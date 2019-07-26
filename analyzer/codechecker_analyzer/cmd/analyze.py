@@ -18,12 +18,14 @@ import sys
 
 from codechecker_analyzer import analyzer, analyzer_context
 from codechecker_analyzer.analyzers import analyzer_types
-from codechecker_analyzer.buildlog import log_parser
 
 from codechecker_common import logger
 from codechecker_common import skiplist_handler
 from codechecker_common.util import RawDescriptionDefaultHelpFormatter, \
     load_json_or_empty
+
+from gcc2clang import gcc2clang
+from gcc2clang import build_action
 
 LOG = logger.get_logger('system')
 
@@ -607,7 +609,7 @@ def main(args):
                       log_file)
             continue
 
-        actions += log_parser.parse_unique_log(
+        actions += gcc2clang.parse_unique_log(
             load_json_or_empty(log_file),
             report_dir,
             args.compile_uniqueing,
@@ -623,8 +625,7 @@ def main(args):
     uniqued_compilation_db_file = os.path.join(
         args.output_path, "unique_compile_commands.json")
     with open(uniqued_compilation_db_file, 'w') as f:
-        json.dump(actions, f,
-                  cls=log_parser.CompileCommandEncoder)
+        json.dump(actions, f, cls=build_action.CompileCommandEncoder)
 
     context = analyzer_context.get_context()
     metadata = {'action_num': len(actions),

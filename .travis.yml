@@ -93,7 +93,7 @@ script:
       make -C tools/plist_to_html test &&
       BUILD_DIR=$TRAVIS_BUILD_DIR/build make -C analyzer test_unit test_functional &&
       if [[ "$TRAVIS_OS_NAME" = "linux" ]]; then
-        make -C analyzer test_tu_collector test_build_logger;
+        make -C analyzer test_tu_collector test_gcc2clang test_build_logger;
       fi &&
       BUILD_DIR=$TRAVIS_BUILD_DIR/build make -C web test_unit test_functional &&
       make clean_travis

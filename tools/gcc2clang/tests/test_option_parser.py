@@ -13,8 +13,8 @@ import shlex
 import tempfile
 import unittest
 
-from codechecker_analyzer.buildlog import log_parser
-from codechecker_analyzer.buildlog.build_action import BuildAction
+from gcc2clang import gcc2clang
+from gcc2clang.build_action import BuildAction
 
 
 class OptionParserTest(unittest.TestCase):
@@ -32,7 +32,7 @@ class OptionParserTest(unittest.TestCase):
             'command': "g++ -o main -fno-merge-const-bfstores main.cpp",
             'directory': ''}
 
-        res = log_parser.parse_options(action)
+        res = gcc2clang.parse_options(action)
         print(res)
         self.assertFalse("-fno-merge-const-bfstores" in res.analyzer_options)
         self.assertTrue('main.cpp' == res.source)
@@ -48,7 +48,7 @@ class OptionParserTest(unittest.TestCase):
             'command': "g++ -o main main.cpp lib.cpp",
             'directory': ''}
 
-        res = log_parser.parse_options(action)
+        res = gcc2clang.parse_options(action)
         print(res)
         self.assertTrue('main.cpp' == res.source)
         self.assertEquals(BuildAction.COMPILE, res.action_type)
@@ -62,7 +62,7 @@ class OptionParserTest(unittest.TestCase):
             'command': "g++ -c main.cpp",
             'directory': ''}
 
-        res = log_parser.parse_options(action)
+        res = gcc2clang.parse_options(action)
         print(res)
         self.assertTrue('main.cpp' == res.source)
         self.assertEquals(BuildAction.COMPILE, res.action_type)
@@ -76,7 +76,7 @@ class OptionParserTest(unittest.TestCase):
             'command': "gcc -E main.c",
             'directory': ''}
 
-        res = log_parser.parse_options(action)
+        res = gcc2clang.parse_options(action)
         print(res)
 
         self.assertTrue('main.c' == res.source)
@@ -93,7 +93,7 @@ class OptionParserTest(unittest.TestCase):
             'command': "gcc -c -x " + lang + ' main.c',
             'directory': ''}
 
-        res = log_parser.parse_options(action)
+        res = gcc2clang.parse_options(action)
         print(res)
 
         self.assertTrue('main.c' == res.source)
@@ -112,7 +112,7 @@ class OptionParserTest(unittest.TestCase):
             'directory': ''
         }
 
-        res = log_parser.parse_options(action)
+        res = gcc2clang.parse_options(action)
         print(res)
 
         self.assertTrue('main.c' == res.source)
@@ -134,7 +134,7 @@ class OptionParserTest(unittest.TestCase):
             'command': build_cmd,
             'directory': ''}
 
-        res = log_parser.parse_options(action)
+        res = gcc2clang.parse_options(action)
         print(res)
         self.assertTrue(set(compiler_options) == set(res.analyzer_options))
         self.assertEqual(BuildAction.COMPILE, res.action_type)
@@ -166,7 +166,7 @@ class OptionParserTest(unittest.TestCase):
             'command': build_cmd,
             'directory': ''}
 
-        res = log_parser.parse_options(action)
+        res = gcc2clang.parse_options(action)
         print(res)
         print(compiler_options)
         print(res.analyzer_options)
@@ -183,7 +183,7 @@ class OptionParserTest(unittest.TestCase):
             'file': '',
             'command': 'g++ -o fubar foo.o main.o bar.o -m',
             'directory': ''}
-        res = log_parser.parse_options(action)
+        res = gcc2clang.parse_options(action)
         print(res)
         self.assertEquals(BuildAction.LINK, res.action_type)
 
@@ -207,7 +207,7 @@ class OptionParserTest(unittest.TestCase):
             'command': build_cmd,
             'directory': ''}
 
-        res = log_parser.parse_options(action)
+        res = gcc2clang.parse_options(action)
         print(res)
         self.assertTrue('' == res.source)
         self.assertTrue(set(compiler_options) == set(res.analyzer_options))
@@ -224,7 +224,7 @@ class OptionParserTest(unittest.TestCase):
             'command': 'g++ -c -MP main.cpp',
             'directory': ''}
 
-        res = log_parser.parse_options(action)
+        res = gcc2clang.parse_options(action)
         print(res)
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
@@ -238,7 +238,7 @@ class OptionParserTest(unittest.TestCase):
             'command': 'g++ -c -MF deps.txt main.cpp',
             'directory': ''}
 
-        res = log_parser.parse_options(action)
+        res = gcc2clang.parse_options(action)
         print(res)
         self.assertEqual(res.analyzer_options, [])
         self.assertEqual(res.source, 'main.cpp')
@@ -254,7 +254,7 @@ class OptionParserTest(unittest.TestCase):
             'command': 'clang++ -c -MF deps.txt main.cpp',
             'directory': ''}
 
-        res = log_parser.parse_options(action)
+        res = gcc2clang.parse_options(action)
         print(res)
         self.assertEqual(res.analyzer_options, [])
         self.assertEqual(res.source, 'main.cpp')
@@ -271,7 +271,7 @@ class OptionParserTest(unittest.TestCase):
             'file': 'main.cpp',
             'command': "g++ {} main.cpp".format(' '.join(ignore)),
             'directory': ''}
-        res = log_parser.parse_options(action)
+        res = gcc2clang.parse_options(action)
         self.assertEqual(res.analyzer_options, ["-fsyntax-only"])
 
     def test_ignore_flags_clang(self):
@@ -287,7 +287,7 @@ class OptionParserTest(unittest.TestCase):
             'file': 'main.cpp',
             'command': "clang++ {} main.cpp".format(' '.join(ignore)),
             'directory': ''}
-        res = log_parser.parse_options(action)
+        res = gcc2clang.parse_options(action)
         self.assertEqual(res.analyzer_options, ["-fsyntax-only"])
 
     @unittest.skip("This will be enabled when we distinguish -Xclang params.")
@@ -305,7 +305,7 @@ class OptionParserTest(unittest.TestCase):
             'file': 'main.cpp',
             'command': "clang++ {} main.cpp".format(' '.join(ignore)),
             'directory': ''}
-        res = log_parser.parse_options(action)
+        res = gcc2clang.parse_options(action)
         self.assertEqual(res.analyzer_options,
                          ["-fsyntax-only", "-Xclang", "-something"])
 
@@ -318,7 +318,7 @@ class OptionParserTest(unittest.TestCase):
             'file': 'main.cpp',
             'command': "g++ {} main.cpp".format(' '.join(preserve)),
             'directory': ''}
-        res = log_parser.parse_options(action)
+        res = gcc2clang.parse_options(action)
         self.assertEqual(res.analyzer_options, preserve)
 
     def is_compiler_executable_fun(self, compiler):
@@ -341,7 +341,7 @@ class OptionParserTest(unittest.TestCase):
             'command': build_cmd,
             'directory': ''}
 
-        res = log_parser.parse_options(action)
+        res = gcc2clang.parse_options(action)
         print(res)
         self.assertTrue(set(compiler_options) == set(res.analyzer_options))
         self.assertEqual(BuildAction.COMPILE, res.action_type)
@@ -350,28 +350,20 @@ class OptionParserTest(unittest.TestCase):
         action = {'file': 'main.cpp', 'directory': ''}
 
         compiler_action = shlex.split('ccache g++ main.cpp')
-        res = log_parser.determine_compiler(compiler_action,
-                                            self.is_compiler_executable_fun)
+        res = gcc2clang.determine_compiler(compiler_action)
         self.assertEqual(res, 'g++')
 
         compiler_action = shlex.split('ccache main.cpp')
-        res = log_parser.determine_compiler(
-            compiler_action,
-            self.is_compiler_executable_fun_false)
+        res = gcc2clang.determine_compiler(compiler_action)
         self.assertEqual(res, 'ccache')
 
         compiler_action = shlex.split('ccache -Ihello main.cpp')
-        res = log_parser.determine_compiler(
-            compiler_action,
-            self.is_compiler_executable_fun_false)
+        res = gcc2clang.determine_compiler(compiler_action)
         self.assertEqual(res, 'ccache')
 
         compiler_action = shlex.split('/usr/lib/ccache/g++ -Ihello main.cpp')
-        res = log_parser.determine_compiler(
-            compiler_action,
-            self.is_compiler_executable_fun_false)
-        self.assertEqual(res,
-                         '/usr/lib/ccache/g++')
+        res = gcc2clang.determine_compiler(compiler_action)
+        self.assertEqual(res, '/usr/lib/ccache/g++')
 
     def test_compiler_include_file(self):
         action = {
@@ -396,6 +388,6 @@ class OptionParserTest(unittest.TestCase):
 }''')
             info_file_tmp.flush()
 
-            res = log_parser.parse_options(action, info_file_tmp.name)
+            res = gcc2clang.parse_options(action, info_file_tmp.name)
             self.assertEqual(res.compiler_includes['c++'],
                              ['-isystem', '/FAKE_INCLUDE_DIR'])

@@ -9,6 +9,7 @@ Makefile.local
 
 # tools
 tools/tu_collector/build
+tools/gcc2clang/build
 
 # external sources
 web/server/vendor/*

@@ -11,6 +11,7 @@ from __future__ import absolute_import
 
 import os
 import shutil
+import subprocess
 import tempfile
 import unittest
 
@@ -19,9 +20,7 @@ try:
 except ImportError:
     from io import BytesIO as StringIO
 
-from codechecker_analyzer.analyzers import analyzer_base
-from codechecker_analyzer.buildlog import build_manager
-from codechecker_analyzer.buildlog import log_parser
+from gcc2clang import gcc2clang
 
 
 class BuildCmdTestNose(unittest.TestCase):
@@ -73,16 +72,6 @@ class BuildCmdTestNose(unittest.TestCase):
 
         return [compile_cmd]
 
-    def test_buildmgr(self):
-        """
-        Check some simple command to be executed by
-        the build manager.
-        """
-        cmd = 'cd ' + self.tmp_dir + ' && echo "test"'
-        print("Running: " + cmd)
-        ret_val = build_manager.execute_buildcmd(cmd)
-        self.assertEqual(ret_val, 0)
-
     def test_analyzer_exec_double_quote(self):
         """
         Test the process execution by the analyzer,
@@ -91,8 +80,9 @@ class BuildCmdTestNose(unittest.TestCase):
         compile_cmd = self.compiler + \
             ' -DDEBUG \'-DMYPATH="/this/some/path/"\''
 
-        comp_actions = log_parser.\
-            parse_unique_log(self.__get_cmp_json(compile_cmd), self.tmp_dir)
+        comp_actions = gcc2clang.parse_unique_log(
+            self.__get_cmp_json(compile_cmd),
+            self.tmp_dir)
 
         for comp_action in comp_actions:
             cmd = [self.compiler]
@@ -103,12 +93,14 @@ class BuildCmdTestNose(unittest.TestCase):
             print(cmd)
             print(cwd)
 
-            ret_val, stdout, stderr = analyzer_base.SourceAnalyzer \
-                .run_proc(cmd, cwd=cwd)
+            proc = subprocess.Popen(cmd, bufsize=-1, cwd=cwd,
+                                    stdout = subprocess.PIPE,
+                                    stderr = subprocess.PIPE)
+            stdout, stderr = proc.communicate()
 
             print(stdout)
             print(stderr)
-            self.assertEqual(ret_val, 0)
+            self.assertEqual(proc.returncode, 0)
 
     def test_analyzer_ansic_double_quote(self):
         """
@@ -117,8 +109,9 @@ class BuildCmdTestNose(unittest.TestCase):
         If the escaping fails the source file will not compile.
         """
         compile_cmd = self.compiler + ''' '-DMYPATH=\"/some/other/path\"' '''
-        comp_actions = log_parser.\
-            parse_unique_log(self.__get_cmp_json(compile_cmd), self.tmp_dir)
+        comp_actions = gcc2clang.parse_unique_log(
+            self.__get_cmp_json(compile_cmd),
+            self.tmp_dir)
 
         for comp_action in comp_actions:
             cmd = [self.compiler]
@@ -129,10 +122,12 @@ class BuildCmdTestNose(unittest.TestCase):
             print(cmd)
             print(cwd)
 
-            ret_val, stdout, stderr = analyzer_base.SourceAnalyzer \
-                .run_proc(cmd, cwd=cwd)
+            proc = subprocess.Popen(cmd, bufsize=-1, cwd=cwd,
+                                    stdout = subprocess.PIPE,
+                                    stderr = subprocess.PIPE)
+            stdout, stderr = proc.communicate()
 
             print(stdout)
             print(stderr)
 
-            self.assertEqual(ret_val, 0)
+            self.assertEqual(proc.returncode, 0)

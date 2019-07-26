@@ -46,6 +46,9 @@ package_plist_to_html: build_plist_to_html package_dir_structure
 build_tu_collector:
 	$(MAKE) -C $(ROOT)/tools/tu_collector build
 
+build_gcc2clang:
+	$(MAKE) -C $(ROOT)/tools/gcc2clang build
+
 package_tu_collector: build_tu_collector package_dir_structure
 	# Copy tu_collector files.
 	cp -rp $(CC_TOOLS)/tu_collector/build/tu_collector/tu_collector $(CC_BUILD_LIB_DIR) && \
@@ -53,7 +56,11 @@ package_tu_collector: build_tu_collector package_dir_structure
 	cd $(CC_BUILD_DIR) && \
 	ln -sf ../lib/python2.7/tu_collector/tu_collector.py bin/tu_collector
 
-package: package_dir_structure package_plist_to_html package_tu_collector
+package_gcc2clang: build_gcc2clang package_dir_structure
+	# Copy gcc2clang files.
+	cp -rp $(CC_TOOLS)/gcc2clang/build/gcc2clang/gcc2clang $(CC_BUILD_LIB_DIR)
+
+package: package_dir_structure package_plist_to_html package_tu_collector package_gcc2clang
 	BUILD_DIR=$(BUILD_DIR) BUILD_LOGGER_64_BIT_ONLY=$(BUILD_LOGGER_64_BIT_ONLY) $(MAKE) -C $(CC_ANALYZER) package_analyzer
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) package_web
 
@@ -123,7 +130,7 @@ clean_venv_dev:
 
 clean: clean_package clean_vendor
 
-clean_package: clean_plist_to_html clean_tu_collector
+clean_package: clean_plist_to_html clean_tu_collector clean_gcc2clang
 	rm -rf $(BUILD_DIR)
 	find . -name "*.pyc" -delete
 
@@ -135,6 +142,9 @@ clean_plist_to_html:
 
 clean_tu_collector:
 	$(MAKE) -C $(CC_TOOLS)/tu_collector clean
+
+clean_gcc2clang:
+	$(MAKE) -C $(CC_TOOLS)/gcc2clang clean
 
 clean_travis:
 	# Clean CodeChecker config files stored in the users home directory.

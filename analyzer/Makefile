@@ -47,6 +47,9 @@ package_plist_to_html: build_plist_to_html package_dir_structure
 build_tu_collector:
 	$(MAKE) -C $(ROOT)/tools/tu_collector build
 
+build_gcc2clang:
+	$(MAKE) -C $(ROOT)/tools/gcc2clang build
+
 package_tu_collector: build_tu_collector package_dir_structure
 	# Copy tu_collector files.
 	cp -rp $(CC_TOOLS)/tu_collector/build/tu_collector/tu_collector $(CC_BUILD_LIB_DIR) && \
@@ -54,12 +57,16 @@ package_tu_collector: build_tu_collector package_dir_structure
 	cd $(CC_BUILD_DIR) && \
 	ln -sf ../lib/python2.7/tu_collector/tu_collector.py bin/tu_collector
 
+package_gcc2clang: build_gcc2clang package_dir_structure
+	# Copy gcc2clang files.
+	cp -rp $(CC_TOOLS)/gcc2clang/build/gcc2clang/gcc2clang $(CC_BUILD_LIB_DIR)
+
 # This target should be used from the top level Makefile to build the package
 # together with the web part. This way we will not build plist-to-html
 # multiple times.
 package_analyzer: package_dir_structure
 
-package: package_plist_to_html package_tu_collector package_analyzer
+package: package_plist_to_html package_tu_collector package_analyzer package_gcc2clang
 	# Copy libraries.
 	cp -r $(ROOT)/codechecker_common $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CURRENT_DIR)/codechecker_analyzer $(CC_BUILD_LIB_DIR)
@@ -109,7 +116,7 @@ else
   endif
 endif
 
-clean_package: clean_plist_to_html clean_tu_collector
+clean_package: clean_plist_to_html clean_tu_collector clean_gcc2clang
 	rm -rf $(BUILD_DIR)
 	find . -name "*.pyc" -delete
 
@@ -118,3 +125,6 @@ clean_plist_to_html:
 
 clean_tu_collector:
 	rm -rf $(ROOT)/tools/tu_collector/build
+
+clean_gcc2clang:
+	rm -rf $(ROOT)/tools/gcc2clang/build

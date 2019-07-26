@@ -8,6 +8,17 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import json
+
+
+class CompileCommandEncoder(json.JSONEncoder):
+    """JSON serializer for objects not serializable by default json code"""
+    def default(self, o):
+        if isinstance(o, BuildAction):
+            return o.to_dict()
+        # Let the base class default method raise the TypeError
+        return json.JSONEncoder.default(self, o)
+
 
 class BuildAction(object):
     """

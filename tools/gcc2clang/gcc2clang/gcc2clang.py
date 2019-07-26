@@ -9,6 +9,8 @@ from __future__ import absolute_import
 
 from collections import defaultdict
 from distutils.spawn import find_executable
+import argparse
+import io
 import json
 import os
 import re
@@ -18,13 +20,7 @@ import sys
 import tempfile
 import traceback
 
-from codechecker_common.logger import get_logger
-from codechecker_common.util import load_json_or_empty
-
-from .. import gcc_toolchain
 from .build_action import BuildAction
-
-LOG = get_logger('buildlogger')
 
 # Replace gcc/g++ build target options with values accepted by Clang.
 REPLACE_OPTIONS_MAP = {
@@ -199,6 +195,44 @@ COMPILE_OPTIONS_MERGED = \
 PRECOMPILATION_OPTION = re.compile('-(E|M[T|Q|F|J|P|V|M]*)$')
 
 
+def load_json_or_empty(path, default=None):
+    """
+    Load the contents of the given file as a JSON and return it's value,
+    or default if the file can't be loaded.
+    """
+
+    ret = default
+    try:
+        with io.open(path, 'r') as handle:
+            ret = json.loads(handle.read())
+    except (IOError, OSError) as ex:
+        print("Failed to open json file: " + path)
+        print(ex)
+    except ValueError as ex:
+        print(path + " is not a valid json file.")
+        print(ex)
+    except TypeError as ex:
+        print("Failed to process json file: " + path)
+        print(ex)
+
+    return ret
+
+
+def toolchain_in_args(compiler_option):
+    """
+    Check for the --gcc-toolchain in the compilation options.
+    """
+    for cmp_opt in compiler_option:
+        if '--gcc-toolchain' in cmp_opt:
+            return re.match(r"^--gcc-toolchain=(?P<tcpath>.*)$",
+                            cmp_opt).group('tcpath')
+
+
+def has_flag(flag, cmd):
+    """Return true if a cmd contains a flag or false if not."""
+    return bool(next((x for x in cmd if x.startswith(flag)), False))
+
+
 class ImplicitCompilerInfo(object):
     """
     This class helps to fetch and set some additional compiler flags which are
@@ -233,7 +267,6 @@ class ImplicitCompilerInfo(object):
         or None in case of error.
         """
         try:
-            LOG.debug("Retrieving default includes via '" + cmd + "'")
             proc = subprocess.Popen(shlex.split(cmd),
                                     stdin=subprocess.PIPE,
                                     stdout=subprocess.PIPE,
@@ -243,13 +276,13 @@ class ImplicitCompilerInfo(object):
             _, err = proc.communicate("")
             return err
         except OSError as oerr:
-            LOG.error("Error during process execution: " + cmd + '\n' +
-                      oerr.strerror + "\n")
+            print("Error during process execution: {}\n{}\n".format(
+                cmd, oerr.strerror))
 
     @staticmethod
     def __parse_compiler_includes(lines):
         """
-        Parse the compiler include paths from a string
+        Parse the compiler include paths from a string.
         """
         start_mark = "#include <...> search starts here:"
         end_mark = "End of search list."
@@ -456,8 +489,8 @@ class ImplicitCompilerInfo(object):
         contents = load_json_or_empty(filename, {})
         compiler_info = contents.get(compiler)
         if compiler_info is None:
-            LOG.error("Could not find compiler %s in file %s",
-                      compiler, filename)
+            print("Could not find compiler {} in file {}".format(
+                compiler, filename))
             return
 
         ICI = ImplicitCompilerInfo
@@ -598,7 +631,7 @@ def get_language(extension):
     return mapping.get(extension)
 
 
-def determine_compiler(gcc_command, is_executable_compiler_fun):
+def determine_compiler(gcc_command):
     """
     This function determines the compiler from the given compilation command.
     If the first part of the gcc_command is ccache invocation then the rest
@@ -626,7 +659,7 @@ def determine_compiler(gcc_command, is_executable_compiler_fun):
     files or environment variables.
     """
     if gcc_command[0].endswith('ccache'):
-        if is_executable_compiler_fun(gcc_command[1]):
+        if ImplicitCompilerInfo.is_executable_compiler(gcc_command[1]):
             return gcc_command[1]
 
     return gcc_command[0]
@@ -813,9 +846,7 @@ def parse_options(compilation_db_entry, compiler_info_file=None):
 
     details['directory'] = compilation_db_entry['directory']
     details['action_type'] = None
-    details['compiler'] =\
-        determine_compiler(gcc_command,
-                           ImplicitCompilerInfo.is_executable_compiler)
+    details['compiler'] = determine_compiler(gcc_command)
     if '++' in details['compiler'] or 'cpp' in details['compiler']:
         details['lang'] = 'c++'
 
@@ -870,23 +901,13 @@ def parse_options(compilation_db_entry, compiler_info_file=None):
     # the compiler set in gcc-toolchain. This can cause missing headers during
     # the analysis.
 
-    toolchain = \
-        gcc_toolchain.toolchain_in_args(details['analyzer_options'])
+    toolchain = toolchain_in_args(details['analyzer_options'])
 
     # Store the compiler built in include paths and defines.
     if not toolchain:
         ImplicitCompilerInfo.set(details, compiler_info_file)
 
     return BuildAction(**details)
-
-
-class CompileCommandEncoder(json.JSONEncoder):
-    """JSON serializer for objects not serializable by default json code"""
-    def default(self, o):
-        if isinstance(o, BuildAction):
-            return o.to_dict()
-        # Let the base class default method raise the TypeError
-        return json.JSONEncoder.default(self, o)
 
 
 class CompileActionUniqueingType(object):
@@ -944,7 +965,7 @@ def parse_unique_log(compilation_database,
 
         for entry in compilation_database:
             if skip_handler and skip_handler.should_skip(entry['file']):
-                LOG.debug("SKIPPING FILE %s", entry['file'])
+                # LOG.debug("SKIPPING FILE %s", entry['file'])
                 continue
             action = parse_options(entry, compiler_info_file)
 
@@ -959,11 +980,11 @@ def parse_unique_log(compilation_database,
                 if action.source not in uniqued_build_actions:
                     uniqued_build_actions[action.source] = action
                 else:
-                    LOG.error("Build Action uniqueing failed"
-                              " as both '%s' and '%s'",
-                              uniqued_build_actions[action.source]
-                              .original_command,
-                              action.original_command)
+                    print("Build Action uniqueing failed"
+                          " as both '%s' and '%s'" % \
+                          (uniqued_build_actions[action.source]
+                           .original_command,
+                           action.original_command))
                     sys.exit(1)
             elif build_action_uniqueing ==\
                     CompileActionUniqueingType.SOURCE_ALPHA:
@@ -974,7 +995,6 @@ def parse_unique_log(compilation_database,
                     uniqued_build_actions[action.source] = action
             elif build_action_uniqueing ==\
                     CompileActionUniqueingType.SOURCE_REGEX:
-                LOG.debug("uniqueing regex")
                 if action.source not in uniqued_build_actions:
                     uniqued_build_actions[action.source] = action
                 elif uniqueing_re.match(action.original_command) and\
@@ -984,27 +1004,82 @@ def parse_unique_log(compilation_database,
                 elif uniqueing_re.match(action.original_command) and\
                     uniqueing_re.match(
                         uniqued_build_actions[action.source].original_command):
-                    LOG.error("Build Action uniqueing failed as both \n %s"
-                              "\n and \n %s \n match regex pattern:%s",
-                              uniqued_build_actions[action.source].
-                              original_command,
-                              action.original_command,
-                              compile_uniqueing)
+                    print("Build Action uniqueing failed as both \n %s"
+                          "\n and \n %s \n match regex pattern:%s" % \
+                          (uniqued_build_actions[action.source].
+                           original_command,
+                           action.original_command,
+                           compile_uniqueing))
                     sys.exit(1)
 
         compiler_info_out = os.path.join(report_dir, "compiler_info.json")
         with open(compiler_info_out, 'w') as f:
-            LOG.debug("Writing compiler info into:"+compiler_info_out)
             json.dump(ImplicitCompilerInfo.get(), f)
 
-        LOG.debug('Parsing log file done.')
         return list(uniqued_build_actions.values())
 
     except (ValueError, KeyError, TypeError) as ex:
         if not compilation_database:
-            LOG.error('The compile database is empty.')
+            print('The compile database is empty.')
         else:
-            LOG.error('The compile database is not valid.')
-        LOG.debug(traceback.format_exc())
-        LOG.debug(ex)
+            print('The compile database is not valid.')
+        print(traceback.format_exc())
+        print(ex)
         sys.exit(1)
+
+
+def main():
+    #--- Handling of command line arguments ---#
+
+    parser = argparse.ArgumentParser(
+        description="This script converts the build commands of a compilation "
+                    "database file to Clang commands in which unknown "
+                    "compiler flags are filtered and implicit GCC default "
+                    "flags (include paths, default standard version, etc.) "
+                    "are included.")
+
+    parser.add_argument('-i', '--input', type=str, required=True,
+                        help="Input compilation database JSON file.")
+    parser.add_argument('-o', '--output', type=str, required=True,
+                        help="Output compilation database JSON file.")
+
+    #--- Checking the existence of input files ---#
+
+    args = parser.parse_args()
+
+    if not os.path.isfile(args.input):
+        print("Input file {} doesn't exist".format(args.input))
+        sys.exit(1)
+
+    #--- Do the job ---#
+
+    result = []
+
+    with open(args.input) as f:
+        comp_db = json.load(f)
+
+    for action in comp_db:
+        ba = parse_options(action)
+
+        command = ['clang++' if ba.lang == 'c++' else 'clang']
+        if not has_flag('-std', ba.analyzer_options):
+            command.extend(['-std', ba.compiler_standard.get(ba.lang)])
+        if ba.output:
+            command.extend(['-o', ba.output])
+        command.extend(['-x', ba.lang])
+        command.extend(['--target', ba.target.get(ba.lang)])
+        command.extend(ba.analyzer_options)
+        command.extend(ba.compiler_includes.get(ba.lang))
+        command.append(ba.source)
+
+        result.append({
+          'directory': ba.directory,
+          'command': ' '.join(command),
+          'file': ba.source})
+
+    with open(args.output, 'w') as f:
+        json.dump(result, f, indent=2)
+
+
+if __name__ == "__main__":
+    main()

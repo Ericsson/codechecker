@@ -8,9 +8,9 @@ REPO_ROOT ?= REPO_ROOT=$(ROOT)
 # Nose test runner configuration options.
 NOSECFG = --config .noserc
 
-test_in_env: pycodestyle_in_env pylint_in_env test_unit_in_env test_functional_in_env test_build_logger test_tu_collector_in_env
+test_in_env: pycodestyle_in_env pylint_in_env test_unit_in_env test_functional_in_env test_build_logger test_tu_collector_in_env test_gcc2clang_in_env
 
-test: pycodestyle pylint test_unit test_functional test_build_logger test_tu_collector
+test: pycodestyle pylint test_unit test_functional test_build_logger test_tu_collector test_gcc2clang
 
 PYCODESTYLE_TEST_CMD = pycodestyle bin codechecker_analyzer tests
 
@@ -62,6 +62,13 @@ test_build_logger:
 test_tu_collector:
 	$(REPO_ROOT) make -C $(ROOT)/tools/tu_collector test
 
+test_gcc2clang:
+	$(REPO_ROOT) make -C $(ROOT)/tools/gcc2clang test
+
 test_tu_collector_in_env:
 	$(ACTIVATE_DEV_VENV) && \
 	$(REPO_ROOT) make -C $(ROOT)/tools/tu_collector test
+
+test_gcc2clang_in_env:
+	$(ACTIVATE_DEV_VENV) && \
+	$(REPO_ROOT) make -C $(ROOT)/tools/gcc2clang test
