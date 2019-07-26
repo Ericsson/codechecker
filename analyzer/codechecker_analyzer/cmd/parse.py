@@ -19,11 +19,10 @@ import sys
 
 from plist_to_html import PlistToHtml
 
-from codechecker_analyzer import analyzer_context
+from codechecker_analyzer import analyzer_context, suppress_handler
 
 from codechecker_common import logger
 from codechecker_common import plist_parser
-from codechecker_common import suppress_handler
 from codechecker_common import util
 from codechecker_common.skiplist_handler import SkipListHandler
 from codechecker_common.source_code_comment_handler import \
@@ -534,7 +533,7 @@ def main(args):
                     # Just create the file.
                     __make_handler = True
                     LOG.info("Will write source-code suppressions to "
-                             "suppress file.")
+                             "suppress file: %s", args.suppress)
             else:
                 LOG.warning("Suppress file '%s' given, but it does not exist"
                             " -- will not suppress anything.", args.suppress)

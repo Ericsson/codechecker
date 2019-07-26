@@ -12,23 +12,22 @@ from __future__ import absolute_import
 
 import os
 
-from codechecker_common import suppress_file_handler
+from codechecker_analyzer import suppress_file_handler
+
 from codechecker_common.source_code_comment_handler import \
-    BaseSourceCodeCommentHandler, skip_suppress_status
+    skip_suppress_status
 from codechecker_common.logger import get_logger
 
 # Warning! this logger should only be used in this module.
 LOG = get_logger('system')
 
 
-class GenericSuppressHandler(BaseSourceCodeCommentHandler):
+class GenericSuppressHandler(object):
 
     def __init__(self, suppress_file, allow_write):
         """
         Create a new suppress handler with a suppress_file as backend.
         """
-        super(GenericSuppressHandler, self).__init__()
-
         self.__suppress_info = []
         self.__allow_write = allow_write
 
@@ -43,6 +42,17 @@ class GenericSuppressHandler(BaseSourceCodeCommentHandler):
             if allow_write:
                 raise ValueError("Can't create allow_write=True suppress "
                                  "handler without a backend file.")
+
+    @property
+    def suppress_file(self):
+        """" File on the filesystem where the suppress
+        data will be written. """
+        return self.__suppressfile
+
+    @suppress_file.setter
+    def suppress_file(self, value):
+        """ Set the suppress file. """
+        self.__suppressfile = value
 
     def __revalidate_suppress_data(self):
         """Reload the information in the suppress file to the memory."""
@@ -66,18 +76,6 @@ class GenericSuppressHandler(BaseSourceCodeCommentHandler):
                                                            file_name,
                                                            comment,
                                                            status)
-        self.__revalidate_suppress_data()
-        return ret
-
-    def remove_suppress_bug_id(self, bug_id, file_name):
-
-        if not self.__allow_write:
-            return True
-
-        ret = suppress_file_handler.remove_from_suppress_file(
-            self.suppress_file,
-            bug_id,
-            file_name)
         self.__revalidate_suppress_data()
         return ret
 

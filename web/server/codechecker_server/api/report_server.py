@@ -617,7 +617,6 @@ class ThriftRequestHandler(object):
                  config_database,
                  checker_md_docs,
                  checker_md_docs_map,
-                 src_comment_handler,
                  package_version,
                  context):
 
@@ -631,7 +630,6 @@ class ThriftRequestHandler(object):
         self.__config_database = config_database
         self.__checker_md_docs = checker_md_docs
         self.__checker_doc_map = checker_md_docs_map
-        self.__src_comment_handler = src_comment_handler
         self.__package_version = package_version
         self.__Session = Session
         self.__context = context
@@ -2105,12 +2103,10 @@ class ThriftRequestHandler(object):
     @exc_to_thrift_reqfail
     def getSuppressFile(self):
         """
-        Return the suppress file path or empty string if not set.
+        DEPRECATED the server is not started with a suppress file anymore.
+        Returning empty string.
         """
         self.__require_access()
-        suppress_file = self.__src_comment_handler.suppress_file
-        if suppress_file:
-            return suppress_file
         return ''
 
     @exc_to_thrift_reqfail

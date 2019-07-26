@@ -10,6 +10,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import division
 
+import json
 import os
 import tempfile
 
@@ -46,3 +47,29 @@ def get_workspace(test_id='test'):
         return tempfile.mkdtemp(prefix=test_id+"-", dir=workspace_root)
     else:
         return workspace_root
+
+
+def test_env(test_workspace):
+    base_env = os.environ.copy()
+    base_env['PATH'] = os.path.join(PKG_ROOT, 'bin') + \
+        ':' + base_env['PATH']
+    base_env['HOME'] = test_workspace
+    return base_env
+
+
+def import_test_cfg(workspace):
+    cfg_file = os.path.join(workspace, "test_config.json")
+    test_cfg = {}
+    with open(cfg_file, 'r') as cfg:
+        test_cfg = json.loads(cfg.read())
+    return test_cfg
+
+
+def export_test_cfg(workspace, test_cfg):
+    cfg_file = os.path.join(workspace, "test_config.json")
+    with open(cfg_file, 'w') as cfg:
+        cfg.write(json.dumps(test_cfg, sort_keys=True, indent=2))
+
+
+def setup_test_proj_cfg(workspace):
+    return import_test_cfg(workspace)['test_project']

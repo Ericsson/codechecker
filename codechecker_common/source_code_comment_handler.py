@@ -10,7 +10,6 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-import abc
 import os
 import re
 
@@ -29,49 +28,6 @@ def skip_suppress_status(status):
     Returns True if the given status is in the skip list, otherwise False.
     """
     return status in SKIP_REVIEW_STATUSES
-
-
-class BaseSourceCodeCommentHandler(object):
-    """ Source code handler base class. """
-
-    __metaclass__ = abc.ABCMeta
-
-    __suppressfile = None
-
-    @abc.abstractmethod
-    def store_suppress_bug_id(self,
-                              bug_id,
-                              file_name,
-                              comment,
-                              status):
-        """ Store the suppress bug_id. """
-        pass
-
-    @abc.abstractmethod
-    def remove_suppress_bug_id(self,
-                               bug_id,
-                               file_name):
-        """ Remove the suppress bug_id. """
-        pass
-
-    @property
-    def suppress_file(self):
-        """" File on the filesystem where the suppress
-        data will be written. """
-        return self.__suppressfile
-
-    @suppress_file.setter
-    def suppress_file(self, value):
-        """ Set the suppress file. """
-        self.__suppressfile = value
-
-    @abc.abstractmethod
-    def get_suppressed(self, bug):
-        """
-        Retrieve whether the given bug is suppressed according to the
-        suppress handler.
-        """
-        pass
 
 
 class SourceCodeCommentHandler(object):
