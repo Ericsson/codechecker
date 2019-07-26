@@ -40,7 +40,7 @@ def invoke_binary_checked(binary_path, args=None):
     try:
         output = subprocess.check_output(invocation)
     except subprocess.CalledProcessError as e:
-        LOG.DEBUG(
+        LOG.debug(
             'Command invocation failed because of non-zero exit code!'
             'Details: {}'.format(str(e)))
         return False
@@ -125,7 +125,7 @@ class CTUAutodetection(object):
         """
 
         if self.__analyzer_binary is None:
-            LOG.DEBUG(
+            LOG.debug(
                 'Trying to detect CTU capability, but analyzer binary is not '
                 'set!')
             return False
@@ -134,13 +134,13 @@ class CTUAutodetection(object):
             self.__analyzer_binary, ['--version'])
 
         if analyzer_version is False:
-            LOG.DEBUG('Failed to invoke command to get Clang version!')
+            LOG.debug('Failed to invoke command to get Clang version!')
             return False
 
         version_info = self.parser.parse(analyzer_version)
 
         if not version_info:
-            LOG.DEBUG('Failed to parse Clang version information!')
+            LOG.debug('Failed to parse Clang version information!')
             return False
 
         self.__analyzer_version_info = version_info
@@ -195,7 +195,7 @@ class CTUAutodetection(object):
         if os.path.isfile(tool_path):
             return tool_path
 
-        LOG.DEBUG(
+        LOG.debug(
             "Mapping tool '{}' suggested by autodetection is not found in "
             "directory reported by Clang '{}'. Trying with version-postfixed "
             "filename...".format(tool_path, installed_dir))
@@ -205,7 +205,7 @@ class CTUAutodetection(object):
         if os.path.isfile(postfixed_tool_path):
             return postfixed_tool_path
 
-        LOG.DEBUG(
+        LOG.debug(
             "Postfixed mapping tool '{}' suggested by autodetection is not "
             "found in directory reported by Clang '{}'."
             .format(postfixed_tool_path, installed_dir))
