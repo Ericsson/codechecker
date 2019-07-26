@@ -23,11 +23,11 @@ before_install:
     # Download macOS specific extra dependencies.
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then git clone https://github.com/llvm-mirror/clang.git ~/llvm --branch master --single-branch --depth 1; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install doxygen; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install llvm@7; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install llvm@8; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install thrift@0.9; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/usr/local/Cellar/thrift@0.9/0.9.3/bin:$PATH; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then which thrift; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/usr/local/opt/llvm@7/bin:$PATH; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/usr/local/opt/llvm@8/bin:$PATH; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PYTHONPATH=~/llvm/tools/scan-build-py/; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=~/llvm/tools/scan-build-py/bin:$PATH; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then chmod a+x ~/llvm/tools/scan-build-py/bin/intercept-build; fi
@@ -47,9 +47,9 @@ install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip install --ignore-installed nose --user; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/Users/travis/Library/Python/2.7/bin:$PATH; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip install virtualenv; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-7 100; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-7 100; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-7 100; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-8 100; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-8 100; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-8 100; fi
     # Check if the right clang and clang-tidy is used
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then update-alternatives --display clang; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then update-alternatives --display clang-tidy; fi
@@ -70,7 +70,7 @@ cache:
 addons:
     apt:
         sources:
-            - llvm-toolchain-xenial-7
+            - llvm-toolchain-xenial-8
             - ubuntu-toolchain-r-test
         packages:
             - g++-6
@@ -79,8 +79,8 @@ addons:
             - libc6-dev-i386
             - libpq-dev
             - thrift-compiler
-            - clang-7
-            - clang-tidy-7
+            - clang-8
+            - clang-tidy-8
     postgresql: "9.6"
 
 script:
