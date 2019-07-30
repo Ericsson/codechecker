@@ -191,7 +191,7 @@ def generate_report_hash_no_bugpath(main_section, source_file):
      * checker message
      * line content from the source file if can be read up
      * column numbers from the main diag sections location
-     * whitespaces from the beginning of the source content are removed
+     * all the whitespaces from the source content are removed
 
     """
 
