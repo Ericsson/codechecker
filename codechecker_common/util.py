@@ -10,7 +10,6 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-import argparse
 import io
 import json
 import os
@@ -25,17 +24,6 @@ import psutil
 from codechecker_common.logger import get_logger
 
 LOG = get_logger('system')
-
-
-class RawDescriptionDefaultHelpFormatter(
-        argparse.RawDescriptionHelpFormatter,
-        argparse.ArgumentDefaultsHelpFormatter
-):
-    """
-    Adds default values to argument help and retains any formatting in
-    descriptions.
-    """
-    pass
 
 
 def find_by_regex_in_envpath(pattern, environment):

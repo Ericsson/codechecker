@@ -32,6 +32,17 @@ DEFAULT_FILTER_VALUES = {
 }
 
 
+class RawDescriptionDefaultHelpFormatter(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter
+):
+    """
+    Adds default values to argument help and retains any formatting in
+    descriptions.
+    """
+    pass
+
+
 class NewLineDefaultHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
 
     def _split_lines(self, text, width):
@@ -1032,7 +1043,7 @@ def add_arguments_to_parser(parser):
 
     results = subcommands.add_parser(
         'results',
-        formatter_class=util.RawDescriptionDefaultHelpFormatter,
+        formatter_class=RawDescriptionDefaultHelpFormatter,
         description="Show the individual analysis reports' summary.",
         help="List analysis result (finding) summary for a given run.",
         epilog='''Example scenario: List analysis results
@@ -1058,7 +1069,7 @@ Get analysis results for a run and filter the analysis results:
 
     diff = subcommands.add_parser(
         'diff',
-        formatter_class=util.RawDescriptionDefaultHelpFormatter,
+        formatter_class=RawDescriptionDefaultHelpFormatter,
         description="Compare two analysis runs to show the results that "
                     "differ between the two.",
         help="Compare two analysis runs and show the difference.",
@@ -1082,7 +1093,7 @@ by multiple severity values:
 
     sum_p = subcommands.add_parser(
         'sum',
-        formatter_class=util.RawDescriptionDefaultHelpFormatter,
+        formatter_class=RawDescriptionDefaultHelpFormatter,
         description="Show checker statistics for some analysis runs.",
         help="Show statistics of checkers.",
         epilog='''Example scenario: Get checker statistics
