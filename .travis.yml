@@ -1,4 +1,4 @@
-language: 
+language:
     - python
 
 services:
@@ -11,12 +11,52 @@ matrix:
       sudo: required
       dist: xenial
       python: "2.7"
+      env: CC_MODULE=analyzer
+    - os: linux
+      name: "Server/client test cases (sqlite)"
+      sudo: required
+      dist: xenial
+      python: "2.7"
+      env: DATABASE=sqlite
+    - os: linux
+      name: "Server/client test cases (psycopg2)"
+      sudo: required
+      dist: xenial
+      python: "2.7"
+      env: DATABASE=psql_psycopg2
+    - os: linux
+      name: "Server/client test cases (pg8000)"
+      sudo: required
+      dist: xenial
+      python: "2.7"
+      env: DATABASE=psql_pg8000
+    - os: osx
+      osx_image: xcode9.4
+      name: "Analyzer test cases"
+      sudo: false
+      language: generic
+      env: CC_MODULE=analyzer
+    - os: osx
+      osx_image: xcode9.4
+      name: "Server/client test cases (sqlite)"
+      sudo: false
+      language: generic
+      env: DATABASE=sqlite
+    - os: osx
+      osx_image: xcode9.4
+      name: "Server/client test cases (psycopg2)"
+      sudo: false
+      language: generic
+      env:
+        - DATABASE=psql_psycopg2
+        - POSTGRESQL_VERSION=9.6
     - os: osx
       osx_image: xcode9.4
       name: "Analyzer, web (sqlite, psycopg2, pg8000) and tools test cases."
       sudo: false
       language: generic
       env:
+        - DATABASE=psql_pg8000
         - POSTGRESQL_VERSION=9.6
 
 before_install:
@@ -91,9 +131,13 @@ script:
       make clean_travis &&
       make package &&
       make -C tools/plist_to_html test &&
-      BUILD_DIR=$TRAVIS_BUILD_DIR/build make -C analyzer test_unit test_functional &&
-      if [[ "$TRAVIS_OS_NAME" = "linux" ]]; then
-        make -C analyzer test_tu_collector test_build_logger;
-      fi &&
-      BUILD_DIR=$TRAVIS_BUILD_DIR/build make -C web test_unit test_functional &&
-      make clean_travis
+      if [[ "$CC_MODULE" = "analyzer" ]]; then
+        BUILD_DIR=$TRAVIS_BUILD_DIR/build make -C analyzer test_unit test_functional test_tu_collector;
+        if [[ "$TRAVIS_OS_NAME" = "linux" ]]; then
+          make -C analyzer test_build_logger
+        fi
+      elif [[ ! -z "$DATABASE" ]]; then
+        make -C web test_matrix_${DATABASE};
+      else
+        make test;
+      fi

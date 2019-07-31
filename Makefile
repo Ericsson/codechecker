@@ -179,6 +179,14 @@ test_web:
 test_web_sqlite:
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) test_sqlite
 
+# Run all the functional tests for the web with psycopg2.
+test_web_psql_psycopg2:
+	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) test_psql_psycopg2
+
+# Run all the functional tests for the web with pg8000.
+test_web_psql_pg8000:
+	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) test_psql_pg8000
+
 # Run a specific web test.
 test_web_feature:
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) run_test
