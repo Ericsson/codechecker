@@ -20,7 +20,8 @@ import shared
 from ProductManagement_v6 import ttypes
 
 from codechecker_common.logger import get_logger
-from codechecker_common.profiler import timeit
+
+from codechecker_server.profiler import timeit
 
 from .. import permissions
 from ..database.config_db_model import IDENTIFIER, Product, ProductPermission

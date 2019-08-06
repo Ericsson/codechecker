@@ -17,7 +17,8 @@ from Authentication_v6.ttypes import AuthorisationList, HandshakeInformation, \
     SessionTokenData
 
 from codechecker_common.logger import get_logger
-from codechecker_common.profiler import timeit
+
+from codechecker_server.profiler import timeit
 
 from ..database.config_db_model import Session
 from ..permissions import handler_from_scope_params as make_handler

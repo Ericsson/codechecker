@@ -37,8 +37,9 @@ from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler, SKIP_REVIEW_STATUSES
 from codechecker_common import util
 from codechecker_common.logger import get_logger
-from codechecker_common.profiler import timeit
 from codechecker_common.report import get_report_path_hash
+
+from codechecker_server.profiler import timeit
 
 from .. import permissions
 from ..database import db_cleanup

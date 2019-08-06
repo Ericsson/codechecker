@@ -15,7 +15,8 @@ import base64
 import shared
 
 from codechecker_common.logger import get_logger
-from codechecker_common.profiler import timeit
+
+from codechecker_server.profiler import timeit
 
 from ..database.config_db_model import Configuration
 from .db import DBSession
