@@ -10,6 +10,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import fnmatch
 import os
 import shutil
 import sys
@@ -17,10 +18,13 @@ import uuid
 
 from libtest import codechecker
 from libtest import env
+from libtest import plist_test
 from libtest import project
 
 
 TEST_WORKSPACE = None
+
+test_dir = os.path.dirname(os.path.realpath(__file__))
 
 
 def setup_package():
@@ -31,33 +35,28 @@ def setup_package():
 
     os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
 
-    test_project = 'cpp'
-
     test_config = {}
 
-    project_info = project.get_info(test_project)
+    test_project_name = uuid.uuid4().hex
 
-    test_project_path = os.path.join(TEST_WORKSPACE, "test_proj")
-    shutil.copytree(project.path(test_project), test_project_path)
+    test_project_path = os.path.join(test_dir, "test_proj")
 
-    project_info['project_path'] = test_project_path
+    temp_test_project_data = project.prepare(test_project_path, TEST_WORKSPACE)
 
-    test_project_name = project_info['name'] + '_' + uuid.uuid4().hex
-
-    test_config['test_project'] = project_info
-
-    suppress_file = None
-
-    skip_list_file = None
+    test_config['test_project'] = temp_test_project_data
 
     test_env = env.test_env(TEST_WORKSPACE)
 
+    base_reports = os.path.join(temp_test_project_data['test_project_reports'],
+                                'base')
+
     codechecker_cfg = {
-        'suppress_file': suppress_file,
-        'skip_list_file': skip_list_file,
+        'suppress_file': None,
+        'skip_list_file': None,
         'check_env': test_env,
         'workspace': TEST_WORKSPACE,
-        'checkers': []
+        'checkers': [],
+        'reportdir': base_reports
     }
 
     # Start or connect to the running CodeChecker server and get connection
@@ -70,16 +69,11 @@ def setup_package():
     # Extend the checker configuration with the server access.
     codechecker_cfg.update(server_access)
 
-    ret = project.clean(test_project, test_env)
-    if ret:
-        sys.exit(ret)
-
-    ret = codechecker.check_and_store(codechecker_cfg,
-                                      test_project_name,
-                                      test_project_path)
+    ret = codechecker.store(codechecker_cfg,
+                            test_project_name)
     if ret:
         sys.exit(1)
-    print("Analyzing test project was succcessful.")
+    print("Storing the base reports was succcessful.")
 
     codechecker_cfg['run_names'] = [test_project_name]
 
