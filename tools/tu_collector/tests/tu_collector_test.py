@@ -24,13 +24,9 @@ from tu_collector import tu_collector
 
 class TUCollectorTest(unittest.TestCase):
     def setUp(self):
-        PKG_ROOT = os.path.join(os.environ['REPO_ROOT'],
-                                'build', 'CodeChecker')
-        TU_COLLECTOR_DIR = os.path.join(os.environ['REPO_ROOT'],
-                                        'tools', 'tu_collector')
 
-        self._test_proj_dir = os.path.abspath(os.path.join(TU_COLLECTOR_DIR,
-                                              'tests', 'project'))
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        self._test_proj_dir = os.path.join(dir_path, 'project')
 
     def test_file_existence(self):
 
