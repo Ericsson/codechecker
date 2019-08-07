@@ -127,7 +127,7 @@ int main()
         This tests the change of the detection status of bugs when the file
         content changes.
         """
-        runs = self._cc_client.getRunData(None, None, 0)
+        runs = self._cc_client.getRunData(None, None, 0, None)
 
         if runs:
             run_id = max(map(lambda run: run.runId, runs))
@@ -137,7 +137,7 @@ int main()
         self._create_source_file(0)
         self._check_source_file(self._codechecker_cfg)
 
-        runs = self._cc_client.getRunData(None, None, 0)
+        runs = self._cc_client.getRunData(None, None, 0, None)
         run_id = max(map(lambda run: run.runId, runs))
 
         reports = self._cc_client.getRunResults([run_id],
@@ -282,7 +282,7 @@ int main()
         """
         This test checks whether the storage works without a metadata.json.
         """
-        runs = self._cc_client.getRunData(None, None, 0)
+        runs = self._cc_client.getRunData(None, None, 0, None)
         if runs:
             run_id = max(map(lambda run: run.runId, runs))
 
@@ -304,7 +304,7 @@ int main()
 
         codechecker.store(self._codechecker_cfg, 'hello')
 
-        runs = self._cc_client.getRunData(None, None, 0)
+        runs = self._cc_client.getRunData(None, None, 0, None)
         run_id = max(map(lambda run: run.runId, runs))
 
         reports = self._cc_client.getRunResults([run_id],
@@ -321,7 +321,7 @@ int main()
         """
         This test checks reports which have detection status of 'Off'.
         """
-        runs = self._cc_client.getRunData(None, None, 0)
+        runs = self._cc_client.getRunData(None, None, 0, None)
         if runs:
             run_id = max(map(lambda run: run.runId, runs))
 

@@ -74,6 +74,14 @@ enum SortType {
   BUG_PATH_LENGTH,
 }
 
+enum RunSortType {
+  NAME,
+  UNRESOLVED_REPORTS,
+  DATE,
+  DURATION,
+  CC_VERSION
+}
+
 enum StoreLimitKind {
   FAILURE_ZIP_SIZE,         // Maximum size of the collected failed zips which can be store on the server.
   COMPILATION_DATABASE_SIZE // Limit of the compilation database file size.
@@ -93,6 +101,11 @@ struct SourceFileData {
 
 struct SortMode {
   1: SortType type,
+  2: Order    ord
+}
+
+struct RunSortMode {
+  1: RunSortType type,
   2: Order    ord
 }
 
@@ -319,7 +332,8 @@ service codeCheckerDBAccess {
   // PERMISSION: PRODUCT_ACCESS
   RunDataList getRunData(1: RunFilter runFilter,
                          2: optional i64 limit,
-                         3: optional i64 offset)
+                         3: optional i64 offset,
+                         4: optional RunSortMode sortMode)
                          throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Returns the number of available runs based on the run filter parameter.

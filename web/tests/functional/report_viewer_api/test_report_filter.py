@@ -52,7 +52,8 @@ class TestReportFilter(unittest.TestCase):
         # Get the run names which belong to this test.
         run_names = env.get_run_names(test_workspace)
 
-        runs = self._cc_client.getRunData(None, None, 0)
+        sort_mode = RunSortMode(RunSortType.DATE, Order.ASC)
+        runs = self._cc_client.getRunData(None, None, 0, sort_mode)
 
         test_runs = [run for run in runs if run.name in run_names]
         self._runids = [r.runId for r in test_runs]

@@ -17,11 +17,8 @@ import os
 import re
 import unittest
 
-from codeCheckerDBAccess_v6.ttypes import Encoding
-from codeCheckerDBAccess_v6.ttypes import Order
-from codeCheckerDBAccess_v6.ttypes import ReportFilter
-from codeCheckerDBAccess_v6.ttypes import SortMode
-from codeCheckerDBAccess_v6.ttypes import SortType
+from codeCheckerDBAccess_v6.ttypes import Encoding, Order, ReportFilter, \
+    SortMode, SortType, RunSortMode, RunSortType
 
 from libtest.debug_printer import print_run_results
 from libtest.thrift_client_to_db import get_all_run_results
@@ -51,7 +48,8 @@ class RunResults(unittest.TestCase):
         # Get the run names which belong to this test.
         run_names = env.get_run_names(test_workspace)
 
-        runs = self._cc_client.getRunData(None, None, 0)
+        sort_mode = RunSortMode(RunSortType.DATE, Order.ASC)
+        runs = self._cc_client.getRunData(None, None, 0, sort_mode)
 
         test_runs = [run for run in runs if run.name in run_names]
 

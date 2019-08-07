@@ -228,7 +228,7 @@ function (declare, ObjectStore, Store, Deferred, DataGrid, Dialog, ContentPane,
         var runFilter = new CC_OBJECTS.RunFilter();
         runFilter.names = runNames;
 
-        CC_SERVICE.getRunData(runFilter, null, 0, function (runData) {
+        CC_SERVICE.getRunData(runFilter, null, 0, null, function (runData) {
           var runIds = runData.map(function (run) { return run.runId; });
           that._runHistoryGrid.refreshGrid(runIds);
         }).fail(function (xhr) { util.handleAjaxFailure(xhr); });

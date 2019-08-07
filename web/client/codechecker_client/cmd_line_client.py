@@ -140,7 +140,7 @@ def get_run_data(client, run_filter, limit=constants.MAX_QUERY_SIZE):
 
     offset = 0
     while True:
-        runs = runs = client.getRunData(run_filter, limit, offset)
+        runs = runs = client.getRunData(run_filter, limit, offset, None)
         all_runs.extend(runs)
         offset += limit
 

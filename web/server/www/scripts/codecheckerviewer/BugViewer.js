@@ -139,7 +139,7 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
 
           var runDataSet = [];
           try{
-            runDataSet = CC_SERVICE.getRunData(runFilter, null, 0);
+            runDataSet = CC_SERVICE.getRunData(runFilter, null, 0, null);
           } catch (ex) { util.handleThriftException(ex); }
 
           var options = res.map(function (reportData) {

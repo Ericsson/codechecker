@@ -121,6 +121,7 @@ function (declare, dom, ObjectStore, Store, Deferred, topic, Dialog, Button,
         query.runFilter,
         CC_OBJECTS.MAX_QUERY_SIZE,
         options.start,
+        options.sort ? this._toSortMode(options.sort) : null,
         function (runDataList) {
           if (runDataList instanceof RequestFailed) {
             deferred.reject('Failed to get runs: ' + runDataList.message);
@@ -156,6 +157,28 @@ function (declare, dom, ObjectStore, Store, Deferred, topic, Dialog, Button,
       });
 
       return runDataList;
+    },
+
+    _toSortMode : function (sort) {
+      var sortMode = new CC_OBJECTS.RunSortMode();
+
+      sortMode.type
+        = sort.attribute === 'name'
+        ? CC_OBJECTS.RunSortType.NAME
+        : sort.attribute === 'numberofbugs'
+        ? CC_OBJECTS.RunSortType.UNRESOLVED_REPORTS
+        : sort.attribute === 'duration'
+        ? CC_OBJECTS.RunSortType.DURATION
+        : sort.attribute === 'codeCheckerVersion'
+        ? CC_OBJECTS.RunSortType.CC_VERSION
+        : CC_OBJECTS.RunSortType.DATE;
+
+      sortMode.ord
+        = sort.descending
+        ? CC_OBJECTS.Order.DESC
+        : CC_OBJECTS.Order.ASC;
+
+      return sortMode;
     }
   });
 
