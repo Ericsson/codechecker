@@ -98,7 +98,7 @@ function (declare, dom, style, topic, Memory, Observable, ConfirmDialog,
 
       this._message = new ContentPane({
         class   : 'message',
-        content : this.message
+        content : this.message.replace(/(?:\r\n|\r|\n)/g, '<br>')
       });
 
       //--- Remove comment confirmation dialog ---//
@@ -133,7 +133,8 @@ function (declare, dom, style, topic, Memory, Observable, ConfirmDialog,
             CC_SERVICE.updateComment(that.cId, newContent);
           } catch (ex) { util.handleThriftException(ex); }
 
-          that._message.set('content', newContent);
+          that._message.replace(/(?:\r\n|\r|\n)/g, '<br>')
+              .set('content', newContent);
           that._editDialog.hide();
         }
       });
