@@ -17,43 +17,14 @@ import os
 import shutil
 import tempfile
 
+from codechecker_analyzer import arg
 from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.analyzers import analyzer_types
 
 from codechecker_common import logger
-from codechecker_common.util import RawDescriptionDefaultHelpFormatter
+
 
 LOG = logger.get_logger('system')
-
-
-class OrderedCheckersAction(argparse.Action):
-    """
-    Action to store enabled and disabled checkers
-    and keep ordering from command line.
-
-    Create separate lists based on the checker names for
-    each analyzer.
-    """
-
-    # Users can supply invocation to 'codechecker-analyze' as follows:
-    # -e core -d core.uninitialized -e core.uninitialized.Assign
-    # We must support having multiple '-e' and '-d' options and the order
-    # specified must be kept when the list of checkers are assembled for Clang.
-
-    def __init__(self, option_strings, dest, nargs=None, **kwargs):
-        if nargs is not None:
-            raise ValueError("nargs not allowed")
-        super(OrderedCheckersAction, self).__init__(option_strings, dest,
-                                                    **kwargs)
-
-    def __call__(self, parser, namespace, value, option_string=None):
-
-        if 'ordered_checkers' not in namespace:
-            namespace.ordered_checkers = []
-        ordered_checkers = namespace.ordered_checkers
-        ordered_checkers.append((value, self.dest == 'enable'))
-
-        namespace.ordered_checkers = ordered_checkers
 
 
 def get_argparser_ctor_args():
@@ -64,7 +35,7 @@ def get_argparser_ctor_args():
 
     return {
         'prog': 'CodeChecker check',
-        'formatter_class': RawDescriptionDefaultHelpFormatter,
+        'formatter_class': arg.RawDescriptionDefaultHelpFormatter,
 
         # Description is shown when the command's help is queried directly
         'description': """
@@ -497,7 +468,7 @@ https://clang.llvm.org/docs/DiagnosticsReference.html.""")
                                dest="enable",
                                metavar='checker/group/profile',
                                default=argparse.SUPPRESS,
-                               action=OrderedCheckersAction,
+                               action=arg.OrderedCheckersAction,
                                help="Set a checker (or checker group) "
                                     "to BE USED in the analysis.")
 
@@ -505,7 +476,7 @@ https://clang.llvm.org/docs/DiagnosticsReference.html.""")
                                dest="disable",
                                metavar='checker/group/profile',
                                default=argparse.SUPPRESS,
-                               action=OrderedCheckersAction,
+                               action=arg.OrderedCheckersAction,
                                help="Set a checker (or checker group) "
                                     "to BE PROHIBITED from use in the "
                                     "analysis.")
