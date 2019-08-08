@@ -144,3 +144,13 @@ test_psql_pg8000_in_env: venv_dev
 
 test_clean:
 	$(CLEAR_WORKSPACE_CMD)
+
+# Use the proper requirement file for the given test configuration
+test_matrix_sqlite: VENV_DEV_REQ_FILE = web/requirements_py/dev/requirements.txt
+test_matrix_sqlite: test_unit test_sqlite
+
+test_matrix_psql_psycopg2: VENV_DEV_REQ_FILE = web/requirements_py/db_psycopg2/requirements.txt
+test_matrix_psql_psycopg2: test_unit test_psql_psycopg2
+
+test_matrix_psql_pg8000: VENV_DEV_REQ_FILE = requirements_py/db_pg8000/requirements.txt
+test_matrix_psql_pg8000: test_unit test_psql_pg8000
