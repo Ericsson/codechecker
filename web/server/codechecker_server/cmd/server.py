@@ -26,7 +26,6 @@ from sqlalchemy.orm import sessionmaker
 
 from shared.ttypes import DBStatus
 
-from codechecker_common import suppress_handler
 from codechecker_common import logger
 from codechecker_common import output_formatters
 from codechecker_common import util
@@ -950,15 +949,11 @@ def server_init_start(args):
                     'checker_md_docs_map': checker_md_docs_map,
                     'version': context.package_git_tag}
 
-    suppr_handler = suppress_handler. \
-        GenericSuppressHandler(None, False)
-
     try:
         server.start_server(args.config_directory,
                             package_data,
                             args.view_port,
                             cfg_sql_server,
-                            suppr_handler,
                             args.listen_address,
                             'force_auth' in args,
                             args.skip_db_cleanup,

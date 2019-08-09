@@ -70,39 +70,6 @@ class TestSuppress(unittest.TestCase):
         self._runid = test_runs[0].runId
         self._run_name = test_runs[0].name
 
-    def test_source_suppress_export(self):
-        """
-        Test exporting a source suppress comment automatically to file.
-        """
-
-        generated_file = os.path.join(self._test_workspace,
-                                      "generated.suppress")
-
-        extract_cmd = ['CodeChecker', 'parse',
-                       os.path.join(self._test_workspace, "reports"),
-                       "--suppress", generated_file,
-                       "--export-source-suppress"
-                       ]
-
-        ret = call_cmd(extract_cmd,
-                       self._test_project_path,
-                       env.test_env(self._test_workspace))
-        self.assertEqual(ret, 0, "Failed to generate suppress file.")
-
-        with open(generated_file, 'r') as generated:
-            with open(os.path.join(self._test_project_path,
-                      "suppress.expected"), 'r') as expected:
-                generated_content = generated.read()
-                expected_content = expected.read()
-                logging.debug(generated_content)
-                logging.debug(expected_content)
-
-                diff = set(expected_content).difference(generated_content)
-                self.assertEqual(len(diff),
-                                 0,
-                                 "The generated suppress file does not "
-                                 "look like what was expected")
-
     def test_suppress_import(self):
         """
         Test the suppress file importing.

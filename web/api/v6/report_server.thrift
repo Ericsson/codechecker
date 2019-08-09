@@ -477,6 +477,7 @@ service codeCheckerDBAccess {
                  throws (1: shared.RequestFailed requestError),
 
   // get the suppress file path set by the command line
+  // !!! DEPRECATED !!!
   // returns empty string if not set
   // PERMISSION: PRODUCT_ACCESS
   string getSuppressFile()

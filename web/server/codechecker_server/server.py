@@ -341,7 +341,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
         # Create new thrift handler.
         checker_md_docs = self.server.checker_md_docs
         checker_md_docs_map = self.server.checker_md_docs_map
-        suppress_handler = self.server.suppress_handler
         version = self.server.version
 
         protocol_factory = TJSONProtocol.TJSONProtocolFactory()
@@ -428,7 +427,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
                             self.server.config_session,
                             checker_md_docs,
                             checker_md_docs_map,
-                            suppress_handler,
                             version,
                             self.server.context)
                         processor = ReportAPI_v6.Processor(acc_handler)
@@ -692,7 +690,6 @@ class CCSimpleHttpServer(HTTPServer):
                  product_db_sql_server,
                  skip_db_cleanup,
                  pckg_data,
-                 suppress_handler,
                  context,
                  check_env,
                  manager):
@@ -705,7 +702,6 @@ class CCSimpleHttpServer(HTTPServer):
         self.checker_md_docs = pckg_data['checker_md_docs']
         self.checker_md_docs_map = pckg_data['checker_md_docs_map']
         self.version = pckg_data['version']
-        self.suppress_handler = suppress_handler
         self.context = context
         self.check_env = check_env
         self.manager = manager
@@ -928,14 +924,12 @@ def __make_root_file(root_file):
 
 
 def start_server(config_directory, package_data, port, config_sql_server,
-                 suppress_handler, listen_address, force_auth, skip_db_cleanup,
+                 listen_address, force_auth, skip_db_cleanup,
                  context, check_env):
     """
     Start http server to handle web client and thrift requests.
     """
     LOG.debug("Starting CodeChecker server...")
-
-    LOG.debug("Using suppress file '%s'", suppress_handler.suppress_file)
 
     server_addr = (listen_address, port)
 
@@ -997,7 +991,6 @@ def start_server(config_directory, package_data, port, config_sql_server,
                                      config_sql_server,
                                      skip_db_cleanup,
                                      package_data,
-                                     suppress_handler,
                                      context,
                                      check_env,
                                      manager)
