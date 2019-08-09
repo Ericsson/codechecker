@@ -513,7 +513,8 @@ class DiffRemote(unittest.TestCase):
         report_hashes = [str(i) for i in range(0, 10000)]
         diff_res = self._cc_client.getDiffResultsHash([base_run_id],
                                                       report_hashes,
-                                                      DiffType.NEW)
+                                                      DiffType.NEW,
+                                                      None)
         self.assertEqual(len(diff_res), len(report_hashes))
 
     def test_diff_run_tags(self):
