@@ -69,7 +69,7 @@ class TestCmdline(unittest.TestCase):
     def test_version_help(self):
         """ Test the 'version' subcommand. """
 
-        version_help = [env.codechecker_cmd(), 'version', '--help']
+        version_help = [env.codechecker_cmd(), 'web-version', '--help']
         self.assertEqual(0, run_cmd(version_help)[0])
 
     def test_server_help(self):
