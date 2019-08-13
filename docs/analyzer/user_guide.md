@@ -12,6 +12,7 @@ Table of Contents
             * [Absolute path examples](#skip-abs-example)
             * [Relative or partial path examples](#skip-rel-example)
         * [Analyzer configuration](#analyzer-configuration)
+            * [Configuration file](#analyzer-configuration-file)
             * [Compiler-specific include path and define detection (cross compilation)](#include-path)
             * [Forwarding compiler options](#forwarding-compiler-options)
               * [_Clang Static Analyzer_](#clang-static-analyzer)
@@ -392,7 +393,7 @@ usage: CodeChecker analyze [-h] [-j JOBS] [-i SKIPFILE] -o OUTPUT_PATH
                            [--report-hash {context-free}] [-n NAME]
                            [--analyzers ANALYZER [ANALYZER ...]]
                            [--add-compiler-defaults]
-                           [--capture-analysis-output]
+                           [--capture-analysis-output] [--config CONFIG_FILE]
                            [--saargs CLANGSA_ARGS_CFG_FILE]
                            [--tidyargs TIDY_ARGS_CFG_FILE]
                            [--tidy-config TIDY_CONFIG] [--timeout TIMEOUT]
@@ -537,6 +538,13 @@ analyzer arguments:
                         Store standard output and standard error of successful
                         analyzer invocations into the '<OUTPUT_DIR>/success'
                         directory.
+  --config CONFIG_FILE  Allow the configuration from an explicit JSON based
+                        configuration file. The value of the 'analyzer' key in
+                        the config file will be emplaced as command line
+                        arguments. The format of configuration file is: {
+                        "analyzer": [ "--enable=core.DivideZero", "--
+                        enable=core.CallAndMessage", "--clean" ]}. (default:
+                        ~/.codechecker.json)
   --saargs CLANGSA_ARGS_CFG_FILE
                         File containing argument which will be forwarded
                         verbatim for the Clang Static Analyzer.
@@ -577,6 +585,33 @@ See [Configure Clang Static Analyzer and checkers](checker_and_analyzer_configur
 documentation for a more detailed description how to use the `saargs`,
 `tidyargs` and `z3` arguments.
 
+#### Configuration file <a name="analyzer-configuration-file"></a>
+`--config` option allow the configuration from an explicit configuration file.
+The parameters in the config file will be emplaced as command line arguments.
+
+**Example**:
+Lets assume you have a configuration file
+[`codechecker.json`](#config/codechecker.json) with the following content:
+```json
+{
+  "enabled": true,
+  "analyzer": [
+    "--enable=core.DivideZero",
+    "--enable=core.CallAndMessage",
+    "--clean"
+  ]
+}
+```
+
+If you run the following command:
+```sh
+CodeChecker analyze compilation.json -o ./reports --config ./codechecker.json
+```
+then the analyzer parameters from the `codechecker.json` file will be emplaced
+as command line arguments if the `enabled` option in this file is `true`:
+```sh
+CodeChecker analyze compilation.json -o ./reports --enable=core.DivideZero --enable=core.CallAndMessage --clean
+```
 
 #### Compiler-specific include path and define detection (cross compilation) <a name="include-path"></a>
 

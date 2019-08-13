@@ -1,0 +1,10 @@
+{
+    "enabled": true,
+    "analyzer": [
+        "--enable", "core.DivideZero",
+        "--enable", "core.CallAndMessage",
+        "--disable", "alpha",
+        "--analyzers", "clangsa", "clang-tidy",
+        "--clean"
+    ]
+}

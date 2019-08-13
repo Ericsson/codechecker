@@ -117,6 +117,16 @@ output.
 
         args = parser.parse_args()
 
+        # Call handler function to process configuration files. If there are
+        # any configuration options available in one of the given file than
+        # extend the system argument list with these options and try to parse
+        # the argument list again to validate it.
+        if 'func_process_config_file' in args:
+            cfg_args = args.func_process_config_file(args)
+            if cfg_args:
+                sys.argv.extend(cfg_args)
+                args = parser.parse_args()
+
         args.func(args)
 
     except KeyboardInterrupt as kb_err:
