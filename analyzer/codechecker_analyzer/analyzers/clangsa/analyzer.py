@@ -17,7 +17,6 @@ import shlex
 import subprocess
 
 from codechecker_common.logger import get_logger
-from codechecker_common.util import get_binary_in_path
 
 from codechecker_analyzer import host_check
 from codechecker_analyzer import env
@@ -296,9 +295,9 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             return False
 
         # clang, clang-5.0, clang++, clang++-5.1, ...
-        clang = get_binary_in_path(['clang', 'clang++'],
-                                   r'^clang(\+\+)?(-\d+(\.\d+){0,2})?$',
-                                   environ)
+        clang = env.get_binary_in_path(['clang', 'clang++'],
+                                       r'^clang(\+\+)?(-\d+(\.\d+){0,2})?$',
+                                       environ)
 
         if clang:
             LOG.debug("Using '%s' for ClangSA!", clang)
