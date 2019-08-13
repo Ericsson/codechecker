@@ -380,6 +380,24 @@ class OptionParserTest(unittest.TestCase):
         self.assertEqual(res,
                          '/usr/lib/ccache/g++')
 
+    def test_compiler_gcc_implicit_includes(self):
+        action = {
+            'file': 'main.cpp',
+            'directory': '',
+            'command': 'g++ main.cpp'
+        }
+
+        # In this test we assume that there will always be an "include-fixed"
+        # directory among the implicit include paths. Otherwise this test may
+        # fail.
+
+        res = log_parser.parse_options(action, skip_gcc_fix_headers=False)
+        self.assertTrue(any(map(lambda x: x.endswith('include-fixed'),
+                                res.compiler_includes['c++'])))
+        res = log_parser.parse_options(action, skip_gcc_fix_headers=True)
+        self.assertFalse(any(map(lambda x: x.endswith('include-fixed'),
+                                 res.compiler_includes['c++'])))
+
     def test_compiler_include_file(self):
         action = {
             'file': 'main.cpp',
@@ -405,4 +423,4 @@ class OptionParserTest(unittest.TestCase):
 
             res = log_parser.parse_options(action, info_file_tmp.name)
             self.assertEqual(res.compiler_includes['c++'],
-                             ['-isystem', '/FAKE_INCLUDE_DIR'])
+                             ['/FAKE_INCLUDE_DIR'])

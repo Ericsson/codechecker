@@ -310,37 +310,6 @@ class ImplicitCompilerInfo(object):
         return include_paths
 
     @staticmethod
-    def __filter_compiler_includes(include_dirs):
-        """
-        Filter the list of compiler includes.
-        We want to elide GCC's include-fixed and instrinsic directory.
-        See docs/gcc_incompatibilities.md
-        """
-
-        def contains_intrinsic_headers(include_dir):
-            """
-            Returns True if the given directory contains at least one intrinsic
-            header.
-            """
-            if not os.path.exists(include_dir):
-                return False
-            for f in os.listdir(include_dir):
-                if f.endswith("intrin.h"):
-                    return True
-            return False
-
-        result = []
-        for include_dir in include_dirs:
-            # Skip GCC's fixinclude dir
-            if os.path.basename(
-                    os.path.normpath(include_dir)) == "include-fixed":
-                continue
-            if contains_intrinsic_headers(include_dir):
-                continue
-            result.append(include_dir)
-        return result
-
-    @staticmethod
     def get_compiler_includes(compiler, language, compiler_flags):
         """
         Returns a list of default includes of the given compiler.
@@ -355,13 +324,10 @@ class ImplicitCompilerInfo(object):
             + " -E -x " + language + " - -v "
 
         ICI = ImplicitCompilerInfo
-        include_dirs = ICI.__filter_compiler_includes(
-            ICI.__parse_compiler_includes(ICI.__get_compiler_err(cmd)))
-        idirs = []
-        for idir in include_dirs:
-            idirs.append("-isystem")
-            idirs.append(os.path.normpath(idir))
-        return idirs
+        include_dirs = \
+            ICI.__parse_compiler_includes(ICI.__get_compiler_err(cmd))
+
+        return map(os.path.normpath, include_dirs)
 
     @staticmethod
     def get_compiler_target(compiler):
@@ -485,6 +451,7 @@ class ImplicitCompilerInfo(object):
         if c_lang_data:
             for element in map(shlex.split,
                                c_lang_data.get("compiler_includes")):
+                element = filter(lambda x: x != '-isystem', element)
                 ICI.compiler_info[compiler][ICI.c()]['compiler_includes'] \
                     .extend(element)
             ICI.compiler_info[compiler][ICI.c()]['compiler_standard'] = \
@@ -498,6 +465,7 @@ class ImplicitCompilerInfo(object):
         if cpp_lang_data:
             for element in map(shlex.split,
                                cpp_lang_data.get('compiler_includes')):
+                element = filter(lambda x: x != '-isystem', element)
                 ICI.compiler_info[compiler][ICI.cpp()]['compiler_includes'] \
                     .extend(element)
             ICI.compiler_info[compiler][ICI.cpp()]['compiler_standard'] = \
@@ -523,15 +491,12 @@ class ImplicitCompilerInfo(object):
             # Independently of the actual compilation language in the
             # compile command collect the iformation for C and C++.
             if not ICI.compiler_info.get(compiler):
-
                 ICI.compiler_info[compiler] = defaultdict(dict)
+
                 # Collect for C
-                c_includes = \
-                    ICI.get_compiler_includes(compiler,
-                                              ICI.c(),
-                                              details['analyzer_options'])
                 ICI.compiler_info[compiler][ICI.c()]['compiler_includes'] = \
-                    c_includes
+                    ICI.get_compiler_includes(compiler, ICI.c(),
+                                              details['analyzer_options'])
                 ICI.compiler_info[compiler][ICI.c()]['target'] = \
                     ICI.get_compiler_target(compiler)
                 ICI.compiler_info[compiler][ICI.c()]['compiler_standard'] = \
@@ -644,6 +609,37 @@ def determine_compiler(gcc_command, is_executable_compiler_fun):
             return gcc_command[1]
 
     return gcc_command[0]
+
+
+def filter_compiler_includes(include_dirs):
+    """
+    Filter the list of compiler includes.
+    We want to elide GCC's include-fixed and instrinsic directory.
+    See docs/gcc_incompatibilities.md
+    """
+
+    def contains_intrinsic_headers(include_dir):
+        """
+        Returns True if the given directory contains at least one intrinsic
+        header.
+        """
+        if not os.path.exists(include_dir):
+            return False
+        for f in os.listdir(include_dir):
+            if f.endswith("intrin.h"):
+                return True
+        return False
+
+    result = []
+    for include_dir in include_dirs:
+        # Skip GCC's fixinclude dir
+        if os.path.basename(
+                os.path.normpath(include_dir)) == "include-fixed":
+            continue
+        if contains_intrinsic_headers(include_dir):
+            continue
+        result.append(include_dir)
+    return result
 
 
 def __collect_compile_opts(flag_iterator, details):
@@ -791,7 +787,9 @@ def __skip(flag_iterator, _):
     return False
 
 
-def parse_options(compilation_db_entry, compiler_info_file=None):
+def parse_options(compilation_db_entry,
+                  compiler_info_file=None,
+                  skip_gcc_fix_headers=False):
     """
     This function parses a GCC compilation action and returns a BuildAction
     object which can be the input of Clang analyzer tools.
@@ -801,6 +799,10 @@ def parse_options(compilation_db_entry, compiler_info_file=None):
                             command, the compiled file and the current working
                             directory.
     compiler_info_file -- Contains the path to a compiler info file.
+    skip_gcc_fix_headers -- There are some implicit include paths which are
+                            only used by GCC (include-fixed). This flag
+                            determines whether these should be skipped from
+                            the implicit include paths.
     """
 
     details = {
@@ -891,6 +893,14 @@ def parse_options(compilation_db_entry, compiler_info_file=None):
     if not toolchain:
         ImplicitCompilerInfo.set(details, compiler_info_file)
 
+    if skip_gcc_fix_headers:
+        for lang, includes in details['compiler_includes'].items():
+            isystems = []
+            for idir in filter_compiler_includes(includes):
+                isystems.append('-isystem')
+                isystems.append(idir)
+            details['compiler_includes'][lang] = isystems
+
     return BuildAction(**details)
 
 
@@ -915,7 +925,8 @@ def parse_unique_log(compilation_database,
                      report_dir,
                      compile_uniqueing="none",
                      skip_handler=None,
-                     compiler_info_file=None):
+                     compiler_info_file=None,
+                     skip_gcc_fix_headers=False):
     """
     This function reads up the compilation_database
     and returns with a list of build actions that is prepared for clang
@@ -942,6 +953,10 @@ def parse_unique_log(compilation_database,
                     this handler will not be the part of the result list.
     compiler_info_file -- compiler_info.json. If exists, it will be used for
                     analysis.
+    skip_gcc_fix_headers -- There are some implicit include paths which are
+                            only used by GCC (include-fixed). This flag
+                            determines whether these should be skipped from
+                            the implicit include paths.
     """
     try:
         uniqued_build_actions = dict()
@@ -960,7 +975,9 @@ def parse_unique_log(compilation_database,
             if skip_handler and skip_handler.should_skip(entry['file']):
                 LOG.debug("SKIPPING FILE %s", entry['file'])
                 continue
-            action = parse_options(entry, compiler_info_file)
+            action = parse_options(entry,
+                                   compiler_info_file,
+                                   skip_gcc_fix_headers)
 
             if not action.lang:
                 continue
