@@ -73,8 +73,6 @@ def print_version(output_format=None):
         ("Package build date", context.package_build_date),
         ("Git commit ID (hash)", context.package_git_hash),
         ("Git tag information", context.package_git_tag),
-        ("Configuration schema", str(context.product_db_version_info)),
-        ("Database schema", str(context.run_db_version_info)),
         ("Server supported API (Thrift)", server_versions),
         ("Client API (Thrift)", version.CLIENT_API)
     ]
