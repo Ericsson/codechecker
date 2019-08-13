@@ -18,8 +18,6 @@ import sys
 from codechecker_common import logger
 from codechecker_common.util import load_json_or_empty
 
-from codechecker_web.shared import db_version
-
 LOG = logger.get_logger('system')
 
 
@@ -59,8 +57,6 @@ class Context(object):
         self._severity_map = SeverityMap(
             load_json_or_empty(self.checkers_severity_map_file, {}))
         self.__package_version = None
-        self.__product_db_version_info = None
-        self.__run_db_version_info = None
         self.__package_build_date = None
         self.__package_git_hash = None
 
@@ -75,28 +71,15 @@ class Context(object):
         if not vfile_data:
             sys.exit(1)
 
-        db_versions = load_json_or_empty(self.db_version_file)
-
-        if not db_versions:
-            sys.exit(1)
-
         package_version = vfile_data['version']
         package_build_date = vfile_data['package_build_date']
         package_git_hash = vfile_data.get('git_hash')
         package_git_tag = vfile_data.get('git_describe', {}).get('tag')
         package_git_dirtytag = vfile_data.get('git_describe', {}).get('dirty')
-        product_database_version = db_versions['product_db_version']
-        run_database_version = db_versions['run_db_version']
 
         self.__package_version = package_version['major'] + '.' + \
             package_version['minor'] + '.' + \
             package_version['revision']
-        self.__product_db_version_info = db_version.DBVersionInfo(
-            product_database_version['major'],
-            product_database_version['minor'])
-        self.__run_db_version_info = db_version.DBVersionInfo(
-            run_database_version['major'],
-            run_database_version['minor'])
 
         self.__package_build_date = package_build_date
         self.__package_git_hash = package_git_hash
@@ -124,21 +107,8 @@ class Context(object):
         return self.__package_git_tag
 
     @property
-    def product_db_version_info(self):
-        return self.__product_db_version_info
-
-    @property
-    def run_db_version_info(self):
-        return self.__run_db_version_info
-
-    @property
     def version_file(self):
         return os.path.join(self._package_root, 'config', 'web_version.json')
-
-    @property
-    def db_version_file(self):
-        return os.path.join(self._package_root, 'config',
-                            'server_db_version.json')
 
     @property
     def path_plist_to_html_dist(self):
