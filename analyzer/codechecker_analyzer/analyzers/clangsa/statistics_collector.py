@@ -22,6 +22,7 @@ import re
 from codechecker_common.logger import get_logger
 
 from ..flag import has_flag
+from ..flag import prepend_all
 
 LOG = get_logger('analyzer')
 
@@ -76,7 +77,9 @@ def build_stat_coll_cmd(action, config, source):
     if not has_flag('-std', cmd) and not has_flag('--std', cmd):
         cmd.append(action.compiler_standard.get(compile_lang, ""))
 
-    cmd.extend(action.compiler_includes.get(compile_lang, []))
+    cmd.extend(prepend_all(
+        '-isystem',
+        action.compiler_includes.get(compile_lang, [])))
 
     if source:
         cmd.append(source)
