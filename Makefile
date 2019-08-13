@@ -85,6 +85,20 @@ package: package_dir_structure package_plist_to_html package_tu_collector
 	# Copy license file.
 	cp $(ROOT)/LICENSE.TXT $(CC_BUILD_DIR)
 
+standalone_package: venv package
+	# Create a version of the package, which uses a wrapper script to
+	# eliminate the need to manually source the virtual environment before
+	# using the CodeChecker runnable. Replaces the original main runnable
+	# with a wrapper script of the same name. The package built this way
+	# should be used just as the wrapped runnable, but without activating
+	# the virtual environment beforehand.
+	cd $(CC_BUILD_BIN_DIR) && \
+	mv CodeChecker _CodeChecker && \
+	$(ROOT)/scripts/build/wrap_binary_in_venv.py \
+		-e $(ROOT)/venv \
+		-b _CodeChecker \
+		-o CodeChecker
+
 venv:
 	# Create a virtual environment which can be used to run the build package.
 	virtualenv -p python2 venv && \
