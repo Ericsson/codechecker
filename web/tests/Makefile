@@ -129,7 +129,7 @@ test_psql_psycopg2_in_env: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(PSYCOPG2_TEST_CMD)
 
 PG8000_TEST_CMD = python $(ROOT)/scripts/test/check_clang.py || exit 1; \
-  $(DBUNAME) $(DBPORT) $(PSYCOPG2) $(DROP_DB_CMD) && \
+  $(DBUNAME) $(DBPORT) $(PG8000) $(DROP_DB_CMD) && \
   $(DBUNAME) $(DBPORT) $(PG8000) $(MAKE_DB_CMD) && \
   $(CLEAR_WORKSPACE_CMD) && \
   $(PSQL) $(DBUNAME) $(DBPORT) $(PG8000) \
