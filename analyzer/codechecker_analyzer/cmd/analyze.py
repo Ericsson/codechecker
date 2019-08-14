@@ -19,9 +19,9 @@ import sys
 from codechecker_analyzer import analyzer, analyzer_context, arg
 from codechecker_analyzer.analyzers import analyzer_types
 from codechecker_analyzer.buildlog import log_parser
+from codechecker_analyzer import skiplist
 
 from codechecker_common import logger
-from codechecker_common import skiplist_handler
 from codechecker_common.util import load_json_or_empty
 
 
@@ -491,7 +491,7 @@ def __get_skip_handler(args):
         if args.skipfile:
             LOG.debug_analyzer("Creating skiplist handler.")
             with open(args.skipfile) as skip_file:
-                return skiplist_handler.SkipListHandler(skip_file.read())
+                return skiplist.SkipListHandler(skip_file.read())
     except AttributeError:
         LOG.debug_analyzer('Skip file was not set in the command line')
 

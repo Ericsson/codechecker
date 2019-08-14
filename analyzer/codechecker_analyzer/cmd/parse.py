@@ -19,12 +19,11 @@ import sys
 
 from plist_to_html import PlistToHtml
 
-from codechecker_analyzer import analyzer_context, suppress_handler
+from codechecker_analyzer import analyzer_context, suppress_handler, skiplist
 
 from codechecker_common import logger
 from codechecker_common import plist_parser
 from codechecker_common import util
-from codechecker_common.skiplist_handler import SkipListHandler
 from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler
 from codechecker_common.output_formatters import twodim_to_str
@@ -554,7 +553,7 @@ def main(args):
     skip_handler = None
     if 'skipfile' in args:
         with open(args.skipfile, 'r') as skip_file:
-            skip_handler = SkipListHandler(skip_file.read())
+            skip_handler = skiplist.SkipListHandler(skip_file.read())
 
     trim_path_prefixes = args.trim_path_prefix if \
         'trim_path_prefix' in args else None

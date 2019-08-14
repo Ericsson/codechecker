@@ -32,7 +32,7 @@ from codeCheckerDBAccess_v6.ttypes import BugPathPos, CheckerCount, \
     ReportDetails, ReviewData, RunData, RunFilter, RunReportCount, \
     RunTagCount, SourceComponentData, SourceFileData, SortMode, SortType
 
-from codechecker_common import plist_parser, skiplist_handler
+from codechecker_common import plist_parser
 from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler, SKIP_REVIEW_STATUSES
 from codechecker_common import util
@@ -42,6 +42,7 @@ from codechecker_common.report import get_report_path_hash
 from codechecker_server.profiler import timeit
 
 from .. import permissions
+from .. import skiplist
 from ..database import db_cleanup
 from ..database.config_db_model import Product
 from ..database.database import conv
@@ -2312,7 +2313,7 @@ class ThriftRequestHandler(object):
                 checker_name = report.main['check_name']
 
                 source_file = files[report.main['location']['file']]
-                if skip_handler.should_skip(source_file):
+                if skip_handler and skip_handler.should_skip(source_file):
                     continue
 
                 bug_paths, bug_events, bug_extended_data = \
@@ -2573,13 +2574,12 @@ class ThriftRequestHandler(object):
                 content_hash_file = os.path.join(zip_dir,
                                                  'content_hashes.json')
 
-                skip_handler = skiplist_handler.SkipListHandler()
+                skip_handler = None
                 if os.path.exists(skip_file):
                     LOG.debug("Pocessing skip file %s", skip_file)
                     try:
                         with open(skip_file) as sf:
-                            skip_handler = \
-                                skiplist_handler.SkipListHandler(sf.read())
+                            skip_handler = skiplist.SkipListHandler(sf.read())
                     except (IOError, OSError) as err:
                         LOG.error("Failed to open skip file")
                         LOG.error(err)
