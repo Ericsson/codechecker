@@ -9,6 +9,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import os
 import shlex
 import tempfile
 import unittest
@@ -87,18 +88,24 @@ class OptionParserTest(unittest.TestCase):
         Test if the compilation language is
         detected correctly from the command line.
         """
-        lang = 'c'
         action = {
             'file': 'main.c',
-            'command': "gcc -c -x " + lang + ' main.c',
+            'command': "gcc -c -x c main.c",
             'directory': ''}
 
         res = log_parser.parse_options(action)
         print(res)
 
         self.assertTrue('main.c' == res.source)
-        self.assertEqual(lang, res.lang)
+        self.assertEqual('c', res.lang)
         self.assertEqual(BuildAction.COMPILE, res.action_type)
+
+        action['command'] = os.path.join('mypath', 'cpp', 'gcc') + ' -c main.c'
+
+        res = log_parser.parse_options(action)
+        print(res)
+
+        self.assertEqual('c', res.lang)
 
     def test_compile_arch(self):
         """
