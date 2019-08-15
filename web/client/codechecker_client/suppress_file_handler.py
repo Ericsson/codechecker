@@ -24,9 +24,10 @@ import codecs
 import os
 import re
 
-from codechecker_common.logger import get_logger
-from codechecker_common.source_code_comment_handler import \
+from codechecker_web.shared.source_code_comment_handler import \
     SourceCodeCommentHandler
+
+from codechecker_common.logger import get_logger
 
 LOG = get_logger('system')
 

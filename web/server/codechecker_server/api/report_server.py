@@ -33,7 +33,7 @@ from codeCheckerDBAccess_v6.ttypes import BugPathPos, CheckerCount, \
     RunTagCount, SourceComponentData, SourceFileData, SortMode, SortType
 
 from codechecker_common import plist_parser, skiplist_handler
-from codechecker_common.source_code_comment_handler import \
+from codechecker_web.shared.source_code_comment_handler import \
     SourceCodeCommentHandler, SKIP_REVIEW_STATUSES
 from codechecker_common import util
 from codechecker_common.logger import get_logger

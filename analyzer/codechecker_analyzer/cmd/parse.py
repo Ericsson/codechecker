@@ -20,16 +20,15 @@ import sys
 from plist_to_html import PlistToHtml
 
 from codechecker_analyzer import analyzer_context, suppress_handler
+from codechecker_analyzer.source_code_comment_handler import \
+    SourceCodeCommentHandler, skip_suppress_status
 
 from codechecker_common import logger
 from codechecker_common import plist_parser
 from codechecker_common import util
 from codechecker_common.skiplist_handler import SkipListHandler
-from codechecker_common.source_code_comment_handler import \
-    SourceCodeCommentHandler
 from codechecker_common.output_formatters import twodim_to_str
 from codechecker_common.report import Report, get_report_path_hash
-from codechecker_common.source_code_comment_handler import skip_suppress_status
 
 LOG = logger.get_logger('system')
 

@@ -31,11 +31,11 @@ from codechecker_common import logger
 from codechecker_common import util
 from codechecker_common import plist_parser
 from codechecker_common.output_formatters import twodim_to_str
-from codechecker_common.source_code_comment_handler import \
-    SourceCodeCommentHandler
 
 from codechecker_web.shared import webserver_context, host_check
 from codechecker_web.shared.env import get_default_workspace
+from codechecker_web.shared.source_code_comment_handler import \
+    SourceCodeCommentHandler
 
 LOG = logger.get_logger('system')
 

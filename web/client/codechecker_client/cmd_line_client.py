@@ -30,10 +30,9 @@ from codechecker_common import logger
 from codechecker_common import plist_parser
 from codechecker_common.output_formatters import twodim_to_str
 from codechecker_common.report import Report, get_report_path_hash
-from codechecker_common.source_code_comment_handler import \
-    SourceCodeCommentHandler
 
 from codechecker_web.shared import webserver_context
+from codechecker_web.shared import source_code_comment_handler
 
 from .client import handle_auth, setup_client
 from .cmd_line import CmdLineOutputEncoder
@@ -549,7 +548,7 @@ def handle_diff_results(args):
         Returns suppressed reports.
         """
         suppressed_in_code = []
-        sc_handler = SourceCodeCommentHandler()
+        sc_handler = source_code_comment_handler.SourceCodeCommentHandler()
 
         for rep in reports:
             bughash = rep.report_hash

@@ -13,9 +13,9 @@ from __future__ import absolute_import
 import os
 
 from codechecker_analyzer import suppress_file_handler
-
-from codechecker_common.source_code_comment_handler import \
+from codechecker_analyzer.source_code_comment_handler import \
     skip_suppress_status
+
 from codechecker_common.logger import get_logger
 
 # Warning! this logger should only be used in this module.

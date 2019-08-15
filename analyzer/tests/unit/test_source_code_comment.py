@@ -14,7 +14,7 @@ from __future__ import absolute_import
 import os
 import unittest
 
-from codechecker_common.source_code_comment_handler import \
+from codechecker_analyzer.source_code_comment_handler import \
     SourceCodeCommentHandler
 
 
