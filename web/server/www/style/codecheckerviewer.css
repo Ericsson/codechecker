@@ -881,3 +881,11 @@ ul.analyzer-statistics .link {
   transform: rotate(-45deg);
   -webkit-transform: rotate(-45deg);
 }
+
+.dijitTreeIndent {
+  width: 14px;
+}
+
+.dijitTreeExpandoLeaf {
+  display: none;
+}

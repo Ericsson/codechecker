@@ -9,7 +9,14 @@ define([
   'dijit/Tree'],
 function (declare, Tree) {
   var HtmlTreeNode = declare(Tree._TreeNode, {
-    _setLabelAttr : { node : 'labelNode', type : 'innerHTML' }
+    _setLabelAttr : { node : 'labelNode', type : 'innerHTML' },
+    _setIndentAttr : function (indent) {
+      if (this.item.indent) {
+        indent = this.item.indent;
+      }
+
+      this.inherited(arguments);
+    }
   });
 
   return declare(Tree, {

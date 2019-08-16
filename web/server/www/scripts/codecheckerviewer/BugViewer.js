@@ -1009,6 +1009,10 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
         return false; // Continue checking
       });
 
+      // Indent path events on function calls. It's start from 2 because the
+      // first node is the severity level and the second is the bug itself.
+      var indent = 2;
+
       reportDetails.pathEvents.forEach(function (step, index) {
         var isResult = index == reportDetails.pathEvents.length - 1;
 
@@ -1052,6 +1056,12 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
           name = name.replace('{FILENAME}', filename);
         }
 
+        if (highlightData.iconOverride === 'entered_call') {
+          indent += 1;
+        } else if (highlightData.iconOverride === 'returning') {
+          indent -= 1;
+        }
+
         res.push({
           id : report.reportId + '_' + (index + 1),
           name : name,
@@ -1059,6 +1069,7 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
           tooltip : tooltip,
           backgroundColor : highlightData.background,
           iconOverride : highlightData.iconOverride,
+          indent : indent,
           parent : report.reportId,
           bugPathEvent : step,
           isLeaf : true,
