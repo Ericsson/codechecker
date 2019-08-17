@@ -25,7 +25,7 @@ from threading import Timer
 import psutil
 
 from codechecker_analyzer import env
-from codechecker_common import util, plist_parser
+from codechecker_common import plist_parser
 from codechecker_common.logger import get_logger
 
 from . import gcc_toolchain
@@ -500,7 +500,7 @@ def check(check_data):
                 Once the analyzer process is started, this method is
                 called. Set up a timeout for the analysis.
                 """
-                timeout_cleanup[0] = util.setup_process_timeout(
+                timeout_cleanup[0] = setup_process_timeout(
                     analyzer_process, analysis_timeout)
         else:
             def __create_timeout(analyzer_process):
