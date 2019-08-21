@@ -72,23 +72,11 @@ class TestCmdline(unittest.TestCase):
         version_help = [env.codechecker_cmd(), 'version', '--help']
         self.assertEqual(0, run_cmd(version_help)[0])
 
-    def test_check_help(self):
-        """ Get help for check subcmd. """
-
-        check_help = [env.codechecker_cmd(), 'check', '--help']
-        self.assertEqual(0, run_cmd(check_help)[0])
-
     def test_server_help(self):
         """ Get help for server subcmd. """
 
         srv_help = [env.codechecker_cmd(), 'server', '--help']
         self.assertEqual(0, run_cmd(srv_help)[0])
-
-    def test_checkers(self):
-        """ Listing available checkers. """
-
-        checkers_cmd = [env.codechecker_cmd(), 'checkers']
-        self.assertEqual(0, run_cmd(checkers_cmd)[0])
 
     def test_sum(self):
         """ Test cmd sum command. """
