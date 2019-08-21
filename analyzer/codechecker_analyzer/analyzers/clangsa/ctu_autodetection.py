@@ -21,7 +21,7 @@ from codechecker_analyzer import host_check
 LOG = get_logger('analyzer.clangsa')
 
 
-def invoke_binary_checked(binary_path, args=None):
+def invoke_binary_checked(binary_path, args=None, environ=None):
     """
     Invoke the binary with the specified args, and return the output if the
     command finished running with zero exit code. Return False otherwise.
@@ -38,7 +38,7 @@ def invoke_binary_checked(binary_path, args=None):
     invocation = [binary_path]
     invocation.extend(args)
     try:
-        output = subprocess.check_output(invocation)
+        output = subprocess.check_output(invocation, env=environ)
     except subprocess.CalledProcessError as e:
         LOG.debug(
             'Command invocation failed because of non-zero exit code!'
@@ -131,7 +131,7 @@ class CTUAutodetection(object):
             return False
 
         analyzer_version = invoke_binary_checked(
-            self.__analyzer_binary, ['--version'])
+            self.__analyzer_binary, ['--version'], self.environ)
 
         if analyzer_version is False:
             LOG.debug('Failed to invoke command to get Clang version!')
@@ -262,4 +262,5 @@ class CTUAutodetection(object):
         if not tool_path:
             return False
 
-        return invoke_binary_checked(tool_path, ['-version']) is not False
+        return invoke_binary_checked(tool_path, ['-version'], self.environ) \
+            is not False
