@@ -14,8 +14,7 @@ from __future__ import absolute_import
 import unittest
 import os
 
-from codechecker_analyzer.analyzers.clangsa.ctu_autodetection import \
-        ClangVersionInfoParser
+from codechecker_analyzer.analyzers.clangsa import version
 
 
 OLD_PWD = None
@@ -46,7 +45,7 @@ class CTUAutodetectionVersionParsingTest(unittest.TestCase):
         Test that the empty stirng is not a valid version-string.
         """
 
-        parser = ClangVersionInfoParser()
+        parser = version.ClangVersionInfoParser()
         version_info = parser.parse('')
 
         self.assertFalse(version_info, False)
@@ -60,7 +59,7 @@ class CTUAutodetectionVersionParsingTest(unittest.TestCase):
         with open('clang_7_src_version_output') as version_output:
             version_string = version_output.read()
 
-        parser = ClangVersionInfoParser()
+        parser = version.ClangVersionInfoParser()
         version_info = parser.parse(version_string)
 
         self.assertIsNot(version_info, False)
@@ -78,7 +77,7 @@ class CTUAutodetectionVersionParsingTest(unittest.TestCase):
         with open('clang_8_src_version_output') as version_output:
             version_string = version_output.read()
 
-        parser = ClangVersionInfoParser()
+        parser = version.ClangVersionInfoParser()
         version_info = parser.parse(version_string)
 
         self.assertIsNot(version_info, False)
@@ -96,7 +95,7 @@ class CTUAutodetectionVersionParsingTest(unittest.TestCase):
         with open('clang_7_bin_dist_version_output') as version_output:
             version_string = version_output.read()
 
-        parser = ClangVersionInfoParser()
+        parser = version.ClangVersionInfoParser()
         version_info = parser.parse(version_string)
 
         self.assertIsNot(version_info, False)
@@ -114,7 +113,7 @@ class CTUAutodetectionVersionParsingTest(unittest.TestCase):
         with open('clang_9_monorepo_src_version_output') as version_output:
             version_string = version_output.read()
 
-        parser = ClangVersionInfoParser()
+        parser = version.ClangVersionInfoParser()
         version_info = parser.parse(version_string)
 
         self.assertIsNot(version_info, False)

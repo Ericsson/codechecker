@@ -11,12 +11,11 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-import os
-import re
 import subprocess
 
 from codechecker_common.logger import get_logger
 from codechecker_analyzer import host_check
+from codechecker_analyzer.analyzers.clangsa import clang_options, version
 
 LOG = get_logger('analyzer.clangsa')
 
@@ -47,57 +46,6 @@ def invoke_binary_checked(binary_path, args=None, environ=None):
     return output
 
 
-class ClangVersionInfo(object):
-    """
-    ClangVersionInfo holds the relevant version information of the used Clang
-    tool.
-    """
-
-    def __init__(self,
-                 major_version=None,
-                 minor_version=None,
-                 patch_version=None,
-                 installed_dir=None):
-
-        self.major_version = int(major_version)
-        self.minor_version = int(minor_version)
-        self.patch_version = int(patch_version)
-        self.installed_dir = str(installed_dir)
-
-
-class ClangVersionInfoParser(object):
-    """
-    ClangVersionInfoParser is responsible for creating ClangVersionInfo
-    instances from the version output of Clang.
-    """
-
-    def __init__(self):
-        self.clang_version_pattern = (
-            r'clang version (?P<major_version>[0-9]+)'
-            r'\.(?P<minor_version>[0-9]+)\.(?P<patch_version>[0-9]+)')
-
-        self.clang_installed_dir_pattern =\
-            r'InstalledDir: (?P<installed_dir>[^\s]*)'
-
-    def parse(self, version_string):
-        """
-        Try to parse the version string using the predefined patterns.
-        """
-
-        version_match = re.search(self.clang_version_pattern, version_string)
-        installed_dir_match = re.search(
-            self.clang_installed_dir_pattern, version_string)
-
-        if not version_match or not installed_dir_match:
-            return False
-
-        return ClangVersionInfo(
-            version_match.group('major_version'),
-            version_match.group('minor_version'),
-            version_match.group('patch_version'),
-            installed_dir_match.group('installed_dir'))
-
-
 class CTUAutodetection(object):
     """
     CTUAutodetection is responsible for providing the availability information
@@ -107,22 +55,7 @@ class CTUAutodetection(object):
 
     def __init__(self, analyzer_binary, environ):
         self.__analyzer_binary = analyzer_binary
-        self.__analyzer_version_info = None
         self.environ = environ
-        self.parser = ClangVersionInfoParser()
-
-        self.old_mapping_tool_name = 'clang-func-mapping'
-        self.new_mapping_tool_name = 'clang-extdef-mapping'
-
-        self.old_mapping_file_name = 'externalFnMap.txt'
-        self.new_mapping_file_name = 'externalDefMap.txt'
-
-    @property
-    def analyzer_version_info(self):
-        """
-        Returns the relevant parameters of the analyzer by parsing the
-        output of the analyzer binary when called with version flag.
-        """
 
         if self.__analyzer_binary is None:
             LOG.debug(
@@ -137,13 +70,24 @@ class CTUAutodetection(object):
             LOG.debug('Failed to invoke command to get Clang version!')
             return False
 
-        version_info = self.parser.parse(analyzer_version)
+        version_parser = version.ClangVersionInfoParser()
+        version_info = version_parser.parse(analyzer_version)
 
         if not version_info:
             LOG.debug('Failed to parse Clang version information!')
             return False
 
         self.__analyzer_version_info = version_info
+
+    @property
+    def analyzer_version_info(self):
+        """
+        Returns the relevant parameters of the analyzer by parsing the
+        output of the analyzer binary when called with version flag.
+        """
+        if not self.__analyzer_version_info:
+            return False
+
         return self.__analyzer_version_info
 
     @property
@@ -152,10 +96,6 @@ class CTUAutodetection(object):
         Returns the major version of the analyzer, which is used for
         CTU analysis.
         """
-
-        if not self.analyzer_version_info:
-            return False
-
         return self.analyzer_version_info.major_version
 
     @property
@@ -164,52 +104,15 @@ class CTUAutodetection(object):
         Returns the installed directory of the analyzer, which is used for
         CTU analysis.
         """
-
-        if not self.analyzer_version_info:
-            return False
-
         return self.analyzer_version_info.installed_dir
 
     @property
     def mapping_tool_path(self):
-        """
-        Returns the path of the mapping tool, which is assumed to be located
-        inside the installed directory of the analyzer. Certain binary
-        distributions can postfix the the tool name with the major version
-        number, the the number and the tool name being separated by a dash. By
-        default the shorter name is looked up, then if it is not found the
-        postfixed.
-        """
+        """Return the path to the mapping tool."""
+        tool_path, _ = clang_options.ctu_mapping(self.analyzer_version_info)
 
-        if not self.analyzer_version_info:
-            return False
-
-        major_version = self.analyzer_version_info.major_version
-        installed_dir = self.analyzer_version_info.installed_dir
-
-        tool_name = self.new_mapping_tool_name if major_version > 7 else\
-            self.old_mapping_tool_name
-
-        tool_path = os.path.join(installed_dir, tool_name)
-
-        if os.path.isfile(tool_path):
+        if tool_path:
             return tool_path
-
-        LOG.debug(
-            "Mapping tool '{}' suggested by autodetection is not found in "
-            "directory reported by Clang '{}'. Trying with version-postfixed "
-            "filename...".format(tool_path, installed_dir))
-
-        postfixed_tool_path = ''.join([tool_path, '-', str(major_version)])
-
-        if os.path.isfile(postfixed_tool_path):
-            return postfixed_tool_path
-
-        LOG.debug(
-            "Postfixed mapping tool '{}' suggested by autodetection is not "
-            "found in directory reported by Clang '{}'."
-            .format(postfixed_tool_path, installed_dir))
-
         return False
 
     @property
@@ -242,13 +145,12 @@ class CTUAutodetection(object):
         CTU analysis.
         """
 
-        if not self.analyzer_version_info:
-            return False
+        _, mapping_file_name = \
+            clang_options.ctu_mapping(self.analyzer_version_info)
 
-        major_version = self.analyzer_version_info.major_version
-
-        return self.new_mapping_file_name if major_version > 7 else\
-            self.old_mapping_file_name
+        if mapping_file_name:
+            return mapping_file_name
+        return False
 
     @property
     def is_ctu_capable(self):
