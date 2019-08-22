@@ -44,7 +44,7 @@ def execute_buildcmd(command, silent=False, env=None, cwd=None):
         if not line and proc.poll() is not None:
             break
         if not silent:
-            print(line)
+            sys.stdout.write(line)
 
     return proc.returncode
 
