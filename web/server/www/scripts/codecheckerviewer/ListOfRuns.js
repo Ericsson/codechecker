@@ -92,7 +92,24 @@ function (declare, dom, ObjectStore, Store, Deferred, topic, Dialog, Button,
     },
 
     getIdentity : function (run) {
-      return run.runId;
+      return run.runid;
+    },
+
+    get : function (id) {
+      var deferred = new Deferred();
+
+      var runFilter = new CC_OBJECTS.RunFilter();
+      runFilter.ids = [ id ];
+
+      CC_SERVICE.getRunData(runFilter, 1, 0, function (runDataList) {
+        if (typeof runDataList === 'string') {
+          deferred.reject('Failed to get run ' + id + ': ' + runDataList);
+        } else {
+          deferred.resolve(runDataList[0]);
+        }
+      }).fail(function (xhr) { util.handleAjaxFailure(xhr); });
+
+      return deferred;
     },
 
     query : function (query, options) {
@@ -213,10 +230,8 @@ function (declare, dom, ObjectStore, Store, Deferred, topic, Dialog, Button,
           break;
 
         case 'del':
-          if (evt.target.type !== 'checkbox') {
-            item.del = !item.del;
-            this.update();
-          }
+          item.del = !item.del;
+          this.update();
 
           if (item.del)
             this.infoPane.addToDeleteList(runId);
@@ -336,13 +351,18 @@ function (declare, dom, ObjectStore, Store, Deferred, topic, Dialog, Button,
             onComplete : function (runs) {
               var runCount = runs.length;
               runs.forEach(function (run) {
-                if (that.deleteRunIds.indexOf(run.runid[0]) !== -1) {
+                if (that.deleteRunIds.indexOf(run.runid) !== -1) {
                   that.listOfRunsGrid.store.deleteItem(run);
                   --runCount;
                 }
               });
               that.listOfRunsGrid._updateRunCount(runCount);
-            }
+
+              that.deleteRunIds = [];
+              that.update();
+            },
+
+            query : {}
           });
 
           that.deleteRunIds.forEach(function (runId) {
@@ -355,9 +375,6 @@ function (declare, dom, ObjectStore, Store, Deferred, topic, Dialog, Button,
               util.handleAjaxFailure(jsReq);
             });
           });
-
-          that.deleteRunIds = [];
-          that.update();
         }
       });
     },
