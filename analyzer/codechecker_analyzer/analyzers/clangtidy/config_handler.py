@@ -10,11 +10,32 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import shlex
+import subprocess
+
 from codechecker_common.logger import get_logger
 
 from .. import config_handler
 
 LOG = get_logger('analyzer.tidy')
+
+
+def parse_checkers(tidy_output):
+    """
+    Parse clang tidy checkers list.
+    Skip clang static analyzer checkers.
+    Store them to checkers.
+    """
+    checkers = []
+
+    for line in tidy_output.splitlines():
+        line = line.strip()
+        if not line or line.startswith('Enabled checks:') or \
+           line.startswith('clang-analyzer-'):
+            continue
+        checkers.append((line, ''))
+
+    return checkers
 
 
 class ClangTidyConfigHandler(config_handler.AnalyzerConfigHandler):
@@ -24,6 +45,21 @@ class ClangTidyConfigHandler(config_handler.AnalyzerConfigHandler):
 
     def __init__(self):
         super(ClangTidyConfigHandler, self).__init__()
+
+    def get_analyzer_checkers(self, environ):
+        """
+        Return the list of the supported checkers.
+        """
+        analyzer_binary = self.analyzer_binary
+
+        command = [analyzer_binary, "-list-checks", "-checks=*"]
+
+        try:
+            result = subprocess.check_output(command, env=environ,
+                                             universal_newlines=True)
+            return parse_checkers(result)
+        except (subprocess.CalledProcessError, OSError):
+            return []
 
     def set_checker_enabled(self, checker_name, enabled=True):
         """

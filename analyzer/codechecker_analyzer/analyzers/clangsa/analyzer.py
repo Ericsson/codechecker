@@ -14,7 +14,6 @@ from __future__ import absolute_import
 import os
 import re
 import shlex
-import subprocess
 
 from codechecker_common.logger import get_logger
 
@@ -31,37 +30,6 @@ from . import version
 from .result_handler import ResultHandlerClangSA
 
 LOG = get_logger('analyzer')
-
-
-def parse_checkers(clangsa_output):
-    """
-    Parse clang static analyzer checkers list output.
-    Return a list of (checker name, description) tuples.
-    """
-
-    # Checker name and description in one line.
-    pattern = re.compile(
-        r'^\s\s(?P<checker_name>\S*)\s*(?P<description>.*)')
-    checkers_list = []
-    checker_name = None
-    for line in clangsa_output.splitlines():
-        if line.startswith('CHECKERS:') or line == '':
-            continue
-        elif checker_name and not re.match(r'^\s\s\S', line):
-            # Collect description for the checker name.
-            checkers_list.append((checker_name, line.strip()))
-            checker_name = None
-        elif re.match(r'^\s\s\S+$', line.rstrip()):
-            # Only checker name is in the line.
-            checker_name = line.strip()
-        else:
-            # Checker name and description is in one line.
-            match = pattern.match(line.rstrip())
-            if match:
-                current = match.groupdict()
-                checkers_list.append((current['checker_name'],
-                                      current['description']))
-    return checkers_list
 
 
 class ClangSA(analyzer_base.SourceAnalyzer):
@@ -108,41 +76,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         """
 
         self.__checker_configs.append(checker_cfg)
-
-    @classmethod
-    def get_analyzer_checkers(cls, cfg_handler, environ):
-        """Return the list of the supported checkers."""
-        analyzer_binary = cfg_handler.analyzer_binary
-
-        try:
-            analyzer_version = subprocess.check_output(
-                [analyzer_binary, '--version'],
-                env=environ)
-
-        except subprocess.CalledProcessError as cerr:
-            LOG.error('Failed to get and parse clang version: %s',
-                      analyzer_binary)
-            LOG.error(cerr)
-            return []
-
-        version_parser = version.ClangVersionInfoParser()
-        version_info = version_parser.parse(analyzer_version)
-
-        command = [analyzer_binary, "-cc1"]
-
-        checkers_list_args = clang_options.get_analyzer_checkers_cmd(
-            version_info,
-            environ,
-            cfg_handler.analyzer_plugins,
-            alpha=True)
-        command.extend(checkers_list_args)
-
-        try:
-            result = subprocess.check_output(command, env=environ,
-                                             universal_newlines=True)
-            return parse_checkers(result)
-        except (subprocess.CalledProcessError, OSError):
-            return []
 
     def construct_analyzer_cmd(self, result_handler):
         """
@@ -376,7 +309,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             # No clangsa arguments file was given in the command line.
             LOG.debug_analyzer(aerr)
 
-        checkers = ClangSA.get_analyzer_checkers(handler, environ)
+        checkers = handler.get_analyzer_checkers(environ)
 
         # Read clang-sa checkers from the config file.
         clang_sa_checkers = context.checker_config.get(cls.ANALYZER_NAME +

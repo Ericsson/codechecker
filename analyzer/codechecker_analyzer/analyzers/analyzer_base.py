@@ -103,13 +103,6 @@ class SourceAnalyzer(object):
             res_handler.analyzer_returncode = 1
             return res_handler
 
-    @classmethod
-    def get_analyzer_checkers(cls, cfg_handler, environ):
-        """
-        Return the checkers available in the analyzer.
-        """
-        raise NotImplementedError("Subclasses should implement this!")
-
     @staticmethod
     def run_proc(command, env=None, cwd=None, proc_callback=None):
         """

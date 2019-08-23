@@ -43,6 +43,12 @@ class AnalyzerConfigHandler(object):
         # (False/True, 'checker_description')
         self.__available_checkers = collections.OrderedDict()
 
+    def get_analyzer_checkers(self, environ):
+        """
+        Return the checkers available in the analyzer.
+        """
+        raise NotImplementedError("Subclasses should implement this!")
+
     @property
     def analyzer_plugins(self):
         """

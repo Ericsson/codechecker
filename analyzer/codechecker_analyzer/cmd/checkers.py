@@ -257,11 +257,8 @@ def main(args):
     rows = []
     for analyzer in working:
         config_handler = analyzer_config_map.get(analyzer)
-        analyzer_class = \
-            analyzer_types.supported_analyzers[analyzer]
 
-        checkers = analyzer_class.get_analyzer_checkers(config_handler,
-                                                        analyzer_environment)
+        checkers = config_handler.get_analyzer_checkers(analyzer_environment)
         default_checker_cfg = context.checker_config.get(
             analyzer + '_checkers')
 

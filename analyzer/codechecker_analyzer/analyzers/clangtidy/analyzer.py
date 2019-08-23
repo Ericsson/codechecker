@@ -12,7 +12,6 @@ from __future__ import absolute_import
 import os
 import re
 import shlex
-import subprocess
 
 from codechecker_common.logger import get_logger
 
@@ -29,26 +28,6 @@ from . import result_handler
 LOG = get_logger('analyzer')
 
 
-def parse_checkers(tidy_output):
-    """
-    Parse clang tidy checkers list.
-    Skip clang static analyzer checkers.
-    Store them to checkers.
-    """
-    checkers = []
-    pattern = re.compile(r'^\S+$')
-    for line in tidy_output.splitlines():
-        line = line.strip()
-        if line.startswith('Enabled checks:') or line == '':
-            continue
-        elif line.startswith('clang-analyzer-'):
-            continue
-        match = pattern.match(line)
-        if match:
-            checkers.append((match.group(0), ''))
-    return checkers
-
-
 class ClangTidy(analyzer_base.SourceAnalyzer):
     """
     Constructs the clang tidy analyzer commands.
@@ -58,23 +37,6 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
     def add_checker_config(self, checker_cfg):
         LOG.error("Not implemented yet")
-
-    @classmethod
-    def get_analyzer_checkers(cls, cfg_handler, environ):
-        """
-        Return the list of the supported checkers.
-        """
-        analyzer_binary = cfg_handler.analyzer_binary
-
-        command = [analyzer_binary, "-list-checks", "-checks='*'"]
-
-        try:
-            command = shlex.split(' '.join(command))
-            result = subprocess.check_output(command, env=environ,
-                                             universal_newlines=True)
-            return parse_checkers(result)
-        except (subprocess.CalledProcessError, OSError):
-            return []
 
     def construct_analyzer_cmd(self, result_handler):
         """
@@ -277,7 +239,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         check_env = env.extend(context.path_env_extra,
                                context.ld_lib_path_extra)
 
-        checkers = ClangTidy.get_analyzer_checkers(handler, check_env)
+        checkers = handler.get_analyzer_checkers(check_env)
 
         # Read clang-tidy checkers from the config file.
         clang_tidy_checkers = context.checker_config.get(cls.ANALYZER_NAME +
