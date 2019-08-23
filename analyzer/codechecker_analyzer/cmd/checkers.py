@@ -256,12 +256,6 @@ def main(args):
 
     rows = []
     for analyzer in working:
-        config_handler = analyzer_config_map.get(analyzer)
-
-        checkers = config_handler.get_analyzer_checkers(analyzer_environment)
-        default_checker_cfg = context.checker_config.get(
-            analyzer + '_checkers')
-
         profile_checkers = None
         if 'profile' in args:
             if args.profile not in context.available_profiles:
@@ -272,14 +266,19 @@ def main(args):
 
             profile_checkers = [(args.profile, True)]
 
+        checker_cfg = context.checker_config.get(analyzer + '_checkers')
+        config_handler = analyzer_config_map.get(analyzer)
+        checkers = config_handler.get_analyzer_checkers(analyzer_environment)
+
         config_handler.initialize_checkers(context.available_profiles,
                                            context.package_root,
                                            checkers,
-                                           default_checker_cfg,
+                                           checker_cfg,
                                            profile_checkers)
 
-        for checker_name, value in config_handler.checks().items():
-            enabled, description = value
+        for checker_name, value in config_handler.checkers.items():
+            enabled = value.enabled
+            description = value.description
 
             if not enabled and 'profile' in args:
                 continue

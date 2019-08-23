@@ -57,22 +57,20 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             compiler_warnings = []
 
             # Config handler stores which checkers are enabled or disabled.
-            for checker_name, value in config.checks().items():
-                enabled, _ = value
-
+            for checker_name, value in config.checkers.items():
                 # Checker name is a compiler warning.
                 if checker_name.startswith('W'):
                     warning_name = checker_name[4:] if \
                         checker_name.startswith('Wno-') else checker_name[1:]
 
-                    if enabled:
+                    if value.enabled:
                         compiler_warnings.append('-W' + warning_name)
                     else:
                         compiler_warnings.append('-Wno-' + warning_name)
 
                     continue
 
-                if enabled:
+                if value.enabled:
                     checkers_cmdline += ',' + checker_name
                 else:
                     checkers_cmdline += ',-' + checker_name

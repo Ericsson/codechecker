@@ -52,7 +52,7 @@ def build_stat_coll_cmd(action, config, source):
 
     # Enable the statistics collector checkers only.
     collector_checkers = []
-    for checker_name, _ in config.checks().items():
+    for checker_name, _ in config.checkers.items():
         if SpecialReturnValueCollector.checker_collect in checker_name:
             collector_checkers.append(checker_name)
 

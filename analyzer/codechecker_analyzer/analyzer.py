@@ -172,7 +172,7 @@ def perform_analysis(args, skip_handler, context, actions, metadata):
     # Collect all the available checkers from the enabled analyzers.
     for analyzer in config_map.items():
         _, analyzer_cfg = analyzer
-        for analyzer_checker in analyzer_cfg.checks().items():
+        for analyzer_checker in analyzer_cfg.checkers.items():
             checker_name, _ = analyzer_checker
             available_checkers.add(checker_name)
 
@@ -210,9 +210,8 @@ def perform_analysis(args, skip_handler, context, actions, metadata):
     for analyzer in analyzers:
         metadata['checkers'][analyzer] = {}
 
-        for check, data in config_map[analyzer].checks().items():
-            enabled, _ = data
-            metadata['checkers'][analyzer].update({check: enabled})
+        for check, data in config_map[analyzer].checkers.items():
+            metadata['checkers'][analyzer].update({check: data.enabled})
 
     if ctu_collect:
         shutil.rmtree(ctu_dir, ignore_errors=True)
