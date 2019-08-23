@@ -13,7 +13,6 @@ from __future__ import absolute_import
 
 from abc import ABCMeta
 import collections
-import os
 import platform
 import sys
 
@@ -31,7 +30,6 @@ class AnalyzerConfigHandler(object):
     def __init__(self):
 
         self.analyzer_binary = None
-        self.analyzer_plugins_dir = None
         self.compiler_resource_dir = ''
         self.analyzer_extra_arguments = []
         self.checker_config = ''
@@ -48,21 +46,6 @@ class AnalyzerConfigHandler(object):
         Return the checkers available in the analyzer.
         """
         raise NotImplementedError("Subclasses should implement this!")
-
-    @property
-    def analyzer_plugins(self):
-        """
-        Full path of the analyzer plugins.
-        """
-        plugin_dir = self.analyzer_plugins_dir
-        if not os.path.exists(plugin_dir):
-            return []
-
-        analyzer_plugins = [os.path.join(plugin_dir, f)
-                            for f in os.listdir(plugin_dir)
-                            if os.path.isfile(os.path.join(plugin_dir, f))
-                            and f.endswith(".so")]
-        return analyzer_plugins
 
     def add_checker(self, checker_name, enabled, description):
         """

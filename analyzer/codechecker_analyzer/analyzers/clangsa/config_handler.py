@@ -11,6 +11,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import os
 import re
 import subprocess
 
@@ -77,6 +78,21 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
         self.enable_z3 = False
         self.enable_z3_refutation = False
         self.environ = environ
+        self.analyzer_plugins_dir = None
+
+    @property
+    def analyzer_plugins(self):
+        """
+        Full path of the analyzer plugins.
+        """
+        plugin_dir = self.analyzer_plugins_dir
+        if not os.path.exists(plugin_dir):
+            return []
+
+        return [os.path.join(plugin_dir, f)
+                for f in os.listdir(plugin_dir)
+                if os.path.isfile(os.path.join(plugin_dir, f)) and
+                f.endswith(".so")]
 
     def get_analyzer_checkers(self, environ):
         """
