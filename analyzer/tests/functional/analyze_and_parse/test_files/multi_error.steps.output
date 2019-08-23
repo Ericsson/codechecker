@@ -17,14 +17,14 @@ CHECK#CodeChecker check --build "make multi_error" --output $OUTPUT$ --quiet --a
 [] - To store results use the "CodeChecker store" command.
 [] - See --help and the user guide for further options about parsing and storing the reports.
 [] - ----=================----
-[HIGH] multi_error.cpp:3:3: Address of stack memory associated with local variable 'x' returned to caller [core.StackAddressEscape]
-  return &x;
-  ^
-  Report hash: 9b976691ee1dbc182ca89ecfcae5c8db
+[HIGH] multi_error.cpp:3:11: Division by zero [core.DivideZero]
+  return x/0;
+          ^
+  Report hash: 901a68a2ecb36a9221296fa65b53dec7
   Steps:
-    1, multi_error.cpp:10:12: Calling 'foo'
+    1, multi_error.cpp:10:11: Calling 'foo'
     2, multi_error.cpp:1:1: Entered call from 'main'
-    3, multi_error.cpp:3:3: Address of stack memory associated with local variable 'x' returned to caller
+    3, multi_error.cpp:3:11: Division by zero
 
 [LOW] multi_error.cpp:9:3: Value stored to 'y' is never read [deadcode.DeadStores]
   y = 7;

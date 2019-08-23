@@ -17,9 +17,9 @@ CHECK#CodeChecker check --build "make multi_error_suppress" --output $OUTPUT$ --
 [] - To store results use the "CodeChecker store" command.
 [] - See --help and the user guide for further options about parsing and storing the reports.
 [] - ----=================----
-[HIGH] multi_error_suppress.cpp:3:3: Address of stack memory associated with local variable 'x' returned to caller [core.StackAddressEscape]
-  return &x;
-  ^
+[HIGH] multi_error_suppress.cpp:3:11: Division by zero [core.DivideZero]
+  return x/0;
+          ^
 
 Found 1 defect(s) in multi_error_suppress.cpp
 
