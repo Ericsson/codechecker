@@ -65,8 +65,11 @@ function (declare, cookie, dom, domConstruct, domClass, ioQuery, keys, on,
     _doLogin : function() {
       var that = this;
 
+      var userName = this.txtUser.get('value');
+      var pass = this.txtPass.get('value');
+
       // No username supplied.
-      if (!this.txtUser.value || !this.txtUser.value.trim().length) {
+      if (!userName || !userName.trim().length) {
         domClass.add(that._mbox.domNode, 'mbox-error');
         that._mbox.show("Failed to log in!", "No username supplied.");
         return;
@@ -76,7 +79,7 @@ function (declare, cookie, dom, domConstruct, domClass, ioQuery, keys, on,
       this._standBy.show();
 
       CC_AUTH_SERVICE.performLogin(
-        'Username:Password', this.txtUser.value + ':' + this.txtPass.value,
+        'Username:Password', userName + ':' + pass,
         function (sessionToken) {
           domClass.add(that._mbox.domNode, 'mbox-success');
           that._mbox.show("Successfully logged in!", '');
@@ -270,7 +273,7 @@ function (declare, cookie, dom, domConstruct, domClass, ioQuery, keys, on,
     var loginContainer = new ContentPane({
       region : 'center',
       postCreate : function () {
-         var smallerContainer = domConstruct.create('div', {
+         var smallerContainer = domConstruct.create('form', {
            id : 'login-form'
          }, this.containerNode);
 
