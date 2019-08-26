@@ -17,9 +17,9 @@ CHECK#CodeChecker check --build "make multi_error_suppress_typo" --output $OUTPU
 [] - To store results use the "CodeChecker store" command.
 [] - See --help and the user guide for further options about parsing and storing the reports.
 [] - ----=================----
-[HIGH] multi_error_suppress_typo.cpp:3:3: Address of stack memory associated with local variable 'x' returned to caller [core.StackAddressEscape]
-  return &x;
-  ^
+[HIGH] multi_error_suppress_typo.cpp:3:11: Division by zero [core.DivideZero]
+  return x/0;
+          ^
 
 [] - Misspelled review status comment in multi_error_suppress_typo.cpp@9: // codechecker_suppressssss [all] some comment
 [LOW] multi_error_suppress_typo.cpp:10:3: Value stored to 'y' is never read [deadcode.DeadStores]

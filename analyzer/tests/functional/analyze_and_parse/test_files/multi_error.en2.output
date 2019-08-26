@@ -1,7 +1,7 @@
 NORMAL#CodeChecker log --output $LOGFILE$ --build "make multi_error" --quiet
-NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clangsa --disable core.StackAddressEscape --enable deadcode.DeadStores
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clangsa --disable core.DivideZero -d core.UndefinedBinaryOperatorResult -d core.uninitialized.UndefReturn -d core.uninitialized.Assign --enable deadcode.DeadStores
 NORMAL#CodeChecker parse $OUTPUT$
-CHECK#CodeChecker check --build "make multi_error" --output $OUTPUT$ --quiet --analyzers clangsa --disable core.StackAddressEscape --enable deadcode.DeadStores
+CHECK#CodeChecker check --build "make multi_error" --output $OUTPUT$ --quiet --analyzers clangsa --disable core.DivideZero -d core.UndefinedBinaryOperatorResult -d core.uninitialized.UndefReturn -d core.uninitialized.Assign --enable deadcode.DeadStores
 -----------------------------------------------
 [] - Starting build ...
 [] - Build finished successfully.

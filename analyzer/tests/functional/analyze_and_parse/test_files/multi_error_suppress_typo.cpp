@@ -1,6 +1,6 @@
-int* foo() {
+int foo() {
   int x = 42;
-  return &x;
+  return x/0;
 }
 
 int main() {
@@ -8,8 +8,8 @@ int main() {
 
   // codechecker_suppressssss [all] some comment
   y = 7;
-  int* x = foo();
+  int x = foo();
   y = 10;
 
-  return y + *x;
+  return y + x;
 }
