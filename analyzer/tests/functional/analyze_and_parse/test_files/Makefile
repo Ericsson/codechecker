@@ -31,3 +31,7 @@ compiler_warning_unused:
 	$(CXX) -w compiler_warning.cpp -Wunused -o /dev/null
 context_hash:
 	$(CXX) -w context_hash.cpp -o /dev/null
+cppcheck_multiple:
+	$(CXX) -w cppcheck_multiple.cpp -o /dev/null
+cppcheck_args:
+	$(CXX) -w cppcheck_args.cpp -o /dev/null
