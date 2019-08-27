@@ -23,10 +23,8 @@ from codechecker_analyzer import env
 from .. import analyzer_base
 from ..flag import has_flag
 
-from . import clang_options
 from . import config_handler
 from . import ctu_triple_arch
-from . import version
 from .result_handler import ResultHandlerClangSA
 
 LOG = get_logger('analyzer')

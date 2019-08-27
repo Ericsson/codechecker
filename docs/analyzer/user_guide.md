@@ -83,6 +83,7 @@ usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-t {plist}] [-q] [-f]
                          [--compile-uniqueing COMPILE_UNIQUEING]
                          [--report-hash {context-free}] [-i SKIPFILE]
                          [--analyzers ANALYZER [ANALYZER ...]]
+                         [--cppcheck-args CPPCHECK_ARGS_CFG_FILE]
                          [--add-compiler-defaults] [--capture-analysis-output]
                          [--saargs CLANGSA_ARGS_CFG_FILE]
                          [--tidyargs TIDY_ARGS_CFG_FILE]
@@ -174,6 +175,9 @@ analyzer arguments:
                         Run analysis only with the analyzers specified.
                         Currently supported analyzers are: clangsa, clang-
                         tidy.
+  --cppcheck-args CPPCHECK_ARGS_CFG_FILE
+                        Configuration file to pass cppcheck command line
+                        arguments.
   --add-compiler-defaults
                         DEPRECATED. Always True. Retrieve compiler-specific
                         configuration from the analyzers themselves, and use
@@ -391,6 +395,7 @@ usage: CodeChecker analyze [-h] [-j JOBS] [-i SKIPFILE] -o OUTPUT_PATH
                            [--compile-uniqueing COMPILE_UNIQUEING]
                            [--report-hash {context-free}] [-n NAME]
                            [--analyzers ANALYZER [ANALYZER ...]]
+                           [--cppcheck-args CPPCHECK_ARGS_CFG_FILE]
                            [--add-compiler-defaults]
                            [--capture-analysis-output]
                            [--saargs CLANGSA_ARGS_CFG_FILE]
@@ -527,6 +532,9 @@ analyzer arguments:
                         Run analysis only with the analyzers specified.
                         Currently supported analyzers are: clangsa, clang-
                         tidy.
+  --cppcheck-args CPPCHECK_ARGS_CFG_FILE
+                        Configuration file to pass cppcheck command line
+                        arguments.
   --add-compiler-defaults
                         DEPRECATED. Always True. 
                         Retrieve compiler-specific configuration from the
@@ -567,8 +575,9 @@ analyzer arguments:
 ```
 
 CodeChecker supports several analyzer tools. Currently, these analyzers are
-the [_Clang Static Analyzer_](http://clang-analyzer.llvm.org) and
-[_Clang-Tidy_](http://clang.llvm.org/extra/clang-tidy). `--analyzers` can be
+the [_Clang Static Analyzer_](http://clang-analyzer.llvm.org),
+[_Clang-Tidy_](http://clang.llvm.org/extra/clang-tidy) and
+[_Cppcheck_](http://cppcheck.sourceforge.net/). `--analyzers` can be
 used to specify which analyzer tool should be used (by default, all supported
 are used). The tools are completely independent, so either can be omitted if
 not present as they are provided by different binaries.

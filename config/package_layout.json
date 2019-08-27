@@ -28,7 +28,8 @@
   "runtime": {
     "analyzers": {
       "clangsa": "clang",
-      "clang-tidy": "clang-tidy"
+      "clang-tidy": "clang-tidy",
+      "cppcheck": "cppcheck"
     },
     "ld_logger_bin": "bin/ldlogger",
     "ld_logger_lib_name": "ldlogger.so",

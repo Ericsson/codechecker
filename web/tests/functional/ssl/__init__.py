@@ -47,7 +47,8 @@ def setup_package():
     codechecker_cfg = {
         'check_env': test_env,
         'workspace': TEST_WORKSPACE,
-        'checkers': []
+        'checkers': [],
+        'analyzers': ['clangsa', 'clang-tidy']
     }
 
     codechecker_cfg.update(host_port_cfg)

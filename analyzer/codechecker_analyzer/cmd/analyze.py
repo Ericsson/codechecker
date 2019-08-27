@@ -200,6 +200,13 @@ def add_arguments_to_parser(parser):
                                     ', '.join(analyzer_types.
                                               supported_analyzers) + ".")
 
+    analyzer_opts.add_argument('--cppcheck-args',
+                               dest="cppcheck_args_cfg_file",
+                               required=False,
+                               default=argparse.SUPPRESS,
+                               help="Configuration file to pass cppcheck "
+                                    "command line arguments.")
+
     analyzer_opts.add_argument('--add-compiler-defaults',
                                action='store_true',
                                required=False,

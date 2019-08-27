@@ -21,11 +21,13 @@ from .. import host_check
 
 from .clangtidy.analyzer import ClangTidy
 from .clangsa.analyzer import ClangSA
+from .cppcheck.analyzer import Cppcheck
 
 LOG = get_logger('analyzer')
 
 supported_analyzers = {ClangSA.ANALYZER_NAME: ClangSA,
-                       ClangTidy.ANALYZER_NAME: ClangTidy}
+                       ClangTidy.ANALYZER_NAME: ClangTidy,
+                       Cppcheck.ANALYZER_NAME: Cppcheck}
 
 
 def is_ctu_capable(context):

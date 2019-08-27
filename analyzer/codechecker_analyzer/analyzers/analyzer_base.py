@@ -103,6 +103,12 @@ class SourceAnalyzer(object):
             res_handler.analyzer_returncode = 1
             return res_handler
 
+    def post_analyze(self, result_handler):
+        """
+        Run immediately after the analyze function.
+        """
+        pass
+
     @staticmethod
     def run_proc(command, env=None, cwd=None, proc_callback=None):
         """

@@ -37,7 +37,8 @@ def setup_package():
         'workspace': TEST_WORKSPACE,
         'checkers': [],
         'reportdir': os.path.join(TEST_WORKSPACE, 'reports'),
-        'test_project': 'test_run_tag'
+        'test_project': 'test_run_tag',
+        'analyzers': ['clangsa', 'clang-tidy']
     }
 
     # Start or connect to the running CodeChecker server and get connection

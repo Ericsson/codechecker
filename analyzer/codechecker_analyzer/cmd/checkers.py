@@ -19,6 +19,7 @@ import sys
 from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.analyzers import analyzer_types
 from codechecker_analyzer.analyzers.clangsa.analyzer import ClangSA
+from codechecker_analyzer.analyzers.cppcheck.analyzer import Cppcheck
 
 from codechecker_common import logger
 from codechecker_common import output_formatters
@@ -290,6 +291,16 @@ def main(args):
 
             if args.output_format != 'json':
                 enabled = '+' if enabled else '-'
+
+                # In case of Cppcheck analyzer print out the checker ID group
+                # in parentheses which can be used to turn on the checker.
+                if analyzer == Cppcheck.ANALYZER_NAME:
+                    enable_checker_id = value.severity if \
+                        value.severity != 'error' else None
+
+                    if enable_checker_id:
+                        checker_name = "{0} ({1})".format(checker_name,
+                                                          enable_checker_id)
 
             if 'details' not in args:
                 rows.append([checker_name])

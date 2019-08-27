@@ -201,6 +201,11 @@ def check_and_store(codechecker_cfg, test_project_name, test_project_path,
     if clean:
         check_cmd.extend(['--clean'])
 
+    analyzers = codechecker_cfg.get('analyzers')
+    if analyzers:
+        check_cmd.append('--analyzers')
+        check_cmd.extend(analyzers)
+
     check_cmd.extend(codechecker_cfg['checkers'])
 
     try:

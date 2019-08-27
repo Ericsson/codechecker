@@ -348,3 +348,41 @@ def use_context_free_hashes(path):
         traceback.print_exc()
         LOG.warning(type(ex))
         LOG.warning(ex)
+
+
+def use_path_sensitive_hashes(path):
+    """
+    Override issue hash in the given file by using simple context sensitive
+    hashes.
+    """
+    try:
+        plist = plistlib.readPlist(path)
+
+        files = plist['files']
+
+        for diag in plist['diagnostics']:
+            file_path = files[diag['location']['file']]
+
+            report_hash = generate_report_hash(diag['path'], file_path,
+                                               diag['check_name'])
+            diag['issue_hash_content_of_line_in_context'] = report_hash
+
+        if plist['diagnostics']:
+            plistlib.writePlist(plist, path)
+
+    except (ExpatError, TypeError, AttributeError) as err:
+        LOG.warning('Failed to process plist file: %s wrong file format?',
+                    path)
+        LOG.warning(err)
+    except IndexError as iex:
+        LOG.warning('Indexing error during processing plist file %s', path)
+        LOG.warning(type(iex))
+        LOG.warning(repr(iex))
+        _, _, exc_traceback = sys.exc_info()
+        traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
+    except Exception as ex:
+        LOG.warning('Error during processing reports from the plist file: %s',
+                    path)
+        traceback.print_exc()
+        LOG.warning(type(ex))
+        LOG.warning(ex)

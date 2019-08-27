@@ -121,6 +121,9 @@ def main(args):
         elif args.dump_config == 'clangsa':
             # TODO: Not supported by ClangSA yet!
             LOG.warning("'--dump-config clangsa' is not supported yet.")
+        elif args.dump_config == 'cppcheck':
+            # TODO: Not supported by CppCheck yet!
+            LOG.warning("'--dump-config cppcheck' is not supported yet.")
 
         return
 
