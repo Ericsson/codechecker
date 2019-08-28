@@ -250,6 +250,13 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             LOG.debug("Using '%s' for ClangSA!", clang)
         return clang
 
+    @classmethod
+    def version_compatible(cls, configured_binary, environ):
+        """
+        Checker the version compatibility of the given analyzer binary.
+        """
+        return True
+
     def construct_result_handler(self, buildaction, report_output,
                                  severity_map, skiplist_handler):
         """

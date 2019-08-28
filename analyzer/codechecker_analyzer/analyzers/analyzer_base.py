@@ -55,6 +55,13 @@ class SourceAnalyzer(object):
         raise NotImplementedError("Subclasses should implement this!")
 
     @classmethod
+    def version_compatible(cls, configured_binary, environ):
+        """
+        Checker the version compatibility of the given analyzer binary.
+        """
+        raise NotImplementedError("Subclasses should implement this!")
+
+    @classmethod
     def construct_config_handler(cls, args, context):
         """ Should return a subclass of AnalyzerConfigHandler."""
         raise NotImplementedError("Subclasses should implement this!")

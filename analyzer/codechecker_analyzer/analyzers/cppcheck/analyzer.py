@@ -9,9 +9,11 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+from distutils.version import StrictVersion
 import os
 import re
 import shlex
+import subprocess
 
 from codechecker_common.logger import get_logger
 
@@ -25,6 +27,18 @@ from .config_handler import CppcheckConfigHandler
 from .result_handler import ResultHandlerCppcheck
 
 LOG = get_logger('analyzer.cppcheck')
+
+
+def parse_version(cppcheck_output):
+    """
+    Parse cppcheck version output and return the version number.
+    """
+    version_re = re.compile(r'^Cppcheck (?P<version>[\d\.]+)')
+    match = version_re.match(cppcheck_output)
+    if match:
+        return StrictVersion(match.group('version'))
+
+    return None
 
 
 class Cppcheck(analyzer_base.SourceAnalyzer):
@@ -121,6 +135,34 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         if cppcheck:
             LOG.debug("Using '%s' for Cppcheck!", cppcheck)
         return cppcheck
+
+    @classmethod
+    def get_analyzer_version(cls, analyzer_binary, env):
+        """
+        Return the analyzer version.
+        """
+        command = [analyzer_binary, "--version"]
+
+        try:
+            command = shlex.split(' '.join(command))
+            result = subprocess.check_output(command, env=env)
+            return parse_version(result)
+        except (subprocess.CalledProcessError, OSError):
+            return []
+
+    @classmethod
+    def version_compatible(cls, configured_binary, environ):
+        """
+        Checker the version compatibility of the given analyzer binary.
+        """
+        analyzer_version = cls.get_analyzer_version(configured_binary, environ)
+
+        # The analyzer version should be above 1.80 because '--plist-output'
+        # argument was introduced in this release.
+        if analyzer_version >= StrictVersion("1.80"):
+            return True
+
+        return False
 
     def construct_result_handler(self, buildaction, report_output,
                                  severity_map, skiplist_handler):
