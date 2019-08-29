@@ -925,8 +925,18 @@ class ThriftRequestHandler(object):
 
     @exc_to_thrift_reqfail
     @timeit
-    def getDiffResultsHash(self, run_ids, report_hashes, diff_type):
+    def getDiffResultsHash(self, run_ids, report_hashes, diff_type,
+                           skip_detection_statuses):
         self.__require_access()
+
+        if not skip_detection_statuses:
+            skip_detection_statuses = [ttypes.DetectionStatus.RESOLVED,
+                                       ttypes.DetectionStatus.OFF,
+                                       ttypes.DetectionStatus.UNAVAILABLE]
+
+        # Convert statuses to string.
+        skip_statuses_str = [detection_status_str(status)
+                             for status in skip_detection_statuses]
 
         with DBSession(self.__Session) as session:
             if diff_type == DiffType.NEW:
@@ -938,7 +948,8 @@ class ThriftRequestHandler(object):
                     return []
 
                 base_hashes = session.query(Report.bug_id.label('bug_id')) \
-                    .outerjoin(File, Report.file_id == File.id)
+                    .outerjoin(File, Report.file_id == File.id) \
+                    .filter(Report.detection_status.notin_(skip_statuses_str))
 
                 if run_ids:
                     base_hashes = \
@@ -979,7 +990,8 @@ class ThriftRequestHandler(object):
 
             elif diff_type == DiffType.UNRESOLVED:
                 results = session.query(Report.bug_id) \
-                    .filter(Report.bug_id.in_(report_hashes))
+                    .filter(Report.bug_id.in_(report_hashes)) \
+                    .filter(Report.detection_status.notin_(skip_statuses_str))
 
                 if run_ids:
                     results = results.filter(Report.run_id.in_(run_ids))

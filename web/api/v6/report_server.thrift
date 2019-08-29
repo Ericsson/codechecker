@@ -351,9 +351,13 @@ service codeCheckerDBAccess {
 
   // Returns report hashes based on the diffType parameter.
   // PERMISSION: PRODUCT_ACCESS
+  // skipDetectionStatuses - you can filter out reports from the database which
+  // have these detection statuses, so these hashes will be marked as
+  // New/Unresolved reports when doing the comparison.
   list<string> getDiffResultsHash(1: list<i64>    runIds,
                                   2: list<string> reportHashes,
-                                  3: DiffType     diffType)
+                                  3: DiffType     diffType,
+                                  4: optional list<DetectionStatus> skipDetectionStatuses)
                                   throws (1: shared.RequestFailed requestError),
 
   // PERMISSION: PRODUCT_ACCESS

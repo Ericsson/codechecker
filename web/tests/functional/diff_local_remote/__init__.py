@@ -104,6 +104,12 @@ def setup_package():
         sys.exit(1)
     print('Analyzing local was successful.')
 
+    # Store results to the remote server.
+    test_project_name_remote = project_info['name'] + '_' + uuid.uuid4().hex
+    ret = codechecker.store(codechecker_cfg, test_project_name_remote)
+    if ret:
+        sys.exit(1)
+
     # Remote analysis, results will be stored to the remote server.
     altered_file = os.path.join(test_proj_path_local, "call_and_message.cpp")
     project.insert_suppression(altered_file)
@@ -118,8 +124,8 @@ def setup_package():
         sys.exit(1)
     print('Analyzing new was successful.')
 
-    # Store results to the remote server.
-    test_project_name_remote = project_info['name'] + '_' + uuid.uuid4().hex
+    # Store results again to the remote server. We need this second store to
+    # set the detection status to the required states.
     ret = codechecker.store(codechecker_cfg, test_project_name_remote)
     if ret:
         sys.exit(1)

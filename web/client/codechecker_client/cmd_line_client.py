@@ -607,7 +607,8 @@ def handle_diff_results(args):
             remote_hashes = \
                 client.getDiffResultsHash(run_ids,
                                           local_report_hashes,
-                                          ttypes.DiffType.RESOLVED)
+                                          ttypes.DiffType.RESOLVED,
+                                          None)
 
             results = get_diff_base_results(client, run_ids,
                                             remote_hashes,
@@ -620,7 +621,8 @@ def handle_diff_results(args):
             remote_hashes = \
                 client.getDiffResultsHash(run_ids,
                                           local_report_hashes,
-                                          ttypes.DiffType.UNRESOLVED)
+                                          ttypes.DiffType.UNRESOLVED,
+                                          None)
             for result in report_dir_results:
                 rep_h = result.report_hash
                 if rep_h in remote_hashes and rep_h not in suppressed_in_code:
@@ -631,7 +633,8 @@ def handle_diff_results(args):
             remote_hashes = \
                 client.getDiffResultsHash(run_ids,
                                           local_report_hashes,
-                                          ttypes.DiffType.UNRESOLVED)
+                                          ttypes.DiffType.UNRESOLVED,
+                                          None)
             for result in report_dir_results:
                 if result.report_hash not in remote_hashes:
                     filtered_reports.append(result)
@@ -653,7 +656,8 @@ def handle_diff_results(args):
 
         remote_hashes = client.getDiffResultsHash(run_ids,
                                                   local_report_hashes,
-                                                  diff_type)
+                                                  diff_type,
+                                                  None)
 
         if diff_type in [ttypes.DiffType.NEW, ttypes.DiffType.UNRESOLVED]:
             # Shows reports from the report dir which are not present in

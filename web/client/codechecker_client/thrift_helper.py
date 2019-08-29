@@ -59,7 +59,8 @@ class ThriftClientHelper(object):
         pass
 
     @ThriftClientCall
-    def getDiffResultsHash(self, run_ids, report_hashes, diff_type):
+    def getDiffResultsHash(self, run_ids, report_hashes, diff_type,
+                           skip_detection_statuses):
         pass
 
     @ThriftClientCall
