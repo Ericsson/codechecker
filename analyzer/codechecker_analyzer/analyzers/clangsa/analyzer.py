@@ -24,8 +24,10 @@ from codechecker_analyzer import env
 from .. import analyzer_base
 from ..flag import has_flag
 
+from . import clang_options
 from . import config_handler
 from . import ctu_triple_arch
+from . import version
 from .result_handler import ResultHandlerClangSA
 
 LOG = get_logger('analyzer')
@@ -109,18 +111,33 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
     @classmethod
     def get_analyzer_checkers(cls, cfg_handler, environ):
-        """
-        Return the list of the supported checkers.
-        """
+        """Return the list of the supported checkers."""
         analyzer_binary = cfg_handler.analyzer_binary
 
+        try:
+            analyzer_version = subprocess.check_output(
+                [analyzer_binary, '--version'],
+                env=environ)
+
+        except subprocess.CalledProcessError as cerr:
+            LOG.error('Failed to get and parse clang version: %s',
+                      analyzer_binary)
+            LOG.error(cerr)
+            return []
+
+        version_parser = version.ClangVersionInfoParser()
+        version_info = version_parser.parse(analyzer_version)
+
         command = [analyzer_binary, "-cc1"]
-        for plugin in cfg_handler.analyzer_plugins:
-            command.extend(["-load", plugin])
-        command.append("-analyzer-checker-help")
+
+        checkers_list_args = clang_options.get_analyzer_checkers_cmd(
+            version_info,
+            environ,
+            cfg_handler.analyzer_plugins,
+            alpha=True)
+        command.extend(checkers_list_args)
 
         try:
-            command = shlex.split(' '.join(command))
             result = subprocess.check_output(command, env=environ,
                                              universal_newlines=True)
             return parse_checkers(result)
