@@ -169,6 +169,7 @@ COMPILE_OPTIONS = [
     '-O[1-3]',
     '-Os',
     '-std=',
+    '-stdlib=',
     '-f',
     '-m',
     '-Wno-',
@@ -198,6 +199,30 @@ COMPILE_OPTIONS_MERGED = \
     re.compile('(' + '|'.join(COMPILE_OPTIONS_MERGED) + ')')
 
 PRECOMPILATION_OPTION = re.compile('-(E|M[T|Q|F|J|P|V|M]*)$')
+
+
+def filter_compiler_includes_extra_args(compiler_flags):
+    """Return the list of flags which affect the list of implicit includes.
+
+    compiler_flags -- A list of compiler flags which may affect the list
+                      of implicit compiler include paths, like -std=,
+                      --sysroot=, -m32, -m64 or -stdlib=.
+    """
+    # If these options are present in the original build command, they must
+    # be forwarded to get_compiler_includes and get_compiler_defines so the
+    # resulting includes point to the target that was used in the build.
+    pattern = re.compile('-m(32|64)|-std=|-stdlib=')
+    extra_opts = filter(pattern.match, compiler_flags)
+
+    pos = next((pos for pos, val in enumerate(compiler_flags)
+                if val.startswith('--sysroot')), None)
+    if pos is not None:
+        if compiler_flags[pos] == '--sysroot':
+            extra_opts.append('--sysroot=' + compiler_flags[pos + 1])
+        else:
+            extra_opts.append(compiler_flags[pos])
+
+    return extra_opts
 
 
 class ImplicitCompilerInfo(object):
@@ -320,24 +345,9 @@ class ImplicitCompilerInfo(object):
         compiler -- The compiler binary of which the implicit include paths are
                     fetched.
         language -- The programming language being compiled (e.g. 'c' or 'c++')
-        compiler_flags -- A list of compiler flags which may affect the list
-                          of implicit compiler include paths, like -std=,
-                          --sysroot= or -m32, -m64.
+        compiler_flags -- the flags used for compilation
         """
-        # If these options are present in the original build command, they must
-        # be forwarded to get_compiler_includes and get_compiler_defines so the
-        # resulting includes point to the target that was used in the build.
-        pattern = re.compile('-m(32|64)|-std=')
-        extra_opts = filter(pattern.match, compiler_flags)
-
-        pos = next((pos for pos, val in enumerate(compiler_flags)
-                    if val.startswith('--sysroot')), None)
-        if pos is not None:
-            if compiler_flags[pos] == '--sysroot':
-                extra_opts.append('--sysroot=' + compiler_flags[pos + 1])
-            else:
-                extra_opts.append(compiler_flags[pos])
-
+        extra_opts = filter_compiler_includes_extra_args(compiler_flags)
         cmd = compiler + " " + ' '.join(extra_opts) \
             + " -E -x " + language + " - -v "
 

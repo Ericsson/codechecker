@@ -232,3 +232,24 @@ class LogParserTest(unittest.TestCase):
         self.assertEqual(build_action.analyzer_options[1], '/include')
         self.assertEqual(build_action.analyzer_options[2], '-I/include')
         self.assertEqual(build_action.analyzer_options[3], '-I/tmp')
+
+    def test_compiler_extra_args_filter_empty(self):
+        """Filtering no flags."""
+
+        flags = []
+        filtered = log_parser.filter_compiler_includes_extra_args(flags)
+        self.assertEqual(filtered, [])
+
+    def test_compiler_implicit_include_flags(self):
+        """Specific stdlib, build architecture related flags should be kept."""
+
+        flags = ["-I", "/usr/include", "-m64", "-stdlib=libc++", "-std=c++17"]
+        filtered = log_parser.filter_compiler_includes_extra_args(flags)
+        self.assertEqual(filtered, ["-m64", "-stdlib=libc++", "-std=c++17"])
+
+    def test_compiler_implicit_include_flags_sysroot(self):
+        """sysroot flags should be kept."""
+
+        flags = ["-I", "/usr/include", "--sysroot=/usr/mysysroot"]
+        filtered = log_parser.filter_compiler_includes_extra_args(flags)
+        self.assertEqual(filtered, ["--sysroot=/usr/mysysroot"])
