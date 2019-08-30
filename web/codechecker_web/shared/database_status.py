@@ -11,7 +11,7 @@ Map between database statuses and the corresponding messages.
 from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
-from shared.ttypes import DBStatus
+from codechecker_api_shared.ttypes import DBStatus
 
 db_status_msg = {
     DBStatus.OK: "Database is up to date.",

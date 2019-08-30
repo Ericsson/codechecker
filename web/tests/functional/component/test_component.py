@@ -14,7 +14,7 @@ from __future__ import absolute_import
 import os
 import unittest
 
-from shared.ttypes import Permission
+from codechecker_api_shared.ttypes import Permission
 
 from codeCheckerDBAccess_v6.ttypes import ReportFilter
 

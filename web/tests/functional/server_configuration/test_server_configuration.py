@@ -17,8 +17,8 @@ import base64
 import os
 import unittest
 
-from shared.ttypes import Permission
-from shared.ttypes import RequestFailed
+from codechecker_api_shared.ttypes import Permission
+from codechecker_api_shared.ttypes import RequestFailed
 
 from libtest import env
 

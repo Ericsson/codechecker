@@ -19,7 +19,7 @@ import subprocess
 from subprocess import CalledProcessError
 import time
 
-from shared.ttypes import Permission
+from codechecker_api_shared.ttypes import Permission
 
 from codechecker_client.product import create_product_url
 

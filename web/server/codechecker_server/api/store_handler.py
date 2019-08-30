@@ -19,7 +19,7 @@ import zlib
 
 import sqlalchemy
 
-import shared
+import codechecker_api_shared
 from codeCheckerDBAccess_v6 import ttypes
 
 from codechecker_common.logger import get_logger
@@ -274,8 +274,8 @@ def is_same_event_path(report_id, events, session):
         return True
 
     except Exception as ex:
-        raise shared.ttypes.RequestFailed(
-            shared.ttypes.ErrorCode.GENERAL,
+        raise codechecker_api_shared.ttypes.RequestFailed(
+            codechecker_api_shared.ttypes.ErrorCode.GENERAL,
             str(ex))
 
 
@@ -298,8 +298,8 @@ def addCheckerRun(session, command, name, tag, username,
                 # Deletion is already in progress.
                 msg = "Can't delete " + str(run.id)
                 LOG.debug(msg)
-                raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.DATABASE,
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE,
                     msg)
 
             LOG.info('Removing previous analysis results ...')
@@ -377,8 +377,8 @@ def addCheckerRun(session, command, name, tag, username,
         session.flush()
         return run_id
     except Exception as ex:
-        raise shared.ttypes.RequestFailed(
-            shared.ttypes.ErrorCode.GENERAL,
+        raise codechecker_api_shared.ttypes.RequestFailed(
+            codechecker_api_shared.ttypes.ErrorCode.GENERAL,
             str(ex))
 
 
@@ -461,8 +461,8 @@ def addReport(session,
         return report.id
 
     except Exception as ex:
-        raise shared.ttypes.RequestFailed(
-            shared.ttypes.ErrorCode.GENERAL,
+        raise codechecker_api_shared.ttypes.RequestFailed(
+            codechecker_api_shared.ttypes.ErrorCode.GENERAL,
             str(ex))
 
 

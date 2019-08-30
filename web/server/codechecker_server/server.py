@@ -39,7 +39,7 @@ from thrift.transport import TTransport
 from thrift.Thrift import TApplicationException
 from thrift.Thrift import TMessageType
 
-from shared.ttypes import DBStatus
+from codechecker_api_shared.ttypes import DBStatus
 from Authentication_v6 import codeCheckerAuthentication as AuthAPI_v6
 from Configuration_v6 import configurationService as ConfigAPI_v6
 from codeCheckerDBAccess_v6 import codeCheckerDBAccess as ReportAPI_v6

@@ -25,7 +25,7 @@ import sqlalchemy
 from sqlalchemy.sql.expression import or_, and_, not_, func, \
     asc, desc, text, union_all, select, bindparam, literal_column, cast
 
-import shared
+import codechecker_api_shared
 from codeCheckerDBAccess_v6 import constants, ttypes
 from codeCheckerDBAccess_v6.ttypes import BugPathPos, CheckerCount, \
     CommentData, DiffType, Encoding, RunHistoryData, Order, ReportData, \
@@ -104,16 +104,16 @@ def exc_to_thrift_reqfail(func):
             # Convert SQLAlchemy exceptions.
             msg = str(alchemy_ex)
             LOG.warning("%s:\n%s", func_name, msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                              msg)
-        except shared.ttypes.RequestFailed as rf:
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
+        except codechecker_api_shared.ttypes.RequestFailed as rf:
             LOG.warning(rf.message)
             raise
         except Exception as ex:
             msg = str(ex)
             LOG.warning(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.GENERAL,
-                                              msg)
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.GENERAL, msg)
 
     return wrapper
 
@@ -354,8 +354,8 @@ def get_diff_hashes_for_query(base_run_ids, base_line_hashes, new_run_ids,
     else:
         msg = 'Unsupported diff type: ' + str(diff_type)
         LOG.error(msg)
-        raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.DATABASE,
-                                          msg)
+        raise codechecker_api_shared.ttypes.RequestFailed(
+            codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
 
 
 def get_report_details(session, report_ids):
@@ -597,8 +597,8 @@ def check_remove_runs_lock(session, run_ids):
         .all()
 
     if run_locks:
-        raise shared.ttypes.RequestFailed(
-            shared.ttypes.ErrorCode.DATABASE,
+        raise codechecker_api_shared.ttypes.RequestFailed(
+            codechecker_api_shared.ttypes.ErrorCode.DATABASE,
             "Can not remove results because the following runs "
             "are locked: {0}".format(
                 ', '.join([r[0] for r in run_locks])))
@@ -656,8 +656,8 @@ class ThriftRequestHandler(object):
             if not any([permissions.require_permission(
                             perm, args, self.__auth_session)
                         for perm in required]):
-                raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.UNAUTHORIZED,
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
                     "You are not authorized to execute this action.")
 
             return True
@@ -902,8 +902,8 @@ class ThriftRequestHandler(object):
                 .limit(1).one_or_none()
 
             if not result:
-                raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.DATABASE,
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE,
                     "Report " + str(reportId) + " not found!")
 
             report, source_file, review_status = result
@@ -1292,8 +1292,8 @@ class ThriftRequestHandler(object):
             return True
         else:
             msg = "No report found in the database."
-            raise shared.ttypes.RequestFailed(
-                shared.ttypes.ErrorCode.DATABASE, msg)
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
 
     @exc_to_thrift_reqfail
     @timeit
@@ -1316,8 +1316,8 @@ class ThriftRequestHandler(object):
 
         if self.isReviewStatusChangeDisabled():
             msg = "Review status change is disabled!"
-            raise shared.ttypes.RequestFailed(
-                shared.ttypes.ErrorCode.GENERAL, msg)
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.GENERAL, msg)
 
         with DBSession(self.__Session) as session:
             res = self._setReviewStatus(report_id, status, message, session)
@@ -1358,8 +1358,8 @@ class ThriftRequestHandler(object):
             else:
                 msg = 'Report id ' + str(report_id) + \
                       ' was not found in the database.'
-                raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.DATABASE, msg)
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
 
     @exc_to_thrift_reqfail
     @timeit
@@ -1404,8 +1404,8 @@ class ThriftRequestHandler(object):
                 msg = 'Report id ' + str(report_id) + \
                       ' was not found in the database.'
                 LOG.error(msg)
-                raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.DATABASE, msg)
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
 
     @exc_to_thrift_reqfail
     @timeit
@@ -1423,8 +1423,8 @@ class ThriftRequestHandler(object):
             comment = session.query(Comment).get(comment_id)
             if comment:
                 if comment.author != 'Anonymous' and comment.author != user:
-                    raise shared.ttypes.RequestFailed(
-                        shared.ttypes.ErrorCode.UNAUTHORIZED,
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
                         'Unathorized comment modification!')
                 comment.message = content
                 session.add(comment)
@@ -1434,8 +1434,8 @@ class ThriftRequestHandler(object):
                 msg = 'Comment id ' + str(comment_id) + \
                       ' was not found in the database.'
                 LOG.error(msg)
-                raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.DATABASE, msg)
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
 
     @exc_to_thrift_reqfail
     @timeit
@@ -1454,8 +1454,8 @@ class ThriftRequestHandler(object):
             comment = session.query(Comment).get(comment_id)
             if comment:
                 if comment.author != 'Anonymous' and comment.author != user:
-                    raise shared.ttypes.RequestFailed(
-                        shared.ttypes.ErrorCode.UNAUTHORIZED,
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
                         'Unathorized comment modification!')
                 session.delete(comment)
                 session.commit()
@@ -1468,8 +1468,8 @@ class ThriftRequestHandler(object):
             else:
                 msg = 'Comment id ' + str(comment_id) + \
                       ' was not found in the database.'
-                raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.DATABASE, msg)
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
 
     @exc_to_thrift_reqfail
     @timeit
@@ -1506,8 +1506,8 @@ class ThriftRequestHandler(object):
 
         except Exception as ex:
             msg = str(ex)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
-                                              msg)
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.IOERROR, msg)
 
     @exc_to_thrift_reqfail
     @timeit
@@ -2189,8 +2189,8 @@ class ThriftRequestHandler(object):
             else:
                 msg = 'Source component ' + str(name) + \
                       ' was not found in the database.'
-                raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.DATABASE, msg)
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
 
     @exc_to_thrift_reqfail
     @timeit
@@ -2471,8 +2471,8 @@ class ThriftRequestHandler(object):
 
             LOG.info("Refusing to store into run '%s' as it is locked by "
                      "%s. Lock will expire at '%s'.", name, username, when)
-            raise shared.ttypes.RequestFailed(
-                shared.ttypes.ErrorCode.DATABASE,
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
                 "The run named '{0}' is being stored into by {1}. If the "
                 "other store operation has failed, this lock will expire "
                 "at '{2}'.".format(name, username, when))
@@ -2500,8 +2500,8 @@ class ThriftRequestHandler(object):
             LOG.info("Run '%s' got locked while current transaction "
                      "tried to acquire a lock. Considering run as locked.",
                      name)
-            raise shared.ttypes.RequestFailed(
-                shared.ttypes.ErrorCode.DATABASE,
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
                 "The run named '{0}' is being stored into by another "
                 "user.".format(name))
 
@@ -2549,8 +2549,8 @@ class ThriftRequestHandler(object):
                 # limit it will throw an exception.
                 if not run and run_count >= max_run_count:
                     remove_run_count = run_count - max_run_count + 1
-                    raise shared.ttypes.RequestFailed(
-                        shared.ttypes.ErrorCode.GENERAL,
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.GENERAL,
                         'You reached the maximum number of allowed runs '
                         '({0}/{1})! Please remove at least {2} run(s) before '
                         'you try it again.'.format(run_count,
@@ -2682,8 +2682,8 @@ class ThriftRequestHandler(object):
                 ThriftRequestHandler.__free_run_lock(session, name)
 
             if wrong_src_code_comments:
-                raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.SOURCE_FILE,
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.SOURCE_FILE,
                     "Multiple source code comment can be found with the same "
                     "checker name for same bug!",
                     wrong_src_code_comments)

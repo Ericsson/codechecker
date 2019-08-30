@@ -17,8 +17,8 @@ from copy import deepcopy
 import os
 import unittest
 
-from shared.ttypes import RequestFailed
-from shared.ttypes import DBStatus
+from codechecker_api_shared.ttypes import RequestFailed
+from codechecker_api_shared.ttypes import DBStatus
 from ProductManagement_v6.ttypes import ProductConfiguration
 from ProductManagement_v6.ttypes import DatabaseConnection
 

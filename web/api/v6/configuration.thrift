@@ -4,7 +4,7 @@
 //   License. See LICENSE.TXT for details.
 // -------------------------------------------------------------------------
 
-include "shared.thrift"
+include "codechecker_api_shared.thrift"
 
 namespace py Configuration_v6
 namespace js codeCheckerConfiguration_v6
@@ -18,5 +18,5 @@ service configurationService {
     // Call with an empty string to hide the notification banner.
     // PERMISSION: SUPERUSER
     void setNotificationBannerText(1: string notification_b64)
-                         throws (1: shared.RequestFailed requestError)
+                         throws (1: codechecker_api_shared.RequestFailed requestError)
 }

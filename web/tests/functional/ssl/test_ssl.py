@@ -16,7 +16,7 @@ import unittest
 
 from thrift.protocol.TProtocol import TProtocolException
 
-from shared.ttypes import RequestFailed
+from codechecker_api_shared.ttypes import RequestFailed
 
 from libtest import codechecker
 from libtest import env

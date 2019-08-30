@@ -12,7 +12,7 @@ from __future__ import absolute_import
 
 import base64
 
-import shared
+import codechecker_api_shared
 
 from codechecker_common.logger import get_logger
 
@@ -39,8 +39,8 @@ class ThriftConfigHandler(object):
         """
         if (not (self.__auth_session is None) and
                 not self.__auth_session.is_root):
-            raise shared.ttypes.RequestFailed(
-                shared.ttypes.ErrorCode.UNAUTHORIZED,
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
                 "You are not authorized to modify the notification.")
 
         return True

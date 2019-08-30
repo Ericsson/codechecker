@@ -16,7 +16,7 @@ import os
 import subprocess
 import unittest
 
-from shared.ttypes import RequestFailed, Permission
+from codechecker_api_shared.ttypes import RequestFailed, Permission
 
 from libtest import codechecker
 from libtest import env

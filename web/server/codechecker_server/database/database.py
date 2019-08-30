@@ -25,7 +25,7 @@ from sqlalchemy.engine.url import URL, make_url
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
 
-from shared.ttypes import DBStatus
+from codechecker_api_shared.ttypes import DBStatus
 
 from codechecker_common.logger import get_logger
 
