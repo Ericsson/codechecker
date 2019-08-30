@@ -17,7 +17,7 @@ from abc import abstractmethod
 
 from sqlalchemy import and_, func
 
-from shared.ttypes import Permission as PermissionEnum
+from codechecker_api_shared.ttypes import Permission as PermissionEnum
 
 from codechecker_common.logger import get_logger
 

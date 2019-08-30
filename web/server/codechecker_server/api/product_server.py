@@ -16,7 +16,7 @@ import random
 
 from sqlalchemy.sql.expression import and_
 
-import shared
+import codechecker_api_shared
 from ProductManagement_v6 import ttypes
 
 from codechecker_common.logger import get_logger
@@ -69,8 +69,8 @@ class ThriftProductHandler(object):
             if not any([permissions.require_permission(
                             perm, args, self.__auth_session)
                         for perm in required]):
-                raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.UNAUTHORIZED,
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
                     "You are not authorized to execute this action.")
 
             return True
@@ -105,7 +105,8 @@ class ThriftProductHandler(object):
             # Try to connect to the product and try to get details again.
             server_product.connect()
 
-            if server_product.db_status == shared.ttypes.DBStatus.OK:
+            if server_product.db_status ==\
+                    codechecker_api_shared.ttypes.DBStatus.OK:
                 num_of_runs, runs_in_progress, latest_store_to_product = \
                     server_product.get_details()
 
@@ -126,6 +127,9 @@ class ThriftProductHandler(object):
                         ProductPermission.product_id == product.id)) \
             .all()
 
+        connected = server_product.db_status ==\
+            codechecker_api_shared.ttypes.DBStatus.OK
+
         return server_product, ttypes.Product(
             id=product.id,
             endpoint=product.endpoint,
@@ -133,7 +137,7 @@ class ThriftProductHandler(object):
             description_b64=descr,
             runCount=num_of_runs,
             latestStoreToProduct=str(latest_store_to_product),
-            connected=server_product.db_status == shared.ttypes.DBStatus.OK,
+            connected=connected,
             accessible=product_access,
             administrating=product_admin,
             databaseStatus=server_product.db_status,
@@ -214,8 +218,9 @@ class ThriftProductHandler(object):
             msg = "Requested current product from ProductService but the " \
                   "request came through the main endpoint."
             LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.IOERROR,
-                                              msg)
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.IOERROR,
+                msg)
 
         with DBSession(self.__session) as session:
             prod = session.query(Product).get(self.__product.id)
@@ -224,8 +229,8 @@ class ThriftProductHandler(object):
                 msg = "The product requested has been disconnected from the " \
                       "server."
                 LOG.error(msg)
-                raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.IOERROR,
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.IOERROR,
                     msg)
 
             _, ret = self.__get_product(session, prod)
@@ -242,8 +247,8 @@ class ThriftProductHandler(object):
             product = session.query(Product).get(product_id)
             if product is None:
                 LOG.error("Product with ID %d does not exist!", product_id)
-                raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.DATABASE, msg)
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
 
             # Put together the database connection's descriptor.
             args = SQLServer.connection_string_to_args(product.connection)
@@ -300,22 +305,25 @@ class ThriftProductHandler(object):
         if not is_valid_product_endpoint(product.endpoint):
             msg = "The specified endpoint is invalid."
             LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.GENERAL,
-                                              msg)
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.GENERAL,
+                msg)
 
         dbc = product.connection
         if not dbc:
             msg = "Product cannot be added without a database configuration!"
             LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.GENERAL,
-                                              msg)
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.GENERAL,
+                msg)
 
         if self.__server.get_product(product.endpoint):
             msg = "A product endpoint '/{0}' is already configured!" \
                 .format(product.endpoint)
             LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.GENERAL,
-                                              msg)
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.GENERAL,
+                msg)
 
         # Some values come encoded as Base64, decode these.
         displayed_name = base64.b64decode(product.displayedName_b64)\
@@ -351,8 +359,9 @@ class ThriftProductHandler(object):
         else:
             msg = "Database engine '{0}' unknown!".format(dbc.engine)
             LOG.error(msg)
-            raise shared.ttypes.RequestFailed(shared.ttypes.ErrorCode.GENERAL,
-                                              msg)
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.GENERAL,
+                msg)
 
         conn_str = SQLServer \
             .from_cmdline_args(conn_str_args, IDENTIFIER, None, False, None) \
@@ -383,8 +392,8 @@ class ThriftProductHandler(object):
 
                 self.__server.remove_product(product.endpoint)
 
-                raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.IOERROR, msg)
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.IOERROR, msg)
 
             LOG.debug("Product database successfully connected to.")
             session.add(orm_prod)
@@ -421,8 +430,8 @@ class ThriftProductHandler(object):
             if product is None:
                 msg = "Product with ID {0} does not exist!".format(product_id)
                 LOG.error(msg)
-                raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.DATABASE, msg)
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
 
             # Editing the metadata of the product, such as display name and
             # description is available for product admins.
@@ -439,21 +448,21 @@ class ThriftProductHandler(object):
             if not dbc:
                 msg = "Product's database configuration cannot be removed!"
                 LOG.error(msg)
-                raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.GENERAL, msg)
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.GENERAL, msg)
 
             if new_config.endpoint != product.endpoint:
                 if not is_valid_product_endpoint(new_config.endpoint):
                     msg = "The endpoint to move the product to is invalid."
                     LOG.error(msg)
-                    raise shared.ttypes.RequestFailed(
-                        shared.ttypes.ErrorCode.GENERAL, msg)
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.GENERAL, msg)
 
                 if self.__server.get_product(new_config.endpoint):
                     LOG.error("A product endpoint '/%s' is already"
                               "configured!", product.endpoint)
-                    raise shared.ttypes.RequestFailed(
-                        shared.ttypes.ErrorCode.GENERAL, msg)
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.GENERAL, msg)
 
                 LOG.info("User renamed product '%s' to '%s'",
                          product.endpoint, new_config.endpoint)
@@ -501,8 +510,8 @@ class ThriftProductHandler(object):
             else:
                 msg = "Database engine '{0}' unknown!".format(dbc.engine)
                 LOG.error(msg)
-                raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.GENERAL,
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.GENERAL,
                     msg)
 
             conn_str = SQLServer \
@@ -548,8 +557,8 @@ class ThriftProductHandler(object):
 
                     self.__server.remove_product(dummy_endpoint)
 
-                    raise shared.ttypes.RequestFailed(
-                        shared.ttypes.ErrorCode.IOERROR, msg)
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.IOERROR, msg)
 
                 # The orm_prod object above is not bound to the database as it
                 # was just created. We use the actual database-backed
@@ -594,8 +603,8 @@ class ThriftProductHandler(object):
             product = session.query(Product).get(product_id)
             if product is None:
                 LOG.erorr("Product with ID %d does not exist!", product_id)
-                raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.DATABASE, msg)
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
 
             LOG.info("User requested to remove product '%s'", product.endpoint)
             self.__server.remove_product(product.endpoint)

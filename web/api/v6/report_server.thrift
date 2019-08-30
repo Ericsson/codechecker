@@ -4,7 +4,7 @@
 //   License. See LICENSE.TXT for details.
 // -------------------------------------------------------------------------
 
-include "shared.thrift"
+include "codechecker_api_shared.thrift"
 
 namespace py codeCheckerDBAccess_v6
 namespace js codeCheckerDBAccess_v6
@@ -320,18 +320,18 @@ service codeCheckerDBAccess {
   RunDataList getRunData(1: RunFilter runFilter,
                          2: optional i64 limit,
                          3: optional i64 offset)
-                         throws (1: shared.RequestFailed requestError),
+                         throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Returns the number of available runs based on the run filter parameter.
   // PERMISSION: PRODUCT_ACCESS
   i64 getRunCount(1: RunFilter runFilter)
-                  throws (1: shared.RequestFailed requestError),
+                  throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Get check command for a run.
   // PERMISSION: PRODUCT_ACCESS
   string getCheckCommand(1: i64 runHistoryId,
                          2: i64 runId)
-                         throws (1: shared.RequestFailed requestError),
+                         throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Get run history for runs.
   // If an empty run id list is provided the history
@@ -341,13 +341,13 @@ service codeCheckerDBAccess {
                                    2: i64       limit,
                                    3: i64       offset,
                                    4: RunHistoryFilter runHistoryFilter)
-                                   throws (1: shared.RequestFailed requestError),
+                                   throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Get the number of run history for runs.
   // PERMISSION: PRODUCT_ACCESS
   i64 getRunHistoryCount(1: list<i64> runIds,
                          2: RunHistoryFilter runHistoryFilter)
-                         throws (1: shared.RequestFailed requestError),
+                         throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Returns report hashes based on the diffType parameter.
   // PERMISSION: PRODUCT_ACCESS
@@ -358,11 +358,11 @@ service codeCheckerDBAccess {
                                   2: list<string> reportHashes,
                                   3: DiffType     diffType,
                                   4: optional list<DetectionStatus> skipDetectionStatuses)
-                                  throws (1: shared.RequestFailed requestError),
+                                  throws (1: codechecker_api_shared.RequestFailed requestError)
 
   // PERMISSION: PRODUCT_ACCESS
   ReportData getReport(1: i64 reportId)
-                       throws (1: shared.RequestFailed requestError),
+                       throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Get the results for some runIds
   // can be used in diff mode if cmpData is set.
@@ -374,7 +374,7 @@ service codeCheckerDBAccess {
                                5: ReportFilter   reportFilter,
                                6: CompareData    cmpData,
                                7: optional bool  getDetails)
-                               throws (1: shared.RequestFailed requestError),
+                               throws (1: codechecker_api_shared.RequestFailed requestError),
 
 
   // Count the results separately for multiple runs.
@@ -385,19 +385,19 @@ service codeCheckerDBAccess {
                                      2: ReportFilter reportFilter,
                                      3: i64          limit,
                                      4: i64          offset)
-                                     throws (1: shared.RequestFailed requestError),
+                                     throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Count all the results some runIds can be used for diff counting.
   // PERMISSION: PRODUCT_ACCESS
   i64 getRunResultCount(1: list<i64>    runIds,
                         2: ReportFilter reportFilter,
                         3: CompareData  cmpData)
-                        throws (1: shared.RequestFailed requestError),
+                        throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // gives back the all marked region and message for a report
   // PERMISSION: PRODUCT_ACCESS
   ReportDetails getReportDetails(1: i64 reportId)
-                                 throws (1: shared.RequestFailed requestError),
+                                 throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // get file information, if fileContent is true the content of the source
   // file will be also returned
@@ -405,7 +405,7 @@ service codeCheckerDBAccess {
   SourceFileData getSourceFileData(1: i64      fileId,
                                    2: bool     fileContent,
                                    3: Encoding encoding)
-                                   throws (1: shared.RequestFailed requestError),
+                                   throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Get line content information for multiple files in different positions.
   // The first key of the map is a file id, the second is a line number:
@@ -413,50 +413,50 @@ service codeCheckerDBAccess {
   // PERMISSION: PRODUCT_ACCESS
   map<i64, map<i64, string>> getLinesInSourceFileContents(1: LinesInFilesRequestedList linesInFilesRequested,
                                                           2: Encoding encoding)
-                                                          throws (1: shared.RequestFailed requestError),
+                                                          throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Return true if review status change is disabled.
   // PERMISSION: PRODUCT_ACCESS or PRODUCT_STORE
   bool isReviewStatusChangeDisabled()
-                                    throws (1: shared.RequestFailed requestError),
+                                    throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // change review status of a bug.
   // PERMISSION: PRODUCT_ACCESS or PRODUCT_STORE
   bool changeReviewStatus(1: i64          reportId,
                           2: ReviewStatus status,
                           3: string       message)
-                          throws (1: shared.RequestFailed requestError),
+                          throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // get comments for a bug
   // PERMISSION: PRODUCT_ACCESS
   CommentDataList getComments(1: i64 reportId)
-                              throws(1: shared.RequestFailed requestError),
+                              throws(1: codechecker_api_shared.RequestFailed requestError),
 
   // count all the comments for one bug
   // PERMISSION: PRODUCT_ACCESS
   i64 getCommentCount(1: i64 reportId)
-                      throws(1: shared.RequestFailed requestError),
+                      throws(1: codechecker_api_shared.RequestFailed requestError),
 
   // add new comment for a bug
   // PERMISSION: PRODUCT_ACCESS
   bool addComment(1: i64 reportId,
                   2: CommentData comment)
-                  throws(1: shared.RequestFailed requestError),
+                  throws(1: codechecker_api_shared.RequestFailed requestError),
 
   // update a comment
   // PERMISSION: PRODUCT_ACCESS
   bool updateComment(1: i64 commentId,
                      2: string newMessage)
-                     throws(1: shared.RequestFailed requestError),
+                     throws(1: codechecker_api_shared.RequestFailed requestError),
 
   // remove a comment
   // PERMISSION: PRODUCT_ACCESS
   bool removeComment(1: i64 commentId)
-                     throws(1: shared.RequestFailed requestError),
+                     throws(1: codechecker_api_shared.RequestFailed requestError),
 
   // get the md documentation for a checker
   string getCheckerDoc(1: string checkerId)
-                       throws (1: shared.RequestFailed requestError),
+                       throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // returns the CodeChecker version that is running on the server
   string getPackageVersion();
@@ -473,19 +473,19 @@ service codeCheckerDBAccess {
   bool removeRunReports(1: list<i64>    runIds,
                         2: ReportFilter reportFilter,
                         3: CompareData  cmpData)
-                        throws (1: shared.RequestFailed requestError),
+                        throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Remove run from the database.
   // PERMISSION: PRODUCT_STORE
   bool removeRun(1: i64 runId)
-                 throws (1: shared.RequestFailed requestError),
+                 throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // get the suppress file path set by the command line
   // !!! DEPRECATED !!!
   // returns empty string if not set
   // PERMISSION: PRODUCT_ACCESS
   string getSuppressFile()
-                        throws (1: shared.RequestFailed requestError),
+                        throws (1: codechecker_api_shared.RequestFailed requestError),
 
 
   // If the run id list is empty the metrics will be counted
@@ -495,7 +495,7 @@ service codeCheckerDBAccess {
   map<Severity, i64> getSeverityCounts(1: list<i64>    runIds,
                                        2: ReportFilter reportFilter,
                                        3: CompareData  cmpData)
-                                       throws (1: shared.RequestFailed requestError),
+                                       throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // If the run id list is empty the metrics will be counted
   // for all of the runs and in compare mode all of the runs
@@ -506,7 +506,7 @@ service codeCheckerDBAccess {
                                        3: CompareData  cmpData,
                                        4: i64          limit,
                                        5: i64          offset)
-                                       throws (1: shared.RequestFailed requestError),
+                                       throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // If the run id list is empty the metrics will be counted
   // for all of the runs and in compare mode all of the runs
@@ -515,7 +515,7 @@ service codeCheckerDBAccess {
   map<ReviewStatus, i64> getReviewStatusCounts(1: list<i64>    runIds,
                                                2: ReportFilter reportFilter,
                                                3: CompareData  cmpData)
-                                               throws (1: shared.RequestFailed requestError),
+                                               throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // If the run id list is empty the metrics will be counted
   // for all of the runs and in compare mode all of the runs
@@ -524,7 +524,7 @@ service codeCheckerDBAccess {
   map<DetectionStatus, i64> getDetectionStatusCounts(1: list<i64>    runIds,
                                                      2: ReportFilter reportFilter,
                                                      3: CompareData  cmpData)
-                                                     throws (1: shared.RequestFailed requestError),
+                                                     throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // If the run id list is empty the metrics will be counted
   // for all of the runs and in compare mode all of the runs
@@ -535,7 +535,7 @@ service codeCheckerDBAccess {
                                  3: CompareData  cmpData,
                                  4: i64          limit,
                                  5: i64          offset)
-                                 throws (1: shared.RequestFailed requestError),
+                                 throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // If the run id list is empty the metrics will be counted
   // for all of the runs and in compare mode all of the runs
@@ -546,7 +546,7 @@ service codeCheckerDBAccess {
                                  3: CompareData  cmpData,
                                  4: i64          limit,
                                  5: i64          offset)
-                                 throws (1: shared.RequestFailed requestError),
+                                 throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // If the run id list is empty the metrics will be counted
   // for all of the runs and in compare mode all of the runs
@@ -555,7 +555,7 @@ service codeCheckerDBAccess {
   RunTagCounts getRunHistoryTagCounts(1: list<i64>    runIds,
                                       2: ReportFilter reportFilter,
                                       3: CompareData  cmpData)
-                                      throws (1: shared.RequestFailed requestError),
+                                      throws (1: codechecker_api_shared.RequestFailed requestError),
 
   //============================================
   // Source component related API calls.
@@ -566,17 +566,17 @@ service codeCheckerDBAccess {
   bool addSourceComponent(1: string name,
                           2: string value,
                           3: string description)
-                          throws (1: shared.RequestFailed requestError),
+                          throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Get source components.
   // PERMISSION: PRODUCT_ACCESS
   SourceComponentDataList getSourceComponents(1: list<string> sourceComponentFilter)
-                                              throws (1: shared.RequestFailed requestError),
+                                              throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Removes a source component.
   // PERMISSION: PRODUCT_ADMIN
   bool removeSourceComponent(1: string name)
-                             throws (1: shared.RequestFailed requestError),
+                             throws (1: codechecker_api_shared.RequestFailed requestError),
 
   //============================================
   // Analysis result storage related API calls.
@@ -588,7 +588,7 @@ service codeCheckerDBAccess {
   // (sha256) and returns the ones which are not stored yet.
   // PERMISSION: PRODUCT_STORE
   list<string> getMissingContentHashes(1: list<string> fileHashes)
-                                       throws (1: shared.RequestFailed requestError),
+                                       throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // This function stores an entire run encapsulated and sent in a ZIP file.
   // The ZIP file has to be compressed and sent as a base64 encoded string. The
@@ -608,20 +608,20 @@ service codeCheckerDBAccess {
                    4: string       zipfile,
                    5: bool         force,
                    6: list<string> trimPathPrefixes)
-                   throws (1: shared.RequestFailed requestError),
+                   throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Returns true if analysis statistics information can be sent to the server,
   // otherwise it returns false.
   // PERMISSION: PRODUCT_STORE
   bool allowsStoringAnalysisStatistics()
-                                       throws (1: shared.RequestFailed requestError),
+                                       throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Returns size limit for each server configuration parameter.
   // The first key of the map is the limit type, the second is the actual limit
   // value in bytes.
   // PERMISSION: PRODUCT_STORE
   map<StoreLimitKind, i64> getAnalysisStatisticsLimits()
-                                                       throws (1: shared.RequestFailed requestError),
+                                                       throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // This function stores analysis statistics information on the server in a
   // directory which specified in the configuration file of the server. These
@@ -630,11 +630,11 @@ service codeCheckerDBAccess {
   // PERMISSION: PRODUCT_STORE
   bool storeAnalysisStatistics(1: string runName
                                2: string zipfile)
-                               throws (1: shared.RequestFailed requestError),
+                               throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Get analysis statistics for a run.
   // PERMISSION: PRODUCT_ACCESS
   AnalyzerStatisticsData getAnalysisStatistics(1: i64 runId,
                                                2: i64 runHistoryId)
-                                               throws (1: shared.RequestFailed requestError),
+                                               throws (1: codechecker_api_shared.RequestFailed requestError),
 }

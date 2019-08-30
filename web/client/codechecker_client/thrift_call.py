@@ -17,7 +17,7 @@ import sys
 from thrift.protocol.TProtocol import TProtocolException
 from thrift.Thrift import TApplicationException
 
-import shared
+import codechecker_api_shared
 
 from codechecker_common.logger import get_logger
 
@@ -37,20 +37,21 @@ def ThriftClientCall(function):
         try:
             res = func(*args, **kwargs)
             return res
-        except shared.ttypes.RequestFailed as reqfailure:
-            if reqfailure.errorCode == shared.ttypes.ErrorCode.DATABASE:
+        except codechecker_api_shared.ttypes.RequestFailed as reqfailure:
+            if reqfailure.errorCode ==\
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE:
                 LOG.error('Database error on server\n%s',
                           str(reqfailure.message))
             elif reqfailure.errorCode ==\
-                    shared.ttypes.ErrorCode.AUTH_DENIED:
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED:
                 LOG.error('Authentication denied\n %s',
                           str(reqfailure.message))
             elif reqfailure.errorCode ==\
-                    shared.ttypes.ErrorCode.UNAUTHORIZED:
+                    codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED:
                 LOG.error('Unauthorized to access\n %s',
                           str(reqfailure.message))
             elif reqfailure.errorCode ==\
-                    shared.ttypes.ErrorCode.API_MISMATCH:
+                    codechecker_api_shared.ttypes.ErrorCode.API_MISMATCH:
                 LOG.error('Client/server API mismatch\n %s',
                           str(reqfailure.message))
             else:

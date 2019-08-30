@@ -15,7 +15,7 @@ import logging
 import os
 import unittest
 
-from shared.ttypes import RequestFailed
+from codechecker_api_shared.ttypes import RequestFailed
 from codeCheckerDBAccess_v6.ttypes import CommentData
 
 from libtest import env

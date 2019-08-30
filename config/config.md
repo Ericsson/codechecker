@@ -3,7 +3,8 @@
 
 ### Checker severity map
 checker_severity_map.json file contains a mapping between a
-checker name and a severity level. Severity levels can be found in the shared.thrift file.
+checker name and a severity level. Severity levels can be found in the
+codechecker_api_shared.thrift file.
 
 The following severity levels are defined:
 

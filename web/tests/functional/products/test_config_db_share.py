@@ -22,7 +22,7 @@ import subprocess
 import time
 import unittest
 
-from shared.ttypes import Permission
+from codechecker_api_shared.ttypes import Permission
 
 from ProductManagement_v6.ttypes import ProductConfiguration
 from ProductManagement_v6.ttypes import DatabaseConnection
