@@ -12,8 +12,6 @@ from __future__ import absolute_import
 
 import shlex
 
-from codechecker_analyzer.env import extend_analyzer_cmd_with_resource_dir
-
 from .. import analyzer_base
 from ..flag import has_flag
 
@@ -30,13 +28,11 @@ def get_compile_command(action, config, source='', output=''):
             action.target[compile_lang] != "":
         cmd.append("--target=" + action.target[compile_lang])
 
-    extend_analyzer_cmd_with_resource_dir(cmd,
-                                          config.compiler_resource_dir)
-
     cmd.extend(action.compiler_includes[compile_lang])
     cmd.append('-c')
     if not has_flag('-x', cmd):
         cmd.extend(['-x', action.lang])
+
     cmd.extend(config.analyzer_extra_arguments)
     cmd.extend(action.analyzer_options)
     if output:
