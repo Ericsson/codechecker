@@ -5,6 +5,7 @@ get results.
 Any new client should only interact with the database through these APIs.
 
 # Table of Contents
+* [Generate API files](#gen-apis)
 * [Available APIs](#available-apis)
     * [Report server](#report-server-api)
     * [Authentication system](#authentication-system-api)
@@ -14,6 +15,12 @@ Any new client should only interact with the database through these APIs.
         * [Minor API improvements](#minor-api-improvements)
         * [Major API changes](#major-api-changes)
     * [How to delete API versions](#how-to-delete-api-versions)
+
+# Generate API files <a name="gen-apis"></a>
+By default the `make` command will use the `thrift-compiler` installed on your
+system to generate API stubs. If you do not have a required `thrift-compiler`
+you can use `docker` to generate Thrift API stubs by set the `BUILD_WITH_DOCKER`
+environment variable to `1`: `BUILD_WITH_DOCKER=1 make -C web/api`.
 
 # Available APIs <a name="available-apis"></a>
 

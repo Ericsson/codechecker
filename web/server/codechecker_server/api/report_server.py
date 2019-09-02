@@ -1393,7 +1393,7 @@ class ThriftRequestHandler(object):
                 user = self.__get_username()
                 comment = Comment(report.bug_id,
                                   user,
-                                  comment_data.message,
+                                  comment_data.message.encode('utf8'),
                                   datetime.now())
 
                 session.add(comment)
@@ -1426,7 +1426,7 @@ class ThriftRequestHandler(object):
                     raise codechecker_api_shared.ttypes.RequestFailed(
                         codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
                         'Unathorized comment modification!')
-                comment.message = content
+                comment.message = content.encode('utf8')
                 session.add(comment)
                 session.commit()
                 return True

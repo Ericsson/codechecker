@@ -2,7 +2,7 @@ VENDOR_DIR = $(shell pwd)
 BUILD_DIR = $(VENDOR_DIR)/build
 
 # Git tag versions of external dependencies.
-THRIFT_VERSION = 0.9.2
+THRIFT_VERSION = 0.11.0
 CODEMIRROR_VERSION = 5.25.0
 JSPLUMB_VERSION = 2.2.0
 MARKED_VERSION = v0.3.3

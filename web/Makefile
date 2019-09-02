@@ -11,7 +11,7 @@ CC_BUILD_DOCS_DIR = $(CC_BUILD_WEB_DIR)/docs
 CC_BUILD_SCRIPTS_DIR = $(CC_BUILD_WEB_DIR)/scripts
 CC_BUILD_API_DIR = $(CC_BUILD_SCRIPTS_DIR)/codechecker-api
 CC_BUILD_WEB_PLUGINS_DIR = $(CC_BUILD_SCRIPTS_DIR)/plugins
-CC_BUILD_GEN_DIR = $(CC_BUILD_LIB_DIR)/codechecker_api
+CC_BUILD_GEN_DIR = $(CC_BUILD_LIB_DIR)/codechecker_api_v6
 
 CC_SERVER = $(CURRENT_DIR)/server/
 CC_CLIENT = $(CURRENT_DIR)/client/
@@ -31,11 +31,6 @@ include server/tests/Makefile
 pip_dev_deps:
 	pip install -r $(VENV_DEV_REQ_FILE)
 
-thrift: build_dir
-	if [ -d "$(BUILD_DIR)/thrift" ]; then rm -rf $(BUILD_DIR)/thrift; fi
-	mkdir $(BUILD_DIR)/thrift
-	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CURRENT_DIR)/api/
-
 venv_dev:
 	# Create a virtual environment for development.
 	virtualenv -p python2 venv_dev && \
@@ -52,11 +47,12 @@ package_dir_structure:
 	mkdir -p $(CC_BUILD_DIR)/bin && \
 	mkdir -p $(CC_BUILD_LIB_DIR)
 
-package_thrift: thrift package_dir_structure
+package_thrift: package_dir_structure
 	mkdir -p $(CC_BUILD_API_DIR) && \
 	mkdir -p $(CC_BUILD_GEN_DIR) && \
-	cp -r $(BUILD_DIR)/thrift/v*/gen-py/* $(CC_BUILD_GEN_DIR) && \
-	cp -r $(BUILD_DIR)/thrift/v*/gen-js/* $(CC_BUILD_API_DIR)
+	cp -r $(CURRENT_DIR)/api/v6/codechecker_api_v6/gen-js/* $(CC_BUILD_API_DIR) && \
+	cp -r $(CURRENT_DIR)/api/v6/codechecker_api_v6/gen-py/* $(CC_BUILD_GEN_DIR) && \
+	mv $(CC_BUILD_GEN_DIR)/codechecker_api_shared $(CC_BUILD_LIB_DIR)
 
 gen_docs: build_dir
 	cd $(ROOT) && \
