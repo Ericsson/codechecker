@@ -15,6 +15,7 @@ from codechecker_common.logger import get_logger
 
 LOG = get_logger('analyzer')
 
+
 def get_analyzer_checkers_cmd(clang_version_info, env, plugins,
                               alpha=True, debug=True):
     """Return the checkers list which depends on the used clang version.
