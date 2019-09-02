@@ -187,6 +187,10 @@ binaries you intend to use.
 },
 ```
 
+Make sure that the required include paths are at the right place!
+Clang based tools search by default for [builtin-includes](https://clang.llvm.org/docs/LibTooling.html#builtin-includes) in a path relative to the tool binary.
+`$(dirname /path/to/tool)/../lib/clang/8.0.0/include`
+
 ## Setting up the environment in your Terminal
 
 These steps must always be taken in a new command prompt you wish to execute

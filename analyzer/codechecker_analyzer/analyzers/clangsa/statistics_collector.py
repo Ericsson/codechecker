@@ -21,8 +21,6 @@ import re
 
 from codechecker_common.logger import get_logger
 
-from codechecker_analyzer.env import extend_analyzer_cmd_with_resource_dir
-
 from ..flag import has_flag
 
 LOG = get_logger('analyzer')
@@ -77,9 +75,6 @@ def build_stat_coll_cmd(action, config, source):
 
     if not has_flag('-std', cmd) and not has_flag('--std', cmd):
         cmd.append(action.compiler_standard.get(compile_lang, ""))
-
-    extend_analyzer_cmd_with_resource_dir(cmd,
-                                          config.compiler_resource_dir)
 
     cmd.extend(action.compiler_includes.get(compile_lang, []))
 
