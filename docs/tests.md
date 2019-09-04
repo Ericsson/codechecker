@@ -72,6 +72,26 @@ From the repository root run the new test template (should pass):
 make TEST="tests/functional/mynewfeature" run_test
 ~~~~~~
 
+## Create c/cpp project and generate test reports
+
+If it is possible generate and add the report files used during
+the test to the repository.
+It will speed up the tests because no analysis is needed, during each test
+and the results will not depend on the analyzer version in the test
+environment.
+
+Make sure to generate plist reports where the source file names do not contain
+the source file path only the source file name because the reports will be
+moved during the tests to temporary directories.
+
+A simple test c/cpp should look like this:
+```
+Makefile              # build and analyze targets for the test source files
+main.cpp              # cpp file with errors in it
+reports/base/*.plist  # first report set used for the tests
+reports/new/*.plist   # second report set used for the tests
+```
+
 ### Modify `__init__.py`
 
 In each functional test `mynewfeature/__init__.py` is doing the functional test setup:  

@@ -10,11 +10,41 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-import os
+import fnmatch
 import json
+import os
 import shlex
+import shutil
 import subprocess
-from . import env
+from . import env, plist_test
+
+
+def prepare(test_project_path, temporary_test_path):
+    """Prepare test project and report files for the tests.
+
+    Copy the test project to the temporary test dir.
+    Modify the report files to point to the source files in the
+    temporary test dir.
+
+    Returns a dict with the path to created temporary project
+    and report directories.
+    """
+    shutil.copytree(test_project_path,
+                    os.path.join(temporary_test_path, "project"))
+
+    test_project = os.path.join(temporary_test_path, "project")
+    test_reports = os.path.join(temporary_test_path, "project", "reports")
+
+    for root, _, filenames in os.walk(test_reports):
+        for filename in fnmatch.filter(filenames, '*.plist'):
+            plist_test.prefix_file_path(os.path.join(root, filename),
+                                        test_project)
+    test_project_data = {
+        "test_project_path": test_project,
+        "test_project_reports": test_reports
+    }
+
+    return test_project_data
 
 
 def get_info(test_project):
