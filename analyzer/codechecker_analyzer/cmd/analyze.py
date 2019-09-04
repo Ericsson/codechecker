@@ -586,9 +586,10 @@ def main(args):
             )
 
     if not actions:
-        LOG.info("None of the specified build log files contained "
-                 "valid compilation commands. No analysis needed...")
-        sys.exit(1)
+        LOG.info("No analysis is required.\nThere were no compilation "
+                 "commands in the provided compilation database or "
+                 "all of them were skipped.")
+        sys.exit(0)
 
     uniqued_compilation_db_file = os.path.join(
         args.output_path, "unique_compile_commands.json")

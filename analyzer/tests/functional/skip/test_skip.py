@@ -48,8 +48,7 @@ class TestSkip(unittest.TestCase):
             shutil.rmtree(self.report_dir)
 
     def test_skip(self):
-        """
-        """
+        """Analyze a project with a skip file."""
         build_json = os.path.join(self.test_workspace, "build.json")
 
         clean_cmd = ["make", "clean"]
