@@ -70,6 +70,7 @@ IGNORED_OPTIONS = [
     '-frerun-cse-after-loop',
     '-fs$',
     '-fsched-spec',
+    '-fstack-reuse',
     '-fthread-jumps',
     '-ftree-pre',
     '-ftree-switch-conversion',
