@@ -817,7 +817,7 @@ def parse_options(compilation_db_entry, compiler_info_file=None):
     details['compiler'] =\
         determine_compiler(gcc_command,
                            ImplicitCompilerInfo.is_executable_compiler)
-    if '++' in details['compiler'] or 'cpp' in details['compiler']:
+    if '++' in os.path.basename(details['compiler']):
         details['lang'] = 'c++'
 
     flag_transformers = [
