@@ -513,11 +513,33 @@ class SessionManager(object):
 
         return None
 
+    def __is_root_user(self, user_name):
+        """ Return True if the given user has system permissions. """
+        transaction = None
+        try:
+            # Try the database, if it is connected.
+            transaction = self.__database_connection()
+            system_permission = transaction.query(SystemPermission) \
+                .filter(SystemPermission.name == user_name) \
+                .limit(1).one_or_none()
+            return True if system_permission else False
+        except Exception as e:
+            LOG.error("Couldn't get system permission from database: ")
+            LOG.error(str(e))
+        finally:
+            if transaction:
+                transaction.close()
+
+        return False
+
     def __create_local_session(self, token, user_name, groups, is_root,
                                last_access=None, can_expire=True):
         """
         Returns a new local session object initalized by the given parameters.
         """
+        if not is_root:
+            is_root = self.__is_root_user(user_name)
+
         return _Session(
             token, user_name, groups,
             self.__auth_config['session_lifetime'],
@@ -642,14 +664,11 @@ class SessionManager(object):
 
             if db_record:
                 user_name = db_record.user_name
-                system_permission = transaction.query(SystemPermission) \
-                    .filter(SystemPermission.name == user_name) \
-                    .limit(1).one_or_none()
+                is_root = self.__is_root_user(user_name)
 
                 groups = db_record.groups.split(';') \
                     if db_record.groups else []
 
-                is_root = True if system_permission else False
                 return self.__create_local_session(token, user_name,
                                                    groups,
                                                    is_root,
