@@ -17,21 +17,45 @@ from .. import config_handler
 LOG = get_logger('analyzer.tidy')
 
 
+def is_warning(checker_name):
+    """
+    Predicate function used to determine whether the checker name signifies a
+    warning.
+    """
+    return checker_name.startswith("W")
+
+
 class ClangTidyConfigHandler(config_handler.AnalyzerConfigHandler):
     """
-    Configuration handler for Clang-tidy analyzer.
+    Configuration handler for Clang-tidy analyzer. Compiler warnings are
+    handled as checkers.
     """
 
     def __init__(self):
         super(ClangTidyConfigHandler, self).__init__()
 
-    def set_checker_enabled(self, checker_name, enabled=True):
+    def initialize_checkers(self,
+                            available_profiles,
+                            package_root,
+                            checkers,
+                            checker_config=None,
+                            cmdline_checkers=None,
+                            enable_all=False):
         """
-        Enable checker, keep description if already set.
+        Extend the available checkers with warnings.
         """
-        if checker_name.startswith("Wno-") or checker_name.startswith("W"):
-            self.add_checker(checker_name, enabled, None)
-            return
 
-        super(ClangTidyConfigHandler, self).set_checker_enabled(checker_name,
-                                                                enabled)
+        if cmdline_checkers is None:
+            cmdline_checkers = []
+
+        for checker_name, _ in cmdline_checkers:
+            if is_warning(checker_name):
+                self.checker_handler().register_checker(checker_name)
+
+        super(ClangTidyConfigHandler, self).initialize_checkers(
+                available_profiles,
+                package_root,
+                checkers,
+                checker_config,
+                cmdline_checkers,
+                enable_all)

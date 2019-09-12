@@ -25,6 +25,7 @@ from ..flag import prepend_all
 from ..clangsa.analyzer import ClangSA
 
 from . import config_handler
+from .config_handler import is_warning
 from . import result_handler
 
 LOG = get_logger('analyzer')
@@ -93,28 +94,26 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             # They can be disabled by this glob -clang-diagnostic-*
             checkers_cmdline = '-*,-clang-analyzer-*,clang-diagnostic-*'
 
-            compiler_warnings = []
-
             # Config handler stores which checkers are enabled or disabled.
-            for checker_name, value in config.checks().items():
-                enabled, _ = value
 
-                # Checker name is a compiler warning.
-                if checker_name.startswith('W'):
-                    warning_name = checker_name[4:] if \
-                        checker_name.startswith('Wno-') else checker_name[1:]
+            # Enable these compiler warnings by default.
+            warnings_cmdline = []
 
-                    if enabled:
-                        compiler_warnings.append('-W' + warning_name)
-                    else:
-                        compiler_warnings.append('-Wno-' + warning_name)
+            checker_handler = config.checker_handler()
+            for checker_name, value in checker_handler.checkers().items():
+                state, _ = value
 
-                    continue
-
-                if enabled:
-                    checkers_cmdline += ',' + checker_name
+                if is_warning(checker_name):
+                    name_stem = checker_name[1:]
+                    if state.is_enabled():
+                        warnings_cmdline.append('-W' + name_stem)
+                    elif state.is_disabled():
+                        warnings_cmdline.append('-Wno-' + name_stem)
                 else:
-                    checkers_cmdline += ',-' + checker_name
+                    if state.is_enabled():
+                        checkers_cmdline += ',' + checker_name
+                    elif state.is_disabled():
+                        checkers_cmdline += ',-' + checker_name
 
             analyzer_cmd.append("-checks='%s'" % checkers_cmdline.lstrip(','))
 
@@ -129,9 +128,6 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd.append('-Qunused-arguments')
 
-            # Enable these compiler warnings by default.
-            analyzer_cmd.extend(['-Wall', '-Wextra'])
-
             compile_lang = self.buildaction.lang
 
             if not has_flag('-x', analyzer_cmd):
@@ -145,6 +141,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd.extend(self.buildaction.analyzer_options)
 
+            analyzer_cmd.extend(warnings_cmdline)
+
             analyzer_cmd.extend(prepend_all(
                 '-isystem',
                 self.buildaction.compiler_includes[compile_lang]))
@@ -153,8 +151,6 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                     has_flag('--std', analyzer_cmd):
                 analyzer_cmd.append(
                     self.buildaction.compiler_standard.get(compile_lang, ""))
-
-            analyzer_cmd.extend(compiler_warnings)
 
             return analyzer_cmd
 

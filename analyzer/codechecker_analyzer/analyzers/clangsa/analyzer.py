@@ -160,9 +160,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd = [config.analyzer_binary, '--analyze',
                             # Do not warn about the unused gcc/g++ arguments.
-                            '-Qunused-arguments',
-                            # Turn off clang hardcoded checkers list.
-                            '--analyzer-no-default-checks']
+                            '-Qunused-arguments']
 
             for plugin in config.analyzer_plugins:
                 analyzer_cmd.extend(["-Xclang", "-plugin",
@@ -190,12 +188,14 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                     analyzer_cmd.extend(cfg)
 
             # Config handler stores which checkers are enabled or disabled.
-            for checker_name, value in config.checks().items():
-                enabled, _ = value
-                if enabled:
+            checker_handler = config.checker_handler()
+            for checker_name, value in checker_handler.checkers().items():
+                state, _ = value
+
+                if state.is_enabled():
                     analyzer_cmd.extend(['-Xclang',
                                          '-analyzer-checker=' + checker_name])
-                else:
+                elif state.is_disabled():
                     analyzer_cmd.extend(['-Xclang',
                                          '-analyzer-disable-checker=' +
                                          checker_name])

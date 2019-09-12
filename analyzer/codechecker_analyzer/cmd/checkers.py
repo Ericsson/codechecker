@@ -218,6 +218,7 @@ def main(args):
     analyzer_config_map = analyzer_types.build_config_handlers(args,
                                                                context,
                                                                working)
+
     # List available checker profiles.
     if 'profile' in args and args.profile == 'list':
         if 'details' not in args:
@@ -281,25 +282,35 @@ def main(args):
                                            default_checker_cfg,
                                            profile_checkers)
 
-        for checker_name, value in config_handler.checks().items():
-            enabled, description = value
+        checker_handler = config_handler.checker_handler()
 
-            if not enabled and 'profile' in args:
+        for checker_name, value in checker_handler.checkers().items():
+            state, description = value
+
+            if state.is_enabled() and 'profile' in args:
                 continue
 
-            if enabled and 'only_disabled' in args:
-                continue
-            elif not enabled and 'only_enabled' in args:
-                continue
+            if state.is_auto():
+                enabled_output = 'd' if args.output_format != 'json' \
+                    else str(state)
 
-            if args.output_format != 'json':
-                enabled = '+' if enabled else '-'
+            elif state.is_enabled():
+                if 'only_disabled' in args:
+                    continue
+                enabled_output = '+' if args.output_format == 'json' \
+                    else str(state)
+
+            elif state.is_auto():
+                if 'only_enabled' in args:
+                    continue
+                enabled_output = '-' if args.output_format != 'json' \
+                    else str(state)
 
             if 'details' not in args:
                 rows.append([checker_name])
             else:
                 severity = context.severity_map.get(checker_name)
-                rows.append([enabled, checker_name, analyzer,
+                rows.append([enabled_output, checker_name, analyzer,
                              severity, description])
 
         show_warnings = True if 'show_warnings' in args and \

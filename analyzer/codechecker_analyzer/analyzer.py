@@ -172,7 +172,8 @@ def perform_analysis(args, skip_handler, context, actions, metadata):
     # Collect all the available checkers from the enabled analyzers.
     for analyzer in config_map.items():
         _, analyzer_cfg = analyzer
-        for analyzer_checker in analyzer_cfg.checks().items():
+        checker_handler = analyzer_cfg.checker_handler()
+        for analyzer_checker in checker_handler.checkers().items():
             checker_name, _ = analyzer_checker
             available_checkers.add(checker_name)
 
@@ -186,21 +187,23 @@ def perform_analysis(args, skip_handler, context, actions, metadata):
                         "In the next release the analysis will not start "
                         "with invalid checker names.")
 
-    if 'stats_enabled' in args:
-        config_map[ClangSA.ANALYZER_NAME].set_checker_enabled(
-            SpecialReturnValueCollector.checker_analyze)
-
-        config_map[ClangSA.ANALYZER_NAME].set_checker_enabled(
-            ReturnValueCollector.checker_analyze)
-
-    # Statistics collector checkers must be explicitly disabled
-    # as they trash the output.
     if "clangsa" in analyzers:
-        config_map[ClangSA.ANALYZER_NAME].set_checker_enabled(
-            SpecialReturnValueCollector.checker_collect, False)
+        clangsa_checkers = config_map[ClangSA.ANALYZER_NAME].checker_handler()
 
-        config_map[ClangSA.ANALYZER_NAME].set_checker_enabled(
-            ReturnValueCollector.checker_collect, False)
+        # Statistics collector checkers must be explicitly disabled
+        # as they trash the output.
+        clangsa_checkers.disable_matching_checkers(
+            SpecialReturnValueCollector.checker_collect)
+
+        clangsa_checkers.disable_matching_checkers(
+            ReturnValueCollector.checker_collect)
+
+        if 'stats_enabled' in args:
+            clangsa_checkers.enable_matching_checkers(
+                SpecialReturnValueCollector.checker_analyze)
+
+            clangsa_checkers.enable_matching_checkers(
+                ReturnValueCollector.checker_analyze)
 
     # Save some metadata information.
     versions = __get_analyzer_version(context, config_map)
@@ -210,9 +213,12 @@ def perform_analysis(args, skip_handler, context, actions, metadata):
     for analyzer in analyzers:
         metadata['checkers'][analyzer] = {}
 
-        for check, data in config_map[analyzer].checks().items():
-            enabled, _ = data
-            metadata['checkers'][analyzer].update({check: enabled})
+        checker_handler = config_map[analyzer].checker_handler()
+
+        for check, data in checker_handler.checkers().items():
+            state, _ = data
+            metadata['checkers'][analyzer].update(
+                {check: str(state)})
 
     if ctu_collect:
         shutil.rmtree(ctu_dir, ignore_errors=True)
