@@ -15,7 +15,7 @@ make package
 
 ## Usage
 ```sh
-usage: warn-to-plist [-h] -o OUTPUT_DIR -t TYPE [-v] [file]
+usage: warn-to-plist [-h] -o OUTPUT_DIR -t TYPE [-c] [-v] [file]
 
 Creates a CodeChecker report directory from the given code analyzer output
 which can be stored to a CodeChecker web server.
@@ -33,6 +33,7 @@ optional arguments:
                         report directory files.
   -t TYPE, --type TYPE  Specify the format of the code analyzer output.
                         Currently supported output types are: clang-tidy.
+  -c, --clean           Delete files stored in the output directory.
   -v, --verbose         Set verbosity level. (default: False)
 ```
 

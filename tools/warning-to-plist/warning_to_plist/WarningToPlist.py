@@ -12,6 +12,7 @@ from __future__ import absolute_import
 import argparse
 import logging
 import os
+import shutil
 import sys
 
 from .converter.clang_tidy.plist_converter import ClangTidyPlistConverter
@@ -29,7 +30,7 @@ supported_converters = {
     ClangTidyPlistConverter.TOOL_NAME: ClangTidyPlistConverter}
 
 
-def output_to_plist(output, parser_type, output_dir):
+def output_to_plist(output, parser_type, output_dir, clean=False):
     """ Creates .plist files from the given output to the given output dir. """
     plist_converter = supported_converters[parser_type]()
     messages = plist_converter.parse_messages(output)
@@ -44,6 +45,11 @@ def output_to_plist(output, parser_type, output_dir):
         if m.path not in converters:
             converters[m.path] = supported_converters[parser_type]()
         converters[m.path].add_messages([m])
+
+    if clean and os.path.isdir(output_dir):
+        LOG.info("Previous analysis results in '%s' have been removed, "
+                 "overwriting with current result", output_dir)
+        shutil.rmtree(output_dir)
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -88,6 +94,13 @@ def __add_arguments_to_parser(parser):
                              "Currently supported output types are: " +
                               ', '.join(supported_converters) + ".")
 
+    parser.add_argument('-c', '--clean',
+                        dest="clean",
+                        required=False,
+                        action='store_true',
+                        default=argparse.SUPPRESS,
+                        help="Delete files stored in the output directory.")
+
     parser.add_argument('-v', '--verbose',
                         action='store_true',
                         dest='verbose',
@@ -116,7 +129,9 @@ def main():
     else:
         output = sys.stdin.readlines()
 
-    output_to_plist(output, args.type, args.output_dir)
+    clean = True if 'clean' in args else False
+
+    output_to_plist(output, args.type, args.output_dir, clean)
 
 
 if __name__ == "__main__":
