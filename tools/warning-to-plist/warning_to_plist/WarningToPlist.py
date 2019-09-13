@@ -15,8 +15,11 @@ import os
 import shutil
 import sys
 
-from .converter.sanitizers.ub.plist_converter import UBSANPlistConverter
 from .converter.clang_tidy.plist_converter import ClangTidyPlistConverter
+from .converter.sanitizers.address.plist_converter import ASANPlistConverter
+from .converter.sanitizers.memory.plist_converter import MSANPlistConverter
+from .converter.sanitizers.thread.plist_converter import TSANPlistConverter
+from .converter.sanitizers.ub.plist_converter import UBSANPlistConverter
 
 LOG = logging.getLogger('WarningToPlist')
 
@@ -29,6 +32,9 @@ LOG.addHandler(log_handler)
 
 supported_converters = {
     ClangTidyPlistConverter.TOOL_NAME: ClangTidyPlistConverter,
+    MSANPlistConverter.TOOL_NAME: MSANPlistConverter,
+    ASANPlistConverter.TOOL_NAME: ASANPlistConverter,
+    TSANPlistConverter.TOOL_NAME: TSANPlistConverter,
     UBSANPlistConverter.TOOL_NAME: UBSANPlistConverter}
 
 

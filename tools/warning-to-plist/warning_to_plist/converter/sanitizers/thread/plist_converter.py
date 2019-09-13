@@ -10,17 +10,17 @@ from __future__ import division
 from __future__ import absolute_import
 
 from ...plist_converter import PlistConverter
-from .output_parser import UBSANOutputParser
+from .output_parser import TSANOutputParser
 
 
-class UBSANPlistConverter(PlistConverter):
+class TSANPlistConverter(PlistConverter):
     """ Warning messages to plist converter. """
 
-    TOOL_NAME = 'ubsan'
+    TOOL_NAME = 'tsan'
 
     def parse_messages(self, output):
         """ Parse the given output. """
-        parser = UBSANOutputParser()
+        parser = TSANOutputParser()
         return parser.parse_messages(output)
 
     def _get_checker_category(self, checker):

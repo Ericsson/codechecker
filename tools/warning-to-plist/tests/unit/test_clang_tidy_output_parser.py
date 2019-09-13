@@ -127,6 +127,7 @@ def setup_module():
             'use nullptr',
             'modernize-use-nullptr',
             None,
+            None,
             [Event(
                 os.path.abspath('files/test3.cpp'),
                 4, 12,

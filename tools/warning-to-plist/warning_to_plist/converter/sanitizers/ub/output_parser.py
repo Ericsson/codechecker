@@ -13,12 +13,13 @@ import logging
 import os
 import re
 
-from ...output_parser import get_next, Message, Event, OutputParser
+from ...output_parser import get_next, Message, Event
+from ..output_parser import SANOutputParser
 
 LOG = logging.getLogger('WarningToPlist')
 
 
-class UBSANOutputParser(OutputParser):
+class UBSANOutputParser(SANOutputParser):
     """ Parser for Clang UndefinedBehaviourSanitizer console outputs.
 
     Example output
@@ -39,25 +40,22 @@ class UBSANOutputParser(OutputParser):
             # Checker message.
             r'(?P<message>[\S \t]+)')
 
-        # Regex for parsing stack trace line.
-        # It has the following format:
-        #     #1 0x42a51d in main /dummy/main.cpp:24:2
-        self.ub_stack_trace_re = re.compile(r'^\s+#\d+')
+    def parse_stack_trace(self, it, line):
+        """ Iterate over lines and parse stack traces. """
+        events = []
+        stack_traces = []
 
-        self.file_re = re.compile(
-            r'(?P<path>[\S]+?):(?P<line>\d+)(:(?P<column>\d+))?')
+        while self.stack_trace_re.match(line):
+            event = self.parse_stack_trace_line(line)
+            if event:
+                events.append(event)
 
-    def parse_message(self, it, line):
-        """Parse the given line.
+            stack_traces.append(line)
+            line = get_next(it)
 
-        Returns a (message, next_line) pair or throws a StopIteration.
-        The message could be None.
-        """
-        message, next_line = self.parse_sanitizer_message(it, line)
-        if message:
-            return message, next_line
+        events.reverse()
 
-        return None, next(it)
+        return stack_traces, events, line
 
     def parse_sanitizer_message(self, it, line):
         """ Parses UndefinedBehaviorSanitizer output message. """
@@ -69,26 +67,8 @@ class UBSANOutputParser(OutputParser):
         report_line = int(match.group('line'))
         report_col = int(match.group('column'))
 
-        events = []
-        stack_traces = []
-
         line = get_next(it)
-
-        # Read lines while it is a stack trace.
-        while self.ub_stack_trace_re.match(line):
-            file_match = self.file_re.search(line)
-            if file_match:
-                file_path = file_match.group('path')
-                if file_path and os.path.exists(file_path):
-                    events.append(Event(file_path,
-                                        int(file_match.group('line')),
-                                        int(file_match.group('column')),
-                                        line.rstrip()))
-
-            stack_traces.append(line)
-            line = get_next(it)
-
-        events.reverse()
+        stack_traces, events, line = self.parse_stack_trace(it, line)
 
         notes = []
         if stack_traces:

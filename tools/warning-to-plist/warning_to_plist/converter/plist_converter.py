@@ -122,8 +122,7 @@ class PlistConverter(object):
                 'description': message.message,
                 'category': self._get_checker_category(message.checker),
                 'type': self._get_analyzer_type(),
-                'path': [],
-                'notes': []}
+                'path': []}
 
         self.__add_fixits(diag, message, fmap)
         self.__add_events(diag, message, fmap)
@@ -149,8 +148,10 @@ class PlistConverter(object):
 
     def __add_notes(self, diag, message, fmap):
         """ Adds notes to the diagnostics. """
-        for note in message.notes:
-            diag['notes'].append(self._create_note(note, fmap))
+        if not message.notes:
+            return
+
+        diag['notes'] = [self._create_note(n, fmap) for n in message.notes]
 
     def __add_events(self, diag, message, fmap):
         """ Adds events to the diagnostics.
