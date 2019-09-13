@@ -144,9 +144,6 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd.extend(self.buildaction.analyzer_options)
 
-            env.extend_analyzer_cmd_with_resource_dir(
-                analyzer_cmd, config.compiler_resource_dir)
-
             analyzer_cmd.extend(
                 self.buildaction.compiler_includes[compile_lang])
 
