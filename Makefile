@@ -137,7 +137,7 @@ clean_venv_dev:
 
 clean: clean_package clean_vendor
 
-clean_package: clean_plist_to_html clean_tu_collector
+clean_package: clean_plist_to_html clean_tu_collector clean_warning_to_plist
 	rm -rf $(BUILD_DIR)
 	find . -name "*.pyc" -delete
 
@@ -149,6 +149,9 @@ clean_plist_to_html:
 
 clean_tu_collector:
 	$(MAKE) -C $(CC_TOOLS)/tu_collector clean
+
+clean_warning_to_plist:
+	$(MAKE) -C $(CC_TOOLS)/warning-to-plist clean
 
 clean_travis:
 	# Clean CodeChecker config files stored in the users home directory.
