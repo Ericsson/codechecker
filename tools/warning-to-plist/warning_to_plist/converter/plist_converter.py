@@ -59,6 +59,13 @@ class PlistConverter(object):
                 'depth': 0,
                 'message': msg.message}
 
+    def _create_note(self, msg, fmap):
+        """ Create a note from the given message. """
+        return {'kind': 'note',
+                'location': self._create_location(msg, fmap),
+                'depth': 0,
+                'message': msg.message}
+
     def _create_edge(self, start_msg, end_msg, fmap):
         """ Create an edge between the start and end messages. """
         start_loc = self._create_location(start_msg, fmap)
@@ -115,10 +122,12 @@ class PlistConverter(object):
                 'description': message.message,
                 'category': self._get_checker_category(message.checker),
                 'type': self._get_analyzer_type(),
-                'path': []}
+                'path': [],
+                'notes': []}
 
         self.__add_fixits(diag, message, fmap)
         self.__add_events(diag, message, fmap)
+        self.__add_notes(diag, message, fmap)
 
         # The original message should be the last part of the path. This is
         # displayed by quick check, and this is the main event displayed by
@@ -137,6 +146,11 @@ class PlistConverter(object):
             mf = copy.deepcopy(fixit)
             mf.message = '%s (fixit)' % fixit.message
             diag['path'].append(self._create_event(mf, fmap))
+
+    def __add_notes(self, diag, message, fmap):
+        """ Adds notes to the diagnostics. """
+        for note in message.notes:
+            diag['notes'].append(self._create_note(note, fmap))
 
     def __add_events(self, diag, message, fmap):
         """ Adds events to the diagnostics.

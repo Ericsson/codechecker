@@ -15,6 +15,7 @@ import os
 import shutil
 import sys
 
+from .converter.sanitizers.ub.plist_converter import UBSANPlistConverter
 from .converter.clang_tidy.plist_converter import ClangTidyPlistConverter
 
 LOG = logging.getLogger('WarningToPlist')
@@ -27,7 +28,8 @@ LOG.addHandler(log_handler)
 
 
 supported_converters = {
-    ClangTidyPlistConverter.TOOL_NAME: ClangTidyPlistConverter}
+    ClangTidyPlistConverter.TOOL_NAME: ClangTidyPlistConverter,
+    UBSANPlistConverter.TOOL_NAME: UBSANPlistConverter}
 
 
 def output_to_plist(output, parser_type, output_dir, clean=False):

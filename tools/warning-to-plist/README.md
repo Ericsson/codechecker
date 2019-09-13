@@ -37,6 +37,34 @@ optional arguments:
   -v, --verbose         Set verbosity level. (default: False)
 ```
 
+## Sanitizers
+### Undefined Behaviour Sanitizer
+- Compile with `-g` and `-fno-omit-frame-pointer` to get proper debug
+  information in your binary.
+- Run your program with environment variable
+  `UBSAN_OPTIONS=print_stacktrace=1`.
+- Set the `UBSAN_SYMBOLIZER_PATH` environment variable to point to the
+  `llvm-symbolizer` binary (or make sure `llvm-symbolizer` is in your `$PATH`).
+- Run the `warning-to-plist` converter from the directory where your binary
+  is because the output of the `UndefinedBehaviorSanitizer` will contain
+  relative paths.
+
+```sh
+# Compiler your program.
+clang++ -fsanitize=undefined -g -fno-omit-frame-pointer ubsanitizer.cpp
+
+# Run your program and redirect the output to a file.
+UBSAN_OPTIONS=print_stacktrace=1 \
+UBSAN_SYMBOLIZER_PATH=/usr/lib/llvm-6.0/bin/llvm-symbolizer \
+./a.out > ubsan.output 2>&1
+
+# Generate plist files from the output.
+warning-to-plist -t ub-sanitizer -o ./ubsan_results ubsan.output
+```
+
+For more information
+[see](https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html).
+
 ## License
 
 The project is licensed under University of Illinois/NCSA Open Source License.

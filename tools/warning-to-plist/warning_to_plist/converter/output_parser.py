@@ -44,22 +44,25 @@ class Message(Event):
     """ Represents a message with an optional event and fixit messages. """
 
     def __init__(self, path, line, column, message, checker, events=None,
-                 fixits=None):
+                 notes=None, fixits=None):
         super(Message, self).__init__(path, line, column, message)
         self.checker = checker
         self.events = events if events else []
+        self.notes = notes if notes else []
         self.fixits = fixits if fixits else []
 
     def __eq__(self, other):
         return super(Message, self).__eq__(other) and \
             self.checker == other.checker and \
             self.events == other.events and \
+            self.notes == other.notes and \
             self.fixits == other.fixits
 
     def __str__(self):
-        return '%s, checker=%s, events=%s, fixits=%s' % \
+        return '%s, checker=%s, events=%s, notes=%s, fixits=%s' % \
                (super(Message, self).__str__(), self.checker,
                 [str(event) for event in self.events],
+                [str(note) for note in self.notes],
                 [str(fixit) for fixit in self.fixits])
 
 
