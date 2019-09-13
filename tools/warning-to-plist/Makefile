@@ -33,6 +33,8 @@ venv_dev:
 clean_venv_dev:
 	rm -rf venv_dev
 
+include tests/Makefile
+
 package:
 	# Install package in 'development mode'.
 	python setup.py develop
