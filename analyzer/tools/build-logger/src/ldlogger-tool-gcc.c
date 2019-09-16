@@ -321,7 +321,7 @@ int loggerGccParserCollectActions(
          * TODO: According to a GCC warning the -x flag has no effect when it
          * is placed after the last input file to be compiled.
          */
-        const char* l = current[2] ? current[2] : argv_[i + 1];
+        const char* l = current[2] ? current + 2 : argv_[i + 1];
         if (strcmp(l, "c") == 0 || strcmp(l, "c-header") == 0)
           lang = C;
         else if (strcmp(l, "c++") == 0 || strcmp(l, "c++-header") == 0)
@@ -337,7 +337,7 @@ int loggerGccParserCollectActions(
       {
         loggerFileInitFromPath(
           &action->output,
-          current[2] ? current[2] : argv_[i + 1]);
+          current[2] ? current + 2 : argv_[i + 1]);
       }
     }
     else
