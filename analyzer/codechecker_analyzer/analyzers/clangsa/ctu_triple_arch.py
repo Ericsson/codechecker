@@ -10,8 +10,6 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-import shlex
-
 from .. import analyzer_base
 from ..flag import has_flag
 
@@ -46,6 +44,23 @@ def get_compile_command(action, config, source='', output=''):
     return cmd
 
 
+def _find_arch_in_command(output):
+    # Sometimes this output can't be split by shlex.split(), because the
+    # words of the command are surrounded with quotation mark thus it can
+    # odd number of unescaped quotation marks in case the original command
+    # included one. (By the way this crash happened at a user.)
+    # Anyway the normal split() is enough for us because we just need to find
+    # -triple flag and its parameter. These don't contain any special
+    # characters that justifies the usage of shlex.split().
+    res_cmd = map(lambda x: x.strip('"'), output.split())
+
+    try:
+        arch = res_cmd[res_cmd.index('-triple') + 1]
+        return arch.split('-')[0]
+    except ValueError:
+        pass
+
+
 def get_triple_arch(action, source, config, env):
     """Returns the architecture part of the target triple for the given
     compilation command. """
@@ -55,12 +70,8 @@ def get_triple_arch(action, source, config, env):
     _, stdout, stderr = analyzer_base.SourceAnalyzer.run_proc(cmd,
                                                               env,
                                                               action.directory)
-    last_line = (stdout + stderr).splitlines()[-1]
-    res_cmd = shlex.split(last_line)
-    arch = ""
-    i = 0
-    while i < len(res_cmd) and res_cmd[i] != "-triple":
-        i += 1
-    if i < (len(res_cmd) - 1):
-        arch = res_cmd[i + 1].split("-")[0]
-    return arch
+
+    # The -### flag in a Clang invocation emits the commands of substeps in a
+    # build process (compilation phase, link phase, etc.). If there is -c flag
+    # in the build command then there is no linking.
+    return _find_arch_in_command(stdout + stderr) or ""
