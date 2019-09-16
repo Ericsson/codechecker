@@ -16,7 +16,7 @@ CC = gcc
 # Preprocessor flags
 CPPFLAGS = -D_GNU_SOURCE
 # C flags
-CFLAGS = -std=c89 -ansi -pedantic -Wall -Wextra -O2
+CFLAGS = -std=c99 -pedantic -Wall -Wextra -O2
 # Linker flags
 LDFLAGS =
 # Flags for ldlogger lib
