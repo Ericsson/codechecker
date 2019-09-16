@@ -65,7 +65,6 @@ static void tryLog(
 {
   size_t i;
   const char* loggerArgs[CC_LOGGER_MAX_ARGS];
-  char* ldpreload;
 
   loggerArgs[0] = filename_;
   for (i = 0; argv_[i]; ++i)
@@ -74,7 +73,7 @@ static void tryLog(
   }
   loggerArgs[i+1] = NULL;
 
-  logExec(i+1, (char* const*) loggerArgs);
+  logExec(i+1, loggerArgs);
 }
 
 __attribute__ ((visibility ("default"))) int execv(const char* filename_, char* const argv_[])
