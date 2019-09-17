@@ -30,6 +30,26 @@ EOF
 
 #--- Test functions ---#
 
+function test_compiler_path1 {
+  IFS=':' read -ra my_array <<< $PATH
+  compiler=$(find ${my_array[@]} -name g++-* -print -quit)
+
+  if [ -n $compiler ]; then
+    CC_LOGGER_GCC_LIKE="g++-" bash -c "$compiler $source_file"
+    assert_json "$source_file" $compiler
+  fi
+}
+
+function test_compiler_path2 {
+  IFS=':' read -ra my_array <<< $PATH
+  compiler=$(find ${my_array[@]} -name g++-* -print -quit)
+
+  if [ -n $compiler ]; then
+    CC_LOGGER_GCC_LIKE="/g++-" bash -c "$compiler $source_file"
+    test ! -s $CC_LOGGER_FILE
+  fi
+}
+
 function test_simple {
   bash -c "g++ $source_file"
 

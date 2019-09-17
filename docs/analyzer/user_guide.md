@@ -307,6 +307,23 @@ For example (default):
 export CC_LOGGER_GCC_LIKE="gcc:g++:clang"
 ```
 
+This colon separated list may contain compiler names or paths. In case an
+element of this list contains at least one slash (/) character then this is
+considered a path. The logger will capture only those build actions which have
+this postfix:
+
+```sh
+export CC_LOGGER_GCC_LIKE="gcc:/bin/g++"
+
+# "gcc" has to be infix of the compiler's name because it contains no slash.
+# "/bin/g++" has to be postfix of the compiler's path because it contains slash.
+
+my/gcc/compiler/g++ main.cpp  # Not captured because there is no match.
+my/gcc/compiler/gcc-7 main.c  # Captured because "gcc" is infix of "gcc-7".
+/usr/bin/g++ main.cpp         # Captured because "/bin/g++" is postfix of the compiler path.
+/usr/bin/g++-7 main.cpp       # Not captured because "/bin/g++" is not postfix of the compiler path.
+```
+
 Example:
 
 ```sh
