@@ -154,8 +154,6 @@ class TestAnalyze(unittest.TestCase):
                 self.assertEquals(len(data), 2)
                 self.assertTrue("clang++" in data)
                 self.assertTrue("g++" in data)
-                self.assertEqual(
-                    data["clang++"]['c++']["compiler_includes"][0], "-isystem")
             except ValueError:
                 self.fail("json.load should successfully parse the file %s"
                           % info_File)

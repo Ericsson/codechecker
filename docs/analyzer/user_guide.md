@@ -79,7 +79,8 @@ subcommand.
 
 ```
 usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-t {plist}] [-q] [-f]
-                         (-b COMMAND | -l LOGFILE) [-j JOBS] [-c]
+                         [--skip-gcc-fix-include] (-b COMMAND | -l LOGFILE)
+                         [-j JOBS] [-c]
                          [--compile-uniqueing COMPILE_UNIQUEING]
                          [--report-hash {context-free}] [-i SKIPFILE]
                          [--analyzers ANALYZER [ANALYZER ...]]
@@ -113,6 +114,11 @@ optional arguments:
                         coming from files not affected by the analysis, and
                         only incrementally update defect reports for source
                         files that were analysed.)
+  --skip-gcc-fix-include
+                        DEPRECATED. There are some implicit include paths which
+                        are only used by GCC (include-fixed). This flag
+                        determines whether these should be skipped from the
+                        implicit include paths. (default: False)
   --compile-uniqueing COMPILE_UNIQUEING
                         Specify the method the compilation actions in the
                         compilation database are uniqued before analysis. CTU
@@ -387,7 +393,7 @@ below:
 ```
 usage: CodeChecker analyze [-h] [-j JOBS] [-i SKIPFILE] -o OUTPUT_PATH
                            [--compiler-info-file COMPILER_INFO_FILE]
-                           [-t {plist}] [-q] [-c]
+                           [--skip-gcc-fix-include] [-t {plist}] [-q] [-c]
                            [--compile-uniqueing COMPILE_UNIQUEING]
                            [--report-hash {context-free}] [-n NAME]
                            [--analyzers ANALYZER [ANALYZER ...]]
@@ -427,6 +433,11 @@ optional arguments:
                         Read the compiler includes and target from the
                         specified file rather than invoke the compiler
                         executable.
+  --skip-gcc-fix-include
+                        DEPRECATED. There are some implicit include paths which
+                        are only used by GCC (include-fixed). This flag
+                        determines whether these should be skipped from the
+                        implicit include paths. (default: False)
   -t {plist}, --type {plist}, --output-format {plist}
                         Specify the format the analysis results should use.
                         (default: plist)
@@ -607,6 +618,11 @@ recorded int the `<report-directory>/compiler_info.json`.
 If you want to run the analysis with a specific compiler configuration
 instead of the auto-detection you can pass that to the
 `--compiler-info-file compiler_info.json` parameter.
+
+There are some implicit include paths (for example those which contain
+`include-fixed` directory) which are used only by GCC. By default CodeChecker
+doesn't collect them if `--skip-gcc-fix-include` flag is given. For
+further information see [GCC incompatibilities](gcc_incompatibilities.md).
 
 #### Forwarding compiler options <a name="forwarding-compiler-options"></a>
 
