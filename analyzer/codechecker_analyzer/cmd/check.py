@@ -108,6 +108,17 @@ def add_arguments_to_parser(parser):
                              "incrementally update defect reports for source "
                              "files that were analysed.)")
 
+    parser.add_argument('--skip-gcc-fix-include',
+                        dest="skip_gcc_fix_include",
+                        required=False,
+                        action='store_true',
+                        default=False,
+                        help="DEPRECATED. There are some implicit include "
+                             "paths which are only used by GCC "
+                             "(include-fixed). This flag determines whether "
+                             "these should be skipped from the implicit "
+                             "include paths.")
+
     log_args = parser.add_argument_group(
         "log arguments",
         """
@@ -580,7 +591,8 @@ def main(args):
             logfile=[logfile],
             output_path=output_dir,
             output_format='plist',
-            jobs=args.jobs
+            jobs=args.jobs,
+            skip_gcc_fix_include=args.skip_gcc_fix_include
         )
         # Some arguments don't have default values.
         # We can't set these keys to None because it would result in an error

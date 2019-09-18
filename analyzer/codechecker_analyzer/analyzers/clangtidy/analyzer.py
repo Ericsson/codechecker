@@ -21,6 +21,7 @@ from codechecker_analyzer import env
 
 from .. import analyzer_base
 from ..flag import has_flag
+from ..flag import prepend_all
 from ..clangsa.analyzer import ClangSA
 
 from . import config_handler
@@ -144,8 +145,9 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd.extend(self.buildaction.analyzer_options)
 
-            analyzer_cmd.extend(
-                self.buildaction.compiler_includes[compile_lang])
+            analyzer_cmd.extend(prepend_all(
+                '-isystem',
+                self.buildaction.compiler_includes[compile_lang]))
 
             if not has_flag('-std', analyzer_cmd) and not \
                     has_flag('--std', analyzer_cmd):
