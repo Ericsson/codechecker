@@ -890,6 +890,11 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
             + " while the last function " + "was "
             + stack.funcStack[stack.funcStack.length - 1]);
         }
+      } else if (msg === "Returned allocated memory") {
+        stack.funcStack.pop();
+        stack.background = this._highlight_colours[
+          stack.funcStack.length % this._highlight_colours.length];
+        highlight.iconOverride = "returning";
       } else if (msg.startsWith("Assuming the condition")) {
         highlight.iconOverride = "assume_switch";
       } else if (msg.startsWith("Assuming")) {
