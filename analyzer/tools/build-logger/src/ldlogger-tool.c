@@ -10,6 +10,7 @@
 
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 
 #define PROG_LIST_SEPARATOR ":"
 
@@ -20,15 +21,19 @@ extern char** environ;
  * to match to the given program name. If one program matches (from the list)
  * to the given program name, then it will return a non zero value.
  *
+ * If a (PROG_LIST_SEPARATOR separated) member of the envVar_ contains a slash
+ * character then we assume that this is a postfix of a compiler's path.
+ * Otherwise we assume that this is an infix of a compier's name.
+ *
  * On any error or mismatch the function returns 0.
  *
  * @param envVar_ the name of environment variable.
- * @param progName_ program name to match.
+ * @param progPath_ program path to match.
  * @return non zero on match, 0 otherwise
  */
 static int matchToProgramList(
   const char* envVar_,
-  const char* progName_)
+  const char* progPath_)
 {
   char* progList;
   char* token;
@@ -47,7 +52,27 @@ static int matchToProgramList(
   token = strtok(progList, PROG_LIST_SEPARATOR);
   while (token)
   {
-    if (strstr(progName_, token))
+    int found = 0;
+
+    if (strchr(token, '/'))
+    {
+      const char* posOfToken = strstr(progPath_, token);
+      if (posOfToken)
+        found = strcmp(posOfToken, token) == 0;
+    }
+    else
+    {
+      const char* progName = strrchr(progPath_, '/');
+
+      if (progName)
+        ++progName;
+      else
+        progName = progPath_;
+
+      found = strstr(progName, token) != NULL;
+    }
+
+    if (found)
     {
       /* Match! */
       free(progList);
@@ -121,19 +146,7 @@ int loggerCollectActionsByProgName(
   const char* const argv_[],
   LoggerVector* actions_)
 {
-  const char* toolName = strrchr(prog_, '/');
-  if (toolName)
-  {
-    /* It was a path -> now its a program name */
-    ++toolName;
-  }
-  else
-  {
-    /* Its a program name */
-    toolName = prog_;
-  }
-
-  if (matchToProgramList("CC_LOGGER_GCC_LIKE", toolName))
+  if (matchToProgramList("CC_LOGGER_GCC_LIKE", prog_))
   {
     int ret;
     turnLogging(0);
@@ -141,7 +154,7 @@ int loggerCollectActionsByProgName(
     turnLogging(1);
     return ret;
   }
-  else if (matchToProgramList("CC_LOGGER_JAVAC_LIKE", toolName))
+  else if (matchToProgramList("CC_LOGGER_JAVAC_LIKE", prog_))
   {
     return loggerJavacParserCollectActions(prog_, argv_, actions_);
   }
