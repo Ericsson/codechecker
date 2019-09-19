@@ -141,6 +141,19 @@ class RequestHandler(SimpleHTTPRequestHandler):
                       "- session refused.")
             return None
 
+    def __has_access_permission(self, product):
+        """
+        Returns True if the currently authenticated user has access permission
+        on the given product.
+        """
+        with DBSession(self.server.config_session) as session:
+            perm_args = {'productID': product.id,
+                         'config_db_session': session}
+            return permissions.require_permission(
+                permissions.PRODUCT_ACCESS,
+                perm_args,
+                self.auth_session)
+
     def end_headers(self):
         # Sending the authentication cookie
         # in every response if any.
@@ -168,6 +181,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         """
 
         self.auth_session = self.__check_session_cookie()
+        username = self.auth_session.user if self.auth_session else 'Anonymous'
         LOG.debug("%s:%s -- [%s] GET %s", self.client_address[0],
                   str(self.client_address[1]),
                   self.auth_session.user if self.auth_session else 'Anonymous',
@@ -202,24 +216,34 @@ class RequestHandler(SimpleHTTPRequestHandler):
                     .format(product_endpoint))
                 return
 
-            if product:
-                # Try to reconnect in these cases.
-                # Do not try to reconnect if there is a schema mismatch.
-                reconnect_cases = [DBStatus.FAILED_TO_CONNECT,
-                                   DBStatus.MISSING,
-                                   DBStatus.SCHEMA_INIT_ERROR]
-                # If the product is not connected, try reconnecting...
-                if product.db_status in reconnect_cases:
-                    LOG.error("Request's product '%s' is not connected! "
-                              "Attempting reconnect...", product_endpoint)
-                    product.connect()
-                    if product.db_status != DBStatus.OK:
-                        # If the reconnection fails,
-                        # redirect user to the products page.
-                        self.send_response(307)  # 307 Temporary Redirect
-                        self.send_header("Location", '/products.html')
-                        self.end_headers()
-                        return
+            # Try to reconnect in these cases.
+            # Do not try to reconnect if there is a schema mismatch.
+            reconnect_cases = [DBStatus.FAILED_TO_CONNECT,
+                               DBStatus.MISSING,
+                               DBStatus.SCHEMA_INIT_ERROR]
+            # If the product is not connected, try reconnecting...
+            if product.db_status in reconnect_cases:
+                LOG.error("Request's product '%s' is not connected! "
+                          "Attempting reconnect...", product_endpoint)
+                product.connect()
+                if product.db_status != DBStatus.OK:
+                    # If the reconnection fails,
+                    # redirect user to the products page.
+                    self.send_response(307)  # 307 Temporary Redirect
+                    self.send_header("Location", '/products.html')
+                    self.end_headers()
+                    return
+
+            if path == '' and not self.__has_access_permission(product):
+                LOG.warning("User '%s' does not have permission to access "
+                            "the '%s' product.", username, product_endpoint)
+
+                self.send_response(307)  # 307 Temporary Redirect
+                self.send_header('Location', '/products.html')
+                self.send_header('Connection', 'close')
+                self.end_headers()
+                self.wfile.write('')
+                return
 
             if path == '' and not self.path.endswith('/'):
                 # /prod must be routed to /prod/index.html first, so later
