@@ -66,7 +66,7 @@ DIFF_CMD=$(cat << END \
 # Assume that there are new bugs introduced, unless proven otherwise.
 echo -n "1" > "${WORKSPACE}/was_output.txt"
 
-eval "${DIFF_CMD}" | while read -r line
+eval "${DIFF_CMD}" 2>&1 | while read -r line
   do
     # If CodeChecker says there aren't new bugs, don't introduce them.
     if [[ "$line" =~ "- No results" ]]
