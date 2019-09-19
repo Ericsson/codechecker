@@ -1085,8 +1085,14 @@ usage: CodeChecker cmd del [-h]
                            [--url PRODUCT_URL]
                            [--verbose {info,debug,debug_analyzer}]
 
-Remove analysis runs from the server based on some criteria. NOTE! When a run
-is deleted, ALL associated information is permanently lost!
+Remove analysis runs from the server based on some criteria.
+
+!!! WARNING !!! When a run is deleted, ALL associated information (reports,
+files, run histories) is PERMANENTLY LOST! Please be careful with this command
+because it can not be undone.
+
+NOTE! You can't remove a snapshot of run (a run history), you can remove only
+full runs.
 
 optional arguments:
   -h, --help            show this help message and exit
