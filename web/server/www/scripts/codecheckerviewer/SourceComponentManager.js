@@ -61,10 +61,11 @@ function (dom, domAttr, domClass, declare, ItemFileWriteStore, DataGrid,
       this._componentValue = new SimpleTextarea({
         class : 'component-value',
         rows : 10,
-        placeholder : 'Value of the source component. Each line must start '
+        placeholder : 'Value of the source component.\nEach line must start '
                     + 'with a "+" (results from this path should be listed) or '
-                    + '"-" (results from this path should not be listed) sign. '
-                    + 'E.g.: +/a/b/x.cpp or -/a/b/'
+                    + 'a "-" (results from this path should not be listed) '
+                    + 'sign.\nFor whole directories, a trailing "*" must be '
+                    + 'added.\nE.g.: +/a/b/x.cpp or -/a/b/*'
       });
       this._placeFormElement(this._componentValue, 'value', 'Value*');
 
