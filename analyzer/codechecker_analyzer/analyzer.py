@@ -247,11 +247,19 @@ def perform_analysis(args, skip_handler, context, actions, metadata):
 
         pre_analyze = [a for a in actions
                        if a.analyzer_type == ClangSA.ANALYZER_NAME]
+        pre_anal_skip_handler = None
+
+        # Skip list is applied only in pre-analysis
+        # if --ctu-collect or --stats-collect  was called explicitly
+        if ((ctu_collect and not ctu_analyze)
+                or ("stats_output" in args and args.stats_outptut)):
+            pre_anal_skip_handler = skip_handler
+
         pre_analysis_manager.run_pre_analysis(pre_analyze,
                                               context,
                                               config_map,
                                               args.jobs,
-                                              skip_handler,
+                                              pre_anal_skip_handler,
                                               ctu_data,
                                               statistics_data,
                                               manager)
