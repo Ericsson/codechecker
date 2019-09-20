@@ -592,7 +592,6 @@ def main(args):
             load_json_or_empty(log_file),
             report_dir,
             args.compile_uniqueing,
-            skip_handler,
             compiler_info_file,
             args.skip_gcc_fix_include)
 

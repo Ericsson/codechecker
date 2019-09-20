@@ -924,7 +924,6 @@ class CompileActionUniqueingType(object):
 def parse_unique_log(compilation_database,
                      report_dir,
                      compile_uniqueing="none",
-                     skip_handler=None,
                      compiler_info_file=None,
                      skip_gcc_fix_headers=False):
     """
@@ -948,9 +947,6 @@ def parse_unique_log(compilation_database,
     compile_uniqueing -- Compilation database uniqueing mode.
                          If there are more than one compile commands for a
                          target file, only a single one is kept.
-    skip_handler -- A SkipListHandler object which helps to skip build actions
-                    that shouldn't be analyzed. The build actions described by
-                    this handler will not be the part of the result list.
     compiler_info_file -- compiler_info.json. If exists, it will be used for
                     analysis.
     skip_gcc_fix_headers -- There are some implicit include paths which are
@@ -972,9 +968,6 @@ def parse_unique_log(compilation_database,
             uniqueing_re = re.compile(compile_uniqueing)
 
         for entry in compilation_database:
-            if skip_handler and skip_handler.should_skip(entry['file']):
-                LOG.debug("SKIPPING FILE %s", entry['file'])
-                continue
             action = parse_options(entry,
                                    compiler_info_file,
                                    skip_gcc_fix_headers)
