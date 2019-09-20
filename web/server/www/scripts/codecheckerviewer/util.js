@@ -511,16 +511,22 @@ function (locale, dom, style, json) {
       return tooltips[name] ? tooltips[name] : '';
     },
 
+    getReturnToLocation : function () {
+      var pathName = window.location.pathname || '';
+      var hash = window.location.hash || '';
+      if (pathName || hash) {
+        return '?returnto=' + pathName.replace('/', '') +
+          window.location.hash;
+      }
+      return '';
+    },
+
     handleAjaxFailure : function (xhr) {
       if (xhr.responseText.indexOf('Error code 401:') !== -1) {
-        var returnTo = '';
-        var pathName = window.location.pathname || '';
-        var hash = window.location.hash || '';
-        if (pathName || hash) {
-          returnTo = '?returnto=' + pathName.replace('/', '') +
-            window.location.hash;
-        }
+        var returnTo = this.getReturnToLocation();
         window.location = window.location.origin + '/login.html' + returnTo;
+      } else if (xhr.responseText.indexOf('You are not authorized') !== -1) {
+        window.location = window.location.origin + '/products.html';
       } else {
         console.warn(xhr);
       }
