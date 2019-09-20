@@ -1122,10 +1122,16 @@ Get statistics for all runs and only for severity 'high':
 
     del_p = subcommands.add_parser(
         'del',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description="Remove analysis runs from the server based on some "
-                    "criteria. NOTE! When a run is deleted, ALL associated "
-                    "information is permanently lost!",
+        formatter_class=RawDescriptionDefaultHelpFormatter,
+        description="""
+Remove analysis runs from the server based on some criteria.
+
+!!! WARNING !!! When a run is deleted, ALL associated information (reports,
+files, run histories) is PERMANENTLY LOST! Please be careful with this command
+because it can not be undone.
+
+NOTE! You can't remove a snapshot of run (a run history), you can remove only
+full runs.""",
         help="Delete analysis runs.")
     __register_delete(del_p)
     del_p.set_defaults(func=cmd_line_client.handle_remove_run_results)
