@@ -247,7 +247,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             analyzer_cmd.extend(self.buildaction.analyzer_options)
 
             analyzer_cmd.extend(prepend_all(
-                '-isystem',
+                '-isystem-after',
                 self.buildaction.compiler_includes[compile_lang]))
 
             analyzer_cmd.append(self.source_file)

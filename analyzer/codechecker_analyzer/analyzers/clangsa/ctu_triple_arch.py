@@ -27,7 +27,8 @@ def get_compile_command(action, config, source='', output=''):
             action.target[compile_lang] != "":
         cmd.append("--target=" + action.target[compile_lang])
 
-    cmd.extend(prepend_all('-isystem', action.compiler_includes[compile_lang]))
+    cmd.extend(prepend_all('-isystem-after',
+                           action.compiler_includes[compile_lang]))
     cmd.append('-c')
     if not has_flag('-x', cmd):
         cmd.extend(['-x', action.lang])
