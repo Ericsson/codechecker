@@ -329,7 +329,8 @@ function (declare, lang, ItemFileWriteStore, dom, Deferred, all, Memory,
       this._standBy = new Standby({
         color : '#ffffff',
         target : this.domNode,
-        duration : 0
+        duration : 0,
+        style : 'border: none;'
       });
       this.addChild(this._standBy);
 
