@@ -92,6 +92,7 @@ from __future__ import absolute_import
 from contextlib import contextmanager
 
 import ldap
+from ldap.dn import escape_dn_chars
 
 from codechecker_common.logger import get_logger
 
@@ -293,6 +294,7 @@ def auth_user(ldap_config, username=None, credentials=None):
         LOG.warning('Please configure one.')
         return False
 
+    username = escape_dn_chars(username)
     account_pattern = account_pattern.replace('$USN$', username)
 
     account_scope = ldap_config.get('accountScope', '')
