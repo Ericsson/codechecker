@@ -121,16 +121,12 @@ class AnalyzerConfigHandler(object):
         # Set default enabled or disabled checkers, based on the config file.
         if checker_config:
             # Check whether a default profile exists.
-            profiles = checker_config.values()
-            all_profile_names = (
-                profile for check_list in profiles for profile in check_list)
-            if 'default' not in all_profile_names:
+            if 'default' not in checker_config:
                 LOG.warning("No default profile found!")
             else:
                 # Turn default checkers on.
-                for checker_name, profile_list in checker_config.items():
-                    if 'default' in profile_list:
-                        self.set_checker_enabled(checker_name)
+                for checker in checker_config['default']:
+                    self.set_checker_enabled(checker, True)
 
         # If enable_all is given, almost all checkers should be enabled.
         if enable_all:
@@ -171,11 +167,9 @@ class AnalyzerConfigHandler(object):
                         LOG.warning("Profile name '%s' conflicts with a "
                                     "checker(-group) name.", profile_name)
 
-                    profile_checkers = (name for name, profile_list
-                                        in checker_config.items()
-                                        if profile_name in profile_list)
-                    for checker_name in profile_checkers:
-                        self.set_checker_enabled(checker_name, enabled)
+                    # Enable or disable all checkers belonging to the profile.
+                    for checker in checker_config[profile_name]:
+                        self.set_checker_enabled(checker, enabled)
 
                 # The identifier is a checker(-group) name.
                 else:
