@@ -209,12 +209,12 @@ def filter_compiler_includes_extra_args(compiler_flags):
 
     compiler_flags -- A list of compiler flags which may affect the list
                       of implicit compiler include paths, like -std=,
-                      --sysroot=, -m32, -m64 or -stdlib=.
+                      --sysroot=, -m32, -m64, -nostdinc or -stdlib=.
     """
     # If these options are present in the original build command, they must
     # be forwarded to get_compiler_includes and get_compiler_defines so the
     # resulting includes point to the target that was used in the build.
-    pattern = re.compile('-m(32|64)|-std=|-stdlib=')
+    pattern = re.compile('-m(32|64)|-std=|-stdlib=|-nostdinc')
     extra_opts = filter(pattern.match, compiler_flags)
 
     pos = next((pos for pos, val in enumerate(compiler_flags)
@@ -789,7 +789,7 @@ def __skip(flag_iterator, _):
 
 def parse_options(compilation_db_entry,
                   compiler_info_file=None,
-                  skip_gcc_fix_headers=False):
+                  keep_gcc_fix_headers=False):
     """
     This function parses a GCC compilation action and returns a BuildAction
     object which can be the input of Clang analyzer tools.
@@ -799,9 +799,9 @@ def parse_options(compilation_db_entry,
                             command, the compiled file and the current working
                             directory.
     compiler_info_file -- Contains the path to a compiler info file.
-    skip_gcc_fix_headers -- There are some implicit include paths which are
+    keep_gcc_fix_headers -- There are some implicit include paths which are
                             only used by GCC (include-fixed). This flag
-                            determines whether these should be skipped from
+                            determines whether these should be kept among
                             the implicit include paths.
     """
 
@@ -893,13 +893,10 @@ def parse_options(compilation_db_entry,
     if not toolchain:
         ImplicitCompilerInfo.set(details, compiler_info_file)
 
-    if skip_gcc_fix_headers:
+    if not keep_gcc_fix_headers:
         for lang, includes in details['compiler_includes'].items():
-            isystems = []
-            for idir in filter_compiler_includes(includes):
-                isystems.append('-isystem')
-                isystems.append(idir)
-            details['compiler_includes'][lang] = isystems
+            details['compiler_includes'][lang] = \
+                filter_compiler_includes(includes)
 
     return BuildAction(**details)
 
@@ -926,7 +923,7 @@ def parse_unique_log(compilation_database,
                      compile_uniqueing="none",
                      skip_handler=None,
                      compiler_info_file=None,
-                     skip_gcc_fix_headers=False):
+                     keep_gcc_fix_headers=False):
     """
     This function reads up the compilation_database
     and returns with a list of build actions that is prepared for clang
@@ -953,9 +950,9 @@ def parse_unique_log(compilation_database,
                     this handler will not be the part of the result list.
     compiler_info_file -- compiler_info.json. If exists, it will be used for
                     analysis.
-    skip_gcc_fix_headers -- There are some implicit include paths which are
+    keep_gcc_fix_headers -- There are some implicit include paths which are
                             only used by GCC (include-fixed). This flag
-                            determines whether these should be skipped from
+                            determines whether these should be kept among
                             the implicit include paths.
     """
     try:
@@ -977,7 +974,7 @@ def parse_unique_log(compilation_database,
                 continue
             action = parse_options(entry,
                                    compiler_info_file,
-                                   skip_gcc_fix_headers)
+                                   keep_gcc_fix_headers)
 
             if not action.lang:
                 continue

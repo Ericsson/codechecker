@@ -391,12 +391,12 @@ class OptionParserTest(unittest.TestCase):
         # directory among the implicit include paths. Otherwise this test may
         # fail.
 
-        res = log_parser.parse_options(action, skip_gcc_fix_headers=False)
-        self.assertTrue(any(map(lambda x: x.endswith('include-fixed'),
-                                res.compiler_includes['c++'])))
-        res = log_parser.parse_options(action, skip_gcc_fix_headers=True)
+        res = log_parser.parse_options(action, keep_gcc_fix_headers=False)
         self.assertFalse(any(map(lambda x: x.endswith('include-fixed'),
                                  res.compiler_includes['c++'])))
+        res = log_parser.parse_options(action, keep_gcc_fix_headers=True)
+        self.assertTrue(any(map(lambda x: x.endswith('include-fixed'),
+                                res.compiler_includes['c++'])))
 
     def test_compiler_include_file(self):
         action = {
