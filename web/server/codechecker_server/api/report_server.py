@@ -312,7 +312,7 @@ def process_run_history_filter(query, run_ids, run_history_filter):
     return query
 
 
-def process_run_filter(query, run_filter):
+def process_run_filter(session, query, run_filter):
     """
     Process run filter.
     """
@@ -329,6 +329,30 @@ def process_run_filter(query, run_filter):
                 escape_like(name, '\\'))), escape='\\') for
                 name in run_filter.names]
             query = query.filter(or_(*OR))
+
+    if run_filter.beforeTime:
+        date = datetime.fromtimestamp(run_filter.beforeTime)
+        query = query.filter(Run.date < date)
+
+    if run_filter.afterTime:
+        date = datetime.fromtimestamp(run_filter.afterTime)
+        query = query.filter(Run.date > date)
+
+    if run_filter.beforeRun:
+        run = session.query(Run.date) \
+            .filter(Run.name == run_filter.beforeRun) \
+            .one_or_none()
+
+        if run:
+            query = query.filter(Run.date < run.date)
+
+    if run_filter.afterRun:
+        run = session.query(Run.date) \
+            .filter(Run.name == run_filter.afterRun) \
+            .one_or_none()
+
+        if run:
+            query = query.filter(Run.date > run.date)
 
     return query
 
@@ -745,7 +769,7 @@ class ThriftRequestHandler(object):
                               RunHistory.cc_version,
                               stmt.c.report_count)
 
-            q = process_run_filter(q, run_filter)
+            q = process_run_filter(session, q, run_filter)
 
             q = q.outerjoin(stmt, Run.id == stmt.c.run_id) \
                 .outerjoin(tag_q, Run.id == tag_q.c.run_id) \
@@ -832,7 +856,7 @@ class ThriftRequestHandler(object):
 
         with DBSession(self.__Session) as session:
             query = session.query(Run.id)
-            query = process_run_filter(query, run_filter)
+            query = process_run_filter(session, query, run_filter)
 
         return query.count()
 
@@ -2040,7 +2064,7 @@ class ThriftRequestHandler(object):
         failed = False
         for run_id in run_ids:
             try:
-                self.removeRun(run_id)
+                self.removeRun(run_id, None)
             except Exception as ex:
                 LOG.error("Failed to remove run: %s", run_id)
                 LOG.error(ex)
@@ -2116,16 +2140,19 @@ class ThriftRequestHandler(object):
 
     @exc_to_thrift_reqfail
     @timeit
-    def removeRun(self, run_id):
+    def removeRun(self, run_id, run_filter):
         self.__require_store()
 
         # Remove the whole run.
         with DBSession(self.__Session) as session:
             check_remove_runs_lock(session, [run_id])
 
-            session.query(Run) \
-                .filter(Run.id == run_id) \
-                .delete(synchronize_session=False)
+            if not run_filter:
+                run_filter = RunFilter(ids=[run_id])
+
+            q = session.query(Run)
+            q = process_run_filter(session, q, run_filter)
+            q.delete(synchronize_session=False)
 
             # Delete files and contents that are not present
             # in any bug paths.

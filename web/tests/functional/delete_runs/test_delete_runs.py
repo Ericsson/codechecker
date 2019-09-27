@@ -13,6 +13,7 @@ from __future__ import division
 from __future__ import absolute_import
 
 
+import json
 import os
 import unittest
 import itertools
@@ -24,8 +25,8 @@ from libtest import env
 
 def run_cmd(cmd, env):
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, env=env)
-    proc.communicate()
-    return proc.returncode
+    out, _ = proc.communicate()
+    return out, proc.returncode
 
 
 class TestCmdLineDeletion(unittest.TestCase):
@@ -74,6 +75,8 @@ class TestCmdLineDeletion(unittest.TestCase):
                          self._cc_client.getRunData(None, None, 0, None)]
             return not bool(set(runs).intersection(run_names))
 
+        check_env = self._test_config['codechecker_cfg']['check_env']
+
         project_name = self._testproject_data['name']
         run2_name = project_name + '_' + str(2)
 
@@ -82,21 +85,33 @@ class TestCmdLineDeletion(unittest.TestCase):
         self.assertTrue(all_exists(
             [project_name + '_' + str(i) for i in range(0, 5)]))
 
+        # Get runs after run 2 by run name.
+        get_runs_cmd = [self._codechecker_cmd,
+                        'cmd', 'runs',
+                        '--all-after-run', run2_name,
+                        '-o', 'json',
+                        '--url', self.server_url]
+        out, _ = run_cmd(get_runs_cmd, env=check_env)
+        ret = json.loads(out)
+
+        self.assertEqual(len(ret), 2)
+        self.assertSetEqual({run_name for r in ret for run_name in r},
+                            {project_name + '_' + str(i) for i in range(3, 5)})
+
         # Remove runs after run 2 by run name.
 
         del_cmd = [self._codechecker_cmd,
                    'cmd', 'del',
                    '--all-after-run', run2_name,
                    '--url', self.server_url]
-        run_cmd(del_cmd, env=self._test_config['codechecker_cfg']['check_env'])
+        run_cmd(del_cmd, env=check_env)
 
         self.assertTrue(all_exists(
             [project_name + '_' + str(i) for i in range(0, 3)]))
         self.assertTrue(none_exists(
             [project_name + '_' + str(i) for i in range(3, 5)]))
 
-        # Remove runs before run 2 by run date.
-
+        # Get runs before run 2 by run date.
         run2 = next(itertools.ifilter(lambda run: run.name == run2_name,
                     self._cc_client.getRunData(None, None, 0, None)), None)
 
@@ -109,11 +124,24 @@ class TestCmdLineDeletion(unittest.TestCase):
             str(date_run2.minute) + ':' + \
             str(date_run2.second)
 
+        get_runs_cmd = [self._codechecker_cmd,
+                        'cmd', 'runs',
+                        '--all-before-time', date_run2,
+                        '-o', 'json',
+                        '--url', self.server_url]
+        out, _ = run_cmd(get_runs_cmd, env=check_env)
+        ret = json.loads(out)
+
+        self.assertEqual(len(ret), 2)
+        self.assertSetEqual({run_name for r in ret for run_name in r},
+                            {project_name + '_' + str(i) for i in range(0, 2)})
+
+        # Remove runs before run 2 by run date.
         del_cmd = [self._codechecker_cmd,
                    'cmd', 'del',
                    '--all-before-time', date_run2,
                    '--url', self.server_url]
-        run_cmd(del_cmd, env=self._test_config['codechecker_cfg']['check_env'])
+        run_cmd(del_cmd, env=check_env)
 
         self.assertTrue(all_exists(
             [project_name + '_' + str(2)]))
@@ -126,7 +154,7 @@ class TestCmdLineDeletion(unittest.TestCase):
                    'cmd', 'del',
                    '--name', run2_name,
                    '--url', self.server_url]
-        run_cmd(del_cmd, env=self._test_config['codechecker_cfg']['check_env'])
+        run_cmd(del_cmd, env=check_env)
 
         self.assertTrue(none_exists(
             [project_name + '_' + str(i) for i in range(0, 5)]))

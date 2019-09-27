@@ -98,7 +98,7 @@ class RemoveRunResults(unittest.TestCase):
         self.assertEqual(res_count, 0)
 
         # Remove the run.
-        self._cc_client.removeRun(run_id)
+        self._cc_client.removeRun(run_id, None)
 
         # Check that we removed all results from the run.
         res = self._cc_client.getRunResultCount([run_id], None, None)

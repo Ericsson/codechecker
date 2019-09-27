@@ -91,7 +91,7 @@ class HashClash(unittest.TestCase):
         run_id = runs[0].runId
 
         # Remove the run.
-        self._report.removeRun(run_id)
+        self._report.removeRun(run_id, None)
 
     def _reports_for_latest_run(self):
         runs = self._report.getRunData(None, None, 0, None)

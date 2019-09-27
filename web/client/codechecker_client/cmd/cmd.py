@@ -505,7 +505,7 @@ def __register_delete(parser):
     group.add_argument('-n', '--name',
                        type=str,
                        nargs='+',
-                       dest="name",
+                       dest="names",
                        metavar='RUN_NAME',
                        default=argparse.SUPPRESS,
                        help="Full name(s) of the analysis run or runs to "
@@ -933,22 +933,64 @@ def __register_runs(parser):
     Add argparse subcommand parser for the "list runs by run name" action.
     """
 
-    parser.add_argument('-n', '--name',
-                        type=str,
-                        nargs='*',
-                        dest="names",
-                        metavar='RUN_NAME',
-                        default=argparse.SUPPRESS,
-                        required=False,
-                        help="Names of the analysis runs. If this argument is "
-                             "not supplied it will show all runs. This has "
-                             "the  following format: \"<run_name_1> "
-                             "<run_name_2> <run_name_3>\" where run names can "
-                             "contain multiple * quantifiers which matches "
-                             "any number of characters (zero or more). So if "
-                             "you have run_1_a_name, run_2_b_name, "
-                             "run_2_c_name, run_3_d_name then \"run_2* "
-                             "run_3_d_name\" shows the last three runs.")
+    group = parser.add_mutually_exclusive_group(required=False)
+
+    group.add_argument('-n', '--name',
+                       type=str,
+                       nargs='*',
+                       dest="names",
+                       metavar='RUN_NAME',
+                       default=argparse.SUPPRESS,
+                       required=False,
+                       help="Names of the analysis runs. If this argument is "
+                            "not supplied it will show all runs. This has "
+                            "the  following format: \"<run_name_1> "
+                            "<run_name_2> <run_name_3>\" where run names can "
+                            "contain multiple * quantifiers which matches "
+                            "any number of characters (zero or more). So if "
+                            "you have run_1_a_name, run_2_b_name, "
+                            "run_2_c_name, run_3_d_name then \"run_2* "
+                            "run_3_d_name\" shows the last three runs.")
+
+    group.add_argument('--all-before-run',
+                       type=str,
+                       dest="all_before_run",
+                       metavar='RUN_NAME',
+                       default=argparse.SUPPRESS,
+                       help="Get all runs that were stored to the server "
+                            "BEFORE the specified one.")
+
+    group.add_argument('--all-after-run',
+                       type=str,
+                       dest="all_after_run",
+                       metavar='RUN_NAME',
+                       default=argparse.SUPPRESS,
+                       help="Get all runs that were stored to the server "
+                            "AFTER the specified one.")
+
+    group.add_argument('--all-after-time',
+                       type=valid_time,
+                       dest="all_after_time",
+                       metavar='TIMESTAMP',
+                       default=argparse.SUPPRESS,
+                       help="Get all analysis runs that were stored to "
+                            "the server AFTER the given timestamp. The "
+                            "format of TIMESTAMP is "
+                            "'year:month:day:hour:minute:second' (the "
+                            "\"time\" part can be omitted, in which case "
+                            "midnight (00:00:00) is used).")
+
+    group.add_argument('--all-before-time',
+                       type=valid_time,
+                       dest="all_before_time",
+                       metavar='TIMESTAMP',
+                       default=argparse.SUPPRESS,
+                       help="Get all analysis runs that were stored to "
+                            "the server BEFORE the given timestamp. The "
+                            "format of TIMESTAMP is "
+                            "'year:month:day:hour:minute:second' (the "
+                            "\"time\" part can be omitted, in which case "
+                            "midnight (00:00:00) is used).")
 
 
 def __register_run_histories(parser):
