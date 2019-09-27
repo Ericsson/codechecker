@@ -481,6 +481,12 @@ class RequestHandler(SimpleHTTPRequestHandler):
             LOG.warning(str(exn))
             import traceback
             traceback.print_exc()
+
+            cstringio_buf = itrans.cstringio_buf.getvalue()
+            if cstringio_buf:
+                itrans = TTransport.TMemoryBuffer(cstringio_buf)
+                iprot = input_protocol_factory.getProtocol(itrans)
+
             self.send_thrift_exception(str(exn), iprot, oprot, otrans)
             return
 

@@ -102,11 +102,12 @@ function (declare, cookie, topic, Lightbox, Dialog, Button, BorderContainer,
     layout.addChild(runsTab);
 
     CURRENT_PRODUCT = new CC_PROD_OBJECTS.Product();
+    var currentProductName = '';
     try {
       CURRENT_PRODUCT = CC_PROD_SERVICE.getCurrentProduct();
+      var currentProductName = util.atou(CURRENT_PRODUCT.displayedName_b64);
     } catch (ex) { util.handleThriftException(ex); }
 
-    var currentProductName = util.atou(CURRENT_PRODUCT.displayedName_b64);
     document.title = currentProductName + ' - CodeChecker';
 
     IS_ADMIN_OF_ANY_PRODUCT = false;

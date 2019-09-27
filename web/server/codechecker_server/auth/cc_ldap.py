@@ -92,6 +92,7 @@ from __future__ import absolute_import
 from contextlib import contextmanager
 
 import ldap
+from ldap.dn import escape_dn_chars
 
 from codechecker_common.logger import get_logger
 
@@ -100,7 +101,7 @@ LOG = get_logger('server')
 
 def log_ldap_error(ldap_error):
     """
-    Log the LDAP error details in debug mode.
+    Log the LDAP error details.
     """
     toprint = 'LDAP Error: '
     if ldap_error.message:
@@ -112,7 +113,7 @@ def log_ldap_error(ldap_error):
             toprint = toprint + ldap_error.message['desc']
     else:
         toprint = ldap_error.__repr__()
-    LOG.debug(toprint)
+    LOG.error(toprint)
 
 
 @contextmanager
@@ -125,15 +126,12 @@ def ldap_error_handler():
     except ldap.INVALID_CREDENTIALS:
         LOG.warning("Invalid credentials, please recheck "
                     "your authentication configuration.")
-        raise
 
-    except ldap.FILTER_ERROR:
-        LOG.error("Filter error, please recheck your filter patterns.")
-        raise
+    except ldap.FILTER_ERROR as ex:
+        LOG.error("Filter error: %s", str(ex))
 
     except ldap.LDAPError as err:
         log_ldap_error(err)
-        raise
 
 
 def get_user_dn(con,
@@ -179,6 +177,8 @@ def check_group_membership(connection,
         # There is at least one match for one of the groups.
         return len(group_result) != 0
 
+    return False
+
 
 class LDAPConnection(object):
     """
@@ -219,33 +219,34 @@ class LDAPConnection(object):
 
         LOG.debug('Binding to LDAP server with user: %s', who if who else '')
 
-        try:
-            with ldap_error_handler():
-                if who is None or cred is None:
-                    LOG.debug("Anonymous bind with no credentials.")
-                    res = self.connection.simple_bind_s()
-                    LOG.debug(res)
-                else:
-                    LOG.debug("Binding with credential: %s", who)
-                    res = self.connection.simple_bind_s(who, cred)
-                    whoami = self.connection.whoami_s()
-                    LOG.debug(res)
-                    LOG.debug(whoami)
+        res = None
+        with ldap_error_handler():
+            if who is None or cred is None:
+                LOG.debug("Anonymous bind with no credentials.")
+                res = self.connection.simple_bind_s()
+                LOG.debug(res)
+            else:
+                LOG.debug("Binding with credential: %s", who)
+                res = self.connection.simple_bind_s(who, cred)
+                whoami = self.connection.whoami_s()
+                LOG.debug(res)
+                LOG.debug(whoami)
 
-                    # mail.python.org/pipermail/python-ldap/2012q4/003180.html
-                    if whoami is None:
-                        # If LDAP server allows anonymous binds, simple bind
-                        # does not throw an exception when the password is
-                        # empty and does the binding as anonymous.
-                        # This is an expected behaviour as per LDAP RFC.
+                # mail.python.org/pipermail/python-ldap/2012q4/003180.html
+                if whoami is None:
+                    # If LDAP server allows anonymous binds, simple bind
+                    # does not throw an exception when the password is
+                    # empty and does the binding as anonymous.
+                    # This is an expected behaviour as per LDAP RFC.
 
-                        # However, if the bind is successful but no
-                        # authentication has been done, it is still to be
-                        # considered an error from the user's perspective.
-                        LOG.debug("Anonymous bind succeeded but no valid "
-                                  "password was given.")
-                        raise ldap.INVALID_CREDENTIALS()
-        except Exception:
+                    # However, if the bind is successful but no
+                    # authentication has been done, it is still to be
+                    # considered an error from the user's perspective.
+                    LOG.debug("Anonymous bind succeeded but no valid "
+                              "password was given.")
+                    raise ldap.INVALID_CREDENTIALS()
+
+        if not res:
             LOG.debug("Server bind failed.")
             if self.connection is not None:
                 self.connection.unbind()
@@ -293,6 +294,7 @@ def auth_user(ldap_config, username=None, credentials=None):
         LOG.warning('Please configure one.')
         return False
 
+    username = escape_dn_chars(username)
     account_pattern = account_pattern.replace('$USN$', username)
 
     account_scope = ldap_config.get('accountScope', '')
@@ -408,19 +410,15 @@ def get_groups(ldap_config, username, credentials):
                   group_pattern, group_name_attr)
 
         groups = []
-        try:
-            with ldap_error_handler():
-                group_result = connection.search_s(group_base,
-                                                   group_scope,
-                                                   group_pattern,
-                                                   attr_list)
-                if group_result:
-                    for g in group_result:
-                        groups.append(g[1][group_name_attr][0])
+        with ldap_error_handler():
+            group_result = connection.search_s(group_base,
+                                               group_scope,
+                                               group_pattern,
+                                               attr_list)
+            if group_result:
+                for g in group_result:
+                    groups.append(g[1][group_name_attr][0])
 
-            LOG.debug("groups:")
-            LOG.debug(groups)
-            return groups
-        except Exception:
-            LOG.error("Cannot get ldap groups for user: %s", username)
-            return []
+        LOG.debug("groups:")
+        LOG.debug(groups)
+        return groups
