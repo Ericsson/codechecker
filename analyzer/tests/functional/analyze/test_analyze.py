@@ -209,7 +209,7 @@ class TestAnalyze(unittest.TestCase):
         print(out)
         self.assertTrue("-std=FAKE_STD" in out)
         self.assertTrue("--target=FAKE_TARGET" in out)
-        self.assertTrue("-isystem /FAKE_INCLUDE_DIR" in out)
+        self.assertTrue("-isystem-after /FAKE_INCLUDE_DIR" in out)
 
     def test_capture_analysis_output(self):
         """
