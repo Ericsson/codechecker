@@ -92,8 +92,6 @@ def pre_analyze(params):
 
     progress_checked_num.value += 1
 
-    if skip_handler and skip_handler.should_skip(action.source):
-        return
     if action.analyzer_type != ClangSA.ANALYZER_NAME:
         return
 
@@ -129,6 +127,9 @@ def pre_analyze(params):
 
     try:
         if statistics_data:
+            if skip_handler and skip_handler.should_skip(action.source):
+                return
+
             LOG.debug("running statistics pre analysis")
             collect_statistics(action,
                                action.source,
