@@ -1,8 +1,25 @@
-[![Build status](https://travis-ci.org/Ericsson/codechecker.png?branch=master)](https://travis-ci.org/Ericsson/codechecker)
-[![Gitter](https://badges.gitter.im/codecheckerHQ/Lobby.svg)](https://gitter.im/codecheckerHQ/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)
-[![Documentation Status](https://readthedocs.org/projects/codechecker/badge/?version=latest)](https://codechecker.readthedocs.io/en/latest/?badge=latest)
+<h1 align="center">
+  <br>
+  <img src="https://github.com/Ericsson/codechecker/raw/master/docs/logo/logo_blue.png" alt="CodeChecker" width="200">
+  <br>
+  CodeChecker
+  <br>
+</h1>
 
-# CodeChecker
+<p align="center">
+  <a href="https://travis-ci.org/Ericsson/codechecker">
+    <img src="https://travis-ci.org/Ericsson/codechecker.png?branch=master"
+         alt="Travis">
+  </a>
+  <a href="https://gitter.im/codecheckerHQ/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link">
+    <img src="https://badges.gitter.im/codecheckerHQ/Lobby.svg"
+         alt="Gitter">
+  </a>
+  <a href="https://codechecker.readthedocs.io/en/latest/?badge=latest">
+    <img src="https://readthedocs.org/projects/codechecker/badge/?version=latest"
+         alt="Documentation Status">
+  </a>
+</p>
 
 **CodeChecker** is a static analysis infrastructure built on the [LLVM/Clang
 Static Analyzer](http://clang-analyzer.llvm.org) toolchain, replacing
