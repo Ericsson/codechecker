@@ -90,7 +90,7 @@ class SourceCodeCommentHandler(object):
         # Check for codechecker source code comment.
         comment_markers = '|'.join(self.source_code_comment_markers)
         pattern = r'^\s*(?P<status>' + comment_markers + r')' \
-                  + r'\s*\[\s*(?P<checkers>(.*))\s*\]\s*(?P<comment>.*)$'
+                  + r'\s*\[\s*(?P<checkers>[^\]]*)\s*\]\s*(?P<comment>.*)$'
 
         ptn = re.compile(pattern)
         res = re.match(ptn, formatted)
