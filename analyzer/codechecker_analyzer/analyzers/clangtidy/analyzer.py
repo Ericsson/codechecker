@@ -283,8 +283,10 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         checkers = ClangTidy.get_analyzer_checkers(handler, check_env)
 
         # Read clang-tidy checkers from the config file.
-        clang_tidy_checkers = context.checker_config.get(cls.ANALYZER_NAME +
-                                                         '_checkers')
+        profile_configs = context.checker_config.get(cls.ANALYZER_NAME)
+
+        matching_profile_config = cls.get_matching_profile(
+            handler, check_env, profile_configs)
 
         try:
             cmdline_checkers = args.ordered_checkers
@@ -298,7 +300,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             context.available_profiles,
             context.package_root,
             checkers,
-            clang_tidy_checkers,
+            matching_profile_config,
             cmdline_checkers,
             'enable_all' in args and args.enable_all)
 

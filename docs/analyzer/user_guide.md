@@ -811,14 +811,36 @@ https://clang.llvm.org/docs/DiagnosticsReference.html.
 #### Checker profiles <a name="checker-profiles"></a>
 
 Checker profiles describe custom sets of enabled checks which can be specified
-in the `{INSTALL_DIR}/config/config.json` file. Three built-in options are
-available grouping checkers by their quality (measured by their false positive
-rate): `default`, `sensitive` and `extreme`. In addition, profile `portability`
-contains checkers for detecting platform-dependent code issues. These issues
-can arise when migrating code from 32-bit to 64-bit architectures, and the root
-causes of the bugs tend to be overflows, sign extensions and widening
-conversions or casts. Detailed information about profiles can be retrieved by
-the `CodeChecker checkers` command.
+in the `{INSTALL_DIR}/config/config.json` file. The profiles can be specified
+in the config file like this:
+```
+...
+"<analyzer-name>": [{
+  "config_name": "<name-of-profile_config-entry>",
+  "version_regex": "<regular-expression-matching-version-string-of-analyzer>",
+  "profiles": {
+    "<profile-name>": [
+      "<checker-or-group-name>",
+      "<checker-or-group-name>",
+      "<checker-or-group-name>",
+      ...
+    ]
+  }
+}]
+...
+```
+There can be multiple profile configurations specified for each analyzer inside
+the `config.json` file, out of which the first one with matching
+`version_regex` is used when running the analysis with a specific analyzer.
+
+Three built-in options are available grouping checkers by their quality
+(measured by their false positive rate): `default`, `sensitive` and `extreme`.
+In addition, profile `portability` contains checkers for detecting
+platform-dependent code issues. These issues can arise when migrating code from
+32-bit to 64-bit architectures, and the root causes of the bugs tend to be
+overflows, sign extensions and widening conversions or casts. Detailed
+information about profiles can be retrieved by the `CodeChecker checkers`
+command.
 
 Note: `list` is a reserved keyword used to show all the available profiles and
 thus should not be used as a profile name. Profile names should also be

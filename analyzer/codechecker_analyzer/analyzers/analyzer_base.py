@@ -13,10 +13,12 @@ from __future__ import absolute_import
 
 from abc import ABCMeta, abstractmethod
 import os
+import re
 import signal
 import subprocess
 import sys
 
+from codechecker_common.util import find_first
 from codechecker_common.logger import get_logger
 
 LOG = get_logger('analyzer')
@@ -67,6 +69,39 @@ class SourceAnalyzer(object):
         analyzer_stderr from a result handler.
         """
         raise NotImplementedError("Subclasses should implement this!")
+
+    @classmethod
+    def get_analyzer_version_string(cls, cfg_handler, environ):
+        """Return the output of the version call on the analyzer binary."""
+        analyzer_binary = cfg_handler.analyzer_binary
+
+        try:
+            analyzer_version = subprocess.check_output(
+                [analyzer_binary, '--version'],
+                env=environ)
+
+        except subprocess.CalledProcessError as cerr:
+            LOG.error('Failed to get and parse clang version: %s',
+                      analyzer_binary)
+            LOG.error(cerr)
+            return []
+        return analyzer_version
+
+    @classmethod
+    def get_matching_profile(cls, cfg_handler, environ, profile_configs):
+        """
+        Return the profile to checkers mapping for the current analyzer
+        version.
+        """
+        analyzer_version = cls.get_analyzer_version_string(
+            cfg_handler, environ)
+
+        matching_config = find_first(
+            lambda x: re.match(x["version_regex"], analyzer_version),
+            profile_configs
+        )
+
+        return matching_config['profiles'] if matching_config else None
 
     @abstractmethod
     def construct_result_handler(self, buildaction, report_output,

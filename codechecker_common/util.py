@@ -34,6 +34,14 @@ def arg_match(options, args):
     return matched_args
 
 
+def find_first(predicate, iterable, default=None):
+    """
+    Finds the first occurence matching predicate insided an iterable.
+    Returns default if no items match.
+    """
+    return next(iter(filter(predicate, iterable)), default)
+
+
 def get_line(file_name, line_no, errors='ignore'):
     """
     Return the given line from the file. If line_no is larger than the number

@@ -360,8 +360,10 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         checkers = ClangSA.get_analyzer_checkers(handler, environ)
 
         # Read clang-sa checkers from the config file.
-        clang_sa_checkers = context.checker_config.get(cls.ANALYZER_NAME +
-                                                       '_checkers')
+        profile_configs = context.checker_config.get(cls.ANALYZER_NAME)
+
+        matching_profile_config = cls.get_matching_profile(
+            handler, environ, profile_configs)
 
         try:
             cmdline_checkers = args.ordered_checkers
@@ -374,7 +376,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             context.available_profiles,
             context.package_root,
             checkers,
-            clang_sa_checkers,
+            matching_profile_config,
             cmdline_checkers,
             'enable_all' in args and args.enable_all)
 
