@@ -78,7 +78,7 @@ def build_stat_coll_cmd(action, config, source):
         cmd.append(action.compiler_standard.get(compile_lang, ""))
 
     cmd.extend(prepend_all(
-        '-isystem-after',
+        '-isystem',
         action.compiler_includes.get(compile_lang, [])))
 
     if source:

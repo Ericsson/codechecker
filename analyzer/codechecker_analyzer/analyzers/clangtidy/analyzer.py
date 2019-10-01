@@ -146,7 +146,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             analyzer_cmd.extend(self.buildaction.analyzer_options)
 
             analyzer_cmd.extend(prepend_all(
-                '-isystem-after',
+                '-isystem',
                 self.buildaction.compiler_includes[compile_lang]))
 
             if not has_flag('-std', analyzer_cmd) and not \
