@@ -176,6 +176,8 @@ pycodestyle_in_env:
 
 test: test_analyzer test_web
 
+test_in_env: test_analyzer_in_env test_web_in_env
+
 test_analyzer:
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) test
 

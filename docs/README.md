@@ -288,7 +288,7 @@ If you have Clang `3.7` installed you might see the following warning message:
 * [Package layout](package_layout.md)
 * [Dependencies](deps.md)
 * [Thrift interface](web/api/README.md)
-* [Package and integration tests](tests/README.md)
+* [Package and integration tests](tests.md)
 
 ## Conference papers, presentations
 * A high-level overview about the infrastructure is available amongst the
