@@ -204,7 +204,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             analyzer_cmd.extend(['-Xclang',
                                  '-analyzer-config',
                                  '-Xclang',
-                                 'aggressive-binary-operation-simplification'
+                                 '-aggressive-binary-operation-simplification'
                                  '=true'])
 
             # Enable the z3 solver backend.
