@@ -1,0 +1,5 @@
+LLVM (http://llvm.org/):
+  LLVM version 9.0.0
+  Optimized build.
+  Default target: x86_64-unknown-linux-gnu
+  Host CPU: skylake

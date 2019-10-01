@@ -889,7 +889,6 @@ class TestAnalyze(unittest.TestCase):
             encoding="utf-8",
             errors="ignore")
         out, _ = process.communicate()
-
         self.assertEqual(out.count('hicpp-use-nullptr'), 1)
 
         analyze_cmd = [self._codechecker_cmd, "check", "-l", build_json,

@@ -359,10 +359,10 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         environ = env.extend(context.path_env_extra,
                              context.ld_lib_path_extra)
 
-        handler = config_handler.ClangSAConfigHandler(environ)
+        analyzer_binary = context.analyzer_binaries.get(cls.ANALYZER_NAME)
+
+        handler = config_handler.ClangSAConfigHandler(environ, analyzer_binary)
         handler.analyzer_plugins_dir = context.checker_plugin
-        handler.analyzer_binary = context.analyzer_binaries.get(
-            cls.ANALYZER_NAME)
         handler.version_info = version.get(handler.analyzer_binary, environ)
 
         handler.report_hash = args.report_hash \
@@ -401,8 +401,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         checkers = ClangSA.get_analyzer_checkers(handler, environ)
 
         # Read clang-sa checkers from the config file.
-        clang_sa_checkers = context.checker_config.get(cls.ANALYZER_NAME +
-                                                       '_checkers')
+        profile_configs = context.checker_config.get(cls.ANALYZER_NAME)
 
         try:
             cmdline_checkers = args.ordered_checkers
@@ -411,13 +410,17 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                'the command line for %s', cls.ANALYZER_NAME)
             cmdline_checkers = None
 
-        handler.initialize_checkers(
+        init_ok = handler.initialize_checkers(
             context.available_profiles,
             context.package_root,
             checkers,
-            clang_sa_checkers,
+            profile_configs,
             cmdline_checkers,
             'enable_all' in args and args.enable_all)
+
+        if not init_ok:
+            LOG.warning("There was a problem during initializing the "
+                        "the checkers for clangsa!")
 
         handler.checker_config = []
         r = re.compile(r'(?P<analyzer>.+?):(?P<key>.+?)=(?P<value>.+)')

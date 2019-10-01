@@ -159,6 +159,10 @@ def run_pre_analysis(actions, context, clangsa_config,
     Run multiple pre analysis jobs before the actual analysis.
     """
     LOG.info('Pre-analysis started.')
+    if not actions:
+        LOG.info("No compilaction commands to run pre analysis on.")
+        return
+
     if ctu_data:
         LOG.info("Collecting data for ctu analysis.")
     if statistics_data:

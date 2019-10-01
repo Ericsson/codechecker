@@ -12,6 +12,7 @@ Config handler for Clang Tidy analyzer.
 
 from codechecker_common.logger import get_logger
 
+from . import version
 from .. import config_handler
 
 LOG = get_logger('analyzer.tidy')
@@ -22,8 +23,11 @@ class ClangTidyConfigHandler(config_handler.AnalyzerConfigHandler):
     Configuration handler for Clang-tidy analyzer.
     """
 
-    def __init__(self):
+    def __init__(self, environ, analyzer_binary):
         super(ClangTidyConfigHandler, self).__init__()
+        self.version_info = None
+        self.analyzer_binary = analyzer_binary
+        self.version_info = version.get(self.analyzer_binary, environ)
 
     def set_checker_enabled(self, checker_name, enabled=True):
         """

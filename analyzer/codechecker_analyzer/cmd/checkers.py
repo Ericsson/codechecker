@@ -332,10 +332,13 @@ def main(args):
 
         checkers = analyzer_class.get_analyzer_checkers(config_handler,
                                                         analyzer_environment)
-        default_checker_cfg = context.checker_config.get(
-            analyzer + '_checkers')
+        analyzer_config_lists = context.checker_config.get(analyzer)
+        default_checker_cfg = []
+        for acfg in analyzer_config_lists:
+            if acfg['config_name'] == 'default':
+                default_checker_cfg = [acfg]
 
-        profile_checkers = None
+        profile_checkers = []
         if 'profile' in args:
             if args.profile not in context.available_profiles:
                 LOG.error("Checker profile '%s' does not exist!",
@@ -345,11 +348,17 @@ def main(args):
 
             profile_checkers = [(args.profile, True)]
 
-        config_handler.initialize_checkers(context.available_profiles,
-                                           context.package_root,
-                                           checkers,
-                                           default_checker_cfg,
-                                           profile_checkers)
+        init_ok = config_handler.initialize_checkers(
+            context.available_profiles,
+            context.package_root,
+            checkers,
+            default_checker_cfg,
+            profile_checkers)
+
+        if not init_ok:
+            LOG.warning("There was a problem during initializing the "
+                        "checkers for %s!", analyzer)
+            continue
 
         for checker_name, value in config_handler.checks().items():
             state, description = value

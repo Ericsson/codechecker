@@ -280,9 +280,15 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
     @classmethod
     def construct_config_handler(cls, args, context):
-        handler = config_handler.ClangTidyConfigHandler()
-        handler.analyzer_binary = context.analyzer_binaries.get(
+
+        environ = env.extend(context.path_env_extra,
+                             context.ld_lib_path_extra)
+
+        analyzer_binary = context.analyzer_binaries.get(
             cls.ANALYZER_NAME)
+
+        handler = config_handler.ClangTidyConfigHandler(environ,
+                                                        analyzer_binary)
         handler.report_hash = args.report_hash \
             if 'report_hash' in args else None
 
@@ -358,8 +364,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         checkers = ClangTidy.get_analyzer_checkers(handler, check_env)
 
         # Read clang-tidy checkers from the config file.
-        clang_tidy_checkers = context.checker_config.get(cls.ANALYZER_NAME +
-                                                         '_checkers')
+        profile_configs = context.checker_config.get(cls.ANALYZER_NAME)
 
         try:
             cmdline_checkers = args.ordered_checkers
@@ -369,12 +374,16 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                                cls.ANALYZER_NAME)
             cmdline_checkers = None
 
-        handler.initialize_checkers(
+        init_ok = handler.initialize_checkers(
             context.available_profiles,
             context.package_root,
             checkers,
-            clang_tidy_checkers,
+            profile_configs,
             cmdline_checkers,
             'enable_all' in args and args.enable_all)
+
+        if not init_ok:
+            LOG.warning("There was a problem during initializing the "
+                        "checkers for clang-tidy!")
 
         return handler

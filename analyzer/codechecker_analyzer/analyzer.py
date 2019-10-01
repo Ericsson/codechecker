@@ -196,7 +196,6 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
                       "the Clang Static Analyzer.")
             return
 
-    actions = prepare_actions(actions, analyzers)
     config_map = analyzer_types.build_config_handlers(args, context, analyzers)
 
     available_checkers = set()
@@ -239,6 +238,16 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
 
     check_env = env.extend(context.path_env_extra,
                            context.ld_lib_path_extra)
+
+    # CHECK if any checkers are enabled and only execute that analyzer
+    # where at least one checker is enabled.
+    for analyzer_name, analyzer_cfg in config_map.items():
+        if not analyzer_cfg.any_checker_enabled():
+            LOG.warning(
+                f"Disabling {analyzer_name}: no checkers were enabled.")
+            analyzers.remove(analyzer_name)
+
+    actions = prepare_actions(actions, analyzers)
 
     # Save some metadata information.
     for analyzer in analyzers:

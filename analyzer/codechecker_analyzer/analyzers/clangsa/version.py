@@ -11,27 +11,12 @@
 import re
 import subprocess
 
-
-class ClangVersionInfo(object):
-    """ClangVersionInfo holds the version information of the used Clang."""
-
-    def __init__(self,
-                 major_version=None,
-                 minor_version=None,
-                 patch_version=None,
-                 installed_dir=None,
-                 vendor=None):
-
-        self.major_version = int(major_version)
-        self.minor_version = int(minor_version)
-        self.patch_version = int(patch_version)
-        self.installed_dir = str(installed_dir)
-        self.vendor = str(vendor)
+from codechecker_analyzer.analyzers import version_info
 
 
 class ClangVersionInfoParser(object):
     """
-    ClangVersionInfoParser is responsible for creating ClangVersionInfo
+    ClangVersionInfoParser is responsible for creating VersionInfo
     instances from the version output of Clang.
     """
 
@@ -52,12 +37,13 @@ class ClangVersionInfoParser(object):
         if not version_match or not installed_dir_match:
             return False
 
-        return ClangVersionInfo(
+        return version_info.VersionInfo(
             version_match.group('major_version'),
             version_match.group('minor_version'),
             version_match.group('patch_version'),
             installed_dir_match.group('installed_dir'),
-            version_match.group('vendor'))
+            version_match.group('vendor'),
+            version_string)
 
 
 def get(clang_binary, env=None):

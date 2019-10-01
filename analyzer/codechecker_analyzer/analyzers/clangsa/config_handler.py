@@ -14,6 +14,7 @@ from codechecker_analyzer import env
 from codechecker_common.logger import get_logger
 from .ctu_autodetection import CTUAutodetection
 
+from . import version
 from .. import config_handler
 
 LOG = get_logger('analyzer.clangsa')
@@ -24,7 +25,7 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
     Configuration handler for the clang static analyzer.
     """
 
-    def __init__(self, environ):
+    def __init__(self, environ, analyzer_binary):
         super(ClangSAConfigHandler, self).__init__()
         self.ctu_dir = ''
         self.ctu_on_demand = False
@@ -34,7 +35,8 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
         self.enable_z3 = False
         self.enable_z3_refutation = False
         self.environ = environ
-        self.version_info = None
+        self.analyzer_binary = analyzer_binary
+        self.version_info = version.get(self.analyzer_binary, environ)
 
     @property
     def analyzer_plugins(self):

@@ -13,12 +13,20 @@ Static analyzer configuration handler.
 from abc import ABCMeta
 import collections
 import platform
-import subprocess
+import re
 import sys
 
 from codechecker_common.logger import get_logger
 
 LOG = get_logger('system')
+
+
+def find_first(predicate, iterable, default=None):
+    """
+    Finds the first occurence matching predicate insided an iterable.
+    Returns default if no items match.
+    """
+    return next(iter(filter(predicate, iterable)), default)
 
 
 # The baseline handling of checks in every analyzer is to let the analysis
@@ -52,6 +60,7 @@ class AnalyzerConfigHandler(object, metaclass=ABCMeta):
         self.analyzer_extra_arguments = []
         self.checker_config = ''
         self.report_hash = None
+        self.version_info = None
 
         # The key is the checker name, the value is a tuple.
         # False if disabled (should be by default).
@@ -66,20 +75,20 @@ class AnalyzerConfigHandler(object, metaclass=ABCMeta):
 
     def get_version(self, env=None):
         """ Get analyzer version information. """
-        version = [self.analyzer_binary, '--version']
-        try:
-            output = subprocess.check_output(version,
-                                             env=env,
-                                             universal_newlines=True,
-                                             encoding="utf-8",
-                                             errors="ignore")
-            return output
-        except (subprocess.CalledProcessError, OSError) as oerr:
-            LOG.warning("Failed to get analyzer version: %s",
-                        ' '.join(version))
-            LOG.warning(oerr)
+        return self.version_info.cmd_output
 
-        return None
+    def __get_matching_checker_config(self, profile_configs):
+        """
+        Return the profile to checkers mapping for the current analyzer
+        version.
+        """
+        analyzer_version = self.version_info.cmd_output
+        matching_config = find_first(
+            lambda x: re.search(x["version_regex"], analyzer_version),
+            profile_configs
+        )
+
+        return matching_config['profiles'] if matching_config else None
 
     def add_checker(self, checker_name, description='',
                     state=CheckerState.default):
@@ -100,6 +109,14 @@ class AnalyzerConfigHandler(object, metaclass=ABCMeta):
                 state = CheckerState.enabled if enabled \
                     else CheckerState.disabled
                 self.__available_checkers[ch_name] = (state, description)
+
+    def any_checker_enabled(self):
+        """ Returns true if at least one checker is enabled.  """
+
+        for _, checker_state in self.__available_checkers.items():
+            if checker_state[0] == CheckerState.enabled:
+                return True
+        return False
 
     def checks(self):
         """
@@ -131,14 +148,44 @@ class AnalyzerConfigHandler(object, metaclass=ABCMeta):
                             available_profiles,
                             package_root,
                             checkers,
-                            checker_config=None,
+                            builtin_checker_profile_cfg=None,
                             cmdline_checkers=None,
                             enable_all=False):
+        """Initializes which checkers should be enabled during the analysis.
+
+        Enables checkers based on the configuration from the config files
+        checker profiles or user config from the command line.
+        Calls sys.exit(1) in case of the 'list' profile name was set.
+
+        Args:
+            available_profiles (Dict[str, str]): profile name and description
+            package_root (str): root path to the CodeChecker package
+            checkers (Sequence[Tuple[str, str]): (checker, description) list
+            builtin_checker_profile_cfg (Sequence[Dict]):
+                list of the available checker configs for an analyzer
+                (for every analyzer version)
+            cmdline_checkers (Sequence[Tuple[str, bool]): list of checker name
+                and if the checker was enabled in the command line
+            enable_all (bool): all the checker should be enabled
+
+        Returns:
+             bool: False if there was some problem
+                   during initialization.
         """
-        Initializes the checker list for the specified config handler based on
-        given checker profiles, commandline arguments and the
-        analyzer-retrieved checker list.
-        """
+        no_init_problem = True
+
+        checker_config = None
+        # Filter out the profiles which should be valid for the given version
+        if builtin_checker_profile_cfg:
+            checker_config = \
+                self.__get_matching_checker_config(builtin_checker_profile_cfg)
+
+            if checker_config is None:
+                LOG.warning("No matching checker profile was found "
+                            "for the configured analyzer version.\n"
+                            "Please check the profile configuration in "
+                            "<package-root>/config/config.json")
+                no_init_problem = False
 
         # Add all checkers marked as default. This means the analyzer should
         # manage whether it is enabled or disabled.
@@ -150,6 +197,7 @@ class AnalyzerConfigHandler(object, metaclass=ABCMeta):
             # Check whether a default profile exists.
             if 'default' not in checker_config:
                 LOG.warning("No default profile found!")
+                no_init_problem = False
             else:
                 # Turn default checkers on.
                 for checker in checker_config['default']:
@@ -194,11 +242,15 @@ class AnalyzerConfigHandler(object, metaclass=ABCMeta):
                         LOG.warning("Profile name '%s' conflicts with a "
                                     "checker(-group) name.", profile_name)
 
-                    # Enable or disable all checkers belonging to the profile.
-                    for checker in checker_config[profile_name]:
-                        self.set_checker_enabled(checker, enabled)
+                    if checker_config:
+                        # Enable or disable all checkers
+                        # belonging to the profile.
+                        for checker in checker_config[profile_name]:
+                            self.set_checker_enabled(checker, enabled)
 
                 # The identifier is a checker(-group) name.
                 else:
                     checker_name = identifier
                     self.set_checker_enabled(checker_name, enabled)
+
+        return no_init_problem

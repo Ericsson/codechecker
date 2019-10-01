@@ -24,7 +24,15 @@ class MockContextSA(object):
     ld_lib_path_extra = None
     checker_plugin = None
     analyzer_binaries = {'clangsa': 'clang'}
-    checker_config = {'clangsa_checkers': ['a.b']}
+    checker_config = {'clangsa': [
+      {
+        'config_name': 'default',
+        'version_regex': '.*',
+        'profiles': {
+          'profile1': []
+        },
+      }
+    ]}
     available_profiles = ['profile1']
     package_root = './'
 
@@ -99,7 +107,15 @@ class MockContextTidy(object):
     ld_lib_path_extra = None
     checker_plugin = None
     analyzer_binaries = {'clang-tidy': 'clang-tidy'}
-    checker_config = {'clangtidy_checkers': ['d-e']}
+    checker_config = {'clang-tidy': [
+      {
+        'config_name': 'default',
+        'version_regex': '.*',
+        'profiles': {
+          'profile1': []
+        },
+      }
+    ]}
     available_profiles = ['profile1']
     package_root = './'
 
