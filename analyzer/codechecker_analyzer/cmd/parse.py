@@ -243,6 +243,9 @@ class PlistToPlaintextFormatter(object):
                     for index, event in enumerate(events):
                         output.write(index_format % (index + 1))
                         source_file = report.files[event['location']['file']]
+                        trimmed_source_file = \
+                            util.trim_path_prefixes(source_file,
+                                                    self._trim_path_prefixes)
                         output.write(
                             self.__format_bug_event(None,
                                                     None,
