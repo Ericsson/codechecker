@@ -547,6 +547,11 @@ Every other file where the path contains `/myproject` except the files in the
 
 The provided *shell-style* pattern is converted to a regex with the [fnmatch.translate](https://docs.python.org/2/library/fnmatch.html#fnmatch.translate).
 
+Please note that when `-i SKIPFILE` is used along with `--stats` or 
+`--ctu` the skip list will be ignored in the pre-analysis phase. This means
+that statistics and ctu-pre-analysis will be created for *all* files in the
+*compilation database*.
+
 ### Analyzer configuration <a name="analyzer-configuration"></a>
 
 ```
