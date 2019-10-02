@@ -182,7 +182,7 @@ class SourceCodeCommentTestCase(unittest.TestCase):
         self.assertEqual(len(source_line_comments), 1)
 
         expected = {'checkers': {'my_checker_1'},
-                    'message': u"áúőóüöáé ▬▬▬▬▬▬▬▬▬▬ஜ۩۞۩ஜ▬▬▬▬▬▬▬▬▬▬",
+                    'message': u"áúőóüöáé [▬▬▬▬▬▬▬▬▬▬ஜ۩۞۩ஜ▬▬▬▬▬▬▬▬▬▬]",
                     'status': 'false_positive'}
         self.assertDictEqual(expected, source_line_comments[0])
 

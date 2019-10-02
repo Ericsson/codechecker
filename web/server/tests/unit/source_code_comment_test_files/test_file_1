@@ -60,7 +60,7 @@ void test_func(int num){ // line 57
 }
 
 // codechecker_suppress [ my_checker_1 ]
-// áúőóüöáé ▬▬▬▬▬▬▬▬▬▬ஜ۩۞۩ஜ▬▬▬▬▬▬▬▬▬▬
+// áúőóüöáé [▬▬▬▬▬▬▬▬▬▬ஜ۩۞۩ஜ▬▬▬▬▬▬▬▬▬▬]
 void test_func(int num){ // line 64
     // wrong formatted suppress comment
     cout << "test func"  << endl;
