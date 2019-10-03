@@ -252,7 +252,7 @@ def perform_analysis(args, skip_handler, context, actions, metadata):
         # Skip list is applied only in pre-analysis
         # if --ctu-collect or --stats-collect  was called explicitly
         if ((ctu_collect and not ctu_analyze)
-                or ("stats_output" in args and args.stats_outptut)):
+                or ("stats_output" in args and args.stats_output)):
             pre_anal_skip_handler = skip_handler
 
         pre_analysis_manager.run_pre_analysis(pre_analyze,
