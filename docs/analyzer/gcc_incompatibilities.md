@@ -46,6 +46,21 @@ Consequently, Clang (from version 3.8) skips the `include-fixed` include path
 even if it is built with GCC and configured to use GCC's libstdc++
 (https://bugs.launchpad.net/ubuntu/+source/llvm-toolchain-3.8/+bug/1573778).
 
+The practical difficulty in CodeChecker is that we're appending the implicit
+include paths of the compiler which is used during the comiplation of the
+analyzed project in the logging phase. The reason of this is that we'd like to
+see the same build environment during the analysis. However, Clang also has its
+own implicit include paths. These are almost the same of GCC's paths except for
+`include-fixed` directories because these are GCC specific. Unfortunately some
+projects require the additiion of these paths but some do not. So
+`--keep-gcc-include-fixed` flag can control whether we should keep these during
+the analysis. There is another unanswered question: currently the GCC implicit
+include paths are added with `-isystem` flag. This appends the paths _before_
+the analyzer Clang's implicit paths. However, we could also use
+`-isystem-after` which appends them _after_ Clang's paths. According to our
+experiences `-isystem` has to be used otherwise we get compilation error during
+the analysis.
+
 References:
 * https://www.gnu.org/software/autogen/fixinc.html
 * https://android.googlesource.com/toolchain/gcc/+/master/gcc-4.8.3/fixincludes/README

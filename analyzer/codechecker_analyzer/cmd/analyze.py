@@ -102,16 +102,15 @@ def add_arguments_to_parser(parser):
                              "specified file rather than invoke the compiler "
                              "executable.")
 
-    parser.add_argument('--skip-gcc-fix-include',
-                        dest="skip_gcc_fix_include",
+    parser.add_argument('--keep-gcc-include-fixed',
+                        dest="keep_gcc_include_fixed",
                         required=False,
                         action='store_true',
                         default=False,
-                        help="DEPRECATED. There are some implicit include "
-                             "paths which are only used by GCC "
-                             "(include-fixed). This flag determines whether "
-                             "these should be skipped from the implicit "
-                             "include paths.")
+                        help="There are some implicit include paths which are "
+                             "only used by GCC (include-fixed). This flag "
+                             "determines whether these should be kept among "
+                             "the implicit include paths.")
 
     parser.add_argument('-t', '--type', '--output-format',
                         dest="output_format",
@@ -593,7 +592,7 @@ def main(args):
             report_dir,
             args.compile_uniqueing,
             compiler_info_file,
-            args.skip_gcc_fix_include)
+            args.keep_gcc_include_fixed)
 
     if not actions:
         LOG.info("No analysis is required.\nThere were no compilation "
