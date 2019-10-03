@@ -29,7 +29,7 @@
         "alpha.cplusplus.UninitializedObject" : ["sensitive", "extreme"],
         "alpha.security.ArrayBound" : ["extreme","security"],
         "alpha.security.ArrayBoundV2" : ["extreme","security"],
-        "alpha.security.MallocOverflow" : ["sensitive", "extreme","security"],
+        "alpha.security.MallocOverflow" : ["extreme","security"],
         "alpha.security.MmapWriteExec" : ["sensitive", "extreme","security"],
         "alpha.security.ReturnPtrRange" : ["sensitive", "extreme","security"],
         "alpha.security.taint.TaintPropagation" : ["sensitive", "extreme","security"],
