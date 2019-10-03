@@ -663,7 +663,18 @@ def __collect_compile_opts(flag_iterator, details):
             next(flag_iterator)
             param = flag_iterator.item
 
-        if flag == '-I':
+        # The .plist file contains a section with a list of files. For some
+        # further actions these need to be given with an absolute path. Clang
+        # prints them with absolute path if the original compiler invocation
+        # was given absolute paths.
+        # TODO: If Clang will be extended with an extra analyzer option in
+        # order to print these absolute paths natively, this conversion will
+        # not be necessary.
+        flags_with_path = ['-I', '-idirafter', '-imacros', '-imultilib',
+                           '-include', '-iquote', '-isysroot', '-isystem',
+                           '-iwithprefix', '-iwithprefixbefore', '-sysroot',
+                           '--sysroot']
+        if flag in flags_with_path:
             param = os.path.normpath(
                 os.path.join(details['directory'], param))
 
