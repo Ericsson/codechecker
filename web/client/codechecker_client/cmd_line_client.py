@@ -403,6 +403,7 @@ def handle_list_results(args):
                   'Review status', 'Detection status']
 
         rows = []
+        max_msg_len = 50
         for res in all_results:
             bug_line = res.line
             checked_file = res.checkedFile
@@ -419,7 +420,14 @@ def handle_list_results(args):
             if status is not None:
                 dt_status = ttypes.DetectionStatus._VALUES_TO_NAMES[status]
 
-            rows.append((checked_file, res.checkerId, sev, res.checkerMsg,
+            # Remove whitespace characters from the checker message.
+            msg = re.sub(r'\s+', ' ', res.checkerMsg)
+
+            # Avoid too long cell content.
+            if len(msg) > max_msg_len:
+                msg = msg[:max_msg_len] + '...'
+
+            rows.append((checked_file, res.checkerId, sev, msg,
                          res.bugPathLength, rw_status, dt_status))
 
         print(twodim_to_str(args.output_format, header, rows))
