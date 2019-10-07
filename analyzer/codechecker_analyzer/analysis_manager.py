@@ -508,6 +508,8 @@ def check(check_data):
                 # shouldn't do anything.
                 pass
 
+        result_file_exists = os.path.exists(rh.analyzer_result_file)
+
         # Fills up the result handler with the analyzer information.
         source_analyzer.analyze(analyzer_cmd, rh, analyzer_environment,
                                 __create_timeout)
@@ -567,6 +569,10 @@ def check(check_data):
                      progress_checked_num.value, progress_actions.value,
                      action.analyzer_type, source_file_name)
 
+            if result_file_exists:
+                LOG.warning("Previous analysis results in '%s' has been "
+                            "overwritten.", rh.analyzer_result_file)
+
             if skip_handler:
                 # We need to check the plist content because skipping
                 # reports in headers can be done only this way.
@@ -616,6 +622,11 @@ def check(check_data):
                              progress_actions.value,
                              action.analyzer_type,
                              source_file_name)
+
+                    if result_file_exists:
+                        LOG.warning("Previous analysis results in '%s' has "
+                                    "been overwritten.",
+                                    rh.analyzer_result_file)
 
                 else:
 
