@@ -154,7 +154,8 @@ IGNORED_PARAM_OPTIONS = {
     # Skip paired Xclang options like "-Xclang -mllvm".
     re.compile('-Xclang'): 1,
     # Darwin linker can be given a file with lists the sources for linking.
-    re.compile('-filelist'): 1
+    re.compile('-filelist'): 1,
+    re.compile('-mllvm'): 1
 }
 
 # These flag groups are ignored together.

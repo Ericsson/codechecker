@@ -288,6 +288,7 @@ class OptionParserTest(unittest.TestCase):
         ignore = ["-Werror", "-fsyntax-only",
                   "-mfloat-gprs=double", "-mfloat-gprs=yes",
                   "-mabi=spe", "-mabi=eabi",
+                  '-mllvm',
                   '-Xclang', '-mllvm',
                   '-Xclang', '-instcombine-lower-dbg-declare=0']
         action = {
