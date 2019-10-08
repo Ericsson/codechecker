@@ -355,7 +355,7 @@ def addCheckerRun(session, command, name, tag, username,
             failed_sources = res.get('failed_sources')
 
             if analyzer_version:
-                analyzer_version = zlib.compress(version,
+                analyzer_version = zlib.compress(analyzer_version,
                                                  zlib.Z_BEST_COMPRESSION)
 
             compressed_files = None
