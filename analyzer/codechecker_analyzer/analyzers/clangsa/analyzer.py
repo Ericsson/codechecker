@@ -149,11 +149,13 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                             # Turn off clang hardcoded checkers list.
                             '--analyzer-no-default-checks']
 
-            for plugin in config.analyzer_plugins:
-                analyzer_cmd.extend(["-Xclang", "-plugin",
-                                     "-Xclang", "checkercfg",
-                                     "-Xclang", "-load",
-                                     "-Xclang", plugin])
+            # Do not load the plugin because it might be incompatible.
+            if not env.is_analyzer_from_path():
+                for plugin in config.analyzer_plugins:
+                    analyzer_cmd.extend(["-Xclang", "-plugin",
+                                         "-Xclang", "checkercfg",
+                                         "-Xclang", "-load",
+                                         "-Xclang", plugin])
 
             analyzer_mode = 'plist-multi-file'
             analyzer_cmd.extend(['-Xclang',
