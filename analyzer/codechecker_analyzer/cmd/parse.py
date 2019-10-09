@@ -599,6 +599,8 @@ def main(args):
 
         return skip
 
+    file_change = set()
+
     for input_path in args.input:
 
         input_path = os.path.abspath(input_path)
@@ -648,7 +650,6 @@ def main(args):
             files = [os.path.join(input_path, file_name) for file_name
                      in file_names]
 
-        file_change = set()
         file_report_map = defaultdict(list)
 
         rh = PlistToPlaintextFormatter(suppr_handler,
@@ -686,13 +687,13 @@ def main(args):
         print("Total number of reports: {}".format(report_count))
         print("----=================----")
 
-        if file_change:
-            changed_files = '\n'.join([' - ' + f for f in file_change])
-            LOG.warning("The following source file contents changed since the "
-                        "latest analysis:\n%s\nMultiple reports were not "
-                        "shown and skipped from the statistics. Please "
-                        "analyze your project again to update the "
-                        "reports!", changed_files)
+    if file_change:
+        changed_files = '\n'.join([' - ' + f for f in file_change])
+        LOG.warning("The following source file contents changed since the "
+                    "latest analysis:\n%s\nMultiple reports were not "
+                    "shown and skipped from the statistics. Please "
+                    "analyze your project again to update the "
+                    "reports!", changed_files)
 
     os.chdir(original_cwd)
 
