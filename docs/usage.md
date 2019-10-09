@@ -23,6 +23,7 @@ It invokes Clang Static Analyzer and Clang-Tidy tools to analyze your code.
         * [Jenkins Script](#storing-results-example)
     * [Alternative 2: Store each analysis in a new run](#storing-new-runs)
         * [Jenkins Script](#storing-new-runs-example)
+    * [Gerrit Integration](#gerrit)
     * [Programmer checking new bugs in the code after local edit (and compare it to a central database)](#compare)
     * [Setting up user authentication](#authentication)
 * [Updating CodeChecker to new version](#upgrade)
@@ -106,6 +107,18 @@ invoked.**
 The analysis can be run for only the changed files and the `report-directory`
 will be correctly updated with the new results.
 
+There are two supported ways for incremental analysis.
+
+a) In case you can build your
+project incrementally, you can build, log and analyze only the changed files and all the files
+that are depending on the source code changes (in case of the update of a header file).
+
+b) If you only want to re-analyze changed source files, without re-building your
+project, you can use skip list to tell CodeChecker which files to analyze.
+
+
+a) **Using incremental build**
+
 ```sh
 cd tmux
 make clean
@@ -117,8 +130,34 @@ vi ./cmd-find.c
 #Only cmd-find.c will be re-analyzed
 CodeChecker check -b "make" -o reports
 ```
+Since the `make` command only re-compiles the changed `cmd-find.c`
+only that file will be re-analyzed.
 
 Now the `reports` directory contains also the results of the updated `cmd-find.c`.
+
+b) **Using skip file**
+
+If you want to re-analyze only the changed source files without build, you
+can give a skip-list to CodeChecker.
+
+Let's assume that only `cmd-find.c` that needs to be re-analyzed.
+
+You need to create the following skip list file that tells CodeChecker
+to analyze `cmd-find.c` and ignore the rest.
+```sh
+#skip.list:
+
++*cmd-find.c
+-*
+```
+Let's assume you have the compilation database in
+`compile_commands.json`.
+
+```sh
+CodeChecker check ./compile_commands.json -i skip.list -o reports
+```
+For more details regarding the skip file format see
+the [user guide](analyzer/user_guide.md#skip).
 
 ### Analysis Failures <a name="analysis-failures"></a>
 
@@ -393,6 +432,7 @@ information on the exact syntax.
 Please find a [Shell Script](script_update.md) that can be used
 in a Jenkins or any other CI engine to report new bugs.
 
+
 #### Alternative 2: Store each analysis in a new run <a name="storing-new-runs"></a>
 
 Each daily analysis should be stored as a new run name, for example using the
@@ -433,6 +473,19 @@ CodeChecker cmd diff -b tmux_master_2017_08_28 -n tmux_master_2017_08_29 --new -
 
 Please find a [Shell Script](script_daily.md) that can be used
 in a Jenkins or any other CI engine to report new bugs.
+
+### Gerrit Integration <a name="gerrit"></a>
+
+The workflow based on *Alternative 1)* can be used to implement the gerrit integration with CodeChecker.
+Let us assume you would like to run the CodeChecker analysis to *gerrit merge request* and mark the
+new findings in the gerrit review.
+
+You can implement that by creating a jenkins job that monitors the
+gerrit merge requests, runs the anaysis on the changed files and then uploads the
+new findings to gerrit through its [web-api](https://gerrit-review.googlesource.com/Documentation/rest-api.html).
+
+You can find the details and the example scripts in the [Integrate CodeChecker with Gerrit review](jenkins_gerrit_integration.md)
+guide.
 
 ### Programmer checking new bugs in the code after local edit (and compare it to a central database) <a name="compare"></a>
 Say that you made some local changes in your code (tmux in our example) and
