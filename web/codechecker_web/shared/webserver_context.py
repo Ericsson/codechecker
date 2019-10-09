@@ -112,8 +112,8 @@ class Context(object):
 
     @property
     def path_plist_to_html_dist(self):
-        return os.path.join(self.package_root,
-                            self.pckg_layout['plist_to_html_dist_path'])
+        return os.path.join(self.package_root, 'lib', 'python2.7',
+                            'plist_to_html', 'static')
 
     @property
     def path_env_extra(self):
@@ -147,28 +147,26 @@ class Context(object):
 
             return severity_map_file
 
-        return os.path.join(self._package_root,
-                            self.pckg_layout['checkers_severity_map_file'])
+        return os.path.join(self._package_root, 'config',
+                            'checker_severity_map.json')
 
     @property
     def doc_root(self):
-        return os.path.join(self._package_root,
-                            self.pckg_layout['docs'])
+        return os.path.join(self._package_root, 'www', 'docs')
 
     @property
     def www_root(self):
-        return os.path.join(self._package_root,
-                            self.pckg_layout['www'])
+        return os.path.join(self._package_root, 'www')
 
     @property
     def run_migration_root(self):
-        return os.path.join(self._package_root,
-                            self.pckg_layout['run_db_migrate'])
+        return os.path.join(self._package_root, 'lib', 'python2.7',
+                            'codechecker_server', 'migrations', 'report')
 
     @property
     def config_migration_root(self):
-        return os.path.join(self._package_root,
-                            self.pckg_layout['config_db_migrate'])
+        return os.path.join(self._package_root, 'lib', 'python2.7',
+                            'codechecker_server', 'migrations', 'config')
 
     @property
     def severity_map(self):
@@ -199,14 +197,8 @@ def get_context():
     if not lcfg_dict:
         sys.exit(1)
 
-    # Merge static and runtime layout.
-    layout_config = lcfg_dict['static'].copy()
-    layout_config.update(lcfg_dict['runtime'])
-
-    LOG.debug(layout_config)
-
     try:
-        return Context(package_root, layout_config, cfg_dict)
+        return Context(package_root, lcfg_dict['runtime'], cfg_dict)
     except KeyError:
         import traceback
         traceback.print_exc()

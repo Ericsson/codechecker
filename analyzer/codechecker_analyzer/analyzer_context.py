@@ -168,22 +168,20 @@ class Context(object):
 
     @property
     def path_logger_bin(self):
-        return os.path.join(self.package_root,
-                            self.pckg_layout['ld_logger_bin'])
+        return os.path.join(self.package_root, 'bin', 'ld_logger')
 
     @property
     def path_logger_lib(self):
-        return os.path.join(self.package_root,
-                            self.pckg_layout['ld_logger_lib_path'])
+        return os.path.join(self.package_root, 'ld_logger', 'lib')
 
     @property
     def logger_lib_name(self):
-        return self.pckg_layout['ld_logger_lib_name']
+        return 'ldlogger.so'
 
     @property
     def path_plist_to_html_dist(self):
-        return os.path.join(self.package_root,
-                            self.pckg_layout['plist_to_html_dist_path'])
+        return os.path.join(self.package_root, 'lib', 'python2.7',
+                            'plist_to_html', 'static')
 
     @property
     def compiler_resource_dir(self):
@@ -218,8 +216,7 @@ class Context(object):
 
     @property
     def checker_plugin(self):
-        return os.path.join(self._package_root,
-                            self.pckg_layout['plugin'])
+        return os.path.join(self._package_root, 'plugin')
 
     @property
     def checkers_severity_map_file(self):
@@ -233,8 +230,8 @@ class Context(object):
 
             return severity_map_file
 
-        return os.path.join(self._package_root,
-                            self.pckg_layout['checkers_severity_map_file'])
+        return os.path.join(self._package_root, 'config',
+                            'checker_severity_map.json')
 
     @property
     def severity_map(self):
@@ -265,14 +262,8 @@ def get_context():
     if not lcfg_dict:
         sys.exit(1)
 
-    # Merge static and runtime layout.
-    layout_config = lcfg_dict['static'].copy()
-    layout_config.update(lcfg_dict['runtime'])
-
-    LOG.debug(layout_config)
-
     try:
-        return Context(package_root, layout_config, cfg_dict)
+        return Context(package_root, lcfg_dict['runtime'], cfg_dict)
     except KeyError:
         import traceback
         traceback.print_exc()
