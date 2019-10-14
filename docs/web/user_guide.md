@@ -854,7 +854,9 @@ This mode shows analysis results (in the same format as `results`) does, but
 from the comparison of two runs.
 
 ```
-usage: CodeChecker cmd diff [-h] -b BASE_RUN -n NEW_RUN [--uniqueing {on,off}]
+usage: CodeChecker cmd diff [-h] [-b BASE_RUNS [BASE_RUNS ...]]
+                            [-n NEW_RUNS [NEW_RUNS ...]]
+                            [--uniqueing {on,off}]
                             [--report-hash [REPORT_HASH [REPORT_HASH ...]]]
                             [--review-status [REVIEW_STATUS [REVIEW_STATUS ...]]]
                             [--detection-status [DETECTION_STATUS [DETECTION_STATUS ...]]]
@@ -877,22 +879,26 @@ Compare two analysis runs to show the results that differ between the two.
 
 optional arguments:
   -h, --help            show this help message and exit
-  -b BASE_RUN, --basename BASE_RUN
-                        The 'base' (left) side of the difference: this
-                        analysis run is used as the initial state in the
-                        comparison. The basename can contain * quantifiers
+  -b BASE_RUNS [BASE_RUNS ...], --basename BASE_RUNS [BASE_RUNS ...]
+                        The 'base' (left) side of the difference: these
+                        analysis runs are used as the initial state in the
+                        comparison. The parameter can be multiple run names
+                        (on the remote server) or multiple local report
+                        directories (result of the analyze command). In case
+                        of run name the the basename can contain * quantifiers
                         which matches any number of characters (zero or more).
                         So if you have run-a-1, run-a-2 and run-b-1 then
                         "run-a*" selects the first two.
-  -n NEW_RUN, --newname NEW_RUN
-                        The 'new' (right) side of the difference: this
-                        analysis run is compared to the -b/--basename run. The
-                        parameter can be a run name(on the remote server) or a
-                        local report directory (result of the analyze
-                        command). In case of run name the newname can contain
-                        * quantifiers which matches any number of characters
-                        (zero or more). So if you have run-a-1, run-a-2 and
-                        run-b-1 then "run-a*" selects the first two.
+  -n NEW_RUNS [NEW_RUNS ...], --newname NEW_RUNS [NEW_RUNS ...]
+                        The 'new' (right) side of the difference: these
+                        analysis runs are compared to the -b/--basename runs.
+                        The parameter can be multiple run names (on the remote
+                        server) or multiple local report directories (result
+                        of the analyze command). In case of run name the
+                        newname can contain * quantifiers which matches any
+                        number of characters (zero or more). So if you have
+                        run-a-1, run-a-2 and run-b-1 then "run-a*" selects the
+                        first two.
 
 comparison modes:
   --new                 Show results that didn't exist in the 'base' but

@@ -300,3 +300,39 @@ class LocalRemote(unittest.TestCase):
                 continue
 
             self.assertIn(file_name, checked_files)
+
+    def test_different_basename_types(self):
+        """ Test different basename types.
+
+        Test that diff command will fail when remote run and local report
+        directory are given to the basename parameter.
+        """
+        base_run_name = self._run_names[0]
+
+        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
+                    "-b", base_run_name, self._local_reports,
+                    "-n", self._local_reports,
+                    "--unresolved",
+                    "--url", self._url]
+
+        with self.assertRaises(subprocess.CalledProcessError):
+            subprocess.check_output(diff_cmd, env=self._env,
+                                    cwd=os.environ['TEST_WORKSPACE'])
+
+    def test_different_newname_types(self):
+        """ Test different newname types.
+
+        Test that diff command will fail when remote run and local report
+        directory are given to the newname parameter.
+        """
+        base_run_name = self._run_names[0]
+
+        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
+                    "-b", base_run_name,
+                    "-n", self._local_reports, base_run_name,
+                    "--unresolved",
+                    "--url", self._url]
+
+        with self.assertRaises(subprocess.CalledProcessError):
+            subprocess.check_output(diff_cmd, env=self._env,
+                                    cwd=os.environ['TEST_WORKSPACE'])

@@ -483,14 +483,18 @@ def handle_diff_results(args):
 
         return False
 
-    def get_report_dir_results(reportdir):
+    def get_report_dir_results(report_dirs):
+        """ Get reports from the given report directories.
+
+        Absolute paths are expected to the given report directories.
+        """
         all_reports = []
         processed_path_hashes = set()
-        for filename in os.listdir(reportdir):
-            if filename.endswith(".plist"):
-                file_path = os.path.join(reportdir, filename)
-                LOG.debug("Parsing: %s", file_path)
-                try:
+        for report_dir in report_dirs:
+            for filename in os.listdir(report_dir):
+                if filename.endswith(".plist"):
+                    file_path = os.path.join(report_dir, filename)
+                    LOG.debug("Parsing: %s", file_path)
                     files, reports = plist_parser.parse_plist_file(file_path)
                     for report in reports:
                         path_hash = get_report_path_hash(report, files)
@@ -509,10 +513,6 @@ def handle_diff_results(args):
                         report.main['location']['file_name'] = \
                             files[int(report.main['location']['file'])]
                         all_reports.append(report)
-
-                except Exception as ex:
-                    LOG.error('The generated plist is not valid!')
-                    LOG.error(ex)
         return all_reports
 
     def get_line_from_file(filename, lineno):
@@ -599,17 +599,16 @@ def handle_diff_results(args):
 
         return None
 
-    def get_diff_local_dir_remote_run(client, report_dir, run_name):
+    def get_diff_local_dir_remote_run(client, report_dirs, remote_run_names):
         """
         Compares a local report directory with a remote run.
         """
         filtered_reports = []
-        report_dir_results = get_report_dir_results(
-            os.path.abspath(report_dir))
+        report_dir_results = get_report_dir_results(report_dirs)
         suppressed_in_code = get_suppressed_reports(report_dir_results)
 
         diff_type = get_diff_type()
-        run_ids, run_names, _ = process_run_arg(run_name)
+        run_ids, run_names, _ = process_run_args(remote_run_names)
         local_report_hashes = set([r.report_hash for r in report_dir_results])
 
         if diff_type == ttypes.DiffType.NEW:
@@ -651,17 +650,16 @@ def handle_diff_results(args):
 
         return filtered_reports, run_names
 
-    def get_diff_remote_run_local_dir(client, run_name, report_dir):
+    def get_diff_remote_run_local_dir(client, remote_run_names, report_dirs):
         """
         Compares a remote run with a local report directory.
         """
         filtered_reports = []
-        report_dir_results = get_report_dir_results(
-            os.path.abspath(report_dir))
+        report_dir_results = get_report_dir_results(report_dirs)
         suppressed_in_code = get_suppressed_reports(report_dir_results)
 
         diff_type = get_diff_type()
-        run_ids, run_names, _ = process_run_arg(run_name)
+        run_ids, run_names, _ = process_run_args(remote_run_names)
         local_report_hashes = set([r.report_hash for r in report_dir_results])
 
         remote_hashes = client.getDiffResultsHash(run_ids,
@@ -689,20 +687,23 @@ def handle_diff_results(args):
 
         return filtered_reports, run_names
 
-    def get_diff_remote_runs(client, basename, newname):
+    def get_diff_remote_runs(client, remote_base_run_names,
+                             remote_new_run_names):
         """
         Compares two remote runs and returns the filtered results.
         """
         report_filter = ttypes.ReportFilter()
         add_filter_conditions(client, report_filter, args)
 
-        base_ids, base_run_names, base_run_tags = process_run_arg(basename)
+        base_ids, base_run_names, base_run_tags = \
+            process_run_args(remote_base_run_names)
         report_filter.runTag = base_run_tags
 
         cmp_data = ttypes.CompareData()
         cmp_data.diffType = get_diff_type()
 
-        new_ids, new_run_names, new_run_tags = process_run_arg(newname)
+        new_ids, new_run_names, new_run_tags = \
+            process_run_args(remote_new_run_names)
         cmp_data.runIds = new_ids
         cmp_data.runTag = new_run_tags
 
@@ -737,13 +738,13 @@ def handle_diff_results(args):
 
         return all_results, base_run_names, new_run_names
 
-    def get_diff_local_dirs(basename, newname):
+    def get_diff_local_dirs(base_run_names, new_run_names):
         """
         Compares two report directories and returns the filtered results.
         """
         filtered_reports = []
-        base_results = get_report_dir_results(os.path.abspath(basename))
-        new_results = get_report_dir_results(os.path.abspath(newname))
+        base_results = get_report_dir_results(base_run_names)
+        new_results = get_report_dir_results(new_run_names)
 
         base_hashes = set([res.report_hash for res in base_results])
         new_hashes = set([res.report_hash for res in new_results])
@@ -1067,33 +1068,39 @@ def handle_diff_results(args):
 
         return run_histories[0] if run_histories else None
 
-    def process_run_arg(run_arg_with_tag):
+    def process_run_args(run_args_with_tag):
+        """ Process the argument and returns run ids and run tag ids.
+
+        The elemnts inside the given run_args_with_tag list has the following
+        format: <run_name>:<run_tag>
         """
-        Process the argument and returns run ids a run tag ids.
-        The argument has the following format: <run_name>:<run_tag>
-        """
-        run_with_tag = run_arg_with_tag.split(':')
-        run_name = run_with_tag[0]
-        run_filter = ttypes.RunFilter(names=[run_name])
+        run_ids = []
+        run_names = []
+        run_tags = []
 
-        runs = get_run_data(client, run_filter)
-        run_ids = map(lambda run: run.runId, runs)
-        run_names = map(lambda run: run.name, runs)
+        for run_arg_with_tag in run_args_with_tag:
+            run_with_tag = run_arg_with_tag.split(':')
+            run_name = run_with_tag[0]
+            run_filter = ttypes.RunFilter(names=[run_name])
 
-        # Set base run tag if it is available.
-        run_tag_name = run_with_tag[1] if len(run_with_tag) > 1 else None
-        run_tags = None
-        if run_tag_name:
-            tag = get_run_tag(client, run_ids, run_tag_name)
-            run_tags = [tag.id] if tag else None
+            runs = get_run_data(client, run_filter)
+            if not runs:
+                LOG.warning("No run names match the given pattern: %s",
+                            run_arg_with_tag)
+                sys.exit(1)
 
-        if not run_ids:
-            LOG.warning(
-                "No run names match the given pattern: %s", run_arg_with_tag)
-            sys.exit(1)
+            r_ids = map(lambda run: run.runId, runs)
+            run_ids.extend(r_ids)
 
-        LOG.info("Matching runs: %s",
-                 ', '.join(map(lambda run: run.name, runs)))
+            r_names = map(lambda run: run.name, runs)
+            run_names.extend(r_names)
+
+            # Set base run tag if it is available.
+            run_tag_name = run_with_tag[1] if len(run_with_tag) > 1 else None
+            if run_tag_name:
+                tag = get_run_tag(client, r_ids, run_tag_name)
+                if tag:
+                    run_tags.append(tag.id)
 
         return run_ids, run_names, run_tags
 
@@ -1108,48 +1115,88 @@ def handle_diff_results(args):
 
     client = None
 
+    def preprocess_run_args(run_args):
+        """ Preprocess the given run argument.
+        Get a list of local directories and remote runs by processing the
+        given argument.
+        """
+        local_dirs = []
+        run_names = []
+
+        for r in run_args:
+            if os.path.isdir(r):
+                local_dirs.append(os.path.abspath(r))
+            else:
+                run_names.append(r)
+
+        return local_dirs, run_names
+
+    basename_local_dirs, basename_run_names = \
+        preprocess_run_args(args.base_run_names)
+
+    newname_local_dirs, newname_run_names = \
+        preprocess_run_args(args.new_run_names)
+
+    has_different_run_args = False
+    if basename_local_dirs and basename_run_names:
+        LOG.error("All base run names must have the same type: local "
+                  "directory (%s) or run names (%s).",
+                  ', '.join(basename_local_dirs),
+                  ', '.join(basename_run_names))
+        has_different_run_args = True
+
+    if newname_local_dirs and newname_run_names:
+        LOG.error("All new run names must have the same type: local "
+                  "directory (%s) or run names (%s).",
+                  ', '.join(newname_local_dirs),
+                  ', '.join(newname_run_names))
+        has_different_run_args = True
+
+    if has_different_run_args:
+        sys.exit(1)
+
     # We set up the client if we are not comparing two local report directory.
-    if not os.path.isdir(args.basename) or not os.path.isdir(args.newname):
+    if basename_run_names or newname_run_names:
         client = setup_client(args.product_url)
 
-    if os.path.isdir(args.basename) and os.path.isdir(args.newname):
-        reports = get_diff_local_dirs(args.basename, args.newname)
+    if basename_local_dirs and newname_local_dirs:
+        reports = get_diff_local_dirs(basename_local_dirs, newname_local_dirs)
         print_diff_results(reports)
-        LOG.info("Compared two local report directories %s and %s",
-                 os.path.abspath(args.basename),
-                 os.path.abspath(args.newname))
-    elif os.path.isdir(args.newname):
-        reports, base_run_names = \
+        LOG.info("Compared the following local report directories: %s and %s",
+                 ', '.join(basename_local_dirs),
+                 ', '.join(newname_local_dirs))
+    elif newname_local_dirs:
+        reports, matching_base_run_names = \
             get_diff_remote_run_local_dir(client,
-                                          args.basename,
-                                          os.path.abspath(args.newname))
+                                          basename_run_names,
+                                          newname_local_dirs)
         print_diff_results(reports)
         LOG.info("Compared remote run(s) %s (matching: %s) and local report "
-                 "directory %s",
-                 args.basename,
-                 ', '.join(base_run_names),
-                 os.path.abspath(args.newname))
-    elif os.path.isdir(args.basename):
-        reports, new_run_names = \
+                 "directory(s) %s",
+                 ', '.join(basename_run_names),
+                 ', '.join(matching_base_run_names),
+                 ', '.join(newname_local_dirs))
+    elif basename_local_dirs:
+        reports, matching_new_run_names = \
             get_diff_local_dir_remote_run(client,
-                                          os.path.abspath(args.basename),
-                                          args.newname)
+                                          basename_local_dirs,
+                                          newname_run_names)
         print_diff_results(reports)
-        LOG.info("Compared local report directory %s and remote run(s) %s "
+        LOG.info("Compared local report directory(s) %s and remote run(s) %s "
                  "(matching: %s).",
-                 os.path.abspath(args.basename),
-                 args.newname,
-                 ', '.join(new_run_names))
+                 ', '.join(basename_local_dirs),
+                 ', '.join(newname_run_names),
+                 ', '.join(matching_new_run_names))
     else:
-        reports, base_run_names, new_run_names = \
-            get_diff_remote_runs(client, args.basename, args.newname)
+        reports, matching_base_run_names, matching_new_run_names = \
+            get_diff_remote_runs(client, basename_run_names, newname_run_names)
         print_diff_results(reports)
         LOG.info("Compared multiple remote runs %s (matching: %s) and %s "
                  "(matching: %s)",
-                 args.basename,
-                 ', '.join(base_run_names),
-                 args.newname,
-                 ', '.join(new_run_names))
+                 ', '.join(basename_run_names),
+                 ', '.join(matching_base_run_names),
+                 ', '.join(newname_run_names),
+                 ', '.join(matching_new_run_names))
 
 
 def handle_list_result_types(args):
