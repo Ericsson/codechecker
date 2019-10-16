@@ -183,6 +183,14 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                  '-Xclang',
                                  'expand-macros=true'])
 
+            # Enable improved loop execution modeling
+            # See: https://reviews.llvm.org/D12358 and
+            # https://summerofcode.withgoogle.com/archive/2017/projects/6071606019358720/
+            analyzer_cmd.extend(['-Xclang',
+                                 '-analyzer-config',
+                                 '-Xclang',
+                                 'widen-loops=true'])
+
             # Checker configuration arguments needs to be set before
             # the checkers.
             if self.__checker_configs:
