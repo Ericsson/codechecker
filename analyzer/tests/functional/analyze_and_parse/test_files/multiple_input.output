@@ -1,0 +1,31 @@
+NORMAL#CodeChecker parse $WORKSPACE$/test_files/macros/macros.plist $WORKSPACE$/test_files/notes/notes.plist
+--------------------------------------------------------------------------------
+[HIGH] macros.cpp:7:8: Dereference of null pointer (loaded from variable 'ptr') [core.NullDereference]
+  *ptr = 5; // expected-warning{{Dereference of null pointer}}
+       ^
+
+Found 1 defect(s) in macros.cpp
+
+[LOW] notes.cpp:3:23: Duplicate code detected [alpha.clone.CloneChecker]
+int max(int a, int b) { // expected-warning{{Duplicate code detected}}
+                      ^
+
+Found 1 defect(s) in notes.cpp
+
+
+----==== Summary ====----
+-------------------------
+Filename   | Report count
+-------------------------
+macros.cpp |            1
+notes.cpp  |            1
+-------------------------
+-----------------------
+Severity | Report count
+-----------------------
+HIGH     |            1
+LOW      |            1
+-----------------------
+----=================----
+Total number of reports: 2
+----=================----

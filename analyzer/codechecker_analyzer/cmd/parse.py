@@ -599,6 +599,11 @@ def main(args):
 
         return skip
 
+    file_change = set()
+    severity_stats = defaultdict(int)
+    file_stats = defaultdict(int)
+    report_count = 0
+
     for input_path in args.input:
 
         input_path = os.path.abspath(input_path)
@@ -648,7 +653,6 @@ def main(args):
             files = [os.path.join(input_path, file_name) for file_name
                      in file_names]
 
-        file_change = set()
         file_report_map = defaultdict(list)
 
         rh = PlistToPlaintextFormatter(suppr_handler,
@@ -663,36 +667,42 @@ def main(args):
             file_change = file_change.union(f_change)
 
         report_stats = rh.write(file_report_map)
-        severity_stats = report_stats.get('severity')
-        file_stats = report_stats.get('files')
-        reports_stats = report_stats.get('reports')
+        sev_stats = report_stats.get('severity')
+        for severity in sev_stats:
+            severity_stats[severity] += sev_stats[severity]
 
-        print("\n----==== Summary ====----")
-        if file_stats:
-            vals = [[os.path.basename(k), v] for k, v in
-                    dict(file_stats).items()]
-            keys = ['Filename', 'Report count']
-            table = twodim_to_str('table', keys, vals, 1, True)
-            print(table)
+        f_stats = report_stats.get('files')
+        for file_path in f_stats:
+            file_stats[file_path] += f_stats[file_path]
 
-        if severity_stats:
-            vals = [[k, v] for k, v in dict(severity_stats).items()]
-            keys = ['Severity', 'Report count']
-            table = twodim_to_str('table', keys, vals, 1, True)
-            print(table)
+        rep_stats = report_stats.get('reports')
+        report_count += rep_stats.get("report_count", 0)
 
-        report_count = reports_stats.get("report_count", 0)
-        print("----=================----")
-        print("Total number of reports: {}".format(report_count))
-        print("----=================----")
+    print("\n----==== Summary ====----")
+    if file_stats:
+        vals = [[os.path.basename(k), v] for k, v in
+                dict(file_stats).items()]
+        keys = ['Filename', 'Report count']
+        table = twodim_to_str('table', keys, vals, 1, True)
+        print(table)
 
-        if file_change:
-            changed_files = '\n'.join([' - ' + f for f in file_change])
-            LOG.warning("The following source file contents changed since the "
-                        "latest analysis:\n%s\nMultiple reports were not "
-                        "shown and skipped from the statistics. Please "
-                        "analyze your project again to update the "
-                        "reports!", changed_files)
+    if severity_stats:
+        vals = [[k, v] for k, v in dict(severity_stats).items()]
+        keys = ['Severity', 'Report count']
+        table = twodim_to_str('table', keys, vals, 1, True)
+        print(table)
+
+    print("----=================----")
+    print("Total number of reports: {}".format(report_count))
+    print("----=================----")
+
+    if file_change:
+        changed_files = '\n'.join([' - ' + f for f in file_change])
+        LOG.warning("The following source file contents changed since the "
+                    "latest analysis:\n%s\nMultiple reports were not "
+                    "shown and skipped from the statistics. Please "
+                    "analyze your project again to update the "
+                    "reports!", changed_files)
 
     os.chdir(original_cwd)
 
