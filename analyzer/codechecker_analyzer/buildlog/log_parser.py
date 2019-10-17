@@ -20,6 +20,8 @@ import sys
 import tempfile
 import traceback
 
+from codechecker_analyzer.analyzers import clangsa
+
 from codechecker_common.logger import get_logger
 from codechecker_common.util import load_json_or_empty
 
@@ -153,19 +155,10 @@ IGNORED_PARAM_OPTIONS = {
     re.compile('-u$'): 1,
     re.compile('--serialize-diagnostics'): 1,
     re.compile('-framework'): 1,
-    # Skip paired Xclang options like "-Xclang -mllvm".
-    re.compile('-Xclang'): 1,
     # Darwin linker can be given a file with lists the sources for linking.
     re.compile('-filelist'): 1
 }
 
-# These flag groups are ignored together.
-# TODO: This list is not used yet, but will be applied in the next release.
-IGNORED_FLAG_LISTS = [
-  ['-Xclang', '-mllvm'],
-  ['-Xclang', '-emit-llvm'],
-  ['-Xclang', '-instcombine-lower-dbg-declare=0']
-]
 
 COMPILE_OPTIONS = [
     '-nostdinc',
@@ -205,6 +198,9 @@ COMPILE_OPTIONS_MERGED = \
 
 PRECOMPILATION_OPTION = re.compile('-(E|M[T|Q|F|J|P|V|M]*)$')
 
+# Match for all of the compiler flags.
+CLANG_OPTIONS = re.compile('.*')
+
 
 def filter_compiler_includes_extra_args(compiler_flags):
     """Return the list of flags which affect the list of implicit includes.
@@ -240,6 +236,10 @@ class ImplicitCompilerInfo(object):
     # information depends on other data like language or target architecture.
     compiler_info = defaultdict(dict)
     compiler_isexecutable = {}
+    # Store the already detected compiler version information.
+    # If the value is False the compiler is not clang otherwise the value
+    # should be a clang version information object.
+    compiler_versions = {}
 
     @staticmethod
     def c():
@@ -264,7 +264,6 @@ class ImplicitCompilerInfo(object):
         or None in case of error.
         """
         try:
-            LOG.debug("Retrieving default includes via '" + cmd + "'")
             proc = subprocess.Popen(shlex.split(cmd),
                                     stdin=subprocess.PIPE,
                                     stdout=subprocess.PIPE,
@@ -325,6 +324,7 @@ class ImplicitCompilerInfo(object):
         cmd = compiler + " " + ' '.join(extra_opts) \
             + " -E -x " + language + " - -v "
 
+        LOG.debug("Retrieving default includes via '" + cmd + "'")
         ICI = ImplicitCompilerInfo
         include_dirs = \
             ICI.__parse_compiler_includes(ICI.__get_compiler_err(cmd))
@@ -483,7 +483,6 @@ class ImplicitCompilerInfo(object):
         information will be loaded and set from it.
         """
         ICI = ImplicitCompilerInfo
-
         compiler = details['compiler']
         if compiler_info_file and os.path.exists(compiler_info_file):
             # Compiler info file exists, load it.
@@ -644,14 +643,18 @@ def filter_compiler_includes(include_dirs):
     return result
 
 
-def __collect_compile_opts(flag_iterator, details):
+def __collect_clang_compile_opts(flag_iterator, details):
+    """Collect all the options for clang do not filter anything."""
+    if CLANG_OPTIONS.match(flag_iterator.item):
+        details['analyzer_options'].append(flag_iterator.item)
+        return True
+
+
+def __collect_transform_include_opts(flag_iterator, details):
     """
     This function collects the compilation (i.e. not linker or preprocessor)
     flags to the buildaction.
     """
-    if COMPILE_OPTIONS.match(flag_iterator.item):
-        details['analyzer_options'].append(flag_iterator.item)
-        return True
 
     m = COMPILE_OPTIONS_MERGED.match(flag_iterator.item)
 
@@ -677,14 +680,35 @@ def __collect_compile_opts(flag_iterator, details):
                            '-iwithprefix', '-iwithprefixbefore', '-sysroot',
                            '--sysroot']
         if flag in flags_with_path:
+            # --sysroot format can be --sysroot=/path/to/include
+            # in this case before the normalization the '='
+            # sign must be removed.
+            # We put back the original
+            # --sysroot=/path/to/include as
+            # --sysroot /path/to/include
+            # which is a valid format too.
+            if param.startswith("="):
+                param = param[1:]
+                together = False
             param = os.path.normpath(
-                os.path.join(details['directory'], param))
+                    os.path.join(details['directory'], param))
 
         if together:
             details['analyzer_options'].append(flag + param)
         else:
             details['analyzer_options'].extend([flag, param])
 
+        return True
+    return False
+
+
+def __collect_compile_opts(flag_iterator, details):
+    """
+    This function collects the compilation (i.e. not linker or preprocessor)
+    flags to the buildaction.
+    """
+    if COMPILE_OPTIONS.match(flag_iterator.item):
+        details['analyzer_options'].append(flag_iterator.item)
         return True
 
     return False
@@ -802,7 +826,9 @@ def __skip(flag_iterator, _):
 
 def parse_options(compilation_db_entry,
                   compiler_info_file=None,
-                  keep_gcc_fix_headers=False):
+                  keep_gcc_fix_headers=False,
+                  get_clangsa_version_func=None,
+                  env=None):
     """
     This function parses a GCC compilation action and returns a BuildAction
     object which can be the input of Clang analyzer tools.
@@ -816,8 +842,13 @@ def parse_options(compilation_db_entry,
                             only used by GCC (include-fixed). This flag
                             determines whether these should be kept among
                             the implicit include paths.
+    get_clangsa_version_func -- Is a function which should return the
+                            version information for a clang compiler.
+                            It requires the compiler binary and an env.
+                            get_clangsa_version_func(compiler_binary, env)
+                            Should return false for a non clang compiler.
+    env -- Is the environment where a subprocess call should be executed.
     """
-
     details = {
         'analyzer_options': [],
         'compiler_includes': defaultdict(dict),  # For each language c/cpp.
@@ -848,19 +879,60 @@ def parse_options(compilation_db_entry,
     if '++' in os.path.basename(details['compiler']):
         details['lang'] = 'c++'
 
-    flag_transformers = [
+    # Source files are skipped first so they are not collected
+    # with the other compiler flags together. Source file is handled
+    # separately from the compile command json.
+    clang_flag_collectors = [
+        __skip_sources,
+        __get_output,
+        __determine_action_type,
+        __get_arch,
+        __get_language,
+        __collect_transform_include_opts,
+        __collect_clang_compile_opts
+        ]
+
+    gcc_flag_transformers = [
         __skip,
         __replace,
         __collect_compile_opts,
+        __collect_transform_include_opts,
         __determine_action_type,
         __skip_sources,
         __get_arch,
         __get_language,
         __get_output]
 
+    flag_processors = gcc_flag_transformers
+
+    compiler_version_info = \
+        ImplicitCompilerInfo.compiler_versions.get(
+            details['compiler'], False)
+
+    if not compiler_version_info and get_clangsa_version_func:
+
+        # did not find in the cache yet
+        try:
+            compiler_version_info = \
+                get_clangsa_version_func(details['compiler'], env)
+        except subprocess.CalledProcessError as cerr:
+            LOG.error('Failed to get and parse clang version: %s',
+                      details['compiler'])
+            LOG.error(cerr)
+            compiler_version_info = False
+
+    ImplicitCompilerInfo.compiler_versions[details['compiler']] \
+        = compiler_version_info
+
+    using_clang_to_compile_and_analyze = False
+    if ImplicitCompilerInfo.compiler_versions[details['compiler']]:
+        # Based on the version information the compiler is clang.
+        using_clang_to_compile_and_analyze = True
+        flag_processors = clang_flag_collectors
+
     for it in OptionIterator(gcc_command[1:]):
-        for flag_transformer in flag_transformers:
-            if flag_transformer(it, details):
+        for flag_processor in flag_processors:
+            if flag_processor(it, details):
                 break
         else:
             pass
@@ -903,7 +975,10 @@ def parse_options(compilation_db_entry,
         gcc_toolchain.toolchain_in_args(details['analyzer_options'])
 
     # Store the compiler built in include paths and defines.
-    if not toolchain:
+    # If clang compiler is used for compilation and analysis,
+    # do not collect the implicit include paths.
+    if (not toolchain and not using_clang_to_compile_and_analyze) or \
+            (compiler_info_file and os.path.exists(compiler_info_file)):
         ImplicitCompilerInfo.set(details, compiler_info_file)
 
     if not keep_gcc_fix_headers:
@@ -938,7 +1013,8 @@ def parse_unique_log(compilation_database,
                      compiler_info_file=None,
                      keep_gcc_fix_headers=False,
                      analysis_skip_handler=None,
-                     pre_analysis_skip_handler=None):
+                     pre_analysis_skip_handler=None,
+                     env=None):
     """
     This function reads up the compilation_database
     and returns with a list of build actions that is prepared for clang
@@ -976,6 +1052,8 @@ def parse_unique_log(compilation_database,
                              during analysis
     pre_analysis_skip_handler -- skip handler for files wich should be skipped
                                  during pre analysis
+
+    env -- Is the environment where a subprocess call should be executed.
     """
     try:
         uniqued_build_actions = dict()
@@ -1002,7 +1080,9 @@ def parse_unique_log(compilation_database,
 
             action = parse_options(entry,
                                    compiler_info_file,
-                                   keep_gcc_fix_headers)
+                                   keep_gcc_fix_headers,
+                                   clangsa.version.get,
+                                   env)
 
             if not action.lang:
                 continue

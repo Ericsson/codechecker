@@ -250,22 +250,6 @@ class OptionParserTest(unittest.TestCase):
         self.assertEqual(res.source, 'main.cpp')
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
-    def test_preprocess_and_compile_with_extra_file_clang(self):
-        """
-        -MF flag is followed by a dependency file. We shouldn't consider this
-        a source file.
-        """
-        action = {
-            'file': 'main.cpp',
-            'command': 'clang++ -c -MF deps.txt main.cpp',
-            'directory': ''}
-
-        res = log_parser.parse_options(action)
-        print(res)
-        self.assertEqual(res.analyzer_options, [])
-        self.assertEqual(res.source, 'main.cpp')
-        self.assertEqual(BuildAction.COMPILE, res.action_type)
-
     def test_ignore_flags_gcc(self):
         """
         Test if special compiler options are ignored properly.
@@ -280,40 +264,69 @@ class OptionParserTest(unittest.TestCase):
         res = log_parser.parse_options(action)
         self.assertEqual(res.analyzer_options, ["-fsyntax-only"])
 
-    def test_ignore_flags_clang(self):
+    def test_preprocess_and_compile_with_extra_file_clang(self):
         """
-        Clang has some further flags which should be omitted.
+        -MF flag is followed by a dependency file. We shouldn't consider this
+        a source file.
         """
-        ignore = ["-Werror", "-fsyntax-only",
-                  "-mfloat-gprs=double", "-mfloat-gprs=yes",
-                  "-mabi=spe", "-mabi=eabi",
-                  '-Xclang', '-mllvm',
-                  '-Xclang', '-instcombine-lower-dbg-declare=0']
         action = {
             'file': 'main.cpp',
-            'command': "clang++ {} main.cpp".format(' '.join(ignore)),
+            'command': 'clang++ -c -MF deps.txt main.cpp',
             'directory': ''}
-        res = log_parser.parse_options(action)
-        self.assertEqual(res.analyzer_options, ["-fsyntax-only"])
 
-    @unittest.skip("This will be enabled when we distinguish -Xclang params.")
-    def test_ignore_xclang_groups(self):
-        """
-        In case a flag has a parameter, we'd like to skip only the ones with a
-        specific parameter. Currently Clang compiler has such parameters after
-        -Xclang flag.
-        """
-        ignore = ["-Werror", "-fsyntax-only",
-                  '-Xclang', '-mllvm',
-                  '-Xclang', '-instcombine-lower-dbg-declare=0',
-                  '-Xclang', '-something']
+        class FakeClangVersion(object):
+            installed_dir = "/tmp/clang/install"
+            major_version = "9"
+
+        fake_clang_version = FakeClangVersion()
+
+        log_parser.ImplicitCompilerInfo.compiler_versions["clang++"] =\
+            fake_clang_version
+
+        def fake_clangsa_version_func(compiler, env):
+            """Return always the fake compiler version"""
+            return fake_clang_version
+
+        res = log_parser.parse_options(
+            action, get_clangsa_version_func=fake_clangsa_version_func)
+        print(res)
+        self.assertEqual(res.analyzer_options, [])
+        self.assertEqual(res.source, 'main.cpp')
+        self.assertEqual(BuildAction.COMPILE, res.action_type)
+
+    def test_keep_clang_flags(self):
+        """ The analyzer is the same as the compiler keep all the flags. """
+        keep = ["-std=c++11",
+                "-include/include/myheader.h",
+                "-include", "/include/myheader2.h",
+                "--include", "/include/myheader3.h",
+                "--sysroot", "/home/sysroot", "-Werror", "-fsyntax-only",
+                "-mfloat-gprs=double", "-mfloat-gprs=yes",
+                "-mabi=spe", "-mabi=eabi",
+                "-Xclang", "-mllvm",
+                "-Xclang", "-instcombine-lower-dbg-declare=0",
+                "--target=something"]
         action = {
             'file': 'main.cpp',
-            'command': "clang++ {} main.cpp".format(' '.join(ignore)),
+            'command': "clang++ {} main.cpp".format(' '.join(keep)),
             'directory': ''}
-        res = log_parser.parse_options(action)
-        self.assertEqual(res.analyzer_options,
-                         ["-fsyntax-only", "-Xclang", "-something"])
+
+        class FakeClangVersion(object):
+            installed_dir = "/tmp/clang/install"
+            major_version = "9"
+
+        fake_clang_version = FakeClangVersion()
+
+        log_parser.ImplicitCompilerInfo.compiler_versions["clang++"] =\
+            fake_clang_version
+
+        def fake_clangsa_version_func(compiler, env):
+            """Return always the fake compiler version"""
+            return fake_clang_version
+
+        res = log_parser.parse_options(
+            action, get_clangsa_version_func=fake_clangsa_version_func)
+        self.assertEqual(res.analyzer_options, keep)
 
     def test_preserve_flags(self):
         """

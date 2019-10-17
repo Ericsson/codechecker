@@ -121,3 +121,13 @@ class CTUAutodetectionVersionParsingTest(unittest.TestCase):
         self.assertEqual(version_info.minor_version, 0)
         self.assertEqual(version_info.patch_version, 0)
         self.assertEqual(version_info.installed_dir, '/path/to/clang/bin')
+
+    def test_built_from_gcc(self):
+        """ Test if parsing a gcc version info returns False. """
+
+        with open('gcc_version') as version_output:
+            version_string = version_output.read()
+
+        parser = version.ClangVersionInfoParser()
+        version_info = parser.parse(version_string)
+        self.assertIs(version_info, False)
