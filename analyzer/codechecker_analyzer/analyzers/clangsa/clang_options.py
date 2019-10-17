@@ -94,3 +94,20 @@ def ctu_mapping(clang_version_info):
         "found in directory reported by Clang '%s'.",
         postfixed_tool_path, installed_dir)
     return None, None
+
+
+def get_abos_options(clang_version_info):
+    """ Get options to enable aggressive-binary-operation-simplification.
+
+    Returns list of options which enables
+    aggressive-binary-operation-simplification option (which is needed for the
+    iterator checker) if the Clang version is greater then 8.
+    Otherwise returns an empty list.
+    """
+    if clang_version_info and clang_version_info.major_version >= 8:
+        return ['-Xclang',
+                '-analyzer-config',
+                '-Xclang',
+                'aggressive-binary-operation-simplification=true']
+
+    return []
