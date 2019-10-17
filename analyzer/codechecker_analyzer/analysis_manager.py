@@ -697,7 +697,7 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
             sys.exit(128 + signum)
 
     signal.signal(signal.SIGINT, signal_handler)
-
+    actions, skipped_actions = skip_cpp(actions, skip_handler)
     # Start checking parallel.
     checked_var = multiprocessing.Value('i', 1)
     actions_num = multiprocessing.Value('i', len(actions))
@@ -723,8 +723,6 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
     # Construct analyzer env.
     analyzer_environment = env.extend(context.path_env_extra,
                                       context.ld_lib_path_extra)
-
-    actions, skipped_actions = skip_cpp(actions, skip_handler)
 
     analyzed_actions = [(actions_map,
                          build_action,
@@ -770,6 +768,8 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
         LOG.debug_analyzer("%s is skipped", skp.source)
 
     LOG.info("Total analyzed compilation commands: %d", len(analyzed_actions))
+    if skipped_actions:
+        LOG.info("Skipped compilation commands: %d", len(skipped_actions))
 
     LOG.info("----=================----")
     if not os.listdir(success_dir):
