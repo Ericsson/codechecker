@@ -10,6 +10,7 @@
 import glob
 import json
 import os
+import shutil
 import unittest
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import DetectionStatus, \
@@ -433,3 +434,52 @@ int main()
         offed_reports = [r for r in reports
                          if r.detectionStatus == DetectionStatus.OFF]
         self.assertEqual(len(offed_reports), 1)
+
+    def test_store_multiple_dir_no_off(self):
+        """
+        Store multiple report directory and check that no reports are marked
+        as OFF.
+        """
+        cfg = dict(self._codechecker_cfg)
+        cfg['checkers'] = ['-d', 'core.DivideZero']
+
+        self._create_source_file(1)
+        codechecker.log_and_analyze(cfg,
+                                    self._test_dir)
+
+        # Remove metadata.json.
+        try:
+            os.remove(os.path.join(cfg['reportdir'],
+                                   'metadata.json'))
+        except OSError:
+            pass
+
+        # Analyze the same project to a different report directory and disable
+        # modernize checkers.
+        cfg['checkers'] = ['-d', 'deadcode.DeadStores']
+        cfg['reportdir'] = self._codechecker_cfg['reportdir'] + "2"
+
+        orig_test_dir = self._test_dir
+        self._test_dir = self._test_dir + "2"
+        shutil.copytree(orig_test_dir, self._test_dir)
+        self._create_source_file(3)
+
+        codechecker.log_and_analyze(cfg,
+                                    self._test_dir)
+
+        # Set back test dir.
+        self._test_dir = orig_test_dir
+
+        # Store two report directory.
+        cfg['reportdir'] = '{0} {1}'.format(
+            cfg['reportdir'],
+            self._codechecker_cfg['reportdir'])
+        codechecker.store(cfg, 'hello')
+
+        # Check that no reports are marked as OFF.
+        reports = self._cc_client.getRunResults(None, 100, 0, [], None, None,
+                                                False)
+
+        offed_reports = [r for r in reports
+                         if r.detectionStatus == DetectionStatus.OFF]
+        self.assertEqual(len(offed_reports), 0)

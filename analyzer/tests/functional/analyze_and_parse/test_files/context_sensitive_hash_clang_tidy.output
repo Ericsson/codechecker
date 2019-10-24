@@ -1,7 +1,7 @@
 NORMAL#CodeChecker log --output $LOGFILE$ --build "make context_hash" --quiet
 NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy
 NORMAL#CodeChecker parse $OUTPUT$ --print-steps
-CHECK#CodeChecker check --build "make context_hash" --output $OUTPUT$ --quiet --print-steps --analyer clang-tidy
+CHECK#CodeChecker check --build "make context_hash" --output $OUTPUT$ --quiet --print-steps --analyzers clang-tidy
 --------------------------------------------------------------------------------
 [] - Starting build ...
 [] - Build finished successfully.

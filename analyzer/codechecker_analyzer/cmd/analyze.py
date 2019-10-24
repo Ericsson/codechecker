@@ -619,7 +619,7 @@ def __cleanup_metadata(metadata_prev, metadata):
     if not metadata_prev:
         return
 
-    result_src_files = metadata_prev['result_source_files']
+    result_src_files = __get_result_source_files(metadata_prev)
     for plist_file, source_file in result_src_files.items():
         if not os.path.exists(source_file):
             try:
@@ -630,6 +630,19 @@ def __cleanup_metadata(metadata_prev, metadata):
                 os.remove(plist_file)
             except OSError:
                 LOG.warning("Failed to remove plist file: %s", plist_file)
+
+
+def __get_result_source_files(metadata):
+    """ Get result source files from the given metadata. """
+    if 'result_source_files' in metadata:
+        return metadata['result_source_files']
+
+    result_src_files = {}
+    for tool in metadata.get('tools', {}):
+        r_src_files = tool.get('result_source_files', {})
+        result_src_files.update(r_src_files.items())
+
+    return result_src_files
 
 
 def main(args):
@@ -762,26 +775,31 @@ def main(args):
         json.dump(actions, f,
                   cls=log_parser.CompileCommandEncoder)
 
-    metadata = {'action_num': len(actions),
-                'command': sys.argv,
-                'versions': {
-                    'codechecker': "{0} ({1})".format(
-                        context.package_git_tag,
-                        context.package_git_hash)},
-                'working_directory': os.getcwd(),
-                'output_path': args.output_path,
-                'result_source_files': {}}
+    metadata = {
+        'version': 2,
+        'tools': [{
+            'name': 'codechecker',
+            'action_num': len(actions),
+            'command': sys.argv,
+            'version': "{0} ({1})".format(context.package_git_tag,
+                                          context.package_git_hash),
+            'working_directory': os.getcwd(),
+            'output_path': args.output_path,
+            'result_source_files': {},
+            'analyzers': {}
+        }]}
+    metadata_tool = metadata['tools'][0]
 
     if 'name' in args:
-        metadata['name'] = args.name
+        metadata_tool['run_name'] = args.name
 
     # Update metadata dictionary with old values.
     metadata_file = os.path.join(args.output_path, 'metadata.json')
     metadata_prev = None
     if os.path.exists(metadata_file):
         metadata_prev = load_json_or_empty(metadata_file)
-        metadata['result_source_files'] = \
-            dict(metadata_prev['result_source_files'])
+        metadata_tool['result_source_files'] = \
+            __get_result_source_files(metadata_prev)
 
     CompileCmdParseCount = \
         collections.namedtuple('CompileCmdParseCount',
@@ -809,7 +827,7 @@ def main(args):
                        compile_cmd_count.analyze)
 
     analyzer.perform_analysis(args, skip_handler, context, actions,
-                              metadata,
+                              metadata_tool,
                               compile_cmd_count)
 
     __update_skip_file(args)

@@ -35,66 +35,52 @@ from .analyzers.clangsa.statistics_collector import SpecialReturnValueCollector
 LOG = get_logger('analyzer')
 
 
-def print_analyzer_statistic_summary(statistics, status, msg=None):
+def print_analyzer_statistic_summary(metadata_analyzers, status, msg=None):
     """
     Print analyzer statistic summary for the given status code with the given
     section heading message.
     """
-    has_status = sum((res.get(status, 0) for res in
-                      (statistics[i] for i in statistics)))
+    has_status = False
+    for _, analyzer in metadata_analyzers.items():
+        if analyzer.get('analyzer_statistics', {}).get(status):
+            has_status = True
+            break
 
     if has_status and msg:
         LOG.info(msg)
 
-    for analyzer_type, res in statistics.items():
-        successful = res[status]
-        if successful:
-            LOG.info("  %s: %s", analyzer_type, successful)
+    for analyzer_type, analyzer in metadata_analyzers.items():
+        res = analyzer.get('analyzer_statistics', {}).get(status)
+        if res:
+            LOG.info("  %s: %s", analyzer_type, res)
 
 
-def worker_result_handler(results, metadata, output_path, analyzer_binaries):
-    """
-    Print the analysis summary.
-    """
-
-    if metadata is None:
-        metadata = {}
-
+def worker_result_handler(results, metadata_tool, output_path,
+                          analyzer_binaries):
+    """ Print the analysis summary. """
     skipped_num = 0
     reanalyzed_num = 0
-    statistics = {}
-
+    metadata_analyzers = metadata_tool['analyzers']
     for res, skipped, reanalyzed, analyzer_type, _, sources in results:
+        statistics = metadata_analyzers[analyzer_type]['analyzer_statistics']
         if skipped:
             skipped_num += 1
         else:
             if reanalyzed:
                 reanalyzed_num += 1
 
-            if analyzer_type not in statistics:
-                analyzer_bin = analyzer_binaries[analyzer_type]
-                analyzer_version = \
-                    metadata.get('versions', {}).get(analyzer_bin)
-
-                statistics[analyzer_type] = {
-                    "failed": 0,
-                    "failed_sources": [],
-                    "successful": 0,
-                    "version": analyzer_version
-                }
-
             if res == 0:
-                statistics[analyzer_type]['successful'] += 1
+                statistics['successful'] += 1
             else:
-                statistics[analyzer_type]['failed'] += 1
-                statistics[analyzer_type]['failed_sources'].append(sources)
+                statistics['failed'] += 1
+                statistics['failed_sources'].append(sources)
 
     LOG.info("----==== Summary ====----")
-    print_analyzer_statistic_summary(statistics,
+    print_analyzer_statistic_summary(metadata_analyzers,
                                      'successful',
                                      'Successfully analyzed')
 
-    print_analyzer_statistic_summary(statistics,
+    print_analyzer_statistic_summary(metadata_analyzers,
                                      'failed',
                                      'Failed to analyze')
 
@@ -103,8 +89,7 @@ def worker_result_handler(results, metadata, output_path, analyzer_binaries):
     if skipped_num:
         LOG.info("Skipped compilation commands: %d", skipped_num)
 
-    metadata['skipped'] = skipped_num
-    metadata['analyzer_statistics'] = statistics
+    metadata_tool['skipped'] = skipped_num
 
     # check() created the result .plist files and additional, per-analysis
     # meta information in forms of .plist.source files.
@@ -121,9 +106,9 @@ def worker_result_handler(results, metadata, output_path, analyzer_binaries):
         err_file, _ = os.path.splitext(f)
         plist_file = os.path.basename(err_file) + ".plist"
         plist_file = os.path.join(output_path, plist_file)
-        metadata['result_source_files'].pop(plist_file, None)
+        metadata_tool['result_source_files'].pop(plist_file, None)
 
-    metadata['result_source_files'].update(source_map)
+    metadata_tool['result_source_files'].update(source_map)
 
 
 # Progress reporting.
@@ -680,7 +665,7 @@ def skip_cpp(compile_actions, skip_handler):
 
 
 def start_workers(actions_map, actions, context, analyzer_config_map,
-                  jobs, output_path, skip_handler, metadata,
+                  jobs, output_path, skip_handler, metadata_tool,
                   quiet_analyze, capture_analysis_output, timeout,
                   ctu_reanalyze_on_failure, statistics_data, manager,
                   compile_cmd_count):
@@ -752,7 +737,7 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
                            analyzed_actions,
                            1,
                            callback=lambda results: worker_result_handler(
-                               results, metadata, output_path,
+                               results, metadata_tool, output_path,
                                context.analyzer_binaries)
                            ).get(31557600)
 

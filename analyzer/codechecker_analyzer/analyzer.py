@@ -140,7 +140,7 @@ def __get_statistics_data(args, manager):
     return statistics_data
 
 
-def perform_analysis(args, skip_handler, context, actions, metadata,
+def perform_analysis(args, skip_handler, context, actions, metadata_tool,
                      compile_cmd_count):
     """
     Perform static analysis via the given (or if not, all) analyzers,
@@ -212,18 +212,28 @@ def perform_analysis(args, skip_handler, context, actions, metadata,
         config_map[ClangSA.ANALYZER_NAME].set_checker_enabled(
             ReturnValueCollector.checker_collect, False)
 
-    # Save some metadata information.
-    versions = __get_analyzer_version(context, config_map)
-    metadata['versions'].update(versions)
+    check_env = env.extend(context.path_env_extra,
+                           context.ld_lib_path_extra)
 
-    metadata['checkers'] = {}
+    # Save some metadata information.
     for analyzer in analyzers:
-        metadata['checkers'][analyzer] = {}
+        metadata_info = {
+            'checkers': {},
+            'analyzer_statistics': {
+                "failed": 0,
+                "failed_sources": [],
+                "successful": 0,
+                "version": None}}
 
         for check, data in config_map[analyzer].checks().items():
             state, _ = data
-            metadata['checkers'][analyzer].update(
-                {check: state == CheckerState.enabled})
+            metadata_info['checkers'].update({
+                check: state == CheckerState.enabled})
+
+        version = config_map[analyzer].get_version(check_env)
+        metadata_info['analyzer_statistics']['version'] = version
+
+        metadata_tool['analyzers'][analyzer] = metadata_info
 
     if ctu_collect:
         shutil.rmtree(ctu_dir, ignore_errors=True)
@@ -291,7 +301,7 @@ def perform_analysis(args, skip_handler, context, actions, metadata,
                                        config_map, args.jobs,
                                        args.output_path,
                                        skip_handler,
-                                       metadata,
+                                       metadata_tool,
                                        'quiet' in args,
                                        'capture_analysis_output' in args,
                                        args.timeout if 'timeout' in args
@@ -311,8 +321,8 @@ def perform_analysis(args, skip_handler, context, actions, metadata,
     end_time = time.time()
     LOG.info("Analysis length: %s sec.", end_time - start_time)
 
-    metadata['timestamps'] = {'begin': start_time,
-                              'end': end_time}
+    metadata_tool['timestamps'] = {'begin': start_time,
+                                   'end': end_time}
 
     if ctu_collect and ctu_analyze:
         shutil.rmtree(ctu_dir, ignore_errors=True)
