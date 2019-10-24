@@ -315,7 +315,7 @@ def handle_failure(source_analyzer, rh, zip_file, result_base, actions_map):
         zip_file,
         map(lambda path: os.path.join(action.directory, path), other_files))
 
-    with zipfile.ZipFile(zip_file, 'a') as archive:
+    with zipfile.ZipFile(zip_file, 'w') as archive:
         LOG.debug("[ZIP] Writing analyzer STDOUT to /stdout")
         archive.writestr("stdout", rh.analyzer_stdout)
 
@@ -553,7 +553,6 @@ def check(check_data):
         source_file_name = os.path.basename(action.source)
 
         if rh.analyzer_returncode == 0:
-
             # Remove the previously generated error file.
             if os.path.exists(zip_file):
                 os.remove(zip_file)
