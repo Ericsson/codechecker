@@ -579,6 +579,16 @@ def main(args):
 
     report_dir = args.output_path
 
+    # Skip list is applied only in pre-analysis
+    # if --ctu-collect or --stats-collect was called explicitly.
+    pre_analysis_skip_handler = None
+    if 'ctu_phases' in args:
+        ctu_collect = args.ctu_phases[0]
+        ctu_analyze = args.ctu_phases[1]
+        if ((ctu_collect and not ctu_analyze)
+                or ("stats_output" in args and args.stats_output)):
+            pre_analysis_skip_handler = skip_handler
+
     # Parse the JSON CCDBs and retrieve the compile commands.
     actions = []
     for log_file in args.logfile:
@@ -592,7 +602,9 @@ def main(args):
             report_dir,
             args.compile_uniqueing,
             compiler_info_file,
-            args.keep_gcc_include_fixed)
+            args.keep_gcc_include_fixed,
+            skip_handler,
+            pre_analysis_skip_handler)
 
     if not actions:
         LOG.info("No analysis is required.\nThere were no compilation "
