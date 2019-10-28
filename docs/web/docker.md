@@ -7,6 +7,19 @@ packaged with all its dependencies and libraries.
 To see how you can run a CodeChecker server in Docker read the following
 sections.
 
+## Table of Contents
+* [Build Docker image](#build-docker-image)
+* [Pre-built CodeChecker Docker images](#pre-built-codechecker-docker-images)
+* [Usage](#usage)
+* [Docker compose](#docker-compose)
+  * [docker-compose.yml](#docker-composeyml)
+    * [Sqlite setup](#sqlite-setup)
+    * [PostgreSQL setup](#postgresql-setup)
+      * [PostgreSQL (no authentication)](#postgresql-no-authentication)
+      * [PostgreSQL (authentication)](#postgresql-authentication)
+    * [Running your app](#running-your-app)
+* [Kubernetes](#kubernetes)
+
 ## Build Docker image
 You can create a Docker image by running the following command in the root
 directory of this repository:
@@ -110,3 +123,20 @@ previously created password files for secrets.
 ### Running your app
 Run `docker-compose -f web/docker/services/<service-yml-file> up -d` and
 Compose starts and runs your entire app.
+
+## Kubernetes
+[![Kubernetes](../images/kubernetes.png)](https://kubernetes.io/)
+
+CodeChecker supports to configure liveness, readiness and startup probes for
+containers when using
+[Kubernetes]( https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/).
+
+If your server is running on `my.company.org` at `8080` port then two URL
+endpoints will be available for you:
+* `my.company.org:8080/live`: simply say that the server is running. In case of
+succes it will response with `200` status code and a
+`CODECHECKER_SERVER_IS_LIVE` message.
+* `my.company.org:8080/ready`: it will run a simple query on the database. In
+case of success it will response with `200` status code and a
+`CODECHECKER_SERVER_IS_READY` message. In case of error it will response with
+`500` error code and a `CODECHECKER_SERVER_IS_NOT_READY` error message.

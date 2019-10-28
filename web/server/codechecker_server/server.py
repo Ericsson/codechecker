@@ -63,7 +63,8 @@ from .api.product_server import ThriftProductHandler as ProductHandler_v6
 from .api.report_server import ThriftRequestHandler as ReportHandler_v6
 from .database import database
 from .database import db_cleanup
-from .database.config_db_model import Product as ORMProduct
+from .database.config_db_model import Product as ORMProduct, \
+    Configuration as ORMConfiguration
 from .database.run_db_model import IDENTIFIER as RUN_META, Run, RunLock
 
 LOG = get_logger('server')
@@ -154,6 +155,30 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 perm_args,
                 self.auth_session)
 
+    def __handle_readiness(self):
+        """ Handle readiness probe. """
+        try:
+            cfg_sess = self.server.config_session()
+            cfg_sess.query(ORMConfiguration).count()
+
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write('CODECHECKER_SERVER_IS_READY')
+        except Exception:
+            self.send_response(500)
+            self.end_headers()
+            self.wfile.write('CODECHECKER_SERVER_IS_NOT_READY')
+        finally:
+            if cfg_sess:
+                cfg_sess.close()
+                cfg_sess.commit()
+
+    def __handle_liveness(self):
+        """ Handle liveness probe. """
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write('CODECHECKER_SERVER_IS_LIVE')
+
     def end_headers(self):
         # Sending the authentication cookie
         # in every response if any.
@@ -188,6 +213,14 @@ class RequestHandler(SimpleHTTPRequestHandler):
                   self.path)
 
         product_endpoint, path = routing.split_client_GET_request(self.path)
+
+        if self.path == '/live':
+            self.__handle_liveness()
+            return
+
+        if self.path == '/ready':
+            self.__handle_readiness()
+            return
 
         if self.server.manager.is_enabled and not self.auth_session \
                 and routing.is_protected_GET_entrypoint(path):
