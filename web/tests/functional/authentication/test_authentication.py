@@ -13,11 +13,13 @@ from __future__ import absolute_import
 
 import json
 import os
+import re
 import subprocess
 import unittest
 
 from codechecker_api_shared.ttypes import RequestFailed, Permission
 
+from codechecker_client.credential_manager import UserCredentials
 from libtest import codechecker
 from libtest import env
 
@@ -246,3 +248,54 @@ class DictAuth(unittest.TestCase):
 
         result = auth_client.destroySession()
         self.assertTrue(result, "Server did not allow us to destroy session.")
+
+    def test_personal_access_tokens(self):
+        """ Test personal access token commands. """
+        codechecker_cfg = self._test_cfg['codechecker_cfg']
+        host = codechecker_cfg['viewer_host']
+        port = codechecker_cfg['viewer_port']
+
+        new_token_cmd = [env.codechecker_cmd(), 'cmd', 'token', 'new',
+                         '--url', env.parts_to_url(codechecker_cfg)]
+
+        with self.assertRaises(subprocess.CalledProcessError):
+            subprocess.check_output(new_token_cmd)
+
+        # Login to the server.
+        auth_client = env.setup_auth_client(self._test_workspace,
+                                            session_token='_PROHIBIT')
+
+        # A non-authenticated session should return an empty user.
+        user = auth_client.getLoggedInUser()
+        self.assertEqual(user, "")
+
+        # Create a SUPERUSER login.
+        session_token = auth_client.performLogin("Username:Password",
+                                                 "cc:test")
+
+        self.assertIsNotNone(session_token,
+                             "Valid credentials didn't give us a token!")
+
+        cred_manager = UserCredentials()
+        cred_manager.save_token(host, port, session_token)
+
+        # Run the new token command after login.
+        subprocess.check_output(new_token_cmd)
+
+        # List personal access tokens.
+        list_token_cmd = [env.codechecker_cmd(), 'cmd', 'token', 'list',
+                          '--url', env.parts_to_url(codechecker_cfg),
+                          '-o', 'json']
+
+        out_json = subprocess.check_output(list_token_cmd)
+        tokens = json.loads(out_json)
+        self.assertEqual(len(tokens), 1)
+
+        # Remove personal access token.
+        del_token_cmd = [env.codechecker_cmd(), 'cmd', 'token', 'del',
+                         '--url', env.parts_to_url(codechecker_cfg),
+                         tokens[0]['token']]
+
+        subprocess.check_output(del_token_cmd)
+
+        cred_manager.save_token(host, port, session_token, True)
