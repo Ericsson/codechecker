@@ -13,8 +13,9 @@ from __future__ import absolute_import
 from codechecker_common import logger
 from codechecker_common.output_formatters import twodim_to_str
 
-from .client import setup_auth_client
+from .client import setup_auth_client, perform_auth_for_handler
 from .cmd_line import CmdLineOutputEncoder
+from .credential_manager import UserCredentials
 from .product import split_server_url
 
 # Needs to be set in the handler functions.
@@ -27,6 +28,21 @@ def init_logger(level, stream=None, logger_name='system'):
     LOG = logger.get_logger(logger_name)
 
 
+def init_auth_client(protocol, host, port):
+    """ Setup a new auth client. """
+    auth_client = setup_auth_client(protocol, host, port)
+
+    # Check if local token is available.
+    cred_manager = UserCredentials()
+    session_token = cred_manager.get_token(host, port)
+
+    if not session_token:
+        session_token = perform_auth_for_handler(auth_client, host, port,
+                                                 cred_manager)
+
+    return setup_auth_client(protocol, host, port, session_token)
+
+
 def handle_add_token(args):
     """
     Creates a new personal access token for the logged in user based on the
@@ -35,7 +51,7 @@ def handle_add_token(args):
     init_logger(args.verbose if 'verbose' in args else None)
 
     protocol, host, port = split_server_url(args.server_url)
-    client, _ = setup_auth_client(protocol, host, port)
+    client = init_auth_client(protocol, host, port)
 
     description = args.description if 'description' in args else None
     session = client.newToken(description)
@@ -57,7 +73,7 @@ def handle_list_tokens(args):
     init_logger(args.verbose if 'verbose' in args else None, stream)
 
     protocol, host, port = split_server_url(args.server_url)
-    client, _ = setup_auth_client(protocol, host, port)
+    client = init_auth_client(protocol, host, port)
     tokens = client.getTokens()
 
     if args.output_format == 'json':
@@ -80,7 +96,7 @@ def handle_del_token(args):
     init_logger(args.verbose if 'verbose' in args else None)
 
     protocol, host, port = split_server_url(args.server_url)
-    client, _ = setup_auth_client(protocol, host, port)
+    client = init_auth_client(protocol, host, port)
 
     token = args.token
     try:
