@@ -11,7 +11,7 @@ from __future__ import division
 from __future__ import absolute_import
 
 import json
-import shared
+import codechecker_api_shared
 
 from Authentication_v6.ttypes import AuthorisationList, HandshakeInformation, \
     SessionTokenData
@@ -47,8 +47,8 @@ class ThriftAuthHandler(object):
         exception if it is not.
         """
         if not self.getLoggedInUser():
-            raise shared.ttypes.RequestFailed(
-                shared.ttypes.ErrorCode.UNAUTHORIZED,
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
                 "The server must be start by using privilaged access to "
                 "execute this action.")
 
@@ -88,12 +88,12 @@ class ThriftAuthHandler(object):
             if session:
                 return session.token
             else:
-                raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.AUTH_DENIED,
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     "Invalid credentials supplied. Refusing authentication!")
 
-        raise shared.ttypes.RequestFailed(
-            shared.ttypes.ErrorCode.AUTH_DENIED,
+        raise codechecker_api_shared.ttypes.RequestFailed(
+            codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
             "Could not negotiate via common authentication method.")
 
     @timeit
@@ -200,8 +200,8 @@ class ThriftAuthHandler(object):
                 permission, extra_params, session)
 
             if not require_manager(perm, params, self.__auth_session):
-                raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.UNAUTHORIZED,
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
                     "You can not manage the permission '{0}'"
                     .format(perm.name))
 
@@ -224,8 +224,8 @@ class ThriftAuthHandler(object):
                 permission, extra_params, session)
 
             if not require_manager(perm, params, self.__auth_session):
-                raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.UNAUTHORIZED,
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
                     "You can not manage the permission '{0}'"
                     .format(perm.name))
 
@@ -247,8 +247,8 @@ class ThriftAuthHandler(object):
                 permission, extra_params, session)
 
             if not require_manager(perm, params, self.__auth_session):
-                raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.UNAUTHORIZED,
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
                     "You can not manage the permission '{0}'"
                     .format(perm.name))
 
@@ -317,8 +317,8 @@ class ThriftAuthHandler(object):
             session.commit()
 
             if not num_of_removed:
-                raise shared.ttypes.RequestFailed(
-                    shared.ttypes.ErrorCode.DATABASE,
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE,
                     "Personal access token {0} was not found in the "
                     "database.".format(token))
 

@@ -15,7 +15,7 @@ import sys
 
 from thrift.Thrift import TApplicationException
 
-import shared
+import codechecker_api_shared
 from Authentication_v6 import ttypes as AuthTypes
 
 from codechecker_common.logger import get_logger
@@ -113,7 +113,7 @@ def handle_auth(protocol, host, port, username, login=False):
 
             session.save_token(host, port, session_token)
             LOG.info("Server reported successful authentication.")
-        except shared.ttypes.RequestFailed as reqfail:
+        except codechecker_api_shared.ttypes.RequestFailed as reqfail:
             LOG.error("Authentication failed! Please check your credentials.")
             LOG.error(reqfail.message)
             sys.exit(1)
@@ -156,7 +156,7 @@ def perform_auth_for_handler(auth_client, host, port, manager):
                     manager.save_token(host, port, session_token)
                     LOG.info("Authentication successful.")
                     return session_token
-                except shared.ttypes.RequestFailed:
+                except codechecker_api_shared.ttypes.RequestFailed:
                     pass
 
         if manager.is_autologin_enabled():

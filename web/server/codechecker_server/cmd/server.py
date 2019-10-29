@@ -24,7 +24,7 @@ from alembic import config
 from alembic import script
 from sqlalchemy.orm import sessionmaker
 
-from shared.ttypes import DBStatus
+from codechecker_api_shared.ttypes import DBStatus
 
 from codechecker_common import logger
 from codechecker_common import output_formatters

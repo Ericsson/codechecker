@@ -20,7 +20,7 @@ from thrift.transport import THttpClient
 from thrift.transport import TTransport
 from thrift.Thrift import TApplicationException
 
-import shared
+import codechecker_api_shared
 
 from codechecker_client.product import create_product_url
 from codechecker_web.shared.version import CLIENT_API as VERSION
@@ -40,20 +40,25 @@ class ThriftAPIHelper(object):
         try:
             res = func(*args, **kwargs)
 
-        except shared.ttypes.RequestFailed as reqfailure:
-            if reqfailure.errorCode == shared.ttypes.ErrorCode.GENERAL:
+        except codechecker_api_shared.ttypes.RequestFailed as reqfailure:
+            if reqfailure.errorCode ==\
+                    codechecker_api_shared.ttypes.ErrorCode.GENERAL:
                 print('Request failed')
                 print(str(reqfailure.message))
-            elif reqfailure.errorCode == shared.ttypes.ErrorCode.IOERROR:
+            elif reqfailure.errorCode ==\
+                    codechecker_api_shared.ttypes.ErrorCode.IOERROR:
                 print('Server reported I/O error')
                 print(str(reqfailure.message))
-            elif reqfailure.errorCode == shared.ttypes.ErrorCode.DATABASE:
+            elif reqfailure.errorCode ==\
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE:
                 print('Database error on server')
                 print(str(reqfailure.message))
-            elif reqfailure.errorCode == shared.ttypes.ErrorCode.AUTH_DENIED:
+            elif reqfailure.errorCode ==\
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED:
                 print('Authentication denied')
                 print(str(reqfailure.message))
-            elif reqfailure.errorCode == shared.ttypes.ErrorCode.UNAUTHORIZED:
+            elif reqfailure.errorCode ==\
+                    codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED:
                 print('Unauthorized to access')
                 print(str(reqfailure.message))
             else:
