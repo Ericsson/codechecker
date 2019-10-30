@@ -28,7 +28,9 @@ NON_PRODUCT_ENDPOINTS = ['index.html',
                          'scripts',
                          'style',
                          'userguide',
-                         'docs']
+                         'docs',
+                         'live',
+                         'ready']
 
 # A list of top-level path elements in requests (such as Thrift endpoints)
 # which should not be considered as a product route.
