@@ -933,7 +933,9 @@ def parse_unique_log(compilation_database,
                      report_dir,
                      compile_uniqueing="none",
                      compiler_info_file=None,
-                     keep_gcc_fix_headers=False):
+                     keep_gcc_fix_headers=False,
+                     analysis_skip_handler=None,
+                     pre_analysis_skip_handler=None):
     """
     This function reads up the compilation_database
     and returns with a list of build actions that is prepared for clang
@@ -961,6 +963,16 @@ def parse_unique_log(compilation_database,
                             only used by GCC (include-fixed). This flag
                             determines whether these should be kept among
                             the implicit include paths.
+
+    Separate skip handlers are required because it is possible that different
+    files are skipped during pre analysis and the actual analysis. In the
+    pre analysis step nothing should be skipped to collect the required
+    information for the analysis step where not all the files are analyzed.
+
+    analysis_skip_handler -- skip handler for files which should be skipped
+                             during analysis
+    pre_analysis_skip_handler -- skip handler for files wich should be skipped
+                                 during pre analysis
     """
     try:
         uniqued_build_actions = dict()
@@ -976,6 +988,15 @@ def parse_unique_log(compilation_database,
             uniqueing_re = re.compile(compile_uniqueing)
 
         for entry in compilation_database:
+            # Skip parsing the compilaton commands if it should be skipped
+            # at both analysis phases (pre analysis and analysis).
+            full_path = os.path.join(entry["directory"], entry["file"])
+            if analysis_skip_handler \
+                    and analysis_skip_handler.should_skip(full_path) \
+                    and pre_analysis_skip_handler \
+                    and pre_analysis_skip_handler.should_skip(full_path):
+                continue
+
             action = parse_options(entry,
                                    compiler_info_file,
                                    keep_gcc_fix_headers)
