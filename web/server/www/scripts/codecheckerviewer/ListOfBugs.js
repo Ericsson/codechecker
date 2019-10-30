@@ -43,10 +43,10 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
 
     switch (state.subtab) {
       case undefined:
-        topic.publish('subtab/bugOverview');
+        topic.publish('subtab/bugOverview', grid);
         return;
       case 'runHistory':
-        topic.publish('subtab/runHistory');
+        topic.publish('subtab/runHistory', grid);
         return;
     }
   }
@@ -443,11 +443,21 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
     _subscribeTopics : function () {
       var that = this;
 
-      this._runHistoryTopic = topic.subscribe('subtab/runHistory', function () {
+      this._runHistoryTopic = topic.subscribe('subtab/runHistory',
+      function (sender) {
+        if (sender && sender !== that._grid) {
+          return;
+        }
+
         that.selectChild(that._runHistory);
       });
 
-      this._bugOverviewTopic = topic.subscribe('subtab/bugOverview', function () {
+      this._bugOverviewTopic = topic.subscribe('subtab/bugOverview',
+      function (sender) {
+        if (sender && sender !== that._grid) {
+          return;
+        }
+
         that.selectChild(that._bugOverview);
       });
 
@@ -550,7 +560,7 @@ function (declare, dom, style, Deferred, ObjectStore, Store, QueryResults,
             delete that._bugViewerHashToTab[reportData.bugHash];
             that.reportData = null;
 
-            topic.publish('subtab/bugOverview');
+            topic.publish('subtab/bugOverview', that._grid);
 
             return true;
           }
