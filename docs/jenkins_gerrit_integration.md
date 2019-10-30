@@ -12,6 +12,18 @@ also sets the Code-Review and Verify labels in Gerrit Review. For reporting,
 is used. In addition to the inline comments in Gerrit, the full result of the
 analysis is stored and visualised in Jenkins.
 
+The idea is simple:
+* Create a Jenkins job that polls Gerrit for new merge requests.
+* If there is a new merge request, run the CodeChecker analysis on the changed
+files in Jenkins.
+* If the analysis was successful (no new warnings detected), push back a
+message to Gerrit with `+1` review.
+* If the analysis found new warnings, push back the warnings to Gerrit as
+review comments to Gerrit (the warnings will appear in Gerrit in the code as
+review comments) and give a `-1` review to the change. You can also send email
+notification with a link to the codechecker analysis result and the Gerrit
+change to the user.
+
 Table of Contents
 =================
 * [Gerrit requirements](#gerrit-requirements)
@@ -20,10 +32,14 @@ Table of Contents
 * [Gerrit Trigger plugin setup](#gerrit-plugin-setup)
 * [Configuring the Jenkins job](#configuring-the-jenkins-job)
     * [Source Code Managament](#jenkins-source-code-management)
-    * [Build Triggers](#jenkins-build-triggers)
     * [Gerrit Trigger](#jenkins-gerrit-trigger)
     * [Build Environment](#jenkins-build-environment)
     * [Build](#jenkins-build)
+      * [HTTP Request (get the changes)](#http-request-get-the-changes)
+      * [Execute shell](#execute-shell)
+      * [Inject environment variable](#inject-environment-variable)
+      * [HTTP Request (send the review)](#http-request-send-the-review)
+    * [Results in Gerrit](#results-in-gerrit)
 
 # Gerrit requirements <a name="gerrit-requirements"></a>
 On Gerrit, a user with the following privileges must be present:
@@ -134,7 +150,7 @@ Requests and the Environment Injection could be replaced by `curl` in the
 Execute Shell part. We decided to use these plugins in order to prevent
 storing the reporting Gerrit user's password in the script.
 
-### HTTP Request (get the changes)
+### HTTP Request (get the changes) <a name="http-request-get-the-changes"></a>
 To query the list of the changed files from Gerrit, add a `HTTP Request` build
 step.
 The `URL` should be the Gerrit [revision files endpoint](https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#list-files),
@@ -149,7 +165,7 @@ that is parsed in the following build step.
 
 ![HTTP Request configuration (get the changes)](images/gerrit_jenkins/http_request_changed_files.png)
 
-### Execute shell
+### Execute shell <a name="execute-shell"></a>
 In this shell, the project is logged and analyzed by CodeChecker.
 A CodeChecker skipfile is generated from the file containing the changes 
 (see previous section). This is done by the `create_skipfile.py` script. 
@@ -221,13 +237,13 @@ CodeChecker parse -i skipfile cc_reports |
 
 ~~~~~~
 
-### Inject environment variable
+### Inject environment variable <a name="inject-environment-variable"></a>
 To load the previously crafted review message as an environment variable,
 add an Inject environment variables build step. The file path is the 
 path of the file written at the end of the execute shell step, 
 while the content field can remain empty.
 
-### HTTP Request (send the review)
+### HTTP Request (send the review) <a name="http-request-send-the-review"></a>
 To send the crafted Gerrit review, add a `HTTP Request` build step.
 The `URL` should be the Gerrit
 [revision set review endpoint](https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#set-review),
@@ -242,3 +258,11 @@ The request's `body` should be set to the environment variable that was
 injected before, which contains the review message.
 
 ![HTTP Request configuration (send the review)](images/gerrit_jenkins/http_request_post_review.png)
+
+## Results in Gerrit <a name="results-in-gerrit"></a>
+Expected Gerrit review results:
+![Reports in gerrit](images/gerrit_jenkins/gerrit_review_reports.png)
+
+Detailed view of a report:
+
+![Report in gerrit](images/gerrit_jenkins/gerrit_review_report.png)
