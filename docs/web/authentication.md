@@ -337,17 +337,18 @@ After creating the new file open `~/.codechecker.passwords.json`.
 The `credentials` section is used by the client to read pre-saved
 authentication data in `username:password` format.
 
-~~~{.json}
+```json
 {
   "client_autologin" : true,
   "credentials": {
     "*" : "global:passphrase",
     "*:8080" : "webserver:1234",
     "localhost" : "local:admin",
-    "localhost:6251" : "super:secret"
+    "localhost:6251" : "super:secret",
+    "my.company.org:443": "user:pass"
   }
 }
-~~~
+```
 
 Credentials are matched for any particular server at login in the following
 order:
@@ -390,7 +391,8 @@ Personal tokens can be written instead of the user's password in the
   "client_autologin" : true,
   "credentials": {
     "*" : "global:passphrase",
-    "localhost:6251" : "super:22eca8f31ad117e90c371f2e98bcf4c9"
+    "localhost:6251" : "super:22eca8f31ad117e90c371f2e98bcf4c9",
+    "my.company.org:443": "user:pass"
   }
 }
 ```
