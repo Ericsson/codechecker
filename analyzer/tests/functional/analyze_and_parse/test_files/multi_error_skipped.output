@@ -6,11 +6,12 @@ CHECK#CodeChecker check --build "make multi_error simple1" --output $OUTPUT$ --q
 [] - Starting build ...
 [] - Build finished successfully.
 [] - Starting static analysis ...
-[] - [1/2] clangsa analyzed simple1.cpp successfully.
+[] - [1/1] clangsa analyzed simple1.cpp successfully.
 [] - ----==== Summary ====----
 [] - Successfully analyzed
 [] -   clangsa: 1
 [] - Total analyzed compilation commands: 1
+[] - Skipped compilation commands: 1
 [] - ----=================----
 [] - Analysis finished.
 [] - To view results in the terminal use the "CodeChecker parse" command.
