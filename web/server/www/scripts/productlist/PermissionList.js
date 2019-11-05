@@ -118,6 +118,9 @@ function (declare, domAttr, domClass, domConstruct, ItemFileWriteStore,
 
       function __lstAddUser(textBox, multiselect, store, nameList) {
         var name = textBox.get('value');
+        if (name) {
+          name = name.trim();
+        }
 
         if (name.length > 0 && name !== "*" &&
             nameList.indexOf(name) === -1) {
