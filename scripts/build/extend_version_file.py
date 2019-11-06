@@ -3,7 +3,6 @@
 Extend CodeChecker version file with some extra information.
 """
 import argparse
-import io
 import json
 import logging
 import os

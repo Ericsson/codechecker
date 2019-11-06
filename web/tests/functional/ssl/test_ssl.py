@@ -14,8 +14,6 @@ import os
 import subprocess
 import unittest
 
-from thrift.protocol.TProtocol import TProtocolException
-
 from codechecker_api_shared.ttypes import RequestFailed
 
 from libtest import codechecker

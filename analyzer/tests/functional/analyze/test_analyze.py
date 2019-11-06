@@ -336,7 +336,7 @@ class TestAnalyze(unittest.TestCase):
         process = subprocess.Popen(
             analyze_cmd, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE, cwd=self.test_dir)
-        out, err = process.communicate()
+        process.communicate()
 
         errcode = process.returncode
         self.assertEquals(errcode, 0)
@@ -554,7 +554,7 @@ class TestAnalyze(unittest.TestCase):
         process = subprocess.Popen(
             analyze_cmd, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE, cwd=self.test_dir)
-        out, err = process.communicate()
+        out, _ = process.communicate()
 
         match = self.missing_checker_regex.search(out)
         self.assertIsNotNone(match)
@@ -583,7 +583,7 @@ class TestAnalyze(unittest.TestCase):
         process = subprocess.Popen(
             analyze_cmd, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE, cwd=self.test_dir)
-        out, err = process.communicate()
+        out, _ = process.communicate()
 
         match = self.missing_checker_regex.search(out)
         self.assertIsNotNone(match)
@@ -615,7 +615,7 @@ class TestAnalyze(unittest.TestCase):
         process = subprocess.Popen(
             analyze_cmd, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE, cwd=self.test_dir)
-        out, err = process.communicate()
+        out, _ = process.communicate()
 
         match = self.missing_checker_regex.search(out)
         self.assertIsNotNone(match)

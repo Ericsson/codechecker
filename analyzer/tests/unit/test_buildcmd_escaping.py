@@ -14,11 +14,6 @@ import shutil
 import tempfile
 import unittest
 
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import BytesIO as StringIO
-
 from codechecker_analyzer.analyzers import analyzer_base
 from codechecker_analyzer.buildlog import build_manager
 from codechecker_analyzer.buildlog import log_parser

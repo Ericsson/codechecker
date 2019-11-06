@@ -85,7 +85,7 @@ def get_resource_dir(clang_bin):
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
                                 )
-        out, err = proc.communicate()
+        out, _ = proc.communicate()
 
         if proc.returncode == 0:
             return out.decode("utf-8").rstrip()

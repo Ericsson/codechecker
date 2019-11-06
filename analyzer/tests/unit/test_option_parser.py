@@ -185,7 +185,6 @@ class OptionParserTest(unittest.TestCase):
         """
         Should be link if only object files are in the command.
         """
-        build_cmd = "g++ -o fubar foo.o main.o bar.o -lm"
         action = {
             'file': '',
             'command': 'g++ -o fubar foo.o main.o bar.o -m',
@@ -354,8 +353,6 @@ class OptionParserTest(unittest.TestCase):
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
     def test_ccache_compiler(self):
-        action = {'file': 'main.cpp', 'directory': ''}
-
         compiler_action = shlex.split('ccache g++ main.cpp')
         res = log_parser.determine_compiler(compiler_action,
                                             self.is_compiler_executable_fun)

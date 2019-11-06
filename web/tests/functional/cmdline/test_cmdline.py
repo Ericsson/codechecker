@@ -128,7 +128,7 @@ class TestCmdline(unittest.TestCase):
         res_cmd = [self._codechecker_cmd, 'cmd', 'results', 'test_files1*',
                    'test_files1*', '-o', 'json', '--url', str(self.server_url)]
 
-        ret, res, _ = run_cmd(res_cmd, env=check_env)
+        ret, _, _ = run_cmd(res_cmd, env=check_env)
         self.assertEqual(0, ret)
 
     def test_stderr_results(self):

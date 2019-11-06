@@ -116,7 +116,7 @@ def parse_arguments():
     return parser.parse_args()
 
 
-class StatManager:
+class StatManager(object):
     """
     This class stores the statistics of the single user events and prints them
     in CSV format. To produce a nice output the users should do the same tasks
@@ -156,7 +156,7 @@ class StatManager:
                 writer.writerow([user_id] + map(lambda x: x[1], durations))
 
 
-class UserSimulator:
+class UserSimulator(object):
     """
     This class simulates a user who performs actions one after the other. The
     durations of the single actions are stored in the statistics.

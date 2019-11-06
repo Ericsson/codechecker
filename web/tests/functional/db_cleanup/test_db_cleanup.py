@@ -17,7 +17,6 @@ import multiprocessing
 import os
 import unittest
 from shutil import copyfile, rmtree
-import time
 
 from codeCheckerDBAccess_v6.ttypes import *
 

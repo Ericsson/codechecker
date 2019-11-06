@@ -20,7 +20,7 @@ pycodestyle:
 pycodestyle_in_env: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(PYCODESTYLE_TEST_CMD)
 
-PYLINT_TEST_CMD = pylint ./bin ./cmd ./codechecker_analyzer ./tests \
+PYLINT_TEST_CMD = pylint ./bin/** ./codechecker_analyzer ./tests/** \
 	--rcfile=$(ROOT)/.pylintrc
 
 pylint:
