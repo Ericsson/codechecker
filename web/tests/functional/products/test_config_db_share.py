@@ -18,8 +18,6 @@ from copy import deepcopy
 import multiprocessing
 import os
 import shutil
-import subprocess
-import time
 import unittest
 
 from codechecker_api_shared.ttypes import Permission

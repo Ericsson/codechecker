@@ -39,12 +39,11 @@ pycodestyle:
 pycodestyle_in_env: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(PYCODESTYLE_TEST_CMD)
 
-PYLINT_TEST_CMD = pylint ./bin/codechecker-web-version \
+PYLINT_TEST_CMD = pylint ./bin/** \
   ./codechecker_web \
-  ./client/bin/codechecker-cmd ./client/bin/codechecker-store \
-  ./client/codechecker_client \
-  ./server/bin/codechecker-server ./server/codechecker_server \
-  ./server/tests/unit \
+  ./client/bin/** ./client/codechecker_client \
+  ./server/bin/** ./server/codechecker_server ./server/tests/unit \
+  ./tests/functional ./tests/libtest ./tests/tools \
 	--rcfile=$(ROOT)/.pylintrc
 
 pylint:
