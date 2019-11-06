@@ -92,8 +92,11 @@ def handle_auth(protocol, host, port, username, login=False):
     # Attempt username-password auth first.
     if 'Username:Password' in str(methods):
 
-        # Try to use a previously saved credential from configuration file.
-        saved_auth = session.get_auth_string(host, port)
+        # Try to use a previously saved credential from configuration file if
+        # autologin is enabled.
+        saved_auth = None
+        if session.is_autologin_enabled():
+            saved_auth = session.get_auth_string(host, port)
 
         if saved_auth:
             LOG.info("Logging in using preconfigured credentials...")
