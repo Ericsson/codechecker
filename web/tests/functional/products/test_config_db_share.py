@@ -65,8 +65,10 @@ class TestProductConfigShare(unittest.TestCase):
         root_token = self._auth_client.performLogin("Username:Password",
                                                     "root:root")
 
+        # Add SUPERUSER permission to the root user and test that the white
+        # spaces are being removed from the user name.
         ret = self._auth_client.addPermission(Permission.SUPERUSER,
-                                              "root",
+                                              "  root  ",
                                               False,
                                               "")
         self.assertTrue(ret)

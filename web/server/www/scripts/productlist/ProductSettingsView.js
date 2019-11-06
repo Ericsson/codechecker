@@ -595,12 +595,14 @@ function (declare, domAttr, domClass, domConstruct, Dialog, Button, CheckBox,
           var extraParams = that.permissionView.get('extraParamsJSON');
           permDiff.forEach(function (record) {
            try {
-              if (record.action === 'ADD')
+              if (record.action === 'ADD') {
+                var authName = record.name.trim();
                 CC_AUTH_SERVICE.addPermission(
-                  record.permission, record.name, record.isGroup, extraParams);
-              else if (record.action === 'REMOVE')
+                  record.permission, authName, record.isGroup, extraParams);
+              } else if (record.action === 'REMOVE') {
                 CC_AUTH_SERVICE.removePermission(
                   record.permission, record.name, record.isGroup, extraParams);
+              }
             }
             catch (exc) {
               errors.push(record);

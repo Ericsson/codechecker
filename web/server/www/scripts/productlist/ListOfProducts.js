@@ -63,12 +63,14 @@ function (declare, domClass, domBase, dom, ItemFileWriteStore, topic, DataGrid,
       var permDiff = this.permissionView.getPermissionDifference();
       permDiff.forEach(function (record) {
        try {
-          if (record.action === 'ADD')
+          if (record.action === 'ADD') {
+            var authName = record.name.trim();
             CC_AUTH_SERVICE.addPermission(
-              record.permission, record.name, record.isGroup, "");
-          else if (record.action === 'REMOVE')
+              record.permission, authName, record.isGroup, "");
+          } else if (record.action === 'REMOVE') {
             CC_AUTH_SERVICE.removePermission(
               record.permission, record.name, record.isGroup, "");
+          }
         }
         catch (exc) {
           errors.push(record);

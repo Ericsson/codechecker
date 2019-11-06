@@ -230,7 +230,8 @@ class ThriftAuthHandler(object):
                     .format(perm.name))
 
             handler = make_handler(perm, params)
-            handler.add_permission(auth_name, is_group,
+            handler.add_permission(auth_name.strip(),
+                                   is_group,
                                    user_name=self.getLoggedInUser())
 
             session.commit()
