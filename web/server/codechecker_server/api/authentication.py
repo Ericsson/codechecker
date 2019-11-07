@@ -83,7 +83,7 @@ class ThriftAuthHandler(object):
             user_name, _ = auth_string.split(':', 1)
             LOG.info("'%s' logged in.", user_name)
 
-            session = self.__manager.create_or_get_session(auth_string)
+            session = self.__manager.create_session(auth_string)
 
             if session:
                 return session.token

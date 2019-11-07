@@ -56,15 +56,17 @@ def setup_auth_client(protocol, host, port, session_token=None):
     return client
 
 
-def handle_auth(protocol, host, port, username, login=False):
+def login_user(protocol, host, port, username, login=False):
+    """ Login with the given user name.
+
+    If login is False the user will be logged out.
+    """
     session = UserCredentials()
-    auth_token = session.get_token(host, port)
     auth_client = authentication_helper.ThriftAuthHelper(protocol, host,
                                                          port,
                                                          '/v' +
                                                          CLIENT_API +
-                                                         '/Authentication',
-                                                         auth_token)
+                                                         '/Authentication')
 
     if not login:
         logout_done = auth_client.destroySession()
@@ -78,10 +80,6 @@ def handle_auth(protocol, host, port, username, login=False):
 
         if not handshake.requiresAuthentication:
             LOG.info("This server does not require privileged access.")
-            return
-
-        if auth_token and handshake.sessionStillActive:
-            LOG.info("You are already logged in.")
             return
 
     except TApplicationException:

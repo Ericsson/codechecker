@@ -35,7 +35,7 @@ from codechecker_common.source_code_comment_handler import \
 
 from codechecker_web.shared import webserver_context
 
-from .client import handle_auth, setup_client
+from .client import login_user, setup_client
 from .cmd_line import CmdLineOutputEncoder
 from .product import split_server_url
 
@@ -1373,8 +1373,8 @@ def handle_login(args):
     init_logger(args.verbose if 'verbose' in args else None)
 
     protocol, host, port = split_server_url(args.server_url)
-    handle_auth(protocol, host, port, args.username,
-                login='logout' not in args)
+    login_user(protocol, host, port, args.username,
+               login='logout' not in args)
 
 
 def handle_list_run_histories(args):
