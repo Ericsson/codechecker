@@ -13,6 +13,8 @@ from __future__ import absolute_import
 
 from collections import defaultdict
 import argparse
+import io
+import json
 import math
 import os
 import sys
@@ -361,11 +363,12 @@ def add_arguments_to_parser(parser):
     output_opts.add_argument('-e', '--export',
                              dest="export",
                              required=False,
-                             choices=['html'],
+                             choices=['html', 'json'],
                              help="Specify extra output format type.")
 
     output_opts.add_argument('-o', '--output',
                              dest="output_path",
+                             default=argparse.SUPPRESS,
                              help="Store the output in the given folder.")
 
     output_opts.add_argument('-c', '--clean',
@@ -437,25 +440,7 @@ def add_arguments_to_parser(parser):
                              "will be removed.")
 
     logger.add_verbose_arguments(parser)
-
-    def __handle(args):
-        """Custom handler for 'parser' so custom error messages can be
-        printed without having to capture 'parser' in main."""
-
-        def arg_match(options):
-            return util.arg_match(options, sys.argv[1:])
-
-        # --export cannot be specified without --output.
-        export = ['-e', '--export']
-        output = ['-o', '--output']
-        if any(arg_match(export)) and not any(arg_match(output)):
-            parser.error("argument --export: not allowed without "
-                         "argument --output")
-
-        # If everything is fine, do call the handler for the subcommand.
-        main(args)
-
-    parser.set_defaults(func=__handle)
+    parser.set_defaults(func=main)
 
 
 def parse(plist_file, metadata_dict, rh, file_report_map):
@@ -509,6 +494,32 @@ def parse(plist_file, metadata_dict, rh, file_report_map):
     return changed_files
 
 
+def convert_reports_to_json(input_dirs):
+    """ Converts reports found in the input directories to json. """
+    res = []
+
+    input_files = set()
+    for input_path in input_dirs:
+        input_path = os.path.abspath(input_path)
+        if os.path.isfile(input_path):
+            input_files.add(input_path)
+        elif os.path.isdir(input_path):
+            _, _, file_names = next(os.walk(input_path), ([], [], []))
+            input_paths = [os.path.join(input_path, file_name) for file_name
+                           in file_names]
+            input_files.update(input_paths)
+
+    for input_file in input_files:
+        if not input_file.endswith('.plist'):
+            continue
+
+        _, reports = plist_parser.parse_plist_file(input_file)
+        for report in reports:
+            res.append(report.to_json())
+
+    return json.dumps(res)
+
+
 def main(args):
     """
     Entry point for parsing some analysis results and printing them to the
@@ -516,6 +527,12 @@ def main(args):
     """
 
     logger.setup_logger(args.verbose if 'verbose' in args else None)
+
+    export = args.export if 'export' in args else None
+    if export == 'html' and 'output_path' not in args:
+        LOG.error("Argument --export not allowed without argument --output "
+                  "when exporting to HTML.")
+        sys.exit(1)
 
     context = analyzer_context.get_context()
 
@@ -562,6 +579,18 @@ def main(args):
     trim_path_prefixes = args.trim_path_prefix if \
         'trim_path_prefix' in args else None
 
+    if export == 'json':
+        res = convert_reports_to_json(args.input)
+        if 'output_path' in args:
+            output_path = os.path.abspath(args.output_path)
+            reports_json = os.path.join(output_path, 'reports.json')
+            with io.open(reports_json,
+                         mode='w',
+                         encoding='utf-8') as output_f:
+                output_f.write(res)
+
+        return print(res)
+
     def trim_path_prefixes_handler(source_file):
         """
         Callback to util.trim_path_prefixes to prevent module dependency
@@ -605,13 +634,11 @@ def main(args):
     report_count = 0
 
     for input_path in args.input:
-
         input_path = os.path.abspath(input_path)
         os.chdir(original_cwd)
         LOG.debug("Parsing input argument: '%s'", input_path)
 
-        export = args.export if 'export' in args else None
-        if export is not None and export == 'html':
+        if export == 'html':
             output_path = os.path.abspath(args.output_path)
 
             if not html_builder:
