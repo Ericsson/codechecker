@@ -345,7 +345,7 @@ authentication data in `username:password` format.
     "*:8080" : "webserver:1234",
     "localhost" : "local:admin",
     "localhost:6251" : "super:secret",
-    "my.company.org:443": "user:pass"
+    "https://my.company.org:443": "user:pass"
   }
 }
 ```
@@ -392,7 +392,7 @@ Personal tokens can be written instead of the user's password in the
   "credentials": {
     "*" : "global:passphrase",
     "localhost:6251" : "super:22eca8f31ad117e90c371f2e98bcf4c9",
-    "my.company.org:443": "user:pass"
+    "https://my.company.org:443": "user:pass"
   }
 }
 ```

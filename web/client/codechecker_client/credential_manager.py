@@ -13,6 +13,7 @@ from __future__ import absolute_import
 
 import json
 import os
+import re
 import stat
 
 import portalocker
@@ -25,6 +26,33 @@ from codechecker_web.shared.version import SESSION_COOKIE_NAME as _SCN
 
 LOG = get_logger('system')
 SESSION_COOKIE_NAME = _SCN
+
+
+def simplify_credentials(credentials):
+    """ Replace the key of the entries with host:port values.
+
+    Returns a new dictionary from the credentials where the key will be
+    replaced by 'host:port' values so protocols and product names will be
+    removed if these are given.
+    """
+    host_entry_pattern = re.compile(
+        r'^(?P<protocol>http[s]?://)*(?P<host>[\w.\*]+):*(?P<port>\d+)*'
+        r'/*(?P<product>\w+)*$')
+
+    ret = {}
+    for host_entry, auth_string in credentials.items():
+        match = host_entry_pattern.match(host_entry)
+        if not match:
+            LOG.warning("Not a valid host entry: %s.", host_entry)
+            continue
+
+        host = match.group('host')
+        port = match.group('port')
+        host_port = '{0}:{1}'.format(host, port) if port else host
+
+        ret[host_port] = auth_string
+
+    return ret
 
 
 class UserCredentials(object):
@@ -42,6 +70,8 @@ class UserCredentials(object):
         if os.path.exists(session_cfg_file):
             scfg_dict = load_json_or_empty(session_cfg_file, {},
                                            "user authentication")
+            scfg_dict['credentials'] = \
+                simplify_credentials(scfg_dict['credentials'])
         if os.path.exists(session_cfg_file):
             check_file_owner_rw(session_cfg_file)
 
