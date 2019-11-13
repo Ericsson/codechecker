@@ -31,6 +31,8 @@ DEFAULT_FILTER_VALUES = {
     'uniqueing': 'off'
 }
 
+DEFAULT_OUTPUT_FORMATS = ["plaintext"] + output_formatters.USER_FORMATS
+
 
 class RawDescriptionDefaultHelpFormatter(
         argparse.RawDescriptionHelpFormatter,
@@ -99,75 +101,90 @@ def get_argparser_ctor_args():
     }
 
 
-def __add_common_arguments(parser,
-                           needs_product_url=True,
-                           has_matrix_output=False,
-                           allow_html_output=False):
-    """
-    Add some common arguments, like server address and verbosity, to parser.
-    """
+def __add_output_formats(parser, output_formats=None,
+                         allow_multiple_outputs=False):
+    """ Add output arguments to the given parser. """
+    if not output_formats:
+        # Use default output formats.
+        output_formats = DEFAULT_OUTPUT_FORMATS
 
-    common_group = parser.add_argument_group('common arguments')
+    if allow_multiple_outputs:
+        parser.add_argument('-o', '--output',
+                            nargs="+",
+                            dest="output_format",
+                            required=False,
+                            default=["plaintext"],
+                            choices=output_formats,
+                            help="The output format to use in showing the "
+                                 "data.")
+    else:
+        parser.add_argument('-o', '--output',
+                            dest="output_format",
+                            required=False,
+                            default="plaintext",
+                            choices=output_formats,
+                            help="The output format to use in showing the "
+                                 "data.")
 
+    if any(out_f in ["html", "gerrit"] for out_f in output_formats):
+        parser.add_argument('-e', '--export-dir',
+                            dest="export_dir",
+                            default=argparse.SUPPRESS,
+                            help="Store the output in the given folder.")
+
+        parser.add_argument('-c', '--clean',
+                            dest="clean",
+                            required=False,
+                            action='store_true',
+                            default=argparse.SUPPRESS,
+                            help="Delete output results stored in the output "
+                                 "directory. (By default, it would keep "
+                                 "output files and overwrites only those "
+                                 "that contain any reports).")
+
+
+def __add_url_arguments(parser, needs_product_url=True):
+    """ Add product url arguments to the given parser. """
     if needs_product_url is None:
         # Explicitly not add anything, the command does not connect to a
         # server.
         pass
     elif needs_product_url:
         # Command connects to a product on a server.
-        common_group.add_argument('--url',
-                                  type=str,
-                                  metavar='PRODUCT_URL',
-                                  dest="product_url",
-                                  default="localhost:8001/Default",
-                                  required=False,
-                                  help="The URL of the product which will be "
-                                       "accessed by the client, in the "
-                                       "format of"
-                                       " '[http[s]://]host:port/Endpoint'.")
+        parser.add_argument('--url',
+                            type=str,
+                            metavar='PRODUCT_URL',
+                            dest="product_url",
+                            default="localhost:8001/Default",
+                            required=False,
+                            help="The URL of the product which will be "
+                                 "accessed by the client, in the format of "
+                                 "'[http[s]://]host:port/Endpoint'.")
     else:
         # Command connects to a server directly.
-        common_group.add_argument('--url',
-                                  type=str,
-                                  metavar='SERVER_URL',
-                                  dest="server_url",
-                                  default="localhost:8001",
-                                  required=False,
-                                  help="The URL of the server to access, "
-                                       "in the format of"
-                                       " '[http[s]://]host:port'.")
+        parser.add_argument('--url',
+                            type=str,
+                            metavar='SERVER_URL',
+                            dest="server_url",
+                            default="localhost:8001",
+                            required=False,
+                            help="The URL of the server to access, in the "
+                                 "format of '[http[s]://]host:port'.")
 
-    if has_matrix_output:
-        output_formats = ["plaintext"] + output_formatters.USER_FORMATS
-        if allow_html_output:
-            output_formats += ["html"]
 
-        common_group.add_argument('-o', '--output',
-                                  dest="output_format",
-                                  required=False,
-                                  # TODO: 'plaintext' only kept for legacy.
-                                  default="plaintext",
-                                  choices=output_formats,
-                                  help="The output format to use in showing "
-                                       "the data.")
+def __add_common_arguments(parser,
+                           needs_product_url=True,
+                           output_formats=None,
+                           allow_multiple_outputs=False):
+    """
+    Add some common arguments, like server address and verbosity, to parser.
+    """
 
-        if allow_html_output:
-            common_group.add_argument('-e', '--export-dir',
-                                      dest="export_dir",
-                                      default=argparse.SUPPRESS,
-                                      help="Store the output in the given"
-                                           "folder.")
+    common_group = parser.add_argument_group('common arguments')
+    __add_url_arguments(common_group, needs_product_url)
 
-            common_group.add_argument('-c', '--clean',
-                                      dest="clean",
-                                      required=False,
-                                      action='store_true',
-                                      default=argparse.SUPPRESS,
-                                      help="Delete output results stored in"
-                                           "the output directory. (By "
-                                           "default, it would keep output "
-                                           "files and overwrites only those "
-                                           "that contain any reports).")
+    if output_formats:
+        __add_output_formats(parser, output_formats, allow_multiple_outputs)
 
     logger.add_verbose_arguments(common_group)
 
@@ -793,7 +810,8 @@ def __register_products(parser):
         help="List products available on the server.")
     list_p.set_defaults(func=product_client.handle_list_products)
     __add_common_arguments(list_p,
-                           needs_product_url=False, has_matrix_output=True)
+                           needs_product_url=False,
+                           output_formats=DEFAULT_OUTPUT_FORMATS)
 
     add = subcommands.add_parser(
         'add',
@@ -885,7 +903,8 @@ def __register_source_components(parser):
         help="List source components available on the server.")
     list_components.set_defaults(
         func=source_component_client.handle_list_components)
-    __add_common_arguments(list_components, has_matrix_output=True)
+    __add_common_arguments(list_components,
+                           output_formats=DEFAULT_OUTPUT_FORMATS)
 
     add = subcommands.add_parser(
         'add',
@@ -1086,8 +1105,9 @@ def __register_token(parser):
         help="List tokens available on the server.")
     list_tokens.set_defaults(
         func=token_client.handle_list_tokens)
-    __add_common_arguments(list_tokens, has_matrix_output=True,
-                           needs_product_url=False)
+    __add_common_arguments(list_tokens,
+                           needs_product_url=False,
+                           output_formats=DEFAULT_OUTPUT_FORMATS)
 
     new_t = subcommands.add_parser(
         'new',
@@ -1123,7 +1143,7 @@ def add_arguments_to_parser(parser):
         help="List the available analysis runs.")
     __register_runs(runs)
     runs.set_defaults(func=cmd_line_client.handle_list_runs)
-    __add_common_arguments(runs, has_matrix_output=True)
+    __add_common_arguments(runs, output_formats=DEFAULT_OUTPUT_FORMATS)
 
     run_histories = subcommands.add_parser(
         'history',
@@ -1132,7 +1152,8 @@ def add_arguments_to_parser(parser):
         help="Show run history of multiple runs.")
     __register_run_histories(run_histories)
     run_histories.set_defaults(func=cmd_line_client.handle_list_run_histories)
-    __add_common_arguments(run_histories, has_matrix_output=True)
+    __add_common_arguments(run_histories,
+                           output_formats=DEFAULT_OUTPUT_FORMATS)
 
     results = subcommands.add_parser(
         'results',
@@ -1158,7 +1179,7 @@ Get analysis results for a run and filter the analysis results:
         --component my_component_name''')
     __register_results(results)
     results.set_defaults(func=cmd_line_client.handle_list_results)
-    __add_common_arguments(results, has_matrix_output=True)
+    __add_common_arguments(results, output_formats=DEFAULT_OUTPUT_FORMATS)
 
     diff = subcommands.add_parser(
         'diff',
@@ -1181,8 +1202,11 @@ by multiple severity values:
     CodeChecker cmd diff -b run1 -n run2 --unresolved --severity high medium'''
     )
     __register_diff(diff)
-    __add_common_arguments(diff, has_matrix_output=True,
-                           allow_html_output=True)
+
+    diff_output_formats = DEFAULT_OUTPUT_FORMATS + ["html", "gerrit"]
+    __add_common_arguments(diff,
+                           output_formats=diff_output_formats,
+                           allow_multiple_outputs=True)
 
     sum_p = subcommands.add_parser(
         'sum',
@@ -1201,7 +1225,7 @@ Get statistics for all runs and only for severity 'high':
     CodeChecker cmd sum --all --severity "high"''')
     __register_sum(sum_p)
     sum_p.set_defaults(func=cmd_line_client.handle_list_result_types)
-    __add_common_arguments(sum_p, has_matrix_output=True)
+    __add_common_arguments(sum_p, output_formats=DEFAULT_OUTPUT_FORMATS)
 
     token = subcommands.add_parser(
         'token',

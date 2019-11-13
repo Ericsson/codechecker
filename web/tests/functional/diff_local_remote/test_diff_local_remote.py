@@ -15,6 +15,7 @@ with a remote run in the database.
 import json
 import os
 import re
+import shutil
 import subprocess
 import unittest
 
@@ -47,25 +48,34 @@ class LocalRemote(unittest.TestCase):
         # Get the run names which belong to this test.
         self._run_names = env.get_run_names(test_workspace)
 
-        local_test_project = \
+        self._local_test_project = \
             self._test_cfg['test_project']['project_path_local']
 
-        self._local_reports = os.path.join(local_test_project, 'reports')
+        self._local_reports = os.path.join(self._local_test_project,
+                                           'reports')
 
         self._url = env.parts_to_url(self._test_cfg['codechecker_cfg'])
 
         self._env = self._test_cfg['codechecker_cfg']['check_env']
 
-    def run_cmd(self, diff_cmd):
+    def run_cmd(self, diff_cmd, r_env=None):
+        """ Runs the given command and returns the output. """
+        if not r_env:
+            r_env = self._env
+
         diff_cmd.extend(["--verbose", "debug"])
 
         print(diff_cmd)
-        out = subprocess.check_output(
-            diff_cmd,
-            env=self._env,
-            cwd=os.environ['TEST_WORKSPACE'],
-            encoding="utf-8",
-            errors="ignore")
+        try:
+            out = subprocess.check_output(diff_cmd,
+                                          env=r_env,
+                                          cwd=os.environ['TEST_WORKSPACE'],
+                                          encoding="utf-8",
+                                          errors="ignore")
+        except subprocess.CalledProcessError as e:
+            print(e.output)
+            raise e
+
         print(out)
         return out
 
@@ -98,6 +108,9 @@ class LocalRemote(unittest.TestCase):
             encoding="utf-8",
             errors="ignore")
         print(out)
+
+        out = self.run_cmd(diff_cmd)
+
         return out
 
     def test_local_to_remote_compare_count_new(self):
@@ -281,14 +294,7 @@ class LocalRemote(unittest.TestCase):
                     "--verbose", "debug"
                     ]
 
-        print(diff_cmd)
-        out = subprocess.check_output(
-            diff_cmd,
-            env=self._env,
-            cwd=os.environ['TEST_WORKSPACE'],
-            encoding="utf-8",
-            errors="ignore")
-        print(out)
+        self.run_cmd(diff_cmd)
 
         diff_res = json.loads(self.get_local_remote_diff(['-o', 'json']))
 
@@ -355,3 +361,136 @@ class LocalRemote(unittest.TestCase):
                 cwd=os.environ['TEST_WORKSPACE'],
                 encoding="utf-8",
                 errors="ignore")
+
+    def test_diff_gerrit_output(self):
+        """ Test gerrit output. """
+        base_run_name = self._run_names[0]
+
+        export_dir = os.path.join(self._local_reports, "export_dir1")
+
+        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
+                    "--new",
+                    "--url", self._url,
+                    "-b", base_run_name,
+                    "-n", self._local_reports,
+                    "-o", "gerrit",
+                    "-e", export_dir]
+
+        self.run_cmd(diff_cmd)
+        gerrit_review_file = os.path.join(export_dir, 'gerrit_review.json')
+        self.assertTrue(os.path.exists(gerrit_review_file))
+
+        with open(gerrit_review_file, 'r',
+                  encoding="utf-8", errors="ignore") as rw_file:
+            review_data = json.load(rw_file)
+
+        lbls = review_data["labels"]
+        self.assertEqual(lbls["Verified"], 1)
+        self.assertEqual(lbls["Code-Review"], -1)
+        self.assertEqual(review_data["message"],
+                         "CodeChecker found 4 issue(s) in the code.")
+        self.assertEqual(review_data["tag"], "jenkins")
+
+        comments = review_data["comments"]
+        self.assertEqual(len(comments), 1)
+
+        file_path = next(iter(comments))
+        reports = comments[file_path]
+        self.assertEqual(len(reports), 4)
+        for report in reports:
+            self.assertIn("message", report)
+
+            self.assertIn("range", report)
+            range = report["range"]
+            self.assertIn("start_line", range)
+            self.assertIn("start_character", range)
+            self.assertIn("end_line", range)
+            self.assertIn("end_character", range)
+
+        shutil.rmtree(export_dir)
+
+    def test_set_env_diff_gerrit_output(self):
+        """ Test gerrit output when using diff and set env vars. """
+        base_run_name = self._run_names[0]
+
+        export_dir = os.path.join(self._local_reports, "export_dir2")
+
+        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
+                    "--unresolved",
+                    "--url", self._url,
+                    "-b", base_run_name,
+                    "-n", self._local_reports,
+                    "-o", "gerrit",
+                    "-e", export_dir]
+
+        env = self._env.copy()
+        env["CC_REPO_DIR"] = self._local_test_project
+
+        report_url = "localhost:8080/index.html"
+        env["CC_REPORT_URL"] = report_url
+
+        changed_file_path = os.path.join(self._local_reports, 'files_changed')
+        with open(changed_file_path, 'w',
+                  encoding="utf-8", errors="ignore") as changed_file:
+            changed_files = {
+                "/COMMIT_MSG": {},
+                "divide_zero.cpp": {}}
+            changed_file.write(json.dumps(changed_files))
+
+        env["CC_CHANGED_FILES"] = changed_file_path
+
+        self.run_cmd(diff_cmd, env)
+        gerrit_review_file = os.path.join(export_dir, 'gerrit_review.json')
+        self.assertTrue(os.path.exists(gerrit_review_file))
+
+        with open(gerrit_review_file, 'r',
+                  encoding="utf-8", errors="ignore") as rw_file:
+            review_data = json.load(rw_file)
+
+        lbls = review_data["labels"]
+        self.assertEqual(lbls["Verified"], 1)
+        self.assertEqual(lbls["Code-Review"], -1)
+        self.assertEqual(review_data["message"],
+                         "CodeChecker found 4 issue(s) in the code. "
+                         "See: '{0}'".format(report_url))
+        self.assertEqual(review_data["tag"], "jenkins")
+
+        # Because the CC_CHANGED_FILES is set we will se reports only for
+        # the divide_zero.cpp function.
+        comments = review_data["comments"]
+        self.assertEqual(len(comments), 1)
+
+        reports = comments["divide_zero.cpp"]
+        self.assertEqual(len(reports), 4)
+
+        shutil.rmtree(export_dir)
+
+    def test_diff_multiple_output(self):
+        """ Test multiple output type for diff command. """
+        base_run_name = self._run_names[0]
+
+        export_dir = os.path.join(self._local_reports, "export_dir3")
+
+        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
+                    "--resolved",
+                    "--url", self._url,
+                    "-b", base_run_name,
+                    "-n", self._local_reports,
+                    "-o", "html", "gerrit", "plaintext",
+                    "-e", export_dir]
+
+        out = self.run_cmd(diff_cmd)
+
+        # Check the plaintext output.
+        count = len(re.findall(r'\[core\.NullDereference\]', out))
+        self.assertEqual(count, 4)
+
+        # Check that the gerrit output json file was generated.
+        gerrit_review_file = os.path.join(export_dir, 'gerrit_review.json')
+        self.assertTrue(os.path.exists(gerrit_review_file))
+
+        # Check that index.html output was generated.
+        index_html = os.path.join(export_dir, 'index.html')
+        self.assertTrue(os.path.exists(index_html))
+
+        shutil.rmtree(export_dir)

@@ -11,6 +11,7 @@ Command line client.
 from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
 import hashlib
+import json
 import os
 from operator import itemgetter
 import re
@@ -487,11 +488,19 @@ def handle_diff_results(args):
 
     init_logger(args.verbose if 'verbose' in args else None, stream)
 
+    require_export_dir = any([o in ['html', 'gerrit']
+                              for o in args.output_format])
+    if require_export_dir and 'export_dir' not in args:
+        LOG.error("No export directory given!")
+        sys.exit(1)
+
     check_deprecated_arg_usage(args)
 
     f_severities, f_checkers, f_file_path, _, _, _ = check_filter_values(args)
 
     context = webserver_context.get_context()
+
+    lines_in_files_requested = []
 
     def skip_report_dir_result(report):
         """
@@ -1005,14 +1014,136 @@ def handle_diff_results(args):
         html_builder.create_index_html(output_dir)
         print_stats(reports, file_stats, severity_stats)
 
-    def print_reports(client, reports, output_format):
+    def get_report_show_info(report):
+        """ Get information from report which will be used during print. """
+        if isinstance(report, Report):
+            # Report is coming from a plist file.
+            bug_line = report.main['location']['line']
+            bug_col = report.main['location']['col']
+            check_name = report.main['check_name']
+            sev = context.severity_map.get(check_name)
+            file_name = report.main['location']['file_name']
+            checked_file = file_name \
+                + ':' + str(bug_line) + ":" + str(bug_col)
+            check_msg = report.main['description']
+            source_line =\
+                get_line_from_file(report.main['location']['file_name'],
+                                   bug_line)
+        else:
+            # Report is coming from CodeChecker server.
+            bug_line = report.line
+            bug_col = report.column
+            check_name = report.checkerId
+            sev = ttypes.Severity._VALUES_TO_NAMES[report.severity]
+            file_name = report.checkedFile
+            checked_file = file_name
+            if bug_line is not None:
+                checked_file += ':' + str(bug_line) + ":" + str(bug_col)
+            check_msg = report.checkerMsg
+            if lines_in_files_requested:
+                source_line_contents = client.getLinesInSourceFileContents(
+                    lines_in_files_requested, ttypes.Encoding.BASE64)
+                source_line = convert.from_b64(
+                    source_line_contents[report.fileId][bug_line])
+        return bug_line, bug_col, sev, file_name, checked_file, check_name, \
+            check_msg, source_line
+
+    def get_gerrit_review_changed_files(changed_file_path):
+        """ Return a list of changed files.
+
+        Process the given gerrit changed file object and return a list of
+        file paths which changed.
+        """
+        ret = []
+
+        if not changed_file_path:
+            return ret
+
+        with open(changed_file_path) as changed_file:
+            # File is likely to contain some garbage values at start,
+            # only the corresponding json should be parsed.
+            json_pattern = re.compile(r"^\{.*\}")
+            for line in changed_file.readlines():
+                if not re.match(json_pattern, line):
+                    continue
+
+                for filename in json.loads(line):
+                    if "/COMMIT_MSG" in filename:
+                        continue
+
+                    ret.append(filename)
+
+        return ret
+
+    def print_gerrit_json(reports, output_dir):
+        repo_dir = os.environ.get('CC_REPO_DIR')
+        report_url = os.environ.get('CC_REPORT_URL')
+        changed_file_path = os.environ.get('CC_CHANGED_FILES')
+        changed_files = get_gerrit_review_changed_files(changed_file_path)
+
+        review_comments = {}
+
+        report_count = 0
+        for report in reports:
+            bug_line, bug_col, sev, file_name, checked_file, check_name, \
+                check_msg, source_line = get_report_show_info(report)
+
+            # Skip the report if it is not in the changed files.
+            if changed_file_path and not any([file_name.endswith(c)
+                                              for c in changed_files]):
+                continue
+
+            report_count += 1
+
+            rel_file_path = os.path.relpath(file_name, repo_dir) \
+                if repo_dir else file_name
+
+            if rel_file_path not in review_comments:
+                review_comments[rel_file_path] = []
+
+            review_comment_msg = "[{0}] {1}: {2} [{3}]\n{4}".format(
+                sev, checked_file, check_msg, check_name, source_line)
+
+            review_comments[rel_file_path].append({
+                "range": {
+                    "start_line": bug_line,
+                    "start_character": bug_col,
+                    "end_line": bug_line,
+                    "end_character": bug_col},
+                "message": review_comment_msg})
+
+        message = "CodeChecker found {0} issue(s) in the code.".format(
+            report_count)
+
+        if report_url:
+            message += " See: '{0}'".format(report_url)
+
+        review = {"tag": "jenkins",
+                  "message": message,
+                  "labels": {
+                      "Code-Review": -1 if report_count else 1,
+                      "Verified": 1},
+                  "comments": review_comments}
+
+        gerrit_review_json = os.path.join(output_dir,
+                                          'gerrit_review.json')
+        with open(gerrit_review_json, 'w') as review_file:
+            json.dump(review, review_file)
+
+        LOG.info("Gerrit review file was created: %s\n",
+                 gerrit_review_json)
+
+    def print_reports(client, reports, output_formats):
         output_dir = args.export_dir if 'export_dir' in args else None
         if 'clean' in args and os.path.isdir(output_dir):
             print("Previous analysis results in '{0}' have been removed, "
                   "overwriting with current results.".format(output_dir))
             shutil.rmtree(output_dir)
 
-        if output_format == 'json':
+        if output_dir and not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        if 'json' in output_formats:
             output = []
             for report in reports:
                 if isinstance(report, Report):
@@ -1021,13 +1152,13 @@ def handle_diff_results(args):
                 else:
                     output.append(report)
             print(CmdLineOutputEncoder().encode(output))
-            return
 
-        if output_format == 'html':
-            output_dir = args.export_dir
-            if not os.path.exists(output_dir):
-                os.makedirs(output_dir)
+            if len(output_formats) == 1:
+                return
 
+            output_formats.remove('json')
+
+        if 'html' in output_formats:
             print("Generating HTML output files to file://{0} directory:\n"
                   .format(output_dir))
 
@@ -1036,70 +1167,53 @@ def handle_diff_results(args):
             print('\nTo view the results in a browser run:\n'
                   '  $ firefox {0}\n'.format(os.path.join(args.export_dir,
                                                           'index.html')))
-            return
 
-        header = ['File', 'Checker', 'Severity', 'Msg', 'Source']
-        rows = []
+            if len(output_formats) == 1:
+                return
+
+            output_formats.remove('html')
 
         source_lines = defaultdict(set)
         for report in reports:
             if not isinstance(report, Report) and report.line is not None:
                 source_lines[report.fileId].add(report.line)
 
-        lines_in_files_requested = []
         for key in source_lines:
             lines_in_files_requested.append(
                 ttypes.LinesInFilesRequested(fileId=key,
                                              lines=source_lines[key]))
 
+        if 'gerrit' in output_formats:
+            print_gerrit_json(reports, output_dir)
+
+            if len(output_formats) == 1:
+                return
+
+            output_formats.remove('gerrit')
+
+        header = ['File', 'Checker', 'Severity', 'Msg', 'Source']
+        rows = []
+
         file_stats = defaultdict(int)
         severity_stats = defaultdict(int)
 
         for report in reports:
-            source_line = ''
-            if isinstance(report, Report):
-                # report is coming from a plist file.
-                bug_line = report.main['location']['line']
-                bug_col = report.main['location']['col']
-                file_name = report.main['location']['file_name']
-                checked_file = file_name \
-                    + ':' + str(bug_line) + ":" + str(bug_col)
-                check_name = report.main['check_name']
-                sev = context.severity_map.get(check_name)
-                check_msg = report.main['description']
-                source_line =\
-                    get_line_from_file(report.main['location']['file_name'],
-                                       bug_line)
-            else:
-                # report is of ReportData type coming from CodeChecker server.
-                bug_line = report.line
-                bug_col = report.column
-                sev = ttypes.Severity._VALUES_TO_NAMES[report.severity]
-                file_name = report.checkedFile
-                checked_file = file_name
-                if bug_line is not None:
-                    checked_file += ':' + str(bug_line) + ":" + str(bug_col)
+            _, _, sev, file_name, checked_file, check_name, \
+                check_msg, source_line = get_report_show_info(report)
 
-                check_name = report.checkerId
-                check_msg = report.checkerMsg
-
-                if lines_in_files_requested:
-                    source_line_contents = client.getLinesInSourceFileContents(
-                        lines_in_files_requested, ttypes.Encoding.BASE64)
-                    source_line = convert.from_b64(
-                        source_line_contents[report.fileId][bug_line])
             rows.append(
                 (sev, checked_file, check_msg, check_name, source_line))
 
             severity_stats[sev] += 1
             file_stats[file_name] += 1
 
-        if output_format == 'plaintext':
-            for row in rows:
-                print("[{0}] {1}: {2} [{3}]\n{4}\n".format(
-                    row[0], row[1], row[2], row[3], row[4]))
-        else:
-            print(twodim_to_str(output_format, header, rows))
+        for output_format in output_formats:
+            if output_format == 'plaintext':
+                for row in rows:
+                    print("[{0}] {1}: {2} [{3}]\n{4}\n".format(
+                        row[0], row[1], row[2], row[3], row[4]))
+            else:
+                print(twodim_to_str(output_format, header, rows))
 
         print_stats(reports, file_stats, severity_stats)
 
