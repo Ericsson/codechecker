@@ -183,6 +183,12 @@ void getPathsFromEnvVar(
   {
     char token[PATH_MAX];
     size_t length = to - from;
+    if (length > PATH_MAX - 1){
+      // If the string is too long, skip it.
+      from = to + 1;
+      to = strchr(from, ":");
+      continue;
+    }
     strncpy(token, from, length);
     token[length] = 0;
     from = to + 1;
