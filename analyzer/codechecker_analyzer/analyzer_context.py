@@ -12,11 +12,14 @@ from __future__ import division
 from __future__ import absolute_import
 
 from collections import Mapping
+from distutils.spawn import find_executable
 import os
 import sys
 
 from codechecker_common import logger
 from codechecker_common.util import load_json_or_empty
+
+from . import env
 
 LOG = logger.get_logger('system')
 
@@ -116,6 +119,7 @@ class Context(object):
             self.__package_git_tag = package_git_dirtytag
 
     def __populate_analyzers(self):
+        analyzer_env = env.extend(self.path_env_extra, self.ld_lib_path_extra)
         compiler_binaries = self.pckg_layout.get('analyzers')
         for name, value in compiler_binaries.items():
             if os.path.dirname(value):
@@ -123,7 +127,8 @@ class Context(object):
                 self.__analyzers[name] = os.path.join(self._package_root,
                                                       value)
             else:
-                self.__analyzers[name] = value
+                compiler_binary = find_executable(value, analyzer_env['PATH'])
+                self.__analyzers[name] = os.path.realpath(compiler_binary)
 
     @property
     def checker_config(self):
