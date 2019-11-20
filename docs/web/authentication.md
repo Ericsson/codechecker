@@ -38,19 +38,23 @@ is handled.
  * `enabled`
 
     Setting this to `false` disables privileged access
+    
  * `realm_name`
 
     The name to show for web-browser viewers' pop-up login window via
     *HTTP Authenticate*
+    
  * `realm_error`
 
     The error message shown in the browser when the user fails to authenticate
+    
  * `logins_until_cleanup`
 
     After this many login attempts made towards the server, it will perform an
     automatic cleanup of old, expired sessions.
     This option can be changed and reloaded without server restart by using the
     `--reload` option of CodeChecker server command.
+    
  * `session_lifetime`
 
     (in seconds) The lifetime of the session sets that after this many seconds
@@ -58,6 +62,7 @@ is handled.
 
     This option can be changed and reloaded without server restart by using the
     `--reload` option of CodeChecker server command.
+    
  * `refresh_time`
 
     (in seconds) Refresh time of the local session objects. We use local session
