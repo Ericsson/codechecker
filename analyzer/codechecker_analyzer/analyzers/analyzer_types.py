@@ -137,7 +137,8 @@ def check_supported_analyzers(analyzers, context):
                 LOG.debug("Configured binary '%s' for analyzer '%s' was "
                           "not found, but environment PATH contains '%s'.",
                           analyzer_bin, analyzer_name, found_bin)
-                context.analyzer_binaries[analyzer_name] = found_bin
+                context.analyzer_binaries[analyzer_name] = \
+                    os.path.realpath(found_bin)
 
             analyzer_bin = found_bin
 

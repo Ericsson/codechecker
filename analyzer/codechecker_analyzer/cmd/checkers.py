@@ -11,7 +11,6 @@ from __future__ import division
 from __future__ import absolute_import
 
 import argparse
-from distutils.spawn import find_executable
 import os
 import subprocess
 import sys
@@ -27,7 +26,7 @@ from codechecker_analyzer import env
 LOG = logger.get_logger('system')
 
 
-def get_diagtool_bin(env=None):
+def get_diagtool_bin():
     """
     Return full path of diagtool.
 
@@ -35,12 +34,7 @@ def get_diagtool_bin(env=None):
     clang binary and return full path of this binary if it exists.
     """
     context = analyzer_context.get_context()
-    analyzer_binary = context.analyzer_binaries.get(ClangSA.ANALYZER_NAME)
-
-    clang_bin = analyzer_binary
-    if not os.path.isabs(clang_bin):
-        clang_bin = find_executable(analyzer_binary,
-                                    env['PATH'] if env else None)
+    clang_bin = context.analyzer_binaries.get(ClangSA.ANALYZER_NAME)
 
     if not clang_bin:
         return None
@@ -63,7 +57,7 @@ def get_warnings(env=None):
     """
     Returns list of warning flags by using diagtool.
     """
-    diagtool_bin = get_diagtool_bin(env)
+    diagtool_bin = get_diagtool_bin()
 
     if not diagtool_bin:
         return []
@@ -135,11 +129,7 @@ def add_arguments_to_parser(parser):
                              ', '.join(analyzer_types.
                                        supported_analyzers) + ".")
 
-    context = analyzer_context.get_context()
-    analyzer_environment = env.extend(context.path_env_extra,
-                                      context.ld_lib_path_extra)
-
-    if get_diagtool_bin(analyzer_environment):
+    if get_diagtool_bin():
         parser.add_argument('-w', '--warnings',
                             dest='show_warnings',
                             default=argparse.SUPPRESS,
