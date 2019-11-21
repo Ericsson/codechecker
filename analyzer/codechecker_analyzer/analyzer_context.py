@@ -139,6 +139,11 @@ class Context(object):
             else:
                 env_path = analyzer_env['PATH'] if analyzer_env else None
                 compiler_binary = find_executable(value, env_path)
+                if not compiler_binary:
+                    LOG.warning("'%s' binary can not be found in your PATH!",
+                                value)
+                    continue
+
                 self.__analyzers[name] = os.path.realpath(compiler_binary)
 
     @property
