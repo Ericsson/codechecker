@@ -256,7 +256,7 @@ class ImplicitCompilerInfo(object):
         return ImplicitCompilerInfo.compiler_isexecutable[compiler]
 
     @staticmethod
-    def __get_compiler_err(cmd):
+    def __get_compiler_err(cmd, directory):
         """
         Returns the stderr of a compiler invocation as string
         or None in case of error.
@@ -267,6 +267,7 @@ class ImplicitCompilerInfo(object):
                                     stdin=subprocess.PIPE,
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE,
+                                    cwd=directory,
                                     universal_newlines=True)
 
             _, err = proc.communicate("")
@@ -310,7 +311,7 @@ class ImplicitCompilerInfo(object):
         return include_paths
 
     @staticmethod
-    def get_compiler_includes(compiler, language, compiler_flags):
+    def get_compiler_includes(compiler, directory, language, compiler_flags):
         """
         Returns a list of default includes of the given compiler.
 
@@ -325,19 +326,21 @@ class ImplicitCompilerInfo(object):
 
         ICI = ImplicitCompilerInfo
         include_dirs = \
-            ICI.__parse_compiler_includes(ICI.__get_compiler_err(cmd))
+            ICI.__parse_compiler_includes(ICI.__get_compiler_err(cmd,
+                                                                 directory))
 
         return map(os.path.normpath, include_dirs)
 
     @staticmethod
-    def get_compiler_target(compiler):
+    def get_compiler_target(compiler, directory):
         """
         Returns the target triple of the given compiler as a string.
 
         compiler -- The compiler binary of which the target architecture is
                     fetched.
         """
-        lines = ImplicitCompilerInfo.__get_compiler_err(compiler + ' -v')
+        lines = ImplicitCompilerInfo.__get_compiler_err(compiler + ' -v',
+                                                        directory)
 
         if lines is None:
             return ""
@@ -353,7 +356,7 @@ class ImplicitCompilerInfo(object):
         return target
 
     @staticmethod
-    def get_compiler_standard(compiler, language):
+    def get_compiler_standard(compiler, directory, language):
         """
         Returns the default compiler standard of the given compiler. The
         standard is determined by the values of __STDC_VERSION__ and
@@ -412,7 +415,8 @@ class ImplicitCompilerInfo(object):
                 f.write(VERSION_C if language == 'c' else VERSION_CPP)
 
             err = ImplicitCompilerInfo.\
-                __get_compiler_err(" ".join([compiler, source.name]))
+                __get_compiler_err(" ".join([compiler, source.name]),
+                                   directory)
 
             if err is not None:
                 finding = re.search('CC_FOUND_STANDARD_VER#(.+)', err)
@@ -483,6 +487,7 @@ class ImplicitCompilerInfo(object):
         ICI = ImplicitCompilerInfo
 
         compiler = details['compiler']
+        directory = details['directory']
         if compiler_info_file and os.path.exists(compiler_info_file):
             # Compiler info file exists, load it.
             ICI.load_compiler_info(compiler_info_file, compiler)
@@ -495,21 +500,21 @@ class ImplicitCompilerInfo(object):
 
                 # Collect for C
                 ICI.compiler_info[compiler][ICI.c()]['compiler_includes'] = \
-                    ICI.get_compiler_includes(compiler, ICI.c(),
+                    ICI.get_compiler_includes(compiler, directory, ICI.c(),
                                               details['analyzer_options'])
                 ICI.compiler_info[compiler][ICI.c()]['target'] = \
-                    ICI.get_compiler_target(compiler)
+                    ICI.get_compiler_target(compiler, directory)
                 ICI.compiler_info[compiler][ICI.c()]['compiler_standard'] = \
-                    ICI.get_compiler_standard(compiler, ICI.c())
+                    ICI.get_compiler_standard(compiler, directory, ICI.c())
 
                 # Collect for C++
                 ICI.compiler_info[compiler][ICI.cpp()]['compiler_includes'] = \
-                    ICI.get_compiler_includes(compiler, ICI.cpp(),
+                    ICI.get_compiler_includes(compiler, directory, ICI.cpp(),
                                               details['analyzer_options'])
                 ICI.compiler_info[compiler][ICI.cpp()]['target'] = \
-                    ICI.get_compiler_target(compiler)
+                    ICI.get_compiler_target(compiler, directory)
                 ICI.compiler_info[compiler][ICI.cpp()]['compiler_standard'] = \
-                    ICI.get_compiler_standard(compiler, ICI.cpp())
+                    ICI.get_compiler_standard(compiler, directory, ICI.cpp())
 
         def set_details_from_ICI(key, lang):
             """Set compiler related information in the 'details' dictionary.
