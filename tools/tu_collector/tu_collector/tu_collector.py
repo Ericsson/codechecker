@@ -281,6 +281,10 @@ def zip_tu_files(zip_file, compilation_database, write_mode='w'):
 
     add_sources_to_zip(zip_file, tu_files)
 
+    with zipfile.ZipFile(zip_file, 'a') as archive:
+        archive.writestr('compilation_database.json',
+                         json.dumps(compilation_database, indent=2))
+
 
 def main():
     # --- Handling of command line arguments --- #

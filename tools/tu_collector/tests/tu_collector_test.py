@@ -57,3 +57,4 @@ class TUCollectorTest(unittest.TestCase):
         self.assertTrue(
             any(map(lambda path: path.endswith(os.path.join('/', 'vector')),
                     files)))
+        self.assertIn('compilation_database.json', files)
