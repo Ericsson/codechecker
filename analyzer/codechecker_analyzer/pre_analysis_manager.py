@@ -202,7 +202,7 @@ def run_pre_analysis(actions, context, clangsa_config,
 
     # Postprocessing the pre analysis results.
     if ctu_data:
-        ctu_manager.merge_ctu_func_maps(
+        ctu_manager.merge_clang_extdef_mappings(
                 ctu_data.get('ctu_dir'),
                 ctu_data.get('ctu_func_map_file'),
                 ctu_data.get('ctu_temp_fnmap_folder'))

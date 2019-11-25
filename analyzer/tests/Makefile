@@ -20,8 +20,8 @@ pycodestyle:
 pycodestyle_in_env: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(PYCODESTYLE_TEST_CMD)
 
-PYLINT_TEST_CMD = PYLINTRC=$(ROOT)/.pylintrc \
-	pylint ./bin/** ./codechecker_analyzer ./tests/**
+PYLINT_TEST_CMD = $(MAKE) -C $(CURRENT_DIR)/tools/merge_clang_extdef_mappings pylint && \
+	PYLINTRC=$(ROOT)/.pylintrc pylint ./bin/** ./codechecker_analyzer ./tests/**
 
 pylint:
 	$(PYLINT_TEST_CMD)
@@ -65,3 +65,10 @@ test_tu_collector:
 test_tu_collector_in_env:
 	$(ACTIVATE_DEV_VENV) && \
 	$(REPO_ROOT) make -C $(ROOT)/tools/tu_collector test
+
+test_merge_clang_extdef_mappings:
+	make -C tools/merge_clang_extdef_mappings test
+
+test_merge_clang_extdef_mappings_in_env:
+	$(ACTIVATE_DEV_VENV) && \
+	make -C tools/merge_clang_extdef_mappings test

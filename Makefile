@@ -69,7 +69,17 @@ build_report_hash:
 package_report_hash: build_report_hash package_dir_structure
 	cp -r $(CC_TOOLS)/codechecker_report_hash/build/codechecker_report_hash/codechecker_report_hash $(CC_BUILD_LIB_DIR)
 
-package: package_dir_structure set_git_commit_template package_plist_to_html package_tu_collector package_report_converter package_report_hash
+build_merge_clang_extdef_mappings:
+	$(MAKE) -C $(CC_ANALYZER)/tools/merge_clang_extdef_mappings build
+
+package_merge_clang_extdef_mappings: build_merge_clang_extdef_mappings package_dir_structure
+	# Copy merge-clang-extdef-mappings files.
+	cp -r $(CC_ANALYZER)/tools/merge_clang_extdef_mappings/build/merge_clang_extdef_mappings/codechecker_merge_clang_extdef_mappings $(CC_BUILD_LIB_DIR) && \
+	chmod u+x $(CC_BUILD_LIB_DIR)/codechecker_merge_clang_extdef_mappings/cli.py && \
+	cd $(CC_BUILD_DIR) && \
+	ln -sf ../lib/python3/codechecker_merge_clang_extdef_mappings/cli.py bin/merge-clang-extdef-mappings
+
+package: package_dir_structure set_git_commit_template package_plist_to_html package_tu_collector package_report_converter package_report_hash package_merge_clang_extdef_mappings
 	BUILD_DIR=$(BUILD_DIR) BUILD_LOGGER_64_BIT_ONLY=$(BUILD_LOGGER_64_BIT_ONLY) $(MAKE) -C $(CC_ANALYZER) package_analyzer
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) package_web
 

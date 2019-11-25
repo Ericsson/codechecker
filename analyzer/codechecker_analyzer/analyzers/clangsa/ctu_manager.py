@@ -17,82 +17,33 @@ import tempfile
 
 from codechecker_common.logger import get_logger
 
+from merge_clang_extdef_mappings.merge import merge
+
 from .. import analyzer_base
 from . import ctu_triple_arch
 
 LOG = get_logger('analyzer')
 
 
-def generate_func_map_lines(fnmap_dir):
-    """ Iterate over all lines of input files in random order. """
-
-    files = glob.glob(os.path.join(fnmap_dir, '*'))
-    for filename in files:
-        with open(filename, 'r', encoding='utf-8',
-                  errors="ignore") as in_file:
-            for line in in_file:
-                yield line
-
-
-def create_global_ctu_function_map(func_map_lines):
-    """ Takes iterator of individual function maps and creates a global map
-    keeping only unique names. We leave conflicting names out of CTU.
-    A function map contains the id of a function (mangled name) and the
-    originating source (the corresponding AST file) name."""
-
-    mangled_to_asts = {}
-
-    for line in func_map_lines:
-        mangled_name, ast_file = line.strip().split(' ', 1)
-        # We collect all occurences of a function name into a list
-        if mangled_name not in mangled_to_asts:
-            mangled_to_asts[mangled_name] = {ast_file}
-        else:
-            mangled_to_asts[mangled_name].add(ast_file)
-
-    mangled_ast_pairs = []
-
-    for mangled_name, ast_files in mangled_to_asts.items():
-        if len(ast_files) == 1:
-            mangled_ast_pairs.append((mangled_name, ast_files.pop()))
-
-    return mangled_ast_pairs
-
-
-def write_global_map(ctu_dir, arch, ctu_func_map_file, mangled_ast_pairs):
-    """ Write (mangled function name, ast file) pairs into final file. """
-
-    extern_fns_map_file = os.path.join(ctu_dir, arch, ctu_func_map_file)
-    with open(extern_fns_map_file, 'w',
-              encoding='utf-8', errors='ignore') as out_file:
-        for mangled_name, ast_file in mangled_ast_pairs:
-            out_file.write('%s %s\n' % (mangled_name, ast_file))
-
-
-def merge_ctu_func_maps(ctu_dir, ctu_func_map_file, ctu_temp_fnmap_folder):
-    """ Merge individual function maps into a global one.
-
-    As the collect phase runs parallel on multiple threads, all compilation
-    units are separately mapped into a temporary file in ctu_temp_fnmap_folder.
-    These function maps contain the mangled names of functions and the source
-    (AST generated from the source) which had them.
-    These files should be merged at the end into a global map file:
-    ctu_func_map_file."""
+def merge_clang_extdef_mappings(ctu_dir, ctu_func_map_file,
+                                ctu_temp_fnmap_folder):
+    """ Merge individual function maps into a global one."""
 
     triple_arches = glob.glob(os.path.join(ctu_dir, '*'))
     for triple_path in triple_arches:
-        if os.path.isdir(triple_path):
-            triple_arch = os.path.basename(triple_path)
-            fnmap_dir = os.path.join(ctu_dir, triple_arch,
-                                     ctu_temp_fnmap_folder)
+        if not os.path.isdir(triple_path):
+            continue
 
-            func_map_lines = generate_func_map_lines(fnmap_dir)
-            mangled_ast_pairs = create_global_ctu_function_map(func_map_lines)
-            write_global_map(ctu_dir, triple_arch, ctu_func_map_file,
-                             mangled_ast_pairs)
+        triple_arch = os.path.basename(triple_path)
+        fnmap_dir = os.path.join(ctu_dir, triple_arch,
+                                 ctu_temp_fnmap_folder)
 
-            # Remove all temporary files
-            shutil.rmtree(fnmap_dir, ignore_errors=True)
+        merged_fn_map = os.path.join(ctu_dir, triple_arch,
+                                     ctu_func_map_file)
+        merge(fnmap_dir, merged_fn_map)
+
+        # Remove all temporary files.
+        shutil.rmtree(fnmap_dir, ignore_errors=True)
 
 
 def generate_ast(triple_arch, action, source, config, env):
