@@ -10,6 +10,7 @@ from __future__ import division
 from __future__ import absolute_import
 
 import re
+import subprocess
 
 
 class ClangVersionInfo(object):
@@ -55,3 +56,12 @@ class ClangVersionInfoParser(object):
             version_match.group('minor_version'),
             version_match.group('patch_version'),
             installed_dir_match.group('installed_dir'))
+
+
+def get(clang_binary, env=None):
+    """Get and parse the version information from given clang binary."""
+    compiler_version = subprocess.check_output([clang_binary, '--version'],
+                                               env=env)
+    version_parser = ClangVersionInfoParser()
+    version_info = version_parser.parse(compiler_version)
+    return version_info

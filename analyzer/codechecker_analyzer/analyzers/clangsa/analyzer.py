@@ -113,29 +113,14 @@ class ClangSA(analyzer_base.SourceAnalyzer):
     @classmethod
     def get_analyzer_checkers(cls, cfg_handler, environ):
         """Return the list of the supported checkers."""
-        analyzer_binary = cfg_handler.analyzer_binary
-
-        try:
-            analyzer_version = subprocess.check_output(
-                [analyzer_binary, '--version'],
-                env=environ)
-
-        except subprocess.CalledProcessError as cerr:
-            LOG.error('Failed to get and parse clang version: %s',
-                      analyzer_binary)
-            LOG.error(cerr)
-            return []
-
-        version_parser = version.ClangVersionInfoParser()
-        version_info = version_parser.parse(analyzer_version)
-
-        command = [analyzer_binary, "-cc1"]
-
         checkers_list_args = clang_options.get_analyzer_checkers_cmd(
-            version_info,
+            cfg_handler.version_info,
             environ,
             cfg_handler.analyzer_plugins,
             alpha=True)
+
+        analyzer_binary = cfg_handler.analyzer_binary
+        command = [analyzer_binary, "-cc1"]
         command.extend(checkers_list_args)
 
         try:
@@ -200,12 +185,9 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                          '-analyzer-disable-checker=' +
                                          checker_name])
 
-            # Needed for the iterator checkers.
-            analyzer_cmd.extend(['-Xclang',
-                                 '-analyzer-config',
-                                 '-Xclang',
-                                 'aggressive-binary-operation-simplification'
-                                 '=true'])
+            # Enable aggressive-binary-operation-simplification option.
+            analyzer_cmd.extend(
+                clang_options.get_abos_options(config.version_info))
 
             # Enable the z3 solver backend.
             if config.enable_z3:
@@ -344,6 +326,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             cls.ANALYZER_NAME)
         handler.compiler_resource_dir = \
             host_check.get_resource_dir(handler.analyzer_binary, context)
+        handler.version_info = version.get(handler.analyzer_binary, environ)
 
         handler.report_hash = args.report_hash \
             if 'report_hash' in args else None

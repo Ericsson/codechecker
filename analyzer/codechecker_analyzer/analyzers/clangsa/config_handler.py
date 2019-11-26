@@ -34,6 +34,7 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
         self.enable_z3 = False
         self.enable_z3_refutation = False
         self.environ = environ
+        self.version_info = None
 
     def add_checker_config(self, config):
         """
