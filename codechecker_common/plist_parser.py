@@ -286,7 +286,8 @@ def remove_report_from_plist(plist_file_obj, skip_handler):
     """
     Parse the original plist content provided by the analyzer
     and return a new plist content where reports were removed
-    if they should be skipped.
+    if they should be skipped. If the remove failed for some reason None
+    will be returned.
 
     WARN !!!!
     If the 'files' array in the plist is modified all of the
@@ -299,9 +300,8 @@ def remove_report_from_plist(plist_file_obj, skip_handler):
     except (ExpatError, TypeError, AttributeError) as ex:
         LOG.error("Failed to parse plist content, "
                   "keeping the original version")
-        LOG.error(plist_content)
         LOG.error(ex)
-        return plist_content
+        return None
 
     file_ids_to_remove = []
 
@@ -319,7 +319,7 @@ def remove_report_from_plist(plist_file_obj, skip_handler):
     except KeyError:
         LOG.error("Failed to modify plist content, "
                   "keeping the original version")
-        return plist_content
+        return None
 
 
 def skip_report_from_plist(plist_file, skip_handler):
@@ -330,7 +330,8 @@ def skip_report_from_plist(plist_file, skip_handler):
     with io.open(plist_file, 'r+') as plist:
         new_plist_content = remove_report_from_plist(plist,
                                                      skip_handler)
-        new_plist_content = new_plist_content.decode("utf8")
-        plist.seek(0)
-        plist.write(new_plist_content)
-        plist.truncate()
+        if new_plist_content:
+            new_plist_content = new_plist_content.decode("utf8")
+            plist.seek(0)
+            plist.write(new_plist_content)
+            plist.truncate()
