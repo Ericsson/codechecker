@@ -343,7 +343,7 @@ class LogParserTest(unittest.TestCase):
 
         self.assertEqual(len(build_actions), 3)
 
-    def test_skip_no_pre_from_parse(self):
+    def test_no_skip_from_parse(self):
         """Keep everything for analysis, no skipping there."""
         cmp_cmd_json = [
             {"directory": "/tmp/lib1",
