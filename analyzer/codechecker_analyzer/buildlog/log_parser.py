@@ -993,7 +993,7 @@ def parse_unique_log(compilation_database,
             full_path = os.path.join(entry["directory"], entry["file"])
             if analysis_skip_handler \
                     and analysis_skip_handler.should_skip(full_path) \
-                    and pre_analysis_skip_handler \
+                    or pre_analysis_skip_handler \
                     and pre_analysis_skip_handler.should_skip(full_path):
                 continue
 
