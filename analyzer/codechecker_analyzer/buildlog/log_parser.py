@@ -672,8 +672,8 @@ def __collect_compile_opts(flag_iterator, details):
         # TODO: If Clang will be extended with an extra analyzer option in
         # order to print these absolute paths natively, this conversion will
         # not be necessary.
-        flags_with_path = ['-I', '-idirafter', '-imacros', '-imultilib',
-                           '-include', '-iquote', '-isysroot', '-isystem',
+        flags_with_path = ['-I', '-idirafter', '-imultilib',
+                           '-iquote', '-isysroot', '-isystem',
                            '-iwithprefix', '-iwithprefixbefore', '-sysroot',
                            '--sysroot']
         if flag in flags_with_path:
