@@ -16,6 +16,7 @@ import argparse
 import math
 import os
 import sys
+import traceback
 
 from plist_to_html import PlistToHtml
 

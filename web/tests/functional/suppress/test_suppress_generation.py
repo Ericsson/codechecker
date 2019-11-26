@@ -13,6 +13,7 @@ from __future__ import absolute_import
 import logging
 import os
 import shlex
+import sys
 import subprocess
 from subprocess import CalledProcessError
 import unittest
