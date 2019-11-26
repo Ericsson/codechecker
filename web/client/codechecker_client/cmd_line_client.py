@@ -192,6 +192,7 @@ def check_filter_values(args):
                 values = [y.strip() for y in x.strip().split(',') if y.strip()]
                 filter_values.append(values if values else None)
 
+            # pylint: disable=unbalanced-tuple-unpacking
             severities, checkers, file_path, dt_statuses, rw_statuses = \
                 filter_values
 
