@@ -145,9 +145,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd = [config.analyzer_binary, '--analyze',
                             # Do not warn about the unused gcc/g++ arguments.
-                            '-Qunused-arguments',
-                            # Turn off clang hardcoded checkers list.
-                            '--analyzer-no-default-checks']
+                            '-Qunused-arguments']
 
             for plugin in config.analyzer_plugins:
                 analyzer_cmd.extend(["-Xclang", "-plugin",
