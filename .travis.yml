@@ -135,12 +135,15 @@ script:
       make package &&
       make -C tools/plist_to_html test &&
       if [[ "$CC_MODULE" = "analyzer" ]]; then
-        BUILD_DIR=$TRAVIS_BUILD_DIR/build make -C analyzer test_unit test_functional test_tu_collector;
+        BUILD_DIR=$TRAVIS_BUILD_DIR/build make -C analyzer \
+          test_unit \
+          test_functional \
+          test_tu_collector &&
         if [[ "$TRAVIS_OS_NAME" = "linux" ]]; then
           make -C analyzer test_build_logger
         fi
       elif [[ ! -z "$DATABASE" ]]; then
-        make -C web test_matrix_${DATABASE};
+        make -C web test_matrix_${DATABASE}
       else
-        make test;
+        make test
       fi
