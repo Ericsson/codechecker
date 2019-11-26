@@ -284,7 +284,6 @@ class TestAnalyze(unittest.TestCase):
         # We expect a failure archive to be in the failed directory.
         failed_files = os.listdir(failed_dir)
         self.assertEquals(len(failed_files), 1)
-        self.assertIn("failure.c", failed_files[0])
 
         fail_zip = os.path.join(failed_dir, failed_files[0])
 
