@@ -546,13 +546,8 @@ class SessionManager(object):
             self.__refresh_time, is_root, self.__database_connection,
             last_access, can_expire)
 
-    def create_or_get_session(self, auth_string):
-        """
-        Creates a new session for the given auth-string.
-
-        If an existing, valid session is found for the auth_string, that will
-        be used instead. Otherwise, a brand new token cookie will be generated.
-        """
+    def create_session(self, auth_string):
+        """ Creates a new session for the given auth-string. """
         if not self.__auth_config['enabled']:
             return None
 
@@ -575,43 +570,32 @@ class SessionManager(object):
         if not validation:
             return False
 
-        # If the session is still valid and credentials are present,
-        # return old token. This is fetched either locally or from the db.
-        user_name = validation['username']
-        tokens = self.get_db_auth_session_tokens(user_name)
-        token = tokens[0].token if tokens else generate_session_token()
+        # Generate a new token and create a local session.
+        token = generate_session_token()
+        user_name = validation.get('username')
+        groups = validation.get('groups', [])
+        is_root = validation.get('root', False)
 
-        local_session = self.get_session(token)
+        local_session = self.__create_local_session(token, user_name,
+                                                    groups, is_root)
+        self.__sessions.append(local_session)
 
-        if local_session and local_session.is_alive:
-            # The token is still valid, re-validate it.
-            local_session.revalidate()
-        else:
-            # Invalidate the token because it has been expired.
-            self.invalidate(token)
-
-            groups = validation.get('groups', [])
-            is_root = validation.get('root', False)
-
-            local_session = self.__create_local_session(token, user_name,
-                                                        groups, is_root)
-            self.__sessions.append(local_session)
-
-            transaction = None
-            if self.__database_connection:
-                try:
-                    transaction = self.__database_connection()
-                    record = SessionRecord(token, user_name,
-                                           ';'.join(groups))
-                    transaction.add(record)
-                    transaction.commit()
-                except Exception as e:
-                    LOG.error("Couldn't store or update login record in "
-                              "database:")
-                    LOG.error(str(e))
-                finally:
-                    if transaction:
-                        transaction.close()
+        # Store the session in the database.
+        transaction = None
+        if self.__database_connection:
+            try:
+                transaction = self.__database_connection()
+                record = SessionRecord(token, user_name,
+                                       ';'.join(groups))
+                transaction.add(record)
+                transaction.commit()
+            except Exception as e:
+                LOG.error("Couldn't store or update login record in "
+                          "database:")
+                LOG.error(str(e))
+            finally:
+                if transaction:
+                    transaction.close()
 
         return local_session
 
