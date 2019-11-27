@@ -231,6 +231,26 @@ def add_arguments_to_parser(parser):
                                     "into the '<OUTPUT_DIR>/success' "
                                     "directory.")
 
+    analyzer_opts.add_argument('--config',
+                               dest='config_file',
+                               required=False,
+                               default=os.path.join(os.path.expanduser("~"),
+                                                    ".codechecker.json"),
+                               help="Allow the configuration from an explicit "
+                                    "JSON based configuration file. The "
+                                    "value of the 'analyzer' key in the "
+                                    "config file will be emplaced as command "
+                                    "line arguments. The format of "
+                                    "configuration file is: "
+                                    "{"
+                                    "  \"enabled\": true,"
+                                    "  \"analyzer\": ["
+                                    "    \"--enable=core.DivideZero\","
+                                    "    \"--enable=core.CallAndMessage\","
+                                    "    \"--clean\""
+                                    "  ]"
+                                    "}.")
+
     analyzer_opts.add_argument('--saargs',
                                dest="clangsa_args_cfg_file",
                                required=False,
@@ -489,7 +509,25 @@ https://clang.llvm.org/docs/DiagnosticsReference.html.""")
                                     "OWN RISK!")
 
     logger.add_verbose_arguments(parser)
-    parser.set_defaults(func=main)
+    parser.set_defaults(func=main,
+                        func_process_config_file=process_config_file)
+
+
+def process_config_file(args):
+    """
+    Handler to get config file options.
+    """
+    if 'config_file' not in args or not os.path.exists(args.config_file):
+        return None
+
+    cfg = load_json_or_empty(args.config_file, default={})
+    if cfg.get("enabled"):
+        print("Using config file: '{0}'.".format(args.config_file))
+        return cfg.get('analyzer', [])
+
+    print("Config file '{0}' is disabled.".format(args.config_file))
+
+    return None
 
 
 def __get_skip_handler(args):
@@ -527,6 +565,11 @@ def main(args):
     readable format.
     """
     logger.setup_logger(args.verbose if 'verbose' in args else None)
+
+    if 'config' in args and not os.path.exists(args.config):
+        LOG.error("Configuration file '%s' does not exists.",
+                  args.config)
+        sys.exit(1)
 
     if len(args.logfile) != 1:
         LOG.warning("Only one log file can be processed right now!")
