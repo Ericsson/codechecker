@@ -675,8 +675,18 @@ def __collect_compile_opts(flag_iterator, details):
                            '-iwithprefix', '-iwithprefixbefore', '-sysroot',
                            '--sysroot']
         if flag in flags_with_path:
+            # --sysroot format can be --sysroot=/path/to/include
+            # in this case before the normalization the '='
+            # sign must be removed.
+            # We put back the original
+            # --sysroot=/path/to/include as
+            # --sysroot /path/to/include
+            # which is a valid format too.
+            if param.startswith("="):
+                param = param[1:]
+                together = False
             param = os.path.normpath(
-                os.path.join(details['directory'], param))
+                    os.path.join(details['directory'], param))
 
         if together:
             details['analyzer_options'].append(flag + param)
