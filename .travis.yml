@@ -64,11 +64,11 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then git clone https://github.com/llvm-mirror/clang.git ~/llvm --branch master --single-branch --depth 1; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update-reset; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install doxygen; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install llvm@8; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install llvm@9; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install thrift@0.9; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/usr/local/Cellar/thrift@0.9/0.9.3.1/bin:$PATH; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then which thrift; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/usr/local/opt/llvm@8/bin:$PATH; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/usr/local/opt/llvm@9/bin:$PATH; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PYTHONPATH=~/llvm/tools/scan-build-py/; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=~/llvm/tools/scan-build-py/bin:$PATH; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then chmod a+x ~/llvm/tools/scan-build-py/bin/intercept-build; fi
@@ -88,12 +88,23 @@ install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip install --ignore-installed nose --user; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/Users/travis/Library/Python/2.7/bin:$PATH; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip install virtualenv; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-8 100; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-8 100; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-8 100; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo rm -rf /usr/local/clang-*; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-9 9999; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-9 9999; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-9 9999; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --set clang++ /usr/bin/clang++-9; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --set clang /usr/bin/clang-9; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --set clang-tidy /usr/bin/clang-tidy-9; fi
     # Check if the right clang and clang-tidy is used
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then update-alternatives --display clang; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then update-alternatives --display clang++; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then update-alternatives --display clang-tidy; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then which clang++; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then which clang; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then which clang-tidy; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then clang++ --version; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then clang --version; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then clang-tidy --version; fi
 
 # Run brew cleanup at before_cache stage otherwise, the cache will grow
 # indefinitely as new package versions are released.
@@ -111,9 +122,9 @@ cache:
 addons:
     apt:
         sources:
-            - sourceline: 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-8 main'
+            - sourceline: 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-9 main'
               key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
-            - sourceline: 'deb-src http://apt.llvm.org/bionic/ llvm-toolchain-bionic-8 main'
+            - sourceline: 'deb-src http://apt.llvm.org/bionic/ llvm-toolchain-bionic-9 main'
               key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
         packages:
             - g++-6
@@ -122,8 +133,8 @@ addons:
             - libc6-dev-i386
             - libpq-dev
             - thrift-compiler
-            - clang-8
-            - clang-tidy-8
+            - clang-9
+            - clang-tidy-9
     postgresql: "9.6"
 
 script:
