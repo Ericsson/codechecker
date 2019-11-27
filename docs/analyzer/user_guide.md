@@ -930,9 +930,10 @@ EXPERIMENTAL statistics analysis feature arguments:
 `parse` prints analysis results to the standard output.
 
 ```
-usage: CodeChecker parse [-h] [-t {plist}] [--export {html}]
-                         [-o OUTPUT_PATH] [-c] [--suppress SUPPRESS]
-                         [--export-source-suppress] [--print-steps]
+usage: CodeChecker parse [-h] [-t {plist}] [-e {html,json}] [-o OUTPUT_PATH]
+                         [-c] [--suppress SUPPRESS] [--export-source-suppress]
+                         [--print-steps] [-i SKIPFILE]
+                         [--trim-path-prefix [TRIM_PATH_PREFIX [TRIM_PATH_PREFIX ...]]]
                          [--verbose {info,debug,debug_analyzer}]
                          file/folder [file/folder ...]
 
@@ -979,10 +980,10 @@ optional arguments:
                         Set verbosity level.
 
 export arguments:
-  -e {html}, --export {html}
+  -e {html,json}, --export {html,json}
                         Specify extra output format type. (default: None)
   -o OUTPUT_PATH, --output OUTPUT_PATH
-                        Store the output in the given folder. (default: None)
+                        Store the output in the given folder.
   -c, --clean           DEPRECATED. Delete output results stored in the output
                         directory. (By default, it would keep output files and
                         overwrites only those that belongs to a plist file

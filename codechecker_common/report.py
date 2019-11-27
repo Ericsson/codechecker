@@ -313,6 +313,14 @@ class Report(object):
         msg += str(self.__files)
         return msg
 
+    def to_json(self):
+        """ Converts to json format. """
+        ret = self.__main
+        ret["path"] = self.__bug_path
+        ret["files"] = self.__files
+
+        return ret
+
 
 def use_context_free_hashes(path):
     """

@@ -10,6 +10,7 @@ from __future__ import division
 from __future__ import absolute_import
 
 import glob
+import json
 import os
 import re
 import shutil
@@ -20,6 +21,7 @@ from subprocess import CalledProcessError
 
 from libtest import env
 from libtest import project
+from libtest.codechecker import call_command
 
 
 class AnalyzeParseTestCaseMeta(type):
@@ -187,3 +189,55 @@ class AnalyzeParseTestCase(unittest.TestCase):
             print("Failed to run: " + ' '.join(cerr.cmd))
             print(cerr.output)
             return cerr.returncode
+
+    def test_json_output_for_macros(self):
+        """ Test parse json output for macros. """
+        test_project_macros = os.path.join(self.test_workspaces['NORMAL'],
+                                           "test_files", "macros")
+
+        extract_cmd = ['CodeChecker', 'parse', "-e", "json",
+                       test_project_macros]
+
+        out, _ = call_command(extract_cmd, cwd=self.test_dir, env=self.env)
+        res = json.loads(out)
+
+        self.assertEqual(len(res), 1)
+        res = res[0]
+
+        self.assertIn('check_name', res)
+        self.assertIn('issue_hash_content_of_line_in_context', res)
+
+        self.assertIn('files', res)
+        self.assertEqual(len(res['files']), 1)
+
+        self.assertIn('path', res)
+        self.assertTrue(res['path'])
+
+        self.assertIn('macro_expansions', res)
+        self.assertTrue(res['macro_expansions'])
+
+    def test_json_output_for_notes(self):
+        """ Test parse json output for notes. """
+        test_project_notes = os.path.join(self.test_workspaces['NORMAL'],
+                                          "test_files", "notes")
+
+        extract_cmd = ['CodeChecker', 'parse', "-e", "json",
+                       test_project_notes]
+
+        out, _ = call_command(extract_cmd, cwd=self.test_dir, env=self.env)
+        res = json.loads(out)
+
+        self.assertEqual(len(res), 1)
+        res = res[0]
+
+        self.assertIn('check_name', res)
+        self.assertIn('issue_hash_content_of_line_in_context', res)
+
+        self.assertIn('files', res)
+        self.assertEqual(len(res['files']), 1)
+
+        self.assertIn('path', res)
+        self.assertTrue(res['path'])
+
+        self.assertIn('notes', res)
+        self.assertTrue(res['notes'])
