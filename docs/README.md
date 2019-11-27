@@ -204,8 +204,14 @@ binaries you intend to use.
 },
 ```
 
+You can set the `CC_ANALYZERS_FROM_PATH` environment variable before running a
+CodeChecker command to `yes` or `1` to enforce taking the analyzers from the
+`PATH` instead of the given binaries.
+
 Make sure that the required include paths are at the right place!
-Clang based tools search by default for [builtin-includes](https://clang.llvm.org/docs/LibTooling.html#builtin-includes) in a path relative to the tool binary.
+Clang based tools search by default for
+[builtin-includes](https://clang.llvm.org/docs/LibTooling.html#builtin-includes)
+in a path relative to the tool binary.
 `$(dirname /path/to/tool)/../lib/clang/8.0.0/include`
 
 ## Setting up the environment in your Terminal

@@ -144,3 +144,11 @@ def get_binary_in_path(basename_list, versioning_pattern, env):
 
         # Return the one earliest in PATH.
         return files[0]
+
+
+def is_analyzer_from_path():
+    """ Return True if CC_ANALYZERS_FROM_PATH environment variable is set. """
+    analyzers_from_path = os.environ.get('CC_ANALYZERS_FROM_PATH', '').lower()
+    if analyzers_from_path in ['yes', '1']:
+        return True
+    return False
