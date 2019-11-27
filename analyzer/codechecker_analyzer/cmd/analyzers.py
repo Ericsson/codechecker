@@ -119,8 +119,16 @@ def main(args):
         if args.dump_config == 'clang-tidy':
             subprocess.call([binary, '-dump-config', '-checks=*'])
         elif args.dump_config == 'clangsa':
-            # TODO: Not supported by ClangSA yet!
-            LOG.warning("'--dump-config clangsa' is not supported yet.")
+            ret = subprocess.call([binary, '-cc1',
+                                   '-analyzer-checker-option-help',
+                                   '-analyzer-checker-option-help-alpha'],
+                                  stderr=subprocess.PIPE)
+
+            if ret:
+                # This flag is supported from Clang 9.
+                LOG.warning("'--dump-config clangsa' is not supported yet. "
+                            "Please make sure that you are using Clang 9 or "
+                            "newer.")
 
         return
 
