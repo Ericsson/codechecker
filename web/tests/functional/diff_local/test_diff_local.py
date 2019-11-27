@@ -145,7 +145,7 @@ class DiffLocal(unittest.TestCase):
         print(high_severity_cmd)
         out = subprocess.check_output(high_severity_cmd)
         print(out)
-        self.assertEqual(len(re.findall(r'\[HIGH\]', out)), 18)
+        self.assertEqual(len(re.findall(r'\[HIGH\]', out)), 15)
         self.assertEqual(len(re.findall(r'\[LOW\]', out)), 6)
 
     @unittest.skip("fix test if severity will be"
