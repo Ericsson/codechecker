@@ -99,7 +99,7 @@ int f(int x) { return 1 / x; }
                                     'db_cleanup_test',
                                     self.test_dir)
 
-        runs = self._cc_client.getRunData(run_filter, None, 0)
+        runs = self._cc_client.getRunData(run_filter, None, 0, None)
         run_id = runs[0].runId
 
         reports \
@@ -129,7 +129,7 @@ int f(int x) { return 1 / x; }
         run_filter.names = ['db_cleanup_test']
         run_filter.exactMatch = True
 
-        runs = self._cc_client.getRunData(run_filter, None, 0)
+        runs = self._cc_client.getRunData(run_filter, None, 0, None)
         run_id = runs[0].runId
 
         reports \

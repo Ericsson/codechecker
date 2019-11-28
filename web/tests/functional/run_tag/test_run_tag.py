@@ -13,7 +13,8 @@ import json
 import os
 import unittest
 
-from codeCheckerDBAccess_v6.ttypes import ReportFilter
+from codeCheckerDBAccess_v6.ttypes import Order, ReportFilter, RunSortMode, \
+    RunSortType
 
 from libtest import codechecker
 from libtest import env
@@ -144,7 +145,9 @@ int main()
         self._create_source_file(0, 'test_run_tag_update')
 
         # Get the run names which belong to this test
-        runs = self._cc_client.getRunData(None, None, 0)
+
+        sort_mode = RunSortMode(RunSortType.DATE, Order.ASC)
+        runs = self._cc_client.getRunData(None, None, 0, sort_mode)
         test_run_ids = [run.runId for run in runs]
 
         self.assertEqual(len(test_run_ids), 2)

@@ -30,7 +30,8 @@ from codeCheckerDBAccess_v6 import constants, ttypes
 from codeCheckerDBAccess_v6.ttypes import BugPathPos, CheckerCount, \
     CommentData, DiffType, Encoding, RunHistoryData, Order, ReportData, \
     ReportDetails, ReviewData, RunData, RunFilter, RunReportCount, \
-    RunTagCount, SourceComponentData, SourceFileData, SortMode, SortType
+    RunSortType, RunTagCount, SourceComponentData, SourceFileData, SortMode, \
+    SortType
 
 from codechecker_common import plist_parser, skiplist_handler
 from codechecker_common.source_code_comment_handler import \
@@ -604,6 +605,30 @@ def check_remove_runs_lock(session, run_ids):
                 ', '.join([r[0] for r in run_locks])))
 
 
+def sort_run_data_query(query, sort_mode):
+    """
+    Sort run data query by the given sort type.
+    """
+    # Sort by run date by default.
+    if not sort_mode:
+        return query.order_by(desc(Run.date))
+
+    order_type_map = {Order.ASC: asc, Order.DESC: desc}
+    order_type = order_type_map.get(sort_mode.ord)
+    if sort_mode.type == RunSortType.NAME:
+        query = query.order_by(order_type(Run.name))
+    elif sort_mode.type == RunSortType.UNRESOLVED_REPORTS:
+        query = query.order_by(order_type('report_count'))
+    elif sort_mode.type == RunSortType.DATE:
+        query = query.order_by(order_type(Run.date))
+    elif sort_mode.type == RunSortType.DURATION:
+        query = query.order_by(order_type(Run.duration))
+    elif sort_mode.type == RunSortType.CC_VERSION:
+        query = query.order_by(order_type(RunHistory.cc_version))
+
+    return query
+
+
 class ThriftRequestHandler(object):
     """
     Connect to database and handle thrift client requests.
@@ -689,7 +714,7 @@ class ThriftRequestHandler(object):
 
     @exc_to_thrift_reqfail
     @timeit
-    def getRunData(self, run_filter, limit, offset):
+    def getRunData(self, run_filter, limit, offset, sort_mode):
         self.__require_access()
 
         limit = verify_limit_range(limit)
@@ -729,8 +754,9 @@ class ThriftRequestHandler(object):
                 .group_by(Run.id,
                           RunHistory.version_tag,
                           RunHistory.cc_version,
-                          stmt.c.report_count) \
-                .order_by(Run.date)
+                          stmt.c.report_count)
+
+            q = sort_run_data_query(q, sort_mode)
 
             if limit:
                 q = q.limit(limit).offset(offset)

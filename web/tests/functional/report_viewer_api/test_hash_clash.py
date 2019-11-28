@@ -23,7 +23,7 @@ from uuid import uuid4
 from libtest import env
 from libtest import codechecker
 
-from codeCheckerDBAccess_v6.ttypes import Encoding
+from codeCheckerDBAccess_v6.ttypes import Encoding, RunFilter
 
 
 def _generate_content(cols, lines):
@@ -79,11 +79,22 @@ class HashClash(unittest.TestCase):
                       self._test_dir)
 
         self._codechecker_cfg['reportdir'] = self._test_dir
-        codechecker.store(self._codechecker_cfg,
-                          'test_hash_clash_' + uuid4().hex)
+        self._run_name = 'test_hash_clash_' + uuid4().hex
+        codechecker.store(self._codechecker_cfg, self._run_name)
+
+    def tearDown(self):
+        """
+        Remove the run which was stored by this test case.
+        """
+        run_filter = RunFilter(names=[self._run_name], exactMatch=True)
+        runs = self._report.getRunData(run_filter, None, 0, None)
+        run_id = runs[0].runId
+
+        # Remove the run.
+        self._report.removeRun(run_id)
 
     def _reports_for_latest_run(self):
-        runs = self._report.getRunData(None, None, 0)
+        runs = self._report.getRunData(None, None, 0, None)
         max_run_id = max(map(lambda run: run.runId, runs))
         return self._report.getRunResults([max_run_id],
                                           100,

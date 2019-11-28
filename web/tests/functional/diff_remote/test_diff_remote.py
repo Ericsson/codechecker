@@ -19,8 +19,9 @@ import re
 import subprocess
 import unittest
 
-from codeCheckerDBAccess_v6.ttypes import CompareData, DiffType, \
-    ReportFilter, Severity, ReviewStatus, RunHistoryFilter
+from codeCheckerDBAccess_v6.ttypes import CompareData, DiffType, Order, \
+    ReportFilter, ReviewStatus, RunHistoryFilter, RunSortMode, RunSortType, \
+    Severity
 
 from libtest import env
 from libtest.debug_printer import print_run_results
@@ -65,7 +66,8 @@ class DiffRemote(unittest.TestCase):
         # Name order matters from __init__ !
         run_names = env.get_run_names(test_workspace)
 
-        runs = self._cc_client.getRunData(None, None, 0)
+        sort_mode = RunSortMode(RunSortType.DATE, Order.ASC)
+        runs = self._cc_client.getRunData(None, None, 0, sort_mode)
         self._test_runs = [run for run in runs if run.name in run_names]
 
         # There should be at least two runs for this test.

@@ -85,7 +85,7 @@ class TestProductConfigShare(unittest.TestCase):
         # Get the run names which belong to this test.
         run_names = env.get_run_names(self.test_workspace_main)
 
-        runs = self._cc_client.getRunData(None, None, 0)
+        runs = self._cc_client.getRunData(None, None, 0, None)
         test_runs = [run for run in runs if run.name in run_names]
 
         self.assertEqual(len(test_runs), 1,
@@ -192,10 +192,11 @@ class TestProductConfigShare(unittest.TestCase):
         self.assertEqual(store_res, 0, "Storing the test project failed.")
 
         cc_client_2 = env.setup_viewer_client(self.test_workspace_secondary)
-        self.assertEqual(len(cc_client_2.getRunData(None, None, 0)), 1,
+        self.assertEqual(len(cc_client_2.getRunData(None, None, 0, None)), 1,
                          "There should be a run present in the new server.")
 
-        self.assertEqual(len(self._cc_client.getRunData(None, None, 0)), 1,
+        self.assertEqual(len(self._cc_client.getRunData(None, None, 0, None)),
+                         1,
                          "There should be a run present in the database when "
                          "connected through the main server.")
 

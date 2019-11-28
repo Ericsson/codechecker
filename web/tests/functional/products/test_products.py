@@ -66,7 +66,7 @@ class TestProducts(unittest.TestCase):
         # Get the run names which belong to this test.
         run_names = env.get_run_names(self.test_workspace)
 
-        runs = self._cc_client.getRunData(None, None, 0)
+        runs = self._cc_client.getRunData(None, None, 0, None)
         test_runs = [run for run in runs if run.name in run_names]
 
         self.assertEqual(len(test_runs), 1,
@@ -247,7 +247,7 @@ class TestProducts(unittest.TestCase):
         # There is no schema initialization if the product database
         # was changed. The inital schema needs to be created manually
         # for the new database.
-        runs = self._cc_client.getRunData(None, None, 0)
+        runs = self._cc_client.getRunData(None, None, 0, None)
         self.assertIsNone(runs)
 
         # Connect back to the old database.
@@ -260,7 +260,7 @@ class TestProducts(unittest.TestCase):
                          "Server didn't save back to old database name.")
 
         # The old database should have its data available again.
-        runs = self._cc_client.getRunData(None, None, 0)
+        runs = self._cc_client.getRunData(None, None, 0, None)
         self.assertEqual(
             len(runs), 1,
             "We connected to old database but the run was missing.")
@@ -295,7 +295,7 @@ class TestProducts(unittest.TestCase):
                          "Server didn't save new endpoint.")
 
         # The old product is gone. Thus, connection should NOT happen.
-        res = self._cc_client.getRunData(None, None, 0)
+        res = self._cc_client.getRunData(None, None, 0, None)
         self.assertIsNone(res)
 
         # The new product should connect and have the data.
@@ -307,7 +307,7 @@ class TestProducts(unittest.TestCase):
             product=new_endpoint,  # Use the new product URL.
             endpoint='/CodeCheckerService',
             session_token=token)
-        self.assertEqual(len(new_client.getRunData(None, None, 0)), 1,
+        self.assertEqual(len(new_client.getRunData(None, None, 0, None)), 1,
                          "The new product did not serve the stored data.")
 
         # Set back to the old endpoint.
@@ -320,7 +320,7 @@ class TestProducts(unittest.TestCase):
                          "Server didn't save back to old endpoint.")
 
         # The old product should have its data available again.
-        runs = self._cc_client.getRunData(None, None, 0)
+        runs = self._cc_client.getRunData(None, None, 0, None)
         self.assertEqual(
             len(runs), 1,
             "We connected to old database but the run was missing.")

@@ -16,7 +16,8 @@ import os
 import sys
 import unittest
 
-from codeCheckerDBAccess_v6.ttypes import ReportFilter, RunFilter
+from codeCheckerDBAccess_v6.ttypes import Order, ReportFilter, RunFilter, \
+    RunSortMode, RunSortType
 
 from libtest import codechecker
 from libtest import env
@@ -49,7 +50,8 @@ class RemoveRunResults(unittest.TestCase):
         # Get the run names which belong to this test.
         run_names = env.get_run_names(test_workspace)
 
-        runs = self._cc_client.getRunData(None, None, 0)
+        sort_mode = RunSortMode(RunSortType.DATE, Order.ASC)
+        runs = self._cc_client.getRunData(None, None, 0, sort_mode)
 
         test_runs = [run for run in runs if run.name in run_names]
 
@@ -70,7 +72,8 @@ class RemoveRunResults(unittest.TestCase):
                                     test_project_path)
 
         run_filter = RunFilter(names=['remove_run_results'], exactMatch=True)
-        runs = self._cc_client.getRunData(run_filter, None, 0)
+        sort_mode = RunSortMode(RunSortType.DATE, Order.ASC)
+        runs = self._cc_client.getRunData(run_filter, None, 0, sort_mode)
         self.assertEqual(len(runs), 1)
 
         run_id = runs[0].runId
