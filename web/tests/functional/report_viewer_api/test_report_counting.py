@@ -17,7 +17,7 @@ import os
 import unittest
 
 from codeCheckerDBAccess_v6.ttypes import DetectionStatus, ReportFilter, \
-    ReviewStatus, Severity
+    ReviewStatus, Severity, RunSortMode, RunSortType, Order
 
 from libtest import env
 
