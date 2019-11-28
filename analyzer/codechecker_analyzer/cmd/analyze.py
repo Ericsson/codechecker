@@ -704,6 +704,7 @@ def main(args):
         LOG.debug("Copying compilation database JSON file failed.")
 
     try:
+        # pylint: disable=no-name-in-module
         from codechecker_analyzer import analyzer_statistics
         analyzer_statistics.collect(metadata, "analyze")
     except Exception:

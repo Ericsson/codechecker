@@ -5,13 +5,16 @@
 
 # Python code to execute, usually for sys.path manipulation such as
 # pygtk.require().
-init-hook='import sys;
-           sys.path.append("build/thrift/v6/gen-py");
-           sys.path.append("tools/plist_to_html");
-           sys.path.append("analyzer");
-           sys.path.append("web");
-           sys.path.append("web/client");
-           sys.path.append("web/server");'
+init-hook='import os, sys, pylint;
+
+           root_dir = os.path.basename(pylint.config.PYLINTRC);
+
+           sys.path.append(os.path.join(root_dir, "tools/plist_to_html"));
+           sys.path.append(os.path.join(root_dir, "analyzer"));
+           sys.path.append(os.path.join(root_dir, "web"));
+           sys.path.append(os.path.join(root_dir, "web/build/thrift/v6/gen-py"));
+           sys.path.append(os.path.join(root_dir, "web/client"));
+           sys.path.append(os.path.join(root_dir, "web/server"));'
 
 # Add files or directories to the blacklist. They should be base names, not
 # paths.
@@ -65,7 +68,7 @@ disable=all
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
 # multiple time. See also the "--disable" option for examples.
-enable=logging-format-interpolation,old-style-class,unused-import,unused-variable,len-as-condition,bad-indentation
+enable=logging-format-interpolation,old-style-class,unused-import,unused-variable,len-as-condition,bad-indentation,unpacking-in-except,import-star-module-level,parameter-unpacking,long-suffix,old-octal-literal,old-ne-operator,backtick,old-raise-syntax,print-statement,unpacking-in-except,import-star-module-level,parameter-unpacking,long-suffix,old-octal-literal,old-ne-operator,backtick,old-raise-syntax,print-statement,not-in-loop,function-redefined,continue-in-finally,abstract-class-instantiated,sstar-needs-assignment-target,duplicate-argument-name,too-many-star-expressions,nonlocal-and-global,return-outside-function,return-arg-in-generator,invalid-star-assignment-target,bad-reversed-sequence,nonexistent-operator,yield-outside-function,init-is-generator,nonlocal-without-binding,invalid-unary-operand-type,unsupported-binary-operation,no-member,not-callable,redundant-keyword-arg,assignment-from-no-return,assignment-from-none,not-context-manager,repeated-keyword,missing-kwoa,no-value-for-parameter,invalid-sequence-index,invalid-slice-index,too-many-function-args,unexpected-keyword-arg,unsupported-membership-test,unsubscriptable-object,unpacking-non-sequence,invalid-all-object,no-name-in-module,unbalanced-tuple-unpacking,undefined-variable,undefined-all-variable,used-before-assignment,format-needs-mapping,truncated-format-string,missing-format-string-key,mixed-format-string,too-few-format-args,bad-str-strip-call,too-many-format-args,bad-format-character,access-member-before-definition,method-hidden,assigning-non-slot,duplicate-bases,inconsistent-mro,inherit-non-class,invalid-slots,invalid-slots-object,no-method-argument,no-self-argument,unexpected-special-method-signature,non-iterator-returned,invalid-length-returned
 
 [REPORTS]
 
@@ -277,12 +280,12 @@ ignore-mixin-members=yes
 # (useful for modules/projects where namespaces are manipulated during runtime
 # and thus existing member attributes cannot be deduced by static analysis. It
 # supports qualified module names, as well as Unix pattern matching.
-ignored-modules=
+ignored-modules=ldap,lxml.etree
 
 # List of classes names for which member attributes should not be checked
 # (useful for classes with attributes dynamically set). This supports can work
 # with qualified names.
-ignored-classes=
+ignored-classes=BuildAction
 
 # List of members which are set dynamically and missed by pylint inference
 # system, and so shouldn't trigger E1101 when accessed. Python regular

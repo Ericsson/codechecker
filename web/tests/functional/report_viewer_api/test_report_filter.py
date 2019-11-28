@@ -15,7 +15,8 @@ import logging
 import os
 import unittest
 
-from codeCheckerDBAccess_v6.ttypes import *
+from codeCheckerDBAccess_v6.ttypes import BugPathLengthRange, ReportFilter, \
+    ReviewStatus, Severity
 
 from libtest import env
 

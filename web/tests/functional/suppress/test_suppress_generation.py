@@ -13,11 +13,12 @@ from __future__ import absolute_import
 import logging
 import os
 import shlex
+import sys
 import subprocess
 from subprocess import CalledProcessError
 import unittest
 
-from codeCheckerDBAccess_v6.ttypes import *
+from codeCheckerDBAccess_v6.ttypes import ReviewStatus
 
 from libtest import env
 from libtest import codechecker

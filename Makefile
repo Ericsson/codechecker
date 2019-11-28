@@ -163,7 +163,7 @@ PYLINT_CMD = $(MAKE) -C $(CC_ANALYZER) pylint && \
 	--rcfile=$(ROOT)/.pylintrc
 
 pylint:
-	$(PYLINT_CMD)
+	PYLINTRC=$(ROOT)/.pylintrc $(PYLINT_CMD)
 
 pylint_in_env: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(PYLINT_CMD)

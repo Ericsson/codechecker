@@ -14,6 +14,7 @@ import json
 
 
 class CmdLineOutputEncoder(json.JSONEncoder):
+    # pylint: disable=method-hidden
     def default(self, o):
         d = {}
         d.update(o.__dict__)

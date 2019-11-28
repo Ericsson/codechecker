@@ -246,7 +246,9 @@ class ThriftProductHandler(object):
         with DBSession(self.__session) as session:
             product = session.query(Product).get(product_id)
             if product is None:
-                LOG.error("Product with ID %d does not exist!", product_id)
+                msg = "Product with ID {0} does not exist!".format(product_id)
+                LOG.error(msg)
+
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
 
@@ -602,7 +604,9 @@ class ThriftProductHandler(object):
         with DBSession(self.__session) as session:
             product = session.query(Product).get(product_id)
             if product is None:
-                LOG.erorr("Product with ID %d does not exist!", product_id)
+                msg = "Product with ID {0} does not exist!".format(product_id)
+                LOG.error(msg)
+
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
 

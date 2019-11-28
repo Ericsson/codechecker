@@ -8,7 +8,9 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 from collections import defaultdict
+# pylint: disable=no-name-in-module
 from distutils.spawn import find_executable
+
 import json
 import os
 import re
@@ -914,6 +916,7 @@ def parse_options(compilation_db_entry,
 
 class CompileCommandEncoder(json.JSONEncoder):
     """JSON serializer for objects not serializable by default json code"""
+    # pylint: disable=method-hidden
     def default(self, o):
         if isinstance(o, BuildAction):
             return o.to_dict()
