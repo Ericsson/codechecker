@@ -31,19 +31,19 @@ matrix:
       python: "2.7"
       env: DATABASE=psql_pg8000
     - os: osx
-      osx_image: xcode9.4
+      osx_image: xcode10
       name: "Analyzer test cases"
       sudo: false
       language: generic
       env: CC_MODULE=analyzer
     - os: osx
-      osx_image: xcode9.4
+      osx_image: xcode10
       name: "Server/client test cases (sqlite)"
       sudo: false
       language: generic
       env: DATABASE=sqlite
     - os: osx
-      osx_image: xcode9.4
+      osx_image: xcode10
       name: "Server/client test cases (psycopg2)"
       sudo: false
       language: generic
@@ -51,7 +51,7 @@ matrix:
         - DATABASE=psql_psycopg2
         - POSTGRESQL_VERSION=9.6
     - os: osx
-      osx_image: xcode9.4
+      osx_image: xcode10
       name: "Analyzer, web (sqlite, psycopg2, pg8000) and tools test cases."
       sudo: false
       language: generic
