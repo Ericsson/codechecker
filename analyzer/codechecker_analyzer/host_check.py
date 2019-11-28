@@ -17,7 +17,7 @@ import tempfile
 
 from codechecker_common.logger import get_logger
 
-LOG = get_logger('analyze')
+LOG = get_logger('analyzer')
 
 
 def check_clang(compiler_bin, env):
@@ -93,7 +93,7 @@ def has_analyzer_option(clang_bin, feature, env=None):
             return proc.returncode == 0
         except OSError:
             LOG.error('Failed to run: "%s"', ' '.join(cmd))
-            raise
+            return False
 
 
 def get_resource_dir(clang_bin, context, env=None):
@@ -123,4 +123,4 @@ def get_resource_dir(clang_bin, context, env=None):
             return None
     except OSError:
         LOG.error('Failed to run: "%s"', ' '.join(cmd))
-        raise
+        return False

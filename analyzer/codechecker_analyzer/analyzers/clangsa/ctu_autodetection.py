@@ -38,7 +38,7 @@ def invoke_binary_checked(binary_path, args=None, environ=None):
     invocation.extend(args)
     try:
         output = subprocess.check_output(invocation, env=environ)
-    except subprocess.CalledProcessError as e:
+    except (subprocess.CalledProcessError, OSError) as e:
         LOG.debug(
             'Command invocation failed because of non-zero exit code!'
             'Details: {}'.format(str(e)))
@@ -56,26 +56,27 @@ class CTUAutodetection(object):
     def __init__(self, analyzer_binary, environ):
         self.__analyzer_binary = analyzer_binary
         self.environ = environ
+        self.__analyzer_version_info = None
 
         if self.__analyzer_binary is None:
             LOG.debug(
                 'Trying to detect CTU capability, but analyzer binary is not '
                 'set!')
-            return False
+            return None
 
         analyzer_version = invoke_binary_checked(
             self.__analyzer_binary, ['--version'], self.environ)
 
         if analyzer_version is False:
             LOG.debug('Failed to invoke command to get Clang version!')
-            return False
+            return None
 
         version_parser = version.ClangVersionInfoParser()
         version_info = version_parser.parse(analyzer_version)
 
         if not version_info:
             LOG.debug('Failed to parse Clang version information!')
-            return False
+            return None
 
         self.__analyzer_version_info = version_info
 
