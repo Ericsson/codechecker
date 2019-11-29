@@ -681,7 +681,8 @@ def skip_cpp(compile_actions, skip_handler):
 def start_workers(actions_map, actions, context, analyzer_config_map,
                   jobs, output_path, skip_handler, metadata,
                   quiet_analyze, capture_analysis_output, timeout,
-                  ctu_reanalyze_on_failure, statistics_data, manager):
+                  ctu_reanalyze_on_failure, statistics_data, manager,
+                  compile_cmd_count):
     """
     Start the workers in the process pool.
     For every build action there is worker which makes the analysis.
@@ -766,9 +767,14 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
     for skp in skipped_actions:
         LOG.debug_analyzer("%s is skipped", skp.source)
 
-    LOG.info("Total analyzed compilation commands: %d", len(analyzed_actions))
-    if skipped_actions:
-        LOG.info("Skipped compilation commands: %d", len(skipped_actions))
+    LOG.info("Total analyzed compilation commands: %d",
+             compile_cmd_count.analyze)
+    # Some compile commands are skipped during log processing, if nothing
+    # is skipped there for pre-analysis step, files will be skipped only
+    # during analysis.
+    if skipped_actions or compile_cmd_count.skipped:
+        LOG.info("Skipped compilation commands: %d",
+                 compile_cmd_count.skipped + len(skipped_actions))
 
     LOG.info("----=================----")
     if not os.listdir(success_dir):
