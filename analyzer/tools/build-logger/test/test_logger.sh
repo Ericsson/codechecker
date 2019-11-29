@@ -160,6 +160,21 @@ function test_compiler_abs {
     "$source_file"
 }
 
+function test_include_abs1 {
+  CC_LOGGER_ABS_PATH=1 bash -c "gcc -Ihello $source_file"
+  grep -- -I/.*hello $CC_LOGGER_FILE &> /dev/null
+}
+
+function test_include_abs2 {
+  CC_LOGGER_ABS_PATH=1 bash -c "gcc -I hello $source_file"
+  grep -- "-I /.*hello" $CC_LOGGER_FILE &> /dev/null
+}
+
+function test_include_abs3 {
+  CC_LOGGER_ABS_PATH=1 bash -c "gcc -isystem=hello $source_file"
+  grep -- "-isystem=/.*hello" $CC_LOGGER_FILE &> /dev/null
+}
+
 #--- Run tests ---#
 
 echo "int main() {}" > $source_file

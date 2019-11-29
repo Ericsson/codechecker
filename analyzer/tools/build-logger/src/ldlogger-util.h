@@ -49,6 +49,11 @@ char* shellEscapeStr(const char* str_, char* buff_);
 char* loggerMakePathAbs(const char* path_, char* resolved_, int mustExist_);
 
 /**
+ * The function returns true if str_ starts with prefix_.
+ */
+int startsWith(const char* str_, const char* prefix_);
+
+/**
  * Typedef for free function for a vector.
  */
 typedef void (*LoggerFreeFuc)(void*);
@@ -162,15 +167,24 @@ int loggerVectorAddUnique(LoggerVector* vec_, void* data_, LoggerCmpFuc cmp_);
 /**
  * Removes (and frees) an item from the vector.
  *
- * @param vec_ a vector struct (must be not NULL).
- * @parma index_ an item index.
+ * @param vec_ a vector struct (must not be NULL).
+ * @param index_ an item index.
  */
 void loggerVectorErase(LoggerVector* vec_, size_t index_);
 
 /**
+ * Replaces the item in the vector at the given position.
+ *
+ * @param vec_ a vector struct (must not be NULL).
+ * @param index_ an item index.
+ * @param data_ the new data to insert.
+ */
+void loggerVectorReplace(LoggerVector* vec_, size_t index_, void* data_);
+
+/**
  * Finds an element using the given comparation fuction.
  *
- * @param vec_ a vector struct (must be not NULL).
+ * @param vec_ a vector struct (must not be NULL).
  * @param data_ an item.
  * @param cmp_ a comparation function.
  * @return SIZE_MAX if the element not found otherwise the item`s index.
