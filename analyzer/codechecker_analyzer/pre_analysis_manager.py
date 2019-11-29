@@ -21,9 +21,11 @@ import uuid
 from codechecker_analyzer import env
 from codechecker_common.logger import get_logger
 
+from codechecker_statistics_collector import post_process_stats
+
 from .analyzers import analyzer_base
 from .analyzers.clangsa import ctu_manager, ctu_triple_arch
-from .analyzers.clangsa import statistics_collector
+from .analyzers.clangsa import statistics_manager
 from .analyzers.clangsa.analyzer import ClangSA
 
 
@@ -36,9 +38,9 @@ def collect_statistics(action, source, clangsa_config,
     Run the statistics collection command and save the
     stdout and stderr to a file.
     """
-    cmd, can_collect = statistics_collector.build_stat_coll_cmd(action,
-                                                                clangsa_config,
-                                                                source)
+    cmd, can_collect = statistics_manager.build_stat_coll_cmd(action,
+                                                              clangsa_config,
+                                                              source)
 
     if not can_collect:
         LOG.debug('Can not collect statistical data.')
@@ -212,12 +214,11 @@ def run_pre_analysis(actions, context, clangsa_config,
         stats_in = statistics_data.get('stat_tmp_dir')
         stats_out = statistics_data.get('stats_out_dir')
 
-        statistics_collector.postprocess_stats(stats_in, stats_out,
-                                               statistics_data.get(
-                                                   'stats_min_sample_count'),
-                                               statistics_data.get(
-                                                   'stats_relevance_threshold')
-                                               )
+        post_process_stats.process(stats_in, stats_out,
+                                   statistics_data.get(
+                                      'stats_min_sample_count'),
+                                   statistics_data.get(
+                                      'stats_relevance_threshold'))
 
         if os.path.exists(stats_in):
             LOG.debug('Cleaning up temporary statistics directory')

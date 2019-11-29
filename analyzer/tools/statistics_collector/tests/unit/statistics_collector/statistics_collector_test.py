@@ -11,13 +11,14 @@
 
 import unittest
 
-from codechecker_analyzer.analyzers.clangsa import statistics_collector
+from codechecker_statistics_collector.collectors.special_return_value import \
+    SpecialReturnValueCollector
+from codechecker_statistics_collector.collectors.return_value import \
+    ReturnValueCollector
 
 
-class statistics_collectorsTest(unittest.TestCase):
-    """
-    Testing the statistics collectors output parsing.
-    """
+class statisticsCollectorTest(unittest.TestCase):
+    """ Testing the statistics collectors output parsing. """
 
     def test_spec_ret_val_coll(self):
         """
@@ -33,8 +34,7 @@ class statistics_collectorsTest(unittest.TestCase):
                       " Special Return Value:/.../x.c:551:12,parsedate,0,0"
                       ]
 
-        special_ret_collector = \
-            statistics_collector.SpecialReturnValueCollector(10, 0.85)
+        special_ret_collector = SpecialReturnValueCollector(10, 0.85)
 
         for line in test_input:
             special_ret_collector.process_line(line)
@@ -86,8 +86,7 @@ class statistics_collectorsTest(unittest.TestCase):
                         " Special Return Value:/.../x.c:551:12,myfunc,0,0",
                         ]
 
-        special_ret_collector = \
-            statistics_collector.SpecialReturnValueCollector(10, 0.85)
+        special_ret_collector = SpecialReturnValueCollector(10, 0.85)
 
         for line in test_ret_neg:
             special_ret_collector.process_line(line)
@@ -119,7 +118,7 @@ class statistics_collectorsTest(unittest.TestCase):
                         " Return Value Check:/.../x.c:551:12,parsedate,0",
                         ]
 
-        ret_val_collector = statistics_collector.ReturnValueCollector(10, 0.85)
+        ret_val_collector = ReturnValueCollector(10, 0.85)
 
         for line in test_ret_neg:
             ret_val_collector.process_line(line)
@@ -154,7 +153,7 @@ class statistics_collectorsTest(unittest.TestCase):
                         " Return Value Check:/.../x.c:551:12,parsedate,1",
                         ]
 
-        ret_val_collector = statistics_collector.ReturnValueCollector(10, 0.85)
+        ret_val_collector = ReturnValueCollector(10, 0.85)
 
         for line in test_ret_neg:
             ret_val_collector.process_line(line)

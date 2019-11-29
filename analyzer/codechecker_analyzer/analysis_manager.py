@@ -28,12 +28,14 @@ from codechecker_analyzer import env
 from codechecker_common import plist_parser
 from codechecker_common.logger import get_logger
 
+from statistics_collector.collectors.special_return_value import \
+    SpecialReturnValueCollector
+
 from . import gcc_toolchain
 
 from .analyzers import analyzer_types
 from .analyzers.config_handler import CheckerState
 from .analyzers.clangsa.analyzer import ClangSA
-from .analyzers.clangsa.statistics_collector import SpecialReturnValueCollector
 
 LOG = get_logger('analyzer')
 

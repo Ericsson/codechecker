@@ -64,12 +64,22 @@ package_merge_clang_extdef_mappings: build_merge_clang_extdef_mappings package_d
 	cd $(CC_BUILD_DIR) && \
 	ln -sf ../lib/python3/codechecker_merge_clang_extdef_mappings/cli.py bin/merge-clang-extdef-mappings
 
+build_statistics_collector:
+	$(MAKE) -C $(CC_ANALYZER_TOOLS)/statistics_collector build
+
+package_statistics_collector: build_statistics_collector package_dir_structure
+	# Copy statistics-collector files.
+	cp -r tools/statistics_collector/build/statistics_collector/codechecker_statistics_collector $(CC_BUILD_LIB_DIR) && \
+	chmod u+x $(CC_BUILD_LIB_DIR)/codechecker_statistics_collector/cli.py && \
+	cd $(CC_BUILD_DIR) && \
+	ln -sf ../lib/python3/codechecker_statistics_collector/cli.py bin/post-process-stats
+
 # This target should be used from the top level Makefile to build the package
 # together with the web part. This way we will not build plist-to-html
 # multiple times.
 package_analyzer: package_dir_structure
 
-package: package_plist_to_html package_tu_collector package_analyzer package_merge_clang_extdef_mappings
+package: package_plist_to_html package_tu_collector package_analyzer package_merge_clang_extdef_mappings package_statistics_collector
 	# Copy libraries.
 	cp -r $(ROOT)/codechecker_common $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CURRENT_DIR)/codechecker_analyzer $(CC_BUILD_LIB_DIR)
