@@ -13,6 +13,7 @@ from __future__ import absolute_import
 
 from collections import defaultdict
 import argparse
+import codecs
 import io
 import json
 import math
@@ -36,6 +37,13 @@ from codechecker_common.report import Report, get_report_path_hash
 from codechecker_common.source_code_comment_handler import skip_suppress_status
 
 LOG = logger.get_logger('system')
+
+
+# Print to the console without UnicodeEncodeErrors. For more information see:
+# https://chase-seibert.github.io/blog/2014/01/12/python-unicode-console-output.html
+# TODO: This should be removed when we move to Python 3.
+sys.stdout = codecs.getwriter('utf8')(sys.stdout)
+sys.stderr = codecs.getwriter('utf8')(sys.stderr)
 
 
 class PlistToPlaintextFormatter(object):
