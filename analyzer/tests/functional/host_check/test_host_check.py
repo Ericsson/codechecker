@@ -28,10 +28,11 @@ class Test_has_analyzer_option(unittest.TestCase):
                                    ["-non-existent-feature"]),
             False)
 
-    def test_non_existent_option_binary_throws(self):
-        with self.assertRaises(OSError):
+    def test_non_existent_option_binary(self):
+        self.assertEqual(
             hc.has_analyzer_option("non-existent-binary-Yg4pEna5P7",
-                                   [""])
+                                   [""]),
+            False)
 
     def test_non_existing_congif_option(self):
         self.assertEqual(
