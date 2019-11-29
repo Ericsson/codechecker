@@ -47,5 +47,11 @@ class ClangTidyPlistToFile(ResultHandler):
         tidy_stdout = self.analyzer_stdout.splitlines()
         generate_plist_from_tidy_result(output_file, tidy_stdout)
 
-        if self.report_hash_type == 'context-free':
+        # In the earlier versions of CodeChecker Clang Tidy never used context
+        # free hash even if we enabled it with '--report-hash context-free'
+        # when calling the analyze command. To do not break every hash
+        # automatically when using this option we introduced a new choice for
+        # --report-hash option ('context-free-v2') and we still do not use
+        # context free hash for 'context-free' choice.
+        if self.report_hash_type == 'context-free-v2':
             report.use_context_free_hashes(output_file)

@@ -238,6 +238,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         handler = config_handler.ClangTidyConfigHandler()
         handler.analyzer_binary = context.analyzer_binaries.get(
             cls.ANALYZER_NAME)
+        handler.report_hash = args.report_hash \
+            if 'report_hash' in args else None
 
         # FIXME We cannot get the resource dir from the clang-tidy binary,
         # therefore we get a sibling clang binary which of clang-tidy.

@@ -213,18 +213,20 @@ used to generate a log file on the fly.""")
                                dest="report_hash",
                                default=argparse.SUPPRESS,
                                required=False,
-                               choices=['context-free'],
-                               help="Specify the hash calculation method for "
-                                    "reports. If this option is not set, the "
-                                    "default calculation method for Clang "
-                                    "Static Analyzer will be context "
-                                    "sensitive and for Clang Tidy it will be "
-                                    "context insensitive. If this option is "
-                                    "set to 'context-free' bugs will be "
-                                    "identified with the CodeChecker "
-                                    "generated context free hash for every "
-                                    "analyzers. USE WISELY AND AT YOUR OWN "
-                                    "RISK!")
+                               choices=['context-free', 'context-free-v2'],
+                               help="Specify the hash calculation method "
+                                    "for reports. By default the calculation "
+                                    "method for Clang Static Analyzer is "
+                                    "context sensitive and for Clang Tidy it "
+                                    "is context insensitive.\nYou can use the "
+                                    "following calculation methods:\n"
+                                    "- context-free: there was a bug and for "
+                                    "Clang Tidy not the context free hash "
+                                    "was generated (kept for backward "
+                                    "compatibility).\n"
+                                    "- context-free-v2: context free hash is "
+                                    "used for ClangSA and Clang Tidy.\n"
+                                    "USE WISELY AND AT YOUR OWN RISK!")
 
     skip_mode = analyzer_opts.add_mutually_exclusive_group()
     skip_mode.add_argument('-i', '--ignore', '--skip',
