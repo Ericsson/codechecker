@@ -17,6 +17,7 @@ import io
 import json
 import math
 import os
+from operator import itemgetter
 import sys
 import traceback
 
@@ -710,12 +711,14 @@ def main(args):
     if file_stats:
         vals = [[os.path.basename(k), v] for k, v in
                 dict(file_stats).items()]
+        vals.sort(key=itemgetter(0))
         keys = ['Filename', 'Report count']
         table = twodim_to_str('table', keys, vals, 1, True)
         print(table)
 
     if severity_stats:
         vals = [[k, v] for k, v in dict(severity_stats).items()]
+        vals.sort(key=itemgetter(0))
         keys = ['Severity', 'Report count']
         table = twodim_to_str('table', keys, vals, 1, True)
         print(table)
