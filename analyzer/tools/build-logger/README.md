@@ -65,4 +65,10 @@ If the environment variable is defined,
 the logger will extend the  compiler argument list in the compilation 
 database  with the pre-configured include paths of the logged compiler.
 
+### `CC_LOGGER_ABS_PATH`
+If the environment variable is defined, 
+all relative paths in the compilation commands after 
+`-I, -idirafter, -imultilib, -iquote, -isysroot -isystem,
+-iwithprefix, -iwithprefixbefore, -sysroot, --sysroot`
+will be converted to absolute PATH when written into the compilation database.
 
