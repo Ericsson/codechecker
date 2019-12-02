@@ -17,7 +17,8 @@ import tempfile
 
 from codechecker_common.logger import get_logger
 
-from merge_clang_extdef_mappings.merge import merge
+from codechecker_merge_clang_extdef_mappings.merge_clang_extdef_mappings \
+    import merge
 
 from .. import analyzer_base
 from . import ctu_triple_arch
@@ -46,22 +47,30 @@ def merge_clang_extdef_mappings(ctu_dir, ctu_func_map_file,
         shutil.rmtree(fnmap_dir, ignore_errors=True)
 
 
-def generate_ast(triple_arch, action, source, config, env):
-    """ Generates ASTs for the current compilation command. """
-
+def generate_ast_cmd(action, config, triple_arch, source):
+    """ Command to generate AST (or PCH) file. """
     ast_joined_path = os.path.join(config.ctu_dir, triple_arch, 'ast',
                                    os.path.realpath(source)[1:] + '.ast')
     ast_path = os.path.abspath(ast_joined_path)
     ast_dir = os.path.dirname(ast_path)
+
+    cmd = ctu_triple_arch.get_compile_command(action, config, source)
+
+    # __clang__analyzer__ macro needs to be set in the imported TUs too.
+    cmd.extend(['-emit-ast', '-D__clang_analyzer__', '-w', '-o', ast_path])
+
+    return cmd, ast_dir
+
+
+def generate_ast(triple_arch, action, source, config, env):
+    """ Generates ASTs for the current compilation command. """
+    cmd, ast_dir = generate_ast_cmd(action, config, triple_arch, source)
+
     if not os.path.isdir(ast_dir):
         try:
             os.makedirs(ast_dir)
         except OSError:
             pass
-
-    cmd = ctu_triple_arch.get_compile_command(action, config, source)
-    # __clang__analyzer__ macro needs to be set in the imported TUs too.
-    cmd.extend(['-emit-ast', '-D__clang_analyzer__', '-w', '-o', ast_path])
 
     cmdstr = ' '.join(cmd)
     LOG.debug_analyzer("Generating AST using '%s'", cmdstr)
@@ -91,14 +100,19 @@ def func_map_list_src_to_ast(func_src_list):
     return func_ast_list
 
 
-def map_functions(triple_arch, action, source, config, env,
-                  func_map_cmd, temp_fnmap_folder):
-    """ Generate function map file for the current source. """
-
+def get_extdef_mapping_cmd(action, config, source, func_map_cmd):
+    """ Get command to create CTU index file. """
     cmd = ctu_triple_arch.get_compile_command(action, config)
     cmd[0] = func_map_cmd
     cmd.insert(1, source)
     cmd.insert(2, '--')
+    return cmd
+
+
+def map_functions(triple_arch, action, source, config, env,
+                  func_map_cmd, temp_fnmap_folder):
+    """ Generate function map file for the current source. """
+    cmd = get_extdef_mapping_cmd(action, config, source, func_map_cmd)
 
     cmdstr = ' '.join(cmd)
     LOG.debug_analyzer("Generating function map using '%s'", cmdstr)

@@ -37,7 +37,8 @@ optional arguments:
                         stored into.
 
 Example:
-  merge-ctu-func-maps -i /path/to/fn_map_folder /path/to/externalDefMap.txt
+  merge-clang-extdef-mappings -i /path/to/fn_map_folder -o
+  /path/to/externalDefMap.txt
 ```
 
 ## License

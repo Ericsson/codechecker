@@ -76,7 +76,7 @@ class CppcheckAnalyzerResult(AnalyzerResult):
                                          files[diag['location']['file']])
                 diag['issue_hash_content_of_line_in_context'] = report_hash
 
-    def _write(self, file_to_plist_data, output_dir):
+    def _write(self, file_to_plist_data, output_dir, file_name):
         """ Creates plist files from the parse result to the given output. """
         output_dir = os.path.abspath(output_dir)
         for file_name, plist_data in file_to_plist_data.items():

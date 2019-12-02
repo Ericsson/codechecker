@@ -20,15 +20,17 @@ import time
 
 from codechecker_common.logger import get_logger
 
-from statistics_collector.collectors.special_return_value import \
+from codechecker_statistics_collector.collectors.special_return_value import \
     SpecialReturnValueCollector
-from statistics_collector.collectors.return_value import ReturnValueCollector
+from codechecker_statistics_collector.collectors.return_value import \
+    ReturnValueCollector
 
 from . import analysis_manager, pre_analysis_manager, env, checkers
 from .analyzers import analyzer_types
 from .analyzers.config_handler import CheckerState
 from .analyzers.clangsa.analyzer import ClangSA
 
+from .makefile import MakeFileCreator
 
 LOG = get_logger('analyzer')
 
@@ -111,16 +113,20 @@ def __mgr_init():
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 
-def __get_statistics_data(args, manager):
+def __get_statistics_data(args):
+    """ Get statistics data. """
     statistics_data = None
 
     if 'stats_enabled' in args and args.stats_enabled:
-        statistics_data = manager.dict({
-            'stats_out_dir': os.path.join(args.output_path, "stats")})
+        statistics_data = {
+            'stats_out_dir': os.path.join(args.output_path, "stats")}
 
     if 'stats_output' in args and args.stats_output:
-        statistics_data = manager.dict({'stats_out_dir':
-                                        args.stats_output})
+        statistics_data = {'stats_out_dir': args.stats_output}
+
+    if statistics_data:
+        statistics_data['stat_tmp_dir'] = \
+            os.path.join(statistics_data.get('stats_out_dir'), 'tmp')
 
     if 'stats_min_sample_count' in args and statistics_data:
         if args.stats_min_sample_count > 1:
@@ -141,6 +147,15 @@ def __get_statistics_data(args, manager):
             return None
 
     return statistics_data
+
+
+def __get_ctu_data(config_map, ctu_dir):
+    """ Get CTU data. """
+    ctu_capability = config_map[ClangSA.ANALYZER_NAME].ctu_capability
+    return {'ctu_dir': ctu_dir,
+            'ctu_func_map_cmd': ctu_capability.mapping_tool_path,
+            'ctu_func_map_file': ctu_capability.mapping_file_name,
+            'ctu_temp_fnmap_folder': 'tmpExternalFnMaps'}
 
 
 def perform_analysis(args, skip_handler, context, actions, metadata_tool,
@@ -238,6 +253,20 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
 
         metadata_tool['analyzers'][analyzer] = metadata_info
 
+    if 'makefile' in args and args.makefile:
+        statistics_data = __get_statistics_data(args)
+
+        ctu_data = None
+        if ctu_collect or statistics_data:
+            ctu_data = __get_ctu_data(config_map, ctu_dir)
+
+        makefile_creator = MakeFileCreator(analyzers, args.output_path,
+                                           config_map, context, skip_handler,
+                                           ctu_collect, statistics_data,
+                                           ctu_data)
+        makefile_creator.create(actions)
+        return
+
     if ctu_collect:
         shutil.rmtree(ctu_dir, ignore_errors=True)
     elif ctu_analyze and not os.path.exists(ctu_dir):
@@ -254,19 +283,14 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
     actions_map = create_actions_map(actions, manager)
 
     # Setting to not None value will enable statistical analysis features.
-    statistics_data = __get_statistics_data(args, manager)
+    statistics_data = __get_statistics_data(args)
+    if statistics_data:
+        statistics_data = manager.dict(statistics_data)
 
     if ctu_collect or statistics_data:
         ctu_data = None
         if ctu_collect or ctu_analyze:
-            ctu_capability = config_map[ClangSA.ANALYZER_NAME].ctu_capability
-            ctu_data = manager.dict({'ctu_dir': ctu_dir,
-                                     'ctu_func_map_cmd':
-                                     ctu_capability.mapping_tool_path,
-                                     'ctu_func_map_file':
-                                     ctu_capability.mapping_file_name,
-                                     'ctu_temp_fnmap_folder':
-                                     'tmpExternalFnMaps'})
+            ctu_data = manager.dict(__get_ctu_data(config_map, ctu_dir))
 
         pre_analyze = [a for a in actions
                        if a.analyzer_type == ClangSA.ANALYZER_NAME]

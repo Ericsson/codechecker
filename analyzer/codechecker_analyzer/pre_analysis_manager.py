@@ -25,7 +25,7 @@ from codechecker_statistics_collector import post_process_stats
 
 from .analyzers import analyzer_base
 from .analyzers.clangsa import ctu_manager, ctu_triple_arch
-from .analyzers.clangsa import statistics_manager
+from .analyzers.clangsa import statistics
 from .analyzers.clangsa.analyzer import ClangSA
 
 
@@ -38,9 +38,8 @@ def collect_statistics(action, source, clangsa_config,
     Run the statistics collection command and save the
     stdout and stderr to a file.
     """
-    cmd, can_collect = statistics_manager.build_stat_coll_cmd(action,
-                                                              clangsa_config,
-                                                              source)
+    cmd, can_collect = statistics.build_stat_coll_cmd(action, clangsa_config,
+                                                      source)
 
     if not can_collect:
         LOG.debug('Can not collect statistical data.')
@@ -174,16 +173,13 @@ def run_pre_analysis(actions, context, clangsa_config,
     if statistics_data:
         # Statistics collection is enabled setup temporary
         # directories.
-        stat_tmp_dir = os.path.join(statistics_data.get('stats_out_dir'),
-                                    'tmp')
+        stat_tmp_dir = statistics_data['stat_tmp_dir']
 
         # Cleaning previous outputs.
         if os.path.exists(stat_tmp_dir):
             shutil.rmtree(stat_tmp_dir)
 
         os.makedirs(stat_tmp_dir)
-
-        statistics_data['stat_tmp_dir'] = stat_tmp_dir
 
     try:
         collect_actions = [(build_action,
