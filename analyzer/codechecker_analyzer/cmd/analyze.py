@@ -522,12 +522,37 @@ def process_config_file(args):
 
     cfg = load_json_or_empty(args.config_file, default={})
     if cfg.get("enabled"):
-        print("Using config file: '{0}'.".format(args.config_file))
         return cfg.get('analyzer', [])
 
-    print("Config file '{0}' is disabled.".format(args.config_file))
-
     return None
+
+
+def check_config_file(args):
+    """
+    LOG and check about the config file usage.
+
+    If a config file is set but does not exists the program will
+    exit.
+    LOG is not initialized in the process_config_file function yet
+    so we can not log the usage there. Using print will
+    always print out the config file data which can mess up the
+    tests depending on the output.
+    """
+
+    if 'config_file' not in args:
+        return None
+
+    if 'config_file' in args and not os.path.exists(args.config_file):
+        LOG.error("Configuration file '%s' does not exists.",
+                  args.config)
+        sys.exit(1)
+
+    cfg = load_json_or_empty(args.config_file, default={})
+    if cfg.get("enabled"):
+        LOG.debug("Using config file: '%s'.", args.config_file)
+        return cfg.get('analyzer', [])
+
+    LOG.debug("Config file '%s' is available but disabled.", args.config_file)
 
 
 def __get_skip_handler(args):
@@ -566,10 +591,7 @@ def main(args):
     """
     logger.setup_logger(args.verbose if 'verbose' in args else None)
 
-    if 'config' in args and not os.path.exists(args.config):
-        LOG.error("Configuration file '%s' does not exists.",
-                  args.config)
-        sys.exit(1)
+    check_config_file(args)
 
     if len(args.logfile) != 1:
         LOG.warning("Only one log file can be processed right now!")
