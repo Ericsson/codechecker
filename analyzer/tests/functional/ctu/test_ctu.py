@@ -158,3 +158,22 @@ class TestCtu(unittest.TestCase):
         self.assertIn("no defects in main.c", output)
         self.assertIn("lib.c:3:", output)
         self.assertIn("[core.NullDereference]", output)
+
+    def test_ctu_makefile_generation(self):
+        """ Test makefile generation in CTU mode. """
+        if not self.ctu_capable:
+            self.skipTest(NO_CTU_MESSAGE)
+
+        cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
+               '--analyzers', 'clangsa', '--ctu', '--makefile']
+        cmd.append(self.buildlog)
+        call_command(cmd, cwd=self.test_dir, env=self.env)
+
+        call_command(["make"], cwd=self.report_dir, env=self.env)
+
+        # Check the output.
+        cmd = [self._codechecker_cmd, 'parse', self.report_dir]
+        output, _ = call_command(cmd, cwd=self.test_dir, env=self.env)
+        self.assertIn("defect(s) in lib.c", output)
+        self.assertIn("lib.c:3:", output)
+        self.assertIn("[core.NullDereference]", output)

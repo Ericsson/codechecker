@@ -18,3 +18,5 @@ PKG_ROOT = os.path.join(REPO_ROOT, 'build', 'CodeChecker')
 
 sys.path.append(REPO_ROOT)
 sys.path.append(os.path.join(REPO_ROOT, 'tools', 'codechecker_report_hash'))
+sys.path.append(os.path.join(REPO_ROOT, 'analyzer', 'tools',
+                             'statistics_collector'))

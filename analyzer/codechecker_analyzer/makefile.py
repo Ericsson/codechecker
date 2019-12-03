@@ -40,6 +40,7 @@ class MakeFileCreator(object):
         self.__context = context
         self.__skip_handler = skip_handler
         self.__pre_analysis = pre_analysis
+        self.__log_info = "[`date +'%Y-%m-%d %H:%M:%S'`] -"
 
         self.__ctu_data = ctu_data
         self.__ctu_dir = None
@@ -195,12 +196,13 @@ class MakeFileCreator(object):
 
         target = self.__get_target_name(action)
         mfile.write('{0}:\n'
-                    '\t@echo "Pre-analysis of {3}."\n'
+                    '\t@echo "{4} Pre-analysis of {3}."\n'
                     '{1}\n'
                     '{2}: {0}\n\n'.format('pre_' + target,
                                           commands,
                                           pre_all_target,
-                                          action.source))
+                                          action.source,
+                                          self.__log_info))
 
     def __write_post_pre_analysis_targets(self, mfile, pre_all_target):
         """ Creates targets to post-process pre-analysis results. """
@@ -267,14 +269,15 @@ class MakeFileCreator(object):
             command = "@{0} 1>/dev/null".format(' '.join(analyzer_cmd))
 
         mfile.write('{0}: {1}\n'
-                    '\t@echo "{4} analyze {5}."\n'
+                    '\t@echo "{6} {4} analyze {5}."\n'
                     '\t{2}\n'
                     'all_{3}: {0}\n\n'.format(target,
                                               post_pre_all_target,
                                               command,
                                               analyzer_name,
                                               action.analyzer_type,
-                                              action.source))
+                                              action.source,
+                                              self.__log_info))
 
     def create(self, actions):
         """ Creates a Makefile from the given actions. """
