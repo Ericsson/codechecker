@@ -65,7 +65,7 @@ class TestReportFilter(unittest.TestCase):
             {'core.CallAndMessage': 5,
              'core.DivideZero': 10,
              'core.NullDereference': 4,
-             'core.StackAddressEscape': 3,
+             'core.StackAddrEscapeBase': 3,
              'cplusplus.NewDelete': 5,
              'deadcode.DeadStores': 6,
              'unix.Malloc': 1}
@@ -78,9 +78,10 @@ class TestReportFilter(unittest.TestCase):
              'deadcode.DeadStores': 6,
              'unix.MismatchedDeallocator': 1}
 
-        self.run1_sev_counts = {Severity.MEDIUM: 1,
+        self.run1_sev_counts = {Severity.UNSPECIFIED: 3,
+                                Severity.MEDIUM: 1,
                                 Severity.LOW: 6,
-                                Severity.HIGH: 27}
+                                Severity.HIGH: 24}
 
         self.run2_sev_counts = {Severity.MEDIUM: 1,
                                 Severity.LOW: 6,
@@ -521,7 +522,7 @@ class TestReportFilter(unittest.TestCase):
         checkers_dict = dict((res.name, res.count) for res in new_reports)
 
         new = {'core.CallAndMessage': 5,
-               'core.StackAddressEscape': 3,
+               'core.StackAddrEscapeBase': 3,
                'cplusplus.NewDelete': 5,
                'core.NullDereference': 4,
                'core.DivideZero': 10,
