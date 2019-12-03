@@ -13,6 +13,7 @@ import os
 import shlex
 import tempfile
 import unittest
+import platform
 
 from codechecker_analyzer.buildlog import log_parser
 from codechecker_analyzer.buildlog.build_action import BuildAction
@@ -377,6 +378,9 @@ class OptionParserTest(unittest.TestCase):
         self.assertEqual(res,
                          '/usr/lib/ccache/g++')
 
+    @unittest.skipIf(platform.system() == 'Darwin',
+                     "OSX does not have 'include-fixed' in the list of "
+                     "implicit includes.")
     def test_compiler_gcc_implicit_includes(self):
         action = {
             'file': 'main.cpp',
