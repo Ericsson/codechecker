@@ -30,8 +30,7 @@ class ClangTidyConfigHandler(config_handler.AnalyzerConfigHandler):
         Enable checker, keep description if already set.
         """
         if checker_name.startswith("Wno-") or checker_name.startswith("W"):
-            self.add_checker(checker_name, enabled, None)
-            return
+            self.add_checker(checker_name)
 
         super(ClangTidyConfigHandler, self).set_checker_enabled(checker_name,
                                                                 enabled)

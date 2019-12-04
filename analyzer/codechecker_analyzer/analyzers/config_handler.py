@@ -22,6 +22,25 @@ from codechecker_common.logger import get_logger
 LOG = get_logger('system')
 
 
+# The baseline handling of checks in every analyzer is to let the analysis
+# engine decide which checks are worthwhile run. Checks handled this way
+# (implicitly by the analyzer) are considered to have a CheckerState of
+# default. If the check however appears in profiles, and such a profile is
+# enabled explicitly on the command-line or implicitly as in case of the
+# default profile, then they are considered to have a CheckerState of enabled.
+# Likewise for individually enabled checks. If a check is however explicitly
+# disabled on the command-line, or belongs to a profile explicitly disabled
+# on the command-line, then it is considered to have a CheckerState of
+# disabled.
+# TODO: Use enum when upgrading to Python3.
+class CheckerState(object):
+    default = 0
+    disabled = 1
+    enabled = 2
+    STATES = {'default', 'disabled', 'enabled'}
+    NAMES = {0: 'default', 1: 'disabled', 2: 'enabled'}
+
+
 class AnalyzerConfigHandler(object):
     """
     Handle the checker configurations and enabled disabled checkers lists.
@@ -58,22 +77,29 @@ class AnalyzerConfigHandler(object):
                             and f.endswith(".so")]
         return analyzer_plugins
 
-    def add_checker(self, checker_name, enabled, description):
+    def add_checker(self, checker_name, description=None, state=None):
         """
-        Add additional checker.
-        Tuple of (checker_name, True or False).
+        Add additional checker. If no state argument is given, the actual usage
+        of the checker is handled by the analyzer.
         """
-        self.__available_checkers[checker_name] = (enabled, description)
+        if not description:
+            description = ''
+        if state is None:
+            state = CheckerState.default
+
+        self.__available_checkers[checker_name] = (state, description)
 
     def set_checker_enabled(self, checker_name, enabled=True):
         """
-        Enable checker, keep description if already set.
+        Explicitly handle checker state, keep description if already set.
         """
         for ch_name, values in self.__available_checkers.items():
             if ch_name.startswith(checker_name) or \
                ch_name.endswith(checker_name):
                 _, description = values
-                self.__available_checkers[ch_name] = (enabled, description)
+                state = CheckerState.enabled if enabled \
+                    else CheckerState.disabled
+                self.__available_checkers[ch_name] = (state, description)
 
     def checks(self):
         """
@@ -114,9 +140,10 @@ class AnalyzerConfigHandler(object):
         analyzer-retrieved checker list.
         """
 
-        # By default disable all checkers.
+        # Add all checkers marked as default. This means the analyzer should
+        # manage whether it is enabled or disabled.
         for checker_name, description in checkers:
-            self.add_checker(checker_name, False, description)
+            self.add_checker(checker_name, description)
 
         # Set default enabled or disabled checkers, based on the config file.
         if checker_config:
@@ -126,7 +153,7 @@ class AnalyzerConfigHandler(object):
             else:
                 # Turn default checkers on.
                 for checker in checker_config['default']:
-                    self.set_checker_enabled(checker, True)
+                    self.set_checker_enabled(checker)
 
         # If enable_all is given, almost all checkers should be enabled.
         if enable_all:

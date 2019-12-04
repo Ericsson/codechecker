@@ -22,6 +22,7 @@ from codechecker_analyzer.analyzers.clangsa.analyzer import ClangSA
 from codechecker_common import logger
 from codechecker_common import output_formatters
 from codechecker_analyzer import env
+from codechecker_analyzer.analyzers.config_handler import CheckerState
 
 LOG = logger.get_logger('system')
 
@@ -272,24 +273,26 @@ def main(args):
                                            profile_checkers)
 
         for checker_name, value in config_handler.checks().items():
-            enabled, description = value
+            state, description = value
 
-            if not enabled and 'profile' in args:
+            if state != CheckerState.enabled and 'profile' in args:
                 continue
 
-            if enabled and 'only_disabled' in args:
+            if state == CheckerState.enabled and 'only_disabled' in args:
                 continue
-            elif not enabled and 'only_enabled' in args:
+            elif state != CheckerState.enabled and 'only_enabled' in args:
                 continue
 
             if args.output_format != 'json':
-                enabled = '+' if enabled else '-'
+                state = '+' if state == CheckerState.enabled else '-'
+            else:
+                state = state == CheckerState.enabled
 
             if 'details' not in args:
                 rows.append([checker_name])
             else:
                 severity = context.severity_map.get(checker_name)
-                rows.append([enabled, checker_name, analyzer,
+                rows.append([state, checker_name, analyzer,
                              severity, description])
 
         show_warnings = True if 'show_warnings' in args and \

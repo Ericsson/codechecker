@@ -22,6 +22,7 @@ from codechecker_analyzer import host_check
 from codechecker_analyzer import env
 
 from .. import analyzer_base
+from ..config_handler import CheckerState
 from ..flag import has_flag
 from ..flag import prepend_all
 
@@ -174,11 +175,11 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
             # Config handler stores which checkers are enabled or disabled.
             for checker_name, value in config.checks().items():
-                enabled, _ = value
-                if enabled:
+                state, _ = value
+                if state == CheckerState.enabled:
                     analyzer_cmd.extend(['-Xclang',
                                          '-analyzer-checker=' + checker_name])
-                else:
+                elif state == CheckerState.disabled:
                     analyzer_cmd.extend(['-Xclang',
                                          '-analyzer-disable-checker=' +
                                          checker_name])
