@@ -53,7 +53,7 @@ package_tu_collector: build_tu_collector package_dir_structure
 	cd $(CC_BUILD_DIR) && \
 	ln -sf ../lib/python2.7/tu_collector/tu_collector.py bin/tu_collector
 
-package: package_dir_structure package_plist_to_html package_tu_collector
+package: package_dir_structure set_git_commit_template package_plist_to_html package_tu_collector
 	BUILD_DIR=$(BUILD_DIR) BUILD_LOGGER_64_BIT_ONLY=$(BUILD_LOGGER_64_BIT_ONLY) $(MAKE) -C $(CC_ANALYZER) package_analyzer
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) package_web
 
@@ -229,3 +229,6 @@ test_functional:
 test_functional_in_env:
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) test_functional_in_env
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) test_functional_in_env
+
+set_git_commit_template:
+	if [ -d "$(CURRENT_DIR)/.git" ]; then git config --local commit.template .gitmessage; fi
