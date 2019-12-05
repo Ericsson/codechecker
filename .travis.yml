@@ -88,13 +88,16 @@ install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip install --ignore-installed nose --user; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/Users/travis/Library/Python/2.7/bin:$PATH; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip install virtualenv; fi
+
+    # Remove clang symlinks from the travis base install.
+    # The update-alternatives changes will not change the used clang version without this.
+    # /usr/local is searched for clang binaries before the /usr/bin direcory.
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo rm -rf /usr/local/clang-*; fi
+
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-9 9999; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-9 9999; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-9 9999; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --set clang++ /usr/bin/clang++-9; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --set clang /usr/bin/clang-9; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --set clang-tidy /usr/bin/clang-tidy-9; fi
+
     # Check if the right clang and clang-tidy is used
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then update-alternatives --display clang; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then update-alternatives --display clang++; fi
