@@ -59,7 +59,11 @@ class ClangVersionInfoParser(object):
 
 
 def get(clang_binary, env=None):
-    """Get and parse the version information from given clang binary."""
+    """Get and parse the version information from given clang binary
+
+    Should return False for getting the version
+    information not from a clang compiler.
+    """
     compiler_version = subprocess.check_output([clang_binary, '--version'],
                                                env=env)
     version_parser = ClangVersionInfoParser()

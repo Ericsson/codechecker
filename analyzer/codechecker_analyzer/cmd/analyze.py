@@ -16,7 +16,7 @@ import os
 import shutil
 import sys
 
-from codechecker_analyzer import analyzer, analyzer_context, arg
+from codechecker_analyzer import analyzer, analyzer_context, arg, env
 from codechecker_analyzer.analyzers import analyzer_types
 from codechecker_analyzer.buildlog import log_parser
 
@@ -632,6 +632,10 @@ def main(args):
                 or ("stats_output" in args and args.stats_output)):
             pre_analysis_skip_handler = skip_handler
 
+    context = analyzer_context.get_context()
+    analyzer_env = env.extend(context.path_env_extra,
+                              context.ld_lib_path_extra)
+
     # Parse the JSON CCDBs and retrieve the compile commands.
     actions = []
     for log_file in args.logfile:
@@ -647,7 +651,8 @@ def main(args):
             compiler_info_file,
             args.keep_gcc_include_fixed,
             skip_handler,
-            pre_analysis_skip_handler)
+            pre_analysis_skip_handler,
+            analyzer_env)
 
     if not actions:
         LOG.info("No analysis is required.\nThere were no compilation "
@@ -661,7 +666,6 @@ def main(args):
         json.dump(actions, f,
                   cls=log_parser.CompileCommandEncoder)
 
-    context = analyzer_context.get_context()
     metadata = {'action_num': len(actions),
                 'command': sys.argv,
                 'versions': {

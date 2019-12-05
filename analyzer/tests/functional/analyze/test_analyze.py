@@ -151,8 +151,8 @@ class TestAnalyze(unittest.TestCase):
         with open(info_File, 'r') as f:
             try:
                 data = json.load(f)
-                self.assertEquals(len(data), 2)
-                self.assertTrue("clang++" in data)
+                self.assertEquals(len(data), 1)
+                # For clang we do not collect anything.
                 self.assertTrue("g++" in data)
             except ValueError:
                 self.fail("json.load should successfully parse the file %s"
