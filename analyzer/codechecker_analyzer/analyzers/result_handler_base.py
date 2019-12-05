@@ -85,10 +85,15 @@ class ResultHandler(object, metaclass=ABCMeta):
         if not self.__result_file:
             analyzed_file_name = os.path.basename(self.analyzed_source_file)
 
-            build_info = str(self.buildaction.analyzer_type) + '_' + \
+            source_file = os.path.normpath(
+                os.path.join(self.buildaction.directory,
+                             self.analyzed_source_file))
+
+            build_info = source_file + '_' + \
                 self.buildaction.original_command
 
             out_file_name = analyzed_file_name + '_' + \
+                str(self.buildaction.analyzer_type) + '_' + \
                 hashlib.md5(build_info.encode(errors='ignore')).hexdigest() \
                 + '.plist'
 
