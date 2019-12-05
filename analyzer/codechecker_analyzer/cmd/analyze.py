@@ -584,6 +584,28 @@ def __update_skip_file(args):
         shutil.copyfile(args.skipfile, skip_file_to_send)
 
 
+def __cleanup_metadata(metadata_prev, metadata):
+    """ Cleanup metadata.
+
+    If the source file for a plist does not exist, remove the plist from the
+    system and from the metadata.
+    """
+    if not metadata_prev:
+        return
+
+    result_src_files = metadata_prev['result_source_files']
+    for plist_file, source_file in result_src_files.items():
+        if not os.path.exists(source_file):
+            try:
+                LOG.info("Remove plist file '%s' because it refers to a "
+                         "source file ('%s') which was removed.",
+                         plist_file, source_file)
+                del metadata['result_source_files'][plist_file]
+                os.remove(plist_file)
+            except OSError:
+                LOG.warning("Failed to remove plist file: %s", plist_file)
+
+
 def main(args):
     """
     Perform analysis on the given logfiles and store the results in a machine-
@@ -729,10 +751,11 @@ def main(args):
 
     # Update metadata dictionary with old values.
     metadata_file = os.path.join(args.output_path, 'metadata.json')
+    metadata_prev = None
     if os.path.exists(metadata_file):
         metadata_prev = load_json_or_empty(metadata_file)
         metadata['result_source_files'] = \
-            metadata_prev['result_source_files']
+            dict(metadata_prev['result_source_files'])
 
     CompileCmdParseCount = \
         collections.namedtuple('CompileCmdParseCount',
@@ -764,6 +787,7 @@ def main(args):
                               compile_cmd_count)
 
     __update_skip_file(args)
+    __cleanup_metadata(metadata_prev, metadata)
 
     LOG.debug("Analysis metadata write to '%s'", metadata_file)
     with open(metadata_file, 'w',
