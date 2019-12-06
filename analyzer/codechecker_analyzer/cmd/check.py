@@ -259,6 +259,24 @@ used to generate a log file on the fly.""")
                                     "into the '<OUTPUT_DIR>/success' "
                                     "directory.")
 
+    analyzer_opts.add_argument('--config',
+                               dest='config_file',
+                               required=False,
+                               help="Allow the configuration from an explicit "
+                                    "JSON based configuration file. The "
+                                    "value of the 'analyzer' key in the "
+                                    "config file will be emplaced as command "
+                                    "line arguments. The format of "
+                                    "configuration file is: "
+                                    "{"
+                                    "  \"enabled\": true,"
+                                    "  \"analyzer\": ["
+                                    "    \"--enable=core.DivideZero\","
+                                    "    \"--enable=core.CallAndMessage\","
+                                    "    \"--clean\""
+                                    "  ]"
+                                    "}.")
+
     # TODO: One day, get rid of these. See Issue #36, #427.
     analyzer_opts.add_argument('--saargs',
                                dest="clangsa_args_cfg_file",
@@ -604,6 +622,7 @@ def main(args):
                           'tidy_args_cfg_file',
                           'tidy_config',
                           'capture_analysis_output',
+                          'config_file',
                           'ctu_phases',
                           'stats_output',
                           'stats_dir',
