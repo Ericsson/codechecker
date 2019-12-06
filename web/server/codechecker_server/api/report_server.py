@@ -2139,6 +2139,49 @@ class ThriftRequestHandler(object):
         return True
 
     @exc_to_thrift_reqfail
+    @timeit
+    def updateRunData(self, run_id, new_run_name):
+        self.__require_store()
+
+        if not new_run_name:
+            msg = 'No new run name was given to update the run.'
+            LOG.error(msg)
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.GENERAL, msg)
+
+        with DBSession(self.__Session) as session:
+            check_new_run_name = session.query(Run) \
+                    .filter(Run.name == new_run_name) \
+                    .all()
+            if check_new_run_name:
+                msg = "New run name '" + new_run_name + "' already exists."
+                LOG.error(msg)
+
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
+
+            run_data = session.query(Run).get(run_id)
+            if run_data:
+                old_run_name = run_data.name
+                run_data.name = new_run_name
+                session.add(run_data)
+                session.commit()
+
+                LOG.info("Run name '%s' (%d) was changed to %s by '%s'.",
+                         old_run_name, run_id, new_run_name,
+                         self.__get_username())
+
+                return True
+            else:
+                msg = 'Run id ' + str(run_id) + \
+                      ' was not found in the database.'
+                LOG.error(msg)
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
+
+        return True
+
+    @exc_to_thrift_reqfail
     def getSuppressFile(self):
         """
         DEPRECATED the server is not started with a suppress file anymore.

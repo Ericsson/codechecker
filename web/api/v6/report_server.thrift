@@ -494,6 +494,11 @@ service codeCheckerDBAccess {
   bool removeRun(1: i64 runId)
                  throws (1: codechecker_api_shared.RequestFailed requestError),
 
+  // PERMISSION: PRODUCT_STORE
+  bool updateRunData(1: i64 runId,
+                     2: string newRunName)
+                     throws (1: codechecker_api_shared.RequestFailed requestError),
+
   // get the suppress file path set by the command line
   // !!! DEPRECATED !!!
   // returns empty string if not set
