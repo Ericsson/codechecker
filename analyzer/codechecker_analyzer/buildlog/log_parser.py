@@ -30,6 +30,9 @@ from .build_action import BuildAction
 
 LOG = get_logger('buildlogger')
 
+SOURCE_EXTENSIONS = {".c", ".cc", ".cp", ".cpp", ".cxx", ".c++", ".o", ".so",
+                     ".a"}
+
 # Replace gcc/g++ build target options with values accepted by Clang.
 REPLACE_OPTIONS_MAP = {
     '-mips32': ['-target', 'mips', '-mips32'],
@@ -989,6 +992,62 @@ def parse_options(compilation_db_entry,
     return BuildAction(**details)
 
 
+def process_response_file(response_file):
+    """
+    Return list of options and source files from the given response file.
+    """
+    with open(response_file) as r_file:
+        options = shlex.split(r_file)
+
+    sources = filter(lambda opt: not opt.startswith('-') and
+                     os.path.splitext(opt)[1].lower() in SOURCE_EXTENSIONS,
+                     options)
+
+    return options, sources
+
+
+def extend_compilation_database_entries(compilation_database):
+    """
+    Loop through the compilation database entries and whether compilation
+    command contains a response file we read those files and replace the
+    response file with the options from the file.
+    """
+    entries = []
+    for entry in compilation_database:
+        if 'command' in entry and '@' in entry['command']:
+            cmd = []
+            source_files = []
+            source_dir = entry['directory']
+
+            options = shlex.split(entry['command'])
+            for opt in options:
+                if opt.startswith('@'):
+                    response_file = os.path.join(source_dir, opt[1:])
+                    if not os.path.exists(response_file):
+                        LOG.warning("Response file '%s' does not exists.",
+                                    response_file)
+                        continue
+
+                    opts, sources = process_response_file(response_file)
+                    cmd.extend(opts)
+                    source_files.extend(sources)
+                else:
+                    cmd.append(opt)
+
+            entry['command'] = ' '.join(cmd)
+
+            if '@' in entry['file']:
+                for source_file in source_files:
+                    new_entry = dict(entry)
+                    new_entry['file'] = source_file
+                    entries.append(new_entry)
+                continue
+
+        entries.append(entry)
+
+    return entries
+
+
 class CompileCommandEncoder(json.JSONEncoder):
     """JSON serializer for objects not serializable by default json code"""
     # pylint: disable=method-hidden
@@ -1068,7 +1127,7 @@ def parse_unique_log(compilation_database,
             build_action_uniqueing = CompileActionUniqueingType.SOURCE_REGEX
             uniqueing_re = re.compile(compile_uniqueing)
 
-        for entry in compilation_database:
+        for entry in extend_compilation_database_entries(compilation_database):
             # Skip parsing the compilaton commands if it should be skipped
             # at both analysis phases (pre analysis and analysis).
             full_path = os.path.join(entry["directory"], entry["file"])

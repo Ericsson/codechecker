@@ -243,6 +243,27 @@ int isObjectFile(const char* filename_)
   return 0;
 }
 
+/**
+ * Compilers (clang) support passing extra flags using so-called response
+ * files that you specify with the @file syntax.
+ * This function returns the response file path if it can be found in the
+ * given arguments or NULL if is doesn't.
+ * The returned string has to be deallocated by the caller.
+ */
+char* getResponseFile(const LoggerVector* arguments_)
+{
+  int i;
+
+  for (i = 0; i < arguments_->size; ++i)
+  {
+    const char* arg = arguments_->data[i];
+    if (arg != NULL && arg[0] == '@')
+      return loggerStrDup(arg);
+  }
+
+  return NULL;
+}
+
 int loggerGccParserCollectActions(
   const char* prog_,
   const char* const argv_[],
@@ -254,6 +275,7 @@ int loggerGccParserCollectActions(
   /* Position of the last include path + 1 */
   char full_prog_path[PATH_MAX+1];
   char *path_ptr = NULL;
+  char* responseFile = NULL;
 
   size_t lastIncPos = 1;
   size_t lastSysIncPos = 1;
@@ -453,7 +475,14 @@ int loggerGccParserCollectActions(
     } while (i != SIZE_MAX);
 
   if (action->sources.size != 0)
+  {
     loggerVectorAdd(actions_, action);
+  }
+  else if (responseFile = getResponseFile(&action->arguments))
+  {
+    loggerVectorAdd(&action->sources, responseFile);
+    loggerVectorAdd(actions_, action);
+  }
 
   return 1;
 }
