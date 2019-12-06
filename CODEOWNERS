@@ -1,0 +1,20 @@
+# Lines starting with '#' are comments.
+# Each line is a file pattern followed by one or more owners.
+
+# These owners will be the default owners for everything in the repo.
+*      @csordasmarton  @gyorb
+
+# Web files.
+*.js    @csordasmarton @bruntib @gyorb
+*.html  @csordasmarton @bruntib @gyorb
+*.css   @csordasmarton @bruntib @gyorb
+
+# Analyzer.
+/analyzer/ @csordasmarton @bruntib @gyorb
+/analyzer/codechecker_analyzer/analyzers/clangsa/ctu_*.py @martong @csordasmarton @bruntib @gyorb
+
+# Build logger.
+/analyzer/tools/build-logger/ @bruntib
+
+# Documentations.
+/docs @csordasmarton @dkrupp @bruntib @gyorb
