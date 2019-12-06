@@ -278,6 +278,11 @@ def zip_tu_files(zip_file, compilation_database, write_mode='w'):
     if error_messages:
         with zipfile.ZipFile(zip_file, write_mode) as archive:
             archive.writestr(no_sources, error_messages)
+    elif write_mode == 'w':
+        try:
+            os.remove(zip_file)
+        except OSError:
+            pass
 
     add_sources_to_zip(zip_file, tu_files)
 
