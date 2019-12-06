@@ -101,7 +101,7 @@ function (declare, dom, ObjectStore, Store, Deferred, topic, Dialog, Button,
       var runFilter = new CC_OBJECTS.RunFilter();
       runFilter.ids = [ id ];
 
-      CC_SERVICE.getRunData(runFilter, 1, 0, function (runDataList) {
+      CC_SERVICE.getRunData(runFilter, 1, 0, null, function (runDataList) {
         if (typeof runDataList === 'string') {
           deferred.reject('Failed to get run ' + id + ': ' + runDataList);
         } else {
