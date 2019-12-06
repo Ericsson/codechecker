@@ -196,7 +196,7 @@ COMPILE_OPTIONS_MERGED = [
 COMPILE_OPTIONS_MERGED = \
     re.compile('(' + '|'.join(COMPILE_OPTIONS_MERGED) + ')')
 
-PRECOMPILATION_OPTION = re.compile('-(E|M[T|Q|F|J|P|V|M]*)$')
+PRECOMPILATION_OPTION = re.compile('-(E|M[G|T|Q|F|J|P|V|M]*)$')
 
 # Match for all of the compiler flags.
 CLANG_OPTIONS = re.compile('.*')
