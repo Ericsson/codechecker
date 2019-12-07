@@ -137,7 +137,8 @@ class SpecialReturnValueCollector(object):
             return []
         else:
             return ['-Xclang', '-analyzer-config',
-                    '-Xclang', 'api-metadata-path=' + path]
+                    '-Xclang',
+                    'alpha.ericsson.statisticsbased:APIMetadataPath=' + path]
 
     def total(self):
         return self.stats.get('total')
@@ -246,7 +247,8 @@ class ReturnValueCollector(object):
             return []
         else:
             return ['-Xclang', '-analyzer-config',
-                    '-Xclang', 'api-metadata-path=' + path]
+                    '-Xclang',
+                    'alpha.ericsson.statisticsbased:APIMetadataPath=' + path]
 
     def total(self):
         return self.stats.get('total')
