@@ -234,8 +234,6 @@ def add_arguments_to_parser(parser):
     analyzer_opts.add_argument('--config',
                                dest='config_file',
                                required=False,
-                               default=os.path.join(os.path.expanduser("~"),
-                                                    ".codechecker.json"),
                                help="Allow the configuration from an explicit "
                                     "JSON based configuration file. The "
                                     "value of the 'analyzer' key in the "
@@ -517,21 +515,17 @@ def process_config_file(args):
     """
     Handler to get config file options.
     """
-    if 'config_file' not in args or not os.path.exists(args.config_file):
-        return None
-
-    cfg = load_json_or_empty(args.config_file, default={})
-    if cfg.get("enabled"):
-        return cfg.get('analyzer', [])
-
-    return None
+    if args.config_file and os.path.exists(args.config_file):
+        cfg = load_json_or_empty(args.config_file, default={})
+        if cfg.get("enabled"):
+            return cfg.get('analyzer', [])
 
 
 def check_config_file(args):
     """
     LOG and check about the config file usage.
 
-    If a config file is set but does not exists the program will
+    If a config file is set but does not exist the program will
     exit.
     LOG is not initialized in the process_config_file function yet
     so we can not log the usage there. Using print will
@@ -539,13 +533,12 @@ def check_config_file(args):
     tests depending on the output.
     """
 
-    if 'config_file' not in args:
-        return None
-
-    if 'config_file' in args and not os.path.exists(args.config_file):
-        LOG.error("Configuration file '%s' does not exists.",
-                  args.config)
+    if args.config_file and not os.path.exists(args.config_file):
+        LOG.error("Configuration file '%s' does not exist.",
+                  args.config_file)
         sys.exit(1)
+    elif not args.config_file:
+        return
 
     cfg = load_json_or_empty(args.config_file, default={})
     if cfg.get("enabled"):
