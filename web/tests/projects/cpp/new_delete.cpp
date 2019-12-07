@@ -34,7 +34,7 @@ void test2() {
 void test3() {
   int *p = new int;
   delete p;
-  delete p; // warn: attempt to free released
+  delete p; // warn: attempt to free released °
 }
 
 void test4() {

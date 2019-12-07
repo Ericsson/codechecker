@@ -29,6 +29,12 @@ from codechecker_common.util import get_line
 LOG = get_logger('report')
 
 
+def str_to_hash(string_to_hash, errors='ignore'):
+    """ Encodes the given string and generates a hash from it. """
+    string_hash = string_to_hash.encode(encoding="utf-8", errors=errors)
+    return hashlib.md5(string_hash).hexdigest()
+
+
 def generate_report_hash(path, source_file, check_name):
     """
     !!! Compatible with the old hash before v6.0
@@ -147,8 +153,7 @@ def generate_report_hash(path, source_file, check_name):
                 col_num = loc['col']
                 hash_content.append(str(col_num))
 
-        string_to_hash = '|||'.join(hash_content)
-        return hashlib.md5(string_to_hash.encode()).hexdigest()
+        return str_to_hash('|||'.join(hash_content))
 
     except Exception as ex:
         LOG.error("Hash generation failed")
@@ -228,8 +233,7 @@ def generate_report_hash_no_bugpath(main_section, source_file):
                         str(from_col),
                         str(until_col)]
 
-        string_to_hash = '|||'.join(hash_content)
-        return hashlib.md5(string_to_hash.encode()).hexdigest()
+        return str_to_hash('|||'.join(hash_content))
 
     except Exception as ex:
         LOG.error("Hash generation failed")
@@ -259,7 +263,7 @@ def get_report_path_hash(report, files):
         LOG.error(events)
 
     LOG.debug(report_path_hash)
-    return hashlib.md5(report_path_hash.encode()).hexdigest()
+    return str_to_hash(report_path_hash)
 
 
 class Report(object):

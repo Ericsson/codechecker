@@ -12,6 +12,7 @@ from __future__ import division
 from __future__ import absolute_import
 
 import base64
+import codecs
 import logging
 import os
 import re
@@ -160,7 +161,8 @@ class RunResults(unittest.TestCase):
             file_content1 = file_data.fileContent
             self.assertIsNotNone(file_content1)
 
-            with open(run_res.checkedFile) as source_file:
+            with codecs.open(run_res.checkedFile, 'r', 'UTF-8',
+                             'replace') as source_file:
                 file_content2 = source_file.read()
 
             self.assertEqual(file_content1, file_content2)
@@ -172,6 +174,7 @@ class RunResults(unittest.TestCase):
             file_content1_b64 = base64.b64decode(file_data_b64.fileContent)
             self.assertIsNotNone(file_content1_b64)
 
+            file_content2 = codecs.encode(file_content2, 'utf-8')
             self.assertEqual(file_content1_b64, file_content2)
 
         logging.debug('got ' + str(len(run_results)) + ' files')
