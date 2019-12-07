@@ -131,7 +131,7 @@ int main()
 
         if runs:
             run_id = max(map(lambda run: run.runId, runs))
-            self._cc_client.removeRun(run_id)
+            self._cc_client.removeRun(run_id, None)
 
         # Check the first file version
         self._create_source_file(0)
@@ -287,7 +287,7 @@ int main()
             run_id = max(map(lambda run: run.runId, runs))
 
             # Remove the run.
-            self._cc_client.removeRun(run_id)
+            self._cc_client.removeRun(run_id, None)
 
         self._create_source_file(0)
 
@@ -326,7 +326,7 @@ int main()
             run_id = max(map(lambda run: run.runId, runs))
 
             # Remove the run.
-            self._cc_client.removeRun(run_id)
+            self._cc_client.removeRun(run_id, None)
 
         cfg = dict(self._codechecker_cfg)
 

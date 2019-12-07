@@ -76,7 +76,7 @@ class ThriftClientHelper(object):
         pass
 
     @ThriftClientCall
-    def removeRun(self, run_id):
+    def removeRun(self, run_id, run_filter):
         pass
 
     @ThriftClientCall

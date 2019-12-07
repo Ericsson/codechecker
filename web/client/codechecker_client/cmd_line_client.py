@@ -293,6 +293,29 @@ def add_filter_conditions(client, report_filter, args):
     if 'fixed_at' in args:
         report_filter.fixDate = int(str_to_timestamp(args.fixed_at))
 
+
+def process_run_filter_conditions(args):
+    """
+    This function fills some attributes of the given run filter based on
+    the arguments which is provided in the command line.
+    """
+    run_filter = ttypes.RunFilter()
+
+    if 'names' in args:
+        run_filter.names = args.names
+        run_filter.exactMatch = False
+    elif 'all_after_run' in args:
+        run_filter.afterRun = args.all_after_run
+    elif 'all_before_run' in args:
+        run_filter.beforeRun = args.all_before_run
+    elif 'all_after_time' in args:
+        run_filter.afterTime = int(str_to_timestamp(args.all_after_time))
+    elif 'all_before_time' in args:
+        run_filter.beforeTime = int(str_to_timestamp(args.all_before_time))
+
+    return run_filter
+
+
 # ---------------------------------------------------------------------------
 # Argument handlers for the 'CodeChecker cmd' subcommands.
 # ---------------------------------------------------------------------------
@@ -309,11 +332,7 @@ def handle_list_runs(args):
 
     client = setup_client(args.product_url)
 
-    run_filter = None
-    if 'names' in args:
-        run_filter = ttypes.RunFilter()
-        run_filter.names = args.names
-
+    run_filter = process_run_filter_conditions(args)
     runs = get_run_data(client, run_filter)
 
     if args.output_format == 'json':
@@ -1290,48 +1309,11 @@ def handle_remove_run_results(args):
 
     client = setup_client(args.product_url)
 
-    def is_later(d1, d2):
-        dateformat = '%Y-%m-%d %H:%M:%S.%f'
-
-        if not isinstance(d1, datetime):
-            d1 = datetime.strptime(d1, dateformat)
-        if not isinstance(d2, datetime):
-            d2 = datetime.strptime(d2, dateformat)
-
-        return d1 > d2
-
-    if 'name' in args:
-        check_run_names(client, args.name)
-
-        def condition(name, runid, date):
-            return name in args.name
-    elif 'all_after_run' in args:
-        run_info = check_run_names(client, [args.all_after_run])
-        run_date = run_info[args.all_after_run].runDate
-
-        def condition(name, runid, date):
-            return is_later(date, run_date)
-    elif 'all_before_run' in args:
-        run_info = check_run_names(client, [args.all_before_run])
-        run_date = run_info[args.all_before_run].runDate
-
-        def condition(name, runid, date):
-            return is_later(run_date, date)
-    elif 'all_after_time' in args:
-        def condition(name, runid, date):
-            return is_later(date, args.all_after_time)
-    elif 'all_before_time' in args:
-        def condition(name, runid, date):
-            return is_later(args.all_before_time, date)
+    run_filter = process_run_filter_conditions(args)
+    if client.removeRun(None, run_filter):
+        LOG.info("Done.")
     else:
-        def condition(name, runid, date):
-            return False
-
-    for run_id in [run.runId for run in get_run_data(client, None)
-                   if condition(run.name, run.runId, run.runDate)]:
-        client.removeRun(run_id)
-
-    LOG.info("Done.")
+        LOG.error("Failed to remove runs!")
 
 
 def handle_update_run(args):

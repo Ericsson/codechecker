@@ -389,7 +389,7 @@ function (declare, dom, ObjectStore, Store, Deferred, topic, Dialog, Button,
           });
 
           that.deleteRunIds.forEach(function (runId) {
-            CC_SERVICE.removeRun(runId, function () {}).fail(
+            CC_SERVICE.removeRun(runId, null, function () {}).fail(
             function (jsReq, status, exc) {
               new Dialog({
                 title : 'Failure!',

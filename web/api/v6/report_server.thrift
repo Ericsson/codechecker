@@ -290,9 +290,13 @@ typedef list<CommentData> CommentDataList
  * If exactMatch field is True it will use exact match for run names.
  */
 struct RunFilter {
-  1: list<i64>    ids,        // IDs of the runs.
-  2: list<string> names,      // Part of the run name.
-  3: bool         exactMatch  // If it's True it will use an exact match for run names.
+  1: list<i64>       ids,        // IDs of the runs.
+  2: list<string>    names,      // Part of the run name.
+  3: bool            exactMatch, // If it's True it will use an exact match for run names.
+  4: optional i64    beforeTime, // Filter runs that were stored to the server BEFORE this time.
+  5: optional i64    afterTime,  // Filter runs that were stored to the server AFTER this time.
+  6: optional string beforeRun,  // Filter runs that were stored to the server BEFORE this one.
+  7: optional string afterRun,   // Filter runs that were stored to the server AFTER this one.
 }
 
 // CompareData is used as an optinal argument for multiple API calls.
@@ -491,7 +495,8 @@ service codeCheckerDBAccess {
 
   // Remove run from the database.
   // PERMISSION: PRODUCT_STORE
-  bool removeRun(1: i64 runId)
+  bool removeRun(1: i64 runId,
+                 2: optional RunFilter runFilter)
                  throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // PERMISSION: PRODUCT_STORE

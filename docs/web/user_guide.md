@@ -765,6 +765,24 @@ optional arguments:
                         you have run_1_a_name, run_2_b_name, run_2_c_name,
                         run_3_d_name then "run_2* run_3_d_name" shows the last
                         three runs.
+  --all-before-run RUN_NAME
+                        Get all runs that were stored to the server BEFORE the
+                        specified one.
+  --all-after-run RUN_NAME
+                        Get all runs that were stored to the server AFTER the
+                        specified one.
+  --all-after-time TIMESTAMP
+                        Get all analysis runs that were stored to the server
+                        AFTER the given timestamp. The format of TIMESTAMP is
+                        'year:month:day:hour:minute:second' (the "time" part
+                        can be omitted, in which case midnight (00:00:00) is
+                        used).
+  --all-before-time TIMESTAMP
+                        Get all analysis runs that were stored to the server
+                        BEFORE the given timestamp. The format of TIMESTAMP is
+                        'year:month:day:hour:minute:second' (the "time" part
+                        can be omitted, in which case midnight (00:00:00) is
+                        used).
 ```
 
 ### List of run histories (`history`) <a name="cmd-history"></a>
