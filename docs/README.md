@@ -71,6 +71,7 @@ macOS (OS X) development environment.
 * [Permission management](web/permissions.md)
 * [Usage of PostgreSQL database](web/postgresql_setup.md)
 * [How to deal with false positives](analyzer/false_positives.md)
+* [Store Cppcheck analyzer reports](cppcheck.md)
 
 # Install guide
 
