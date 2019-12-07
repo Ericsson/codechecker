@@ -30,6 +30,7 @@ from codechecker_client import client as libclient
 from codechecker_common import logger
 from codechecker_common import util
 from codechecker_common import plist_parser
+from codechecker_common import report as common_report
 from codechecker_common.output_formatters import twodim_to_str
 from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler
@@ -233,6 +234,14 @@ def assemble_zip(inputs, zip_file, client):
 
         try:
             files, reports = plist_parser.parse_plist_file(plist_file)
+
+            # CppCheck generates a '0' value for the bug hash.
+            # In case all of the reports in a plist file contain only
+            # a hash with '0' value oeverwrite the hash values in the
+            # plist report files with a context free hash value.
+            rep_hash = [rep.report_hash == '0' for rep in reports]
+            if all(rep_hash):
+                common_report.use_context_free_hashes(plist_file)
 
             for f in files:
                 if not os.path.isfile(f):
