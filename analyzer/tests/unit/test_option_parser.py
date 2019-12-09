@@ -265,6 +265,32 @@ class OptionParserTest(unittest.TestCase):
         res = log_parser.parse_options(action)
         self.assertEqual(res.analyzer_options, ["-fsyntax-only"])
 
+    def test_ignore_warning_flags_gcc(self):
+        """-w -Werror flag should be omitted if the compiler gcc."""
+
+        warning_action_gcc = {
+             "directory": "/tmp",
+             "command":
+             "g++ -std=gnu++14 -w -Werror  /tmp/a.cpp -c /tmp/a.cpp",
+             "file": "/tmp/a.cpp"}
+
+        res = log_parser.parse_options(warning_action_gcc)
+
+        self.assertEqual(["-std=gnu++14"], res.analyzer_options)
+
+    def test_ignore_warning_flags_clang(self):
+        """-w -Werror flag should be omitted if the compiler is clang."""
+
+        warning_action_clang = {
+            "directory": "/tmp",
+            "command":
+            "clang++ -std=gnu++14 -w -Werror /tmp/a.cpp -c /tmp/a.cpp",
+            "file": "/tmp/a.cpp"}
+
+        res = log_parser.parse_options(warning_action_clang)
+
+        self.assertEqual(["-std=gnu++14"], res.analyzer_options)
+
     def test_preprocess_and_compile_with_extra_file_clang(self):
         """
         -MF flag is followed by a dependency file. We shouldn't consider this
@@ -301,7 +327,7 @@ class OptionParserTest(unittest.TestCase):
                 "-include/include/myheader.h",
                 "-include", "/include/myheader2.h",
                 "--include", "/include/myheader3.h",
-                "--sysroot", "/home/sysroot", "-Werror", "-fsyntax-only",
+                "--sysroot", "/home/sysroot", "-fsyntax-only",
                 "-mfloat-gprs=double", "-mfloat-gprs=yes",
                 "-mabi=spe", "-mabi=eabi",
                 "-Xclang", "-mllvm",
