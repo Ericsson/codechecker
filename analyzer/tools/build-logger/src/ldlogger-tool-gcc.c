@@ -186,7 +186,7 @@ void getPathsFromEnvVar(
     if (length > PATH_MAX - 1){
       // If the string is too long, skip it.
       from = to + 1;
-      to = strchr(from, ":");
+      to = strchr(from, ':');
       continue;
     }
     strncpy(token, from, length);
@@ -264,6 +264,61 @@ char* getResponseFile(const LoggerVector* arguments_)
   return NULL;
 }
 
+void transformSomePathsAbsolute(LoggerVector* args_)
+{
+  /* TODO: The argument of -I, -idirafter, -isystem and -iquote may
+   * start with = sign which means that the following path is relative to
+   * --sysroot (see: man gcc). This logic is not implemented here. */
+
+  static const char* const absFlags[] = {
+    "-I", "-idirafter", "-imultilib", "-iquote", "-isysroot", "-isystem",
+    "-iwithprefix", "-iwithprefixbefore", "-sysroot", "--sysroot", NULL};
+
+  int pathComing = 0;
+
+  for (size_t i = 0; i < args_->size; ++i)
+  {
+    if (pathComing)
+    {
+      char newPath[PATH_MAX];
+      loggerMakePathAbs(args_->data[i], newPath, 0);
+      loggerVectorReplace(args_, i, loggerStrDup(newPath));
+      pathComing = 0;
+    }
+    else
+    {
+      const char* const* flag;
+
+      for (flag = absFlags;
+          *flag && !startsWith(args_->data[i], *flag);
+          ++flag)
+        ;
+
+      if (!*flag)
+        continue;
+
+      const char* path = (const char*)args_->data[i] + strlen(*flag);
+      if (*path)
+      {
+        char newPath[PATH_MAX];
+        strcpy(newPath, *flag);
+
+        int hasEqual = *path == '=';
+        if (hasEqual)
+        {
+          strcat(newPath, "=");
+          ++path;
+        }
+
+        loggerMakePathAbs(path, newPath + strlen(*flag) + hasEqual, 0);
+        loggerVectorReplace(args_, i, loggerStrDup(newPath));
+      }
+      else
+        pathComing = 1;
+    }
+  }
+}
+
 int loggerGccParserCollectActions(
   const char* prog_,
   const char* const argv_[],
@@ -335,14 +390,14 @@ int loggerGccParserCollectActions(
        * from the flag by a space character.
        * 2 == strlen("-I") && 8 == strlen("-isystem")
        */
-      if (strstr(current, "-I") == current)
+      if (startsWith(current, "-I"))
         lastIncPos = action->arguments.size + (current[2] ? 0 : 1);
-      else if (strstr(current, "-isystem") == current)
+      else if (startsWith(current, "-isystem"))
         lastSysIncPos = action->arguments.size + (current[8] ? 0 : 1);
 
       /* Determine the programming language based on -x flag.
        */
-      else if (strstr(current, "-x") == current)
+      else if (startsWith(current, "-x"))
       {
         /* TODO: The language value after -x can be others too. See the man
          * page of GCC.
@@ -361,7 +416,7 @@ int loggerGccParserCollectActions(
        * parameter of a flag other than -o, such as -MT. The only usage of
        * collecting action->output is to remove it from action->sources later.
        */
-      else if (strstr(current, "-o") == current)
+      else if (startsWith(current, "-o"))
       {
         loggerFileInitFromPath(
           &action->output,
@@ -456,6 +511,9 @@ int loggerGccParserCollectActions(
 
     loggerVectorClear(&includes);
   }
+
+  if (getenv("CC_LOGGER_ABS_PATH"))
+    transformSomePathsAbsolute(&action->arguments);
 
   /*
    * Workaround for -MT and friends: if the source set contains the output,

@@ -115,6 +115,11 @@ char* shellEscapeStr(const char* str_, char* buff_)
   return buff_;
 }
 
+int startsWith(const char* str_, const char* prefix_)
+{
+  return strstr(str_, prefix_) == str_;
+}
+
 char* loggerMakePathAbs(const char* path_, char* resolved_, int mustExist_)
 {
   assert(resolved_ && "resolved_ must be not NULL!");
@@ -350,6 +355,14 @@ void loggerVectorErase(LoggerVector* vec_, size_t index_)
   }
 
   vec_->size -= 1;
+}
+
+void loggerVectorReplace(LoggerVector* vec_, size_t index_, void* data_)
+{
+  if (vec_->dataFree)
+    vec_->dataFree(vec_->data[index_]);
+
+  vec_->data[index_] = data_;
 }
 
 char* loggerStrDup(const char* str_)
