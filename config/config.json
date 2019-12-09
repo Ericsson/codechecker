@@ -52,7 +52,6 @@
         "alpha.unix.BlockInCriticalSection",
         "alpha.unix.Chroot",
         "alpha.unix.PthreadLock",
-        "alpha.unix.SimpleStream",
         "alpha.unix.Stream",
         "alpha.unix.cstring.NotNullTerminated",
         "alpha.unix.cstring.OutOfBounds",
