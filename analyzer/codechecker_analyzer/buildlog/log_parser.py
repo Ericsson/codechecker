@@ -43,7 +43,25 @@ REPLACE_OPTIONS_MAP = {
 
 # The compilation flags of which the prefix is any of these regular expressions
 # will not be included in the output Clang command.
-IGNORED_OPTIONS = [
+# These flags should be ignored only in case the original compiler is clang.
+IGNORED_OPTIONS_CLANG = [
+    # Clang gives different warnings than GCC. Thus if these flags are kept,
+    # '-Werror', '-pedantic-errors' the analysis with Clang can fail even
+    # if the compilation passes with GCC.
+    '-Werror',
+    '-pedantic-errors',
+
+    # Remove '-w' the option supressing the warnings.
+    # This suppressing mechanism is independent of
+    # checker enabling/disabling (-W, -W-no), and
+    # cannot be overridden by those.
+    '-w'
+]
+
+# The compilation flags of which the prefix is any of these regular expressions
+# will not be included in the output Clang command.
+# These flags should be ignored only in case the original compiler is gcc.
+IGNORED_OPTIONS_GCC = [
     # --- UNKNOWN BY CLANG --- #
     '-fallow-fetchr-insn',
     '-fcall-saved-',
@@ -127,6 +145,8 @@ IGNORED_OPTIONS = [
     # if the compilation passes with GCC.
     '-Werror',
     '-pedantic-errors',
+    # Remove the option disabling the warnings.
+    '-w',
     '-g(.+)?$',
     # Link Time Optimization:
     '-flto',
@@ -137,7 +157,8 @@ IGNORED_OPTIONS = [
     '-mabi'
 ]
 
-IGNORED_OPTIONS = re.compile('|'.join(IGNORED_OPTIONS))
+IGNORED_OPTIONS_GCC = re.compile('|'.join(IGNORED_OPTIONS_GCC))
+IGNORED_OPTIONS_CLANG = re.compile('|'.join(IGNORED_OPTIONS_CLANG))
 
 # The compilation flags of which the prefix is any of these regular expressions
 # will not be included in the output Clang command. These flags have further
@@ -810,12 +831,23 @@ def __replace(flag_iterator, details):
     return bool(value)
 
 
-def __skip(flag_iterator, _):
+def __skip_clang(flag_iterator, _):
     """
     This function skips the flag pointed by the given flag_iterator with its
     parameters if any.
     """
-    if IGNORED_OPTIONS.match(flag_iterator.item):
+    if IGNORED_OPTIONS_CLANG.match(flag_iterator.item):
+        return True
+
+    return False
+
+
+def __skip_gcc(flag_iterator, _):
+    """
+    This function skips the flag pointed by the given flag_iterator with its
+    parameters if any.
+    """
+    if IGNORED_OPTIONS_GCC.match(flag_iterator.item):
         return True
 
     for pattern, arg_num in IGNORED_PARAM_OPTIONS.items():
@@ -887,6 +919,7 @@ def parse_options(compilation_db_entry,
     # separately from the compile command json.
     clang_flag_collectors = [
         __skip_sources,
+        __skip_clang,
         __get_output,
         __determine_action_type,
         __get_arch,
@@ -896,7 +929,7 @@ def parse_options(compilation_db_entry,
         ]
 
     gcc_flag_transformers = [
-        __skip,
+        __skip_gcc,
         __replace,
         __collect_compile_opts,
         __collect_transform_include_opts,
