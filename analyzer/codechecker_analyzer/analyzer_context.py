@@ -245,6 +245,10 @@ class Context(object):
 
     @property
     def checker_plugin(self):
+        # Do not load the plugin because it might be incompatible.
+        if env.is_analyzer_from_path():
+            return None
+
         return os.path.join(self._package_root, 'plugin')
 
     @property
