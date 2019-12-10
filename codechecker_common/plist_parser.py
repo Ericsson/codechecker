@@ -149,7 +149,9 @@ def parse_plist_file(path, source_root=None, allow_plist_update=True):
     reports = []
     files = []
     try:
-        with io.open(path, 'r') as plist_file_obj:
+        with io.open(path, 'r',
+                     encoding='utf-8',
+                     errors='ignore') as plist_file_obj:
             plist = parse_plist(plist_file_obj)
 
         files = plist['files']
@@ -327,7 +329,9 @@ def skip_report_from_plist(plist_file, skip_handler):
     Rewrites the provided plist file where reports
     were removed if they should be skipped.
     """
-    with io.open(plist_file, 'r+') as plist:
+    with io.open(plist_file, 'r+',
+                 encoding='utf-8',
+                 errors='ignore') as plist:
         new_plist_content = remove_report_from_plist(plist,
                                                      skip_handler)
         if new_plist_content:
