@@ -131,7 +131,8 @@ def __get_statistics_data(args, manager):
     return statistics_data
 
 
-def perform_analysis(args, skip_handler, context, actions, metadata):
+def perform_analysis(args, skip_handler, context, actions, metadata,
+                     compile_cmd_count):
     """
     Perform static analysis via the given (or if not, all) analyzers,
     in the given analysis context for the supplied build actions.
@@ -287,7 +288,8 @@ def perform_analysis(args, skip_handler, context, actions, metadata):
                                        else None,
                                        ctu_reanalyze_on_failure,
                                        statistics_data,
-                                       manager)
+                                       manager,
+                                       compile_cmd_count)
         LOG.info("Analysis finished.")
         LOG.info("To view results in the terminal use the "
                  "\"CodeChecker parse\" command.")

@@ -12,7 +12,7 @@ CHECK#CodeChecker check --build "make context_hash" --output $OUTPUT$ --quiet --
 [] - Successfully analyzed
 [] -   clangsa: 1
 [] -   clang-tidy: 1
-[] - Total analyzed compilation commands: 2
+[] - Total analyzed compilation commands: 1
 [] - ----=================----
 [] - Analysis finished.
 [] - To view results in the terminal use the "CodeChecker parse" command.

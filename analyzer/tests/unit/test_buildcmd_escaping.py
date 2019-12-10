@@ -86,7 +86,7 @@ class BuildCmdTestNose(unittest.TestCase):
         compile_cmd = self.compiler + \
             ' -DDEBUG \'-DMYPATH="/this/some/path/"\''
 
-        comp_actions = log_parser.\
+        comp_actions, _ = log_parser.\
             parse_unique_log(self.__get_cmp_json(compile_cmd), self.tmp_dir)
 
         for comp_action in comp_actions:
@@ -112,7 +112,7 @@ class BuildCmdTestNose(unittest.TestCase):
         If the escaping fails the source file will not compile.
         """
         compile_cmd = self.compiler + ''' '-DMYPATH=\"/some/other/path\"' '''
-        comp_actions = log_parser.\
+        comp_actions, _ = log_parser.\
             parse_unique_log(self.__get_cmp_json(compile_cmd), self.tmp_dir)
 
         for comp_action in comp_actions:

@@ -1106,11 +1106,15 @@ def parse_unique_log(compilation_database,
                      keep_gcc_fix_headers=False,
                      analysis_skip_handler=None,
                      pre_analysis_skip_handler=None,
+                     ctu_or_stats_enabled=False,
                      env=None):
     """
     This function reads up the compilation_database
-    and returns with a list of build actions that is prepared for clang
-    execution. That means that gcc specific parameters are filtered out
+    and returns with a list of build actions that is
+    prepared (uniqued and skipped) for clang execution together
+    with the number of skipped compile commands.
+
+    That means that gcc specific parameters are filtered out
     and gcc built in targets and include paths are added.
     It also filters out duplicate compilation actions based on the
     compile_uniqueing parameter.
@@ -1144,7 +1148,8 @@ def parse_unique_log(compilation_database,
                              during analysis
     pre_analysis_skip_handler -- skip handler for files wich should be skipped
                                  during pre analysis
-
+    ctu_or_stats_enabled -- ctu or statistics based analysis was enabled
+                            influences the behavior which files are skipped.
     env -- Is the environment where a subprocess call should be executed.
     """
     try:
@@ -1160,14 +1165,20 @@ def parse_unique_log(compilation_database,
             build_action_uniqueing = CompileActionUniqueingType.SOURCE_REGEX
             uniqueing_re = re.compile(compile_uniqueing)
 
+        skipped_cmp_cmd_count = 0
+
         for entry in extend_compilation_database_entries(compilation_database):
             # Skip parsing the compilaton commands if it should be skipped
             # at both analysis phases (pre analysis and analysis).
             full_path = os.path.join(entry["directory"], entry["file"])
+
+            # Skipping of the compile commands is done differently if no
+            # CTU or statistics related feature was enabled.
             if analysis_skip_handler \
-                    and analysis_skip_handler.should_skip(full_path) \
-                    and pre_analysis_skip_handler \
-                    and pre_analysis_skip_handler.should_skip(full_path):
+                and analysis_skip_handler.should_skip(full_path) \
+                and (not ctu_or_stats_enabled or pre_analysis_skip_handler
+                     and pre_analysis_skip_handler.should_skip(full_path)):
+                skipped_cmp_cmd_count += 1
                 continue
 
             action = parse_options(entry,
@@ -1226,7 +1237,7 @@ def parse_unique_log(compilation_database,
             json.dump(ImplicitCompilerInfo.get(), f)
 
         LOG.debug('Parsing log file done.')
-        return list(uniqued_build_actions.values())
+        return list(uniqued_build_actions.values()), skipped_cmp_cmd_count
 
     except (ValueError, KeyError, TypeError) as ex:
         if not compilation_database:

@@ -11,6 +11,7 @@ from __future__ import division
 from __future__ import absolute_import
 
 import argparse
+import collections
 import json
 import os
 import shutil
@@ -637,15 +638,27 @@ def main(args):
 
     report_dir = args.output_path
 
+    ctu_or_stats_enabled = False
     # Skip list is applied only in pre-analysis
-    # if --ctu-collect or --stats-collect was called explicitly.
+    # if --ctu-collect was called explicitly.
     pre_analysis_skip_handler = None
     if 'ctu_phases' in args:
         ctu_collect = args.ctu_phases[0]
         ctu_analyze = args.ctu_phases[1]
-        if ((ctu_collect and not ctu_analyze)
-                or ("stats_output" in args and args.stats_output)):
+        if ctu_collect and not ctu_analyze:
             pre_analysis_skip_handler = skip_handler
+
+        if ctu_collect or ctu_analyze:
+            ctu_or_stats_enabled = True
+
+    # Skip list is applied only in pre-analysis
+    # if --stats-collect was called explicitly.
+    if 'stats_output' in args and args.stats_output:
+        pre_analysis_skip_handler = skip_handler
+        ctu_or_stats_enabled = True
+
+    if 'stats_enabled' in args and args.stats_enabled:
+        ctu_or_stats_enabled = True
 
     context = analyzer_context.get_context()
     analyzer_env = env.extend(context.path_env_extra,
@@ -653,21 +666,33 @@ def main(args):
 
     # Parse the JSON CCDBs and retrieve the compile commands.
     actions = []
+
+    # Number of all the compilation commands in the parsed log files,
+    # logged by the logger.
+    all_cmp_cmd_count = 0
+    # Number of the skipped compile commands during the
+    # compile command processing.
+    skipped_cmp_cmd_count = 0
+
     for log_file in args.logfile:
         if not os.path.exists(log_file):
             LOG.error("The specified logfile '%s' does not exist!",
                       log_file)
             continue
-
-        actions += log_parser.parse_unique_log(
-            load_json_or_empty(log_file),
+        compile_commands = load_json_or_empty(log_file, default={})
+        all_cmp_cmd_count += len(compile_commands)
+        filtered_parsed_actions, skipped = log_parser.parse_unique_log(
+            compile_commands,
             report_dir,
             args.compile_uniqueing,
             compiler_info_file,
             args.keep_gcc_include_fixed,
             skip_handler,
             pre_analysis_skip_handler,
+            ctu_or_stats_enabled,
             analyzer_env)
+        actions += filtered_parsed_actions
+        skipped_cmp_cmd_count += skipped
 
     if not actions:
         LOG.info("No analysis is required.\nThere were no compilation "
@@ -701,7 +726,34 @@ def main(args):
         metadata['result_source_files'] = \
             metadata_prev['result_source_files']
 
-    analyzer.perform_analysis(args, skip_handler, context, actions, metadata)
+    CompileCmdParseCount = \
+        collections.namedtuple('CompileCmdParseCount',
+                               'total, analyze, skipped, removed_by_uniqueing')
+    cmp_cmd_to_be_uniqued = all_cmp_cmd_count - skipped_cmp_cmd_count
+
+    # Number of compile commands removed during uniqueing.
+    removed_during_uniqueing = cmp_cmd_to_be_uniqued - len(actions)
+
+    all_to_be_analyzed = cmp_cmd_to_be_uniqued - removed_during_uniqueing
+
+    compile_cmd_count = CompileCmdParseCount(
+        total=all_cmp_cmd_count,
+        analyze=all_to_be_analyzed,
+        skipped=skipped_cmp_cmd_count,
+        removed_by_uniqueing=removed_during_uniqueing)
+
+    LOG.debug_analyzer("Total number of compile commands without "
+                       "skipping or uniqueing: %d", compile_cmd_count.total)
+    LOG.debug_analyzer("Compile commands removed by uniqueing: %d",
+                       compile_cmd_count.removed_by_uniqueing)
+    LOG.debug_analyzer("Compile commands skipped during log processing: %d",
+                       compile_cmd_count.skipped)
+    LOG.debug_analyzer("Compile commands forwarded for analysis: %d",
+                       compile_cmd_count.analyze)
+
+    analyzer.perform_analysis(args, skip_handler, context, actions,
+                              metadata,
+                              compile_cmd_count)
 
     __update_skip_file(args)
 
