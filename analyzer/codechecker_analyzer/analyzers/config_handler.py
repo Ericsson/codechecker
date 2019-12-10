@@ -49,7 +49,7 @@ class AnalyzerConfigHandler(object):
         Full path of the analyzer plugins.
         """
         plugin_dir = self.analyzer_plugins_dir
-        if not os.path.exists(plugin_dir):
+        if not plugin_dir or not os.path.exists(plugin_dir):
             return []
 
         analyzer_plugins = [os.path.join(plugin_dir, f)
