@@ -22,6 +22,7 @@ from codechecker_analyzer import host_check
 from codechecker_analyzer import env
 
 from .. import analyzer_base
+from ..config_handler import CheckerState
 from ..flag import has_flag
 from ..flag import prepend_all
 
@@ -145,9 +146,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd = [config.analyzer_binary, '--analyze',
                             # Do not warn about the unused gcc/g++ arguments.
-                            '-Qunused-arguments',
-                            # Turn off clang hardcoded checkers list.
-                            '--analyzer-no-default-checks']
+                            '-Qunused-arguments']
 
             for plugin in config.analyzer_plugins:
                 analyzer_cmd.extend(["-Xclang", "-plugin",
@@ -176,11 +175,11 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
             # Config handler stores which checkers are enabled or disabled.
             for checker_name, value in config.checks().items():
-                enabled, _ = value
-                if enabled:
+                state, _ = value
+                if state == CheckerState.enabled:
                     analyzer_cmd.extend(['-Xclang',
                                          '-analyzer-checker=' + checker_name])
-                else:
+                elif state == CheckerState.disabled:
                     analyzer_cmd.extend(['-Xclang',
                                          '-analyzer-disable-checker=' +
                                          checker_name])

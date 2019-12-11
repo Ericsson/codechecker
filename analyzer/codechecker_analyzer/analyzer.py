@@ -22,10 +22,12 @@ from codechecker_common.logger import get_logger
 
 from . import analysis_manager, pre_analysis_manager, env, checkers
 from .analyzers import analyzer_types
+from .analyzers.config_handler import CheckerState
 from .analyzers.clangsa.analyzer import ClangSA
 from .analyzers.clangsa.statistics_collector import \
     SpecialReturnValueCollector
 from .analyzers.clangsa.statistics_collector import ReturnValueCollector
+
 
 LOG = get_logger('analyzer')
 
@@ -212,8 +214,9 @@ def perform_analysis(args, skip_handler, context, actions, metadata,
         metadata['checkers'][analyzer] = {}
 
         for check, data in config_map[analyzer].checks().items():
-            enabled, _ = data
-            metadata['checkers'][analyzer].update({check: enabled})
+            state, _ = data
+            metadata['checkers'][analyzer].update(
+                {check: state == CheckerState.enabled})
 
     if ctu_collect:
         shutil.rmtree(ctu_dir, ignore_errors=True)

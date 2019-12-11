@@ -219,7 +219,7 @@ analyzer arguments:
                         solver only. (default: on)
 
 checker configuration:
-  
+
   Checkers
   ------------------------------------------------
   The analyzer performs checks that are categorized into families or "checkers".
@@ -229,9 +229,9 @@ checker configuration:
   '-e core -d core.uninitialized -e core.uninitialized.Assign' will enable every
   'core' checker, but only 'core.uninitialized.Assign' from the
   'core.uninitialized' group. Please consult the manual for details. Disabling
-  certain checkers - such as the 'core' group - is unsupported by the LLVM/Clang
-  community, and thus discouraged.
-  
+  checkers in the "core" package is unsupported by the Clang Static Analyzer,
+  so they will remain switched on, regardless of the settings.
+
   Compiler warnings
   ------------------------------------------------
   Compiler warnings are diagnostic messages that report constructions that are
