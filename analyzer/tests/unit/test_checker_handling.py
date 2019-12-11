@@ -31,30 +31,15 @@ class MockContextSA(object):
 
 
 def create_analyzer_sa():
-    # - Begin create config handler
-    # -- Begin create args
-
     args = []
-
-    # -- End create args
-    # -- Begin create context
-
     context = MockContextSA()
-
-    # -- End create context
-
     cfg_handler = ClangSA.construct_config_handler(args, context)
-
-    # - End create config handler
-    # - Begin create build action
 
     action = {
         'file': 'main.cpp',
         'command': "g++ -o main main.cpp",
         'directory': '/'}
     build_action = log_parser.parse_options(action)
-
-    # - End create build action
 
     return ClangSA(cfg_handler, build_action)
 
@@ -64,32 +49,13 @@ def create_result_handler(analyzer):
     Create result handler for construct_analyzer_cmd call.
     """
 
-    # - Begin create build action
-
     build_action = analyzer.buildaction
-
-    # - End create build action
-    # - Begin create report output
-
-    report_output = build_action.directory
-
-    # - End create report output
-    # - Begin create severity map
-
-    severity_map = None
-
-    # - End create severity map
-    # - Begin create skiplist handler
-
-    skiplist_handler = None
-
-    # - End create skiplist handler
 
     rh = analyzer.construct_result_handler(
         build_action,
-        report_output,
-        severity_map,
-        skiplist_handler)
+        build_action.directory,
+        None,
+        None)
 
     rh.analyzed_source_file = build_action.source
 
@@ -98,8 +64,9 @@ def create_result_handler(analyzer):
 
 class CheckerHandlingClangSATest(unittest.TestCase):
     """
-    Test that the every analyzer manages its default checkers, but explicitly
-    enabling or disabling a checker results in compiler flags being used.
+    Test that Clang Static Analyzer manages its default checkers, but
+    explicitly enabling or disabling a checker results in compiler flags being
+    used.
     """
 
     @classmethod
@@ -134,28 +101,15 @@ class MockContextTidy(object):
     checker_plugin = None
     analyzer_binaries = {'clang-tidy': 'clang-tidy'}
     compiler_resource_dir = None
-    checker_config = {'clangtidy_checkers': ['d.e']}
+    checker_config = {'clangtidy_checkers': ['d-e']}
     available_profiles = ['profile1']
     package_root = './'
 
 
 def create_analyzer_tidy():
-    # - Begin create config handler
-    # -- Begin create args
-
     args = []
-
-    # -- End create args
-    # -- Begin create context
-
     context = MockContextTidy()
-
-    # -- End create context
-
     cfg_handler = ClangTidy.construct_config_handler(args, context)
-
-    # - End create config handler
-    # - Begin create build action
 
     action = {
         'file': 'main.cpp',
@@ -163,14 +117,12 @@ def create_analyzer_tidy():
         'directory': '/'}
     build_action = log_parser.parse_options(action)
 
-    # - End create build action
-
     return ClangTidy(cfg_handler, build_action)
 
 
 class CheckerHandlingClangTidyTest(unittest.TestCase):
     """
-    Test that the every analyzer manages its default checkers, but explicitly
+    Test that Clang Tidy manages its default checkers, but explicitly
     enabling or disabling a checker results in compiler flags being used.
     """
 
@@ -188,14 +140,14 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
 
     def test_default_checkers_are_not_disabled(self):
         """
-        Test that the default checks are not disabled in ClangTidy.
+        Test that the default checks are not disabled in Clang Tidy.
         """
 
         self.assertFalse('-*' in self.__class__.checks_list)
 
     def test_only_clangsa_analyzer_checks_are_disabled(self):
         """
-        Test that exactly the clang-analyzer group is disabled in clang tidy.
+        Test that exactly the clang-analyzer group is disabled in Clang Tidy.
         """
 
         self.assertTrue('-clang-analyzer-*' in self.__class__.checks_list)
