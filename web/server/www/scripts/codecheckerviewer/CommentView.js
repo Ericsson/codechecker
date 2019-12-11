@@ -38,9 +38,12 @@ function (declare, dom, style, topic, Memory, Observable, ConfirmDialog,
         class   : 'reply-btn',
         label   : 'Comment',
         onClick : function () {
-          var commentData = new CC_OBJECTS.CommentData({
-            message   : that._content.get('value')
-          });
+          var message = that._content.get('value');
+          if (!message.trim()) {
+            return;
+          }
+
+          var commentData = new CC_OBJECTS.CommentData({ message: message });
           try {
             CC_SERVICE.addComment(that.reportId, commentData);
           } catch (ex) { util.handleThriftException(ex); }
@@ -55,25 +58,22 @@ function (declare, dom, style, topic, Memory, Observable, ConfirmDialog,
     }
   });
 
-  var Comment = declare(ContentPane, {
-    constructor : function (args) {
-      dojo.safeMixin(this, args);
-
+  var UserComment = declare(ContentPane, {
+    postCreate : function () {
       var that = this;
 
       //--- Header section ---//
 
-      this._header = new ContentPane();
-      var header = dom.create('div', { class : 'header'}, this._header.domNode);
+      var header = dom.create('div', { class : 'header'}, this.domNode);
 
-      var avatar = util.createAvatar(this.author);
+      var avatar = util.createAvatar(this.commentData.author);
       dom.place(avatar, header);
 
       var vb = dom.create('div', { class : 'vb'}, header);
 
-      dom.create('span', { class : 'author', innerHTML: this.author }, vb);
+      dom.create('span', { class : 'author', innerHTML: this.commentData.author }, vb);
 
-      var time = util.timeAgo(new Date(this.time.replace(/ /g,'T')));
+      var time = util.timeAgo(new Date(this.commentData.createdAt.replace(/ /g,'T')));
       dom.create('span', { class : 'time', innerHTML: time }, vb);
 
       //--- Comment operations (edit, remove) ---//
@@ -82,7 +82,9 @@ function (declare, dom, style, topic, Memory, Observable, ConfirmDialog,
         user = CC_AUTH_SERVICE.getLoggedInUser();
       } catch (ex) { util.handleThriftException(ex); }
       
-      if (this.author == 'Anonymous' || user == this.author) { 
+      if (this.commentData.author === 'Anonymous' ||
+          user === this.commentData.author
+      ) {
           var operations = dom.create('div', { class : 'operations'}, header);
           dom.create('span', {
               class   : 'customIcon edit',
@@ -96,10 +98,10 @@ function (declare, dom, style, topic, Memory, Observable, ConfirmDialog,
       }
       //--- Message section ---//
 
-      this._message = new ContentPane({
-        class   : 'message',
-        content : this.message.replace(/(?:\r\n|\r|\n)/g, '<br>')
-      });
+      this._message = dom.create('div', {
+        class : 'message',
+        innerHTML : this.commentData.message.replace(/(?:\r\n|\r|\n)/g, '<br>')
+      }, this.domNode);
 
       //--- Remove comment confirmation dialog ---//
 
@@ -108,7 +110,7 @@ function (declare, dom, style, topic, Memory, Observable, ConfirmDialog,
         content   : 'Are you sure you want to delete this?',
         onExecute : function () {
           try {
-            CC_SERVICE.removeComment(that.cId);
+            CC_SERVICE.removeComment(that.commentData.id);
           } catch (ex) { util.handleThriftException(ex); }
           topic.publish('showComments', that.reportId, that.sender);
         }
@@ -121,31 +123,28 @@ function (declare, dom, style, topic, Memory, Observable, ConfirmDialog,
       });
 
       this._commentContent = new SimpleTextarea({
-        value : that.message
+        value : this.commentData.message
       });
+      this._editDialog.addChild(this._commentContent);
 
       this._saveButton = new Button({
         label : 'Save',
         onClick : function () {
           var newContent = that._commentContent.get('value');
+          if (!newContent.trim()) {
+            return;
+          }
 
           try {
-            CC_SERVICE.updateComment(that.cId, newContent);
+            CC_SERVICE.updateComment(that.commentData.id, newContent);
           } catch (ex) { util.handleThriftException(ex); }
 
-          that._message.set('content',
-            newContent.replace(/(?:\r\n|\r|\n)/g, '<br>'));
+          that._message.innerHTML =
+            newContent.replace(/(?:\r\n|\r|\n)/g, '<br>');
 
           that._editDialog.hide();
         }
       });
-    },
-
-    postCreate : function () {
-      this.addChild(this._header);
-      this.addChild(this._message);
-
-      this._editDialog.addChild(this._commentContent);
       this._editDialog.addChild(this._saveButton);
     },
 
@@ -155,6 +154,54 @@ function (declare, dom, style, topic, Memory, Observable, ConfirmDialog,
 
     edit : function () {
       this._editDialog.show();
+    }
+  });
+
+  var SystemComment = declare(ContentPane, {
+    postCreate : function () {
+      var wrapper = dom.create('div', { class : 'wrapper'}, this.domNode);
+
+      dom.create('span', { class : 'system-comment-icon' }, wrapper);
+
+      // Create comment time.
+      var timeAgo = util.timeAgo(new Date(this.commentData.createdAt.replace(/ /g,'T')));
+      var time = dom.create('span', { class : 'time', innerHTML: timeAgo });
+
+      // Create comment author.
+      var author = dom.create('span', {
+        class : 'author',
+        innerHTML: this.commentData.author
+      });
+
+      // Replace special string in comment message.
+      var message = this.commentData.message;
+      message = message
+        .replace('%author%', author.outerHTML)
+        .replace('%date%', time.outerHTML);
+
+      var divMsg = dom.create('div', {
+        class : 'message',
+        innerHTML: message
+      }, wrapper);
+
+      this.addStatusIcons(divMsg);
+    },
+
+    addStatusIcons : function (domElement) {
+      ['detection-status', 'review-status'].forEach(function (type) {
+        ['old-' + type, 'new-' + type].forEach(function (className) {
+          var domStatuses =
+            domElement.getElementsByClassName(className);
+
+          for (var i = 0; i < domStatuses.length; i++) {
+            var domStatus = domStatuses[i];
+            var status = domStatus.innerHTML.toLowerCase();
+            domElement.insertBefore(
+              dom.create('i', { class : 'customIcon ' + type + '-' + status}),
+              domStatus);
+          }
+        });
+      });
     }
   });
 
@@ -209,15 +256,19 @@ function (declare, dom, style, topic, Memory, Observable, ConfirmDialog,
         } catch (ex) { util.handleThriftException(ex); }
 
         comments.forEach(function (comment) {
-          that._comments.addChild(new Comment({
-            class    : 'comment',
-            reportId : reportId,
-            cId      : comment.id,
-            author   : comment.author,
-            time     : comment.createdAt,
-            message  : comment.message,
-            sender   : sender
-          }));
+          if (comment.kind === CC_OBJECTS.CommentKind.SYSTEM) {
+            that._comments.addChild(new SystemComment({
+              class : 'system-comment',
+              commentData : comment
+            }));
+          } else {
+            that._comments.addChild(new UserComment({
+              class       : 'comment',
+              reportId    : reportId,
+              commentData : comment,
+              sender      : sender
+            }));
+          }
         });
       });
     }

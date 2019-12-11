@@ -17,6 +17,7 @@ from datetime import datetime, timedelta
 import io
 import os
 import re
+import shlex
 import tempfile
 import zipfile
 import zlib
@@ -40,6 +41,8 @@ from codechecker_common import util
 from codechecker_common.logger import get_logger
 from codechecker_common.report import get_report_path_hash
 
+from codechecker_web.shared import webserver_context
+
 from codechecker_server.profiler import timeit
 
 from .. import permissions
@@ -60,6 +63,27 @@ from .thrift_enum_helper import detection_status_enum, \
 from . import store_handler
 
 LOG = get_logger('server')
+
+
+class CommentKindValue(object):
+    USER = 0
+    SYSTEM = 1
+
+
+def comment_kind_from_thrift_type(kind):
+    """ Convert the given comment kind from Thrift type to Python enum. """
+    if kind == ttypes.CommentKind.USER:
+        return CommentKindValue.USER
+    elif kind == ttypes.CommentKind.SYSTEM:
+        return CommentKindValue.SYSTEM
+
+
+def comment_kind_to_thrift_type(kind):
+    """ Convert the given comment kind from Python enum to Thrift type. """
+    if kind == CommentKindValue.USER:
+        return ttypes.CommentKind.USER
+    elif kind == CommentKindValue.SYSTEM:
+        return ttypes.CommentKind.SYSTEM
 
 
 def verify_limit_range(limit):
@@ -653,6 +677,17 @@ def sort_run_data_query(query, sort_mode):
     return query
 
 
+def escape_whitespaces(s, whitespaces=None):
+    if not whitespaces:
+        whitespaces = [' ', '\n', '\t', '\r']
+
+    escaped = s
+    for w in whitespaces:
+        escaped = escaped.replace(w, '\\{0}'.format(w))
+
+    return escaped
+
+
 class ThriftRequestHandler(object):
     """
     Connect to database and handle thrift client requests.
@@ -736,7 +771,15 @@ class ThriftRequestHandler(object):
 
         return run_ids
 
-    @exc_to_thrift_reqfail
+    def __add_comment(self, bug_id, message, kind=CommentKindValue.USER):
+        """ Creates a new comment object. """
+        user = self.__get_username()
+        return Comment(bug_id,
+                       user,
+                       message,
+                       kind,
+                       datetime.now())
+
     @timeit
     def getRunData(self, run_filter, limit, offset, sort_mode):
         self.__require_access()
@@ -1331,12 +1374,29 @@ class ThriftRequestHandler(object):
 
             user = self.__get_username()
 
+            old_status = review_status.status if review_status.status \
+                else review_status_str(ttypes.ReviewStatus.UNREVIEWED)
+
             review_status.status = review_status_str(status)
             review_status.author = user
             review_status.message = message.encode('utf8')
             review_status.date = datetime.now()
-
             session.add(review_status)
+
+            if message:
+                system_comment_msg = 'rev_st_changed_msg {0} {1} {2}'.format(
+                    escape_whitespaces(old_status.capitalize()),
+                    escape_whitespaces(review_status.status.capitalize()),
+                    escape_whitespaces(message))
+            else:
+                system_comment_msg = 'rev_st_changed {0} {1}'.format(
+                    escape_whitespaces(old_status.capitalize()),
+                    escape_whitespaces(review_status.status.capitalize()))
+
+            system_comment = self.__add_comment(review_status.bug_hash,
+                                                system_comment_msg,
+                                                CommentKindValue.SYSTEM)
+            session.add(system_comment)
             session.flush()
 
             return True
@@ -1397,12 +1457,28 @@ class ThriftRequestHandler(object):
                     .order_by(Comment.created_at.desc()) \
                     .all()
 
+                context = webserver_context.get_context()
                 for comment in comments:
+                    message = comment.message
+
+                    sys_comment = comment_kind_from_thrift_type(
+                        ttypes.CommentKind.SYSTEM)
+                    if comment.kind == sys_comment:
+                        elements = shlex.split(message)
+                        system_comment = context.system_comment_map.get(
+                            elements[0])
+                        if system_comment:
+                            for idx, value in enumerate(elements[1:]):
+                                system_comment = system_comment.replace(
+                                    '{' + str(idx) + '}', value)
+                            message = system_comment
+
                     result.append(CommentData(
                         comment.id,
                         comment.author,
-                        comment.message,
-                        str(comment.created_at)))
+                        message,
+                        str(comment.created_at),
+                        comment_kind_to_thrift_type(comment.kind)))
 
                 return result
             else:
@@ -1433,19 +1509,19 @@ class ThriftRequestHandler(object):
     @exc_to_thrift_reqfail
     @timeit
     def addComment(self, report_id, comment_data):
-        """
-            Add new comment for the given bug.
-        """
+        """ Add new comment for the given bug. """
         self.__require_access()
+
+        if not comment_data.message.strip():
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.GENERAL,
+                'The comment message can not be empty!')
+
         with DBSession(self.__Session) as session:
             report = session.query(Report).get(report_id)
             if report:
-                user = self.__get_username()
-                comment = Comment(report.bug_id,
-                                  user,
-                                  comment_data.message,
-                                  datetime.now())
-
+                comment = self.__add_comment(report.bug_id,
+                                             comment_data.message)
                 session.add(comment)
                 session.commit()
 
@@ -1466,6 +1542,12 @@ class ThriftRequestHandler(object):
             Anyonymous comments that can be updated by anybody.
         """
         self.__require_access()
+
+        if not content.strip():
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.GENERAL,
+                'The comment message can not be empty!')
+
         with DBSession(self.__Session) as session:
 
             user = self.__get_username()
@@ -1476,8 +1558,22 @@ class ThriftRequestHandler(object):
                     raise codechecker_api_shared.ttypes.RequestFailed(
                         codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
                         'Unathorized comment modification!')
+
+                # Create system comment if the message is changed.
+                if comment.message != content:
+                    system_comment_msg = 'comment_changed {0} {1}'.format(
+                        escape_whitespaces(comment.message),
+                        escape_whitespaces(content))
+
+                    system_comment = \
+                        self.__add_comment(comment.bug_hash,
+                                           system_comment_msg,
+                                           CommentKindValue.SYSTEM)
+                session.add(system_comment)
+
                 comment.message = content
                 session.add(comment)
+
                 session.commit()
                 return True
             else:

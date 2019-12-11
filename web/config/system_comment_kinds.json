@@ -1,0 +1,5 @@
+{
+  "rev_st_changed": "%author% changed review status from <b class=\"old-review-status\">{0}</b> to <b class=\"new-review-status\">{1}</b> %date%",
+  "rev_st_changed_msg": "%author% changed review status from <b class=\"old-review-status\">{0}</b> to <b class=\"new-review-status\">{1}</b> with <i>{2}</i> message %date%",
+  "comment_changed": "%author% changed comment message from <b class=\"old-comment-message\">{0}</b> to <b class=\"new-comment-message\">{1}</b> %date%"
+}

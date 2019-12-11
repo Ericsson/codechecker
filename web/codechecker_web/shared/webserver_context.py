@@ -56,6 +56,8 @@ class Context(object):
         self._package_root = package_root
         self._severity_map = SeverityMap(
             load_json_or_empty(self.checkers_severity_map_file, {}))
+        self.__system_comment_map = \
+            load_json_or_empty(self.system_comment_map_file, {})
         self.__package_version = None
         self.__package_build_date = None
         self.__package_git_hash = None
@@ -109,6 +111,15 @@ class Context(object):
     @property
     def version_file(self):
         return os.path.join(self._package_root, 'config', 'web_version.json')
+
+    @property
+    def system_comment_map(self):
+        return self.__system_comment_map
+
+    @property
+    def system_comment_map_file(self):
+        return os.path.join(self._package_root, 'config',
+                            'system_comment_kinds.json')
 
     @property
     def path_plist_to_html_dist(self):
