@@ -216,6 +216,13 @@ COMPILE_OPTIONS_MERGED = [
     '-iwithprefixbefore'
 ]
 
+XCLANG_FLAGS_TO_SKIP = ['-module-file-info',
+                        '-S',
+                        '-emit-llvm',
+                        '-emit-llvm-bc',
+                        '-emit-llvm-only',
+                        '-emit-llvm-uselists',
+                        '-rewrite-objc']
 
 COMPILE_OPTIONS_MERGED = \
     re.compile('(' + '|'.join(COMPILE_OPTIONS_MERGED) + ')')
@@ -674,6 +681,24 @@ def __collect_clang_compile_opts(flag_iterator, details):
         return True
 
 
+def __collect_transform_xclang_opts(flag_iterator, details):
+    """Some specific -Xclang constucts need to be filtered out.
+
+       To generate the proper plist reports and not LLVM IR or
+       ASCII text as an output the flags need to be removed.
+    """
+    if flag_iterator.item == "-Xclang":
+        next(flag_iterator)
+        next_flag = flag_iterator.item
+        if next_flag in XCLANG_FLAGS_TO_SKIP:
+            return True
+
+        details['analyzer_options'].extend(["-Xclang", next_flag])
+        return True
+
+    return False
+
+
 def __collect_transform_include_opts(flag_iterator, details):
     """
     This function collects the compilation (i.e. not linker or preprocessor)
@@ -920,6 +945,7 @@ def parse_options(compilation_db_entry,
     clang_flag_collectors = [
         __skip_sources,
         __skip_clang,
+        __collect_transform_xclang_opts,
         __get_output,
         __determine_action_type,
         __get_arch,
