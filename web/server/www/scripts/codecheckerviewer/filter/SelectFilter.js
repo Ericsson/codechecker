@@ -190,6 +190,10 @@ function (declare, dom, Standby, ContentPane, Tooltip, FilterBase,
           tooltip : that.getTooltip ? that.getTooltip(value) : null,
           options : options,
           onClick : function () {
+            if (this.options.description) {
+              Tooltip.hide(this.domNode);
+            }
+
             that.deselect(value);
             that.notifyOthers();
             this.destroy();
