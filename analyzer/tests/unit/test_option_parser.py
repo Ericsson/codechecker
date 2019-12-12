@@ -291,6 +291,34 @@ class OptionParserTest(unittest.TestCase):
 
         self.assertEqual(["-std=gnu++14"], res.analyzer_options)
 
+    def test_ignore_xclang_flags_clang(self):
+        """Skip some specific xclang constructs"""
+
+        def fake_clang_version(a, b):
+            return True
+
+        clang_flags = ["-std=gnu++14",
+                       "-Xclang", "-module-file-info",
+                       "-Xclang", "-S",
+                       "-Xclang", "-emit-llvm",
+                       "-Xclang", "-emit-llvm-bc",
+                       "-Xclang", "-emit-llvm-only",
+                       "-Xclang", "-emit-llvm-uselists",
+                       "-Xclang", "-rewrite-objc",
+                       "-Xclang", "-disable-O0-optnone"]
+
+        xclang_skip = {
+            "directory": "/tmp",
+            "command":
+            "clang++ {} -c /tmp/a.cpp".format(' '.join(clang_flags)),
+            "file": "/tmp/a.cpp"}
+
+        res = log_parser.parse_options(
+            xclang_skip, get_clangsa_version_func=fake_clang_version)
+
+        self.assertEqual(["-std=gnu++14", "-Xclang", "-disable-O0-optnone"],
+                         res.analyzer_options)
+
     def test_preprocess_and_compile_with_extra_file_clang(self):
         """
         -MF flag is followed by a dependency file. We shouldn't consider this
