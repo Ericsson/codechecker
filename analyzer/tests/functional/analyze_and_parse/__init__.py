@@ -25,6 +25,7 @@ def setup_package():
     TEST_WORKSPACE = env.get_workspace('analyze_and_parse')
 
     os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
+    os.environ['TERM'] = 'dumb'
 
 
 def teardown_package():
