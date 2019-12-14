@@ -14,6 +14,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import json
 import os
 import re
 import subprocess
@@ -569,3 +570,22 @@ class DiffRemote(unittest.TestCase):
                                                  cmp_data,
                                                  False)
         self.assertEqual(len(diff_res), 26)
+
+    def test_multiple_runs(self):
+        """ Count the unresolved results in multiple runs without filter. """
+        base_run_name = self._test_runs[0].name
+        new_run_name = self._test_runs[1].name
+
+        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
+                    "-b", base_run_name, new_run_name,
+                    "-n", new_run_name, base_run_name,
+                    "--unresolved",
+                    "-o", "json",
+                    "--url", self._url]
+        print(diff_cmd)
+        out_json = subprocess.check_output(diff_cmd,
+                                           env=self._env,
+                                           cwd=os.environ['TEST_WORKSPACE'])
+
+        unresolved_results = json.loads(out_json)
+        self.assertNotEqual(len(unresolved_results), 0)

@@ -164,3 +164,15 @@ class DiffLocal(unittest.TestCase):
         print(high_low_unresolved_results)
 
         # FIXME check json output for the returned severity levels.
+
+    def test_multiple_dir(self):
+        """ Get unresolved reports from muliple local directories. """
+        unresolved_diff_cmd = [self._codechecker_cmd, 'cmd', 'diff',
+                               '-b', self.base_reports, self.new_reports,
+                               '-n', self.new_reports, self.base_reports,
+                               '--unresolved', '-o', 'json']
+        print(unresolved_diff_cmd)
+        out_json = subprocess.check_output(unresolved_diff_cmd)
+        print(out_json)
+        unresolved_results = json.loads(out_json)
+        self.assertNotEqual(len(unresolved_results), 0)

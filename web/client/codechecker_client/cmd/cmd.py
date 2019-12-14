@@ -373,38 +373,37 @@ def __register_diff(parser):
 
     parser.add_argument('-b', '--basename',
                         type=str,
-                        dest="basename",
-                        metavar='BASE_RUN',
-                        required=True,
+                        nargs='+',
+                        dest="base_run_names",
+                        metavar='BASE_RUNS',
                         default=argparse.SUPPRESS,
-                        help="The 'base' (left) side of the difference: this "
-                             "analysis run is used as the initial state in "
-                             "the comparison. The parameter can be a run name "
-                             "(on the remote server) or a local report "
-                             "directory (result of the analyze command). In "
-                             "case of run name the the basename can contain * "
-                             "quantifiers which matches any number of "
-                             "characters (zero or more). So if you have "
-                             "run-a-1, run-a-2 and run-b-1 "
-                             "then \"run-a*\" selects the first two.")
+                        help="The 'base' (left) side of the difference: these "
+                             "analysis runs are used as the initial state in "
+                             "the comparison. The parameter can be multiple "
+                             "run names (on the remote server) or multiple "
+                             "local report directories (result of the analyze "
+                             "command). In case of run name the the basename "
+                             "can contain * quantifiers which matches any "
+                             "number of characters (zero or more). So if you "
+                             "have run-a-1, run-a-2 and run-b-1 then "
+                             "\"run-a*\" selects the first two.")
 
     parser.add_argument('-n', '--newname',
                         type=str,
-                        dest="newname",
-                        metavar='NEW_RUN',
-                        required=True,
+                        nargs='+',
+                        dest="new_run_names",
+                        metavar='NEW_RUNS',
                         default=argparse.SUPPRESS,
-                        help="The 'new' (right) side of the difference: this "
-                             "analysis run is compared to the -b/--basename "
-                             "run. The parameter can be a run name "
-                             "(on the remote server) or a local "
-                             "report directory "
-                             "(result of the analyze command). In case of run "
-                             "name the newname can contain * quantifiers "
-                             "which matches any number of characters "
-                             "(zero or more). So if you have "
-                             "run-a-1, run-a-2 and run-b-1 "
-                             "then \"run-a*\" selects the first two.")
+                        help="The 'new' (right) side of the difference: these "
+                             "analysis runs are compared to the -b/--basename "
+                             "runs. The parameter can be multiple run names "
+                             "(on the remote server) or multiple local "
+                             "report directories (result of the analyze "
+                             "command). In case of run name the newname can "
+                             "contain * quantifiers which matches any number "
+                             "of characters (zero or more). So if you have "
+                             "run-a-1, run-a-2 and run-b-1 then "
+                             "\"run-a*\" selects the first two.")
 
     __add_filtering_arguments(parser, DEFAULT_FILTER_VALUES, True)
 
