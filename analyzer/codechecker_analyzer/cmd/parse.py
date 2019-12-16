@@ -29,8 +29,9 @@ from codechecker_common.skiplist_handler import SkipListHandler
 from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler
 from codechecker_common.output_formatters import twodim_to_str
-from codechecker_common.report import Report, get_report_path_hash
+from codechecker_common.report import Report
 from codechecker_common.source_code_comment_handler import skip_suppress_status
+from codechecker_report_hash.hash import get_report_path_hash
 
 LOG = logger.get_logger('system')
 
@@ -150,7 +151,7 @@ class PlistToPlaintextFormatter(object):
                                     key=lambda r: r.main['location']['line'])
 
             for report in sorted_reports:
-                path_hash = get_report_path_hash(report, report.files)
+                path_hash = get_report_path_hash(report.bug_path, report.files)
                 if path_hash in self._processed_path_hashes:
                     LOG.debug("Not showing report because it is a "
                               "deduplication of an already processed report!")
@@ -608,7 +609,7 @@ def main(args):
         comments.
         """
         report = Report(None, diag['path'], files)
-        path_hash = get_report_path_hash(report, files)
+        path_hash = get_report_path_hash(report.bug_path, files)
         if path_hash in processed_path_hashes:
             LOG.debug("Skip report because it is a deduplication of an "
                       "already processed report!")

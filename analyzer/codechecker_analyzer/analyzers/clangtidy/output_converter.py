@@ -16,7 +16,7 @@ import plistlib
 import re
 
 from codechecker_common.logger import get_logger
-from codechecker_common.report import generate_report_hash
+from codechecker_report_hash.hash import get_report_hash, HashType
 
 LOG = get_logger('analyzer.tidy')
 
@@ -300,10 +300,9 @@ class PListConverter(object):
         diag['path'].append(PListConverter._create_event_from_note(message,
                                                                    fmap))
 
+        source_file = files[diag['location']['file']]
         diag['issue_hash_content_of_line_in_context'] \
-            = generate_report_hash(diag['path'],
-                                   files[diag['location']['file']],
-                                   message.checker)
+            = get_report_hash(diag, source_file, HashType.PATH_SENSITIVE)
 
         return diag
 

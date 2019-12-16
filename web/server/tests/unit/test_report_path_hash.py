@@ -10,7 +10,7 @@ import os
 import unittest
 
 from codechecker_common import plist_parser
-from codechecker_common.report import get_report_path_hash
+from codechecker_report_hash.hash import get_report_path_hash
 
 
 class ReportPathHashHandler(unittest.TestCase):
@@ -54,6 +54,6 @@ class ReportPathHashHandler(unittest.TestCase):
         }
 
         for report in reports:
-            path_hash = get_report_path_hash(report, files)
+            path_hash = get_report_path_hash(report.bug_path, files)
             bug_hash = report.main['issue_hash_content_of_line_in_context']
             self.assertEqual(path_hash, report_hash_to_path_hash[bug_hash])

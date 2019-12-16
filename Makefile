@@ -63,7 +63,13 @@ package_report_converter: build_report_converter package_dir_structure
 	cd $(CC_BUILD_DIR) && \
 	ln -sf ../lib/python3/codechecker_report_converter/cli.py bin/report-converter
 
-package: package_dir_structure set_git_commit_template package_plist_to_html package_tu_collector package_report_converter
+build_report_hash:
+	$(MAKE) -C $(ROOT)/tools/codechecker_report_hash build
+
+package_report_hash: build_report_hash package_dir_structure
+	cp -r $(CC_TOOLS)/codechecker_report_hash/build/codechecker_report_hash/codechecker_report_hash $(CC_BUILD_LIB_DIR)
+
+package: package_dir_structure set_git_commit_template package_plist_to_html package_tu_collector package_report_converter package_report_hash
 	BUILD_DIR=$(BUILD_DIR) BUILD_LOGGER_64_BIT_ONLY=$(BUILD_LOGGER_64_BIT_ONLY) $(MAKE) -C $(CC_ANALYZER) package_analyzer
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) package_web
 
@@ -147,7 +153,7 @@ clean_venv_dev:
 
 clean: clean_package clean_vendor
 
-clean_package: clean_plist_to_html clean_tu_collector clean_report_converter
+clean_package: clean_plist_to_html clean_tu_collector clean_report_converter clean_report_hash
 	rm -rf $(BUILD_DIR)
 	find . -name "*.pyc" -delete
 
@@ -162,6 +168,9 @@ clean_tu_collector:
 
 clean_report_converter:
 	$(MAKE) -C $(CC_TOOLS)/report-converter clean
+
+clean_report_hash:
+	$(MAKE) -C $(CC_TOOLS)/codechecker_report_hash clean
 
 clean_travis:
 	# Clean CodeChecker config files stored in the users home directory.

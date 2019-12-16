@@ -26,9 +26,10 @@ from codechecker_api_shared.ttypes import RequestFailed
 from codechecker_common import logger
 from codechecker_common import plist_parser
 from codechecker_common.output_formatters import twodim_to_str
-from codechecker_common.report import Report, get_report_path_hash
+from codechecker_common.report import Report
 from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler
+from codechecker_report_hash.hash import get_report_path_hash
 
 from codechecker_web.shared import webserver_context
 from codechecker_web.shared import convert
@@ -540,7 +541,8 @@ def handle_diff_results(args):
                     LOG.debug("Parsing: %s", file_path)
                     files, reports = plist_parser.parse_plist_file(file_path)
                     for report in reports:
-                        path_hash = get_report_path_hash(report, files)
+                        path_hash = get_report_path_hash(report.bug_path,
+                                                         files)
                         if path_hash in processed_path_hashes:
                             LOG.debug("Not showing report because it is a "
                                       "deduplication of an already processed "

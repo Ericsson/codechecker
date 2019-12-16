@@ -37,7 +37,8 @@ import plistlib
 from xml.parsers.expat import ExpatError
 
 from codechecker_common.logger import get_logger
-from codechecker_common.report import Report, generate_report_hash
+from codechecker_common.report import Report
+from codechecker_report_hash.hash import get_report_hash, HashType
 
 LOG = get_logger('report')
 
@@ -116,22 +117,6 @@ def get_checker_name(diagnostic, path=""):
     return checker_name
 
 
-def get_report_hash(diagnostic, source_file):
-    """
-    Check if checker name is available in the report.
-    Checker hash was not available in older clang versions before 3.8.
-    """
-
-    report_hash = diagnostic.get('issue_hash_content_of_line_in_context')
-    if not report_hash:
-        # Generate hash value if it is missing from the report.
-        report_hash \
-            = generate_report_hash(diagnostic['path'],
-                                   source_file,
-                                   get_checker_name(diagnostic))
-    return report_hash
-
-
 def parse_plist_file(path, source_root=None, allow_plist_update=True):
     """
     Parse the reports from a plist file.
@@ -168,9 +153,15 @@ def parse_plist_file(path, source_root=None, allow_plist_update=True):
             if source_root:
                 file_path = os.path.join(source_root, file_path.lstrip('/'))
 
-            report_hash = get_report_hash(diag, file_path)
-            main_section['issue_hash_content_of_line_in_context'] = \
-                report_hash
+            report_hash = diag.get('issue_hash_content_of_line_in_context')
+
+            if not report_hash:
+                # Generate hash value if it is missing from the report.
+                report_hash = get_report_hash(diag, file_path,
+                                              HashType.PATH_SENSITIVE)
+
+                main_section['issue_hash_content_of_line_in_context'] = \
+                    report_hash
 
             if 'issue_hash_content_of_line_in_context' not in diag:
                 # If the report hash was not in the plist, we set it in the
