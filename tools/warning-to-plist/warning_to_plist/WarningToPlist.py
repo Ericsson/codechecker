@@ -15,11 +15,30 @@ import os
 import shutil
 import sys
 
-from .converter.clang_tidy.plist_converter import ClangTidyPlistConverter
-from .converter.sanitizers.address.plist_converter import ASANPlistConverter
-from .converter.sanitizers.memory.plist_converter import MSANPlistConverter
-from .converter.sanitizers.thread.plist_converter import TSANPlistConverter
-from .converter.sanitizers.ub.plist_converter import UBSANPlistConverter
+try:
+    from .converter.clang_tidy.plist_converter import \
+        ClangTidyPlistConverter
+    from .converter.sanitizers.address.plist_converter import \
+        ASANPlistConverter
+    from .converter.sanitizers.memory.plist_converter import \
+        MSANPlistConverter
+    from .converter.sanitizers.thread.plist_converter import \
+        TSANPlistConverter
+    from .converter.sanitizers.ub.plist_converter import \
+        UBSANPlistConverter
+except ValueError:
+    # Attempted relative import in non-package.
+    from converter.clang_tidy.plist_converter import \
+        ClangTidyPlistConverter
+    from converter.sanitizers.address.plist_converter import \
+        ASANPlistConverter
+    from converter.sanitizers.memory.plist_converter import \
+        MSANPlistConverter
+    from converter.sanitizers.thread.plist_converter import \
+        TSANPlistConverter
+    from converter.sanitizers.ub.plist_converter import \
+        UBSANPlistConverter
+
 
 LOG = logging.getLogger('WarningToPlist')
 

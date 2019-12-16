@@ -53,7 +53,17 @@ package_tu_collector: build_tu_collector package_dir_structure
 	cd $(CC_BUILD_DIR) && \
 	ln -sf ../lib/python2.7/tu_collector/tu_collector.py bin/tu_collector
 
-package: package_dir_structure set_git_commit_template package_plist_to_html package_tu_collector
+build_warning_to_plist:
+	$(MAKE) -C $(ROOT)/tools/warning-to-plist build
+
+package_warning_to_plist: build_warning_to_plist package_dir_structure
+	# Copy tu_collector files.
+	cp -rp $(CC_TOOLS)/warning-to-plist/build/warning_to_plist/warning_to_plist $(CC_BUILD_LIB_DIR) && \
+	chmod u+x $(CC_BUILD_LIB_DIR)/warning_to_plist/WarningToPlist.py && \
+	cd $(CC_BUILD_DIR) && \
+	ln -sf ../lib/python2.7/warning_to_plist/WarningToPlist.py bin/warning-to-plist
+
+package: package_dir_structure set_git_commit_template package_plist_to_html package_tu_collector package_warning_to_plist
 	BUILD_DIR=$(BUILD_DIR) BUILD_LOGGER_64_BIT_ONLY=$(BUILD_LOGGER_64_BIT_ONLY) $(MAKE) -C $(CC_ANALYZER) package_analyzer
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) package_web
 

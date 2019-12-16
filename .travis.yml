@@ -148,7 +148,7 @@ script:
       make clean_travis &&
       make package &&
       make -C tools/plist_to_html test &&
-      make -C tools/warning-to-plist test &&
+      make -C tools/warning-to-plist package test &&
       if [[ "$CC_MODULE" = "analyzer" ]]; then
         BUILD_DIR=$TRAVIS_BUILD_DIR/build make -C analyzer \
           test_unit \
