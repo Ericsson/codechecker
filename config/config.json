@@ -224,7 +224,9 @@
         "misc-unused-using",
         "misc-use",
         "misc-virtual",
-        "modernize",
+        "modernize-deprecated-headers",
+        "modernize-replace-auto-ptr",
+        "modernize-replace-random-shuffle",
         "mpi",
         "performance"
       ],
