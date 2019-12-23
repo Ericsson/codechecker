@@ -30,7 +30,11 @@ supported_analyzers = {ClangSA.ANALYZER_NAME: ClangSA,
 
 def is_ctu_capable(context):
     """ Detects if the current clang is CTU compatible. """
-    check_supported_analyzers([ClangSA.ANALYZER_NAME], context)
+    enabled_analyzers, _ = \
+        check_supported_analyzers([ClangSA.ANALYZER_NAME], context)
+    if not enabled_analyzers:
+        return False
+
     clangsa_cfg = ClangSA.construct_config_handler([], context)
 
     return clangsa_cfg.ctu_capability.is_ctu_capable
@@ -39,7 +43,11 @@ def is_ctu_capable(context):
 def is_statistics_capable(context):
     """ Detects if the current clang is Statistics compatible. """
     # Resolve potentially missing binaries.
-    check_supported_analyzers([ClangSA.ANALYZER_NAME], context)
+    enabled_analyzers, _ = \
+        check_supported_analyzers([ClangSA.ANALYZER_NAME], context)
+    if not enabled_analyzers:
+        return False
+
     clangsa_cfg = ClangSA.construct_config_handler([], context)
 
     check_env = env.extend(context.path_env_extra,
@@ -58,7 +66,11 @@ def is_statistics_capable(context):
 
 def is_z3_capable(context):
     """ Detects if the current clang is Z3 compatible. """
-    check_supported_analyzers([ClangSA.ANALYZER_NAME], context)
+    enabled_analyzers, _ = \
+        check_supported_analyzers([ClangSA.ANALYZER_NAME], context)
+    if not enabled_analyzers:
+        return False
+
     analyzer_binary = context.analyzer_binaries.get(ClangSA.ANALYZER_NAME)
 
     analyzer_env = env.extend(context.path_env_extra,
