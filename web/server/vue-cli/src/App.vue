@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <Simple msg="CodeChecker Vue CLI"/>
+    <Simple msg="CodeChecker Vue CLI" />
   </div>
 </template>
 
@@ -8,7 +8,7 @@
 import Simple from './components/Simple.vue'
 
 export default {
-  name: 'app',
+  name: 'App',
   components: {
     Simple
   }
