@@ -1,0 +1,39 @@
+
+# [<tag>] <subject> (Max 70 char)
+# |<----   Preferably using up to 60 chars   --->|<------------------->|
+# Example: [feature] Implement automated commit messages
+
+# (Optional) Explain why this change is being made
+# |<----   Try To Limit Each Line to a Maximum Of 70-75 Characters   ---->|
+
+# --- COMMIT END ---
+# Tag can be
+#    analyzer      (Analyzer related changes)
+#    clang         (Clang Static Analyzer related changes)
+#    clang-tidy    (Clang Tidy related changes)
+#    cmd           (Command line changes)
+#    cfg           (Config file changes)
+#    db            (Issues related to the database schema)
+#    doc           (Changes to documentation)
+#    gui           (Changes in the web GUI)
+#    fix           (Bug fix)
+#    feat          (New feature)
+#    plist2html    (Changes in the plist-to-html tool)
+#    refactor      (Refactoring code)
+#    server        (Server related changes)
+#    style         (Formatting, missing semi colons, etc; no code change)
+#    test          (Adding or refactoring tests; no production code change)
+#    tu-collector  (Changes in the tu-collector tool)
+#    version       (Version bump/new release; no production code change)
+#    web           (Changes in the web module)
+#
+# Note: Multiple tags can be combined, e.g. [feat][server] Save and load filters in the GUI
+# --------------------
+# Remember to:
+#   * Capitalize the subject line.
+#   * Use the imperative mood in the subject line.
+#   * Do not end the subject line with a period.
+#   * Separate subject from body with a blank line.
+#   * Use the body to explain what and why vs how.
+#   * Can use multiple lines with "-" or "*" for bullet points in body.
+# --------------------
