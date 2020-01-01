@@ -17,6 +17,12 @@ module.exports = {
     hot: true,
     historyApiFallback: true
   },
+  resolve: {
+    extensions: ['.js', '.vue'],
+    alias: {
+      '@': join(__dirname, 'src')
+    }
+  },
   module: {
     rules: [
       {

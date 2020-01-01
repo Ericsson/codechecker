@@ -1,17 +1,33 @@
 <template>
   <div id="app">
-    <Simple msg="CodeChecker Vue CLI" />
+    <router-link :to="{ name: 'products' }">
+      Products
+    </router-link>
+    <router-link :to="{ name: 'login' }">
+      Login
+    </router-link>
+    <router-link :to="{ name: 'global-permission' }">
+      Global permissions
+    </router-link>
+    <router-link :to="{ name: 'product-new' }">
+      New product
+    </router-link>
+    <router-link :to="{ name: 'product-edit', params: { endpoint: 'Default' } }">
+      Edit product
+    </router-link>
+    <router-link :to="{ name: 'product-permission', params: { endpoint: 'Default' } }">
+      Product permissions
+    </router-link>
+    <router-link :to="{ name: 'runs', params: { endpoint: 'Default' } }">
+      Product detail
+    </router-link>
+    <router-view />
   </div>
 </template>
 
 <script>
-import Simple from './components/Simple.vue'
-
 export default {
-  name: 'App',
-  components: {
-    Simple
-  }
+  name: 'App'
 }
 </script>
 
