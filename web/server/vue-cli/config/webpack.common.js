@@ -1,26 +1,18 @@
 const HTMLWebpackPlugin = require('html-webpack-plugin');
-const { join } = require('path');
 const { VueLoaderPlugin } = require('vue-loader');
 
-const mode = process.env.NODE_ENV === 'production'
-  ? 'production' : 'development';
+const helpers = require('./helpers');
 
 module.exports = {
-  mode: mode,
-  entry: join(__dirname, 'src', 'main.js'),
+  entry: helpers.root('src', 'main.js'),
   output: {
-    path: join(__dirname, 'dist'),
+    path: helpers.root('dist'),
     filename: 'app.bundler.js'
-  },
-  devServer: {
-    port: 8080,
-    hot: true,
-    historyApiFallback: true
   },
   resolve: {
     extensions: ['.js', '.vue'],
     alias: {
-      '@': join(__dirname, 'src')
+      '@': helpers.root('src')
     }
   },
   module: {
@@ -76,8 +68,8 @@ module.exports = {
       showErrors: true,
       cache: true,
       title: 'CodeChecker viewer',
-      favicon: join(__dirname, 'src', 'assets','favicon.ico'),
-      template: join(__dirname, 'src', 'index.html')
+      favicon: helpers.root('src', 'assets', 'favicon.ico'),
+      template: helpers.root('src', 'index.html')
     })
   ]
 }

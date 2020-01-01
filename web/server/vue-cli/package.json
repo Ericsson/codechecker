@@ -5,8 +5,9 @@
     "author": "Márton Csordás",
     "private": true,
     "scripts": {
+      "build": "webpack --config config/webpack.prod.js",
       "lint": "eslint --ext .js,.vue src",
-      "server:dev": "webpack-dev-server --hot --inline --progress --config webpack.config.js",
+      "server:dev": "webpack-dev-server --hot --inline --progress --config config/webpack.dev.js",
       "server": "npm run server:dev",
       "start": "npm run server"
     },
@@ -33,6 +34,7 @@
       "vue-template-compiler": "^2.6.11",
       "webpack": "^4.41.5",
       "webpack-cli": "^3.3.10",
-      "webpack-dev-server": "^3.10.1"
+      "webpack-dev-server": "^3.10.1",
+      "webpack-merge": "^4.2.2"
     }
   }
