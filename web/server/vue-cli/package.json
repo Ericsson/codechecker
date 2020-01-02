@@ -8,6 +8,7 @@
       "build": "webpack --config config/webpack.prod.js",
       "lint": "eslint --ext .js,.vue src",
       "server:dev": "webpack-dev-server --hot --inline --progress --config config/webpack.dev.js",
+      "server:prod": "http-server dist -c-1 --cors",
       "server": "npm run server:dev",
       "start": "npm run server"
     },
@@ -27,6 +28,7 @@
       "eslint-plugin-vue": "^6.1.1",
       "fibers": "^4.0.2",
       "html-webpack-plugin": "^3.2.0",
+      "http-server": "^0.12.0",
       "sass": "^1.24.0",
       "sass-loader": "^8.0.0",
       "vue-loader": "^15.8.3",
