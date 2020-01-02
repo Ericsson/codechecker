@@ -8,6 +8,9 @@ export default new Router({
     {
       path: '/',
       name: 'products',
+      meta: {
+        requiresAuth: true
+      },
       component: () => import('@/views/Products')
     },
     {
@@ -18,25 +21,40 @@ export default new Router({
     {
       path: '/permission',
       name: 'global-permission',
+      meta: {
+        requiresAuth: true
+      },
       component: () => import('@/views/Permission')
     },
     {
       path: '/p/new',
       name: 'product-new',
+      meta: {
+        requiresAuth: true
+      },
       component: () => import('@/views/ProductNew')
     },
     {
       path: '/p/edit/:endpoint',
       name: 'product-edit',
+      meta: {
+        requiresAuth: true
+      },
       component: () => import('@/views/ProductEdit')
     },
     {
       path: '/p/permissions/:endpoint',
       name: 'product-permission',
+      meta: {
+        requiresAuth: true
+      },
       component: () => import('@/views/ProductPermission')
     },
     {
       path: '/:endpoint',
+      meta: {
+        requiresAuth: true
+      },
       component: () => import('@/views/ProductDetail'),
       children: [
         {
