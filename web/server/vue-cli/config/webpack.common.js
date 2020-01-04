@@ -1,7 +1,18 @@
 const HTMLWebpackPlugin = require('html-webpack-plugin');
 const { VueLoaderPlugin } = require('vue-loader');
+const { DefinePlugin } = require('webpack');
+
+const { join } = require('path');
 
 const helpers = require('./helpers');
+
+const METADATA = {
+  'CC_SERVER_HOST': null,
+  'CC_SERVER_PORT': 80,
+  'CC_API_VERSION': JSON.stringify('6.24')
+};
+
+const cc_api_dir = helpers.root('src', 'codechecker_api');
 
 module.exports = {
   entry: helpers.root('src', 'main.js'),
@@ -12,7 +23,18 @@ module.exports = {
   resolve: {
     extensions: ['.js', '.vue'],
     alias: {
-      '@': helpers.root('src')
+      '@': helpers.root('src'),
+      '@cc-api': helpers.root('src', 'services', 'api'),
+      '@cc/auth': join(cc_api_dir, 'codeCheckerAuthentication.js'),
+      '@cc/auth-types': join(cc_api_dir, 'authentication_types.js'),
+      '@cc/conf': join(cc_api_dir, 'configurationService.js'),
+      '@cc/conf-types': join(cc_api_dir, 'configuration_types.js'),
+      '@cc/db-access': join(cc_api_dir, 'codeCheckerDBAccess.js'),
+      '@cc/prod': join(cc_api_dir, 'codeCheckerProductService.js'),
+      '@cc/prod-types': join(cc_api_dir, 'products_types.js'),
+      '@cc/report-server-types': join(cc_api_dir, 'report_server_types.js'),
+      '@cc/shared-types': join(cc_api_dir, 'codechecker_api_shared_types.js'),
+      'thrift': join('thrift', 'lib', 'nodejs', 'lib', 'thrift', 'browser.js')
     }
   },
   module: {
@@ -31,7 +53,7 @@ module.exports = {
       {
         test: /\.(js|vue)$/,
         loader: 'eslint-loader',
-        exclude: /node_modules/,
+        exclude: [/node_modules/, cc_api_dir],
         enforce: 'pre',
         options: {
           emitWarning: true,
@@ -81,6 +103,11 @@ module.exports = {
     ]
   },
   plugins: [
+    new DefinePlugin({
+      'process.env': {
+        'CC_API_VERSION': METADATA.CC_API_VERSION
+      }
+    }),
     new VueLoaderPlugin(),
     new HTMLWebpackPlugin({
       showErrors: true,
