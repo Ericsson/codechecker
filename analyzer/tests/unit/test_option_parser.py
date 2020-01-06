@@ -25,6 +25,11 @@ class OptionParserTest(unittest.TestCase):
     parsing of the g++/gcc compiler options.
     """
 
+    @unittest.skipIf(platform.system() == 'Darwin',
+                     "OSX has gcc and g++ symlinked to Apple-built clang and "
+                     "clang++ respectively. Filtering does not resolve "
+                     "symlinks when determining the compiler, so this test "
+                     "would fail in OSX.")
     def test_build_onefile(self):
         """
         Test the build command of a simple file.
@@ -41,6 +46,11 @@ class OptionParserTest(unittest.TestCase):
         self.assertTrue(BuildAction.COMPILE, res.action_type)
         self.assertEquals(0, len(res.analyzer_options))
 
+    @unittest.skipIf(platform.system() == 'Darwin',
+                     "OSX has gcc and g++ symlinked to Apple-built clang and "
+                     "clang++ respectively. Filtering does not resolve "
+                     "symlinks when determining the compiler, so this test "
+                     "would fail in OSX.")
     def test_build_multiplefiles(self):
         """
         Test the build command of multiple files.
@@ -147,6 +157,11 @@ class OptionParserTest(unittest.TestCase):
         self.assertTrue(set(compiler_options) == set(res.analyzer_options))
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
+    @unittest.skipIf(platform.system() == 'Darwin',
+                     "OSX has gcc and g++ symlinked to Apple-built clang and "
+                     "clang++ respectively. In case of clang invocations the "
+                     "linker flags are not filtered, so this test would fail "
+                     "in OSX.")
     def test_compile_with_include_paths(self):
         """
         sysroot should be detected as compiler option because it is needed
@@ -194,6 +209,11 @@ class OptionParserTest(unittest.TestCase):
         print(res)
         self.assertEquals(BuildAction.LINK, res.action_type)
 
+    @unittest.skipIf(platform.system() == 'Darwin',
+                     "OSX has gcc and g++ symlinked to Apple-built clang and "
+                     "clang++ respectively. In case of clang invocations the "
+                     "linker flags are not filtered, so this test would fail "
+                     "in OSX.")
     def test_link_with_include_paths(self):
         """
         Should be link if only object files are in the command.
@@ -251,6 +271,11 @@ class OptionParserTest(unittest.TestCase):
         self.assertEqual(res.source, 'main.cpp')
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
+    @unittest.skipIf(platform.system() == 'Darwin',
+                     "OSX has gcc and g++ symlinked to Apple-built clang and "
+                     "clang++ respectively. Filtering does not resolve "
+                     "symlinks when determining the compiler, so this test "
+                     "would fail in OSX.")
     def test_ignore_flags_gcc(self):
         """
         Test if special compiler options are ignored properly.

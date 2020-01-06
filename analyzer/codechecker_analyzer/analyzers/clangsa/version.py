@@ -36,7 +36,7 @@ class ClangVersionInfoParser(object):
 
     def __init__(self):
         self.clang_version_pattern = (
-            r'clang version (?P<major_version>[0-9]+)'
+            r'(?P<vendor>clang|Apple LLVM) version (?P<major_version>[0-9]+)'
             r'\.(?P<minor_version>[0-9]+)\.(?P<patch_version>[0-9]+)')
 
         self.clang_installed_dir_pattern =\
