@@ -1,24 +1,31 @@
 <template>
   <div id="product">
-    <h3>Product Detail</h3>
-    <router-link :to="{ name: 'runs' }">
-      Runs
-    </router-link>
-    <router-link :to="{ name: 'statistics' }">
-      Statistics
-    </router-link>
-    <router-link :to="{ name: 'reports' }">
-      Reports
-    </router-link>
-    <router-link :to="{ name: 'report-detail', params: { name: 'run_name' }}">
-      Report detail
-    </router-link>
+    <v-tabs>
+      <v-tab :to="{ name: 'runs' }">
+        Runs
+      </v-tab>
+      <v-tab :to="{ name: 'statistics' }">
+        Statistics
+      </v-tab>
+      <v-tab :to="{ name: 'reports' }">
+        Reports
+      </v-tab>
+      <v-tab :to="{ name: 'report-detail', params: { name: 'run_name' }}">
+        Report detail
+      </v-tab>
+    </v-tabs>
     <router-view />
   </div>
 </template>
 
 <script>
+import VTab from "Vuetify/VTabs/VTab";
+import VTabs from "Vuetify/VTabs/VTabs";
+
 export default {
-  name: 'Product'
+  name: 'Product',
+  components: {
+    VTab, VTabs
+  }
 }
 </script>
