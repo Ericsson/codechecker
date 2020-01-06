@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <v-app id="app">
     <router-link :to="{ name: 'products' }">
       Products
     </router-link>
@@ -21,20 +21,24 @@
     <router-link :to="{ name: 'runs', params: { endpoint: 'Default' } }">
       Product detail
     </router-link>
+    <v-btn class="ma-2" tile outlined color="success">
+      <v-icon left>
+        mdi-pencil
+      </v-icon> Edit
+    </v-btn>
     <router-view />
-  </div>
+  </v-app>
 </template>
 
 <script>
+import { VApp } from "Vuetify/VApp";
+import { VBtn } from "Vuetify/VBtn";
+import { VIcon } from "Vuetify/VIcon";
+
 export default {
-  name: 'App'
+  name: 'App',
+  components: {
+    VApp, VBtn, VIcon
+  }
 }
 </script>
-
-<style lang="scss">
-#app {
-  text-align: center;
-  color: $cc-primary;
-  margin-top: 60px;
-}
-</style>

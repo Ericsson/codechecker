@@ -1,10 +1,15 @@
-import Vue from 'vue'
+import '@mdi/font/css/materialdesignicons.css'
+
+import Vue from 'vue';
+import vuetify from '@/plugins/vuetify';
 
 import router from "./router";
 import store from "./store";
-import App from './App.vue'
+import App from './App.vue';
 
 import { eventHub } from '@cc-api/_base.service';
+
+import "@/variables.scss";
 
 Vue.config.productionTip = false
 
@@ -31,5 +36,6 @@ router.beforeResolve((to, from, next) => {
 new Vue({
   router,
   store,
+  vuetify,
   render: h => h(App),
 }).$mount('#app')

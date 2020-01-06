@@ -34,7 +34,8 @@ module.exports = {
       '@cc/prod-types': join(cc_api_dir, 'products_types.js'),
       '@cc/report-server-types': join(cc_api_dir, 'report_server_types.js'),
       '@cc/shared-types': join(cc_api_dir, 'codechecker_api_shared_types.js'),
-      'thrift': join('thrift', 'lib', 'nodejs', 'lib', 'thrift', 'browser.js')
+      'thrift': join('thrift', 'lib', 'nodejs', 'lib', 'thrift', 'browser.js'),
+      'Vuetify': join('vuetify', 'lib', 'components')
     }
   },
   module: {
@@ -68,16 +69,17 @@ module.exports = {
         ]
       },
       {
-        test: /\.scss$/,
+        test:/\.s(c|a)ss$/,
         use: [
           'vue-style-loader',
           'css-loader',
           {
             loader: 'sass-loader',
             options: {
-              prependData: `
-                @import "@/variables.scss";
-              `
+              implementation: require('sass'),
+              sassOptions: {
+                fiber: require('fibers')
+              }
             }
           }
         ]
@@ -96,6 +98,18 @@ module.exports = {
 
                 return '[contenthash].[ext]';
               },
+            }
+          }
+        ]
+      },
+      {
+        test: /\.(woff2?|eot|ttf|otf)$/,
+        use: [
+          {
+            loader: 'file-loader',
+            options: {
+              limit: 10000,
+              name: '[name].[hash:7].[ext]'
             }
           }
         ]
