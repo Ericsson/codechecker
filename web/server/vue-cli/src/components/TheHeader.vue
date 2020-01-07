@@ -17,9 +17,6 @@
         <v-list-item :to="{ name: 'login' }">
           <v-list-item-title>Login</v-list-item-title>
         </v-list-item>
-        <v-list-item :to="{ name: 'runs', params: { endpoint: 'Default' } }">
-          <v-list-item-title>Product detail</v-list-item-title>
-        </v-list-item>
       </v-list>
     </v-menu>
   </v-app-bar>

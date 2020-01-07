@@ -10,9 +10,6 @@
       <v-tab :to="{ name: 'reports' }">
         Reports
       </v-tab>
-      <v-tab :to="{ name: 'report-detail', params: { name: 'run_name' }}">
-        Report detail
-      </v-tab>
     </v-tabs>
     <router-view />
   </div>
