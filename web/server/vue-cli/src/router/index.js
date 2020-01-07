@@ -72,7 +72,7 @@ export default new Router({
           component: () => import('@/views/Statistics')
         },
         {
-          path: 'reports',
+          path: ':run',
           name: 'reports',
           component: () => import('@/views/Reports')
         },
