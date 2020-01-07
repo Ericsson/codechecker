@@ -18,7 +18,7 @@
           v-for="(value, name) in item.detectionStatusCount"
           :key="name"
         >
-          {{ name }} ({{ value }})
+          {{ detectionStatusFromCodeToString(name) }} ({{ value }})
         </div>
       </template>
 
@@ -57,6 +57,8 @@ import VChip from "Vuetify/VChip/VChip";
 import VAvatar from "Vuetify/VAvatar/VAvatar";
 import VIcon from "Vuetify/VIcon/VIcon";
 
+import { DetectionStatusMixin } from "@/mixins";
+
 import { ccService } from '@cc-api';
 
 export default {
@@ -64,6 +66,8 @@ export default {
   components: {
     VDataTable, VChip, VAvatar, VIcon
   },
+
+  mixins: [ DetectionStatusMixin ],
 
   data() {
     return {
