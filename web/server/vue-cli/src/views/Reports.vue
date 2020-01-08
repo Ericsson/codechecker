@@ -10,6 +10,14 @@
           {{ item.bugPathLength }}
         </v-chip>
       </template>
+
+      <template #item.reviewData="{ item }">
+        <review-status-icon :status="parseInt(item.reviewData.status)" />
+      </template>
+
+      <template #item.detectionStatus="{ item }">
+        <detection-status-icon :status="parseInt(item.detectionStatus)" />
+      </template>
     </v-data-table>
   </div>
 </template>
@@ -21,11 +29,15 @@ import VChip from "Vuetify/VChip/VChip";
 import { ccService } from '@cc-api';
 
 import { BugPathLengthColorMixin } from '@/mixins';
+import { DetectionStatusIcon } from '@/components/icons';
+import { ReviewStatusIcon } from '@/components/icons';
 
 export default {
   name: 'Reports',
   components: {
-    VDataTable, VChip
+    VDataTable, VChip,
+    DetectionStatusIcon,
+    ReviewStatusIcon
   },
   mixins: [ BugPathLengthColorMixin ],
 
@@ -59,11 +71,13 @@ export default {
         },
         {
           text: "Review status",
-          value: "reviewData"
+          value: "reviewData",
+          align: "center"
         },
         {
           text: "Detection status",
-          value: "detectionStatus"
+          value: "detectionStatus",
+          align: "center"
         }
       ],
       reports: []
