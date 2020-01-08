@@ -4,20 +4,30 @@
       :headers="headers"
       :items="reports"
       item-key="name"
-    />
+    >
+      <template #item.bugPathLength="{ item }">
+        <v-chip :color="getBugPathLenColor(item.bugPathLength)">
+          {{ item.bugPathLength }}
+        </v-chip>
+      </template>
+    </v-data-table>
   </div>
 </template>
 
 <script>
 import VDataTable from "Vuetify/VDataTable/VDataTable";
+import VChip from "Vuetify/VChip/VChip";
 
 import { ccService } from '@cc-api';
+
+import { BugPathLengthColorMixin } from '@/mixins';
 
 export default {
   name: 'Reports',
   components: {
-    VDataTable
+    VDataTable, VChip
   },
+  mixins: [ BugPathLengthColorMixin ],
 
   data() {
     return {
@@ -44,7 +54,8 @@ export default {
         },
         {
           text: "Bug path length",
-          value: "bugPathLength"
+          value: "bugPathLength",
+          align: 'center'
         },
         {
           text: "Review status",
