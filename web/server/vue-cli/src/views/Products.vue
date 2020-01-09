@@ -1,5 +1,15 @@
 <template>
-  <div>
+  <v-card>
+    <v-card-title>
+      <v-text-field
+        v-model="productNameSearch"
+        append-icon="mdi-magnify"
+        label="Search for products..."
+        single-line
+        hide-details
+      />
+    </v-card-title>
+
     <v-data-table
       :headers="headers"
       :items="processedProducts"
@@ -54,7 +64,7 @@
         </v-chip>
       </template>
     </v-data-table>
-  </div>
+  </v-card>
 </template>
 
 <script>
@@ -62,6 +72,8 @@ import VDataTable from "Vuetify/VDataTable/VDataTable";
 import VChip from "Vuetify/VChip/VChip";
 import VAvatar from "Vuetify/VAvatar/VAvatar";
 import VIcon from "Vuetify/VIcon/VIcon";
+import { VCard, VCardTitle } from "Vuetify/VCard";
+import VTextField from "Vuetify/VTextField/VTextField";
 
 import { prodService } from '@cc-api';
 
@@ -70,7 +82,7 @@ import { StrToColorMixin } from '@/mixins';
 export default {
   name: 'Products',
   components: {
-    VDataTable, VChip, VAvatar, VIcon
+    VDataTable, VChip, VAvatar, VIcon, VCard, VCardTitle, VTextField
   },
   filters: {
     productIconName: function (endpoint) {
@@ -83,6 +95,7 @@ export default {
 
   data() {
     return {
+      productNameSearch: null,
       headers: [
         {
           text: "",
@@ -129,13 +142,23 @@ export default {
     }
   },
 
+  watch: {
+    productNameSearch: function() {
+      this.fetchProducts();
+    }
+  },
+
   created() {
     this.fetchProducts();
   },
 
   methods: {
     fetchProducts() {
-      prodService.getClient().getProducts(null, null, (err, products) => {
+      const productNameFilter = this.productNameSearch
+        ? `*${this.productNameSearch}*` : null;
+
+      prodService.getClient().getProducts(null, productNameFilter,
+      (err, products) => {
         this.products = products;
       });
     }
