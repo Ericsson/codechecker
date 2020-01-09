@@ -6,7 +6,11 @@
       :items="statistics"
       :hide-default-footer="true"
       item-key="severity"
-    />
+    >
+      <template #item.severity="{ item }">
+        <severity-icon :status="item.severity" />
+      </template>
+    </v-data-table>
   </div>
 </template>
 
@@ -15,10 +19,13 @@ import VDataTable from "Vuetify/VDataTable/VDataTable";
 
 import { ccService } from '@cc-api';
 
+import { SeverityIcon } from '@/components/icons';
+
 export default {
   name: 'SeverityStatistics',
   components: {
-    VDataTable
+    VDataTable,
+    SeverityIcon
   },
 
   data() {
@@ -52,7 +59,7 @@ export default {
       (err, statistics) => {
         this.statistics = Object.keys(statistics).map((severity) => {
           return {
-            severity: severity,
+            severity: parseInt(severity),
             reports: statistics[severity]
           };
         })

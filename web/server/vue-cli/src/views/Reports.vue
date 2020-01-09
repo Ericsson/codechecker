@@ -5,6 +5,10 @@
       :items="reports"
       item-key="name"
     >
+      <template #item.severity="{ item }">
+        <severity-icon :status="item.severity" />
+      </template>
+
       <template #item.bugPathLength="{ item }">
         <v-chip :color="getBugPathLenColor(item.bugPathLength)">
           {{ item.bugPathLength }}
@@ -31,13 +35,15 @@ import { ccService } from '@cc-api';
 import { BugPathLengthColorMixin } from '@/mixins';
 import { DetectionStatusIcon } from '@/components/icons';
 import { ReviewStatusIcon } from '@/components/icons';
+import { SeverityIcon } from '@/components/icons';
 
 export default {
   name: 'Reports',
   components: {
     VDataTable, VChip,
     DetectionStatusIcon,
-    ReviewStatusIcon
+    ReviewStatusIcon,
+    SeverityIcon
   },
   mixins: [ BugPathLengthColorMixin ],
 

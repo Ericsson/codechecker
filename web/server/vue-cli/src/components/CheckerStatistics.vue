@@ -6,7 +6,11 @@
       :items="statistics"
       :hide-default-footer="true"
       item-key="checker"
-    />
+    >
+      <template #item.severity="{ item }">
+        <severity-icon :status="item.severity" />
+      </template>
+    </v-data-table>
   </div>
 </template>
 
@@ -20,10 +24,13 @@ import {
   ReviewStatus
 } from '@cc/report-server-types';
 
+import { SeverityIcon } from '@/components/icons';
+
 export default {
   name: 'CheckerStatistics',
   components: {
-    VDataTable
+    VDataTable,
+    SeverityIcon
   },
 
   data() {
