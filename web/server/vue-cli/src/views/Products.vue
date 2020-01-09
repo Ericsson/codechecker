@@ -6,6 +6,18 @@
       :hide-default-footer="true"
       item-key="endpoint"
     >
+      <template #item.icon="{ item }">
+        <v-avatar
+          :color="strToColor(item.endpoint)"
+          size="48"
+          class="my-1"
+        >
+          <span class="white--text headline">
+            {{ item.endpoint | productIconName }}
+          </span>
+        </v-avatar>
+      </template>
+
       <template #item.endpoint="{ item }">
         <router-link
           :to="{ name: 'runs', params: { endpoint: item.endpoint } }"
@@ -53,15 +65,29 @@ import VIcon from "Vuetify/VIcon/VIcon";
 
 import { prodService } from '@cc-api';
 
+import { StrToColorMixin } from '@/mixins';
+
 export default {
   name: 'Products',
   components: {
     VDataTable, VChip, VAvatar, VIcon
   },
+  filters: {
+    productIconName: function (endpoint) {
+      if (!endpoint) return '';
+
+      return endpoint.charAt(0).toUpperCase();
+    }
+  },
+  mixins: [ StrToColorMixin ],
 
   data() {
     return {
       headers: [
+        {
+          text: "",
+          value: "icon"
+        },
         {
           text: "Name",
           value: "endpoint"
