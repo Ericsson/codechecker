@@ -131,13 +131,19 @@ export default {
   },
 
   watch: {
-    runNameSearch: function() {
+    runNameSearch: function(newValue) {
       this.fetchRuns();
+
+      var queryParams = Object.assign({}, this.$route.query);
+      if (queryParams["search"] !== newValue) {
+        queryParams["search"] = newValue;
+        this.$router.push({ query: queryParams });
+      }
     }
   },
 
   created() {
-    this.fetchRuns();
+    this.runNameSearch = this.$router.currentRoute.query["search"];
   },
 
   methods: {
