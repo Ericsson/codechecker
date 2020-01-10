@@ -1,70 +1,100 @@
 <template>
-  <v-card>
-    <v-card-title>
-      <v-text-field
-        v-model="productNameSearch"
-        append-icon="mdi-magnify"
-        label="Search for products..."
-        single-line
-        hide-details
-      />
-    </v-card-title>
+  <v-data-table
+    :headers="headers"
+    :items="processedProducts"
+    :hide-default-footer="true"
+    item-key="endpoint"
+  >
+    <template v-slot:top>
+      <v-toolbar flat class="mb-4">
+        <v-text-field
+          v-model="productNameSearch"
+          append-icon="mdi-magnify"
+          label="Search for products..."
+          single-line
+          hide-details
+        />
 
-    <v-data-table
-      :headers="headers"
-      :items="processedProducts"
-      :hide-default-footer="true"
-      item-key="endpoint"
-    >
-      <template #item.icon="{ item }">
-        <v-avatar
-          :color="strToColor(item.endpoint)"
-          size="48"
-          class="my-1"
-        >
-          <span class="white--text headline">
-            {{ item.endpoint | productIconName }}
-          </span>
+        <v-spacer />
+
+        <v-btn color="primary" class="mr-2">
+          Edit announcement <!-- TODO -->
+        </v-btn>
+
+        <v-btn color="primary" class="mr-2">
+          Edit global permissions <!-- TODO -->
+        </v-btn>
+
+        <v-btn color="primary">
+          New product <!-- TODO -->
+        </v-btn>
+      </v-toolbar>
+    </template>
+
+    <template #item.icon="{ item }">
+      <v-avatar
+        :color="strToColor(item.endpoint)"
+        size="48"
+        class="my-1"
+      >
+        <span class="white--text headline">
+          {{ item.endpoint | productIconName }}
+        </span>
+      </v-avatar>
+    </template>
+
+    <template #item.endpoint="{ item }">
+      <router-link
+        :to="{ name: 'runs', params: { endpoint: item.endpoint } }"
+      >
+        {{ item.endpoint }}
+      </router-link>
+    </template>
+
+    <template #item.admins="{ item }">
+      <v-chip
+        v-for="admin in item.admins"
+        :key="admin"
+        color="secondary"
+        class="mr-2"
+      >
+        <v-avatar left>
+          <v-icon>mdi-account-circle</v-icon>
         </v-avatar>
-      </template>
+        {{ admin }}
+      </v-chip>
+    </template>
 
-      <template #item.endpoint="{ item }">
-        <router-link
-          :to="{ name: 'runs', params: { endpoint: item.endpoint } }"
-        >
-          {{ item.endpoint }}
-        </router-link>
-      </template>
+    <template #item.runStoreInProgress="{ item }">
+      <v-chip
+        v-for="runName in item.runStoreInProgress"
+        :key="runName"
+        color="accent"
+        class="mr-2"
+      >
+        <v-avatar left>
+          <v-icon>mdi-play-circle</v-icon>
+        </v-avatar>
+        {{ runName }}
+      </v-chip>
+    </template>
 
-      <template #item.admins="{ item }">
-        <v-chip
-          v-for="admin in item.admins"
-          :key="admin"
-          color="secondary"
-          class="mr-2"
-        >
-          <v-avatar left>
-            <v-icon>mdi-account-circle</v-icon>
-          </v-avatar>
-          {{ admin }}
-        </v-chip>
-      </template>
-
-      <template #item.runStoreInProgress="{ item }">
-        <v-chip
-          v-for="runName in item.runStoreInProgress"
-          :key="runName"
-          color="accent"
-          class="mr-2"
-        >
-          <v-avatar left>
-            <v-icon>mdi-play-circle</v-icon>
-          </v-avatar>
-          {{ runName }}
-        </v-chip>
-      </template>
-    </v-data-table>
-  </v-card>
+    <template v-slot:item.action="{ item }">
+      <v-icon
+        small
+        class="mr-2"
+        @click="editProduct(item)"
+      >
+        mdi-pencil
+      </v-icon>
+      <v-icon
+        small
+        @click="deleteProduct(item)"
+      >
+        mdi-delete
+      </v-icon>
+    </template>
+  </v-data-table>
 </template>
 
 <script>
@@ -72,8 +102,10 @@ import VDataTable from "Vuetify/VDataTable/VDataTable";
 import VChip from "Vuetify/VChip/VChip";
 import VAvatar from "Vuetify/VAvatar/VAvatar";
 import VIcon from "Vuetify/VIcon/VIcon";
-import { VCard, VCardTitle } from "Vuetify/VCard";
 import VTextField from "Vuetify/VTextField/VTextField";
+import VToolbar from "Vuetify/VToolbar/VToolbar";
+import VBtn from "Vuetify/VBtn/VBtn";
+import VSpacer from "Vuetify/VGrid/VSpacer";
 
 import { prodService } from '@cc-api';
 
@@ -82,7 +114,7 @@ import { StrToColorMixin } from '@/mixins';
 export default {
   name: 'Products',
   components: {
-    VDataTable, VChip, VAvatar, VIcon, VCard, VCardTitle, VTextField
+    VDataTable, VChip, VAvatar, VIcon, VTextField, VToolbar, VBtn, VSpacer
   },
   filters: {
     productIconName: function (endpoint) {
@@ -124,7 +156,12 @@ export default {
         {
           text: "Run store in progress",
           value: "runStoreInProgress"
-        }
+        },
+        {
+          text: 'Actions',
+          value: 'action',
+          sortable: false
+        },
       ],
       products: []
     };
@@ -161,7 +198,15 @@ export default {
       (err, products) => {
         this.products = products;
       });
-    }
+    },
+
+    editProduct(/*product*/) {
+      // TODO: implement this feature.
+    },
+
+    deleteProduct(/*product*/) {
+      // TODO: implement this feature.
+    },
   }
 }
 </script>
