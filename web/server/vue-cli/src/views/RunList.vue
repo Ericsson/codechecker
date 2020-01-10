@@ -11,16 +11,8 @@
       </v-card>
     </v-dialog>
 
-    <v-card-title>
-      <v-text-field
-        v-model="runNameSearch"
-        append-icon="mdi-magnify"
-        label="Search for runs..."
-        single-line
-        hide-details
-      />
-    </v-card-title>
     <v-data-table
+      v-model="selected"
       :headers="headers"
       :items="runs"
       :options.sync="pagination"
@@ -30,7 +22,26 @@
         itemsPerPageOptions: [20, 50, 100, 500, -1]
       }"
       item-key="name"
+      show-select
     >
+      <template v-slot:top>
+        <v-toolbar flat class="mb-4">
+          <v-text-field
+            v-model="runNameSearch"
+            append-icon="mdi-magnify"
+            label="Search for runs..."
+            single-line
+            hide-details
+          />
+
+          <v-spacer />
+
+          <v-btn color="primary" class="mr-2" @click="removeSelectedRuns">
+            Delete
+          </v-btn>
+        </v-toolbar>
+      </template>
+
       <template #item.name="{ item }">
         <router-link
           :to="{ name: 'reports', params: { run: item.name } }"
@@ -96,6 +107,8 @@ import { VCard, VCardTitle, VCardText } from "Vuetify/VCard";
 import VTextField from "Vuetify/VTextField/VTextField";
 import VBtn from "Vuetify/VBtn/VBtn";
 import VDialog from "Vuetify/VDialog/VDialog";
+import VSpacer from "Vuetify/VGrid/VSpacer";
+import VToolbar from "Vuetify/VToolbar/VToolbar";
 
 import { DetectionStatusMixin } from "@/mixins";
 import { DetectionStatusIcon } from "@/components/icons";
@@ -107,7 +120,7 @@ export default {
   name: 'RunList',
   components: {
     VDataTable, VChip, VAvatar, VIcon, VCard, VCardTitle, VCardText,
-    VTextField, VBtn, VDialog,
+    VTextField, VBtn, VDialog, VSpacer, VToolbar,
     DetectionStatusIcon
   },
 
@@ -124,6 +137,7 @@ export default {
       },
       totalItems: 0,
       loading: false,
+      selected: [],
       headers: [
         {
           text: "Name",
@@ -232,6 +246,16 @@ export default {
     closeCheckCommandDialog() {
       this.showCheckCommandDialog = false;
       this.checkCommand = null;
+    },
+
+    removeSelectedRuns() {
+      const runFilter = new RunFilter({
+        ids: this.selected.map((run) => run.runId)
+      });
+
+      ccService.getClient().removeRun(null, runFilter, () => {
+        this.fetchRuns();
+      });
     }
   }
 }
