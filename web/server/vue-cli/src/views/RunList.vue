@@ -23,6 +23,12 @@
     <v-data-table
       :headers="headers"
       :items="runs"
+      :options.sync="pagination"
+      :loading="loading"
+      :server-items-length.sync="totalItems"
+      :footer-props="{
+        itemsPerPageOptions: [20, 50, 100, 500, -1]
+      }"
       item-key="name"
     >
       <template #item.name="{ item }">
@@ -112,6 +118,12 @@ export default {
       runNameSearch: null,
       showCheckCommandDialog: false,
       checkCommand: null,
+      pagination: {
+        page: 1,
+        itemsPerPage: 20
+      },
+      totalItems: 0,
+      loading: false,
       headers: [
         {
           text: "Name",
@@ -158,6 +170,13 @@ export default {
   },
 
   watch: {
+    pagination: {
+      handler() {
+        this.fetchRuns();
+      },
+      deep: true
+    },
+
     showCheckCommandDialog (val) {
       val || this.closeCheckCommandDialog();
     },
@@ -183,8 +202,14 @@ export default {
         ? new RunFilter({ names: [`*${this.runNameSearch}*`]})
         : null;
 
-      const limit = null;
-      const offset = null;
+      // Get total item count.
+      ccService.getClient().getRunCount(runFilter, (err, totalItems) => {
+        this.totalItems = totalItems.toNumber();
+      });
+
+      // Get the runs.
+      const limit = this.pagination.itemsPerPage;
+      const offset = this.pagination.page;
       const sortMode = null;
 
       ccService.getClient().getRunData(runFilter, limit, offset, sortMode,
