@@ -1,5 +1,16 @@
 <template>
   <v-card>
+    <v-dialog v-model="showCheckCommandDialog" width="500">
+      <v-card>
+        <v-card-title class="headline" primary-title>
+          Check command
+        </v-card-title>
+        <v-card-text>
+          {{ checkCommand }}
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+
     <v-card-title>
       <v-text-field
         v-model="runNameSearch"
@@ -40,8 +51,10 @@
         </div>
       </template>
 
-      <template #item.checkCommand>
-        Show
+      <template #item.checkCommand="{ item }">
+        <v-btn text small color="primary" @click="openCheckCommandDialog(item)">
+          Show
+        </v-btn>
       </template>
 
       <template #item.versionTag="{ item }">
@@ -65,8 +78,10 @@ import VDataTable from "Vuetify/VDataTable/VDataTable";
 import VChip from "Vuetify/VChip/VChip";
 import VAvatar from "Vuetify/VAvatar/VAvatar";
 import VIcon from "Vuetify/VIcon/VIcon";
-import { VCard, VCardTitle } from "Vuetify/VCard";
+import { VCard, VCardTitle, VCardText } from "Vuetify/VCard";
 import VTextField from "Vuetify/VTextField/VTextField";
+import VBtn from "Vuetify/VBtn/VBtn";
+import VDialog from "Vuetify/VDialog/VDialog";
 
 import { DetectionStatusMixin } from "@/mixins";
 import { DetectionStatusIcon } from "@/components/icons";
@@ -77,7 +92,8 @@ import { RunFilter } from '@cc/report-server-types';
 export default {
   name: 'RunList',
   components: {
-    VDataTable, VChip, VAvatar, VIcon, VCard, VCardTitle, VTextField,
+    VDataTable, VChip, VAvatar, VIcon, VCard, VCardTitle, VCardText,
+    VTextField, VBtn, VDialog,
     DetectionStatusIcon
   },
 
@@ -86,6 +102,8 @@ export default {
   data() {
     return {
       runNameSearch: null,
+      showCheckCommandDialog: false,
+      checkCommand: null,
       headers: [
         {
           text: "Name",
@@ -115,7 +133,8 @@ export default {
         },
         {
           text: "Check command",
-          value: "checkCommand"
+          value: "checkCommand",
+          align: "center"
         },
         {
           text: "Version tag",
@@ -131,6 +150,10 @@ export default {
   },
 
   watch: {
+    showCheckCommandDialog (val) {
+      val || this.closeCheckCommandDialog();
+    },
+
     runNameSearch: function(newValue) {
       this.fetchRuns();
 
@@ -160,6 +183,22 @@ export default {
       (err, runs) => {
         this.runs = runs;
       });
+    },
+
+    openCheckCommandDialog(report) {
+      ccService.getClient().getCheckCommand(null, report.runId,
+      (err, checkCommand) => {
+        if (!checkCommand) {
+          checkCommand = 'Unavailable!';
+        }
+        this.checkCommand = checkCommand;
+        this.showCheckCommandDialog = true;
+      });
+    },
+
+    closeCheckCommandDialog() {
+      this.showCheckCommandDialog = false;
+      this.checkCommand = null;
     }
   }
 }
