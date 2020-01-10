@@ -44,10 +44,18 @@
 
       <template #item.analyzerStatistics="{ item }">
         <div
-          v-for="(value, name) in item.analyzerStatistics"
-          :key="name"
+          v-for="(stats, analyzer) in item.analyzerStatistics"
+          :key="analyzer"
         >
-          {{ name }}
+          {{ analyzer }}:
+          <span v-if="stats.successful.toNumber() !== 0">
+            <v-icon color="#587549">mdi-check</v-icon>
+            ({{ stats.successful }})
+          </span>
+          <span v-if="stats.failed.toNumber() !== 0">
+            <v-icon color="#964739">mdi-close</v-icon>
+            ({{ stats.failed }})
+          </span>
         </div>
       </template>
 
