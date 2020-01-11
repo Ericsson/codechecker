@@ -1,36 +1,41 @@
 <template>
-  <div>
-    <report-filter />
+  <v-row>
+    <v-col>
+      <report-filter />
+    </v-col>
+    <v-col cols="9">
+      <v-data-table
+        :headers="headers"
+        :items="reports"
+        item-key="name"
+      >
+        <template #item.severity="{ item }">
+          <severity-icon :status="item.severity" />
+        </template>
 
-    <v-data-table
-      :headers="headers"
-      :items="reports"
-      item-key="name"
-    >
-      <template #item.severity="{ item }">
-        <severity-icon :status="item.severity" />
-      </template>
+        <template #item.bugPathLength="{ item }">
+          <v-chip :color="getBugPathLenColor(item.bugPathLength)">
+            {{ item.bugPathLength }}
+          </v-chip>
+        </template>
 
-      <template #item.bugPathLength="{ item }">
-        <v-chip :color="getBugPathLenColor(item.bugPathLength)">
-          {{ item.bugPathLength }}
-        </v-chip>
-      </template>
+        <template #item.reviewData="{ item }">
+          <review-status-icon :status="parseInt(item.reviewData.status)" />
+        </template>
 
-      <template #item.reviewData="{ item }">
-        <review-status-icon :status="parseInt(item.reviewData.status)" />
-      </template>
-
-      <template #item.detectionStatus="{ item }">
-        <detection-status-icon :status="parseInt(item.detectionStatus)" />
-      </template>
-    </v-data-table>
-  </div>
+        <template #item.detectionStatus="{ item }">
+          <detection-status-icon :status="parseInt(item.detectionStatus)" />
+        </template>
+      </v-data-table>
+    </v-col>
+  </v-row>
 </template>
 
 <script>
 import VDataTable from "Vuetify/VDataTable/VDataTable";
 import VChip from "Vuetify/VChip/VChip";
+import VRow from "Vuetify/VGrid/VRow";
+import VCol from "Vuetify/VGrid/VCol";
 
 import { ccService } from '@cc-api';
 
@@ -44,7 +49,7 @@ import ReportFilter from '@/components/ReportFilter/ReportFilter';
 export default {
   name: 'Reports',
   components: {
-    VDataTable, VChip,
+    VDataTable, VChip, VRow, VCol,
     DetectionStatusIcon,
     ReviewStatusIcon,
     SeverityIcon,
