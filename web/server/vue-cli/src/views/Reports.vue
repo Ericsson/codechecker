@@ -1,5 +1,7 @@
 <template>
   <div>
+    <report-filter />
+
     <v-data-table
       :headers="headers"
       :items="reports"
@@ -37,13 +39,16 @@ import { DetectionStatusIcon } from '@/components/icons';
 import { ReviewStatusIcon } from '@/components/icons';
 import { SeverityIcon } from '@/components/icons';
 
+import ReportFilter from '@/components/ReportFilter/ReportFilter';
+
 export default {
   name: 'Reports',
   components: {
     VDataTable, VChip,
     DetectionStatusIcon,
     ReviewStatusIcon,
-    SeverityIcon
+    SeverityIcon,
+    ReportFilter
   },
   mixins: [ BugPathLengthColorMixin ],
 
