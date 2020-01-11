@@ -1,14 +1,13 @@
 <template>
   <div id="product">
     <v-tabs>
-      <v-tab :to="{ name: 'runs' }">
-        Runs
-      </v-tab>
-      <v-tab :to="{ name: 'statistics' }">
-        Statistics
-      </v-tab>
-      <v-tab :to="{ name: 'reports' }">
-        Reports
+      <v-tab
+        v-for="tab in tabs"
+        :key="tab.id"
+        :to="{ name: tab.route }"
+        exact
+      >
+        {{ tab.name }}
       </v-tab>
     </v-tabs>
     <router-view />
@@ -23,6 +22,15 @@ export default {
   name: 'Product',
   components: {
     VTab, VTabs
+  },
+  data() {
+    return {
+      tabs: [
+        { id: 1, name: "Runs", route: 'runs' },
+        { id: 2, name: "Statistics", route: 'statistics' },
+        { id: 3, name: "Reports", route: 'reports' }
+      ]
+    };
   }
 }
 </script>
