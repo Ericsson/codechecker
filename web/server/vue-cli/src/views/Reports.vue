@@ -1,7 +1,11 @@
 <template>
   <v-row>
     <v-col>
-      <report-filter />
+      <report-filter
+        :run-ids="runIds"
+        :report-filter="reportFilter"
+        :cmp-data="cmpData"
+      />
     </v-col>
     <v-col cols="9">
       <v-data-table
@@ -38,6 +42,7 @@ import VRow from "Vuetify/VGrid/VRow";
 import VCol from "Vuetify/VGrid/VCol";
 
 import { ccService } from '@cc-api';
+import { ReportFilter as ReportFilterData } from '@cc/report-server-types';
 
 import { BugPathLengthColorMixin } from '@/mixins';
 import { DetectionStatusIcon } from '@/components/icons';
@@ -59,6 +64,9 @@ export default {
 
   data() {
     return {
+      runIds: [],
+      reportFilter: new ReportFilterData(),
+      cmpData: null,
       headers: [
         {
           text: "Report hash",
@@ -100,22 +108,28 @@ export default {
     };
   },
 
+  watch: {
+    reportFilter: {
+      handler() {
+        this.fetchReports();
+      },
+      deep: true
+    }
+  },
+
   created() {
     this.fetchReports();
   },
 
   methods: {
     fetchReports() {
-      const runIds = null;
       const limit = null;
       const offset = null;
       const sortType = null;
-      const reportFilter = null;
-      const cmpData = null;
       const getDetails = false;
 
-      ccService.getClient().getRunResults(runIds, limit, offset, sortType,
-      reportFilter, cmpData, getDetails, (err, reports) => {
+      ccService.getClient().getRunResults(this.runIds, limit, offset, sortType,
+      this.reportFilter, this.cmpData, getDetails, (err, reports) => {
         this.reports = reports;
       });
     }

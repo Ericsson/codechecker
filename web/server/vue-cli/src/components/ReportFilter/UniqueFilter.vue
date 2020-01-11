@@ -1,6 +1,6 @@
 <template>
   <v-checkbox
-    v-model="isUnique"
+    v-model="reportFilter.isUnique"
     :label="'Unique reports'"
   />
 </template>
@@ -13,10 +13,8 @@ export default {
   components: {
     VCheckbox
   },
-  data() {
-    return {
-      isUnique: false
-    };
+  props: {
+    reportFilter: { type: Object, required: true }
   }
 }
 </script>

@@ -2,7 +2,7 @@
   <div>
     <clear-all-filters />
     <report-count />
-    <unique-filter />
+    <unique-filter :report-filter="reportFilter" />
     <report-hash-filter />
     <baseline-filter />
     <newcheck-filter />
@@ -53,6 +53,11 @@ export default {
     CheckerNameFilter,
     CheckerMessageFilter,
     RemoveFilteredReports
+  },
+  props: {
+    runIds: { type: Array, required: true },
+    reportFilter: { type: Object, required: true },
+    cmpData: { required: true, validator: v => typeof v === 'object' }
   }
 }
 </script>
