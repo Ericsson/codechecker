@@ -8,10 +8,17 @@
           <v-icon>mdi-delete</v-icon>
         </v-btn>
         <v-menu
+          v-model="menu"
           :close-on-content-click="false"
           :nudge-width="400"
           offset-x
         >
+          <v-progress-linear
+            v-if="loading"
+            indeterminate
+            size="64"
+          />
+
           <template v-slot:activator="{ on }">
             <v-btn icon v-on="on">
               <v-icon>mdi-settings</v-icon>
@@ -49,6 +56,7 @@ import VSpacer from "Vuetify/VGrid/VSpacer";
 import { VBtn } from "Vuetify/VBtn";
 import VIcon from "Vuetify/VIcon/VIcon";
 import VMenu from "Vuetify/VMenu/VMenu";
+import VProgressLinear from "Vuetify/VProgressLinear/VProgressLinear";
 
 import Items from './Items';
 import ItemsSelected from './ItemsSelected';
@@ -57,17 +65,29 @@ export default {
   name: 'SelectOption',
   components: {
     VCard, VToolbar, VToolbarTitle, VToolbarItems, VSpacer, VBtn, VIcon, VMenu,
+    VProgressLinear,
     Items, ItemsSelected
   },
   props: {
     title: { type: String, required: true },
-    items: { type: Array, required: true }
+    items: { type: Array, required: true },
+    fetchItems: { type: Function, required: true },
+    loading: { type: Boolean, default: false }
   },
   data() {
     return {
+      menu: false,
       selectedItems: []
     };
   },
+
+  created() {
+    const unwatch = this.$watch("menu", () => {
+      this.fetchItems();
+      unwatch();
+    });
+  },
+
   methods: {
     select(selectedItems) {
       this.selectedItems = selectedItems;
