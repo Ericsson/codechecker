@@ -41,10 +41,18 @@ export default {
     VTextField, VCard, VCardActions,
     VToolbar, VToolbarTitle, VToolbarItems, VSpacer, VBtn, VIcon
   },
+  props: {
+    reportFilter: { type: Object, required: true }
+  },
   data() {
     return {
       reportHash: null
     };
+  },
+  watch: {
+    reportHash: function (val) {
+      this.reportFilter.reportHash = val ? [ `${val}*` ] : null;
+    }
   }
 }
 </script>

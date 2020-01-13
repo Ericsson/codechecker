@@ -3,7 +3,7 @@
     <clear-all-filters />
     <report-count />
     <unique-filter :report-filter="reportFilter" />
-    <report-hash-filter />
+    <report-hash-filter :report-filter="reportFilter" />
     <baseline-filter />
     <newcheck-filter />
     <review-status-filter />
