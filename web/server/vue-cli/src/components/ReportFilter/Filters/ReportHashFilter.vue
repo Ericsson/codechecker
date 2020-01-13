@@ -1,5 +1,5 @@
 <template>
-  <v-card>
+  <v-card flat>
     <v-toolbar flat>
       <v-toolbar-title>Report hash filter</v-toolbar-title>
       <v-spacer />

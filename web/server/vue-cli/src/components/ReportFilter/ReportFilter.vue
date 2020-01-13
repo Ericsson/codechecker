@@ -1,24 +1,111 @@
 <template>
-  <div>
-    <clear-all-filters />
-    <report-count />
-    <unique-filter :report-filter="reportFilter" />
-    <report-hash-filter :report-filter="reportFilter" />
-    <baseline-filter />
-    <newcheck-filter />
-    <review-status-filter />
-    <detection-status-filter />
-    <severity-filter />
-    <detection-date-filter />
-    <file-path-filter />
-    <source-component-filter />
-    <checker-name-filter />
-    <checker-message-filter />
-    <remove-filtered-reports />
-  </div>
+  <v-list
+    dense
+    flat
+    tile
+    elevation="0"
+  >
+    <v-list-item>
+      <v-list-item-action class="mr-5">
+        <clear-all-filters />
+      </v-list-item-action>
+
+      <v-spacer />
+
+      <v-list-item-content>
+        <report-count />
+      </v-list-item-content>
+    </v-list-item>
+
+    <v-list-item>
+      <v-list-item-content>
+        <unique-filter :report-filter="reportFilter" />
+      </v-list-item-content>
+    </v-list-item>
+
+    <v-list-item>
+      <v-list-item-content>
+        <report-hash-filter :report-filter="reportFilter" />
+      </v-list-item-content>
+    </v-list-item>
+
+    <v-list-item>
+      <v-list-item-content>
+        <baseline-filter />
+      </v-list-item-content>
+    </v-list-item>
+
+    <v-list-item>
+      <v-list-item-content>
+        <newcheck-filter />
+      </v-list-item-content>
+    </v-list-item>
+
+    <v-list-item>
+      <v-list-item-content>
+        <review-status-filter />
+      </v-list-item-content>
+    </v-list-item>
+
+    <v-list-item>
+      <v-list-item-content>
+        <detection-status-filter />
+      </v-list-item-content>
+    </v-list-item>
+
+    <v-list-item>
+      <v-list-item-content>
+        <severity-filter />
+      </v-list-item-content>
+    </v-list-item>
+
+    <v-list-item>
+      <v-list-item-content>
+        <detection-date-filter />
+      </v-list-item-content>
+    </v-list-item>
+
+    <v-list-item>
+      <v-list-item-content>
+        <file-path-filter />
+      </v-list-item-content>
+    </v-list-item>
+
+    <v-list-item>
+      <v-list-item-content>
+        <source-component-filter />
+      </v-list-item-content>
+    </v-list-item>
+
+    <v-list-item>
+      <v-list-item-content>
+        <checker-name-filter />
+      </v-list-item-content>
+    </v-list-item>
+
+    <v-list-item>
+      <v-list-item-content>
+        <checker-message-filter />
+      </v-list-item-content>
+    </v-list-item>
+
+    <v-list-item>
+      <v-list-item-content>
+        <remove-filtered-reports />
+      </v-list-item-content>
+    </v-list-item>
+  </v-list>
 </template>
 
 <script>
+import {
+  VList,
+  VListItem,
+  VListItemAction,
+  VListItemContent
+} from "Vuetify/VList";
+import VSpacer from "Vuetify/VGrid/VSpacer";
+
 import {
   UniqueFilter,
   ReportHashFilter,
@@ -41,6 +128,7 @@ import ReportCount from './ReportCount';
 export default {
   name: 'ReportFilter',
   components: {
+    VList, VListItem, VListItemAction, VListItemContent, VSpacer,
     ClearAllFilters,
     ReportCount,
     UniqueFilter,
@@ -64,3 +152,11 @@ export default {
   }
 }
 </script>
+
+<style lang="scss">
+.v-list-item {
+  .v-expansion-panel::before {
+    box-shadow: none;
+  }
+}
+</style>
