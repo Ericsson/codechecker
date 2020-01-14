@@ -1,9 +1,14 @@
 <template>
-  <h3>Report detail</h3>
+  <report />
 </template>
 
 <script>
+import Report from '@/components/Report';
+
 export default {
-  name: 'ReportDetail'
+  name: 'ReportDetail',
+  components: {
+    Report
+  }
 }
 </script>

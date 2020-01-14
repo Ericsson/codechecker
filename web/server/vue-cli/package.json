@@ -13,6 +13,7 @@
       "start": "npm run server"
     },
     "dependencies": {
+      "codemirror": "^5.50.2",
       "thrift": "^0.11.0",
       "vue": "^2.5.2",
       "vue-router": "^3.0.1",
