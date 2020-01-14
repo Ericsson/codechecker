@@ -4,6 +4,7 @@
     dense
   >
     <v-list-item-group
+      v-if="items.length"
       v-model="selected"
       active-class="light-blue--text"
       lighten-4
@@ -34,6 +35,13 @@
         </template>
       </v-list-item>
     </v-list-item-group>
+
+    <v-list-item v-else>
+      <v-list-item-icon>
+        <v-icon>mdi-help-rhombus-outline</v-icon>
+      </v-list-item-icon>
+      No items
+    </v-list-item>
   </v-list>
 </template>
 
@@ -49,12 +57,13 @@ import {
 } from "Vuetify/VList";
 import VCheckbox from "Vuetify/VCheckbox/VCheckbox";
 import VChip from "Vuetify/VChip/VChip";
+import VIcon from "Vuetify/VIcon/VIcon";
 
 export default {
   name: 'SelectOptionItems',
   components: {
     VList, VListItem, VListItemAction, VListItemContent, VListItemIcon,
-    VListItemGroup, VListItemTitle, VCheckbox, VChip
+    VListItemGroup, VListItemTitle, VCheckbox, VChip, VIcon
   },
   props: {
     items: { type: Array, required: true },
