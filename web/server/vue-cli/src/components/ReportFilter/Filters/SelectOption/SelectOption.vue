@@ -28,6 +28,7 @@
           <items
             :items="items"
             :selected-items="selectedItems"
+            :search="search"
             @select="select"
           >
             <template v-slot:icon="{ item }">
@@ -72,6 +73,7 @@ export default {
     title: { type: String, required: true },
     items: { type: Array, required: true },
     fetchItems: { type: Function, required: true },
+    search: { type: Object, default: null },
     loading: { type: Boolean, default: false }
   },
   data() {

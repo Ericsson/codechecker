@@ -67,7 +67,7 @@
 
     <v-list-item>
       <v-list-item-content>
-        <file-path-filter />
+        <file-path-filter :report-filter="reportFilter" />
       </v-list-item-content>
     </v-list-item>
 
