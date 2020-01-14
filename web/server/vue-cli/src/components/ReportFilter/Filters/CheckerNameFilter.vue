@@ -3,11 +3,12 @@
     title="Checker name"
     :items="items"
     :fetch-items="fetchItems"
+    :search="search"
     :loading="loading"
   >
     <template v-slot:icon>
       <v-icon color="grey">
-        mdi-card-bulleted-outline
+        mdi-account-card-details
       </v-icon>
     </template>
   </select-option>
@@ -16,6 +17,7 @@
 <script>
 import VIcon from "Vuetify/VIcon/VIcon";
 import { ccService } from '@cc-api';
+import { ReportFilter } from '@cc/report-server-types';
 
 import SelectOption from './SelectOption/SelectOption';
 
@@ -25,20 +27,30 @@ export default {
     VIcon,
     SelectOption
   },
+  props: {
+    reportFilter: { type: Object, required: true }
+  },
   data() {
     return {
       selected: [],
       items: [],
-      loading: false
+      loading: false,
+      search: {
+        placeHolder : 'Search for checker names (e.g.: core*)...',
+        filterItems: this.filterItems
+      }
     };
   },
 
   methods: {
-    fetchItems() {
+    fetchItems(search=null) {
       this.loading = true;
 
       const runIds = null;
-      const reportFilter = null;
+
+      const reportFilter = new ReportFilter(this.reportFilter);
+      reportFilter['checkerName'] = search ? [ `${search}*` ] : null;
+
       const cmpData = null;
       const limit = null;
       const offset = 0;
@@ -55,6 +67,10 @@ export default {
 
         this.loading = false;
       });
+    },
+
+    filterItems(value) {
+      this.fetchItems(value);
     }
   }
 }

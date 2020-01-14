@@ -79,13 +79,13 @@
 
     <v-list-item>
       <v-list-item-content>
-        <checker-name-filter />
+        <checker-name-filter :report-filter="reportFilter" />
       </v-list-item-content>
     </v-list-item>
 
     <v-list-item>
       <v-list-item-content>
-        <checker-message-filter />
+        <checker-message-filter :report-filter="reportFilter" />
       </v-list-item-content>
     </v-list-item>
 
