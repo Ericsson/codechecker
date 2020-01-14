@@ -31,7 +31,7 @@
 
     <v-list-item>
       <v-list-item-content>
-        <baseline-filter />
+        <baseline-filter :report-filter="reportFilter" />
       </v-list-item-content>
     </v-list-item>
 

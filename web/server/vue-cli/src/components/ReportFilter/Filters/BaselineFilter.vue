@@ -1,10 +1,10 @@
 <template>
-  <v-expansion-panels>
+  <v-expansion-panels v-model="activePanelId">
     <v-expansion-panel>
       <v-expansion-panel-header>BASELINE</v-expansion-panel-header>
       <v-expansion-panel-content>
-        <baseline-run-filter />
-        <baseline-tag-filter />
+        <baseline-run-filter :report-filter="reportFilter" />
+        <baseline-tag-filter :report-filter="reportFilter" />
       </v-expansion-panel-content>
     </v-expansion-panel>
   </v-expansion-panels>
@@ -28,6 +28,14 @@ export default {
     VExpansionPanelContent,
     BaselineRunFilter,
     BaselineTagFilter
+  },
+  props: {
+    reportFilter: { type: Object, required: true }
+  },
+  data() {
+    return {
+      activePanelId: 0
+    };
   }
 }
 </script>
