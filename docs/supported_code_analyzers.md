@@ -11,7 +11,7 @@ to a CodeChecker result directory which can be stored to a CodeChecker server.
 | -------------- |--------------|---------------------|
 | **C/C++**      | [Clang Tidy](https://clang.llvm.org/extra/clang-tidy/)  | ✓ |
 |                | [Clang Static Analyzer](https://clang-analyzer.llvm.org/)    | ✓ |
-|                | [Clang Sanitizers](#clang-sanitizers)    | ✗ |
+|                | [Clang Sanitizers](#clang-sanitizers)    | ✓ |
 |                | [Cppcheck](cppcheck.md)    | ✓ |
 |                | [Infer](https://fbinfer.com/)    | ✗ |
 | **Java**       | [FindBugs](http://findbugs.sourceforge.net/)    | ✗ |
@@ -31,9 +31,14 @@ to a CodeChecker result directory which can be stored to a CodeChecker server.
 ## Clang Sanitizers
 | Name         | Supported by CodeChecker |
 |--------------|---------------------|
-| [AddressSanitizer](https://clang.llvm.org/docs/AddressSanitizer.html)    | ✗ |
-| [ThreadSanitizer](https://clang.llvm.org/docs/ThreadSanitizer.html)    | ✗ |
-| [MemorySanitizer](https://clang.llvm.org/docs/MemorySanitizer.html)    | ✗ |
-| [UndefinedBehaviorSanitizer](https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html)    | ✗ |
+| [AddressSanitizer](https://clang.llvm.org/docs/AddressSanitizer.html)    | ✓ |
+| [ThreadSanitizer](https://clang.llvm.org/docs/ThreadSanitizer.html)    | ✓ |
+| [MemorySanitizer](https://clang.llvm.org/docs/MemorySanitizer.html)    | ✓ |
+| [UndefinedBehaviorSanitizer](https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html)    | ✓ |
 | [DataFlowSanitizer](https://clang.llvm.org/docs/DataFlowSanitizer.html)    | ✗ |
 | [LeakSanitizer](https://clang.llvm.org/docs/LeakSanitizer.html)    | ✗ |
+
+We support to convert multiple sanitizer output to a CodeChecker report
+directory which can be stored to a CodeChecker server by using our
+[report-converter](/tools/report-converter) tool. For more information how to
+use this tool see the [user guide](/tools/report-converter/README.md).
