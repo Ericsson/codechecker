@@ -53,17 +53,17 @@ package_tu_collector: build_tu_collector package_dir_structure
 	cd $(CC_BUILD_DIR) && \
 	ln -sf ../lib/python2.7/tu_collector/tu_collector.py bin/tu_collector
 
-build_warning_to_plist:
-	$(MAKE) -C $(ROOT)/tools/warning-to-plist build
+build_report_converter:
+	$(MAKE) -C $(ROOT)/tools/report-converter build
 
-package_warning_to_plist: build_warning_to_plist package_dir_structure
+package_report_converter: build_report_converter package_dir_structure
 	# Copy tu_collector files.
-	cp -rp $(CC_TOOLS)/warning-to-plist/build/warning_to_plist/warning_to_plist $(CC_BUILD_LIB_DIR) && \
-	chmod u+x $(CC_BUILD_LIB_DIR)/warning_to_plist/WarningToPlist.py && \
+	cp -rp $(CC_TOOLS)/report-converter/build/report_converter/report_converter $(CC_BUILD_LIB_DIR) && \
+	chmod u+x $(CC_BUILD_LIB_DIR)/report_converter/ReportConverter.py && \
 	cd $(CC_BUILD_DIR) && \
-	ln -sf ../lib/python2.7/warning_to_plist/WarningToPlist.py bin/warning-to-plist
+	ln -sf ../lib/python2.7/report_converter/ReportConverter.py bin/report-converter
 
-package: package_dir_structure set_git_commit_template package_plist_to_html package_tu_collector package_warning_to_plist
+package: package_dir_structure set_git_commit_template package_plist_to_html package_tu_collector package_report_converter
 	BUILD_DIR=$(BUILD_DIR) BUILD_LOGGER_64_BIT_ONLY=$(BUILD_LOGGER_64_BIT_ONLY) $(MAKE) -C $(CC_ANALYZER) package_analyzer
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) package_web
 
@@ -147,7 +147,7 @@ clean_venv_dev:
 
 clean: clean_package clean_vendor
 
-clean_package: clean_plist_to_html clean_tu_collector clean_warning_to_plist
+clean_package: clean_plist_to_html clean_tu_collector clean_report_converter
 	rm -rf $(BUILD_DIR)
 	find . -name "*.pyc" -delete
 
@@ -160,8 +160,8 @@ clean_plist_to_html:
 clean_tu_collector:
 	$(MAKE) -C $(CC_TOOLS)/tu_collector clean
 
-clean_warning_to_plist:
-	$(MAKE) -C $(CC_TOOLS)/warning-to-plist clean
+clean_report_converter:
+	$(MAKE) -C $(CC_TOOLS)/report-converter clean
 
 clean_travis:
 	# Clean CodeChecker config files stored in the users home directory.
