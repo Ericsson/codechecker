@@ -1,4 +1,4 @@
-import { Severity } from '@cc/report-server-types';
+import { Severity, DetectionStatus } from '@cc/report-server-types';
 
 import ReportTreeKind from './ReportTreeKind';
 
@@ -43,6 +43,13 @@ const rootItems = [
     name: "Unspecified",
     kind: ReportTreeKind.SEVERITY_LEVEL,
     severity: Severity.UNSPECIFIED,
+    children: []
+  },
+  {
+    id: "resolved",
+    name: "Resolved",
+    kind: ReportTreeKind.DETECTION_STATUS,
+    detectionStatus: DetectionStatus.RESOLVED,
     children: []
   }
 ];

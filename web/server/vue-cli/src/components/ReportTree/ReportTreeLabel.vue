@@ -8,6 +8,18 @@
     L{{ item.report.line }} &ndash; {{ item.name }}
   </span>
 
+  <span v-else-if="item.kind === ReportTreeKind.BUG">
+    <b><u>{{ item.name }}</u></b>
+  </span>
+
+  <span v-else-if="isExtendedReportData">
+    <b>{{ item.name }}</b>
+  </span>
+
+  <span v-else-if="isExtendedReportDataItem">
+    L{{ item.data.startLine }} &ndash; {{ item.name }}
+  </span>
+
   <span v-else>
     {{ item.name }}
   </span>
@@ -29,5 +41,15 @@ export default {
       ReportTreeKind
     };
   },
+  computed: {
+    isExtendedReportData() {
+      return this.item.kind === ReportTreeKind.MACRO_EXPANSION ||
+             this.item.kind === ReportTreeKind.NOTE;
+    },
+    isExtendedReportDataItem() {
+      return this.item.kind === ReportTreeKind.MACRO_EXPANSION_ITEM ||
+             this.item.kind === ReportTreeKind.NOTE_ITEM;
+    }
+  }
 }
 </script>

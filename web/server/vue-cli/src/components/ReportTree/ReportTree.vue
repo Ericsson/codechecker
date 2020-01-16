@@ -22,6 +22,10 @@
 import VTreeview from "Vuetify/VTreeview/VTreeview";
 
 import { ccService } from '@cc-api';
+import {
+  DetectionStatus,
+  ExtendedReportDataType
+} from '@cc/report-server-types';
 
 import ReportTreeIcon from './ReportTreeIcon';
 import ReportTreeLabel from './ReportTreeLabel';
@@ -71,11 +75,18 @@ export default {
       const cmpData = null;
       const getDetails = false;
 
-      const parent = this.items.find((item) => item.id == 'high');
-
       ccService.getClient().getRunResults(runIds, limit, offset, sortType,
       reportFilter, cmpData, getDetails, (err, reports) => {
         reports.forEach((report) => {
+          const isResolved =
+            report.detectionStatus === DetectionStatus.RESOLVED;
+
+          const parent = this.items.find((item) => {
+            return isResolved
+              ? item.detectionStatus === DetectionStatus.RESOLVED
+              : item.severity === report.severity;
+          });
+
           parent.children.push({
             id: report.reportId.toString(),
             name: report.checkerId,
@@ -86,7 +97,7 @@ export default {
               return new Promise((resolve) => {
                 ccService.getClient().getReportDetails(report.reportId,
                 (err, details) => {
-                  this.addReportDetails(report, details, item.children);
+                  item.children = this.formatReportDetails(report, details);
                   resolve();
                 });
               });
@@ -105,11 +116,76 @@ export default {
       return item.children;
     },
 
-    addReportDetails(report, reportDetails, children) {
-      children.push({
-        id : report.reportId.toString() + '_main',
+    formatReportDetails(report, reportDetails) {
+      const items = [];
+
+      // Add extended items such as notes and macros.
+      const extendedItems = this.formatExtendedData(report,
+        reportDetails.extendedData);
+      items.push(...extendedItems);
+
+      // Add main report node.
+      items.push({
+        id : `${report.reportId}_${ReportTreeKind.BUG}`,
         name: report.checkerMsg,
         kind: ReportTreeKind.BUG
+      });
+
+      return items;
+    },
+
+    formatExtendedData(report, extendedData) {
+      const items = [];
+
+      // Add macro expansions.
+      const macros = extendedData.filter((data) => {
+        return data.type === ExtendedReportDataType.MACRO;
+      });
+
+      if (macros.length) {
+        const id = `${report.reportId}_${ReportTreeKind.MACRO_EXPANSION}`;
+        const children = this.formatExtendedReportDataChildren(macros,
+          ReportTreeKind.MACRO_EXPANSION_ITEM, id)
+
+        items.push({
+          id: id,
+          name: "Macro expansions",
+          kind: ReportTreeKind.MACRO_EXPANSION,
+          children: children
+        })
+      }
+
+      // Add notes.
+      const notes = extendedData.filter((data) => {
+        return data.type === ExtendedReportDataType.NOTE;
+      });
+
+      if (notes.length) {
+        const id = `${report.reportId}_${ReportTreeKind.NOTE}`;
+        const children = this.formatExtendedReportDataChildren(notes,
+          ReportTreeKind.NOTE_ITEM, id)
+
+        items.push({
+          id: id,
+          name: "Notes",
+          kind: ReportTreeKind.NOTE,
+          children: children
+        })
+      }
+
+      return items;
+    },
+
+    formatExtendedReportDataChildren(extendedData, kind, parentId) {
+      return extendedData.sort((a, b) => {
+        return a.startLine - b.startLine;
+      }).map((data, index) => {
+        return {
+          id: `${parentId}_${index}`,
+          name: data.message,
+          kind: kind,
+          data: data
+        };
       });
     }
   }

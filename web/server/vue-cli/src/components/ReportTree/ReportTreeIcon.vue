@@ -5,6 +5,11 @@
   />
 
   <detection-status-icon
+    v-else-if="item.kind === ReportTreeKind.DETECTION_STATUS"
+    :status="DetectionStatus.RESOLVED"
+  />
+
+  <detection-status-icon
     v-else-if="item.kind === ReportTreeKind.REPORT"
     :status="item.report.detectionStatus"
   />
@@ -15,6 +20,30 @@
     mdi-message-processing
   </v-icon>
 
+  <v-icon
+    v-else-if="item.kind === ReportTreeKind.MACRO_EXPANSION"
+  >
+    mdi-arrow-expand-all
+  </v-icon>
+
+  <v-icon
+    v-else-if="item.kind === ReportTreeKind.MACRO_EXPANSION_ITEM"
+  >
+    mdi-arrow-expand
+  </v-icon>
+
+  <v-icon
+    v-else-if="item.kind === ReportTreeKind.NOTE"
+  >
+    mdi-note
+  </v-icon>
+
+  <v-icon
+    v-else-if="item.kind === ReportTreeKind.NOTE_ITEM"
+  >
+    mdi-note-outline
+  </v-icon>
+
   <v-icon v-else>
     {{ item.open ? "mdi-folder-open" : "mdi-folder" }}
   </v-icon>
@@ -22,6 +51,9 @@
 
 <script>
 import VIcon from "Vuetify/VIcon/VIcon";
+
+import { DetectionStatus } from '@cc/report-server-types';
+
 import { DetectionStatusIcon, SeverityIcon } from '@/components/icons';
 
 import ReportTreeKind from './ReportTreeKind';
@@ -41,6 +73,7 @@ export default {
   },
   data() {
     return {
+      DetectionStatus,
       ReportTreeKind
     };
   },
