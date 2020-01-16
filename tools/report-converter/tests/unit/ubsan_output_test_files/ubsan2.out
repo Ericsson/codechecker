@@ -1,0 +1,2 @@
+files/ubsan2.cpp:13:10: runtime error: load of value 7, which is not a valid value for type 'enum E'
+files/ubsan2.cpp:21:7: runtime error: load of value 2, which is not a valid value for type 'bool'

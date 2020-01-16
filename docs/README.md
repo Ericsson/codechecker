@@ -286,6 +286,7 @@ For now CodeChecker supports only `C/C++` related analyzers:
 | **C/C++**      | [Clang Tidy](https://clang.llvm.org/extra/clang-tidy/)  |
 |                | [Clang Static Analyzer](https://clang-analyzer.llvm.org/)    |
 |                | [Cppcheck](http://cppcheck.sourceforge.net/)    |
+|                | [Clang Sanitizers](supported_code_analyzers.md#clang-sanitizers)    |
 
 We are planning to support multiple analyzers of different programming
 languages. For more detailed information [see](supported_code_analyzers.md).

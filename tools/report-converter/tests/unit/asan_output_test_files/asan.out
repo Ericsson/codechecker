@@ -1,0 +1,52 @@
+=================================================================
+==12457==ERROR: AddressSanitizer: heap-use-after-free on address 0x614000000044 at pc 0x0000004f4b45 bp 0x7ffd40559120 sp 0x7ffd40559118
+READ of size 4 at 0x614000000044 thread T0
+    #0 0x4f4b44 in main files/asan.cpp:5:10
+    #1 0x7f334b52eb96 in __libc_start_main (??)
+    #2 0x41aaf9 in _start (??)
+
+0x614000000044 is located 4 bytes inside of 400-byte region [0x614000000040,0x6140000001d0)
+freed by thread T0 here:
+    #0 0x4f2962 in operator delete[](void*) asan_new_delete.cc:170:3
+    #1 0x4f4af6 in main files/asan.cpp:4:3
+    #2 0x7f334b52eb96 in __libc_start_main (??)
+
+previously allocated by thread T0 here:
+    #0 0x4f1d32 in operator new[](unsigned long) asan_new_delete.cc:109:3
+    #1 0x4f4ad4 in main files/asan.cpp:3:16
+    #2 0x7f334b52eb96 in __libc_start_main (??)
+
+SUMMARY: AddressSanitizer: heap-use-after-free files/asan.cpp:5:10 in main
+Shadow bytes around the buggy address:
+  0x0c287fff7fb0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c287fff7fc0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c287fff7fd0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c287fff7fe0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c287fff7ff0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x0c287fff8000: fa fa fa fa fa fa fa fa[fd]fd fd fd fd fd fd fd
+  0x0c287fff8010: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x0c287fff8020: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x0c287fff8030: fd fd fd fd fd fd fd fd fd fd fa fa fa fa fa fa
+  0x0c287fff8040: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c287fff8050: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+  Shadow gap:              cc
+==12457==ABORTING

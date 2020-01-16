@@ -1,0 +1,9 @@
+/something/fake/test.cpp:8:12: warning: Division by zero [clang-analyzer-core.DivideZero]
+  return x % 0;
+           ^
+/something/fake/test.cpp:8:12: note: Division by zero
+  return x % 0;
+           ^
+/something/fake/test.cpp:8:12: warning: remainder by zero is undefined [clang-diagnostic-division-by-zero]
+  return x % 0;
+           ^
