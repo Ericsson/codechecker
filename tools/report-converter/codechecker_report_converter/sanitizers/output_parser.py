@@ -15,12 +15,12 @@ import logging
 import os
 import re
 
-from ..output_parser import get_next, OutputParser, Event
+from ..output_parser import get_next, BaseParser, Event
 
 LOG = logging.getLogger('ReportConverter')
 
 
-class SANOutputParser(OutputParser):
+class SANParser(BaseParser):
     """ Parser for Clang UndefinedBehaviourSanitizer console outputs.
 
     Example output
@@ -28,7 +28,7 @@ class SANOutputParser(OutputParser):
     """
 
     def __init__(self):
-        super(SANOutputParser, self).__init__()
+        super(SANParser, self).__init__()
 
         # Regex for parsing stack trace line.
         # It has the following format:

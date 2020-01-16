@@ -25,13 +25,11 @@ setuptools.setup(
         "License :: OSI Approved :: University of Illinois/NCSA Open Source License",
         "Operating System :: MacOS",
         "Operating System :: POSIX",
-        "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 2.7"
     ],
     entry_points={
         'console_scripts': [
-            'report-converter = report_converter.ReportConverter:main'
+            'report-converter = codechecker_report_converter.cli:main'
         ]
     },
 )

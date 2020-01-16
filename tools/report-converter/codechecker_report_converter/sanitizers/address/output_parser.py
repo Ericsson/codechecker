@@ -13,30 +13,30 @@ import logging
 import re
 
 from ...output_parser import get_next, Message, Event
-from ..output_parser import SANOutputParser
+from ..output_parser import SANParser
 
 LOG = logging.getLogger('ReportConverter')
 
 
-class MSANOutputParser(SANOutputParser):
-    """ Parser for Clang MemorySanitizer console outputs. """
+class ASANParser(SANParser):
+    """ Parser for Clang AddressSanitizer console outputs. """
 
     def __init__(self):
-        super(MSANOutputParser, self).__init__()
+        super(ASANParser, self).__init__()
 
-        # Regex for parsing MemorySanitizer output message.
-        self.memory_line_re = re.compile(
+        # Regex for parsing AddressSanitizer output message.
+        self.address_line_re = re.compile(
             # Error code
-            r'==(?P<code>\d+)==(ERROR|WARNING): MemorySanitizer: '
+            r'==(?P<code>\d+)==(ERROR|WARNING): AddressSanitizer: '
             # Checker message.
             r'(?P<message>[\S \t]+)')
 
     def parse_sanitizer_message(self, it, line):
-        """ Parses MemorySanitizer output message.
+        """ Parses AddressSanitizer output message.
 
         The first event will be the main location of the bug.
         """
-        match = self.memory_line_re.match(line)
+        match = self.address_line_re.match(line)
         if not match:
             return None, line
 
@@ -46,12 +46,10 @@ class MSANOutputParser(SANOutputParser):
         if not events:
             return None, line
 
-        main_event = events[-1]
-
-        notes = [Event(main_event.path, main_event.line, main_event.column,
+        notes = [Event(events[0].path, events[0].line, events[0].column,
                        ''.join(stack_traces))]
 
-        return Message(main_event.path, main_event.line, main_event.column,
+        return Message(events[0].path, events[0].line, events[0].column,
                        match.group('message').strip(),
-                       "MemorySanitizer",
+                       "AddressSanitizer",
                        events, notes), line

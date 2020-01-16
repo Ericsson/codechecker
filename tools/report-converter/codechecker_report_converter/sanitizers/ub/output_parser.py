@@ -14,12 +14,12 @@ import os
 import re
 
 from ...output_parser import get_next, Message, Event
-from ..output_parser import SANOutputParser
+from ..output_parser import SANParser
 
 LOG = logging.getLogger('ReportConverter')
 
 
-class UBSANOutputParser(SANOutputParser):
+class UBSANParser(SANParser):
     """ Parser for Clang UndefinedBehaviourSanitizer console outputs.
 
     Example output
@@ -27,7 +27,7 @@ class UBSANOutputParser(SANOutputParser):
     """
 
     def __init__(self):
-        super(UBSANOutputParser, self).__init__()
+        super(UBSANParser, self).__init__()
 
         # Regex for parsing UndefinedBehaviorSanitizer output message.
         self.ub_line_re = re.compile(

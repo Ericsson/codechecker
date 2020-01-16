@@ -21,10 +21,10 @@ try:
 except ImportError:
     from io import BytesIO as StringIO
 
-from report_converter.converter.output_parser import Message
-from report_converter.converter.sanitizers.ub.output_parser import \
-    UBSANOutputParser
-from report_converter.converter.sanitizers.ub.plist_converter import \
+from codechecker_report_converter.output_parser import Message
+from codechecker_report_converter.sanitizers.ub.output_parser import \
+    UBSANParser
+from codechecker_report_converter.sanitizers.ub.plist_converter import \
     UBSANPlistConverter
 
 OLD_PWD = None
@@ -138,7 +138,7 @@ class UBSANOutputParserTestCase(unittest.TestCase):
 
     def setUp(self):
         """Setup the OutputParser."""
-        self.parser = UBSANOutputParser()
+        self.parser = UBSANParser()
 
     def test_empty1(self):
         """Test an empty output file."""

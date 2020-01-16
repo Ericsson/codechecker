@@ -20,10 +20,10 @@ try:
 except ImportError:
     from io import BytesIO as StringIO
 
-from report_converter.converter.output_parser import Event, Message
-from report_converter.converter.sanitizers.thread.output_parser import \
-    TSANOutputParser
-from report_converter.converter.sanitizers.thread.plist_converter import \
+from codechecker_report_converter.output_parser import Event, Message
+from codechecker_report_converter.sanitizers.thread.output_parser import \
+    TSANParser
+from codechecker_report_converter.sanitizers.thread.plist_converter import \
     TSANPlistConverter
 
 OLD_PWD = None
@@ -112,7 +112,7 @@ class TSANOutputParserTestCase(unittest.TestCase):
 
     def setUp(self):
         """Setup the OutputParser."""
-        self.parser = TSANOutputParser()
+        self.parser = TSANParser()
 
     def test_tsan(self):
         """ Test the generated Messages of tsan.out. """

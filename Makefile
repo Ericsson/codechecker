@@ -58,10 +58,10 @@ build_report_converter:
 
 package_report_converter: build_report_converter package_dir_structure
 	# Copy tu_collector files.
-	cp -rp $(CC_TOOLS)/report-converter/build/report_converter/report_converter $(CC_BUILD_LIB_DIR) && \
-	chmod u+x $(CC_BUILD_LIB_DIR)/report_converter/ReportConverter.py && \
+	cp -rp $(CC_TOOLS)/report-converter/build/report_converter/codechecker_report_converter $(CC_BUILD_LIB_DIR) && \
+	chmod u+x $(CC_BUILD_LIB_DIR)/codechecker_report_converter/cli.py && \
 	cd $(CC_BUILD_DIR) && \
-	ln -sf ../lib/python2.7/report_converter/ReportConverter.py bin/report-converter
+	ln -sf ../lib/python2.7/codechecker_report_converter/cli.py bin/report-converter
 
 package: package_dir_structure set_git_commit_template package_plist_to_html package_tu_collector package_report_converter
 	BUILD_DIR=$(BUILD_DIR) BUILD_LOGGER_64_BIT_ONLY=$(BUILD_LOGGER_64_BIT_ONLY) $(MAKE) -C $(CC_ANALYZER) package_analyzer

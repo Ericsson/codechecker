@@ -9,24 +9,23 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-from ..plist_converter import PlistConverter
-from .output_parser import ClangTidyOutputParser
+from ...plist_converter import PlistConverter
+from .output_parser import MSANParser
 
 
-class ClangTidyPlistConverter(PlistConverter):
+class MSANPlistConverter(PlistConverter):
     """ Warning messages to plist converter. """
 
-    TOOL_NAME = 'clang-tidy'
+    TOOL_NAME = 'msan'
 
     def parse_messages(self, output):
         """ Parse the given output. """
-        parser = ClangTidyOutputParser()
+        parser = MSANParser()
         return parser.parse_messages(output)
 
     def _get_checker_category(self, checker):
         """ Returns the check's category."""
-        parts = checker.split('-')
-        return parts[0] if parts else 'unknown'
+        return 'unknown'
 
     def _get_analyzer_type(self):
         """ Returns the analyzer type. """

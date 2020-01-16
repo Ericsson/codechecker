@@ -13,16 +13,16 @@ import logging
 import os
 import re
 
-from ..output_parser import Message, Event, OutputParser
+from ..output_parser import Message, Event, BaseParser
 
 LOG = logging.getLogger('ReportConverter')
 
 
-class ClangTidyOutputParser(OutputParser):
+class ClangTidyParser(BaseParser):
     """ Parser for clang-tidy console output. """
 
     def __init__(self):
-        super(ClangTidyOutputParser, self).__init__()
+        super(ClangTidyParser, self).__init__()
 
         # Regex for parsing a clang-tidy message.
         self.message_line_re = re.compile(

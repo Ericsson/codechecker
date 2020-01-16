@@ -13,30 +13,30 @@ import logging
 import re
 
 from ...output_parser import get_next, Message, Event
-from ..output_parser import SANOutputParser
+from ..output_parser import SANParser
 
 LOG = logging.getLogger('ReportConverter')
 
 
-class ASANOutputParser(SANOutputParser):
+class TSANParser(SANParser):
     """ Parser for Clang AddressSanitizer console outputs. """
 
     def __init__(self):
-        super(ASANOutputParser, self).__init__()
+        super(TSANParser, self).__init__()
 
-        # Regex for parsing AddressSanitizer output message.
-        self.address_line_re = re.compile(
+        # Regex for parsing ThreadSanitizer output message.
+        self.tsan_line_re = re.compile(
             # Error code
-            r'==(?P<code>\d+)==(ERROR|WARNING): AddressSanitizer: '
+            r'==(?P<code>\d+)==(ERROR|WARNING): ThreadSanitizer: '
             # Checker message.
             r'(?P<message>[\S \t]+)')
 
     def parse_sanitizer_message(self, it, line):
-        """ Parses AddressSanitizer output message.
+        """ Parses ThreadSanitizer output message.
 
         The first event will be the main location of the bug.
         """
-        match = self.address_line_re.match(line)
+        match = self.tsan_line_re.match(line)
         if not match:
             return None, line
 
@@ -51,5 +51,5 @@ class ASANOutputParser(SANOutputParser):
 
         return Message(events[0].path, events[0].line, events[0].column,
                        match.group('message').strip(),
-                       "AddressSanitizer",
+                       "ThreadSanitizer",
                        events, notes), line

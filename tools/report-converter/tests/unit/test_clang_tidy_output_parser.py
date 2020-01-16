@@ -21,10 +21,10 @@ try:
 except ImportError:
     from io import BytesIO as StringIO
 
-from report_converter.converter.output_parser import Message, Event
-from report_converter.converter.clang_tidy.output_parser import \
-    ClangTidyOutputParser
-from report_converter.converter.clang_tidy.plist_converter import \
+from codechecker_report_converter.output_parser import Message, Event
+from codechecker_report_converter.clang_tidy.output_parser import \
+    ClangTidyParser
+from codechecker_report_converter.clang_tidy.plist_converter import \
     ClangTidyPlistConverter
 
 OLD_PWD = None
@@ -252,7 +252,7 @@ class ClangTidyOutputParserTestCase(unittest.TestCase):
 
     def setUp(self):
         """Setup the OutputParser."""
-        self.parser = ClangTidyOutputParser()
+        self.parser = ClangTidyParser()
 
     def test_absolute_path(self):
         """Test for absolute paths in Messages."""

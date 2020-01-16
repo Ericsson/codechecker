@@ -20,10 +20,10 @@ try:
 except ImportError:
     from io import BytesIO as StringIO
 
-from report_converter.converter.output_parser import Event, Message
-from report_converter.converter.sanitizers.memory.output_parser import \
-    MSANOutputParser
-from report_converter.converter.sanitizers.memory.plist_converter import \
+from codechecker_report_converter.output_parser import Event, Message
+from codechecker_report_converter.sanitizers.memory.output_parser import \
+    MSANParser
+from codechecker_report_converter.sanitizers.memory.plist_converter import \
     MSANPlistConverter
 
 OLD_PWD = None
@@ -101,7 +101,7 @@ class MSANOutputParserTestCase(unittest.TestCase):
 
     def setUp(self):
         """Setup the OutputParser."""
-        self.parser = MSANOutputParser()
+        self.parser = MSANParser()
 
     def test_msan(self):
         """ Test the generated Messages of msan.out. """

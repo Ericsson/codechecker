@@ -15,22 +15,12 @@ import subprocess
 import unittest
 
 
-def run_cmd(cmd, env=None):
-    print(cmd)
-    proc = subprocess.Popen(cmd,
-                            env=env,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
-
-    out, err = proc.communicate()
-    print(out)
-    return proc.returncode, out, err
-
-
 class TestCmdline(unittest.TestCase):
     """ Simple tests to check report-converter command line. """
 
     def test_help(self):
         """ Get help for report-converter tool. """
-        cmd_help = ['report-converter', '--help']
-        self.assertEqual(0, run_cmd(cmd_help)[0])
+        ret = subprocess.call(['report-converter', '--help'],
+                              stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE)
+        self.assertEqual(0, ret)

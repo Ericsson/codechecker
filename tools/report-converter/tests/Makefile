@@ -9,7 +9,7 @@ test: pycodestyle pylint test_unit test_functional
 
 test_in_env: pycodestyle_in_env pylint_in_env test_unit_in_env
 
-PYCODESTYLE_TEST_CMD = pycodestyle report_converter tests
+PYCODESTYLE_TEST_CMD = pycodestyle codechecker_report_converter tests
 
 pycodestyle:
 	$(PYCODESTYLE_TEST_CMD)
@@ -18,7 +18,7 @@ pycodestyle_in_env: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(PYCODESTYLE_TEST_CMD)
 
 PYLINT_TEST_CMD = PYLINTRC=$(ROOT)/.pylintrc \
-	pylint ./report_converter ./tests/**
+	pylint ./codechecker_report_converter ./tests/**
 
 pylint:
 	$(PYLINT_TEST_CMD)

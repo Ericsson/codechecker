@@ -41,7 +41,10 @@ class Event(object):
 
 
 class Message(Event):
-    """ Represents a message with an optional event and fixit messages. """
+    """ Represents a message with an optional event, fixit and note messages.
+
+    This will be a diagnostic section in the plist which represents a report.
+    """
 
     def __init__(self, path, line, column, message, checker, events=None,
                  notes=None, fixits=None):
@@ -66,7 +69,7 @@ class Message(Event):
                 [str(fixit) for fixit in self.fixits])
 
 
-class OutputParser(object):
+class BaseParser(object):
     """ Warning message parser. """
 
     __metaclass__ = ABCMeta

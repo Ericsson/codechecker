@@ -15,29 +15,16 @@ import os
 import shutil
 import sys
 
-try:
-    from .converter.clang_tidy.plist_converter import \
-        ClangTidyPlistConverter
-    from .converter.sanitizers.address.plist_converter import \
-        ASANPlistConverter
-    from .converter.sanitizers.memory.plist_converter import \
-        MSANPlistConverter
-    from .converter.sanitizers.thread.plist_converter import \
-        TSANPlistConverter
-    from .converter.sanitizers.ub.plist_converter import \
-        UBSANPlistConverter
-except ValueError:
-    # Attempted relative import in non-package.
-    from converter.clang_tidy.plist_converter import \
-        ClangTidyPlistConverter
-    from converter.sanitizers.address.plist_converter import \
-        ASANPlistConverter
-    from converter.sanitizers.memory.plist_converter import \
-        MSANPlistConverter
-    from converter.sanitizers.thread.plist_converter import \
-        TSANPlistConverter
-    from converter.sanitizers.ub.plist_converter import \
-        UBSANPlistConverter
+from codechecker_report_converter.clang_tidy.plist_converter import \
+    ClangTidyPlistConverter
+from codechecker_report_converter.sanitizers.address.plist_converter import \
+    ASANPlistConverter
+from codechecker_report_converter.sanitizers.memory.plist_converter import \
+    MSANPlistConverter
+from codechecker_report_converter.sanitizers.thread.plist_converter import \
+    TSANPlistConverter
+from codechecker_report_converter.sanitizers.ub.plist_converter import \
+    UBSANPlistConverter
 
 
 LOG = logging.getLogger('ReportConverter')
@@ -135,7 +122,7 @@ def __add_arguments_to_parser(parser):
 
 
 def main():
-    """ Warning to plist converter main command line. """
+    """ Report converter main command line. """
     parser = argparse.ArgumentParser(
         prog="report-converter",
         description="Creates a CodeChecker report directory from the given "
