@@ -13,18 +13,16 @@ from __future__ import division
 from __future__ import absolute_import
 
 import os
+import plistlib
+import shutil
+import tempfile
 import unittest
-
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import BytesIO as StringIO
 
 from codechecker_report_converter.output_parser import Event, Message
 from codechecker_report_converter.sanitizers.memory.output_parser import \
     MSANParser
-from codechecker_report_converter.sanitizers.memory.plist_converter import \
-    MSANPlistConverter
+from codechecker_report_converter.sanitizers.memory.analyzer_result import \
+    MSANAnalyzerResult
 
 OLD_PWD = None
 
@@ -36,29 +34,6 @@ def setup_module():
     os.chdir(os.path.join(os.path.dirname(__file__),
                           'msan_output_test_files'))
 
-    msan_repr = [
-        Message(
-            os.path.abspath('files/msan.cpp'),
-            7, 7,
-            "use-of-uninitialized-value",
-            "MemorySanitizer",
-            [Event(
-                os.path.abspath('files/msan.cpp'),
-                7, 7,
-                "    #0 0x4940da in main files/msan.cpp:7:7"
-            )],
-            [Event(
-                os.path.abspath('files/msan.cpp'),
-                7, 7,
-                "    #0 0x4940da in main files/msan.cpp:7:7\n"
-                "    #1 0x7fed9df58b96 in __libc_start_main (??)\n"
-                "    #2 0x41b2d9 in _start (??)\n"
-            )]),
-    ]
-
-    MSANOutputParserTestCase.msan_repr = msan_repr
-    MSANPListConverterTestCase.msan_repr = msan_repr
-
 
 def teardown_module():
     """Restore environment after tests have ran."""
@@ -67,30 +42,32 @@ def teardown_module():
 
 
 class MSANPListConverterTestCase(unittest.TestCase):
-    """
-    Test the output of the PListConverter, which converts Messages to plist
-    format.
-    """
+    """ Test the output of the MSANAnalyzerResult. """
 
     def setUp(self):
-        """Setup the PListConverter."""
-        self.plist_conv = MSANPlistConverter()
+        """ Setup the test. """
+        self.analyzer_result = MSANAnalyzerResult()
+        self.cc_result_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        """ Clean temporary directory. """
+        shutil.rmtree(self.cc_result_dir)
 
     def test_msan(self):
-        """Test for the msan.plist file."""
-        self.plist_conv.add_messages(self.msan_repr)
-
-        # use relative path for this test
-        self.plist_conv.plist['files'][0] = 'files/msan.cpp'
-
-        output = StringIO()
-        self.plist_conv.write(output)
+        """ Test for the msan.plist file. """
+        self.analyzer_result.transform('msan.out', self.cc_result_dir)
 
         with open('msan.plist') as pfile:
-            exp = pfile.read()
-            self.assertEqual(exp, output.getvalue())
+            exp = plistlib.readPlist(pfile)
 
-        output.close()
+        plist_file = os.path.join(self.cc_result_dir, 'msan.cpp_msan.plist')
+        with open(plist_file) as pfile:
+            res = plistlib.readPlist(pfile)
+
+            # Use relative path for this test.
+            res['files'][0] = 'files/msan.cpp'
+
+        self.assertEqual(res, exp)
 
 
 class MSANOutputParserTestCase(unittest.TestCase):
@@ -100,8 +77,27 @@ class MSANOutputParserTestCase(unittest.TestCase):
     """
 
     def setUp(self):
-        """Setup the OutputParser."""
+        """ Setup the OutputParser. """
         self.parser = MSANParser()
+        self.msan_repr = [
+            Message(
+                os.path.abspath('files/msan.cpp'),
+                7, 7,
+                "use-of-uninitialized-value",
+                "MemorySanitizer",
+                [Event(
+                    os.path.abspath('files/msan.cpp'),
+                    7, 7,
+                    "    #0 0x4940da in main files/msan.cpp:7:7"
+                )],
+                [Event(
+                    os.path.abspath('files/msan.cpp'),
+                    7, 7,
+                    "    #0 0x4940da in main files/msan.cpp:7:7\n"
+                    "    #1 0x7fed9df58b96 in __libc_start_main (??)\n"
+                    "    #2 0x41b2d9 in _start (??)\n"
+                )]),
+        ]
 
     def test_msan(self):
         """ Test the generated Messages of msan.out. """

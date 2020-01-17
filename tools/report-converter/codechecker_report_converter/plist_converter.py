@@ -9,12 +9,9 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 import copy
 import json
-import plistlib
-
-from .report import generate_report_hash
 
 
 class PlistConverter(object):
@@ -22,29 +19,17 @@ class PlistConverter(object):
 
     __metaclass__ = ABCMeta
 
-    def __init__(self):
-        self.plist = {
-            'files': [],
-            'diagnostics': []
-        }
+    def __init__(self, tool_name):
+        self.tool_name = tool_name
+        self.path_to_plist = {}
 
-    @abstractmethod
-    def parse_messages(self, output):
-        """ Parse the given output. """
-        raise NotImplementedError("Subclasses should implement this!")
+    def get_plist_results(self):
+        """ Returns a list of plist results. """
+        return self.path_to_plist.values()
 
     def add_messages(self, messages):
         """ Adds the given messages to the plist. """
-        self._add_diagnostics(messages, self.plist['files'])
-
-    def write_to_file(self, path):
-        """ Writes out the plist XML to the given path. """
-        with open(path, 'wb') as file:
-            self.write(file)
-
-    def write(self, file):
-        """ Writes out the plist XML using the given file object. """
-        plistlib.writePlist(self.plist, file)
+        self._add_diagnostics(messages)
 
     def _create_location(self, msg, fmap):
         """ Create a location section from the message. """
@@ -73,21 +58,20 @@ class PlistConverter(object):
         return {'start': [start_loc, start_loc],
                 'end': [end_loc, end_loc]}
 
-    def _add_diagnostics(self, messages, files):
+    def _add_diagnostics(self, messages):
         """ Adds the messages to the plist as diagnostics. """
-        fmap = self._add_files_from_messages(messages)
+        self._add_files_from_messages(messages)
         for message in messages:
-            diag = self._create_diag(message, fmap, files)
-            self.plist['diagnostics'].append(diag)
+            plist_data = self.path_to_plist[message.path]
+            diag = self._create_diag(message, plist_data['files'])
+            plist_data['diagnostics'].append(diag)
 
-    def _add_files_from_message(self, message, fmap):
+    def _add_files_from_message(self, message, plist_data):
         """ Add new file from the given message. """
         try:
-            idx = self.plist['files'].index(message.path)
-            fmap[message.path] = idx
+            plist_data['files'].index(message.path)
         except ValueError:
-            fmap[message.path] = len(self.plist['files'])
-            self.plist['files'].append(message.path)
+            plist_data['files'].append(message.path)
 
     def _add_files_from_messages(self, messages):
         """ Add new file from the given messages.
@@ -95,28 +79,31 @@ class PlistConverter(object):
         Adds the new files from the given message array to the plist's "files"
         key, and returns a path to file index dictionary.
         """
-        fmap = {}
         for message in messages:
-            self._add_files_from_message(message, fmap)
+            if message.path not in self.path_to_plist:
+                self.path_to_plist[message.path] = {
+                    'files': [],
+                    'diagnostics': []}
+
+            plist_data = self.path_to_plist[message.path]
+
+            self._add_files_from_message(message, plist_data)
 
             # Collect file paths from the events.
             for nt in message.events:
-                self._add_files_from_message(nt, fmap)
+                self._add_files_from_message(nt, plist_data)
 
-        return fmap
-
-    @abstractmethod
     def _get_checker_category(self, checker):
         """ Returns the check's category."""
-        raise NotImplementedError("Subclasses should implement this!")
+        return 'unknown'
 
-    @abstractmethod
     def _get_analyzer_type(self):
         """ Returns the analyzer type. """
-        raise NotImplementedError("Subclasses should implement this!")
+        return self.tool_name
 
-    def _create_diag(self, message, fmap, files):
+    def _create_diag(self, message, files):
         """ Creates a new plist diagnostic from the given message. """
+        fmap = {files[i]: i for i in range(0, len(files))}
         diag = {'location': self._create_location(message, fmap),
                 'check_name': message.checker,
                 'description': message.message,
@@ -132,10 +119,6 @@ class PlistConverter(object):
         # displayed by quick check, and this is the main event displayed by
         # the web interface. FIXME: notes and fixits should not be events.
         diag['path'].append(self._create_event(message, fmap))
-
-        diag['issue_hash_content_of_line_in_context'] \
-            = generate_report_hash(diag,
-                                   files[diag['location']['file']])
 
         return diag
 
@@ -172,4 +155,6 @@ class PlistConverter(object):
             diag['path'].append({'kind': 'control', 'edges': edges})
 
     def __str__(self):
-        return str(json.dumps(self.plist, indent=4, separators=(',', ': ')))
+        return str(json.dumps(self.path_to_plist,
+                              indent=4,
+                              separators=(',', ': ')))

@@ -25,7 +25,7 @@ make package
 
 ## Usage
 ```sh
-usage: report-converter [-h] -o OUTPUT_DIR -t TYPE [-c] [-v] [file]
+usage: report-converter [-h] -o OUTPUT_DIR -t TYPE [-c] [-v] file
 
 Creates a CodeChecker report directory from the given code analyzer output
 which can be stored to a CodeChecker web server.
@@ -33,8 +33,6 @@ which can be stored to a CodeChecker web server.
 positional arguments:
   file                  Code analyzer output result file which will be parsed
                         and used to generate a CodeChecker report directory.
-                        If this parameter is not given the standard input will
-                        be used.
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -44,7 +42,8 @@ optional arguments:
   -t TYPE, --type TYPE  Specify the format of the code analyzer output.
                         Currently supported output types are: asan, tsan,
                         ubsan, msan, clang-tidy.
-  -c, --clean           Delete files stored in the output directory.
+  -c, --clean           Delete files stored in the output directory. (default:
+                        False)
   -v, --verbose         Set verbosity level. (default: False)
 ```
 
