@@ -16,6 +16,7 @@
   "alpha.cplusplus.EnumCastOutOfRange":                         "MEDIUM",
   "alpha.cplusplus.IteratorModeling":                           "MEDIUM",
   "alpha.cplusplus.IteratorRange":                              "MEDIUM",
+  "alpha.cplusplus.PlacementNew":                               "HIGH",
   "alpha.cplusplus.UninitializedObject":                        "MEDIUM",
   "alpha.deadcode.UnreachableCode":                             "LOW",
   "alpha.llvm.Conventions":                                     "LOW",
