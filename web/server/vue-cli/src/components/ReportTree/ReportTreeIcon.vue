@@ -1,6 +1,19 @@
 <template>
+  <span
+    v-if="item.kind === ReportTreeKind.REPORT_STEPS"
+  >
+    <report-step-icon
+      :value="item.icon"
+    />
+
+    <report-step-enum-icon
+      :type="item.reportStepIcon.type"
+      :index="item.reportStepIcon.index"
+    />
+  </span>
+
   <severity-icon
-    v-if="item.kind === ReportTreeKind.SEVERITY_LEVEL"
+    v-else-if="item.kind === ReportTreeKind.SEVERITY_LEVEL"
     :status="item.severity"
   />
 
@@ -54,15 +67,22 @@ import VIcon from "Vuetify/VIcon/VIcon";
 
 import { DetectionStatus } from '@cc/report-server-types';
 
-import { DetectionStatusIcon, SeverityIcon } from '@/components/icons';
+import {
+  DetectionStatusIcon,
+  ReportStepEnumIcon,
+  SeverityIcon
+} from '@/components/icons';
 
 import ReportTreeKind from './ReportTreeKind';
+import ReportStepIcon from './ReportStepIcon';
 
 export default {
   name: 'ReportTreeIcon',
   components: {
     VIcon,
     DetectionStatusIcon,
+    ReportStepEnumIcon,
+    ReportStepIcon,
     SeverityIcon
   },
   props: {

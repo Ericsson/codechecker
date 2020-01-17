@@ -5,7 +5,7 @@
   </span>
 
   <span v-else-if="item.kind === ReportTreeKind.REPORT_STEPS">
-    L{{ item.report.line }} &ndash; {{ item.name }}
+    L{{ item.step.startLine }} &ndash; {{ item.step.msg }}
   </span>
 
   <span v-else-if="item.kind === ReportTreeKind.BUG">

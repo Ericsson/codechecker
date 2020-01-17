@@ -7,13 +7,27 @@
     activatable
     item-key="id"
     open-on-click
+    dense
+    @update:active="onClick"
   >
     <template v-slot:prepend="{ item }">
+      <span
+        v-for="i in (0, item.level)"
+        :key="i"
+        class="v-treeview-node__level"
+        :style="{ display: 'inline-block' }"
+      >
+        &nbsp;
+      </span>
+
       <report-tree-icon :item="item" />
     </template>
 
     <template v-slot:label="{ item }">
-      <report-tree-label :item="item" />
+      <report-tree-label
+        :item="item"
+        :style="{ backgroundColor: item.bgColor, display: 'inline-block' }"
+      />
     </template>
   </v-treeview>
 </template>
@@ -22,15 +36,13 @@
 import VTreeview from "Vuetify/VTreeview/VTreeview";
 
 import { ccService } from '@cc-api';
-import {
-  DetectionStatus,
-  ExtendedReportDataType
-} from '@cc/report-server-types';
+import { DetectionStatus } from '@cc/report-server-types';
 
 import ReportTreeIcon from './ReportTreeIcon';
 import ReportTreeLabel from './ReportTreeLabel';
 import ReportTreeKind from './ReportTreeKind';
 import ReportTreeRootItem from './ReportTreeRootItem';
+import formatReportDetails from './ReportDetailFormatter';
 
 export default {
   name: 'ReportTree',
@@ -97,7 +109,7 @@ export default {
               return new Promise((resolve) => {
                 ccService.getClient().getReportDetails(report.reportId,
                 (err, details) => {
-                  item.children = this.formatReportDetails(report, details);
+                  item.children = formatReportDetails(report, details);
                   resolve();
                 });
               });
@@ -116,77 +128,8 @@ export default {
       return item.children;
     },
 
-    formatReportDetails(report, reportDetails) {
-      const items = [];
-
-      // Add extended items such as notes and macros.
-      const extendedItems = this.formatExtendedData(report,
-        reportDetails.extendedData);
-      items.push(...extendedItems);
-
-      // Add main report node.
-      items.push({
-        id : `${report.reportId}_${ReportTreeKind.BUG}`,
-        name: report.checkerMsg,
-        kind: ReportTreeKind.BUG
-      });
-
-      return items;
-    },
-
-    formatExtendedData(report, extendedData) {
-      const items = [];
-
-      // Add macro expansions.
-      const macros = extendedData.filter((data) => {
-        return data.type === ExtendedReportDataType.MACRO;
-      });
-
-      if (macros.length) {
-        const id = `${report.reportId}_${ReportTreeKind.MACRO_EXPANSION}`;
-        const children = this.formatExtendedReportDataChildren(macros,
-          ReportTreeKind.MACRO_EXPANSION_ITEM, id)
-
-        items.push({
-          id: id,
-          name: "Macro expansions",
-          kind: ReportTreeKind.MACRO_EXPANSION,
-          children: children
-        })
-      }
-
-      // Add notes.
-      const notes = extendedData.filter((data) => {
-        return data.type === ExtendedReportDataType.NOTE;
-      });
-
-      if (notes.length) {
-        const id = `${report.reportId}_${ReportTreeKind.NOTE}`;
-        const children = this.formatExtendedReportDataChildren(notes,
-          ReportTreeKind.NOTE_ITEM, id)
-
-        items.push({
-          id: id,
-          name: "Notes",
-          kind: ReportTreeKind.NOTE,
-          children: children
-        })
-      }
-
-      return items;
-    },
-
-    formatExtendedReportDataChildren(extendedData, kind, parentId) {
-      return extendedData.sort((a, b) => {
-        return a.startLine - b.startLine;
-      }).map((data, index) => {
-        return {
-          id: `${parentId}_${index}`,
-          name: data.message,
-          kind: kind,
-          data: data
-        };
-      });
+    onClick(/* activeItems */) {
+      /* const item = activeItems[0]; */
     }
   }
 }
