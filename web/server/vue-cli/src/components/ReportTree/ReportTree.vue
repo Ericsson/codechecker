@@ -36,7 +36,7 @@
 import VTreeview from "Vuetify/VTreeview/VTreeview";
 
 import { ccService } from '@cc-api';
-import { DetectionStatus } from '@cc/report-server-types';
+import { DetectionStatus, ReportFilter } from '@cc/report-server-types';
 
 import ReportTreeIcon from './ReportTreeIcon';
 import ReportTreeLabel from './ReportTreeLabel';
@@ -52,6 +52,10 @@ export default {
     ReportTreeLabel
   },
 
+  props: {
+    report: { type: Object, default: null }
+  },
+
   data() {
     return {
       ReportTreeKind,
@@ -61,8 +65,10 @@ export default {
     };
   },
 
-  mounted() {
-    this.fetchReports();
+  watch: {
+    report() {
+      this.fetchReports();
+    }
   },
 
   methods: {
@@ -79,11 +85,17 @@ export default {
     fetchReports() {
       this.items = JSON.parse(JSON.stringify(ReportTreeRootItem));
 
-      const runIds = null;
+
+
+      const runIds = [ this.report.runId ];
       const limit = null;
       const offset = null;
       const sortType = null;
-      const reportFilter = null;
+
+      const reportFilter = new ReportFilter({
+        filepath: [ this.report.checkedFile ]
+      });
+
       const cmpData = null;
       const getDetails = false;
 

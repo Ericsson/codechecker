@@ -2,6 +2,7 @@
   <v-select
     label="Set review status"
     :items="items"
+    :value="value"
     item-text="label"
     item-value="id"
     dense
@@ -62,6 +63,9 @@ export default {
   components: {
     VSelect, VListItemContent, VListItemIcon, VListItemTitle,
     ReviewStatusIcon
+  },
+  props: {
+    value: { type: Number, default: ReviewStatus.UNREVIEWED }
   },
   data() {
     return {

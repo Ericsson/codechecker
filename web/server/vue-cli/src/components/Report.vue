@@ -7,7 +7,9 @@
           Show documentation
         </v-btn>
 
-        <select-review-status />
+        <select-review-status
+          :value="reviewStatus"
+        />
 
         <v-checkbox label="Show arrows" />
 
@@ -59,11 +61,14 @@ export default {
     VToolbarTitle, VSpacer, VBtn, VIcon, VCheckbox,
     SelectReviewStatus
   },
+  props: {
+    report: { type: Object, default: null }
+  },
   data() {
     return {
       codemirror: null,
       sourceFile: null,
-      report: null
+      reviewStatus: null
     };
   },
 
@@ -72,6 +77,8 @@ export default {
       this.codemirror.setValue(this.sourceFile.fileContent);
     },
     report(val) {
+      this.reviewStatus = this.report.reviewData.status;
+
       ccService.getClient().getSourceFileData(val.fileId, true,
       Encoding.DEFAULT, (err, sourceFile) => {
         this.sourceFile = sourceFile;
@@ -89,17 +96,6 @@ export default {
       viewportMargin: 500
     });
     this.codemirror.setSize("100%", "100%");
-
-    const reportId = this.$router.currentRoute.query["reportId"];
-    this.loadReport(reportId);
-  },
-
-  methods: {
-    loadReport(reportId) {
-      ccService.getClient().getReport(reportId, (err, reportData) => {
-        this.report = reportData;
-      });
-    }
   }
 }
 </script>
