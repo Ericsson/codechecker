@@ -223,7 +223,7 @@ export default {
 
       // Get the runs.
       const limit = this.pagination.itemsPerPage;
-      const offset = this.pagination.page;
+      const offset = this.pagination.page - 1;
       const sortMode = null;
 
       ccService.getClient().getRunData(runFilter, limit, offset, sortMode,
