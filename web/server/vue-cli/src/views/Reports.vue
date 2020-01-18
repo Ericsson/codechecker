@@ -13,6 +13,17 @@
         :items="reports"
         item-key="name"
       >
+        <template #item.checkedFile="{ item }">
+          <router-link
+            :to="{ name: 'report-detail', query: {
+              reportId: item.reportId ? item.reportId : undefined,
+              reportHash: item.reportId ? undefined : item.bugHash
+            }}"
+          >
+            {{ item.checkedFile }}
+          </router-link>
+        </template>
+
         <template #item.severity="{ item }">
           <severity-icon :status="item.severity" />
         </template>

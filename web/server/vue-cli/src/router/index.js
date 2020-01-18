@@ -72,20 +72,14 @@ export default new Router({
           component: () => import('@/views/Statistics')
         },
         {
-          path: ':run',
-          component: () => import('@/views/RunDetail'),
-          children: [
-            {
-              path: '',
-              name: 'reports',
-              component: () => import('@/views/Reports')
-            },
-            {
-              path: ':name',
-              name: 'report-detail',
-              component: () => import('@/views/ReportDetail')
-            }
-          ]
+          path: 'reports',
+          name: 'reports',
+          component: () => import('@/views/Reports')
+        },
+        {
+          path: 'report-detail',
+          name: 'report-detail',
+          component: () => import('@/views/ReportDetail')
         }
       ]
     }
