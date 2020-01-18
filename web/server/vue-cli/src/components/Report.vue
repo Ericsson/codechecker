@@ -29,6 +29,9 @@
           <v-spacer />
 
           Also found in:
+          <select-same-report
+            :report="report"
+          />
         </v-toolbar>
       </v-card-subtitle>
       <v-card-text>
@@ -53,13 +56,15 @@ import { ccService } from '@cc-api';
 import { Encoding } from '@cc/report-server-types';
 
 import SelectReviewStatus from './SelectReviewStatus';
+import SelectSameReport from './SelectSameReport';
 
 export default {
   name: 'Report',
   components: {
     VContainer, VCard, VCardTitle, VCardSubtitle, VCardText, VToolbar,
     VToolbarTitle, VSpacer, VBtn, VIcon, VCheckbox,
-    SelectReviewStatus
+    SelectReviewStatus,
+    SelectSameReport
   },
   props: {
     report: { type: Object, default: null }
