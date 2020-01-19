@@ -2,6 +2,8 @@
   <v-treeview
     v-model="tree"
     :items="items"
+    :open.sync="openedItems"
+    :active.sync="activeItems"
     :load-children="getChildren"
     :return-object="true"
     activatable
@@ -61,12 +63,20 @@ export default {
       ReportTreeKind,
       root: {},
       items: [],
-      tree: []
+      tree: [],
+      openedItems: [],
+      activeItems: []
     };
   },
 
   watch: {
     report() {
+      this.fetchReports();
+    }
+  },
+
+  mounted() {
+    if (this.report) {
       this.fetchReports();
     }
   },
@@ -84,8 +94,6 @@ export default {
 
     fetchReports() {
       this.items = JSON.parse(JSON.stringify(ReportTreeRootItem));
-
-
 
       const runIds = [ this.report.runId ];
       const limit = null;
@@ -123,10 +131,16 @@ export default {
                 (err, details) => {
                   item.children = formatReportDetails(report, details);
                   resolve();
+
+                  if (this.report.reportId.equals(item.report.reportId)) {
+                    this.activeItems.push(item.children[0]);
+                  }
                 });
               });
             }
           });
+
+          this.openReportItems();
         });
 
         this.removeEmptyRootElements();
@@ -138,6 +152,26 @@ export default {
         return item.getChildren(item);
       }
       return item.children;
+    },
+
+    openReportItems() {
+      const isResolved =
+        this.report.detectionStatus === DetectionStatus.RESOLVED;
+
+      const rootNode = this.items.find((item) => {
+        return isResolved
+          ? item.detectionStatus === DetectionStatus.RESOLVED
+          : item.severity === this.report.severity;
+      });
+
+      this.openedItems.push(rootNode);
+      this.$nextTick(() => {
+        const reportNode = rootNode.children.find((item) => {
+          return item.id === this.report.reportId.toString();
+        });
+
+        this.openedItems.push(reportNode);
+      });
     },
 
     onClick(/* activeItems */) {
