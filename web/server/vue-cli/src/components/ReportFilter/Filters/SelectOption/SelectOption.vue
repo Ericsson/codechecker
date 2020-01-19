@@ -73,13 +73,13 @@ export default {
     title: { type: String, required: true },
     items: { type: Array, required: true },
     fetchItems: { type: Function, required: true },
+    selectedItems: { type: Array, default: () => [] },
     search: { type: Object, default: null },
     loading: { type: Boolean, default: false }
   },
   data() {
     return {
-      menu: false,
-      selectedItems: []
+      menu: false
     };
   },
 
@@ -92,10 +92,10 @@ export default {
 
   methods: {
     select(selectedItems) {
-      this.selectedItems = selectedItems;
+      this.selectedItems.splice(0, this.selectedItems.length, ...selectedItems);
     },
     clear() {
-      this.selectedItems = [];
+      this.selectedItems.splice(0, this.selectedItems.length);
     }
   }
 }

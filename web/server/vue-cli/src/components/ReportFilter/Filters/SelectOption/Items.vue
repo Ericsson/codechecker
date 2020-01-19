@@ -29,12 +29,15 @@
         <v-list-item
           v-for="item in items"
           :key="item.id"
-          :value="item"
+          :value="item.id"
           class="my-1"
         >
           <template v-slot:default="{ active }">
             <v-list-item-action class="mr-5">
-              <v-checkbox :value="active" color="#28a745" />
+              <v-checkbox
+                :input-value="active"
+                color="#28a745"
+              />
             </v-list-item-action>
 
             <v-list-item-icon class="mr-2">
@@ -94,10 +97,14 @@ export default {
   computed: {
     selected: {
       get() {
-        return this.selectedItems;
+        return this.selectedItems.map((item) => item.id);
       },
       set(value) {
-        this.$emit('select', value)
+        const selectedItems = this.items.filter((item) => {
+          return value.includes(item.id);
+        });
+
+        this.$emit('select', selectedItems)
       }
     }
   },
