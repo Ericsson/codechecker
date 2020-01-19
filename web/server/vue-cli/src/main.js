@@ -1,6 +1,7 @@
 import '@mdi/font/css/materialdesignicons.css'
 import 'codemirror/lib/codemirror.css';
 import 'codemirror/mode/clike/clike.js';
+import 'splitpanes/dist/splitpanes.css';
 
 import Vue from 'vue';
 import vuetify from '@/plugins/vuetify';

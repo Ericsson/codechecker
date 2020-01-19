@@ -1,13 +1,13 @@
 <template>
-  <v-row>
-    <v-col>
+  <splitpanes class="default-theme">
+    <pane size="20">
       <report-filter
         :run-ids="runIds"
         :report-filter="reportFilter"
         :cmp-data="cmpData"
       />
-    </v-col>
-    <v-col cols="9">
+    </pane>
+    <pane>
       <v-data-table
         :headers="headers"
         :items="reports"
@@ -42,15 +42,15 @@
           <detection-status-icon :status="parseInt(item.detectionStatus)" />
         </template>
       </v-data-table>
-    </v-col>
-  </v-row>
+    </pane>
+  </splitpanes>
 </template>
 
 <script>
 import VDataTable from "Vuetify/VDataTable/VDataTable";
 import VChip from "Vuetify/VChip/VChip";
-import VRow from "Vuetify/VGrid/VRow";
-import VCol from "Vuetify/VGrid/VCol";
+
+import { Splitpanes, Pane } from 'splitpanes';
 
 import { ccService } from '@cc-api';
 import { ReportFilter as ReportFilterData } from '@cc/report-server-types';
@@ -65,7 +65,8 @@ import ReportFilter from '@/components/ReportFilter/ReportFilter';
 export default {
   name: 'Reports',
   components: {
-    VDataTable, VChip, VRow, VCol,
+    VDataTable, VChip,
+    Splitpanes, Pane,
     DetectionStatusIcon,
     ReviewStatusIcon,
     SeverityIcon,

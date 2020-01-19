@@ -1,24 +1,20 @@
 <template>
-  <v-container :fluid="true">
-    <v-row>
-      <v-col>
-        <report-tree
-          :report="report"
-        />
-      </v-col>
-      <v-col cols="9">
-        <report
-          :report="report"
-        />
-      </v-col>
-    </v-row>
-  </v-container>
+  <splitpanes class="default-theme">
+    <pane size="20">
+      <report-tree
+        :report="report"
+      />
+    </pane>
+    <pane>
+      <report
+        :report="report"
+      />
+    </pane>
+  </splitpanes>
 </template>
 
 <script>
-import VContainer from "Vuetify/VGrid/VContainer";
-import VRow from "Vuetify/VGrid/VRow";
-import VCol from "Vuetify/VGrid/VCol";
+import { Splitpanes, Pane } from 'splitpanes';
 
 import { ccService } from '@cc-api';
 
@@ -28,7 +24,7 @@ import ReportTree from '@/components/ReportTree/ReportTree';
 export default {
   name: 'ReportDetail',
   components: {
-    VContainer, VRow, VCol,
+    Splitpanes, Pane,
     Report,
     ReportTree
   },
