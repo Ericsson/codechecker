@@ -278,6 +278,19 @@ If you have Clang `3.7` installed you might see the following warning message:
    method is applied for Clang-Tidy results too, because Clang-Tidy does not
    support bug identifier hash generation currently.
 
+# Code Analyzers supported by CodeChecker
+For now CodeChecker supports only `C/C++` related analyzers:
+
+| Language       | Analyzer     |
+| -------------- |--------------|
+| **C/C++**      | [Clang Tidy](https://clang.llvm.org/extra/clang-tidy/)  |
+|                | [Clang Static Analyzer](https://clang-analyzer.llvm.org/)    |
+|                | [Cppcheck](http://cppcheck.sourceforge.net/)    |
+|                | [Clang Sanitizers](supported_code_analyzers.md#clang-sanitizers)    |
+
+We are planning to support multiple analyzers of different programming
+languages. For more detailed information [see](supported_code_analyzers.md).
+
 # Useful Documentation
 
 ## Feature overview
@@ -319,4 +332,3 @@ If you have Clang `3.7` installed you might see the following warning message:
   [2015Euro LLVM Conference](http://llvm.org/devmtg/2015-04) presentations.<br/>
   **Dániel KRUPP, György ORBÁN, Gábor HORVÁTH and Bence BABATI**:<br/>
   [_Industrial Experiences with the Clang Static Analysis Toolset_](http://llvm.org/devmtg/2015-04/slides/Clang_static_analysis_toolset_final.pdf)
-
