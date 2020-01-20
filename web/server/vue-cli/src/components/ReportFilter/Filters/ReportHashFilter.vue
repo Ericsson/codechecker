@@ -35,24 +35,51 @@ import VSpacer from "Vuetify/VGrid/VSpacer";
 import { VBtn } from "Vuetify/VBtn";
 import VIcon from "Vuetify/VIcon/VIcon";
 
+import BaseFilterMixin from './BaseFilter.mixin';
+
 export default {
   name: 'ReportHashFilter',
   components: {
     VTextField, VCard, VCardActions,
     VToolbar, VToolbarTitle, VToolbarItems, VSpacer, VBtn, VIcon
   },
-  props: {
-    reportFilter: { type: Object, required: true }
-  },
+  mixins: [ BaseFilterMixin ],
+
   data() {
     return {
+      id: 'report-hash',
       reportHash: null
     };
   },
   watch: {
-    reportHash: function (val) {
-      this.reportFilter.reportHash = val ? [ `${val}*` ] : null;
+    reportHash: function () {
+      this.updateUrl();
+      this.updateReportFilter();
     }
+  },
+
+  methods: {
+    updateReportFilter() {
+      this.reportFilter.reportHash =
+        this.reportHash ? [ `${this.reportHash}*` ] : null;
+    },
+
+    getUrlState() {
+      return {
+        [this.id]: this.reportHash
+      };
+    },
+
+    initByUrl() {
+      return new Promise((resolve) => {
+        const state = this.$route.query[this.id];
+        if (state) {
+          this.reportHash = state;
+        }
+
+        resolve();
+      });
+    },
   }
 }
 </script>

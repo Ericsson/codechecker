@@ -15,12 +15,12 @@
 <script>
 import { ccService } from '@cc-api';
 
-import { Severity } from "@cc/report-server-types";
+import { ReportFilter, Severity } from "@cc/report-server-types";
 import { SeverityIcon } from "@/components/icons";
 import { SeverityMixin } from "@/mixins";
 
 import SelectOption from './SelectOption/SelectOption';
-import BaseSelectOptionFilter from './BaseSelectOptionFilter';
+import BaseSelectOptionFilterMixin from './BaseSelectOptionFilter.mixin';
 
 export default {
   name: 'SeverityFilter',
@@ -28,12 +28,7 @@ export default {
     SelectOption,
     SeverityIcon
   },
-  extends: BaseSelectOptionFilter,
-  mixins: [ SeverityMixin ],
-
-  props: {
-    reportFilter: { type: Object, required: true }
-  },
+  mixins: [ BaseSelectOptionFilterMixin, SeverityMixin ],
 
   data() {
     return {
@@ -54,12 +49,20 @@ export default {
       this.reportFilter.severity = this.selectedItems.map(item => item.id);
     },
 
+    onReportFilterChange(key) {
+      if (key === 'severity') return;
+
+      this.fetchItems();
+    },
+
     fetchItems() {
       this.loading = true;
 
       const runIds = null;
-      const reportFilter = null;
       const cmpData = null;
+
+      const reportFilter = new ReportFilter(this.reportFilter);
+      reportFilter.severity = null;
 
       ccService.getClient().getSeverityCounts(runIds, reportFilter, cmpData,
       (err, res) => {

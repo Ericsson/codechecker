@@ -4,6 +4,7 @@
     :items="items"
     :fetch-items="fetchItems"
     :loading="loading"
+    :selected-items="selectedItems"
   >
     <template v-slot:icon="{ item }">
       <detection-status-icon :status="item.id" />
@@ -14,10 +15,12 @@
 <script>
 import { ccService } from '@cc-api';
 
-import { DetectionStatus } from "@cc/report-server-types";
+import { DetectionStatus, ReportFilter } from "@cc/report-server-types";
 import { DetectionStatusIcon } from "@/components/icons";
+import { DetectionStatusMixin } from "@/mixins";
 
 import SelectOption from './SelectOption/SelectOption';
+import BaseSelectOptionFilterMixin from './BaseSelectOptionFilter.mixin';
 
 export default {
   name: 'DetectionStatusFilter',
@@ -25,21 +28,42 @@ export default {
     SelectOption,
     DetectionStatusIcon
   },
+  mixins: [ BaseSelectOptionFilterMixin, DetectionStatusMixin ],
+
   data() {
     return {
-      selected: [],
-      items: [],
-      loading: false
+      id: "detection-status"
     };
   },
 
   methods: {
+    encodeValue(detectionStatusId) {
+      return this.detectionStatusFromCodeToString(detectionStatusId);
+    },
+
+    decodeValue(detectionStatusName) {
+      return this.detectionStatusFromStringToCode(detectionStatusName);
+    },
+
+    updateReportFilter() {
+      this.reportFilter.detectionStatus =
+        this.selectedItems.map(item => item.id);
+    },
+
+    onReportFilterChange(key) {
+      if (key === 'detectionStatus') return;
+
+      this.fetchItems();
+    },
+
     fetchItems() {
       this.loading = true;
 
       const runIds = null;
-      const reportFilter = null;
       const cmpData = null;
+
+      const reportFilter = new ReportFilter(this.reportFilter);
+      reportFilter.detectionStatus = null;
 
       ccService.getClient().getDetectionStatusCounts(runIds, reportFilter,
       cmpData, (err, res) => {
@@ -47,10 +71,11 @@ export default {
           const id = DetectionStatus[status];
           return {
             id: id,
-            title: status,
+            title: this.encodeValue(id),
             count: res[id] !== undefined ? res[id] : 0
           };
         });
+        this.updateSelectedItems();
         this.loading = false;
       });
     }

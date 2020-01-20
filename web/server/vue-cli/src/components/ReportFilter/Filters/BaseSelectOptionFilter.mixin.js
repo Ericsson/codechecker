@@ -1,9 +1,8 @@
-<script>
-import BaseFilter from './BaseFilter';
+import BaseFilterMixin from './BaseFilter.mixin';
 
 export default {
   name: 'BaseSelectOptionFilter',
-  extends: BaseFilter,
+  mixins: [ BaseFilterMixin ],
 
   data() {
     return {
@@ -19,10 +18,6 @@ export default {
       this.updateUrl();
       this.updateReportFilter();
     }
-  },
-
-  created() {
-    this.initByUrl();
   },
 
   methods: {
@@ -41,16 +36,26 @@ export default {
     },
 
     initByUrl() {
-      const state = [].concat(this.$route.query[this.id] || []);
-      if (state.length) {
-        this.selectedItems = state.map((s) => {
-          return {
-            id: this.decodeValue(s),
-            title: s,
-            count: "N/A"
-          };
-        });
+      return new Promise((resolve) => {
+        const state = [].concat(this.$route.query[this.id] || []);
+        if (state.length) {
+          this.selectedItems = state.map((s) => {
+            return {
+              id: this.decodeValue(s),
+              title: s,
+              count: "N/A"
+            };
+          });
+        }
 
+        resolve();
+      });
+    },
+
+    afterUrlInit() {
+      this.registerWatchers();
+
+      if (this.selectedItems.length) {
         this.fetchItems();
       }
     },
@@ -69,4 +74,3 @@ export default {
     fetchItems() {}
   }
 }
-</script>

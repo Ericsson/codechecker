@@ -4,6 +4,7 @@
     :items="items"
     :fetch-items="fetchItems"
     :loading="loading"
+    :selected-items="selectedItems"
   >
     <template v-slot:icon="{ item }">
       <review-status-icon :status="item.id" />
@@ -14,10 +15,12 @@
 <script>
 import { ccService } from '@cc-api';
 
-import { ReviewStatus } from "@cc/report-server-types";
+import { ReportFilter, ReviewStatus } from "@cc/report-server-types";
 import { ReviewStatusIcon } from "@/components/icons";
+import { ReviewStatusMixin } from "@/mixins";
 
 import SelectOption from './SelectOption/SelectOption';
+import BaseSelectOptionFilterMixin from './BaseSelectOptionFilter.mixin';
 
 export default {
   name: 'ReviewStatusFilter',
@@ -25,32 +28,53 @@ export default {
     SelectOption,
     ReviewStatusIcon
   },
+  mixins: [ BaseSelectOptionFilterMixin, ReviewStatusMixin ],
+
   data() {
     return {
-      selected: [],
-      items: [],
-      loading: false
+      id: "review-status"
     };
   },
 
   methods: {
+    encodeValue(reviewStatusId) {
+      return this.reviewStatusFromCodeToString(reviewStatusId);
+    },
+
+    decodeValue(reviewStatusName) {
+      return this.reviewStatusFromStringToCode(reviewStatusName);
+    },
+
+    updateReportFilter() {
+      this.reportFilter.reviewStatus = this.selectedItems.map(item => item.id);
+    },
+
+    onReportFilterChange(key) {
+      if (key === 'reviewStatus') return;
+
+      this.fetchItems();
+    },
+
     fetchItems() {
       this.loading = true;
 
       const runIds = null;
-      const reportFilter = null;
       const cmpData = null;
 
-      ccService.getClient().getReviewStatusCounts(runIds, reportFilter, cmpData,
-      (err, res) => {
+      const reportFilter = new ReportFilter(this.reportFilter);
+      reportFilter.reviewStatus = null;
+
+      ccService.getClient().getReviewStatusCounts(runIds, reportFilter,
+      cmpData, (err, res) => {
         this.items = Object.keys(ReviewStatus).map(status => {
-          const reviewStatusId = ReviewStatus[status];
+          const id = ReviewStatus[status];
           return {
-            id: reviewStatusId,
-            title: status,
-            count: res[reviewStatusId] !== undefined ? res[reviewStatusId] : 0
+            id: id,
+            title: this.encodeValue(id),
+            count: res[id] !== undefined ? res[id] : 0
           };
         });
+        this.updateSelectedItems();
         this.loading = false;
       });
     }

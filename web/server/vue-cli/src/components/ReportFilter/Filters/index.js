@@ -10,6 +10,7 @@ import FilePathFilter from './FilePathFilter';
 import SourceComponentFilter from './SourceComponentFilter';
 import CheckerNameFilter from './CheckerNameFilter';
 import CheckerMessageFilter from './CheckerMessageFilter';
+import BaseFilterMixin from './BaseFilter.mixin';
 
 export {
   UniqueFilter,
@@ -23,5 +24,6 @@ export {
   FilePathFilter,
   SourceComponentFilter,
   CheckerNameFilter,
-  CheckerMessageFilter
+  CheckerMessageFilter,
+  BaseFilterMixin
 }

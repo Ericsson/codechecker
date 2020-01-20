@@ -5,12 +5,15 @@
         :run-ids="runIds"
         :report-filter="reportFilter"
         :cmp-data="cmpData"
+        :after-url-init="afterUrlInit"
       />
     </pane>
     <pane>
       <v-data-table
         :headers="headers"
         :items="reports"
+        :loading="loading"
+        loading-text="Loading reports..."
         item-key="name"
       >
         <template #item.checkedFile="{ item }">
@@ -116,25 +119,23 @@ export default {
           align: "center"
         }
       ],
-      reports: []
+      reports: [],
+      loading: true
     };
   },
 
-  watch: {
-    reportFilter: {
-      handler() {
-        this.fetchReports();
-      },
-      deep: true
-    }
-  },
-
-  created() {
-    this.fetchReports();
-  },
-
   methods: {
+    afterUrlInit() {
+      this.fetchReports();
+
+      this.$watch('reportFilter', () => {
+        this.fetchReports();
+      }, { deep: true });
+    },
+
     fetchReports() {
+      this.loading = true;
+
       const limit = null;
       const offset = null;
       const sortType = null;
@@ -143,6 +144,7 @@ export default {
       ccService.getClient().getRunResults(this.runIds, limit, offset, sortType,
       this.reportFilter, this.cmpData, getDetails, (err, reports) => {
         this.reports = reports;
+        this.loading = false;
       });
     }
   }

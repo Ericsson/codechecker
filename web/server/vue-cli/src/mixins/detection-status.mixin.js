@@ -12,6 +12,10 @@ export default {
           return 'Unresolved';
         case DetectionStatus.REOPENED:
           return 'Reopened';
+        case DetectionStatus.OFF:
+            return 'Off';
+        case DetectionStatus.UNAVAILABLE:
+            return 'Unavailable';
         default:
           return '';
       }
@@ -27,6 +31,10 @@ export default {
           return DetectionStatus.UNRESOLVED;
         case 'reopened':
           return DetectionStatus.REOPENED;
+        case 'off':
+          return DetectionStatus.OFF;
+        case 'unavailable':
+          return DetectionStatus.UNAVAILABLE;
         default:
           return -1;
       }

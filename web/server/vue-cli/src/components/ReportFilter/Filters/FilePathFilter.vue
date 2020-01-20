@@ -3,6 +3,7 @@
     title="File path"
     :items="items"
     :fetch-items="fetchItems"
+    :selected-items="selectedItems"
     :search="search"
     :loading="loading"
   >
@@ -20,6 +21,7 @@ import { ccService } from '@cc-api';
 import { ReportFilter } from '@cc/report-server-types';
 
 import SelectOption from './SelectOption/SelectOption';
+import BaseSelectOptionFilterMixin from './BaseSelectOptionFilter.mixin';
 
 export default {
   name: 'FilePathFilter',
@@ -27,14 +29,11 @@ export default {
     VIcon,
     SelectOption
   },
-  props: {
-    reportFilter: { type: Object, required: true }
-  },
+  mixins: [ BaseSelectOptionFilterMixin ],
+
   data() {
     return {
-      selected: [],
-      items: [],
-      loading: false,
+      id: "filepath",
       search: {
         placeHolder : 'Search for files (e.g.: */src/*)...',
         filterItems: this.filterItems
@@ -43,13 +42,23 @@ export default {
   },
 
   methods: {
+    updateReportFilter() {
+      this.reportFilter.filepath = this.selectedItems.map(item => item.id);
+    },
+
+    onReportFilterChange(key) {
+      if (key === 'filepath') return;
+
+      this.fetchItems();
+    },
+
     fetchItems(search=null) {
       this.loading = true;
 
       const runIds = null;
 
       const reportFilter = new ReportFilter(this.reportFilter);
-      reportFilter['filepath'] = search ? [ `${search}*` ] : null;
+      reportFilter.filepath = search ? [ `${search}*` ] : null;
 
       const cmpData = null;
       const limit = 10;
@@ -70,6 +79,7 @@ export default {
           };
         });
 
+        this.updateSelectedItems();
         this.loading = false;
       });
     },

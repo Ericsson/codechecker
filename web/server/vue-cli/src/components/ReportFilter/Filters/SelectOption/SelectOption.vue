@@ -85,7 +85,10 @@ export default {
 
   created() {
     const unwatch = this.$watch("menu", () => {
-      this.fetchItems();
+      if (!this.items.length) {
+        this.fetchItems();
+      }
+
       unwatch();
     });
   },
