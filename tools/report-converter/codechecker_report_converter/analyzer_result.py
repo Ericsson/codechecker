@@ -33,10 +33,16 @@ class AnalyzerResult(object):
         """
         analyzer_result = os.path.abspath(analyzer_result)
         plist_objs = self.parse(analyzer_result)
+        if not plist_objs:
+            return False
 
         self._post_process_result(plist_objs)
 
-        self.__write(plist_objs, output_dir)
+        ret = self._write(plist_objs, output_dir)
+        if not ret:
+            return False
+
+        return True
 
     @abstractmethod
     def parse(self, analyzer_result):
@@ -54,7 +60,7 @@ class AnalyzerResult(object):
         self._add_report_hash(plist_objs)
 
     def _add_report_hash(self, plist_objs):
-        """ Generate report hash for each diagnostics in the plist objects. """
+        """ Generate report hash for each diagnostics in the plist objects."""
         for plist_data in plist_objs:
             files = plist_data['files']
             for diag in plist_data['diagnostics']:
@@ -69,7 +75,7 @@ class AnalyzerResult(object):
                      errors='replace') as analyzer_result:
             return analyzer_result.readlines()
 
-    def __write(self, plist_objs, output_dir):
+    def _write(self, plist_objs, output_dir):
         """ Creates plist files from the parse result to the given output.
 
         It will generate a context free hash for each diagnostics.

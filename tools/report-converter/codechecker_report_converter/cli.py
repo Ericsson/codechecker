@@ -16,6 +16,8 @@ import shutil
 
 from codechecker_report_converter.clang_tidy.analyzer_result import \
     ClangTidyAnalyzerResult
+from codechecker_report_converter.cppcheck.analyzer_result import \
+    CppcheckAnalyzerResult
 from codechecker_report_converter.sanitizers.address.analyzer_result import \
     ASANAnalyzerResult
 from codechecker_report_converter.sanitizers.memory.analyzer_result import \
@@ -37,6 +39,7 @@ LOG.addHandler(log_handler)
 
 supported_converters = {
     ClangTidyAnalyzerResult.TOOL_NAME: ClangTidyAnalyzerResult,
+    CppcheckAnalyzerResult.TOOL_NAME: CppcheckAnalyzerResult,
     ASANAnalyzerResult.TOOL_NAME: ASANAnalyzerResult,
     MSANAnalyzerResult.TOOL_NAME: MSANAnalyzerResult,
     TSANAnalyzerResult.TOOL_NAME: TSANAnalyzerResult,

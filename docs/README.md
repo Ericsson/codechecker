@@ -71,7 +71,7 @@ macOS (OS X) development environment.
 * [Permission management](web/permissions.md)
 * [Usage of PostgreSQL database](web/postgresql_setup.md)
 * [How to deal with false positives](analyzer/false_positives.md)
-* [Store Cppcheck analyzer reports](cppcheck.md)
+* [Store Cppcheck analyzer reports](/tools/report-converter/README.md#cppcheck)
 
 # Install guide
 
@@ -287,7 +287,7 @@ For now CodeChecker supports only `C/C++` related analyzers:
 | -------------- |--------------|
 | **C/C++**      | [Clang Tidy](https://clang.llvm.org/extra/clang-tidy/)  |
 |                | [Clang Static Analyzer](https://clang-analyzer.llvm.org/)    |
-|                | [Cppcheck](http://cppcheck.sourceforge.net/)    |
+|                | [Cppcheck](/tools/report-converter/README.md#cppcheck)    |
 |                | [Clang Sanitizers](supported_code_analyzers.md#clang-sanitizers)    |
 
 We are planning to support multiple analyzers of different programming
