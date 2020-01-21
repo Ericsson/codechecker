@@ -57,21 +57,54 @@
 
       <v-list-item>
         <v-list-item-content>
-          <baseline-filter
-            :run-ids="runIds"
-            :report-filter="reportFilter"
-            :cmp-data="cmpData"
-          />
+          <v-expansion-panels v-model="activeBaselinePanelId">
+            <v-expansion-panel>
+              <v-expansion-panel-header>BASELINE</v-expansion-panel-header>
+              <v-expansion-panel-content>
+                <baseline-run-filter
+                  ref="filters"
+                  :run-ids="runIds"
+                  :report-filter="reportFilter"
+                  :cmp-data="cmpData"
+                />
+
+                <baseline-tag-filter
+                  :run-ids="runIds"
+                  :report-filter="reportFilter"
+                  :cmp-data="cmpData"
+                />
+              </v-expansion-panel-content>
+            </v-expansion-panel>
+          </v-expansion-panels>
         </v-list-item-content>
       </v-list-item>
 
       <v-list-item>
         <v-list-item-content>
-          <newcheck-filter
-            :run-ids="runIds"
-            :report-filter="reportFilter"
-            :cmp-data="cmpData"
-          />
+          <v-expansion-panels v-model="activeNewcheckPanelId">
+            <v-expansion-panel>
+              <v-expansion-panel-header>NEWCHECK</v-expansion-panel-header>
+              <v-expansion-panel-content>
+                <newcheck-run-filter
+                  :run-ids="runIds"
+                  :report-filter="reportFilter"
+                  :cmp-data="cmpData"
+                />
+
+                <newcheck-tag-filter
+                  :run-ids="runIds"
+                  :report-filter="reportFilter"
+                  :cmp-data="cmpData"
+                />
+
+                <newcheck-diff-type-filter
+                  :run-ids="runIds"
+                  :report-filter="reportFilter"
+                  :cmp-data="cmpData"
+                />
+              </v-expansion-panel-content>
+            </v-expansion-panel>
+          </v-expansion-panels>
         </v-list-item-content>
       </v-list-item>
 
@@ -174,13 +207,22 @@ import {
   VListItemAction,
   VListItemContent
 } from "Vuetify/VList";
+import {
+  VExpansionPanels,
+  VExpansionPanel,
+  VExpansionPanelHeader,
+  VExpansionPanelContent
+} from "Vuetify/VExpansionPanel";
 import VSpacer from "Vuetify/VGrid/VSpacer";
 
 import {
   UniqueFilter,
   ReportHashFilter,
-  BaselineFilter,
-  NewcheckFilter,
+  BaselineRunFilter,
+  BaselineTagFilter,
+  NewcheckDiffTypeFilter,
+  NewcheckRunFilter,
+  NewcheckTagFilter,
   ReviewStatusFilter,
   DetectionStatusFilter,
   SeverityFilter,
@@ -199,12 +241,17 @@ export default {
   name: 'ReportFilter',
   components: {
     VList, VListItem, VListItemAction, VListItemContent, VSpacer,
+    VExpansionPanels, VExpansionPanel, VExpansionPanelHeader,
+    VExpansionPanelContent,
     ClearAllFilters,
     ReportCount,
     UniqueFilter,
     ReportHashFilter,
-    BaselineFilter,
-    NewcheckFilter,
+    BaselineRunFilter,
+    BaselineTagFilter,
+    NewcheckDiffTypeFilter,
+    NewcheckRunFilter,
+    NewcheckTagFilter,
     ReviewStatusFilter,
     DetectionStatusFilter,
     SeverityFilter,
@@ -220,6 +267,13 @@ export default {
     reportFilter: { type: Object, required: true },
     cmpData: { required: true, validator: v => typeof v === 'object' },
     afterUrlInit: { type: Function, default: () => {} }
+  },
+
+  data() {
+    return {
+      activeBaselinePanelId: 0,
+      activeNewcheckPanelId: -1
+    };
   },
 
   mounted() {
