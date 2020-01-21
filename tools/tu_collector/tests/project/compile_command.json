@@ -8,5 +8,10 @@
     "directory": "/tmp",
     "command": "gcc -o /dev/null -std=c11 main.c",
     "file": "main.c"
+  },
+  {
+    "directory": "/tmp",
+    "command": "ccache gcc -o /dev/null -std=c11 hello.c",
+    "file": "hello.c"
   }
 ]

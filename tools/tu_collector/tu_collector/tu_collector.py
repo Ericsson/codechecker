@@ -27,6 +27,7 @@ import string
 import subprocess
 import sys
 import zipfile
+from distutils.spawn import find_executable
 
 
 def __random_string(l):
@@ -49,6 +50,44 @@ def __get_toolchain_compiler(command):
             return os.path.join(tcpath.group('tcpath'),
                                 'bin',
                                 'g++' if is_cpp else 'gcc')
+
+
+def __determine_compiler(gcc_command):
+    """
+    This function determines the compiler from the given compilation command.
+    If the first part of the gcc_command is ccache invocation then the rest
+    should be a complete compilation command.
+
+    CCache may have three forms:
+    1. ccache g++ main.cpp
+    2. ccache main.cpp
+    3. /usr/lib/ccache/gcc main.cpp
+    In the first case this function drops "ccache" from gcc_command and returns
+    the next compiler name.
+    In the second case the compiler can be given by config files or an
+    environment variable. Currently we don't handle this version, and in this
+    case the compiler remanis "ccache" and the gcc_command is not changed.
+    The two cases are distinguished by checking whether the second parameter is
+    an executable or not.
+    In the third case gcc is a symlink to ccache, but we can handle
+    it as a normal compiler.
+
+    gcc_command -- A split build action as a list which may or may not start
+                   with ccache.
+
+    !!!WARNING!!! This function must always return an element of gcc_command
+    without modification (symlink resolve, absolute path conversion, etc.)
+    otherwise an exception is thrown at the caller side.
+
+    TODO: The second case could be handled if there was a way for querying the
+    used compiler from ccache. This can be configured for ccache in config
+    files or environment variables.
+    """
+    if gcc_command[0].endswith('ccache'):
+        if find_executable(gcc_command[1]) is not None:
+            return gcc_command[1]
+
+    return gcc_command[0]
 
 
 def __gather_dependencies(command, build_dir):
@@ -118,7 +157,10 @@ def __gather_dependencies(command, build_dir):
     command = __eliminate_argument(command, '-MV')
 
     # Build out custom invocation for dependency generation.
-    command = [command[0], '-E', '-M', '-MT', '__dummy'] + command[1:]
+    compiler = __determine_compiler(command)
+    command = [compiler, '-E', '-M', '-MT', '__dummy'] \
+        + command[command.index(compiler) + 1:]
+    print(command)
 
     # Remove empty arguments
     command = [i for i in command if i]

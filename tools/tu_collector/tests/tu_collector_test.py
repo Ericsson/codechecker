@@ -52,9 +52,15 @@ class TUCollectorTest(unittest.TestCase):
         os.remove(zip_file_name)
 
         self.assertTrue(
+            any(map(lambda path: path.endswith(os.path.join('/', 'main.c')),
+                    files)))
+        self.assertTrue(
             any(map(lambda path: path.endswith(os.path.join('/', 'main.cpp')),
                     files)))
         self.assertTrue(
             any(map(lambda path: path.endswith(os.path.join('/', 'vector')),
+                    files)))
+        self.assertTrue(
+            any(map(lambda path: path.endswith(os.path.join('/', 'hello.c')),
                     files)))
         self.assertIn('compilation_database.json', files)
