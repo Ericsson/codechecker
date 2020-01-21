@@ -51,7 +51,7 @@ export default {
     },
 
     onReportFilterChange(key) {
-      if (key === 'detectionStatus') return;
+      if (key === 'detectionStatus' || !this.selectedItems.length) return;
 
       this.fetchItems();
     },

@@ -47,7 +47,7 @@ export default {
     },
 
     onReportFilterChange(key) {
-      if (key === 'filepath') return;
+      if (key === 'filepath' || !this.selectedItems.length) return;
 
       this.fetchItems();
     },

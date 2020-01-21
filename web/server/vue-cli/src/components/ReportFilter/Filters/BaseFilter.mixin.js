@@ -27,7 +27,10 @@ export default {
     // Object/Array. For this reason we are using computed property for
     // ReportFilter to get the old values and see what are the changes.
     registerWatchers() {
-      this.$watch('reportFilterModel', (oldVal, newVal) => {
+      if (this.reportFilterUnwatch) this.reportFilterUnwatch();
+
+      this.reportFilterUnwatch = this.$watch('reportFilterModel',
+      (oldVal, newVal) => {
         Object.keys(newVal).forEach((key) => {
           if (JSON.stringify(newVal[key]) !== JSON.stringify(oldVal[key])) {
             this.onReportFilterChange(key, oldVal, newVal);

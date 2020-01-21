@@ -50,7 +50,7 @@ export default {
     },
 
     onReportFilterChange(key) {
-      if (key === 'severity') return;
+      if (key === 'severity' || !this.selectedItems.length) return;
 
       this.fetchItems();
     },

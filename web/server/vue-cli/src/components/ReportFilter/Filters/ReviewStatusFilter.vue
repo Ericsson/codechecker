@@ -50,7 +50,7 @@ export default {
     },
 
     onReportFilterChange(key) {
-      if (key === 'reviewStatus') return;
+      if (key === 'reviewStatus' || !this.selectedItems.length) return;
 
       this.fetchItems();
     },

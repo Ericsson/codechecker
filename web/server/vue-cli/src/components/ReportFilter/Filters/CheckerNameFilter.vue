@@ -47,7 +47,7 @@ export default {
     },
 
     onReportFilterChange(key) {
-      if (key === 'checkerName') return;
+      if (key === 'checkerName' || !this.selectedItems.length) return;
 
       this.fetchItems();
     },

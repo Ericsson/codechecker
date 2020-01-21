@@ -128,7 +128,9 @@ export default {
     afterUrlInit() {
       this.fetchReports();
 
-      this.$watch('reportFilter', () => {
+      if (this.reportFilterUnwatch) this.reportFilterUnwatch();
+
+      this.reportFilterUnwatch = this.$watch('reportFilter', () => {
         this.fetchReports();
       }, { deep: true });
     },
