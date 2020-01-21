@@ -58,14 +58,11 @@ export default {
     fetchItems() {
       this.loading = true;
 
-      const runIds = null;
-      const cmpData = null;
-
       const reportFilter = new ReportFilter(this.reportFilter);
       reportFilter.reviewStatus = null;
 
-      ccService.getClient().getReviewStatusCounts(runIds, reportFilter,
-      cmpData, (err, res) => {
+      ccService.getClient().getReviewStatusCounts(this.runIds, reportFilter,
+      this.cmpData, (err, res) => {
         this.items = Object.keys(ReviewStatus).map(status => {
           const id = ReviewStatus[status];
           return {

@@ -58,14 +58,11 @@ export default {
     fetchItems() {
       this.loading = true;
 
-      const runIds = null;
-      const cmpData = null;
-
       const reportFilter = new ReportFilter(this.reportFilter);
       reportFilter.severity = null;
 
-      ccService.getClient().getSeverityCounts(runIds, reportFilter, cmpData,
-      (err, res) => {
+      ccService.getClient().getSeverityCounts(this.runIds, reportFilter,
+      this.cmpData, (err, res) => {
         this.items = Object.keys(Severity).map(status => {
           const severityId = Severity[status];
           return {

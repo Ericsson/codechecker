@@ -4,7 +4,9 @@ export default {
   name: 'BaseFilterMixin',
 
   props: {
-    reportFilter: { type: Object, required: true }
+    runIds: { type: Array, required: true },
+    reportFilter: { type: Object, required: true },
+    cmpData: { required: true, validator: v => typeof v === 'object' },
   },
 
   computed: {

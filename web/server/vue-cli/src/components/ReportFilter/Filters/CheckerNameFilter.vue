@@ -55,17 +55,14 @@ export default {
     fetchItems(search=null) {
       this.loading = true;
 
-      const runIds = null;
-
       const reportFilter = new ReportFilter(this.reportFilter);
       reportFilter.checkerName = search ? [ `${search}*` ] : null;
 
-      const cmpData = null;
       const limit = null;
       const offset = 0;
 
-      ccService.getClient().getCheckerCounts(runIds, reportFilter, cmpData,
-      limit, offset, (err, res) => {
+      ccService.getClient().getCheckerCounts(this.runIds, reportFilter,
+      this.cmpData, limit, offset, (err, res) => {
         this.items = res.map((checker) => {
           return {
             id: checker.name,

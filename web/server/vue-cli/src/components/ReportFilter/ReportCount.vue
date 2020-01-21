@@ -37,11 +37,8 @@ export default {
     },
 
     getReportCount() {
-      const runIds = null;
-      const cmpData = null;
-
-      ccService.getClient().getRunResultCount(runIds, this.reportFilter,
-      cmpData, (err, res) => {
+      ccService.getClient().getRunResultCount(this.runIds, this.reportFilter,
+      this.cmpData, (err, res) => {
         this.value = res;
       });
     }

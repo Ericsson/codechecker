@@ -14,7 +14,11 @@
     >
       <v-list-item>
         <v-list-item-action class="mr-5">
-          <clear-all-filters :report-filter="reportFilter" />
+          <clear-all-filters
+            :run-ids="runIds"
+            :report-filter="reportFilter"
+            :cmp-data="cmpData"
+          />
         </v-list-item-action>
 
         <v-spacer />
@@ -22,7 +26,9 @@
         <v-list-item-content>
           <report-count
             ref="filters"
+            :run-ids="runIds"
             :report-filter="reportFilter"
+            :cmp-data="cmpData"
           />
         </v-list-item-content>
       </v-list-item>
@@ -31,7 +37,9 @@
         <v-list-item-content>
           <unique-filter
             ref="filters"
+            :run-ids="runIds"
             :report-filter="reportFilter"
+            :cmp-data="cmpData"
           />
         </v-list-item-content>
       </v-list-item>
@@ -40,20 +48,30 @@
         <v-list-item-content>
           <report-hash-filter
             ref="filters"
+            :run-ids="runIds"
             :report-filter="reportFilter"
+            :cmp-data="cmpData"
           />
         </v-list-item-content>
       </v-list-item>
 
       <v-list-item>
         <v-list-item-content>
-          <baseline-filter :report-filter="reportFilter" />
+          <baseline-filter
+            :run-ids="runIds"
+            :report-filter="reportFilter"
+            :cmp-data="cmpData"
+          />
         </v-list-item-content>
       </v-list-item>
 
       <v-list-item>
         <v-list-item-content>
-          <newcheck-filter />
+          <newcheck-filter
+            :run-ids="runIds"
+            :report-filter="reportFilter"
+            :cmp-data="cmpData"
+          />
         </v-list-item-content>
       </v-list-item>
 
@@ -61,7 +79,9 @@
         <v-list-item-content>
           <review-status-filter
             ref="filters"
+            :run-ids="runIds"
             :report-filter="reportFilter"
+            :cmp-data="cmpData"
           />
         </v-list-item-content>
       </v-list-item>
@@ -70,7 +90,9 @@
         <v-list-item-content>
           <detection-status-filter
             ref="filters"
+            :run-ids="runIds"
             :report-filter="reportFilter"
+            :cmp-data="cmpData"
           />
         </v-list-item-content>
       </v-list-item>
@@ -79,7 +101,9 @@
         <v-list-item-content>
           <severity-filter
             ref="filters"
+            :run-ids="runIds"
             :report-filter="reportFilter"
+            :cmp-data="cmpData"
           />
         </v-list-item-content>
       </v-list-item>
@@ -94,7 +118,9 @@
         <v-list-item-content>
           <file-path-filter
             ref="filters"
+            :run-ids="runIds"
             :report-filter="reportFilter"
+            :cmp-data="cmpData"
           />
         </v-list-item-content>
       </v-list-item>
@@ -103,7 +129,9 @@
         <v-list-item-content>
           <source-component-filter
             ref="filters"
+            :run-ids="runIds"
             :report-filter="reportFilter"
+            :cmp-data="cmpData"
           />
         </v-list-item-content>
       </v-list-item>
@@ -112,7 +140,9 @@
         <v-list-item-content>
           <checker-name-filter
             ref="filters"
+            :run-ids="runIds"
             :report-filter="reportFilter"
+            :cmp-data="cmpData"
           />
         </v-list-item-content>
       </v-list-item>
@@ -121,7 +151,9 @@
         <v-list-item-content>
           <checker-message-filter
             ref="filters"
+            :run-ids="runIds"
             :report-filter="reportFilter"
+            :cmp-data="cmpData"
           />
         </v-list-item-content>
       </v-list-item>

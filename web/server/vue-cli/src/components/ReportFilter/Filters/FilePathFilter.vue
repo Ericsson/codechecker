@@ -55,17 +55,14 @@ export default {
     fetchItems(search=null) {
       this.loading = true;
 
-      const runIds = null;
-
       const reportFilter = new ReportFilter(this.reportFilter);
       reportFilter.filepath = search ? [ `${search}*` ] : null;
 
-      const cmpData = null;
       const limit = 10;
       const offset = null;
 
-      ccService.getClient().getFileCounts(runIds, reportFilter, cmpData, limit,
-      offset, (err, res) => {
+      ccService.getClient().getFileCounts(this.runIds, reportFilter,
+      this.cmpData, limit, offset, (err, res) => {
         // Order the results alphabetically.
         this.items = Object.keys(res).sort((a, b) => {
             if (a < b) return -1;

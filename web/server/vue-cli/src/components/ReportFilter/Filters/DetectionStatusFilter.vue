@@ -59,14 +59,11 @@ export default {
     fetchItems() {
       this.loading = true;
 
-      const runIds = null;
-      const cmpData = null;
-
       const reportFilter = new ReportFilter(this.reportFilter);
       reportFilter.detectionStatus = null;
 
-      ccService.getClient().getDetectionStatusCounts(runIds, reportFilter,
-      cmpData, (err, res) => {
+      ccService.getClient().getDetectionStatusCounts(this.runIds, reportFilter,
+      this.cmpData, (err, res) => {
         this.items = Object.keys(DetectionStatus).map(status => {
           const id = DetectionStatus[status];
           return {
