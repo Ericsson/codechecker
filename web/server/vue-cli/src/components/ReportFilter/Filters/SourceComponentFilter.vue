@@ -3,11 +3,13 @@
     title="Source component"
     :items="items"
     :fetch-items="fetchItems"
+    :selected-items="selectedItems"
+    :search="search"
     :loading="loading"
   >
     <template v-slot:icon>
       <v-icon color="grey">
-        mdi-message-text-outline
+        mdi-puzzle-outline
       </v-icon>
     </template>
   </select-option>
@@ -18,6 +20,7 @@ import VIcon from "Vuetify/VIcon/VIcon";
 import { ccService } from '@cc-api';
 
 import SelectOption from './SelectOption/SelectOption';
+import BaseSelectOptionFilterMixin from './BaseSelectOptionFilter.mixin';
 
 export default {
   name: 'SourceComponentFilter',
@@ -25,19 +28,28 @@ export default {
     VIcon,
     SelectOption
   },
+  mixins: [ BaseSelectOptionFilterMixin ],
+
   data() {
     return {
-      selected: [],
-      items: [],
-      loading: false
+      id: "source-component",
+      search: {
+        placeHolder : 'Search for source components...',
+        filterItems: this.filterItems
+      }
     };
   },
 
   methods: {
-    fetchItems() {
-      this.loading = true;
-      const filter = null;
+    updateReportFilter() {
+      this.reportFilter.componentNames =
+        this.selectedItems.map(item => item.id);
+    },
 
+    fetchItems(search=null) {
+      this.loading = true;
+
+      const filter = search ? [ `${search}*` ] : null;
       ccService.getClient().getSourceComponents(filter, (err, res) => {
         this.items = res.map((component) => {
           return {
@@ -48,6 +60,10 @@ export default {
 
         this.loading = false;
       });
+    },
+
+    filterItems(value) {
+      this.fetchItems(value);
     }
   }
 }

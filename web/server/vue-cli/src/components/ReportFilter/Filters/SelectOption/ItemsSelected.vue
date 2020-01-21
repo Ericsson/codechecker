@@ -25,7 +25,7 @@
         </v-list-item-content>
 
         <v-chip color="#878d96" outlined>
-          {{ item.count }}
+          {{ item.count === undefined ? "N/A" : item.count }}
         </v-chip>
       </v-list-item>
     </v-list-item-group>

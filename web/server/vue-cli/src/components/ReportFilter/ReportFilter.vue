@@ -98,7 +98,10 @@
 
       <v-list-item>
         <v-list-item-content>
-          <source-component-filter />
+          <source-component-filter
+            ref="filters"
+            :report-filter="reportFilter"
+          />
         </v-list-item-content>
       </v-list-item>
 

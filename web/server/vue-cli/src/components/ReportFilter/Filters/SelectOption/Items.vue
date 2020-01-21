@@ -48,7 +48,11 @@
               <v-list-item-title v-text="item.title" />
             </v-list-item-content>
 
-            <v-chip color="#878d96" outlined>
+            <v-chip
+              v-if="item.count !== undefined"
+              color="#878d96"
+              outlined
+            >
               {{ item.count }}
             </v-chip>
           </template>
