@@ -30,13 +30,52 @@ import VCheckbox from "Vuetify/VCheckbox/VCheckbox";
 import VTooltip from "Vuetify/VTooltip/VTooltip";
 import VIcon from "Vuetify/VIcon/VIcon";
 
+import BaseFilterMixin from './BaseFilter.mixin';
+
 export default {
   name: 'UniqueFilter',
   components: {
     VCheckbox, VTooltip, VIcon
   },
-  props: {
-    reportFilter: { type: Object, required: true }
+  mixins: [ BaseFilterMixin ],
+
+  data() {
+    return {
+      id: 'is-unique'
+    };
+  },
+
+  watch: {
+    'reportFilter.isUnique': function () {
+      this.updateUrl();
+    }
+  },
+
+  methods: {
+    encodeValue(isUnique) {
+      return isUnique ? "on" : "off";
+    },
+
+    decodeValue(state) {
+      return state === "off" ? false : true;
+    },
+
+    getUrlState() {
+      return {
+        [this.id]: this.encodeValue(this.reportFilter.isUnique)
+      };
+    },
+
+    initByUrl() {
+      return new Promise((resolve) => {
+        const state = this.$route.query[this.id];
+        if (state) {
+          this.reportFilter.isUnique = this.decodeValue(state)
+        }
+
+        resolve();
+      });
+    },
   }
 }
 </script>
