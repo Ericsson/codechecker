@@ -20,7 +20,10 @@
         <v-spacer />
 
         <v-list-item-content>
-          <report-count />
+          <report-count
+            ref="filters"
+            :report-filter="reportFilter"
+          />
         </v-list-item-content>
       </v-list-item>
 
@@ -188,6 +191,10 @@ export default {
   },
 
   mounted() {
+    this.initByUrl();
+  },
+
+  beforeUpdate() {
     this.initByUrl();
   },
 
