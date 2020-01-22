@@ -10,8 +10,11 @@ export default {
   },
 
   computed: {
-    reportFilterModel: function() {
+    reportFilterModel() {
       return new ReportFilter(this.reportFilter);
+    },
+    runIdsModel() {
+      return this.runIds ? this.runIds.slice(0) : null;
     }
   },
 
@@ -30,7 +33,6 @@ export default {
     // ReportFilter to get the old values and see what are the changes.
     registerWatchers() {
       if (this.reportFilterUnwatch) this.reportFilterUnwatch();
-
       this.reportFilterUnwatch = this.$watch('reportFilterModel',
       (oldVal, newVal) => {
         Object.keys(newVal).forEach((key) => {
@@ -39,6 +41,11 @@ export default {
           }
         });
       }, { deep: true });
+
+      if (this.runIdsUnwatch) this.runIdsUnwatch();
+      this.runIdsUnwatch = this.$watch("runIdsModel", (oldVal, newVal) => {
+        this.onRunIdsChange(oldVal, newVal);
+      });
     },
 
     afterUrlInit() {
@@ -55,6 +62,12 @@ export default {
 
     fetchItems() {},
 
-    onReportFilterChange(/* key, oldValue, newValue */) {},
+    onRunIdsChange(/* oldVal, newVal */) {
+      this.fetchItems();
+    },
+
+    onReportFilterChange(/* key, oldValue, newValue */) {
+      this.fetchItems();
+    },
   }
 }

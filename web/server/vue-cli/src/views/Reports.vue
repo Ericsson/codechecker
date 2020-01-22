@@ -129,10 +129,14 @@ export default {
       this.fetchReports();
 
       if (this.reportFilterUnwatch) this.reportFilterUnwatch();
-
       this.reportFilterUnwatch = this.$watch('reportFilter', () => {
         this.fetchReports();
       }, { deep: true });
+
+      if (this.runIdsUnwatch) this.runIdsUnwatch();
+      this.runIdsUnwatch = this.$watch('runIds', () => {
+        this.fetchReports();
+      });
     },
 
     fetchReports() {

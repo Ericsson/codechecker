@@ -3,6 +3,7 @@
     title="Run Filter"
     :items="items"
     :fetch-items="fetchItems"
+    :selected-items="selectedItems"
     :search="search"
     :loading="loading"
   >
@@ -17,9 +18,10 @@
 <script>
 import VIcon from "Vuetify/VIcon/VIcon";
 import { ccService } from '@cc-api';
-import { ReportFilter } from '@cc/report-server-types';
+import { ReportFilter, RunFilter } from '@cc/report-server-types';
 
 import SelectOption from './SelectOption/SelectOption';
+import BaseSelectOptionFilterMixin from './BaseSelectOptionFilter.mixin';
 
 export default {
   name: 'BaselineRunFilter',
@@ -27,14 +29,11 @@ export default {
     VIcon,
     SelectOption
   },
-  props: {
-    reportFilter: { type: Object, required: true }
-  },
+  mixins: [ BaseSelectOptionFilterMixin ],
+
   data() {
     return {
-      selected: [],
-      items: [],
-      loading: false,
+      id: "run",
       search: {
         placeHolder : 'Search for run names (e.g.: myrun*)...',
         filterItems: this.filterItems
@@ -43,6 +42,46 @@ export default {
   },
 
   methods: {
+    getSelectedItems(runNames) {
+      return runNames.map((s) => {
+        return new Promise((resolve) => {
+          this.getRunIdsByRunName(s).then((runIds) => {
+            resolve({
+              id: s,
+              runIds: runIds,
+              title: s,
+              count: "N/A"
+            });
+          });
+        });
+      });
+    },
+
+    initByUrl() {
+      return new Promise((resolve) => {
+        const state = [].concat(this.$route.query[this.id] || []);
+        if (state.length) {
+          const selectedItems = this.getSelectedItems(state);
+          Promise.all(selectedItems).then((res) => {
+            this.selectedItems = res;
+            resolve();
+          });
+        }
+      });
+    },
+
+    updateReportFilter() {
+      const selectedRunIds =
+        [].concat(...this.selectedItems.map(item => item.runIds));
+      this.runIds.splice(0, this.runIds.length, ...selectedRunIds);
+    },
+
+    onRunIdsChange() {},
+
+    onReportFilterChange() {
+      this.fetchItems();
+    },
+
     fetchItems(search=null) {
       this.loading = true;
 
@@ -58,19 +97,35 @@ export default {
       offset, (err, res) => {
         this.items = res.map((run) => {
           return {
-            id: run.runId,
+            id: run.name,
+            runIds: [ run.runId ],
             title: run.name,
             count: run.reportCount
           };
         });
 
+        this.updateSelectedItems();
         this.loading = false;
       });
     },
 
     filterItems(value) {
       this.fetchItems(value);
-    }
+    },
+
+    getRunIdsByRunName(runName) {
+      const runFilter = new RunFilter({ names: [ runName ]});
+      const limit = null;
+      const offset = null;
+      const sortMode = null;
+
+      return new Promise((resolve) => {
+        ccService.getClient().getRunData(runFilter, limit, offset, sortMode,
+        (err, runs) => {
+          resolve(runs.map((run) => run.runId));
+        });
+      });
+    },
   }
 }
 </script>

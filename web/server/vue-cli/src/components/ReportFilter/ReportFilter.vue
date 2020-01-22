@@ -281,7 +281,7 @@ export default {
   },
 
   beforeUpdate() {
-    this.initByUrl();
+    // TODO: init by url if component is not initialized.
   },
 
   methods: {

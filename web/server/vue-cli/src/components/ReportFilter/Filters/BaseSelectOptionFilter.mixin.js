@@ -21,12 +21,12 @@ export default {
   },
 
   methods: {
-    encodeValue(severityId) {
-      return severityId;
+    encodeValue(value) {
+      return value;
     },
 
-    decodeValue(severityName) {
-      return severityName;
+    decodeValue(value) {
+      return value;
     },
 
     getUrlState() {
@@ -59,8 +59,6 @@ export default {
         this.fetchItems();
       }
     },
-
-    updateReportFilter() {},
 
     updateSelectedItems() {
       this.selectedItems.forEach((selectedItem) => {
