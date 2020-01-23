@@ -44,7 +44,7 @@
 
       <template #item.name="{ item }">
         <router-link
-          :to="{ name: 'reports', params: { run: item.name } }"
+          :to="{ name: 'reports', query: { run: item.name } }"
         >
           {{ item.name }}
         </router-link>
