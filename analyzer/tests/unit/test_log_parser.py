@@ -304,6 +304,42 @@ class LogParserTest(unittest.TestCase):
 
         self.assertEqual(len(build_actions), 0)
 
+    def test_skip_everything_from_parse_relative_path(self):
+        """
+        Same skip file for pre analysis and analysis. Skip everything.
+        Source file contains relative path.
+        """
+        cmp_cmd_json = [
+            {"directory": "/tmp/lib1/Debug",
+             "command": "g++ ../a.cpp",
+             "file": "../a.cpp"},
+            {"directory": "/tmp/lib1/Debug/rel",
+             "command": "g++ ../../b.cpp",
+             "file": "../../b.cpp"},
+            {"directory": "/tmp/lib1/Debug",
+             "command": "g++ ../d.cpp",
+             "file": "../d.cpp"},
+            {"directory": "/tmp/lib2/Debug",
+             "command": "g++ ../a.cpp",
+             "file": "../a.cpp"}]
+
+        skip_list = """
+        +/tmp/lib1/d.cpp
+        -*/lib1/Debug/rel/../../*
+        -*/lib1/a.cpp
+        -/tmp/lib2/a.cpp
+        """
+        analysis_skip = skiplist_handler.SkipListHandler(skip_list)
+        pre_analysis_skip = skiplist_handler.SkipListHandler(skip_list)
+
+        build_actions, _ = log_parser.\
+            parse_unique_log(cmp_cmd_json, self.__this_dir,
+                             analysis_skip_handler=analysis_skip,
+                             pre_analysis_skip_handler=pre_analysis_skip)
+
+        self.assertEqual(len(build_actions), 1)
+        self.assertEqual(build_actions[0].source, '/tmp/lib1/d.cpp')
+
     def test_skip_all_in_pre_from_parse(self):
         """Pre analysis skips everything but keep build action for analysis."""
         cmp_cmd_json = [
