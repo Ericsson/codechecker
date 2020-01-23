@@ -46,7 +46,7 @@ export default {
   computed: {
     isUnique: {
       get() {
-        return !!this.$store.state.reportfilter.reportFilter.isUnique;
+        return !!this.$store.state.report.reportFilter.isUnique;
       },
       set(isUnique) {
         this.setReportFilter({ isUnique: isUnique });

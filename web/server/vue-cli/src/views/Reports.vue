@@ -133,19 +133,19 @@ export default {
 
       if (this.reportFilterUnwatch) this.reportFilterUnwatch();
       this.reportFilterUnwatch = this.$store.watch(
-      (state) => state.reportfilter.reportFilter, () => {
+      (state) => state.report.reportFilter, () => {
         this.fetchReports();
       }, { deep: true });
 
       if (this.runIdsUnwatch) this.runIdsUnwatch();
       this.runIdsUnwatch = this.$store.watch(
-      (state) => state.reportfilter.runIds, () => {
+      (state) => state.report.runIds, () => {
         this.fetchReports();
       });
 
       if (this.cmpDataUnwatch) this.cmpDataUnwatch();
       this.cmpDataUnwatch = this.$store.watch(
-      (state) => state.reportfilter.cmpData, () => {
+      (state) => state.report.cmpData, () => {
         this.fetchReports();
       }, { deep: true });
     },

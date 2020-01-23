@@ -12,9 +12,9 @@ export default {
 
   computed: {
     ...mapState({
-      runIds: state => state.reportfilter.runIds,
-      reportFilter: state => state.reportfilter.reportFilter,
-      cmpData: state => state.reportfilter.cmpData,
+      runIds: state => state.report.runIds,
+      reportFilter: state => state.report.reportFilter,
+      cmpData: state => state.report.cmpData,
     }),
 
     reportFilterModel() {
