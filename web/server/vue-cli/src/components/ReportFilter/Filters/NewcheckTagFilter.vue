@@ -1,10 +1,27 @@
-<template>
-  <h3>Tag Filter</h3>
-</template>
-
 <script>
+import BaselineTagFilter from "./BaselineTagFilter";
 
 export default {
-  name: 'NewcheckTagFilter'
+  name: 'NewcheckTagFilter',
+  mixins: [ BaselineTagFilter ],
+
+  data() {
+    return {
+      id: "run-tag-newcheck"
+    };
+  },
+
+  methods: {
+    updateReportFilter() {
+      const selectedTagIds =
+        [].concat(...this.selectedItems.map(item => item.tagIds));
+
+      if (selectedTagIds.length) {
+        this.setCmpData({ runTag: selectedTagIds });
+      } else {
+        this.setCmpData({ runTag: null });
+      }
+    },
+  }
 }
 </script>

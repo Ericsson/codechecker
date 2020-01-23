@@ -43,7 +43,7 @@
               <v-expansion-panel-header>BASELINE</v-expansion-panel-header>
               <v-expansion-panel-content>
                 <baseline-run-filter ref="filters" />
-                <baseline-tag-filter />
+                <baseline-tag-filter ref="filters" />
               </v-expansion-panel-content>
             </v-expansion-panel>
           </v-expansion-panels>
@@ -57,7 +57,7 @@
               <v-expansion-panel-header>NEWCHECK</v-expansion-panel-header>
               <v-expansion-panel-content>
                 <newcheck-run-filter ref="filters" />
-                <newcheck-tag-filter />
+                <newcheck-tag-filter ref="filters" />
                 <newcheck-diff-type-filter />
               </v-expansion-panel-content>
             </v-expansion-panel>
