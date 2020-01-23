@@ -1,3 +1,5 @@
+import { mapGetters } from 'vuex';
+
 import { ReportFilter } from "@cc/report-server-types";
 
 export default {
@@ -5,11 +7,14 @@ export default {
 
   props: {
     runIds: { type: Array, required: true },
-    reportFilter: { type: Object, required: true },
-    cmpData: { required: true, validator: v => typeof v === 'object' },
+    reportFilter: { type: Object, required: true }
   },
 
   computed: {
+    ...mapGetters[{
+      cmpData: 'getCmpData'
+    }],
+
     reportFilterModel() {
       return new ReportFilter(this.reportFilter);
     },

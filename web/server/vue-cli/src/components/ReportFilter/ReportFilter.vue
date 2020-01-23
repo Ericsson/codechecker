@@ -17,7 +17,6 @@
           <clear-all-filters
             :run-ids="runIds"
             :report-filter="reportFilter"
-            :cmp-data="cmpData"
           />
         </v-list-item-action>
 
@@ -28,7 +27,6 @@
             ref="filters"
             :run-ids="runIds"
             :report-filter="reportFilter"
-            :cmp-data="cmpData"
           />
         </v-list-item-content>
       </v-list-item>
@@ -39,7 +37,6 @@
             ref="filters"
             :run-ids="runIds"
             :report-filter="reportFilter"
-            :cmp-data="cmpData"
           />
         </v-list-item-content>
       </v-list-item>
@@ -50,7 +47,6 @@
             ref="filters"
             :run-ids="runIds"
             :report-filter="reportFilter"
-            :cmp-data="cmpData"
           />
         </v-list-item-content>
       </v-list-item>
@@ -65,13 +61,11 @@
                   ref="filters"
                   :run-ids="runIds"
                   :report-filter="reportFilter"
-                  :cmp-data="cmpData"
                 />
 
                 <baseline-tag-filter
                   :run-ids="runIds"
                   :report-filter="reportFilter"
-                  :cmp-data="cmpData"
                 />
               </v-expansion-panel-content>
             </v-expansion-panel>
@@ -86,21 +80,19 @@
               <v-expansion-panel-header>NEWCHECK</v-expansion-panel-header>
               <v-expansion-panel-content>
                 <newcheck-run-filter
+                  ref="filters"
                   :run-ids="runIds"
                   :report-filter="reportFilter"
-                  :cmp-data="cmpData"
                 />
 
                 <newcheck-tag-filter
                   :run-ids="runIds"
                   :report-filter="reportFilter"
-                  :cmp-data="cmpData"
                 />
 
                 <newcheck-diff-type-filter
                   :run-ids="runIds"
                   :report-filter="reportFilter"
-                  :cmp-data="cmpData"
                 />
               </v-expansion-panel-content>
             </v-expansion-panel>
@@ -114,7 +106,6 @@
             ref="filters"
             :run-ids="runIds"
             :report-filter="reportFilter"
-            :cmp-data="cmpData"
           />
         </v-list-item-content>
       </v-list-item>
@@ -125,7 +116,6 @@
             ref="filters"
             :run-ids="runIds"
             :report-filter="reportFilter"
-            :cmp-data="cmpData"
           />
         </v-list-item-content>
       </v-list-item>
@@ -136,7 +126,6 @@
             ref="filters"
             :run-ids="runIds"
             :report-filter="reportFilter"
-            :cmp-data="cmpData"
           />
         </v-list-item-content>
       </v-list-item>
@@ -153,7 +142,6 @@
             ref="filters"
             :run-ids="runIds"
             :report-filter="reportFilter"
-            :cmp-data="cmpData"
           />
         </v-list-item-content>
       </v-list-item>
@@ -164,7 +152,6 @@
             ref="filters"
             :run-ids="runIds"
             :report-filter="reportFilter"
-            :cmp-data="cmpData"
           />
         </v-list-item-content>
       </v-list-item>
@@ -175,7 +162,6 @@
             ref="filters"
             :run-ids="runIds"
             :report-filter="reportFilter"
-            :cmp-data="cmpData"
           />
         </v-list-item-content>
       </v-list-item>
@@ -186,7 +172,6 @@
             ref="filters"
             :run-ids="runIds"
             :report-filter="reportFilter"
-            :cmp-data="cmpData"
           />
         </v-list-item-content>
       </v-list-item>
@@ -265,7 +250,6 @@ export default {
   props: {
     runIds: { type: Array, required: true },
     reportFilter: { type: Object, required: true },
-    cmpData: { required: true, validator: v => typeof v === 'object' },
     afterUrlInit: { type: Function, default: () => {} }
   },
 

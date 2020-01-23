@@ -4,7 +4,6 @@
       <report-filter
         :run-ids="runIds"
         :report-filter="reportFilter"
-        :cmp-data="cmpData"
         :after-url-init="afterUrlInit"
       />
     </pane>
@@ -55,6 +54,8 @@ import VChip from "Vuetify/VChip/VChip";
 
 import { Splitpanes, Pane } from 'splitpanes';
 
+import { mapGetters } from 'vuex';
+
 import { ccService } from '@cc-api';
 import { ReportFilter as ReportFilterData } from '@cc/report-server-types';
 
@@ -81,7 +82,6 @@ export default {
     return {
       runIds: [],
       reportFilter: new ReportFilterData(),
-      cmpData: null,
       headers: [
         {
           text: "Report hash",
@@ -124,6 +124,12 @@ export default {
     };
   },
 
+  computed: {
+    ...mapGetters({
+      cmpData: 'getCmpData'
+    })
+  },
+
   methods: {
     afterUrlInit() {
       this.fetchReports();
@@ -137,6 +143,12 @@ export default {
       this.runIdsUnwatch = this.$watch('runIds', () => {
         this.fetchReports();
       });
+
+      if (this.cmpDataUnwatch) this.cmpDataUnwatch();
+      this.cmpDataUnwatch = this.$store.watch(
+      (state) => state.reportfilter.cmpData, () => {
+        this.fetchReports();
+      }, { deep: true });
     },
 
     fetchReports() {

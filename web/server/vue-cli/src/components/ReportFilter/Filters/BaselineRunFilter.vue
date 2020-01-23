@@ -66,6 +66,8 @@ export default {
             this.selectedItems = res;
             resolve();
           });
+        } else {
+          resolve();
         }
       });
     },
