@@ -75,7 +75,7 @@ export default {
     updateReportFilter() {
       const selectedRunIds =
         [].concat(...this.selectedItems.map(item => item.runIds));
-      this.runIds.splice(0, this.runIds.length, ...selectedRunIds);
+      this.setRunIds(selectedRunIds);
     },
 
     onRunIdsChange() {},

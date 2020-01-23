@@ -43,7 +43,9 @@ export default {
 
   methods: {
     updateReportFilter() {
-      this.reportFilter.checkerName = this.selectedItems.map(item => item.id);
+      this.setReportFilter({
+        checkerName: this.selectedItems.map(item => item.id)
+      });
     },
 
     onReportFilterChange(key) {

@@ -46,7 +46,9 @@ export default {
     },
 
     updateReportFilter() {
-      this.reportFilter.reviewStatus = this.selectedItems.map(item => item.id);
+      this.setReportFilter({
+        reviewStatus: this.selectedItems.map(item => item.id)
+      });
     },
 
     onReportFilterChange(key) {

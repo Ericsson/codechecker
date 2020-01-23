@@ -42,8 +42,9 @@ export default {
 
   methods: {
     updateReportFilter() {
-      this.reportFilter.componentNames =
-        this.selectedItems.map(item => item.id);
+      this.setReportFilter({
+        componentNames: this.selectedItems.map(item => item.id)
+      });
     },
 
     fetchItems(search=null) {

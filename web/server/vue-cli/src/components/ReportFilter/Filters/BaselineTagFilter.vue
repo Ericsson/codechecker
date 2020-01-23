@@ -27,9 +27,6 @@ export default {
     VIcon,
     SelectOption
   },
-  props: {
-    reportFilter: { type: Object, required: true }
-  },
   data() {
     return {
       selected: [],

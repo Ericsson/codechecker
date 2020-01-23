@@ -43,7 +43,9 @@ export default {
 
   methods: {
     updateReportFilter() {
-      this.reportFilter.filepath = this.selectedItems.map(item => item.id);
+      this.setReportFilter({
+        filepath: this.selectedItems.map(item => item.id)
+      });
     },
 
     onReportFilterChange(key) {

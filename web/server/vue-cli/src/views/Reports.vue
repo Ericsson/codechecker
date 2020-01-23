@@ -2,8 +2,6 @@
   <splitpanes class="default-theme">
     <pane size="20">
       <report-filter
-        :run-ids="runIds"
-        :report-filter="reportFilter"
         :after-url-init="afterUrlInit"
       />
     </pane>
@@ -57,7 +55,6 @@ import { Splitpanes, Pane } from 'splitpanes';
 import { mapGetters } from 'vuex';
 
 import { ccService } from '@cc-api';
-import { ReportFilter as ReportFilterData } from '@cc/report-server-types';
 
 import { BugPathLengthColorMixin } from '@/mixins';
 import { DetectionStatusIcon } from '@/components/icons';
@@ -80,8 +77,6 @@ export default {
 
   data() {
     return {
-      runIds: [],
-      reportFilter: new ReportFilterData(),
       headers: [
         {
           text: "Report hash",
@@ -126,6 +121,8 @@ export default {
 
   computed: {
     ...mapGetters({
+      runIds: 'getRunIds',
+      reportFilter: 'getReportFilter',
       cmpData: 'getCmpData'
     })
   },
@@ -135,12 +132,14 @@ export default {
       this.fetchReports();
 
       if (this.reportFilterUnwatch) this.reportFilterUnwatch();
-      this.reportFilterUnwatch = this.$watch('reportFilter', () => {
+      this.reportFilterUnwatch = this.$store.watch(
+      (state) => state.reportfilter.reportFilter, () => {
         this.fetchReports();
       }, { deep: true });
 
       if (this.runIdsUnwatch) this.runIdsUnwatch();
-      this.runIdsUnwatch = this.$watch('runIds', () => {
+      this.runIdsUnwatch = this.$store.watch(
+      (state) => state.reportfilter.runIds, () => {
         this.fetchReports();
       });
 

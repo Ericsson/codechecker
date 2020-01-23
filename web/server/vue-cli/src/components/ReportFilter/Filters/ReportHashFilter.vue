@@ -60,8 +60,9 @@ export default {
 
   methods: {
     updateReportFilter() {
-      this.reportFilter.reportHash =
-        this.reportHash ? [ `${this.reportHash}*` ] : null;
+      this.setReportFilter({
+        reportHash: this.reportHash ? [ `${this.reportHash}*` ] : null
+      });
     },
 
     getUrlState() {

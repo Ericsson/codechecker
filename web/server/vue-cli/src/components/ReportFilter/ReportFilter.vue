@@ -14,40 +14,25 @@
     >
       <v-list-item>
         <v-list-item-action class="mr-5">
-          <clear-all-filters
-            :run-ids="runIds"
-            :report-filter="reportFilter"
-          />
+          <clear-all-filters />
         </v-list-item-action>
 
         <v-spacer />
 
         <v-list-item-content>
-          <report-count
-            ref="filters"
-            :run-ids="runIds"
-            :report-filter="reportFilter"
-          />
+          <report-count ref="filters" />
         </v-list-item-content>
       </v-list-item>
 
       <v-list-item>
         <v-list-item-content>
-          <unique-filter
-            ref="filters"
-            :run-ids="runIds"
-            :report-filter="reportFilter"
-          />
+          <unique-filter ref="filters" />
         </v-list-item-content>
       </v-list-item>
 
       <v-list-item>
         <v-list-item-content>
-          <report-hash-filter
-            ref="filters"
-            :run-ids="runIds"
-            :report-filter="reportFilter"
-          />
+          <report-hash-filter ref="filters" />
         </v-list-item-content>
       </v-list-item>
 
@@ -57,16 +42,8 @@
             <v-expansion-panel>
               <v-expansion-panel-header>BASELINE</v-expansion-panel-header>
               <v-expansion-panel-content>
-                <baseline-run-filter
-                  ref="filters"
-                  :run-ids="runIds"
-                  :report-filter="reportFilter"
-                />
-
-                <baseline-tag-filter
-                  :run-ids="runIds"
-                  :report-filter="reportFilter"
-                />
+                <baseline-run-filter ref="filters" />
+                <baseline-tag-filter />
               </v-expansion-panel-content>
             </v-expansion-panel>
           </v-expansion-panels>
@@ -79,21 +56,9 @@
             <v-expansion-panel>
               <v-expansion-panel-header>NEWCHECK</v-expansion-panel-header>
               <v-expansion-panel-content>
-                <newcheck-run-filter
-                  ref="filters"
-                  :run-ids="runIds"
-                  :report-filter="reportFilter"
-                />
-
-                <newcheck-tag-filter
-                  :run-ids="runIds"
-                  :report-filter="reportFilter"
-                />
-
-                <newcheck-diff-type-filter
-                  :run-ids="runIds"
-                  :report-filter="reportFilter"
-                />
+                <newcheck-run-filter ref="filters" />
+                <newcheck-tag-filter />
+                <newcheck-diff-type-filter />
               </v-expansion-panel-content>
             </v-expansion-panel>
           </v-expansion-panels>
@@ -102,31 +67,19 @@
 
       <v-list-item>
         <v-list-item-content>
-          <review-status-filter
-            ref="filters"
-            :run-ids="runIds"
-            :report-filter="reportFilter"
-          />
+          <review-status-filter ref="filters" />
         </v-list-item-content>
       </v-list-item>
 
       <v-list-item>
         <v-list-item-content>
-          <detection-status-filter
-            ref="filters"
-            :run-ids="runIds"
-            :report-filter="reportFilter"
-          />
+          <detection-status-filter ref="filters" />
         </v-list-item-content>
       </v-list-item>
 
       <v-list-item>
         <v-list-item-content>
-          <severity-filter
-            ref="filters"
-            :run-ids="runIds"
-            :report-filter="reportFilter"
-          />
+          <severity-filter ref="filters" />
         </v-list-item-content>
       </v-list-item>
 
@@ -138,41 +91,25 @@
 
       <v-list-item>
         <v-list-item-content>
-          <file-path-filter
-            ref="filters"
-            :run-ids="runIds"
-            :report-filter="reportFilter"
-          />
+          <file-path-filter ref="filters" />
         </v-list-item-content>
       </v-list-item>
 
       <v-list-item>
         <v-list-item-content>
-          <source-component-filter
-            ref="filters"
-            :run-ids="runIds"
-            :report-filter="reportFilter"
-          />
+          <source-component-filter ref="filters" />
         </v-list-item-content>
       </v-list-item>
 
       <v-list-item>
         <v-list-item-content>
-          <checker-name-filter
-            ref="filters"
-            :run-ids="runIds"
-            :report-filter="reportFilter"
-          />
+          <checker-name-filter ref="filters" />
         </v-list-item-content>
       </v-list-item>
 
       <v-list-item>
         <v-list-item-content>
-          <checker-message-filter
-            ref="filters"
-            :run-ids="runIds"
-            :report-filter="reportFilter"
-          />
+          <checker-message-filter ref="filters" />
         </v-list-item-content>
       </v-list-item>
 
@@ -248,8 +185,6 @@ export default {
     RemoveFilteredReports
   },
   props: {
-    runIds: { type: Array, required: true },
-    reportFilter: { type: Object, required: true },
     afterUrlInit: { type: Function, default: () => {} }
   },
 

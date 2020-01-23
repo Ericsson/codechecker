@@ -46,7 +46,9 @@ export default {
     },
 
     updateReportFilter() {
-      this.reportFilter.severity = this.selectedItems.map(item => item.id);
+      this.setReportFilter({
+        severity: this.selectedItems.map(item => item.id)
+      });
     },
 
     onReportFilterChange(key) {

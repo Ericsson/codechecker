@@ -46,8 +46,9 @@ export default {
     },
 
     updateReportFilter() {
-      this.reportFilter.detectionStatus =
-        this.selectedItems.map(item => item.id);
+      this.setReportFilter({
+        detectionStatus: this.selectedItems.map(item => item.id)
+      });
     },
 
     onReportFilterChange(key) {

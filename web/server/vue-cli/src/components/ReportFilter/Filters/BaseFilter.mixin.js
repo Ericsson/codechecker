@@ -1,19 +1,21 @@
-import { mapGetters } from 'vuex';
+import { mapMutations, mapState } from 'vuex';
+import {
+  SET_RUN_IDS,
+  SET_REPORT_FILTER,
+  SET_CMP_DATA
+} from "@/store/mutations.type";
 
 import { ReportFilter } from "@cc/report-server-types";
 
 export default {
   name: 'BaseFilterMixin',
 
-  props: {
-    runIds: { type: Array, required: true },
-    reportFilter: { type: Object, required: true }
-  },
-
   computed: {
-    ...mapGetters[{
-      cmpData: 'getCmpData'
-    }],
+    ...mapState({
+      runIds: state => state.reportfilter.runIds,
+      reportFilter: state => state.reportfilter.reportFilter,
+      cmpData: state => state.reportfilter.cmpData,
+    }),
 
     reportFilterModel() {
       return new ReportFilter(this.reportFilter);
@@ -24,6 +26,12 @@ export default {
   },
 
   methods: {
+    ...mapMutations([
+      SET_RUN_IDS,
+      SET_REPORT_FILTER,
+      SET_CMP_DATA
+    ]),
+
     getUrlState() {
       return {};
     },
