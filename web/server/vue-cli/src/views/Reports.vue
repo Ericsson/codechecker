@@ -16,6 +16,7 @@
         <template #item.checkedFile="{ item }">
           <router-link
             :to="{ name: 'report-detail', query: {
+              ...$router.currentRoute.query,
               reportId: item.reportId ? item.reportId : undefined,
               reportHash: item.reportId ? undefined : item.bugHash
             }}"
