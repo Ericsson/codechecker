@@ -1,8 +1,8 @@
 
 import JwtService from "@/services/jwt.service";
 
-import { CHECK_AUTH, LOGIN, LOGOUT } from "./actions.type";
-import { SET_AUTH, PURGE_AUTH, SET_ERROR } from "./mutations.type";
+import { CHECK_AUTH, LOGIN, LOGOUT } from "../actions.type";
+import { SET_AUTH, PURGE_AUTH, SET_ERROR } from "../mutations.type";
 
 const state = {
   errors: null,
