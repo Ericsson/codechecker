@@ -6,6 +6,9 @@ Vue.use(Vuetify)
 const opts = {
   iconfont: 'mdi',
   theme: {
+    options: {
+      customProperties: true,
+    },
     themes: {
       light: {
         primary: '#2196f3',

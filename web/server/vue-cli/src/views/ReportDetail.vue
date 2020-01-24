@@ -3,11 +3,12 @@
     <pane size="20">
       <report-tree
         :report="report"
+        @click="onReportTreeClick"
       />
     </pane>
     <pane>
       <report
-        :report="report"
+        :tree-item="treeItem"
       />
     </pane>
   </splitpanes>
@@ -30,7 +31,8 @@ export default {
   },
   data() {
     return {
-      report: null
+      report: null,
+      treeItem: null
     };
   },
   mounted() {
@@ -42,6 +44,12 @@ export default {
       ccService.getClient().getReport(reportId, (err, reportData) => {
         this.report = reportData;
       });
+    },
+
+    onReportTreeClick(item) {
+      if (!item) return;
+
+      this.treeItem = item;
     }
   }
 }

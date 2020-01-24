@@ -4,6 +4,7 @@
     class="report-step-msg"
     :color="color"
     :text-color="textColor"
+    :step-id="id"
     :style="{ 'margin-left': marginLeft }"
   >
     <v-avatar left>
@@ -45,6 +46,7 @@ export default {
     ReportStepEnumIcon
   },
   props: {
+    id: { type: [ String, Number ], required: true },
     value: { type: String, required: true },
     marginLeft: { type: String, default: '' },
     type: { type: String, default: null },

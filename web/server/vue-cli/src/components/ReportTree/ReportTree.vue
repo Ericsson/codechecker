@@ -65,7 +65,9 @@ export default {
       items: [],
       tree: [],
       openedItems: [],
-      activeItems: []
+      activeItems: [],
+      runId: null,
+      checkedFile: null
     };
   },
 
@@ -93,6 +95,17 @@ export default {
     },
 
     fetchReports() {
+      // If the runId or the checkedFile are not changed, we should not load
+      // the reports.
+      if (this.runId && this.runId.equals(this.report.runId) ||
+          this.checkedFile && this.checkedFile.equals(this.report.checkedFile)
+      ) {
+        return;
+      }
+
+      this.runId = this.report.runId;
+      this.checkedFile = this.report.checkedFile;
+
       this.items = JSON.parse(JSON.stringify(ReportTreeRootItem));
 
       const runIds = [ this.report.runId ];
@@ -174,8 +187,8 @@ export default {
       });
     },
 
-    onClick(/* activeItems */) {
-      /* const item = activeItems[0]; */
+    onClick(activeItems) {
+      this.$emit("click", activeItems[0]);
     }
   }
 }

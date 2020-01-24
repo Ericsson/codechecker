@@ -58,11 +58,14 @@ import { jsPlumb } from 'jsplumb';
 import { ccService } from '@cc-api';
 import { Encoding } from '@cc/report-server-types';
 
+import ReportTreeKind from './ReportTree/ReportTreeKind';
+
 import SelectReviewStatus from './SelectReviewStatus';
 import SelectSameReport from './SelectSameReport';
 
 import ReportStepMessage from './ReportStepMessage';
 const ReportStepMessageClass = Vue.extend(ReportStepMessage)
+
 
 export default {
   name: 'Report',
@@ -73,10 +76,12 @@ export default {
     SelectSameReport
   },
   props: {
-    report: { type: Object, default: null }
+    treeItem: { type: Object, default: null }
   },
   data() {
     return {
+      report: null,
+      step: null,
       editor: null,
       sourceFile: null,
       reviewStatus: null,
@@ -87,13 +92,8 @@ export default {
   },
 
   watch: {
-    sourceFile() {
-      this.editor.setValue(this.sourceFile.fileContent);
-      this.drawBugPath();
-      this.jumpTo(this.report.line.toNumber(), 0);
-    },
-    report(val) {
-      this.init(val);
+    treeItem() {
+      this.init(this.treeItem);
     }
   },
 
@@ -108,18 +108,81 @@ export default {
     });
     this.editor.setSize("100%", "100%");
 
-    if (this.report) {
-      this.init(this.report);
+    if (this.treeItem) {
+      this.init(this.treeItem);
     }
   },
 
   methods: {
-    init(report) {
-      this.reviewStatus = report.reviewData.status;
+    init(treeItem) {
+      if (treeItem.step) {
+        this.loadReportStep(treeItem.report, treeItem.step);
+      } else {
+        this.loadReport(treeItem.report);
+      }
+    },
 
-      ccService.getClient().getSourceFileData(report.fileId, true,
-      Encoding.DEFAULT, (err, sourceFile) => {
-        this.sourceFile = sourceFile;
+    loadReportStep(report, step) {
+      this.step = step;
+
+      if (!this.report ||
+          !this.report.reportId.equals(report.reportId) ||
+          !this.sourceFile ||
+          !step.fileId.equals(this.sourceFile.fileId)
+      ) {
+        this.report = report;
+
+        this.setSourceFileData(step.fileId).then(() => {
+          this.drawBugPath().then(() => {
+            this.jumpTo(step.startLine.toNumber(), 0);
+            this.highlightReportStep(step);
+          });
+        });
+      } else {
+        this.highlightReportStep(step);
+      }
+    },
+
+    loadReport(report) {
+      if (this.report && this.report.reportId.equals(report.reportId)) {
+        this.highlightReport(report);
+        return;
+      }
+
+      this.report = report;
+
+      this.reviewStatus = report.reviewData.status;
+      this.setSourceFileData(report.fileId).then(() => {
+        this.drawBugPath().then(() => {
+          this.jumpTo(report.line.toNumber(), 0);
+          this.highlightReport(report);
+        });
+      });
+    },
+
+    highlightReportStep() {
+      this.highlightCurrentBubble(this.treeItem.id);
+    },
+
+    highlightReport() {
+      // TODO:
+    },
+
+    highlightCurrentBubble(id) {
+      this.lineWidgets.forEach((widget) => {
+        const stepId = widget.node.getAttribute("step-id");
+        widget.node.classList.toggle("current", stepId === id);
+      });
+    },
+
+    setSourceFileData(fileId) {
+      return new Promise((resolve) => {
+        ccService.getClient().getSourceFileData(fileId, true,
+        Encoding.DEFAULT, (err, sourceFile) => {
+          this.sourceFile = sourceFile;
+          this.editor.setValue(sourceFile.fileContent);
+          resolve();
+        });
       });
     },
 
@@ -145,17 +208,26 @@ export default {
       this.clearBubbles();
       this.clearLines();
 
-      ccService.getClient().getReportDetails(this.report.reportId,
-      (err, reportDetail) => {
-        const points = reportDetail.executionPath.filter((path) => {
-          return path.fileId.equals(this.sourceFile.fileId);
-        });
-        const bubbles = reportDetail.pathEvents.filter((path) => {
-          return path.fileId.equals(this.sourceFile.fileId);
-        });
+      return new Promise((resolve) => {
+        const reportId = this.report.reportId;
+        ccService.getClient().getReportDetails(reportId,
+        (err, reportDetail) => {
+          const points = reportDetail.executionPath.filter((path) => {
+            return path.fileId.equals(this.sourceFile.fileId);
+          });
+          const bubbles = reportDetail.pathEvents.map((event, index) => {
+            const id =
+              `${reportId}_${ReportTreeKind.REPORT_STEPS}_${index}`;
 
-        this.addBubbles(bubbles);
-        this.addLines(points);
+            return { ...event, $id: id };
+          }).filter((path) => {
+            return path.fileId.equals(this.sourceFile.fileId);
+          });
+
+          this.addBubbles(bubbles);
+          this.addLines(points);
+          resolve();
+        });
       });
     },
 
@@ -172,31 +244,32 @@ export default {
 
     addBubbles(bubbles) {
       this.editor.operation(() => {
-      bubbles.forEach((bubble, index) => {
-        if (!bubble.fileId.equals(this.sourceFile.fileId)) return;
+        bubbles.forEach((bubble, index) => {
+          if (!bubble.fileId.equals(this.sourceFile.fileId)) return;
 
-        var isResult = index === bubbles.length - 1;
-        const type = isResult
-          ? "error" : bubble.msg.indexOf(" (fixit)") > -1
-          ? "fixit" : "info";
+          var isResult = index === bubbles.length - 1;
+          const type = isResult
+            ? "error" : bubble.msg.indexOf(" (fixit)") > -1
+            ? "fixit" : "info";
 
-        const marginLeft =
-          this.editor.defaultCharWidth() * bubble.startCol + 'px';
+          const marginLeft =
+            this.editor.defaultCharWidth() * bubble.startCol + 'px';
 
-        const widget = new ReportStepMessageClass({
-          propsData: {
-            value: bubble.msg,
-            marginLeft: marginLeft,
-            type: type,
-            index: index + 1
-          }
+          const widget = new ReportStepMessageClass({
+            propsData: {
+              id: bubble.$id,
+              value: bubble.msg,
+              marginLeft: marginLeft,
+              type: type,
+              index: index + 1
+            }
+          });
+          widget.$mount();
+
+          this.lineWidgets.push(this.editor.addLineWidget(
+            bubble.startLine.toNumber() - 1, widget.$el));
         });
-        widget.$mount()
-
-        this.lineWidgets.push(this.editor.addLineWidget(
-          bubble.startLine.toNumber() - 1, widget.$el));
       });
-    });
     },
 
     addLines(points) {
@@ -263,5 +336,9 @@ export default {
 <style type="scss">
 .checker-step {
   background-color: #eeb;
+}
+
+.report-step-msg.current {
+  border: 2px dashed var(--v-primary-base) !important;
 }
 </style>

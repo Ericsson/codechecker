@@ -165,6 +165,7 @@ function formatReportEvents(report, events) {
       name: report.checkerMsg,
       kind: ReportTreeKind.REPORT_STEPS,
       step: step,
+      report: report,
       icon: highlightData.icon,
       reportStepIcon: reportStepIcon,
       bgColor: highlightData.bgColor,
@@ -186,7 +187,8 @@ export default function formatReportDetails(report, reportDetails) {
   items.push({
     id : `${report.reportId}_${ReportTreeKind.BUG}`,
     name: report.checkerMsg,
-    kind: ReportTreeKind.BUG
+    kind: ReportTreeKind.BUG,
+    report: report
   });
 
   const reportSteps = formatReportEvents(report, reportDetails.pathEvents);
