@@ -1,10 +1,36 @@
 <template>
   <splitpanes class="default-theme">
     <pane size="20">
-      <report-tree
-        :report="report"
-        @click="onReportTreeClick"
-      />
+      <v-container fluid>
+        <v-row no-gutters>
+          <v-col>
+            <v-btn
+              block
+              outlined
+              tile
+              class="mb-2"
+              color="primary"
+              :to="{ name: 'reports', query: {
+                ...$router.currentRoute.query,
+                reportId: undefined
+              }}"
+            >
+              <v-icon left>
+                mdi-arrow-left
+              </v-icon>
+              Back to reports
+            </v-btn>
+          </v-col>
+        </v-row>
+        <v-row no-gutters>
+          <v-col>
+            <report-tree
+              :report="report"
+              @click="onReportTreeClick"
+            />
+          </v-col>
+        </v-row>
+      </v-container>
     </pane>
     <pane>
       <report
@@ -16,6 +42,11 @@
 
 <script>
 import { Splitpanes, Pane } from 'splitpanes';
+import VContainer from "Vuetify/VGrid/VContainer";
+import VRow from "Vuetify/VGrid/VRow";
+import VCol from "Vuetify/VGrid/VCol";
+import { VBtn } from "Vuetify/VBtn";
+import VIcon from "Vuetify/VIcon/VIcon";
 
 import { ccService } from '@cc-api';
 
@@ -26,6 +57,7 @@ export default {
   name: 'ReportDetail',
   components: {
     Splitpanes, Pane,
+    VContainer, VRow, VCol, VBtn, VIcon,
     Report,
     ReportTree
   },
