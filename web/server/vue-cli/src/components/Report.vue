@@ -122,7 +122,7 @@ export default {
       }
     },
 
-    loadReportStep(report, step) {
+    async loadReportStep(report, step) {
       this.step = step;
 
       if (!this.report ||
@@ -132,18 +132,17 @@ export default {
       ) {
         this.report = report;
 
-        this.setSourceFileData(step.fileId).then(() => {
-          this.drawBugPath().then(() => {
-            this.jumpTo(step.startLine.toNumber(), 0);
-            this.highlightReportStep(step);
-          });
-        });
+        await this.setSourceFileData(step.fileId);
+        await this.drawBugPath();
+
+        this.jumpTo(step.startLine.toNumber(), 0);
+        this.highlightReportStep(step);
       } else {
         this.highlightReportStep(step);
       }
     },
 
-    loadReport(report) {
+    async loadReport(report) {
       if (this.report && this.report.reportId.equals(report.reportId)) {
         this.highlightReport(report);
         return;
@@ -152,12 +151,12 @@ export default {
       this.report = report;
 
       this.reviewStatus = report.reviewData.status;
-      this.setSourceFileData(report.fileId).then(() => {
-        this.drawBugPath().then(() => {
-          this.jumpTo(report.line.toNumber(), 0);
-          this.highlightReport(report);
-        });
-      });
+
+      await this.setSourceFileData(report.fileId);
+      await this.drawBugPath();
+
+      this.jumpTo(report.line.toNumber(), 0);
+      this.highlightReport(report);
     },
 
     highlightReportStep() {
@@ -175,15 +174,16 @@ export default {
       });
     },
 
-    setSourceFileData(fileId) {
-      return new Promise((resolve) => {
+    async setSourceFileData(fileId) {
+      const sourceFile = await new Promise((resolve) => {
         ccService.getClient().getSourceFileData(fileId, true,
         Encoding.DEFAULT, (err, sourceFile) => {
-          this.sourceFile = sourceFile;
-          this.editor.setValue(sourceFile.fileContent);
-          resolve();
+          resolve(sourceFile);
         });
       });
+
+      this.sourceFile = sourceFile;
+      this.editor.setValue(sourceFile.fileContent);
     },
 
     resetJsPlumb() {
@@ -204,31 +204,33 @@ export default {
       });
     },
 
-    drawBugPath() {
+    async drawBugPath() {
       this.clearBubbles();
       this.clearLines();
 
-      return new Promise((resolve) => {
-        const reportId = this.report.reportId;
+      const reportId = this.report.reportId;
+
+      const reportDetail = await new Promise((resolve) => {
         ccService.getClient().getReportDetails(reportId,
         (err, reportDetail) => {
-          const points = reportDetail.executionPath.filter((path) => {
-            return path.fileId.equals(this.sourceFile.fileId);
-          });
-          const bubbles = reportDetail.pathEvents.map((event, index) => {
-            const id =
-              `${reportId}_${ReportTreeKind.REPORT_STEPS}_${index}`;
-
-            return { ...event, $id: id };
-          }).filter((path) => {
-            return path.fileId.equals(this.sourceFile.fileId);
-          });
-
-          this.addBubbles(bubbles);
-          this.addLines(points);
-          resolve();
+          resolve(reportDetail);
         });
       });
+
+      const points = reportDetail.executionPath.filter((path) => {
+        return path.fileId.equals(this.sourceFile.fileId);
+      });
+      const bubbles = reportDetail.pathEvents.map((event, index) => {
+        const id =
+          `${reportId}_${ReportTreeKind.REPORT_STEPS}_${index}`;
+
+        return { ...event, $id: id };
+      }).filter((path) => {
+        return path.fileId.equals(this.sourceFile.fileId);
+      });
+
+      this.addBubbles(bubbles);
+      this.addLines(points);
     },
 
     clearBubbles() {

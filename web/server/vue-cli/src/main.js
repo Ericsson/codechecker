@@ -1,3 +1,6 @@
+import "core-js/stable";
+import "regenerator-runtime/runtime";
+
 import '@mdi/font/css/materialdesignicons.css'
 import 'codemirror/lib/codemirror.css';
 import 'codemirror/mode/clike/clike.js';

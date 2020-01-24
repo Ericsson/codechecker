@@ -43,8 +43,14 @@ module.exports = {
       {
         test: /\.js$/,
         loader: 'babel-loader',
+        exclude: [/node_modules/, cc_api_dir],
         options: {
-          presets: ['@babel/preset-env']
+          presets: [
+            ["@babel/preset-env", {
+              useBuiltIns: "usage",
+              corejs: 3,
+            }]
+          ]
         }
       },
       {
