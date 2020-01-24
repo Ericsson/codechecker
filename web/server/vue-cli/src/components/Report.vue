@@ -42,6 +42,8 @@
 </template>
 
 <script>
+import Vue from 'vue';
+
 import VContainer from "Vuetify/VGrid/VContainer";
 import { VCard, VCardTitle, VCardSubtitle, VCardText } from "Vuetify/VCard";
 import { VToolbar, VToolbarTitle } from "Vuetify/VToolbar";
@@ -58,6 +60,9 @@ import { Encoding } from '@cc/report-server-types';
 
 import SelectReviewStatus from './SelectReviewStatus';
 import SelectSameReport from './SelectSameReport';
+
+import ReportStepMessage from './ReportStepMessage';
+const ReportStepMessageClass = Vue.extend(ReportStepMessage)
 
 export default {
   name: 'Report',
@@ -167,15 +172,29 @@ export default {
 
     addBubbles(bubbles) {
       this.editor.operation(() => {
-      bubbles.forEach((bubble) => {
-        const left = this.editor.defaultCharWidth() * bubble.startCol + 'px';
+      bubbles.forEach((bubble, index) => {
+        if (!bubble.fileId.equals(this.sourceFile.fileId)) return;
 
-        const widget = document.createElement('span');
-        widget.innerHTML = bubble.msg;
-        widget.setAttribute('style', 'margin-left: ' + left);
+        var isResult = index === bubbles.length - 1;
+        const type = isResult
+          ? "error" : bubble.msg.indexOf(" (fixit)") > -1
+          ? "fixit" : "info";
+
+        const marginLeft =
+          this.editor.defaultCharWidth() * bubble.startCol + 'px';
+
+        const widget = new ReportStepMessageClass({
+          propsData: {
+            value: bubble.msg,
+            marginLeft: marginLeft,
+            type: type,
+            index: index + 1
+          }
+        });
+        widget.$mount()
 
         this.lineWidgets.push(this.editor.addLineWidget(
-          bubble.startLine.toNumber() - 1, widget));
+          bubble.startLine.toNumber() - 1, widget.$el));
       });
     });
     },

@@ -2,7 +2,6 @@
   <v-avatar
     :color="color"
     size="28"
-    class="pa-2"
   >
     <span class="caption white--text">{{ index }}</span>
   </v-avatar>
