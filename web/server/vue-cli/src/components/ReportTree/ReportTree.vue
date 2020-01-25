@@ -193,3 +193,13 @@ export default {
   }
 }
 </script>
+
+<style lang="scss">
+.v-treeview--dense .v-treeview-node__root {
+  min-height: 35px;
+}
+
+.v-treeview-node__level {
+  width: 18px;
+}
+</style>

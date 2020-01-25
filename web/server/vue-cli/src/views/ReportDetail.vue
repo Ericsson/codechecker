@@ -1,9 +1,12 @@
 <template>
   <splitpanes class="default-theme">
     <pane size="20">
-      <v-container fluid>
+      <v-container
+        fluid
+        class="px-0"
+      >
         <v-row no-gutters>
-          <v-col>
+          <v-col class="px-2">
             <v-btn
               block
               outlined
