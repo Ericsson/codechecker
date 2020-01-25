@@ -329,7 +329,7 @@ export default {
       this.editor.scrollIntoView({
         line: line,
         ch: column
-      }, null);
+      }, 150);
     }
   }
 }
