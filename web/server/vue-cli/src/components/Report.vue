@@ -136,12 +136,10 @@ export default {
 
         await this.setSourceFileData(step.fileId);
         await this.drawBugPath();
-
-        this.jumpTo(step.startLine.toNumber(), 0);
-        this.highlightReportStep(step);
-      } else {
-        this.highlightReportStep(step);
       }
+
+      this.jumpTo(step.startLine.toNumber(), 0);
+      this.highlightReportStep(step);
     },
 
     async loadReport(report) {
