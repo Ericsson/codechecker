@@ -2,11 +2,13 @@
   <splitpanes class="default-theme">
     <pane size="20">
       <report-filter
+        v-fill-height
         :after-url-init="afterUrlInit"
       />
     </pane>
     <pane>
       <v-data-table
+        v-fill-height
         :headers="headers"
         :items="reports"
         :loading="loading"
@@ -57,6 +59,7 @@ import { mapGetters } from 'vuex';
 
 import { ccService } from '@cc-api';
 
+import { FillHeight } from "@/directives";
 import { BugPathLengthColorMixin } from '@/mixins';
 import { DetectionStatusIcon } from '@/components/icons';
 import { ReviewStatusIcon } from '@/components/icons';
@@ -74,6 +77,7 @@ export default {
     SeverityIcon,
     ReportFilter
   },
+  directives: { FillHeight },
   mixins: [ BugPathLengthColorMixin ],
 
   data() {

@@ -25,6 +25,7 @@
         <v-row no-gutters>
           <v-col>
             <report-tree
+              v-fill-height
               :report="report"
               @click="onReportTreeClick"
             />
@@ -50,6 +51,7 @@ import VIcon from "Vuetify/VIcon/VIcon";
 
 import { ccService } from '@cc-api';
 
+import { FillHeight } from "@/directives";
 import Report from '@/components/Report';
 import ReportTree from '@/components/ReportTree/ReportTree';
 
@@ -61,6 +63,7 @@ export default {
     Report,
     ReportTree
   },
+  directives: { FillHeight },
   data() {
     return {
       report: null,

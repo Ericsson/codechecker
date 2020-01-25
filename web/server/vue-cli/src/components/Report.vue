@@ -34,7 +34,7 @@
           />
         </v-toolbar>
       </v-card-subtitle>
-      <v-card-text>
+      <v-card-text v-fill-height>
         <textarea ref="editor" />
       </v-card-text>
     </v-card>
@@ -58,6 +58,7 @@ import { jsPlumb } from 'jsplumb';
 import { ccService } from '@cc-api';
 import { Encoding } from '@cc/report-server-types';
 
+import { FillHeight } from "@/directives";
 import ReportTreeKind from './ReportTree/ReportTreeKind';
 
 import SelectReviewStatus from './SelectReviewStatus';
@@ -75,6 +76,7 @@ export default {
     SelectReviewStatus,
     SelectSameReport
   },
+  directives: { FillHeight },
   props: {
     treeItem: { type: Object, default: null }
   },
