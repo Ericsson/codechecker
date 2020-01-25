@@ -1,43 +1,87 @@
 <template>
   <v-container fluid>
-    <v-card>
-      <v-card-title>
-        <v-btn class="mr-2" color="primary">
+    <v-row class="mb-2 mx-2">
+      <v-col
+        cols="auto"
+        class="py-0"
+        align-self="center"
+      >
+        <v-btn color="primary">
           <v-icon>mdi-file-document-box-outline</v-icon>
           Show documentation
         </v-btn>
+      </v-col>
 
+      <v-col
+        cols="auto"
+        class="py-0"
+        align-self="center"
+      >
         <select-review-status
+          class="mx-2"
           :value="reviewStatus"
         />
+      </v-col>
 
-        <v-checkbox label="Show arrows" />
+      <v-col
+        cols="auto"
+        class="py-0"
+        align-self="center"
+      >
+        <v-checkbox
+          class="mx-2 my-0 align-center justify-center"
+          label="Show arrows"
+          :hide-details="true"
+        />
+      </v-col>
 
-        <v-spacer />
+      <v-spacer />
 
-        <v-btn>
+      <v-col
+        cols="auto"
+        class="py-0 pr-0"
+        align-self="center"
+      >
+        <v-btn class="mx-2 mr-0">
           <v-icon>mdi-comment-multiple-outline</v-icon>
           Comments (0)
         </v-btn>
-      </v-card-title>
-      <v-card-subtitle>
-        <v-toolbar dense flat>
-          <v-toolbar-title>
-            <span v-if="sourceFile">{{ sourceFile.filePath }}</span>
-          </v-toolbar-title>
+      </v-col>
+    </v-row>
 
-          <v-spacer />
+    <v-row class="mb-2 mx-2">
+      <v-col
+        cols="auto"
+        class="py-0"
+        align-self="center"
+      >
+        <span
+          v-if="sourceFile"
+        >
+          {{ sourceFile.filePath }}
+        </span>
+      </v-col>
 
+      <v-spacer />
+
+      <v-col
+        cols="auto"
+        class="py-0"
+        align-self="center"
+      >
+        <v-row align="center">
           Also found in:
           <select-same-report
+            class="ml-2"
             :report="report"
           />
-        </v-toolbar>
-      </v-card-subtitle>
-      <v-card-text v-fill-height>
-        <textarea ref="editor" />
-      </v-card-text>
-    </v-card>
+        </v-row>
+      </v-col>
+    </v-row>
+
+    <v-row v-fill-height>
+      <textarea ref="editor" />
+    </v-row>
   </v-container>
 </template>
 
@@ -45,12 +89,12 @@
 import Vue from 'vue';
 
 import VContainer from "Vuetify/VGrid/VContainer";
-import { VCard, VCardTitle, VCardSubtitle, VCardText } from "Vuetify/VCard";
-import { VToolbar, VToolbarTitle } from "Vuetify/VToolbar";
 import VSpacer from "Vuetify/VGrid/VSpacer";
 import { VBtn } from "Vuetify/VBtn";
 import VIcon from "Vuetify/VIcon/VIcon";
 import VCheckbox from "Vuetify/VCheckbox/VCheckbox";
+import VRow from "Vuetify/VGrid/VRow";
+import VCol from "Vuetify/VGrid/VCol";
 
 import CodeMirror from 'codemirror';
 import { jsPlumb } from 'jsplumb';
@@ -71,8 +115,7 @@ const ReportStepMessageClass = Vue.extend(ReportStepMessage)
 export default {
   name: 'Report',
   components: {
-    VContainer, VCard, VCardTitle, VCardSubtitle, VCardText, VToolbar,
-    VToolbarTitle, VSpacer, VBtn, VIcon, VCheckbox,
+    VContainer, VSpacer, VBtn, VIcon, VCheckbox, VRow, VCol,
     SelectReviewStatus,
     SelectSameReport
   },

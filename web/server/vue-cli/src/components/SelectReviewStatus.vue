@@ -3,8 +3,10 @@
     label="Set review status"
     :items="items"
     :value="value"
+    :hide-details="true"
     item-text="label"
     item-value="id"
+    height="0"
     dense
     solo
     @input="changeReviewStatus"

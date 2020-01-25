@@ -2,8 +2,10 @@
   <v-select
     label="Select same report"
     :items="items"
+    :hide-details="true"
     item-text="label"
     item-value="id"
+    height="0"
     dense
     solo
     @input="selectSameReport"
