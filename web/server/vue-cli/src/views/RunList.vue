@@ -89,6 +89,19 @@
         </v-chip>
       </template>
 
+      <template #item.duration="{ item }">
+        <v-chip
+          class="ma-2"
+          color="success"
+          outlined
+        >
+          <v-icon left>
+            mdi-clock-outline
+          </v-icon>
+          {{ prettifyDuration(item.duration) }}
+        </v-chip>
+      </template>
+
       <template #item.checkCommand="{ item }">
         <v-btn text small color="primary" @click="openCheckCommandDialog(item)">
           Show
@@ -270,6 +283,22 @@ export default {
       ccService.getClient().removeRun(null, runFilter, () => {
         this.fetchRuns();
       });
+    },
+
+    prettifyDuration(seconds) {
+      if (seconds >= 0) {
+        const durHours = Math.floor(seconds / 3600);
+        const durMins  = Math.floor(seconds / 60) - durHours * 60;
+        const durSecs  = seconds - durMins * 60 - durHours * 3600;
+
+        const prettyDurHours = (durHours < 10 ? "0" : "") + durHours;
+        const prettyDurMins  = (durMins  < 10 ? "0" : "") + durMins;
+        const prettyDurSecs  = (durSecs  < 10 ? "0" : "") + durSecs;
+
+        return prettyDurHours + ':' + prettyDurMins + ':' + prettyDurSecs;
+      }
+
+      return "";
     }
   }
 }
