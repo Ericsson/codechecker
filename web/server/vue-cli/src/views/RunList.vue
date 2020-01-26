@@ -76,6 +76,19 @@
         </div>
       </template>
 
+      <template #item.runDate="{ item }">
+        <v-chip
+          class="ma-2"
+          color="primary"
+          outlined
+        >
+          <v-icon left>
+            mdi-calendar-range
+          </v-icon>
+          {{ item.runDate | prettifyDate }}
+        </v-chip>
+      </template>
+
       <template #item.checkCommand="{ item }">
         <v-btn text small color="primary" @click="openCheckCommandDialog(item)">
           Show
@@ -158,7 +171,8 @@ export default {
         },
         {
           text: "Storage date",
-          value: "runDate"
+          value: "runDate",
+          align: 'center'
         },
         {
           text: "Analysis duration",
