@@ -16,7 +16,7 @@
       </v-list-item-icon>
 
       <v-list-item-content>
-        <v-list-item-title>{{ item.runName }}:{{ item.report.checkedFile }}:L{{ item.report.line }} [{{ item.report.bugPathLength }}]</v-list-item-title>
+        <v-list-item-title>{{ item.runName }}:{{ item.fileName }}:L{{ item.report.line }} [{{ item.report.bugPathLength }}]</v-list-item-title>
       </v-list-item-content>
     </template>
 
@@ -27,7 +27,7 @@
 
       <v-list-item-title>
         <b>
-          {{ item.runName }}:{{ item.report.checkedFile }}:L{{ item.report.line }} [{{ item.report.bugPathLength }}]
+          {{ item.runName }}:{{ item.fileName }}:L{{ item.report.line }} [{{ item.report.bugPathLength }}]
         </b>
       </v-list-item-title>
     </template>
@@ -94,7 +94,8 @@ export default {
             return {
               id: report.reportId,
               report: report,
-              runName: run.name
+              runName: run.name,
+              fileName: report.checkedFile.replace(/^.*[\\/]/, "")
             };
           });
         });
