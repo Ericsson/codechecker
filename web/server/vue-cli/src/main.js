@@ -11,6 +11,8 @@ import vuetify from '@/plugins/vuetify';
 
 import router from "./router";
 import store from "./store";
+import filters from './filters';
+
 import App from './App.vue';
 
 import { eventHub } from '@cc-api/_base.service';
@@ -38,6 +40,8 @@ router.beforeResolve((to, from, next) => {
     next()
   }
 });
+
+Vue.use(filters);
 
 new Vue({
   router,

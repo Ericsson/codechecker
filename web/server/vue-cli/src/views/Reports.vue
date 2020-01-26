@@ -15,6 +15,10 @@
         loading-text="Loading reports..."
         item-key="name"
       >
+        <template #item.bugHash="{ item }">
+          {{ item.bugHash | truncate(10) }}
+        </template>
+
         <template #item.checkedFile="{ item }">
           <router-link
             :to="{ name: 'report-detail', query: {
