@@ -1,12 +1,12 @@
 <template>
   <v-container fluid>
-    <v-row class="mb-2 mx-2">
+    <v-row class="mb-2 mx-0">
       <v-col
         cols="auto"
-        class="py-0"
+        class="pa-0 mr-2"
         align-self="center"
       >
-        <v-btn color="primary">
+        <v-btn color="primary" outlined>
           <v-icon>mdi-file-document-box-outline</v-icon>
           Show documentation
         </v-btn>
@@ -14,18 +14,18 @@
 
       <v-col
         cols="auto"
-        class="py-0"
+        class="pa-0 mr-2"
         align-self="center"
       >
         <select-review-status
-          class="mx-2"
+          class="mx-0"
           :value="reviewStatus"
         />
       </v-col>
 
       <v-col
         cols="auto"
-        class="py-0"
+        class="pa-0"
         align-self="center"
       >
         <v-checkbox
@@ -42,45 +42,62 @@
         class="py-0 pr-0"
         align-self="center"
       >
-        <v-btn class="mx-2 mr-0">
+        <v-btn
+          class="mx-2 mr-0"
+          color="primary"
+          outlined
+        >
           <v-icon>mdi-comment-multiple-outline</v-icon>
           Comments (0)
         </v-btn>
       </v-col>
     </v-row>
 
-    <v-row class="mb-2 mx-2">
-      <v-col
-        cols="auto"
-        class="py-0"
-        align-self="center"
-      >
-        <span
-          v-if="sourceFile"
+    <v-row
+      id="editor-wrapper"
+      class="mx-0"
+    >
+      <v-col class="pa-0">
+        <v-row
+          class="header pa-2 mx-0"
         >
-          {{ sourceFile.filePath }}
-        </span>
-      </v-col>
+          <v-col
+            cols="auto"
+            class="py-0"
+            align-self="center"
+          >
+            <span
+              v-if="sourceFile"
+              class="file-path"
+            >
+              {{ sourceFile.filePath }}
+            </span>
+          </v-col>
 
-      <v-spacer />
+          <v-spacer />
 
-      <v-col
-        cols="auto"
-        class="py-0"
-        align-self="center"
-      >
-        <v-row align="center">
-          Also found in:
-          <select-same-report
-            class="ml-2"
-            :report="report"
-          />
+          <v-col
+            cols="auto"
+            class="py-0"
+            align-self="center"
+          >
+            <v-row align="center">
+              Also found in:
+              <select-same-report
+                class="ml-2"
+                :report="report"
+              />
+            </v-row>
+          </v-col>
+        </v-row>
+
+        <v-row
+          v-fill-height
+          class="mx-0"
+        >
+          <textarea ref="editor" />
         </v-row>
       </v-col>
-    </v-row>
-
-    <v-row v-fill-height>
-      <textarea ref="editor" />
     </v-row>
   </v-container>
 </template>
@@ -378,7 +395,20 @@ export default {
 }
 </script>
 
-<style type="scss">
+<style lang="scss">
+#editor-wrapper {
+  border: 1px solid #d8dbe0;
+
+  >.header {
+    background-color: var(--v-grey-lighten3);
+
+    .file-path {
+      font-family: monospace;
+      color: var(--v-grey-darken4);
+    }
+  }
+}
+
 .checker-step {
   background-color: #eeb;
 }
