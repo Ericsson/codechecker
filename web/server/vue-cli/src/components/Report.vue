@@ -29,6 +29,7 @@
         align-self="center"
       >
         <v-checkbox
+          v-model="showArrows"
           class="mx-2 my-0 align-center justify-center"
           label="Show arrows"
           :hide-details="true"
@@ -149,13 +150,22 @@ export default {
       reviewStatus: null,
       jsPlumbInstance: null,
       lineMarks: [],
-      lineWidgets: []
+      lineWidgets: [],
+      showArrows: true
     };
   },
 
   watch: {
     treeItem() {
       this.init(this.treeItem);
+    },
+
+    showArrows() {
+      if (this.showArrows) {
+        this.drawBugPath();
+      } else {
+        this.clearLines();
+      }
     }
   },
 
@@ -247,6 +257,10 @@ export default {
     },
 
     resetJsPlumb() {
+      if (this.jsPlumbInstance) {
+        this.jsPlumbInstance.reset();
+      }
+
       const jsPlumbParentElement =
         this.$el.querySelector('.CodeMirror-lines');
       jsPlumbParentElement.style.position = 'relative';
@@ -290,16 +304,25 @@ export default {
       });
 
       this.addBubbles(bubbles);
-      this.addLines(points);
+
+      if (this.showArrows) {
+        this.addLines(points);
+      }
     },
 
     clearBubbles() {
-      this.lineWidgets.forEach(widget => widget.clear());
+      this.editor.operation(() => {
+        this.lineWidgets.forEach(widget => widget.clear());
+      });
+
       this.lineWidgets = [];
     },
 
     clearLines() {
-      this.lineMarks.forEach(mark => mark.clear());
+      this.editor.operation(() => {
+        this.lineMarks.forEach(mark => mark.clear());
+      });
+
       this.lineMarks = [];
       this.resetJsPlumb();
     },
