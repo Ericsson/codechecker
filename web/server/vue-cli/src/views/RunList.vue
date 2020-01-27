@@ -14,7 +14,7 @@
     <v-data-table
       v-model="selected"
       :headers="headers"
-      :items="runs"
+      :items="formattedRuns"
       :options.sync="pagination"
       :loading="loading"
       :server-items-length.sync="totalItems"
@@ -85,7 +85,7 @@
           <v-icon left>
             mdi-calendar-range
           </v-icon>
-          {{ item.runDate | prettifyDate }}
+          {{ item.$runDate }}
         </v-chip>
       </template>
 
@@ -98,7 +98,7 @@
           <v-icon left>
             mdi-clock-outline
           </v-icon>
-          {{ prettifyDuration(item.duration) }}
+          {{ item.$duration }}
         </v-chip>
       </template>
 
@@ -126,6 +126,10 @@
             {{ item.versionTag }}
           </span>
         </v-chip>
+      </template>
+
+      <template #item.codeCheckerVersion="{ item }">
+        {{ item.$codeCheckerVersion }}
       </template>
     </v-data-table>
   </v-card>
@@ -197,11 +201,25 @@ export default {
         },
         {
           text: "CodeChecker version",
-          value: "codeCheckerVersion"
+          value: "codeCheckerVersion",
+          align: "center"
         }
       ],
       runs: []
     };
+  },
+
+  computed: {
+    formattedRuns() {
+      return this.runs.map((run) => {
+        return {
+          ...run,
+          $duration: this.prettifyDuration(run.duration),
+          $runDate: this.prettifyDate(run.runDate),
+          $codeCheckerVersion: this.prettifyCCVersion(run.codeCheckerVersion)
+        };
+      });
+    }
   },
 
   watch: {
@@ -279,6 +297,10 @@ export default {
       });
     },
 
+    prettifyDate (date) {
+      return date.split(/[.]+/)[0];
+    },
+
     prettifyDuration(seconds) {
       if (seconds >= 0) {
         const durHours = Math.floor(seconds / 3600);
@@ -293,6 +315,12 @@ export default {
       }
 
       return "";
+    },
+
+    prettifyCCVersion(version) {
+      if (!version) return version;
+
+      return version.split(" ")[0];
     }
   }
 }
