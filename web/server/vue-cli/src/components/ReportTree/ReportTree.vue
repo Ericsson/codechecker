@@ -143,7 +143,11 @@ export default {
                   resolve();
 
                   if (this.report.reportId.equals(item.report.reportId)) {
-                    this.activeItems.push(item.children[0]);
+                    const bugItem = item.children.find((c) =>
+                      c.id === `${report.reportId}_${ReportTreeKind.BUG}`
+                    );
+
+                    this.activeItems.push(bugItem);
                   }
                 });
               });
