@@ -14,12 +14,13 @@
 
       <v-col
         cols="auto"
-        class="pa-0 mr-2"
+        class="pa-0"
         align-self="center"
       >
         <select-review-status
           class="mx-0"
-          :value="reviewStatus"
+          :value.sync="reviewStatus"
+          :on-confirm="confirmReviewStatusChange"
         />
       </v-col>
 
@@ -404,6 +405,13 @@ export default {
         line: line,
         ch: column
       }, 150);
+    },
+
+    confirmReviewStatusChange(status, message) {
+      ccService.getClient().changeReviewStatus(this.report.reportId, status,
+      message, () => {
+        // TODO: handle errors.
+      });
     }
   }
 }

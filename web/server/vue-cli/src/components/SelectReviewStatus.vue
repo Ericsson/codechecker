@@ -1,36 +1,97 @@
 <template>
-  <v-select
-    label="Set review status"
-    :items="items"
-    :value="value"
-    :hide-details="true"
-    item-text="label"
-    item-value="id"
-    height="0"
-    dense
-    solo
-    @input="changeReviewStatus"
+  <v-dialog
+    v-model="dialog"
+    persistent
+    max-width="600px"
   >
-    <template v-slot:selection="{ item }">
-      <v-list-item-icon class="mr-2">
-        <review-status-icon :status="item.id" />
-      </v-list-item-icon>
+    <template v-slot:activator="{}">
+      <v-row>
+        <v-col
+          cols="auto"
+          class="pa-0 mx-4"
+        >
+          <v-select
+            v-model="status"
+            :items="items"
+            :hide-details="true"
+            label="Set review status"
+            item-text="label"
+            item-value="id"
+            height="0"
+            dense
+            outlined
+            @input="onReviewStatusChange"
+          >
+            <template v-slot:selection="{ item }">
+              <v-avatar left>
+                <review-status-icon :status="item.id" />
+              </v-avatar>
+              {{ item.label }}
+            </template>
 
-      <v-list-item-content>
-        <v-list-item-title v-text="item.label" />
-      </v-list-item-content>
+            <template v-slot:item="{ item }">
+              <v-avatar left>
+                <review-status-icon :status="item.id" />
+              </v-avatar>
+              {{ item.label }}
+            </template>
+          </v-select>
+        </v-col>
+      </v-row>
     </template>
 
-    <template v-slot:item="{ item }">
-      <v-list-item-icon class="mr-2">
-        <review-status-icon :status="item.id" />
-      </v-list-item-icon>
+    <v-card>
+      <v-card-title
+        class="headline primary white--text"
+        primary-title
+      >
+        Change review status
 
-      <v-list-item-content>
-        <v-list-item-title v-text="item.label" />
-      </v-list-item-content>
-    </template>
-  </v-select>
+        <v-spacer />
+
+        <v-btn icon dark @click="cancelReviewStatusChange">
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+      </v-card-title>
+
+      <v-card-text class="pa-0">
+        <v-container>
+          <v-textarea
+            v-model="message"
+            solo
+            flat
+            outlined
+            name="reviewStatusMessage"
+            label="(Optionally) Explain the status change..."
+            class="pa-0"
+            :hide-details="true"
+          />
+        </v-container>
+      </v-card-text>
+
+      <v-divider />
+
+      <v-card-actions>
+        <v-spacer />
+
+        <v-btn
+          color="error"
+          text
+          @click="cancelReviewStatusChange"
+        >
+          Cancel
+        </v-btn>
+
+        <v-btn
+          color="primary"
+          text
+          @click="confirmReviewStatusChange"
+        >
+          Change review status
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script>
@@ -59,13 +120,29 @@ export default {
     ReviewStatusIcon
   },
   props: {
-    value: { type: Number, default: ReviewStatus.UNREVIEWED }
+    value: { type: Number, default: ReviewStatus.UNREVIEWED },
+    onConfirm: { type: Function, default: () => {} }
   },
   data() {
     return {
-      items: [ ]
+      items: [],
+      dialog: false,
+      prevValue: null,
+      message: ""
     };
   },
+
+  computed: {
+    status: {
+      get() {
+        return this.value;
+      },
+      set(value) {
+        this.$emit("update:value", value);
+      }
+    }
+  },
+
   created() {
     this.items = Object.values(ReviewStatus).map((id) => {
       return {
@@ -74,10 +151,38 @@ export default {
       };
     });
   },
+
   methods: {
-    changeReviewStatus(value) {
-      console.log("Change review status", value);
+    onReviewStatusChange() {
+      this.dialog = true;
+      this.prevValue = this.value;
+    },
+
+    confirmReviewStatusChange() {
+      if (!this.message.length) return;
+
+      this.onConfirm(this.value, this.message);
+      this.message = "";
+      this.dialog = false;
+      this.prevValue = this.value;
+    },
+
+    cancelReviewStatusChange() {
+      this.dialog = false;
+      this.status = this.prevValue;
     }
   }
 }
 </script>
+
+<style lang="scss" scoped>
+::v-deep .v-select__selections input {
+  display: none;
+}
+
+::v-deep .v-select.v-text-field--outlined {
+  .theme--light.v-label {
+    background-color: #fff;
+  }
+}
+</style>
