@@ -1,6 +1,19 @@
 <template>
   <v-app-bar app color="primary" dark>
-    <v-toolbar-title>CodeChecker</v-toolbar-title>
+    <v-app-bar-nav-icon>
+      <v-avatar
+        size="36px"
+      >
+        <img
+          alt="Logo"
+          src="@/assets/logo.png"
+        >
+      </v-avatar>
+    </v-app-bar-nav-icon>
+
+    <v-toolbar-title class="pl-0">
+      CodeChecker
+    </v-toolbar-title>
 
     <v-spacer />
 
