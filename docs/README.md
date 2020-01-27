@@ -151,6 +151,7 @@ OS X El Capitan 10.11, macOS Sierra 10.12 and macOS High Sierra 10.13.
 # Download and install dependencies.
 brew update
 brew install doxygen gcc git
+pip2 install virtualenv
 
 # Install the latest clang see: https://formulae.brew.sh/formula/llvm
 brew install llvm@7
@@ -158,6 +159,7 @@ brew install llvm@7
 # Install Thrift 0.9.3 (Note: the general Thrift version is 0.10.0 on macOS High Sierra 10.13)
 brew unlink thrift
 brew install thrift@0.9
+# Put the installed `thrift` binary into your PATH; either run `brew link --force thrift@0.9` or follow the message printed by brew during install
 
 # Fetch source code.
 git clone https://github.com/Ericsson/CodeChecker.git --depth 1 ~/codechecker
