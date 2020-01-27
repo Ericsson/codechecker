@@ -46,8 +46,16 @@
 
 <script>
 import { Splitpanes, Pane } from "splitpanes";
+import { mapState } from "vuex";
 
 import { ccService } from "@cc-api";
+import {
+  MAX_QUERY_SIZE,
+  Order,
+  ReportFilter,
+  SortMode,
+  SortType
+} from "@cc/report-server-types";
 
 import { FillHeight } from "@/directives";
 import Report from "@/components/Report";
@@ -68,14 +76,54 @@ export default {
       treeItem: null
     };
   },
-  mounted() {
-    const reportId = this.$router.currentRoute.query["reportId"] || 1;
-    this.loadReport(reportId);
+  computed: {
+    ...mapState({
+      runIds: state => state.report.runIds,
+      reportFilter: state => state.report.reportFilter,
+      cmpData: state => state.report.cmpData,
+    })
   },
+
+  mounted() {
+    const reportId = this.$router.currentRoute.query["reportId"];
+    const reportHash = this.$router.currentRoute.query["reportHash"];
+    this.loadReport(reportId, reportHash);
+  },
+
   methods: {
-    loadReport(reportId) {
+    loadReport(reportId, reportHash) {
+      if (reportId) {
+        this.loadReportById(reportId);
+      } else if (reportHash) {
+        this.loadReportByHash(reportHash);
+      }
+    },
+
+    loadReportById(reportId) {
       ccService.getClient().getReport(reportId, (err, reportData) => {
         this.report = reportData;
+      });
+    },
+
+    loadReportByHash(reportHash) {
+      const limit = MAX_QUERY_SIZE;
+      const offset = 0;
+      const getDetails = false;
+
+      const sortType = new SortMode({
+        type: SortType.BUG_PATH_LENGTH,
+        ord: Order.ASC
+      });
+
+      const reportFilter = new ReportFilter({
+        ...this.reportFilter,
+        reportHash: [ reportHash ]
+      });
+
+      ccService.getClient().getRunResults(this.runIds, limit, offset,
+      [ sortType ], reportFilter, this.cmpData, getDetails,
+      (err, reports) => {
+        this.report = reports[0];
       });
     },
 
