@@ -37,26 +37,11 @@
 </template>
 
 <script>
-import { VCard, VCardActions, VCardText } from "Vuetify/VCard";
-import { VToolbar, VToolbarTitle } from "Vuetify/VToolbar";
-import VTextField from "Vuetify/VTextField/VTextField";
-import VSpacer from "Vuetify/VGrid/VSpacer";
-import VForm from "Vuetify/VForm/VForm";
-import VBtn from "Vuetify/VBtn/VBtn";
-
-import VRow from "Vuetify/VGrid/VRow";
-import VCol from "Vuetify/VGrid/VCol";
-
 import { mapState } from "vuex";
 import { LOGIN } from "@/store/actions.type";
 
 export default {
   name: "Login",
-  components: {
-    VCard, VCardActions, VCardText, VToolbar, VToolbarTitle, VForm,
-    VTextField, VSpacer, VBtn, VRow, VCol
-  },
-
   data() {
     return {
       username: null,

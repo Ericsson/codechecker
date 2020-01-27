@@ -1,5 +1,6 @@
 const HTMLWebpackPlugin = require('html-webpack-plugin');
 const { VueLoaderPlugin } = require('vue-loader');
+const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin');
 const { DefinePlugin } = require('webpack');
 
 const { join } = require('path');
@@ -129,6 +130,7 @@ module.exports = {
       }
     }),
     new VueLoaderPlugin(),
+    new VuetifyLoaderPlugin(),
     new HTMLWebpackPlugin({
       showErrors: true,
       cache: true,

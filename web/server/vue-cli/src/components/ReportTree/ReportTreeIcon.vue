@@ -63,8 +63,6 @@
 </template>
 
 <script>
-import VIcon from "Vuetify/VIcon/VIcon";
-
 import { DetectionStatus } from "@cc/report-server-types";
 
 import {
@@ -79,7 +77,6 @@ import ReportStepIcon from "./ReportStepIcon";
 export default {
   name: "ReportTreeIcon",
   components: {
-    VIcon,
     DetectionStatusIcon,
     ReportStepEnumIcon,
     ReportStepIcon,

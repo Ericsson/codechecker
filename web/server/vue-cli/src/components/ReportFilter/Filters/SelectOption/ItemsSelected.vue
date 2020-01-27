@@ -39,22 +39,8 @@
 </template>
 
 <script>
-import {
-  VList,
-  VListItem,
-  VListItemContent,
-  VListItemIcon,
-  VListItemGroup,
-  VListItemTitle
-} from "Vuetify/VList";
-import VChip from "Vuetify/VChip/VChip";
-
 export default {
   name: "ItemsSelected",
-  components: {
-    VList, VListItem, VListItemContent, VListItemIcon, VListItemGroup,
-    VListItemTitle, VChip
-  },
   props: {
     selectedItems: { type: Array, required: true }
   },

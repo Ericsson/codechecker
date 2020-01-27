@@ -124,20 +124,6 @@
 
 <script>
 import {
-  VList,
-  VListItem,
-  VListItemAction,
-  VListItemContent
-} from "Vuetify/VList";
-import {
-  VExpansionPanels,
-  VExpansionPanel,
-  VExpansionPanelHeader,
-  VExpansionPanelContent
-} from "Vuetify/VExpansionPanel";
-import VSpacer from "Vuetify/VGrid/VSpacer";
-
-import {
   UniqueFilter,
   ReportHashFilter,
   BaselineRunFilter,
@@ -162,9 +148,6 @@ import ReportCount from "./ReportCount";
 export default {
   name: "ReportFilter",
   components: {
-    VList, VListItem, VListItemAction, VListItemContent, VSpacer,
-    VExpansionPanels, VExpansionPanel, VExpansionPanelHeader,
-    VExpansionPanelContent,
     ClearAllFilters,
     ReportCount,
     UniqueFilter,

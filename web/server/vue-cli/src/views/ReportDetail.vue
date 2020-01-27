@@ -46,11 +46,6 @@
 
 <script>
 import { Splitpanes, Pane } from "splitpanes";
-import VContainer from "Vuetify/VGrid/VContainer";
-import VRow from "Vuetify/VGrid/VRow";
-import VCol from "Vuetify/VGrid/VCol";
-import { VBtn } from "Vuetify/VBtn";
-import VIcon from "Vuetify/VIcon/VIcon";
 
 import { ccService } from "@cc-api";
 
@@ -61,8 +56,8 @@ import ReportTree from "@/components/ReportTree/ReportTree";
 export default {
   name: "ReportDetail",
   components: {
-    Splitpanes, Pane,
-    VContainer, VRow, VCol, VBtn, VIcon,
+    Splitpanes,
+    Pane,
     Report,
     ReportTree
   },

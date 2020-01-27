@@ -16,7 +16,6 @@
 </template>
 
 <script>
-import VIcon from "Vuetify/VIcon/VIcon";
 import { ccService } from "@cc-api";
 import { ReportFilter } from "@cc/report-server-types";
 
@@ -26,7 +25,6 @@ import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
 export default {
   name: "CheckerMessageFilter",
   components: {
-    VIcon,
     SelectOption
   },
   mixins: [ BaseSelectOptionFilterMixin ],

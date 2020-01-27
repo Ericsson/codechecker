@@ -98,24 +98,12 @@
 </template>
 
 <script>
-import VDataTable from "Vuetify/VDataTable/VDataTable";
-import VChip from "Vuetify/VChip/VChip";
-import VAvatar from "Vuetify/VAvatar/VAvatar";
-import VIcon from "Vuetify/VIcon/VIcon";
-import VTextField from "Vuetify/VTextField/VTextField";
-import VToolbar from "Vuetify/VToolbar/VToolbar";
-import VBtn from "Vuetify/VBtn/VBtn";
-import VSpacer from "Vuetify/VGrid/VSpacer";
-
 import { prodService } from "@cc-api";
 
 import { StrToColorMixin } from "@/mixins";
 
 export default {
   name: "Products",
-  components: {
-    VDataTable, VChip, VAvatar, VIcon, VTextField, VToolbar, VBtn, VSpacer
-  },
   filters: {
     productIconName: function (endpoint) {
       if (!endpoint) return "";

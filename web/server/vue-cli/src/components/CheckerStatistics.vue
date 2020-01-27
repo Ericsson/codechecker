@@ -15,8 +15,6 @@
 </template>
 
 <script>
-import VDataTable from "Vuetify/VDataTable/VDataTable";
-
 import { ccService } from "@cc-api";
 import {
   DetectionStatus,
@@ -29,7 +27,6 @@ import { SeverityIcon } from "@/components/icons";
 export default {
   name: "CheckerStatistics",
   components: {
-    VDataTable,
     SeverityIcon
   },
 

@@ -32,17 +32,11 @@
 </template>
 
 <script>
-import VChip from "Vuetify/VChip/VChip";
-import VAvatar from "Vuetify/VAvatar/VAvatar";
-import VIcon from "Vuetify/VIcon/VIcon";
-import { VBtn } from "Vuetify/VBtn";
-
 import { ReportStepEnumIcon } from "@/components/icons";
 
 export default {
   name: "EditorBugStep",
   components: {
-    VChip, VAvatar, VIcon, VBtn,
     ReportStepEnumIcon
   },
   props: {

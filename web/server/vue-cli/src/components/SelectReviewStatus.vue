@@ -34,13 +34,6 @@
 </template>
 
 <script>
-import VSelect from "Vuetify/VSelect/VSelect";
-import {
-  VListItemContent,
-  VListItemIcon,
-  VListItemTitle
-} from "Vuetify/VList";
-
 import { ReviewStatus } from "@cc/report-server-types";
 
 import { ReviewStatusIcon } from "@/components/icons";
@@ -63,7 +56,6 @@ function reviewStatusFromCodeToString(reviewCode) {
 export default {
   name: "SelectReviewStatus",
   components: {
-    VSelect, VListItemContent, VListItemIcon, VListItemTitle,
     ReviewStatusIcon
   },
   props: {

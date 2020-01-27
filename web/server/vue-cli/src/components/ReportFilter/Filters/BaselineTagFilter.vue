@@ -16,7 +16,6 @@
 </template>
 
 <script>
-import VIcon from "Vuetify/VIcon/VIcon";
 import { ccService } from "@cc-api";
 import {
   ReportFilter,
@@ -30,7 +29,6 @@ import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
 export default {
   name: "BaselineTagFilter",
   components: {
-    VIcon,
     SelectOption
   },
   mixins: [ BaseSelectOptionFilterMixin ],

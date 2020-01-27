@@ -70,29 +70,8 @@
 </template>
 
 <script>
-import {
-  VList,
-  VListItem,
-  VListItemAction,
-  VListItemContent,
-  VListItemIcon,
-  VListItemGroup,
-  VListItemTitle
-} from "Vuetify/VList";
-import VCheckbox from "Vuetify/VCheckbox/VCheckbox";
-import VChip from "Vuetify/VChip/VChip";
-import VIcon from "Vuetify/VIcon/VIcon";
-import { VCard } from "Vuetify/VCard";
-import VToolbar from "Vuetify/VToolbar/VToolbar";
-import VTextField from "Vuetify/VTextField/VTextField";
-
 export default {
   name: "SelectOptionItems",
-  components: {
-    VList, VListItem, VListItemAction, VListItemContent, VListItemIcon,
-    VListItemGroup, VListItemTitle, VCheckbox, VChip, VIcon, VCard, VToolbar,
-    VTextField
-  },
   props: {
     items: { type: Array, required: true },
     selectedItems: { type: Array, required: true },

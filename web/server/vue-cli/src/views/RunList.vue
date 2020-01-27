@@ -125,17 +125,6 @@
 </template>
 
 <script>
-import VDataTable from "Vuetify/VDataTable/VDataTable";
-import VChip from "Vuetify/VChip/VChip";
-import VAvatar from "Vuetify/VAvatar/VAvatar";
-import VIcon from "Vuetify/VIcon/VIcon";
-import { VCard, VCardTitle, VCardText } from "Vuetify/VCard";
-import VTextField from "Vuetify/VTextField/VTextField";
-import VBtn from "Vuetify/VBtn/VBtn";
-import VDialog from "Vuetify/VDialog/VDialog";
-import VSpacer from "Vuetify/VGrid/VSpacer";
-import VToolbar from "Vuetify/VToolbar/VToolbar";
-
 import { DetectionStatusMixin } from "@/mixins";
 import { DetectionStatusIcon } from "@/components/icons";
 
@@ -145,8 +134,6 @@ import { RunFilter } from "@cc/report-server-types";
 export default {
   name: "RunList",
   components: {
-    VDataTable, VChip, VAvatar, VIcon, VCard, VCardTitle, VCardText,
-    VTextField, VBtn, VDialog, VSpacer, VToolbar,
     DetectionStatusIcon
   },
 

@@ -24,17 +24,10 @@
 </template>
 
 <script>
-import VCheckbox from "Vuetify/VCheckbox/VCheckbox";
-import VTooltip from "Vuetify/VTooltip/VTooltip";
-import VIcon from "Vuetify/VIcon/VIcon";
-
 import BaseFilterMixin from "./BaseFilter.mixin";
 
 export default {
   name: "UniqueFilter",
-  components: {
-    VCheckbox, VTooltip, VIcon
-  },
   mixins: [ BaseFilterMixin ],
 
   data() {

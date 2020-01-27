@@ -6,13 +6,7 @@
 </template>
 
 <script>
-import { VBtn } from "Vuetify/VBtn";
-import VIcon from "Vuetify/VIcon/VIcon";
-
 export default {
-  name: "RemoveFileteredReports",
-  components: {
-    VBtn, VIcon
-  }
+  name: "RemoveFileteredReports"
 }
 </script>

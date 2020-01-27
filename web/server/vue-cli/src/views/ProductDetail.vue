@@ -15,14 +15,8 @@
 </template>
 
 <script>
-import VTab from "Vuetify/VTabs/VTab";
-import VTabs from "Vuetify/VTabs/VTabs";
-
 export default {
   name: "Product",
-  components: {
-    VTab, VTabs
-  },
   data() {
     return {
       tabs: [

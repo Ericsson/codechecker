@@ -16,7 +16,6 @@
 </template>
 
 <script>
-import VIcon from "Vuetify/VIcon/VIcon";
 import { ccService } from "@cc-api";
 
 import SelectOption from "./SelectOption/SelectOption";
@@ -25,7 +24,6 @@ import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
 export default {
   name: "SourceComponentFilter",
   components: {
-    VIcon,
     SelectOption
   },
   mixins: [ BaseSelectOptionFilterMixin ],

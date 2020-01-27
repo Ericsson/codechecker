@@ -54,9 +54,6 @@
 </template>
 
 <script>
-import VDataTable from "Vuetify/VDataTable/VDataTable";
-import VChip from "Vuetify/VChip/VChip";
-
 import { Splitpanes, Pane } from "splitpanes";
 
 import { mapGetters } from "vuex";
@@ -74,8 +71,8 @@ import ReportFilter from "@/components/ReportFilter/ReportFilter";
 export default {
   name: "Reports",
   components: {
-    VDataTable, VChip,
-    Splitpanes, Pane,
+    Splitpanes,
+    Pane,
     DetectionStatusIcon,
     ReviewStatusIcon,
     SeverityIcon,

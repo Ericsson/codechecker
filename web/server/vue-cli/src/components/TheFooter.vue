@@ -12,14 +12,7 @@
 </template>
 
 <script>
-import { VFooter } from "Vuetify/VFooter";
-import VRow from "Vuetify/VGrid/VRow";
-import VCol from "Vuetify/VGrid/VCol";
-
 export default {
-  name: "TheHeader",
-  components: {
-    VFooter, VCol, VRow
-  }
+  name: "TheHeader"
 };
 </script>

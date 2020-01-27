@@ -6,17 +6,12 @@
 </template>
 
 <script>
-import VIcon from "Vuetify/VIcon/VIcon";
-
 import { ccService } from "@cc-api";
 
 import { BaseFilterMixin } from "./Filters";
 
 export default {
   name: "ReportCount",
-  components: {
-    VIcon
-  },
   mixins: [ BaseFilterMixin ],
 
   data() {

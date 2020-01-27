@@ -35,13 +35,6 @@
 </template>
 
 <script>
-import VSelect from "Vuetify/VSelect/VSelect";
-import {
-  VListItemContent,
-  VListItemIcon,
-  VListItemTitle
-} from "Vuetify/VList";
-
 import { ccService } from "@cc-api";
 import {
   MAX_QUERY_SIZE,
@@ -57,7 +50,6 @@ import { DetectionStatusIcon } from "@/components/icons";
 export default {
   name: "SelectSameReport",
   components: {
-    VSelect, VListItemContent, VListItemIcon, VListItemTitle,
     DetectionStatusIcon
   },
   props: {

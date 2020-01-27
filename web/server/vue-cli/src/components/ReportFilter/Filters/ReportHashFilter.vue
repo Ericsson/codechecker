@@ -28,21 +28,10 @@
 </template>
 
 <script>
-import VTextField from "Vuetify/VTextField/VTextField";
-import { VCard, VCardActions } from "Vuetify/VCard";
-import { VToolbar, VToolbarTitle, VToolbarItems } from "Vuetify/VToolbar";
-import VSpacer from "Vuetify/VGrid/VSpacer";
-import { VBtn } from "Vuetify/VBtn";
-import VIcon from "Vuetify/VIcon/VIcon";
-
 import BaseFilterMixin from "./BaseFilter.mixin";
 
 export default {
   name: "ReportHashFilter",
-  components: {
-    VTextField, VCard, VCardActions,
-    VToolbar, VToolbarTitle, VToolbarItems, VSpacer, VBtn, VIcon
-  },
   mixins: [ BaseFilterMixin ],
 
   data() {

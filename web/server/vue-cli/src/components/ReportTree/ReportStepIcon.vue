@@ -62,14 +62,10 @@
 </template>
 
 <script>
-import VIcon from "Vuetify/VIcon/VIcon";
 import ReportStepIconType from "./ReportStepIconType";
 
 export default {
   name: "ReportTreeIcon",
-  components: {
-    VIcon
-  },
   props: {
     value: {
       required: true,

@@ -35,8 +35,6 @@
 </template>
 
 <script>
-import VTreeview from "Vuetify/VTreeview/VTreeview";
-
 import { ccService } from "@cc-api";
 import { DetectionStatus, ReportFilter } from "@cc/report-server-types";
 
@@ -49,7 +47,6 @@ import formatReportDetails from "./ReportDetailFormatter";
 export default {
   name: "ReportTree",
   components: {
-    VTreeview,
     ReportTreeIcon,
     ReportTreeLabel
   },

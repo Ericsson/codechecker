@@ -106,14 +106,6 @@
 <script>
 import Vue from "vue";
 
-import VContainer from "Vuetify/VGrid/VContainer";
-import VSpacer from "Vuetify/VGrid/VSpacer";
-import { VBtn } from "Vuetify/VBtn";
-import VIcon from "Vuetify/VIcon/VIcon";
-import VCheckbox from "Vuetify/VCheckbox/VCheckbox";
-import VRow from "Vuetify/VGrid/VRow";
-import VCol from "Vuetify/VGrid/VCol";
-
 import CodeMirror from "codemirror";
 import { jsPlumb } from "jsplumb";
 
@@ -133,7 +125,6 @@ const ReportStepMessageClass = Vue.extend(ReportStepMessage)
 export default {
   name: "Report",
   components: {
-    VContainer, VSpacer, VBtn, VIcon, VCheckbox, VRow, VCol,
     SelectReviewStatus,
     SelectSameReport
   },

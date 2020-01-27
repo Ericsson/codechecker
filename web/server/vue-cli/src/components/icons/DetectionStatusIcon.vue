@@ -25,13 +25,10 @@
 </template>
 
 <script>
-import VIcon from "Vuetify/VIcon/VIcon";
-
 import { DetectionStatus } from "@cc/report-server-types";
 
 export default {
   name: "DetectionStatusIcon",
-  components: { VIcon },
   props: {
     status: {
       type: Number,

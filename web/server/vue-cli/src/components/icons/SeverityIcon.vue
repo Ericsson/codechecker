@@ -55,13 +55,10 @@
 </template>
 
 <script>
-import VAvatar from "Vuetify/VAvatar/VAvatar";
-
 import { Severity } from "@cc/report-server-types";
 
 export default {
   name: "SeverityIcon",
-  components: { VAvatar },
   props: {
     status: {
       type: Number,

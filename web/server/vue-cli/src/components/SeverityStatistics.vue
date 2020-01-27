@@ -15,8 +15,6 @@
 </template>
 
 <script>
-import VDataTable from "Vuetify/VDataTable/VDataTable";
-
 import { ccService } from "@cc-api";
 
 import { SeverityIcon } from "@/components/icons";
@@ -24,7 +22,6 @@ import { SeverityIcon } from "@/components/icons";
 export default {
   name: "SeverityStatistics",
   components: {
-    VDataTable,
     SeverityIcon
   },
 

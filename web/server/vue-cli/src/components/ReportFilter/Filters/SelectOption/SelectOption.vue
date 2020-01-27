@@ -51,23 +51,14 @@
 </template>
 
 <script>
-import { VCard } from "Vuetify/VCard";
-import { VToolbar, VToolbarTitle, VToolbarItems } from "Vuetify/VToolbar";
-import VSpacer from "Vuetify/VGrid/VSpacer";
-import { VBtn } from "Vuetify/VBtn";
-import VIcon from "Vuetify/VIcon/VIcon";
-import VMenu from "Vuetify/VMenu/VMenu";
-import VProgressLinear from "Vuetify/VProgressLinear/VProgressLinear";
-
 import Items from "./Items";
 import ItemsSelected from "./ItemsSelected";
 
 export default {
   name: "SelectOption",
   components: {
-    VCard, VToolbar, VToolbarTitle, VToolbarItems, VSpacer, VBtn, VIcon, VMenu,
-    VProgressLinear,
-    Items, ItemsSelected
+    Items,
+    ItemsSelected
   },
   props: {
     title: { type: String, required: true },

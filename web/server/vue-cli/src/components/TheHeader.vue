@@ -23,18 +23,7 @@
 </template>
 
 <script>
-import { VAppBar } from "Vuetify/VAppBar";
-import { VBtn } from "Vuetify/VBtn";
-import { VList, VListItem, VListItemTitle } from "Vuetify/VList";
-import { VMenu } from "Vuetify/VMenu";
-import VSpacer from "Vuetify/VGrid/VSpacer";
-import { VToolbarTitle } from "Vuetify/VToolbar";
-
 export default {
-  name: "TheHeader",
-  components: {
-    VAppBar, VBtn, VList, VListItem, VListItemTitle, VMenu, VSpacer,
-    VToolbarTitle
-  }
+  name: "TheHeader"
 };
 </script>

@@ -8,11 +8,8 @@
 </template>
 
 <script>
-import VAvatar from "Vuetify/VAvatar/VAvatar";
-
 export default {
   name: "ReportStepIcon",
-  components: { VAvatar },
   props: {
     type: { type: String, default: null },
     index: { type: Number, default: null }
