@@ -111,13 +111,20 @@
       <template #item.versionTag="{ item }">
         <v-chip
           v-if="item.versionTag"
-          color="secondary"
-          class="mr-2"
+          outlined
         >
           <v-avatar left>
-            <v-icon>mdi-label</v-icon>
+            <v-icon
+              :color="strToColor(item.versionTag)"
+            >
+              mdi-tag-outline
+            </v-icon>
           </v-avatar>
-          {{ item.versionTag }}
+          <span
+            class="grey--text text--darken-3"
+          >
+            {{ item.versionTag }}
+          </span>
         </v-chip>
       </template>
     </v-data-table>
@@ -125,7 +132,7 @@
 </template>
 
 <script>
-import { DetectionStatusMixin } from "@/mixins";
+import { DetectionStatusMixin, StrToColorMixin } from "@/mixins";
 import { DetectionStatusIcon } from "@/components/icons";
 
 import { ccService } from "@cc-api";
@@ -137,7 +144,7 @@ export default {
     DetectionStatusIcon
   },
 
-  mixins: [ DetectionStatusMixin ],
+  mixins: [ DetectionStatusMixin, StrToColorMixin ],
 
   data() {
     return {
