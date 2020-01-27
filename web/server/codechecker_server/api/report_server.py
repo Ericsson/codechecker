@@ -95,7 +95,10 @@ def verify_limit_range(limit):
     max_query_limit = constants.MAX_QUERY_SIZE
     if limit > max_query_limit:
         LOG.warning('Query limit %d was larger than max query limit %d, '
-                    'setting limit to %d', limit, max_query_limit, max)
+                    'setting limit to %d',
+                    limit,
+                    max_query_limit,
+                    max_query_limit)
         limit = max_query_limit
     return limit
 
