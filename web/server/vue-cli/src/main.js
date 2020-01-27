@@ -1,23 +1,23 @@
 import "core-js/stable";
 import "regenerator-runtime/runtime";
 
-import '@mdi/font/css/materialdesignicons.css'
-import 'codemirror/lib/codemirror.css';
-import 'codemirror/mode/clike/clike.js';
-import 'splitpanes/dist/splitpanes.css';
+import "@mdi/font/css/materialdesignicons.css"
+import "codemirror/lib/codemirror.css";
+import "codemirror/mode/clike/clike.js";
+import "splitpanes/dist/splitpanes.css";
 
-import Vue from 'vue';
-import vuetify from '@/plugins/vuetify';
+import Vue from "vue";
+import vuetify from "@/plugins/vuetify";
 
 import router from "./router";
 import store from "./store";
-import filters from './filters';
+import filters from "./filters";
 
 Vue.use(filters);
 
-import App from './App.vue';
+import App from "./App.vue";
 
-import { eventHub } from '@cc-api/_base.service';
+import { eventHub } from "@cc-api/_base.service";
 
 import "@/variables.scss";
 
@@ -29,7 +29,7 @@ router.beforeResolve((to, from, next) => {
   if (from.params.endpoint === undefined ||
       to.params.endpoint !== from.params.endpoint
   ) {
-    eventHub.$emit('update', to.params.endpoint);
+    eventHub.$emit("update", to.params.endpoint);
   }
 
   if(to.matched.some(record => record.meta.requiresAuth)) {
@@ -37,7 +37,7 @@ router.beforeResolve((to, from, next) => {
       next()
       return
     }
-    next('/login')
+    next("/login")
   } else {
     next()
   }
@@ -48,4 +48,4 @@ new Vue({
   store,
   vuetify,
   render: h => h(App),
-}).$mount('#app')
+}).$mount("#app")

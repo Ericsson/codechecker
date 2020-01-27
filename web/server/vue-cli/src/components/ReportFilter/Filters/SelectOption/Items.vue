@@ -87,7 +87,7 @@ import VToolbar from "Vuetify/VToolbar/VToolbar";
 import VTextField from "Vuetify/VTextField/VTextField";
 
 export default {
-  name: 'SelectOptionItems',
+  name: "SelectOptionItems",
   components: {
     VList, VListItem, VListItemAction, VListItemContent, VListItemIcon,
     VListItemGroup, VListItemTitle, VCheckbox, VChip, VIcon, VCard, VToolbar,
@@ -108,7 +108,7 @@ export default {
           return value.includes(item.id);
         });
 
-        this.$emit('select', selectedItems)
+        this.$emit("select", selectedItems)
       }
     }
   },

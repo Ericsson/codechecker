@@ -17,14 +17,14 @@
 
 <script>
 import VIcon from "Vuetify/VIcon/VIcon";
-import { ccService } from '@cc-api';
-import { ReportFilter, RunFilter } from '@cc/report-server-types';
+import { ccService } from "@cc-api";
+import { ReportFilter, RunFilter } from "@cc/report-server-types";
 
-import SelectOption from './SelectOption/SelectOption';
-import BaseSelectOptionFilterMixin from './BaseSelectOptionFilter.mixin';
+import SelectOption from "./SelectOption/SelectOption";
+import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
 
 export default {
-  name: 'BaselineRunFilter',
+  name: "BaselineRunFilter",
   components: {
     VIcon,
     SelectOption
@@ -35,7 +35,7 @@ export default {
     return {
       id: "run",
       search: {
-        placeHolder : 'Search for run names (e.g.: myrun*)...',
+        placeHolder : "Search for run names (e.g.: myrun*)...",
         filterItems: this.filterItems
       }
     };
@@ -90,7 +90,7 @@ export default {
       const runIds = null;
 
       const reportFilter = new ReportFilter(this.reportFilter);
-      reportFilter['runName'] = search ? [ `${search}*` ] : null;
+      reportFilter["runName"] = search ? [ `${search}*` ] : null;
 
       const limit = null;
       const offset = 0;

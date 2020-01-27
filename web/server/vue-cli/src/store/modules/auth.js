@@ -24,7 +24,7 @@ const actions = {
     return new Promise(resolve => {
       // TODO: get data from Thrift and handler errors.
       credentials;
-      const data = { user: 'test' };
+      const data = { user: "test" };
 
       context.commit(SET_AUTH, data.user);
       resolve(data);
@@ -37,7 +37,7 @@ const actions = {
     if (JwtService.getToken()) {
       return new Promise(resolve => {
         // TODO: get data from Thrift and handler errors.
-        const data = { user: 'test' };
+        const data = { user: "test" };
 
         context.commit(SET_AUTH, data.user);
         resolve(data);

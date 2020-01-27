@@ -1,7 +1,7 @@
-import { ExtendedReportDataType } from '@cc/report-server-types';
+import { ExtendedReportDataType } from "@cc/report-server-types";
 
-import ReportTreeKind from './ReportTreeKind';
-import ReportStepIconType from './ReportStepIconType';
+import ReportTreeKind from "./ReportTreeKind";
+import ReportStepIconType from "./ReportStepIconType";
 
 const highlightColours = [
   "#ffffff",
@@ -128,8 +128,8 @@ function formatExtendedReportDataChildren(extendedData, kind, parentId) {
 
 function getReportStepIcon(step, index, isResult) {
   var type = isResult
-    ? 'error' : step.msg.indexOf(' (fixit)') > -1
-    ? 'fixit' : 'info';
+    ? "error" : step.msg.indexOf(" (fixit)") > -1
+    ? "fixit" : "info";
 
   return {
     index: index + 1,

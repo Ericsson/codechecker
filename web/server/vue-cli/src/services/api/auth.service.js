@@ -1,9 +1,9 @@
-import ServiceClient from '@cc/auth';
-import { BaseService } from './_base.service';
+import ServiceClient from "@cc/auth";
+import { BaseService } from "./_base.service";
 
 class AuthService extends BaseService {
   constructor() {
-    super('Authentication', ServiceClient);
+    super("Authentication", ServiceClient);
   }
 }
 

@@ -107,18 +107,18 @@ import VToolbar from "Vuetify/VToolbar/VToolbar";
 import VBtn from "Vuetify/VBtn/VBtn";
 import VSpacer from "Vuetify/VGrid/VSpacer";
 
-import { prodService } from '@cc-api';
+import { prodService } from "@cc-api";
 
-import { StrToColorMixin } from '@/mixins';
+import { StrToColorMixin } from "@/mixins";
 
 export default {
-  name: 'Products',
+  name: "Products",
   components: {
     VDataTable, VChip, VAvatar, VIcon, VTextField, VToolbar, VBtn, VSpacer
   },
   filters: {
     productIconName: function (endpoint) {
-      if (!endpoint) return '';
+      if (!endpoint) return "";
 
       return endpoint.charAt(0).toUpperCase();
     }
@@ -158,8 +158,8 @@ export default {
           value: "runStoreInProgress"
         },
         {
-          text: 'Actions',
-          value: 'action',
+          text: "Actions",
+          value: "action",
           sortable: false
         },
       ],

@@ -1,10 +1,10 @@
-import Vue from 'vue';
+import Vue from "vue";
 import {
   createXHRClient,
   createXHRConnection,
   TBufferedTransport,
   TJSONProtocol
-} from 'thrift';
+} from "thrift";
 
 // Host should be set explicitly to `hostname` because thrift will use
 // the value of `window.location.host` which will contain port number by
@@ -23,7 +23,7 @@ class BaseService {
     this._client = null;
 
     // Event which can be used to update client on route changes.
-    eventHub.$on('update', (endpoint) => {
+    eventHub.$on("update", (endpoint) => {
       this._client = this.createClient(endpoint);
     });
   }
@@ -33,7 +33,7 @@ class BaseService {
   }
 
   createClient(endpoint) {
-    let productEndpoint = endpoint ? '/' + endpoint : '';
+    let productEndpoint = endpoint ? "/" + endpoint : "";
     const connection = createXHRConnection(host, port, {
       transport: TBufferedTransport,
       protocol: TJSONProtocol,

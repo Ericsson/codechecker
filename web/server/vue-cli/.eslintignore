@@ -1,0 +1,5 @@
+node_modules
+dist
+
+# Generated Thrift API files.
+src/codechecker_api

@@ -1,9 +1,9 @@
-import ServiceClient from '@cc/conf';
-import { BaseService } from './_base.service';
+import ServiceClient from "@cc/conf";
+import { BaseService } from "./_base.service";
 
 class ConfigurationService extends BaseService {
   constructor() {
-    super('Configuration', ServiceClient);
+    super("Configuration", ServiceClient);
   }
 }
 

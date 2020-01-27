@@ -5,6 +5,6 @@
 <script>
 
 export default {
-  name: 'NewcheckDiffTypeRunFilter'
+  name: "NewcheckDiffTypeRunFilter"
 }
 </script>

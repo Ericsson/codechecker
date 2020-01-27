@@ -5,35 +5,35 @@ export default {
     severityFromCodeToString(severity) {
       switch (severity) {
         case Severity.UNSPECIFIED:
-          return 'Unspecified';
+          return "Unspecified";
         case Severity.STYLE:
-          return 'Style';
+          return "Style";
         case Severity.LOW:
-          return 'Low';
+          return "Low";
         case Severity.MEDIUM:
-          return 'Medium';
+          return "Medium";
         case Severity.HIGH:
-          return 'High';
+          return "High";
         case Severity.CRITICAL:
-          return 'Critical';
+          return "Critical";
         default:
-          return '';
+          return "";
       }
     },
 
     severityFromStringToCode(severity) {
       switch (severity.toLowerCase()) {
-        case 'unspecified':
+        case "unspecified":
           return Severity.UNSPECIFIED;
-        case 'style':
+        case "style":
           return Severity.STYLE;
-        case 'low':
+        case "low":
           return Severity.LOW;
-        case 'medium':
+        case "medium":
           return Severity.MEDIUM;
-        case 'high':
+        case "high":
           return Severity.HIGH;
-        case 'critical':
+        case "critical":
           return Severity.CRITICAL;
         default:
           return -1;

@@ -28,10 +28,10 @@ import VCheckbox from "Vuetify/VCheckbox/VCheckbox";
 import VTooltip from "Vuetify/VTooltip/VTooltip";
 import VIcon from "Vuetify/VIcon/VIcon";
 
-import BaseFilterMixin from './BaseFilter.mixin';
+import BaseFilterMixin from "./BaseFilter.mixin";
 
 export default {
-  name: 'UniqueFilter',
+  name: "UniqueFilter",
   components: {
     VCheckbox, VTooltip, VIcon
   },
@@ -39,7 +39,7 @@ export default {
 
   data() {
     return {
-      id: 'is-unique'
+      id: "is-unique"
     };
   },
 

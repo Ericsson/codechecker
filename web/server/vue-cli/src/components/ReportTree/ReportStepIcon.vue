@@ -63,10 +63,10 @@
 
 <script>
 import VIcon from "Vuetify/VIcon/VIcon";
-import ReportStepIconType from './ReportStepIconType';
+import ReportStepIconType from "./ReportStepIconType";
 
 export default {
-  name: 'ReportTreeIcon',
+  name: "ReportTreeIcon",
   components: {
     VIcon
   },

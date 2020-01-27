@@ -19,16 +19,16 @@ import VTab from "Vuetify/VTabs/VTab";
 import VTabs from "Vuetify/VTabs/VTabs";
 
 export default {
-  name: 'Product',
+  name: "Product",
   components: {
     VTab, VTabs
   },
   data() {
     return {
       tabs: [
-        { id: 1, name: "Runs", route: 'runs' },
-        { id: 2, name: "Statistics", route: 'statistics' },
-        { id: 3, name: "Reports", route: 'reports' }
+        { id: 1, name: "Runs", route: "runs" },
+        { id: 2, name: "Statistics", route: "statistics" },
+        { id: 3, name: "Reports", route: "reports" }
       ]
     };
   }

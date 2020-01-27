@@ -59,11 +59,11 @@ import VIcon from "Vuetify/VIcon/VIcon";
 import VMenu from "Vuetify/VMenu/VMenu";
 import VProgressLinear from "Vuetify/VProgressLinear/VProgressLinear";
 
-import Items from './Items';
-import ItemsSelected from './ItemsSelected';
+import Items from "./Items";
+import ItemsSelected from "./ItemsSelected";
 
 export default {
-  name: 'SelectOption',
+  name: "SelectOption",
   components: {
     VCard, VToolbar, VToolbarTitle, VToolbarItems, VSpacer, VBtn, VIcon, VMenu,
     VProgressLinear,

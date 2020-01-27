@@ -48,15 +48,15 @@ import { ReviewStatusIcon } from "@/components/icons";
 function reviewStatusFromCodeToString(reviewCode) {
   switch (parseInt(reviewCode)) {
     case ReviewStatus.UNREVIEWED:
-      return 'Unreviewed';
+      return "Unreviewed";
     case ReviewStatus.CONFIRMED:
-      return 'Confirmed';
+      return "Confirmed";
     case ReviewStatus.FALSE_POSITIVE:
-      return 'False positive';
+      return "False positive";
     case ReviewStatus.INTENTIONAL:
       return "Intentional";
     default:
-      console.warning('Non existing review status code: ', reviewCode);
+      console.warning("Non existing review status code: ", reviewCode);
   }
 }
 

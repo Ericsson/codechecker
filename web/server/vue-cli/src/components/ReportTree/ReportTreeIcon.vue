@@ -65,19 +65,19 @@
 <script>
 import VIcon from "Vuetify/VIcon/VIcon";
 
-import { DetectionStatus } from '@cc/report-server-types';
+import { DetectionStatus } from "@cc/report-server-types";
 
 import {
   DetectionStatusIcon,
   ReportStepEnumIcon,
   SeverityIcon
-} from '@/components/icons';
+} from "@/components/icons";
 
-import ReportTreeKind from './ReportTreeKind';
-import ReportStepIcon from './ReportStepIcon';
+import ReportTreeKind from "./ReportTreeKind";
+import ReportStepIcon from "./ReportStepIcon";
 
 export default {
-  name: 'ReportTreeIcon',
+  name: "ReportTreeIcon",
   components: {
     VIcon,
     DetectionStatusIcon,

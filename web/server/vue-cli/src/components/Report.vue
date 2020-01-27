@@ -104,7 +104,7 @@
 </template>
 
 <script>
-import Vue from 'vue';
+import Vue from "vue";
 
 import VContainer from "Vuetify/VGrid/VContainer";
 import VSpacer from "Vuetify/VGrid/VSpacer";
@@ -114,24 +114,24 @@ import VCheckbox from "Vuetify/VCheckbox/VCheckbox";
 import VRow from "Vuetify/VGrid/VRow";
 import VCol from "Vuetify/VGrid/VCol";
 
-import CodeMirror from 'codemirror';
-import { jsPlumb } from 'jsplumb';
+import CodeMirror from "codemirror";
+import { jsPlumb } from "jsplumb";
 
-import { ccService } from '@cc-api';
-import { Encoding } from '@cc/report-server-types';
+import { ccService } from "@cc-api";
+import { Encoding } from "@cc/report-server-types";
 
 import { FillHeight } from "@/directives";
-import ReportTreeKind from './ReportTree/ReportTreeKind';
+import ReportTreeKind from "./ReportTree/ReportTreeKind";
 
-import SelectReviewStatus from './SelectReviewStatus';
-import SelectSameReport from './SelectSameReport';
+import SelectReviewStatus from "./SelectReviewStatus";
+import SelectSameReport from "./SelectSameReport";
 
-import ReportStepMessage from './ReportStepMessage';
+import ReportStepMessage from "./ReportStepMessage";
 const ReportStepMessageClass = Vue.extend(ReportStepMessage)
 
 
 export default {
-  name: 'Report',
+  name: "Report",
   components: {
     VContainer, VSpacer, VBtn, VIcon, VCheckbox, VRow, VCol,
     SelectReviewStatus,
@@ -173,8 +173,8 @@ export default {
     this.editor = CodeMirror.fromTextArea(this.$refs.editor, {
       lineNumbers: true,
       readOnly: true,
-      mode: 'text/x-c++src',
-      gutters: ['CodeMirror-linenumbers', 'bugInfo'],
+      mode: "text/x-c++src",
+      gutters: ["CodeMirror-linenumbers", "bugInfo"],
       extraKeys: {},
       viewportMargin: 500
     });
@@ -262,18 +262,18 @@ export default {
       }
 
       const jsPlumbParentElement =
-        this.$el.querySelector('.CodeMirror-lines');
-      jsPlumbParentElement.style.position = 'relative';
+        this.$el.querySelector(".CodeMirror-lines");
+      jsPlumbParentElement.style.position = "relative";
 
       this.jsPlumbInstance = jsPlumb.getInstance({
         Container : jsPlumbParentElement,
-        Anchor : ['Perimeter', { shape : 'Ellipse' }],
-        Endpoint : ['Dot', { radius: 1 }],
-        PaintStyle : { stroke : '#a94442', strokeWidth: 2 },
-        Connector: ['Bezier', { curviness: 10 }],
+        Anchor : ["Perimeter", { shape : "Ellipse" }],
+        Endpoint : ["Dot", { radius: 1 }],
+        PaintStyle : { stroke : "#a94442", strokeWidth: 2 },
+        Connector: ["Bezier", { curviness: 10 }],
         ConnectionsDetachable : false,
         ConnectionOverlays : [
-          ['Arrow', { location: 1, length: 10, width: 8 }]
+          ["Arrow", { location: 1, length: 10, width: 8 }]
         ]
       });
     },
@@ -338,7 +338,7 @@ export default {
             ? "fixit" : "info";
 
           const marginLeft =
-            this.editor.defaultCharWidth() * bubble.startCol + 'px';
+            this.editor.defaultCharWidth() * bubble.startCol + "px";
 
           const widget = new ReportStepMessageClass({
             propsData: {
@@ -362,10 +362,10 @@ export default {
         points.forEach((p) => {
           const from = { line : p.startLine - 1, ch : p.startCol - 1 };
           const to =   { line : p.endLine - 1,   ch : p.endCol.toNumber() };
-          const markerId = [from.line, from.ch, to.line, to.ch].join('_');
+          const markerId = [from.line, from.ch, to.line, to.ch].join("_");
 
           let opts = {
-            className: 'checker-step',
+            className: "checker-step",
             attributes: {
               markerid: markerId
             }

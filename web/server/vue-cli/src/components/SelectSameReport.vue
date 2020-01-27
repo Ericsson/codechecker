@@ -42,7 +42,7 @@ import {
   VListItemTitle
 } from "Vuetify/VList";
 
-import { ccService } from '@cc-api';
+import { ccService } from "@cc-api";
 import {
   MAX_QUERY_SIZE,
   ReportFilter,

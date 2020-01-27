@@ -17,14 +17,14 @@
 
 <script>
 import VIcon from "Vuetify/VIcon/VIcon";
-import { ccService } from '@cc-api';
-import { ReportFilter } from '@cc/report-server-types';
+import { ccService } from "@cc-api";
+import { ReportFilter } from "@cc/report-server-types";
 
-import SelectOption from './SelectOption/SelectOption';
-import BaseSelectOptionFilterMixin from './BaseSelectOptionFilter.mixin';
+import SelectOption from "./SelectOption/SelectOption";
+import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
 
 export default {
-  name: 'CheckerNameFilter',
+  name: "CheckerNameFilter",
   components: {
     VIcon,
     SelectOption
@@ -35,7 +35,7 @@ export default {
     return {
       id: "checker-name",
       search: {
-        placeHolder : 'Search for checker names (e.g.: core*)...',
+        placeHolder : "Search for checker names (e.g.: core*)...",
         filterItems: this.filterItems
       }
     };
@@ -49,7 +49,7 @@ export default {
     },
 
     onReportFilterChange(key) {
-      if (key === 'checkerName' || !this.selectedItems.length) return;
+      if (key === "checkerName" || !this.selectedItems.length) return;
 
       this.fetchItems();
     },

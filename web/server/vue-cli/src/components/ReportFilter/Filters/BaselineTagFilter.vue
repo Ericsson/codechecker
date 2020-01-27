@@ -17,18 +17,18 @@
 
 <script>
 import VIcon from "Vuetify/VIcon/VIcon";
-import { ccService } from '@cc-api';
+import { ccService } from "@cc-api";
 import {
   ReportFilter,
   RunFilter,
   RunHistoryFilter
-} from '@cc/report-server-types';
+} from "@cc/report-server-types";
 
-import SelectOption from './SelectOption/SelectOption';
-import BaseSelectOptionFilterMixin from './BaseSelectOptionFilter.mixin';
+import SelectOption from "./SelectOption/SelectOption";
+import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
 
 export default {
-  name: 'BaselineTagFilter',
+  name: "BaselineTagFilter",
   components: {
     VIcon,
     SelectOption
@@ -39,7 +39,7 @@ export default {
     return {
       id: "run-tag",
       search: {
-        placeHolder : 'Search for run tags...',
+        placeHolder : "Search for run tags...",
         filterItems: this.filterItems
       }
     };
@@ -86,12 +86,12 @@ export default {
       this.loading = true;
 
       const reportFilter = new ReportFilter(this.reportFilter);
-      reportFilter['runTag'] = search ? [ `${search}*` ] : null;
+      reportFilter["runTag"] = search ? [ `${search}*` ] : null;
 
       ccService.getClient().getRunHistoryTagCounts(this.runIds, reportFilter,
       this.cmpData, (err, res) => {
         this.items = res.map((tag) => {
-          const title = tag.runName + ':' + tag.name;
+          const title = tag.runName + ":" + tag.name;
           return {
             id: title,
             tagIds: [ tag.id ],
@@ -111,7 +111,7 @@ export default {
 
     getTagIds(tagWithRunName) {
       return new Promise((resolve) => {
-        const index = tagWithRunName.indexOf(':');
+        const index = tagWithRunName.indexOf(":");
         if (index === -1) {
           resolve();
           return;

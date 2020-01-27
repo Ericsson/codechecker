@@ -1,39 +1,39 @@
-import { DetectionStatus } from '@cc/report-server-types';
+import { DetectionStatus } from "@cc/report-server-types";
 
 export default {
   methods: {
     detectionStatusFromCodeToString(status) {
       switch (parseInt(status)) {
         case DetectionStatus.NEW:
-          return 'New';
+          return "New";
         case DetectionStatus.RESOLVED:
-          return 'Resolved';
+          return "Resolved";
         case DetectionStatus.UNRESOLVED:
-          return 'Unresolved';
+          return "Unresolved";
         case DetectionStatus.REOPENED:
-          return 'Reopened';
+          return "Reopened";
         case DetectionStatus.OFF:
-            return 'Off';
+            return "Off";
         case DetectionStatus.UNAVAILABLE:
-            return 'Unavailable';
+            return "Unavailable";
         default:
-          return '';
+          return "";
       }
     },
 
     detectionStatusFromStringToCode(status) {
       switch (status.toLowerCase()) {
-        case 'new':
+        case "new":
           return DetectionStatus.NEW;
-        case 'resolved':
+        case "resolved":
           return DetectionStatus.RESOLVED;
-        case 'unresolved':
+        case "unresolved":
           return DetectionStatus.UNRESOLVED;
-        case 'reopened':
+        case "reopened":
           return DetectionStatus.REOPENED;
-        case 'off':
+        case "off":
           return DetectionStatus.OFF;
-        case 'unavailable':
+        case "unavailable":
           return DetectionStatus.UNAVAILABLE;
         default:
           return -1;

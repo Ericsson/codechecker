@@ -27,7 +27,7 @@ import TheFooter from "@/components/TheFooter"
 import TheHeader from "@/components/TheHeader"
 
 export default {
-  name: 'App',
+  name: "App",
   components: {
     TheFooter,
     TheHeader,

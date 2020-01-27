@@ -10,7 +10,7 @@ import { VBtn } from "Vuetify/VBtn";
 import VIcon from "Vuetify/VIcon/VIcon";
 
 export default {
-  name: 'RemoveFileteredReports',
+  name: "RemoveFileteredReports",
   components: {
     VBtn, VIcon
   }

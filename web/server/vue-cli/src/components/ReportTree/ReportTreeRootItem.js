@@ -1,6 +1,6 @@
-import { Severity, DetectionStatus } from '@cc/report-server-types';
+import { Severity, DetectionStatus } from "@cc/report-server-types";
 
-import ReportTreeKind from './ReportTreeKind';
+import ReportTreeKind from "./ReportTreeKind";
 
 const rootItems = [
   {

@@ -17,14 +17,14 @@
 
 <script>
 import VIcon from "Vuetify/VIcon/VIcon";
-import { ccService } from '@cc-api';
-import { ReportFilter } from '@cc/report-server-types';
+import { ccService } from "@cc-api";
+import { ReportFilter } from "@cc/report-server-types";
 
-import SelectOption from './SelectOption/SelectOption';
-import BaseSelectOptionFilterMixin from './BaseSelectOptionFilter.mixin';
+import SelectOption from "./SelectOption/SelectOption";
+import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
 
 export default {
-  name: 'FilePathFilter',
+  name: "FilePathFilter",
   components: {
     VIcon,
     SelectOption
@@ -35,7 +35,7 @@ export default {
     return {
       id: "filepath",
       search: {
-        placeHolder : 'Search for files (e.g.: */src/*)...',
+        placeHolder : "Search for files (e.g.: */src/*)...",
         filterItems: this.filterItems
       }
     };
@@ -49,7 +49,7 @@ export default {
     },
 
     onReportFilterChange(key) {
-      if (key === 'filepath' || !this.selectedItems.length) return;
+      if (key === "filepath" || !this.selectedItems.length) return;
 
       this.fetchItems();
     },

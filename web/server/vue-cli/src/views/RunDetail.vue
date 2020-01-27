@@ -4,6 +4,6 @@
 
 <script>
 export default {
-  name: 'RunDetails'
+  name: "RunDetails"
 }
 </script>

@@ -5,6 +5,6 @@
 <script>
 
 export default {
-  name: 'DetectionDateFilter'
+  name: "DetectionDateFilter"
 }
 </script>

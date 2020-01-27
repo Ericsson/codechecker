@@ -6,11 +6,11 @@
 </template>
 
 <script>
-import CheckerStatistics from '@/components/CheckerStatistics';
-import SeverityStatistics from '@/components/SeverityStatistics';
+import CheckerStatistics from "@/components/CheckerStatistics";
+import SeverityStatistics from "@/components/SeverityStatistics";
 
 export default {
-  name: 'Statistics',
+  name: "Statistics",
   components: {
     CheckerStatistics,
     SeverityStatistics

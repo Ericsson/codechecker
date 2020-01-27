@@ -139,11 +139,11 @@ import VToolbar from "Vuetify/VToolbar/VToolbar";
 import { DetectionStatusMixin } from "@/mixins";
 import { DetectionStatusIcon } from "@/components/icons";
 
-import { ccService } from '@cc-api';
-import { RunFilter } from '@cc/report-server-types';
+import { ccService } from "@cc-api";
+import { RunFilter } from "@cc/report-server-types";
 
 export default {
-  name: 'RunList',
+  name: "RunList",
   components: {
     VDataTable, VChip, VAvatar, VIcon, VCard, VCardTitle, VCardText,
     VTextField, VBtn, VDialog, VSpacer, VToolbar,
@@ -172,7 +172,7 @@ export default {
         {
           text: "Number of unresolved reports",
           value: "resultCount",
-          align: 'center',
+          align: "center",
         },
         {
           text: "Detection status",
@@ -185,12 +185,12 @@ export default {
         {
           text: "Storage date",
           value: "runDate",
-          align: 'center'
+          align: "center"
         },
         {
           text: "Analysis duration",
           value: "duration",
-          align: 'center',
+          align: "center",
         },
         {
           text: "Check command",
@@ -263,7 +263,7 @@ export default {
       ccService.getClient().getCheckCommand(null, report.runId,
       (err, checkCommand) => {
         if (!checkCommand) {
-          checkCommand = 'Unavailable!';
+          checkCommand = "Unavailable!";
         }
         this.checkCommand = checkCommand;
         this.showCheckCommandDialog = true;
@@ -295,7 +295,7 @@ export default {
         const prettyDurMins  = (durMins  < 10 ? "0" : "") + durMins;
         const prettyDurSecs  = (durSecs  < 10 ? "0" : "") + durSecs;
 
-        return prettyDurHours + ':' + prettyDurMins + ':' + prettyDurSecs;
+        return prettyDurHours + ":" + prettyDurMins + ":" + prettyDurSecs;
       }
 
       return "";

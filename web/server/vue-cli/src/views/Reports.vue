@@ -57,22 +57,22 @@
 import VDataTable from "Vuetify/VDataTable/VDataTable";
 import VChip from "Vuetify/VChip/VChip";
 
-import { Splitpanes, Pane } from 'splitpanes';
+import { Splitpanes, Pane } from "splitpanes";
 
-import { mapGetters } from 'vuex';
+import { mapGetters } from "vuex";
 
-import { ccService } from '@cc-api';
+import { ccService } from "@cc-api";
 
 import { FillHeight } from "@/directives";
-import { BugPathLengthColorMixin } from '@/mixins';
-import { DetectionStatusIcon } from '@/components/icons';
-import { ReviewStatusIcon } from '@/components/icons';
-import { SeverityIcon } from '@/components/icons';
+import { BugPathLengthColorMixin } from "@/mixins";
+import { DetectionStatusIcon } from "@/components/icons";
+import { ReviewStatusIcon } from "@/components/icons";
+import { SeverityIcon } from "@/components/icons";
 
-import ReportFilter from '@/components/ReportFilter/ReportFilter';
+import ReportFilter from "@/components/ReportFilter/ReportFilter";
 
 export default {
-  name: 'Reports',
+  name: "Reports",
   components: {
     VDataTable, VChip,
     Splitpanes, Pane,
@@ -110,7 +110,7 @@ export default {
         {
           text: "Bug path length",
           value: "bugPathLength",
-          align: 'center'
+          align: "center"
         },
         {
           text: "Review status",
@@ -130,9 +130,9 @@ export default {
 
   computed: {
     ...mapGetters({
-      runIds: 'getRunIds',
-      reportFilter: 'getReportFilter',
-      cmpData: 'getCmpData'
+      runIds: "getRunIds",
+      reportFilter: "getReportFilter",
+      cmpData: "getCmpData"
     })
   },
 

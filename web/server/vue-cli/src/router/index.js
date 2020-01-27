@@ -1,85 +1,85 @@
-import Vue from 'vue';
-import Router from 'vue-router';
+import Vue from "vue";
+import Router from "vue-router";
 
 Vue.use(Router);
 
 export default new Router({
   routes: [
     {
-      path: '/',
-      name: 'products',
+      path: "/",
+      name: "products",
       meta: {
         requiresAuth: true
       },
-      component: () => import('@/views/Products')
+      component: () => import("@/views/Products")
     },
     {
-      path: '/login',
-      name: 'login',
-      component: () => import('@/views/Login')
+      path: "/login",
+      name: "login",
+      component: () => import("@/views/Login")
     },
     {
-      path: '/permission',
-      name: 'global-permission',
+      path: "/permission",
+      name: "global-permission",
       meta: {
         requiresAuth: true
       },
-      component: () => import('@/views/Permission')
+      component: () => import("@/views/Permission")
     },
     {
-      path: '/p/new',
-      name: 'product-new',
+      path: "/p/new",
+      name: "product-new",
       meta: {
         requiresAuth: true
       },
-      component: () => import('@/views/ProductNew')
+      component: () => import("@/views/ProductNew")
     },
     {
-      path: '/p/edit/:endpoint',
-      name: 'product-edit',
+      path: "/p/edit/:endpoint",
+      name: "product-edit",
       meta: {
         requiresAuth: true
       },
-      component: () => import('@/views/ProductEdit')
+      component: () => import("@/views/ProductEdit")
     },
     {
-      path: '/p/permissions/:endpoint',
-      name: 'product-permission',
+      path: "/p/permissions/:endpoint",
+      name: "product-permission",
       meta: {
         requiresAuth: true
       },
-      component: () => import('@/views/ProductPermission')
+      component: () => import("@/views/ProductPermission")
     },
     {
-      path: '/:endpoint',
+      path: "/:endpoint",
       meta: {
         requiresAuth: true
       },
-      component: () => import('@/views/ProductDetail'),
+      component: () => import("@/views/ProductDetail"),
       children: [
         {
-          path: '',
-          component: () => import('@/views/RunList')
+          path: "",
+          component: () => import("@/views/RunList")
         },
         {
-          path: 'runs',
-          name: 'runs',
-          component: () => import('@/views/RunList')
+          path: "runs",
+          name: "runs",
+          component: () => import("@/views/RunList")
         },
         {
-          path: 'statistics',
-          name: 'statistics',
-          component: () => import('@/views/Statistics')
+          path: "statistics",
+          name: "statistics",
+          component: () => import("@/views/Statistics")
         },
         {
-          path: 'reports',
-          name: 'reports',
-          component: () => import('@/views/Reports')
+          path: "reports",
+          name: "reports",
+          component: () => import("@/views/Reports")
         },
         {
-          path: 'report-detail',
-          name: 'report-detail',
-          component: () => import('@/views/ReportDetail')
+          path: "report-detail",
+          name: "report-detail",
+          component: () => import("@/views/ReportDetail")
         }
       ]
     }

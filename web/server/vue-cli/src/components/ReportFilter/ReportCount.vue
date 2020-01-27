@@ -8,12 +8,12 @@
 <script>
 import VIcon from "Vuetify/VIcon/VIcon";
 
-import { ccService } from '@cc-api';
+import { ccService } from "@cc-api";
 
-import { BaseFilterMixin } from './Filters';
+import { BaseFilterMixin } from "./Filters";
 
 export default {
-  name: 'ReportCount',
+  name: "ReportCount",
   components: {
     VIcon
   },
@@ -21,7 +21,7 @@ export default {
 
   data() {
     return {
-      id: 'report-count',
+      id: "report-count",
       value: null
     };
   },

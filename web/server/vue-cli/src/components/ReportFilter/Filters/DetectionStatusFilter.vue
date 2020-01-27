@@ -13,17 +13,17 @@
 </template>
 
 <script>
-import { ccService } from '@cc-api';
+import { ccService } from "@cc-api";
 
 import { DetectionStatus, ReportFilter } from "@cc/report-server-types";
 import { DetectionStatusIcon } from "@/components/icons";
 import { DetectionStatusMixin } from "@/mixins";
 
-import SelectOption from './SelectOption/SelectOption';
-import BaseSelectOptionFilterMixin from './BaseSelectOptionFilter.mixin';
+import SelectOption from "./SelectOption/SelectOption";
+import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
 
 export default {
-  name: 'DetectionStatusFilter',
+  name: "DetectionStatusFilter",
   components: {
     SelectOption,
     DetectionStatusIcon
@@ -52,7 +52,7 @@ export default {
     },
 
     onReportFilterChange(key) {
-      if (key === 'detectionStatus' || !this.selectedItems.length) return;
+      if (key === "detectionStatus" || !this.selectedItems.length) return;
 
       this.fetchItems();
     },

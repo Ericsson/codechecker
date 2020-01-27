@@ -13,17 +13,17 @@
 </template>
 
 <script>
-import { ccService } from '@cc-api';
+import { ccService } from "@cc-api";
 
 import { ReportFilter, Severity } from "@cc/report-server-types";
 import { SeverityIcon } from "@/components/icons";
 import { SeverityMixin } from "@/mixins";
 
-import SelectOption from './SelectOption/SelectOption';
-import BaseSelectOptionFilterMixin from './BaseSelectOptionFilter.mixin';
+import SelectOption from "./SelectOption/SelectOption";
+import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
 
 export default {
-  name: 'SeverityFilter',
+  name: "SeverityFilter",
   components: {
     SelectOption,
     SeverityIcon
@@ -52,7 +52,7 @@ export default {
     },
 
     onReportFilterChange(key) {
-      if (key === 'severity' || !this.selectedItems.length) return;
+      if (key === "severity" || !this.selectedItems.length) return;
 
       this.fetchItems();
     },

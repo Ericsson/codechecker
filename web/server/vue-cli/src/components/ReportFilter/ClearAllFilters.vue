@@ -11,10 +11,10 @@
 import { VBtn } from "Vuetify/VBtn";
 import VIcon from "Vuetify/VIcon/VIcon";
 
-import { BaseFilterMixin } from './Filters';
+import { BaseFilterMixin } from "./Filters";
 
 export default {
-  name: 'ClearAllFilters',
+  name: "ClearAllFilters",
   components: {
     VBtn, VIcon
   },

@@ -35,10 +35,10 @@ import VSpacer from "Vuetify/VGrid/VSpacer";
 import { VBtn } from "Vuetify/VBtn";
 import VIcon from "Vuetify/VIcon/VIcon";
 
-import BaseFilterMixin from './BaseFilter.mixin';
+import BaseFilterMixin from "./BaseFilter.mixin";
 
 export default {
-  name: 'ReportHashFilter',
+  name: "ReportHashFilter",
   components: {
     VTextField, VCard, VCardActions,
     VToolbar, VToolbarTitle, VToolbarItems, VSpacer, VBtn, VIcon
@@ -47,7 +47,7 @@ export default {
 
   data() {
     return {
-      id: 'report-hash',
+      id: "report-hash",
       reportHash: null
     };
   },

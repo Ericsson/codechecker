@@ -26,10 +26,10 @@
 </template>
 
 <script>
-import ReportTreeKind from './ReportTreeKind';
+import ReportTreeKind from "./ReportTreeKind";
 
 export default {
-  name: 'ReportTreeLabel',
+  name: "ReportTreeLabel",
   props: {
     item: {
       type: Object,

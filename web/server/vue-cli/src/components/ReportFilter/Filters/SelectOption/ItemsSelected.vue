@@ -50,7 +50,7 @@ import {
 import VChip from "Vuetify/VChip/VChip";
 
 export default {
-  name: 'ItemsSelected',
+  name: "ItemsSelected",
   components: {
     VList, VListItem, VListItemContent, VListItemIcon, VListItemGroup,
     VListItemTitle, VChip
@@ -64,7 +64,7 @@ export default {
         return this.selectedItems;
       },
       set(value) {
-        this.$emit('select', value)
+        this.$emit("select", value)
       }
     }
   }

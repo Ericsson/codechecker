@@ -17,13 +17,13 @@
 
 <script>
 import VIcon from "Vuetify/VIcon/VIcon";
-import { ccService } from '@cc-api';
+import { ccService } from "@cc-api";
 
-import SelectOption from './SelectOption/SelectOption';
-import BaseSelectOptionFilterMixin from './BaseSelectOptionFilter.mixin';
+import SelectOption from "./SelectOption/SelectOption";
+import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
 
 export default {
-  name: 'SourceComponentFilter',
+  name: "SourceComponentFilter",
   components: {
     VIcon,
     SelectOption
@@ -34,7 +34,7 @@ export default {
     return {
       id: "source-component",
       search: {
-        placeHolder : 'Search for source components...',
+        placeHolder : "Search for source components...",
         filterItems: this.filterItems
       }
     };

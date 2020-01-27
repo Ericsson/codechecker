@@ -1,4 +1,4 @@
-import ReportTree from './ReportTree';
+import ReportTree from "./ReportTree";
 
 export {
   ReportTree

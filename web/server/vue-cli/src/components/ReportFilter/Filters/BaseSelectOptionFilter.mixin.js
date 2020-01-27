@@ -1,7 +1,7 @@
-import BaseFilterMixin from './BaseFilter.mixin';
+import BaseFilterMixin from "./BaseFilter.mixin";
 
 export default {
-  name: 'BaseSelectOptionFilter',
+  name: "BaseSelectOptionFilter",
   mixins: [ BaseFilterMixin ],
 
   data() {

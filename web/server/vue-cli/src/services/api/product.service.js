@@ -1,9 +1,9 @@
-import ServiceClient from '@cc/prod';
-import { BaseService } from './_base.service';
+import ServiceClient from "@cc/prod";
+import { BaseService } from "./_base.service";
 
 class ProductsService extends BaseService {
   constructor() {
-    super('Products', ServiceClient);
+    super("Products", ServiceClient);
   }
 }
 

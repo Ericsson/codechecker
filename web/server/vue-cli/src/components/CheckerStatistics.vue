@@ -17,17 +17,17 @@
 <script>
 import VDataTable from "Vuetify/VDataTable/VDataTable";
 
-import { ccService } from '@cc-api';
+import { ccService } from "@cc-api";
 import {
   DetectionStatus,
   ReportFilter,
   ReviewStatus
-} from '@cc/report-server-types';
+} from "@cc/report-server-types";
 
-import { SeverityIcon } from '@/components/icons';
+import { SeverityIcon } from "@/components/icons";
 
 export default {
-  name: 'CheckerStatistics',
+  name: "CheckerStatistics",
   components: {
     VDataTable,
     SeverityIcon
@@ -88,11 +88,11 @@ export default {
 
       const queries = [
         { field: null, values: null },
-        { field: 'reviewStatus', values: [ ReviewStatus.UNREVIEWED ] },
-        { field: 'reviewStatus', values: [ ReviewStatus.CONFIRMED ] },
-        { field: 'reviewStatus', values: [ ReviewStatus.FALSE_POSITIVE ] },
-        { field: 'reviewStatus', values: [ ReviewStatus.INTENTIONAL ] },
-        { field: 'detectionStatus', values: [ DetectionStatus.RESOLVED ] }
+        { field: "reviewStatus", values: [ ReviewStatus.UNREVIEWED ] },
+        { field: "reviewStatus", values: [ ReviewStatus.CONFIRMED ] },
+        { field: "reviewStatus", values: [ ReviewStatus.FALSE_POSITIVE ] },
+        { field: "reviewStatus", values: [ ReviewStatus.INTENTIONAL ] },
+        { field: "detectionStatus", values: [ DetectionStatus.RESOLVED ] }
       ].map((q) => {
         const reportFilter = new ReportFilter();
         reportFilter.isUnique = isUnique;

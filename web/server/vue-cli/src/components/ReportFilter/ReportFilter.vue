@@ -153,14 +153,14 @@ import {
   SourceComponentFilter,
   CheckerNameFilter,
   CheckerMessageFilter
-} from './Filters';
+} from "./Filters";
 
-import ClearAllFilters from './ClearAllFilters';
-import RemoveFilteredReports from './RemoveFilteredReports';
-import ReportCount from './ReportCount';
+import ClearAllFilters from "./ClearAllFilters";
+import RemoveFilteredReports from "./RemoveFilteredReports";
+import ReportCount from "./ReportCount";
 
 export default {
-  name: 'ReportFilter',
+  name: "ReportFilter",
   components: {
     VList, VListItem, VListItemAction, VListItemContent, VSpacer,
     VExpansionPanels, VExpansionPanel, VExpansionPanelHeader,

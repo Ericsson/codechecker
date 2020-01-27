@@ -37,7 +37,7 @@ import VAvatar from "Vuetify/VAvatar/VAvatar";
 import VIcon from "Vuetify/VIcon/VIcon";
 import { VBtn } from "Vuetify/VBtn";
 
-import { ReportStepEnumIcon } from '@/components/icons';
+import { ReportStepEnumIcon } from "@/components/icons";
 
 export default {
   name: "EditorBugStep",
@@ -48,7 +48,7 @@ export default {
   props: {
     id: { type: [ String, Number ], required: true },
     value: { type: String, required: true },
-    marginLeft: { type: String, default: '' },
+    marginLeft: { type: String, default: "" },
     type: { type: String, default: null },
     index: { type: Number, default: null }
   },

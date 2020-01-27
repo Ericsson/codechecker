@@ -1,4 +1,4 @@
-import { mapMutations, mapState } from 'vuex';
+import { mapMutations, mapState } from "vuex";
 import {
   SET_RUN_IDS,
   SET_REPORT_FILTER,
@@ -8,7 +8,7 @@ import {
 import { ReportFilter } from "@cc/report-server-types";
 
 export default {
-  name: 'BaseFilterMixin',
+  name: "BaseFilterMixin",
 
   computed: {
     ...mapState({
@@ -46,7 +46,7 @@ export default {
     // ReportFilter to get the old values and see what are the changes.
     registerWatchers() {
       if (this.reportFilterUnwatch) this.reportFilterUnwatch();
-      this.reportFilterUnwatch = this.$watch('reportFilterModel',
+      this.reportFilterUnwatch = this.$watch("reportFilterModel",
       (oldVal, newVal) => {
         Object.keys(newVal).forEach((key) => {
           if (JSON.stringify(newVal[key]) !== JSON.stringify(oldVal[key])) {

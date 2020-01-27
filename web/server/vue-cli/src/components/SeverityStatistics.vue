@@ -17,12 +17,12 @@
 <script>
 import VDataTable from "Vuetify/VDataTable/VDataTable";
 
-import { ccService } from '@cc-api';
+import { ccService } from "@cc-api";
 
-import { SeverityIcon } from '@/components/icons';
+import { SeverityIcon } from "@/components/icons";
 
 export default {
-  name: 'SeverityStatistics',
+  name: "SeverityStatistics",
   components: {
     VDataTable,
     SeverityIcon

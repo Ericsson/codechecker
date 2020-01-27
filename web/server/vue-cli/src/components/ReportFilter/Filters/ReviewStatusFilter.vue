@@ -13,17 +13,17 @@
 </template>
 
 <script>
-import { ccService } from '@cc-api';
+import { ccService } from "@cc-api";
 
 import { ReportFilter, ReviewStatus } from "@cc/report-server-types";
 import { ReviewStatusIcon } from "@/components/icons";
 import { ReviewStatusMixin } from "@/mixins";
 
-import SelectOption from './SelectOption/SelectOption';
-import BaseSelectOptionFilterMixin from './BaseSelectOptionFilter.mixin';
+import SelectOption from "./SelectOption/SelectOption";
+import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
 
 export default {
-  name: 'ReviewStatusFilter',
+  name: "ReviewStatusFilter",
   components: {
     SelectOption,
     ReviewStatusIcon
@@ -52,7 +52,7 @@ export default {
     },
 
     onReportFilterChange(key) {
-      if (key === 'reviewStatus' || !this.selectedItems.length) return;
+      if (key === "reviewStatus" || !this.selectedItems.length) return;
 
       this.fetchItems();
     },

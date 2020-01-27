@@ -2,8 +2,8 @@ function generateRedGreenGradientColor(value, max, opacity) {
   var red   = (255 * value) / max;
   var green = (255 * (max - value)) / max;
   var blue  = 0;
-  return 'rgba(' + parseInt(red) + ',' + parseInt(green) + ',' + blue
-    + ',' + opacity + ')';
+  return "rgba(" + parseInt(red) + "," + parseInt(green) + "," + blue
+    + "," + opacity + ")";
 }
 
 export default {

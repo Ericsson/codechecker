@@ -1,5 +1,5 @@
 function fillHeight(el) {
-  el.style.overflow = 'auto';
+  el.style.overflow = "auto";
   const windowHeight = window.innerHeight;
   const top = el.getBoundingClientRect().top;
 
@@ -18,7 +18,7 @@ function fillHeight(el) {
     paddingBottom += parseInt(style.paddingBottom);
   }
 
-  el.style.height = windowHeight - top - paddingBottom - footerHeight + 'px';
+  el.style.height = windowHeight - top - paddingBottom - footerHeight + "px";
   return el.style.height;
 }
 
@@ -58,7 +58,7 @@ export const FillHeight = {
     if (!el._onResize) return;
     const { fn, options } = el._onResize;
 
-    window.removeEventListener('resize', fn, options);
+    window.removeEventListener("resize", fn, options);
     delete el._onResize;
   }
 }
