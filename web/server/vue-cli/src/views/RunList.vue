@@ -36,8 +36,23 @@
 
           <v-spacer />
 
-          <v-btn color="primary" class="mr-2" @click="removeSelectedRuns">
+          <v-btn
+            color="error"
+            class="mr-2"
+            outlined
+            @click="removeSelectedRuns"
+          >
             Delete
+          </v-btn>
+
+          <v-btn
+            color="primary"
+            class="mr-2"
+            outlined
+            :disabled="isDiffBtnDisabled"
+            @click="diffSelectedRuns"
+          >
+            Diff
           </v-btn>
         </v-toolbar>
       </template>
@@ -131,6 +146,20 @@
       <template #item.codeCheckerVersion="{ item }">
         {{ item.$codeCheckerVersion }}
       </template>
+
+      <template #item.diff="{ item }">
+        <v-row>
+          <v-checkbox
+            v-model="selectedBaselineRuns"
+            :value="item.name"
+          />
+
+          <v-checkbox
+            v-model="selectedNewcheckRuns"
+            :value="item.name"
+          />
+        </v-row>
+      </template>
     </v-data-table>
   </v-card>
 </template>
@@ -162,6 +191,8 @@ export default {
       totalItems: 0,
       loading: false,
       selected: [],
+      selectedBaselineRuns: [],
+      selectedNewcheckRuns: [],
       headers: [
         {
           text: "Name",
@@ -203,6 +234,11 @@ export default {
           text: "CodeChecker version",
           value: "codeCheckerVersion",
           align: "center"
+        },
+        {
+          text: "Diff",
+          value: "diff",
+          align: "center"
         }
       ],
       runs: []
@@ -219,6 +255,10 @@ export default {
           $codeCheckerVersion: this.prettifyCCVersion(run.codeCheckerVersion)
         };
       });
+    },
+    isDiffBtnDisabled() {
+      return !this.selectedBaselineRuns.length ||
+             !this.selectedNewcheckRuns.length;
     }
   },
 
@@ -295,6 +335,16 @@ export default {
       ccService.getClient().removeRun(null, runFilter, () => {
         this.fetchRuns();
       });
+    },
+
+    diffSelectedRuns() {
+      this.$router.push({
+        name: "reports",
+        query: {
+          ...this.$router.currentRoute.query,
+          run: this.selectedBaselineRuns,
+          newcheck: this.selectedNewcheckRuns
+        }});
     },
 
     prettifyDate (date) {
