@@ -12,7 +12,7 @@ to a CodeChecker result directory which can be stored to a CodeChecker server.
 | **C/C++**      | [Clang Tidy](https://clang.llvm.org/extra/clang-tidy/)  | ✓ |
 |                | [Clang Static Analyzer](https://clang-analyzer.llvm.org/)    | ✓ |
 |                | [Clang Sanitizers](#clang-sanitizers)    | ✓ |
-|                | [Cppcheck](cppcheck.md)    | ✓ |
+|                | [Cppcheck](/tools/report-converter/README.md#cppcheck)    | ✓ |
 |                | [Infer](https://fbinfer.com/)    | ✗ |
 | **Java**       | [FindBugs](http://findbugs.sourceforge.net/)    | ✗ |
 |                | [SpotBugs](https://spotbugs.github.io/)    | ✗ |

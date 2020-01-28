@@ -13,18 +13,19 @@ import argparse
 import logging
 import os
 import shutil
-import sys
 
-from codechecker_report_converter.clang_tidy.plist_converter import \
-    ClangTidyPlistConverter
-from codechecker_report_converter.sanitizers.address.plist_converter import \
-    ASANPlistConverter
-from codechecker_report_converter.sanitizers.memory.plist_converter import \
-    MSANPlistConverter
-from codechecker_report_converter.sanitizers.thread.plist_converter import \
-    TSANPlistConverter
-from codechecker_report_converter.sanitizers.ub.plist_converter import \
-    UBSANPlistConverter
+from codechecker_report_converter.clang_tidy.analyzer_result import \
+    ClangTidyAnalyzerResult
+from codechecker_report_converter.cppcheck.analyzer_result import \
+    CppcheckAnalyzerResult
+from codechecker_report_converter.sanitizers.address.analyzer_result import \
+    ASANAnalyzerResult
+from codechecker_report_converter.sanitizers.memory.analyzer_result import \
+    MSANAnalyzerResult
+from codechecker_report_converter.sanitizers.thread.analyzer_result import \
+    TSANAnalyzerResult
+from codechecker_report_converter.sanitizers.ub.analyzer_result import \
+    UBSANAnalyzerResult
 
 
 LOG = logging.getLogger('ReportConverter')
@@ -37,29 +38,17 @@ LOG.addHandler(log_handler)
 
 
 supported_converters = {
-    ClangTidyPlistConverter.TOOL_NAME: ClangTidyPlistConverter,
-    MSANPlistConverter.TOOL_NAME: MSANPlistConverter,
-    ASANPlistConverter.TOOL_NAME: ASANPlistConverter,
-    TSANPlistConverter.TOOL_NAME: TSANPlistConverter,
-    UBSANPlistConverter.TOOL_NAME: UBSANPlistConverter}
+    ClangTidyAnalyzerResult.TOOL_NAME: ClangTidyAnalyzerResult,
+    CppcheckAnalyzerResult.TOOL_NAME: CppcheckAnalyzerResult,
+    ASANAnalyzerResult.TOOL_NAME: ASANAnalyzerResult,
+    MSANAnalyzerResult.TOOL_NAME: MSANAnalyzerResult,
+    TSANAnalyzerResult.TOOL_NAME: TSANAnalyzerResult,
+    UBSANAnalyzerResult.TOOL_NAME: UBSANAnalyzerResult
+}
 
 
-def output_to_plist(output, parser_type, output_dir, clean=False):
+def output_to_plist(analyzer_result, parser_type, output_dir, clean=False):
     """ Creates .plist files from the given output to the given output dir. """
-    plist_converter = supported_converters[parser_type]()
-    messages = plist_converter.parse_messages(output)
-
-    if not messages:
-        LOG.info("No '%s' results can be found in the given code analyzer "
-                 "output.", parser_type)
-        sys.exit(0)
-
-    converters = {}
-    for m in messages:
-        if m.path not in converters:
-            converters[m.path] = supported_converters[parser_type]()
-        converters[m.path].add_messages([m])
-
     if clean and os.path.isdir(output_dir):
         LOG.info("Previous analysis results in '%s' have been removed, "
                  "overwriting with current result", output_dir)
@@ -68,15 +57,8 @@ def output_to_plist(output, parser_type, output_dir, clean=False):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    for c in converters:
-        file_name = os.path.basename(c)
-        out_file_name = '{0}_{1}.plist'.format(file_name, parser_type)
-        out_file = os.path.join(output_dir, out_file_name)
-
-        LOG.info("Creating plist file: '%s'.", out_file)
-        LOG.debug(converters[c].plist)
-
-        converters[c].write_to_file(out_file)
+    parser = supported_converters[parser_type]()
+    parser.transform(analyzer_result, output_dir)
 
 
 def __add_arguments_to_parser(parser):
@@ -84,12 +66,10 @@ def __add_arguments_to_parser(parser):
     parser.add_argument('input',
                         type=str,
                         metavar='file',
-                        nargs='?',
                         default=argparse.SUPPRESS,
                         help="Code analyzer output result file which will be "
                              "parsed and used to generate a CodeChecker "
-                             "report directory. If this parameter is not "
-                             "given the standard input will be used.")
+                             "report directory.")
 
     parser.add_argument('-o', '--output',
                         dest="output_dir",
@@ -112,7 +92,6 @@ def __add_arguments_to_parser(parser):
                         dest="clean",
                         required=False,
                         action='store_true',
-                        default=argparse.SUPPRESS,
                         help="Delete files stored in the output directory.")
 
     parser.add_argument('-v', '--verbose',
@@ -137,15 +116,8 @@ def main():
     if 'verbose' in args and args.verbose:
         LOG.setLevel(logging.DEBUG)
 
-    if 'input' in args and args.input:
-        with open(args.input) as input_file:
-            output = input_file.readlines()
-    else:
-        output = sys.stdin.readlines()
-
-    clean = True if 'clean' in args else False
-
-    output_to_plist(output, args.type, args.output_dir, clean)
+    return output_to_plist(args.input, args.type, args.output_dir,
+                           args.clean)
 
 
 if __name__ == "__main__":
