@@ -6,10 +6,9 @@
         class="pa-0 mr-2"
         align-self="center"
       >
-        <v-btn color="primary" outlined>
-          <v-icon>mdi-file-document-box-outline</v-icon>
-          Show documentation
-        </v-btn>
+        <show-documentation-button
+          :value="checkerId"
+        />
       </v-col>
 
       <v-col
@@ -163,6 +162,7 @@ import ReportTreeKind from "./ReportTree/ReportTreeKind";
 
 import SelectReviewStatus from "./SelectReviewStatus";
 import SelectSameReport from "./SelectSameReport";
+import ShowDocumentationButton from "./ShowDocumentationButton";
 
 import ReportStepMessage from "./ReportStepMessage";
 const ReportStepMessageClass = Vue.extend(ReportStepMessage)
@@ -173,6 +173,7 @@ export default {
   components: {
     SelectReviewStatus,
     SelectSameReport,
+    ShowDocumentationButton,
     UserIcon
   },
   directives: { FillHeight },
@@ -191,6 +192,12 @@ export default {
       lineWidgets: [],
       showArrows: true
     };
+  },
+
+  computed: {
+    checkerId() {
+      return this.report ? this.report.checkerId : null;
+    }
   },
 
   watch: {
