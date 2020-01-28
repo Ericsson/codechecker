@@ -58,8 +58,8 @@ import {
 } from "@cc/report-server-types";
 
 import { FillHeight } from "@/directives";
-import Report from "@/components/Report";
-import ReportTree from "@/components/ReportTree/ReportTree";
+import { Report } from "@/components/Report";
+import { ReportTree } from "@/components/ReportTree";
 
 export default {
   name: "ReportDetail",

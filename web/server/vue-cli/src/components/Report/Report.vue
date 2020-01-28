@@ -158,7 +158,7 @@ import { Encoding, ReviewData } from "@cc/report-server-types";
 import { FillHeight } from "@/directives";
 import { UserIcon } from "@/components/icons";
 
-import ReportTreeKind from "./ReportTree/ReportTreeKind";
+import ReportTreeKind from "@/components/ReportTree/ReportTreeKind";
 
 import SelectReviewStatus from "./SelectReviewStatus";
 import SelectSameReport from "./SelectSameReport";
