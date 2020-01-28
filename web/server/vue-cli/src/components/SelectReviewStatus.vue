@@ -11,7 +11,7 @@
           class="pa-0 mx-4"
         >
           <v-select
-            v-model="status"
+            v-model="value.status"
             :items="items"
             :hide-details="true"
             label="Set review status"
@@ -57,7 +57,7 @@
       <v-card-text class="pa-0">
         <v-container>
           <v-textarea
-            v-model="message"
+            v-model="value.comment"
             solo
             flat
             outlined
@@ -120,27 +120,15 @@ export default {
     ReviewStatusIcon
   },
   props: {
-    value: { type: Number, default: ReviewStatus.UNREVIEWED },
+    value: { type: Object, default: () => {} },
     onConfirm: { type: Function, default: () => {} }
   },
   data() {
     return {
       items: [],
       dialog: false,
-      prevValue: null,
-      message: ""
+      prevValue: null
     };
-  },
-
-  computed: {
-    status: {
-      get() {
-        return this.value;
-      },
-      set(value) {
-        this.$emit("update:value", value);
-      }
-    }
   },
 
   created() {
@@ -155,21 +143,20 @@ export default {
   methods: {
     onReviewStatusChange() {
       this.dialog = true;
-      this.prevValue = this.value;
+      this.prevValue = { ...this.value };
     },
 
     confirmReviewStatusChange() {
-      if (!this.message.length) return;
+      if (!this.value.comment || !this.value.comment.length) return;
 
-      this.onConfirm(this.value, this.message);
-      this.message = "";
+      this.onConfirm(this.value);
       this.dialog = false;
-      this.prevValue = this.value;
+      this.prevValue = { ...this.value };
     },
 
     cancelReviewStatusChange() {
       this.dialog = false;
-      this.status = this.prevValue;
+      Object.assign(this.value, this.prevValue);
     }
   }
 }

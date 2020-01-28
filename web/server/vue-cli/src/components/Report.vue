@@ -17,11 +17,54 @@
         class="pa-0"
         align-self="center"
       >
-        <select-review-status
-          class="mx-0"
-          :value.sync="reviewStatus"
-          :on-confirm="confirmReviewStatusChange"
-        />
+        <v-row class="px-4">
+          <select-review-status
+            class="mx-0"
+            :value="reviewData"
+            :on-confirm="confirmReviewStatusChange"
+          />
+
+          <v-menu
+            v-if="reviewData.comment"
+            :close-on-content-click="false"
+            :nudge-width="200"
+            offset-x
+          >
+            <template v-slot:activator="{ on }">
+              <v-btn icon v-on="on">
+                <v-icon>mdi-message-text-outline</v-icon>
+              </v-btn>
+            </template>
+            <v-card>
+              <v-list>
+                <v-list-item>
+                  <v-list-item-avatar>
+                    <user-icon :value="reviewData.author" />
+                  </v-list-item-avatar>
+
+                  <v-list-item-content>
+                    <v-list-item-title>
+                      {{ reviewData.author }}
+                    </v-list-item-title>
+                    <v-list-item-subtitle>
+                      {{ reviewData.date }}
+                    </v-list-item-subtitle>
+                  </v-list-item-content>
+                </v-list-item>
+              </v-list>
+
+              <v-divider />
+
+              <v-list>
+                <v-list-item>
+                  <v-list-item-title>
+                    {{ reviewData.comment }}
+                  </v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-card>
+          </v-menu>
+        </v-row>
       </v-col>
 
       <v-col
@@ -111,9 +154,11 @@ import CodeMirror from "codemirror";
 import { jsPlumb } from "jsplumb";
 
 import { ccService } from "@cc-api";
-import { Encoding } from "@cc/report-server-types";
+import { Encoding, ReviewData } from "@cc/report-server-types";
 
 import { FillHeight } from "@/directives";
+import { UserIcon } from "@/components/icons";
+
 import ReportTreeKind from "./ReportTree/ReportTreeKind";
 
 import SelectReviewStatus from "./SelectReviewStatus";
@@ -127,7 +172,8 @@ export default {
   name: "Report",
   components: {
     SelectReviewStatus,
-    SelectSameReport
+    SelectSameReport,
+    UserIcon
   },
   directives: { FillHeight },
   props: {
@@ -139,7 +185,7 @@ export default {
       step: null,
       editor: null,
       sourceFile: null,
-      reviewStatus: null,
+      reviewData: new ReviewData(),
       jsPlumbInstance: null,
       lineMarks: [],
       lineWidgets: [],
@@ -212,7 +258,7 @@ export default {
 
       this.report = report;
 
-      this.reviewStatus = report.reviewData.status;
+      this.reviewData = report.reviewData;
 
       await this.setSourceFileData(report.fileId);
       await this.drawBugPath();
@@ -407,9 +453,9 @@ export default {
       }, 150);
     },
 
-    confirmReviewStatusChange(status, message) {
-      ccService.getClient().changeReviewStatus(this.report.reportId, status,
-      message, () => {
+    confirmReviewStatusChange(reviewData) {
+      ccService.getClient().changeReviewStatus(this.report.reportId,
+      reviewData.status, reviewData.comment, () => {
         // TODO: handle errors.
       });
     }
