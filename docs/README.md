@@ -296,6 +296,7 @@ For now CodeChecker supports the storage of the following analyzers results:
 |                | [Clang Static Analyzer](https://clang-analyzer.llvm.org/)    |
 |                | [Cppcheck](/tools/report-converter/README.md#cppcheck)    |
 |                | [Clang Sanitizers](supported_code_analyzers.md#clang-sanitizers)    |
+| **Java**       | [SpotBugs](/tools/report-converter/README.md#spotbugs)    |
 
 We are planning to support the storage of the results created by other
 analyzers for different languages (Java, Python ...). For more detailed

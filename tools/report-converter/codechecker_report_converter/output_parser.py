@@ -90,7 +90,6 @@ class BaseParser(object, metaclass=ABCMeta):
 
         return self.messages
 
-    @abstractmethod
     def parse_message(self, it, line):
         """ Parse the given line. """
         raise NotImplementedError("Subclasses should implement this!")

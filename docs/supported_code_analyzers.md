@@ -16,7 +16,7 @@ CodeChecker result directory which can be stored to a CodeChecker server.
 |                | [Cppcheck](/tools/report-converter/README.md#cppcheck)    | ✓ |
 |                | [Infer](https://fbinfer.com/)    | ✗ |
 | **Java**       | [FindBugs](http://findbugs.sourceforge.net/)    | ✗ |
-|                | [SpotBugs](https://spotbugs.github.io/)    | ✗ |
+|                | [SpotBugs](/tools/report-converter/README.md#spotbugs)    | ✓ |
 |                | [Infer](https://fbinfer.com/)    | ✗ |
 | **Python**     | [Pylint](https://www.pylint.org/)    | ✗ |
 |                | [Pyflakes](https://github.com/PyCQA/pyflakes)    | ✗ |
