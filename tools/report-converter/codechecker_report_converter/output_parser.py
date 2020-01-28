@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------------
 
 
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 
 
 def get_next(it):
