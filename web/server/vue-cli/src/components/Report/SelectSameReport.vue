@@ -1,35 +1,22 @@
 <template>
   <v-select
-    label="Select same report"
+    v-model="active"
     :items="items"
     :hide-details="true"
+    label="Also found in"
     item-text="label"
     item-value="id"
     height="0"
     dense
-    solo
+    outlined
     @input="selectSameReport"
   >
     <template v-slot:selection="{ item }">
-      <v-list-item-icon class="mr-2">
-        <detection-status-icon :status="item.report.detectionStatus" />
-      </v-list-item-icon>
-
-      <v-list-item-content>
-        <v-list-item-title>{{ item.runName }}:{{ item.fileName }}:L{{ item.report.line }} [{{ item.report.bugPathLength }}]</v-list-item-title>
-      </v-list-item-content>
+      <select-same-report-item :item="item" />
     </template>
 
     <template v-slot:item="{ item }">
-      <v-list-item-icon class="mr-2">
-        <detection-status-icon :status="item.report.detectionStatus" />
-      </v-list-item-icon>
-
-      <v-list-item-title>
-        <b>
-          {{ item.runName }}:{{ item.fileName }}:L{{ item.report.line }} [{{ item.report.bugPathLength }}]
-        </b>
-      </v-list-item-title>
+      <select-same-report-item :item="item" />
     </template>
   </v-select>
 </template>
@@ -45,23 +32,25 @@ import {
   Order
 } from "@cc/report-server-types";
 
-import { DetectionStatusIcon } from "@/components/icons";
+import SelectSameReportItem from "./SelectSameReportItem";
 
 export default {
   name: "SelectSameReport",
   components: {
-    DetectionStatusIcon
+    SelectSameReportItem
   },
   props: {
     report: { type: Object, default: null }
   },
   data() {
     return {
-      items: [ ]
+      items: [],
+      active: null
     };
   },
   watch: {
     report() {
+      this.active = this.report.reportId;
       this.getSameReports();
     }
   },
@@ -85,9 +74,11 @@ export default {
 
             return {
               id: report.reportId,
-              report: report,
               runName: run.name,
-              fileName: report.checkedFile.replace(/^.*[\\/]/, "")
+              fileName: report.checkedFile.replace(/^.*[\\/]/, ""),
+              line: report.line,
+              bugPathLength: report.bugPathLength,
+              detectionStatus: report.detectionStatus
             };
           });
         });
@@ -113,3 +104,15 @@ export default {
   }
 }
 </script>
+
+<style lang="scss" scoped>
+::v-deep .v-select__selections input {
+  display: none;
+}
+
+.v-select.v-text-field--outlined {
+  ::v-deep .theme--light.v-label {
+    background-color: #fff;
+  }
+}
+</style>

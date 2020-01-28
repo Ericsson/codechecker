@@ -126,7 +126,6 @@
             align-self="center"
           >
             <v-row align="center">
-              Also found in:
               <select-same-report
                 class="ml-2"
                 :report="report"
