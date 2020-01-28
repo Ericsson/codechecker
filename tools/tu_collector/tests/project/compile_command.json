@@ -6,7 +6,7 @@
 	},
   {
     "directory": "/tmp",
-    "command": "gcc -o /dev/null -std=c++11 main.c",
+    "command": "gcc -o /dev/null -std=c11 main.c",
     "file": "main.c"
   }
 ]
