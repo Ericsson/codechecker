@@ -783,6 +783,9 @@ optional arguments:
                         'year:month:day:hour:minute:second' (the "time" part
                         can be omitted, in which case midnight (00:00:00) is
                         used).
+  --sort {date,duration,codechecker_version,name,unresolved_reports}
+                        Sort run data by this column. (default: date)
+  --order {asc,desc}    Sort order of the run data. (default: desc)
 ```
 
 ### List of run histories (`history`) <a name="cmd-history"></a>

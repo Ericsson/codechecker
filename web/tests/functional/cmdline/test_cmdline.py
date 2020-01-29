@@ -213,3 +213,28 @@ class TestCmdline(unittest.TestCase):
         self.assertEqual(1, ret)
         self.assertEqual(res, '')
         self.assertIn('No runs were found!', err)
+
+    def test_run_sort(self):
+        """ Test cmd runs sort command. """
+
+        env = self._test_config['codechecker_cfg']['check_env']
+
+        # Sort runs by the default sort type and sort order.
+        res_cmd = [self._codechecker_cmd, 'cmd', 'runs',
+                   '-o', 'json',
+                   '--url', str(self.server_url)]
+        ret, res, _ = run_cmd(res_cmd, env=env)
+
+        self.assertEqual(0, ret)
+        self.assertEqual(2, len(json.loads(res)))
+
+        # Sort runs by name.
+        res_cmd = [self._codechecker_cmd, 'cmd', 'runs',
+                   '-o', 'json',
+                   '--sort', 'name',
+                   '--order', 'asc',
+                   '--url', str(self.server_url)]
+        ret, res, _ = run_cmd(res_cmd, env=env)
+
+        self.assertEqual(0, ret)
+        self.assertEqual(2, len(json.loads(res)))
