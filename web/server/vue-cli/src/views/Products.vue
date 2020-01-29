@@ -17,9 +17,7 @@
 
         <v-spacer />
 
-        <v-btn color="primary" class="mr-2">
-          Edit announcement <!-- TODO -->
-        </v-btn>
+        <edit-announcement-btn />
 
         <v-btn color="primary" class="mr-2">
           Edit global permissions <!-- TODO -->
@@ -101,6 +99,7 @@
 import { prodService } from "@cc-api";
 
 import { StrToColorMixin } from "@/mixins";
+import { EditAnnouncementBtn } from "@/components/Product/"
 
 export default {
   name: "Products",
@@ -111,9 +110,12 @@ export default {
       return endpoint.charAt(0).toUpperCase();
     }
   },
+  components: {
+    EditAnnouncementBtn
+  },
   mixins: [ StrToColorMixin ],
 
-  data() {
+data() {
     return {
       productNameSearch: null,
       headers: [
