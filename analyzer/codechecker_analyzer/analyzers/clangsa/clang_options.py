@@ -33,6 +33,14 @@ def get_analyzer_checkers_cmd(clang_version_info, env, plugins,
 
     command.append("-analyzer-checker-help")
 
+    # The clang compiler os OSX is a few
+    # relases older that the open source clang release.
+    # The new checker help printig flags are not available there yet.
+    # If the OSX clang will be updated to based on clang v8
+    # this early return can be removed.
+    if clang_version_info.vendor != "clang":
+        return command
+
     if alpha and major_version > 8:
         command.append("-analyzer-checker-help-alpha")
 
