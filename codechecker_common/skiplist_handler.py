@@ -11,6 +11,7 @@ from __future__ import absolute_import
 
 import fnmatch
 import re
+import os
 
 from codechecker_common.logger import get_logger
 
@@ -49,8 +50,9 @@ class SkipListHandler(object):
         the regular expressions.
         """
         for skip_line in skip_lines:
+            norm_skip_path = os.path.normpath(skip_line[1:].strip())
             rexpr = re.compile(
-                fnmatch.translate(skip_line[1:].strip() + '*'))
+                fnmatch.translate(norm_skip_path + '*'))
             self.__skip.append((skip_line, rexpr))
 
     def __check_line_format(self, skip_lines):
