@@ -1,6 +1,7 @@
 <template>
   <v-avatar
     :color="strToColor(value)"
+    :title="value"
     size="48"
     class="my-1"
   >
