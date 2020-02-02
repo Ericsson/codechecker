@@ -23,9 +23,7 @@
           Edit global permissions <!-- TODO -->
         </v-btn>
 
-        <v-btn color="primary">
-          New product <!-- TODO -->
-        </v-btn>
+        <new-product-btn />
       </v-toolbar>
     </template>
 
@@ -98,7 +96,8 @@ import { StrToColorMixin } from "@/mixins";
 import {
   DeleteProductBtn,
   EditAnnouncementBtn,
-  EditProductBtn
+  EditProductBtn,
+  NewProductBtn
 } from "@/components/Product/";
 
 export default {
@@ -113,7 +112,8 @@ export default {
   components: {
     DeleteProductBtn,
     EditAnnouncementBtn,
-    EditProductBtn
+    EditProductBtn,
+    NewProductBtn
   },
   mixins: [ StrToColorMixin ],
 
