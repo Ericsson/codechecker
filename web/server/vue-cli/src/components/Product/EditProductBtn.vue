@@ -48,7 +48,9 @@
             v-model="tab"
           >
             <v-tab-item>
-              TODO: Edit product
+              <edit-product
+                :product-id="product.id"
+              />
             </v-tab-item>
             <v-tab-item>
               TODO: Product permissions
@@ -82,12 +84,16 @@
 </template>
 
 <script>
+import EditProduct from "./EditProduct";
+
 export default {
   name: "EditProductBtn",
+  components: {
+    EditProduct
+  },
   props: {
     product: { type: Object, required: true }
   },
-
   data() {
     return {
       dialog: false,
