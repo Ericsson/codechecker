@@ -2,7 +2,7 @@
   <v-dialog
     v-model="dialog"
     persistent
-    max-width="600px"
+    max-width="50%"
   >
     <template v-slot:activator="{ on }">
       <v-btn
@@ -30,7 +30,30 @@
 
       <v-card-text class="pa-0">
         <v-container>
-          TODO
+          <v-tabs
+            v-model="tab"
+            background-color="transparent"
+            color="basil"
+            grow
+          >
+            <v-tab>
+              Edit
+            </v-tab>
+            <v-tab>
+              Permissions
+            </v-tab>
+          </v-tabs>
+
+          <v-tabs-items
+            v-model="tab"
+          >
+            <v-tab-item>
+              TODO: Edit product
+            </v-tab-item>
+            <v-tab-item>
+              TODO: Product permissions
+            </v-tab-item>
+          </v-tabs-items>
         </v-container>
       </v-card-text>
 
@@ -59,8 +82,6 @@
 </template>
 
 <script>
-import { prodService } from "@cc-api";
-
 export default {
   name: "EditProductBtn",
   props: {
@@ -69,7 +90,8 @@ export default {
 
   data() {
     return {
-      dialog: false
+      dialog: false,
+      tab: null
     };
   },
 
