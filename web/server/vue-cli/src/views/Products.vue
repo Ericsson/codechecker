@@ -23,7 +23,9 @@
           Edit global permissions <!-- TODO -->
         </v-btn>
 
-        <new-product-btn />
+        <new-product-btn
+          @on-complete="onCompleteNewProduct"
+        />
       </v-toolbar>
     </template>
 
@@ -78,7 +80,7 @@
     <template v-slot:item.action="{ item }">
       <edit-product-btn
         :product="item"
-        @on-complete="editProduct"
+        @on-complete="onCompleteEditProduct"
       />
 
       <delete-product-btn
@@ -192,8 +194,12 @@ data() {
       });
     },
 
-    editProduct(/*product*/) {
-      // TODO: implement this feature.
+    onCompleteNewProduct() {
+      this.fetchProducts();
+    },
+
+    onCompleteEditProduct() {
+      this.fetchProducts();
     },
 
     deleteProduct(product) {

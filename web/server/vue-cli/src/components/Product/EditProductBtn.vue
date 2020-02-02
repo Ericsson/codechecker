@@ -14,7 +14,22 @@
       </v-btn>
     </template>
 
-    <v-card>
+    <v-card
+      v-if="loading"
+      color="primary"
+      dark
+    >
+      <v-card-text>
+        Loading...
+        <v-progress-linear
+          indeterminate
+          color="white"
+          class="mb-0"
+        />
+      </v-card-text>
+    </v-card>
+
+    <v-card v-else>
       <v-card-title
         class="headline primary white--text"
         primary-title
@@ -48,8 +63,9 @@
             v-model="tab"
           >
             <v-tab-item>
-              <edit-product
-                :product-id="product.id"
+              <product-config-form
+                :is-valid.sync="isValid"
+                :product-config="productConfig"
               />
             </v-tab-item>
             <v-tab-item>
@@ -74,6 +90,7 @@
         <v-btn
           color="primary"
           text
+          :disabled="!isValid"
           @click="save"
         >
           Save
@@ -84,25 +101,54 @@
 </template>
 
 <script>
-import EditProduct from "./EditProduct";
+import { prodService } from "@cc-api";
+import {
+  ProductConfiguration,
+  DatabaseConnection
+} from "@cc/prod-types";
+
+import ProductConfigForm from "./ProductConfigForm";
 
 export default {
   name: "EditProductBtn",
   components: {
-    EditProduct
+    ProductConfigForm
   },
   props: {
-    product: { type: Object, required: true }
+    product: { type: Object, required: true },
   },
   data() {
     return {
       dialog: false,
-      tab: null
+      productConfig: new ProductConfiguration({
+        connection: new DatabaseConnection()
+      }),
+      tab: null,
+      loading: false,
+      isValid: false
     };
+  },
+  watch: {
+    dialog() {
+      if (!this.dialog) return;
+
+      this.loading = true;
+      prodService.getClient().getProductConfiguration(this.product.id,
+      (err, config) => {
+        this.productConfig = config;
+        this.loading = false;
+      });
+    }
   },
 
   methods: {
-    save() {}
+    save() {
+      prodService.getClient().editProduct(this.product.id, this.productConfig,
+      (/* err */) => {
+        this.$emit("on-complete", new ProductConfiguration(this.productConfig));
+        this.dialog = false;
+      });
+    }
   }
 }
 </script>

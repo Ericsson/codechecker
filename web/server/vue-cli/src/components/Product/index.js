@@ -1,13 +1,13 @@
 import DeleteProductBtn from "./DeleteProductBtn";
 import EditAnnouncementBtn from "./EditAnnouncementBtn";
-import EditProduct from "./EditProductBtn";
 import EditProductBtn from "./EditProductBtn";
 import NewProductBtn from "./NewProductBtn";
+import ProductConfigForm from "./ProductConfigForm";
 
 export {
   DeleteProductBtn,
   EditAnnouncementBtn,
-  EditProduct,
   EditProductBtn,
-  NewProductBtn
+  NewProductBtn,
+  ProductConfigForm
 }

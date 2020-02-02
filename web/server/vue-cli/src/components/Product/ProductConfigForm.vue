@@ -3,23 +3,28 @@
     <v-text-field
       v-model="productConfig.endpoint"
       :rules="rules.endpoint"
-      label="URL endpoint"
+      label="URL endpoint*"
+      prepend-icon="mdi-account-card-details-outline"
       required
     />
 
     <v-text-field
       v-model="displayName"
       label="Display name"
+      prepend-icon="mdi-television"
     />
 
     <v-textarea
       v-model="description"
       label="Description"
+      prepend-icon="mdi-text"
+      rows="1"
     />
 
     <v-text-field
       v-model="productConfig.runLimit"
       label="Run limit"
+      prepend-icon="mdi-speedometer"
     />
 
     <v-checkbox
@@ -29,7 +34,10 @@
 
     <v-divider />
 
-    <v-radio-group v-model="dbConnection.engine">
+    <v-radio-group
+      v-model="dbConnection.engine"
+      :rules="rules.engine"
+    >
       <v-radio
         label="SQLite"
         value="sqlite"
@@ -46,7 +54,9 @@
     >
       <v-text-field
         v-model="dbConnection.database"
-        label="Database file"
+        label="Database file*"
+        prepend-icon="mdi-database"
+        :rules="rules.dbFile"
       />
     </div>
 
@@ -56,85 +66,98 @@
       <v-text-field
         v-model="dbConnection.host"
         label="Server address"
+        prepend-icon="mdi-protocol"
       />
 
       <v-text-field
         v-model="dbConnection.port"
         label="Port"
+        prepend-icon="mdi-map-marker"
       />
 
       <v-text-field
         v-model="dbConnection.username"
         label="User name"
+        prepend-icon="mdi-account-outline"
       />
 
       <v-text-field
         v-model="dbConnection.password"
         label="Password"
+        prepend-icon="mdi-lock-outline"
       />
 
       <v-text-field
         v-model="dbConnection.database"
-        label="Database name"
+        label="Database name*"
+        prepend-icon="mdi-database"
+        :rules="rules.dbName"
       />
     </div>
   </v-form>
 </template>
 
 <script>
-import {
-  ProductConfiguration,
-  DatabaseConnection
-} from "@cc/prod-types";
-
-import { prodService } from "@cc-api";
-
 export default {
   name: "EditProduct",
   props: {
-    productId: { type: [ Number, Object ], required: true }
+    productConfig: { type: Object, required: true },
+    isValid: { type: Boolean, default: false }
   },
   data() {
     return {
-      productConfig: new ProductConfiguration({
-        connection: new DatabaseConnection()
-      }),
       rules: {
         endpoint: [
           v => !!v || "Endpoint is required"
+        ],
+        dbFile: [
+          v => !!v || "Database file is required"
+        ],
+        dbName: [
+          v => !!v || "Database name is required"
+        ],
+        engine: [
+          v => !!v || "Engine is required"
         ]
       },
-      valid: false
     };
   },
 
   computed: {
+    valid: {
+      get() {
+        return this.isValid;
+      },
+      set(value) {
+        this.$emit("update:is-valid", value)
+      }
+    },
+
     dbConnection() {
       return this.productConfig.connection;
     },
     description: {
       get() {
+        if (!this.productConfig.description_b64) return "";
+
         return window.atob(this.productConfig.description_b64);
       },
       set(value) {
-        this.productConfig.description_b64 = window.btoa(value);
+        this.productConfig.description_b64 =
+          value.length ? window.btoa(value) : null;
       }
     },
     displayName: {
       get() {
+        if (!this.productConfig.displayedName_b64) return "";
+
         return window.atob(this.productConfig.displayedName_b64);
       },
       set(value) {
-        this.productConfig.displayedName_b64 = window.btoa(value);
+        this.productConfig.displayedName_b64 =
+          value.length ? window.btoa(value) : null;
       }
     }
-  },
-
-  mounted() {
-    prodService.getClient().getProductConfiguration(this.productId,
-    (err, config) => {
-      this.productConfig = config;
-    });
   }
 }
 </script>

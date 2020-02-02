@@ -29,7 +29,10 @@
 
       <v-card-text class="pa-0">
         <v-container>
-          TODO
+          <product-config-form
+            :is-valid.sync="isValid"
+            :product-config="productConfig"
+          />
         </v-container>
       </v-card-text>
 
@@ -48,6 +51,7 @@
         <v-btn
           color="primary"
           text
+          :disabled="!isValid"
           @click="save"
         >
           Save
@@ -58,15 +62,39 @@
 </template>
 
 <script>
+import { prodService } from "@cc-api";
+import {
+  ProductConfiguration,
+  DatabaseConnection
+} from "@cc/prod-types";
+
+import ProductConfigForm from "./ProductConfigForm";
+
 export default {
   name: "NewProductBtn",
+  components: {
+    ProductConfigForm
+  },
   data() {
     return {
-      dialog: false
+      dialog: false,
+      productConfig: new ProductConfiguration({
+        connection: new DatabaseConnection()
+      }),
+      isValid: false
     };
   },
   methods: {
-    save() {}
+    save() {
+      prodService.getClient().addProduct(this.productConfig, (/* err */) => {
+        this.$emit("on-complete", new ProductConfiguration(this.productConfig));
+
+        this.dialog = false;
+        this.productConfig = new ProductConfiguration({
+          connection: new DatabaseConnection()
+        });
+      });
+    }
   }
 }
 </script>
