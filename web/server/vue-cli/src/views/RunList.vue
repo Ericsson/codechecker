@@ -19,8 +19,9 @@
       :loading="loading"
       :server-items-length.sync="totalItems"
       :footer-props="{
-        itemsPerPageOptions: [20, 50, 100, 500, -1]
+        itemsPerPageOptions: [50, 100, 250, 500, -1]
       }"
+      :must-sort="true"
       item-key="name"
       show-select
     >
@@ -169,7 +170,12 @@ import { DetectionStatusMixin, StrToColorMixin } from "@/mixins";
 import { DetectionStatusIcon } from "@/components/icons";
 
 import { ccService } from "@cc-api";
-import { RunFilter } from "@cc/report-server-types";
+import {
+  Order,
+  RunFilter,
+  RunSortType,
+  RunSortMode
+} from "@cc/report-server-types";
 
 export default {
   name: "RunList",
@@ -186,7 +192,9 @@ export default {
       checkCommand: null,
       pagination: {
         page: 1,
-        itemsPerPage: 20
+        itemsPerPage: 50,
+        sortBy: [],
+        sortDesc: []
       },
       totalItems: 0,
       loading: false,
@@ -196,49 +204,59 @@ export default {
       headers: [
         {
           text: "Name",
-          value: "name"
+          value: "name",
+          sortable: true
         },
         {
           text: "Number of unresolved reports",
           value: "resultCount",
           align: "center",
+          sortable: true
         },
         {
           text: "Detection status",
-          value: "detectionStatusCount"
+          value: "detectionStatusCount",
+          sortable: false
         },
         {
           text: "Analyzer statistics",
-          value: "analyzerStatistics"
+          value: "analyzerStatistics",
+          sortable: false
         },
         {
           text: "Storage date",
           value: "runDate",
-          align: "center"
+          align: "center",
+          sortable: true
         },
         {
           text: "Analysis duration",
           value: "duration",
           align: "center",
+          sortable: true
         },
         {
           text: "Check command",
           value: "checkCommand",
-          align: "center"
+          align: "center",
+          sortable: false
         },
         {
           text: "Version tag",
-          value: "versionTag"
+          value: "versionTag",
+          sortable: false
         },
         {
           text: "CodeChecker version",
           value: "codeCheckerVersion",
-          align: "center"
+          align: "center",
+          sortable: true
         },
         {
           text: "Diff",
           value: "diff",
-          align: "center"
+          align: "center",
+          sortable: false
         }
       ],
       runs: []
@@ -290,6 +308,30 @@ export default {
   },
 
   methods: {
+    getSortMode() {
+      let type = null;
+      switch (this.pagination.sortBy[0]) {
+        case "name":
+          type = RunSortType.NAME;
+          break;
+        case "resultCount":
+          type = RunSortType.UNRESOLVED_REPORTS;
+          break;
+        case "duration":
+          type = RunSortType.DURATION;
+          break;
+        case "codeCheckerVersion":
+          type = RunSortType.CC_VERSION;
+          break;
+        default:
+          type = RunSortType.DATE;
+      }
+
+      const ord = this.pagination.sortDesc[0] ? Order.DESC : Order.ASC;
+
+      return new RunSortMode({ type: type, ord: ord });
+    },
+
     fetchRuns() {
       const runFilter = this.runNameSearch
         ? new RunFilter({ names: [`*${this.runNameSearch}*`]})
@@ -303,7 +345,7 @@ export default {
       // Get the runs.
       const limit = this.pagination.itemsPerPage;
       const offset = this.pagination.page - 1;
-      const sortMode = null;
+      const sortMode = this.getSortMode();
 
       ccService.getClient().getRunData(runFilter, limit, offset, sortMode,
       (err, runs) => {
