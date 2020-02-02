@@ -78,19 +78,18 @@
     </template>
 
     <template v-slot:item.action="{ item }">
-      <v-icon
-        small
-        class="mr-2"
+      <v-btn
+        icon
+        color="primary"
         @click="editProduct(item)"
       >
-        mdi-pencil
-      </v-icon>
-      <v-icon
-        small
-        @click="deleteProduct(item)"
-      >
-        mdi-delete
-      </v-icon>
+        <v-icon>mdi-pencil</v-icon>
+      </v-btn>
+
+      <delete-product-btn
+        :product="item"
+        @on-complete="deleteProduct"
+      />
     </template>
   </v-data-table>
 </template>
@@ -99,7 +98,7 @@
 import { prodService } from "@cc-api";
 
 import { StrToColorMixin } from "@/mixins";
-import { EditAnnouncementBtn } from "@/components/Product/"
+import { DeleteProductBtn, EditAnnouncementBtn } from "@/components/Product/";
 
 export default {
   name: "Products",
@@ -111,6 +110,7 @@ export default {
     }
   },
   components: {
+    DeleteProductBtn,
     EditAnnouncementBtn
   },
   mixins: [ StrToColorMixin ],
@@ -194,8 +194,8 @@ data() {
       // TODO: implement this feature.
     },
 
-    deleteProduct(/*product*/) {
-      // TODO: implement this feature.
+    deleteProduct(product) {
+      this.products = this.products.filter((p) => p.id !== product.id);
     },
   }
 }
