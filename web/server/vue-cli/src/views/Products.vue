@@ -78,13 +78,10 @@
     </template>
 
     <template v-slot:item.action="{ item }">
-      <v-btn
-        icon
-        color="primary"
-        @click="editProduct(item)"
-      >
-        <v-icon>mdi-pencil</v-icon>
-      </v-btn>
+      <edit-product-btn
+        :product="item"
+        @on-complete="editProduct"
+      />
 
       <delete-product-btn
         :product="item"
@@ -98,7 +95,11 @@
 import { prodService } from "@cc-api";
 
 import { StrToColorMixin } from "@/mixins";
-import { DeleteProductBtn, EditAnnouncementBtn } from "@/components/Product/";
+import {
+  DeleteProductBtn,
+  EditAnnouncementBtn,
+  EditProductBtn
+} from "@/components/Product/";
 
 export default {
   name: "Products",
@@ -111,7 +112,8 @@ export default {
   },
   components: {
     DeleteProductBtn,
-    EditAnnouncementBtn
+    EditAnnouncementBtn,
+    EditProductBtn
   },
   mixins: [ StrToColorMixin ],
 
