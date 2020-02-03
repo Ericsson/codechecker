@@ -85,6 +85,12 @@
 
       <v-list-item>
         <v-list-item-content>
+          <bug-path-length-filter ref="filters" />
+        </v-list-item-content>
+      </v-list-item>
+
+      <v-list-item>
+        <v-list-item-content>
           <detection-date-filter />
         </v-list-item-content>
       </v-list-item>
@@ -138,7 +144,8 @@ import {
   FilePathFilter,
   SourceComponentFilter,
   CheckerNameFilter,
-  CheckerMessageFilter
+  CheckerMessageFilter,
+  BugPathLengthFilter
 } from "./Filters";
 
 import ClearAllFilters from "./ClearAllFilters";
@@ -165,7 +172,8 @@ export default {
     SourceComponentFilter,
     CheckerNameFilter,
     CheckerMessageFilter,
-    RemoveFilteredReports
+    RemoveFilteredReports,
+    BugPathLengthFilter
   },
   props: {
     afterUrlInit: { type: Function, default: () => {} }

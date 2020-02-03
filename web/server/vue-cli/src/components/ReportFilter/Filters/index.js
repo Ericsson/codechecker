@@ -14,6 +14,7 @@ import SourceComponentFilter from "./SourceComponentFilter";
 import CheckerNameFilter from "./CheckerNameFilter";
 import CheckerMessageFilter from "./CheckerMessageFilter";
 import BaseFilterMixin from "./BaseFilter.mixin";
+import BugPathLengthFilter from "./BugPathLengthFilter";
 
 export {
   UniqueFilter,
@@ -31,5 +32,6 @@ export {
   SourceComponentFilter,
   CheckerNameFilter,
   CheckerMessageFilter,
-  BaseFilterMixin
+  BaseFilterMixin,
+  BugPathLengthFilter
 }
