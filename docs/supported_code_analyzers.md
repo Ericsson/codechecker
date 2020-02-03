@@ -14,10 +14,10 @@ CodeChecker result directory which can be stored to a CodeChecker server.
 |                | [Clang Static Analyzer](https://clang-analyzer.llvm.org/)    | ✓ |
 |                | [Clang Sanitizers](#clang-sanitizers)    | ✓ |
 |                | [Cppcheck](/tools/report-converter/README.md#cppcheck)    | ✓ |
-|                | [Infer](https://fbinfer.com/)    | ✗ |
+|                | [Facebook Infer](/tools/report-converter/README.md#fbinfer)    | ✓ |
 | **Java**       | [FindBugs](http://findbugs.sourceforge.net/)    | ✗ |
 |                | [SpotBugs](/tools/report-converter/README.md#spotbugs)    | ✓ |
-|                | [Infer](https://fbinfer.com/)    | ✗ |
+|                | [Facebook Infer](/tools/report-converter/README.md#fbinfer)    | ✓ |
 | **Python**     | [Pylint](https://www.pylint.org/)    | ✗ |
 |                | [Pyflakes](https://github.com/PyCQA/pyflakes)    | ✗ |
 |                | [mypy](http://mypy-lang.org/)    | ✗ |

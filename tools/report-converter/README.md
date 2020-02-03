@@ -13,6 +13,7 @@ a CodeChecker server.
   * [Thread Sanitizer](#thread-sanitizer)
 * [Cppcheck](#cppcheck)
 * [Spotbugs](#spotbugs)
+* [Facebook Infer](#facebook-infer)
 * [License](#license)
 
 ## Install guide
@@ -43,10 +44,19 @@ optional arguments:
                         report directory files.
   -t TYPE, --type TYPE  Specify the format of the code analyzer output.
                         Currently supported output types are: asan, clang-
-                        tidy, cppcheck, msan, spotbugs, tsan, ubsan.
-  -c, --clean           Delete files stored in the output directory. (default:
-                        False)
-  -v, --verbose         Set verbosity level. (default: False)
+                        tidy, cppcheck, fbinfer, msan, spotbugs, tsan, ubsan.
+  -c, --clean           Delete files stored in the output directory.
+  -v, --verbose         Set verbosity level.
+
+Supported analyzers:
+  asan - AddressSanitizer, https://clang.llvm.org/docs/AddressSanitizer.html
+  clang-tidy - Clang Tidy, https://clang.llvm.org/extra/clang-tidy
+  cppcheck - Cppcheck, http://cppcheck.sourceforge.net
+  fbinfer - Facebook Infer, https://fbinfer.com
+  msan - MemorySanitizer, https://clang.llvm.org/docs/MemorySanitizer.html
+  spotbugs - spotbugs, https://spotbugs.github.io
+  tsan - ThreadSanitizer, https://clang.llvm.org/docs/ThreadSanitizer.html
+  ubsan - UndefinedBehaviorSanitizer, https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
 ```
 
 ## Sanitizers
@@ -186,6 +196,30 @@ report-converter -t spotbugs -o ./codechecker_spotbugs_reports ./bugs.xml
 
 # Store the SpotBugs reports with CodeChecker.
 CodeChecker store ./codechecker_spotbugs_reports -n spotbugs
+```
+
+## [Facebook Infer](https://fbinfer.com/)
+[Facebook Infer](https://fbinfer.com/) is a static analysis tool developed by
+Facebook which supports multiple programming languages such as `C/C++`, `Java`
+etc.
+
+The recommended way of running the Facebook Infer tool is to generate an
+`infer-out` directory which will contain a `report.json` file.
+
+The following example shows you how to run Facebook Infer and store the results
+found by Infer to the CodeChecker database.
+
+```sh
+# Run Infer.
+infer capture -- clang++ main.cpp
+infer analyze
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of FB Infer.
+report-converter -t fbinfer -o ./codechecker_fbinfer_reports ./infer-out
+
+# Store the Infer reports with CodeChecker.
+CodeChecker store ./codechecker_fbinfer_reports -n fbinfer
 ```
 
 ## License

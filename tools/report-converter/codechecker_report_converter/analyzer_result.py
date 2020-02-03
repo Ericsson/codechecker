@@ -35,12 +35,13 @@ class AnalyzerResult(object, metaclass=ABCMeta):
         analyzer_result = os.path.abspath(analyzer_result)
         plist_objs = self.parse(analyzer_result)
         if not plist_objs:
+            LOG.info("No '%s' results can be found in the given code analyzer "
+                     "output.", self.TOOL_NAME)
             return False
 
         self._post_process_result(plist_objs)
 
-        if self._write(plist_objs, output_dir) is None:
-            return False
+        self._write(plist_objs, output_dir)
 
         return True
 
@@ -80,11 +81,6 @@ class AnalyzerResult(object, metaclass=ABCMeta):
 
         It will generate a context free hash for each diagnostics.
         """
-        if not plist_objs:
-            LOG.info("No '%s' results can be found in the given code analyzer "
-                     "output.", self.TOOL_NAME)
-            return
-
         output_dir = os.path.abspath(output_dir)
         for plist_data in plist_objs:
             file_name = os.path.basename(plist_data['files'][0])
