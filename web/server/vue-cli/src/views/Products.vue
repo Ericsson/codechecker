@@ -63,6 +63,20 @@
       </v-chip>
     </template>
 
+    <template #item.latestStoreToProduct="{ item }">
+      <v-chip
+        v-if="item.latestStoreToProduct"
+        class="ma-2"
+        color="primary"
+        outlined
+      >
+        <v-icon left>
+          mdi-calendar-range
+        </v-icon>
+        {{ item.latestStoreToProduct | prettifyDate }}
+      </v-chip>
+    </template>
+
     <template #item.runStoreInProgress="{ item }">
       <v-chip
         v-for="runName in item.runStoreInProgress"

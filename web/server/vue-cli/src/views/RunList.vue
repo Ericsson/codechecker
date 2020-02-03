@@ -101,7 +101,7 @@
           <v-icon left>
             mdi-calendar-range
           </v-icon>
-          {{ item.$runDate }}
+          {{ item.runDate | prettifyDate }}
         </v-chip>
       </template>
 
@@ -269,7 +269,6 @@ export default {
         return {
           ...run,
           $duration: this.prettifyDuration(run.duration),
-          $runDate: this.prettifyDate(run.runDate),
           $codeCheckerVersion: this.prettifyCCVersion(run.codeCheckerVersion)
         };
       });
@@ -387,10 +386,6 @@ export default {
           run: this.selectedBaselineRuns,
           newcheck: this.selectedNewcheckRuns
         }});
-    },
-
-    prettifyDate (date) {
-      return date.split(/[.]+/)[0];
     },
 
     prettifyDuration(seconds) {
