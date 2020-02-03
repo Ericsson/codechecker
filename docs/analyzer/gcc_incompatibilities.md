@@ -111,6 +111,12 @@ $ gcc -E -x c -v -
  /usr/include
 
 ```
+
+By default the include paths which contain at least one header with `intrin.h`
+postfix are excluded from among the collected paths. If for some reason these
+are needed for the analysis these can be kept with `--keep-gcc-intrin` flag
+after `CodeChecker analyze` and `CodeChecker check` commands.
+
 References:
 * https://software.intel.com/sites/landingpage/IntrinsicsGuide/
 * http://clang.llvm.org/compatibility.html#vector_builtins
