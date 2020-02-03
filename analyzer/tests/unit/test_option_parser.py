@@ -459,11 +459,38 @@ class OptionParserTest(unittest.TestCase):
         # directory among the implicit include paths. Otherwise this test may
         # fail.
 
-        res = log_parser.parse_options(action, keep_gcc_fix_headers=False)
+        res = log_parser.parse_options(action, keep_gcc_include_fixed=False)
         self.assertFalse(any(map(lambda x: x.endswith('include-fixed'),
                                  res.compiler_includes['c++'])))
-        res = log_parser.parse_options(action, keep_gcc_fix_headers=True)
+        res = log_parser.parse_options(action, keep_gcc_include_fixed=True)
         self.assertTrue(any(map(lambda x: x.endswith('include-fixed'),
+                                res.compiler_includes['c++'])))
+
+    @unittest.skipIf(platform.system() == 'Darwin',
+                     "If gcc or g++ is a symlink to clang this test should be "
+                     "skipped. Option filtering is different for the two "
+                     "compilers. This test is gcc/g++ specific.")
+    def test_compiler_gcc_intrin_headers(self):
+        def contains_intrinsic_headers(dirname):
+            for f in os.listdir(dirname):
+                if f.endswith("intrin.h"):
+                    return True
+            return False
+
+        action = {
+            'file': 'main.cpp',
+            'directory': '',
+            'command': 'g++ main.cpp'
+        }
+
+        # In this test we assume that there will always be a directory
+        # containing ...intrin.h header files. Otherwise this test may fail.
+
+        res = log_parser.parse_options(action, keep_gcc_intrin=False)
+        self.assertFalse(any(map(contains_intrinsic_headers,
+                                 res.compiler_includes['c++'])))
+        res = log_parser.parse_options(action, keep_gcc_intrin=True)
+        self.assertTrue(any(map(contains_intrinsic_headers,
                                 res.compiler_includes['c++'])))
 
     def test_compiler_include_file(self):

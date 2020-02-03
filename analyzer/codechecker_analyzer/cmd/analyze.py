@@ -113,6 +113,19 @@ def add_arguments_to_parser(parser):
                              "determines whether these should be kept among "
                              "the implicit include paths.")
 
+    parser.add_argument('--keep-gcc-intrin',
+                        dest="keep_gcc_intrin",
+                        required=False,
+                        action='store_true',
+                        default=False,
+                        help="There are some implicit include paths which "
+                             "contain GCC-specific header files (those "
+                             "which end with intrin.h). This flag determines "
+                             "whether these should be kept among the implicit "
+                             "include paths. Use this flag if Clang analysis "
+                             "fails with error message related to __builtin "
+                             "symbols.")
+
     parser.add_argument('-t', '--type', '--output-format',
                         dest="output_format",
                         required=False,
@@ -687,6 +700,7 @@ def main(args):
             args.compile_uniqueing,
             compiler_info_file,
             args.keep_gcc_include_fixed,
+            args.keep_gcc_intrin,
             skip_handler,
             pre_analysis_skip_handler,
             ctu_or_stats_enabled,

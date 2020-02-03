@@ -11,6 +11,7 @@ from collections import defaultdict
 # pylint: disable=no-name-in-module
 from distutils.spawn import find_executable
 
+import glob
 import json
 import os
 import re
@@ -643,35 +644,23 @@ def determine_compiler(gcc_command, is_executable_compiler_fun):
     return gcc_command[0]
 
 
-def filter_compiler_includes(include_dirs):
+def __is_not_include_fixed(dirname):
     """
-    Filter the list of compiler includes.
-    We want to elide GCC's include-fixed and instrinsic directory.
-    See docs/gcc_incompatibilities.md
+    This function returns True in case the given dirname is NOT a GCC-specific
+    include-fixed directory containing standard headers.
     """
+    return os.path.basename(os.path.normpath(dirname)) != 'include-fixed'
 
-    def contains_intrinsic_headers(include_dir):
-        """
-        Returns True if the given directory contains at least one intrinsic
-        header.
-        """
-        if not os.path.exists(include_dir):
-            return False
-        for f in os.listdir(include_dir):
-            if f.endswith("intrin.h"):
-                return True
+
+def __contains_no_intrinsic_headers(dirname):
+    """
+    Returns True if the given directory doesn't contain any intrinsic headers.
+    """
+    if not os.path.exists(dirname):
+        return True
+    if glob.glob(os.path.join(dirname, "*intrin.h")):
         return False
-
-    result = []
-    for include_dir in include_dirs:
-        # Skip GCC's fixinclude dir
-        if os.path.basename(
-                os.path.normpath(include_dir)) == "include-fixed":
-            continue
-        if contains_intrinsic_headers(include_dir):
-            continue
-        result.append(include_dir)
-    return result
+    return True
 
 
 def __collect_clang_compile_opts(flag_iterator, details):
@@ -886,7 +875,8 @@ def __skip_gcc(flag_iterator, _):
 
 def parse_options(compilation_db_entry,
                   compiler_info_file=None,
-                  keep_gcc_fix_headers=False,
+                  keep_gcc_include_fixed=False,
+                  keep_gcc_intrin=False,
                   get_clangsa_version_func=None,
                   env=None):
     """
@@ -898,10 +888,16 @@ def parse_options(compilation_db_entry,
                             command, the compiled file and the current working
                             directory.
     compiler_info_file -- Contains the path to a compiler info file.
-    keep_gcc_fix_headers -- There are some implicit include paths which are
-                            only used by GCC (include-fixed). This flag
-                            determines whether these should be kept among
-                            the implicit include paths.
+    keep_gcc_include_fixed -- There are some implicit include paths which are
+                              only used by GCC (include-fixed). This flag
+                              determines whether these should be kept among
+                              the implicit include paths.
+    keep_gcc_intrin -- There are some implicit include paths which contain
+                       GCC-specific header files (those which end with
+                       intrin.h). This flag determines whether these should be
+                       kept among the implicit include paths. Use this flag if
+                       Clang analysis fails with error message related to
+                       __builtin symbols.
     get_clangsa_version_func -- Is a function which should return the
                             version information for a clang compiler.
                             It requires the compiler binary and an env.
@@ -1041,10 +1037,15 @@ def parse_options(compilation_db_entry,
             (compiler_info_file and os.path.exists(compiler_info_file)):
         ImplicitCompilerInfo.set(details, compiler_info_file)
 
-    if not keep_gcc_fix_headers:
+    if not keep_gcc_include_fixed:
         for lang, includes in details['compiler_includes'].items():
             details['compiler_includes'][lang] = \
-                filter_compiler_includes(includes)
+                filter(__is_not_include_fixed, includes)
+
+    if not keep_gcc_intrin:
+        for lang, includes in details['compiler_includes'].items():
+            details['compiler_includes'][lang] = \
+                filter(__contains_no_intrinsic_headers, includes)
 
     return BuildAction(**details)
 
@@ -1127,7 +1128,8 @@ def parse_unique_log(compilation_database,
                      report_dir,
                      compile_uniqueing="none",
                      compiler_info_file=None,
-                     keep_gcc_fix_headers=False,
+                     keep_gcc_include_fixed=False,
+                     keep_gcc_intrin=False,
                      analysis_skip_handler=None,
                      pre_analysis_skip_handler=None,
                      ctu_or_stats_enabled=False,
@@ -1158,10 +1160,16 @@ def parse_unique_log(compilation_database,
                          target file, only a single one is kept.
     compiler_info_file -- compiler_info.json. If exists, it will be used for
                     analysis.
-    keep_gcc_fix_headers -- There are some implicit include paths which are
-                            only used by GCC (include-fixed). This flag
-                            determines whether these should be kept among
-                            the implicit include paths.
+    keep_gcc_include_fixed -- There are some implicit include paths which are
+                              only used by GCC (include-fixed). This flag
+                              determines whether these should be kept among
+                              the implicit include paths.
+    keep_gcc_intrin -- There are some implicit include paths which contain
+                       GCC-specific header files (those which end with
+                       intrin.h). This flag determines whether these should be
+                       kept among the implicit include paths. Use this flag if
+                       Clang analysis fails with error message related to
+                       __builtin symbols.
 
     Separate skip handlers are required because it is possible that different
     files are skipped during pre analysis and the actual analysis. In the
@@ -1209,7 +1217,8 @@ def parse_unique_log(compilation_database,
 
             action = parse_options(entry,
                                    compiler_info_file,
-                                   keep_gcc_fix_headers,
+                                   keep_gcc_include_fixed,
+                                   keep_gcc_intrin,
                                    clangsa.version.get,
                                    env)
 
