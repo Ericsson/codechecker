@@ -98,6 +98,15 @@
       </v-chip>
     </template>
 
+    <template #item.runCount="{ item }">
+      <v-chip
+        :color="getRunCountColor(item.runCount)"
+        dark
+      >
+        {{ item.runCount }}
+      </v-chip>
+    </template>
+
     <template #item.latestStoreToProduct="{ item }">
       <v-chip
         v-if="item.latestStoreToProduct"
@@ -193,7 +202,8 @@ data() {
         },
         {
           text: "Number of runs",
-          value: "runCount"
+          value: "runCount",
+          align: "center"
         },
         {
           text: "Latest store to product",
@@ -279,6 +289,16 @@ data() {
           return "N/A";
       }
     },
+
+    getRunCountColor(runCount) {
+      if (runCount > 500) {
+        return "red";
+      } else if (runCount > 200) {
+        return "orange";
+      } else {
+        return "green";
+      }
+    }
   }
 }
 </script>
