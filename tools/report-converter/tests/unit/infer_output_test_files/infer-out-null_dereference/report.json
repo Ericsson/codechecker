@@ -1,0 +1,53 @@
+[
+    {
+        "bug_trace": [
+            {
+                "column_number": -1,
+                "description": "start of procedure main(...)",
+                "filename": "files/NullDereference.java",
+                "level": 0,
+                "line_number": 6
+            },
+            {
+                "column_number": -1,
+                "description": "",
+                "filename": "files/NullDereference.java",
+                "level": 0,
+                "line_number": 7
+            },
+            {
+                "column_number": -1,
+                "description": "start of procedure foo()",
+                "filename": "files/NullDereference.java",
+                "level": 1,
+                "line_number": 2
+            },
+            {
+                "column_number": -1,
+                "description": "return from a call to Integer NullDereference.foo()",
+                "filename": "files/NullDereference.java",
+                "level": 1,
+                "line_number": 3
+            },
+            {
+                "column_number": -1,
+                "description": "",
+                "filename": "files/NullDereference.java",
+                "level": 0,
+                "line_number": 8
+            }
+        ],
+        "bug_type": "NULL_DEREFERENCE",
+        "bug_type_hum": "Null Dereference",
+        "column": -1,
+        "file": "files/NullDereference.java",
+        "hash": "5bf747535b56f2690e3aa7c68198134d",
+        "key": "NullDereference.java|main|NULL_DEREFERENCE",
+        "line": 8,
+        "node_key": "f17711d6e64f2c443a0f2eb1b1bb0871",
+        "procedure": "NullDereference.main(java.lang.String[]):void",
+        "procedure_start_line": 6,
+        "qualifier": "object `i` last assigned on line 7 could be null and is dereferenced at line 8.",
+        "severity": "ERROR"
+    }
+]

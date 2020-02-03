@@ -1,0 +1,24 @@
+[
+  {
+    "bug_trace": [
+      {
+        "column_number": 3,
+        "description": "Write of unused value",
+        "filename": "files/dead_store.cpp",
+        "level": 0,
+        "line_number": 2
+      }
+    ],
+    "bug_type": "DEAD_STORE",
+    "bug_type_hum": "Dead Store",
+    "column": 3,
+    "file": "files/dead_store.cpp",
+    "hash": "bb934aa5f0317f087aa2d897a1bee337",
+    "key": "dead_store.cpp|main|DEAD_STORE",
+    "line": 2,
+    "procedure": "main",
+    "procedure_start_line": 1,
+    "qualifier": "The value written to &i (type int) is never used.",
+    "severity": "ERROR"
+  }
+]
