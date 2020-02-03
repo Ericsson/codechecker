@@ -42,11 +42,46 @@
     </template>
 
     <template #item.endpoint="{ item }">
+      <span
+        v-if="item.databaseStatus !== DBStatus.OK || !item.accessible"
+        :style="{ 'text-decoration': 'line-through' }"
+      >
+        {{ item.endpoint }}
+      </span>
+
       <router-link
+        v-else
         :to="{ name: 'runs', params: { endpoint: item.endpoint } }"
       >
         {{ item.endpoint }}
       </router-link>
+    </template>
+
+    <template #item.description="{ item }">
+      <div
+        v-if="!item.accessible"
+        color="grey--text"
+      >
+        <v-icon>mdi-alert-outline</v-icon>
+        You do not have access to this product!
+      </div>
+
+      <div
+        v-else-if="item.databaseStatus !== DBStatus.OK"
+        class="error--text"
+      >
+        <v-icon>mdi-alert-outline</v-icon>
+        {{ dbStatusFromCodeToString(item.databaseStatus) }}
+        <span
+          v-if="item.databaseStatus === DBStatus.SCHEMA_MISMATCH_OK ||
+            item.databaseStatus === DBStatus.SCHEMA_MISSING"
+        >
+          Use <kbd>CodeChecker server</kbd> command for schema
+          upgrade/initialization.
+        </span>
+      </div>
+
+      {{ item.description }}
     </template>
 
     <template #item.admins="{ item }">
@@ -107,6 +142,7 @@
 
 <script>
 import { prodService } from "@cc-api";
+import { DBStatus } from "@cc/shared-types";
 
 import { StrToColorMixin } from "@/mixins";
 import {
@@ -135,11 +171,13 @@ export default {
 
 data() {
     return {
+      DBStatus,
       productNameSearch: null,
       headers: [
         {
           text: "",
-          value: "icon"
+          value: "icon",
+          width: "1%"
         },
         {
           text: "Name",
@@ -218,6 +256,28 @@ data() {
 
     deleteProduct(product) {
       this.products = this.products.filter((p) => p.id !== product.id);
+    },
+
+    dbStatusFromCodeToString(dbStatus) {
+      switch (parseInt(dbStatus)) {
+        case DBStatus.OK:
+          return "Database is up to date.";
+        case DBStatus.MISSING:
+          return "Database is missing.";
+        case DBStatus.FAILED_TO_CONNECT:
+          return "Failed to connect to the database.";
+        case DBStatus.SCHEMA_MISMATCH_OK:
+          return "Schema mismatch: migration is possible.";
+        case DBStatus.SCHEMA_MISMATCH_NO:
+          return "Schema mismatch: migration not available.";
+        case DBStatus.SCHEMA_MISSING:
+          return "Schema is missing.";
+        case DBStatus.SCHEMA_INIT_ERROR:
+          return "Schema initialization error.";
+        default:
+          console.warn("Non existing database status code: ", dbStatus);
+          return "N/A";
+      }
     },
   }
 }
