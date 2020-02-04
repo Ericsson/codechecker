@@ -19,9 +19,7 @@
 
         <edit-announcement-btn />
 
-        <v-btn color="primary" class="mr-2">
-          Edit global permissions <!-- TODO -->
-        </v-btn>
+        <edit-global-permission-btn />
 
         <new-product-btn
           @on-complete="onCompleteNewProduct"
@@ -154,6 +152,7 @@ import { prodService } from "@cc-api";
 import { DBStatus } from "@cc/shared-types";
 
 import { StrToColorMixin } from "@/mixins";
+import { EditGlobalPermissionBtn } from "@/components/Product/Permission";
 import {
   DeleteProductBtn,
   EditAnnouncementBtn,
@@ -173,6 +172,7 @@ export default {
   components: {
     DeleteProductBtn,
     EditAnnouncementBtn,
+    EditGlobalPermissionBtn,
     EditProductBtn,
     NewProductBtn
   },

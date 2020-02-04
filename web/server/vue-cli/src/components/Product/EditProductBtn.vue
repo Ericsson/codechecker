@@ -69,7 +69,10 @@
               />
             </v-tab-item>
             <v-tab-item>
-              TODO: Product permissions
+              <edit-product-permission
+                :product="product"
+                :bus="bus"
+              />
             </v-tab-item>
           </v-tabs-items>
         </v-container>
@@ -101,17 +104,21 @@
 </template>
 
 <script>
+import Vue from "vue";
+
 import { prodService } from "@cc-api";
 import {
   ProductConfiguration,
   DatabaseConnection
 } from "@cc/prod-types";
 
+import EditProductPermission from "./Permission/EditProductPermission";
 import ProductConfigForm from "./ProductConfigForm";
 
 export default {
   name: "EditProductBtn",
   components: {
+    EditProductPermission,
     ProductConfigForm
   },
   props: {
@@ -125,7 +132,8 @@ export default {
       }),
       tab: null,
       loading: false,
-      isValid: false
+      isValid: false,
+      bus: new Vue()
     };
   },
   watch: {
@@ -146,8 +154,10 @@ export default {
       prodService.getClient().editProduct(this.product.id, this.productConfig,
       (/* err */) => {
         this.$emit("on-complete", new ProductConfiguration(this.productConfig));
-        this.dialog = false;
       });
+
+      // Save permissions.
+      this.bus.$emit("save");
     }
   }
 }
