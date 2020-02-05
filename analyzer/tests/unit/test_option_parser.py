@@ -13,10 +13,10 @@ import os
 import shlex
 import tempfile
 import unittest
-import platform
 
 from codechecker_analyzer.buildlog import log_parser
 from codechecker_analyzer.buildlog.build_action import BuildAction
+from codechecker_analyzer.analyzers import clangsa
 
 
 class OptionParserTest(unittest.TestCase):
@@ -25,6 +25,10 @@ class OptionParserTest(unittest.TestCase):
     parsing of the g++/gcc compiler options.
     """
 
+    @unittest.skipIf(clangsa.version.get("gcc") is not None,
+                     "If gcc or g++ is a symlink to clang this test should be "
+                     "skipped. Option filtering is different for the two "
+                     "compilers. This test is gcc/g++ specific.")
     def test_build_onefile(self):
         """
         Test the build command of a simple file.
@@ -41,6 +45,10 @@ class OptionParserTest(unittest.TestCase):
         self.assertTrue(BuildAction.COMPILE, res.action_type)
         self.assertEquals(0, len(res.analyzer_options))
 
+    @unittest.skipIf(clangsa.version.get("g++") is not None,
+                     "If gcc or g++ is a symlink to clang this test should be "
+                     "skipped. Option filtering is different for the two "
+                     "compilers. This test is gcc/g++ specific.")
     def test_build_multiplefiles(self):
         """
         Test the build command of multiple files.
@@ -147,6 +155,10 @@ class OptionParserTest(unittest.TestCase):
         self.assertTrue(set(compiler_options) == set(res.analyzer_options))
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
+    @unittest.skipIf(clangsa.version.get("g++") is not None,
+                     "If gcc or g++ is a symlink to clang this test should be "
+                     "skipped. Option filtering is different for the two "
+                     "compilers. This test is gcc/g++ specific.")
     def test_compile_with_include_paths(self):
         """
         sysroot should be detected as compiler option because it is needed
@@ -194,6 +206,10 @@ class OptionParserTest(unittest.TestCase):
         print(res)
         self.assertEquals(BuildAction.LINK, res.action_type)
 
+    @unittest.skipIf(clangsa.version.get("g++") is not None,
+                     "If gcc or g++ is a symlink to clang this test should be "
+                     "skipped. Option filtering is different for the two "
+                     "compilers. This test is gcc/g++ specific.")
     def test_link_with_include_paths(self):
         """
         Should be link if only object files are in the command.
@@ -251,6 +267,10 @@ class OptionParserTest(unittest.TestCase):
         self.assertEqual(res.source, 'main.cpp')
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
+    @unittest.skipIf(clangsa.version.get("g++") is not None,
+                     "If gcc or g++ is a symlink to clang this test should be "
+                     "skipped. Option filtering is different for the two "
+                     "compilers. This test is gcc/g++ specific.")
     def test_ignore_flags_gcc(self):
         """
         Test if special compiler options are ignored properly.
@@ -445,9 +465,10 @@ class OptionParserTest(unittest.TestCase):
         self.assertEqual(res,
                          '/usr/lib/ccache/g++')
 
-    @unittest.skipIf(platform.system() == 'Darwin',
-                     "OSX does not have 'include-fixed' in the list of "
-                     "implicit includes.")
+    @unittest.skipIf(clangsa.version.get("g++") is not None,
+                     "If gcc or g++ is a symlink to clang this test should be "
+                     "skipped. Option filtering is different for the two "
+                     "compilers. This test is gcc/g++ specific.")
     def test_compiler_gcc_implicit_includes(self):
         action = {
             'file': 'main.cpp',

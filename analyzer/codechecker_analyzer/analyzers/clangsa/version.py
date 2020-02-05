@@ -20,12 +20,14 @@ class ClangVersionInfo(object):
                  major_version=None,
                  minor_version=None,
                  patch_version=None,
-                 installed_dir=None):
+                 installed_dir=None,
+                 vendor=None):
 
         self.major_version = int(major_version)
         self.minor_version = int(minor_version)
         self.patch_version = int(patch_version)
         self.installed_dir = str(installed_dir)
+        self.vendor = str(vendor)
 
 
 class ClangVersionInfoParser(object):
@@ -36,7 +38,7 @@ class ClangVersionInfoParser(object):
 
     def __init__(self):
         self.clang_version_pattern = (
-            r'clang version (?P<major_version>[0-9]+)'
+            r'(?P<vendor>clang|Apple LLVM) version (?P<major_version>[0-9]+)'
             r'\.(?P<minor_version>[0-9]+)\.(?P<patch_version>[0-9]+)')
 
         self.clang_installed_dir_pattern =\
@@ -55,7 +57,8 @@ class ClangVersionInfoParser(object):
             version_match.group('major_version'),
             version_match.group('minor_version'),
             version_match.group('patch_version'),
-            installed_dir_match.group('installed_dir'))
+            installed_dir_match.group('installed_dir'),
+            version_match.group('vendor'))
 
 
 def get(clang_binary, env=None):

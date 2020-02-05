@@ -118,7 +118,7 @@ venv:
 
 venv_osx:
 	# Create a virtual environment which can be used to run the build package.
-	virtualenv -p python2 venv && \
+	virtualenv -p python2.7 venv && \
 		$(ACTIVATE_RUNTIME_VENV) && \
 		pip install -r $(CC_ANALYZER)/requirements_py/osx/requirements.txt && \
 		pip install -r $(CC_WEB)/requirements_py/osx/requirements.txt

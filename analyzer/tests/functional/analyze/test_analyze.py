@@ -22,6 +22,8 @@ import zipfile
 
 from libtest import env
 
+from codechecker_analyzer.analyzers.clangsa import version
+
 
 class TestAnalyze(unittest.TestCase):
     _ccClient = None
@@ -98,6 +100,10 @@ class TestAnalyze(unittest.TestCase):
                 os.remove(f)
         self.assertEquals(failed_file_count, failed_count)
 
+    @unittest.skipIf(version.get("gcc") is not None,
+                     "If gcc or g++ is a symlink to clang this test should be "
+                     "skipped. Option filtering is different for the two "
+                     "compilers. This test is gcc/g++ specific.")
     def test_compiler_info_files(self):
         '''
         Test that the compiler info files are generated
@@ -105,16 +111,17 @@ class TestAnalyze(unittest.TestCase):
         # GIVEN
         build_json = os.path.join(self.test_workspace, "build_simple.json")
         reports_dir = self.report_dir
-        source_file = os.path.join(self.test_workspace, "simple.cpp")
+        source_file_cpp = os.path.join(self.test_workspace, "simple.cpp")
+        source_file_c = os.path.join(self.test_workspace, "simple.c")
 
         # Create a compilation database.
         build_log = [{"directory": self.test_workspace,
-                      "command": "g++ -c " + source_file,
-                      "file": source_file
+                      "command": "gcc -c " + source_file_c,
+                      "file": source_file_c
                       },
                      {"directory": self.test_workspace,
-                      "command": "clang++ -c " + source_file,
-                      "file": source_file
+                      "command": "clang++ -c " + source_file_cpp,
+                      "file": source_file_cpp
                       }
                      ]
 
@@ -125,7 +132,10 @@ class TestAnalyze(unittest.TestCase):
         simple_file_content = "int main() { return 0; }"
 
         # Write content to the test file
-        with open(source_file, 'w') as source:
+        with open(source_file_cpp, 'w') as source:
+            source.write(simple_file_content)
+
+        with open(source_file_c, 'w') as source:
             source.write(simple_file_content)
 
         # Create analyze command.

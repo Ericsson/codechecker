@@ -40,8 +40,7 @@ def get_compile_command(action, config, source='', output=''):
         cmd.append(source)
 
     if not has_flag('-std', cmd) and not has_flag('--std', cmd):
-        cmd.append(action.compiler_standard[compile_lang])
-
+        cmd.append(action.compiler_standard.get(compile_lang, ""))
     return cmd
 
 
