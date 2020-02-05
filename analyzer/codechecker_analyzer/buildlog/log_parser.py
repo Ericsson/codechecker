@@ -1003,9 +1003,7 @@ def parse_options(compilation_db_entry,
     if details['action_type'] is None:
         details['action_type'] = BuildAction.COMPILE
 
-    details['source'] = os.path.normpath(
-        os.path.join(compilation_db_entry['directory'],
-                     compilation_db_entry['file']))
+    details['source'] = compilation_db_entry['file']
 
     # In case the file attribute in the entry is empty.
     if details['source'] == '.':
@@ -1194,16 +1192,18 @@ def parse_unique_log(compilation_database,
         skipped_cmp_cmd_count = 0
 
         for entry in extend_compilation_database_entries(compilation_database):
+            # Normalization needs to be done here, because the skip regex
+            # won't match properly in the skiplist handler.
+            entry['file'] = os.path.normpath(
+                os.path.join(entry['directory'], entry['file']))
             # Skip parsing the compilaton commands if it should be skipped
             # at both analysis phases (pre analysis and analysis).
-            full_path = os.path.join(entry["directory"], entry["file"])
-
             # Skipping of the compile commands is done differently if no
             # CTU or statistics related feature was enabled.
             if analysis_skip_handler \
-                and analysis_skip_handler.should_skip(full_path) \
+                and analysis_skip_handler.should_skip(entry['file']) \
                 and (not ctu_or_stats_enabled or pre_analysis_skip_handler
-                     and pre_analysis_skip_handler.should_skip(full_path)):
+                     and pre_analysis_skip_handler.should_skip(entry['file'])):
                 skipped_cmp_cmd_count += 1
                 continue
 
