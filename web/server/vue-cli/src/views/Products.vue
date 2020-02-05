@@ -3,6 +3,7 @@
     :headers="headers"
     :items="processedProducts"
     :hide-default-footer="true"
+    :must-sort="true"
     item-key="endpoint"
   >
     <template v-slot:top>
@@ -39,19 +40,19 @@
       </v-avatar>
     </template>
 
-    <template #item.endpoint="{ item }">
+    <template #item.displayedName="{ item }">
       <span
         v-if="item.databaseStatus !== DBStatus.OK || !item.accessible"
         :style="{ 'text-decoration': 'line-through' }"
       >
-        {{ item.endpoint }}
+        {{ item.displayedName }}
       </span>
 
       <router-link
         v-else
         :to="{ name: 'runs', params: { endpoint: item.endpoint } }"
       >
-        {{ item.endpoint }}
+        {{ item.displayedName }}
       </router-link>
     </template>
 
@@ -188,32 +189,39 @@ data() {
         {
           text: "",
           value: "icon",
-          width: "1%"
+          width: "1%",
+          sortable: false
         },
         {
           text: "Name",
-          value: "endpoint"
+          value: "displayedName",
+          sortable: true
         },
         {
           text: "Description",
-          value: "description"
+          value: "description",
+          sortable: true
         },
         {
           text: "Admins",
-          value: "admins"
+          value: "admins",
+          sortable: false
         },
         {
           text: "Number of runs",
           value: "runCount",
-          align: "center"
+          align: "center",
+          sortable: true
         },
         {
           text: "Latest store to product",
-          value: "latestStoreToProduct"
+          value: "latestStoreToProduct",
+          sortable: true
         },
         {
           text: "Run store in progress",
-          value: "runStoreInProgress"
+          value: "runStoreInProgress",
+          sortable: false
         },
         {
           text: "Actions",
@@ -233,6 +241,8 @@ data() {
       return products.map((product) => {
         product.description = product.description_b64 ?
           window.atob(product.description_b64) : null;
+        product.displayedName = product.displayedName_b64 ?
+          window.atob(product.displayedName_b64) : null;
 
         return product;
       });
