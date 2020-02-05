@@ -226,14 +226,29 @@ used to generate a log file on the fly.""")
                                     "analyzers. USE WISELY AND AT YOUR OWN "
                                     "RISK!")
 
-    analyzer_opts.add_argument('-i', '--ignore', '--skip',
-                               dest="skipfile",
-                               required=False,
-                               default=argparse.SUPPRESS,
-                               help="Path to the Skipfile dictating which "
-                                    "project files should be omitted from "
-                                    "analysis. Please consult the User guide "
-                                    "on how a Skipfile should be laid out.")
+    skip_mode = analyzer_opts.add_mutually_exclusive_group()
+    skip_mode.add_argument('-i', '--ignore', '--skip',
+                           dest="skipfile",
+                           required=False,
+                           default=argparse.SUPPRESS,
+                           help="Path to the Skipfile dictating which project "
+                                "files should be omitted from analysis. "
+                                "Please consult the User guide on how a "
+                                "Skipfile should be laid out.")
+
+    skip_mode.add_argument('--file',
+                           nargs='+',
+                           dest="files",
+                           metavar='FILE',
+                           required=False,
+                           default=argparse.SUPPRESS,
+                           help="Analyze only the given file(s) not the whole "
+                                "compilation database. Absolute directory "
+                                "paths should start with '/', relative "
+                                "directory paths should start with '*' and "
+                                "it can contain path glob pattern. "
+                                "Example: '/path/to/main.cpp', 'lib/*.cpp', "
+                                "*/test*'.")
 
     analyzer_opts.add_argument('--analyzers',
                                nargs='+',
@@ -622,6 +637,7 @@ def main(args):
         # after the call.
         args_to_update = ['quiet',
                           'skipfile',
+                          'files',
                           'analyzers',
                           'add_compiler_defaults',
                           'clangsa_args_cfg_file',

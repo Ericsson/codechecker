@@ -159,6 +159,22 @@ CodeChecker check ./compile_commands.json -i skip.list -o reports
 For more details regarding the skip file format see
 the [user guide](analyzer/user_guide.md#skip).
 
+c) **Select source files from the compilation database**
+You can select which files you would like to analyze from the compilation
+database. This is similar to the skip list feature but can be easier to quickly
+analyze only a few files not the whole compilation database.
+
+Let's assume you have the compilation database in `compile_commands.json`.
+
+```sh
+CodeChecker check ./compile_commands.json -o reports --file "*cmd-find.c"
+```
+
+Absolute directory paths should start with `/`, relative directory paths should
+start with `*` and it can contain path glob pattern. Example:
+`/path/to/main.cpp`, `lib/*.cpp`, `*/test*`.
+
+
 ### Analysis Failures <a name="analysis-failures"></a>
 
 The `reports/failed` folder contains all build-actions that
