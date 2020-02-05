@@ -203,8 +203,7 @@ used to generate a log file on the fly.""")
                                default=argparse.SUPPRESS,
                                required=False,
                                choices=['context-free'],
-                               help="EXPERIMENTAL feature. "
-                                    "Specify the hash calculation method for "
+                               help="Specify the hash calculation method for "
                                     "reports. If this option is not set, the "
                                     "default calculation method for Clang "
                                     "Static Analyzer will be context "
