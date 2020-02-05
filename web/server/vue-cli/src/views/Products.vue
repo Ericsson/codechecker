@@ -8,23 +8,35 @@
   >
     <template v-slot:top>
       <v-toolbar flat class="mb-4">
-        <v-text-field
-          v-model="productNameSearch"
-          append-icon="mdi-magnify"
-          label="Search for products..."
-          single-line
-          hide-details
-        />
+        <v-row>
+          <v-col>
+            <v-text-field
+              v-model="productNameSearch"
+              prepend-inner-icon="mdi-magnify"
+              label="Search for products..."
+              single-line
+              hide-details
+              outlined
+              solo
+              flat
+              dense
+            />
+          </v-col>
 
-        <v-spacer />
+          <v-spacer />
 
-        <edit-announcement-btn />
+          <v-col cols="auto" align="right">
+            <v-spacer />
 
-        <edit-global-permission-btn />
+            <edit-announcement-btn />
 
-        <new-product-btn
-          @on-complete="onCompleteNewProduct"
-        />
+            <edit-global-permission-btn />
+
+            <new-product-btn
+              @on-complete="onCompleteNewProduct"
+            />
+          </v-col>
+        </v-row>
       </v-toolbar>
     </template>
 

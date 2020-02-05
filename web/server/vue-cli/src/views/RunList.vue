@@ -27,34 +27,44 @@
     >
       <template v-slot:top>
         <v-toolbar flat class="mb-4">
-          <v-text-field
-            v-model="runNameSearch"
-            append-icon="mdi-magnify"
-            label="Search for runs..."
-            single-line
-            hide-details
-          />
+          <v-row>
+            <v-col>
+              <v-text-field
+                v-model="runNameSearch"
+                prepend-inner-icon="mdi-magnify"
+                label="Search for runs..."
+                single-line
+                hide-details
+                outlined
+                solo
+                flat
+                dense
+              />
+            </v-col>
 
-          <v-spacer />
+            <v-spacer />
 
-          <v-btn
-            color="error"
-            class="mr-2"
-            outlined
-            @click="removeSelectedRuns"
-          >
-            Delete
-          </v-btn>
+            <v-col align="right">
+              <v-btn
+                color="error"
+                class="mr-2"
+                outlined
+                @click="removeSelectedRuns"
+              >
+                Delete
+              </v-btn>
 
-          <v-btn
-            color="primary"
-            class="mr-2"
-            outlined
-            :disabled="isDiffBtnDisabled"
-            @click="diffSelectedRuns"
-          >
-            Diff
-          </v-btn>
+              <v-btn
+                color="primary"
+                class="mr-2"
+                outlined
+                :disabled="isDiffBtnDisabled"
+                @click="diffSelectedRuns"
+              >
+                Diff
+              </v-btn>
+            </v-col>
+          </v-row>
         </v-toolbar>
       </template>
 
