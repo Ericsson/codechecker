@@ -37,15 +37,16 @@
             <td
               v-for="permission in permissions"
               :key="permission"
-              class="pa-1"
+              class="pa-1 text-center"
             >
-              <!-- Align this center -->
-              <v-checkbox
-                :input-value="authRight.includes(permission)"
-                :hide-details="true"
-                class="ma-1"
-                @change="changeAuthPermission(userName, permission)"
-              />
+              <span class="d-inline-block">
+                <v-checkbox
+                  :input-value="authRight.includes(permission)"
+                  :hide-details="true"
+                  class="ma-1"
+                  @change="changeAuthPermission(userName, permission)"
+                />
+              </span>
             </td>
           </tr>
         </tbody>
