@@ -715,36 +715,6 @@ def main(args):
         rep_stats = report_stats.get('reports')
         report_count += rep_stats.get("report_count", 0)
 
-    print("\n----==== Summary ====----")
-    if file_stats:
-        vals = [[os.path.basename(k), v] for k, v in
-                dict(file_stats).items()]
-        vals.sort(key=itemgetter(0))
-        keys = ['Filename', 'Report count']
-        table = twodim_to_str('table', keys, vals, 1, True)
-        print(table)
-
-    if severity_stats:
-        vals = [[k, v] for k, v in dict(severity_stats).items()]
-        vals.sort(key=itemgetter(0))
-        keys = ['Severity', 'Report count']
-        table = twodim_to_str('table', keys, vals, 1, True)
-        print(table)
-
-    print("----=================----")
-    print("Total number of reports: {}".format(report_count))
-    print("----=================----")
-
-    if file_change:
-        changed_files = '\n'.join([' - ' + f for f in file_change])
-        LOG.warning("The following source file contents changed since the "
-                    "latest analysis:\n%s\nMultiple reports were not "
-                    "shown and skipped from the statistics. Please "
-                    "analyze your project again to update the "
-                    "reports!", changed_files)
-
-    os.chdir(original_cwd)
-
     # Create index.html and statistics.html for the generated html files.
     if html_builder:
         html_builder.create_index_html(args.output_path)
@@ -755,3 +725,33 @@ def main(args):
 
         print('\nTo view the results in a browser run:\n> firefox {0}'.format(
             os.path.join(args.output_path, 'index.html')))
+    else:
+        print("\n----==== Summary ====----")
+        if file_stats:
+            vals = [[os.path.basename(k), v] for k, v in
+                    dict(file_stats).items()]
+            vals.sort(key=itemgetter(0))
+            keys = ['Filename', 'Report count']
+            table = twodim_to_str('table', keys, vals, 1, True)
+            print(table)
+
+        if severity_stats:
+            vals = [[k, v] for k, v in dict(severity_stats).items()]
+            vals.sort(key=itemgetter(0))
+            keys = ['Severity', 'Report count']
+            table = twodim_to_str('table', keys, vals, 1, True)
+            print(table)
+
+        print("----=================----")
+        print("Total number of reports: {}".format(report_count))
+        print("----=================----")
+
+    if file_change:
+        changed_files = '\n'.join([' - ' + f for f in file_change])
+        LOG.warning("The following source file contents changed since the "
+                    "latest analysis:\n%s\nMultiple reports were not "
+                    "shown and skipped from the statistics. Please "
+                    "analyze your project again to update the "
+                    "reports!", changed_files)
+
+    os.chdir(original_cwd)

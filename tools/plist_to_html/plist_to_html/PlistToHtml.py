@@ -250,6 +250,12 @@ class HtmlBuilder(object):
                      errors='ignore') as html_output:
             html_output.write(content)
 
+        print("\n----==== Summary ====----")
+
+        print("----=================----")
+        print("Total number of reports: {}".format(num_of_reports))
+        print("----=================----")
+
         print("\n----======== Statistics ========----")
         statistics_rows = [
             ["Number of processed plist files", num_of_plist_files],
