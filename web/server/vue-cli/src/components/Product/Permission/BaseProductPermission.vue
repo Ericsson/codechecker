@@ -30,7 +30,7 @@
           >
             <td>
               <v-icon>
-                mdi-account
+                {{ icon }}
               </v-icon>
               {{ userName }}
             </td>
@@ -38,6 +38,7 @@
               v-for="permission in permissions"
               :key="permission"
               class="pa-1 text-center"
+              width="1%"
             >
               <span class="d-inline-block">
                 <v-checkbox
@@ -62,6 +63,7 @@
       flat
       outlined
       class="mt-4"
+      @keyup.native.enter="addNewAuthRight"
     >
       <template v-slot:append>
         <v-btn
@@ -87,6 +89,7 @@ export default {
     authRights: { type: Object, default: () => {} },
     title: { type: String, default: "" },
     label: { type: String, default: "" },
+    icon: { type: String, default: "mdi-account-outline" },
     bus: { type: Object, required: true },
     extraParamsJson: { type: String, required: true },
     isGroup: { type: Boolean, required: true }
@@ -177,6 +180,8 @@ export default {
       if (!(this.name in this.authRights)) {
         this.$set(this.authRights, this.name, []);
       }
+
+      this.name = "";
     }
   }
 }

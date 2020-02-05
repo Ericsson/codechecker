@@ -24,8 +24,8 @@
       Some permission changes could not be saved!
     </v-alert>
 
-    <v-row>
-      <v-col>
+    <v-row justify="center">
+      <v-col cols="auto">
         <product-user-permission
           :permissions="permissions"
           :auth-rights="userAuthRights"
@@ -36,7 +36,7 @@
           :error.sync="error"
         />
       </v-col>
-      <v-col>
+      <v-col cols="auto">
         <product-group-permission
           :permissions="permissions"
           :auth-rights="groupAuthRights"

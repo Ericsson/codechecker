@@ -3,6 +3,7 @@
     v-model="dialog"
     persistent
     max-width="1000px"
+    :scrollable="true"
   >
     <template v-slot:activator="{ on }">
       <v-btn

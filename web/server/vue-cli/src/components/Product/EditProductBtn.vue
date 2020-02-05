@@ -2,7 +2,8 @@
   <v-dialog
     v-model="dialog"
     persistent
-    max-width="50%"
+    max-width="80%"
+    :scrollable="true"
   >
     <template v-slot:activator="{ on }">
       <v-btn
@@ -44,7 +45,7 @@
       </v-card-title>
 
       <v-card-text class="pa-0">
-        <v-container>
+        <v-container fluid>
           <v-tabs
             v-model="tab"
             background-color="transparent"
@@ -63,10 +64,12 @@
             v-model="tab"
           >
             <v-tab-item>
-              <product-config-form
-                :is-valid.sync="isValid"
-                :product-config="productConfig"
-              />
+              <v-container fluid>
+                <product-config-form
+                  :is-valid.sync="isValid"
+                  :product-config="productConfig"
+                />
+              </v-container>
             </v-tab-item>
             <v-tab-item>
               <edit-product-permission
@@ -144,6 +147,7 @@ export default {
       prodService.getClient().getProductConfiguration(this.product.id,
       (err, config) => {
         this.productConfig = config;
+        console.log(config);
         this.loading = false;
       });
     }

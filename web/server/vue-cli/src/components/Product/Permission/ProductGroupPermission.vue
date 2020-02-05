@@ -6,7 +6,8 @@ export default {
   mixins: [ BaseProductPermission ],
   props: {
     title: { type: String, default: "Group permissions" },
-    label: { type: String, default: "Group name" }
+    label: { type: String, default: "Group name" },
+    icon: { type: String, default: "mdi-account-group-outline" }
   }
 }
 </script>
