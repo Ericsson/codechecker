@@ -135,11 +135,13 @@
 
     <template v-slot:item.action="{ item }">
       <edit-product-btn
+        v-if="isSuperUser || isAdminOfAnyProduct"
         :product="item"
         @on-complete="onCompleteEditProduct"
       />
 
       <delete-product-btn
+        v-if="isSuperUser"
         :product="item"
         @on-complete="deleteProduct"
       />
@@ -148,8 +150,8 @@
 </template>
 
 <script>
-import { prodService } from "@cc-api";
-import { DBStatus } from "@cc/shared-types";
+import { authService, prodService } from "@cc-api";
+import { DBStatus, Permission } from "@cc/shared-types";
 
 import { StrToColorMixin } from "@/mixins";
 import { EditGlobalPermissionBtn } from "@/components/Product/Permission";
@@ -219,7 +221,9 @@ data() {
           sortable: false
         },
       ],
-      products: []
+      products: [],
+      isSuperUser: false,
+      isAdminOfAnyProduct: false
     };
   },
 
@@ -242,6 +246,25 @@ data() {
   },
 
   created() {
+    authService.getClient().hasPermission(Permission.SUPERUSER, "",
+    (err, isSuperUser) => {
+      this.isSuperUser = isSuperUser;
+
+      if (!isSuperUser) {
+        prodService.getClient().isAdministratorOfAnyProduct(
+        (err, isAdminOfAnyProduct) => {
+          this.isAdminOfAnyProduct = isAdminOfAnyProduct;
+
+          // Remove action column from headers.
+          if (!isAdminOfAnyProduct) {
+            this.headers = this.headers.filter((header) => {
+              return header.value !== "action"
+            });
+          }
+        });
+      }
+    });
+
     this.fetchProducts();
   },
 
