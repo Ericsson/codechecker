@@ -20,7 +20,7 @@ class BaseService {
   constructor(serviceName, serviceClass) {
     this._serviceName = serviceName;
     this._serviceClass = serviceClass;
-    this._client = null;
+    this._client = this.createClient();
 
     // Event which can be used to update client on route changes.
     eventHub.$on("update", (endpoint) => {

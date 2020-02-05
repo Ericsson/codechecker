@@ -88,7 +88,9 @@ export default {
   },
   methods: {
     confirmAnnouncementChange() {
-      const announcementB64 = window.btoa(this.announcement);
+      const announcementB64 = this.announcement
+        ? window.btoa(this.announcement) : window.btoa("");
+
       confService.getClient().setNotificationBannerText(announcementB64,
       () => {
         this.dialog = false;
