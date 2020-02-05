@@ -278,7 +278,10 @@ export default {
     },
 
     highlightReport() {
-      // TODO:
+      this.lineWidgets.forEach((widget, index) => {
+        const isResult = index === this.lineWidgets.length - 1;
+        widget.node.classList.toggle("current", isResult);
+      });
     },
 
     highlightCurrentBubble(id) {
