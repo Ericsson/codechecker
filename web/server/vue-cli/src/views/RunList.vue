@@ -2,11 +2,22 @@
   <v-card>
     <v-dialog v-model="showCheckCommandDialog" width="500">
       <v-card>
-        <v-card-title class="headline" primary-title>
+        <v-card-title
+          class="headline primary white--text"
+          primary-title
+        >
           Check command
+
+          <v-spacer />
+
+          <v-btn icon dark @click="showCheckCommandDialog = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
         </v-card-title>
         <v-card-text>
-          {{ checkCommand }}
+          <v-container>
+            {{ checkCommand }}
+          </v-container>
         </v-card-text>
       </v-card>
     </v-dialog>
