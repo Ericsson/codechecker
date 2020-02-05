@@ -3,9 +3,12 @@
     <the-header />
 
     <v-content>
-      <v-container fluid>
+      <v-container
+        class="py-0"
+        fluid
+      >
         <v-row>
-          <v-col>
+          <v-col class="py-0">
             <router-view />
           </v-col>
         </v-row>
