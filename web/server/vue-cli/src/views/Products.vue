@@ -245,6 +245,22 @@ data() {
           window.atob(product.displayedName_b64) : null;
 
         return product;
+      }).sort((p1, p2) => {
+        // By default sort runs by displayd name and put products to the end
+        // of list which are not accessible by the current user.
+        if (p1.accessible === p2.accessible) {
+          if (p1.displayedName.toLowerCase() < p2.displayedName.toLowerCase()) {
+            return -1;
+          }
+
+          if (p1.displayedName.toLowerCase() > p2.displayedName.toLowerCase()) {
+            return 1;
+          }
+
+          return 0;
+        } else {
+          return p1.accessible ? -1 : 1;
+        }
       });
     }
   },
