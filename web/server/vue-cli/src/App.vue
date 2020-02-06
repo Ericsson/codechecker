@@ -4,7 +4,7 @@
 
     <v-content>
       <v-container
-        class="py-0"
+        class="py-0 pb-2"
         fluid
       >
         <v-row>
@@ -34,6 +34,6 @@ export default {
 
 <style lang="scss">
 html {
-  overflow-y: hidden;
+  overflow-y: auto;
 }
 </style>
