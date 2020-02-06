@@ -36,6 +36,26 @@
       :must-sort="true"
       item-key="name"
     >
+      <template v-slot:top>
+        <v-toolbar flat class="mb-4">
+          <v-row>
+            <v-col>
+              <v-text-field
+                v-model="runNameSearch"
+                prepend-inner-icon="mdi-magnify"
+                label="Filter by run name..."
+                clearable
+                single-line
+                hide-details
+                outlined
+                solo
+                flat
+                dense
+              />
+            </v-col>
+          </v-row>
+        </v-toolbar>
+      </template>
       <template #item.runName="{ item }">
         <router-link
           :to="{ name: 'reports', query: { run: item.runName } }"
@@ -124,6 +144,7 @@
 import { StrToColorMixin } from "@/mixins";
 
 import { ccService } from "@cc-api";
+import { RunFilter } from "@cc/report-server-types";
 
 export default {
   name: "RunHistoryList",
@@ -132,6 +153,7 @@ export default {
 
   data() {
     return {
+      runNameSearch: null,
       showCheckCommandDialog: false,
       checkCommand: null,
       pagination: {
@@ -200,13 +222,33 @@ export default {
     }
   },
 
+  watch: {
+    runNameSearch: function(newValue) {
+      this.fetchRunHistories();
+
+      var queryParams = Object.assign({}, this.$route.query);
+      if (queryParams["run"] !== newValue) {
+        queryParams["run"] = newValue;
+        this.$router.push({ query: queryParams });
+      }
+    }
+  },
+
   created() {
-    this.fetchRunHistories();
+    this.runNameSearch = this.$router.currentRoute.query["run"];
   },
 
   methods: {
-    fetchRunHistories() {
-      const runIds = [];
+    async fetchRunHistories() {
+      let runIds = null;
+      if (this.runNameSearch) {
+        runIds = await this.getRunIdsByRunName(this.runNameSearch);
+        if (!runIds.length) {
+          this.histories = [];
+          return;
+        }
+      }
+
       const filter = null;
 
       // Get total item count.
@@ -222,6 +264,21 @@ export default {
       ccService.getClient().getRunHistory(runIds, limit, offset, filter,
       (err, histories) => {
         this.histories = histories;
+      });
+    },
+
+    // TODO: Same function in the BaselineRunFilter component.
+    async getRunIdsByRunName(runName) {
+      const runFilter = new RunFilter({ names: [ runName ]});
+      const limit = null;
+      const offset = null;
+      const sortMode = null;
+
+      return new Promise((resolve) => {
+        ccService.getClient().getRunData(runFilter, limit, offset, sortMode,
+        (err, runs) => {
+          resolve(runs.map((run) => run.runId));
+        });
       });
     },
 
