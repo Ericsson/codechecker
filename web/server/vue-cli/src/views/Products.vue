@@ -40,32 +40,68 @@
       </v-toolbar>
     </template>
 
-    <template #item.icon="{ item }">
-      <v-avatar
-        :color="strToColor(item.endpoint)"
-        size="48"
-        class="my-1"
-      >
-        <span class="white--text headline">
-          {{ item.endpoint | productIconName }}
-        </span>
-      </v-avatar>
-    </template>
-
     <template #item.displayedName="{ item }">
-      <span
-        v-if="item.databaseStatus !== DBStatus.OK || !item.accessible"
-        :style="{ 'text-decoration': 'line-through' }"
+      <v-list-item
+        class="pa-0"
+        two-line
       >
-        {{ item.displayedName }}
-      </span>
+        <v-list-item-avatar>
+          <v-avatar
+            :color="strToColor(item.endpoint)"
+            size="48"
+            class="my-1"
+          >
+            <span class="white--text headline">
+              {{ item.endpoint | productIconName }}
+            </span>
+          </v-avatar>
+        </v-list-item-avatar>
 
-      <router-link
-        v-else
-        :to="{ name: 'runs', params: { endpoint: item.endpoint } }"
-      >
-        {{ item.displayedName }}
-      </router-link>
+        <v-list-item-content>
+          <v-list-item-title>
+            <span
+              v-if="item.databaseStatus !== DBStatus.OK || !item.accessible"
+              :style="{ 'text-decoration': 'line-through' }"
+            >
+              {{ item.displayedName }}
+            </span>
+
+            <router-link
+              v-else
+              :to="{ name: 'runs', params: { endpoint: item.endpoint } }"
+            >
+              {{ item.displayedName }}
+            </router-link>
+
+            <span
+              v-if="!item.accessible"
+              color="grey--text"
+            >
+              <v-icon>mdi-alert-outline</v-icon>
+              You do not have access to this product!
+            </span>
+
+            <span
+              v-else-if="item.databaseStatus !== DBStatus.OK"
+              class="error--text"
+            >
+              <v-icon>mdi-alert-outline</v-icon>
+              {{ dbStatusFromCodeToString(item.databaseStatus) }}
+              <span
+                v-if="item.databaseStatus === DBStatus.SCHEMA_MISMATCH_OK ||
+                  item.databaseStatus === DBStatus.SCHEMA_MISSING"
+              >
+                Use <kbd>CodeChecker server</kbd> command for schema
+                upgrade/initialization.
+              </span>
+            </span>
+          </v-list-item-title>
+
+          <v-list-item-subtitle>
+            {{ item.description }}
+          </v-list-item-subtitle>
+        </v-list-item-content>
+      </v-list-item>
     </template>
 
     <template #item.description="{ item }">
@@ -199,19 +235,8 @@ data() {
       productNameSearch: null,
       headers: [
         {
-          text: "",
-          value: "icon",
-          width: "1%",
-          sortable: false
-        },
-        {
           text: "Name",
           value: "displayedName",
-          sortable: true
-        },
-        {
-          text: "Description",
-          value: "description",
           sortable: true
         },
         {
