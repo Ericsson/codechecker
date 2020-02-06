@@ -48,18 +48,15 @@
 
     <v-menu offset-y>
       <template v-slot:activator="{ on }">
-        <v-btn color="secondary" v-on="on">
-          Menu
+        <v-btn
+          icon
+          v-on="on"
+        >
+          <v-icon>mdi-dots-vertical</v-icon>
         </v-btn>
       </template>
-      <v-list>
-        <v-list-item :to="{ name: 'products' }">
-          <v-list-item-title>Products</v-list-item-title>
-        </v-list-item>
-        <v-list-item :to="{ name: 'login' }">
-          <v-list-item-title>Login</v-list-item-title>
-        </v-list-item>
-      </v-list>
+
+      <header-menu-items />
     </v-menu>
   </v-app-bar>
 </template>
@@ -67,8 +64,13 @@
 <script>
 import { confService } from "@cc-api";
 
+import HeaderMenuItems from "./HeaderMenuItems";
+
 export default {
   name: "TheHeader",
+  components: {
+    HeaderMenuItems
+  },
   data() {
     return {
       announcement: ""
