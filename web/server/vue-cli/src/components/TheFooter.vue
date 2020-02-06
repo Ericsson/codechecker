@@ -1,11 +1,21 @@
 <template>
   <v-footer color="secondary" padless>
-    <v-row justify="center" no-gutters>
+    <v-row
+      justify="center"
+      no-gutters
+    >
       <v-col
-        class="py-2 text-center white--text"
-        cols="12"
+        class="py-3 text-center white--text"
+        cols="5"
       >
-        {{ new Date().getFullYear() }} — <strong>Ericsson</strong>
+        © {{ new Date().getFullYear() }} —
+        <v-avatar size="24px" tile>
+          <img
+            alt="Ericsson"
+            src="@/assets/ericsson.png"
+          >
+        </v-avatar>
+        Ericsson
       </v-col>
     </v-row>
   </v-footer>
