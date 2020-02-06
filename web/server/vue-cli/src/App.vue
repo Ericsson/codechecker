@@ -4,7 +4,7 @@
 
     <v-content>
       <v-container
-        class="py-0 pb-2"
+        class="py-2 pb-2"
         fluid
       >
         <v-row>

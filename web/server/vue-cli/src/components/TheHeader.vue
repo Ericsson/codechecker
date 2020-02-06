@@ -46,6 +46,19 @@
 
     <v-spacer />
 
+    <v-btn
+      v-for="item in menuItems"
+      :key="item.name"
+      :to="{ name: item.route }"
+      exact
+      text
+    >
+      <v-icon left>
+        {{ item.icon }}
+      </v-icon>
+      {{ item.name }}
+    </v-btn>
+
     <v-menu offset-y>
       <template v-slot:activator="{ on }">
         <v-btn
@@ -73,9 +86,52 @@ export default {
   },
   data() {
     return {
-      announcement: ""
+      announcement: "",
+      menuButtons: [
+        {
+          name: "Products",
+          icon: "mdi-briefcase-outline",
+          route: "products",
+          hide: [ "products" ]
+        },
+        {
+          name: "Runs",
+          icon: "mdi-run-fast",
+          route: "runs",
+          hide: [ "products" ]
+        },
+        {
+          name: "Run history",
+          icon: "mdi-history",
+          route: "run-history",
+          hide: [ "products" ]
+        },
+        {
+          name: "Statistics",
+          icon: "mdi-chart-line",
+          route: "statistics",
+          hide: [ "products" ]
+        },
+        {
+          name: "Reports",
+          icon: "mdi-clipboard-text-multiple-outline",
+          route: "reports",
+          hide: [ "products" ]
+        }
+      ]
     };
   },
+
+  computed: {
+    menuItems() {
+      if (!this.$route.name) return [];
+
+      return this.menuButtons.filter((item) => {
+        return !item.hide || !item.hide.includes(this.$route.name);
+      });
+    }
+  },
+
   mounted() {
     confService.getClient().getNotificationBannerText((err, announcement) => {
       this.announcement = window.atob(announcement);
