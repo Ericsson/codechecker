@@ -80,20 +80,102 @@
       </template>
 
       <template #item.name="{ item }">
-        <router-link
-          :to="{ name: 'reports', query: { run: item.name } }"
-        >
-          {{ item.name }}
-        </router-link>
-      </template>
+        <v-list-item two-line>
+          <v-list-item-content>
+            <v-list-item-title>
+              <router-link
+                :to="{ name: 'reports', query: { run: item.name } }"
+                class="mr-2"
+              >
+                {{ item.name }}
+              </router-link>
 
-      <template #item.detectionStatusCount="{ item }">
-        <div
-          v-for="(value, name) in item.detectionStatusCount"
-          :key="name"
-        >
-          <detection-status-icon :status="parseInt(name)" /> ({{ value }})
-        </div>
+              <v-chip
+                v-if="item.versionTag"
+                outlined
+                small
+              >
+                <v-avatar
+                  class="mr-0"
+                  left
+                >
+                  <v-icon
+                    :color="strToColor(item.versionTag)"
+                    small
+                  >
+                    mdi-tag-outline
+                  </v-icon>
+                </v-avatar>
+                <span
+                  class="grey--text text--darken-3"
+                >
+                  {{ item.versionTag }}
+                </span>
+              </v-chip>
+            </v-list-item-title>
+
+            <v-list-item-subtitle>
+              <v-btn
+                :to="{ name: 'run-history', query: { run: item.name } }"
+                title="Show history"
+                color="primary"
+                small
+                text
+                icon
+              >
+                <v-icon>mdi-history</v-icon>
+              </v-btn>
+
+              <v-btn
+                :to="{ name: 'statistics', query: { run: item.name } }"
+                title="Show statistics"
+                color="green"
+                small
+                text
+                icon
+              >
+                <v-icon>mdi-chart-line</v-icon>
+              </v-btn>
+
+              <v-divider
+                class="mx-2 d-inline"
+                inset
+                vertical
+              />
+
+              <v-btn
+                title="Show check command"
+                color="orange"
+                small
+                text
+                icon
+                @click="openCheckCommandDialog(item)"
+              >
+                <v-icon>mdi-apple-keyboard-command</v-icon>
+              </v-btn>
+
+              <v-divider
+                class="mx-2 d-inline"
+                inset
+                vertical
+              />
+
+              <v-btn
+                v-for="(value, name) in item.detectionStatusCount"
+                :key="name"
+                :to="{ name: 'reports', query: {
+                  run: item.name,
+                  'detection-status': detectionStatusFromCodeToString(name)
+                }}"
+                class="pa-0"
+                small
+                text
+              >
+                <detection-status-icon :status="parseInt(name)" /> ({{ value }})
+              </v-btn>
+            </v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
       </template>
 
       <template #item.analyzerStatistics="{ item }">
@@ -136,32 +218,6 @@
             mdi-clock-outline
           </v-icon>
           {{ item.$duration }}
-        </v-chip>
-      </template>
-
-      <template #item.checkCommand="{ item }">
-        <v-btn text small color="primary" @click="openCheckCommandDialog(item)">
-          Show
-        </v-btn>
-      </template>
-
-      <template #item.versionTag="{ item }">
-        <v-chip
-          v-if="item.versionTag"
-          outlined
-        >
-          <v-avatar left>
-            <v-icon
-              :color="strToColor(item.versionTag)"
-            >
-              mdi-tag-outline
-            </v-icon>
-          </v-avatar>
-          <span
-            class="grey--text text--darken-3"
-          >
-            {{ item.versionTag }}
-          </span>
         </v-chip>
       </template>
 
@@ -235,11 +291,6 @@ export default {
           sortable: true
         },
         {
-          text: "Detection status",
-          value: "detectionStatusCount",
-          sortable: false
-        },
-        {
           text: "Analyzer statistics",
           value: "analyzerStatistics",
           sortable: false
@@ -255,17 +306,6 @@ export default {
           value: "duration",
           align: "center",
           sortable: true
-        },
-        {
-          text: "Check command",
-          value: "checkCommand",
-          align: "center",
-          sortable: false
-        },
-        {
-          text: "Version tag",
-          value: "versionTag",
-          sortable: false
         },
         {
           text: "CodeChecker version",
