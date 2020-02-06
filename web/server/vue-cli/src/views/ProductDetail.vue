@@ -2,6 +2,16 @@
   <div id="product">
     <v-tabs>
       <v-tab
+        :to="{ name: 'products' }"
+        exact
+      >
+        <v-icon left>
+          mdi-arrow-left
+        </v-icon>
+        Products
+      </v-tab>
+
+      <v-tab
         v-for="tab in tabs"
         :key="tab.id"
         :to="{ name: tab.route }"
