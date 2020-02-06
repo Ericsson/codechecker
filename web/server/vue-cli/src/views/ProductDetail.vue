@@ -22,7 +22,8 @@ export default {
       tabs: [
         { id: 1, name: "Runs", route: "runs" },
         { id: 2, name: "Statistics", route: "statistics" },
-        { id: 3, name: "Reports", route: "reports" }
+        { id: 3, name: "Run history", route: "run-history" },
+        { id: 4, name: "Reports", route: "reports" }
       ]
     };
   }

@@ -72,6 +72,11 @@ export default new Router({
           component: () => import("@/views/Statistics")
         },
         {
+          path: "run-history",
+          name: "run-history",
+          component: () => import("@/views/RunHistoryList")
+        },
+        {
           path: "reports",
           name: "reports",
           component: () => import("@/views/Reports")
