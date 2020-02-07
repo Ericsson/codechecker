@@ -90,6 +90,7 @@
           class="mx-2 mr-0"
           color="primary"
           outlined
+          @click="$emit('toggle:comments')"
         >
           <v-icon>mdi-comment-multiple-outline</v-icon>
           Comments (0)

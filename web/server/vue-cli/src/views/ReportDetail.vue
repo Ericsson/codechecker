@@ -36,9 +36,21 @@
         </v-row>
       </v-container>
     </pane>
+
     <pane>
       <report
         :tree-item="treeItem"
+        @toggle:comments="showComments = !showComments"
+      />
+    </pane>
+
+    <pane
+      v-if="showComments"
+      size="20"
+    >
+      <report-comments
+        v-fill-height
+        :report="report"
       />
     </pane>
   </splitpanes>
@@ -58,7 +70,7 @@ import {
 } from "@cc/report-server-types";
 
 import { FillHeight } from "@/directives";
-import { Report } from "@/components/Report";
+import { Report, ReportComments } from "@/components/Report";
 import { ReportTree } from "@/components/ReportTree";
 
 export default {
@@ -67,13 +79,15 @@ export default {
     Splitpanes,
     Pane,
     Report,
+    ReportComments,
     ReportTree
   },
   directives: { FillHeight },
   data() {
     return {
       report: null,
-      treeItem: null
+      treeItem: null,
+      showComments: true
     };
   },
   computed: {

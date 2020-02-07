@@ -1,0 +1,59 @@
+<template>
+  <v-container>
+    <v-row>
+      <v-textarea
+        v-model="message"
+        outlined
+        name="message"
+        label="Leave a message..."
+        hide-details
+      />
+    </v-row>
+
+    <v-row>
+      <v-spacer />
+      <v-col
+        cols="auto"
+        class="px-0"
+      >
+        <v-btn
+          color="primary"
+          @click="addNewComment"
+        >
+          Add
+        </v-btn>
+      </v-col>
+    </v-row>
+  </v-container>
+</template>
+
+<script>
+import { ccService } from "@cc-api";
+import { CommentData } from "@cc/report-server-types";
+
+export default {
+  name: "NewComment",
+  props: {
+    comments: { type: Array, required: true },
+    report: { type: Object, default: () => null },
+    bus: { type: Object, required: true }
+  },
+  data() {
+    return {
+      message: null
+    };
+  },
+  methods: {
+    addNewComment() {
+      if (!this.message) return;
+
+      const commentData = new CommentData({ message: this.message });
+      ccService.getClient().addComment(this.report.reportId, commentData,
+      (/* err */) => {
+        this.bus.$emit("update:comments");
+        this.message = null;
+      });
+    }
+  }
+}
+</script>
