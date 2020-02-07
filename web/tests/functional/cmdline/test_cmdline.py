@@ -119,6 +119,17 @@ class TestCmdline(unittest.TestCase):
         self.assertEqual(0, ret)
         self.assertEqual(1, len(json.loads(res)))
 
+    def test_runs_row(self):
+        """ Test cmd row output type. """
+        env = self._test_config['codechecker_cfg']['check_env']
+
+        res_cmd = [self._codechecker_cmd, 'cmd', 'runs',
+                   '-o', 'rows', '-n', 'test_files1*',
+                   '--url', str(self.server_url)]
+        ret, _, _ = run_cmd(res_cmd, env=env)
+
+        self.assertEqual(0, ret)
+
     def test_run_update(self):
         """ Test to update run name from the command line. """
 

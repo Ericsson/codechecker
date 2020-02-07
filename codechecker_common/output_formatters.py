@@ -66,7 +66,7 @@ def twodim_to_rows(lines):
     # Generate the format string to pad the columns.
     print_string = " "
     for i, width in enumerate(widths):
-        if i == 0 or i == len(widths) - 1:
+        if i == 0 or i == len(widths) - 1 or width == 0:
             print_string += "{" + str(i) + "} "
         else:
             print_string += "{" + str(i) + ":" + str(width) + "} "
