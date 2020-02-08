@@ -38,9 +38,11 @@
           </v-list-item-action>
         </v-list-item>
       </v-list>
-      <v-card-text class="pt-0">
-        {{ comment.message }}
-      </v-card-text>
+      <!-- eslint-disable vue/no-v-html -->
+      <v-card-text
+        class="pt-0"
+        v-html="message"
+      />
     </v-card>
   </v-timeline-item>
 </template>
@@ -60,6 +62,11 @@ export default {
   props: {
     comment: { type: Object, required: true },
     bus: { type: Object, required: true }
+  },
+  computed: {
+    message() {
+      return this.comment.message.replace(/(?:\r\n|\r|\n)/g, "<br>");
+    }
   }
 }
 </script>

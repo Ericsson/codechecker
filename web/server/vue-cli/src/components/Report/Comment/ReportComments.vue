@@ -1,7 +1,13 @@
 <template>
   <v-container>
     <edit-comment-dialog
-      :value.sync="dialog"
+      :value.sync="editDialog"
+      :comment="selected"
+      @on-confirm="fetchComments"
+    />
+
+    <remove-comment-dialog
+      :value.sync="removeDialog"
       :comment="selected"
       @on-confirm="fetchComments"
     />
@@ -46,6 +52,7 @@ import { CommentKind } from "@cc/report-server-types";
 import EditCommentDialog from "./EditCommentDialog";
 import NewComment from "./NewComment";
 import UserComment from "./UserComment";
+import RemoveCommentDialog from "./RemoveCommentDialog";
 import SystemComment from "./SystemComment";
 
 export default {
@@ -54,6 +61,7 @@ export default {
     EditCommentDialog,
     NewComment,
     UserComment,
+    RemoveCommentDialog,
     SystemComment
   },
   props: {
@@ -65,7 +73,8 @@ export default {
       CommentKind,
       comments: [],
       selected: null,
-      dialog: false,
+      editDialog: false,
+      removeDialog: false,
       bus: new Vue()
     };
   },
@@ -83,13 +92,12 @@ export default {
 
     this.bus.$on("update:comment", (comment) => {
       this.selected = comment;
-      this.dialog = true;
+      this.editDialog = true;
     });
 
-    this.bus.$on("remove:comment", (commentId) => {
-      this.comments = this.comments.filter((comment) => {
-        return comment.id !== commentId;
-      });
+    this.bus.$on("remove:comment", (comment) => {
+      this.selected = comment;
+      this.removeDialog = true;
     });
   },
 

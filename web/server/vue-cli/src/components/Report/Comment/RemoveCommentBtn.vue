@@ -10,8 +10,6 @@
 </template>
 
 <script>
-import { ccService } from "@cc-api";
-
 export default {
   name: "RemoveCommentBtn",
   props: {
@@ -20,10 +18,7 @@ export default {
   },
   methods: {
     removeComment() {
-      // TODO: confirmation dialog before remove.
-      ccService.getClient().removeComment(this.comment.id, (/* err */) => {
-        this.bus.$emit("remove:comment", this.comment.id);
-      });
+      this.bus.$emit("remove:comment", this.comment);
     }
   }
 }
