@@ -91,7 +91,7 @@
 
       <v-list-item>
         <v-list-item-content>
-          <detection-date-filter />
+          <detection-date-filter ref="filters" />
         </v-list-item-content>
       </v-list-item>
 
