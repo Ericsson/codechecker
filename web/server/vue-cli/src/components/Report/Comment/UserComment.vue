@@ -23,11 +23,11 @@
               {{ comment.createdAt }}
             </v-list-item-subtitle>
           </v-list-item-content>
-           <v-list-item-action>
+          <v-list-item-action>
             <div>
               <edit-comment-btn
-              :comment="comment"
-              :bus="bus"
+                :comment="comment"
+                :bus="bus"
               />
 
               <remove-comment-btn
