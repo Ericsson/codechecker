@@ -8,21 +8,34 @@
     <v-card
       class="elevation-2"
     >
-      <v-card-title>
-        {{ comment.author }}
-        <v-spacer />
+      <v-list two-line>
+        <v-list-item>
+          <user-icon
+            :value="comment.author"
+            class="mr-2"
+            tile
+          />
+          <v-list-item-content>
+            <v-list-item-title>
+              {{ comment.author }}
+            </v-list-item-title>
+            <v-list-item-subtitle>
+              {{ comment.createdAt }}
+            </v-list-item-subtitle>
+          </v-list-item-content>
+           <v-list-item-action>
+             <div>
+              <edit-comment-btn />
 
-        <edit-comment-btn />
-
-        <remove-comment-btn
-          :comment="comment"
-          :bus="bus"
-        />
-      </v-card-title>
-      <v-card-subtitle>
-        {{ comment.createdAt }}
-      </v-card-subtitle>
-      <v-card-text>
+                <remove-comment-btn
+                  :comment="comment"
+                  :bus="bus"
+                />
+             </div>
+           </v-list-item-action>
+        </v-list-item>
+      </v-list>
+      <v-card-text class="pt-0">
         {{ comment.message }}
       </v-card-text>
     </v-card>
@@ -30,6 +43,7 @@
 </template>
 
 <script>
+import { UserIcon } from "@/components/icons";
 import EditCommentBtn from "./EditCommentBtn";
 import RemoveCommentBtn from "./RemoveCommentBtn";
 
@@ -37,7 +51,8 @@ export default {
   name: "UserComment",
   components: {
     EditCommentBtn,
-    RemoveCommentBtn
+    RemoveCommentBtn,
+    UserIcon
   },
   props: {
     comment: { type: Object, required: true },

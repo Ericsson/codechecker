@@ -2,8 +2,9 @@
   <v-avatar
     :color="strToColor(value)"
     :title="value"
-    size="48"
+    :size="size"
     class="my-1"
+    :tile="tile"
   >
     <span class="white--text headline">
       {{ userIconName }}
@@ -18,7 +19,9 @@ export default {
   name: "UserIcon",
   mixins: [ StrToColorMixin ],
   props: {
-    value: { type: String, required: true }
+    value: { type: String, required: true },
+    size: { type: Number, default: 48 },
+    tile: { type: Boolean, default: false }
   },
   computed: {
     userIconName() {
