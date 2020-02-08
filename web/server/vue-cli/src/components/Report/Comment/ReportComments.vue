@@ -20,6 +20,7 @@
 
     <v-row>
       <v-timeline
+        v-if="comments.length"
         dense
       >
         <template
