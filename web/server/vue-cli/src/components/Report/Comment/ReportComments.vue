@@ -1,5 +1,61 @@
 <template>
   <v-container>
+    <v-dialog
+      v-model="dialog"
+      persistent
+      max-width="600px"
+    >
+      <v-card>
+        <v-card-title
+          class="headline primary white--text"
+          primary-title
+        >
+          Edit comment
+
+          <v-spacer />
+
+          <v-btn icon dark @click="dialog = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-card-title>
+
+        <v-card-text class="pa-0">
+          <v-container>
+            <v-textarea
+              v-model="message"
+              label="Leave a message..."
+              hide-details
+              solo
+              flat
+              outlined
+            />
+          </v-container>
+        </v-card-text>
+
+        <v-divider />
+
+        <v-card-actions>
+          <v-spacer />
+
+          <v-btn
+            color="error"
+            text
+            @click="dialog = false"
+          >
+            Cancel
+          </v-btn>
+
+          <v-btn
+            color="primary"
+            text
+            @click="confirmCommentChange"
+          >
+            Change
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <new-comment
       :comments="comments"
       :report="report"
@@ -56,7 +112,10 @@ export default {
     return {
       CommentKind,
       comments: [],
-      bus: new Vue()
+      bus: new Vue(),
+      comment: null,
+      message: null,
+      dialog: false
     };
   },
 
@@ -70,6 +129,12 @@ export default {
     this.fetchComments();
 
     this.bus.$on("update:comments", this.fetchComments);
+
+    this.bus.$on("update:comment", (comment) => {
+      this.comment = comment;
+      this.message = comment.message;
+      this.dialog = true;
+    });
 
     this.bus.$on("remove:comment", (commentId) => {
       this.comments = this.comments.filter((comment) => {
@@ -85,6 +150,14 @@ export default {
       ccService.getClient().getComments(this.report.reportId,
       (err, comments) => {
         this.comments = comments;
+      });
+    },
+    confirmCommentChange() {
+      // TODO: validate the message.
+      ccService.getClient().updateComment(this.comment.id, this.message,
+      () => {
+        this.fetchComments();
+        this.dialog = false;
       });
     }
   }

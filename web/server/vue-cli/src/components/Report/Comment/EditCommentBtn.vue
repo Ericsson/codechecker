@@ -1,5 +1,8 @@
 <template>
-  <v-btn icon>
+  <v-btn
+    icon
+    @click="editComment"
+  >
     <v-icon color="grey lighten-1">
       mdi-pencil
     </v-icon>
@@ -8,6 +11,15 @@
 
 <script>
 export default {
-  name: "EditCommentBtn"
+  name: "EditCommentBtn",
+  props: {
+    comment: { type: Object, required: true },
+    bus: { type: Object, required: true }
+  },
+  methods: {
+    editComment() {
+      this.bus.$emit("update:comment", this.comment);
+    }
+  }
 }
 </script>

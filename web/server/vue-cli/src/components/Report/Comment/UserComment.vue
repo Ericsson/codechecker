@@ -24,15 +24,18 @@
             </v-list-item-subtitle>
           </v-list-item-content>
            <v-list-item-action>
-             <div>
-              <edit-comment-btn />
+            <div>
+              <edit-comment-btn
+              :comment="comment"
+              :bus="bus"
+              />
 
-                <remove-comment-btn
-                  :comment="comment"
-                  :bus="bus"
-                />
-             </div>
-           </v-list-item-action>
+              <remove-comment-btn
+                :comment="comment"
+                :bus="bus"
+              />
+            </div>
+          </v-list-item-action>
         </v-list-item>
       </v-list>
       <v-card-text class="pt-0">
