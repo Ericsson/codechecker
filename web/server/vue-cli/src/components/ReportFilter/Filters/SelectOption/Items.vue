@@ -33,14 +33,14 @@
           class="my-1"
         >
           <template v-slot:default="{ active }">
-            <v-list-item-action class="mr-5">
+            <v-list-item-action class="ma-1 mr-5">
               <v-checkbox
                 :input-value="active"
                 color="#28a745"
               />
             </v-list-item-action>
 
-            <v-list-item-icon class="mr-2">
+            <v-list-item-icon class="ma-1 mr-2">
               <slot name="icon" :item="item" />
             </v-list-item-icon>
 
@@ -52,6 +52,7 @@
               v-if="item.count !== undefined"
               color="#878d96"
               outlined
+              small
             >
               {{ item.count }}
             </v-chip>

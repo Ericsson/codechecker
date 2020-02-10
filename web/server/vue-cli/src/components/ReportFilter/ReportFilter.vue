@@ -12,7 +12,7 @@
       tile
       elevation="0"
     >
-      <v-list-item>
+      <v-list-item class="pl-1">
         <v-list-item-action class="mr-5">
           <clear-all-filters />
         </v-list-item-action>
@@ -24,24 +24,31 @@
         </v-list-item-content>
       </v-list-item>
 
-      <v-list-item>
+      <v-list-item class="pl-1">
         <v-list-item-content>
           <unique-filter ref="filters" />
         </v-list-item-content>
       </v-list-item>
 
-      <v-list-item>
-        <v-list-item-content>
+      <v-list-item class="pl-1">
+        <v-list-item-content class="pa-0">
           <report-hash-filter ref="filters" />
         </v-list-item-content>
       </v-list-item>
 
-      <v-list-item>
-        <v-list-item-content>
-          <v-expansion-panels v-model="activeBaselinePanelId">
+      <v-list-item class="pl-1">
+        <v-list-item-content class="pa-0">
+          <v-expansion-panels
+            v-model="activeBaselinePanelId"
+            hover
+          >
             <v-expansion-panel>
-              <v-expansion-panel-header>BASELINE</v-expansion-panel-header>
-              <v-expansion-panel-content>
+              <v-expansion-panel-header
+                class="pa-0 px-1 primary--text"
+              >
+                <b>BASELINE</b>
+              </v-expansion-panel-header>
+              <v-expansion-panel-content class="pa-1">
                 <baseline-run-filter ref="filters" />
                 <baseline-tag-filter ref="filters" />
               </v-expansion-panel-content>
@@ -50,12 +57,19 @@
         </v-list-item-content>
       </v-list-item>
 
-      <v-list-item>
-        <v-list-item-content>
-          <v-expansion-panels v-model="activeNewcheckPanelId">
+      <v-list-item class="pl-1">
+        <v-list-item-content class="pa-0">
+          <v-expansion-panels
+            v-model="activeNewcheckPanelId"
+            hover
+          >
             <v-expansion-panel>
-              <v-expansion-panel-header>NEWCHECK</v-expansion-panel-header>
-              <v-expansion-panel-content>
+              <v-expansion-panel-header
+                class="pa-0 px-1 primary--text"
+              >
+                <b>NEWCHECK</b>
+              </v-expansion-panel-header>
+              <v-expansion-panel-content class="pa-1">
                 <newcheck-run-filter ref="filters" />
                 <newcheck-tag-filter ref="filters" />
                 <newcheck-diff-type-filter ref="filters" />
@@ -65,61 +79,61 @@
         </v-list-item-content>
       </v-list-item>
 
-      <v-list-item>
-        <v-list-item-content>
+      <v-list-item class="pl-1">
+        <v-list-item-content class="pa-0">
           <review-status-filter ref="filters" />
         </v-list-item-content>
       </v-list-item>
 
-      <v-list-item>
-        <v-list-item-content>
+      <v-list-item class="pl-1">
+        <v-list-item-content class="pa-0">
           <detection-status-filter ref="filters" />
         </v-list-item-content>
       </v-list-item>
 
-      <v-list-item>
-        <v-list-item-content>
+      <v-list-item class="pl-1">
+        <v-list-item-content class="pa-0">
           <severity-filter ref="filters" />
         </v-list-item-content>
       </v-list-item>
 
-      <v-list-item>
-        <v-list-item-content>
+      <v-list-item class="pl-1">
+        <v-list-item-content class="pa-0">
           <bug-path-length-filter ref="filters" />
         </v-list-item-content>
       </v-list-item>
 
-      <v-list-item>
-        <v-list-item-content>
+      <v-list-item class="pl-1">
+        <v-list-item-content class="pa-0">
           <detection-date-filter ref="filters" />
         </v-list-item-content>
       </v-list-item>
 
-      <v-list-item>
-        <v-list-item-content>
+      <v-list-item class="pl-1">
+        <v-list-item-content class="pa-0">
           <file-path-filter ref="filters" />
         </v-list-item-content>
       </v-list-item>
 
-      <v-list-item>
-        <v-list-item-content>
+      <v-list-item class="pl-1">
+        <v-list-item-content class="pa-0">
           <source-component-filter ref="filters" />
         </v-list-item-content>
       </v-list-item>
 
-      <v-list-item>
-        <v-list-item-content>
+      <v-list-item class="pl-1">
+        <v-list-item-content class="pa-0">
           <checker-name-filter ref="filters" />
         </v-list-item-content>
       </v-list-item>
 
-      <v-list-item>
-        <v-list-item-content>
+      <v-list-item class="pl-1">
+        <v-list-item-content class="pa-0">
           <checker-message-filter ref="filters" />
         </v-list-item-content>
       </v-list-item>
 
-      <v-list-item>
+      <v-list-item class="pl-1">
         <v-list-item-content>
           <remove-filtered-reports />
         </v-list-item-content>
@@ -215,10 +229,8 @@ export default {
 }
 </script>
 
-<style lang="scss">
-.v-list-item {
-  .v-expansion-panel::before {
-    box-shadow: none;
-  }
+<style lang="scss" scoped>
+.v-expansion-panel-content > ::v-deep .v-expansion-panel-content__wrap {
+  padding: 0 4px 0 6px;
 }
 </style>
