@@ -1,15 +1,7 @@
 <template>
-  <v-card flat>
-    <v-toolbar flat>
-      <v-toolbar-title>Detection date</v-toolbar-title>
-      <v-spacer />
-      <v-toolbar-items>
-        <v-btn icon @click="clear">
-          <v-icon>mdi-delete</v-icon>
-        </v-btn>
-      </v-toolbar-items>
-    </v-toolbar>
-
+  <filter-toolbar
+    title="Detection date"
+  >
     <v-container
       class="py-0"
     >
@@ -59,14 +51,18 @@
         </v-col>
       </v-row>
     </v-container>
-  </v-card>
+  </filter-toolbar>
 </template>
 
 <script>
 import BaseFilterMixin from "./BaseFilter.mixin";
+import FilterToolbar from "./Layout/FilterToolbar";
 
 export default {
   name: "DetectionDateFilter",
+  components: {
+    FilterToolbar
+  },
   mixins: [ BaseFilterMixin ],
   data() {
     return {

@@ -1,15 +1,7 @@
 <template>
-  <v-card flat>
-    <v-toolbar flat>
-      <v-toolbar-title>Report hash filter</v-toolbar-title>
-      <v-spacer />
-      <v-toolbar-items>
-        <v-btn icon>
-          <v-icon>mdi-delete</v-icon>
-        </v-btn>
-      </v-toolbar-items>
-    </v-toolbar>
-
+  <filter-toolbar
+    title="Report hash filter"
+  >
     <v-card-actions class="">
       <v-text-field
         v-model="reportHash"
@@ -24,14 +16,18 @@
         dense
       />
     </v-card-actions>
-  </v-card>
+  </filter-toolbar>
 </template>
 
 <script>
 import BaseFilterMixin from "./BaseFilter.mixin";
+import FilterToolbar from "./Layout/FilterToolbar";
 
 export default {
   name: "ReportHashFilter",
+  components: {
+    FilterToolbar
+  },
   mixins: [ BaseFilterMixin ],
 
   data() {

@@ -1,47 +1,46 @@
 <template>
-  <v-card flat>
-    <v-toolbar flat>
-      <v-toolbar-title>{{ title }}</v-toolbar-title>
-      <v-spacer />
-      <v-toolbar-items>
-        <v-btn icon @click="clear">
-          <v-icon>mdi-delete</v-icon>
-        </v-btn>
-        <v-menu
-          v-model="menu"
-          :close-on-content-click="false"
-          :nudge-width="400"
-          offset-x
-        >
-          <v-progress-linear
-            v-if="loading"
-            indeterminate
-            size="64"
-          />
+  <filter-toolbar
+    :title="title"
+  >
+    <template v-slot:append-toolbar-items>
+      <v-menu
+        v-model="menu"
+        :close-on-content-click="false"
+        :nudge-width="400"
+        offset-x
+      >
+        <v-progress-linear
+          v-if="loading"
+          indeterminate
+          size="64"
+        />
 
-          <template v-slot:activator="{ on }">
-            <v-btn icon v-on="on">
-              <v-icon>mdi-settings</v-icon>
-            </v-btn>
-          </template>
-
-          <items
-            :items="items"
-            :selected-items="selectedItems"
-            :search="search"
-            :multiple="multiple"
-            @select="select"
+        <template v-slot:activator="{ on }">
+          <v-btn
+            icon
+            small
+            v-on="on"
           >
-            <template v-slot:icon="{ item }">
-              <slot name="icon" :item="item" />
-            </template>
-            <template v-slot:no-items>
-              <slot name="no-items" />
-            </template>
-          </items>
-        </v-menu>
-      </v-toolbar-items>
-    </v-toolbar>
+            <v-icon>mdi-settings</v-icon>
+          </v-btn>
+        </template>
+
+        <items
+          :items="items"
+          :selected-items="selectedItems"
+          :search="search"
+          :multiple="multiple"
+          @select="select"
+        >
+          <template v-slot:icon="{ item }">
+            <slot name="icon" :item="item" />
+          </template>
+          <template v-slot:no-items>
+            <slot name="no-items" />
+          </template>
+        </items>
+      </v-menu>
+    </template>
 
     <items-selected
       :selected-items="selectedItems"
@@ -51,16 +50,18 @@
         <slot name="icon" :item="item" />
       </template>
     </items-selected>
-  </v-card>
+  </filter-toolbar>
 </template>
 
 <script>
+import FilterToolbar from "../Layout/FilterToolbar";
 import Items from "./Items";
 import ItemsSelected from "./ItemsSelected";
 
 export default {
   name: "SelectOption",
   components: {
+    FilterToolbar,
     Items,
     ItemsSelected
   },
