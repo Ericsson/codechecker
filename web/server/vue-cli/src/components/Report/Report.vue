@@ -90,10 +90,11 @@
           class="mx-2 mr-0"
           color="primary"
           outlined
+          :loading="loadNumOfComments"
           @click="$emit('toggle:comments')"
         >
           <v-icon>mdi-comment-multiple-outline</v-icon>
-          Comments (0)
+          Comments({{ numOfComments }})
         </v-btn>
       </v-col>
     </v-row>
@@ -190,7 +191,9 @@ export default {
       jsPlumbInstance: null,
       lineMarks: [],
       lineWidgets: [],
-      showArrows: true
+      showArrows: true,
+      numOfComments: null,
+      loadNumOfComments: true
     };
   },
 
@@ -211,6 +214,15 @@ export default {
       } else {
         this.clearLines();
       }
+    },
+
+    report() {
+      this.loadNumOfComments = true;
+      ccService.getClient().getCommentCount(this.report.reportId,
+      (err, numOfComments) => {
+        this.numOfComments = numOfComments;
+        this.loadNumOfComments = false;
+      });
     }
   },
 
