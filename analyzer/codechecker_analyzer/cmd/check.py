@@ -118,6 +118,19 @@ def add_arguments_to_parser(parser):
                              "determines whether these should be kept among "
                              "the implicit include paths.")
 
+    parser.add_argument('--keep-gcc-intrin',
+                        dest="keep_gcc_intrin",
+                        required=False,
+                        action='store_true',
+                        default=False,
+                        help="There are some implicit include paths which "
+                             "contain GCC-specific header files (those "
+                             "which end with intrin.h). This flag determines "
+                             "whether these should be kept among the implicit "
+                             "include paths. Use this flag if Clang analysis "
+                             "fails with error message related to __builtin "
+                             "symbols.")
+
     log_args = parser.add_argument_group(
         "log arguments",
         """
@@ -609,7 +622,8 @@ def main(args):
             output_path=output_dir,
             output_format='plist',
             jobs=args.jobs,
-            keep_gcc_include_fixed=args.keep_gcc_include_fixed
+            keep_gcc_include_fixed=args.keep_gcc_include_fixed,
+            keep_gcc_intrin=args.keep_gcc_intrin
         )
         # Some arguments don't have default values.
         # We can't set these keys to None because it would result in an error

@@ -80,8 +80,8 @@ subcommand.
 
 ```
 usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-t {plist}] [-q] [-f]
-                         [--keep-gcc-include-fixed] (-b COMMAND | -l LOGFILE)
-                         [-j JOBS] [-c]
+                         [--keep-gcc-include-fixed] [--keep-gcc-intrin]
+                         (-b COMMAND | -l LOGFILE) [-j JOBS] [-c]
                          [--compile-uniqueing COMPILE_UNIQUEING]
                          [--report-hash {context-free}] [-i SKIPFILE]
                          [--analyzers ANALYZER [ANALYZER ...]]
@@ -120,6 +120,12 @@ optional arguments:
                         are only used by GCC (include-fixed). This flag
                         determines whether these should be kept among the
                         implicit include paths. (default: False)
+  --keep-gcc-intrin     There are some implicit include paths which contain
+                        GCC-specific header files (those which end with
+                        intrin.h). This flag determines whether these should
+                        be kept among the implicit include paths. Use this
+                        flag if Clang analysis fails with error message
+                        related to __builtin symbols. (default: False)
   --compile-uniqueing COMPILE_UNIQUEING
                         Specify the method the compilation actions in the
                         compilation database are uniqued before analysis. CTU
@@ -411,7 +417,8 @@ below:
 ```
 usage: CodeChecker analyze [-h] [-j JOBS] [-i SKIPFILE] -o OUTPUT_PATH
                            [--compiler-info-file COMPILER_INFO_FILE]
-                           [--keep-gcc-include-fixed] [-t {plist}] [-q] [-c]
+                           [--keep-gcc-include-fixed] [--keep-gcc-intrin]
+                           [-t {plist}] [-q] [-c]
                            [--compile-uniqueing COMPILE_UNIQUEING]
                            [--report-hash {context-free}] [-n NAME]
                            [--analyzers ANALYZER [ANALYZER ...]]
@@ -456,6 +463,12 @@ optional arguments:
                         are only used by GCC (include-fixed). This flag
                         determines whether these should be kept among the
                         implicit include paths. (default: False)
+  --keep-gcc-intrin     There are some implicit include paths which contain
+                        GCC-specific header files (those which end with
+                        intrin.h). This flag determines whether these should
+                        be kept among the implicit include paths. Use this
+                        flag if Clang analysis fails with error message
+                        related to __builtin symbols. (default: False)
   -t {plist}, --type {plist}, --output-format {plist}
                         Specify the format the analysis results should use.
                         (default: plist)
@@ -682,8 +695,9 @@ to collect these so the analysis process can run in the same environment as the
 original build. However, there are some GCC-specific locations (usually with
 name `include-fixed`) which may be incompatible with other compilers and may
 cause failure in analysis. CodeChecker omits these GCC-specific paths from the
-analysis unless `--keep-gcc-include-fixed` flag is given. For further
-information see [GCC incompatibilities](gcc_incompatibilities.md).
+analysis unless `--keep-gcc-include-fixed` or `--keep-gcc-intrin` flag is
+given. For further information see
+[GCC incompatibilities](gcc_incompatibilities.md).
 
 #### Forwarding compiler options <a name="forwarding-compiler-options"></a>
 
