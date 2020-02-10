@@ -29,6 +29,10 @@ export default {
       return value;
     },
 
+    titleFormatter(id) {
+      return this.encodeValue(id);
+    },
+
     getUrlState() {
       return {
         [this.id]: this.selectedItems.map((item) => this.encodeValue(item.id))
@@ -40,9 +44,10 @@ export default {
         const state = [].concat(this.$route.query[this.id] || []);
         if (state.length) {
           this.selectedItems = state.map((s) => {
+            const id = this.decodeValue(s);
             return {
-              id: this.decodeValue(s),
-              title: s,
+              id: id,
+              title: this.titleFormatter(id),
               count: "N/A"
             };
           });

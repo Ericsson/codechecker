@@ -58,7 +58,7 @@
               <v-expansion-panel-content>
                 <newcheck-run-filter ref="filters" />
                 <newcheck-tag-filter ref="filters" />
-                <newcheck-diff-type-filter />
+                <newcheck-diff-type-filter ref="filters" />
               </v-expansion-panel-content>
             </v-expansion-panel>
           </v-expansion-panels>

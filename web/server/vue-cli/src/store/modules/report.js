@@ -1,4 +1,4 @@
-import { CompareData, ReportFilter } from "@cc/report-server-types";
+import { CompareData, DiffType, ReportFilter } from "@cc/report-server-types";
 import {
   SET_CMP_DATA,
   SET_REPORT_FILTER,
@@ -37,9 +37,16 @@ const mutations = {
     if (!params) {
       state.cmpData = null;
     } else if (!state.cmpData) {
-      state.cmpData = new CompareData(params);
+      state.cmpData = new CompareData({
+        diffType: DiffType.NEW,
+        params
+      });
     } else {
-      Object.assign(state.cmpData, params);
+      Object.assign({
+        diffType: DiffType.NEW,
+        ...state.cmpData,
+        ...params
+      });
     }
   }
 };

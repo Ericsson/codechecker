@@ -22,9 +22,9 @@
       <v-list-item-group
         v-if="items.length"
         v-model="selected"
+        :multiple="multiple"
         active-class="light-blue--text"
         lighten-4
-        multiple
       >
         <v-list-item
           v-for="item in items"
@@ -60,10 +60,12 @@
       </v-list-item-group>
 
       <v-list-item v-else>
-        <v-list-item-icon>
-          <v-icon>mdi-help-rhombus-outline</v-icon>
-        </v-list-item-icon>
-        No items
+        <slot name="no-items">
+          <v-list-item-icon>
+            <v-icon>mdi-help-rhombus-outline</v-icon>
+          </v-list-item-icon>
+          No items
+        </slot>
       </v-list-item>
     </v-list>
   </v-card>
@@ -75,16 +77,19 @@ export default {
   props: {
     items: { type: Array, required: true },
     selectedItems: { type: Array, required: true },
+    multiple: { type: Boolean, default: true },
     search: { type: Object, default: null },
   },
   computed: {
     selected: {
       get() {
-        return this.selectedItems.map((item) => item.id);
+        const ids = this.selectedItems.map((item) => item.id);
+        return this.multiple ? ids : ids[0]
       },
       set(value) {
+        const values = this.multiple ? value : [ value ];
         const selectedItems = this.items.filter((item) => {
-          return value.includes(item.id);
+          return values.includes(item.id);
         });
 
         this.$emit("select", selectedItems)

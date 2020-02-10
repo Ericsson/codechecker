@@ -29,10 +29,14 @@
             :items="items"
             :selected-items="selectedItems"
             :search="search"
+            :multiple="multiple"
             @select="select"
           >
             <template v-slot:icon="{ item }">
               <slot name="icon" :item="item" />
+            </template>
+            <template v-slot:no-items>
+              <slot name="no-items" />
             </template>
           </items>
         </v-menu>
@@ -65,6 +69,7 @@ export default {
     items: { type: Array, required: true },
     fetchItems: { type: Function, required: true },
     selectedItems: { type: Array, default: () => [] },
+    multiple: { type: Boolean, default: true },
     search: { type: Object, default: null },
     loading: { type: Boolean, default: false }
   },
