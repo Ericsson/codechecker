@@ -124,7 +124,8 @@ export default {
   },
   props: {
     value: { type: Boolean, default: false },
-    runId: { type: Object, default: () => null }
+    runId: { type: Object, default: () => null },
+    runHistoryId: { type: Object, default: () => null }
   },
 
   data() {
@@ -157,8 +158,8 @@ export default {
 
   methods: {
     getAnalysisStatistics() {
-      ccService.getClient().getAnalysisStatistics(this.runId, null,
-      (err, stats) => {
+      ccService.getClient().getAnalysisStatistics(this.runId,
+      this.runHistoryId, (err, stats) => {
         this.analyzerStatistics = stats;
         this.activeExpansionPanels = [0];
       });

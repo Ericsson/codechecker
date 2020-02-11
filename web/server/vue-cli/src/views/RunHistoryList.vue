@@ -24,6 +24,11 @@
       </v-card>
     </v-dialog>
 
+    <analyzer-statistics-dialog
+      :value.sync="analyzerStatisticsDialog"
+      :run-history-id="selectedRunHistoryId"
+    />
+
     <v-data-table
       :headers="headers"
       :items="formattedRunHistories"
@@ -65,20 +70,11 @@
       </template>
 
       <template #item.analyzerStatistics="{ item }">
-        <div
-          v-for="(stats, analyzer) in item.analyzerStatistics"
-          :key="analyzer"
-        >
-          {{ analyzer }}:
-          <span v-if="stats.successful.toNumber() !== 0">
-            <v-icon color="#587549">mdi-check</v-icon>
-            ({{ stats.successful }})
-          </span>
-          <span v-if="stats.failed.toNumber() !== 0">
-            <v-icon color="#964739">mdi-close</v-icon>
-            ({{ stats.failed }})
-          </span>
-        </div>
+        <analyzer-statistics-btn
+          v-if="Object.keys(item.analyzerStatistics).length"
+          :value="item.analyzerStatistics"
+          @click.native="openAnalyzerStatisticsDialog(item)"
+        />
       </template>
 
       <template #item.time="{ item }">
@@ -141,6 +137,10 @@
 </template>
 
 <script>
+import {
+  AnalyzerStatisticsBtn,
+  AnalyzerStatisticsDialog
+} from "@/components/Run";
 import { StrToColorMixin } from "@/mixins";
 
 import { ccService } from "@cc-api";
@@ -148,13 +148,18 @@ import { RunFilter } from "@cc/report-server-types";
 
 export default {
   name: "RunHistoryList",
-
+  components: {
+    AnalyzerStatisticsBtn,
+    AnalyzerStatisticsDialog
+  },
   mixins: [ StrToColorMixin ],
 
   data() {
     return {
       runNameSearch: null,
       showCheckCommandDialog: false,
+      analyzerStatisticsDialog: false,
+      selectedRunHistoryId: null,
       checkCommand: null,
       pagination: {
         page: 1,
@@ -296,6 +301,11 @@ export default {
     closeCheckCommandDialog() {
       this.showCheckCommandDialog = false;
       this.checkCommand = null;
+    },
+
+    openAnalyzerStatisticsDialog(runHistory) {
+      this.selectedRunHistoryId = runHistory.id;
+      this.analyzerStatisticsDialog = true;
     },
 
     // TODO: same function in the RunList component.
