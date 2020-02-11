@@ -71,7 +71,7 @@ import {
 
 import { FillHeight } from "@/directives";
 import { Report, ReportComments } from "@/components/Report";
-import { ReportTree } from "@/components/ReportTree";
+import { ReportTree } from "@/components/Report/ReportTree";
 
 export default {
   name: "ReportDetail",

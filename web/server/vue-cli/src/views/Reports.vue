@@ -66,7 +66,7 @@ import { DetectionStatusIcon } from "@/components/icons";
 import { ReviewStatusIcon } from "@/components/icons";
 import { SeverityIcon } from "@/components/icons";
 
-import ReportFilter from "@/components/ReportFilter/ReportFilter";
+import { ReportFilter } from "@/components/Report/ReportFilter";
 
 export default {
   name: "Reports",
