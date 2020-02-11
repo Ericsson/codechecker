@@ -22,6 +22,11 @@
       </v-card>
     </v-dialog>
 
+    <analyzer-statistics-dialog
+      :value.sync="analyzerStatisticsDialog"
+      :run-id="selectedRunId"
+    />
+
     <v-data-table
       v-model="selected"
       :headers="headers"
@@ -179,20 +184,11 @@
       </template>
 
       <template #item.analyzerStatistics="{ item }">
-        <div
-          v-for="(stats, analyzer) in item.analyzerStatistics"
-          :key="analyzer"
-        >
-          {{ analyzer }}:
-          <span v-if="stats.successful.toNumber() !== 0">
-            <v-icon color="#587549">mdi-check</v-icon>
-            ({{ stats.successful }})
-          </span>
-          <span v-if="stats.failed.toNumber() !== 0">
-            <v-icon color="#964739">mdi-close</v-icon>
-            ({{ stats.failed }})
-          </span>
-        </div>
+        <analyzer-statistics-btn
+          v-if="Object.keys(item.analyzerStatistics).length"
+          :value="item.analyzerStatistics"
+          @click.native="openAnalyzerStatisticsDialog(item)"
+        />
       </template>
 
       <template #item.runDate="{ item }">
@@ -243,6 +239,10 @@
 </template>
 
 <script>
+import {
+  AnalyzerStatisticsBtn,
+  AnalyzerStatisticsDialog
+} from "@/components/Run";
 import { DetectionStatusMixin, StrToColorMixin } from "@/mixins";
 import { DetectionStatusIcon } from "@/components/icons";
 
@@ -257,6 +257,8 @@ import {
 export default {
   name: "RunList",
   components: {
+    AnalyzerStatisticsBtn,
+    AnalyzerStatisticsDialog,
     DetectionStatusIcon
   },
 
@@ -278,6 +280,8 @@ export default {
       selected: [],
       selectedBaselineRuns: [],
       selectedNewcheckRuns: [],
+      analyzerStatisticsDialog: false,
+      selectedRunId: null,
       headers: [
         {
           text: "Name",
@@ -422,6 +426,11 @@ export default {
         this.checkCommand = checkCommand;
         this.showCheckCommandDialog = true;
       });
+    },
+
+    openAnalyzerStatisticsDialog(report) {
+      this.selectedRunId = report.runId;
+      this.analyzerStatisticsDialog = true;
     },
 
     closeCheckCommandDialog() {
