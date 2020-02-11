@@ -69,6 +69,32 @@
         </slot>
       </v-list-item>
     </v-list>
+
+    <v-card-actions>
+      <v-spacer />
+
+      <v-btn
+        color="grey"
+        text
+        @click="$emit('cancel')"
+      >
+        <v-icon left>
+          mdi-close-circle-outline
+        </v-icon>
+        Cancel
+      </v-btn>
+
+      <v-btn
+        color="primary"
+        text
+        @click="$emit('apply')"
+      >
+        <v-icon left>
+          mdi-check-circle-outline
+        </v-icon>
+        Apply
+      </v-btn>
+    </v-card-actions>
   </v-card>
 </template>
 

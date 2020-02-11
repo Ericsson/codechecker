@@ -31,6 +31,8 @@
           :selected-items="prevSelectedItems"
           :search="search"
           :multiple="multiple"
+          @apply="apply"
+          @cancel="cancel"
           @select="select"
         >
           <template v-slot:icon="{ item }">
@@ -78,23 +80,19 @@ export default {
   data() {
     return {
       menu: false,
-      prevSelectedItems: null
+      prevSelectedItems: null,
+      cancelled: false
     };
   },
 
   watch: {
     menu(show) {
       if (show) {
+        this.cancelled = false;
         this.prevSelectedItems =
           JSON.parse(JSON.stringify(this.selectedItems));
-      } else {
-        // TODO: check if the selected items are changed.
-        const changed = true;
-
-        if (!changed) return;
-
-        this.selectedItems.splice(0, this.selectedItems.length,
-          ...this.prevSelectedItems);
+      } else if (!this.cancelled) {
+        this.apply();
       }
     }
   },
@@ -109,6 +107,21 @@ export default {
   },
 
   methods: {
+    apply() {
+      // TODO: check if the selected items are changed.
+      const changed = true;
+
+      if (!changed) return;
+
+      this.selectedItems.splice(0, this.selectedItems.length,
+        ...this.prevSelectedItems);
+    },
+
+    cancel() {
+      this.cancelled = true;
+      this.menu = false;
+    },
+
     select(selectedItems) {
       this.prevSelectedItems = selectedItems;
     },
