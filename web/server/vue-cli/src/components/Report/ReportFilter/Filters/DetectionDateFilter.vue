@@ -1,6 +1,7 @@
 <template>
   <filter-toolbar
     title="Detection date"
+    @clear="clear"
   >
     <v-container
       class="py-0"
@@ -128,7 +129,6 @@ export default {
       }
 
       if (Object.keys(detectionDate).length) {
-        console.log(detectionDate);
         this.setReportFilter(detectionDate);
       }
 
@@ -165,6 +165,8 @@ export default {
     },
 
     clear() {
+      // TODO: this will not work.
+      // see: https://github.com/darrenfang/vuetify-datetime-picker/pull/51
       this.fromDateTime = null;
       this.toDateTime = null;
     }

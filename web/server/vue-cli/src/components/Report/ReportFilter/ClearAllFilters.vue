@@ -16,7 +16,7 @@ export default {
 
   methods: {
     clearAllFilters() {
-      console.log("Clear All Filters");
+      this.$emit("clear");
     }
   }
 }

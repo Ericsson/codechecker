@@ -1,6 +1,7 @@
 <template>
   <filter-toolbar
     title="Report hash filter"
+    @clear="clear"
   >
     <v-card-actions class="">
       <v-text-field
@@ -66,6 +67,10 @@ export default {
         resolve();
       });
     },
+
+    clear() {
+      this.reportHash = null;
+    }
   }
 }
 </script>

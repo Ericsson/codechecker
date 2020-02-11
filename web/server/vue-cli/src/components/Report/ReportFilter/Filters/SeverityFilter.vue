@@ -5,6 +5,7 @@
     :fetch-items="fetchItems"
     :loading="loading"
     :selected-items="selectedItems"
+    @clear="clear"
   >
     <template v-slot:icon="{ item }">
       <severity-icon :status="item.id" />

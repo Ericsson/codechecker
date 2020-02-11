@@ -74,6 +74,10 @@ export default {
       });
     },
 
-    fetchItems() {}
+    fetchItems() {},
+
+    clear() {
+      this.selectedItems = [];
+    }
   }
 }

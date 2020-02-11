@@ -6,6 +6,7 @@
     :selected-items="selectedItems"
     :loading="loading"
     :multiple="false"
+    @clear="clear"
   >
     <template v-slot:icon>
       <v-icon color="grey">

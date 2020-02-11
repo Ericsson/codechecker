@@ -1,6 +1,7 @@
 <template>
   <filter-toolbar
     :title="title"
+    @clear="clear"
   >
     <template v-slot:append-toolbar-items>
       <v-menu
@@ -95,7 +96,7 @@ export default {
       this.selectedItems.splice(0, this.selectedItems.length, ...selectedItems);
     },
     clear() {
-      this.selectedItems.splice(0, this.selectedItems.length);
+      this.$emit("clear");
     }
   }
 }

@@ -1,6 +1,7 @@
 <template>
   <filter-toolbar
     title="Bug path length"
+    @clear="clear"
   >
     <v-container
       class="py-0"

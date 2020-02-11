@@ -75,6 +75,8 @@ export default {
 
     fetchItems() {},
 
+    clear() {},
+
     onRunIdsChange(/* oldVal, newVal */) {
       this.fetchItems();
     },

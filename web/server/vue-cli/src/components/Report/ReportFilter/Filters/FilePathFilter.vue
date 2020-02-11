@@ -6,6 +6,7 @@
     :selected-items="selectedItems"
     :search="search"
     :loading="loading"
+    @clear="clear"
   >
     <template v-slot:icon>
       <v-icon color="grey">

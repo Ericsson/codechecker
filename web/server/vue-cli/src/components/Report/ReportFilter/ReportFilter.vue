@@ -14,7 +14,9 @@
     >
       <v-list-item class="pl-1">
         <v-list-item-action class="mr-5">
-          <clear-all-filters />
+          <clear-all-filters
+            @clear="clearAllFilters"
+          />
         </v-list-item-action>
 
         <v-spacer />
@@ -223,6 +225,14 @@ export default {
           return filter.afterUrlInit();
         });
         this.afterUrlInit();
+      });
+    },
+
+    clearAllFilters() {
+      const filters = this.$refs.filters;
+
+      filters.forEach((filter) => {
+        filter.clear();
       });
     }
   }
