@@ -13,7 +13,8 @@ import json
 import os
 import unittest
 
-from codeCheckerDBAccess_v6.ttypes import DetectionStatus, Encoding
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import DetectionStatus, \
+    Encoding
 
 from libtest import codechecker
 from libtest import env

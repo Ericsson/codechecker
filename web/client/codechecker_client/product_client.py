@@ -13,7 +13,7 @@ from __future__ import division
 import base64
 import sys
 
-from ProductManagement_v6.ttypes import DatabaseConnection, \
+from codechecker_api.ProductManagement_v6.ttypes import DatabaseConnection, \
     ProductConfiguration
 
 from codechecker_common import logger

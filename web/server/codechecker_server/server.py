@@ -40,10 +40,14 @@ from thrift.Thrift import TApplicationException
 from thrift.Thrift import TMessageType
 
 from codechecker_api_shared.ttypes import DBStatus
-from Authentication_v6 import codeCheckerAuthentication as AuthAPI_v6
-from Configuration_v6 import configurationService as ConfigAPI_v6
-from codeCheckerDBAccess_v6 import codeCheckerDBAccess as ReportAPI_v6
-from ProductManagement_v6 import codeCheckerProductService as ProductAPI_v6
+from codechecker_api.Authentication_v6 import \
+    codeCheckerAuthentication as AuthAPI_v6
+from codechecker_api.Configuration_v6 import \
+    configurationService as ConfigAPI_v6
+from codechecker_api.codeCheckerDBAccess_v6 import \
+    codeCheckerDBAccess as ReportAPI_v6
+from codechecker_api.ProductManagement_v6 import \
+    codeCheckerProductService as ProductAPI_v6
 
 from codechecker_common.logger import get_logger
 

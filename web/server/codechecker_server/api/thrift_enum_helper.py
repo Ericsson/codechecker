@@ -10,8 +10,8 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-from codeCheckerDBAccess_v6.ttypes import DetectionStatus, ReviewStatus, \
-    ExtendedReportDataType
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import DetectionStatus, \
+    ReviewStatus, ExtendedReportDataType
 
 
 def detection_status_enum(status):

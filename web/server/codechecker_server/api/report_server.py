@@ -27,12 +27,12 @@ from sqlalchemy.sql.expression import or_, and_, not_, func, \
     asc, desc, text, union_all, select, bindparam, literal_column, cast
 
 import codechecker_api_shared
-from codeCheckerDBAccess_v6 import constants, ttypes
-from codeCheckerDBAccess_v6.ttypes import BugPathPos, CheckerCount, \
-    CommentData, DiffType, Encoding, RunHistoryData, Order, ReportData, \
-    ReportDetails, ReviewData, RunData, RunFilter, RunReportCount, \
-    RunSortType, RunTagCount, SourceComponentData, SourceFileData, SortMode, \
-    SortType
+from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import BugPathPos, \
+    CheckerCount, CommentData, DiffType, Encoding, RunHistoryData, Order, \
+    ReportData, ReportDetails, ReviewData, RunData, RunFilter, \
+    RunReportCount, RunSortType, RunTagCount, SourceComponentData, \
+    SourceFileData, SortMode, SortType
 
 from codechecker_common import plist_parser, skiplist_handler
 from codechecker_common.source_code_comment_handler import \

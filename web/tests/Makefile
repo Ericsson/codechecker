@@ -46,10 +46,10 @@ PYLINT_TEST_CMD = PYLINTRC=$(ROOT)/.pylintrc \
     ./server/bin/** ./server/codechecker_server ./server/tests/unit \
     ./tests/functional ./tests/libtest ./tests/tools
 
-pylint: thrift
+pylint:
 	$(PYLINT_TEST_CMD)
 
-pylint_in_env: thrift
+pylint_in_env:
 	$(ACTIVATE_DEV_VENV) && $(PYLINT_TEST_CMD)
 
 CODECHECKER_CMD = $(BUILD_DIR)/CodeChecker/bin/CodeChecker

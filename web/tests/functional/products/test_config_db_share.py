@@ -22,8 +22,8 @@ import unittest
 
 from codechecker_api_shared.ttypes import Permission
 
-from ProductManagement_v6.ttypes import ProductConfiguration
-from ProductManagement_v6.ttypes import DatabaseConnection
+from codechecker_api.ProductManagement_v6.ttypes import ProductConfiguration
+from codechecker_api.ProductManagement_v6.ttypes import DatabaseConnection
 
 from libtest import codechecker
 from libtest import env

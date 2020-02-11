@@ -19,8 +19,8 @@ import unittest
 
 from codechecker_api_shared.ttypes import RequestFailed
 from codechecker_api_shared.ttypes import DBStatus
-from ProductManagement_v6.ttypes import ProductConfiguration
-from ProductManagement_v6.ttypes import DatabaseConnection
+from codechecker_api.ProductManagement_v6.ttypes import ProductConfiguration
+from codechecker_api.ProductManagement_v6.ttypes import DatabaseConnection
 
 from libtest import env
 

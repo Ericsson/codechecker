@@ -65,9 +65,6 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update-reset; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install doxygen; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install llvm@9; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install thrift@0.9; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/usr/local/Cellar/thrift@0.9/0.9.3.1/bin:$PATH; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then which thrift; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/usr/local/opt/llvm@9/bin:$PATH; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PYTHONPATH=~/llvm/tools/scan-build-py/; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=~/llvm/tools/scan-build-py/bin:$PATH; fi

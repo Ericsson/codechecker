@@ -13,7 +13,7 @@ from __future__ import division
 from thrift.transport import THttpClient
 from thrift.protocol import TJSONProtocol
 
-from Configuration_v6 import configurationService
+from codechecker_api.Configuration_v6 import configurationService
 
 from codechecker_common.logger import get_logger
 

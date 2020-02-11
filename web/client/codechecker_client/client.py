@@ -16,7 +16,7 @@ import sys
 from thrift.Thrift import TApplicationException
 
 import codechecker_api_shared
-from Authentication_v6 import ttypes as AuthTypes
+from codechecker_api.Authentication_v6 import ttypes as AuthTypes
 
 from codechecker_common.logger import get_logger
 

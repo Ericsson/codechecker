@@ -121,8 +121,9 @@ class CCViewerHelper(ThriftAPIHelper):
     def __init__(self, protocol, host, port, product, endpoint,
                  auto_handle_connection=True, session_token=None):
         # Import only if necessary; some tests may not add this to PYTHONPATH.
-        from codeCheckerDBAccess_v6 import codeCheckerDBAccess
-        from codeCheckerDBAccess_v6.constants import MAX_QUERY_SIZE
+        from codechecker_api.codeCheckerDBAccess_v6 import codeCheckerDBAccess
+        from codechecker_api.codeCheckerDBAccess_v6.constants \
+            import MAX_QUERY_SIZE
         from codechecker_client.credential_manager import SESSION_COOKIE_NAME
 
         self.max_query_size = MAX_QUERY_SIZE
@@ -176,7 +177,7 @@ class CCAuthHelper(ThriftAPIHelper):
     def __init__(self, proto, host, port, uri, auto_handle_connection=True,
                  session_token=None):
         # Import only if necessary; some tests may not add this to PYTHONPATH.
-        from Authentication_v6 import codeCheckerAuthentication
+        from codechecker_api.Authentication_v6 import codeCheckerAuthentication
         from codechecker_client.credential_manager import SESSION_COOKIE_NAME
         url = create_product_url(proto, host, port, '/v' + VERSION + uri)
         transport = THttpClient.THttpClient(url)
@@ -198,7 +199,8 @@ class CCProductHelper(ThriftAPIHelper):
                  uri, auto_handle_connection=True,
                  session_token=None):
         # Import only if necessary; some tests may not add this to PYTHONPATH.
-        from ProductManagement_v6 import codeCheckerProductService
+        from codechecker_api.ProductManagement_v6 \
+            import codeCheckerProductService
         from codechecker_client.credential_manager import SESSION_COOKIE_NAME
         full_uri = '/v' + VERSION + uri
         if product:
@@ -222,7 +224,7 @@ class CCConfigHelper(ThriftAPIHelper):
     def __init__(self, proto, host, port, uri, auto_handle_connection=True,
                  session_token=None):
 
-        from Configuration_v6 import configurationService
+        from codechecker_api.Configuration_v6 import configurationService
         from codechecker_client.credential_manager import SESSION_COOKIE_NAME
 
         full_uri = '/v' + VERSION + uri

@@ -22,7 +22,7 @@ from libtest import codechecker
 from libtest.debug_printer import print_run_results
 from libtest.thrift_client_to_db import get_all_run_results
 
-from codeCheckerDBAccess_v6.ttypes import DetectionStatus
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import DetectionStatus
 
 
 class TestUpdate(unittest.TestCase):

@@ -39,12 +39,7 @@ def run_codechecker(checker_env, subcommand=None):
                               'lib',
                               'python2.7')
 
-    gen_lib = os.path.join(package_root,
-                           'lib',
-                           'python2.7',
-                           'codechecker_api')
-
-    checker_env['PYTHONPATH'] = common_lib + ':' + gen_lib
+    checker_env['PYTHONPATH'] = common_lib
 
     checker_env['CC_PACKAGE_ROOT'] = \
         os.path.realpath(os.path.join(package_bin, os.pardir))

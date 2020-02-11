@@ -20,9 +20,9 @@ import re
 import subprocess
 import unittest
 
-from codeCheckerDBAccess_v6.ttypes import CompareData, DiffType, Order, \
-    ReportFilter, ReviewStatus, RunHistoryFilter, RunSortMode, RunSortType, \
-    Severity
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import CompareData, \
+    DiffType, Order, ReportFilter, ReviewStatus, RunHistoryFilter, \
+    RunSortMode, RunSortType, Severity
 
 from libtest import env
 from libtest.debug_printer import print_run_results

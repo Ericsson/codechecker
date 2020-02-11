@@ -18,8 +18,8 @@ import unittest
 
 from libtest import env
 
-from codeCheckerDBAccess_v6.ttypes import Encoding, LinesInFilesRequested, \
-    Order, ReportFilter, RunSortMode, RunSortType
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import Encoding, \
+    LinesInFilesRequested, Order, ReportFilter, RunSortMode, RunSortType
 
 
 class TestGetLinesInFile(unittest.TestCase):

@@ -31,11 +31,6 @@ include server/tests/Makefile
 pip_dev_deps:
 	pip install -r $(VENV_DEV_REQ_FILE)
 
-thrift: build_dir
-	if [ -d "$(BUILD_DIR)/thrift" ]; then rm -rf $(BUILD_DIR)/thrift; fi
-	mkdir $(BUILD_DIR)/thrift
-	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CURRENT_DIR)/api/
-
 venv_dev:
 	# Create a virtual environment for development.
 	virtualenv -p python2 venv_dev && \
@@ -51,12 +46,6 @@ package_dir_structure:
 	mkdir -p $(BUILD_DIR) && \
 	mkdir -p $(CC_BUILD_DIR)/bin && \
 	mkdir -p $(CC_BUILD_LIB_DIR)
-
-package_thrift: thrift package_dir_structure
-	mkdir -p $(CC_BUILD_API_DIR) && \
-	mkdir -p $(CC_BUILD_GEN_DIR) && \
-	cp -r $(BUILD_DIR)/thrift/v*/gen-py/* $(CC_BUILD_GEN_DIR) && \
-	cp -r $(BUILD_DIR)/thrift/v*/gen-js/* $(CC_BUILD_API_DIR)
 
 gen_docs: build_dir
 	cd $(ROOT) && \
@@ -91,7 +80,7 @@ package_vendor: package_dir_structure
 # This target should be used from the top level Makefile to build the package
 # together with the analyzer part. This way we will not build plist-to-html
 # multiple times.
-package_web: package_thrift package_userguide package_vendor package_docs
+package_web: package_dir_structure package_userguide package_vendor package_docs
 
 build_plist_to_html:
 	$(MAKE) -C $(ROOT)/tools/plist_to_html build

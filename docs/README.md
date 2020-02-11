@@ -86,7 +86,7 @@ The following commands are used to bootstrap CodeChecker on Ubuntu 18.04 LTS:
 # Install mandatory dependencies for a development and analysis environment.
 # NOTE: clang or clang-tidy can be replaced by any later versions of LLVM/Clang.
 sudo apt-get install clang clang-tidy build-essential curl doxygen gcc-multilib \
-      git python-virtualenv python-dev thrift-compiler
+      git python-virtualenv python-dev
 
 # Check out CodeChecker source code.
 git clone https://github.com/Ericsson/CodeChecker.git --depth 1 ~/codechecker
@@ -155,11 +155,6 @@ pip2 install virtualenv
 
 # Install the latest clang see: https://formulae.brew.sh/formula/llvm
 brew install llvm@7
-
-# Install Thrift 0.9.3 (Note: the general Thrift version is 0.10.0 on macOS High Sierra 10.13)
-brew unlink thrift
-brew install thrift@0.9
-# Put the installed `thrift` binary into your PATH; either run `brew link --force thrift@0.9` or follow the message printed by brew during install
 
 # Fetch source code.
 git clone https://github.com/Ericsson/CodeChecker.git --depth 1 ~/codechecker

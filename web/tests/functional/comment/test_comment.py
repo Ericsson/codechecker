@@ -16,7 +16,8 @@ import os
 import unittest
 
 from codechecker_api_shared.ttypes import RequestFailed
-from codeCheckerDBAccess_v6.ttypes import CommentData, CommentKind
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import CommentData, \
+    CommentKind
 
 from libtest import env
 from libtest.thrift_client_to_db import get_all_run_results

@@ -1,0 +1,28 @@
+{
+  "name": "codechecker-api-js",
+  "version": "6.25.0",
+  "description": "Generated jQuery compatible API stubs for CodeChecker server.",
+  "main": "lib",
+  "homepage": "https://github.com/Ericsson/codechecker",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/Ericsson/codechecker/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ericsson/codechecker.git",
+    "directory": "web/api"
+  },
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "codechecker",
+    "thrift",
+    "api"
+  ],
+  "dependencies": {
+    "thrift": "0.9.2"
+  }
+}
