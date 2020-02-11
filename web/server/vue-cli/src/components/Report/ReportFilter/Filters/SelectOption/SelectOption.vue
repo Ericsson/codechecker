@@ -28,7 +28,7 @@
 
         <items
           :items="items"
-          :selected-items="selectedItems"
+          :selected-items="prevSelectedItems"
           :search="search"
           :multiple="multiple"
           @select="select"
@@ -77,10 +77,27 @@ export default {
   },
   data() {
     return {
-      menu: false
+      menu: false,
+      prevSelectedItems: null
     };
   },
 
+  watch: {
+    menu(show) {
+      if (show) {
+        this.prevSelectedItems =
+          JSON.parse(JSON.stringify(this.selectedItems));
+      } else {
+        // TODO: check if the selected items are changed.
+        const changed = true;
+
+        if (!changed) return;
+
+        this.selectedItems.splice(0, this.selectedItems.length,
+          ...this.prevSelectedItems);
+      }
+    }
+  },
   created() {
     const unwatch = this.$watch("menu", () => {
       if (!this.items.length) {
@@ -93,7 +110,7 @@ export default {
 
   methods: {
     select(selectedItems) {
-      this.selectedItems.splice(0, this.selectedItems.length, ...selectedItems);
+      this.prevSelectedItems = selectedItems;
     },
     clear() {
       this.$emit("clear");
