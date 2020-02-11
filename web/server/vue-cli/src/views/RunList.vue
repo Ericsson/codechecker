@@ -61,14 +61,10 @@
             <v-spacer />
 
             <v-col align="right">
-              <v-btn
-                color="error"
-                class="mr-2"
-                outlined
-                @click="removeSelectedRuns"
-              >
-                Delete
-              </v-btn>
+              <delete-run-btn
+                :selected="selected"
+                @on-confirm="fetchRuns"
+              />
 
               <v-btn
                 color="primary"
@@ -241,7 +237,8 @@
 <script>
 import {
   AnalyzerStatisticsBtn,
-  AnalyzerStatisticsDialog
+  AnalyzerStatisticsDialog,
+  DeleteRunBtn
 } from "@/components/Run";
 import { DetectionStatusMixin, StrToColorMixin } from "@/mixins";
 import { DetectionStatusIcon } from "@/components/icons";
@@ -259,6 +256,7 @@ export default {
   components: {
     AnalyzerStatisticsBtn,
     AnalyzerStatisticsDialog,
+    DeleteRunBtn,
     DetectionStatusIcon
   },
 
@@ -436,16 +434,6 @@ export default {
     closeCheckCommandDialog() {
       this.showCheckCommandDialog = false;
       this.checkCommand = null;
-    },
-
-    removeSelectedRuns() {
-      const runFilter = new RunFilter({
-        ids: this.selected.map((run) => run.runId)
-      });
-
-      ccService.getClient().removeRun(null, runFilter, () => {
-        this.fetchRuns();
-      });
     },
 
     diffSelectedRuns() {
