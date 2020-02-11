@@ -53,7 +53,7 @@ export default {
 
     getUrlState() {
       return {
-        [this.id]: this.reportHash
+        [this.id]: this.reportHash ? this.reportHash : undefined
       };
     },
 
