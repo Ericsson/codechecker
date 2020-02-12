@@ -82,6 +82,7 @@ IGNORED_OPTIONS_GCC = [
     '-fno-aggressive-loop-optimizations',
     '-fno-delete-null-pointer-checks',
     '-fno-jump-table',
+    '-fno-keep-static-consts',
     '-fno-strength-reduce',
     '-fno-toplevel-reorder',
     '-fno-unit-at-a-time',
