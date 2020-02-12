@@ -34,7 +34,8 @@ export default {
     return {
       id: "checker-msg",
       search: {
-        placeHolder : "Search for checker messages (e.g.: *deref*)...",
+        placeHolder: "Search for checker messages (e.g.: *deref*)...",
+        regexLabel: "Filter by wildcard pattern (e.g.: *deref*)",
         filterItems: this.filterItems
       }
     };

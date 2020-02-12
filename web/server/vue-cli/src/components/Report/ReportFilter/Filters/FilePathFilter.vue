@@ -34,7 +34,8 @@ export default {
     return {
       id: "filepath",
       search: {
-        placeHolder : "Search for files (e.g.: */src/*)...",
+        placeHolder: "Search for files (e.g.: */src/*)...",
+        regexLabel: "Filter by wildcard pattern (e.g.: */src/*)",
         filterItems: this.filterItems
       }
     };

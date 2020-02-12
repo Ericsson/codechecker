@@ -34,7 +34,8 @@ export default {
     return {
       id: "run",
       search: {
-        placeHolder : "Search for run names (e.g.: myrun*)...",
+        placeHolder: "Search for run names (e.g.: myrun*)...",
+        regexLabel: "Filter by wildcard pattern (e.g.: myrun*)",
         filterItems: this.filterItems
       }
     };

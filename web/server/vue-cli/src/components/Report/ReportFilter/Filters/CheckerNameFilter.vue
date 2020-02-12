@@ -34,7 +34,8 @@ export default {
     return {
       id: "checker-name",
       search: {
-        placeHolder : "Search for checker names (e.g.: core*)...",
+        placeHolder: "Search for checker names (e.g.: core*)...",
+        regexLabel: "Filter by wildcard pattern (e.g.: core*)",
         filterItems: this.filterItems
       }
     };

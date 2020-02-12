@@ -7,6 +7,7 @@
       flat
     >
       <v-text-field
+        v-model="searchTxt"
         hide-details
         prepend-icon="mdi-magnify"
         single-line
@@ -19,6 +20,38 @@
       class="pa-2"
       dense
     >
+      <v-list-item-group
+        v-if="searchTxt && search.regexLabel"
+        v-model="selectedRgx"
+        active-class="white--text"
+        lighten-4
+      >
+        <v-list-item
+          class="my-1 regex-label"
+          :value="searchTxt"
+          dark
+        >
+          <template v-slot:default="{ active }">
+            <v-list-item-action class="ma-1 mr-5">
+              <v-checkbox
+                :input-value="active"
+                color="#28a745"
+              />
+            </v-list-item-action>
+
+            <v-list-item-icon class="ma-1 mr-2">
+              <v-icon>mdi-regex</v-icon>
+            </v-list-item-icon>
+
+            <v-list-item-content>
+              <v-list-item-title>
+                {{ search.regexLabel }}: {{ searchTxt }}
+              </v-list-item-title>
+            </v-list-item-content>
+          </template>
+        </v-list-item>
+      </v-list-item-group>
+
       <v-list-item-group
         v-if="items.length"
         v-model="selected"
@@ -107,11 +140,18 @@ export default {
     multiple: { type: Boolean, default: true },
     search: { type: Object, default: null },
   },
+
+  data() {
+    return {
+      searchTxt: null,
+    };
+  },
+
   computed: {
     selected: {
       get() {
         const ids = this.selectedItems.map((item) => item.id);
-        return this.multiple ? ids : ids[0]
+        return this.multiple ? ids : ids[0];
       },
       set(value) {
         const values = this.multiple ? value : [ value ];
@@ -119,10 +159,32 @@ export default {
           return values.includes(item.id);
         });
 
-        this.$emit("select", selectedItems)
+        this.$emit("select", selectedItems);
+      }
+    },
+
+    selectedRgx: {
+      get() {
+        return this.selectedItems.find((item) => item.id === this.searchTxt)
+          ? this.searchTxt
+          : null;
+      },
+      set(value) {
+        const selectedItems = [ ...this.selectedItems ];
+        const idx =
+          selectedItems.findIndex((item) => item.id === this.searchTxt);
+
+        if (!value && idx !== -1) {
+          selectedItems.splice(idx, 1);
+        } else if (value && idx === -1) {
+          selectedItems.push({ id: value, title: value });
+        }
+
+        this.$emit("select", selectedItems);
       }
     }
   },
+
   methods: {
     filter(value) {
       this.search.filterItems(value);
@@ -130,3 +192,10 @@ export default {
   }
 }
 </script>
+
+<style lang="scss">
+.regex-label {
+  background-color: var(--v-primary-base);
+  color: white;
+}
+</style>
