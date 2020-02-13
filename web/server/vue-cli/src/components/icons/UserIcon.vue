@@ -6,7 +6,7 @@
     class="my-1"
     :tile="tile"
   >
-    <span class="white--text headline">
+    <span :class="txtClass">
       {{ userIconName }}
     </span>
   </v-avatar>
@@ -21,7 +21,8 @@ export default {
   props: {
     value: { type: String, required: true },
     size: { type: Number, default: 48 },
-    tile: { type: Boolean, default: false }
+    tile: { type: Boolean, default: false },
+    txtClass: { type: String, default: "font-weight-bold white--text title" },
   },
   computed: {
     userIconName() {

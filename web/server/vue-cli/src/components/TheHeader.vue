@@ -60,6 +60,15 @@
       {{ item.name }}
     </v-btn>
 
+    <v-divider
+      v-if="menuItems.length"
+      class="mx-2"
+      inset
+      vertical
+    />
+
+    <user-info-menu />
+
     <v-menu offset-y>
       <template v-slot:activator="{ on }">
         <v-btn
@@ -79,11 +88,13 @@
 import { confService } from "@cc-api";
 
 import HeaderMenuItems from "./HeaderMenuItems";
+import UserInfoMenu from "./UserInfoMenu";
 
 export default {
   name: "TheHeader",
   components: {
-    HeaderMenuItems
+    HeaderMenuItems,
+    UserInfoMenu
   },
   data() {
     return {
