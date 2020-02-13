@@ -24,6 +24,10 @@ export default {
         this.setCmpData(null);
       }
     },
+
+    onReportFilterChange() {
+      this.fetchItems();
+    },
   }
 }
 </script>

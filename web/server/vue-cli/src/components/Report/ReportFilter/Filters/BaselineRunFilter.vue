@@ -80,7 +80,9 @@ export default {
 
     onRunIdsChange() {},
 
-    onReportFilterChange() {
+    onReportFilterChange(key) {
+      if (key === "runName" || !this.selectedItems.length) return;
+
       this.fetchItems();
     },
 
