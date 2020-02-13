@@ -66,6 +66,12 @@ export default {
       });
     },
 
+    onReportFilterChange(key) {
+      if (key === "componentNames" || !this.selectedItems.length) return;
+
+      this.fetchItems();
+    },
+
     fetchItems(search=null) {
       this.loading = true;
 
