@@ -74,6 +74,7 @@
 
 <script>
 import { UserIcon } from "@/components/icons";
+import { LOGOUT } from "@/store/actions.type";
 
 export default {
   name: "UserInfoMenu",
@@ -87,10 +88,15 @@ export default {
       permissions: ["Admin", "Store", "Access"] // TODO: get these from server.
     };
   },
-
   methods: {
     logOut() {
-      // TODO: implement this.
+      this.$store
+        .dispatch(LOGOUT)
+        .then(
+      () => {
+        this.$router.push({ name: "login" });
+        this.menu = false;
+      });
     }
   }
 }

@@ -67,7 +67,9 @@
       vertical
     />
 
-    <user-info-menu />
+    <user-info-menu
+      v-if="isAuthenticated"
+    />
 
     <v-menu offset-y>
       <template v-slot:activator="{ on }">
@@ -85,6 +87,7 @@
 </template>
 
 <script>
+import { mapGetters } from "vuex";
 import { confService } from "@cc-api";
 
 import HeaderMenuItems from "./HeaderMenuItems";
@@ -135,6 +138,10 @@ export default {
   },
 
   computed: {
+    ...mapGetters([
+      'isAuthenticated'
+    ]),
+
     menuItems() {
       if (!this.$route.name) return [];
 
