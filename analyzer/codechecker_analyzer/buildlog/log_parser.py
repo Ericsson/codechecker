@@ -217,6 +217,15 @@ COMPILE_OPTIONS_MERGED = [
     '-iwithprefixbefore'
 ]
 
+INCLUDE_OPTIONS_MERGED = [
+    '-iquote',
+    '-[IF]',
+    '-isystem',
+    '-iprefix',
+    '-iwithprefix',
+    '-iwithprefixbefore'
+]
+
 XCLANG_FLAGS_TO_SKIP = ['-module-file-info',
                         '-S',
                         '-emit-llvm',
@@ -227,6 +236,10 @@ XCLANG_FLAGS_TO_SKIP = ['-module-file-info',
 
 COMPILE_OPTIONS_MERGED = \
     re.compile('(' + '|'.join(COMPILE_OPTIONS_MERGED) + ')')
+
+INCLUDE_OPTIONS_MERGED = \
+    re.compile('(' + '|'.join(INCLUDE_OPTIONS_MERGED) + ')')
+
 
 PRECOMPILATION_OPTION = re.compile('-(E|M[G|T|Q|F|J|P|V|M]*)$')
 
@@ -1046,6 +1059,34 @@ def parse_options(compilation_db_entry,
         for lang, includes in details['compiler_includes'].items():
             details['compiler_includes'][lang] = \
                 filter(__contains_no_intrinsic_headers, includes)
+
+        # filter out intrin directories
+        aop_without_intrin = []
+        analyzer_options = iter(details['analyzer_options'])
+
+        for aopt in analyzer_options:
+            m = INCLUDE_OPTIONS_MERGED.match(aopt)
+            if m:
+                flag = m.group(0)
+                together = len(flag) != len(aopt)
+
+                if together:
+                    value = aopt[len(flag):]
+                else:
+                    flag = aopt
+                    value = analyzer_options.next()
+                if os.path.isdir(value) and __contains_no_intrinsic_headers(
+                        value) or not os.path.isdir(value):
+                    if together:
+                        aop_without_intrin.append(aopt)
+                    else:
+                        aop_without_intrin.append(flag)
+                        aop_without_intrin.append(value)
+            else:
+                # no match
+                aop_without_intrin.append(aopt)
+
+        details['analyzer_options'] = aop_without_intrin
 
     return BuildAction(**details)
 

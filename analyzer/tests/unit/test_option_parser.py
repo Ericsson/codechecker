@@ -487,6 +487,31 @@ class OptionParserTest(unittest.TestCase):
         self.assertTrue(any(map(lambda x: x.endswith('include-fixed'),
                                 res.compiler_includes['c++'])))
 
+    def test_compiler_intrin_headers(self):
+        """ Include directories with *intrin.h files should be skipped."""
+
+        action = {
+            'file': 'main.cpp',
+            'directory': '',
+            'command': 'g++ main.cpp'
+        }
+        with tempfile.NamedTemporaryFile(suffix="test-intrin.h") as tmpintrin:
+            intrin_dir = os.path.dirname(tmpintrin.name)
+            include_dirs = ["-I", intrin_dir, "-I" + intrin_dir,
+                            "-isystem", intrin_dir, "-isystem" + intrin_dir,
+                            "-I/usr/include"]
+            action['command'] = "g++ " + ' '.join(include_dirs)
+
+            print(action)
+
+            res = log_parser.parse_options(action, keep_gcc_intrin=False)
+            print(res)
+            self.assertEquals(len(res.analyzer_options), 1)
+            self.assertIn("-I/usr/include", res.analyzer_options)
+
+            res = log_parser.parse_options(action, keep_gcc_intrin=True)
+            self.assertEquals(include_dirs, res.analyzer_options)
+
     @unittest.skipIf(clangsa.version.get("g++") is not None,
                      "If gcc or g++ is a symlink to clang this test should be "
                      "skipped. Option filtering is different for the two "
