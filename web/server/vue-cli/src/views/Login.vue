@@ -13,6 +13,7 @@
               name="username"
               prepend-icon="mdi-account"
               type="text"
+              @keyup.enter="login"
             />
 
             <v-text-field
@@ -22,12 +23,16 @@
               name="password"
               prepend-icon="mdi-lock"
               type="password"
+              @keyup.enter="login"
             />
           </v-form>
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn color="primary" @click="login">
+          <v-btn
+            color="primary"
+            @click="login"
+          >
             Login
           </v-btn>
         </v-card-actions>
@@ -56,10 +61,13 @@ export default {
   },
 
   methods: {
-    login(username, password) {
+    login() {
       this.$store
-        .dispatch(LOGIN, { username, password })
-        .then(() => this.$router.push({ name: "products" }));
+        .dispatch(LOGIN, { username: this.username, password: this.password })
+        .then(() => this.$router.push({ name: "products" }))
+        .catch((err) => {
+          console.log(err);
+        });
     }
   }
 };

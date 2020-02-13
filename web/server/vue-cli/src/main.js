@@ -9,6 +9,7 @@ import "splitpanes/dist/splitpanes.css";
 import Vue from "vue";
 import vuetify from "@/plugins/vuetify";
 import DatetimePicker from "vuetify-datetime-picker";
+import { CHECK_AUTH_PARAMS } from "@/store/actions.type";
 
 import router from "./router";
 import store from "./store";
@@ -19,7 +20,7 @@ Vue.use(DatetimePicker);
 
 import App from "./App.vue";
 
-import { eventHub } from "@cc-api/_base.service";
+import { eventHub } from "@cc-api";
 
 import "@/variables.scss";
 
@@ -34,15 +35,19 @@ router.beforeResolve((to, from, next) => {
     eventHub.$emit("update", to.params.endpoint);
   }
 
-  if(to.matched.some(record => record.meta.requiresAuth)) {
-    if (store.getters.isAuthenticated) {
-      next()
-      return
+  store.dispatch(CHECK_AUTH_PARAMS).then(() => {
+    if(to.matched.some(record => record.meta.requiresAuth)) {
+      if (store.getters.isAuthenticated ||
+          !store.getters.authParams.requiresAuthentication
+      ) {
+        next();
+        return;
+      }
+      next("/login");
+    } else {
+      next();
     }
-    next("/login")
-  } else {
-    next()
-  }
+  });
 });
 
 new Vue({

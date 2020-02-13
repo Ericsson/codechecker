@@ -46,30 +46,32 @@
 
     <v-spacer />
 
-    <v-btn
-      v-for="item in menuItems"
-      :key="item.name"
-      :to="{ name: item.route }"
-      :class="$route.name === item.route && 'v-btn--active router-link-active'"
-      exact
-      text
+    <span
+      v-if="showMenuItems"
     >
-      <v-icon left>
-        {{ item.icon }}
-      </v-icon>
-      {{ item.name }}
-    </v-btn>
+      <v-btn
+        v-for="item in menuItems"
+        :key="item.name"
+        :to="{ name: item.route }"
+        :class="$route.name === item.route && 'v-btn--active router-link-active'"
+        exact
+        text
+      >
+        <v-icon left>
+          {{ item.icon }}
+        </v-icon>
+        {{ item.name }}
+      </v-btn>
 
-    <v-divider
-      v-if="menuItems.length"
-      class="mx-2"
-      inset
-      vertical
-    />
+      <v-divider
+        v-if="menuItems.length"
+        class="mx-2"
+        inset
+        vertical
+      />
 
-    <user-info-menu
-      v-if="isAuthenticated"
-    />
+      <user-info-menu />
+    </span>
 
     <v-menu offset-y>
       <template v-slot:activator="{ on }">
@@ -107,31 +109,31 @@ export default {
           name: "Products",
           icon: "mdi-briefcase-outline",
           route: "products",
-          hide: [ "products" ]
+          hide: [ "products", "login" ]
         },
         {
           name: "Runs",
           icon: "mdi-run-fast",
           route: "runs",
-          hide: [ "products" ]
+          hide: [ "products", "login" ]
         },
         {
           name: "Run history",
           icon: "mdi-history",
           route: "run-history",
-          hide: [ "products" ]
+          hide: [ "products", "login" ]
         },
         {
           name: "Statistics",
           icon: "mdi-chart-line",
           route: "statistics",
-          hide: [ "products" ]
+          hide: [ "products", "login" ]
         },
         {
           name: "Reports",
           icon: "mdi-clipboard-text-multiple-outline",
           route: "reports",
-          hide: [ "products" ]
+          hide: [ "products", "login" ]
         }
       ]
     };
@@ -139,7 +141,8 @@ export default {
 
   computed: {
     ...mapGetters([
-      'isAuthenticated'
+      "authParams",
+      "isAuthenticated"
     ]),
 
     menuItems() {
@@ -148,6 +151,11 @@ export default {
       return this.menuButtons.filter((item) => {
         return !item.hide || !item.hide.includes(this.$route.name);
       });
+    },
+
+    showMenuItems() {
+      return this.authParams && !this.authParams.requiresAuthentication ||
+        this.isAuthenticated;
     }
   },
 

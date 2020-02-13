@@ -1,15 +1,32 @@
 const ID_TOKEN_KEY = "__ccPrivilegedAccessToken";
 
+function setCookie(name, value, expires) {
+  const props = { path: "/" };
+
+  if (expires) {
+    const d = new Date();
+    d.setTime(d.getTime() + (expires * 24 * 60 * 60 * 1000));
+    props["expires"] = d.toUTCString();
+  }
+
+  const properties = Object.keys(props).map((k, v) => `${k}=${v}`).join(";");
+  document.cookie = `${name}=${value};${properties}`;
+}
+
 export const getToken = () => {
-  return window.localStorage.getItem(ID_TOKEN_KEY);
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${ID_TOKEN_KEY}=`);
+  if (parts.length == 2) return parts.pop().split(";").shift();
+
+  return null;
 };
 
 export const saveToken = token => {
-  window.localStorage.setItem(ID_TOKEN_KEY, token);
+  setCookie(ID_TOKEN_KEY, token);
 };
 
 export const destroyToken = () => {
-  window.localStorage.removeItem(ID_TOKEN_KEY);
+  setCookie(ID_TOKEN_KEY, "LOGGED_OUT", -1);
 };
 
 export default { getToken, saveToken, destroyToken };
