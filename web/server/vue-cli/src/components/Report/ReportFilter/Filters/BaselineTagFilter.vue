@@ -81,6 +81,12 @@ export default {
       this.setReportFilter({ runTag: selectedTagIds });
     },
 
+    onReportFilterChange(key) {
+      if (key === "runTag" || !this.selectedItems.length) return;
+
+      this.fetchItems();
+    },
+
     fetchItems(search=null) {
       this.loading = true;
 
