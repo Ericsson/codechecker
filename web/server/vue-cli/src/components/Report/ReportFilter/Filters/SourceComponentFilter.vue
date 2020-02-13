@@ -1,23 +1,41 @@
 <template>
-  <select-option
-    title="Source component"
-    :items="items"
-    :fetch-items="fetchItems"
-    :selected-items="selectedItems"
-    :search="search"
-    :loading="loading"
-    @clear="clear"
+  <manage-source-component-dialog
+    :value.sync="dialog"
   >
-    <template v-slot:icon>
-      <v-icon color="grey">
-        mdi-puzzle-outline
-      </v-icon>
-    </template>
-  </select-option>
+    <select-option
+      title="Source component"
+      :items="items"
+      :fetch-items="fetchItems"
+      :selected-items="selectedItems"
+      :search="search"
+      :loading="loading"
+      @clear="clear"
+    >
+      <template v-slot:prepend-toolbar-items>
+        <v-btn
+          icon
+          small
+          @click="dialog = true"
+        >
+          <v-icon>mdi-pencil</v-icon>
+        </v-btn>
+      </template>
+
+      <template v-slot:icon>
+        <v-icon color="grey">
+          mdi-puzzle-outline
+        </v-icon>
+      </template>
+    </select-option>
+  </manage-source-component-dialog>
 </template>
 
 <script>
 import { ccService } from "@cc-api";
+
+import {
+  ManageSourceComponentDialog
+} from "@/components/Report/SourceComponent";
 
 import SelectOption from "./SelectOption/SelectOption";
 import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
@@ -25,6 +43,7 @@ import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
 export default {
   name: "SourceComponentFilter",
   components: {
+    ManageSourceComponentDialog,
     SelectOption
   },
   mixins: [ BaseSelectOptionFilterMixin ],
@@ -35,7 +54,8 @@ export default {
       search: {
         placeHolder : "Search for source components...",
         filterItems: this.filterItems
-      }
+      },
+      dialog: false
     };
   },
 
