@@ -1,3 +1,4 @@
-export const CHECK_AUTH_PARAMS = "checkAuthParams";
+export const GET_AUTH_PARAMS = "getAuthParameters";
+export const GET_LOGGED_IN_USER = "getLoggedInUser";
 export const LOGIN = "login";
 export const LOGOUT = "logout";

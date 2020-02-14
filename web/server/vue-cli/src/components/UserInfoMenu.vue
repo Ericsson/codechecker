@@ -12,12 +12,13 @@
         v-on="on"
       >
         <user-icon
-          :value="userName"
+          v-if="currentUser"
+          :value="currentUser"
           :size="24"
           class="mr-2"
           txt-class="font-weight-bold white--text"
         />
-        {{ userName }}
+        {{ currentUser }}
       </v-btn>
     </template>
 
@@ -26,13 +27,13 @@
         <v-list-item>
           <v-list-item-avatar>
             <user-icon
-              :value="userName"
+              :value="currentUser"
             />
           </v-list-item-avatar>
 
           <v-list-item-content>
             <v-list-item-title class="headline">
-              {{ userName }}
+              {{ currentUser }}
             </v-list-item-title>
           </v-list-item-content>
         </v-list-item>
@@ -73,8 +74,10 @@
 </template>
 
 <script>
+import { mapGetters, mapActions } from "vuex";
+
 import { UserIcon } from "@/components/icons";
-import { LOGOUT } from "@/store/actions.type";
+import { GET_LOGGED_IN_USER, LOGOUT } from "@/store/actions.type";
 
 export default {
   name: "UserInfoMenu",
@@ -84,11 +87,24 @@ export default {
   data() {
     return {
       menu: false,
-      userName: "TestUser",
       permissions: ["Admin", "Store", "Access"] // TODO: get these from server.
     };
   },
+  computed: {
+    ...mapGetters([
+      "currentUser"
+    ])
+  },
+
+  created() {
+    this.getLoggedInUser();
+  },
+
   methods: {
+    ...mapActions([
+      GET_LOGGED_IN_USER
+    ]),
+
     logOut() {
       this.$store
         .dispatch(LOGOUT)

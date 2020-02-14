@@ -62,16 +62,19 @@
         </v-icon>
         {{ item.name }}
       </v-btn>
-
-      <v-divider
-        v-if="menuItems.length"
-        class="mx-2"
-        inset
-        vertical
-      />
-
-      <user-info-menu />
     </span>
+
+    <v-divider
+      v-if="isAuthenticated && menuItems.length"
+      class="mx-2"
+      inset
+      vertical
+      :style="{ display: 'inline' }"
+    />
+
+    <user-info-menu
+      v-if="isAuthenticated"
+    />
 
     <v-menu offset-y>
       <template v-slot:activator="{ on }">
