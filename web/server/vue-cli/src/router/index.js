@@ -19,38 +19,6 @@ export default new Router({
       component: () => import("@/views/Login")
     },
     {
-      path: "/permission",
-      name: "global-permission",
-      meta: {
-        requiresAuth: true
-      },
-      component: () => import("@/views/Permission")
-    },
-    {
-      path: "/p/new",
-      name: "product-new",
-      meta: {
-        requiresAuth: true
-      },
-      component: () => import("@/views/ProductNew")
-    },
-    {
-      path: "/p/edit/:endpoint",
-      name: "product-edit",
-      meta: {
-        requiresAuth: true
-      },
-      component: () => import("@/views/ProductEdit")
-    },
-    {
-      path: "/p/permissions/:endpoint",
-      name: "product-permission",
-      meta: {
-        requiresAuth: true
-      },
-      component: () => import("@/views/ProductPermission")
-    },
-    {
       path: "/:endpoint",
       meta: {
         requiresAuth: true
