@@ -6,6 +6,13 @@
           <v-toolbar-title>Login</v-toolbar-title>
         </v-toolbar>
         <v-card-text>
+          <alerts
+            :success="success"
+            success-msg="Successfully logged in!"
+            :error="error"
+            :error-msg="errorMsg"
+          />
+
           <v-form>
             <v-text-field
               v-model="username"
@@ -45,12 +52,20 @@
 import { mapState } from "vuex";
 import { LOGIN } from "@/store/actions.type";
 
+import Alerts from "@/components/Alerts";
+
 export default {
   name: "Login",
+  components: {
+    Alerts
+  },
   data() {
     return {
       username: null,
-      password: null
+      password: null,
+      success: false,
+      error: false,
+      errorMsg: null
     };
   },
 
@@ -64,9 +79,14 @@ export default {
     login() {
       this.$store
         .dispatch(LOGIN, { username: this.username, password: this.password })
-        .then(() => this.$router.push({ name: "products" }))
-        .catch((err) => {
-          console.log(err);
+        .then(() => {
+          this.success = true;
+          this.error = false;
+
+          this.$router.push({ name: "products" });
+        }).catch((err) => {
+          this.errorMsg = `Failed to log in! ${err.message}`;
+          this.error = true;
         });
     }
   }
