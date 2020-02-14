@@ -171,14 +171,14 @@ analyzer arguments:
                         and overwrites only those files that were update by
                         the current build command).
   --report-hash {context-free}
-                        EXPERIMENTAL feature. Specify the hash calculation
-                        method for reports. If this option is not set, the
-                        default calculation method for Clang Static Analyzer
-                        will be context sensitive and for Clang Tidy it will
-                        be context insensitive. If this option is set to
-                        'context-free' bugs will be identified with the
-                        CodeChecker generated context free hash for every
-                        analyzers. USE WISELY AND AT YOUR OWN RISK!
+                        Specify the hash calculation method for reports. If
+                        this option is not set, the default calculation method
+                        for Clang Static Analyzer will be context sensitive
+                        and for Clang Tidy it will be context insensitive. If
+                        this option is set to 'context-free' bugs will be
+                        identified with the CodeChecker generated context free
+                        hash for every analyzers. USE WISELY AND AT YOUR OWN
+                        RISK!
   -i SKIPFILE, --ignore SKIPFILE, --skip SKIPFILE
                         Path to the Skipfile dictating which project files
                         should be omitted from analysis. Please consult the
@@ -497,14 +497,14 @@ optional arguments:
                         given. The whole compilation action text is searched
                         for match. (default: none)
   --report-hash {context-free}
-                        EXPERIMENTAL feature. Specify the hash calculation
-                        method for reports. If this option is not set, the
-                        default calculation method for Clang Static Analyzer
-                        will be context sensitive and for Clang Tidy it will
-                        be context insensitive. If this option is set to
-                        'context-free' bugs will be identified with the
-                        CodeChecker generated context free hash for every
-                        analyzers. USE WISELY AND AT YOUR OWN RISK!
+                        Specify the hash calculation method for reports. If
+                        this option is not set, the default calculation method
+                        for Clang Static Analyzer will be context sensitive
+                        and for Clang Tidy it will be context insensitive. If
+                        this option is set to 'context-free' bugs will be
+                        identified with the CodeChecker generated context free
+                        hash for every analyzers. USE WISELY AND AT YOUR OWN
+                        RISK!
   -n NAME, --name NAME  Annotate the run analysis with a custom name in the
                         created metadata file.
   --verbose {info,debug,debug_analyzer}
