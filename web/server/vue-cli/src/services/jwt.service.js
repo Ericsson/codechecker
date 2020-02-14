@@ -26,7 +26,7 @@ export const saveToken = token => {
 };
 
 export const destroyToken = () => {
-  setCookie(ID_TOKEN_KEY, "LOGGED_OUT", -1);
+  setCookie(ID_TOKEN_KEY, "", -1);
 };
 
 export default { getToken, saveToken, destroyToken };

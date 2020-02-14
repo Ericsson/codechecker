@@ -1,7 +1,7 @@
 
 import JwtService from "@/services/jwt.service";
 
-import { CHECK_AUTH, CHECK_AUTH_PARAMS, LOGIN, LOGOUT } from "../actions.type";
+import { CHECK_AUTH_PARAMS, LOGIN, LOGOUT } from "../actions.type";
 import {
   PURGE_AUTH,
   SET_AUTH,
@@ -55,19 +55,6 @@ const actions = {
         }
       });
     });
-  },
-  [CHECK_AUTH](context) {
-    if (JwtService.getToken()) {
-      return new Promise(resolve => {
-        // TODO: get data from Thrift and handler errors.
-        const data = { user: "test" };
-
-        context.commit(SET_AUTH, data.user);
-        resolve(data);
-      });
-    } else {
-      context.commit(PURGE_AUTH);
-    }
   },
   [CHECK_AUTH_PARAMS](context) {
     if (state.authParams) return;

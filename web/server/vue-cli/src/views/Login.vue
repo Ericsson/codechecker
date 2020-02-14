@@ -49,7 +49,7 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
+import { mapGetters } from "vuex";
 import { LOGIN } from "@/store/actions.type";
 
 import Alerts from "@/components/Alerts";
@@ -70,9 +70,15 @@ export default {
   },
 
   computed: {
-    ...mapState({
-      errors: state => state.auth.errors
-    })
+    ...mapGetters([
+      "isAuthenticated"
+    ])
+  },
+
+  created() {
+    if (this.isAuthenticated) {
+      this.$router.replace({ name: "products" });
+    }
   },
 
   methods: {
