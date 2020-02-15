@@ -157,7 +157,7 @@ import { ccService } from "@cc-api";
 import { Encoding, ReviewData } from "@cc/report-server-types";
 
 import { FillHeight } from "@/directives";
-import { UserIcon } from "@/components/icons";
+import { UserIcon } from "@/components/Icons";
 
 import ReportTreeKind from "@/components/Report/ReportTree/ReportTreeKind";
 

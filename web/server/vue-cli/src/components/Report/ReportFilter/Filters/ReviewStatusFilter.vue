@@ -17,7 +17,7 @@
 import { ccService } from "@cc-api";
 
 import { ReportFilter, ReviewStatus } from "@cc/report-server-types";
-import { ReviewStatusIcon } from "@/components/icons";
+import { ReviewStatusIcon } from "@/components/Icons";
 import { ReviewStatusMixin } from "@/mixins";
 
 import SelectOption from "./SelectOption/SelectOption";

@@ -115,7 +115,7 @@
 
 <script>
 import { ccService } from "@cc-api";
-import { AnalyzerStatisticsIcon } from "@/components/icons";
+import { AnalyzerStatisticsIcon } from "@/components/Icons";
 
 export default {
   name: "DeleteProductBtn",

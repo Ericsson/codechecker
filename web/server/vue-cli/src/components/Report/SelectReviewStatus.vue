@@ -97,7 +97,7 @@
 <script>
 import { ReviewStatus } from "@cc/report-server-types";
 
-import { ReviewStatusIcon } from "@/components/icons";
+import { ReviewStatusIcon } from "@/components/Icons";
 
 function reviewStatusFromCodeToString(reviewCode) {
   switch (parseInt(reviewCode)) {

@@ -17,7 +17,7 @@
 import { ccService } from "@cc-api";
 
 import { DetectionStatus, ReportFilter } from "@cc/report-server-types";
-import { DetectionStatusIcon } from "@/components/icons";
+import { DetectionStatusIcon } from "@/components/Icons";
 import { DetectionStatusMixin } from "@/mixins";
 
 import SelectOption from "./SelectOption/SelectOption";

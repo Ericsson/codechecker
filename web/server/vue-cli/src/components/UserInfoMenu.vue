@@ -76,7 +76,7 @@
 <script>
 import { mapGetters, mapActions } from "vuex";
 
-import { UserIcon } from "@/components/icons";
+import { UserIcon } from "@/components/Icons";
 import { GET_LOGGED_IN_USER, LOGOUT } from "@/store/actions.type";
 
 export default {

@@ -32,7 +32,7 @@
 </template>
 
 <script>
-import { ReportStepEnumIcon } from "@/components/icons";
+import { ReportStepEnumIcon } from "@/components/Icons";
 
 export default {
   name: "EditorBugStep",

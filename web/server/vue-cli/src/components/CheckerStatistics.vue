@@ -22,7 +22,7 @@ import {
   ReviewStatus
 } from "@cc/report-server-types";
 
-import { SeverityIcon } from "@/components/icons";
+import { SeverityIcon } from "@/components/Icons";
 
 export default {
   name: "CheckerStatistics",

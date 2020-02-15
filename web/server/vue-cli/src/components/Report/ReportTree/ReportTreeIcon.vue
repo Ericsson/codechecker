@@ -69,7 +69,7 @@ import {
   DetectionStatusIcon,
   ReportStepEnumIcon,
   SeverityIcon
-} from "@/components/icons";
+} from "@/components/Icons";
 
 import ReportTreeKind from "./ReportTreeKind";
 import ReportStepIcon from "./ReportStepIcon";

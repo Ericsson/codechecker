@@ -62,9 +62,9 @@ import { ccService } from "@cc-api";
 
 import { FillHeight } from "@/directives";
 import { BugPathLengthColorMixin } from "@/mixins";
-import { DetectionStatusIcon } from "@/components/icons";
-import { ReviewStatusIcon } from "@/components/icons";
-import { SeverityIcon } from "@/components/icons";
+import { DetectionStatusIcon } from "@/components/Icons";
+import { ReviewStatusIcon } from "@/components/Icons";
+import { SeverityIcon } from "@/components/Icons";
 
 import { ReportFilter } from "@/components/Report/ReportFilter";
 

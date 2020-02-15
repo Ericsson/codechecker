@@ -48,7 +48,7 @@
 </template>
 
 <script>
-import { UserIcon } from "@/components/icons";
+import { UserIcon } from "@/components/Icons";
 import EditCommentBtn from "./EditCommentBtn";
 import RemoveCommentBtn from "./RemoveCommentBtn";
 

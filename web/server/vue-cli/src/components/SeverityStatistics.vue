@@ -17,7 +17,7 @@
 <script>
 import { ccService } from "@cc-api";
 
-import { SeverityIcon } from "@/components/icons";
+import { SeverityIcon } from "@/components/Icons";
 
 export default {
   name: "SeverityStatistics",

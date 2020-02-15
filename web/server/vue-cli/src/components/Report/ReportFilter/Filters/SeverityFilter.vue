@@ -17,7 +17,7 @@
 import { ccService } from "@cc-api";
 
 import { ReportFilter, Severity } from "@cc/report-server-types";
-import { SeverityIcon } from "@/components/icons";
+import { SeverityIcon } from "@/components/Icons";
 import { SeverityMixin } from "@/mixins";
 
 import SelectOption from "./SelectOption/SelectOption";

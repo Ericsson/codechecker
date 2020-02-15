@@ -241,7 +241,7 @@ import {
   DeleteRunBtn
 } from "@/components/Run";
 import { DetectionStatusMixin, StrToColorMixin } from "@/mixins";
-import { DetectionStatusIcon } from "@/components/icons";
+import { DetectionStatusIcon } from "@/components/Icons";
 
 import { ccService } from "@cc-api";
 import {

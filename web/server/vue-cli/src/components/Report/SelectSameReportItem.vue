@@ -16,7 +16,7 @@
 </template>
 
 <script>
-import { DetectionStatusIcon } from "@/components/icons";
+import { DetectionStatusIcon } from "@/components/Icons";
 import { BugPathLengthColorMixin } from "@/mixins";
 
 export default {
