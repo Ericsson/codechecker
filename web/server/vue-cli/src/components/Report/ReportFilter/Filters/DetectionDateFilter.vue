@@ -13,20 +13,10 @@
           md="6"
           class="py-0"
         >
-          <v-datetime-picker
+          <date-time-picker
             v-model="fromDateTime"
             label="Detection date"
-            date-format="yyyy-MM-dd"
-            time-format="HH:mm:ss"
-            :time-picker-props="timeProps"
-          >
-            <template slot="dateIcon">
-              <v-icon>mdi-calendar</v-icon>
-            </template>
-            <template slot="timeIcon">
-              <v-icon>mdi-clock-outline</v-icon>
-            </template>
-          </v-datetime-picker>
+          />
         </v-col>
 
         <v-col
@@ -35,20 +25,10 @@
           md="6"
           class="py-0"
         >
-          <v-datetime-picker
+          <date-time-picker
             v-model="toDateTime"
             label="Fix date"
-            date-format="yyyy-MM-dd"
-            time-format="HH:mm:ss"
-            :time-picker-props="timeProps"
-          >
-            <template slot="dateIcon">
-              <v-icon>mdi-calendar</v-icon>
-            </template>
-            <template slot="timeIcon">
-              <v-icon>mdi-clock-outline</v-icon>
-            </template>
-          </v-datetime-picker>
+          />
         </v-col>
       </v-row>
     </v-container>
@@ -56,12 +36,16 @@
 </template>
 
 <script>
+import { format } from "date-fns";
+
+import DateTimePicker from "@/components/DateTimePicker";
 import BaseFilterMixin from "./BaseFilter.mixin";
 import FilterToolbar from "./Layout/FilterToolbar";
 
 export default {
   name: "DetectionDateFilter",
   components: {
+    DateTimePicker,
     FilterToolbar
   },
   mixins: [ BaseFilterMixin ],
@@ -70,11 +54,7 @@ export default {
       fromDateTimeId: "first-detection-date",
       toDateTimeId: "fix-date",
       fromDateTime: null,
-      toDateTime: null,
-      timeProps: {
-        useSeconds: true,
-        ampmInTitle: true
-      }
+      toDateTime: null
     };
   },
 
@@ -136,15 +116,7 @@ export default {
     },
 
     dateTimeToStr(date) {
-      const year = date.getFullYear();
-      const month = ("0" + (date.getMonth() + 1)).slice(-2);
-      const day = ("0" + (date.getDate() + 1)).slice(-2);
-
-      const hour = ("0" + date.getHours()).slice(-2);
-      const min = ("0" + date.getMinutes()).slice(-2);
-      const sec = ("0" + date.getSeconds()).slice(-2);
-
-      return `${year}-${month}-${day} ${hour}:${min}:${sec}`;
+      return format(date, "yyyy-MM-dd HH:mm:ss", new Date());
     },
 
     // Returns UTC timestamp of the parameter.

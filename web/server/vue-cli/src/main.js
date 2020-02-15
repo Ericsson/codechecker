@@ -8,7 +8,6 @@ import "splitpanes/dist/splitpanes.css";
 
 import Vue from "vue";
 import vuetify from "@/plugins/vuetify";
-import DatetimePicker from "vuetify-datetime-picker";
 import { GET_AUTH_PARAMS } from "@/store/actions.type";
 
 import router from "./router";
@@ -16,7 +15,6 @@ import store from "./store";
 import filters from "./filters";
 
 Vue.use(filters);
-Vue.use(DatetimePicker);
 
 import App from "./App.vue";
 
