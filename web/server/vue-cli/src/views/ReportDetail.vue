@@ -131,6 +131,7 @@ export default {
 
       const reportFilter = new ReportFilter({
         ...this.reportFilter,
+        isUnique: false,
         reportHash: [ reportHash ]
       });
 
