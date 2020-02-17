@@ -14,7 +14,7 @@
         v-for="item in selected"
         :key="item.id"
         :value="item"
-        class="pa-0 ma-0"
+        class="selected-item pa-0 px-1 ma-0 mb-1"
         dense
       >
         <v-list-item-icon class="ma-1 mr-2">
@@ -25,9 +25,21 @@
           <v-list-item-title v-text="item.title" />
         </v-list-item-content>
 
-        <v-chip color="#878d96" outlined small>
+        <v-chip
+          class="report-count"
+          color="#878d96"
+          outlined
+          small
+        >
           {{ item.count === undefined ? "N/A" : item.count }}
         </v-chip>
+
+        <v-icon
+          class="remove-btn font-weight-bold"
+          color="error"
+        >
+          mdi-close
+        </v-icon>
       </v-list-item>
     </v-list-item-group>
   </v-list>
@@ -61,5 +73,34 @@ export default {
 <style lang="sass" scoped>
 ::v-deep .v-list-item.v-list-item--dense {
   min-height: 30px;
+}
+
+.selected-item {
+  border: 1px solid var(--v-grey-lighten2);
+
+  &:before {
+    content: "";
+    display: block;
+    background-color: var(--v-primary-base);
+    border-radius: 4px;
+  }
+
+  &:hover:before {
+    background-color: var(--v-error-base);
+  }
+
+  .remove-btn {
+    display:none;
+  }
+
+  &:hover {
+    .report-count {
+      display: none;
+    }
+
+    .remove-btn {
+      display: block;
+    }
+  }
 }
 </style>
