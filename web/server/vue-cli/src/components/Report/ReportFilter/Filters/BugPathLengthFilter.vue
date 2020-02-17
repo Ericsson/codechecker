@@ -16,7 +16,6 @@
           <v-text-field
             v-model="minBugPathLength"
             label="Min..."
-            :hide-details="true"
           />
         </v-col>
 
@@ -29,7 +28,6 @@
           <v-text-field
             v-model="maxBugPathLength"
             label="Max..."
-            :hide-details="true"
           />
         </v-col>
       </v-row>
