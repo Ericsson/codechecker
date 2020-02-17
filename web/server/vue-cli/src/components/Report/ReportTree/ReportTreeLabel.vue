@@ -5,7 +5,7 @@
   </span>
 
   <span v-else-if="item.kind === ReportTreeKind.REPORT_STEPS">
-    L{{ item.step.startLine }} &ndash; {{ item.step.msg }}
+    {{ fileName }}{{ item.step.startLine }} &ndash; {{ item.step.msg }}
   </span>
 
   <span v-else-if="item.kind === ReportTreeKind.BUG">
@@ -42,6 +42,10 @@ export default {
     };
   },
   computed: {
+    fileName() {
+      return this.item.shortFileName ? `${this.item.shortFileName}:` : "L";
+    },
+
     isExtendedReportData() {
       return this.item.kind === ReportTreeKind.MACRO_EXPANSION ||
              this.item.kind === ReportTreeKind.NOTE;
