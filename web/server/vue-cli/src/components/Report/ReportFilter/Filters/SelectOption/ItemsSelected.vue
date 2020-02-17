@@ -63,7 +63,7 @@ export default {
         return this.selectedItems;
       },
       set(value) {
-        this.$emit("select", value)
+        this.$emit("update:select", value)
       }
     }
   }

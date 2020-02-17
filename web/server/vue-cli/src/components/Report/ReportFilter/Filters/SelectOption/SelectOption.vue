@@ -51,7 +51,7 @@
 
     <items-selected
       :selected-items="selectedItems"
-      @select="select"
+      @update:select="updateSelectedItems"
     >
       <template v-slot:icon="{ item }">
         <slot name="icon" :item="item" />
@@ -117,8 +117,7 @@ export default {
 
       if (!changed) return;
 
-      this.selectedItems.splice(0, this.selectedItems.length,
-        ...this.prevSelectedItems);
+      this.updateSelectedItems(this.prevSelectedItems);
     },
 
     cancel() {
@@ -129,6 +128,12 @@ export default {
     select(selectedItems) {
       this.prevSelectedItems = selectedItems;
     },
+
+    updateSelectedItems(selectedItems) {
+      this.selectedItems.splice(0, this.selectedItems.length,
+        ...selectedItems);
+    },
+
     clear() {
       this.$emit("clear");
     }
