@@ -16,7 +16,9 @@
         item-key="name"
       >
         <template #item.bugHash="{ item }">
-          {{ item.bugHash | truncate(10) }}
+          <span :title="item.bugHash">
+            {{ item.bugHash | truncate(10) }}
+          </span>
         </template>
 
         <template #item.checkedFile="{ item }">
