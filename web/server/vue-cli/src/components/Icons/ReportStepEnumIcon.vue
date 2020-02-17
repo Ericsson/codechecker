@@ -1,7 +1,7 @@
 <template>
   <v-avatar
     :color="color"
-    size="28"
+    size="24"
   >
     <span class="caption white--text">{{ index }}</span>
   </v-avatar>
