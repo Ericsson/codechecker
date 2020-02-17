@@ -62,7 +62,7 @@ class ThriftAPIHelper(object):
                 print('Unauthorized to access')
                 print(str(reqfailure.message))
             else:
-                print('API call error ' + reqfailure.error_code +
+                print('API call error ' + reqfailure.errorCode +
                       ': ' + func_name)
                 print(str(reqfailure))
 
