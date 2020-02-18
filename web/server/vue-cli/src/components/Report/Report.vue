@@ -339,6 +339,10 @@ export default {
       });
     },
 
+    isSameFile (filePath) {
+      return filePath.fileId === this.sourceFile.fileId;
+    },
+
     async drawBugPath() {
       this.clearBubbles();
       this.clearLines();
@@ -352,21 +356,19 @@ export default {
         });
       });
 
-      const points = reportDetail.executionPath.filter((path) => {
-        return path.fileId.equals(this.sourceFile.fileId);
-      });
-      const bubbles = reportDetail.pathEvents.map((event, index) => {
+      const isSameFile = (path) => path.fileId.equals(this.sourceFile.fileId);
+
+      const events = reportDetail.pathEvents.map((event, index) => {
         const id = ReportTreeKind.getId(ReportTreeKind.REPORT_STEPS,
           this.report, index);
 
         return { ...event, $id: id };
-      }).filter((path) => {
-        return path.fileId.equals(this.sourceFile.fileId);
-      });
+      }).filter(isSameFile);
 
-      this.addBubbles(bubbles);
+      this.addEvents(events);
 
       if (this.showArrows) {
+        const points = reportDetail.executionPath.filter(isSameFile);
         this.addLines(points);
       }
     },
@@ -388,23 +390,23 @@ export default {
       this.resetJsPlumb();
     },
 
-    addBubbles(bubbles) {
+    addEvents(events) {
       this.editor.operation(() => {
-        bubbles.forEach((bubble, index) => {
-          if (!bubble.fileId.equals(this.sourceFile.fileId)) return;
+        events.forEach((event, index) => {
+          if (!event.fileId.equals(this.sourceFile.fileId)) return;
 
-          var isResult = index === bubbles.length - 1;
+          var isResult = index === events.length - 1;
           const type = isResult
-            ? "error" : bubble.msg.indexOf(" (fixit)") > -1
+            ? "error" : event.msg.indexOf(" (fixit)") > -1
             ? "fixit" : "info";
 
           const marginLeft =
-            this.editor.defaultCharWidth() * bubble.startCol + "px";
+            this.editor.defaultCharWidth() * event.startCol + "px";
 
           const widget = new ReportStepMessageClass({
             propsData: {
-              id: bubble.$id,
-              value: bubble.msg,
+              id: event.$id,
+              value: event.msg,
               marginLeft: marginLeft,
               type: type,
               index: index + 1
@@ -413,7 +415,7 @@ export default {
           widget.$mount();
 
           this.lineWidgets.push(this.editor.addLineWidget(
-            bubble.startLine.toNumber() - 1, widget.$el));
+            event.startLine.toNumber() - 1, widget.$el));
         });
       });
     },

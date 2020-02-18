@@ -119,7 +119,8 @@ function formatExtendedReportDataChildren(report, extendedData, kind) {
       id: ReportTreeKind.getId(kind, report, index),
       name: data.message,
       kind: kind,
-      data: data
+      data: data,
+      report: report
     };
   });
 }
