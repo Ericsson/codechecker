@@ -109,12 +109,12 @@
         >
           <v-col
             cols="auto"
-            class="py-0"
+            class="file-path py-0"
             align-self="center"
           >
             <span
               v-if="sourceFile"
-              class="file-path"
+              :title="sourceFile.filePath"
             >
               {{ sourceFile.filePath }}
             </span>
@@ -556,12 +556,20 @@ export default {
 #editor-wrapper {
   border: 1px solid #d8dbe0;
 
-  >.header {
+  .header {
     background-color: var(--v-grey-lighten3);
 
     .file-path {
       font-family: monospace;
       color: var(--v-grey-darken4);
+
+      max-width: 50%;
+      display: inline-block;
+      text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      direction: rtl;
     }
   }
 
