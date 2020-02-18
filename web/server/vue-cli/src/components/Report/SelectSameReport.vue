@@ -98,8 +98,8 @@ export default {
       });
     },
 
-    selectSameReport(value) {
-      console.log("Select same report", value);
+    selectSameReport(reportId) {
+      this.$emit("update:report", reportId);
     }
   }
 }

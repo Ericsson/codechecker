@@ -64,7 +64,7 @@ export default {
       openedItems: [],
       activeItems: [],
       runId: null,
-      checkedFile: null
+      fileId: null
     };
   },
 
@@ -95,13 +95,13 @@ export default {
       // If the runId or the checkedFile are not changed, we should not load
       // the reports.
       if (this.runId && this.runId.equals(this.report.runId) ||
-          this.checkedFile && this.checkedFile.equals(this.report.checkedFile)
+          this.fileId && this.fileId.equals(this.report.fileId)
       ) {
         return;
       }
 
       this.runId = this.report.runId;
-      this.checkedFile = this.report.checkedFile;
+      this.fileId = this.report.fileId;
 
       this.items = JSON.parse(JSON.stringify(ReportTreeRootItem));
 

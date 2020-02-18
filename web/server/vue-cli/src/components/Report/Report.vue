@@ -131,6 +131,7 @@
               <select-same-report
                 class="ml-2"
                 :report="report"
+                @update:report="(reportId) => $emit('update:report', reportId)"
               />
             </v-row>
           </v-col>

@@ -41,6 +41,7 @@
       <report
         :tree-item="treeItem"
         @toggle:comments="showComments = !showComments"
+        @update:report="loadReport"
       />
     </pane>
 
