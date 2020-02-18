@@ -16,7 +16,7 @@ import unittest
 
 from codechecker_api_shared.ttypes import Permission
 
-from codeCheckerDBAccess_v6.ttypes import ReportFilter
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import ReportFilter
 
 from libtest import env
 

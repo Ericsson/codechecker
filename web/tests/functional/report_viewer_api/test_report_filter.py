@@ -15,8 +15,8 @@ import logging
 import os
 import unittest
 
-from codeCheckerDBAccess_v6.ttypes import BugPathLengthRange, ReportFilter, \
-    ReviewStatus, Severity, RunSortMode, RunSortType, Order
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import BugPathLengthRange, \
+    ReportFilter, ReviewStatus, Severity, RunSortMode, RunSortType, Order
 
 from libtest import env
 

@@ -13,8 +13,8 @@ from __future__ import absolute_import
 import json
 import codechecker_api_shared
 
-from Authentication_v6.ttypes import AuthorisationList, HandshakeInformation, \
-    SessionTokenData
+from codechecker_api.Authentication_v6.ttypes import AuthorisationList, \
+    HandshakeInformation, SessionTokenData
 
 from codechecker_common.logger import get_logger
 

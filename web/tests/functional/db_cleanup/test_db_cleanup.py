@@ -18,7 +18,7 @@ import os
 import unittest
 from shutil import copyfile, rmtree
 
-from codeCheckerDBAccess_v6.ttypes import RunFilter, Severity
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import RunFilter, Severity
 
 from libtest import codechecker
 from libtest import env

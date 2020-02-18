@@ -25,7 +25,7 @@ import time
 
 from plist_to_html import PlistToHtml
 
-from codeCheckerDBAccess_v6 import constants, ttypes
+from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
 from codechecker_api_shared.ttypes import RequestFailed
 
 from codechecker_common import logger

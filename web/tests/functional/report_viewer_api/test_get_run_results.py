@@ -18,8 +18,8 @@ import os
 import re
 import unittest
 
-from codeCheckerDBAccess_v6.ttypes import Encoding, Order, ReportFilter, \
-    SortMode, SortType, RunSortMode, RunSortType
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import Encoding, Order, \
+    ReportFilter, SortMode, SortType, RunSortMode, RunSortType
 
 from libtest.debug_printer import print_run_results
 from libtest.thrift_client_to_db import get_all_run_results

@@ -13,8 +13,8 @@ import json
 import os
 import unittest
 
-from codeCheckerDBAccess_v6.ttypes import Order, ReportFilter, RunSortMode, \
-    RunSortType
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import Order, \
+    ReportFilter, RunSortMode, RunSortType
 
 from libtest import codechecker
 from libtest import env

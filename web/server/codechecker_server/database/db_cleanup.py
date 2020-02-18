@@ -16,7 +16,7 @@ from datetime import datetime, timedelta
 import sqlalchemy
 from sqlalchemy.sql.expression import bindparam, union_all, select, cast
 
-from codeCheckerDBAccess_v6.ttypes import Severity
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import Severity
 
 from codechecker_common.logger import get_logger
 

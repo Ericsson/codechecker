@@ -17,8 +17,8 @@ import unittest
 
 from libtest import env
 
-from codeCheckerDBAccess_v6.ttypes import DetectionStatus, Order, \
-    ReportFilter, RunFilter, RunSortMode, RunSortType
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import DetectionStatus, \
+    Order, ReportFilter, RunFilter, RunSortMode, RunSortType
 
 
 class TestRunData(unittest.TestCase):

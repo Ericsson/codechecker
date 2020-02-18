@@ -23,7 +23,7 @@ from uuid import uuid4
 from libtest import env
 from libtest import codechecker
 
-from codeCheckerDBAccess_v6.ttypes import Encoding, RunFilter
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import Encoding, RunFilter
 
 
 def _generate_content(cols, lines):

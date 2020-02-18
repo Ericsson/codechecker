@@ -18,7 +18,7 @@ import subprocess
 from subprocess import CalledProcessError
 import unittest
 
-from codeCheckerDBAccess_v6.ttypes import ReviewStatus
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import ReviewStatus
 
 from libtest import env
 from libtest import codechecker

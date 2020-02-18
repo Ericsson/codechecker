@@ -16,8 +16,8 @@ import os
 import sys
 import unittest
 
-from codeCheckerDBAccess_v6.ttypes import Order, ReportFilter, RunFilter, \
-    RunSortMode, RunSortType
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import Order, \
+    ReportFilter, RunFilter, RunSortMode, RunSortType
 
 from libtest import codechecker
 from libtest import env

@@ -17,7 +17,7 @@ import random
 from sqlalchemy.sql.expression import and_
 
 import codechecker_api_shared
-from ProductManagement_v6 import ttypes
+from codechecker_api.ProductManagement_v6 import ttypes
 
 from codechecker_common.logger import get_logger
 

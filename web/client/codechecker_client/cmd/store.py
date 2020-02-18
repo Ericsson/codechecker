@@ -22,7 +22,7 @@ import tempfile
 import zipfile
 import zlib
 
-from codeCheckerDBAccess_v6.ttypes import StoreLimitKind
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import StoreLimitKind
 from codechecker_api_shared.ttypes import RequestFailed, ErrorCode
 
 from codechecker_client import client as libclient

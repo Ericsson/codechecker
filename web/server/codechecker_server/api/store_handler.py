@@ -20,7 +20,7 @@ import zlib
 import sqlalchemy
 
 import codechecker_api_shared
-from codeCheckerDBAccess_v6 import ttypes
+from codechecker_api.codeCheckerDBAccess_v6 import ttypes
 
 from codechecker_common.logger import get_logger
 from codechecker_common.util import load_json_or_empty
