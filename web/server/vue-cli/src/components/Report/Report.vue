@@ -389,7 +389,13 @@ export default {
         const id = ReportTreeKind.getId(ReportTreeKind.REPORT_STEPS,
           this.report, index);
 
-        return { ...event, $id: id, $message: event.msg };
+        return {
+          ...event,
+          $id: id,
+          $message: event.msg,
+          $index: index + 1,
+          $isResult: index === reportDetail.pathEvents.length - 1
+        };
       }).filter(isSameFile);
 
       this.addEvents(events);
@@ -438,13 +444,12 @@ export default {
 
     addEvents(events) {
       this.editor.operation(() => {
-        events.forEach((event, index) => {
-          var isResult = index === events.length - 1;
-          const type = isResult
+        events.forEach((event) => {
+          const type = event.$isResult
             ? "error" : event.msg.indexOf(" (fixit)") > -1
             ? "fixit" : "info";
 
-          const props = { type: type, index: index + 1 };
+          const props = { type: type, index: event.$index };
           this.addLineWidget(event, props);
         });
       });
