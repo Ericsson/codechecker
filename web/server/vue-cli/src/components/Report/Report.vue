@@ -127,7 +127,11 @@
             class="py-0"
             align-self="center"
           >
-            <v-row align="center">
+            <v-row
+              align="center"
+              class="text-no-wrap"
+            >
+              Also found in:
               <select-same-report
                 class="ml-2"
                 :report="report"
@@ -563,7 +567,7 @@ export default {
       font-family: monospace;
       color: var(--v-grey-darken4);
 
-      max-width: 50%;
+      max-width: 40%;
       display: inline-block;
       text-align: left;
       white-space: nowrap;

@@ -3,12 +3,14 @@
     v-model="active"
     :items="items"
     :hide-details="true"
+    class="small"
     label="Also found in"
     item-text="label"
     item-value="id"
     height="0"
+    flat
     dense
-    outlined
+    solo
     @input="selectSameReport"
   >
     <template v-slot:selection="{ item }">
@@ -106,6 +108,16 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.v-input.small {
+  ::v-deep .v-input__control {
+    min-height: 30px;
+
+    & > .v-input__slot {
+      min-height: 30px;
+    }
+  }
+}
+
 ::v-deep .v-select__selections input {
   display: none;
 }
