@@ -5,16 +5,22 @@
     :color="color"
     :text-color="textColor"
     :step-id="id"
+    :type="type"
     :style="{ 'margin-left': marginLeft }"
   >
-    <v-avatar left>
-      <report-step-enum-icon
-        :type="type"
-        :index="index"
-      />
-    </v-avatar>
+    <report-step-enum-icon
+      :type="type"
+      :index="index"
+      class="mr-1"
+    />
 
-    <v-btn left text icon small>
+    <v-btn
+      v-if="showArrows"
+      left
+      text
+      icon
+      small
+    >
       <v-icon>
         mdi-chevron-left
       </v-icon>
@@ -23,7 +29,13 @@
 
     {{ value }}
 
-    <v-btn right text icon small>
+    <v-btn
+      v-if="showArrows"
+      right
+      text
+      icon
+      small
+    >
       <v-icon>
         mdi-chevron-right
       </v-icon>
@@ -44,7 +56,8 @@ export default {
     value: { type: String, required: true },
     marginLeft: { type: String, default: "" },
     type: { type: String, default: null },
-    index: { type: Number, default: null }
+    index: { type: [ Number, String ], default: null },
+    showArrows: { type: Boolean, default: true }
   },
   computed: {
     color() {
@@ -53,6 +66,10 @@ export default {
           return "#f2dede";
         case "fixit":
           return "#fcf8e3";
+        case "macro":
+          return "#d7dac2";
+        case "note":
+          return "#d7d7d7";
         default:
           return "#bfdfe9";
       }
@@ -63,6 +80,10 @@ export default {
           return "#a94442";
         case "fixit":
           return "#8a6d3b";
+        case "macro":
+          return "#4f5c6d";
+        case "note":
+          return "#4f5c6d";
         default:
           return "#00546f";
       }

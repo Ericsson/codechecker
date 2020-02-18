@@ -155,7 +155,11 @@ import CodeMirror from "codemirror";
 import { jsPlumb } from "jsplumb";
 
 import { ccService } from "@cc-api";
-import { Encoding, ReviewData } from "@cc/report-server-types";
+import {
+  Encoding,
+  ExtendedReportDataType,
+  ReviewData
+} from "@cc/report-server-types";
 
 import { FillHeight } from "@/directives";
 import { UserIcon } from "@/components/Icons";
@@ -247,6 +251,8 @@ export default {
     init(treeItem) {
       if (treeItem.step) {
         this.loadReportStep(treeItem.report, treeItem.step);
+      } else if (treeItem.data) {
+        this.loadReportStep(treeItem.report, treeItem.data);
       } else {
         this.loadReport(treeItem.report);
       }
@@ -267,7 +273,7 @@ export default {
       }
 
       this.jumpTo(step.startLine.toNumber(), 0);
-      this.highlightReportStep(step);
+      this.highlightReportStep();
     },
 
     async loadReport(report) {
@@ -292,9 +298,9 @@ export default {
     },
 
     highlightReport() {
-      this.lineWidgets.forEach((widget, index) => {
-        const isResult = index === this.lineWidgets.length - 1;
-        widget.node.classList.toggle("current", isResult);
+      this.lineWidgets.forEach((widget) => {
+        const type = widget.node.getAttribute("type");
+        widget.node.classList.toggle("current", type === "error");
       });
     },
 
@@ -358,15 +364,37 @@ export default {
 
       const isSameFile = (path) => path.fileId.equals(this.sourceFile.fileId);
 
+      // Add extra path events (macro expansions, notes).
+      const extendedData = reportDetail.extendedData.map((data, index) => {
+        let kind = null;
+        switch(data.type) {
+          case ExtendedReportDataType.NOTE:
+            kind = ReportTreeKind.NOTE_ITEM;
+            break;
+          case ExtendedReportDataType.MACRO:
+            kind = ReportTreeKind.MACRO_EXPANSION_ITEM;
+            break;
+          default:
+            console.warning("Unhandled extended data type", data.type);
+        }
+
+        const id = ReportTreeKind.getId(kind, this.report, index);
+        return { ...data, $id: id, $message: data.message };
+      }).filter(isSameFile);
+
+      this.addExtendedData(extendedData);
+
+      // Add file path events.
       const events = reportDetail.pathEvents.map((event, index) => {
         const id = ReportTreeKind.getId(ReportTreeKind.REPORT_STEPS,
           this.report, index);
 
-        return { ...event, $id: id };
+        return { ...event, $id: id, $message: event.msg };
       }).filter(isSameFile);
 
       this.addEvents(events);
 
+      // Add lines.
       if (this.showArrows) {
         const points = reportDetail.executionPath.filter(isSameFile);
         this.addLines(points);
@@ -390,32 +418,58 @@ export default {
       this.resetJsPlumb();
     },
 
+    addLineWidget(element, props) {
+      const marginLeft =
+        this.editor.defaultCharWidth() * element.startCol + "px";
+
+      const widget = new ReportStepMessageClass({
+        propsData: {
+          ...props,
+          id: element.$id,
+          value: element.$message,
+          marginLeft: marginLeft,
+        }
+      });
+      widget.$mount();
+
+      this.lineWidgets.push(this.editor.addLineWidget(
+        element.startLine.toNumber() - 1, widget.$el));
+    },
+
     addEvents(events) {
       this.editor.operation(() => {
         events.forEach((event, index) => {
-          if (!event.fileId.equals(this.sourceFile.fileId)) return;
-
           var isResult = index === events.length - 1;
           const type = isResult
             ? "error" : event.msg.indexOf(" (fixit)") > -1
             ? "fixit" : "info";
 
-          const marginLeft =
-            this.editor.defaultCharWidth() * event.startCol + "px";
+          const props = { type: type, index: index + 1 };
+          this.addLineWidget(event, props);
+        });
+      });
+    },
 
-          const widget = new ReportStepMessageClass({
-            propsData: {
-              id: event.$id,
-              value: event.msg,
-              marginLeft: marginLeft,
-              type: type,
-              index: index + 1
-            }
-          });
-          widget.$mount();
+    addExtendedData(extendedData) {
+      this.editor.operation(() => {
+        extendedData.forEach((data) => {
+          let type = null;
+          let value = null;
+          switch(data.type) {
+            case ExtendedReportDataType.NOTE:
+              type = "note";
+              value = "Note";
+              break;
+            case ExtendedReportDataType.MACRO:
+              type = "macro";
+              value = "Macro Expansion";
+              break;
+            default:
+              console.warning("Unhandled extended data type", data.type);
+          }
 
-          this.lineWidgets.push(this.editor.addLineWidget(
-            event.startLine.toNumber() - 1, widget.$el));
+          const props = { type: type, showArrows: false, index: value };
+          this.addLineWidget(data, props);
         });
       });
     },
