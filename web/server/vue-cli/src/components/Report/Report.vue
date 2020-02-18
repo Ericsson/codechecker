@@ -138,7 +138,7 @@
 
         <v-row
           v-fill-height
-          class="mx-0"
+          class="editor mx-0"
         >
           <textarea ref="editor" />
         </v-row>
@@ -485,7 +485,7 @@ export default {
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 #editor-wrapper {
   border: 1px solid #d8dbe0;
 
@@ -497,13 +497,18 @@ export default {
       color: var(--v-grey-darken4);
     }
   }
+
+  .editor {
+    font-size: initial;
+    line-height: initial;
+  }
 }
 
-.checker-step {
+::v-deep .checker-step {
   background-color: #eeb;
 }
 
-.report-step-msg.current {
+::v-deep .report-step-msg.current {
   border: 2px dashed var(--v-primary-base) !important;
 }
 </style>
