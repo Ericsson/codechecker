@@ -72,8 +72,14 @@ class UserCredentials(object):
                                            "user authentication")
             scfg_dict['credentials'] = \
                 simplify_credentials(scfg_dict['credentials'])
-        if os.path.exists(session_cfg_file):
+
             check_file_owner_rw(session_cfg_file)
+        else:
+            misstyped_cfg_file = os.path.join(user_home,
+                                              ".codechecker.password.json")
+            if os.path.exists(misstyped_cfg_file):
+                LOG.warning("Typo in file name! Rename '%s' to '%s'.",
+                            misstyped_cfg_file, session_cfg_file)
 
         if not scfg_dict.get('credentials'):
             scfg_dict['credentials'] = {}
