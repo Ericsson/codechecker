@@ -13,8 +13,6 @@ const METADATA = {
   'CC_API_VERSION': JSON.stringify('6.24')
 };
 
-const cc_api_dir = helpers.root('src', 'codechecker_api');
-
 module.exports = {
   entry: helpers.root('src', 'main.js'),
   output: {
@@ -26,15 +24,15 @@ module.exports = {
     alias: {
       '@': helpers.root('src'),
       '@cc-api': helpers.root('src', 'services', 'api'),
-      '@cc/auth': join(cc_api_dir, 'codeCheckerAuthentication.js'),
-      '@cc/auth-types': join(cc_api_dir, 'authentication_types.js'),
-      '@cc/conf': join(cc_api_dir, 'configurationService.js'),
-      '@cc/conf-types': join(cc_api_dir, 'configuration_types.js'),
-      '@cc/db-access': join(cc_api_dir, 'codeCheckerDBAccess.js'),
-      '@cc/prod': join(cc_api_dir, 'codeCheckerProductService.js'),
-      '@cc/prod-types': join(cc_api_dir, 'products_types.js'),
-      '@cc/report-server-types': join(cc_api_dir, 'report_server_types.js'),
-      '@cc/shared-types': join(cc_api_dir, 'codechecker_api_shared_types.js'),
+      '@cc/auth': join('codechecker-api', 'lib', 'codeCheckerAuthentication.js'),
+      '@cc/auth-types': join('codechecker-api', 'lib', 'authentication_types.js'),
+      '@cc/conf': join('codechecker-api', 'lib', 'configurationService.js'),
+      '@cc/conf-types': join('codechecker-api', 'lib', 'configuration_types.js'),
+      '@cc/db-access': join('codechecker-api', 'lib', 'codeCheckerDBAccess.js'),
+      '@cc/prod': join('codechecker-api', 'lib', 'codeCheckerProductService.js'),
+      '@cc/prod-types': join('codechecker-api', 'lib', 'products_types.js'),
+      '@cc/report-server-types': join('codechecker-api', 'lib', 'report_server_types.js'),
+      '@cc/shared-types': join('codechecker-api', 'lib', 'codechecker_api_shared_types.js'),
       'thrift': join('thrift', 'lib', 'nodejs', 'lib', 'thrift', 'browser.js'),
       'Vuetify': join('vuetify', 'lib', 'components')
     }
@@ -44,7 +42,7 @@ module.exports = {
       {
         test: /\.js$/,
         loader: 'babel-loader',
-        exclude: [/node_modules/, cc_api_dir],
+        exclude: [/node_modules/],
         options: {
           presets: [
             ["@babel/preset-env", {
@@ -61,7 +59,7 @@ module.exports = {
       {
         test: /\.(js|vue)$/,
         loader: 'eslint-loader',
-        exclude: [/node_modules/, cc_api_dir],
+        exclude: [/node_modules/],
         enforce: 'pre',
         options: {
           emitWarning: true,
