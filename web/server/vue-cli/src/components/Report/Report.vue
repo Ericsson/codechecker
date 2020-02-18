@@ -493,7 +493,12 @@ export default {
       });
 
       const range = this.editor.getViewport();
-      this.drawLines(range.from, range.to);
+
+      // Use setTimeout to make sure that the previously marked texts are
+      // rendered.
+      setTimeout(() => {
+        this.drawLines(range.from, range.to);
+      }, 0);
     },
 
     drawLines(/*from, to*/) {
