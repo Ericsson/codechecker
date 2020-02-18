@@ -80,12 +80,11 @@ function formatExtendedData(report, extendedData) {
   });
 
   if (macros.length) {
-    const id = `${report.reportId}_${ReportTreeKind.MACRO_EXPANSION}`;
-    const children = formatExtendedReportDataChildren(macros,
-      ReportTreeKind.MACRO_EXPANSION_ITEM, id)
+    const children = formatExtendedReportDataChildren(report, macros,
+      ReportTreeKind.MACRO_EXPANSION_ITEM)
 
     items.push({
-      id: id,
+      id: ReportTreeKind.getId(ReportTreeKind.MACRO_EXPANSION, report),
       name: "Macro expansions",
       kind: ReportTreeKind.MACRO_EXPANSION,
       children: children
@@ -98,12 +97,11 @@ function formatExtendedData(report, extendedData) {
   });
 
   if (notes.length) {
-    const id = `${report.reportId}_${ReportTreeKind.NOTE}`;
-    const children = formatExtendedReportDataChildren(notes,
-      ReportTreeKind.NOTE_ITEM, id)
+    const children = formatExtendedReportDataChildren(report, notes,
+      ReportTreeKind.NOTE_ITEM)
 
     items.push({
-      id: id,
+      id: ReportTreeKind.getId(ReportTreeKind.NOTE, report),
       name: "Notes",
       kind: ReportTreeKind.NOTE,
       children: children
@@ -113,12 +111,12 @@ function formatExtendedData(report, extendedData) {
   return items;
 }
 
-function formatExtendedReportDataChildren(extendedData, kind, parentId) {
+function formatExtendedReportDataChildren(report, extendedData, kind) {
   return extendedData.sort((a, b) => {
     return a.startLine - b.startLine;
   }).map((data, index) => {
     return {
-      id: `${parentId}_${index}`,
+      id: ReportTreeKind.getId(kind, report, index),
       name: data.message,
       kind: kind,
       data: data
@@ -173,7 +171,6 @@ function formatReportEvents(report, events) {
         shortFileName = fnWithoutExt.substr(0, 8) + "..." + extension;
       }
     }
-    console.log(showFileName, fileName, shortFileName);
 
     const highlightData = getHighlightData(highlightStack, step);
     const reportStepIcon = getReportStepIcon(step, index, isResult);
@@ -185,7 +182,7 @@ function formatReportEvents(report, events) {
     }
 
     items.push({
-      id : `${report.reportId}_${ReportTreeKind.REPORT_STEPS}_${index}`,
+      id: ReportTreeKind.getId(ReportTreeKind.REPORT_STEPS, report, index),
       name: report.checkerMsg,
       kind: ReportTreeKind.REPORT_STEPS,
       step: step,
@@ -211,7 +208,7 @@ export default function formatReportDetails(report, reportDetails) {
 
   // Add main report node.
   items.push({
-    id : `${report.reportId}_${ReportTreeKind.BUG}`,
+    id: ReportTreeKind.getId(ReportTreeKind.BUG, report),
     name: report.checkerMsg,
     kind: ReportTreeKind.BUG,
     report: report

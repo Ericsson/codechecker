@@ -130,7 +130,7 @@ export default {
           });
 
           parent.children.push({
-            id: report.reportId.toString(),
+            id: ReportTreeKind.getId(ReportTreeKind.REPORT, report),
             name: report.checkerId,
             kind: ReportTreeKind.REPORT,
             report: report,

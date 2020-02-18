@@ -356,8 +356,8 @@ export default {
         return path.fileId.equals(this.sourceFile.fileId);
       });
       const bubbles = reportDetail.pathEvents.map((event, index) => {
-        const id =
-          `${reportId}_${ReportTreeKind.REPORT_STEPS}_${index}`;
+        const id = ReportTreeKind.getId(ReportTreeKind.REPORT_STEPS,
+          this.report, index);
 
         return { ...event, $id: id };
       }).filter((path) => {
