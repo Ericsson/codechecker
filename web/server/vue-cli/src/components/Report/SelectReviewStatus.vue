@@ -11,7 +11,7 @@
           class="pa-0 mx-4"
         >
           <v-select
-            v-model="value.status"
+            :value="value.status"
             :items="items"
             :hide-details="true"
             label="Set review status"
@@ -122,7 +122,7 @@ export default {
     return {
       items: [],
       dialog: false,
-      prevValue: null
+      oldReviewStatus: null
     };
   },
 
@@ -136,22 +136,21 @@ export default {
   },
 
   methods: {
-    onReviewStatusChange() {
+    onReviewStatusChange(value) {
+      this.oldReviewStatus = this.value.status;
+      this.value.status = value;
+
       this.dialog = true;
-      this.prevValue = { ...this.value };
     },
 
     confirmReviewStatusChange() {
-      if (!this.value.comment || !this.value.comment.length) return;
-
       this.onConfirm(this.value);
       this.dialog = false;
-      this.prevValue = { ...this.value };
     },
 
     cancelReviewStatusChange() {
+      this.value.status = this.oldReviewStatus;
       this.dialog = false;
-      Object.assign(this.value, this.prevValue);
     }
   }
 }
