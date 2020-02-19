@@ -10,8 +10,18 @@
           cols="auto"
           class="pa-0 mx-4"
         >
-          <v-btn color="primary" outlined v-on="on">
-            <v-icon>mdi-file-document-box-outline</v-icon>
+          <v-btn
+            color="primary"
+            outlined
+            small
+            v-on="on"
+          >
+            <v-icon
+              class="mr-1"
+              small
+            >
+              mdi-file-document-box-outline
+            </v-icon>
             Show documentation
           </v-btn>
         </v-col>

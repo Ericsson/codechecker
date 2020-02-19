@@ -1,7 +1,13 @@
 <template>
   <div>
-    <v-avatar left>
-      <detection-status-icon :status="item.detectionStatus" />
+    <v-avatar
+      left
+      :size="16"
+    >
+      <detection-status-icon
+        :status="item.detectionStatus"
+        :size="16"
+      />
     </v-avatar>
     {{ item.runName }}:{{ item.fileName }}:L{{ item.line }}
     <v-chip

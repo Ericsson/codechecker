@@ -75,6 +75,7 @@
           v-model="showArrows"
           class="mx-2 my-0 align-center justify-center"
           label="Show arrows"
+          dense
           :hide-details="true"
         />
       </v-col>
@@ -90,10 +91,16 @@
           class="mx-2 mr-0"
           color="primary"
           outlined
+          small
           :loading="loadNumOfComments"
           @click="$emit('toggle:comments')"
         >
-          <v-icon>mdi-comment-multiple-outline</v-icon>
+          <v-icon
+            class="mr-1"
+            small
+          >
+            mdi-comment-multiple-outline
+          </v-icon>
           Comments({{ numOfComments }})
         </v-btn>
       </v-col>
@@ -105,7 +112,7 @@
     >
       <v-col class="pa-0">
         <v-row
-          class="header pa-2 mx-0"
+          class="header pa-1 mx-0"
         >
           <v-col
             cols="auto"
@@ -561,7 +568,7 @@ export default {
   border: 1px solid #d8dbe0;
 
   .header {
-    background-color: var(--v-grey-lighten3);
+    background-color: "#f7f7f7";
 
     .file-path {
       font-family: monospace;

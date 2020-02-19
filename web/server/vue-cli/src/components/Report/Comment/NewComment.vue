@@ -18,8 +18,12 @@
       >
         <v-btn
           color="primary"
+          small
           @click="addNewComment"
         >
+          <v-icon small>
+            mdi-plus
+          </v-icon>
           Add
         </v-btn>
       </v-col>

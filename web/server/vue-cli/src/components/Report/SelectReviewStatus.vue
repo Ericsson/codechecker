@@ -17,14 +17,23 @@
             label="Set review status"
             item-text="label"
             item-value="id"
+            class="small"
             height="0"
+            flat
             dense
-            outlined
+            solo
             @input="onReviewStatusChange"
           >
             <template v-slot:selection="{ item }">
-              <v-avatar left>
-                <review-status-icon :status="item.id" />
+              <v-avatar
+                class="mr-1"
+                left
+                :size="16"
+              >
+                <review-status-icon
+                  :status="item.id"
+                  :size="16"
+                />
               </v-avatar>
               {{ item.label }}
             </template>

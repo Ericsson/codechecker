@@ -35,4 +35,18 @@ export default {
 html {
   overflow-y: auto;
 }
+
+.v-text-field.v-text-field--solo.small {
+  & > .v-input__control {
+    min-height: 30px;
+
+    & > .v-input__slot {
+      min-height: 30px;
+
+      .v-select__selections {
+        font-size: 0.75rem;
+      }
+    }
+  }
+}
 </style>

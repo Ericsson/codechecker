@@ -11,6 +11,7 @@
               block
               outlined
               tile
+              small
               class="mb-2"
               color="primary"
               :to="{ name: 'reports', query: {
@@ -18,7 +19,10 @@
                 reportId: undefined
               }}"
             >
-              <v-icon left>
+              <v-icon
+                left
+                small
+              >
                 mdi-arrow-left
               </v-icon>
               Back to reports
