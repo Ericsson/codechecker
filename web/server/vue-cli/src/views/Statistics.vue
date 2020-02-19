@@ -1,11 +1,16 @@
 <template>
   <splitpanes class="default-theme">
     <pane size="20">
-      TODO: Statistics filter
+      <report-filter
+        v-fill-height
+        :after-url-init="afterUrlInit"
+      />
     </pane>
     <pane>
-      <checker-statistics />
-      <severity-statistics />
+      <div v-fill-height>
+        <checker-statistics />
+        <severity-statistics />
+      </div>
     </pane>
   </splitpanes>
 </template>
@@ -14,7 +19,9 @@
 import { Splitpanes, Pane } from "splitpanes";
 
 import CheckerStatistics from "@/components/CheckerStatistics";
+import { FillHeight } from "@/directives";
 import SeverityStatistics from "@/components/SeverityStatistics";
+import { ReportFilter } from "@/components/Report/ReportFilter";
 
 export default {
   name: "Statistics",
@@ -22,7 +29,14 @@ export default {
     Splitpanes,
     Pane,
     CheckerStatistics,
+    ReportFilter,
     SeverityStatistics
+  },
+  directives: { FillHeight },
+  methods: {
+    afterUrlInit() {
+      // TODO: implement this.
+    }
   }
 }
 </script>
