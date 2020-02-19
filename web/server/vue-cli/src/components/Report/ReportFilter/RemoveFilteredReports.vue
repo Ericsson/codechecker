@@ -1,6 +1,8 @@
 <template>
   <v-btn outlined color="error">
-    <v-icon>mdi-delete</v-icon>
+    <v-icon left>
+      mdi-delete
+    </v-icon>
     Remove Filtered Reports
   </v-btn>
 </template>

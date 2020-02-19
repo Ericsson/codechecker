@@ -9,6 +9,9 @@
         color="primary"
         v-on="on"
       >
+        <v-icon left>
+          mdi-plus
+        </v-icon>
         New product
       </v-btn>
     </template>

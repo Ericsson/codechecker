@@ -11,6 +11,9 @@
         class="mr-2"
         v-on="on"
       >
+        <v-icon left>
+          mdi-shield-key
+        </v-icon>
         Edit global permission
       </v-btn>
     </template>

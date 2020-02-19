@@ -73,6 +73,9 @@
                 :disabled="isDiffBtnDisabled"
                 @click="diffSelectedRuns"
               >
+                <v-icon left>
+                  mdi-select-compare
+                </v-icon>
                 Diff
               </v-btn>
             </v-col>

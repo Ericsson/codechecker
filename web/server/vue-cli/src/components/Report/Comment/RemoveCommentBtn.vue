@@ -1,9 +1,12 @@
 <template>
   <v-btn
     icon
+    small
     @click="removeComment"
   >
-    <v-icon color="grey lighten-1">
+    <v-icon
+      color="grey lighten-1"
+    >
       mdi-trash-can-outline
     </v-icon>
   </v-btn>

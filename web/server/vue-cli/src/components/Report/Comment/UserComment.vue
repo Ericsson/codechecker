@@ -12,6 +12,7 @@
         <v-list-item>
           <user-icon
             :value="comment.author"
+            :size="32"
             class="mr-2"
             tile
           />

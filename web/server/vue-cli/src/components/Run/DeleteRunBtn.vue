@@ -12,6 +12,9 @@
         :disabled="!selected.length"
         v-on="on"
       >
+        <v-icon left>
+          mdi-trash-can-outline
+        </v-icon>
         Delete
       </v-btn>
     </template>

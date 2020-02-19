@@ -1,9 +1,12 @@
 <template>
   <v-btn
     icon
+    small
     @click="editComment"
   >
-    <v-icon color="grey lighten-1">
+    <v-icon
+      color="grey lighten-1"
+    >
       mdi-pencil
     </v-icon>
   </v-btn>

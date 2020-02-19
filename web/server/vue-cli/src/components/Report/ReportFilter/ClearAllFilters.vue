@@ -2,7 +2,9 @@
   <v-btn
     @click="clearAllFilters"
   >
-    <v-icon>mdi-delete</v-icon>
+    <v-icon left>
+      mdi-delete
+    </v-icon>
     Clear All Filters
   </v-btn>
 </template>

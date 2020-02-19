@@ -10,6 +10,9 @@
         class="mr-2"
         v-on="on"
       >
+        <v-icon left>
+          mdi-bullhorn-outline
+        </v-icon>
         Edit announcement
       </v-btn>
     </template>
