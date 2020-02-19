@@ -25,24 +25,11 @@
             @input="onReviewStatusChange"
           >
             <template v-slot:selection="{ item }">
-              <v-avatar
-                class="mr-1"
-                left
-                :size="16"
-              >
-                <review-status-icon
-                  :status="item.id"
-                  :size="16"
-                />
-              </v-avatar>
-              {{ item.label }}
+              <select-review-status-item :item="item" />
             </template>
 
             <template v-slot:item="{ item }">
-              <v-avatar left>
-                <review-status-icon :status="item.id" />
-              </v-avatar>
-              {{ item.label }}
+              <select-review-status-item :item="item" />
             </template>
           </v-select>
         </v-col>
@@ -105,8 +92,7 @@
 
 <script>
 import { ReviewStatus } from "@cc/report-server-types";
-
-import { ReviewStatusIcon } from "@/components/Icons";
+import SelectReviewStatusItem from "./SelectReviewStatusItem";
 
 function reviewStatusFromCodeToString(reviewCode) {
   switch (parseInt(reviewCode)) {
@@ -126,7 +112,7 @@ function reviewStatusFromCodeToString(reviewCode) {
 export default {
   name: "SelectReviewStatus",
   components: {
-    ReviewStatusIcon
+    SelectReviewStatusItem
   },
   props: {
     value: { type: Object, default: () => {} },
