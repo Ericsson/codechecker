@@ -52,12 +52,22 @@ export default {
   },
   watch: {
     report() {
-      this.active = this.report.reportId;
-      this.getSameReports();
+      this.init();
     }
   },
 
+  mounted() {
+    this.init();
+  },
+
   methods: {
+    init() {
+      if (!this.report) return;
+
+      this.active = this.report.reportId;
+      this.getSameReports();
+    },
+
     getSameReports() {
       var reportFilter = new ReportFilter({
         reportHash: [ this.report.bugHash ]
@@ -101,7 +111,7 @@ export default {
     },
 
     selectSameReport(reportId) {
-      this.$emit("update:report", reportId);
+      this.$emit("update:report", reportId.toNumber());
     }
   }
 }

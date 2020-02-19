@@ -92,9 +92,9 @@ export default {
     },
 
     fetchReports() {
-      // If the runId or the checkedFile are not changed, we should not load
+      // If the runId and the checkedFile are not changed, we should not load
       // the reports.
-      if (this.runId && this.runId.equals(this.report.runId) ||
+      if (this.runId && this.runId.equals(this.report.runId) &&
           this.fileId && this.fileId.equals(this.report.fileId)
       ) {
         return;
