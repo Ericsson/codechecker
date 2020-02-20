@@ -5,6 +5,9 @@
         v-fill-height
         :after-url-init="afterUrlInit"
         :namespace="namespace"
+        :show-newcheck="false"
+        :show-review-status="false"
+        :show-remove-filtered-reports="false"
       />
     </pane>
     <pane>

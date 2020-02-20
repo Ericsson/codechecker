@@ -75,7 +75,10 @@
         </v-list-item-content>
       </v-list-item>
 
-      <v-list-item class="pl-1">
+      <v-list-item
+        v-if="showNewcheck"
+        class="pl-1"
+      >
         <v-list-item-content class="pa-0">
           <v-expansion-panels
             v-model="activeNewcheckPanelId"
@@ -106,7 +109,10 @@
         </v-list-item-content>
       </v-list-item>
 
-      <v-list-item class="pl-1">
+      <v-list-item
+        v-if="showReviewStatus"
+        class="pl-1"
+      >
         <v-list-item-content class="pa-0">
           <review-status-filter
             ref="filters"
@@ -187,7 +193,10 @@
         </v-list-item-content>
       </v-list-item>
 
-      <v-list-item class="pl-1">
+      <v-list-item
+        v-if="showRemoveFilteredReports"
+        class="pl-1"
+      >
         <v-list-item-content>
           <remove-filtered-reports />
         </v-list-item-content>
@@ -245,7 +254,10 @@ export default {
   },
   props: {
     afterUrlInit: { type: Function, default: () => {} },
-    namespace: { type: String, required: true }
+    namespace: { type: String, required: true },
+    showNewcheck: { type: Boolean, default: true },
+    showReviewStatus: { type: Boolean, default: true },
+    showRemoveFilteredReports: { type: Boolean, default: true }
   },
 
   data() {
