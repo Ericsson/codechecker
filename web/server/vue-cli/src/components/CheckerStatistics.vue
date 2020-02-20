@@ -1,94 +1,100 @@
 <template>
-  <div id="checker-statistics">
-    <h3>Checker statistics</h3>
-    <v-data-table
-      :headers="headers"
-      :items="statistics"
-      :hide-default-footer="true"
-      item-key="checker"
-    >
-      <template #item.checker="{ item }">
-        <router-link
-          :to="{ name: 'reports', query: {
-            ...$router.currentRoute.query,
-            'checker-name': item.checker
-          }}"
+  <v-container fluid>
+    <v-row>
+      <v-col>
+        <h3 class="title primary--text">
+          Checker statistics
+        </h3>
+        <v-data-table
+          :headers="headers"
+          :items="statistics"
+          :hide-default-footer="true"
+          item-key="checker"
         >
-          {{ item.checker }}
-        </router-link>
-      </template>
+          <template #item.checker="{ item }">
+            <router-link
+              :to="{ name: 'reports', query: {
+                ...$router.currentRoute.query,
+                'checker-name': item.checker
+              }}"
+            >
+              {{ item.checker }}
+            </router-link>
+          </template>
 
-      <template #item.severity="{ item }">
-        <severity-icon :status="item.severity" />
-      </template>
+          <template #item.severity="{ item }">
+            <severity-icon :status="item.severity" />
+          </template>
 
-      <!-- TODO Get review status filter id from the component and use
-           the encode function to encode the value -->
-      <template #item.unreviewed="{ item }">
-        <router-link
-          v-if="item.unreviewed"
-          :to="{ name: 'reports', query: {
-            ...$router.currentRoute.query,
-            'checker-name': item.checker,
-            'review-status': 'Unreviewed'
-          }}"
-        >
-          {{ item.unreviewed }}
-        </router-link>
-      </template>
+          <!-- TODO Get review status filter id from the component and use
+              the encode function to encode the value -->
+          <template #item.unreviewed="{ item }">
+            <router-link
+              v-if="item.unreviewed"
+              :to="{ name: 'reports', query: {
+                ...$router.currentRoute.query,
+                'checker-name': item.checker,
+                'review-status': 'Unreviewed'
+              }}"
+            >
+              {{ item.unreviewed }}
+            </router-link>
+          </template>
 
-      <template #item.confirmed="{ item }">
-        <router-link
-          v-if="item.confirmed"
-          :to="{ name: 'reports', query: {
-            ...$router.currentRoute.query,
-            'checker-name': item.checker,
-            'review-status': 'Confirmed'
-          }}"
-        >
-          {{ item.confirmed }}
-        </router-link>
-      </template>
+          <template #item.confirmed="{ item }">
+            <router-link
+              v-if="item.confirmed"
+              :to="{ name: 'reports', query: {
+                ...$router.currentRoute.query,
+                'checker-name': item.checker,
+                'review-status': 'Confirmed'
+              }}"
+            >
+              {{ item.confirmed }}
+            </router-link>
+          </template>
 
-      <template #item.falsePositive="{ item }">
-        <router-link
-          v-if="item.falsePositive"
-          :to="{ name: 'reports', query: {
-            ...$router.currentRoute.query,
-            'checker-name': item.checker,
-            'review-status': 'False_positive'
-          }}"
-        >
-          {{ item.falsePositive }}
-        </router-link>
-      </template>
+          <template #item.falsePositive="{ item }">
+            <router-link
+              v-if="item.falsePositive"
+              :to="{ name: 'reports', query: {
+                ...$router.currentRoute.query,
+                'checker-name': item.checker,
+                'review-status': 'False_positive'
+              }}"
+            >
+              {{ item.falsePositive }}
+            </router-link>
+          </template>
 
-      <template #item.intentional="{ item }">
-        <router-link
-          v-if="item.intentional"
-          :to="{ name: 'reports', query: {
-            ...$router.currentRoute.query,
-            'checker-name': item.checker,
-            'review-status': 'Intentional'
-          }}"
-        >
-          {{ item.intentional }}
-        </router-link>
-      </template>
+          <template #item.intentional="{ item }">
+            <router-link
+              v-if="item.intentional"
+              :to="{ name: 'reports', query: {
+                ...$router.currentRoute.query,
+                'checker-name': item.checker,
+                'review-status': 'Intentional'
+              }}"
+            >
+              {{ item.intentional }}
+            </router-link>
+          </template>
 
-      <template #item.reports="{ item }">
-        <router-link
-          v-if="item.reports"
-          :to="{ name: 'reports', query: {
-            ...$router.currentRoute.query,
-            'checker-name': item.checker
-          }}"
-        >
-          {{ item.reports }}
-        </router-link>
-      </template>
-    </v-data-table>
-  </div>
+          <template #item.reports="{ item }">
+            <router-link
+              v-if="item.reports"
+              :to="{ name: 'reports', query: {
+                ...$router.currentRoute.query,
+                'checker-name': item.checker
+              }}"
+            >
+              {{ item.reports }}
+            </router-link>
+          </template>
+        </v-data-table>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script>

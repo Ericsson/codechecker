@@ -1,17 +1,23 @@
 <template>
-  <div id="severity-statistics">
-    <h3>Severity statistics</h3>
-    <v-data-table
-      :headers="headers"
-      :items="statistics"
-      :hide-default-footer="true"
-      item-key="severity"
-    >
-      <template #item.severity="{ item }">
-        <severity-icon :status="item.severity" />
-      </template>
-    </v-data-table>
-  </div>
+  <v-container fluid>
+    <v-row>
+      <v-col cols="auto">
+        <h3 class="title primary--text">
+          Severity statistics
+        </h3>
+        <v-data-table
+          :headers="headers"
+          :items="statistics"
+          :hide-default-footer="true"
+          item-key="severity"
+        >
+          <template #item.severity="{ item }">
+            <severity-icon :status="item.severity" />
+          </template>
+        </v-data-table>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script>
