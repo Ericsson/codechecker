@@ -18,7 +18,9 @@ function fillHeight(el) {
     paddingBottom += parseInt(style.paddingBottom);
   }
 
-  el.style.height = windowHeight - top - paddingBottom - footerHeight + "px";
+  // TODO: We have to extract -1 from the heigh to hide scrollbar. Find out
+  // a better solution for this problem.
+  el.style.height = windowHeight - top - paddingBottom - footerHeight - 1 + "px";
   return el.style.height;
 }
 
