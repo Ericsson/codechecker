@@ -19,27 +19,29 @@
     />
 
     <v-row>
-      <v-timeline
-        v-if="comments.length"
-        dense
-      >
-        <template
-          v-for="comment in comments"
+      <v-col cols="auto">
+        <v-timeline
+          v-if="comments.length"
+          dense
         >
-          <user-comment
-            v-if="comment.kind === CommentKind.USER"
-            :key="comment.id.toString()"
-            :comment="comment"
-            :bus="bus"
-          />
+          <template
+            v-for="comment in comments"
+          >
+            <user-comment
+              v-if="comment.kind === CommentKind.USER"
+              :key="comment.id.toString()"
+              :comment="comment"
+              :bus="bus"
+            />
 
-          <system-comment
-            v-if="comment.kind === CommentKind.SYSTEM"
-            :key="comment.id.toString()"
-            :comment="comment"
-          />
-        </template>
-      </v-timeline>
+            <system-comment
+              v-if="comment.kind === CommentKind.SYSTEM"
+              :key="comment.id.toString()"
+              :comment="comment"
+            />
+          </template>
+        </v-timeline>
+      </v-col>
     </v-row>
   </v-container>
 </template>
