@@ -1,5 +1,5 @@
 <template>
-  <v-container>
+  <v-container class="py-0">
     <v-row>
       <v-textarea
         v-model="message"

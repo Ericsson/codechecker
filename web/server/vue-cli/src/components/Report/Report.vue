@@ -1,159 +1,176 @@
 <template>
   <v-container fluid>
-    <v-row class="mb-2 mx-0">
+    <v-row>
       <v-col
-        cols="auto"
-        class="pa-0 mr-2"
-        align-self="center"
+        class="py-0"
+        :cols="editorCols"
       >
-        <show-documentation-button
-          :value="checkerId"
-        />
-      </v-col>
-
-      <v-col
-        cols="auto"
-        class="pa-0"
-        align-self="center"
-      >
-        <v-row class="px-4">
-          <select-review-status
-            class="mx-0"
-            :value="reviewData"
-            :on-confirm="confirmReviewStatusChange"
-          />
-
-          <v-menu
-            v-if="reviewData.comment"
-            :close-on-content-click="false"
-            :nudge-width="200"
-            offset-x
-          >
-            <template v-slot:activator="{ on }">
-              <v-btn icon v-on="on">
-                <v-icon>mdi-message-text-outline</v-icon>
-              </v-btn>
-            </template>
-            <v-card>
-              <v-list>
-                <v-list-item>
-                  <v-list-item-avatar>
-                    <user-icon :value="reviewData.author" />
-                  </v-list-item-avatar>
-
-                  <v-list-item-content>
-                    <v-list-item-title>
-                      {{ reviewData.author }}
-                    </v-list-item-title>
-                    <v-list-item-subtitle>
-                      {{ reviewData.date }}
-                    </v-list-item-subtitle>
-                  </v-list-item-content>
-                </v-list-item>
-              </v-list>
-
-              <v-divider />
-
-              <v-list>
-                <v-list-item>
-                  <v-list-item-title>
-                    {{ reviewData.comment }}
-                  </v-list-item-title>
-                </v-list-item>
-              </v-list>
-            </v-card>
-          </v-menu>
-        </v-row>
-      </v-col>
-
-      <v-col
-        cols="auto"
-        class="pa-0"
-        align-self="center"
-      >
-        <v-checkbox
-          v-model="showArrows"
-          class="mx-2 my-0 align-center justify-center"
-          label="Show arrows"
-          dense
-          :hide-details="true"
-        />
-      </v-col>
-
-      <v-spacer />
-
-      <v-col
-        cols="auto"
-        class="py-0 pr-0"
-        align-self="center"
-      >
-        <v-btn
-          class="mx-2 mr-0"
-          color="primary"
-          outlined
-          small
-          :loading="loadNumOfComments"
-          @click="$emit('toggle:comments')"
-        >
-          <v-icon
-            class="mr-1"
-            small
-          >
-            mdi-comment-multiple-outline
-          </v-icon>
-          Comments({{ numOfComments }})
-        </v-btn>
-      </v-col>
-    </v-row>
-
-    <v-row
-      id="editor-wrapper"
-      class="mx-0"
-    >
-      <v-col class="pa-0">
-        <v-row
-          class="header pa-1 mx-0"
-        >
+        <v-row class="mb-2 mx-0">
           <v-col
             cols="auto"
-            class="file-path py-0"
+            class="pa-0 mr-2"
             align-self="center"
           >
-            <span
-              v-if="sourceFile"
-              :title="sourceFile.filePath"
-            >
-              {{ sourceFile.filePath }}
-            </span>
+            <show-documentation-button
+              :value="checkerId"
+            />
+          </v-col>
+
+          <v-col
+            cols="auto"
+            class="pa-0"
+            align-self="center"
+          >
+            <v-row class="px-4">
+              <select-review-status
+                class="mx-0"
+                :value="reviewData"
+                :on-confirm="confirmReviewStatusChange"
+              />
+
+              <v-menu
+                v-if="reviewData.comment"
+                :close-on-content-click="false"
+                :nudge-width="200"
+                offset-x
+              >
+                <template v-slot:activator="{ on }">
+                  <v-btn icon v-on="on">
+                    <v-icon>mdi-message-text-outline</v-icon>
+                  </v-btn>
+                </template>
+                <v-card>
+                  <v-list>
+                    <v-list-item>
+                      <v-list-item-avatar>
+                        <user-icon :value="reviewData.author" />
+                      </v-list-item-avatar>
+
+                      <v-list-item-content>
+                        <v-list-item-title>
+                          {{ reviewData.author }}
+                        </v-list-item-title>
+                        <v-list-item-subtitle>
+                          {{ reviewData.date }}
+                        </v-list-item-subtitle>
+                      </v-list-item-content>
+                    </v-list-item>
+                  </v-list>
+
+                  <v-divider />
+
+                  <v-list>
+                    <v-list-item>
+                      <v-list-item-title>
+                        {{ reviewData.comment }}
+                      </v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-card>
+              </v-menu>
+            </v-row>
+          </v-col>
+
+          <v-col
+            cols="auto"
+            class="pa-0"
+            align-self="center"
+          >
+            <v-checkbox
+              v-model="showArrows"
+              class="mx-2 my-0 align-center justify-center"
+              label="Show arrows"
+              dense
+              :hide-details="true"
+            />
           </v-col>
 
           <v-spacer />
 
           <v-col
             cols="auto"
-            class="py-0"
+            class="py-0 pr-0"
             align-self="center"
           >
-            <v-row
-              align="center"
-              class="text-no-wrap"
+            <v-btn
+              class="mx-2 mr-0"
+              color="primary"
+              outlined
+              small
+              :loading="loadNumOfComments"
+              @click="showComments = !showComments"
             >
-              Also found in:
-              <select-same-report
-                class="ml-2"
-                :report="report"
-                @update:report="(reportId) => $emit('update:report', reportId)"
-              />
-            </v-row>
+              <v-icon
+                class="mr-1"
+                small
+              >
+                mdi-comment-multiple-outline
+              </v-icon>
+              Comments({{ numOfComments }})
+            </v-btn>
           </v-col>
         </v-row>
 
         <v-row
-          v-fill-height
-          class="editor mx-0"
+          id="editor-wrapper"
+          class="mx-0"
         >
-          <textarea ref="editor" />
+          <v-col class="pa-0">
+            <v-row
+              class="header pa-1 mx-0"
+            >
+              <v-col
+                cols="auto"
+                class="file-path py-0"
+                align-self="center"
+              >
+                <span
+                  v-if="sourceFile"
+                  :title="sourceFile.filePath"
+                >
+                  {{ sourceFile.filePath }}
+                </span>
+              </v-col>
+
+              <v-spacer />
+
+              <v-col
+                cols="auto"
+                class="py-0"
+                align-self="center"
+              >
+                <v-row
+                  align="center"
+                  class="text-no-wrap"
+                >
+                  Also found in:
+                  <select-same-report
+                    class="ml-2"
+                    :report="report"
+                    @update:report="(reportId) => $emit('update:report', reportId)"
+                  />
+                </v-row>
+              </v-col>
+            </v-row>
+
+            <v-row
+              v-fill-height
+              class="editor mx-0"
+            >
+              <textarea ref="editor" />
+            </v-row>
+          </v-col>
         </v-row>
+      </v-col>
+      <v-col
+        v-if="showComments"
+        class="pa-0"
+        :cols="commentCols"
+      >
+        <report-comments
+          v-fill-height
+          :report="report"
+        />
       </v-col>
     </v-row>
   </v-container>
@@ -177,6 +194,7 @@ import { UserIcon } from "@/components/Icons";
 
 import ReportTreeKind from "@/components/Report/ReportTree/ReportTreeKind";
 
+import { ReportComments } from "./Comment";
 import SelectReviewStatus from "./SelectReviewStatus";
 import SelectSameReport from "./SelectSameReport";
 import ShowDocumentationButton from "./ShowDocumentationButton";
@@ -188,6 +206,7 @@ const ReportStepMessageClass = Vue.extend(ReportStepMessage)
 export default {
   name: "Report",
   components: {
+    ReportComments,
     SelectReviewStatus,
     SelectSameReport,
     ShowDocumentationButton,
@@ -209,13 +228,23 @@ export default {
       lineWidgets: [],
       showArrows: true,
       numOfComments: null,
-      loadNumOfComments: true
+      loadNumOfComments: true,
+      showComments: false,
+      commentCols: 3
     };
   },
 
   computed: {
     checkerId() {
       return this.report ? this.report.checkerId : null;
+    },
+
+    editorCols() {
+      const maxCols = 12;
+
+      return this.showComments
+        ? maxCols - this.commentCols
+        : maxCols;
     }
   },
 

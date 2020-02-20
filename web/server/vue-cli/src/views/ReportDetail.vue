@@ -48,16 +48,6 @@
         @update:report="loadReport"
       />
     </pane>
-
-    <pane
-      v-if="showComments"
-      size="20"
-    >
-      <report-comments
-        v-fill-height
-        :report="report"
-      />
-    </pane>
   </splitpanes>
 </template>
 
@@ -75,7 +65,7 @@ import {
 } from "@cc/report-server-types";
 
 import { FillHeight } from "@/directives";
-import { Report, ReportComments } from "@/components/Report";
+import { Report } from "@/components/Report";
 import { ReportTree } from "@/components/Report/ReportTree";
 
 export default {
@@ -84,7 +74,6 @@ export default {
     Splitpanes,
     Pane,
     Report,
-    ReportComments,
     ReportTree
   },
   directives: { FillHeight },

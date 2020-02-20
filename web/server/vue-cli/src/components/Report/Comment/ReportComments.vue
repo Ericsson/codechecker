@@ -1,5 +1,7 @@
 <template>
-  <v-container>
+  <v-container
+    class="py-0"
+  >
     <edit-comment-dialog
       :value.sync="editDialog"
       :comment="selected"
