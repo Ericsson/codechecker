@@ -12,8 +12,13 @@
     </pane>
     <pane>
       <div v-fill-height>
-        <checker-statistics />
-        <severity-statistics />
+        <checker-statistics
+          :namespace="namespace"
+        />
+
+        <severity-statistics
+          :namespace="namespace"
+        />
       </div>
     </pane>
   </splitpanes>

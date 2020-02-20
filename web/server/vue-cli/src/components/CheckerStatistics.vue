@@ -92,6 +92,8 @@
 </template>
 
 <script>
+import { mapState } from "vuex";
+
 import { ccService } from "@cc-api";
 import {
   DetectionStatus,
@@ -105,6 +107,10 @@ export default {
   name: "CheckerStatistics",
   components: {
     SeverityIcon
+  },
+
+  props: {
+    namespace: { type: String, required: true }
   },
 
   data() {
@@ -143,21 +149,28 @@ export default {
     };
   },
 
+  computed: {
+    ...mapState({
+      runIds(state, getters) {
+        return getters[`${this.namespace}/getRunIds`];
+      },
+      reportFilter(state, getters) {
+        return getters[`${this.namespace}/getReportFilter`];
+      }
+    })
+  },
+
   created() {
     this.fetchStatistics();
   },
 
   methods: {
     fetchStatistics() {
-      // TODO: this should be controlled by the filter bar.
-      const runIds = null;
+      const runIds = this.runIds;
       const cmpData = null;
 
       const limit = null;
       const offset = null;
-
-      // TODO: this should be controlled by the filter bar.
-      const isUnique = true;
 
       const queries = [
         { field: null, values: null },
@@ -167,8 +180,7 @@ export default {
         { field: "reviewStatus", values: [ ReviewStatus.INTENTIONAL ] },
         { field: "detectionStatus", values: [ DetectionStatus.RESOLVED ] }
       ].map((q) => {
-        const reportFilter = new ReportFilter();
-        reportFilter.isUnique = isUnique;
+        const reportFilter = new ReportFilter(this.reportFilter);
 
         if (q.field) {
           reportFilter[q.field] = q.values;

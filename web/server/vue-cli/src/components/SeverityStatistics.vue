@@ -15,6 +15,7 @@
 </template>
 
 <script>
+import { mapState } from "vuex";
 import { ccService } from "@cc-api";
 
 import { SeverityIcon } from "@/components/Icons";
@@ -23,6 +24,10 @@ export default {
   name: "SeverityStatistics",
   components: {
     SeverityIcon
+  },
+
+  props: {
+    namespace: { type: String, required: true }
   },
 
   data() {
@@ -41,6 +46,16 @@ export default {
     };
   },
 
+  computed: {
+    ...mapState({
+      runIds(state, getters) {
+        return getters[`${this.namespace}/getRunIds`];
+      },
+      reportFilter(state, getters) {
+        return getters[`${this.namespace}/getReportFilter`];
+      }
+    })
+  },
 
   created() {
     this.fetchStatistics();
@@ -48,8 +63,8 @@ export default {
 
   methods: {
     fetchStatistics() {
-      const runIds = null;
-      const reportFilter = null;
+      const runIds = this.runIds;
+      const reportFilter = this.reportFilter;
       const cmpData = null;
 
       ccService.getClient().getSeverityCounts(runIds, reportFilter, cmpData,
