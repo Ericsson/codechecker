@@ -9,7 +9,8 @@ export LD_LIBRARY_PATH=$logger_dir/lib:$LD_LIBRARY_PATH
 export CC_LOGGER_GCC_LIKE="gcc:g++:clang"
 export CC_LOGGER_FILE=/tmp/logger_test_compilation_database.json
 
-source_file=/tmp/logger_test_source.cpp
+source_file_name=logger_test_source.cpp
+source_file=/tmp/$source_file_name
 response_file=/tmp/logger_test_source.cpp.rsp
 reference_file=/tmp/logger_test_reference.json
 
@@ -174,6 +175,12 @@ function test_include_abs3 {
   CC_LOGGER_ABS_PATH=1 bash -c "gcc -isystem=hello $source_file"
   grep -- "-isystem=/.*hello" $CC_LOGGER_FILE &> /dev/null
 }
+
+function test_source_abs {
+  CC_LOGGER_ABS_PATH=1 bash -c "cd /tmp && gcc $source_file_name"
+  grep -- "$source_file" $CC_LOGGER_FILE &> /dev/null
+}
+
 
 #--- Run tests ---#
 
