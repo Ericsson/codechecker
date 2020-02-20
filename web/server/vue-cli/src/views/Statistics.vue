@@ -4,6 +4,7 @@
       <report-filter
         v-fill-height
         :after-url-init="afterUrlInit"
+        :namespace="namespace"
       />
     </pane>
     <pane>
@@ -23,6 +24,8 @@ import { FillHeight } from "@/directives";
 import SeverityStatistics from "@/components/SeverityStatistics";
 import { ReportFilter } from "@/components/Report/ReportFilter";
 
+const namespace = "statistics";
+
 export default {
   name: "Statistics",
   components: {
@@ -33,6 +36,11 @@ export default {
     SeverityStatistics
   },
   directives: { FillHeight },
+  data() {
+    return {
+      namespace: namespace
+    };
+  },
   methods: {
     afterUrlInit() {
       // TODO: implement this.

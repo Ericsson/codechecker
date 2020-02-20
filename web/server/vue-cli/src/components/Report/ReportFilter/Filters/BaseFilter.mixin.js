@@ -10,11 +10,21 @@ import { ReportFilter } from "@cc/report-server-types";
 export default {
   name: "BaseFilterMixin",
 
+  props: {
+    namespace: { type: String, required: true }
+  },
+
   computed: {
     ...mapState({
-      runIds: state => state.report.runIds,
-      reportFilter: state => state.report.reportFilter,
-      cmpData: state => state.report.cmpData,
+      runIds(state) {
+        return state[this.namespace].runIds;
+      },
+      reportFilter(state) {
+        return state[this.namespace].reportFilter;
+      },
+      cmpData(state) {
+        return state[this.namespace].cmpData;
+      }
     }),
 
     reportFilterModel() {
@@ -26,11 +36,17 @@ export default {
   },
 
   methods: {
-    ...mapMutations([
-      SET_RUN_IDS,
-      SET_REPORT_FILTER,
-      SET_CMP_DATA
-    ]),
+    ...mapMutations({
+      [SET_RUN_IDS](commit, payload) {
+        return commit(`${this.namespace}/${SET_RUN_IDS}`, payload);
+      },
+      [SET_REPORT_FILTER](commit, payload) {
+        return commit(`${this.namespace}/${SET_REPORT_FILTER}`, payload);
+      },
+      [SET_CMP_DATA](commit, payload) {
+        return commit(`${this.namespace}/${SET_CMP_DATA}`, payload);
+      }
+    }),
 
     getUrlState() {
       return {};

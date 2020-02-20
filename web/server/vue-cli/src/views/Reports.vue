@@ -4,6 +4,7 @@
       <report-filter
         v-fill-height
         :after-url-init="afterUrlInit"
+        :namespace="namespace"
       />
     </pane>
     <pane>
@@ -70,6 +71,8 @@ import { SeverityIcon } from "@/components/Icons";
 
 import { ReportFilter } from "@/components/Report/ReportFilter";
 
+const namespace = "report";
+
 export default {
   name: "Reports",
   components: {
@@ -123,12 +126,13 @@ export default {
         }
       ],
       reports: [],
+      namespace: namespace,
       loading: true
     };
   },
 
   computed: {
-    ...mapGetters({
+    ...mapGetters(namespace, {
       runIds: "getRunIds",
       reportFilter: "getReportFilter",
       cmpData: "getCmpData"

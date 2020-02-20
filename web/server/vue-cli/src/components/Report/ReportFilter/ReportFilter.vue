@@ -15,6 +15,7 @@
       <v-list-item class="pl-1">
         <v-list-item-action class="mr-5">
           <clear-all-filters
+            :namespace="namespace"
             @clear="clearAllFilters"
           />
         </v-list-item-action>
@@ -22,19 +23,28 @@
         <v-spacer />
 
         <v-list-item-content>
-          <report-count ref="filters" />
+          <report-count
+            ref="filters"
+            :namespace="namespace"
+          />
         </v-list-item-content>
       </v-list-item>
 
       <v-list-item class="pl-1">
         <v-list-item-content>
-          <unique-filter ref="filters" />
+          <unique-filter
+            ref="filters"
+            :namespace="namespace"
+          />
         </v-list-item-content>
       </v-list-item>
 
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
-          <report-hash-filter ref="filters" />
+          <report-hash-filter
+            ref="filters"
+            :namespace="namespace"
+          />
         </v-list-item-content>
       </v-list-item>
 
@@ -51,8 +61,14 @@
                 <b>BASELINE</b>
               </v-expansion-panel-header>
               <v-expansion-panel-content class="pa-1">
-                <baseline-run-filter ref="filters" />
-                <baseline-tag-filter ref="filters" />
+                <baseline-run-filter
+                  ref="filters"
+                  :namespace="namespace"
+                />
+                <baseline-tag-filter
+                  ref="filters"
+                  :namespace="namespace"
+                />
               </v-expansion-panel-content>
             </v-expansion-panel>
           </v-expansion-panels>
@@ -72,9 +88,18 @@
                 <b>NEWCHECK</b>
               </v-expansion-panel-header>
               <v-expansion-panel-content class="pa-1">
-                <newcheck-run-filter ref="filters" />
-                <newcheck-tag-filter ref="filters" />
-                <newcheck-diff-type-filter ref="filters" />
+                <newcheck-run-filter
+                  ref="filters"
+                  :namespace="namespace"
+                />
+                <newcheck-tag-filter
+                  ref="filters"
+                  :namespace="namespace"
+                />
+                <newcheck-diff-type-filter
+                  ref="filters"
+                  :namespace="namespace"
+                />
               </v-expansion-panel-content>
             </v-expansion-panel>
           </v-expansion-panels>
@@ -83,55 +108,82 @@
 
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
-          <review-status-filter ref="filters" />
+          <review-status-filter
+            ref="filters"
+            :namespace="namespace"
+          />
         </v-list-item-content>
       </v-list-item>
 
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
-          <detection-status-filter ref="filters" />
+          <detection-status-filter
+            ref="filters"
+            :namespace="namespace"
+          />
         </v-list-item-content>
       </v-list-item>
 
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
-          <severity-filter ref="filters" />
+          <severity-filter
+            ref="filters"
+            :namespace="namespace"
+          />
         </v-list-item-content>
       </v-list-item>
 
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
-          <bug-path-length-filter ref="filters" />
+          <bug-path-length-filter
+            ref="filters"
+            :namespace="namespace"
+          />
         </v-list-item-content>
       </v-list-item>
 
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
-          <detection-date-filter ref="filters" />
+          <detection-date-filter
+            ref="filters"
+            :namespace="namespace"
+          />
         </v-list-item-content>
       </v-list-item>
 
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
-          <file-path-filter ref="filters" />
+          <file-path-filter
+            ref="filters"
+            :namespace="namespace"
+          />
         </v-list-item-content>
       </v-list-item>
 
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
-          <source-component-filter ref="filters" />
+          <source-component-filter
+            ref="filters"
+            :namespace="namespace"
+          />
         </v-list-item-content>
       </v-list-item>
 
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
-          <checker-name-filter ref="filters" />
+          <checker-name-filter
+            ref="filters"
+            :namespace="namespace"
+          />
         </v-list-item-content>
       </v-list-item>
 
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
-          <checker-message-filter ref="filters" />
+          <checker-message-filter
+            ref="filters"
+            :namespace="namespace"
+          />
         </v-list-item-content>
       </v-list-item>
 
@@ -192,7 +244,8 @@ export default {
     BugPathLengthFilter
   },
   props: {
-    afterUrlInit: { type: Function, default: () => {} }
+    afterUrlInit: { type: Function, default: () => {} },
+    namespace: { type: String, required: true }
   },
 
   data() {
