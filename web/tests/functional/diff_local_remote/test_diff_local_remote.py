@@ -430,8 +430,12 @@ class LocalRemote(unittest.TestCase):
         env["CC_REPORT_URL"] = report_url
 
         changed_file_path = os.path.join(self._local_reports, 'files_changed')
+
         with open(changed_file_path, 'w',
                   encoding="utf-8", errors="ignore") as changed_file:
+            # Print some garbage value to the file.
+            changed_file.write(")]}'\n")
+
             changed_files = {
                 "/COMMIT_MSG": {},
                 "divide_zero.cpp": {}}

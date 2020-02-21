@@ -1053,6 +1053,9 @@ def handle_diff_results(args):
 
         Process the given gerrit changed file object and return a list of
         file paths which changed.
+
+        The file can contain some garbage values at start, so we use regex
+        to find a json object.
         """
         ret = []
 
@@ -1060,18 +1063,19 @@ def handle_diff_results(args):
             return ret
 
         with open(changed_file_path) as changed_file:
-            # File is likely to contain some garbage values at start,
-            # only the corresponding json should be parsed.
-            json_pattern = re.compile(r"^\{.*\}")
-            for line in changed_file.readlines():
-                if not re.match(json_pattern, line):
+            content = changed_file.read()
+
+            # The file can contain some garbage values at start, so we use
+            # regex search to find a json object.
+            match = re.search(r'\{[\s\S]*\}', content)
+            if not match:
+                return ret
+
+            for filename in json.loads(match.group(0)):
+                if "/COMMIT_MSG" in filename:
                     continue
 
-                for filename in json.loads(line):
-                    if "/COMMIT_MSG" in filename:
-                        continue
-
-                    ret.append(filename)
+                ret.append(filename)
 
         return ret
 
@@ -1153,6 +1157,7 @@ def handle_diff_results(args):
                     output.append(report)
             print(CmdLineOutputEncoder().encode(output))
 
+            # Json was the only format specified.
             if len(output_formats) == 1:
                 return
 
@@ -1168,6 +1173,7 @@ def handle_diff_results(args):
                   '  $ firefox {0}\n'.format(os.path.join(args.export_dir,
                                                           'index.html')))
 
+            # HTML was the only format specified.
             if len(output_formats) == 1:
                 return
 
@@ -1186,6 +1192,7 @@ def handle_diff_results(args):
         if 'gerrit' in output_formats:
             print_gerrit_json(reports, output_dir)
 
+            # Gerrit was the only format specified.
             if len(output_formats) == 1:
                 return
 

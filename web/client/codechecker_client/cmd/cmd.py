@@ -115,7 +115,7 @@ def __add_output_formats(parser, output_formats=None,
                             required=False,
                             default=["plaintext"],
                             choices=output_formats,
-                            help="The output format to use in showing the "
+                            help="The output format(s) to use in showing the "
                                  "data.")
     else:
         parser.add_argument('-o', '--output',
