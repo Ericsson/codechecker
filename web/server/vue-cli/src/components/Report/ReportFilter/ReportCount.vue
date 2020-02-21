@@ -22,7 +22,7 @@ export default {
   },
 
   methods: {
-    afterUrlInit() {
+    afterInit() {
       this.getReportCount();
       this.registerWatchers();
     },

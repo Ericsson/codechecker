@@ -61,7 +61,8 @@ export default {
     // Object/Array. For this reason we are using computed property for
     // ReportFilter to get the old values and see what are the changes.
     registerWatchers() {
-      if (this.reportFilterUnwatch) this.reportFilterUnwatch();
+      this.unregisterWatchers();
+
       this.reportFilterUnwatch = this.$watch("reportFilterModel",
       (oldVal, newVal) => {
         Object.keys(newVal).forEach((key) => {
@@ -71,13 +72,22 @@ export default {
         });
       }, { deep: true });
 
-      if (this.runIdsUnwatch) this.runIdsUnwatch();
       this.runIdsUnwatch = this.$watch("runIdsModel", (oldVal, newVal) => {
         this.onRunIdsChange(oldVal, newVal);
       });
     },
 
-    afterUrlInit() {
+    unregisterWatchers() {
+      if (this.reportFilterUnwatch) this.reportFilterUnwatch();
+      if (this.runIdsUnwatch) this.runIdsUnwatch();
+    },
+
+    beforeInit() {
+      this.unregisterWatchers();
+      this.clear();
+    },
+
+    afterInit() {
       this.registerWatchers();
     },
 

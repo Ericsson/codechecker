@@ -3,7 +3,8 @@
     <pane size="20">
       <report-filter
         v-fill-height
-        :after-url-init="afterUrlInit"
+        :before-init="beforeInit"
+        :after-init="afterInit"
         :namespace="namespace"
       />
     </pane>
@@ -127,7 +128,10 @@ export default {
       ],
       reports: [],
       namespace: namespace,
-      loading: true
+      loading: true,
+      runIdsUnwatch: null,
+      reportFilterUnwatch: null,
+      cmpDataUnwatch: null
     };
   },
 
@@ -139,27 +143,43 @@ export default {
     })
   },
 
-  methods: {
-    afterUrlInit() {
-      this.fetchReports();
+  beforeDestroy() {
+    this.unregisterWatchers();
+  },
 
-      if (this.reportFilterUnwatch) this.reportFilterUnwatch();
+  methods: {
+    beforeInit() {
+      this.unregisterWatchers();
+    },
+
+    afterInit() {
+      this.fetchReports();
+      this.registerWatchers();
+    },
+
+    registerWatchers() {
+      this.unregisterWatchers();
+
       this.reportFilterUnwatch = this.$store.watch(
       (state) => state.report.reportFilter, () => {
         this.fetchReports();
       }, { deep: true });
 
-      if (this.runIdsUnwatch) this.runIdsUnwatch();
       this.runIdsUnwatch = this.$store.watch(
       (state) => state.report.runIds, () => {
         this.fetchReports();
       });
 
-      if (this.cmpDataUnwatch) this.cmpDataUnwatch();
       this.cmpDataUnwatch = this.$store.watch(
       (state) => state.report.cmpData, () => {
         this.fetchReports();
       }, { deep: true });
+    },
+
+    unregisterWatchers() {
+      if (this.reportFilterUnwatch) this.reportFilterUnwatch();
+      if (this.runIdsUnwatch) this.runIdsUnwatch();
+      if (this.cmpDataUnwatch) this.cmpDataUnwatch();
     },
 
     fetchReports() {

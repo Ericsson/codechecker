@@ -57,7 +57,7 @@ export default {
       });
     },
 
-    afterUrlInit() {
+    afterInit() {
       this.registerWatchers();
 
       if (this.selectedItems.length) {

@@ -253,7 +253,8 @@ export default {
     BugPathLengthFilter
   },
   props: {
-    afterUrlInit: { type: Function, default: () => {} },
+    afterInit: { type: Function, default: () => {} },
+    beforeInit: { type: Function, default: () => {} },
     namespace: { type: String, required: true },
     showNewcheck: { type: Boolean, default: true },
     showReviewStatus: { type: Boolean, default: true },
@@ -271,13 +272,18 @@ export default {
     this.initByUrl();
   },
 
-  beforeUpdate() {
-    // TODO: init by url if component is not initialized.
+  beforeDestroy() {
+    const filters = this.$refs.filters;
+    filters.forEach((filter) => filter.unregisterWatchers());
   },
 
   methods: {
     initByUrl() {
       const filters = this.$refs.filters;
+
+      // Before init.
+      this.beforeInit();
+      filters.forEach((filter) => filter.beforeInit());
 
       // Init all filters by URL parameters.
       const results = filters.map((filter) => {
@@ -287,9 +293,9 @@ export default {
       // If all filters are initalized call a post function.
       Promise.all(results).then(() => {
         filters.map((filter) => {
-          return filter.afterUrlInit();
+          return filter.afterInit();
         });
-        this.afterUrlInit();
+        this.afterInit();
       });
     },
 
