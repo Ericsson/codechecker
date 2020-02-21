@@ -63,10 +63,6 @@ export default {
     })
   },
 
-  created() {
-    this.fetchStatistics();
-  },
-
   methods: {
     fetchStatistics() {
       const runIds = this.runIds;

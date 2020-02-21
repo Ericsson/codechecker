@@ -3,7 +3,8 @@
     <pane size="20">
       <report-filter
         v-fill-height
-        :after-url-init="afterUrlInit"
+        :before-init="beforeInit"
+        :after-init="afterInit"
         :namespace="namespace"
         :show-newcheck="false"
         :show-review-status="false"
@@ -12,13 +13,24 @@
     </pane>
     <pane>
       <div v-fill-height>
-        <checker-statistics
-          :namespace="namespace"
-        />
+        <!--
+          'refs' becomes an Array if used inside a v-for. This is the reason
+          why we use this.
+        -->
+        <span
+          v-for="i in 1"
+          :key="i"
+        >
+          <checker-statistics
+            ref="statistics"
+            :namespace="namespace"
+          />
 
-        <severity-statistics
-          :namespace="namespace"
-        />
+          <severity-statistics
+            ref="statistics"
+            :namespace="namespace"
+          />
+        </span>
       </div>
     </pane>
   </splitpanes>
@@ -49,9 +61,43 @@ export default {
       namespace: namespace
     };
   },
+
+  beforeDestroy() {
+    this.unregisterWatchers();
+  },
+
   methods: {
-    afterUrlInit() {
-      // TODO: implement this.
+    beforeInit() {
+      this.unregisterWatchers();
+    },
+
+    afterInit() {
+      this.refresh();
+      this.registerWatchers();
+    },
+
+    registerWatchers() {
+      this.unregisterWatchers();
+
+      this.reportFilterUnwatch = this.$store.watch(
+      (state) => state[this.namespace].reportFilter, () => {
+        this.refresh();
+      }, { deep: true });
+
+      this.runIdsUnwatch = this.$store.watch(
+      (state) => state[this.namespace].runIds, () => {
+        this.refresh();
+      });
+    },
+
+    unregisterWatchers() {
+      if (this.reportFilterUnwatch) this.reportFilterUnwatch();
+      if (this.runIdsUnwatch) this.runIdsUnwatch();
+    },
+
+    refresh() {
+      const statistics = this.$refs.statistics;
+      statistics.forEach((statistic) => statistic.fetchStatistics());
     }
   }
 }
