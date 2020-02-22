@@ -3,12 +3,11 @@
     <pane size="20">
       <report-filter
         v-fill-height
-        :before-init="beforeInit"
-        :after-init="afterInit"
         :namespace="namespace"
         :show-newcheck="false"
         :show-review-status="false"
         :show-remove-filtered-reports="false"
+        @refresh="refresh"
       />
     </pane>
     <pane>
@@ -62,39 +61,7 @@ export default {
     };
   },
 
-  beforeDestroy() {
-    this.unregisterWatchers();
-  },
-
   methods: {
-    beforeInit() {
-      this.unregisterWatchers();
-    },
-
-    afterInit() {
-      this.refresh();
-      this.registerWatchers();
-    },
-
-    registerWatchers() {
-      this.unregisterWatchers();
-
-      this.reportFilterUnwatch = this.$store.watch(
-      (state) => state[this.namespace].reportFilter, () => {
-        this.refresh();
-      }, { deep: true });
-
-      this.runIdsUnwatch = this.$store.watch(
-      (state) => state[this.namespace].runIds, () => {
-        this.refresh();
-      });
-    },
-
-    unregisterWatchers() {
-      if (this.reportFilterUnwatch) this.reportFilterUnwatch();
-      if (this.runIdsUnwatch) this.runIdsUnwatch();
-    },
-
     refresh() {
       const statistics = this.$refs.statistics;
       statistics.forEach((statistic) => statistic.fetchStatistics());

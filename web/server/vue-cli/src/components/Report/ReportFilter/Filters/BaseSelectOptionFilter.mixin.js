@@ -34,9 +34,10 @@ export default {
     },
 
     getUrlState() {
-      return {
-        [this.id]: this.selectedItems.map((item) => this.encodeValue(item.id))
-      };
+      const state =
+        this.selectedItems.map((item) => this.encodeValue(item.id));
+
+      return { [this.id]: state.length ? state : undefined };
     },
 
     initByUrl() {

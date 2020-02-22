@@ -3,9 +3,8 @@
     <pane size="20">
       <report-filter
         v-fill-height
-        :before-init="beforeInit"
-        :after-init="afterInit"
         :namespace="namespace"
+        @refresh="fetchReports"
       />
     </pane>
     <pane>
@@ -143,45 +142,7 @@ export default {
     })
   },
 
-  beforeDestroy() {
-    this.unregisterWatchers();
-  },
-
   methods: {
-    beforeInit() {
-      this.unregisterWatchers();
-    },
-
-    afterInit() {
-      this.fetchReports();
-      this.registerWatchers();
-    },
-
-    registerWatchers() {
-      this.unregisterWatchers();
-
-      this.reportFilterUnwatch = this.$store.watch(
-      (state) => state.report.reportFilter, () => {
-        this.fetchReports();
-      }, { deep: true });
-
-      this.runIdsUnwatch = this.$store.watch(
-      (state) => state.report.runIds, () => {
-        this.fetchReports();
-      });
-
-      this.cmpDataUnwatch = this.$store.watch(
-      (state) => state.report.cmpData, () => {
-        this.fetchReports();
-      }, { deep: true });
-    },
-
-    unregisterWatchers() {
-      if (this.reportFilterUnwatch) this.reportFilterUnwatch();
-      if (this.runIdsUnwatch) this.runIdsUnwatch();
-      if (this.cmpDataUnwatch) this.cmpDataUnwatch();
-    },
-
     fetchReports() {
       this.loading = true;
 

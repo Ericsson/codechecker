@@ -84,7 +84,10 @@ export default {
 
     beforeInit() {
       this.unregisterWatchers();
-      this.clear();
+
+      this.setRunIds([]);
+      this.setReportFilter(new ReportFilter());
+      this.setCmpData(null);
     },
 
     afterInit() {

@@ -253,8 +253,6 @@ export default {
     BugPathLengthFilter
   },
   props: {
-    afterInit: { type: Function, default: () => {} },
-    beforeInit: { type: Function, default: () => {} },
     namespace: { type: String, required: true },
     showNewcheck: { type: Boolean, default: true },
     showReviewStatus: { type: Boolean, default: true },
@@ -273,11 +271,47 @@ export default {
   },
 
   beforeDestroy() {
+    this.unregisterWatchers();
+
     const filters = this.$refs.filters;
     filters.forEach((filter) => filter.unregisterWatchers());
   },
 
   methods: {
+    beforeInit() {
+      this.unregisterWatchers();
+    },
+
+    afterInit() {
+      this.$emit("refresh");
+      this.registerWatchers();
+    },
+
+    registerWatchers() {
+      this.unregisterWatchers();
+
+      this.reportFilterUnwatch = this.$store.watch(
+      (state) => state.report.reportFilter, () => {
+        this.$emit("refresh");
+      }, { deep: true });
+
+      this.runIdsUnwatch = this.$store.watch(
+      (state) => state.report.runIds, () => {
+        this.$emit("refresh");
+      });
+
+      this.cmpDataUnwatch = this.$store.watch(
+      (state) => state.report.cmpData, () => {
+        this.$emit("refresh");
+      }, { deep: true });
+    },
+
+    unregisterWatchers() {
+      if (this.reportFilterUnwatch) this.reportFilterUnwatch();
+      if (this.runIdsUnwatch) this.runIdsUnwatch();
+      if (this.cmpDataUnwatch) this.cmpDataUnwatch();
+    },
+
     initByUrl() {
       const filters = this.$refs.filters;
 
@@ -292,9 +326,7 @@ export default {
 
       // If all filters are initalized call a post function.
       Promise.all(results).then(() => {
-        filters.map((filter) => {
-          return filter.afterInit();
-        });
+        filters.forEach((filter) => filter.afterInit());
         this.afterInit();
       });
     },
