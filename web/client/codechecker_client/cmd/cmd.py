@@ -16,7 +16,7 @@ import getpass
 import datetime
 import sys
 
-from codeCheckerDBAccess_v6 import ttypes
+from codechecker_api.codeCheckerDBAccess_v6 import ttypes
 
 from codechecker_client import cmd_line_client
 from codechecker_client import product_client
