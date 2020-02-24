@@ -433,7 +433,17 @@ int loggerGccParserCollectActions(
         {
           if (strcmp(srcExts[i], ext) == 0)
           {
-            loggerVectorAddUnique(&action->sources, loggerStrDup(current),
+            char newPath[PATH_MAX];
+
+            if (getenv("CC_LOGGER_ABS_PATH"))
+            {
+              loggerMakePathAbs(current, newPath, 0);
+            }
+            else
+            {
+              strcpy(newPath, current);
+            }
+            loggerVectorAddUnique(&action->sources, loggerStrDup(newPath),
               (LoggerCmpFuc) &strcmp);
             break;
           }
