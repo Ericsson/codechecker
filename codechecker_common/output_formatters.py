@@ -57,7 +57,7 @@ def twodim_to_rows(lines):
     # Count the column width.
     widths = []
     for line in lines:
-        for i, size in enumerate([len(x) for x in line]):
+        for i, size in enumerate([len(str(x)) for x in line]):
             while i >= len(widths):
                 widths.append(0)
             if size > widths[i]:
