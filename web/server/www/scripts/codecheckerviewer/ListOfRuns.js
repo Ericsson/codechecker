@@ -121,7 +121,7 @@ function (declare, dom, ObjectStore, Store, Deferred, topic, Dialog, Button,
         query.runFilter,
         CC_OBJECTS.MAX_QUERY_SIZE,
         options.start,
-        options.sort ? this._toSortMode(options.sort) : null,
+        options.sort ? this._toSortMode(options.sort[0]) : null,
         function (runDataList) {
           if (runDataList instanceof RequestFailed) {
             deferred.reject('Failed to get runs: ' + runDataList.message);
