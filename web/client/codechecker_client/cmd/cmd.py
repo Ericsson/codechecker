@@ -16,6 +16,8 @@ import getpass
 import datetime
 import sys
 
+from codeCheckerDBAccess_v6 import ttypes
+
 from codechecker_client import cmd_line_client
 from codechecker_client import product_client
 from codechecker_client import source_component_client, token_client
@@ -990,6 +992,38 @@ def __register_runs(parser):
                             "'year:month:day:hour:minute:second' (the "
                             "\"time\" part can be omitted, in which case "
                             "midnight (00:00:00) is used).")
+
+    # Get available sort types.
+    sort_type_values = ttypes.RunSortType._NAMES_TO_VALUES.values()
+    sort_types = [cmd_line_client.run_sort_type_str(s)
+                  for s in sort_type_values]
+
+    # Set 'date' as a default sort type.
+    default_sort_type = sort_types[
+        sort_type_values.index(ttypes.RunSortType.DATE)]
+
+    parser.add_argument('--sort',
+                        dest="sort_type",
+                        required=False,
+                        choices=sort_types,
+                        default=default_sort_type,
+                        help="Sort run data by this column.")
+
+    # Get available order types.
+    order_type_names = ttypes.Order._NAMES_TO_VALUES.keys()
+    order_types = [s.lower() for s in order_type_names]
+
+    # Set 'desc' as a default order type.
+    order_type_values = ttypes.Order._NAMES_TO_VALUES.values()
+    default_order_type = order_types[
+        order_type_values.index(ttypes.Order.DESC)]
+
+    parser.add_argument('--order',
+                        dest="sort_order",
+                        required=False,
+                        choices=order_types,
+                        default=default_order_type,
+                        help="Sort order of the run data.")
 
 
 def __register_run_histories(parser):

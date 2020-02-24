@@ -56,6 +56,34 @@ def init_logger(level, stream=None, logger_name='system'):
     LOG = logger.get_logger(logger_name)
 
 
+def run_sort_type_str(value):
+    """ Converts the given run sort type to string. """
+    if value == ttypes.RunSortType.NAME:
+        return 'name'
+    elif value == ttypes.RunSortType.UNRESOLVED_REPORTS:
+        return 'unresolved_reports'
+    elif value == ttypes.RunSortType.DATE:
+        return 'date'
+    elif value == ttypes.RunSortType.DURATION:
+        return 'duration'
+    elif value == ttypes.RunSortType.CC_VERSION:
+        return 'codechecker_version'
+
+
+def run_sort_type_enum(value):
+    """ Returns the given run sort type Thrift enum value. """
+    if value == 'name':
+        return ttypes.RunSortType.NAME
+    elif value == 'unresolved_reports':
+        return ttypes.RunSortType.UNRESOLVED_REPORTS
+    elif value == 'date':
+        return ttypes.RunSortType.DATE
+    elif value == 'duration':
+        return ttypes.RunSortType.DURATION
+    elif value == 'codechecker_version':
+        return ttypes.RunSortType.CC_VERSION
+
+
 def report_to_report_data(report, context=None):
     """
     Convert a report object to a Thrift ReportData type.
@@ -128,7 +156,8 @@ def check_deprecated_arg_usage(args):
                     'results. For more information see the help.')
 
 
-def get_run_data(client, run_filter, limit=constants.MAX_QUERY_SIZE):
+def get_run_data(client, run_filter, sort_mode=None,
+                 limit=constants.MAX_QUERY_SIZE):
     """
     Get all runs based on the given run filter.
     """
@@ -136,7 +165,7 @@ def get_run_data(client, run_filter, limit=constants.MAX_QUERY_SIZE):
 
     offset = 0
     while True:
-        runs = runs = client.getRunData(run_filter, limit, offset, None)
+        runs = runs = client.getRunData(run_filter, limit, offset, sort_mode)
         all_runs.extend(runs)
         offset += limit
 
@@ -333,7 +362,12 @@ def handle_list_runs(args):
     client = setup_client(args.product_url)
 
     run_filter = process_run_filter_conditions(args)
-    runs = get_run_data(client, run_filter)
+
+    sort_type = run_sort_type_enum(args.sort_type)
+    sort_order = ttypes.Order._NAMES_TO_VALUES[args.sort_order.upper()]
+    sort_mode = ttypes.RunSortMode(sort_type, sort_order)
+
+    runs = get_run_data(client, run_filter, sort_mode)
 
     if args.output_format == 'json':
         results = []
