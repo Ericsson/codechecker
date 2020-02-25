@@ -344,6 +344,17 @@ Example:
 CodeChecker log -o ../codechecker_myProject_build.log -b "make -j2"
 ```
 
+If you run CodeChecker log in verbose mode (`debug` or `debug_analyzer`) it
+will create a 'codechecker.logger.debug' debug log file beside the given output
+file. It will contain debug information of compilation database generation. You
+can override this file if you set the `CC_LOGGER_DEBUG_FILE` environment
+variable to a different file path.
+
+```sh
+export CC_LOGGER_DEBUG_FILE="/path/to/codechecker.debug.log"
+```
+
+
 ### BitBake
 Do the following steps to log compiler calls made by
 [BitBake](https://github.com/openembedded/bitbake) using CodeChecker.

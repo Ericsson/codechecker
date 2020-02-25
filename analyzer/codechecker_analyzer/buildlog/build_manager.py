@@ -50,7 +50,8 @@ def execute_buildcmd(command, silent=False, env=None, cwd=None):
     return proc.returncode
 
 
-def perform_build_command(logfile, command, context, keep_link, silent=False):
+def perform_build_command(logfile, command, context, keep_link, silent=False,
+                          verbose=None):
     """
     Build the project and create a log file.
     """
@@ -93,6 +94,16 @@ def perform_build_command(logfile, command, context, keep_link, silent=False):
             if keep_link or ('CC_LOGGER_KEEP_LINK' in log_env and
                              log_env['CC_LOGGER_KEEP_LINK'] == 'true'):
                 log_env['CC_LOGGER_KEEP_LINK'] = 'true'
+
+            is_debug = verbose and verbose in ['debug', 'debug_analyzer']
+            if is_debug and 'CC_LOGGER_DEBUG_FILE' not in log_env:
+                log_file = os.path.join(os.path.dirname(logfile),
+                                        'codechecker.logger.debug')
+
+                if os.path.exists(log_file):
+                    os.remove(log_file)
+
+                log_env['CC_LOGGER_DEBUG_FILE'] = log_file
         else:
             LOG.error("Intercept-build is required"
                       " to run CodeChecker in OS X.")
@@ -114,6 +125,14 @@ def perform_build_command(logfile, command, context, keep_link, silent=False):
         LOG.error(str(ex))
         sys.exit(1)
     finally:
+        debug_file = log_env.get('CC_LOGGER_DEBUG_FILE')
+        if debug_file:
+            LOG.info("The debug log file is: %s", debug_file)
+
+            debug_logfile_lock = debug_file + '.lock'
+            if os.path.exists(debug_logfile_lock):
+                os.remove(debug_logfile_lock)
+
         # Removing flock lock file.
         logfile_lock = logfile + '.lock'
         if os.path.exists(logfile_lock):

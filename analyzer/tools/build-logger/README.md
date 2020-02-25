@@ -72,3 +72,6 @@ all relative paths in the compilation commands after
 -iwithprefix, -iwithprefixbefore, -sysroot, --sysroot`
 will be converted to absolute PATH when written into the compilation database.
 
+### `CC_LOGGER_DEBUG_FILE`
+Output file to print log messages. If this environment variable is not
+defined it will do nothing.
