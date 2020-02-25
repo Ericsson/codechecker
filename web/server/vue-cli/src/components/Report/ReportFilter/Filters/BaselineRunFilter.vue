@@ -118,7 +118,7 @@ export default {
     },
 
     getRunIdsByRunName(runName) {
-      const runFilter = new RunFilter({ names: [ runName ]});
+      const runFilter = new RunFilter({ names: [ runName ] });
       const limit = null;
       const offset = null;
       const sortMode = null;

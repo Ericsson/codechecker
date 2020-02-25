@@ -274,7 +274,7 @@ export default {
 
     // TODO: Same function in the BaselineRunFilter component.
     async getRunIdsByRunName(runName) {
-      const runFilter = new RunFilter({ names: [ runName ]});
+      const runFilter = new RunFilter({ names: [ runName ] });
       const limit = null;
       const offset = null;
       const sortMode = null;

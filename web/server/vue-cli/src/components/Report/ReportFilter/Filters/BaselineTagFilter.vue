@@ -145,7 +145,7 @@ export default {
         const limit = null;
         const offset = null;
         const sortMode = null;
-        const runFilter = new RunFilter({ names: [ runName ]});
+        const runFilter = new RunFilter({ names: [ runName ] });
 
         ccService.getClient().getRunData(runFilter, limit, offset, sortMode,
         (err, runs) => {

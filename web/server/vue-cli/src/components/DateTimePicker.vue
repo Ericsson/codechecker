@@ -79,7 +79,7 @@ export default {
     label: { type: String, default: "" },
     dateFormat: { type: String, default: "yyyy-MM-dd" },
     timeFormat: { type: String, default: "HH:mm:ss" },
-    defaultTime: {type: String, default: "00:00:00" }
+    defaultTime: { type: String, default: "00:00:00" }
   },
   data() {
     return {
