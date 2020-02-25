@@ -1,7 +1,7 @@
-import Vue from "vue"
-import Vuetify from "vuetify/lib"
+import Vue from "vue";
+import Vuetify from "vuetify/lib";
 
-Vue.use(Vuetify)
+Vue.use(Vuetify);
 
 const opts = {
   iconfont: "mdi",
@@ -22,6 +22,6 @@ const opts = {
       }
     },
   }
-}
+};
 
-export default new Vuetify(opts)
+export default new Vuetify(opts);

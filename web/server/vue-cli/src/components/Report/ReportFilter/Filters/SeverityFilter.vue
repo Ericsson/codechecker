@@ -43,7 +43,7 @@ export default {
     },
 
     decodeValue(severityName) {
-      return this.severityFromStringToCode(severityName)
+      return this.severityFromStringToCode(severityName);
     },
 
     updateReportFilter() {
@@ -79,5 +79,5 @@ export default {
       });
     }
   }
-}
+};
 </script>

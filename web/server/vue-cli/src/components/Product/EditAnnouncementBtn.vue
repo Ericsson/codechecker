@@ -87,7 +87,7 @@ export default {
   mounted() {
     confService.getClient().getNotificationBannerText((err, announcement) => {
       this.announcement = window.atob(announcement);
-    })
+    });
   },
   methods: {
     confirmAnnouncementChange() {
@@ -97,8 +97,8 @@ export default {
       confService.getClient().setNotificationBannerText(announcementB64,
       () => {
         this.dialog = false;
-      })
+      });
     }
   }
-}
+};
 </script>

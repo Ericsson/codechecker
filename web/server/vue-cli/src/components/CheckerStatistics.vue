@@ -217,5 +217,5 @@ export default {
       });
     }
   }
-}
+};
 </script>

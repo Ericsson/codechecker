@@ -8,5 +8,5 @@ export default {
     title: { type: String, default: "User permissions" },
     label: { type: String, default: "User name" }
   }
-}
+};
 </script>

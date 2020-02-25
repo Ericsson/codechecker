@@ -109,5 +109,5 @@ export default {
       this.maxBugPathLength = null;
     }
   }
-}
+};
 </script>

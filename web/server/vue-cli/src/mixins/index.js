@@ -10,4 +10,4 @@ export {
   ReviewStatusMixin,
   SeverityMixin,
   StrToColorMixin
-}
+};

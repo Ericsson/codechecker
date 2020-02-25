@@ -321,7 +321,7 @@ data() {
           // Remove action column from headers.
           if (!isAdminOfAnyProduct) {
             this.headers = this.headers.filter(header => {
-              return header.value !== "action"
+              return header.value !== "action";
             });
           }
         });
@@ -386,5 +386,5 @@ data() {
       }
     }
   }
-}
+};
 </script>

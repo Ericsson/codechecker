@@ -79,5 +79,5 @@ export default {
       this.doc = null;
     }
   }
-}
+};
 </script>

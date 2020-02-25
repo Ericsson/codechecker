@@ -63,11 +63,11 @@ export default {
         return this.selectedItems;
       },
       set(value) {
-        this.$emit("update:select", value)
+        this.$emit("update:select", value);
       }
     }
   }
-}
+};
 </script>
 
 <style lang="sass" scoped>

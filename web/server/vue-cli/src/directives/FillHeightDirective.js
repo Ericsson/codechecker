@@ -64,6 +64,6 @@ export const FillHeight = {
     window.removeEventListener("resize", fn, options);
     delete el._onResize;
   }
-}
+};
 
 export default FillHeight;

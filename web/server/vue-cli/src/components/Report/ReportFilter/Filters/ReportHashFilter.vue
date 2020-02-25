@@ -72,5 +72,5 @@ export default {
       this.reportHash = null;
     }
   }
-}
+};
 </script>

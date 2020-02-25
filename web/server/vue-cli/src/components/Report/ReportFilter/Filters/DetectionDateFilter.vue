@@ -143,5 +143,5 @@ export default {
       this.toDateTime = null;
     }
   }
-}
+};
 </script>

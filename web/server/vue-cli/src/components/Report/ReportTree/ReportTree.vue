@@ -192,7 +192,7 @@ export default {
       this.$emit("click", activeItems[0]);
     }
   }
-}
+};
 </script>
 
 <style lang="scss" scoped>

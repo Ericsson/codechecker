@@ -29,5 +29,5 @@ export default {
       this.fetchItems();
     },
   }
-}
+};
 </script>

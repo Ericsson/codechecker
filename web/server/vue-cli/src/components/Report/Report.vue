@@ -201,7 +201,7 @@ import SelectSameReport from "./SelectSameReport";
 import ShowDocumentationButton from "./ShowDocumentationButton";
 
 import ReportStepMessage from "./ReportStepMessage";
-const ReportStepMessageClass = Vue.extend(ReportStepMessage)
+const ReportStepMessageClass = Vue.extend(ReportStepMessage);
 
 
 export default {
@@ -590,7 +590,7 @@ export default {
       });
     }
   }
-}
+};
 </script>
 
 <style lang="scss" scoped>

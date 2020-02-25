@@ -1,7 +1,7 @@
 import "core-js/stable";
 import "regenerator-runtime/runtime";
 
-import "@mdi/font/css/materialdesignicons.css"
+import "@mdi/font/css/materialdesignicons.css";
 import "codemirror/lib/codemirror.css";
 import "codemirror/mode/clike/clike.js";
 import "splitpanes/dist/splitpanes.css";
@@ -22,7 +22,7 @@ import { eventHub } from "@cc-api";
 
 import "@/variables.scss";
 
-Vue.config.productionTip = false
+Vue.config.productionTip = false;
 
 // Ensure we checked auth before each page load.
 router.beforeResolve((to, from, next) => {
@@ -53,4 +53,4 @@ new Vue({
   store,
   vuetify,
   render: h => h(App),
-}).$mount("#app")
+}).$mount("#app");

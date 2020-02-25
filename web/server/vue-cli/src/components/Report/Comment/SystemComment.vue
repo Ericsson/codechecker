@@ -28,5 +28,5 @@ export default {
         .replace("%date%", this.comment.createdAt);
     }
   }
-}
+};
 </script>

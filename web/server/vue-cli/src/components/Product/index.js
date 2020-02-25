@@ -10,4 +10,4 @@ export {
   EditProductBtn,
   NewProductBtn,
   ProductConfigForm
-}
+};

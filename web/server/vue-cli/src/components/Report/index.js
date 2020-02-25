@@ -12,4 +12,4 @@ export {
   SelectReviewStatus,
   SelectSameReport,
   ShowDocumentationButton
-}
+};

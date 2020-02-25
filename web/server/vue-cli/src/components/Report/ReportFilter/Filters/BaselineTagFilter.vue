@@ -154,5 +154,5 @@ export default {
       });
     }
   }
-}
+};
 </script>

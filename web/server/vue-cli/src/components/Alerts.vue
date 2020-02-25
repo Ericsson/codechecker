@@ -35,5 +35,5 @@ export default {
     successMsg: { type: String, default: null },
     errorMsg: { type: String, default: null }
   }
-}
+};
 </script>

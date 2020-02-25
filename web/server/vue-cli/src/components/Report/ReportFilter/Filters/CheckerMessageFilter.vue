@@ -45,7 +45,7 @@ export default {
     updateReportFilter() {
       this.setReportFilter({
         checkerMsg: this.selectedItems.map(item => item.id)
-      })
+      });
     },
 
     onReportFilterChange(key) {
@@ -82,5 +82,5 @@ export default {
       this.fetchItems(value);
     }
   }
-}
+};
 </script>

@@ -76,9 +76,9 @@ export default {
             severity: parseInt(severity),
             reports: statistics[severity]
           };
-        })
+        });
       });
     }
   }
-}
+};
 </script>

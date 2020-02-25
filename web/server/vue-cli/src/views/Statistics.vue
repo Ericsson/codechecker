@@ -67,5 +67,5 @@ export default {
       statistics.forEach(statistic => statistic.fetchStatistics());
     }
   }
-}
+};
 </script>

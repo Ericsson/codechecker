@@ -12,4 +12,4 @@ export {
   ReviewStatusIcon,
   SeverityIcon,
   UserIcon
-}
+};

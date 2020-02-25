@@ -129,7 +129,7 @@ export default {
         return this.isValid;
       },
       set(value) {
-        this.$emit("update:is-valid", value)
+        this.$emit("update:is-valid", value);
       }
     },
 
@@ -159,5 +159,5 @@ export default {
       }
     }
   }
-}
+};
 </script>

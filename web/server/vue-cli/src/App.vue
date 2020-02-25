@@ -28,7 +28,7 @@ export default {
     TheFooter,
     TheHeader
   }
-}
+};
 </script>
 
 <style lang="scss">

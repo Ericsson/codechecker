@@ -4,4 +4,4 @@ import TheFooter from "./TheFooter";
 export {
   TheHeader,
   TheFooter
-}
+};

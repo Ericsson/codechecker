@@ -190,7 +190,7 @@ export default {
       this.search.filterItems(value);
     }
   }
-}
+};
 </script>
 
 <style lang="scss">

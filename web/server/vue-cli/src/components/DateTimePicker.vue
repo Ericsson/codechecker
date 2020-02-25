@@ -116,7 +116,7 @@ export default {
   },
 
   mounted() {
-    this.init()
+    this.init();
   },
 
   methods: {
@@ -128,7 +128,7 @@ export default {
 
       let initValue = null;
       if (this.value instanceof Date) {
-        initValue = this.value
+        initValue = this.value;
       } else if (typeof this.value === "string" ||
                  this.value instanceof String
       ) {

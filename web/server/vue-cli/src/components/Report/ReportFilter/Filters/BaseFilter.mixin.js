@@ -114,4 +114,4 @@ export default {
       this.fetchItems();
     },
   }
-}
+};

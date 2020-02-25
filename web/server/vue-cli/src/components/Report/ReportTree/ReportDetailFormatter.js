@@ -81,14 +81,14 @@ function formatExtendedData(report, extendedData) {
 
   if (macros.length) {
     const children = formatExtendedReportDataChildren(report, macros,
-      ReportTreeKind.MACRO_EXPANSION_ITEM)
+      ReportTreeKind.MACRO_EXPANSION_ITEM);
 
     items.push({
       id: ReportTreeKind.getId(ReportTreeKind.MACRO_EXPANSION, report),
       name: "Macro expansions",
       kind: ReportTreeKind.MACRO_EXPANSION,
       children: children
-    })
+    });
   }
 
   // Add notes.
@@ -98,14 +98,14 @@ function formatExtendedData(report, extendedData) {
 
   if (notes.length) {
     const children = formatExtendedReportDataChildren(report, notes,
-      ReportTreeKind.NOTE_ITEM)
+      ReportTreeKind.NOTE_ITEM);
 
     items.push({
       id: ReportTreeKind.getId(ReportTreeKind.NOTE, report),
       name: "Notes",
       kind: ReportTreeKind.NOTE,
       children: children
-    })
+    });
   }
 
   return items;

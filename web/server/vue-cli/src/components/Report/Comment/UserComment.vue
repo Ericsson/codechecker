@@ -69,5 +69,5 @@ export default {
       return this.comment.message.replace(/(?:\r\n|\r|\n)/g, "<br>");
     }
   }
-}
+};
 </script>

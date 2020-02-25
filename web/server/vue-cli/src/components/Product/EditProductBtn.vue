@@ -164,5 +164,5 @@ export default {
       this.bus.$emit("save");
     }
   }
-}
+};
 </script>

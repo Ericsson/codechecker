@@ -184,7 +184,7 @@ export default {
       this.name = "";
     }
   }
-}
+};
 </script>
 
 <style lang="scss" scoped>

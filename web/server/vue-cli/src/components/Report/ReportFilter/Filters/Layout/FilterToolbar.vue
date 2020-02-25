@@ -38,7 +38,7 @@ export default {
       this.$emit("clear");
     }
   }
-}
+};
 </script>
 
 <style lang="sass" scoped>

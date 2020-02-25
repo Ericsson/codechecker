@@ -471,5 +471,5 @@ export default {
       return version.split(" ")[0];
     }
   }
-}
+};
 </script>

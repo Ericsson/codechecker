@@ -116,7 +116,7 @@ export default {
           sortable: false
         },
       ]
-    }
+    };
   },
 
   computed: {
@@ -138,7 +138,7 @@ export default {
     fetchSourceComponents() {
       ccService.getClient().getSourceComponents(null, (err, components) => {
         this.components = components;
-      })
+      });
     },
 
     editSourceComponent(component) {
@@ -156,7 +156,7 @@ export default {
       this.removeDialog = true;
     }
   }
-}
+};
 </script>
 
 <style lang="sass" scoped>

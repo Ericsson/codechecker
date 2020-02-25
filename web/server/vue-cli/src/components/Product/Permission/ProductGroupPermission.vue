@@ -9,5 +9,5 @@ export default {
     label: { type: String, default: "Group name" },
     icon: { type: String, default: "mdi-account-group-outline" }
   }
-}
+};
 </script>

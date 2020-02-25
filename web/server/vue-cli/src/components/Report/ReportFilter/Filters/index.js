@@ -34,4 +34,4 @@ export {
   CheckerMessageFilter,
   BaseFilterMixin,
   BugPathLengthFilter
-}
+};

@@ -24,5 +24,5 @@ export default {
       this.bus.$emit("remove:comment", this.comment);
     }
   }
-}
+};
 </script>

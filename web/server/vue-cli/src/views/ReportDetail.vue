@@ -142,7 +142,7 @@ export default {
       this.treeItem = item;
     }
   }
-}
+};
 </script>
 
 <style lang="scss" scoped>

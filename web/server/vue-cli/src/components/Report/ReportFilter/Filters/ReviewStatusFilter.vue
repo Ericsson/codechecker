@@ -79,5 +79,5 @@ export default {
       });
     }
   }
-}
+};
 </script>

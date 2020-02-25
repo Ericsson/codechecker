@@ -21,5 +21,5 @@ export default {
       this.$emit("clear");
     }
   }
-}
+};
 </script>

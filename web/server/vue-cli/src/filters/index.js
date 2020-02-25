@@ -6,4 +6,4 @@ export default {
     Vue.filter("prettifyDate", prettifyDate);
     Vue.filter("truncate", truncate);
   }
-}
+};

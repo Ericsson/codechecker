@@ -94,5 +94,5 @@ export default {
       ReportTreeKind
     };
   },
-}
+};
 </script>

@@ -67,12 +67,12 @@ export default {
       return new Promise(resolve => {
         const state = this.$route.query[this.id];
         if (state) {
-          this.isUnique = this.decodeValue(state)
+          this.isUnique = this.decodeValue(state);
         }
 
         resolve();
       });
     },
   }
-}
+};
 </script>

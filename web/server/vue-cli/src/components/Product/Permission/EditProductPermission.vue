@@ -82,5 +82,5 @@ export default {
   mounted() {
     this.populatePermissions(this.scope, this.extraParamsJSON);
   }
-}
+};
 </script>

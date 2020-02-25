@@ -10,4 +10,4 @@ export {
   confService,
   eventHub,
   prodService
-}
+};

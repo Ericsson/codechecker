@@ -55,5 +55,5 @@ export default {
              this.item.kind === ReportTreeKind.NOTE_ITEM;
     }
   }
-}
+};
 </script>

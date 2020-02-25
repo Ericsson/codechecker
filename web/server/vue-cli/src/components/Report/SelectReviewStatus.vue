@@ -153,7 +153,7 @@ export default {
       this.dialog = false;
     }
   }
-}
+};
 </script>
 
 <style lang="scss" scoped>

@@ -114,7 +114,7 @@ export default {
       this.$emit("update:report", reportId.toNumber());
     }
   }
-}
+};
 </script>
 
 <style lang="scss" scoped>

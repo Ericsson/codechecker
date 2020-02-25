@@ -172,5 +172,5 @@ export default {
       });
     }
   }
-}
+};
 </script>
