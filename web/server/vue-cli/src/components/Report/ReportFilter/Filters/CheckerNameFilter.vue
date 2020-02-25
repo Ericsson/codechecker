@@ -65,7 +65,7 @@ export default {
 
       ccService.getClient().getCheckerCounts(this.runIds, reportFilter,
       this.cmpData, limit, offset, (err, res) => {
-        this.items = res.map((checker) => {
+        this.items = res.map(checker => {
           return {
             id: checker.name,
             title: checker.name,

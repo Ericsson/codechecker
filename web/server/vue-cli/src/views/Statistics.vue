@@ -64,7 +64,7 @@ export default {
   methods: {
     refresh() {
       const statistics = this.$refs.statistics;
-      statistics.forEach((statistic) => statistic.fetchStatistics());
+      statistics.forEach(statistic => statistic.fetchStatistics());
     }
   }
 }

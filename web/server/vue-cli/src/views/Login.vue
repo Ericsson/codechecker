@@ -90,7 +90,7 @@ export default {
           this.error = false;
 
           this.$router.push({ name: "products" });
-        }).catch((err) => {
+        }).catch(err => {
           this.errorMsg = `Failed to log in! ${err.message}`;
           this.error = true;
         });

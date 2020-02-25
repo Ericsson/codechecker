@@ -119,11 +119,11 @@ export default {
 
       ccService.getClient().getRunResults(runIds, limit, offset, sortType,
       reportFilter, cmpData, getDetails, (err, reports) => {
-        reports.forEach((report) => {
+        reports.forEach(report => {
           const isResolved =
             report.detectionStatus === DetectionStatus.RESOLVED;
 
-          const parent = this.items.find((item) => {
+          const parent = this.items.find(item => {
             return isResolved
               ? item.detectionStatus === DetectionStatus.RESOLVED
               : item.severity === report.severity;
@@ -135,15 +135,15 @@ export default {
             kind: ReportTreeKind.REPORT,
             report: report,
             children: [],
-            getChildren: (item) => {
-              return new Promise((resolve) => {
+            getChildren: item => {
+              return new Promise(resolve => {
                 ccService.getClient().getReportDetails(report.reportId,
                 (err, details) => {
                   item.children = formatReportDetails(report, details);
                   resolve();
 
                   if (this.report.reportId.equals(item.report.reportId)) {
-                    const bugItem = item.children.find((c) =>
+                    const bugItem = item.children.find(c =>
                       c.id === `${report.reportId}_${ReportTreeKind.BUG}`
                     );
 
@@ -172,7 +172,7 @@ export default {
       const isResolved =
         this.report.detectionStatus === DetectionStatus.RESOLVED;
 
-      const rootNode = this.items.find((item) => {
+      const rootNode = this.items.find(item => {
         return isResolved
           ? item.detectionStatus === DetectionStatus.RESOLVED
           : item.severity === this.report.severity;
@@ -180,7 +180,7 @@ export default {
 
       this.openedItems.push(rootNode);
       this.$nextTick(() => {
-        const reportNode = rootNode.children.find((item) => {
+        const reportNode = rootNode.children.find(item => {
           return item.id === this.report.reportId.toString();
         });
 

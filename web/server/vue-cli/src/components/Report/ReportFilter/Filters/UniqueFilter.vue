@@ -64,7 +64,7 @@ export default {
     },
 
     initByUrl() {
-      return new Promise((resolve) => {
+      return new Promise(resolve => {
         const state = this.$route.query[this.id];
         if (state) {
           this.isUnique = this.decodeValue(state)

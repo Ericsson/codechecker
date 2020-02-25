@@ -150,12 +150,12 @@ export default {
   computed: {
     selected: {
       get() {
-        const ids = this.selectedItems.map((item) => item.id);
+        const ids = this.selectedItems.map(item => item.id);
         return this.multiple ? ids : ids[0];
       },
       set(value) {
         const values = this.multiple ? value : [ value ];
-        const selectedItems = this.items.filter((item) => {
+        const selectedItems = this.items.filter(item => {
           return values.includes(item.id);
         });
 
@@ -165,14 +165,14 @@ export default {
 
     selectedRgx: {
       get() {
-        return this.selectedItems.find((item) => item.id === this.searchTxt)
+        return this.selectedItems.find(item => item.id === this.searchTxt)
           ? this.searchTxt
           : null;
       },
       set(value) {
         const selectedItems = [ ...this.selectedItems ];
         const idx =
-          selectedItems.findIndex((item) => item.id === this.searchTxt);
+          selectedItems.findIndex(item => item.id === this.searchTxt);
 
         if (!value && idx !== -1) {
           selectedItems.splice(idx, 1);

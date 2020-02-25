@@ -121,7 +121,7 @@ export default {
 
   computed: {
     processedComponents() {
-      return this.components.map((component) => {
+      return this.components.map(component => {
         return {
           ...component,
           $values: component.value.split(/\r|\n/)

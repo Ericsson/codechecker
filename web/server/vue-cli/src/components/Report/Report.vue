@@ -338,21 +338,21 @@ export default {
     },
 
     highlightReport() {
-      this.lineWidgets.forEach((widget) => {
+      this.lineWidgets.forEach(widget => {
         const type = widget.node.getAttribute("type");
         widget.node.classList.toggle("current", type === "error");
       });
     },
 
     highlightCurrentBubble(id) {
-      this.lineWidgets.forEach((widget) => {
+      this.lineWidgets.forEach(widget => {
         const stepId = widget.node.getAttribute("step-id");
         widget.node.classList.toggle("current", stepId === id);
       });
     },
 
     async setSourceFileData(fileId) {
-      const sourceFile = await new Promise((resolve) => {
+      const sourceFile = await new Promise(resolve => {
         ccService.getClient().getSourceFileData(fileId, true,
         Encoding.DEFAULT, (err, sourceFile) => {
           resolve(sourceFile);
@@ -395,14 +395,14 @@ export default {
 
       const reportId = this.report.reportId;
 
-      const reportDetail = await new Promise((resolve) => {
+      const reportDetail = await new Promise(resolve => {
         ccService.getClient().getReportDetails(reportId,
         (err, reportDetail) => {
           resolve(reportDetail);
         });
       });
 
-      const isSameFile = (path) => path.fileId.equals(this.sourceFile.fileId);
+      const isSameFile = path => path.fileId.equals(this.sourceFile.fileId);
 
       // Add extra path events (macro expansions, notes).
       const extendedData = reportDetail.extendedData.map((data, index) => {
@@ -484,7 +484,7 @@ export default {
 
     addEvents(events) {
       this.editor.operation(() => {
-        events.forEach((event) => {
+        events.forEach(event => {
           const type = event.$isResult
             ? "error" : event.msg.indexOf(" (fixit)") > -1
             ? "fixit" : "info";
@@ -497,7 +497,7 @@ export default {
 
     addExtendedData(extendedData) {
       this.editor.operation(() => {
-        extendedData.forEach((data) => {
+        extendedData.forEach(data => {
           let type = null;
           let value = null;
           switch(data.type) {
@@ -521,7 +521,7 @@ export default {
 
     addLines(points) {
       this.editor.operation(() => {
-        points.forEach((p) => {
+        points.forEach(p => {
           const from = { line : p.startLine - 1, ch : p.startCol - 1 };
           const to =   { line : p.endLine - 1,   ch : p.endCol.toNumber() };
           const markerId = [ from.line, from.ch, to.line, to.ch ].join("_");
@@ -552,7 +552,7 @@ export default {
       }
 
       let prev = null;
-      this.lineMarks.forEach((textMarker) => {
+      this.lineMarks.forEach(textMarker => {
         const current = this.getDomToMarker(textMarker);
 
         if (!current) {

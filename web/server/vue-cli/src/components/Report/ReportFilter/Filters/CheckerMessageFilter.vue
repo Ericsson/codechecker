@@ -65,7 +65,7 @@ export default {
 
       ccService.getClient().getCheckerMsgCounts(this.runIds, reportFilter,
       this.cmpData, limit, offset, (err, res) => {
-        this.items = Object.keys(res).map((msg) => {
+        this.items = Object.keys(res).map(msg => {
           return {
             id : msg,
             title: msg,

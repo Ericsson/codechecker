@@ -71,7 +71,7 @@ export default {
 
       ccService.getClient().getSeverityCounts(runIds, reportFilter, cmpData,
       (err, statistics) => {
-        this.statistics = Object.keys(statistics).map((severity) => {
+        this.statistics = Object.keys(statistics).map(severity => {
           return {
             severity: parseInt(severity),
             reports: statistics[severity]

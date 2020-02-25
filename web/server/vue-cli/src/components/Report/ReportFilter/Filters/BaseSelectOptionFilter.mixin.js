@@ -35,16 +35,16 @@ export default {
 
     getUrlState() {
       const state =
-        this.selectedItems.map((item) => this.encodeValue(item.id));
+        this.selectedItems.map(item => this.encodeValue(item.id));
 
       return { [this.id]: state.length ? state : undefined };
     },
 
     initByUrl() {
-      return new Promise((resolve) => {
+      return new Promise(resolve => {
         const state = [].concat(this.$route.query[this.id] || []);
         if (state.length) {
-          this.selectedItems = state.map((s) => {
+          this.selectedItems = state.map(s => {
             const id = this.decodeValue(s);
             return {
               id: id,
@@ -67,8 +67,8 @@ export default {
     },
 
     updateSelectedItems() {
-      this.selectedItems.forEach((selectedItem) => {
-        const item = this.items.find((i) => i.id === selectedItem.id);
+      this.selectedItems.forEach(selectedItem => {
+        const item = this.items.find(i => i.id === selectedItem.id);
         if (item) {
           selectedItem.count = item.count;
         }

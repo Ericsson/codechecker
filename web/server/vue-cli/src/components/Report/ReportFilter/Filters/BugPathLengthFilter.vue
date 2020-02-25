@@ -75,7 +75,7 @@ export default {
     },
 
     initByUrl() {
-      return new Promise((resolve) => {
+      return new Promise(resolve => {
         const minBugPathLength = this.$route.query[this.minId];
         if (minBugPathLength) {
           this.minBugPathLength = minBugPathLength;

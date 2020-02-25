@@ -127,7 +127,7 @@ export default {
   },
 
   created() {
-    this.items = Object.values(ReviewStatus).map((id) => {
+    this.items = Object.values(ReviewStatus).map(id => {
       return {
         id: id,
         label: reviewStatusFromCodeToString(id)

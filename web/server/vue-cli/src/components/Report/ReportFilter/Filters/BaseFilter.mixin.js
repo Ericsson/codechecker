@@ -53,7 +53,7 @@ export default {
     },
 
     initByUrl() {
-      return new Promise((resolve) => { resolve(); });
+      return new Promise(resolve => { resolve(); });
     },
 
     // When mutating (rather than replacing) an Object or an Array, the old
@@ -65,7 +65,7 @@ export default {
 
       this.reportFilterUnwatch = this.$watch("reportFilterModel",
       (oldVal, newVal) => {
-        Object.keys(newVal).forEach((key) => {
+        Object.keys(newVal).forEach(key => {
           if (JSON.stringify(newVal[key]) !== JSON.stringify(oldVal[key])) {
             this.onReportFilterChange(key, oldVal, newVal);
           }

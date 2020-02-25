@@ -275,7 +275,7 @@ data() {
   computed: {
     processedProducts() {
       let products = [ ...this.products ];
-      return products.map((product) => {
+      return products.map(product => {
         product.description = product.description_b64 ?
           window.atob(product.description_b64) : null;
         product.displayedName = product.displayedName_b64 ?
@@ -320,7 +320,7 @@ data() {
 
           // Remove action column from headers.
           if (!isAdminOfAnyProduct) {
-            this.headers = this.headers.filter((header) => {
+            this.headers = this.headers.filter(header => {
               return header.value !== "action"
             });
           }
@@ -351,7 +351,7 @@ data() {
     },
 
     deleteProduct(product) {
-      this.products = this.products.filter((p) => p.id !== product.id);
+      this.products = this.products.filter(p => p.id !== product.id);
     },
 
     dbStatusFromCodeToString(dbStatus) {

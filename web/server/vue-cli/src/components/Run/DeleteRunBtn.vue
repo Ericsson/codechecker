@@ -90,7 +90,7 @@ export default {
   methods: {
     confirmDelete() {
       const runFilter = new RunFilter({
-        ids: this.selected.map((run) => run.runId)
+        ids: this.selected.map(run => run.runId)
       });
 
       ccService.getClient().removeRun(null, runFilter, () => {

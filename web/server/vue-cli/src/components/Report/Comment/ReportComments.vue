@@ -95,12 +95,12 @@ export default {
 
     this.bus.$on("update:comments", this.fetchComments);
 
-    this.bus.$on("update:comment", (comment) => {
+    this.bus.$on("update:comment", comment => {
       this.selected = comment;
       this.editDialog = true;
     });
 
-    this.bus.$on("remove:comment", (comment) => {
+    this.bus.$on("remove:comment", comment => {
       this.selected = comment;
       this.removeDialog = true;
     });

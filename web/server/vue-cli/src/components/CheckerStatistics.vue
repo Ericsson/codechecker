@@ -181,18 +181,18 @@ export default {
         { field: "reviewStatus", values: [ ReviewStatus.FALSE_POSITIVE ] },
         { field: "reviewStatus", values: [ ReviewStatus.INTENTIONAL ] },
         { field: "detectionStatus", values: [ DetectionStatus.RESOLVED ] }
-      ].map((q) => {
+      ].map(q => {
         const reportFilter = new ReportFilter(this.reportFilter);
 
         if (q.field) {
           reportFilter[q.field] = q.values;
         }
 
-        return new Promise((resolve) => {
+        return new Promise(resolve => {
           ccService.getClient().getCheckerCounts(runIds, reportFilter, cmpData,
           limit, offset, (err, checkerCounts) => {
             const obj = {};
-            checkerCounts.forEach((item) => { obj[item.name] = item; });
+            checkerCounts.forEach(item => { obj[item.name] = item; });
             resolve(obj);
           });
         });
@@ -202,7 +202,7 @@ export default {
         const checkers = res[0];
         const checkerNames = Object.keys(checkers);
 
-        this.statistics = checkerNames.map((key) => {
+        this.statistics = checkerNames.map(key => {
           return {
             checker       : key,
             severity      : checkers[key].severity,

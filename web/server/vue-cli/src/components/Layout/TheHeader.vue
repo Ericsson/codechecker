@@ -151,7 +151,7 @@ export default {
     menuItems() {
       if (!this.$route.name) return [];
 
-      return this.menuButtons.filter((item) => {
+      return this.menuButtons.filter(item => {
         return !item.hide || !item.hide.includes(this.$route.name);
       });
     },

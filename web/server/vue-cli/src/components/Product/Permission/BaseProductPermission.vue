@@ -134,7 +134,7 @@ export default {
 
     saveAll() {
       for (const userName of Object.keys(this.changedAuthRights)) {
-        this.changedAuthRights[userName].forEach((permission) => {
+        this.changedAuthRights[userName].forEach(permission => {
           if (this.authRights[userName] &&
               this.authRights[userName].indexOf(permission) !== -1
           ) {

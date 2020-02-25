@@ -81,7 +81,7 @@ export default {
       ccService.getClient().getRunResults(null, MAX_QUERY_SIZE, 0, [ sortMode ],
       reportFilter, null, false, (err, res) => {
         this.getRuns(res).then(runs => {
-          this.items = res.map((report) => {
+          this.items = res.map(report => {
             const run = runs.find(run => run.runId.equals(report.runId)) || {};
 
             return {
@@ -102,7 +102,7 @@ export default {
         ids: reports.map(report => report.runId)
       });
 
-      return new Promise((resolve) => {
+      return new Promise(resolve => {
         ccService.getClient().getRunData(runFilter, null, 0, null,
         (err, res) => {
           resolve(res);

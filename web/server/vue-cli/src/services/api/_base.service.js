@@ -23,7 +23,7 @@ class BaseService {
     this._client = this.createClient();
 
     // Event which can be used to update client on route changes.
-    eventHub.$on("update", (endpoint) => {
+    eventHub.$on("update", endpoint => {
       this._client = this.createClient(endpoint);
     });
   }

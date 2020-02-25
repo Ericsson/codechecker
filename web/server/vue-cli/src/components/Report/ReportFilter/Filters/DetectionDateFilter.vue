@@ -82,7 +82,7 @@ export default {
     },
 
     initByUrl() {
-      return new Promise((resolve) => {
+      return new Promise(resolve => {
         const fromDateTime = this.$route.query[this.fromDateTimeId];
         if (fromDateTime) {
           this.fromDateTime = new Date(fromDateTime);

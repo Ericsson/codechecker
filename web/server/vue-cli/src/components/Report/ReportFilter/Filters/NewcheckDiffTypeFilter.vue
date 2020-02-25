@@ -79,11 +79,11 @@ export default {
         return;
       }
 
-      const query = Object.keys(DiffType).map((key) => {
+      const query = Object.keys(DiffType).map(key => {
         const cmpData = new CompareData(this.cmpData);
         cmpData.diffType = DiffType[key];
 
-        return new Promise((resolve) => {
+        return new Promise(resolve => {
           ccService.getClient().getRunResultCount(this.runIds,
           this.reportFilter, cmpData, (err, res) => {
             resolve({ [key]: res });
@@ -91,7 +91,7 @@ export default {
         });
       });
 
-      Promise.all(query).then((res) => {
+      Promise.all(query).then(res => {
         this.items = Object.keys(DiffType).map((key, index) => {
           const id = DiffType[key];
           return {

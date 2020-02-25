@@ -21,7 +21,7 @@ export default {
     },
 
     addAuthRight(authRights, permission, userNames) {
-      userNames.forEach((userName) => {
+      userNames.forEach(userName => {
         if (!(userName in authRights)) {
           this.$set(authRights, userName, []);
         }
@@ -36,7 +36,7 @@ export default {
       this.userAuthRights = {};
       this.groupAuthRights = {};
 
-      this.permissions.forEach((permission) => {
+      this.permissions.forEach(permission => {
         authService.getClient().getAuthorisedNames(permission,
         extraParamsJSON, (err, res) => {
           this.addAuthRight(this.userAuthRights, permission, res.users);

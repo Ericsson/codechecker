@@ -46,9 +46,9 @@ export default {
 
   methods: {
     getSelectedItems(tagWithRunNames) {
-      return tagWithRunNames.map((s) => {
-        return new Promise((resolve) => {
-          this.getTagIds(s).then((tagIds) => {
+      return tagWithRunNames.map(s => {
+        return new Promise(resolve => {
+          this.getTagIds(s).then(tagIds => {
             resolve({
               id: s,
               tagIds: tagIds,
@@ -61,11 +61,11 @@ export default {
     },
 
     initByUrl() {
-      return new Promise((resolve) => {
+      return new Promise(resolve => {
         const state = [].concat(this.$route.query[this.id] || []);
         if (state.length) {
           const selectedItems = this.getSelectedItems(state);
-          Promise.all(selectedItems).then((res) => {
+          Promise.all(selectedItems).then(res => {
             this.selectedItems = res;
             resolve();
           });
@@ -95,7 +95,7 @@ export default {
 
       ccService.getClient().getRunHistoryTagCounts(this.runIds, reportFilter,
       this.cmpData, (err, res) => {
-        this.items = res.map((tag) => {
+        this.items = res.map(tag => {
           const title = tag.runName + ":" + tag.name;
           return {
             id: title,
@@ -115,7 +115,7 @@ export default {
     },
 
     getTagIds(tagWithRunName) {
-      return new Promise((resolve) => {
+      return new Promise(resolve => {
         const index = tagWithRunName.indexOf(":");
         if (index === -1) {
           resolve();
@@ -125,7 +125,7 @@ export default {
         const runName = tagWithRunName.substring(0, index);
         const tagName = tagWithRunName.substring(index + 1);
 
-        this.getRunIds(runName).then((runIds) => {
+        this.getRunIds(runName).then(runIds => {
           const limit = null;
           const offset = 0;
           const runHistoryFilter = new RunHistoryFilter({
@@ -134,14 +134,14 @@ export default {
 
           ccService.getClient().getRunHistory(runIds, limit, offset,
           runHistoryFilter, (err, res) => {
-            resolve(res.map((history) => history.id));
+            resolve(res.map(history => history.id));
           });
         });
       });
     },
 
     getRunIds(runName) {
-      return new Promise((resolve) => {
+      return new Promise(resolve => {
         const limit = null;
         const offset = null;
         const sortMode = null;
@@ -149,7 +149,7 @@ export default {
 
         ccService.getClient().getRunData(runFilter, limit, offset, sortMode,
         (err, runs) => {
-          resolve(runs.map((run) => run.runId));
+          resolve(runs.map(run => run.runId));
         });
       });
     }

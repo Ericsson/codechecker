@@ -77,7 +77,7 @@ export default {
 
       const filter = search ? [ `${search}*` ] : null;
       ccService.getClient().getSourceComponents(filter, (err, res) => {
-        this.items = res.map((component) => {
+        this.items = res.map(component => {
           return {
             id : component.name,
             title: component.name

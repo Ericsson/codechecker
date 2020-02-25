@@ -331,7 +331,7 @@ export default {
 
   computed: {
     formattedRuns() {
-      return this.runs.map((run) => {
+      return this.runs.map(run => {
         return {
           ...run,
           $duration: this.prettifyDuration(run.duration),

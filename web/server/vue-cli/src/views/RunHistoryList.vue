@@ -216,7 +216,7 @@ export default {
 
   computed: {
     formattedRunHistories() {
-      return this.histories.map((history) => {
+      return this.histories.map(history => {
         const ccVersion = this.prettifyCCVersion(history.codeCheckerVersion);
 
         return {
@@ -279,10 +279,10 @@ export default {
       const offset = null;
       const sortMode = null;
 
-      return new Promise((resolve) => {
+      return new Promise(resolve => {
         ccService.getClient().getRunData(runFilter, limit, offset, sortMode,
         (err, runs) => {
-          resolve(runs.map((run) => run.runId));
+          resolve(runs.map(run => run.runId));
         });
       });
     },

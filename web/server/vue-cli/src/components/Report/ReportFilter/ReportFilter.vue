@@ -274,7 +274,7 @@ export default {
     this.unregisterWatchers();
 
     const filters = this.$refs.filters;
-    filters.forEach((filter) => filter.unregisterWatchers());
+    filters.forEach(filter => filter.unregisterWatchers());
   },
 
   methods: {
@@ -291,17 +291,17 @@ export default {
       this.unregisterWatchers();
 
       this.reportFilterUnwatch = this.$store.watch(
-      (state) => state.report.reportFilter, () => {
+      state => state.report.reportFilter, () => {
         this.$emit("refresh");
       }, { deep: true });
 
       this.runIdsUnwatch = this.$store.watch(
-      (state) => state.report.runIds, () => {
+      state => state.report.runIds, () => {
         this.$emit("refresh");
       });
 
       this.cmpDataUnwatch = this.$store.watch(
-      (state) => state.report.cmpData, () => {
+      state => state.report.cmpData, () => {
         this.$emit("refresh");
       }, { deep: true });
     },
@@ -317,16 +317,16 @@ export default {
 
       // Before init.
       this.beforeInit();
-      filters.forEach((filter) => filter.beforeInit());
+      filters.forEach(filter => filter.beforeInit());
 
       // Init all filters by URL parameters.
-      const results = filters.map((filter) => {
+      const results = filters.map(filter => {
         return filter.initByUrl();
       });
 
       // If all filters are initalized call a post function.
       Promise.all(results).then(() => {
-        filters.forEach((filter) => filter.afterInit());
+        filters.forEach(filter => filter.afterInit());
         this.afterInit();
       });
     },
@@ -334,7 +334,7 @@ export default {
     clearAllFilters() {
       const filters = this.$refs.filters;
 
-      filters.forEach((filter) => {
+      filters.forEach(filter => {
         filter.clear();
       });
     }

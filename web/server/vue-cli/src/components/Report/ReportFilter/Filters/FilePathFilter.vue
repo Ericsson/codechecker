@@ -70,7 +70,7 @@ export default {
             if (a < b) return -1;
             if (a > b) return 1;
             return 0;
-        }).map((file) => {
+        }).map(file => {
           return {
             id : file,
             title: file,

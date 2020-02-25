@@ -43,9 +43,9 @@ export default {
 
   methods: {
     getSelectedItems(runNames) {
-      return runNames.map((s) => {
-        return new Promise((resolve) => {
-          this.getRunIdsByRunName(s).then((runIds) => {
+      return runNames.map(s => {
+        return new Promise(resolve => {
+          this.getRunIdsByRunName(s).then(runIds => {
             resolve({
               id: s,
               runIds: runIds,
@@ -58,11 +58,11 @@ export default {
     },
 
     initByUrl() {
-      return new Promise((resolve) => {
+      return new Promise(resolve => {
         const state = [].concat(this.$route.query[this.id] || []);
         if (state.length) {
           const selectedItems = this.getSelectedItems(state);
-          Promise.all(selectedItems).then((res) => {
+          Promise.all(selectedItems).then(res => {
             this.selectedItems = res;
             resolve();
           });
@@ -99,7 +99,7 @@ export default {
 
       ccService.getClient().getRunReportCounts(runIds, reportFilter, limit,
       offset, (err, res) => {
-        this.items = res.map((run) => {
+        this.items = res.map(run => {
           return {
             id: run.name,
             runIds: [ run.runId ],
@@ -123,10 +123,10 @@ export default {
       const offset = null;
       const sortMode = null;
 
-      return new Promise((resolve) => {
+      return new Promise(resolve => {
         ccService.getClient().getRunData(runFilter, limit, offset, sortMode,
         (err, runs) => {
-          resolve(runs.map((run) => run.runId));
+          resolve(runs.map(run => run.runId));
         });
       });
     },

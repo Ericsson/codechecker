@@ -75,7 +75,7 @@ function formatExtendedData(report, extendedData) {
   const items = [];
 
   // Add macro expansions.
-  const macros = extendedData.filter((data) => {
+  const macros = extendedData.filter(data => {
     return data.type === ExtendedReportDataType.MACRO;
   });
 
@@ -92,7 +92,7 @@ function formatExtendedData(report, extendedData) {
   }
 
   // Add notes.
-  const notes = extendedData.filter((data) => {
+  const notes = extendedData.filter(data => {
     return data.type === ExtendedReportDataType.NOTE;
   });
 
@@ -148,7 +148,7 @@ function formatReportEvents(report, events) {
   // If so, we show the file names properly.
   const firstFilePath = events.length ? events[0].filePath : null;
   const showFileName =
-    events.some((step) => step.filePath !== firstFilePath);
+    events.some(step => step.filePath !== firstFilePath);
 
   // Indent path events on function calls.
   let indentation = 0;

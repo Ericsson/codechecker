@@ -9,6 +9,7 @@ module.exports = {
   ],
   rules: {
     "array-bracket-spacing": ["error", "always"],
+    "arrow-parens": ["error", "as-needed"],
     "no-console": process.env.NODE_ENV === "production" ? "error" : "off",
     "no-debugger": process.env.NODE_ENV === "production" ? "error" : "off",
     "vue/max-attributes-per-line": "off",
