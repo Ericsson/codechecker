@@ -3,20 +3,20 @@ module.exports = {
   env: {
     node: true
   },
-  'extends': [
-    'plugin:vue/recommended',
-    'eslint:recommended'
+  extends: [
+    "plugin:vue/recommended",
+    "eslint:recommended"
   ],
   rules: {
-    'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',
-    'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
-    'vue/max-attributes-per-line': 'off',
-    'quotes': ['error', 'double', {
-      'avoidEscape': true
+    "no-console": process.env.NODE_ENV === "production" ? "error" : "off",
+    "no-debugger": process.env.NODE_ENV === "production" ? "error" : "off",
+    "vue/max-attributes-per-line": "off",
+    "quotes": ["error", "double", {
+      "avoidEscape": true
     }]
   },
   parserOptions: {
-    parser: 'babel-eslint',
-    sourceType: 'module'
+    parser: "babel-eslint",
+    sourceType: "module"
   }
 }
