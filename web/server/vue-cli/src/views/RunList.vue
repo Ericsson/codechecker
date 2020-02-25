@@ -399,7 +399,7 @@ export default {
 
     fetchRuns() {
       const runFilter = this.runNameSearch
-        ? new RunFilter({ names: [`*${this.runNameSearch}*`]})
+        ? new RunFilter({ names: [ `*${this.runNameSearch}*` ]})
         : null;
 
       // Get total item count.

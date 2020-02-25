@@ -75,7 +75,7 @@ import { format, parse } from "date-fns";
 export default {
   name: "DateTimePicker",
   props: {
-    value: { type: [Date, String], default: null },
+    value: { type: [ Date, String ], default: null },
     label: { type: String, default: "" },
     dateFormat: { type: String, default: "yyyy-MM-dd" },
     timeFormat: { type: String, default: "HH:mm:ss" },

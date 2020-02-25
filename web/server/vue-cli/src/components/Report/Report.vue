@@ -276,7 +276,7 @@ export default {
       lineNumbers: true,
       readOnly: true,
       mode: "text/x-c++src",
-      gutters: ["CodeMirror-linenumbers", "bugInfo"],
+      gutters: [ "CodeMirror-linenumbers", "bugInfo" ],
       extraKeys: {},
       viewportMargin: 500
     });
@@ -374,13 +374,13 @@ export default {
 
       this.jsPlumbInstance = jsPlumb.getInstance({
         Container : jsPlumbParentElement,
-        Anchor : ["Perimeter", { shape : "Ellipse" }],
-        Endpoint : ["Dot", { radius: 1 }],
+        Anchor : [ "Perimeter", { shape : "Ellipse" } ],
+        Endpoint : [ "Dot", { radius: 1 } ],
         PaintStyle : { stroke : "#a94442", strokeWidth: 2 },
-        Connector: ["Bezier", { curviness: 10 }],
+        Connector: [ "Bezier", { curviness: 10 } ],
         ConnectionsDetachable : false,
         ConnectionOverlays : [
-          ["Arrow", { location: 1, length: 10, width: 8 }]
+          [ "Arrow", { location: 1, length: 10, width: 8 } ]
         ]
       });
     },
@@ -524,7 +524,7 @@ export default {
         points.forEach((p) => {
           const from = { line : p.startLine - 1, ch : p.startCol - 1 };
           const to =   { line : p.endLine - 1,   ch : p.endCol.toNumber() };
-          const markerId = [from.line, from.ch, to.line, to.ch].join("_");
+          const markerId = [ from.line, from.ch, to.line, to.ch ].join("_");
 
           let opts = {
             className: "checker-step",
