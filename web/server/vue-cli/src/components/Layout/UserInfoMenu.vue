@@ -87,7 +87,8 @@ export default {
   data() {
     return {
       menu: false,
-      permissions: [ "Admin", "Store", "Access" ] // TODO: get these from server.
+      // TODO: get these from server.
+      permissions: [ "Admin", "Store", "Access" ]
     };
   },
   computed: {

@@ -53,7 +53,8 @@
         v-for="item in menuItems"
         :key="item.name"
         :to="{ name: item.route }"
-        :class="$route.name === item.route && 'v-btn--active router-link-active'"
+        :class="$route.name === item.route &&
+          'v-btn--active router-link-active'"
         exact
         text
       >
