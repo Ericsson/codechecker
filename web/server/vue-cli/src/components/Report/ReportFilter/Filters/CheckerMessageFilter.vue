@@ -6,7 +6,8 @@
     :selected-items="selectedItems"
     :search="search"
     :loading="loading"
-    @clear="clear"
+    @clear="clear(true)"
+    @input="setSelectedItems"
   >
     <template v-slot:icon>
       <v-icon color="grey">
@@ -49,9 +50,8 @@ export default {
     },
 
     onReportFilterChange(key) {
-      if (key === "checkerMsg" || !this.selectedItems.length) return;
-
-      this.fetchItems();
+      if (key === "checkerMsg") return;
+      this.update();
     },
 
     fetchItems(search=null) {

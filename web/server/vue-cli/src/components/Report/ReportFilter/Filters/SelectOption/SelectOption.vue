@@ -130,8 +130,7 @@ export default {
     },
 
     updateSelectedItems(selectedItems) {
-      this.selectedItems.splice(0, this.selectedItems.length,
-        ...selectedItems);
+      this.$emit("input", selectedItems);
     },
 
     clear() {

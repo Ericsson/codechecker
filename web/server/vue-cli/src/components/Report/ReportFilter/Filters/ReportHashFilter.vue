@@ -1,11 +1,11 @@
 <template>
   <filter-toolbar
     title="Report hash filter"
-    @clear="clear"
+    @clear="clear(true)"
   >
     <v-card-actions class="">
       <v-text-field
-        v-model="reportHash"
+        :value="reportHash"
         append-icon="mdi-magnify"
         label="Search for report hash (min 5 characters)..."
         single-line
@@ -15,6 +15,7 @@
         clearable
         flat
         dense
+        @input="setReportHash"
       />
     </v-card-actions>
   </filter-toolbar>
@@ -37,14 +38,17 @@ export default {
       reportHash: null
     };
   },
-  watch: {
-    reportHash: function () {
-      this.updateUrl();
-      this.updateReportFilter();
-    }
-  },
 
   methods: {
+    setReportHash(reportHash, updateUrl=true) {
+      this.reportHash = reportHash;
+      this.updateReportFilter();
+
+      if (updateUrl) {
+        this.$emit("update:url");
+      }
+    },
+
     updateReportFilter() {
       this.setReportFilter({
         reportHash: this.reportHash ? [ `${this.reportHash}*` ] : null
@@ -61,15 +65,15 @@ export default {
       return new Promise(resolve => {
         const state = this.$route.query[this.id];
         if (state) {
-          this.reportHash = state;
+          this.setReportHash(state, false);
         }
 
         resolve();
       });
     },
 
-    clear() {
-      this.reportHash = null;
+    clear(updateUrl) {
+      this.setReportHash(null, updateUrl);
     }
   }
 };

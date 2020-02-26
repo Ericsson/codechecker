@@ -5,7 +5,8 @@
     :fetch-items="fetchItems"
     :loading="loading"
     :selected-items="selectedItems"
-    @clear="clear"
+    @clear="clear(true)"
+    @input="setSelectedItems"
   >
     <template v-slot:icon="{ item }">
       <detection-status-icon :status="item.id" />
@@ -53,9 +54,8 @@ export default {
     },
 
     onReportFilterChange(key) {
-      if (key === "detectionStatus" || !this.selectedItems.length) return;
-
-      this.fetchItems();
+      if (key === "detectionStatus") return;
+      this.update();
     },
 
     fetchItems() {

@@ -1,5 +1,8 @@
 <template>
-  <v-checkbox v-model="isUnique">
+  <v-checkbox
+    :input-value="isUnique"
+    @change="setIsUnique"
+  >
     <template v-slot:label>
       Unique reports
       <v-tooltip max-width="200" right>
@@ -32,23 +35,25 @@ export default {
 
   data() {
     return {
-      id: "is-unique"
+      id: "is-unique",
+      defaultValue: false
     };
   },
 
   computed: {
-    isUnique: {
-      get() {
-        return !!this.$store.state.report.reportFilter.isUnique;
-      },
-      set(isUnique) {
-        this.setReportFilter({ isUnique: isUnique });
-        this.updateUrl();
-      }
+    isUnique() {
+      return !!this.$store.state.report.reportFilter.isUnique;
     }
   },
 
   methods: {
+    setIsUnique(isUnique, updateUrl=true) {
+      this.setReportFilter({ isUnique: isUnique });
+      if (updateUrl) {
+        this.$emit("update:url");
+      }
+    },
+
     encodeValue(isUnique) {
       return isUnique ? "on" : "off";
     },
@@ -67,12 +72,19 @@ export default {
       return new Promise(resolve => {
         const state = this.$route.query[this.id];
         if (state) {
-          this.isUnique = this.decodeValue(state);
+          const isUnique = this.decodeValue(state);
+          this.setIsUnique(isUnique, false);
+        } else {
+          this.setIsUnique(this.defaultValue, false);
         }
 
         resolve();
       });
     },
+
+    clear(updateUrl) {
+      this.setIsUnique(this.defaultValue, updateUrl);
+    }
   }
 };
 </script>

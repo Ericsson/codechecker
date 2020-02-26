@@ -6,7 +6,8 @@
     :selected-items="selectedItems"
     :loading="loading"
     :multiple="false"
-    @clear="clear"
+    @clear="clear(true)"
+    @input="setSelectedItems"
   >
     <template v-slot:icon>
       <v-icon color="grey">
@@ -67,7 +68,7 @@ export default {
     },
 
     onReportFilterChange(/* key */) {
-      this.fetchItems();
+      this.update();
     },
 
     fetchItems() {

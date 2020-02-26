@@ -27,6 +27,10 @@ export default {
       this.registerWatchers();
     },
 
+    update() {
+      this.getReportCount();
+    },
+
     onReportFilterChange() {
       this.getReportCount();
     },

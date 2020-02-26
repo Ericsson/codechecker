@@ -35,6 +35,7 @@
           <unique-filter
             ref="filters"
             :namespace="namespace"
+            @update:url="updateUrl"
           />
         </v-list-item-content>
       </v-list-item>
@@ -44,6 +45,7 @@
           <report-hash-filter
             ref="filters"
             :namespace="namespace"
+            @update:url="updateUrl"
           />
         </v-list-item-content>
       </v-list-item>
@@ -64,10 +66,12 @@
                 <baseline-run-filter
                   ref="filters"
                   :namespace="namespace"
+                  @update:url="updateUrl"
                 />
                 <baseline-tag-filter
                   ref="filters"
                   :namespace="namespace"
+                  @update:url="updateUrl"
                 />
               </v-expansion-panel-content>
             </v-expansion-panel>
@@ -94,14 +98,17 @@
                 <newcheck-run-filter
                   ref="filters"
                   :namespace="namespace"
+                  @update:url="updateUrl"
                 />
                 <newcheck-tag-filter
                   ref="filters"
                   :namespace="namespace"
+                  @update:url="updateUrl"
                 />
                 <newcheck-diff-type-filter
                   ref="filters"
                   :namespace="namespace"
+                  @update:url="updateUrl"
                 />
               </v-expansion-panel-content>
             </v-expansion-panel>
@@ -117,6 +124,7 @@
           <review-status-filter
             ref="filters"
             :namespace="namespace"
+            @update:url="updateUrl"
           />
         </v-list-item-content>
       </v-list-item>
@@ -126,6 +134,7 @@
           <detection-status-filter
             ref="filters"
             :namespace="namespace"
+            @update:url="updateUrl"
           />
         </v-list-item-content>
       </v-list-item>
@@ -135,6 +144,7 @@
           <severity-filter
             ref="filters"
             :namespace="namespace"
+            @update:url="updateUrl"
           />
         </v-list-item-content>
       </v-list-item>
@@ -144,6 +154,7 @@
           <bug-path-length-filter
             ref="filters"
             :namespace="namespace"
+            @update:url="updateUrl"
           />
         </v-list-item-content>
       </v-list-item>
@@ -153,6 +164,7 @@
           <detection-date-filter
             ref="filters"
             :namespace="namespace"
+            @update:url="updateUrl"
           />
         </v-list-item-content>
       </v-list-item>
@@ -162,6 +174,7 @@
           <file-path-filter
             ref="filters"
             :namespace="namespace"
+            @update:url="updateUrl"
           />
         </v-list-item-content>
       </v-list-item>
@@ -171,6 +184,7 @@
           <source-component-filter
             ref="filters"
             :namespace="namespace"
+            @update:url="updateUrl"
           />
         </v-list-item-content>
       </v-list-item>
@@ -180,6 +194,7 @@
           <checker-name-filter
             ref="filters"
             :namespace="namespace"
+            @update:url="updateUrl"
           />
         </v-list-item-content>
       </v-list-item>
@@ -189,6 +204,7 @@
           <checker-message-filter
             ref="filters"
             :namespace="namespace"
+            @update:url="updateUrl"
           />
         </v-list-item-content>
       </v-list-item>
@@ -287,6 +303,14 @@ export default {
       this.registerWatchers();
     },
 
+    updateUrl() {
+      const filters = this.$refs.filters;
+      const states = filters.map(filter => filter.getUrlState());
+
+      const queryParams = Object.assign({}, this.$route.query, ...states);
+      this.$router.replace({ query: queryParams }).catch(() => {});
+    },
+
     registerWatchers() {
       this.unregisterWatchers();
 
@@ -334,9 +358,21 @@ export default {
     clearAllFilters() {
       const filters = this.$refs.filters;
 
-      filters.forEach(filter => {
-        filter.clear();
-      });
+      // Unregister watchers.
+      this.unregisterWatchers();
+      filters.forEach(filter => filter.unregisterWatchers());
+
+      // Clear all filters and update the url.
+      filters.forEach(filter => filter.clear(false) );
+      this.updateUrl();
+
+      // Update filters after clear.
+      filters.forEach(filter => filter.update() );
+      this.$emit("refresh");
+
+      // Register watchers.
+      filters.forEach(filter => filter.registerWatchers());
+      this.registerWatchers();
     }
   }
 };

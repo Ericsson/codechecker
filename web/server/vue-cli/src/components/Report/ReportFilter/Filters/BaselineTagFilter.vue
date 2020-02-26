@@ -6,7 +6,8 @@
     :selected-items="selectedItems"
     :search="search"
     :loading="loading"
-    @clear="clear"
+    @clear="clear(true)"
+    @input="setSelectedItems"
   >
     <template v-slot:icon>
       <v-icon color="grey">
@@ -82,9 +83,8 @@ export default {
     },
 
     onReportFilterChange(key) {
-      if (key === "runTag" || !this.selectedItems.length) return;
-
-      this.fetchItems();
+      if (key === "runTag") return;
+      this.update();
     },
 
     fetchItems(search=null) {

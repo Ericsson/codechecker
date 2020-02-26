@@ -9,7 +9,8 @@
       :selected-items="selectedItems"
       :search="search"
       :loading="loading"
-      @clear="clear"
+      @clear="clear(true)"
+      @input="setSelectedItems"
     >
       <template v-slot:prepend-toolbar-items>
         <v-btn
@@ -67,9 +68,8 @@ export default {
     },
 
     onReportFilterChange(key) {
-      if (key === "componentNames" || !this.selectedItems.length) return;
-
-      this.fetchItems();
+      if (key === "componentNames") return;
+      this.update();
     },
 
     fetchItems(search=null) {

@@ -1,7 +1,7 @@
 <template>
   <filter-toolbar
     title="Bug path length"
-    @clear="clear"
+    @clear="clear(true)"
   >
     <v-container
       class="py-0"
@@ -14,8 +14,9 @@
           class="py-0"
         >
           <v-text-field
-            v-model="minBugPathLength"
+            :value="minBugPathLength"
             label="Min..."
+            @input="setMinBugPathLength"
           />
         </v-col>
 
@@ -26,8 +27,9 @@
           class="py-0"
         >
           <v-text-field
-            v-model="maxBugPathLength"
+            :value="maxBugPathLength"
             label="Max..."
+            @input="setMaxBugPathLength"
           />
         </v-col>
       </v-row>
@@ -56,17 +58,25 @@ export default {
     };
   },
 
-  watch: {
-    minBugPathLength() {
-      this.onBugPathLengthChange();
+  methods: {
+    setMinBugPathLength(bugPathLength, updateUrl=true) {
+      this.minBugPathLength = bugPathLength;
+      this.updateReportFilter();
+
+      if (updateUrl) {
+        this.$emit("update:url");
+      }
     },
 
-    maxBugPathLength() {
-      this.onBugPathLengthChange();
-    }
-  },
+    setMaxBugPathLength(bugPathLength, updateUrl=true) {
+      this.maxBugPathLength = bugPathLength;
+      this.updateReportFilter();
 
-  methods: {
+      if (updateUrl) {
+        this.$emit("update:url");
+      }
+    },
+
     getUrlState() {
       return {
         [this.minId]: this.minBugPathLength || undefined,
@@ -78,19 +88,19 @@ export default {
       return new Promise(resolve => {
         const minBugPathLength = this.$route.query[this.minId];
         if (minBugPathLength) {
-          this.minBugPathLength = minBugPathLength;
+          this.setMinBugPathLength(minBugPathLength, false);
         }
 
         const maxBugPathLength = this.$route.query[this.maxId];
         if (maxBugPathLength) {
-          this.maxBugPathLength = maxBugPathLength;
+          this.setMaxBugPathLength(maxBugPathLength, false);
         }
 
         resolve();
       });
     },
 
-    onBugPathLengthChange() {
+    updateReportFilter() {
       let bugPathLength = null;
 
       if (this.minBugPathLength || this.maxBugPathLength)  {
@@ -101,12 +111,15 @@ export default {
       }
 
       this.setReportFilter({ bugPathLength: bugPathLength });
-      this.updateUrl();
     },
 
-    clear() {
-      this.minBugPathLength = null;
-      this.maxBugPathLength = null;
+    clear(updateUrl) {
+      this.setMinBugPathLength(null, false);
+      this.setMaxBugPathLength(null, false);
+
+      if (updateUrl) {
+        this.$emit("update:url");
+      }
     }
   }
 };

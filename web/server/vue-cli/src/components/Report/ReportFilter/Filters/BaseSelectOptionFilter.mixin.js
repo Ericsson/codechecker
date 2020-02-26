@@ -13,14 +13,21 @@ export default {
     };
   },
 
-  watch: {
-    selectedItems() {
-      this.updateUrl();
-      this.updateReportFilter();
-    }
-  },
-
   methods: {
+    update() {
+      if (!this.selectedItems.length) return;
+      this.fetchItems();
+    },
+
+    setSelectedItems(selectedItems, updateUrl=true) {
+      this.selectedItems = selectedItems;
+      this.updateReportFilter();
+
+      if (updateUrl) {
+        this.$emit("update:url");
+      }
+    },
+
     encodeValue(value) {
       return value;
     },
@@ -44,7 +51,7 @@ export default {
       return new Promise(resolve => {
         const state = [].concat(this.$route.query[this.id] || []);
         if (state.length) {
-          this.selectedItems = state.map(s => {
+          const selectedItems = state.map(s => {
             const id = this.decodeValue(s);
             return {
               id: id,
@@ -52,6 +59,7 @@ export default {
               count: "N/A"
             };
           });
+          this.setSelectedItems(selectedItems, false);
         }
 
         resolve();
@@ -77,8 +85,8 @@ export default {
 
     fetchItems() {},
 
-    clear() {
-      this.selectedItems = [];
+    clear(updateUrl) {
+      this.setSelectedItems([], updateUrl);
     }
   }
 };

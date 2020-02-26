@@ -94,17 +94,13 @@ export default {
       this.registerWatchers();
     },
 
-    updateUrl() {
-      const state = this.getUrlState();
-      const queryParams = Object.assign({}, this.$route.query, state);
-      this.$router.replace({ query: queryParams }).catch(() => {});
-    },
-
     updateReportFilter() {},
 
     fetchItems() {},
 
-    clear() {},
+    clear(/* updateUrl */) {},
+
+    update() {},
 
     onRunIdsChange(/* oldVal, newVal */) {
       this.fetchItems();

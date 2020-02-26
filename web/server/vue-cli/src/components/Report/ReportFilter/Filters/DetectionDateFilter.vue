@@ -1,7 +1,7 @@
 <template>
   <filter-toolbar
     title="Detection date"
-    @clear="clear"
+    @clear="clear(true)"
   >
     <v-container
       class="py-0"
@@ -14,8 +14,9 @@
           class="py-0"
         >
           <date-time-picker
-            v-model="fromDateTime"
+            :value="fromDateTime"
             label="Detection date"
+            @input="setFromDateTime"
           />
         </v-col>
 
@@ -26,8 +27,9 @@
           class="py-0"
         >
           <date-time-picker
-            v-model="toDateTime"
+            :value="toDateTime"
             label="Fix date"
+            @input="setToDateTime"
           />
         </v-col>
       </v-row>
@@ -58,17 +60,26 @@ export default {
     };
   },
 
-  watch: {
-    fromDateTime() {
-      this.onDetectionDateChange();
-    },
-
-    toDateTime() {
-      this.onDetectionDateChange();
-    }
-  },
 
   methods: {
+    setFromDateTime(dateTime, updateUrl=true) {
+      this.fromDateTime = dateTime;
+      this.updateReportFilter();
+
+      if (updateUrl) {
+        this.$emit("update:url");
+      }
+    },
+
+    setToDateTime(dateTime, updateUrl=true) {
+      this.toDateTime = dateTime;
+      this.updateReportFilter();
+
+      if (updateUrl) {
+        this.$emit("update:url");
+      }
+    },
+
     getUrlState() {
       const state = {};
 
@@ -85,34 +96,28 @@ export default {
       return new Promise(resolve => {
         const fromDateTime = this.$route.query[this.fromDateTimeId];
         if (fromDateTime) {
-          this.fromDateTime = new Date(fromDateTime);
+          this.setFromDateTime(new Date(fromDateTime), false);
         }
 
         const toDateTime = this.$route.query[this.toDateTimeId];
         if (toDateTime) {
-          this.toDateTime = new Date(toDateTime);
+          this.setToDateTime(new Date(toDateTime), false);
         }
 
         resolve();
       });
     },
 
-    onDetectionDateChange() {
-      const detectionDate = {};
+    updateReportFilter() {
+      const firstDetectionDate = this.fromDateTime
+        ? this.getTimeStamp(this.fromDateTime) : null;
+      const fixDate = this.toDateTime
+        ? this.getTimeStamp(this.toDateTime) : null;
 
-      if (this.fromDateTime)  {
-        detectionDate.firstDetectionDate = this.getTimeStamp(this.fromDateTime);
-      }
-
-      if (this.toDateTime)  {
-        detectionDate.fixDate = this.getTimeStamp(this.toDateTime);
-      }
-
-      if (Object.keys(detectionDate).length) {
-        this.setReportFilter(detectionDate);
-      }
-
-      this.updateUrl();
+      this.setReportFilter({
+        firstDetectionDate: firstDetectionDate,
+        fixDate: fixDate
+      });
     },
 
     dateTimeToStr(date) {
@@ -136,11 +141,13 @@ export default {
         date.getUTCMilliseconds());
     },
 
-    clear() {
-      // TODO: this will not work.
-      // see: https://github.com/darrenfang/vuetify-datetime-picker/pull/51
-      this.fromDateTime = null;
-      this.toDateTime = null;
+    clear(updateUrl) {
+      this.setFromDateTime(null, false);
+      this.setToDateTime(null, false);
+
+      if (updateUrl) {
+        this.$emit("update:url");
+      }
     }
   }
 };
