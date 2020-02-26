@@ -89,6 +89,7 @@ export default {
 
     fetchItems(search=null) {
       this.loading = true;
+      this.items = [];
 
       const reportFilter = new ReportFilter(this.reportFilter);
       reportFilter["runTag"] = search ? [ `${search}*` ] : null;
@@ -104,8 +105,6 @@ export default {
               count: tag.count
             };
           });
-
-          this.updateSelectedItems();
           this.loading = false;
         });
     },

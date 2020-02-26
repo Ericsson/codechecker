@@ -83,7 +83,6 @@ export default {
             title: component.name
           };
         });
-
         this.loading = false;
       });
     },

@@ -88,6 +88,7 @@ export default {
 
     fetchItems(search=null) {
       this.loading = true;
+      this.items = [];
 
       const runIds = null;
 
@@ -107,8 +108,6 @@ export default {
               count: run.reportCount
             };
           });
-
-          this.updateSelectedItems();
           this.loading = false;
         });
     },

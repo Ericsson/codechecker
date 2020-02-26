@@ -60,6 +60,7 @@ export default {
 
     fetchItems() {
       this.loading = true;
+      this.items = [];
 
       const reportFilter = new ReportFilter(this.reportFilter);
       reportFilter.reviewStatus = null;
@@ -74,7 +75,6 @@ export default {
               count: res[id] !== undefined ? res[id] : 0
             };
           });
-          this.updateSelectedItems();
           this.loading = false;
         });
     }

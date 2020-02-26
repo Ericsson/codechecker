@@ -56,6 +56,7 @@ export default {
 
     fetchItems(search=null) {
       this.loading = true;
+      this.items = [];
 
       const reportFilter = new ReportFilter(this.reportFilter);
       reportFilter.checkerMsg = search ? [ `${search}*` ] : null;
@@ -72,8 +73,6 @@ export default {
               count : res[msg]
             };
           });
-
-          this.updateSelectedItems();
           this.loading = false;
         });
     },

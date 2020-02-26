@@ -214,7 +214,9 @@
         class="pl-1"
       >
         <v-list-item-content>
-          <remove-filtered-reports />
+          <remove-filtered-reports
+            @update="updateAllFilters"
+          />
         </v-list-item-content>
       </v-list-item>
     </v-list>
@@ -367,12 +369,18 @@ export default {
       this.updateUrl();
 
       // Update filters after clear.
-      filters.forEach(filter => filter.update() );
-      this.$emit("refresh");
+      this.updateAllFilters();
 
       // Register watchers.
       filters.forEach(filter => filter.registerWatchers());
       this.registerWatchers();
+    },
+
+    updateAllFilters() {
+      const filters = this.$refs.filters;
+      filters.forEach(filter => filter.update() );
+
+      this.$emit("refresh");
     }
   }
 };

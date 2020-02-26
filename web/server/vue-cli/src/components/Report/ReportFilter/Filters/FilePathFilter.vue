@@ -56,6 +56,7 @@ export default {
 
     fetchItems(search=null) {
       this.loading = true;
+      this.items = [];
 
       const reportFilter = new ReportFilter(this.reportFilter);
       reportFilter.filepath = search ? [ `${search}*` ] : null;
@@ -77,8 +78,6 @@ export default {
               count : res[file]
             };
           });
-
-          this.updateSelectedItems();
           this.loading = false;
         });
     },

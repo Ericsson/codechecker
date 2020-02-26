@@ -101,8 +101,6 @@ export default {
             count: res[index][key]
           };
         });
-
-        this.updateSelectedItems();
         this.loading = false;
       });
     },

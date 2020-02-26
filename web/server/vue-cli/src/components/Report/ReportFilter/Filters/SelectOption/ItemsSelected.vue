@@ -31,7 +31,7 @@
           outlined
           small
         >
-          {{ item.count === undefined ? "N/A" : item.count }}
+          {{ item.count || item.count === 0 ? item.count : "N/A" }}
         </v-chip>
 
         <v-icon

@@ -13,6 +13,12 @@ export default {
     };
   },
 
+  watch: {
+    items() {
+      this.updateSelectedItems();
+    }
+  },
+
   methods: {
     update() {
       if (!this.selectedItems.length) return;
@@ -77,9 +83,7 @@ export default {
     updateSelectedItems() {
       this.selectedItems.forEach(selectedItem => {
         const item = this.items.find(i => i.id === selectedItem.id);
-        if (item) {
-          selectedItem.count = item.count;
-        }
+        selectedItem.count = item ? item.count : null;
       });
     },
 
