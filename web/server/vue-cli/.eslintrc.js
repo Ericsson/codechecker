@@ -15,7 +15,13 @@ module.exports = {
     "no-debugger": process.env.NODE_ENV === "production" ? "error" : "off",
     "object-curly-spacing": ["error", "always"],
     "semi": ["error", "always"],
-    "vue/max-attributes-per-line": "off",
+    "vue/max-attributes-per-line": ["error", {
+      "singleline": 20,
+      "multiline": {
+        "max": 1,
+        "allowFirstLine": false
+      }
+    }],
     "quotes": ["error", "double", {
       "avoidEscape": true
     }]
