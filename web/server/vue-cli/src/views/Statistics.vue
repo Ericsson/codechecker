@@ -36,7 +36,7 @@
 </template>
 
 <script>
-import { Splitpanes, Pane } from "splitpanes";
+import { Pane, Splitpanes } from "splitpanes";
 
 import CheckerStatistics from "@/components/CheckerStatistics";
 import { FillHeight } from "@/directives";

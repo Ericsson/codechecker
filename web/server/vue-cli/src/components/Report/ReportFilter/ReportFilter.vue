@@ -207,22 +207,22 @@
 
 <script>
 import {
-  UniqueFilter,
-  ReportHashFilter,
   BaselineRunFilter,
   BaselineTagFilter,
+  BugPathLengthFilter,
+  CheckerMessageFilter,
+  CheckerNameFilter,
+  DetectionDateFilter,
+  DetectionStatusFilter,
+  FilePathFilter,
   NewcheckDiffTypeFilter,
   NewcheckRunFilter,
   NewcheckTagFilter,
+  ReportHashFilter,
   ReviewStatusFilter,
-  DetectionStatusFilter,
   SeverityFilter,
-  DetectionDateFilter,
-  FilePathFilter,
   SourceComponentFilter,
-  CheckerNameFilter,
-  CheckerMessageFilter,
-  BugPathLengthFilter
+  UniqueFilter
 } from "./Filters";
 
 import ClearAllFilters from "./ClearAllFilters";

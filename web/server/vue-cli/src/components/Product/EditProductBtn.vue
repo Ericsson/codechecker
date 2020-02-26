@@ -111,8 +111,8 @@ import Vue from "vue";
 
 import { prodService } from "@cc-api";
 import {
-  ProductConfiguration,
-  DatabaseConnection
+  DatabaseConnection,
+  ProductConfiguration
 } from "@cc/prod-types";
 
 import EditProductPermission from "./Permission/EditProductPermission";

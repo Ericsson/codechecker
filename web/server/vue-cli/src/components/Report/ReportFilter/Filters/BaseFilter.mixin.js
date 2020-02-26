@@ -1,8 +1,8 @@
 import { mapMutations, mapState } from "vuex";
 import {
-  SET_RUN_IDS,
+  SET_CMP_DATA,
   SET_REPORT_FILTER,
-  SET_CMP_DATA
+  SET_RUN_IDS
 } from "@/store/mutations.type";
 
 import { ReportFilter } from "@cc/report-server-types";

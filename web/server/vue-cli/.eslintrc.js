@@ -18,6 +18,7 @@ module.exports = {
     "object-curly-spacing": ["error", "always"],
     "prefer-const": ["error"],
     "semi": ["error", "always"],
+    "sort-imports": ["error", { "ignoreDeclarationSort": true }],
     "vue/max-attributes-per-line": ["error", {
       "singleline": 20,
       "multiline": {

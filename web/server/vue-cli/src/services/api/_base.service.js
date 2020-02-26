@@ -1,9 +1,9 @@
 import Vue from "vue";
 import {
-  createXHRClient,
-  createXHRConnection,
   TBufferedTransport,
-  TJSONProtocol
+  TJSONProtocol,
+  createXHRClient,
+  createXHRConnection
 } from "thrift";
 
 // Host should be set explicitly to `hostname` because thrift will use

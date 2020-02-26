@@ -57,7 +57,7 @@
 </template>
 
 <script>
-import { Splitpanes, Pane } from "splitpanes";
+import { Pane, Splitpanes } from "splitpanes";
 
 import { mapGetters } from "vuex";
 

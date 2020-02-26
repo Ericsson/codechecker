@@ -67,8 +67,8 @@
 <script>
 import { prodService } from "@cc-api";
 import {
-  ProductConfiguration,
-  DatabaseConnection
+  DatabaseConnection,
+  ProductConfiguration
 } from "@cc/prod-types";
 
 import ProductConfigForm from "./ProductConfigForm";

@@ -20,7 +20,7 @@
 </template>
 
 <script>
-import { TheHeader, TheFooter } from "@/components/Layout";
+import { TheFooter, TheHeader } from "@/components/Layout";
 
 export default {
   name: "App",

@@ -27,11 +27,11 @@
 import { ccService } from "@cc-api";
 import {
   MAX_QUERY_SIZE,
+  Order,
   ReportFilter,
   RunFilter,
   SortMode,
-  SortType,
-  Order
+  SortType
 } from "@cc/report-server-types";
 
 import SelectSameReportItem from "./SelectSameReportItem";

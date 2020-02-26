@@ -52,7 +52,7 @@
 </template>
 
 <script>
-import { Splitpanes, Pane } from "splitpanes";
+import { Pane, Splitpanes } from "splitpanes";
 import { mapState } from "vuex";
 
 import { ccService } from "@cc-api";

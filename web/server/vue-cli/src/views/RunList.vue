@@ -250,8 +250,8 @@ import { ccService } from "@cc-api";
 import {
   Order,
   RunFilter,
-  RunSortType,
-  RunSortMode
+  RunSortMode,
+  RunSortType
 } from "@cc/report-server-types";
 
 export default {

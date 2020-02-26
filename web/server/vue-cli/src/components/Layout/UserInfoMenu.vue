@@ -74,7 +74,7 @@
 </template>
 
 <script>
-import { mapGetters, mapActions } from "vuex";
+import { mapActions, mapGetters } from "vuex";
 
 import { UserIcon } from "@/components/Icons";
 import { GET_LOGGED_IN_USER, LOGOUT } from "@/store/actions.type";

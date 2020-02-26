@@ -1,4 +1,4 @@
-import { Severity, DetectionStatus } from "@cc/report-server-types";
+import { DetectionStatus, Severity } from "@cc/report-server-types";
 
 import ReportTreeKind from "./ReportTreeKind";
 
