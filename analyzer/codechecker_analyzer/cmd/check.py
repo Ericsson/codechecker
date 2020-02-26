@@ -408,7 +408,7 @@ is called.""")
 
     if analyzer_types.is_statistics_capable(context):
         stat_opts = parser.add_argument_group(
-            "EXPERIMENTAL statistics analysis feature arguments",
+            "Statistics analysis feature arguments",
             """
 These arguments are only available if the Clang Static Analyzer supports
 Statistics-based analysis (e.g. statisticsCollector.ReturnValueCheck,
@@ -418,8 +418,7 @@ statisticsCollector.SpecialReturnValue checkers are available).""")
                                action='store',
                                default=argparse.SUPPRESS,
                                dest='stats_output',
-                               help="EXPERIMENTAL feature. "
-                                    "Perform the first, 'collect' phase of "
+                               help="Perform the first, 'collect' phase of "
                                     "Statistical analysis. This phase "
                                     "generates extra files needed by "
                                     "statistics analysis, and "
@@ -433,8 +432,7 @@ statisticsCollector.SpecialReturnValue checkers are available).""")
                                action='store',
                                default=argparse.SUPPRESS,
                                dest='stats_dir',
-                               help="EXPERIMENTAL feature. "
-                                    "Use the previously generated statistics "
+                               help="Use the previously generated statistics "
                                     "results for the analysis from the given "
                                     "'<STATS_DIR>'.")
 
@@ -442,8 +440,7 @@ statisticsCollector.SpecialReturnValue checkers are available).""")
                                action='store_true',
                                default=argparse.SUPPRESS,
                                dest='stats_enabled',
-                               help="EXPERIMENTAL feature. "
-                                    "Perform both phases of "
+                               help="Perform both phases of "
                                     "Statistical analysis. This phase "
                                     "generates extra files needed by "
                                     "statistics analysis and enables "
@@ -455,8 +452,7 @@ statisticsCollector.SpecialReturnValue checkers are available).""")
                                default="10",
                                type=int,
                                dest='stats_min_sample_count',
-                               help="EXPERIMENTAL feature. "
-                                    "Minimum number of samples (function call"
+                               help="Minimum number of samples (function call"
                                     " occurrences) to be collected"
                                     " for a statistics to be relevant.")
 
@@ -465,8 +461,7 @@ statisticsCollector.SpecialReturnValue checkers are available).""")
                                default="0.85",
                                type=float,
                                dest='stats_relevance_threshold',
-                               help="EXPERIMENTAL feature. "
-                                    "The minimum ratio of calls of function "
+                               help="The minimum ratio of calls of function "
                                     "f that must have a certain property "
                                     "property to consider it true for that "
                                     "function (calculated as calls "
