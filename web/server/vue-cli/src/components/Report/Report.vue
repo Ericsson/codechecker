@@ -408,7 +408,7 @@ export default {
       // Add extra path events (macro expansions, notes).
       const extendedData = reportDetail.extendedData.map((data, index) => {
         let kind = null;
-        switch(data.type) {
+        switch (data.type) {
         case ExtendedReportDataType.NOTE:
           kind = ReportTreeKind.NOTE_ITEM;
           break;
@@ -501,7 +501,7 @@ export default {
         extendedData.forEach(data => {
           let type = null;
           let value = null;
-          switch(data.type) {
+          switch (data.type) {
           case ExtendedReportDataType.NOTE:
             type = "note";
             value = "Note";

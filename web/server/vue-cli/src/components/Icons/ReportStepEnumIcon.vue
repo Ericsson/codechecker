@@ -26,7 +26,7 @@ export default {
   },
   computed: {
     color() {
-      switch(this.type) {
+      switch (this.type) {
       case "error":
         return "#a94442";
       case "fixit":

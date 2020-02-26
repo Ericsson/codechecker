@@ -10,7 +10,7 @@ export default Object.freeze({
   NOTE_ITEM: 8,
 
   getId(kind, report, index) {
-    switch(kind) {
+    switch (kind) {
     case this.REPORT:
       return report.reportId.toString();
 
