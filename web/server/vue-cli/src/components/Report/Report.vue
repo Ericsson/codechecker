@@ -527,7 +527,7 @@ export default {
           const to =   { line : p.endLine - 1,   ch : p.endCol.toNumber() };
           const markerId = [ from.line, from.ch, to.line, to.ch ].join("_");
 
-          let opts = {
+          const opts = {
             className: "checker-step",
             attributes: {
               markerid: markerId

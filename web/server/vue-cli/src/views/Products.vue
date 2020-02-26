@@ -274,7 +274,7 @@ export default {
 
   computed: {
     processedProducts() {
-      let products = [ ...this.products ];
+      const products = [ ...this.products ];
       return products.map(product => {
         product.description = product.description_b64 ?
           window.atob(product.description_b64) : null;

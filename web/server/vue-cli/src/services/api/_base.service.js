@@ -33,7 +33,7 @@ class BaseService {
   }
 
   createClient(endpoint) {
-    let productEndpoint = endpoint ? "/" + endpoint : "";
+    const productEndpoint = endpoint ? "/" + endpoint : "";
     const connection = createXHRConnection(host, port, {
       transport: TBufferedTransport,
       protocol: TJSONProtocol,
