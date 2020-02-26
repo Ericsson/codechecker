@@ -904,36 +904,34 @@ These options are only visible in `analyze` if the experimental
 statistical analysis support is present.
 
 ```
-EXPERIMENTAL statistics analysis feature arguments:
+Statistics analysis feature arguments:
   These arguments are only available if the Clang Static Analyzer supports
   Statistics-based analysis (e.g. statisticsCollector.ReturnValueCheck,
   statisticsCollector.SpecialReturnValue checkers are available).
 
   --stats-collect STATS_OUTPUT, --stats-collect STATS_OUTPUT
-                        EXPERIMENTAL feature. Perform the first, 'collect'
-                        phase of Statistical analysis. This phase generates
-                        extra files needed by statistics analysis, and puts
-                        them into '<STATS_OUTPUT>'. NOTE: If this argument is
-                        present, CodeChecker will NOT execute the analyzers!
+                        Perform the first, 'collect' phase of Statistical
+                        analysis. This phase generates extra files needed by
+                        statistics analysis, and puts them into
+                        '<STATS_OUTPUT>'. NOTE: If this argument is present,
+                        CodeChecker will NOT execute the analyzers!
   --stats-use STATS_DIR, --stats-use STATS_DIR
-                        EXPERIMENTAL feature. Use the previously generated
-                        statistics results for the analysis from the given
-                        '<STATS_DIR>'.
-  --stats               EXPERIMENTAL feature. Perform both phases of
-                        Statistical analysis. This phase generates extra files
-                        needed by statistics analysis and enables the
-                        statistical checkers. No need to enable them
-                        explicitly.
+                        Use the previously generated statistics results for
+                        the analysis from the given '<STATS_DIR>'.
+  --stats               Perform both phases of Statistical analysis. This
+                        phase generates extra files needed by statistics
+                        analysis and enables the statistical checkers. No
+                        need to enable them explicitly.
  --stats-min-sample-count STATS_MIN_SAMPLE_COUNT, --stats-min-sample-count STATS_MIN_SAMPLE_COUNT
-                        EXPERIMENTAL feature. Minimum number of samples
-                        (function call occurrences) to be collected for a
-                        statistics to be relevant.(default: 10)
+                        Minimum number of samples (function call occurrences)
+                        to be collected for a statistics to be relevant.
+                        (default: 10)
   --stats-relevance-threshold STATS_RELEVANCE_THRESHOLD, --stats-relevance-threshold STATS_RELEVANCE_THRESHOLD
-                        EXPERIMENTAL feature. The minimum ratio of
-                        calls of function f that must have a certain property
-                        to consider it true for that function (calculated as calls 
-                        with a property/all calls). CodeChecker will warn for calls 
-                        of f that do not have that property.(default: 0.85)
+                        The minimum ratio of calls of function f that must
+                        have a certain property to consider it true for that
+                        function (calculated as calls  with a property/all
+                        calls). CodeChecker will warn for calls of f that do
+                        not have that property.(default: 0.85)
  
 ```
 
