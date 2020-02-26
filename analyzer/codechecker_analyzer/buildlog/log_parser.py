@@ -987,8 +987,8 @@ def parse_options(compilation_db_entry,
         try:
             compiler_version_info = \
                 get_clangsa_version_func(details['compiler'], env)
-        except subprocess.CalledProcessError as cerr:
-            LOG.error('Failed to get and parse clang version: %s',
+        except (subprocess.CalledProcessError, OSError) as cerr:
+            LOG.error('Failed to get and parse version of: %s',
                       details['compiler'])
             LOG.error(cerr)
             compiler_version_info = False
