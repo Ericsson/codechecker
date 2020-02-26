@@ -14,6 +14,7 @@ module.exports = {
     "max-len": ["error", { "code": 80 }],
     "no-console": process.env.NODE_ENV === "production" ? "error" : "off",
     "no-debugger": process.env.NODE_ENV === "production" ? "error" : "off",
+    "no-duplicate-imports": ["error", { "includeExports": true }],
     "object-curly-spacing": ["error", "always"],
     "prefer-const": ["error"],
     "semi": ["error", "always"],
