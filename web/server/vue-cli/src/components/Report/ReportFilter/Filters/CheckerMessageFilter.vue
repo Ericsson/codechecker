@@ -64,18 +64,18 @@ export default {
       const offset = null;
 
       ccService.getClient().getCheckerMsgCounts(this.runIds, reportFilter,
-      this.cmpData, limit, offset, (err, res) => {
-        this.items = Object.keys(res).map(msg => {
-          return {
-            id : msg,
-            title: msg,
-            count : res[msg]
-          };
-        });
+        this.cmpData, limit, offset, (err, res) => {
+          this.items = Object.keys(res).map(msg => {
+            return {
+              id : msg,
+              title: msg,
+              count : res[msg]
+            };
+          });
 
-        this.updateSelectedItems();
-        this.loading = false;
-      });
+          this.updateSelectedItems();
+          this.loading = false;
+        });
     },
 
     filterItems(value) {

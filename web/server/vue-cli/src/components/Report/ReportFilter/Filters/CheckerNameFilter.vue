@@ -64,18 +64,18 @@ export default {
       const offset = 0;
 
       ccService.getClient().getCheckerCounts(this.runIds, reportFilter,
-      this.cmpData, limit, offset, (err, res) => {
-        this.items = res.map(checker => {
-          return {
-            id: checker.name,
-            title: checker.name,
-            count: checker.count
-          };
-        });
+        this.cmpData, limit, offset, (err, res) => {
+          this.items = res.map(checker => {
+            return {
+              id: checker.name,
+              title: checker.name,
+              count: checker.count
+            };
+          });
 
-        this.updateSelectedItems();
-        this.loading = false;
-      });
+          this.updateSelectedItems();
+          this.loading = false;
+        });
     },
 
     filterItems(value) {

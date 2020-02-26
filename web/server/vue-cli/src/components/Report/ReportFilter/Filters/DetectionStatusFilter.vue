@@ -65,18 +65,18 @@ export default {
       reportFilter.detectionStatus = null;
 
       ccService.getClient().getDetectionStatusCounts(this.runIds, reportFilter,
-      this.cmpData, (err, res) => {
-        this.items = Object.keys(DetectionStatus).map(status => {
-          const id = DetectionStatus[status];
-          return {
-            id: id,
-            title: this.encodeValue(id),
-            count: res[id] !== undefined ? res[id] : 0
-          };
+        this.cmpData, (err, res) => {
+          this.items = Object.keys(DetectionStatus).map(status => {
+            const id = DetectionStatus[status];
+            return {
+              id: id,
+              title: this.encodeValue(id),
+              count: res[id] !== undefined ? res[id] : 0
+            };
+          });
+          this.updateSelectedItems();
+          this.loading = false;
         });
-        this.updateSelectedItems();
-        this.loading = false;
-      });
     }
   }
 };

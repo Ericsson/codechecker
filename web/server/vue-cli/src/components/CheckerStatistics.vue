@@ -190,11 +190,11 @@ export default {
 
         return new Promise(resolve => {
           ccService.getClient().getCheckerCounts(runIds, reportFilter, cmpData,
-          limit, offset, (err, checkerCounts) => {
-            const obj = {};
-            checkerCounts.forEach(item => { obj[item.name] = item; });
-            resolve(obj);
-          });
+            limit, offset, (err, checkerCounts) => {
+              const obj = {};
+              checkerCounts.forEach(item => { obj[item.name] = item; });
+              resolve(obj);
+            });
         });
 
       });

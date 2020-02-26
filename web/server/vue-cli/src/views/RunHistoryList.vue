@@ -258,18 +258,18 @@ export default {
 
       // Get total item count.
       ccService.getClient().getRunHistoryCount(runIds, filter,
-      (err, totalItems) => {
-        this.totalItems = totalItems.toNumber();
-      });
+        (err, totalItems) => {
+          this.totalItems = totalItems.toNumber();
+        });
 
       
       const limit = this.pagination.itemsPerPage;
       const offset = this.pagination.page - 1;
 
       ccService.getClient().getRunHistory(runIds, limit, offset, filter,
-      (err, histories) => {
-        this.histories = histories;
-      });
+        (err, histories) => {
+          this.histories = histories;
+        });
     },
 
     // TODO: Same function in the BaselineRunFilter component.
@@ -281,21 +281,21 @@ export default {
 
       return new Promise(resolve => {
         ccService.getClient().getRunData(runFilter, limit, offset, sortMode,
-        (err, runs) => {
-          resolve(runs.map(run => run.runId));
-        });
+          (err, runs) => {
+            resolve(runs.map(run => run.runId));
+          });
       });
     },
 
     openCheckCommandDialog(history) {
       ccService.getClient().getCheckCommand(history.id, null,
-      (err, checkCommand) => {
-        if (!checkCommand) {
-          checkCommand = "Unavailable!";
-        }
-        this.checkCommand = checkCommand;
-        this.showCheckCommandDialog = true;
-      });
+        (err, checkCommand) => {
+          if (!checkCommand) {
+            checkCommand = "Unavailable!";
+          }
+          this.checkCommand = checkCommand;
+          this.showCheckCommandDialog = true;
+        });
     },
 
     closeCheckCommandDialog() {

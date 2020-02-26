@@ -110,10 +110,10 @@ export default {
       this.$store
         .dispatch(LOGOUT)
         .then(
-      () => {
-        this.$router.push({ name: "login" });
-        this.menu = false;
-      });
+          () => {
+            this.$router.push({ name: "login" });
+            this.menu = false;
+          });
     }
   }
 };

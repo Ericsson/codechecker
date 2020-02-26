@@ -10,6 +10,7 @@ module.exports = {
   rules: {
     "array-bracket-spacing": ["error", "always"],
     "arrow-parens": ["error", "as-needed"],
+    "indent": ["error", 2],
     "max-len": ["error", { "code": 80 }],
     "no-console": process.env.NODE_ENV === "production" ? "error" : "off",
     "no-debugger": process.env.NODE_ENV === "production" ? "error" : "off",

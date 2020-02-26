@@ -65,18 +65,18 @@ export default {
       reportFilter.reviewStatus = null;
 
       ccService.getClient().getReviewStatusCounts(this.runIds, reportFilter,
-      this.cmpData, (err, res) => {
-        this.items = Object.keys(ReviewStatus).map(status => {
-          const id = ReviewStatus[status];
-          return {
-            id: id,
-            title: this.encodeValue(id),
-            count: res[id] !== undefined ? res[id] : 0
-          };
+        this.cmpData, (err, res) => {
+          this.items = Object.keys(ReviewStatus).map(status => {
+            const id = ReviewStatus[status];
+            return {
+              id: id,
+              title: this.encodeValue(id),
+              count: res[id] !== undefined ? res[id] : 0
+            };
+          });
+          this.updateSelectedItems();
+          this.loading = false;
         });
-        this.updateSelectedItems();
-        this.loading = false;
-      });
     }
   }
 };

@@ -11,22 +11,22 @@ export default Object.freeze({
 
   getId(kind, report, index) {
     switch(kind) {
-      case this.REPORT:
-        return report.reportId.toString();
+    case this.REPORT:
+      return report.reportId.toString();
 
-      case this.REPORT_STEPS:
-      case this.MACRO_EXPANSION_ITEM:
-      case this.NOTE_ITEM:
-        return `${report.reportId}_${kind}_${index}`;
+    case this.REPORT_STEPS:
+    case this.MACRO_EXPANSION_ITEM:
+    case this.NOTE_ITEM:
+      return `${report.reportId}_${kind}_${index}`;
 
-      case this.BUG:
-      case this.MACRO_EXPANSION:
-      case this.NOTE:
-        return `${report.reportId}_${kind}`;
+    case this.BUG:
+    case this.MACRO_EXPANSION:
+    case this.NOTE:
+      return `${report.reportId}_${kind}`;
 
-      default:
-        console.warn("No id for the following report tree kind: ", kind);
-        return null;
+    default:
+      console.warn("No id for the following report tree kind: ", kind);
+      return null;
     }
   }
 });

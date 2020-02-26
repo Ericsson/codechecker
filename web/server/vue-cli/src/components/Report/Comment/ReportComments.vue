@@ -111,9 +111,9 @@ export default {
       if (!this.report) return;
 
       ccService.getClient().getComments(this.report.reportId,
-      (err, comments) => {
-        this.comments = comments;
-      });
+        (err, comments) => {
+          this.comments = comments;
+        });
     }
   }
 };

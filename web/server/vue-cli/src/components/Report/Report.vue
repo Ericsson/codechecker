@@ -265,10 +265,10 @@ export default {
     report() {
       this.loadNumOfComments = true;
       ccService.getClient().getCommentCount(this.report.reportId,
-      (err, numOfComments) => {
-        this.numOfComments = numOfComments;
-        this.loadNumOfComments = false;
-      });
+        (err, numOfComments) => {
+          this.numOfComments = numOfComments;
+          this.loadNumOfComments = false;
+        });
     }
   },
 
@@ -355,9 +355,9 @@ export default {
     async setSourceFileData(fileId) {
       const sourceFile = await new Promise(resolve => {
         ccService.getClient().getSourceFileData(fileId, true,
-        Encoding.DEFAULT, (err, sourceFile) => {
-          resolve(sourceFile);
-        });
+          Encoding.DEFAULT, (err, sourceFile) => {
+            resolve(sourceFile);
+          });
       });
 
       this.sourceFile = sourceFile;
@@ -398,9 +398,9 @@ export default {
 
       const reportDetail = await new Promise(resolve => {
         ccService.getClient().getReportDetails(reportId,
-        (err, reportDetail) => {
-          resolve(reportDetail);
-        });
+          (err, reportDetail) => {
+            resolve(reportDetail);
+          });
       });
 
       const isSameFile = path => path.fileId.equals(this.sourceFile.fileId);
@@ -409,14 +409,14 @@ export default {
       const extendedData = reportDetail.extendedData.map((data, index) => {
         let kind = null;
         switch(data.type) {
-          case ExtendedReportDataType.NOTE:
-            kind = ReportTreeKind.NOTE_ITEM;
-            break;
-          case ExtendedReportDataType.MACRO:
-            kind = ReportTreeKind.MACRO_EXPANSION_ITEM;
-            break;
-          default:
-            console.warning("Unhandled extended data type", data.type);
+        case ExtendedReportDataType.NOTE:
+          kind = ReportTreeKind.NOTE_ITEM;
+          break;
+        case ExtendedReportDataType.MACRO:
+          kind = ReportTreeKind.MACRO_EXPANSION_ITEM;
+          break;
+        default:
+          console.warning("Unhandled extended data type", data.type);
         }
 
         const id = ReportTreeKind.getId(kind, this.report, index);
@@ -488,7 +488,7 @@ export default {
         events.forEach(event => {
           const type = event.$isResult
             ? "error" : event.msg.indexOf(" (fixit)") > -1
-            ? "fixit" : "info";
+              ? "fixit" : "info";
 
           const props = { type: type, index: event.$index };
           this.addLineWidget(event, props);
@@ -502,16 +502,16 @@ export default {
           let type = null;
           let value = null;
           switch(data.type) {
-            case ExtendedReportDataType.NOTE:
-              type = "note";
-              value = "Note";
-              break;
-            case ExtendedReportDataType.MACRO:
-              type = "macro";
-              value = "Macro Expansion";
-              break;
-            default:
-              console.warning("Unhandled extended data type", data.type);
+          case ExtendedReportDataType.NOTE:
+            type = "note";
+            value = "Note";
+            break;
+          case ExtendedReportDataType.MACRO:
+            type = "macro";
+            value = "Macro Expansion";
+            break;
+          default:
+            console.warning("Unhandled extended data type", data.type);
           }
 
           const props = { type: type, showArrows: false, index: value };
@@ -585,9 +585,9 @@ export default {
 
     confirmReviewStatusChange(reviewData) {
       ccService.getClient().changeReviewStatus(this.report.reportId,
-      reviewData.status, reviewData.comment, () => {
+        reviewData.status, reviewData.comment, () => {
         // TODO: handle errors.
-      });
+        });
     }
   }
 };

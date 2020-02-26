@@ -70,14 +70,14 @@ export default {
       const cmpData = null;
 
       ccService.getClient().getSeverityCounts(runIds, reportFilter, cmpData,
-      (err, statistics) => {
-        this.statistics = Object.keys(statistics).map(severity => {
-          return {
-            severity: parseInt(severity),
-            reports: statistics[severity]
-          };
+        (err, statistics) => {
+          this.statistics = Object.keys(statistics).map(severity => {
+            return {
+              severity: parseInt(severity),
+              reports: statistics[severity]
+            };
+          });
         });
-      });
     }
   }
 };

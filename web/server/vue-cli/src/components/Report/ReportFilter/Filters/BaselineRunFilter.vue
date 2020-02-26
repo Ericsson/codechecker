@@ -98,19 +98,19 @@ export default {
       const offset = 0;
 
       ccService.getClient().getRunReportCounts(runIds, reportFilter, limit,
-      offset, (err, res) => {
-        this.items = res.map(run => {
-          return {
-            id: run.name,
-            runIds: [ run.runId ],
-            title: run.name,
-            count: run.reportCount
-          };
-        });
+        offset, (err, res) => {
+          this.items = res.map(run => {
+            return {
+              id: run.name,
+              runIds: [ run.runId ],
+              title: run.name,
+              count: run.reportCount
+            };
+          });
 
-        this.updateSelectedItems();
-        this.loading = false;
-      });
+          this.updateSelectedItems();
+          this.loading = false;
+        });
     },
 
     filterItems(value) {
@@ -125,9 +125,9 @@ export default {
 
       return new Promise(resolve => {
         ccService.getClient().getRunData(runFilter, limit, offset, sortMode,
-        (err, runs) => {
-          resolve(runs.map(run => run.runId));
-        });
+          (err, runs) => {
+            resolve(runs.map(run => run.runId));
+          });
       });
     },
   }

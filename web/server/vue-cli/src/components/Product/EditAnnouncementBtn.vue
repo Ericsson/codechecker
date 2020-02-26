@@ -95,9 +95,9 @@ export default {
         ? window.btoa(this.announcement) : window.btoa("");
 
       confService.getClient().setNotificationBannerText(announcementB64,
-      () => {
-        this.dialog = false;
-      });
+        () => {
+          this.dialog = false;
+        });
     }
   }
 };

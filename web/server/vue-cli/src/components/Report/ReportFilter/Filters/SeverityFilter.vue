@@ -65,18 +65,18 @@ export default {
       reportFilter.severity = null;
 
       ccService.getClient().getSeverityCounts(this.runIds, reportFilter,
-      this.cmpData, (err, res) => {
-        this.items = Object.keys(Severity).map(status => {
-          const severityId = Severity[status];
-          return {
-            id: severityId,
-            title: this.encodeValue(severityId),
-            count: res[severityId] !== undefined ? res[severityId] : 0
-          };
+        this.cmpData, (err, res) => {
+          this.items = Object.keys(Severity).map(status => {
+            const severityId = Severity[status];
+            return {
+              id: severityId,
+              title: this.encodeValue(severityId),
+              count: res[severityId] !== undefined ? res[severityId] : 0
+            };
+          });
+          this.updateSelectedItems();
+          this.loading = false;
         });
-        this.updateSelectedItems();
-        this.loading = false;
-      });
     }
   }
 };

@@ -130,10 +130,10 @@ export default {
       });
 
       ccService.getClient().getRunResults(this.runIds, limit, offset,
-      [ sortType ], reportFilter, this.cmpData, getDetails,
-      (err, reports) => {
-        this.report = reports[0];
-      });
+        [ sortType ], reportFilter, this.cmpData, getDetails,
+        (err, reports) => {
+          this.report = reports[0];
+        });
     },
 
     onReportTreeClick(item) {

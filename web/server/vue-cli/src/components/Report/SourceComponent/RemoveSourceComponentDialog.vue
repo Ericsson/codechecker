@@ -79,10 +79,10 @@ export default {
   methods: {
     removeSourceComponent() {
       ccService.getClient().removeSourceComponent(this.sourceComponent.name,
-      (/* err, success */) => {
-        this.$emit("on:confirm");
-        this.dialog = false;
-      });
+        (/* err, success */) => {
+          this.$emit("on:confirm");
+          this.dialog = false;
+        });
     }
   }
 };

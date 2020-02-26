@@ -63,17 +63,17 @@ const actions = {
   [LOGIN](context, credentials) {
     return new Promise((resolve, reject) => {
       authService.getClient().performLogin("Username:Password",
-      `${credentials.username}:${credentials.password}`, (err, token) => {
-        if (!err) {
-          context.commit(SET_AUTH, {
-            userName: credentials.username,
-            token: token
-          });
-          resolve(token);
-        } else {
-          reject(err);
-        }
-      });
+        `${credentials.username}:${credentials.password}`, (err, token) => {
+          if (!err) {
+            context.commit(SET_AUTH, {
+              userName: credentials.username,
+              token: token
+            });
+            resolve(token);
+          } else {
+            reject(err);
+          }
+        });
     });
   },
 

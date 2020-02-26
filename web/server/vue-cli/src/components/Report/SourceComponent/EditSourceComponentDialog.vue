@@ -121,10 +121,10 @@ export default {
     saveSourceComponent() {
       const component = this.component;
       ccService.getClient().addSourceComponent(component.name,
-      component.value, component.description, (/* err, success */) => {
-        this.$emit("save:component");
-        this.dialog = false;
-      });
+        component.value, component.description, (/* err, success */) => {
+          this.$emit("save:component");
+          this.dialog = false;
+        });
     }
   }
 };

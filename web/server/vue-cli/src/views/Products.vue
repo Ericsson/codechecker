@@ -229,7 +229,7 @@ export default {
   },
   mixins: [ StrToColorMixin ],
 
-data() {
+  data() {
     return {
       DBStatus,
       productNameSearch: null,
@@ -310,23 +310,23 @@ data() {
 
   created() {
     authService.getClient().hasPermission(Permission.SUPERUSER, "",
-    (err, isSuperUser) => {
-      this.isSuperUser = isSuperUser;
+      (err, isSuperUser) => {
+        this.isSuperUser = isSuperUser;
 
-      if (!isSuperUser) {
-        prodService.getClient().isAdministratorOfAnyProduct(
-        (err, isAdminOfAnyProduct) => {
-          this.isAdminOfAnyProduct = isAdminOfAnyProduct;
+        if (!isSuperUser) {
+          prodService.getClient().isAdministratorOfAnyProduct(
+            (err, isAdminOfAnyProduct) => {
+              this.isAdminOfAnyProduct = isAdminOfAnyProduct;
 
-          // Remove action column from headers.
-          if (!isAdminOfAnyProduct) {
-            this.headers = this.headers.filter(header => {
-              return header.value !== "action";
+              // Remove action column from headers.
+              if (!isAdminOfAnyProduct) {
+                this.headers = this.headers.filter(header => {
+                  return header.value !== "action";
+                });
+              }
             });
-          }
-        });
-      }
-    });
+        }
+      });
 
     this.fetchProducts();
   },
@@ -337,9 +337,9 @@ data() {
         ? `*${this.productNameSearch}*` : null;
 
       prodService.getClient().getProducts(null, productNameFilter,
-      (err, products) => {
-        this.products = products;
-      });
+        (err, products) => {
+          this.products = products;
+        });
     },
 
     onCompleteNewProduct() {
@@ -356,23 +356,23 @@ data() {
 
     dbStatusFromCodeToString(dbStatus) {
       switch (parseInt(dbStatus)) {
-        case DBStatus.OK:
-          return "Database is up to date.";
-        case DBStatus.MISSING:
-          return "Database is missing.";
-        case DBStatus.FAILED_TO_CONNECT:
-          return "Failed to connect to the database.";
-        case DBStatus.SCHEMA_MISMATCH_OK:
-          return "Schema mismatch: migration is possible.";
-        case DBStatus.SCHEMA_MISMATCH_NO:
-          return "Schema mismatch: migration not available.";
-        case DBStatus.SCHEMA_MISSING:
-          return "Schema is missing.";
-        case DBStatus.SCHEMA_INIT_ERROR:
-          return "Schema initialization error.";
-        default:
-          console.warn("Non existing database status code: ", dbStatus);
-          return "N/A";
+      case DBStatus.OK:
+        return "Database is up to date.";
+      case DBStatus.MISSING:
+        return "Database is missing.";
+      case DBStatus.FAILED_TO_CONNECT:
+        return "Failed to connect to the database.";
+      case DBStatus.SCHEMA_MISMATCH_OK:
+        return "Schema mismatch: migration is possible.";
+      case DBStatus.SCHEMA_MISMATCH_NO:
+        return "Schema mismatch: migration not available.";
+      case DBStatus.SCHEMA_MISSING:
+        return "Schema is missing.";
+      case DBStatus.SCHEMA_INIT_ERROR:
+        return "Schema initialization error.";
+      default:
+        console.warn("Non existing database status code: ", dbStatus);
+        return "N/A";
       }
     },
 

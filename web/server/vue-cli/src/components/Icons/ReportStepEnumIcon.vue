@@ -27,16 +27,16 @@ export default {
   computed: {
     color() {
       switch(this.type) {
-        case "error":
-          return "#a94442";
-        case "fixit":
-          return "#8a6d3b";
-        case "macro":
-          return "#83876a";
-        case "note":
-          return "#9299a1";
-        default:
-          return "#427ea9";
+      case "error":
+        return "#a94442";
+      case "fixit":
+        return "#8a6d3b";
+      case "macro":
+        return "#83876a";
+      case "note":
+        return "#9299a1";
+      default:
+        return "#427ea9";
       }
     }
   }

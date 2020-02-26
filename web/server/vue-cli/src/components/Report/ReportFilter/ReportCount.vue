@@ -33,9 +33,9 @@ export default {
 
     getReportCount() {
       ccService.getClient().getRunResultCount(this.runIds, this.reportFilter,
-      this.cmpData, (err, res) => {
-        this.value = res;
-      });
+        this.cmpData, (err, res) => {
+          this.value = res;
+        });
     }
   }
 };

@@ -145,20 +145,21 @@ export default {
 
       this.loading = true;
       prodService.getClient().getProductConfiguration(this.product.id,
-      (err, config) => {
-        this.productConfig = config;
-        console.log(config);
-        this.loading = false;
-      });
+        (err, config) => {
+          this.productConfig = config;
+          console.log(config);
+          this.loading = false;
+        });
     }
   },
 
   methods: {
     save() {
       prodService.getClient().editProduct(this.product.id, this.productConfig,
-      (/* err */) => {
-        this.$emit("on-complete", new ProductConfiguration(this.productConfig));
-      });
+        (/* err */) => {
+          this.$emit("on-complete",
+            new ProductConfiguration(this.productConfig));
+        });
 
       // Save permissions.
       this.bus.$emit("save");

@@ -118,47 +118,47 @@ export default {
       const getDetails = false;
 
       ccService.getClient().getRunResults(runIds, limit, offset, sortType,
-      reportFilter, cmpData, getDetails, (err, reports) => {
-        reports.forEach(report => {
-          const isResolved =
+        reportFilter, cmpData, getDetails, (err, reports) => {
+          reports.forEach(report => {
+            const isResolved =
             report.detectionStatus === DetectionStatus.RESOLVED;
 
-          const parent = this.items.find(item => {
-            return isResolved
-              ? item.detectionStatus === DetectionStatus.RESOLVED
-              : item.severity === report.severity;
-          });
+            const parent = this.items.find(item => {
+              return isResolved
+                ? item.detectionStatus === DetectionStatus.RESOLVED
+                : item.severity === report.severity;
+            });
 
-          parent.children.push({
-            id: ReportTreeKind.getId(ReportTreeKind.REPORT, report),
-            name: report.checkerId,
-            kind: ReportTreeKind.REPORT,
-            report: report,
-            children: [],
-            getChildren: item => {
-              return new Promise(resolve => {
-                ccService.getClient().getReportDetails(report.reportId,
-                (err, details) => {
-                  item.children = formatReportDetails(report, details);
-                  resolve();
+            parent.children.push({
+              id: ReportTreeKind.getId(ReportTreeKind.REPORT, report),
+              name: report.checkerId,
+              kind: ReportTreeKind.REPORT,
+              report: report,
+              children: [],
+              getChildren: item => {
+                return new Promise(resolve => {
+                  ccService.getClient().getReportDetails(report.reportId,
+                    (err, details) => {
+                      item.children = formatReportDetails(report, details);
+                      resolve();
 
-                  if (this.report.reportId.equals(item.report.reportId)) {
-                    const bugItem = item.children.find(c =>
-                      c.id === `${report.reportId}_${ReportTreeKind.BUG}`
-                    );
+                      if (this.report.reportId.equals(item.report.reportId)) {
+                        const bugItem = item.children.find(c =>
+                          c.id === `${report.reportId}_${ReportTreeKind.BUG}`
+                        );
 
-                    this.activeItems.push(bugItem);
-                  }
+                        this.activeItems.push(bugItem);
+                      }
+                    });
                 });
-              });
-            }
+              }
+            });
+
+            this.openReportItems();
           });
 
-          this.openReportItems();
+          this.removeEmptyRootElements();
         });
-
-        this.removeEmptyRootElements();
-      });
     },
 
     getChildren(item) {

@@ -139,31 +139,31 @@ export default {
               this.authRights[userName].indexOf(permission) !== -1
           ) {
             authService.getClient().removePermission(permission, userName,
-            this.isGroup, this.extraParamsJson, (err, success) => {
-              if (err || !success) {
-                this.$emit("update:error", true);
-                return;
-              }
+              this.isGroup, this.extraParamsJson, (err, success) => {
+                if (err || !success) {
+                  this.$emit("update:error", true);
+                  return;
+                }
 
-              const ind = this.authRights[userName].indexOf(permission);
-              this.authRights[userName].splice(ind, 1);
-              if (!this.authRights[userName].length) {
-                delete this.authRights[userName];
-              }
-            });
+                const ind = this.authRights[userName].indexOf(permission);
+                this.authRights[userName].splice(ind, 1);
+                if (!this.authRights[userName].length) {
+                  delete this.authRights[userName];
+                }
+              });
           } else {
             authService.getClient().addPermission(permission, userName,
-            this.isGroup, this.extraParamsJson, (err, success) => {
-              if (err || !success) {
-                this.$emit("update:error", true);
-                return;
-              }
+              this.isGroup, this.extraParamsJson, (err, success) => {
+                if (err || !success) {
+                  this.$emit("update:error", true);
+                  return;
+                }
 
-              if (!(userName in this.authRights)) {
-                this.authRights[userName] = [];
-              }
-              this.authRights[userName].push(permission);
-            });
+                if (!(userName in this.authRights)) {
+                  this.authRights[userName] = [];
+                }
+                this.authRights[userName].push(permission);
+              });
           }
         });
       }

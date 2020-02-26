@@ -376,20 +376,20 @@ export default {
     getSortMode() {
       let type = null;
       switch (this.pagination.sortBy[0]) {
-        case "name":
-          type = RunSortType.NAME;
-          break;
-        case "resultCount":
-          type = RunSortType.UNRESOLVED_REPORTS;
-          break;
-        case "duration":
-          type = RunSortType.DURATION;
-          break;
-        case "codeCheckerVersion":
-          type = RunSortType.CC_VERSION;
-          break;
-        default:
-          type = RunSortType.DATE;
+      case "name":
+        type = RunSortType.NAME;
+        break;
+      case "resultCount":
+        type = RunSortType.UNRESOLVED_REPORTS;
+        break;
+      case "duration":
+        type = RunSortType.DURATION;
+        break;
+      case "codeCheckerVersion":
+        type = RunSortType.CC_VERSION;
+        break;
+      default:
+        type = RunSortType.DATE;
       }
 
       const ord = this.pagination.sortDesc[0] ? Order.DESC : Order.ASC;
@@ -413,20 +413,20 @@ export default {
       const sortMode = this.getSortMode();
 
       ccService.getClient().getRunData(runFilter, limit, offset, sortMode,
-      (err, runs) => {
-        this.runs = runs;
-      });
+        (err, runs) => {
+          this.runs = runs;
+        });
     },
 
     openCheckCommandDialog(report) {
       ccService.getClient().getCheckCommand(null, report.runId,
-      (err, checkCommand) => {
-        if (!checkCommand) {
-          checkCommand = "Unavailable!";
-        }
-        this.checkCommand = checkCommand;
-        this.showCheckCommandDialog = true;
-      });
+        (err, checkCommand) => {
+          if (!checkCommand) {
+            checkCommand = "Unavailable!";
+          }
+          this.checkCommand = checkCommand;
+          this.showCheckCommandDialog = true;
+        });
     },
 
     openAnalyzerStatisticsDialog(report) {

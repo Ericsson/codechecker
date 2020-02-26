@@ -94,20 +94,20 @@ export default {
       reportFilter["runTag"] = search ? [ `${search}*` ] : null;
 
       ccService.getClient().getRunHistoryTagCounts(this.runIds, reportFilter,
-      this.cmpData, (err, res) => {
-        this.items = res.map(tag => {
-          const title = tag.runName + ":" + tag.name;
-          return {
-            id: title,
-            tagIds: [ tag.id ],
-            title: title,
-            count: tag.count
-          };
-        });
+        this.cmpData, (err, res) => {
+          this.items = res.map(tag => {
+            const title = tag.runName + ":" + tag.name;
+            return {
+              id: title,
+              tagIds: [ tag.id ],
+              title: title,
+              count: tag.count
+            };
+          });
 
-        this.updateSelectedItems();
-        this.loading = false;
-      });
+          this.updateSelectedItems();
+          this.loading = false;
+        });
     },
 
     filterItems(value) {
@@ -133,9 +133,9 @@ export default {
           });
 
           ccService.getClient().getRunHistory(runIds, limit, offset,
-          runHistoryFilter, (err, res) => {
-            resolve(res.map(history => history.id));
-          });
+            runHistoryFilter, (err, res) => {
+              resolve(res.map(history => history.id));
+            });
         });
       });
     },
@@ -148,9 +148,9 @@ export default {
         const runFilter = new RunFilter({ names: [ runName ] });
 
         ccService.getClient().getRunData(runFilter, limit, offset, sortMode,
-        (err, runs) => {
-          resolve(runs.map(run => run.runId));
-        });
+          (err, runs) => {
+            resolve(runs.map(run => run.runId));
+          });
       });
     }
   }

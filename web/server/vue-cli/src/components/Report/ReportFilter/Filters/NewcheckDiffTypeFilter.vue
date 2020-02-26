@@ -46,15 +46,15 @@ export default {
   methods: {
     encodeValue(diffType) {
       switch (parseInt(diffType)) {
-        case DiffType.NEW:
-          return "New";
-        case DiffType.RESOLVED:
-          return "Resolved";
-        case DiffType.UNRESOLVED:
-          return "Unresolved";
-        default:
-          console.warn("Non existing diff type code: ", diffType);
-          return "Unknown";
+      case DiffType.NEW:
+        return "New";
+      case DiffType.RESOLVED:
+        return "Resolved";
+      case DiffType.UNRESOLVED:
+        return "Unresolved";
+      default:
+        console.warn("Non existing diff type code: ", diffType);
+        return "Unknown";
       }
     },
 
@@ -85,9 +85,9 @@ export default {
 
         return new Promise(resolve => {
           ccService.getClient().getRunResultCount(this.runIds,
-          this.reportFilter, cmpData, (err, res) => {
-            resolve({ [key]: res });
-          });
+            this.reportFilter, cmpData, (err, res) => {
+              resolve({ [key]: res });
+            });
         });
       });
 
@@ -108,14 +108,14 @@ export default {
 
     titleFormatter(diffType) {
       switch (diffType) {
-        case DiffType.NEW:
-          return "Only in Newcheck";
-        case DiffType.RESOLVED:
-          return "Only in Baseline";
-        case DiffType.UNRESOLVED:
-          return "Both in Baseline and Newcheck";
-        default:
-          return "Unknown";
+      case DiffType.NEW:
+        return "Only in Newcheck";
+      case DiffType.RESOLVED:
+        return "Only in Baseline";
+      case DiffType.UNRESOLVED:
+        return "Both in Baseline and Newcheck";
+      default:
+        return "Unknown";
       }
     }
   }

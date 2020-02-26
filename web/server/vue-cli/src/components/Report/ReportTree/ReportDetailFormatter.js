@@ -128,7 +128,7 @@ function formatExtendedReportDataChildren(report, extendedData, kind) {
 function getReportStepIcon(step, index, isResult) {
   var type = isResult
     ? "error" : step.msg.indexOf(" (fixit)") > -1
-    ? "fixit" : "info";
+      ? "fixit" : "info";
 
   return {
     index: index + 1,
@@ -167,8 +167,8 @@ function formatReportEvents(report, events) {
         const fnWithoutExt =
           extensionParts.slice(0, extensionParts.length).join(".");
         const extension = (extensionParts.length > 1
-                        ? "." + extensionParts[extensionParts.length - 1]
-                        : "");
+          ? "." + extensionParts[extensionParts.length - 1]
+          : "");
         shortFileName = fnWithoutExt.substr(0, 8) + "..." + extension;
       }
     }

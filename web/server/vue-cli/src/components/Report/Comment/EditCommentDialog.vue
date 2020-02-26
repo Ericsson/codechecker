@@ -92,10 +92,10 @@ export default {
     confirmCommentChange() {
       // TODO: validate the message.
       ccService.getClient().updateComment(this.comment.id, this.message,
-      () => {
-        this.$emit("on-confirm");
-        this.dialog = false;
-      });
+        () => {
+          this.$emit("on-confirm");
+          this.dialog = false;
+        });
     }
   }
 };

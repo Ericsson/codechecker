@@ -64,23 +64,23 @@ export default {
       const offset = null;
 
       ccService.getClient().getFileCounts(this.runIds, reportFilter,
-      this.cmpData, limit, offset, (err, res) => {
+        this.cmpData, limit, offset, (err, res) => {
         // Order the results alphabetically.
-        this.items = Object.keys(res).sort((a, b) => {
+          this.items = Object.keys(res).sort((a, b) => {
             if (a < b) return -1;
             if (a > b) return 1;
             return 0;
-        }).map(file => {
-          return {
-            id : file,
-            title: file,
-            count : res[file]
-          };
-        });
+          }).map(file => {
+            return {
+              id : file,
+              title: file,
+              count : res[file]
+            };
+          });
 
-        this.updateSelectedItems();
-        this.loading = false;
-      });
+          this.updateSelectedItems();
+          this.loading = false;
+        });
     },
 
     filterItems(value) {

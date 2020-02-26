@@ -96,16 +96,16 @@ import SelectReviewStatusItem from "./SelectReviewStatusItem";
 
 function reviewStatusFromCodeToString(reviewCode) {
   switch (parseInt(reviewCode)) {
-    case ReviewStatus.UNREVIEWED:
-      return "Unreviewed";
-    case ReviewStatus.CONFIRMED:
-      return "Confirmed";
-    case ReviewStatus.FALSE_POSITIVE:
-      return "False positive";
-    case ReviewStatus.INTENTIONAL:
-      return "Intentional";
-    default:
-      console.warning("Non existing review status code: ", reviewCode);
+  case ReviewStatus.UNREVIEWED:
+    return "Unreviewed";
+  case ReviewStatus.CONFIRMED:
+    return "Confirmed";
+  case ReviewStatus.FALSE_POSITIVE:
+    return "False positive";
+  case ReviewStatus.INTENTIONAL:
+    return "Intentional";
+  default:
+    console.warning("Non existing review status code: ", reviewCode);
   }
 }
 

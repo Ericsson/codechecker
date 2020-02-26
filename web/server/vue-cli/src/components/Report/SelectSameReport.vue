@@ -78,23 +78,24 @@ export default {
         ord: Order.ASC
       });
 
-      ccService.getClient().getRunResults(null, MAX_QUERY_SIZE, 0, [ sortMode ],
-      reportFilter, null, false, (err, res) => {
-        this.getRuns(res).then(runs => {
-          this.items = res.map(report => {
-            const run = runs.find(run => run.runId.equals(report.runId)) || {};
+      ccService.getClient().getRunResults(null, MAX_QUERY_SIZE, 0,
+        [ sortMode ], reportFilter, null, false, (err, res) => {
+          this.getRuns(res).then(runs => {
+            this.items = res.map(report => {
+              const run =
+                runs.find(run => run.runId.equals(report.runId)) || {};
 
-            return {
-              id: report.reportId,
-              runName: run.name,
-              fileName: report.checkedFile.replace(/^.*[\\/]/, ""),
-              line: report.line,
-              bugPathLength: report.bugPathLength,
-              detectionStatus: report.detectionStatus
-            };
+              return {
+                id: report.reportId,
+                runName: run.name,
+                fileName: report.checkedFile.replace(/^.*[\\/]/, ""),
+                line: report.line,
+                bugPathLength: report.bugPathLength,
+                detectionStatus: report.detectionStatus
+              };
+            });
           });
         });
-      });
     },
 
     getRuns(reports) {
@@ -104,9 +105,9 @@ export default {
 
       return new Promise(resolve => {
         ccService.getClient().getRunData(runFilter, null, 0, null,
-        (err, res) => {
-          resolve(res);
-        });
+          (err, res) => {
+            resolve(res);
+          });
       });
     },
 

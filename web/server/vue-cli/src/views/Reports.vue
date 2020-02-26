@@ -152,10 +152,10 @@ export default {
       const getDetails = false;
 
       ccService.getClient().getRunResults(this.runIds, limit, offset, sortType,
-      this.reportFilter, this.cmpData, getDetails, (err, reports) => {
-        this.reports = reports;
-        this.loading = false;
-      });
+        this.reportFilter, this.cmpData, getDetails, (err, reports) => {
+          this.reports = reports;
+          this.loading = false;
+        });
     }
   }
 };

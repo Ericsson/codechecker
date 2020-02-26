@@ -64,13 +64,13 @@ export default {
       this.unregisterWatchers();
 
       this.reportFilterUnwatch = this.$watch("reportFilterModel",
-      (oldVal, newVal) => {
-        Object.keys(newVal).forEach(key => {
-          if (JSON.stringify(newVal[key]) !== JSON.stringify(oldVal[key])) {
-            this.onReportFilterChange(key, oldVal, newVal);
-          }
-        });
-      }, { deep: true });
+        (oldVal, newVal) => {
+          Object.keys(newVal).forEach(key => {
+            if (JSON.stringify(newVal[key]) !== JSON.stringify(oldVal[key])) {
+              this.onReportFilterChange(key, oldVal, newVal);
+            }
+          });
+        }, { deep: true });
 
       this.runIdsUnwatch = this.$watch("runIdsModel", (oldVal, newVal) => {
         this.onRunIdsChange(oldVal, newVal);

@@ -291,19 +291,19 @@ export default {
       this.unregisterWatchers();
 
       this.reportFilterUnwatch = this.$store.watch(
-      state => state.report.reportFilter, () => {
-        this.$emit("refresh");
-      }, { deep: true });
+        state => state.report.reportFilter, () => {
+          this.$emit("refresh");
+        }, { deep: true });
 
       this.runIdsUnwatch = this.$store.watch(
-      state => state.report.runIds, () => {
-        this.$emit("refresh");
-      });
+        state => state.report.runIds, () => {
+          this.$emit("refresh");
+        });
 
       this.cmpDataUnwatch = this.$store.watch(
-      state => state.report.cmpData, () => {
-        this.$emit("refresh");
-      }, { deep: true });
+        state => state.report.cmpData, () => {
+          this.$emit("refresh");
+        }, { deep: true });
     },
 
     unregisterWatchers() {

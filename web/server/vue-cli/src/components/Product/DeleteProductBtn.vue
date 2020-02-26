@@ -87,9 +87,9 @@ export default {
   methods: {
     confirmDelete() {
       prodService.getClient().removeProduct(this.product.id,
-      (/* error, success */) => {
-        this.$emit("on-complete", this.product);
-      });
+        (/* error, success */) => {
+          this.$emit("on-complete", this.product);
+        });
     }
   }
 };

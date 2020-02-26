@@ -159,10 +159,10 @@ export default {
   methods: {
     getAnalysisStatistics() {
       ccService.getClient().getAnalysisStatistics(this.runId,
-      this.runHistoryId, (err, stats) => {
-        this.analyzerStatistics = stats;
-        this.activeExpansionPanels = [ 0 ];
-      });
+        this.runHistoryId, (err, stats) => {
+          this.analyzerStatistics = stats;
+          this.activeExpansionPanels = [ 0 ];
+        });
     }
   }
 };

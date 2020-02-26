@@ -62,30 +62,30 @@ export default {
   computed: {
     color() {
       switch (this.type) {
-        case "error":
-          return "#f2dede";
-        case "fixit":
-          return "#fcf8e3";
-        case "macro":
-          return "#d7dac2";
-        case "note":
-          return "#d7d7d7";
-        default:
-          return "#bfdfe9";
+      case "error":
+        return "#f2dede";
+      case "fixit":
+        return "#fcf8e3";
+      case "macro":
+        return "#d7dac2";
+      case "note":
+        return "#d7d7d7";
+      default:
+        return "#bfdfe9";
       }
     },
     textColor() {
       switch (this.type) {
-        case "error":
-          return "#a94442";
-        case "fixit":
-          return "#8a6d3b";
-        case "macro":
-          return "#4f5c6d";
-        case "note":
-          return "#4f5c6d";
-        default:
-          return "#00546f";
+      case "error":
+        return "#a94442";
+      case "fixit":
+        return "#8a6d3b";
+      case "macro":
+        return "#4f5c6d";
+      case "note":
+        return "#4f5c6d";
+      default:
+        return "#00546f";
       }
     }
   }
