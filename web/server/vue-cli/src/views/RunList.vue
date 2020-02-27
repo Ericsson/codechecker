@@ -33,10 +33,9 @@
       :items="formattedRuns"
       :options.sync="pagination"
       :loading="loading"
+      loading-text="Loading runs..."
       :server-items-length.sync="totalItems"
-      :footer-props="{
-        itemsPerPageOptions: [50, 100, 250, 500, -1]
-      }"
+      :footer-props="footerProps"
       :must-sort="true"
       item-key="name"
       show-select
@@ -238,6 +237,8 @@
 </template>
 
 <script>
+import _ from "lodash";
+
 import {
   AnalyzerStatisticsBtn,
   AnalyzerStatisticsDialog,
@@ -266,15 +267,27 @@ export default {
   mixins: [ DetectionStatusMixin, StrToColorMixin ],
 
   data() {
+    const itemsPerPageOptions = [ 25, 100, 250, 500 ];
+
+    const page = parseInt(this.$router.currentRoute.query["page"]) || 1;
+    const itemsPerPage =
+      parseInt(this.$router.currentRoute.query["items-per-page"]) ||
+      itemsPerPageOptions[0];
+    const sortBy = this.$router.currentRoute.query["sort-by"];
+    const sortDesc = this.$router.currentRoute.query["sort-desc"];
+
     return {
-      runNameSearch: null,
+      runNameSearch: this.$router.currentRoute.query["name"] || null,
       showCheckCommandDialog: false,
       checkCommand: null,
       pagination: {
-        page: 1,
-        itemsPerPage: 50,
-        sortBy: [],
-        sortDesc: []
+        page: page,
+        itemsPerPage: itemsPerPage,
+        sortBy: sortBy ? [ sortBy ] : [],
+        sortDesc: sortDesc !== undefined ? [ !!sortDesc ] : []
+      },
+      footerProps: {
+        itemsPerPageOptions: itemsPerPageOptions
       },
       totalItems: 0,
       loading: false,
@@ -348,6 +361,29 @@ export default {
   watch: {
     pagination: {
       handler() {
+        const defaultItemsPerPage = this.footerProps.itemsPerPageOptions[0];
+        const itemsPerPage =
+          this.pagination.itemsPerPage === defaultItemsPerPage
+            ? undefined
+            : this.pagination.itemsPerPage;
+
+        const page = this.pagination.page === 1
+          ? undefined : this.pagination.page;
+        const sortBy = this.pagination.sortBy.length
+          ? this.pagination.sortBy : undefined;
+        const sortDesc = this.pagination.sortDesc.length
+          ? this.pagination.sortDesc : undefined;
+
+        this.$router.replace({
+          query: {
+            ...this.$route.query,
+            "items-per-page": itemsPerPage,
+            "page": page,
+            "sort-by": sortBy,
+            "sort-desc": sortDesc,
+          }
+        }).catch(() => {});
+
         this.fetchRuns();
       },
       deep: true
@@ -357,19 +393,18 @@ export default {
       val || this.closeCheckCommandDialog();
     },
 
-    runNameSearch: function(newValue) {
-      this.fetchRuns();
+    runNameSearch: {
+      handler: _.debounce(function () {
+        this.$router.replace({
+          query: {
+            ...this.$route.query,
+            "name": this.runNameSearch ? this.runNameSearch : undefined
+          }
+        }).catch(() => {});
 
-      var queryParams = Object.assign({}, this.$route.query);
-      if (queryParams["search"] !== newValue) {
-        queryParams["search"] = newValue;
-        this.$router.push({ query: queryParams });
-      }
+        this.fetchRuns();
+      }, 250)
     }
-  },
-
-  created() {
-    this.runNameSearch = this.$router.currentRoute.query["search"];
   },
 
   methods: {
@@ -398,6 +433,7 @@ export default {
     },
 
     fetchRuns() {
+      this.loading = true;
       const runFilter = this.runNameSearch
         ? new RunFilter({ names: [ `*${this.runNameSearch}*` ] })
         : null;
@@ -409,12 +445,13 @@ export default {
 
       // Get the runs.
       const limit = this.pagination.itemsPerPage;
-      const offset = this.pagination.page - 1;
+      const offset = limit * (this.pagination.page - 1);
       const sortMode = this.getSortMode();
 
       ccService.getClient().getRunData(runFilter, limit, offset, sortMode,
         (err, runs) => {
           this.runs = runs;
+          this.loading = false;
         });
     },
 
