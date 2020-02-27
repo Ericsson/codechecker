@@ -4,7 +4,8 @@
       <report-filter
         v-fill-height
         :namespace="namespace"
-        @refresh="fetchReports"
+        :report-count="totalItems"
+        @refresh="refresh"
       />
     </pane>
     <pane>
@@ -12,8 +13,12 @@
         v-fill-height
         :headers="headers"
         :items="reports"
+        :options.sync="pagination"
         :loading="loading"
         loading-text="Loading reports..."
+        :server-items-length.sync="totalItems"
+        :footer-props="footerProps"
+        :must-sort="true"
         item-key="name"
       >
         <template #item.bugHash="{ item }">
@@ -89,6 +94,15 @@ export default {
   mixins: [ BugPathLengthColorMixin ],
 
   data() {
+    const itemsPerPageOptions = [ 25, 100, 250, 500 ];
+
+    const page = parseInt(this.$router.currentRoute.query["page"]) || 1;
+    const itemsPerPage =
+      parseInt(this.$router.currentRoute.query["items-per-page"]) ||
+      itemsPerPageOptions[0];
+    const sortBy = this.$router.currentRoute.query["sort-by"];
+    const sortDesc = this.$router.currentRoute.query["sort-desc"];
+
     return {
       headers: [
         {
@@ -129,10 +143,21 @@ export default {
       ],
       reports: [],
       namespace: namespace,
-      loading: true,
+      pagination: {
+        page: page,
+        itemsPerPage: itemsPerPage,
+        sortBy: sortBy ? [ sortBy ] : [],
+        sortDesc: sortDesc !== undefined ? [ !!sortDesc ] : []
+      },
+      footerProps: {
+        itemsPerPageOptions: itemsPerPageOptions
+      },
+      totalItems: 0,
+      loading: false,
       runIdsUnwatch: null,
       reportFilterUnwatch: null,
-      cmpDataUnwatch: null
+      cmpDataUnwatch: null,
+      initalized: false
     };
   },
 
@@ -144,12 +169,62 @@ export default {
     })
   },
 
+  watch: {
+    pagination: {
+      handler() {
+        this.updateUrl();
+        if (this.initalized) {
+          this.fetchReports();
+        }
+      },
+      deep: true
+    },
+  },
+
   methods: {
+    updateUrl() {
+      const defaultItemsPerPage = this.footerProps.itemsPerPageOptions[0];
+      const itemsPerPage =
+        this.pagination.itemsPerPage === defaultItemsPerPage
+          ? undefined
+          : this.pagination.itemsPerPage;
+
+      const page = this.pagination.page === 1
+        ? undefined : this.pagination.page;
+      const sortBy = this.pagination.sortBy.length
+        ? this.pagination.sortBy : undefined;
+      const sortDesc = this.pagination.sortDesc.length
+        ? this.pagination.sortDesc : undefined;
+
+      this.$router.replace({
+        query: {
+          ...this.$route.query,
+          "items-per-page": itemsPerPage,
+          "page": page,
+          "sort-by": sortBy,
+          "sort-desc": sortDesc,
+        }
+      }).catch(() => {});
+    },
+
+    refresh() {
+      ccService.getClient().getRunResultCount(this.runIds,
+        this.reportFilter, this.cmpData, (err, res) => {
+          this.totalItems = res.toNumber();
+        });
+
+      if (this.pagination.page !== 1 && this.initalized) {
+        this.pagination.page = 1;
+      } else {
+        this.fetchReports();
+      }
+    },
+
     fetchReports() {
       this.loading = true;
 
-      const limit = null;
-      const offset = null;
+      const limit = this.pagination.itemsPerPage;
+      const offset = limit * (this.pagination.page - 1);
       const sortType = null;
       const getDetails = false;
 
@@ -157,6 +232,7 @@ export default {
         this.reportFilter, this.cmpData, getDetails, (err, reports) => {
           this.reports = reports;
           this.loading = false;
+          this.initalized = true;
         });
     }
   }

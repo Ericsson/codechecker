@@ -6,41 +6,16 @@
 </template>
 
 <script>
-import { ccService } from "@cc-api";
-
-import { BaseFilterMixin } from "./Filters";
-
 export default {
   name: "ReportCount",
-  mixins: [ BaseFilterMixin ],
+  props: {
+    value: { type: Number, required: true }
+  },
 
   data() {
     return {
-      id: "report-count",
-      value: null
+      id: "report-count"
     };
-  },
-
-  methods: {
-    afterInit() {
-      this.getReportCount();
-      this.registerWatchers();
-    },
-
-    update() {
-      this.getReportCount();
-    },
-
-    onReportFilterChange() {
-      this.getReportCount();
-    },
-
-    getReportCount() {
-      ccService.getClient().getRunResultCount(this.runIds, this.reportFilter,
-        this.cmpData, (err, res) => {
-          this.value = res;
-        });
-    }
   }
 };
 </script>

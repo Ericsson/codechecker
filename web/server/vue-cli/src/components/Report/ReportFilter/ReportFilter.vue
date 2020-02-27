@@ -24,8 +24,7 @@
 
         <v-list-item-content>
           <report-count
-            ref="filters"
-            :namespace="namespace"
+            :value="reportCount"
           />
         </v-list-item-content>
       </v-list-item>
@@ -274,7 +273,8 @@ export default {
     namespace: { type: String, required: true },
     showNewcheck: { type: Boolean, default: true },
     showReviewStatus: { type: Boolean, default: true },
-    showRemoveFilteredReports: { type: Boolean, default: true }
+    showRemoveFilteredReports: { type: Boolean, default: true },
+    reportCount: { type: Number, required: true }
   },
 
   data() {
@@ -317,17 +317,17 @@ export default {
       this.unregisterWatchers();
 
       this.reportFilterUnwatch = this.$store.watch(
-        state => state.report.reportFilter, () => {
+        state => state[this.namespace].reportFilter, () => {
           this.$emit("refresh");
         }, { deep: true });
 
       this.runIdsUnwatch = this.$store.watch(
-        state => state.report.runIds, () => {
+        state => state[this.namespace].runIds, () => {
           this.$emit("refresh");
         });
 
       this.cmpDataUnwatch = this.$store.watch(
-        state => state.report.cmpData, () => {
+        state => state[this.namespace].cmpData, () => {
           this.$emit("refresh");
         }, { deep: true });
     },

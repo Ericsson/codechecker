@@ -7,6 +7,7 @@
         :show-newcheck="false"
         :show-review-status="false"
         :show-remove-filtered-reports="false"
+        :report-count="reportCount"
         @refresh="refresh"
       />
     </pane>
@@ -37,6 +38,9 @@
 
 <script>
 import { Pane, Splitpanes } from "splitpanes";
+import { mapState } from "vuex";
+
+import { ccService } from "@cc-api";
 
 import CheckerStatistics from "@/components/CheckerStatistics";
 import { FillHeight } from "@/directives";
@@ -57,12 +61,29 @@ export default {
   directives: { FillHeight },
   data() {
     return {
-      namespace: namespace
+      namespace: namespace,
+      reportCount: 0
     };
+  },
+
+  computed: {
+    ...mapState({
+      runIds(state, getters) {
+        return getters[`${this.namespace}/getRunIds`];
+      },
+      reportFilter(state, getters) {
+        return getters[`${this.namespace}/getReportFilter`];
+      }
+    })
   },
 
   methods: {
     refresh() {
+      ccService.getClient().getRunResultCount(this.runIds,
+        this.reportFilter, null, (err, res) => {
+          this.reportCount = res.toNumber();
+        });
+
       const statistics = this.$refs.statistics;
       statistics.forEach(statistic => statistic.fetchStatistics());
     }
