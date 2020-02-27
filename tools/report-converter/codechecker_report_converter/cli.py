@@ -11,18 +11,28 @@ import logging
 import os
 import shutil
 
+# If we run this script in an environment where 'codechecker_report_converter'
+# module is not available we should add the grandparent directory of this file
+# to the system path.
+# TODO: This section will not be needed when CodeChecker will be delivered as
+# a python package and will be installed in a virtual environment with all the
+# dependencies.
+if __name__ == '__main__':
+    current_dir = os.path.dirname(os.path.realpath(__file__))
+    os.sys.path.append(os.path.dirname(current_dir))
+
 from codechecker_report_converter.clang_tidy.analyzer_result import \
-    ClangTidyAnalyzerResult
+    ClangTidyAnalyzerResult  # noqa
 from codechecker_report_converter.cppcheck.analyzer_result import \
-    CppcheckAnalyzerResult
+    CppcheckAnalyzerResult  # noqa
 from codechecker_report_converter.sanitizers.address.analyzer_result import \
-    ASANAnalyzerResult
+    ASANAnalyzerResult  # noqa
 from codechecker_report_converter.sanitizers.memory.analyzer_result import \
-    MSANAnalyzerResult
+    MSANAnalyzerResult  # noqa
 from codechecker_report_converter.sanitizers.thread.analyzer_result import \
-    TSANAnalyzerResult
+    TSANAnalyzerResult  # noqa
 from codechecker_report_converter.sanitizers.ub.analyzer_result import \
-    UBSANAnalyzerResult
+    UBSANAnalyzerResult  # noqa
 
 
 LOG = logging.getLogger('ReportConverter')
