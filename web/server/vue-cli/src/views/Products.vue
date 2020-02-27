@@ -199,6 +199,8 @@
 </template>
 
 <script>
+import _ from "lodash";
+
 import { authService, prodService } from "@cc-api";
 import { DBStatus, Permission } from "@cc/shared-types";
 
@@ -303,12 +305,22 @@ export default {
   },
 
   watch: {
-    productNameSearch: function() {
+    productNameSearch: _.debounce(function () {
+      this.$router.replace({
+        query: {
+          ...this.$route.query,
+          "name": this.productNameSearch
+            ? this.productNameSearch : undefined
+        }
+      }).catch(() => {});
+
       this.fetchProducts();
-    }
+    }, 500),
   },
 
   created() {
+    this.productNameSearch = this.$router.currentRoute.query["name"];
+
     authService.getClient().hasPermission(Permission.SUPERUSER, "",
       (err, isSuperUser) => {
         this.isSuperUser = isSuperUser;
