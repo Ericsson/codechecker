@@ -11,6 +11,16 @@
     <template v-slot:icon="{ item }">
       <detection-status-icon :status="item.id" />
     </template>
+
+    <template v-slot:prepend-toolbar-title>
+      <v-icon
+        v-if="reportFilter.isUnique"
+        color="error"
+        :title="uniqueingErrorTitle"
+      >
+        mdi-alert
+      </v-icon>
+    </template>
   </select-option>
 </template>
 
@@ -34,7 +44,9 @@ export default {
 
   data() {
     return {
-      id: "detection-status"
+      id: "detection-status",
+      uniqueingErrorTitle: "Not available in uniqueing mode! Several " +
+        "detection statuses could belong to the same bug!"
     };
   },
 

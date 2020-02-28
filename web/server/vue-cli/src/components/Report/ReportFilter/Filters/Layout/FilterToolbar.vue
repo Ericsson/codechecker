@@ -5,6 +5,8 @@
         {{ title }}
       </v-toolbar-title>
 
+      <slot name="prepend-toolbar-title" />
+
       <v-spacer />
 
       <v-toolbar-items>

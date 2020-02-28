@@ -3,6 +3,10 @@
     :title="title"
     @clear="clear"
   >
+    <template v-slot:prepend-toolbar-title>
+      <slot name="prepend-toolbar-title" />
+    </template>
+
     <template v-slot:prepend-toolbar-items>
       <slot name="prepend-toolbar-items" />
     </template>
