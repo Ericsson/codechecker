@@ -1,5 +1,8 @@
 <template>
   <v-btn
+    outlined
+    text
+    color="primary"
     @click="clearAllFilters"
   >
     <v-icon left>
