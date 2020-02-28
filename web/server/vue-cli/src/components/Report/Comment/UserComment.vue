@@ -20,8 +20,10 @@
             <v-list-item-title>
               {{ comment.author }}
             </v-list-item-title>
-            <v-list-item-subtitle>
-              {{ comment.createdAt }}
+            <v-list-item-subtitle
+              :title="comment.createdAt"
+            >
+              {{ createdAt }}
             </v-list-item-subtitle>
           </v-list-item-content>
           <v-list-item-action>
@@ -49,6 +51,8 @@
 </template>
 
 <script>
+import { formatDistanceToNow, parse } from "date-fns";
+
 import { UserIcon } from "@/components/Icons";
 import EditCommentBtn from "./EditCommentBtn";
 import RemoveCommentBtn from "./RemoveCommentBtn";
@@ -67,6 +71,11 @@ export default {
   computed: {
     message() {
       return this.comment.message.replace(/(?:\r\n|\r|\n)/g, "<br>");
+    },
+    createdAt() {
+      const created = parse(this.comment.createdAt,
+        "yyyy-MM-dd HH:mm:ss.SSSSSS", new Date());
+      return formatDistanceToNow(created);
     }
   }
 };

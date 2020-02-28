@@ -1,6 +1,6 @@
 <template>
   <v-container
-    class="py-0"
+    class="py-1"
   >
     <edit-comment-dialog
       :value.sync="editDialog"
