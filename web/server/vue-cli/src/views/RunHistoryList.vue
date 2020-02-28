@@ -129,7 +129,9 @@
       </template>
 
       <template #item.codeCheckerVersion="{ item }">
-        {{ item.$codeCheckerVersion }}
+        <span :title="item.codeCheckerVersion">
+          {{ item.$codeCheckerVersion }}
+        </span>
       </template>
     </v-data-table>
   </v-card>
