@@ -12,7 +12,7 @@
       <v-data-table
         v-fill-height
         :headers="headers"
-        :items="reports"
+        :items="formattedReports"
         :options.sync="pagination"
         :loading="loading"
         loading-text="Loading reports..."
@@ -54,7 +54,10 @@
         </template>
 
         <template #item.detectionStatus="{ item }">
-          <detection-status-icon :status="parseInt(item.detectionStatus)" />
+          <detection-status-icon
+            :status="parseInt(item.detectionStatus)"
+            :title="item.$detectionStatusTitle"
+          />
         </template>
       </v-data-table>
     </pane>
@@ -69,7 +72,7 @@ import { mapGetters } from "vuex";
 import { ccService } from "@cc-api";
 
 import { FillHeight } from "@/directives";
-import { BugPathLengthColorMixin } from "@/mixins";
+import { BugPathLengthColorMixin, DetectionStatusMixin } from "@/mixins";
 import {
   DetectionStatusIcon,
   ReviewStatusIcon,
@@ -91,7 +94,7 @@ export default {
     ReportFilter
   },
   directives: { FillHeight },
-  mixins: [ BugPathLengthColorMixin ],
+  mixins: [ BugPathLengthColorMixin, DetectionStatusMixin ],
 
   data() {
     const itemsPerPageOptions = [ 25, 100, 250, 500 ];
@@ -166,7 +169,29 @@ export default {
       runIds: "getRunIds",
       reportFilter: "getReportFilter",
       cmpData: "getCmpData"
-    })
+    }),
+
+    formattedReports() {
+      return this.reports.map(report => {
+        const detectionStatus =
+          this.detectionStatusFromCodeToString(report.detectionStatus);
+        const detectedAt = report.detectedAt
+          ? this.$options.filters.prettifyDate(report.detectedAt) : null;
+        const fixedAt = report.fixedAt
+          ? this.$options.filters.prettifyDate(report.fixedAt) : null;
+
+        const detectionStatusTitle = [
+          `Status: ${detectionStatus}`,
+          ...(detectedAt ? [ `Detected at: ${detectedAt}` ] : []),
+          ...(fixedAt ? [ `Fixed at: ${fixedAt}` ] : [])
+        ].join("\n");
+
+        return {
+          ...report,
+          "$detectionStatusTitle": detectionStatusTitle
+        };
+      });
+    },
   },
 
   watch: {
