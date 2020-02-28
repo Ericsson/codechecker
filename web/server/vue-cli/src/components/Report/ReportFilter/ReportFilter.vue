@@ -22,11 +22,9 @@
 
         <v-spacer />
 
-        <v-list-item-content>
-          <report-count
-            :value="reportCount"
-          />
-        </v-list-item-content>
+        <report-count
+          :value="reportCount"
+        />
       </v-list-item>
 
       <v-list-item class="pl-1">
