@@ -11,7 +11,7 @@
     <pane>
       <v-data-table
         v-fill-height
-        :headers="headers"
+        :headers="tableHeaders"
         :items="formattedReports"
         :options.sync="pagination"
         :loading="loading"
@@ -170,6 +170,18 @@ export default {
       reportFilter: "getReportFilter",
       cmpData: "getCmpData"
     }),
+
+    tableHeaders() {
+      if (!this.headers) return;
+
+      return this.headers.filter(header => {
+        if (header.value === "detectionStatus") {
+          return !this.reportFilter.isUnique;
+        }
+
+        return true;
+      });
+    },
 
     formattedReports() {
       return this.reports.map(report => {
