@@ -93,6 +93,8 @@ def verify_limit_range(limit):
     Max is returned if the value is larger than max.
     """
     max_query_limit = constants.MAX_QUERY_SIZE
+    if not limit:
+        return max_query_limit
     if limit > max_query_limit:
         LOG.warning('Query limit %d was larger than max query limit %d, '
                     'setting limit to %d',
@@ -1271,6 +1273,9 @@ class ThriftRequestHandler(object):
           counts will be calculated for all of the available runs.
         """
         self.__require_access()
+
+        limit = verify_limit_range(limit)
+
         results = []
         with DBSession(self.__Session) as session:
             filter_expression = process_report_filter(session, report_filter)
@@ -1762,6 +1767,9 @@ class ThriftRequestHandler(object):
           will be used as a baseline excluding the runs in compare data.
         """
         self.__require_access()
+
+        limit = verify_limit_range(limit)
+
         results = []
         with DBSession(self.__Session) as session:
             diff_hashes = None
@@ -1868,6 +1876,9 @@ class ThriftRequestHandler(object):
           will be used as a baseline excluding the runs in compare data.
         """
         self.__require_access()
+
+        limit = verify_limit_range(limit)
+
         results = {}
         with DBSession(self.__Session) as session:
             diff_hashes = None
@@ -1974,6 +1985,9 @@ class ThriftRequestHandler(object):
           will be used as a baseline excluding the runs in compare data.
         """
         self.__require_access()
+
+        limit = verify_limit_range(limit)
+
         results = {}
         with DBSession(self.__Session) as session:
             if cmp_data:
