@@ -1,0 +1,5 @@
+{
+  "typeAcquisition": {
+    "include": ["jest"]
+  }
+}
