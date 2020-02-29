@@ -1,3 +1,5 @@
+import _ from "lodash";
+
 function fillHeight(el) {
   el.style.overflow = "auto";
   const windowHeight = window.innerHeight;
@@ -6,7 +8,7 @@ function fillHeight(el) {
   // Get footer element height.
   const footerElement = document.querySelector("footer");
   const footerStyle = window.getComputedStyle(footerElement);
-  const footerHeight = parseInt(footerStyle.height, 10);
+  const footerHeight = parseFloat(footerStyle.height);
 
   let current = el;
   let style = null;
@@ -15,13 +17,13 @@ function fillHeight(el) {
     current = current.parentNode;
 
     style = window.getComputedStyle(current);
-    paddingBottom += parseInt(style.paddingBottom);
+    paddingBottom += parseInt(style.paddingBottom, 10);
   }
 
   // TODO: We have to extract -1 from the heigh to hide scrollbar. Find out
   // a better solution for this problem.
   el.style.height =
-    windowHeight - top - paddingBottom - footerHeight - 1 + "px";
+    Math.floor(windowHeight - top - paddingBottom - footerHeight - 1) + "px";
   return el.style.height;
 }
 
@@ -32,13 +34,12 @@ export const FillHeight = {
       passive: true
     };
 
-    // TODO: Use debounce.
     const fn = () => {
       const height = fillHeight(el);
       callback(el, height);
     };
 
-    window.addEventListener("resize", fn, options);
+    window.addEventListener("resize", _.debounce(fn, 200), options);
 
     el._onResize = { fn, options };
   },
