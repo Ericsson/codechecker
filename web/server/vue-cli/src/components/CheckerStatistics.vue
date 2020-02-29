@@ -8,6 +8,7 @@
         <v-data-table
           :headers="headers"
           :items="statistics"
+          :server-items-length.sync="statistics.length"
           :hide-default-footer="true"
           item-key="checker"
         >
