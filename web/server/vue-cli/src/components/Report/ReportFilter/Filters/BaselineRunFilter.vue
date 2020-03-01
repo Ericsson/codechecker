@@ -64,7 +64,7 @@ export default {
         if (state.length) {
           const selectedItems = this.getSelectedItems(state);
           Promise.all(selectedItems).then(res => {
-            this.selectedItems = res;
+            this.setSelectedItems(res, false);
             resolve();
           });
         } else {
