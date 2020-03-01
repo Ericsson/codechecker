@@ -12,7 +12,28 @@
           item-key="severity"
         >
           <template #item.severity="{ item }">
-            <severity-icon :status="item.severity" />
+            <router-link
+              class="severity"
+              :to="{ name: 'reports', query: {
+                ...$router.currentRoute.query,
+                'severity': severityFromCodeToString(
+                  item.severity)
+              }}"
+            >
+              <severity-icon :status="item.severity" />
+            </router-link>
+          </template>
+
+          <template #item.reports="{ item }">
+            <router-link
+              :to="{ name: 'reports', query: {
+                ...$router.currentRoute.query,
+                'severity': severityFromCodeToString(
+                  item.severity)
+              }}"
+            >
+              {{ item.reports }}
+            </router-link>
           </template>
         </v-data-table>
       </v-col>
@@ -25,12 +46,14 @@ import { mapState } from "vuex";
 import { ccService } from "@cc-api";
 
 import { SeverityIcon } from "@/components/Icons";
+import { SeverityMixin } from "@/mixins";
 
 export default {
   name: "SeverityStatistics",
   components: {
     SeverityIcon
   },
+  mixins: [ SeverityMixin ],
 
   props: {
     namespace: { type: String, required: true }
@@ -41,11 +64,13 @@ export default {
       headers: [
         {
           text: "Severity",
-          value: "severity"
+          value: "severity",
+          align: "center"
         },
         {
           text: "All reports",
-          value: "reports"
+          value: "reports",
+          align: "center"
         }
       ],
       statistics: []
@@ -82,3 +107,9 @@ export default {
   }
 };
 </script>
+
+<style lang="sass" scoped>
+::v-deep .severity {
+  text-decoration: none;
+}
+</style>

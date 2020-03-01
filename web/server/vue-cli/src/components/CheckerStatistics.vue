@@ -24,18 +24,27 @@
           </template>
 
           <template #item.severity="{ item }">
-            <severity-icon :status="item.severity" />
+            <router-link
+              class="severity"
+              :to="{ name: 'reports', query: {
+                ...$router.currentRoute.query,
+                'checker-name': item.checker,
+                'severity': severityFromCodeToString(
+                  item.severity)
+              }}"
+            >
+              <severity-icon :status="item.severity" />
+            </router-link>
           </template>
 
-          <!-- TODO Get review status filter id from the component and use
-              the encode function to encode the value -->
           <template #item.unreviewed="{ item }">
             <router-link
               v-if="item.unreviewed"
               :to="{ name: 'reports', query: {
                 ...$router.currentRoute.query,
                 'checker-name': item.checker,
-                'review-status': 'Unreviewed'
+                'review-status': reviewStatusFromCodeToString(
+                  ReviewStatus.UNREVIEWED)
               }}"
             >
               {{ item.unreviewed }}
@@ -48,7 +57,8 @@
               :to="{ name: 'reports', query: {
                 ...$router.currentRoute.query,
                 'checker-name': item.checker,
-                'review-status': 'Confirmed'
+                'review-status': reviewStatusFromCodeToString(
+                  ReviewStatus.CONFIRMED)
               }}"
             >
               {{ item.confirmed }}
@@ -61,7 +71,8 @@
               :to="{ name: 'reports', query: {
                 ...$router.currentRoute.query,
                 'checker-name': item.checker,
-                'review-status': 'False_positive'
+                'review-status': reviewStatusFromCodeToString(
+                  ReviewStatus.FALSE_POSITIVE)
               }}"
             >
               {{ item.falsePositive }}
@@ -74,7 +85,8 @@
               :to="{ name: 'reports', query: {
                 ...$router.currentRoute.query,
                 'checker-name': item.checker,
-                'review-status': 'Intentional'
+                'review-status': reviewStatusFromCodeToString(
+                  ReviewStatus.INTENTIONAL)
               }}"
             >
               {{ item.intentional }}
@@ -109,12 +121,14 @@ import {
 } from "@cc/report-server-types";
 
 import { SeverityIcon } from "@/components/Icons";
+import { ReviewStatusMixin, SeverityMixin } from "@/mixins";
 
 export default {
   name: "CheckerStatistics",
   components: {
     SeverityIcon
   },
+  mixins: [ ReviewStatusMixin, SeverityMixin ],
 
   props: {
     namespace: { type: String, required: true }
@@ -122,6 +136,7 @@ export default {
 
   data() {
     return {
+      ReviewStatus,
       headers: [
         {
           text: "Checker",
@@ -129,27 +144,33 @@ export default {
         },
         {
           text: "Severity",
-          value: "severity"
+          value: "severity",
+          align: "center"
         },
         {
           text: "Unreviewed",
-          value: "unreviewed"
+          value: "unreviewed",
+          align: "center"
         },
         {
           text: "Confirmed bug",
-          value: "confirmed"
+          value: "confirmed",
+          align: "center"
         },
         {
           text: "False positive",
-          value: "falsePositive"
+          value: "falsePositive",
+          align: "center"
         },
         {
           text: "Intentional",
-          value: "intentional"
+          value: "intentional",
+          align: "center"
         },
         {
           text: "All reports",
-          value: "reports"
+          value: "reports",
+          align: "center"
         }
       ],
       statistics: []
@@ -220,3 +241,9 @@ export default {
   }
 };
 </script>
+
+<style lang="sass" scoped>
+::v-deep .severity {
+  text-decoration: none;
+}
+</style>
