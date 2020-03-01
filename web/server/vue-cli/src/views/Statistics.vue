@@ -42,9 +42,11 @@ import { mapState } from "vuex";
 
 import { ccService } from "@cc-api";
 
-import CheckerStatistics from "@/components/CheckerStatistics";
+import {
+  CheckerStatistics,
+  SeverityStatistics
+} from "@/components/Statistics";
 import { FillHeight } from "@/directives";
-import SeverityStatistics from "@/components/SeverityStatistics";
 import { ReportFilter } from "@/components/Report/ReportFilter";
 
 const namespace = "statistics";
