@@ -13,6 +13,7 @@ is used. In addition to the inline comments in Gerrit, the full result of the
 analysis is stored and visualised in Jenkins.
 
 The idea is simple:
+
 * Create a Jenkins job that polls Gerrit for new merge requests.
 * If there is a new merge request, run the CodeChecker analysis on the changed
 files in Jenkins.
@@ -43,6 +44,7 @@ Table of Contents
 
 # Gerrit requirements <a name="gerrit-requirements"></a>
 On Gerrit, a user with the following privileges must be present:
+
 * Read
 * Label Code-Review
 * Label Verified
@@ -52,14 +54,17 @@ If the user is about to clone from Gerrit through SSH, its SSH Public Key
 
 # Jenkins requirements <a name="jenkins-requirements"></a>
 Required plugins
+
 * Git plugin
 * Gerrit Trigger plugin
 
 Optional plugins for reporting (could be replaced by `curl`)
+
 * HTTP Request Plugin
 * Environment Injector Plugin
 
 Requirements of the Jenkins machine
+
 * CodeChecker >= 6.4
 * Python >= 2.7
 * Access to Gerrit (i.e. proper firewall settings)

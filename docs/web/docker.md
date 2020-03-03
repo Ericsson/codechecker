@@ -133,6 +133,7 @@ containers when using
 
 If your server is running on `my.company.org` at `8080` port then two URL
 endpoints will be available for you:
+
 * `my.company.org:8080/live`: simply say that the server is running. In case of
 succes it will response with `200` status code and a
 `CODECHECKER_SERVER_IS_LIVE` message.

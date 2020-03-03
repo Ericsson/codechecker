@@ -23,6 +23,7 @@ A little-known part of GCC's build process is a script called "fixincludes", or
 `fixinc.sh`. Purportedly, the purpose of this script is to fix "non-ANSI system
 header files" which GCC "cannot compile" (https://ewontfix.com/12/).
 Some examples of these fixes are:
+
 * Changing AIX's _LARGE_FILES redirection of open to open64, etc. to use GCC's
   `__asm__` keyword rather than #define, as the latter breaks C++.
 * Exposing the long double math functions in math.h on Mac OS 10.3.9, which
@@ -62,9 +63,10 @@ experiences `-isystem` has to be used otherwise we get compilation error during
 the analysis.
 
 References:
-* https://www.gnu.org/software/autogen/fixinc.html
-* https://android.googlesource.com/toolchain/gcc/+/master/gcc-4.8.3/fixincludes/README
-* https://ewontfix.com/12/
+
+* [https://www.gnu.org/software/autogen/fixinc.html](https://www.gnu.org/software/autogen/fixinc.html)
+* [https://android.googlesource.com/toolchain/gcc/+/master/gcc-4.8.3/fixincludes/README](https://android.googlesource.com/toolchain/gcc/+/master/gcc-4.8.3/fixincludes/README)
+* [https://ewontfix.com/12/](https://ewontfix.com/12/)
 
 ## System headers for Intel vector instructions
 
@@ -118,9 +120,10 @@ are needed for the analysis these can be kept with `--keep-gcc-intrin` flag
 after `CodeChecker analyze` and `CodeChecker check` commands.
 
 References:
-* https://software.intel.com/sites/landingpage/IntrinsicsGuide/
-* http://clang.llvm.org/compatibility.html#vector_builtins
-* http://clang.llvm.org/docs/LanguageExtensions.html#vectors-and-extended-vectors
+
+* [https://software.intel.com/sites/landingpage/IntrinsicsGuide/](https://software.intel.com/sites/landingpage/IntrinsicsGuide/)
+* [http://clang.llvm.org/compatibility.html#vector_builtins](http://clang.llvm.org/compatibility.html#vector_builtins)
+* [http://clang.llvm.org/docs/LanguageExtensions.html#vectors-and-extended-vectors](http://clang.llvm.org/docs/LanguageExtensions.html#vectors-and-extended-vectors)
 
 ## Other system headers in GCC
 GCC implements many other features which are not implemented in Clang.  These
@@ -157,8 +160,9 @@ compilation error if vector instructions are used as well.
  defines ms_abi and sysv_abi specific macros like `__builtin_ms_va_list`.
  There is no need to use this header directly, rather function attributes
  should be used as described in both compilers' documentation:
- * https://gcc.gnu.org/onlinedocs/gcc/x86-Function-Attributes.html
- * https://clang.llvm.org/docs/AttributeReference.html#ms-abi-gnu-ms-abi
+
+ * [https://gcc.gnu.org/onlinedocs/gcc/x86-Function-Attributes.html](https://gcc.gnu.org/onlinedocs/gcc/x86-Function-Attributes.html)
+ * [https://clang.llvm.org/docs/AttributeReference.html#ms-abi-gnu-ms-abi](https://clang.llvm.org/docs/AttributeReference.html#ms-abi-gnu-ms-abi)
 
 #### `omp.h`
 
