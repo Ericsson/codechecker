@@ -15,7 +15,7 @@
     "test": "npm run test:lint && npm run test:unit"
   },
   "dependencies": {
-    "codechecker-api": "6.25.0-dev2",
+    "codechecker-api": "6.26.0",
     "codemirror": "^5.52.0",
     "date-fns": "^2.10.0",
     "jsplumb": "^2.12.9",
