@@ -1,5 +1,5 @@
 THRIFT_OPTS = -r -o /data
-THRIFT_VERSION = "0.9.2"
+THRIFT_VERSION = "0.11.0"
 TARGET_PY = --gen py
 TARGET_JS = --gen js:jquery --gen js:node
 

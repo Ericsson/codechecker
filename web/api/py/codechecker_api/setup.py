@@ -9,7 +9,7 @@ from io import open
 with open('README.md', encoding='utf-8') as f:
     long_description = f.read()
 
-api_version = '6.25.0'
+api_version = '6.26.0'
 
 setup(
     name='codechecker_api',
@@ -32,6 +32,7 @@ setup(
         # These classifiers are *not* checked by 'pip install'. See instead
         # 'python_requires' below.
         'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 3',
     ],
 
     keywords='codechecker thrift api library',
@@ -39,7 +40,7 @@ setup(
     packages=find_packages(where='.'),  # Required
 
     python_requires='>=2.7,',
-    install_requires=['thrift==0.9.2',
+    install_requires=['thrift==0.11.0',
                       'codechecker_api_shared==' + api_version],
 
     project_urls={
