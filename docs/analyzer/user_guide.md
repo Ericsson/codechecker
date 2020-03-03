@@ -7,6 +7,7 @@ Table of Contents
         * [BitBake](#bitbake)
         * [CCache](#ccache)
         * [intercept-build](#intercept-build)
+        * [Bazel](#bazel)
     * [`analyze`](#analyze)
         * [_Skip_ file](#skip)
             * [Absolute path examples](#skip-abs-example)
@@ -393,6 +394,49 @@ intercept-build bash -c 'g++ -DVARIABLE="hello world" main.cpp'
 ```
 When analysing this build action, CodeChecker will most probably give a
 compilation error on the underlying Clang invocation.
+
+
+### Bazel <a name="bazel"></a>
+Do the following steps to log compiler calls made by
+[Bazel](https://www.bazel.build/) using CodeChecker.
+
+1) We need to deactivate the
+["sandbox"](https://bazel.build/designs/2016/06/02/sandboxing.html)
+mechanism of *Bazel*:
+
+- Use [`--batch`](https://docs.bazel.build/versions/2.0.0/user-manual.html#flag--batch)
+mode. Batch mode causes Bazel to not use the standard client/server mode
+instead running a bazel java process for a single command.
+- Use [`--spawn_strategy=local`](https://docs.bazel.build/versions/2.0.0/user-manual.html#flag--spawn_strategy)
+option which causes commands to be executed as local subprocesses.
+- Use [`--strategy=Genrule=strategy`](https://docs.bazel.build/versions/2.0.0/user-manual.html#flag--genrule_strategy)
+option.
+
+2) Keep the following environment variables:
+
+- `LD_LIBRARY_PATH`
+- `LD_PRELOAD`
+- `CC_LOGGER_GCC_LIKE`
+- `CC_LOGGER_FILE`
+
+
+```bash
+CodeChecker log -o ./compile_commands.json -b \
+  "bazel --batch \
+   build \
+     --spawn_strategy=local \
+     --strategy=Genrule=local \
+     --action_env=LD_PRELOAD=\$LD_PRELOAD \
+     --action_env=LD_LIBRARY_PATH=\$LD_LIBRARY_PATH \
+     --action_env=CC_LOGGER_GCC_LIKE=\$CC_LOGGER_GCC_LIKE \
+     --action_env=CC_LOGGER_FILE=\$CC_LOGGER_FILE \
+   //main:hello-world"
+```
+
+**Note**: If you would like to create a compilation database for your full build do not
+forget to [clear](https://docs.bazel.build/versions/master/user-manual.html#clean)
+your project first: `bazel clean --expunge`.
+
 
 ## `analyze` <a name="analyze"></a>
 
