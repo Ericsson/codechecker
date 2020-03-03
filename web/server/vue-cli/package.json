@@ -6,12 +6,13 @@
   "private": true,
   "scripts": {
     "build": "cross-env NODE_ENV=production webpack --config config/webpack.prod.js",
-    "lint": "eslint --ext .js,.vue src",
     "server:dev": "cross-env NODE_ENV=development webpack-dev-server --hot --inline --progress --config config/webpack.dev.js",
     "server:prod": "http-server dist -c-1 --cors",
     "server": "npm run server:dev",
     "start": "npm run server",
-    "test": "jest"
+    "test:lint": "eslint --ext .js,.vue src",
+    "test:unit": "jest",
+    "test": "npm run test:lint && npm run test:unit"
   },
   "dependencies": {
     "codechecker-api": "6.25.0-dev2",
