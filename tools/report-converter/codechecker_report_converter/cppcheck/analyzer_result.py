@@ -1,13 +1,9 @@
-#!/usr/bin/env python
 # -------------------------------------------------------------------------
 #                     The CodeChecker Infrastructure
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
 import glob
 import logging
@@ -47,7 +43,8 @@ class CppcheckAnalyzerResult(AnalyzerResult):
             plist_file = os.path.basename(f)
             file_name = '{0}_{1}.plist'.format(os.path.splitext(plist_file)[0],
                                                self.TOOL_NAME)
-            file_to_plist_data[file_name] = plistlib.readPlist(f)
+            with open(f, 'rb') as plist_file:
+                file_to_plist_data[file_name] = plistlib.load(plist_file)
 
         return file_to_plist_data
 
@@ -86,7 +83,8 @@ class CppcheckAnalyzerResult(AnalyzerResult):
             LOG.debug(plist_data)
 
             try:
-                plistlib.writePlist(plist_data, out_file)
+                with open(out_file, 'wb') as plist_file:
+                    plistlib.dump(plist_data, plist_file)
             except TypeError as err:
                 LOG.error('Failed to write plist file: %s', out_file)
                 LOG.error(err)

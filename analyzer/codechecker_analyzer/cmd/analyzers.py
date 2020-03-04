@@ -7,9 +7,7 @@
 Subcommand module for the 'CodeChecker analyzers' command which lists the
 analyzers available in CodeChecker.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import argparse
 import subprocess
@@ -117,12 +115,16 @@ def main(args):
         binary = context.analyzer_binaries.get(args.dump_config)
 
         if args.dump_config == 'clang-tidy':
-            subprocess.call([binary, '-dump-config', '-checks=*'])
+            subprocess.call([binary, '-dump-config', '-checks=*'],
+                            encoding="utf-8", errors="ignore")
         elif args.dump_config == 'clangsa':
-            ret = subprocess.call([binary, '-cc1',
+            ret = subprocess.call([binary,
+                                   '-cc1',
                                    '-analyzer-checker-option-help',
                                    '-analyzer-checker-option-help-alpha'],
-                                  stderr=subprocess.PIPE)
+                                  stderr=subprocess.PIPE,
+                                  encoding="utf-8",
+                                  errors="ignore")
 
             if ret:
                 # This flag is supported from Clang 9.
@@ -150,8 +152,8 @@ def main(args):
         else:
             binary = context.analyzer_binaries.get(analyzer)
             try:
-                version = subprocess.check_output([binary,
-                                                   '--version'])
+                version = subprocess.check_output(
+                    [binary, '--version'], encoding="utf-8", errors="ignore")
             except (subprocess.CalledProcessError, OSError):
                 version = 'ERROR'
 

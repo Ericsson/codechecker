@@ -1,12 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -------------------------------------------------------------------------
 #                     The CodeChecker Infrastructure
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
+
 import argparse
 import json
 import os
@@ -21,9 +20,12 @@ import prepare_analyzer_cmd
 def execute(cmd):
     print("Executing command: " + ' '.join(cmd))
     try:
-        proc = subprocess.Popen(cmd,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding="utf-8",
+            errors="ignore")
         out, err = proc.communicate()
 
         print("stdout:\n\n" + out.decode("utf-8"))
@@ -39,7 +41,8 @@ def execute(cmd):
 
 
 def get_triple_arch(analyze_command_file):
-    with open(analyze_command_file) as f:
+    with open(analyze_command_file,
+              encoding="utf-8", errors="ignore") as f:
         cmd = f.readline()
 
     cmd = cmd.split()
@@ -75,7 +78,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     compile_cmd_debug = "compile_cmd_DEBUG.json"
-    with open(compile_cmd_debug, 'w') as f:
+    with open(compile_cmd_debug, 'w',
+              encoding="utf-8", errors="ignore") as f:
         f.write(
             json.dumps(
                 prepare_compile_cmd.prepare(
@@ -84,7 +88,8 @@ if __name__ == '__main__':
                 indent=4))
 
     compiler_info_debug = "compiler_info_DEBUG.json"
-    with open(compiler_info_debug, 'w') as f:
+    with open(compiler_info_debug, 'w',
+              encoding="utf-8", errors="ignore") as f:
         f.write(
             json.dumps(
                 prepare_compiler_info.prepare(
@@ -101,7 +106,8 @@ if __name__ == '__main__':
 
     analyzer_command_debug = "analyzer-command_DEBUG"
     target = get_triple_arch('./analyzer-command')
-    with open(analyzer_command_debug, 'w') as f:
+    with open(analyzer_command_debug, 'w',
+              encoding="utf-8", errors="ignore") as f:
         f.write(
             prepare_analyzer_cmd.prepare(
                 "./analyzer-command",

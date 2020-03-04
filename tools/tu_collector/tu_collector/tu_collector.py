@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -------------------------------------------------------------------------
 #                     The CodeChecker Infrastructure
 #   This file is distributed under the University of Illinois Open Source
@@ -10,9 +10,7 @@ translation unit. This script does this action based on a compilation database
 JSON file. The output of the script is a ZIP package with the collected
 sources.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import argparse
 import codecs
@@ -123,7 +121,7 @@ def __gather_dependencies(command, build_dir):
 
         return arg_vect
 
-    if isinstance(command, basestring):
+    if isinstance(command, str):
         command = shlex.split(command)
 
     # gcc and clang can generate makefile-style dependency list.
@@ -172,16 +170,18 @@ def __gather_dependencies(command, build_dir):
     command = __eliminate_argument(command, '--gcc-toolchain')
 
     try:
-        output = subprocess.check_output(command,
-                                         bufsize=-1,
-                                         cwd=build_dir)
+        output = subprocess.check_output(
+            command,
+            bufsize=-1,
+            cwd=build_dir,
+            encoding="utf-8",
+            errors="replace")
         rc = 0
     except subprocess.CalledProcessError as ex:
         output, rc = ex.output, ex.returncode
     except OSError as oerr:
         output, rc = oerr.strerror, oerr.errno
 
-    output = codecs.decode(output, 'utf-8', 'replace')
     if rc == 0:
         # Parse 'Makefile' syntax dependency output.
         dependencies = output.replace('__dummy: ', '') \
@@ -197,8 +197,10 @@ def __gather_dependencies(command, build_dir):
 
 
 def __filter_compilation_db(compilation_db, filt):
-    return filter(lambda action: fnmatch.fnmatch(action['file'], filt),
-                  compilation_db)
+    return [
+        action for action in compilation_db if fnmatch.fnmatch(
+            action['file'],
+            filt)]
 
 
 def get_dependent_headers(command, build_dir, collect_toolchain=True):
@@ -219,7 +221,7 @@ def get_dependent_headers(command, build_dir, collect_toolchain=True):
 
     logging.debug("Generating dependent headers via compiler...")
 
-    if isinstance(command, basestring):
+    if isinstance(command, str):
         command = shlex.split(command)
 
     dependencies = set()
@@ -289,8 +291,8 @@ def zip_tu_files(zip_file, compilation_database, write_mode='w'):
                   files are appended to the existing zip file, in case of 'w'
                   the files are added to a clean zip file.
     """
-    if isinstance(compilation_database, basestring):
-        with open(compilation_database) as f:
+    if isinstance(compilation_database, str):
+        with open(compilation_database, encoding="utf-8", errors="ignore") as f:
             compilation_database = json.load(f)
 
     no_sources = 'no-sources'
@@ -378,13 +380,13 @@ used to generate a log file on the fly.""")
     # --- Do the job. --- #
 
     if args.logfile:
-        with open(args.logfile) as f:
+        with open(args.logfile, encoding="utf-8", errors="ignore") as f:
             compilation_db = json.load(f)
 
         if args.filter:
-            compilation_db = filter(
-                lambda action: fnmatch.fnmatch(action['file'], args.filter),
-                compilation_db)
+            compilation_db = [
+                action for action in compilation_db if fnmatch.fnmatch(
+                    action['file'], args.filter)]
     else:
         if args.filter:
             print('Warning: In case of using build command the filter has no '

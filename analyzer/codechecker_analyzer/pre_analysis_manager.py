@@ -6,9 +6,7 @@
 """
 Run pre analysis, collect statistics or CTU data.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import multiprocessing
 import os
@@ -64,7 +62,7 @@ def collect_statistics(action, source, config, environ, statistics_data):
     stat_for_source = os.path.join(statistics_data['stat_tmp_dir'],
                                    output_id)
 
-    with open(stat_for_source, 'w') as out:
+    with open(stat_for_source, 'w', encoding="utf-8", errors="ignore") as out:
         out.write(analyzer_out)
         out.write(analyzer_err)
 
@@ -193,7 +191,7 @@ def run_pre_analysis(actions, context, analyzer_config_map,
                             statistics_data)
                            for build_action in actions]
 
-        pool.map_async(pre_analyze, collect_actions).get(float('inf'))
+        pool.map_async(pre_analyze, collect_actions)
         pool.close()
     except Exception:
         pool.terminate()

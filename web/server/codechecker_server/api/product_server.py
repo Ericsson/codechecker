@@ -6,11 +6,8 @@
 """
 Handle Thrift requests for the product manager service.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
-import base64
+
 import os
 import random
 
@@ -22,6 +19,7 @@ from codechecker_api.ProductManagement_v6 import ttypes
 from codechecker_common.logger import get_logger
 
 from codechecker_server.profiler import timeit
+from codechecker_web.shared import convert
 
 from .. import permissions
 from ..database.config_db_model import IDENTIFIER, Product, ProductPermission
@@ -110,8 +108,7 @@ class ThriftProductHandler(object):
                 num_of_runs, runs_in_progress, latest_store_to_product = \
                     server_product.get_details()
 
-        name = base64.b64encode(product.display_name.encode('utf-8'))
-        descr = base64.b64encode(product.description.encode('utf-8')) \
+        descr = convert.to_b64(product.description) \
             if product.description else None
 
         args = {'config_db_session': session,
@@ -133,7 +130,7 @@ class ThriftProductHandler(object):
         return server_product, ttypes.Product(
             id=product.id,
             endpoint=product.endpoint,
-            displayedName_b64=name,
+            displayedName_b64=convert.to_b64(product.display_name),
             description_b64=descr,
             runCount=num_of_runs,
             latestStoreToProduct=str(latest_store_to_product),
@@ -234,6 +231,7 @@ class ThriftProductHandler(object):
                     msg)
 
             _, ret = self.__get_product(session, prod)
+            LOG.debug(ret)
             return ret
 
     @timeit
@@ -271,13 +269,12 @@ class ThriftProductHandler(object):
                 engine=db_engine,
                 host=db_host,
                 port=db_port,
-                username_b64=base64.b64encode(db_user),
+                username_b64=convert.to_b64(db_user),
                 # DO NOT TRANSPORT PASSWORD BACK TO THE USER!
                 database=db_name)
 
             # Put together the product configuration.
-            name = base64.b64encode(product.display_name.encode('utf-8'))
-            descr = base64.b64encode(product.description.encode('utf-8')) \
+            descr = convert.to_b64(product.description) \
                 if product.description else None
 
             is_review_status_change_disabled = \
@@ -286,7 +283,7 @@ class ThriftProductHandler(object):
             prod = ttypes.ProductConfiguration(
                 id=product.id,
                 endpoint=product.endpoint,
-                displayedName_b64=name,
+                displayedName_b64=convert.to_b64(product.display_name),
                 description_b64=descr,
                 connection=dbc,
                 runLimit=product.run_limit,
@@ -328,10 +325,10 @@ class ThriftProductHandler(object):
                 msg)
 
         # Some values come encoded as Base64, decode these.
-        displayed_name = base64.b64decode(product.displayedName_b64)\
-            .decode('utf-8') if product.displayedName_b64 else product.endpoint
-        description = base64.b64decode(product.description_b64) \
-            .decode('utf-8') if product.description_b64 else None
+        displayed_name = convert.from_b64(product.displayedName_b64) \
+            if product.displayedName_b64 else product.endpoint
+        description = convert.from_b64(product.description_b64) \
+            if product.description_b64 else None
 
         if dbc.engine == 'sqlite' and not os.path.isabs(dbc.database):
             # Transform the database relative path to be under the
@@ -344,9 +341,9 @@ class ThriftProductHandler(object):
             dbuser = "codechecker"
             dbpass = ""
             if dbc.username_b64 and dbc.username_b64 != '':
-                dbuser = base64.b64decode(dbc.username_b64)
+                dbuser = convert.from_b64(dbc.username_b64)
             if dbc.password_b64 and dbc.password_b64 != '':
-                dbpass = base64.b64decode(dbc.password_b64)
+                dbpass = convert.from_b64(dbc.password_b64)
 
             conn_str_args = {'postgresql': True,
                              'sqlite': False,
@@ -470,11 +467,11 @@ class ThriftProductHandler(object):
                          product.endpoint, new_config.endpoint)
 
             # Some values come encoded as Base64, decode these.
-            displayed_name = base64.b64decode(new_config.displayedName_b64) \
-                .decode('utf-8') if new_config.displayedName_b64 \
+            displayed_name = convert.from_b64(new_config.displayedName_b64) \
+                if new_config.displayedName_b64 \
                 else new_config.endpoint
-            description = base64.b64decode(new_config.description_b64) \
-                .decode('utf-8') if new_config.description_b64 else None
+            description = convert.from_b64(new_config.description_b64) \
+                if new_config.description_b64 else None
 
             if dbc.engine == 'sqlite' and not os.path.isabs(dbc.database):
                 # Transform the database relative path to be under the
@@ -486,12 +483,12 @@ class ThriftProductHandler(object):
             if dbc.engine == 'postgresql':
                 dbuser = "codechecker"
                 if dbc.username_b64 and dbc.username_b64 != '':
-                    dbuser = base64.b64decode(dbc.username_b64)
+                    dbuser = convert.from_b64(dbc.username_b64)
 
                 old_connection_args = SQLServer.connection_string_to_args(
                         product.connection)
                 if dbc.password_b64 and dbc.password_b64 != '':
-                    dbpass = base64.b64decode(dbc.password_b64)
+                    dbpass = convert.from_b64(dbc.password_b64)
                 elif 'dbpassword' in old_connection_args:
                     # The password was not changed. Retrieving from old
                     # configuration -- if the old configuration contained such!

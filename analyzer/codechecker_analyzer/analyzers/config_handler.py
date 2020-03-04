@@ -7,9 +7,6 @@
 Static analyzer configuration handler.
 """
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
 from abc import ABCMeta
 import collections
@@ -41,11 +38,10 @@ class CheckerState(object):
     NAMES = {0: 'default', 1: 'disabled', 2: 'enabled'}
 
 
-class AnalyzerConfigHandler(object):
+class AnalyzerConfigHandler(object, metaclass=ABCMeta):
     """
     Handle the checker configurations and enabled disabled checkers lists.
     """
-    __metaclass__ = ABCMeta
 
     def __init__(self):
 

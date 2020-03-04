@@ -7,15 +7,10 @@
 Command line client.
 """
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
-import base64
 from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
 import hashlib
-import io
 import os
 from operator import itemgetter
 import re
@@ -36,6 +31,7 @@ from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler
 
 from codechecker_web.shared import webserver_context
+from codechecker_web.shared import convert
 
 from .client import login_user, setup_client
 from .cmd_line import CmdLineOutputEncoder
@@ -186,10 +182,10 @@ def validate_filter_values(user_values, valid_values, value_type):
                         if valid_values.get(status.upper(), None) is None]
 
     if non_valid_values:
-        invalid_values = ','.join(map(lambda x: x.lower(), non_valid_values))
+        invalid_values = ','.join([x.lower() for x in non_valid_values])
         LOG.error('Invalid %s value(s): %s', value_type, invalid_values)
 
-        valid_values = ','.join(map(lambda x: x.lower(), valid_values.keys()))
+        valid_values = ','.join([x.lower() for x in valid_values.keys()])
         LOG.error('Valid values are: %s', valid_values)
 
         return False
@@ -274,19 +270,18 @@ def add_filter_conditions(client, report_filter, args):
     report_filter.isUnique = args.uniqueing == 'on'
 
     if severities:
-        report_filter.severity = map(
-                lambda x: ttypes.Severity._NAMES_TO_VALUES[x.upper()],
-                severities)
+        report_filter.severity = [
+            ttypes.Severity._NAMES_TO_VALUES[x.upper()] for x in severities]
 
     if dt_statuses:
-        report_filter.detectionStatus = map(
-            lambda x: ttypes.DetectionStatus._NAMES_TO_VALUES[x.upper()],
-            dt_statuses)
+        report_filter.detectionStatus = [
+            ttypes.DetectionStatus._NAMES_TO_VALUES[x.upper()] for x in
+            dt_statuses]
 
     if rw_statuses:
-        report_filter.reviewStatus = map(
-            lambda x: ttypes.ReviewStatus._NAMES_TO_VALUES[x.upper()],
-            rw_statuses)
+        report_filter.reviewStatus = [
+            ttypes.ReviewStatus._NAMES_TO_VALUES[x.upper()] for x in
+            rw_statuses]
 
     if checkers:
         report_filter.checkerName = checkers
@@ -505,7 +500,7 @@ def handle_diff_results(args):
         """
         if f_severities:
             severity_name = context.severity_map.get(report.main['check_name'])
-            if severity_name.lower() not in map(str.lower, f_severities):
+            if severity_name.lower() not in list(map(str.lower, f_severities)):
                 return True
 
         if f_checkers:
@@ -564,7 +559,7 @@ def handle_diff_results(args):
         return all_reports
 
     def get_line_from_file(filename, lineno):
-        with open(filename, 'r') as f:
+        with open(filename, 'r', encoding='utf-8', errors='ignore') as f:
             i = 1
             for line in f:
                 if i == lineno:
@@ -822,7 +817,7 @@ def handle_diff_results(args):
         if file_id not in file_cache:
             source = client.getSourceFileData(file_id, True,
                                               ttypes.Encoding.BASE64)
-            file_content = base64.b64decode(source.fileContent)
+            file_content = convert.from_b64(source.fileContent)
             file_cache[file_id] = {'id': file_id,
                                    'path': source.filePath,
                                    'content': file_content}
@@ -898,8 +893,8 @@ def handle_diff_results(args):
             for file_index, file_path in enumerate(report.files):
                 if file_index not in file_sources:
                     try:
-                        with io.open(file_path, 'r', encoding='UTF-8',
-                                     errors='ignore') as source_data:
+                        with open(file_path, 'r', encoding='utf-8',
+                                  errors='ignore') as source_data:
                             content = source_data.read()
                     except (OSError, IOError):
                         content = file_path + " NOT FOUND."
@@ -944,14 +939,14 @@ def handle_diff_results(args):
         print("\n----==== Summary ====----")
         if file_stats:
             vals = [[os.path.basename(k), v] for k, v in
-                    dict(file_stats).items()]
+                    list(dict(file_stats).items())]
             vals.sort(key=itemgetter(0))
             keys = ['Filename', 'Report count']
             table = twodim_to_str('table', keys, vals, 1, True)
             print(table)
 
         if severity_stats:
-            vals = [[k, v] for k, v in dict(severity_stats).items()]
+            vals = [[k, v] for k, v in list(dict(severity_stats).items())]
             vals.sort(key=itemgetter(0))
             keys = ['Severity', 'Report count']
             table = twodim_to_str('table', keys, vals, 1, True)
@@ -991,7 +986,10 @@ def handle_diff_results(args):
         for file_path, file_reports in file_report_map.items():
             checked_file = file_path
             filename = os.path.basename(checked_file)
-            h = int(hashlib.md5(file_path).hexdigest(), 16) % (10 ** 8)
+            h = int(
+                hashlib.md5(
+                    file_path.encode('utf-8')).hexdigest(),
+                16) % (10 ** 8)
 
             if isinstance(file_reports[0], Report):
                 report_data = reports_to_report_data(file_reports)
@@ -1088,7 +1086,7 @@ def handle_diff_results(args):
                 if lines_in_files_requested:
                     source_line_contents = client.getLinesInSourceFileContents(
                         lines_in_files_requested, ttypes.Encoding.BASE64)
-                    source_line = base64.b64decode(
+                    source_line = convert.from_b64(
                         source_line_contents[report.fileId][bug_line])
             rows.append(
                 (sev, checked_file, check_msg, check_name, source_line))
@@ -1137,10 +1135,10 @@ def handle_diff_results(args):
                             run_arg_with_tag)
                 sys.exit(1)
 
-            r_ids = map(lambda run: run.runId, runs)
+            r_ids = [run.runId for run in runs]
             run_ids.extend(r_ids)
 
-            r_names = map(lambda run: run.name, runs)
+            r_names = [run.name for run in runs]
             run_names.extend(r_names)
 
             # Set base run tag if it is available.
@@ -1317,7 +1315,7 @@ def handle_list_result_types(args):
     sev_count = client.getSeverityCounts(run_ids, report_filter, None)
     severities = []
     severity_total = 0
-    for key, count in sorted(sev_count.items(),
+    for key, count in sorted(list(sev_count.items()),
                              reverse=True):
         severities.append(dict(
             severity=ttypes.Severity._VALUES_TO_NAMES[key],
@@ -1326,7 +1324,7 @@ def handle_list_result_types(args):
 
     all_results = []
     total = defaultdict(int)
-    for key, checker_data in sorted(all_checkers_dict.items(),
+    for key, checker_data in sorted(list(all_checkers_dict.items()),
                                     key=lambda x: x[1].severity,
                                     reverse=True):
         all_results.append(dict(
@@ -1433,7 +1431,7 @@ def handle_suppress(args):
     run = run_info.get(args.name)
 
     if 'input' in args:
-        with open(args.input) as supp_file:
+        with open(args.input, encoding='utf-8', errors='ignore') as supp_file:
             suppress_data = suppress_file_handler.get_suppress_data(supp_file)
 
         for bug_id, file_name, comment, status in suppress_data:

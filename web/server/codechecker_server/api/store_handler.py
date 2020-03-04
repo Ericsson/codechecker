@@ -6,12 +6,8 @@
 """
 Helpers to store analysis reports.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
 import base64
-import codecs
 from datetime import datetime
 from hashlib import sha256
 import os
@@ -86,7 +82,7 @@ def collect_paths_events(report, file_ids, files):
     bug_events = []
     bug_extended_data = []
 
-    events = filter(lambda i: i.get('kind') == 'event', report.bug_path)
+    events = [i for i in report.bug_path if i.get('kind') == 'event']
 
     # Create remaining data for bugs and send them to the server.  In plist
     # file the source and target of the arrows are provided as starting and
@@ -94,8 +90,7 @@ def collect_paths_events(report, file_ids, files):
     # B->C, thus range B is provided twice. So in the loop only target
     # points of the arrows are stored, and an extra insertion is done for
     # the source of the first arrow before the loop.
-    report_path = filter(lambda i: i.get('kind') == 'control',
-                         report.bug_path)
+    report_path = [i for i in report.bug_path if i.get('kind') == 'control']
 
     if report_path:
         start_range = report_path[0]['edges'][0]['start']
@@ -340,13 +335,13 @@ def addCheckerRun(session, command, name, tag, username,
                 run_history.version_tag = None
                 session.add(run_history)
 
-        compressed_command = zlib.compress(command,
+        compressed_command = zlib.compress(command.encode("utf-8"),
                                            zlib.Z_BEST_COMPRESSION)
         run_history = RunHistory(run_id, tag, username, run_history_time,
                                  compressed_command, codechecker_version)
         session.add(run_history)
         session.flush()
-
+        LOG.debug("command store done")
         # Create entry for analyzer statistics.
         for analyzer_type, res in statistics.items():
             analyzer_version = res.get('version', None)
@@ -355,26 +350,33 @@ def addCheckerRun(session, command, name, tag, username,
             failed_sources = res.get('failed_sources')
 
             if analyzer_version:
-                analyzer_version = zlib.compress(analyzer_version,
-                                                 zlib.Z_BEST_COMPRESSION)
+                LOG.debug(analyzer_version)
+                analyzer_version \
+                    = zlib.compress(analyzer_version.encode('utf-8'),
+                                    zlib.Z_BEST_COMPRESSION)
 
+            LOG.debug("analyzer version compressed")
             compressed_files = None
             if failed_sources:
                 if version == '6.9.0':
                     failed_sources = ['Unavailable in CodeChecker 6.9.0!']
 
-                compressed_files = zlib.compress('\n'.join(failed_sources),
-                                                 zlib.Z_BEST_COMPRESSION)
+                compressed_files = zlib.compress(
+                    '\n'.join(failed_sources).encode('utf-8'),
+                    zlib.Z_BEST_COMPRESSION)
 
+            LOG.debug("failed source compressed")
             analyzer_statistics = AnalyzerStatistic(run_history.id,
                                                     analyzer_type,
                                                     analyzer_version,
                                                     successful,
                                                     failed,
                                                     compressed_files)
+            LOG.debug("stats added to session")
             session.add(analyzer_statistics)
 
         session.flush()
+        LOG.debug("stats store done")
         return run_id
     except Exception as ex:
         raise codechecker_api_shared.ttypes.RequestFailed(
@@ -467,7 +469,7 @@ def addReport(session,
 
 
 def changePathAndEvents(session, run_id, report_path_map):
-    report_ids = report_path_map.keys()
+    report_ids = list(report_path_map.keys())
 
     session.query(BugPathEvent) \
         .filter(BugPathEvent.report_id.in_(report_ids)) \
@@ -490,9 +492,8 @@ def get_file_content(filepath, encoding):
     This encoding is optionally used during network transfer
     between the client an the server.
     """
-    with codecs.open(filepath, 'r', 'UTF-8', 'replace') as source_file:
+    with open(filepath, 'rb') as source_file:
         content = source_file.read()
-        content = codecs.encode(content, 'utf-8')
 
     if encoding == ttypes.Encoding.BASE64:
         content = base64.b64decode(content)

@@ -7,9 +7,6 @@
 Clang Static Analyzer related functions.
 """
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
 import os
 import re
@@ -125,8 +122,12 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         command.extend(checkers_list_args)
 
         try:
-            result = subprocess.check_output(command, env=environ,
-                                             universal_newlines=True)
+            result = subprocess.check_output(
+                command,
+                env=environ,
+                universal_newlines=True,
+                encoding="utf-8",
+                errors="ignore")
             return parse_checkers(result)
         except (subprocess.CalledProcessError, OSError):
             return []
@@ -257,7 +258,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         Parse ClangSA's output to generate a list of files that were mentioned
         in the standard output or standard error.
         """
-
         if not output:
             return set()
 
@@ -344,7 +344,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             handler.ld_lib_path_extra = context.ld_lib_path_extra
 
         try:
-            with open(args.clangsa_args_cfg_file, 'rb') as sa_cfg:
+            with open(args.clangsa_args_cfg_file, 'r', encoding='utf8',
+                      errors='ignore') as sa_cfg:
                 handler.analyzer_extra_arguments = \
                     re.sub(r'\$\((.*?)\)',
                            env.replace_env_var(args.clangsa_args_cfg_file),

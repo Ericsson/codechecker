@@ -6,9 +6,7 @@
 """
 Handle Thrift requests for authentication.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import json
 import codechecker_api_shared
@@ -209,7 +207,7 @@ class ThriftAuthHandler(object):
             users, groups = handler.list_permitted()
 
             # The special default permission marker is an internal value.
-            users = filter(lambda user: user != '*', users)
+            users = [user for user in users if user != '*']
 
             return AuthorisationList(users, groups)
 

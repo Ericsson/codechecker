@@ -7,9 +7,6 @@
 Check host machine for a compile command logger.
 """
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
 import errno
 import os
@@ -27,10 +24,13 @@ def check_intercept(env):
     intercept_cmd = ['intercept-build', '--help']
     try:
         with open(os.devnull, 'wb') as null:
-            res = subprocess.check_call(intercept_cmd,
-                                        env=env,
-                                        stdout=null,
-                                        stderr=null)
+            res = subprocess.check_call(
+                intercept_cmd,
+                env=env,
+                stdout=null,
+                stderr=null,
+                encoding="utf-8",
+                errors="ignore")
 
         if not res:
             return True

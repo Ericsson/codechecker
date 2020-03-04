@@ -7,9 +7,8 @@
 Main server starts a http server which handles Thrift client
 and browser requests.
 """
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import division
+
+
 import atexit
 import datetime
 import errno
@@ -26,12 +25,8 @@ import sys
 import stat
 import urllib
 
-try:
-    from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
-    from SimpleHTTPServer import SimpleHTTPRequestHandler
-except ImportError:
-    from http.server import HTTPServer, BaseHTTPRequestHandler, \
-        SimpleHTTPRequestHandler
+from http.server import HTTPServer, BaseHTTPRequestHandler, \
+    SimpleHTTPRequestHandler
 
 from sqlalchemy.orm import sessionmaker
 from thrift.protocol import TJSONProtocol
@@ -123,8 +118,9 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
         session = None
         # Check if the user has presented a privileged access cookie.
-        for k in self.headers.getheaders("Cookie"):
-            split = k.split("; ")
+        cookies = self.headers.get("Cookie")
+        if cookies:
+            split = cookies.split("; ")
             for cookie in split:
                 values = cookie.split("=")
                 if len(values) == 2 and \
@@ -229,14 +225,15 @@ class RequestHandler(SimpleHTTPRequestHandler):
         if self.server.manager.is_enabled and not self.auth_session \
                 and routing.is_protected_GET_entrypoint(path):
             # If necessary, prompt the user for authentication.
-            returnto = '?returnto=' + urllib.quote_plus(self.path.lstrip('/'))\
+            returnto = '?returnto=' + \
+                urllib.parse.quote_plus(self.path.lstrip('/')) \
                 if self.path != '/' else ''
 
             self.send_response(307)  # 307 Temporary Redirect
             self.send_header('Location', '/login.html' + returnto)
             self.send_header('Connection', 'close')
             self.end_headers()
-            self.wfile.write('')
+            self.wfile.write(b'')
             return
 
         if product_endpoint is not None and product_endpoint != '':
@@ -279,7 +276,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 self.send_header('Location', '/products.html')
                 self.send_header('Connection', 'close')
                 self.end_headers()
-                self.wfile.write('')
+                self.wfile.write(b'')
                 return
 
             if path == '' and not self.path.endswith('/'):
@@ -540,9 +537,9 @@ class RequestHandler(SimpleHTTPRequestHandler):
         # Abandon query parameters.
         path = path.split('?', 1)[0]
         path = path.split('#', 1)[0]
-        path = posixpath.normpath(urllib.unquote(path))
+        path = posixpath.normpath(urllib.parse.unquote(path))
         words = path.split('/')
-        words = filter(None, words)
+        words = [_f for _f in words if _f]
         path = self.server.www_root
         for word in words:
             _, word = os.path.splitdrive(word)
@@ -847,7 +844,7 @@ class CCSimpleHttpServer(HTTPServer):
             self.finish_request(request, client_address)
             self.shutdown_request(request)
         except socket.error as serr:
-            if serr[0] == errno.EPIPE:
+            if serr.errno == errno.EPIPE:
                 LOG.debug("Broken pipe")
                 LOG.debug(serr)
                 self.shutdown_request(request)
@@ -950,8 +947,9 @@ class CCSimpleHttpServer(HTTPServer):
         Removes EVERY product connection from the server except those
         endpoints specified in :endpoints_to_keep.
         """
-        map(self.remove_product, [ep for ep in self.__products.keys()
-                                  if ep not in endpoints_to_keep])
+        [self.remove_product(ep)
+            for ep in self.__products.keys()
+            if ep not in endpoints_to_keep]
 
 
 def __make_root_file(root_file):
@@ -979,8 +977,8 @@ def __make_root_file(root_file):
     LOG.info(credential_msg)
     LOG.info("-" * len(credential_msg))
 
-    sha = sha256(username + ':' + password).hexdigest()
-    with open(root_file, 'w') as f:
+    sha = sha256((username + ':' + password).encode('utf-8')).hexdigest()
+    with open(root_file, 'w', encoding="utf-8", errors="ignore") as f:
         LOG.debug("Save root SHA256 '%s'", sha)
         f.write(sha)
 
@@ -1008,7 +1006,7 @@ def start_server(config_directory, package_data, port, config_sql_server,
     else:
         LOG.debug("Root file was found. Loading...")
         try:
-            with open(root_file, 'r') as f:
+            with open(root_file, 'r', encoding="utf-8", errors="ignore") as f:
                 root_sha = f.read()
             LOG.debug("Root digest is '%s'", root_sha)
         except IOError:

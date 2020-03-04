@@ -5,9 +5,7 @@
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
 """ CTU function test."""
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import glob
 import json
@@ -49,7 +47,8 @@ class TestCtu(unittest.TestCase):
         # Fix the "template" build JSONs to contain a proper directory
         # so the tests work.
         raw_buildlog = os.path.join(self.test_dir, 'buildlog.json')
-        with open(raw_buildlog) as log_file:
+        with open(raw_buildlog,
+                  encoding="utf-8", errors="ignore") as log_file:
             build_json = json.load(log_file)
             for command in build_json:
                 command['directory'] = self.test_dir
@@ -57,7 +56,8 @@ class TestCtu(unittest.TestCase):
         self.__old_pwd = os.getcwd()
         os.chdir(self.test_workspace)
         self.buildlog = os.path.join(self.test_workspace, 'buildlog.json')
-        with open(self.buildlog, 'w') as log_file:
+        with open(self.buildlog, 'w',
+                  encoding="utf-8", errors="ignore") as log_file:
             json.dump(build_json, log_file)
 
     def tearDown(self):
@@ -132,7 +132,7 @@ class TestCtu(unittest.TestCase):
             old_map_file = os.path.join(ctu_dir, arch, 'externalFnMap.txt')
             new_map_file = os.path.join(ctu_dir, arch, 'externalDefMap.txt')
             self.assertTrue(any(os.path.isfile(mapfile) for mapfile in
-                            [old_map_file, new_map_file]))
+                                [old_map_file, new_map_file]))
 
     def __do_ctu_analyze(self):
         """ Execute CTU analyze phase. """

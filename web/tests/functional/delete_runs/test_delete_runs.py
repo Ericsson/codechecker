@@ -8,15 +8,11 @@
 """
 Testing deletion of multiple runs.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
 
 import json
 import os
 import unittest
-import itertools
 import subprocess
 from datetime import datetime
 
@@ -24,7 +20,12 @@ from libtest import env
 
 
 def run_cmd(cmd, env):
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, env=env)
+    proc = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        env=env,
+        encoding="utf-8",
+        errors="ignore")
     out, _ = proc.communicate()
     return out, proc.returncode
 
@@ -112,8 +113,11 @@ class TestCmdLineDeletion(unittest.TestCase):
             [project_name + '_' + str(i) for i in range(3, 5)]))
 
         # Get runs before run 2 by run date.
-        run2 = next(itertools.ifilter(lambda run: run.name == run2_name,
-                    self._cc_client.getRunData(None, None, 0, None)), None)
+        run2 = [run for run in self._cc_client.getRunData(
+                    None,
+                    None,
+                    0,
+                    None) if run.name == run2_name][0]
 
         date_run2 = datetime.strptime(run2.runDate, '%Y-%m-%d %H:%M:%S.%f')
         date_run2 = \

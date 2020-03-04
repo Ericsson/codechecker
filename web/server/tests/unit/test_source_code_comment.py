@@ -7,9 +7,7 @@
 # -----------------------------------------------------------------------------
 
 """Tests for source code comments in source file."""
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import os
 import unittest
@@ -182,7 +180,7 @@ class SourceCodeCommentTestCase(unittest.TestCase):
         self.assertEqual(len(source_line_comments), 1)
 
         expected = {'checkers': {'my_checker_1'},
-                    'message': u"áúőóüöáé [▬▬▬▬▬▬▬▬▬▬ஜ۩۞۩ஜ▬▬▬▬▬▬▬▬▬▬]",
+                    'message': "áúőóüöáé [▬▬▬▬▬▬▬▬▬▬ஜ۩۞۩ஜ▬▬▬▬▬▬▬▬▬▬]",
                     'status': 'false_positive'}
         self.assertDictEqual(expected, source_line_comments[0])
 

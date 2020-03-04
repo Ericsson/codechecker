@@ -5,9 +5,7 @@
 # -------------------------------------------------------------------------
 """
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import argparse
 import json
@@ -81,7 +79,8 @@ DEFAULT_LOG_CONFIG = '''{
 
 
 try:
-    with open(DEFAULT_LOG_CFG_FILE, 'r') as dlc:
+    with open(DEFAULT_LOG_CFG_FILE, 'r',
+              encoding="utf-8", errors="ignore") as dlc:
         DEFAULT_LOG_CONFIG = dlc.read()
 except IOError as ex:
     print(ex)

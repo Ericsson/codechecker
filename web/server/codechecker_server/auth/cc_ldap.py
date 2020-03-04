@@ -85,9 +85,7 @@ Scope of the search performed. (Valid values are: base, one, subtree)
 
 
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 from contextlib import contextmanager
 
@@ -402,8 +400,9 @@ def get_groups(ldap_config, username, credentials):
                       'attribute of the group.')
             return []
 
-        # Attribute name must be ascii encoded
-        group_name_attr = group_name_attr.encode('ascii', 'ignore')
+        # Remove non ascii characters.
+        group_name_attr = \
+            group_name_attr.encode('ascii', 'ignore').decode('utf-8')
         attr_list = [group_name_attr]
 
         LOG.debug("Performing LDAP search for group: %s Group Name Attr: %s",

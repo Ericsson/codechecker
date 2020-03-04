@@ -5,9 +5,7 @@
 # -------------------------------------------------------------------------
 """
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import glob
 import multiprocessing
@@ -115,7 +113,7 @@ def worker_result_handler(results, metadata, output_path, analyzer_binaries):
     # threads would be more error prone.
     source_map = {}
     for f in glob.glob(os.path.join(output_path, "*.source")):
-        with open(f, 'r') as sfile:
+        with open(f, 'r', encoding="utf-8", errors="ignore") as sfile:
             source_map[f[:-7]] = sfile.read().strip()
         os.remove(f)
 
@@ -142,11 +140,13 @@ def init_worker(checked_num, action_num):
 def save_output(base_file_name, out, err):
     try:
         if out:
-            with open(base_file_name + ".stdout.txt", 'w') as outf:
+            with open(base_file_name + ".stdout.txt", 'w',
+                      encoding="utf-8", errors="ignore") as outf:
                 outf.write(out)
 
         if err:
-            with open(base_file_name + ".stderr.txt", 'w') as outf:
+            with open(base_file_name + ".stderr.txt", 'w',
+                      encoding="utf-8", errors="ignore") as outf:
                 outf.write(err)
     except IOError as ioerr:
         LOG.debug("Failed to save analyzer output")
@@ -158,7 +158,8 @@ def save_metadata(result_file, analyzer_result_file, analyzed_source_file):
     Save some extra information next to the plist, .source
     acting as an extra metadata file.
     """
-    with open(result_file + ".source", 'w') as orig:
+    with open(result_file + ".source", 'w',
+              encoding="utf-8", errors="ignore") as orig:
         orig.write(analyzed_source_file.replace(r'\ ', ' ') + "\n")
 
     if os.path.exists(analyzer_result_file) and \
@@ -313,7 +314,7 @@ def handle_failure(source_analyzer, rh, zip_file, result_base, actions_map):
     # TODO: What about the dependencies of the other_files?
     tu_collector.add_sources_to_zip(
         zip_file,
-        map(lambda path: os.path.join(action.directory, path), other_files))
+        [os.path.join(action.directory, path) for path in other_files])
 
     with zipfile.ZipFile(zip_file, 'a') as archive:
         LOG.debug("[ZIP] Writing analyzer STDOUT to /stdout")

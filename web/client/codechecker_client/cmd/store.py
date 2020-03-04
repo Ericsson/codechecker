@@ -7,9 +7,7 @@
 'CodeChecker store' parses a list of analysis results and stores them in the
 database.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import argparse
 import base64
@@ -60,7 +58,7 @@ def get_file_content_hash(file_path):
     """
     Return the file content hash for a file.
     """
-    with open(file_path) as content:
+    with open(file_path, 'rb') as content:
         hasher = hashlib.sha256()
         hasher.update(content.read())
         return hasher.hexdigest()
@@ -234,7 +232,6 @@ def assemble_zip(inputs, zip_file, client):
 
         try:
             files, reports = plist_parser.parse_plist_file(plist_file)
-
             # CppCheck generates a '0' value for the bug hash.
             # In case all of the reports in a plist file contain only
             # a hash with '0' value oeverwrite the hash values in the
@@ -271,6 +268,8 @@ def assemble_zip(inputs, zip_file, client):
 
             return missing_files, source_file_mod_times
         except Exception as ex:
+            import traceback
+            traceback.print_stack()
             LOG.error('Parsing the plist failed: %s', str(ex))
 
     files_to_compress = []
@@ -357,7 +356,7 @@ def assemble_zip(inputs, zip_file, client):
 
     if missing_source_files:
         LOG.warning("Missing source files: \n%s", '\n'.join(
-            map(lambda f_: " - " + f_, missing_source_files)))
+            [" - " + f_ for f_ in missing_source_files]))
 
 
 def should_be_zipped(input_file, input_files):
@@ -449,9 +448,9 @@ def storing_analysis_statistics(client, inputs, run_name):
     """
     _, zip_file = tempfile.mkstemp('.zip')
     LOG.debug("Will write failed store ZIP to '%s'...", zip_file)
-
     try:
         limits = client.getAnalysisStatisticsLimits()
+
         statistics_files = get_analysis_statistics(inputs, limits)
 
         if not statistics_files:
@@ -475,7 +474,7 @@ def storing_analysis_statistics(client, inputs, run_name):
         LOG.debug("[ZIP] Analysis statistics zip written at '%s'", zip_file)
 
         with open(zip_file, 'rb') as zf:
-            b64zip = base64.b64encode(zf.read())
+            b64zip = base64.b64encode(zf.read()).decode('utf-8')
 
         # Store analysis statistics on the server
         return client.storeAnalysisStatistics(run_name, b64zip)
@@ -535,7 +534,7 @@ def main(args):
             sys.exit(1)
 
         with open(zip_file, 'rb') as zf:
-            b64zip = base64.b64encode(zf.read())
+            b64zip = base64.b64encode(zf.read()).decode("utf-8")
 
         context = webserver_context.get_context()
 

@@ -16,9 +16,7 @@ After removing the hash_value_type the generated format is:
 
 For backward compatibility the hash_value_type is an optional filed.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import codecs
 import os
@@ -87,7 +85,7 @@ def get_suppress_data(suppress_file):
             old_format_match = old_format_match.groupdict()
             LOG.debug(old_format_match)
             suppress_data.append((old_format_match['bug_hash'],
-                                  u'',  # empty file name
+                                  '',  # empty file name
                                   old_format_match['comment'],
                                   'false_positive'))
             continue
@@ -100,26 +98,27 @@ def get_suppress_data(suppress_file):
 
 def write_to_suppress_file(suppress_file, value, file_name, comment='',
                            status='false_positive'):
-    comment = comment.decode('UTF-8')
+    comment = comment.decode('utf-8')
 
     LOG.debug('Processing suppress file: %s', suppress_file)
 
     try:
-        with codecs.open(suppress_file, 'r', 'UTF-8') as s_file:
+        with codecs.open(suppress_file, 'r', 'utf-8') as s_file:
             suppress_data = get_suppress_data(s_file)
 
         if not os.stat(suppress_file)[6] == 0:
             # File is not empty.
 
-            res = filter(lambda x: (x[0] == value and x[1] == file_name) or
-                         (x[0] == value and x[1] == ''),
-                         suppress_data)
+            res = [
+                x for x in suppress_data if (
+                    x[0] == value and x[1] == file_name) or (
+                    x[0] == value and x[1] == '')]
 
             if res:
                 LOG.debug("Already found in\n %s", suppress_file)
                 return True
 
-        s_file = codecs.open(suppress_file, 'a', 'UTF-8')
+        s_file = codecs.open(suppress_file, 'a', 'utf-8')
 
         s_file.write(value + COMMENT_SEPARATOR +
                      file_name + COMMENT_SEPARATOR +

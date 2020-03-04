@@ -6,10 +6,6 @@
 """
 Database connection handling to a database backend.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-
 from abc import ABCMeta, abstractmethod
 import os
 import subprocess
@@ -41,10 +37,11 @@ def call_command(cmd, env=None, cwd=None):
     try:
         LOG.debug('Run %s', ' '.join(cmd))
         out = subprocess.check_output(cmd,
-                                      bufsize=-1,
                                       env=env,
                                       stderr=subprocess.STDOUT,
-                                      cwd=cwd)
+                                      cwd=cwd,
+                                      encoding="utf-8",
+                                      errors="ignore")
         LOG.debug(out)
         return out, 0
     except subprocess.CalledProcessError as ex:
@@ -117,7 +114,7 @@ class DBContext(object):
             self.db_engine.dispose()
 
 
-class SQLServer(object):
+class SQLServer(object, metaclass=ABCMeta):
     """
     Abstract base class for database server handling. An SQLServer instance is
     responsible for the connection management towards the database.
@@ -130,8 +127,6 @@ class SQLServer(object):
         3, Modify SQLServer.from_cmdline_args() in order to create an
            instance of the new server type if needed
     """
-
-    __metaclass__ = ABCMeta
 
     def __init__(self, model_meta, migration_root):
         """
@@ -364,9 +359,12 @@ class SQLServer(object):
         if make_url(self.get_connection_string()).drivername == \
                 'sqlite+pysqlite':
             # FIXME: workaround for locking errors
+            # FIXME: why is the connection used by multiple threads
+            # is that a problem ??? do we need some extra locking???
             engine = sqlalchemy.create_engine(self.get_connection_string(),
                                               encoding='utf8',
-                                              connect_args={'timeout': 600},
+                                              connect_args={'timeout': 600,
+                                              'check_same_thread': False},
                                               poolclass=NullPool)
         else:
             engine = sqlalchemy.create_engine(self.get_connection_string(),

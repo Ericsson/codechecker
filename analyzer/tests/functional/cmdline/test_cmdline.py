@@ -7,9 +7,7 @@
 """
 This module tests the CodeChecker command line.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import os
 import subprocess
@@ -20,10 +18,13 @@ from libtest import env
 
 def run_cmd(cmd, env=None):
     print(cmd)
-    proc = subprocess.Popen(cmd,
-                            env=env,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+    proc = subprocess.Popen(
+        cmd,
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        encoding="utf-8",
+        errors="ignore")
 
     out, err = proc.communicate()
     print(out)

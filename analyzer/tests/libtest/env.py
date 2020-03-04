@@ -6,9 +6,7 @@
 """
 Test environment setup and configuration helpers.
 """
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import division
+
 
 import json
 import os
@@ -60,14 +58,14 @@ def test_env(test_workspace):
 def import_test_cfg(workspace):
     cfg_file = os.path.join(workspace, "test_config.json")
     test_cfg = {}
-    with open(cfg_file, 'r') as cfg:
+    with open(cfg_file, 'r', encoding="utf-8", errors="ignore") as cfg:
         test_cfg = json.loads(cfg.read())
     return test_cfg
 
 
 def export_test_cfg(workspace, test_cfg):
     cfg_file = os.path.join(workspace, "test_config.json")
-    with open(cfg_file, 'w') as cfg:
+    with open(cfg_file, 'w', encoding="utf-8", errors="ignore") as cfg:
         cfg.write(json.dumps(test_cfg, sort_keys=True, indent=2))
 
 

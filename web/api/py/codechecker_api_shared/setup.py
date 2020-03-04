@@ -6,12 +6,12 @@ from os import path
 from io import open
 
 # Get the long description from the README file
-with open('README.md', encoding='utf-8') as f:
+with open('README.md', encoding='utf-8', errors="ignore") as f:
     long_description = f.read()
 
 setup(
     name='codechecker_api_shared',
-    version='6.25.0',
+    version='6.26.0',
     description='Shared API stub types package for the CodeChecker API.',
     long_description_content_type='text/markdown',
     long_description=long_description,
@@ -29,6 +29,7 @@ setup(
         # These classifiers are *not* checked by 'pip install'. See instead
         # 'python_requires' below.
         'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 3',
     ],
 
     keywords='codechecker thrift api library',

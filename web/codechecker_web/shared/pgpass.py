@@ -6,9 +6,6 @@
 """
 Parser for PostgreSQL libpq password file.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
 
 def _match_field(line, field):
@@ -89,7 +86,8 @@ def get_password_from_file(passfile_path, hostname, port, database, username):
     if not hostname or not port or not database or not username:
         return None
 
-    with open(passfile_path, 'r') as passfile:
+    with open(passfile_path, 'r',
+              encoding="utf-8", errors="ignore") as passfile:
         for line in passfile:
             pw = _match_line(line.strip(), hostname, port, database, username)
             if pw:

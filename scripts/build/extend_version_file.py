@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 """
 Extend CodeChecker version file with some extra information.
 """
@@ -24,7 +24,7 @@ def run_cmd(cmd, cwd=None):
     Runs the given command and return the output decoded as UTF-8.
     """
     return subprocess.check_output(cmd,
-                                   cwd=cwd)
+                                   cwd=cwd, encoding="utf-8", errors="ignore")
 
 
 def extend_with_git_information(repository_root, version_json_data):
@@ -104,7 +104,7 @@ def extend_version_file(repository_root, version_file):
     """
     Extend CodeChecker version file with build date and git information.
     """
-    with open(version_file) as v_file:
+    with open(version_file, encoding="utf-8", errors="ignore") as v_file:
         version_json_data = json.load(v_file)
 
     extend_with_git_information(repository_root, version_json_data)
@@ -113,7 +113,7 @@ def extend_version_file(repository_root, version_file):
     version_json_data['package_build_date'] = time_now
 
     # Rewrite version config file with the extended data.
-    with open(version_file, 'w') as v_file:
+    with open(version_file, 'w', encoding="utf-8", errors="ignore") as v_file:
         v_file.write(
             json.dumps(version_json_data, sort_keys=True, indent=4))
 

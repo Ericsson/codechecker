@@ -1,13 +1,9 @@
-#!/usr/bin/env python
 # -------------------------------------------------------------------------
 #                     The CodeChecker Infrastructure
 #   This file is distributed under the University of Illinois Open Source
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
 from abc import ABCMeta, abstractmethod
 
@@ -69,17 +65,15 @@ class Message(Event):
                 [str(fixit) for fixit in self.fixits])
 
 
-class BaseParser(object):
+class BaseParser(object, metaclass=ABCMeta):
     """ Warning message parser. """
-
-    __metaclass__ = ABCMeta
 
     def __init__(self):
         self.messages = []
 
     def parse_messages_from_file(self, path):
         """ Parse output dump (redirected output). """
-        with open(path, 'r') as file:
+        with open(path, 'r', encoding="utf-8", errors="ignore") as file:
             return self.parse_messages(file)
 
     def parse_messages(self, lines):

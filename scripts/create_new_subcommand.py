@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -----------------------------------------------------------------------------
 #                     The CodeChecker Infrastructure
 #   This file is distributed under the University of Illinois Open Source
@@ -8,9 +8,7 @@
 Generate a new CodeChecker subcommand and the structure needed for it in the
 working directory.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import os
 import sys
@@ -41,9 +39,9 @@ def main():
 
     entryfile = os.path.join(bin_dir, 'codechecker-' + command_name)
     print("Creating new entrypoint in '" + entryfile + "'")
-    with open(os.path.join(resource_dir,
-                           'entrypoint_template.py')) as template:
-        with open(entryfile, 'w') as entry:
+    with open(os.path.join(resource_dir, 'entrypoint_template.py'),
+              encoding="utf-8", errors="ignore") as template:
+        with open(entryfile, 'w', encoding="utf-8", errors="ignore") as entry:
             contents = template.read()
             contents = contents.replace("$COMMAND$", command_name)
             entry.write(contents)
@@ -59,7 +57,8 @@ def main():
 
     print("Creating library package")
     os.makedirs(os.path.join(lib_dir, lib_name))
-    with open(os.path.join(lib_dir, lib_name, '__init__.py'), 'w') as init:
+    with open(os.path.join(lib_dir, lib_name, '__init__.py'), 'w',
+              encoding="utf-8", errors="ignore") as init:
         # Write licensing information to init of module
         s = "# --------------------------------------------------------------"\
             "---------------""""
@@ -73,8 +72,10 @@ def main():
 
     handler_file = os.path.join(handler_dir, lib_name + '.py')
     print("Creating subcommand definition in '" + handler_file + "'")
-    with open(os.path.join(resource_dir, 'command_template.py')) as template:
-        with open(handler_file, 'w') as libfile:
+    with open(os.path.join(resource_dir, 'command_template.py'),
+              encoding="utf-8", errors="ignore") as template:
+        with open(handler_file, 'w',
+                  encoding="utf-8", errors="ignore") as libfile:
             contents = template.read()
             contents = contents.replace("$COMMAND$", command_name)
             libfile.write(contents)

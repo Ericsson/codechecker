@@ -7,11 +7,8 @@
 Context to store package related information.
 """
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
-from collections import Mapping
+from collections.abc import Mapping
 import os
 import sys
 
@@ -123,7 +120,7 @@ class Context(object):
 
     @property
     def path_plist_to_html_dist(self):
-        return os.path.join(self.package_root, 'lib', 'python2.7',
+        return os.path.join(self.package_root, 'lib', 'python3',
                             'plist_to_html', 'static')
 
     @property
@@ -171,12 +168,12 @@ class Context(object):
 
     @property
     def run_migration_root(self):
-        return os.path.join(self._package_root, 'lib', 'python2.7',
+        return os.path.join(self._package_root, 'lib', 'python3',
                             'codechecker_server', 'migrations', 'report')
 
     @property
     def config_migration_root(self):
-        return os.path.join(self._package_root, 'lib', 'python2.7',
+        return os.path.join(self._package_root, 'lib', 'python3',
                             'codechecker_server', 'migrations', 'config')
 
     @property

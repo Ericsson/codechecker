@@ -7,9 +7,7 @@
 """
 This module tests the report-converter tool.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import subprocess
 import unittest
@@ -20,7 +18,5 @@ class TestCmdline(unittest.TestCase):
 
     def test_help(self):
         """ Get help for report-converter tool. """
-        ret = subprocess.call(['report-converter', '--help'],
-                              stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE)
+        ret = subprocess.call(['report-converter', '--help'])
         self.assertEqual(0, ret)

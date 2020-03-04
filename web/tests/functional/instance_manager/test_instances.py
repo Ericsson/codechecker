@@ -7,9 +7,8 @@
 """
 Instance manager tests.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
+
 import os
 import subprocess
 import time
@@ -40,9 +39,12 @@ class TestInstances(unittest.TestCase):
 
     def run_cmd(self, cmd):
         print(cmd)
-        proc = subprocess.Popen(cmd,
-                                stdout=subprocess.PIPE,
-                                env=self._test_env)
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            env=self._test_env,
+            encoding="utf-8",
+            errors="ignore")
 
         out, _ = proc.communicate()
         print(out)

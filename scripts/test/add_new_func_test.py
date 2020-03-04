@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
+#!/usr/bin/env python3
 # -----------------------------------------------------------------------------
 #                     The CodeChecker Infrastructure
 #   This file is distributed under the University of Illinois Open Source
@@ -10,9 +8,7 @@
 Generate a new functional test directory and files
 based on the template
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import os
 import sys
@@ -37,10 +33,10 @@ def main():
     templ_init = os.path.join(test_skeleton_path, 'template__init__.py')
     templ_test = os.path.join(test_skeleton_path, 'template_test.py')
 
-    with open(templ_init, 'r') as init:
+    with open(templ_init, 'r', encoding="utf-8", errors="ignore") as init:
         new_init_content = init.read()
 
-    with open(templ_test, 'r') as test:
+    with open(templ_test, 'r', encoding="utf-8", errors="ignore") as test:
         new_test_content = test.read()
 
     string_to_replace = "$TEST_NAME$"
@@ -54,10 +50,10 @@ def main():
     new_init = os.path.join(new_test_path, "__init__.py")
     new_test = os.path.join(new_test_path, "test_"+test_name+".py")
 
-    with open(new_init, 'w') as n_init:
+    with open(new_init, 'w', encoding="utf-8", errors="ignore") as n_init:
         n_init.write(new_init_content)
 
-    with open(new_test, 'w') as n_test:
+    with open(new_test, 'w', encoding="utf-8", errors="ignore") as n_test:
         n_test.write(new_test_content)
 
     print('Done.')

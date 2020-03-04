@@ -10,25 +10,25 @@ matrix:
       name: "Analyzer, web (sqlite, psycopg2, pg8000) and tools test cases."
       sudo: required
       dist: bionic
-      python: "2.7"
+      python: "3.6"
       env: CC_MODULE=analyzer
     - os: linux
       name: "Server/client test cases (sqlite)"
       sudo: required
       dist: bionic
-      python: "2.7"
+      python: "3.6"
       env: DATABASE=sqlite
     - os: linux
       name: "Server/client test cases (psycopg2)"
       sudo: required
       dist: bionic
-      python: "2.7"
+      python: "3.6"
       env: DATABASE=psql_psycopg2
     - os: linux
       name: "Server/client test cases (pg8000)"
       sudo: required
       dist: bionic
-      python: "2.7"
+      python: "3.6"
       env: DATABASE=psql_pg8000
     - os: osx
       osx_image: xcode10
@@ -82,9 +82,9 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then while ! pg_isready; do sleep 1; done; createuser -s postgres; fi
 
 install:
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip install --ignore-installed nose --user; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/Users/travis/Library/Python/2.7/bin:$PATH; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip install virtualenv; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip3 install --ignore-installed nose --user; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/Users/travis/Library/Python/3.7/bin:$PATH; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip3 install virtualenv; fi
 
     # Remove clang symlinks from the travis base install.
     # The update-alternatives changes will not change the used clang version without this.

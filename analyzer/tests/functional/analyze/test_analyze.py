@@ -8,9 +8,7 @@
 """
 Test case for the CodeChecker analyze command's direct functionality.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import json
 import os
@@ -63,7 +61,8 @@ class TestAnalyze(unittest.TestCase):
         source_file = os.path.join(self.test_workspace, "simple.cpp")
 
         # Write content to the test file
-        with open(source_file, 'w') as source:
+        with open(source_file, 'w',
+                  encoding="utf-8", errors="ignore") as source:
             source.write(content_)
 
         # Create analyze command.
@@ -72,20 +71,24 @@ class TestAnalyze(unittest.TestCase):
 
         # Run analyze
         process = subprocess.Popen(
-            analyze_cmd, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, cwd=self.test_dir)
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
         out, err = process.communicate()
         print(out)
         print(err)
 
         errcode = process.returncode
-        self.assertEquals(errcode, 0)
+        self.assertEqual(errcode, 0)
 
         # Check the count of the plist files.
         plist_files = [os.path.join(reports_dir, filename)
                        for filename in os.listdir(reports_dir)
                        if filename.endswith('.plist')]
-        self.assertEquals(len(plist_files), plist_count)
+        self.assertEqual(len(plist_files), plist_count)
 
         # Check the count of the error files.
         failed_dir = os.path.join(reports_dir, "failed")
@@ -98,7 +101,7 @@ class TestAnalyze(unittest.TestCase):
 
             for f in failed_files:
                 os.remove(f)
-        self.assertEquals(failed_file_count, failed_count)
+        self.assertEqual(failed_file_count, failed_count)
 
     @unittest.skipIf(version.get("gcc") is not None,
                      "If gcc or g++ is a symlink to clang this test should be "
@@ -125,17 +128,20 @@ class TestAnalyze(unittest.TestCase):
                       }
                      ]
 
-        with open(build_json, 'w') as outfile:
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
             json.dump(build_log, outfile)
 
         # Test file contents
         simple_file_content = "int main() { return 0; }"
 
         # Write content to the test file
-        with open(source_file_cpp, 'w') as source:
+        with open(source_file_cpp, 'w',
+                  encoding="utf-8", errors="ignore") as source:
             source.write(simple_file_content)
 
-        with open(source_file_c, 'w') as source:
+        with open(source_file_c, 'w',
+                  encoding="utf-8", errors="ignore") as source:
             source.write(simple_file_content)
 
         # Create analyze command.
@@ -145,23 +151,27 @@ class TestAnalyze(unittest.TestCase):
         # WHEN
         # Run analyze.
         process = subprocess.Popen(
-            analyze_cmd, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, cwd=self.test_dir)
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
         process.communicate()
 
         # THEN
         errcode = process.returncode
-        self.assertEquals(errcode, 0)
+        self.assertEqual(errcode, 0)
 
         info_File = os.path.join(reports_dir, 'compiler_info.json')
-        self.assertEquals(os.path.exists(info_File), True)
+        self.assertEqual(os.path.exists(info_File), True)
         self.assertNotEqual(os.stat(info_File).st_size, 0)
 
         # Test the validity of the json files.
-        with open(info_File, 'r') as f:
+        with open(info_File, 'r', encoding="utf-8", errors="ignore") as f:
             try:
                 data = json.load(f)
-                self.assertEquals(len(data), 1)
+                self.assertEqual(len(data), 1)
                 # For clang we do not collect anything.
                 self.assertTrue("g++" in data)
             except ValueError:
@@ -183,17 +193,20 @@ class TestAnalyze(unittest.TestCase):
                       "command": "clang++ -c " + source_file,
                       "file": source_file}]
 
-        with open(build_json, 'w') as outfile:
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
             json.dump(build_log, outfile)
 
         # Test file contents
         simple_file_content = "int main() { return 0; }"
 
         # Write content to the test file
-        with open(source_file, 'w') as source:
+        with open(source_file, 'w',
+                  encoding="utf-8", errors="ignore") as source:
             source.write(simple_file_content)
 
-        with open(compiler_info_file, 'w') as source:
+        with open(compiler_info_file, 'w',
+                  encoding="utf-8", errors="ignore") as source:
             source.write('''{
   "clang++": {
     "c++": {
@@ -213,8 +226,12 @@ class TestAnalyze(unittest.TestCase):
                        "-o", reports_dir]
         # Run analyze.
         process = subprocess.Popen(
-            analyze_cmd, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, cwd=self.test_dir)
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
         out, _ = process.communicate()
         print(out)
         self.assertTrue("-std=FAKE_STD" in out)
@@ -238,23 +255,28 @@ class TestAnalyze(unittest.TestCase):
                       "file": source_file
                       }]
 
-        with open(build_json, 'w') as outfile:
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
             json.dump(build_log, outfile)
 
         print(analyze_cmd)
         process = subprocess.Popen(
-            analyze_cmd, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, cwd=self.test_dir)
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
         out, err = process.communicate()
         print(out)
         print(err)
         errcode = process.returncode
-        self.assertEquals(errcode, 0)
+        self.assertEqual(errcode, 0)
 
         # We expect the sucess stderr file in the success directory.
         success_files = os.listdir(success_dir)
         print(success_files)
-        self.assertEquals(len(success_files), 1)
+        self.assertEqual(len(success_files), 1)
         self.assertIn("success.c", success_files[0])
         os.remove(os.path.join(success_dir, success_files[0]))
 
@@ -272,7 +294,8 @@ class TestAnalyze(unittest.TestCase):
                       "file": source_file
                       }]
 
-        with open(build_json, 'w') as outfile:
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
             json.dump(build_log, outfile)
 
         # Create and run analyze command.
@@ -282,18 +305,22 @@ class TestAnalyze(unittest.TestCase):
 
         print(analyze_cmd)
         process = subprocess.Popen(
-            analyze_cmd, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, cwd=self.test_dir)
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
         out, err = process.communicate()
 
         print(out)
         print(err)
         errcode = process.returncode
-        self.assertEquals(errcode, 0)
+        self.assertEqual(errcode, 0)
 
         # We expect a failure archive to be in the failed directory.
         failed_files = os.listdir(failed_dir)
-        self.assertEquals(len(failed_files), 1)
+        self.assertEqual(len(failed_files), 1)
 
         fail_zip = os.path.join(failed_dir, failed_files[0])
 
@@ -304,7 +331,7 @@ class TestAnalyze(unittest.TestCase):
             self.assertIn("analyzer-command", files)
 
             with archive.open("build-action", 'r') as archived_buildcmd:
-                self.assertEqual(archived_buildcmd.read(),
+                self.assertEqual(archived_buildcmd.read().decode("utf-8"),
                                  "gcc -c " + source_file)
 
             source_in_archive = os.path.join("sources-root",
@@ -312,8 +339,10 @@ class TestAnalyze(unittest.TestCase):
             self.assertIn(source_in_archive, files)
 
             with archive.open(source_in_archive, 'r') as archived_code:
-                with open(source_file, 'r') as source_code:
-                    self.assertEqual(archived_code.read(), source_code.read())
+                with open(source_file, 'r',
+                          encoding="utf-8", errors="ignore") as source_code:
+                    self.assertEqual(archived_code.read().decode("utf-8"),
+                                     source_code.read())
 
         os.remove(os.path.join(failed_dir, failed_files[0]))
 
@@ -338,22 +367,27 @@ class TestAnalyze(unittest.TestCase):
         # to its output when invoked as a dependency generator for this
         # build command.
 
-        with open(build_json, 'w') as outfile:
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
             json.dump(build_log, outfile)
 
         print(analyze_cmd)
         process = subprocess.Popen(
-            analyze_cmd, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, cwd=self.test_dir)
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
         process.communicate()
 
         errcode = process.returncode
-        self.assertEquals(errcode, 0)
+        self.assertEqual(errcode, 0)
 
         # We expect a failure archive to be in the failed directory.
         failed_files = os.listdir(failed_dir)
         print(failed_files)
-        self.assertEquals(len(failed_files), 1)
+        self.assertEqual(len(failed_files), 1)
         self.assertIn("failure.c", failed_files[0])
 
         os.remove(os.path.join(failed_dir, failed_files[0]))
@@ -373,7 +407,8 @@ class TestAnalyze(unittest.TestCase):
                       "file": source_file
                       }]
 
-        with open(build_json, 'w') as outfile:
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
             json.dump(build_log, outfile)
 
         # Test file contents
@@ -407,7 +442,8 @@ class TestAnalyze(unittest.TestCase):
                       "file": source_file
                       }]
 
-        with open(build_json, 'w') as outfile:
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
             json.dump(build_log, outfile)
 
         analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
@@ -415,16 +451,21 @@ class TestAnalyze(unittest.TestCase):
         # CodeChecker is executed in a different
         # dir than the containing folder of simple.c.
         process = subprocess.Popen(
-            analyze_cmd, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, cwd=self.test_workspace)
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_workspace,
+            encoding="utf-8",
+            errors="ignore")
         process.communicate()
 
         errcode = process.returncode
-        self.assertEquals(errcode, 0)
+        self.assertEqual(errcode, 0)
         self.assertFalse(os.path.isdir(failed_dir))
 
     def unique_json_helper(self, unique_json, is_a, is_b, is_s):
-        with open(unique_json) as json_file:
+        with open(unique_json,
+                  encoding="utf-8", errors="ignore") as json_file:
             data = json.load(json_file)
             simple_a = False
             simple_b = False
@@ -465,7 +506,8 @@ class TestAnalyze(unittest.TestCase):
                       " -Iincludes -o success.o",
                       "file": source_file2}]
 
-        with open(build_json, 'w') as outfile:
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
             json.dump(build_log, outfile)
 
         # Testing alphabetic uniqueing mode.
@@ -474,12 +516,16 @@ class TestAnalyze(unittest.TestCase):
                        "--compile-uniqueing", "alpha"]
 
         process = subprocess.Popen(
-            analyze_cmd, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, cwd=self.test_workspace)
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_workspace,
+            encoding="utf-8",
+            errors="ignore")
         process.communicate()
 
         errcode = process.returncode
-        self.assertEquals(errcode, 0)
+        self.assertEqual(errcode, 0)
         self.assertFalse(os.path.isdir(failed_dir))
 
         self.unique_json_helper(unique_json, True, False, True)
@@ -489,12 +535,16 @@ class TestAnalyze(unittest.TestCase):
                        "--analyzers", "clangsa", "-o", report_dir,
                        "--compile-uniqueing", ".*_b.*"]
         process = subprocess.Popen(
-            analyze_cmd, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, cwd=self.test_workspace)
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_workspace,
+            encoding="utf-8",
+            errors="ignore")
         process.communicate()
 
         errcode = process.returncode
-        self.assertEquals(errcode, 0)
+        self.assertEqual(errcode, 0)
         self.assertFalse(os.path.isdir(failed_dir))
 
         self.unique_json_helper(unique_json, False, True, True)
@@ -504,13 +554,17 @@ class TestAnalyze(unittest.TestCase):
                        "--analyzers", "clangsa", "-o", report_dir,
                        "--compile-uniqueing", ".*simple.*"]
         process = subprocess.Popen(
-            analyze_cmd, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, cwd=self.test_workspace)
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_workspace,
+            encoding="utf-8",
+            errors="ignore")
         process.communicate()
 
         errcode = process.returncode
         # Since .*simple.* matches 2 files, thus we get an error
-        self.assertEquals(errcode, 1)
+        self.assertEqual(errcode, 1)
 
         # Testing strict mode
         analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
@@ -518,15 +572,19 @@ class TestAnalyze(unittest.TestCase):
                        "--compile-uniqueing", "strict", "--verbose", "debug"]
 
         process = subprocess.Popen(
-            analyze_cmd, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, cwd=self.test_workspace)
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_workspace,
+            encoding="utf-8",
+            errors="ignore")
         process.communicate()
 
         # In strict mode the analysis must fail
         # if there are more than one build
         # commands for a single source.
         errcode = process.returncode
-        self.assertEquals(errcode, 1)
+        self.assertEqual(errcode, 1)
         self.assertFalse(os.path.isdir(failed_dir))
 
         # Testing None mode.
@@ -534,12 +592,16 @@ class TestAnalyze(unittest.TestCase):
                        "--analyzers", "clangsa", "-o", report_dir,
                        "--compile-uniqueing", "none"]
         process = subprocess.Popen(
-            analyze_cmd, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, cwd=self.test_workspace)
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_workspace,
+            encoding="utf-8",
+            errors="ignore")
         process.communicate()
 
         errcode = process.returncode
-        self.assertEquals(errcode, 0)
+        self.assertEqual(errcode, 0)
         self.assertFalse(os.path.isdir(failed_dir))
         self.unique_json_helper(unique_json, True, True, True)
 
@@ -556,13 +618,18 @@ class TestAnalyze(unittest.TestCase):
                       "file": source_file
                       }]
 
-        with open(build_json, 'w') as outfile:
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
             json.dump(build_log, outfile)
 
         print(analyze_cmd)
         process = subprocess.Popen(
-            analyze_cmd, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, cwd=self.test_dir)
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
         out, _ = process.communicate()
 
         match = self.missing_checker_regex.search(out)
@@ -570,7 +637,7 @@ class TestAnalyze(unittest.TestCase):
         self.assertTrue("non-existing-checker-name" in out)
 
         errcode = process.returncode
-        self.assertEquals(errcode, 0)
+        self.assertEqual(errcode, 0)
 
     def test_invalid_disabled_checker_name(self):
         """Warn in case of an invalid disabled checker."""
@@ -585,13 +652,18 @@ class TestAnalyze(unittest.TestCase):
                       "file": source_file
                       }]
 
-        with open(build_json, 'w') as outfile:
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
             json.dump(build_log, outfile)
 
         print(analyze_cmd)
         process = subprocess.Popen(
-            analyze_cmd, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, cwd=self.test_dir)
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
         out, _ = process.communicate()
 
         match = self.missing_checker_regex.search(out)
@@ -599,7 +671,7 @@ class TestAnalyze(unittest.TestCase):
         self.assertTrue("non-existing-checker-name" in out)
 
         errcode = process.returncode
-        self.assertEquals(errcode, 0)
+        self.assertEqual(errcode, 0)
 
     def test_multiple_invalid_checker_names(self):
         """Warn in case of multiple invalid checker names."""
@@ -617,13 +689,18 @@ class TestAnalyze(unittest.TestCase):
                       "file": source_file
                       }]
 
-        with open(build_json, 'w') as outfile:
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
             json.dump(build_log, outfile)
 
         print(analyze_cmd)
         process = subprocess.Popen(
-            analyze_cmd, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, cwd=self.test_dir)
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
         out, _ = process.communicate()
 
         match = self.missing_checker_regex.search(out)
@@ -634,4 +711,4 @@ class TestAnalyze(unittest.TestCase):
         self.assertTrue("other.missing.checker" in out)
 
         errcode = process.returncode
-        self.assertEquals(errcode, 0)
+        self.assertEqual(errcode, 0)

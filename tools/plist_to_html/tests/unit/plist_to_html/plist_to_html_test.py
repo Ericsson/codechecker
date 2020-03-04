@@ -4,9 +4,6 @@
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
 import os
 import plistlib
@@ -21,6 +18,11 @@ from plist_to_html import PlistToHtml
 def get_project_path(test_project):
     """ Return project path for the given project. """
     return os.path.join(env.test_proj_root(), test_project)
+
+
+def load_plist_data(plist_filepath):
+    with open(plist_filepath, 'rb') as plist_file:
+        return plistlib.load(plist_file)
 
 
 class PlistToHtmlTest(unittest.TestCase):
@@ -39,7 +41,8 @@ class PlistToHtmlTest(unittest.TestCase):
             for test_file in os.listdir(test_project_path):
                 if test_file.endswith(".plist"):
                     test_file_path = os.path.join(test_project_path, test_file)
-                    with open(test_file_path, 'r+') as plist_file:
+                    with open(test_file_path, 'r+',
+                              encoding='utf-8', errors='ignore') as plist_file:
                         content = plist_file.read()
                         new_content = content.replace("$FILE_PATH$",
                                                       test_project_path)
@@ -54,7 +57,7 @@ class PlistToHtmlTest(unittest.TestCase):
         proj_dir = os.path.join(self.test_workspace, 'test_files', proj)
         plist_file = os.path.join(proj_dir, proj + '.plist')
 
-        plist = plistlib.readPlist(plist_file)
+        plist = load_plist_data(plist_file)
         report_data = PlistToHtml.get_report_data_from_plist(plist)
 
         output_dir = os.path.join(proj_dir, 'html')
@@ -78,7 +81,7 @@ class PlistToHtmlTest(unittest.TestCase):
         proj_notes = os.path.join(self.test_workspace, 'test_files', 'notes')
         plist_file = os.path.join(proj_notes, 'notes.plist')
 
-        plist = plistlib.readPlist(plist_file)
+        plist = load_plist_data(plist_file)
         res = PlistToHtml.get_report_data_from_plist(plist)
 
         self.assertEqual(len(res['files']), 1)
@@ -97,7 +100,7 @@ class PlistToHtmlTest(unittest.TestCase):
         proj_macros = os.path.join(self.test_workspace, 'test_files', 'macros')
         plist_file = os.path.join(proj_macros, 'macros.plist')
 
-        plist = plistlib.readPlist(plist_file)
+        plist = load_plist_data(plist_file)
         res = PlistToHtml.get_report_data_from_plist(plist)
 
         self.assertEqual(len(res['files']), 1)
@@ -116,7 +119,7 @@ class PlistToHtmlTest(unittest.TestCase):
         proj_simple = os.path.join(self.test_workspace, 'test_files', 'simple')
         plist_file = os.path.join(proj_simple, 'simple.plist')
 
-        plist = plistlib.readPlist(plist_file)
+        plist = load_plist_data(plist_file)
         res = PlistToHtml.get_report_data_from_plist(plist)
 
         self.assertEqual(len(res['files']), 1)

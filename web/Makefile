@@ -6,7 +6,7 @@ BUILD_DIR ?= $(CURRENT_DIR)/build
 CC_BUILD_DIR = $(BUILD_DIR)/CodeChecker
 CC_BUILD_WEB_DIR = $(CC_BUILD_DIR)/www
 CC_BUILD_PLUGIN_DIR = $(CC_BUILD_DIR)/plugin
-CC_BUILD_LIB_DIR = $(CC_BUILD_DIR)/lib/python2.7
+CC_BUILD_LIB_DIR = $(CC_BUILD_DIR)/lib/python3
 CC_BUILD_DOCS_DIR = $(CC_BUILD_WEB_DIR)/docs
 CC_BUILD_SCRIPTS_DIR = $(CC_BUILD_WEB_DIR)/scripts
 CC_BUILD_API_DIR = $(CC_BUILD_SCRIPTS_DIR)/codechecker-api
@@ -29,11 +29,11 @@ include tests/Makefile
 include server/tests/Makefile
 
 pip_dev_deps:
-	pip install -r $(VENV_DEV_REQ_FILE)
+	pip3 install -r $(VENV_DEV_REQ_FILE)
 
 venv_dev:
 	# Create a virtual environment for development.
-	virtualenv -p python2 venv_dev && \
+	virtualenv -p python3 venv_dev && \
 		$(ACTIVATE_DEV_VENV) && pip install -r $(VENV_DEV_REQ_FILE)
 
 clean_venv_dev:

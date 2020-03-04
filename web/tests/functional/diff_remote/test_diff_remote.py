@@ -10,9 +10,6 @@
 Test the compraison of two remote (in the database) runs.
 """
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
 import json
 import os
@@ -502,9 +499,12 @@ class DiffRemote(unittest.TestCase):
                     "-n", new_run_name
                     ]
         print(diff_cmd)
-        out = subprocess.check_output(diff_cmd,
-                                      env=self._env,
-                                      cwd=os.environ['TEST_WORKSPACE'])
+        out = subprocess.check_output(
+            diff_cmd,
+            env=self._env,
+            cwd=os.environ['TEST_WORKSPACE'],
+            encoding="utf-8",
+            errors="ignore")
 
         # 4 disappeared core.CallAndMessage issues
         count = len(re.findall(r'\[core\.CallAndMessage\]', out))
@@ -583,9 +583,12 @@ class DiffRemote(unittest.TestCase):
                     "-o", "json",
                     "--url", self._url]
         print(diff_cmd)
-        out_json = subprocess.check_output(diff_cmd,
-                                           env=self._env,
-                                           cwd=os.environ['TEST_WORKSPACE'])
+        out_json = subprocess.check_output(
+            diff_cmd,
+            env=self._env,
+            cwd=os.environ['TEST_WORKSPACE'],
+            encoding="utf-8",
+            errors="ignore")
 
         unresolved_results = json.loads(out_json)
         self.assertNotEqual(len(unresolved_results), 0)

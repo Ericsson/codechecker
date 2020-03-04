@@ -6,12 +6,8 @@
 """
 Helper for thrift api calls.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
-import os
-import socket
+
 import sys
 
 from thrift.protocol.TProtocol import TProtocolException
@@ -77,11 +73,9 @@ def ThriftClientCall(function):
             LOG.error(kwargs)
             LOG.exception("Request failed.")
             sys.exit(1)
-        except socket.error as serr:
+        except OSError as oserr:
             LOG.error("Connection failed.")
-            errCause = os.strerror(serr.errno)
-            LOG.error(errCause)
-            LOG.error(str(serr))
+            LOG.error(oserr.strerror)
             LOG.error("Check if your CodeChecker server is running.")
             sys.exit(1)
         finally:

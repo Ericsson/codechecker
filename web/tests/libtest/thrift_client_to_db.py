@@ -6,14 +6,10 @@
 """
 Various Thrift api helpers for the tests.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 from functools import partial
-import os
 import re
-import socket
 
 from thrift.protocol import TJSONProtocol
 from thrift.transport import THttpClient
@@ -72,9 +68,8 @@ class ThriftAPIHelper(object):
             print(err.message)
             return None
 
-        except socket.error as serr:
-            err_cause = os.strerror(serr.errno)
-            print(str(serr) + " " + err_cause)
+        except OSError as oserr:
+            print(oserr.strerror)
 
             return None
 

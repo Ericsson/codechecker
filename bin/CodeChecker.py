@@ -7,12 +7,10 @@
 """
 Main CodeChecker script.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import argparse
-import imp
+from importlib import machinery
 import json
 import os
 import signal
@@ -31,13 +29,12 @@ def add_subcommand(subparsers, sub_cmd, cmd_module_path):
     module_name = os.path.splitext(m_name)[0]
 
     cc_bin = os.path.dirname(os.path.realpath(__file__))
-    full_module_path = os.path.join(cc_bin, '..', 'lib', 'python2.7', m_path)
+    full_module_path = os.path.join(cc_bin, '..', 'lib', 'python3', m_path)
 
     # Load the module named as the argument.
-    cmd_file, cmd_path, cmd_descr = imp.find_module(module_name,
-                                                    [full_module_path])
-    command_module = imp.load_module(module_name,
-                                     cmd_file, cmd_path, cmd_descr)
+    cmd_spec = machinery.PathFinder().find_spec(module_name,
+                                                [full_module_path])
+    command_module = cmd_spec.loader.load_module(module_name)
 
     # Now that the module is loaded, construct an ArgumentParser for it.
     sc_parser = subparsers.add_parser(
@@ -151,7 +148,7 @@ if __name__ == "__main__":
     # always meant to be available alongside the CodeChecker.py.
     commands_cfg = os.path.join(os.path.dirname(__file__), "commands.json")
 
-    with open(commands_cfg) as cfg_file:
+    with open(commands_cfg, encoding="utf-8", errors="ignore") as cfg_file:
         commands = json.load(cfg_file)
 
     main(commands)

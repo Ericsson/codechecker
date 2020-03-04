@@ -9,9 +9,7 @@
 Test skipping the analysis of a file and the removal
 of skipped reports from the report files.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import os
 import plistlib
@@ -52,13 +50,15 @@ class TestSkip(unittest.TestCase):
         build_json = os.path.join(self.test_workspace, "build.json")
 
         clean_cmd = ["make", "clean"]
-        out = subprocess.check_output(clean_cmd)
+        out = subprocess.check_output(
+            clean_cmd, encoding="utf-8", errors="ignore")
         print(out)
 
         # Create and run log command.
         log_cmd = [self._codechecker_cmd, "log", "-b", "make",
                    "-o", build_json]
-        out = subprocess.check_output(log_cmd)
+        out = subprocess.check_output(
+            log_cmd, encoding="utf-8", errors="ignore")
         print(out)
         # Create and run analyze command.
         analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
@@ -66,14 +66,18 @@ class TestSkip(unittest.TestCase):
                        "--ignore", "skipfile", "-o", self.report_dir]
 
         process = subprocess.Popen(
-            analyze_cmd, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, cwd=self.test_dir)
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
         out, err = process.communicate()
 
         print(out)
         print(err)
         errcode = process.returncode
-        self.assertEquals(errcode, 0)
+        self.assertEqual(errcode, 0)
 
         # Check if file is skipped.
         report_dir_files = os.listdir(self.report_dir)
@@ -90,7 +94,9 @@ class TestSkip(unittest.TestCase):
 
         self.assertIsNotNone(report_file_to_check,
                              "Report file should be generated.")
-        report_data = plistlib.readPlist(report_file_to_check)
+        report_data = {}
+        with open(report_file_to_check, 'rb') as plist_file:
+            report_data = plistlib.load(plist_file)
         files = report_data['files']
 
         skiped_file_index = None

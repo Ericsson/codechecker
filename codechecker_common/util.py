@@ -6,11 +6,8 @@
 """
 Util module.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
-import io
+
 import json
 import os
 
@@ -48,17 +45,17 @@ def get_line(file_name, line_no, errors='ignore'):
     Changing the encoding error handling can influence the hash content!
     """
     try:
-        with io.open(file_name, mode='r',
-                     encoding='utf-8',
-                     errors=errors) as source_file:
+        with open(file_name, mode='r',
+                  encoding='utf-8',
+                  errors=errors) as source_file:
             for line in source_file:
                 line_no -= 1
                 if line_no == 0:
                     return line
-            return u''
+            return ''
     except IOError:
         LOG.error("Failed to open file %s", file_name)
-        return u''
+        return ''
 
 
 def load_json_or_empty(path, default=None, kind=None, lock=False):
@@ -69,7 +66,7 @@ def load_json_or_empty(path, default=None, kind=None, lock=False):
 
     ret = default
     try:
-        with io.open(path, 'r') as handle:
+        with open(path, 'r', encoding='utf-8', errors='ignore') as handle:
             if lock:
                 portalocker.lock(handle, portalocker.LOCK_SH)
 

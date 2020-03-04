@@ -6,9 +6,7 @@
 """
 Handler for suppressing a bug.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import os
 
@@ -62,7 +60,8 @@ class GenericSuppressHandler(object):
             # needed.
             return
 
-        with open(self.suppress_file, 'r') as file_handle:
+        with open(self.suppress_file, 'r',
+                  encoding='utf-8', errors='ignore') as file_handle:
             self.__suppress_info = suppress_file_handler.\
                 get_suppress_data(file_handle)
 
@@ -70,12 +69,12 @@ class GenericSuppressHandler(object):
 
         if not self.__allow_write:
             return True
-
-        ret = suppress_file_handler.write_to_suppress_file(self.suppress_file,
-                                                           bug_id,
-                                                           file_name,
-                                                           comment,
-                                                           status)
+        ret = suppress_file_handler.write_to_suppress_file(
+                self.suppress_file,
+                bug_id,
+                file_name,
+                comment,
+                status)
         self.__revalidate_suppress_data()
         return ret
 

@@ -7,11 +7,8 @@
 """
 Test getting lines from source files.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
-import base64
+
 import logging
 import os
 import unittest
@@ -20,6 +17,8 @@ from libtest import env
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import Encoding, \
     LinesInFilesRequested, Order, ReportFilter, RunSortMode, RunSortType
+
+from codechecker_web.shared import convert
 
 
 class TestGetLinesInFile(unittest.TestCase):
@@ -73,7 +72,7 @@ class TestGetLinesInFile(unittest.TestCase):
             for line in expected[file_id]:
                 source_line = file_to_lines_map[file_id][line]
                 if encoding == Encoding.BASE64:
-                    source_line = base64.b64decode(source_line)
+                    source_line = convert.from_b64(source_line)
 
                 self.assertEqual(source_line,
                                  expected[file_id][line])
@@ -86,7 +85,7 @@ class TestGetLinesInFile(unittest.TestCase):
         project path.
         """
         file_path = os.path.join(self._project_info['project_path'], file_name)
-        with open(file_path, 'r') as f:
+        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
             lines_in_file = f.read().split('\n')
             return {line: '' if len(lines_in_file) < line else
                     lines_in_file[line - 1] for line in lines}

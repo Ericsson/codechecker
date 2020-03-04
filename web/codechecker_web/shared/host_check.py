@@ -8,9 +8,6 @@ Functions to check the host machine and the analyzers for various
 features, dependecies and configurations.
 """
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
 import os
 
@@ -27,7 +24,7 @@ def check_zlib():
     """
     try:
         import zlib
-        zlib.compress('Compress this')
+        zlib.compress(b'Compress this')
         return True
     except Exception as ex:
         LOG.error(str(ex))
@@ -43,10 +40,12 @@ def get_postgresql_driver_name():
             return driver
 
         try:
-            import psycopg2  # NOQA.
+            # pylint: disable=W0611
+            import psycopg2
             return "psycopg2"
         except Exception:
-            import pg8000  # NOQA.
+            # pylint: disable=W0611
+            import pg8000
             return "pg8000"
     except Exception as ex:
         LOG.error(str(ex))
@@ -74,8 +73,10 @@ def check_sql_driver(check_postgresql):
     else:
         try:
             try:
+                # pylint: disable=W0611
                 import pysqlite2
             except Exception:
+                # pylint: disable=W0611
                 import sqlite3
         except Exception as ex:
             LOG.debug(ex)

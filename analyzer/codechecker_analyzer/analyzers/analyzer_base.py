@@ -7,9 +7,6 @@
 Base class for various source analyzers.
 """
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
 from abc import ABCMeta, abstractmethod
 import os
@@ -22,11 +19,10 @@ from codechecker_common.logger import get_logger
 LOG = get_logger('analyzer')
 
 
-class SourceAnalyzer(object):
+class SourceAnalyzer(object, metaclass=ABCMeta):
     """
     Base class for different source analyzers.
     """
-    __metaclass__ = ABCMeta
 
     def __init__(self, config_handler, buildaction):
         self.__config_handler = config_handler
@@ -127,14 +123,17 @@ class SourceAnalyzer(object):
 
         signal.signal(signal.SIGINT, signal_handler)
 
-        proc = subprocess.Popen(command,
-                                bufsize=-1,
-                                env=env,
-                                preexec_fn=os.setsid,
-                                cwd=cwd,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                universal_newlines=True)
+        proc = subprocess.Popen(
+            command,
+            bufsize=-1,
+            env=env,
+            preexec_fn=os.setsid,
+            cwd=cwd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+            encoding="utf-8",
+            errors="ignore")
 
         # Send the created analyzer process' object if somebody wanted it.
         if proc_callback:

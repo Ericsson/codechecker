@@ -7,9 +7,7 @@
 Instance manager handles the state keeping of running CodeChecker instances
 for a particular user on the local machine.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import getpass
 import json
@@ -36,7 +34,8 @@ def __get_instance_descriptor_path(folder=None):
 def __make_instance_descriptor_file(folder=None):
     descriptor = __get_instance_descriptor_path(folder)
     if not os.path.exists(descriptor):
-        with open(descriptor, 'w') as f:
+        with open(descriptor, 'w',
+                  encoding="utf-8", errors="ignore") as f:
             json.dump([], f)
         os.chmod(descriptor, stat.S_IRUSR | stat.S_IWUSR)
 
@@ -71,7 +70,8 @@ def __rewrite_instance_file(append, remove, folder=None):
     append_pids = [i['pid'] for i in append]
 
     instance_descriptor_file = __get_instance_descriptor_path(folder)
-    with open(instance_descriptor_file, 'r+') as instance_file:
+    with open(instance_descriptor_file, 'r+',
+              encoding="utf-8", errors="ignore") as instance_file:
         portalocker.lock(instance_file, portalocker.LOCK_EX)
 
         instances = []

@@ -6,9 +6,7 @@
 """
 Helpers to manage failure zips.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import json
 import os
@@ -69,7 +67,7 @@ class IncludePathModifier(object):
 
 
 def load_json_file(filename):
-    with open(filename, 'r') as f:
+    with open(filename, 'r', encoding="utf-8", errors="ignore") as f:
         data = json.load(f)
     return data
 

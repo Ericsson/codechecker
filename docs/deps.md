@@ -16,12 +16,12 @@ Javascript dependencies are automatically downloaded based on the ext_source_dep
 
   * [Clang Static analyzer](http://clang-analyzer.llvm.org/) (latest stable or [trunk](http://clang.llvm.org/get_started.html))
   * [Clang Tidy](http://clang.llvm.org/extra/clang-tidy/) (available in the clang tools extra repository [trunk](http://clang.llvm.org/get_started.html))
-  * [Python2](https://www.python.org/) (> 2.7)
+  * [Python3](https://www.python.org/) (> 3.6)
   * [Alembic](https://pypi.python.org/pypi/alembic) (>= 0.8.2) database migration support is available only for PostgreSQL database
   * [SQLAlchemy](http://www.sqlalchemy.org/) (>= 1.0.9) Python SQL toolkit and Object Relational Mapper, for supporting multiple database backends
       * [PyPi SQLAlchemy](https://pypi.python.org/pypi/SQLAlchemy) (> 1.0.2)
   * Thrift python modules. Cross-language service building framework to handle data transfer for report storage and result viewer clients
-      * [PyPi thrift](https://pypi.python.org/pypi/thrift/0.9.2)(> 0.9.2 )
+      * [PyPi thrift](https://pypi.python.org/pypi/thrift/0.11.0)(> 0.11.0 )
   * [Codemirror](https://codemirror.net/) (MIT) - view source code in the browser
   * [Jsplumb](https://jsplumbtoolkit.com/) (community edition, MIT) - draw bug paths
   * [Marked](https://github.com/chjj/marked) (BSD) - view documentation for checkers written in markdown (generated dynamically)

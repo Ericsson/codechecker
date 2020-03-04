@@ -4,7 +4,7 @@ CURRENT_DIR = $(shell pwd)
 BUILD_DIR ?= $(CURRENT_DIR)/build
 
 CC_BUILD_DIR = $(BUILD_DIR)/CodeChecker
-CC_BUILD_LIB_DIR = $(CC_BUILD_DIR)/lib/python2.7
+CC_BUILD_LIB_DIR = $(CC_BUILD_DIR)/lib/python3
 
 # Root of the repository.
 ROOT = $(CURRENT_DIR)/..
@@ -22,12 +22,12 @@ BUILD_LOGGER_64_BIT_ONLY ?= NO
 include tests/Makefile
 
 pip_dev_deps:
-	pip install -r $(VENV_DEV_REQ_FILE)
+	pip3 install -r $(VENV_DEV_REQ_FILE)
 
 venv_dev:
 	# Create a virtual environment for development.
-	virtualenv -p python2 venv_dev && \
-		$(ACTIVATE_DEV_VENV) && pip install -r $(VENV_DEV_REQ_FILE)
+	virtualenv -p python3 venv_dev && \
+		$(ACTIVATE_DEV_VENV) && pip3 install -r $(VENV_DEV_REQ_FILE)
 
 clean_venv_dev:
 	rm -rf venv_dev
@@ -52,7 +52,7 @@ package_tu_collector: build_tu_collector package_dir_structure
 	cp -rp $(CC_TOOLS)/tu_collector/build/tu_collector/tu_collector $(CC_BUILD_LIB_DIR) && \
 	chmod u+x $(CC_BUILD_LIB_DIR)/tu_collector/tu_collector.py && \
 	cd $(CC_BUILD_DIR) && \
-	ln -sf ../lib/python2.7/tu_collector/tu_collector.py bin/tu_collector
+	ln -sf ../lib/python3/tu_collector/tu_collector.py bin/tu_collector
 
 # This target should be used from the top level Makefile to build the package
 # together with the web part. This way we will not build plist-to-html

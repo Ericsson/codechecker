@@ -5,9 +5,7 @@
 # -----------------------------------------------------------------------------
 
 """Test the build commands escaping and execution."""
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import os
 import shutil
@@ -36,7 +34,8 @@ class BuildCmdTestNose(unittest.TestCase):
                                          cls.src_file_name)
         cls.compiler = "clang++"
 
-        with open(cls.src_file_path, "w") as test_src:
+        with open(cls.src_file_path, "w",
+                  encoding="utf-8", errors="ignore") as test_src:
             test_src.write("""
             #include <iostream>
 

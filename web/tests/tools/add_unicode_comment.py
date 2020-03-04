@@ -6,9 +6,7 @@
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 import argparse
 import os
 import re
@@ -38,7 +36,7 @@ def add_comment_to_file(args, file_path):
         print('Adding the comment to %s' % file_path)
         full_comment = '\n' + COMMENT_BEGIN + COMMENT + COMMENT_END + '\n'
 
-    with open(file_path, 'r+') as handle:
+    with open(file_path, 'r+', encoding="utf-8", errors="ignore") as handle:
         text = handle.read()
         text = re.sub(COMMENT_PATTERN, '', text)
         text += full_comment
@@ -77,7 +75,7 @@ def main():
 
     args = parser.parse_args()
 
-    if len(args.paths) > 0:
+    if args.paths:
         for path in args.path:
             full_path = os.path.realpath(path)
             if os.path.isfile(full_path):

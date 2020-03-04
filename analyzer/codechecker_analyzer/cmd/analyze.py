@@ -6,9 +6,7 @@
 """
 Execute analysis over an already existing build.json compilation database.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import argparse
 import collections
@@ -564,7 +562,8 @@ def __get_skip_handler(args):
     try:
         if args.skipfile:
             LOG.debug_analyzer("Creating skiplist handler.")
-            with open(args.skipfile) as skip_file:
+            with open(args.skipfile,
+                      encoding="utf-8", errors="ignore") as skip_file:
                 return skiplist_handler.SkipListHandler(skip_file.read())
     except AttributeError:
         LOG.debug_analyzer('Skip file was not set in the command line')
@@ -710,7 +709,8 @@ def main(args):
 
     uniqued_compilation_db_file = os.path.join(
         args.output_path, "unique_compile_commands.json")
-    with open(uniqued_compilation_db_file, 'w') as f:
+    with open(uniqued_compilation_db_file, 'w',
+              encoding="utf-8", errors="ignore") as f:
         json.dump(actions, f,
                   cls=log_parser.CompileCommandEncoder)
 
@@ -766,7 +766,8 @@ def main(args):
     __update_skip_file(args)
 
     LOG.debug("Analysis metadata write to '%s'", metadata_file)
-    with open(metadata_file, 'w') as metafile:
+    with open(metadata_file, 'w',
+              encoding="utf-8", errors="ignore") as metafile:
         json.dump(metadata, metafile)
 
     # WARN: store command will search for this file!!!!

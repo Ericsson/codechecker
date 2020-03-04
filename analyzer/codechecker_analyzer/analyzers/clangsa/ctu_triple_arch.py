@@ -6,9 +6,7 @@
 """
 Helpers for determining triple arch of a compile action
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 from .. import analyzer_base
 from ..flag import has_flag
@@ -52,7 +50,7 @@ def _find_arch_in_command(output):
     # Anyway the normal split() is enough for us because we just need to find
     # -triple flag and its parameter. These don't contain any special
     # characters that justifies the usage of shlex.split().
-    res_cmd = map(lambda x: x.strip('"'), output.split())
+    res_cmd = [x.strip('"') for x in output.split()]
 
     try:
         arch = res_cmd[res_cmd.index('-triple') + 1]

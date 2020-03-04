@@ -1,9 +1,8 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 
 import setuptools
 
-with open("README.md", "r") as fh:
+with open("README.md", "r", encoding="utf-8", errors="ignore") as fh:
     long_description = fh.read()
 
 setuptools.setup(
@@ -26,10 +25,9 @@ setuptools.setup(
         "License :: OSI Approved :: University of Illinois/NCSA Open Source License",
         "Operating System :: MacOS",
         "Operating System :: POSIX",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
     ],
+    python_requires='>=3.6',
     entry_points={
         'console_scripts': [
             'plist-to-html = plist_to_html.PlistToHtml:main'

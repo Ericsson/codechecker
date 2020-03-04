@@ -7,14 +7,10 @@
 Defines the CodeChecker action for parsing a set of analysis results into a
 human-readable format.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 from collections import defaultdict
 import argparse
-import codecs
-import io
 import json
 import math
 import os
@@ -37,13 +33,6 @@ from codechecker_common.report import Report, get_report_path_hash
 from codechecker_common.source_code_comment_handler import skip_suppress_status
 
 LOG = logger.get_logger('system')
-
-
-# Print to the console without UnicodeEncodeErrors. For more information see:
-# https://chase-seibert.github.io/blog/2014/01/12/python-unicode-console-output.html
-# TODO: This should be removed when we move to Python 3.
-sys.stdout = codecs.getwriter('utf8')(sys.stdout)
-sys.stderr = codecs.getwriter('utf8')(sys.stderr)
 
 
 class PlistToPlaintextFormatter(object):
@@ -559,7 +548,8 @@ def main(args):
         __make_handler = False
         if not os.path.isfile(args.suppress):
             if 'create_suppress' in args:
-                with open(args.suppress, 'w') as _:
+                with open(args.suppress, 'w',
+                          encoding='utf-8', errors='ignore') as _:
                     # Just create the file.
                     __make_handler = True
                     LOG.info("Will write source-code suppressions to "
@@ -583,7 +573,8 @@ def main(args):
 
     skip_handler = None
     if 'skipfile' in args:
-        with open(args.skipfile, 'r') as skip_file:
+        with open(args.skipfile, 'r',
+                  encoding='utf-8', errors='ignore') as skip_file:
             skip_handler = SkipListHandler(skip_file.read())
 
     trim_path_prefixes = args.trim_path_prefix if \
@@ -594,9 +585,9 @@ def main(args):
         if 'output_path' in args:
             output_path = os.path.abspath(args.output_path)
             reports_json = os.path.join(output_path, 'reports.json')
-            with io.open(reports_json,
-                         mode='w',
-                         encoding='utf-8') as output_f:
+            with open(reports_json,
+                      mode='w',
+                      encoding='utf-8', errors="ignore") as output_f:
                 output_f.write(res)
 
         return print(res)

@@ -22,7 +22,6 @@ includes/target files are simply not removed (b).
 """
 
 import argparse
-import io
 import json
 import logging
 import os
@@ -158,7 +157,7 @@ def create_compiler_info_json(old_info, filepath):
         info[compiler]["c"] = compiler_data
         info[compiler]["c++"] = compiler_data
 
-    with io.open(filepath, 'w', encoding='UTF-8') as dest:
+    with open(filepath, 'w', encoding='utf-8', errors="ignore") as dest:
         json.dump(info, dest)
 
 
@@ -194,7 +193,7 @@ if __name__ == '__main__':
             LOG.error("'compiler_info.json' is empty.")
             sys.exit(3)
 
-        with io.open(info_file, 'r', encoding='UTF-8') as src:
+        with open(info_file, 'r', encoding='utf-8', errors="ignore") as src:
             info = json.loads(src.read())
 
         if new_version_detected(info):
@@ -226,10 +225,11 @@ if __name__ == '__main__':
 
         LOG.info("'compiler_[includes/target].json' files detected.")
 
-        with io.open(includes_file, 'r', encoding='UTF-8') as src:
+        with open(includes_file, 'r',
+                  encoding='utf-8', errors="ignore") as src:
             includes = json.loads(src.read())
 
-        with io.open(target_file, 'r', encoding='UTF-8') as src:
+        with open(target_file, 'r', encoding='utf-8', errors="ignore") as src:
             target = json.loads(src.read())
 
         # Unify information from the two files.

@@ -8,9 +8,7 @@
 This module tests the correctness of the CppcheckAnalyzerResult, which
 used in sequence transform Cppcheck output to a plist file.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import os
 import plistlib
@@ -60,13 +58,13 @@ class CppcheckAnalyzerResultTestCase(unittest.TestCase):
 
         plist_file = os.path.join(self.cc_result_dir,
                                   'divide_zero_cppcheck.plist')
-        with open(plist_file) as pfile:
-            res = plistlib.readPlist(pfile)
+        with open(plist_file, mode='rb') as pfile:
+            res = plistlib.load(pfile)
 
         plist_file = os.path.join(self.test_files,
                                   'divide_zero.expected.plist')
-        with open(plist_file) as pfile:
-            exp = plistlib.readPlist(pfile)
+        with open(plist_file, mode='rb') as pfile:
+            exp = plistlib.load(pfile)
 
         self.assertEqual(res, exp)
 
@@ -77,12 +75,12 @@ class CppcheckAnalyzerResultTestCase(unittest.TestCase):
 
         plist_file = os.path.join(self.cc_result_dir,
                                   'divide_zero_cppcheck.plist')
-        with open(plist_file) as pfile:
-            res = plistlib.readPlist(pfile)
+        with open(plist_file, mode='rb') as pfile:
+            res = plistlib.load(pfile)
 
         plist_file = os.path.join(self.test_files,
                                   'divide_zero.expected.plist')
-        with open(plist_file) as pfile:
-            exp = plistlib.readPlist(pfile)
+        with open(plist_file, mode='rb') as pfile:
+            exp = plistlib.load(pfile)
 
         self.assertEqual(res, exp)

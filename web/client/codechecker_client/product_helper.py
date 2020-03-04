@@ -6,9 +6,7 @@
 """
 Helper for the product thrift api.
 """
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import division
+
 
 from thrift.transport import THttpClient
 from thrift.protocol import TJSONProtocol

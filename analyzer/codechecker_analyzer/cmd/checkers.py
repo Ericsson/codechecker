@@ -6,9 +6,7 @@
 """
 List the checkers available in the analyzers.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import argparse
 import os
@@ -65,8 +63,12 @@ def get_warnings(env=None):
 
     command = [diagtool_bin, 'tree']
     try:
-        result = subprocess.check_output(command, env=env,
-                                         universal_newlines=True)
+        result = subprocess.check_output(
+            command,
+            env=env,
+            universal_newlines=True,
+            encoding="utf-8",
+            errors="ignore")
         return parse_warnings(result)
     except (subprocess.CalledProcessError, OSError):
         return []
@@ -223,7 +225,7 @@ def main(args):
                 header = ['profile_name', 'description']
 
         rows = []
-        for (profile, description) in context.available_profiles.items():
+        for profile, description in context.available_profiles.items():
             if 'details' not in args:
                 rows.append([profile])
             else:

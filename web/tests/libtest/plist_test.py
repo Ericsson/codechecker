@@ -6,11 +6,7 @@
 # -----------------------------------------------------------------------------
 """Plist report file modifications functions for the tests."""
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
-import io
 import os
 import plistlib
 
@@ -24,13 +20,11 @@ def prefix_file_path(plist_file, path_prefix):
     report sections refer to the source files by index in the plist.
     """
     print("rewriting %s", plist_file)
-    with io.open(plist_file, 'r+') as report_file:
-        report_data = plistlib.readPlistFromString(report_file.read())
-        report_file.seek(0)
+    with open(plist_file, 'rb') as report_file:
+        report_data = plistlib.loads(report_file.read())
 
         for i, _ in enumerate(report_data["files"]):
             report_data["files"][i] = os.path.join(path_prefix,
                                                    report_data["files"][i])
-        plist_str = plistlib.writePlistToString(report_data)
-        report_file.truncate(0)  # clean the file content
-        report_file.write(plist_str.decode("utf-8"))
+    with open(plist_file, 'wb') as report_file:
+        plistlib.dump(report_data, report_file)

@@ -6,9 +6,7 @@
 """
 Prepare and start different analysis types
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 from multiprocessing.managers import SyncManager
 import os
@@ -77,13 +75,22 @@ def __get_analyzer_version(context, analyzer_config_map):
     versions = {}
     for _, analyzer_cfg in analyzer_config_map.items():
         analyzer_bin = analyzer_cfg.analyzer_binary
-        version = [analyzer_bin, u' --version']
+        version = [analyzer_bin, ' --version']
         try:
-            output = subprocess.check_output(shlex.split(' '.join(version)),
-                                             env=check_env,
-                                             universal_newlines=True)
+            output = subprocess.check_output(
+                shlex.split(
+                    ' '.join(version)),
+                env=check_env,
+                universal_newlines=True,
+                encoding="utf-8",
+                errors="ignore")
             versions[analyzer_bin] = output
-        except (subprocess.CalledProcessError, OSError) as oerr:
+        except subprocess.CalledProcessError as oerr:
+            LOG.warning("Failed to get analyzer version: %s",
+                        ' '.join(version))
+            LOG.warning(oerr.output)
+            LOG.warning(oerr.stderr)
+        except OSError as oerr:
             LOG.warning("Failed to get analyzer version: %s",
                         ' '.join(version))
             LOG.warning(oerr.strerror)

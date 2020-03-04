@@ -7,9 +7,7 @@
 """
 Authentication tests.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import json
 import os
@@ -189,7 +187,8 @@ class DictAuth(unittest.TestCase):
                      report_file]
 
         with self.assertRaises(subprocess.CalledProcessError):
-            subprocess.check_output(store_cmd)
+            subprocess.check_output(
+                store_cmd, encoding="utf-8", errors="ignore")
 
     def test_group_auth(self):
         """
@@ -258,7 +257,10 @@ class DictAuth(unittest.TestCase):
                          '--url', env.parts_to_url(codechecker_cfg)]
 
         with self.assertRaises(subprocess.CalledProcessError):
-            subprocess.check_output(new_token_cmd)
+            subprocess.check_output(
+                new_token_cmd,
+                encoding="utf-8",
+                errors="ignore")
 
         # Login to the server.
         auth_client = env.setup_auth_client(self._test_workspace,
@@ -279,14 +281,18 @@ class DictAuth(unittest.TestCase):
         cred_manager.save_token(host, port, session_token)
 
         # Run the new token command after login.
-        subprocess.check_output(new_token_cmd)
+        subprocess.check_output(
+            new_token_cmd,
+            encoding="utf-8",
+            errors="ignore")
 
         # List personal access tokens.
         list_token_cmd = [env.codechecker_cmd(), 'cmd', 'token', 'list',
                           '--url', env.parts_to_url(codechecker_cfg),
                           '-o', 'json']
 
-        out_json = subprocess.check_output(list_token_cmd)
+        out_json = subprocess.check_output(
+            list_token_cmd, encoding="utf-8", errors="ignore")
         tokens = json.loads(out_json)
         self.assertEqual(len(tokens), 1)
 
@@ -295,6 +301,9 @@ class DictAuth(unittest.TestCase):
                          '--url', env.parts_to_url(codechecker_cfg),
                          tokens[0]['token']]
 
-        subprocess.check_output(del_token_cmd)
+        subprocess.check_output(
+            del_token_cmd,
+            encoding="utf-8",
+            errors="ignore")
 
         cred_manager.save_token(host, port, session_token, True)

@@ -4,8 +4,6 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
-from __future__ import print_function
-from __future__ import absolute_import
 
 from collections import defaultdict
 # pylint: disable=no-name-in-module
@@ -259,7 +257,7 @@ def filter_compiler_includes_extra_args(compiler_flags):
     # be forwarded to get_compiler_includes and get_compiler_defines so the
     # resulting includes point to the target that was used in the build.
     pattern = re.compile('-m(32|64)|-std=|-stdlib=|-nostdinc')
-    extra_opts = filter(pattern.match, compiler_flags)
+    extra_opts = list(filter(pattern.match, compiler_flags))
 
     pos = next((pos for pos, val in enumerate(compiler_flags)
                 if val.startswith('--sysroot')), None)
@@ -310,11 +308,14 @@ class ImplicitCompilerInfo(object):
         or None in case of error.
         """
         try:
-            proc = subprocess.Popen(shlex.split(cmd),
-                                    stdin=subprocess.PIPE,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE,
-                                    universal_newlines=True)
+            proc = subprocess.Popen(
+                shlex.split(cmd),
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
+                encoding="utf-8",
+                errors="ignore")
 
             _, err = proc.communicate("")
             return err
@@ -375,7 +376,7 @@ class ImplicitCompilerInfo(object):
         include_dirs = \
             ICI.__parse_compiler_includes(ICI.__get_compiler_err(cmd))
 
-        return map(os.path.normpath, include_dirs)
+        return list(map(os.path.normpath, include_dirs))
 
     @staticmethod
     def get_compiler_target(compiler):
@@ -415,7 +416,7 @@ class ImplicitCompilerInfo(object):
                     is fetched.
         language -- The programming lenguage being compiled (e.g. 'c' or 'c++')
         """
-        VERSION_C = u"""
+        VERSION_C = """
 #ifdef __STDC_VERSION__
 #  if __STDC_VERSION__ >= 201710L
 #    error CC_FOUND_STANDARD_VER#17
@@ -433,7 +434,7 @@ class ImplicitCompilerInfo(object):
 #endif
         """
 
-        VERSION_CPP = u"""
+        VERSION_CPP = """
 #ifdef __cplusplus
 #  if __cplusplus >= 201703L
 #    error CC_FOUND_STANDARD_VER#17
@@ -454,7 +455,8 @@ class ImplicitCompilerInfo(object):
         standard = ""
         with tempfile.NamedTemporaryFile(
                 mode='w+',
-                suffix=('.c' if language == 'c' else '.cpp')) as source:
+                suffix=('.c' if language == 'c' else '.cpp'),
+                encoding='utf-8') as source:
 
             with source.file as f:
                 f.write(VERSION_C if language == 'c' else VERSION_CPP)
@@ -499,7 +501,7 @@ class ImplicitCompilerInfo(object):
         if c_lang_data:
             for element in map(shlex.split,
                                c_lang_data.get("compiler_includes")):
-                element = filter(lambda x: x != '-isystem', element)
+                element = [x for x in element if x != '-isystem']
                 ICI.compiler_info[compiler][ICI.c()]['compiler_includes'] \
                     .extend(element)
             ICI.compiler_info[compiler][ICI.c()]['compiler_standard'] = \
@@ -513,7 +515,7 @@ class ImplicitCompilerInfo(object):
         if cpp_lang_data:
             for element in map(shlex.split,
                                cpp_lang_data.get('compiler_includes')):
-                element = filter(lambda x: x != '-isystem', element)
+                element = [x for x in element if x != '-isystem']
                 ICI.compiler_info[compiler][ICI.cpp()]['compiler_includes'] \
                     .extend(element)
             ICI.compiler_info[compiler][ICI.cpp()]['compiler_standard'] = \
@@ -1054,12 +1056,12 @@ def parse_options(compilation_db_entry,
     if not keep_gcc_include_fixed:
         for lang, includes in details['compiler_includes'].items():
             details['compiler_includes'][lang] = \
-                filter(__is_not_include_fixed, includes)
+                list(filter(__is_not_include_fixed, includes))
 
     if not keep_gcc_intrin:
         for lang, includes in details['compiler_includes'].items():
             details['compiler_includes'][lang] = \
-                filter(__contains_no_intrinsic_headers, includes)
+                list(filter(__contains_no_intrinsic_headers, includes))
 
         # filter out intrin directories
         aop_without_intrin = []
@@ -1075,7 +1077,7 @@ def parse_options(compilation_db_entry,
                     value = aopt[len(flag):]
                 else:
                     flag = aopt
-                    value = analyzer_options.next()
+                    value = next(analyzer_options)
                 if os.path.isdir(value) and __contains_no_intrinsic_headers(
                         value) or not os.path.isdir(value):
                     if together:
@@ -1096,12 +1098,11 @@ def process_response_file(response_file):
     """
     Return list of options and source files from the given response file.
     """
-    with open(response_file) as r_file:
+    with open(response_file, encoding="utf-8", errors="ignore") as r_file:
         options = shlex.split(r_file)
 
-    sources = filter(lambda opt: not opt.startswith('-') and
-                     os.path.splitext(opt)[1].lower() in SOURCE_EXTENSIONS,
-                     options)
+    sources = [opt for opt in options if not opt.startswith('-') and
+               os.path.splitext(opt)[1].lower() in SOURCE_EXTENSIONS]
 
     return options, sources
 
@@ -1309,7 +1310,8 @@ def parse_unique_log(compilation_database,
                     sys.exit(1)
 
         compiler_info_out = os.path.join(report_dir, "compiler_info.json")
-        with open(compiler_info_out, 'w') as f:
+        with open(compiler_info_out, 'w',
+                  encoding="utf-8", errors="ignore") as f:
             LOG.debug("Writing compiler info into:"+compiler_info_out)
             json.dump(ImplicitCompilerInfo.get(), f)
 

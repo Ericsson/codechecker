@@ -7,9 +7,7 @@
 """
 cppcheck tests.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import json
 import os
@@ -62,16 +60,18 @@ class CppCheck(unittest.TestCase):
                      '--url', env.parts_to_url(codechecker_cfg),
                      temp_workspace]
 
-        out = subprocess.check_output(store_cmd)
+        out = subprocess.check_output(
+            store_cmd, encoding="utf-8", errors="ignore")
         print(out)
         query_cmd = [env.codechecker_cmd(), 'cmd', 'results', run_name,
                      # Use the 'Default' product.
                      '--url', env.parts_to_url(codechecker_cfg), '-o', 'json']
 
-        out = subprocess.check_output(query_cmd)
+        out = subprocess.check_output(
+            query_cmd, encoding="utf-8", errors="ignore")
         print(out)
         reports = json.loads(out)
-        self.assertEquals(len(reports), 5)
+        self.assertEqual(len(reports), 5)
         # The stored hash should not be "0".
         for report in reports:
-            self.assertNotEquals(report['bugHash'], "0")
+            self.assertNotEqual(report['bugHash'], "0")

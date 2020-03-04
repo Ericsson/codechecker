@@ -7,9 +7,7 @@
 """
 Test if the subprocess timeout watcher works properly.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import os
 import signal
@@ -32,10 +30,13 @@ class subprocess_timeoutTest(unittest.TestCase):
         gracefully before the timeout expired.
         """
         # Create a process that executes quickly.
-        proc = subprocess.Popen(['echo', 'This process executes quickly!'],
+        proc = subprocess.Popen(['echo',
+                                 'This process executes quickly!'],
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
-                                preexec_fn=os.setpgrp)
+                                preexec_fn=os.setpgrp,
+                                encoding="utf-8",
+                                errors="ignore")
         print("Started `echo` with PID {0}".format(proc.pid))
 
         future = setup_process_timeout(proc, 5, signal.SIGKILL)
@@ -55,10 +56,14 @@ class subprocess_timeoutTest(unittest.TestCase):
         and properly reports that it was killed.
         """
         # Create a process that runs infinitely.
-        proc = subprocess.Popen(['sh', '-c', 'yes'],
+        proc = subprocess.Popen(['sh',
+                                 '-c',
+                                 'yes'],
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
-                                preexec_fn=os.setpgrp)
+                                preexec_fn=os.setpgrp,
+                                encoding="utf-8",
+                                errors="ignore")
         print("Started `yes` with PID {0}".format(proc.pid))
 
         future = setup_process_timeout(proc, 5)
@@ -88,6 +93,6 @@ class subprocess_timeoutTest(unittest.TestCase):
                 raise psutil.NoSuchProcess(proc.pid)
 
         # NOTE: This assertion is only viable on Unix systems!
-        self.assertEquals(proc.returncode, -signal.SIGTERM,
-                          "`yes` died in a way that it wasn't the process "
-                          "timeout watcher killing it.")
+        self.assertEqual(proc.returncode, -signal.SIGTERM,
+                         "`yes` died in a way that it wasn't the process "
+                         "timeout watcher killing it.")

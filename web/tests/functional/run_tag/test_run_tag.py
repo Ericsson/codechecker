@@ -5,9 +5,7 @@
 #   License. See LICENSE.TXT for details.
 # -----------------------------------------------------------------------------
 """ Run tag function test. """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import json
 import os
@@ -56,9 +54,11 @@ class TestRunTag(unittest.TestCase):
             "build_cmd": "make"
         }
 
-        with open(os.path.join(self._test_dir, 'Makefile'), 'w') as f:
+        with open(os.path.join(self._test_dir, 'Makefile'), 'w',
+                  encoding="utf-8", errors="ignore") as f:
             f.write(makefile)
-        with open(os.path.join(self._test_dir, 'project_info.json'), 'w') as f:
+        with open(os.path.join(self._test_dir, 'project_info.json'), 'w',
+                  encoding="utf-8", errors="ignore") as f:
             json.dump(project_info, f)
 
         self.sources = ["""
@@ -84,7 +84,8 @@ int main()
         os.chdir(self.__old_pwd)
 
     def _create_source_file(self, version, run_name):
-        with open(os.path.join(self._test_dir, self._source_file), 'w') as f:
+        with open(os.path.join(self._test_dir, self._source_file), 'w',
+                  encoding="utf-8", errors="ignore") as f:
             f.write(self.sources[version])
 
         self._codechecker_cfg['tag'] = self.tags[version]

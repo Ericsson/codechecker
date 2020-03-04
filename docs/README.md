@@ -26,6 +26,10 @@ Static Analyzer](http://clang-analyzer.llvm.org) toolchain, replacing
 [`scan-build`](http://clang-analyzer.llvm.org/scan-build.html) in a Linux or
 macOS (OS X) development environment.
 
+**CodeChecker is ported to Python3!**  
+**No Python2 support is planned. The minimal required Python3 version is 3.6.**  
+**Old virtual environments needs to be removed!**
+
 ![Web interface showing list of analysed projects and bugs](images/demo.gif)
 
 
@@ -86,7 +90,7 @@ The following commands are used to bootstrap CodeChecker on Ubuntu 18.04 LTS:
 # Install mandatory dependencies for a development and analysis environment.
 # NOTE: clang or clang-tidy can be replaced by any later versions of LLVM/Clang.
 sudo apt-get install clang clang-tidy build-essential curl doxygen gcc-multilib \
-      git python-virtualenv python-dev
+      git python-virtualenv python3-dev
 
 # Check out CodeChecker source code.
 git clone https://github.com/Ericsson/CodeChecker.git --depth 1 ~/codechecker
@@ -121,7 +125,7 @@ out-of-the-box. To fix this issue, run the following command to upgrade your
 
 ```sh
 cd ~/codechecker/venv
-virtualenv -p /usr/bin/python2.7 .
+virtualenv -p /usr/bin/python3 .
 ```
 
 ## Mac OS X
@@ -152,7 +156,7 @@ OS X El Capitan 10.11, macOS Sierra 10.12 and macOS High Sierra 10.13.
 # Download and install dependencies.
 brew update
 brew install doxygen gcc git
-pip2 install virtualenv
+pip3 install virtualenv
 
 # Install the latest clang see: https://formulae.brew.sh/formula/llvm
 brew install llvm@7

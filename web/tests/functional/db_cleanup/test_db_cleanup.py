@@ -7,11 +7,8 @@
 """
 Test database cleanup.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
-import io
+
 import json
 import multiprocessing
 import os
@@ -72,13 +69,17 @@ int f(int x) { return 1 / x; }
 
         os.makedirs(os.path.join(self.test_dir, 'a'))
 
-        with open(os.path.join(self.test_dir, 'Makefile'), 'w') as f:
+        with open(os.path.join(self.test_dir, 'Makefile'), 'w',
+                  encoding="utf-8", errors="ignore") as f:
             f.write(makefile)
-        with open(os.path.join(self.test_dir, 'project_info.json'), 'w') as f:
+        with open(os.path.join(self.test_dir, 'project_info.json'), 'w',
+                  encoding="utf-8", errors="ignore") as f:
             json.dump(project_info, f)
-        with open(os.path.join(self.test_dir, 'a', 'main.cpp'), 'w') as f:
+        with open(os.path.join(self.test_dir, 'a', 'main.cpp'), 'w',
+                  encoding="utf-8", errors="ignore") as f:
             f.write(source_main)
-        with open(os.path.join(self.test_dir, 'a', 'f.h'), 'w') as f:
+        with open(os.path.join(self.test_dir, 'a', 'f.h'), 'w',
+                  encoding="utf-8", errors="ignore") as f:
             f.write(source_f)
 
     def __rename_project_dir(self):
@@ -87,7 +88,8 @@ int f(int x) { return 1 / x; }
 
         makefile = "all:\n\t$(CXX) -c b/main.cpp -o /dev/null\n"
 
-        with open(os.path.join(self.test_dir, 'Makefile'), 'w') as f:
+        with open(os.path.join(self.test_dir, 'Makefile'), 'w',
+                  encoding="utf-8", errors="ignore") as f:
             f.write(makefile)
 
     def __get_files_in_report(self):
@@ -109,8 +111,8 @@ int f(int x) { return 1 / x; }
         details = self._cc_client.getReportDetails(reports[0].reportId)
 
         files = set()
-        files.update(map(lambda bp: bp.fileId, details.pathEvents))
-        files.update(map(lambda bp: bp.fileId, details.executionPath))
+        files.update([bp.fileId for bp in details.pathEvents])
+        files.update([bp.fileId for bp in details.executionPath])
 
         file_ids = set()
         for file_id in files:
@@ -136,7 +138,8 @@ int f(int x) { return 1 / x; }
             = self._cc_client.getRunResults([run_id], 10, 0, [], None, None,
                                             False)
 
-        with open(self.workspace_severity_cfg, 'r') as severity_cgf_file:
+        with open(self.workspace_severity_cfg, 'r',
+                  encoding="utf-8", errors="ignore") as severity_cgf_file:
             severity_map = json.load(severity_cgf_file)
             for report in reports:
                 severity_id = severity_map.get(report.checkerId, 'UNSPECIFIED')
@@ -183,13 +186,14 @@ int f(int x) { return 1 / x; }
         event.clear()
 
         # Change severity level of core.DivideZero to LOW.
-        with io.open(self.workspace_severity_cfg, 'r+') as severity_cgf_file:
+        with open(self.workspace_severity_cfg, 'r+',
+                  encoding='utf-8', errors='ignore') as severity_cgf_file:
             severity_map = json.load(severity_cgf_file)
             severity_map['core.DivideZero'] = 'LOW'
 
             severity_cgf_file.seek(0)
             severity_cgf_file.truncate()
-            severity_cgf_file.write(unicode(json.dumps(severity_map)))
+            severity_cgf_file.write(str(json.dumps(severity_map)))
 
         self.codechecker_cfg['viewer_port'] = env.get_free_port()
         env.export_test_cfg(self.test_workspace,

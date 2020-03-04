@@ -6,15 +6,11 @@
 """
 Handle Thrift requests.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+
 
 import base64
-import codecs
 from collections import defaultdict
 from datetime import datetime, timedelta
-import io
 import os
 import re
 import shlex
@@ -42,6 +38,7 @@ from codechecker_common.logger import get_logger
 from codechecker_common.report import get_report_path_hash
 
 from codechecker_web.shared import webserver_context
+from codechecker_web.shared import convert
 
 from codechecker_server.profiler import timeit
 
@@ -93,6 +90,8 @@ def verify_limit_range(limit):
     Max is returned if the value is larger than max.
     """
     max_query_limit = constants.MAX_QUERY_SIZE
+    if not limit:
+        return max_query_limit
     if limit > max_query_limit:
         LOG.warning('Query limit %d was larger than max query limit %d, '
                     'setting limit to %d',
@@ -166,7 +165,7 @@ def get_component_values(session, component_name):
     include = []
 
     for component in components:
-        values = component.value.split('\n')
+        values = component.value.decode('utf-8').split('\n')
         for value in values:
             v = value[1:].strip()
             if value[0] == '+':
@@ -520,7 +519,7 @@ def unzip(b64zip, output_dir):
 def create_review_data(review_status):
     if review_status:
         return ReviewData(status=review_status_enum(review_status.status),
-                          comment=review_status.message,
+                          comment=review_status.message.decode('utf-8'),
                           author=review_status.author,
                           date=str(review_status.date))
     else:
@@ -779,7 +778,7 @@ class ThriftRequestHandler(object):
         user = self.__get_username()
         return Comment(bug_id,
                        user,
-                       message,
+                       message.encode('utf-8'),
                        kind,
                        datetime.now())
 
@@ -927,7 +926,7 @@ class ThriftRequestHandler(object):
             if not history or not history[0]:
                 return ""
 
-        return zlib.decompress(history[0])
+        return zlib.decompress(history[0]).decode('utf-8')
 
     @exc_to_thrift_reqfail
     @timeit
@@ -1053,7 +1052,7 @@ class ThriftRequestHandler(object):
 
                 if self.__product.driver_name == 'postgresql':
                     new_hashes = select([func.unnest(report_hashes)
-                                        .label('bug_id')]) \
+                                         .label('bug_id')]) \
                         .except_(base_hashes).alias('new_bugs')
                     return [res[0] for res in session.query(new_hashes)]
                 else:
@@ -1069,7 +1068,7 @@ class ThriftRequestHandler(object):
                                              chunk_size)]:
                         new_hashes_query = union_all(*[
                             select([bindparam('bug_id' + str(i), h)
-                                   .label('bug_id')])
+                                    .label('bug_id')])
                             for i, h in enumerate(chunk)])
                         q = select([new_hashes_query]).except_(base_hashes)
                         new_hashes.extend([res[0] for res in session.query(q)])
@@ -1107,7 +1106,6 @@ class ThriftRequestHandler(object):
 
         with DBSession(self.__Session) as session:
             results = []
-
             diff_hashes = None
             if cmp_data:
                 diff_hashes, run_ids = self._cmp_helper(session,
@@ -1271,6 +1269,9 @@ class ThriftRequestHandler(object):
           counts will be calculated for all of the available runs.
         """
         self.__require_access()
+
+        limit = verify_limit_range(limit)
+
         results = []
         with DBSession(self.__Session) as session:
             filter_expression = process_report_filter(session, report_filter)
@@ -1462,8 +1463,7 @@ class ThriftRequestHandler(object):
 
                 context = webserver_context.get_context()
                 for comment in comments:
-                    message = comment.message
-
+                    message = comment.message.decode('utf-8')
                     sys_comment = comment_kind_from_thrift_type(
                         ttypes.CommentKind.SYSTEM)
                     if comment.kind == sys_comment:
@@ -1563,9 +1563,10 @@ class ThriftRequestHandler(object):
                         'Unathorized comment modification!')
 
                 # Create system comment if the message is changed.
-                if comment.message != content:
+                message = comment.message.decode('utf-8')
+                if message != content:
                     system_comment_msg = 'comment_changed {0} {1}'.format(
-                        escape_whitespaces(comment.message),
+                        escape_whitespaces(message),
                         escape_whitespaces(content))
 
                     system_comment = \
@@ -1574,7 +1575,7 @@ class ThriftRequestHandler(object):
                                            CommentKindValue.SYSTEM)
                 session.add(system_comment)
 
-                comment.message = content
+                comment.message = content.encode('utf-8')
                 session.add(comment)
 
                 session.commit()
@@ -1645,7 +1646,9 @@ class ThriftRequestHandler(object):
             if md_file:
                 md_file = os.path.join(self.__checker_md_docs, md_file)
                 try:
-                    with io.open(md_file, 'r') as md_content:
+                    with open(md_file, 'r',
+                              encoding='utf-8',
+                              errors='ignore') as md_content:
                         missing_doc = md_content.read()
                 except (IOError, OSError):
                     LOG.warning("Failed to read checker documentation: %s",
@@ -1678,14 +1681,12 @@ class ThriftRequestHandler(object):
                 cont = session.query(FileContent).get(sourcefile.content_hash)
                 source = zlib.decompress(cont.content)
 
-                if not encoding or encoding == Encoding.DEFAULT:
-                    source = codecs.decode(source, 'utf-8', 'replace')
-                elif encoding == Encoding.BASE64:
+                if encoding == Encoding.BASE64:
                     source = base64.b64encode(source)
 
                 return SourceFileData(fileId=sourcefile.id,
                                       filePath=sourcefile.filepath,
-                                      fileContent=source)
+                                      fileContent=source.decode('utf-8'))
             else:
                 return SourceFileData(fileId=sourcefile.id,
                                       filePath=sourcefile.filepath)
@@ -1695,18 +1696,16 @@ class ThriftRequestHandler(object):
     def getLinesInSourceFileContents(self, lines_in_files_requested, encoding):
         self.__require_access()
         with DBSession(self.__Session) as session:
-
             res = defaultdict(lambda: defaultdict(str))
             for lines_in_file in lines_in_files_requested:
                 sourcefile = session.query(File).get(lines_in_file.fileId)
                 cont = session.query(FileContent).get(sourcefile.content_hash)
-                lines = zlib.decompress(cont.content).split('\n')
+                lines = zlib.decompress(
+                    cont.content).decode('utf-8').split('\n')
                 for line in lines_in_file.lines:
                     content = '' if len(lines) < line else lines[line - 1]
-                    if not encoding or encoding == Encoding.DEFAULT:
-                        content = codecs.decode(content, 'utf-8', 'replace')
-                    elif encoding == Encoding.BASE64:
-                        content = base64.b64encode(content)
+                    if encoding == Encoding.BASE64:
+                        content = convert.to_b64(content)
                     res[lines_in_file.fileId][line] = content
 
             return res
@@ -1762,6 +1761,9 @@ class ThriftRequestHandler(object):
           will be used as a baseline excluding the runs in compare data.
         """
         self.__require_access()
+
+        limit = verify_limit_range(limit)
+
         results = []
         with DBSession(self.__Session) as session:
             diff_hashes = None
@@ -1868,6 +1870,9 @@ class ThriftRequestHandler(object):
           will be used as a baseline excluding the runs in compare data.
         """
         self.__require_access()
+
+        limit = verify_limit_range(limit)
+
         results = {}
         with DBSession(self.__Session) as session:
             diff_hashes = None
@@ -1974,6 +1979,9 @@ class ThriftRequestHandler(object):
           will be used as a baseline excluding the runs in compare data.
         """
         self.__require_access()
+
+        limit = verify_limit_range(limit)
+
         results = {}
         with DBSession(self.__Session) as session:
             if cmp_data:
@@ -2145,7 +2153,9 @@ class ThriftRequestHandler(object):
             detection_stats = q.group_by(Report.detection_status).all()
 
             results = dict(detection_stats)
-            results = {detection_status_enum(k): v for k, v in results.items()}
+            results = {
+                detection_status_enum(k): v for k,
+                v in results.items()}
 
         return results
 
@@ -2323,7 +2333,6 @@ class ThriftRequestHandler(object):
         Adds a new source if it does not exist or updates an old one.
         """
         self.__require_admin()
-
         with DBSession(self.__Session) as session:
             component = session.query(SourceComponent).get(name)
             user = self.__auth_session.user if self.__auth_session else None
@@ -2334,7 +2343,7 @@ class ThriftRequestHandler(object):
                 component.user = user
             else:
                 component = SourceComponent(name,
-                                            value,
+                                            value.encode('utf-8'),
                                             description,
                                             user)
 
@@ -2360,10 +2369,9 @@ class ThriftRequestHandler(object):
 
             q = q.order_by(SourceComponent.name)
 
-            return list(map(lambda c:
-                            SourceComponentData(c.name,
-                                                c.value,
-                                                c.description), q))
+            return list([SourceComponentData(c.name,
+                                             c.value.decode('utf-8'),
+                                             c.description) for c in q])
 
     @exc_to_thrift_reqfail
     @timeit
@@ -2402,7 +2410,7 @@ class ThriftRequestHandler(object):
                 .filter(FileContent.content_hash.in_(file_hashes))
 
             return list(set(file_hashes) -
-                        set(map(lambda fc: fc.content_hash, q)))
+                        set([fc.content_hash for fc in q]))
 
     def __store_source_files(self, source_root, filename_to_hash,
                              trim_path_prefixes):
@@ -2472,7 +2480,7 @@ class ThriftRequestHandler(object):
         disabled_checkers = set()
         for analyzer_checkers in checkers.values():
             if isinstance(analyzer_checkers, dict):
-                for checker_name, enabled in analyzer_checkers.iteritems():
+                for checker_name, enabled in analyzer_checkers.items():
                     if enabled:
                         enabled_checkers.add(checker_name)
                     else:
@@ -2610,7 +2618,7 @@ class ThriftRequestHandler(object):
         reports_to_delete = set()
         for bug_hash, reports in hash_map_reports.items():
             if bug_hash in new_bug_hashes:
-                reports_to_delete.update(map(lambda x: x.id, reports))
+                reports_to_delete.update([x.id for x in reports])
             else:
                 for report in reports:
                     # We set the fix date of a report only if the report
@@ -2784,7 +2792,9 @@ class ThriftRequestHandler(object):
                 if os.path.exists(skip_file):
                     LOG.debug("Pocessing skip file %s", skip_file)
                     try:
-                        with open(skip_file) as sf:
+                        with open(skip_file,
+                                  encoding="utf-8",
+                                  errors="ignore") as sf:
                             skip_handler = \
                                 skiplist_handler.SkipListHandler(sf.read())
                     except (IOError, OSError) as err:
@@ -2921,18 +2931,16 @@ class ThriftRequestHandler(object):
             try:
                 product_dir = os.path.join(report_dir_store,
                                            self.__product.endpoint)
-
                 # Create report store directory.
                 if not os.path.exists(product_dir):
                     os.makedirs(product_dir)
 
                 # Removes and replaces special characters in the run name.
                 run_name = slugify(run_name)
-
                 run_zip_file = os.path.join(product_dir, run_name + '.zip')
-                with open(run_zip_file, 'w') as run_zip:
+                with open(run_zip_file, 'wb') as run_zip:
                     run_zip.write(zlib.decompress(
-                        base64.b64decode(b64zip)))
+                        base64.b64decode(b64zip.encode('utf-8'))))
                 return True
             except Exception as ex:
                 LOG.error(str(ex))
@@ -2963,10 +2971,10 @@ class ThriftRequestHandler(object):
                            Run.id == RunHistory.run_id)
 
             for stat, run_id in query:
-                failed_files = zlib.decompress(stat.failed_files).split('\n') \
-                    if stat.failed_files else None
-                analyzer_version = zlib.decompress(stat.version) \
-                    if stat.version else None
+                failed_files = zlib.decompress(stat.failed_files).decode(
+                    'utf-8').split('\n') if stat.failed_files else None
+                analyzer_version = zlib.decompress(
+                    stat.version).decode('utf-8') if stat.version else None
 
                 analyzer_statistics[stat.analyzer_type] = \
                     ttypes.AnalyzerStatistics(version=analyzer_version,

@@ -7,19 +7,18 @@
 """
 Tests for getting the run results.
 """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
-import base64
-import codecs
+
 import logging
 import os
 import re
 import unittest
+import codecs
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import Encoding, Order, \
     ReportFilter, SortMode, SortType, RunSortMode, RunSortType
+
+from codechecker_web.shared import convert
 
 from libtest.debug_printer import print_run_results
 from libtest.thrift_client_to_db import get_all_run_results
@@ -133,7 +132,6 @@ class RunResults(unittest.TestCase):
         Test unicode support the stored file can be decoded properly
         compare results form the database to the original file.
         """
-
         runid = self._runid
         report_filter = ReportFilter(checkerName=['*'], filepath=['*.c*'])
 
@@ -161,8 +159,8 @@ class RunResults(unittest.TestCase):
             file_content1 = file_data.fileContent
             self.assertIsNotNone(file_content1)
 
-            with codecs.open(run_res.checkedFile, 'r', 'UTF-8',
-                             'replace') as source_file:
+            with codecs.open(run_res.checkedFile, 'r', encoding='utf-8',
+                             errors='replace') as source_file:
                 file_content2 = source_file.read()
 
             self.assertEqual(file_content1, file_content2)
@@ -171,10 +169,9 @@ class RunResults(unittest.TestCase):
                 run_res.fileId, True, Encoding.BASE64)
             self.assertIsNotNone(file_data_b64)
 
-            file_content1_b64 = base64.b64decode(file_data_b64.fileContent)
+            file_content1_b64 = convert.from_b64(file_data_b64.fileContent)
             self.assertIsNotNone(file_content1_b64)
 
-            file_content2 = codecs.encode(file_content2, 'utf-8')
             self.assertEqual(file_content1_b64, file_content2)
 
         logging.debug('got ' + str(len(run_results)) + ' files')
