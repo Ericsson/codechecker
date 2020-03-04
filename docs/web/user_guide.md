@@ -1261,12 +1261,14 @@ The source code comment has the following format:
 ```
 
 Multiple source code comment types are allowed:
+
  * `codechecker_suppress`
  * `codechecker_false_positive`
  * `codechecker_intentional`
  * `codechecker_confirmed`
 
 Source code comment change the `review status` of a bug in the following form:
+
  * `codechecker_suppress` and `codechecker_false_positive` to `False positive`
  * `codechecker_intentional` to `Intentional`
  * `codechecker_confirmed` to `Confirmed`.

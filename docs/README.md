@@ -136,6 +136,7 @@ the compiler calls without turning off *System Integrity Protection (SIP)*.
 `intercept build` can automatically detect if SIP is turned off.
 
 You can turn off SIP on El Capitan this way:
+
   * Click the  (Apple) menu.
   * Select Restart...
   * Hold down command-R to boot into the Recovery System.
