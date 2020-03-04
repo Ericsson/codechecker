@@ -7,6 +7,7 @@
 """ detection_status function test. """
 
 
+import glob
 import json
 import os
 import unittest
@@ -32,6 +33,7 @@ class TestDetectionStatus(unittest.TestCase):
         # Get the CodeChecker cmd if needed for the tests.
         self._codechecker_cmd = env.codechecker_cmd()
         self._test_dir = os.path.join(self.test_workspace, 'test_files')
+        self._run_name = 'hello'
 
         try:
             os.makedirs(self._test_dir)
@@ -42,6 +44,12 @@ class TestDetectionStatus(unittest.TestCase):
         # Setup a viewer client to test viewer API calls.
         self._cc_client = env.setup_viewer_client(self.test_workspace)
         self.assertIsNotNone(self._cc_client)
+
+        # Remove all runs before the test cases.
+        runs = self._cc_client.getRunData(None, None, 0, None)
+        if runs:
+            run_id = max(map(lambda run: run.runId, runs))
+            self._cc_client.removeRun(run_id, None)
 
         # Change working dir to testfile dir so CodeChecker can be run easily.
         self.__old_pwd = os.getcwd()
@@ -122,19 +130,18 @@ int main()
             f.write(self.sources[version])
 
     def _check_source_file(self, cfg):
-        codechecker.check_and_store(cfg, 'hello', self._test_dir)
+        codechecker.check_and_store(cfg, self._run_name, self._test_dir)
 
-    def test_same_file_change(self):
+    def _create_clang_tidy_cfg_file(self, checkers):
+        """ This function will create a .clang-tidy config file. """
+        with open(os.path.join(self._test_dir, '.clang-tidy'), 'w') as f:
+            f.write("Checks: '{0}'".format(','.join(checkers)))
+
+    def __test_same_file_change(self):
         """
         This tests the change of the detection status of bugs when the file
         content changes.
         """
-        runs = self._cc_client.getRunData(None, None, 0, None)
-
-        if runs:
-            run_id = max([run.runId for run in runs])
-            self._cc_client.removeRun(run_id, None)
-
         # Check the first file version
         self._create_source_file(0)
         self._check_source_file(self._codechecker_cfg)
@@ -279,17 +286,10 @@ int main()
                 self.assertIn(report.bugHash,
                               ['ac147b31a745d91be093bd70bbc5567c'])
 
-    def test_check_without_metadata(self):
+    def __test_check_without_metadata(self):
         """
         This test checks whether the storage works without a metadata.json.
         """
-        runs = self._cc_client.getRunData(None, None, 0, None)
-        if runs:
-            run_id = max([run.runId for run in runs])
-
-            # Remove the run.
-            self._cc_client.removeRun(run_id, None)
-
         self._create_source_file(0)
 
         codechecker.log_and_analyze(self._codechecker_cfg,
@@ -318,17 +318,10 @@ int main()
 
         self.assertEqual(len(reports), 2)
 
-    def test_detection_status_off(self):
+    def _test_detection_status_off(self):
         """
         This test checks reports which have detection status of 'Off'.
         """
-        runs = self._cc_client.getRunData(None, None, 0, None)
-        if runs:
-            run_id = max([run.runId for run in runs])
-
-            # Remove the run.
-            self._cc_client.removeRun(run_id, None)
-
         cfg = dict(self._codechecker_cfg)
 
         self._create_source_file(0)
@@ -364,7 +357,7 @@ int main()
                                                 None,
                                                 None,
                                                 False)
-        print(reports)
+
         offed_reports = [r for r in reports
                          if r.detectionStatus == DetectionStatus.OFF]
         self.assertEqual(len(offed_reports), 1)
@@ -372,3 +365,71 @@ int main()
         unavail_reports = [r for r in reports
                            if r.detectionStatus == DetectionStatus.UNAVAILABLE]
         self.assertEqual(len(unavail_reports), 0)
+
+    def test_detection_status_off_with_cfg(self):
+        """ Test detection status with .clang-tidy config file. """
+        # Explicitly disable all modernize checkers from the command line but
+        # enable all hicpp and modernize checkers from the .clang-tidy file.
+        # If we store the results to the server than no reports will be marked
+        # as OFF.
+        cfg = dict(self._codechecker_cfg)
+        cfg['checkers'] = ['-d', 'modernize']
+
+        self._create_source_file(1)
+        self._create_clang_tidy_cfg_file(['-*', 'hicpp-*', 'modernize-*'])
+        self._check_source_file(cfg)
+
+        reports = self._cc_client.getRunResults(None, 100, 0, [], None, None,
+                                                False)
+
+        hicpp_results = [r for r in reports
+                         if r.checkerId.startswith('hicpp')]
+        self.assertEqual(len(hicpp_results), 1)
+
+        offed_reports = [r for r in reports
+                         if r.detectionStatus == DetectionStatus.OFF]
+        self.assertEqual(len(offed_reports), 0)
+
+        # Store the reports again to see that still no reports are marked as
+        # OFF (every report marked as Unresolved).
+        self._check_source_file(cfg)
+
+        reports = self._cc_client.getRunResults(None, 100, 0, [], None, None,
+                                                False)
+        self.assertTrue([r.detectionStatus == DetectionStatus.UNRESOLVED
+                         for r in reports])
+
+        # We turn off all the 'hicpp' checkers too. If we store the results to
+        # the server see that 'hicpp' results will be marked as 'OFF' now.
+        cfg['checkers'] = ['-d', 'modernize', '-d', 'hicpp']
+        self._check_source_file(cfg)
+
+        reports = self._cc_client.getRunResults(None, 100, 0, [], None, None,
+                                                False)
+
+        offed_reports = [r for r in reports
+                         if r.detectionStatus == DetectionStatus.OFF]
+        self.assertEqual(len(offed_reports), 1)
+
+        # We do not disable hicpp checkers from the command line, so it will
+        # be enabled by the .clang-tidy file. We analyze our test project and
+        # remove the plist files to see that every reports will be marked as
+        # Resolved.
+        # FIXME: Unfortunately it will not work because hicpp checkers will be
+        # disabled by the metadata.json config file so the server will mark
+        # these reports as OFF.
+        # A solution for this problem can be if we mark reports as OFF only and
+        # only if the user explicitly disabled a checker in the command line.
+        cfg['checkers'] = ['-d', 'modernize']
+        codechecker.analyze(cfg, self._test_dir)
+
+        # Remove all plist files.
+        report_dir = self._codechecker_cfg['reportdir']
+        for pfile in glob.glob(os.path.join(report_dir, '*.plist')):
+            os.remove(pfile)
+
+        codechecker.store(cfg, self._run_name)
+
+        offed_reports = [r for r in reports
+                         if r.detectionStatus == DetectionStatus.OFF]
+        self.assertEqual(len(offed_reports), 1)
