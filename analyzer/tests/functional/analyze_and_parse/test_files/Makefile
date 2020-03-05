@@ -31,3 +31,5 @@ compiler_warning_unused:
 	$(CXX) -w compiler_warning.cpp -Wunused -o /dev/null
 context_hash:
 	$(CXX) -w context_hash.cpp -o /dev/null
+collision:
+	$(CXX) -w filename_collision/main.cpp filename_collision/a/f.cpp filename_collision/b/f.cpp -o /dev/null

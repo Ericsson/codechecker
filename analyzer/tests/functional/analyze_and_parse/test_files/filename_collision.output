@@ -1,0 +1,45 @@
+[] - Starting build ...
+[] - Build finished successfully.
+[] - Starting static analysis ...
+[] - [1/3] clangsa analyzed f.cpp successfully.
+[] - [2/3] clangsa analyzed main.cpp successfully.
+[] - [3/3] clangsa analyzed f.cpp successfully.
+[] - ----==== Summary ====----
+[] - Successfully analyzed
+[] -   clangsa: 3
+[] - Total analyzed compilation commands: 3
+[] - ----=================----
+[] - Analysis finished.
+[] - To view results in the terminal use the "CodeChecker parse" command.
+[] - To store results use the "CodeChecker store" command.
+[] - See --help and the user guide for further options about parsing and storing the reports.
+[] - ----=================----
+Found no defects in main.cpp
+[HIGH] f.cpp:3:9: Dereference of undefined pointer value [core.NullDereference]
+    *pb = 42;
+        ^
+
+Found 1 defect(s) in f.cpp
+
+[HIGH] f.cpp:3:9: Dereference of undefined pointer value [core.NullDereference]
+    *pa = 42;
+        ^
+
+Found 1 defect(s) in f.cpp
+
+
+----==== Summary ====----
+-----------------------
+Filename | Report count
+-----------------------
+f.cpp    |            1
+f.cpp    |            1
+-----------------------
+-----------------------
+Severity | Report count
+-----------------------
+HIGH     |            2
+-----------------------
+----=================----
+Total number of reports: 2
+----=================----
