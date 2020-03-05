@@ -503,6 +503,7 @@ function (declare, domClass, dom, style, fx, Toggler, keys, on, query, Memory,
 
     _setFilepathAttr : function (filepath) {
       this.filepath.innerHTML = filepath;
+      this.filepath.title = "\u200E" + filepath;
     },
 
     _setSourceFileDataAttr : function (sourceFileData) {
