@@ -30,6 +30,7 @@ LDLOGGER_HEADERS =  \
 	src/ldlogger-hooks.h \
 	src/ldlogger-tool.h \
 	src/ldlogger-util.h
+
 LDLOGGER_SOURCES = \
 	src/ldlogger-logger.c \
 	src/ldlogger-tool.c \

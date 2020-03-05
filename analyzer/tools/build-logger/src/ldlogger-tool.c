@@ -7,6 +7,7 @@
  */
 
 #include "ldlogger-tool.h"
+#include "ldlogger-util.h"
 
 #include <stdlib.h>
 #include <assert.h>
@@ -157,6 +158,13 @@ int loggerCollectActionsByProgName(
   else if (matchToProgramList("CC_LOGGER_JAVAC_LIKE", prog_))
   {
     return loggerJavacParserCollectActions(prog_, argv_, actions_);
+  } else {
+    LOG_INFO("'%s' does not match any program name! Current environment "
+             "variables are: CC_LOGGER_GCC_LIKE (%s), "
+             "CC_LOGGER_JAVAC_LIKE(%s)",
+             prog_,
+             getenv("CC_LOGGER_GCC_LIKE"),
+             getenv("CC_LOGGER_JAVAC_LIKE"))
   }
 
   return 0;

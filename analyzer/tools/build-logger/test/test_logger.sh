@@ -8,6 +8,7 @@ export LD_PRELOAD=ldlogger.so
 export LD_LIBRARY_PATH=$logger_dir/lib:$LD_LIBRARY_PATH
 export CC_LOGGER_GCC_LIKE="gcc:g++:clang"
 export CC_LOGGER_FILE=/tmp/logger_test_compilation_database.json
+export CC_LOGGER_DEBUG_FILE=/tmp/logger_test_debug.log
 
 source_file_name=logger_test_source.cpp
 source_file=/tmp/$source_file_name
@@ -28,6 +29,7 @@ EOF
   sed -i -e '$a\' $CC_LOGGER_FILE
 
   diff $reference_file $CC_LOGGER_FILE
+  test -s $CC_LOGGER_DEBUG_FILE
 }
 
 #--- Test functions ---#
@@ -189,6 +191,7 @@ echo "int main() {}" > $source_file
 for func in $(declare -F); do
   if [[ $func =~ test_ ]]; then
     rm -f $CC_LOGGER_FILE
+    rm -rf $CC_LOGGER_DEBUG_FILE
     $func
 
     if [ $? -ne 0 ]; then

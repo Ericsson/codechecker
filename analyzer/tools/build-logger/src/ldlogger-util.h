@@ -13,6 +13,10 @@
 #include <linux/limits.h>
 #include <string.h>
 
+#define LOG_INFO(...) logPrint("INFO", __FILE__, __LINE__, __VA_ARGS__ );
+#define LOG_WARN(...) logPrint("WARNING", __FILE__, __LINE__, __VA_ARGS__ );
+#define LOG_ERROR(...) logPrint("ERROR", __FILE__, __LINE__, __VA_ARGS__ );
+
 /**
  * Predicts the size of the string after escaping including the closing \0
  * character. For example:
@@ -256,5 +260,37 @@ char* loggerGetFilePathWithoutExt(const char* absPath_);
  */
 char* loggerGetFileName(const char* absPath_, int withoutExt_);
 
-#endif /* __LOGGER_UTIL_H__ */
+/**
+ * Aquire lock for the given log file.
+ * @param logFile_ log file path.
+ * @return -1 on error, lock file descriptor on success.
+ */
+int aquireLock(char const* logFile_);
 
+/**
+ * Remove the given lock.
+ * @param lockFile_ lock file descriptor.
+ */
+void freeLock(int lockFile_);
+
+/**
+ * Print log messages to a file specified by the 'CC_LOGGER_DEBUG_FILE'
+ * environment variable. If this environment variable is not set it will do
+ * nothing.
+ *
+ * @param logLevel_ log level name.
+ * @param fileName_ file name from which the log is coming from.
+ * @param line_ line number at which the log function is called from.
+ * @param fmt_ Message that contains the text to be written to the stream. It
+ *  can optionally contain the follwing format tags:
+ *  - %s: string of characters.
+ *  - %d: signed decimal integer.
+ *  - %a': Array of strings. Two aguments must be passed when using this. The
+ *         first argument is the size of the array and the second argument
+ *         is the array itself.
+ *  These formatted tags will be replaced by the values specified in
+ *  subsequent additional arguments and formatted as requested.
+ */
+void logPrint(char* logLevel_, char* fileName_, int line_, char* fmt_, ...);
+
+#endif /* __LOGGER_UTIL_H__ */

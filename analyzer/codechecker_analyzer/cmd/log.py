@@ -86,7 +86,20 @@ def add_arguments_to_parser(parser):
                         help="Do not print the output of the build tool into "
                              "the output of this command.")
 
-    logger.add_verbose_arguments(parser)
+    parser.add_argument('--verbose',
+                        type=str,
+                        dest='verbose',
+                        choices=logger.CMDLINE_LOG_LEVELS,
+                        default=argparse.SUPPRESS,
+                        help="Set verbosity level. If the value is 'debug' or "
+                             "'debug_analyzer' it will create a "
+                             "'codechecker.logger.debug' debug log file "
+                             "beside the given output file. It will contain "
+                             "debug information of compilation database "
+                             "generation. You can override the location of "
+                             "this file if you set the 'CC_LOGGER_DEBUG_FILE' "
+                             "environment variable to a different file path.")
+
     parser.set_defaults(func=main)
 
 
@@ -102,8 +115,11 @@ def main(args):
         os.remove(args.logfile)
 
     context = analyzer_context.get_context()
+    verbose = args.verbose if 'verbose' in args else None
+
     build_manager.perform_build_command(args.logfile,
                                         args.command,
                                         context,
                                         'keep_link' in args,
-                                        silent='quiet' in args)
+                                        silent='quiet' in args,
+                                        verbose=verbose)

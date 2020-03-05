@@ -13,7 +13,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
-#include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -139,41 +138,6 @@ static void writeActions(FILE* stream_, char const* wd_, const LoggerVector* act
   fflush(stream_);
 }
 
-static int aquireLock(char const* logFile_)
-{
-  char lockFilePath[PATH_MAX];
-  int lockFile;
-
-  if (!loggerMakePathAbs(logFile_, lockFilePath, 0))
-  {
-    return -1;
-  }
-
-  strcat(lockFilePath, ".lock");
-  lockFile = open(lockFilePath, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
-  if (lockFile == -1)
-  {
-    return -1;
-  }
-
-  if (flock(lockFile, LOCK_EX) == -1)
-  {
-    close(lockFile);
-    return -1;
-  }
-
-  return lockFile;
-}
-
-static void freeLock(int lockFile_)
-{
-  if (lockFile_ != -1)
-  {
-    flock(lockFile_, LOCK_UN);
-    close(lockFile_);
-  }
-}
-
 static void logProgramArgs(
   FILE* stream_,
   char const* prog_,
@@ -186,6 +150,7 @@ static void logProgramArgs(
 
   if (!loggerMakePathAbs(".", workingDir, 1))
   {
+    LOG_WARN("Failed to convert current directory to absolute path!")
     return;
   }
 
@@ -198,6 +163,7 @@ static void logProgramArgs(
   }
   else
   {
+    LOG_WARN("Failed to convert argument vector to a NULL terminated list!")
     return;
   }
 
@@ -228,26 +194,32 @@ int logExec(int argc_, char const* argv_[])
   FILE* stream;
   char const* logFileEnv;
 
+  LOG_INFO("Processing command: %a", argc_, argv_);
+
   if (argc_ < 2)
   {
+    LOG_INFO("Too few arguments: %a", argc_, argv_);
     return -1;
   }
 
   logFileEnv = getenv("CC_LOGGER_FILE");
   if (!logFileEnv)
   {
+    LOG_ERROR("CC_LOGGER_FILE is not set!\n");
     return -3;
   }
 
   lockFd = aquireLock(logFileEnv);
   if (lockFd == -1)
   {
+    LOG_ERROR("Failed to aquire lock!\n");
     return -5;
   }
 
   logFd = open(logFileEnv, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
   if (logFd == -1)
   {
+    LOG_ERROR("Failed to open log file: %s", logFileEnv);
     freeLock(lockFd);
     return -7;
   }
@@ -255,6 +227,7 @@ int logExec(int argc_, char const* argv_[])
   stream = fdopen(logFd, "w+");
   if (!stream)
   {
+    LOG_ERROR("Failed to get log stream for file: %s", logFileEnv);
     close(logFd);
     freeLock(lockFd);
     return -9;

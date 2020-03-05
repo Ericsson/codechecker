@@ -8,12 +8,19 @@
 
 #include "ldlogger-util.h"
 
-#include <limits.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <unistd.h>
 #include <assert.h>
 #include <ctype.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
 
 static char* makePathAbsRec(const char* path_, char* resolved_)
 {
@@ -54,6 +61,25 @@ static char* makePathAbsRec(const char* path_, char* resolved_)
   }
 
   return NULL;
+}
+
+/**
+ * Returns formatted current time.
+ *
+ * @param buff_ an output buffer (non null).
+ * @return anways returns buff_.
+ */
+static void getCurrentTime(char* buff_)
+{
+  time_t rawtime;
+  struct tm* timeinfo;
+
+  time(&rawtime);
+  timeinfo = localtime(&rawtime);
+
+  strftime(buff_, 26, "%Y-%m-%d %H:%M:%S", timeinfo);
+
+  return buff_;
 }
 
 int predictEscapedSize(const char* str_)
@@ -473,4 +499,131 @@ char* loggerGetFileName(const char* absPath_, int withoutExt_)
   }
 
   return loggerStrDup(fileName);
+}
+
+int aquireLock(char const* logFile_)
+{
+  char lockFilePath[PATH_MAX];
+  int lockFile;
+
+  if (!loggerMakePathAbs(logFile_, lockFilePath, 0))
+  {
+    return -1;
+  }
+
+  strcat(lockFilePath, ".lock");
+  lockFile = open(lockFilePath, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+  if (lockFile == -1)
+  {
+    return -1;
+  }
+
+  if (flock(lockFile, LOCK_EX) == -1)
+  {
+    close(lockFile);
+    return -1;
+  }
+
+  return lockFile;
+}
+
+void freeLock(int lockFile_)
+{
+  if (lockFile_ != -1)
+  {
+    flock(lockFile_, LOCK_UN);
+    close(lockFile_);
+  }
+}
+
+void logPrint(char* logLevel_, char* fileName_, int line_, char *fmt_,...)
+{
+  const char* debugFile = getenv("CC_LOGGER_DEBUG_FILE");
+  if (!debugFile)
+  {
+    return 0;
+  }
+
+  int lockFd;
+  int logFd;
+  FILE* stream;
+
+  lockFd = aquireLock(debugFile);
+  if (lockFd == -1)
+  {
+    return -5;
+  }
+
+  logFd = open(debugFile, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+  if (logFd == -1)
+  {
+    freeLock(lockFd);
+    return -7;
+  }
+
+  stream = fdopen(logFd, "a");
+  if (!stream)
+  {
+    close(logFd);
+    freeLock(lockFd);
+    return -9;
+  }
+
+  char currentTime[26];
+  getCurrentTime(currentTime);
+
+  fprintf(stream, "[%s %s][%s:%d] - ", logLevel_, currentTime, fileName_,
+    line_);
+
+  char* p, *str, **items;
+  int num;
+  size_t i;
+
+  va_list args;
+  va_start(args, fmt_);
+  for (p = fmt_; *p; ++p)
+  {
+    if ( *p != '%' )
+    {
+      fputc(*p, stream);
+    }
+    else
+    {
+      switch ( *++p )
+      {
+        case 'a':
+        {
+          num = va_arg(args, int);
+          items = va_arg(args, char**);
+          for (i = 0; i < num; ++i)
+          {
+            fprintf(stream, "%s ", items[i]);
+          }
+          continue;
+        }
+        case 's':
+        {
+          str = va_arg(args, char *);
+          fprintf(stream, "%s", str);
+          continue;
+        }
+        case 'd':
+        {
+          num = va_arg(args, int);
+          fprintf(stream, "%d", num);
+          continue;
+        }
+        default:
+        {
+          fputc(*p, stream);
+        }
+      }
+    }
+  }
+  va_end(args);
+
+  fputc('\n', stream);
+
+  fclose(stream);
+  freeLock(lockFd);
 }
