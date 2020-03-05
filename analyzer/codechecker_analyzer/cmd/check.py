@@ -214,7 +214,7 @@ used to generate a log file on the fly.""")
                                default=argparse.SUPPRESS,
                                required=False,
                                choices=['context-free', 'context-free-v2'],
-                               help="Specify the hash calculation method "
+                               help="R|Specify the hash calculation method "
                                     "for reports. By default the calculation "
                                     "method for Clang Static Analyzer is "
                                     "context sensitive and for Clang Tidy it "

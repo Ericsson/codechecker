@@ -204,7 +204,7 @@ def add_arguments_to_parser(parser):
                         default=argparse.SUPPRESS,
                         required=False,
                         choices=['context-free', 'context-free-v2'],
-                        help="Specify the hash calculation method for "
+                        help="R|Specify the hash calculation method for "
                              "reports. By default the calculation method for "
                              "Clang Static Analyzer is context sensitive and "
                              "for Clang Tidy it is context insensitive.\n"
