@@ -135,6 +135,8 @@ export default {
               kind: ReportTreeKind.REPORT,
               report: report,
               children: [],
+              itemChildren: [],
+              isLoading: false,
               getChildren: item => {
                 return new Promise(resolve => {
                   ccService.getClient().getReportDetails(report.reportId,
@@ -163,6 +165,14 @@ export default {
 
     getChildren(item) {
       if (item.getChildren) {
+        // There is a todo in the source code of vuetify that it will try to
+        // load children every time if the response is empty.
+        // See: vuetify/src/components/VTreeview/VTreeviewNode.ts#L158-L159
+        // FIXME: if this problem will be solved, the isLoading property can
+        // be removed.
+        if (item.isLoading) return;
+
+        item.isLoading = true;
         return item.getChildren(item);
       }
       return item.children;
