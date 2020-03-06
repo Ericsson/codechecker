@@ -362,6 +362,31 @@ export CC_LOGGER_DEBUG_FILE="/path/to/codechecker.debug.log"
 ```
 
 
+### Change user inside the build command
+If we change user inside the build command of the CodeChecker log command
+before the actual compiler invocation, the compilation database will be empty:
+
+```sh
+CodeChecker log -o compile_commands.json -b "su myuser  -c 'g++ main.cpp -o /dev/null'"
+```
+
+The problem here is that the compilation database file and the lock file will
+be created with the user who runs the CodeChecker log command and only this
+user will have permission to read/write these files. A solution can be if we
+change a user before the CodeChecker log command:
+
+```sh
+# Create a directory for compilation database.
+mkdir -p log_dir
+
+# Change file owner of log_dir.
+chown myuser log_dir
+
+# Run the command.
+su myuser  -c "CodeChecker log -o log_dir/compile_commands.json -b 'g++ main.cpp -o /dev/null'"
+```
+
+
 ### BitBake
 Do the following steps to log compiler calls made by
 [BitBake](https://github.com/openembedded/bitbake) using CodeChecker.
