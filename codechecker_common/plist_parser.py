@@ -234,45 +234,56 @@ def fids_in_edge(edges):
     return fids
 
 
-def fids_in_path(report_data, file_ids_to_remove):
+def transform_diag_element(element, file_ids_to_remove, new_file_ids):
     """
-    Skip diagnostic sections and collect file ids in
-    report paths for the remaining diagnostic sections.
+    This function will update every file attribute of the given diagnostic
+    element.
+    On the first call it will get a diagnostic section dictionary and
+    recursively traverse all children of it. If the child element is a file
+    attribute it will update it by using the 'new_file_ids' dictionary.
+
+    It will return False if one of the file attribute is in the removable file
+    list. Otherwise it will return True.
     """
-    all_fids = []
+    if isinstance(element, dict):
+        for k, v in element.items():
+            if k == 'file':
+                if v in file_ids_to_remove:
+                    return False
+                else:
+                    element['file'] = new_file_ids[v]
+            else:
+                if not transform_diag_element(v, file_ids_to_remove,
+                                              new_file_ids):
+                    return False
+    elif isinstance(element, list) or isinstance(element, tuple):
+        for v in element:
+            if not transform_diag_element(v, file_ids_to_remove, new_file_ids):
+                return False
+
+    return True
+
+
+def get_kept_report_data(report_data, file_ids_to_remove):
+    """
+    This function will iterate over the diagnostic section of the given
+    report data and returns the list of diagnostics and files which should
+    be kept.
+    """
+    kept_files = []
+    new_file_ids = {}
+    all_files = report_data['files']
+    for idx, file in enumerate(all_files):
+        if idx not in file_ids_to_remove:
+            new_file_ids[idx] = len(kept_files)
+            kept_files.append(file)
 
     kept_diagnostics = []
-
     for diag in report_data['diagnostics']:
+        if transform_diag_element(diag, file_ids_to_remove, new_file_ids):
+            kept_diagnostics.append(diag)
 
-        if diag['location']['file'] in file_ids_to_remove:
-            continue
-
-        kept_diagnostics.append(diag)
-
-        for pe in diag['path']:
-            path_fids = []
-            try:
-                fids = fids_in_range(pe['ranges'])
-                path_fids.extend(fids)
-            except KeyError:
-                pass
-
-            try:
-                fid = pe['location']['file']
-                path_fids.append(fid)
-            except KeyError:
-                pass
-
-            try:
-                fids = fids_in_edge(pe['edges'])
-                path_fids.extend(fids)
-            except KeyError:
-                pass
-
-            all_fids.extend(path_fids)
-
-    return all_fids, kept_diagnostics
+    return kept_diagnostics, kept_files
 
 
 def remove_report_from_plist(plist_file_obj, skip_handler):
@@ -303,8 +314,10 @@ def remove_report_from_plist(plist_file_obj, skip_handler):
             if skip_handler.should_skip(f):
                 file_ids_to_remove.append(i)
 
-        _, kept_diagnostics = fids_in_path(report_data, file_ids_to_remove)
+        kept_diagnostics, kept_files = get_kept_report_data(report_data,
+                                                            file_ids_to_remove)
         report_data['diagnostics'] = kept_diagnostics
+        report_data['files'] = kept_files
 
         return plistlib.dumps(report_data)
 
