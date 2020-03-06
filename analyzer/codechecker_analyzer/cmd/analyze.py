@@ -78,14 +78,29 @@ def add_arguments_to_parser(parser):
                              "threads mean faster analysis at the cost of "
                              "using more memory.")
 
-    parser.add_argument('-i', '--ignore', '--skip',
-                        dest="skipfile",
-                        required=False,
-                        default=argparse.SUPPRESS,
-                        help="Path to the Skipfile dictating which project "
-                             "files should be omitted from analysis. Please "
-                             "consult the User guide on how a Skipfile "
-                             "should be laid out.")
+    skip_mode = parser.add_mutually_exclusive_group()
+    skip_mode.add_argument('-i', '--ignore', '--skip',
+                           dest="skipfile",
+                           required=False,
+                           default=argparse.SUPPRESS,
+                           help="Path to the Skipfile dictating which project "
+                                "files should be omitted from analysis. "
+                                "Please consult the User guide on how a "
+                                "Skipfile should be laid out.")
+
+    skip_mode.add_argument('--file',
+                           nargs='+',
+                           dest="files",
+                           metavar='FILE',
+                           required=False,
+                           default=argparse.SUPPRESS,
+                           help="Analyze only the given file(s) not the whole "
+                                "compilation database. Absolute directory "
+                                "paths should start with '/', relative "
+                                "directory paths should start with '*' and "
+                                "it can contain path glob pattern. "
+                                "Example: '/path/to/main.cpp', 'lib/*.cpp', "
+                                "*/test*'.")
 
     parser.add_argument('-o', '--output',
                         dest="output_path",
@@ -557,16 +572,25 @@ def check_config_file(args):
 def __get_skip_handler(args):
     """
     Initialize and return a skiplist handler if
-    there is a skip list file in the arguments.
+    there is a skip list file in the arguments or files options is provided.
     """
-    try:
-        if args.skipfile:
-            LOG.debug_analyzer("Creating skiplist handler.")
-            with open(args.skipfile,
-                      encoding="utf-8", errors="ignore") as skip_file:
-                return skiplist_handler.SkipListHandler(skip_file.read())
-    except AttributeError:
-        LOG.debug_analyzer('Skip file was not set in the command line')
+    skip_file_content = ""
+
+    if 'files' in args:
+        # Creates a skip file where all source files will be skipped except
+        # the given source files.
+        skip_files = ['+{0}'.format(f) for f in args.files]
+        skip_files.append('-*')
+
+        skip_file_content = "\n".join(skip_files)
+    elif 'skipfile' in args:
+        with open(args.skipfile,
+                  encoding="utf-8", errors="ignore") as skip_file:
+            skip_file_content = skip_file.read()
+
+    if skip_file_content:
+        LOG.debug_analyzer("Creating skiplist handler.")
+        return skiplist_handler.SkipListHandler(skip_file_content)
 
 
 def __update_skip_file(args):

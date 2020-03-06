@@ -84,7 +84,8 @@ usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-t {plist}] [-q] [-f]
                          [--keep-gcc-include-fixed] [--keep-gcc-intrin]
                          (-b COMMAND | -l LOGFILE) [-j JOBS] [-c]
                          [--compile-uniqueing COMPILE_UNIQUEING]
-                         [--report-hash {context-free}] [-i SKIPFILE]
+                         [--report-hash {context-free}]
+                         [-i SKIPFILE | --file FILE [FILE ...]]
                          [--analyzers ANALYZER [ANALYZER ...]]
                          [--add-compiler-defaults] [--capture-analysis-output]
                          [--saargs CLANGSA_ARGS_CFG_FILE]
@@ -184,6 +185,12 @@ analyzer arguments:
                         Path to the Skipfile dictating which project files
                         should be omitted from analysis. Please consult the
                         User guide on how a Skipfile should be laid out.
+  --file FILE [FILE ...]
+                        Analyze only the given file(s) not the whole
+                        compilation database. Absolute directory paths should
+                        start with '/', relative directory paths should start
+                        with '*' and it can contain path glob pattern.
+                        Example: '/path/to/main.cpp', 'lib/*.cpp', */test*'.
   --analyzers ANALYZER [ANALYZER ...]
                         Run analysis only with the analyzers specified.
                         Currently supported analyzers are: clangsa, clang-
@@ -470,7 +477,9 @@ CodeChecker analyze ../codechecker_myProject_build.log -o my_plists
 below:
 
 ```
-usage: CodeChecker analyze [-h] [-j JOBS] [-i SKIPFILE] -o OUTPUT_PATH
+usage: CodeChecker analyze [-h] [-j JOBS]
+                           [-i SKIPFILE | --file FILE [FILE ...]] -o
+                           OUTPUT_PATH
                            [--compiler-info-file COMPILER_INFO_FILE]
                            [--keep-gcc-include-fixed] [--keep-gcc-intrin]
                            [-t {plist}] [-q] [-c]
@@ -507,6 +516,12 @@ optional arguments:
                         Path to the Skipfile dictating which project files
                         should be omitted from analysis. Please consult the
                         User guide on how a Skipfile should be laid out.
+  --file FILE [FILE ...]
+                        Analyze only the given file(s) not the whole
+                        compilation database. Absolute directory paths should
+                        start with '/', relative directory paths should start
+                        with '*' and it can contain path glob pattern.
+                        Example: '/path/to/main.cpp', 'lib/*.cpp', */test*'.
   -o OUTPUT_PATH, --output OUTPUT_PATH
                         Store the analysis output in the given folder.
   --compiler-info-file COMPILER_INFO_FILE
