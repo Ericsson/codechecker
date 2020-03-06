@@ -14,6 +14,15 @@
         mdi-file-document-box-outline
       </v-icon>
     </template>
+
+    <template v-slot:title="{ item }">
+      <v-list-item-title
+        class="mr-1 filter-item-title"
+        :title="`\u200E${item.title}`"
+      >
+        &lrm;{{ item.title }}&lrm;
+      </v-list-item-title>
+    </template>
   </select-option>
 </template>
 
@@ -84,3 +93,10 @@ export default {
   }
 };
 </script>
+
+<style lang="scss" scoped>
+.filter-item-title {
+  direction: rtl;
+  text-align: left;
+}
+</style>

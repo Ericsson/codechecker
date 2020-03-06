@@ -78,7 +78,11 @@
             </v-list-item-icon>
 
             <v-list-item-content>
-              <v-list-item-title v-text="item.title" />
+              <slot name="title" :item="item">
+                <v-list-item-title>
+                  {{ item.title }}
+                </v-list-item-title>
+              </slot>
             </v-list-item-content>
 
             <v-chip

@@ -15,7 +15,8 @@
       <v-menu
         v-model="menu"
         :close-on-content-click="false"
-        :nudge-width="400"
+        :nudge-width="200"
+        :max-width="600"
         offset-x
       >
         <v-progress-linear
@@ -49,6 +50,9 @@
           <template v-slot:no-items>
             <slot name="no-items" />
           </template>
+          <template v-slot:title="{ item }">
+            <slot name="title" :item="item" />
+          </template>
         </items>
       </v-menu>
     </template>
@@ -59,6 +63,10 @@
     >
       <template v-slot:icon="{ item }">
         <slot name="icon" :item="item" />
+      </template>
+
+      <template v-slot:title="{ item }">
+        <slot name="title" :item="item" />
       </template>
     </items-selected>
   </filter-toolbar>
