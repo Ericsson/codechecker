@@ -256,7 +256,12 @@ function (declare, dom, Standby, ContentPane, Tooltip, FilterBase,
       if (!selectedItemLen) return;
 
       var that = this;
-      var opt = { filter : selectedItems };
+      var opt = {
+        filter: selectedItems,
+        limit: this._filterTooltip.defaultQueryFilterSize,
+        query: selectedItems
+      };
+
       this._standBy.show();
       this.getItems(opt).then(function (items) {
         that._filterTooltip.reset(items);
