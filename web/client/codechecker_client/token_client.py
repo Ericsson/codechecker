@@ -35,6 +35,7 @@ def init_auth_client(protocol, host, port):
     session_token = cred_manager.get_token(host, port)
 
     if not session_token:
+        LOG.info("No valid token or session was found for %s:%s", host, port)
         session_token = perform_auth_for_handler(auth_client, host, port,
                                                  cred_manager)
 

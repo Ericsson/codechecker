@@ -62,32 +62,40 @@ class UserCredentials(object):
         user_home = os.path.expanduser("~")
         session_cfg_file = os.path.join(user_home,
                                         ".codechecker.passwords.json")
-        LOG.debug(session_cfg_file)
+        LOG.info("Checking local passwords or tokens in %s", session_cfg_file)
 
         scfg_dict = {}
+
+        mistyped_cfg_file = os.path.join(user_home,
+                                         ".codechecker.password.json")
+
         if os.path.exists(session_cfg_file):
+            check_file_owner_rw(session_cfg_file)
             scfg_dict = load_json_or_empty(session_cfg_file, {},
                                            "user authentication")
             scfg_dict['credentials'] = \
                 simplify_credentials(scfg_dict['credentials'])
-
-            check_file_owner_rw(session_cfg_file)
+            if not scfg_dict['credentials']:
+                LOG.info("No saved tokens.")
+            else:
+                LOG.debug("Tokens or passwords were found for these hosts:")
+                for k, v in scfg_dict['credentials'].items():
+                    user, _ = v.split(":")
+                    LOG.debug("  user '%s' host '%s'", user, k)
+        elif os.path.exists(mistyped_cfg_file):
+            LOG.warning("Typo in file name! Rename '%s' to '%s'.",
+                        mistyped_cfg_file, session_cfg_file)
         else:
-            misstyped_cfg_file = os.path.join(user_home,
-                                              ".codechecker.password.json")
-            if os.path.exists(misstyped_cfg_file):
-                LOG.warning("Typo in file name! Rename '%s' to '%s'.",
-                            misstyped_cfg_file, session_cfg_file)
+            LOG.info("Password file not found.")
 
         if not scfg_dict.get('credentials'):
             scfg_dict['credentials'] = {}
 
         self.__save = scfg_dict
         self.__autologin = scfg_dict.get('client_autologin', True)
-
         # Check and load token storage for user.
         self.token_file = os.path.join(user_home, ".codechecker.session.json")
-        LOG.debug(self.token_file)
+        LOG.info("Checking for local valid sessions.")
 
         if os.path.exists(self.token_file):
             token_dict = load_json_or_empty(self.token_file, {},
@@ -95,6 +103,9 @@ class UserCredentials(object):
             check_file_owner_rw(self.token_file)
 
             self.__tokens = token_dict.get('tokens')
+            LOG.debug("Found session information for these hosts:")
+            for k, _ in self.__tokens.items():
+                LOG.debug("  %s", k)
         else:
             with open(self.token_file, 'w',
                       encoding="utf-8", errors="ignore") as f:
