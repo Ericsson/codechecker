@@ -87,12 +87,12 @@ export default {
       this.update();
     },
 
-    fetchItems(search=null) {
+    fetchItems(opt={}) {
       this.loading = true;
       this.items = [];
 
       const reportFilter = new ReportFilter(this.reportFilter);
-      reportFilter["runTag"] = search ? [ `${search}*` ] : null;
+      reportFilter["runTag"] = opt.query;
 
       ccService.getClient().getRunHistoryTagCounts(this.runIds, reportFilter,
         this.cmpData, (err, res) => {
@@ -100,17 +100,13 @@ export default {
             const title = tag.runName + ":" + tag.name;
             return {
               id: title,
-              tagIds: [ tag.id ],
+              tagIds: [ tag.id.toNumber() ],
               title: title,
-              count: tag.count
+              count: tag.count.toNumber()
             };
           });
           this.loading = false;
         });
-    },
-
-    filterItems(value) {
-      this.fetchItems(value);
     },
 
     getTagIds(tagWithRunName) {
@@ -133,7 +129,7 @@ export default {
 
           ccService.getClient().getRunHistory(runIds, limit, offset,
             runHistoryFilter, (err, res) => {
-              resolve(res.map(history => history.id));
+              resolve(res.map(history => history.id.toNumber()));
             });
         });
       });
@@ -148,7 +144,7 @@ export default {
 
         ccService.getClient().getRunData(runFilter, limit, offset, sortMode,
           (err, runs) => {
-            resolve(runs.map(run => run.runId));
+            resolve(runs.map(run => run.runId.toNumber()));
           });
       });
     }

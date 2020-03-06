@@ -10,6 +10,12 @@ import { ReportFilter } from "@cc/report-server-types";
 export default {
   name: "BaseFilterMixin",
 
+  data() {
+    return {
+      defaultLimit: 10
+    };
+  },
+
   props: {
     namespace: { type: String, required: true }
   },
@@ -96,7 +102,7 @@ export default {
 
     updateReportFilter() {},
 
-    fetchItems() {},
+    fetchItems(/* {  limit  } */) {},
 
     clear(/* updateUrl */) {},
 

@@ -22,7 +22,11 @@ export default {
   methods: {
     update() {
       if (!this.selectedItems.length) return;
-      this.fetchItems();
+
+      this.fetchItems({
+        limit: this.selectedItems.length,
+        query: this.selectedItems.map(item => item.id)
+      });
     },
 
     setSelectedItems(selectedItems, updateUrl=true) {
@@ -76,18 +80,25 @@ export default {
       this.registerWatchers();
 
       if (this.selectedItems.length) {
-        this.fetchItems();
+        this.fetchItems({
+          limit: this.selectedItems.length,
+          query: this.selectedItems.map(item => item.id)
+        });
       }
     },
 
     updateSelectedItems() {
       this.selectedItems.forEach(selectedItem => {
         const item = this.items.find(i => i.id === selectedItem.id);
-        selectedItem.count = item ? item.count : null;
+        selectedItem.count = item ? item.count.toNumber() : null;
       });
     },
 
-    fetchItems() {},
+    filterItems(value) {
+      this.fetchItems({
+        query: value ? `${value}*` : null
+      });
+    },
 
     clear(updateUrl) {
       this.setSelectedItems([], updateUrl);

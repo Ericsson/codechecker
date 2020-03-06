@@ -72,10 +72,10 @@ export default {
       this.update();
     },
 
-    fetchItems(search=null) {
+    fetchItems(opt={}) {
       this.loading = true;
 
-      const filter = search ? [ `${search}*` ] : null;
+      const filter = opt.query;
       ccService.getClient().getSourceComponents(filter, (err, res) => {
         this.items = res.map(component => {
           return {
@@ -85,10 +85,6 @@ export default {
         });
         this.loading = false;
       });
-    },
-
-    filterItems(value) {
-      this.fetchItems(value);
     }
   }
 };

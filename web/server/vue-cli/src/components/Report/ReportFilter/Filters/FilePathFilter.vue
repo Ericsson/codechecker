@@ -54,14 +54,14 @@ export default {
       this.update();
     },
 
-    fetchItems(search=null) {
+    fetchItems(opt={}) {
       this.loading = true;
       this.items = [];
 
       const reportFilter = new ReportFilter(this.reportFilter);
-      reportFilter.filepath = search ? [ `${search}*` ] : null;
+      reportFilter.filepath = opt.query;
 
-      const limit = 10;
+      const limit = opt.limit || this.defaultLimit;
       const offset = null;
 
       ccService.getClient().getFileCounts(this.runIds, reportFilter,
@@ -80,10 +80,6 @@ export default {
           });
           this.loading = false;
         });
-    },
-
-    filterItems(value) {
-      this.fetchItems(value);
     }
   }
 };

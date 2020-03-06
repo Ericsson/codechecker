@@ -86,34 +86,29 @@ export default {
       this.update();
     },
 
-    fetchItems(search=null) {
+    fetchItems(opt={}) {
       this.loading = true;
       this.items = [];
 
       const runIds = null;
+      const limit = opt.limit || this.defaultLimit;
+      const offset = 0;
 
       const reportFilter = new ReportFilter(this.reportFilter);
-      reportFilter["runName"] = search ? [ `${search}*` ] : null;
-
-      const limit = null;
-      const offset = 0;
+      reportFilter["runName"] = opt.query;
 
       ccService.getClient().getRunReportCounts(runIds, reportFilter, limit,
         offset, (err, res) => {
           this.items = res.map(run => {
             return {
               id: run.name,
-              runIds: [ run.runId ],
+              runIds: [ run.runId.toNumber() ],
               title: run.name,
               count: run.reportCount
             };
           });
           this.loading = false;
         });
-    },
-
-    filterItems(value) {
-      this.fetchItems(value);
     },
 
     getRunIdsByRunName(runName) {
@@ -125,7 +120,7 @@ export default {
       return new Promise(resolve => {
         ccService.getClient().getRunData(runFilter, limit, offset, sortMode,
           (err, runs) => {
-            resolve(runs.map(run => run.runId));
+            resolve(runs.map(run => run.runId.toNumber() ));
           });
       });
     },

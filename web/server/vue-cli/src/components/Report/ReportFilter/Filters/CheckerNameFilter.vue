@@ -54,14 +54,14 @@ export default {
       this.update();
     },
 
-    fetchItems(search=null) {
+    fetchItems(opt={}) {
       this.loading = true;
       this.items = [];
 
       const reportFilter = new ReportFilter(this.reportFilter);
-      reportFilter.checkerName = search ? [ `${search}*` ] : null;
+      reportFilter.checkerName = opt.query;
 
-      const limit = null;
+      const limit = opt.limit || this.defaultLimit;
       const offset = 0;
 
       ccService.getClient().getCheckerCounts(this.runIds, reportFilter,
@@ -70,15 +70,11 @@ export default {
             return {
               id: checker.name,
               title: checker.name,
-              count: checker.count
+              count: checker.count.toNumber()
             };
           });
           this.loading = false;
         });
-    },
-
-    filterItems(value) {
-      this.fetchItems(value);
     }
   }
 };
