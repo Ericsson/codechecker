@@ -4,11 +4,11 @@ CodeChecker can execute two main `C/C++` static analyzer tools:
 - [Clang Tidy](https://clang.llvm.org/extra/clang-tidy/)
 - [Clang Static Analyzer](https://clang-analyzer.llvm.org/)
 
-We are planning to support more analyzer tools by creating a separate converter
-tool which can be used to convert the output of different code analyzer tools
-to a CodeChecker result directory which can be stored to a CodeChecker server.
+We have created a separate [converter tool](/tools/report-converter) which
+can be used to convert the output of different source code analyzer tools to a
+CodeChecker result directory which can be stored to a CodeChecker server.
 
-| Language       | Analyzer     | Supported by CodeChecker |
+| Language       | Analyzer     | Support storage of analyzer results |
 | -------------- |--------------|---------------------|
 | **C/C++**      | [Clang Tidy](https://clang.llvm.org/extra/clang-tidy/)  | ✓ |
 |                | [Clang Static Analyzer](https://clang-analyzer.llvm.org/)    | ✓ |
@@ -30,7 +30,7 @@ to a CodeChecker result directory which can be stored to a CodeChecker server.
 |                | [go-critic](https://github.com/go-critic/go-critic)    | ✗ |
 
 ## Clang Sanitizers
-| Name         | Supported by CodeChecker |
+| Name         | Support storage of analyzer results |
 |--------------|---------------------|
 | [AddressSanitizer](https://clang.llvm.org/docs/AddressSanitizer.html)    | ✓ |
 | [ThreadSanitizer](https://clang.llvm.org/docs/ThreadSanitizer.html)    | ✓ |
