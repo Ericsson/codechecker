@@ -1,8 +1,8 @@
 <template>
-  <v-dialog
+  <confirm-dialog
     v-model="dialog"
-    persistent
-    max-width="600px"
+    confirm-btn-label="Change"
+    @confirm="confirmAnnouncementChange"
   >
     <template v-slot:activator="{ on }">
       <v-btn
@@ -17,67 +17,38 @@
       </v-btn>
     </template>
 
-    <v-card>
-      <v-card-title
-        class="headline primary white--text"
-        primary-title
-      >
-        Change announcement
+    <template v-slot:title>
+      Change announcement
+    </template>
 
-        <v-spacer />
-
-        <v-btn icon dark @click="dialog = false">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
-      </v-card-title>
-
-      <v-card-text class="pa-0">
-        <v-container>
-          <v-text-field
-            v-model="announcement"
-            append-icon="mdi-bullhorn-outline"
-            label="Write your alert here..."
-            single-line
-            hide-details
-            outlined
-            solo
-            clearable
-            flat
-            dense
-          />
-        </v-container>
-      </v-card-text>
-
-      <v-divider />
-
-      <v-card-actions>
-        <v-spacer />
-
-        <v-btn
-          color="error"
-          text
-          @click="dialog = false"
-        >
-          Cancel
-        </v-btn>
-
-        <v-btn
-          color="primary"
-          text
-          @click="confirmAnnouncementChange"
-        >
-          Change
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+    <template v-slot:content>
+      <v-text-field
+        v-model="announcement"
+        append-icon="mdi-bullhorn-outline"
+        label="Write your alert here..."
+        single-line
+        hide-details
+        outlined
+        solo
+        clearable
+        flat
+        dense
+      />
+    </template>
+  </confirm-dialog>
 </template>
 
 <script>
 import { confService } from "@cc-api";
 
+import ConfirmDialog from "@/components/ConfirmDialog";
+
 export default {
   name: "EditAnnouncementBtn",
+  components: {
+    ConfirmDialog
+  },
+
   data() {
     return {
       dialog: false,

@@ -45,7 +45,7 @@
         class="pa-0"
         two-line
       >
-        <v-list-item-avatar>
+        <v-list-item-avatar class="my-1">
           <v-avatar
             :color="strToColor(item.endpoint)"
             size="48"

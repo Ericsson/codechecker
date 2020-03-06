@@ -1,9 +1,9 @@
 <template>
-  <v-dialog
+  <confirm-dialog
     v-model="dialog"
-    persistent
     max-width="80%"
-    :scrollable="true"
+    :loading="loading"
+    @confirm="save"
   >
     <template v-slot:activator="{ on }">
       <v-btn
@@ -15,95 +15,45 @@
       </v-btn>
     </template>
 
-    <v-card
-      v-if="loading"
-      color="primary"
-      dark
-    >
-      <v-card-text>
-        Loading...
-        <v-progress-linear
-          indeterminate
-          color="white"
-          class="mb-0"
-        />
-      </v-card-text>
-    </v-card>
+    <template v-slot:title>
+      Edit product
+    </template>
 
-    <v-card v-else>
-      <v-card-title
-        class="headline primary white--text"
-        primary-title
+    <template v-slot:content>
+      <v-tabs
+        v-model="tab"
+        background-color="transparent"
+        color="basil"
+        grow
       >
-        Edit product
+        <v-tab>
+          Edit
+        </v-tab>
+        <v-tab>
+          Permissions
+        </v-tab>
+      </v-tabs>
 
-        <v-spacer />
-
-        <v-btn icon dark @click="dialog = false">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
-      </v-card-title>
-
-      <v-card-text class="pa-0">
-        <v-container fluid>
-          <v-tabs
-            v-model="tab"
-            background-color="transparent"
-            color="basil"
-            grow
-          >
-            <v-tab>
-              Edit
-            </v-tab>
-            <v-tab>
-              Permissions
-            </v-tab>
-          </v-tabs>
-
-          <v-tabs-items
-            v-model="tab"
-          >
-            <v-tab-item>
-              <v-container fluid>
-                <product-config-form
-                  :is-valid.sync="isValid"
-                  :product-config="productConfig"
-                />
-              </v-container>
-            </v-tab-item>
-            <v-tab-item>
-              <edit-product-permission
-                :product="product"
-                :bus="bus"
-              />
-            </v-tab-item>
-          </v-tabs-items>
-        </v-container>
-      </v-card-text>
-
-      <v-divider />
-
-      <v-card-actions>
-        <v-spacer />
-
-        <v-btn
-          text
-          @click="dialog = false"
-        >
-          Cancel
-        </v-btn>
-
-        <v-btn
-          color="primary"
-          text
-          :disabled="!isValid"
-          @click="save"
-        >
-          Save
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+      <v-tabs-items
+        v-model="tab"
+      >
+        <v-tab-item>
+          <v-container fluid>
+            <product-config-form
+              :is-valid.sync="isValid"
+              :product-config="productConfig"
+            />
+          </v-container>
+        </v-tab-item>
+        <v-tab-item>
+          <edit-product-permission
+            :product="product"
+            :bus="bus"
+          />
+        </v-tab-item>
+      </v-tabs-items>
+    </template>
+  </confirm-dialog>
 </template>
 
 <script>
@@ -115,12 +65,14 @@ import {
   ProductConfiguration
 } from "@cc/prod-types";
 
+import ConfirmDialog from "@/components/ConfirmDialog";
 import EditProductPermission from "./Permission/EditProductPermission";
 import ProductConfigForm from "./ProductConfigForm";
 
 export default {
   name: "EditProductBtn",
   components: {
+    ConfirmDialog,
     EditProductPermission,
     ProductConfigForm
   },
@@ -147,7 +99,6 @@ export default {
       prodService.getClient().getProductConfiguration(this.product.id,
         (err, config) => {
           this.productConfig = config;
-          console.log(config);
           this.loading = false;
         });
     }

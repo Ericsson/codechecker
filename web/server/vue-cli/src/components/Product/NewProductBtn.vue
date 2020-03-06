@@ -1,9 +1,8 @@
 <template>
-  <v-dialog
+  <confirm-dialog
     v-model="dialog"
-    persistent
     max-width="50%"
-    scrollable
+    @confirm="save"
   >
     <template v-slot:activator="{ on }">
       <v-btn
@@ -17,52 +16,17 @@
       </v-btn>
     </template>
 
-    <v-card>
-      <v-card-title
-        class="headline primary white--text"
-        primary-title
-      >
-        New product
+    <template v-slot:title>
+      New product
+    </template>
 
-        <v-spacer />
-
-        <v-btn icon dark @click="dialog = false">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
-      </v-card-title>
-
-      <v-card-text class="pa-0">
-        <v-container>
-          <product-config-form
-            :is-valid.sync="isValid"
-            :product-config="productConfig"
-          />
-        </v-container>
-      </v-card-text>
-
-      <v-divider />
-
-      <v-card-actions>
-        <v-spacer />
-
-        <v-btn
-          text
-          @click="dialog = false"
-        >
-          Cancel
-        </v-btn>
-
-        <v-btn
-          color="primary"
-          text
-          :disabled="!isValid"
-          @click="save"
-        >
-          Save
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+    <template v-slot:content>
+      <product-config-form
+        :is-valid.sync="isValid"
+        :product-config="productConfig"
+      />
+    </template>
+  </confirm-dialog>
 </template>
 
 <script>
@@ -72,11 +36,13 @@ import {
   ProductConfiguration
 } from "@cc/prod-types";
 
+import ConfirmDialog from "@/components/ConfirmDialog";
 import ProductConfigForm from "./ProductConfigForm";
 
 export default {
   name: "NewProductBtn",
   components: {
+    ConfirmDialog,
     ProductConfigForm
   },
   data() {
