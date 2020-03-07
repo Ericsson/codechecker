@@ -51,7 +51,10 @@
 </template>
 
 <script>
+import Vue from "vue";
 import { formatDistanceToNow, parse } from "date-fns";
+
+import { CommentData } from "@cc/report-server-types";
 
 import { UserIcon } from "@/components/Icons";
 import EditCommentBtn from "./EditCommentBtn";
@@ -65,8 +68,8 @@ export default {
     UserIcon
   },
   props: {
-    comment: { type: Object, required: true },
-    bus: { type: Object, required: true }
+    comment: { type: CommentData, required: true },
+    bus: { type: Vue, required: true }
   },
   computed: {
     message() {
