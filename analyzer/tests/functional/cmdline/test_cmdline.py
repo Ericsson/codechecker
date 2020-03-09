@@ -46,6 +46,12 @@ class TestCmdline(unittest.TestCase):
         # Get the CodeChecker cmd if needed for the tests.
         self._codechecker_cmd = env.codechecker_cmd()
 
+    def test_no_subcommand(self):
+        """ Call CodeChecker without subcommand. """
+
+        main_cmd = [env.codechecker_cmd()]
+        self.assertEqual(0, run_cmd(main_cmd)[0])
+
     def test_version_help(self):
         """ Test the 'analyzer-version' subcommand. """
 

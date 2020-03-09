@@ -124,7 +124,10 @@ output.
                 sys.argv.extend(cfg_args)
                 args = parser.parse_args()
 
-        args.func(args)
+        try:
+            args.func(args)
+        except AttributeError:
+            parser.print_help()
 
     except KeyboardInterrupt as kb_err:
         print(str(kb_err))
