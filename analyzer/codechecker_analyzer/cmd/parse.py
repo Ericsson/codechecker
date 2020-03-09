@@ -642,7 +642,10 @@ def main(args):
                                       checker_name, diag, files):
         """
         Report handler which skips bugs which were suppressed by source code
-        comments.
+        comments. This function will return a tuple. The first element
+        will decide whether the report should be skipped or not and the second
+        element will be a list of source code comments related to the actual
+        report.
         """
         report = Report(None, diag['path'], files)
         path_hash = get_report_path_hash(report)
@@ -651,7 +654,7 @@ def main(args):
                       "already processed report!")
             LOG.debug("Path hash: %s", path_hash)
             LOG.debug(diag)
-            return True
+            return True, []
 
         skip, source_code_comments = skip_report(report_hash,
                                                  source_file,

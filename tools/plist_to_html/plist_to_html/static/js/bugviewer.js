@@ -70,6 +70,9 @@ var BugViewer = {
     this._content = document.getElementById('editor-wrapper');
     this._filepath = document.getElementById('file-path');
     this._checkerName = document.getElementById('checker-name');
+    this._reviewStatusWrapper =
+      document.getElementById('review-status-wrapper');
+    this._reviewStatus = document.getElementById('review-status');
     this._editor = document.getElementById('editor');
 
     this._codeMirror = CodeMirror(this._editor, {
@@ -139,6 +142,7 @@ var BugViewer = {
     var lastBugEvent = events[events.length - 1];
     this.setCurrentBugEvent(lastBugEvent, events.length - 1);
     this.setCheckerName(report.checkerName);
+    this.setReviewStatus(report.reviewStatus);
 
     window.location.hash = '#reportHash=' + report.reportHash;
   },
@@ -163,6 +167,19 @@ var BugViewer = {
 
   setCheckerName : function (checkerName) {
     this._checkerName.innerHTML = checkerName;
+  },
+
+  setReviewStatus : function (status) {
+    if (status) {
+      var className =
+        'review-status-' + status.toLowerCase().split(' ').join('-');
+      this._reviewStatus.className = "review-status " + className;
+
+      this._reviewStatus.innerHTML = status;
+      this._reviewStatusWrapper.style.display = 'block';
+    } else {
+      this._reviewStatusWrapper.style.display = 'none';
+    }
   },
 
   setSourceFileData : function (file) {

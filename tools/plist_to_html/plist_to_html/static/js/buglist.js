@@ -62,7 +62,8 @@ var BugList = {
            columnId === 'severity' ||
            columnId === 'checker-name' ||
            columnId === 'message' ||
-           columnId === 'bug-path-length';
+           columnId === 'bug-path-length' ||
+           columnId === 'review-status';
   },
 
   compare : function (columnId, a, b, asc) {

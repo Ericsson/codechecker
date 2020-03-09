@@ -106,7 +106,7 @@ class SourceCodeCommentHandler(object):
             checkers_names.add('all')
         else:
             suppress_checker_list = re.findall(r"[^,\s]+",
-                                                checkers.strip())
+                                               checkers.strip())
             checkers_names.update(suppress_checker_list)
 
         # Get comment message from suppress comment.
