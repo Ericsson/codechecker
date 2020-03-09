@@ -67,18 +67,24 @@ class PlistToPlaintextFormatter(object):
         return '%s%s^' % (line.replace('\t', '  '), marker_line)
 
     @staticmethod
-    def __format_bug_event(name, severity, event, source_file):
+    def __format_bug_event(name, severity, event, source_file,
+                           review_status=None):
 
         loc = event['location']
-        fname = os.path.basename(source_file)
         if name:
-            return '[%s] %s:%d:%d: %s [%s]' % (severity,
-                                               source_file,
-                                               loc['line'],
-                                               loc['col'],
-                                               event['message'],
-                                               name)
+            out = '[%s] %s:%d:%d: %s [%s]' % (severity,
+                                              source_file,
+                                              loc['line'],
+                                              loc['col'],
+                                              event['message'],
+                                              name)
+            if review_status:
+                out = '%s [%s]' % (out,
+                                   review_status.capitalize().replace('_', ''))
+
+            return out
         else:
+            fname = os.path.basename(source_file)
             return '%s:%d:%d: %s' % (fname,
                                      loc['line'],
                                      loc['col'],
@@ -180,8 +186,14 @@ class PlistToPlaintextFormatter(object):
                     report.main['issue_hash_content_of_line_in_context']
                 checker_name = report.main['check_name']
 
-                if skip_report(report_hash, source_file, report_line,
-                               checker_name, self.src_comment_handler):
+                skip, source_code_comments = \
+                    skip_report(report_hash,
+                                source_file,
+                                report_line,
+                                checker_name,
+                                self.src_comment_handler)
+
+                if skip:
                     continue
 
                 file_stats[f_path] += 1
@@ -189,11 +201,22 @@ class PlistToPlaintextFormatter(object):
                 severity_stats[severity] += 1
                 report_count["report_count"] += 1
 
+                review_status = None
+                if len(source_code_comments) == 1:
+                    review_status = source_code_comments[0]['status']
+
                 output.write(self.__format_bug_event(checker_name,
                                                      severity,
                                                      last_report_event,
-                                                     trimmed_source_file))
+                                                     trimmed_source_file,
+                                                     review_status))
                 output.write('\n')
+
+                # Print source code comments.
+                for source_code_comment in source_code_comments:
+                    output.write(source_code_comment['line'].rstrip())
+                    output.write('\n')
+
                 output.write(self.__format_location(last_report_event,
                                                     source_file))
                 output.write('\n')
@@ -271,14 +294,15 @@ class PlistToPlaintextFormatter(object):
 def skip_report(report_hash, source_file, report_line, checker_name,
                 src_comment_handler=None):
     """
-    Returns True if the report was suppressed in the source code, otherwise
-    False.
+    Returns a tuple where the first value will be True if the report was
+    suppressed in the source code, otherwise False. The second value will be
+    the list of available source code comments.
     """
     bug = {'hash_value': report_hash, 'file_path': source_file}
     if src_comment_handler and src_comment_handler.get_suppressed(bug):
         LOG.debug("Suppressed by suppress file: %s:%s [%s] %s", source_file,
                   report_line, checker_name, report_hash)
-        return True
+        return True, []
 
     sc_handler = SourceCodeCommentHandler()
 
@@ -302,14 +326,14 @@ def skip_report(report_hash, source_file, report_line, checker_name,
                 status)
 
         if skip_suppress_status(status):
-            return True
+            return True, src_comment_data
 
     elif len(src_comment_data) > 1:
         LOG.warning("Multiple source code comment can be found "
                     "for '%s' checker in '%s' at line %d. "
                     "This bug will not be suppressed!",
                     checker_name, source_file, report_line)
-    return False
+    return False, src_comment_data
 
 
 def get_argparser_ctor_args():
@@ -629,18 +653,19 @@ def main(args):
             LOG.debug(diag)
             return True
 
-        skip = plist_parser.skip_report(report_hash,
-                                        source_file,
-                                        report_line,
-                                        checker_name,
-                                        suppr_handler)
-        if skip_handler and not skip:
-            skip = skip_handler.should_skip(source_file)
+        skip, source_code_comments = skip_report(report_hash,
+                                                 source_file,
+                                                 report_line,
+                                                 checker_name,
+                                                 suppr_handler)
+
+        if skip_handler:
+            skip |= skip_handler.should_skip(source_file)
 
         if not skip:
             processed_path_hashes.add(path_hash)
 
-        return skip
+        return skip, source_code_comments
 
     file_change = set()
     severity_stats = defaultdict(int)

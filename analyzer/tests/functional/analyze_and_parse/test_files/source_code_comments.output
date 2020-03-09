@@ -17,7 +17,8 @@ CHECK#CodeChecker check --build "make source_code_comments" --output $OUTPUT$ --
 [] - To store results use the "CodeChecker store" command.
 [] - See --help and the user guide for further options about parsing and storing the reports.
 [] - ----=================----
-[HIGH] source_code_comments.cpp:13:3: suspicious usage of 'sizeof(K)'; did you mean 'K'? [bugprone-sizeof-expression]
+[HIGH] source_code_comments.cpp:13:3: suspicious usage of 'sizeof(K)'; did you mean 'K'? [bugprone-sizeof-expression] [Confirmed]
+  // codechecker_confirmed [all] Source code comment message
   sizeof(43);
   ^
 

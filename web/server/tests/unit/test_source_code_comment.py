@@ -67,7 +67,8 @@ class SourceCodeCommentTestCase(unittest.TestCase):
 
         expected = {'checkers': {'all'},
                     'message': 'some comment',
-                    'status': 'false_positive'}
+                    'status': 'false_positive',
+                    'line': '// codechecker_suppress [all] some comment\n'}
         self.assertDictEqual(expected, source_line_comments[0])
 
     def test_multi_liner_all(self):
@@ -84,7 +85,9 @@ class SourceCodeCommentTestCase(unittest.TestCase):
 
         expected = {'checkers': {'all'},
                     'message': 'some long comment',
-                    'status': 'false_positive'}
+                    'status': 'false_positive',
+                    'line': '// codechecker_suppress [all] some long\n '
+                            '// comment\n'}
         self.assertDictEqual(expected, source_line_comments[0])
 
     def test_one_liner_all(self):
@@ -101,7 +104,9 @@ class SourceCodeCommentTestCase(unittest.TestCase):
 
         expected = {'checkers': {'my_checker_1', 'my_checker_2'},
                     'message': 'some comment',
-                    'status': 'false_positive'}
+                    'status': 'false_positive',
+                    'line': '// codechecker_suppress [my_checker_1, '
+                            'my_checker_2] some comment\n'}
         self.assertDictEqual(expected, source_line_comments[0])
 
     def test_multi_liner_all_2(self):
@@ -118,7 +123,9 @@ class SourceCodeCommentTestCase(unittest.TestCase):
 
         expected = {'checkers': {'my.checker_1', 'my.checker_2'},
                     'message': 'some really long comment',
-                    'status': 'false_positive'}
+                    'status': 'false_positive',
+                    'line': '// codechecker_suppress [my.checker_1 '
+                            'my.checker_2] some really\n // long comment\n'}
         self.assertDictEqual(expected, source_line_comments[0])
 
     def test_one_liner_some_checkers(self):
@@ -135,7 +142,10 @@ class SourceCodeCommentTestCase(unittest.TestCase):
 
         expected = {'checkers': {'my.Checker_1', 'my.Checker_2'},
                     'message': 'some really really long comment',
-                    'status': 'false_positive'}
+                    'status': 'false_positive',
+                    'line': '// codechecker_suppress [my.Checker_1, '
+                            'my.Checker_2] some really\n // really\n'
+                            ' // long comment\n'}
         self.assertDictEqual(expected, source_line_comments[0])
 
     def test_multi_liner_some_checkers(self):
@@ -164,7 +174,9 @@ class SourceCodeCommentTestCase(unittest.TestCase):
 
         expected = {'checkers': {'my.checker_1', 'my.checker_2'},
                     'message': "i/';0 (*&^%$#@!)",
-                    'status': 'false_positive'}
+                    'status': 'false_positive',
+                    'line': "// codechecker_suppress [my.checker_1, "
+                            "my.checker_2]\n // i/';0 (*&^%$#@!)\n"}
         self.assertDictEqual(expected, source_line_comments[0])
 
     def test_fancy_comment_characters(self):
@@ -181,7 +193,9 @@ class SourceCodeCommentTestCase(unittest.TestCase):
 
         expected = {'checkers': {'my_checker_1'},
                     'message': "áúőóüöáé [▬▬▬▬▬▬▬▬▬▬ஜ۩۞۩ஜ▬▬▬▬▬▬▬▬▬▬]",
-                    'status': 'false_positive'}
+                    'status': 'false_positive',
+                    'line': '// codechecker_suppress [ my_checker_1 ]\n // '
+                            'áúőóüöáé [▬▬▬▬▬▬▬▬▬▬ஜ۩۞۩ஜ▬▬▬▬▬▬▬▬▬▬]\n'}
         self.assertDictEqual(expected, source_line_comments[0])
 
     def test_no_fancy_comment(self):
@@ -198,7 +212,8 @@ class SourceCodeCommentTestCase(unittest.TestCase):
 
         expected = {'checkers': {'my_checker_1'},
                     'message': 'WARNING! source code comment is missing',
-                    'status': 'false_positive'}
+                    'status': 'false_positive',
+                    'line': '// codechecker_suppress [ my_checker_1 ]\n'}
         self.assertDictEqual(expected, source_line_comments[0])
 
     def test_malformed_commment_format(self):
@@ -227,7 +242,8 @@ class SourceCodeCommentTestCase(unittest.TestCase):
 
         expected = {'checkers': {'all'},
                     'message': 'some comment',
-                    'status': 'false_positive'}
+                    'status': 'false_positive',
+                    'line': '// codechecker_suppress [ all ] some comment\n'}
         self.assertDictEqual(expected, source_line_comments[0])
 
     def test_false_positive_comment(self):
@@ -244,7 +260,9 @@ class SourceCodeCommentTestCase(unittest.TestCase):
 
         expected = {'checkers': {'all'},
                     'message': 'some comment',
-                    'status': 'false_positive'}
+                    'status': 'false_positive',
+                    'line': '// codechecker_false_positive [ all ] '
+                            'some comment\n'}
         self.assertDictEqual(expected, source_line_comments[0])
 
     def test_intentional_comment(self):
@@ -261,7 +279,9 @@ class SourceCodeCommentTestCase(unittest.TestCase):
 
         expected = {'checkers': {'all'},
                     'message': 'some comment',
-                    'status': 'intentional'}
+                    'status': 'intentional',
+                    'line': '// codechecker_intentional [ all ] '
+                            'some comment\n'}
         self.assertDictEqual(expected, source_line_comments[0])
 
     def test_confirmed_comment(self):
@@ -278,7 +298,8 @@ class SourceCodeCommentTestCase(unittest.TestCase):
 
         expected = {'checkers': {'all'},
                     'message': 'some comment',
-                    'status': 'confirmed'}
+                    'status': 'confirmed',
+                    'line': '// codechecker_confirmed [ all ] some comment\n'}
         self.assertDictEqual(expected, source_line_comments[0])
 
     def test_multiple_comments(self):
@@ -296,11 +317,15 @@ class SourceCodeCommentTestCase(unittest.TestCase):
         expected = [{
                         'checkers': {'my.checker_1'},
                         'message': 'intentional comment',
-                        'status': 'intentional'},
+                        'status': 'intentional',
+                        'line': '// codechecker_intentional [ my.checker_1 ] '
+                                'intentional comment\n'},
                     {
                         'checkers': {'my.checker_2'},
                         'message': 'confirmed bug',
-                        'status': 'confirmed'
+                        'status': 'confirmed',
+                        'line': '// codechecker_confirmed  [ my.checker_2 ] '
+                                'confirmed bug\n'
                     }]
 
         self.assertDictEqual(expected[0], source_line_comments[0])
@@ -348,11 +373,15 @@ class SourceCodeCommentTestCase(unittest.TestCase):
         expected = [{
                         'checkers': {'my.checker_1'},
                         'message': 'long intentional bug comment',
-                        'status': 'intentional'},
+                        'status': 'intentional',
+                        'line': '// codechecker_intentional [ my.checker_1 ] '
+                                'long intentional\n // bug comment\n'},
                     {
                         'checkers': {'my.checker_2'},
                         'message': 'long confirmed bug comment',
-                        'status': 'confirmed'
+                        'status': 'confirmed',
+                        'line': '// codechecker_confirmed  [ my.checker_2 ] '
+                                'long confirmed\n // bug comment\n'
                     }]
 
         self.assertDictEqual(expected[0], source_line_comments[0])
@@ -373,11 +402,15 @@ class SourceCodeCommentTestCase(unittest.TestCase):
         expected = [{
                         'checkers': {'my.checker_1'},
                         'message': 'intentional comment',
-                        'status': 'intentional'},
+                        'status': 'intentional',
+                        'line': '// codechecker_intentional [ my.checker_1 ] '
+                                'intentional comment\n'},
                     {
                         'checkers': {'all'},
                         'message': 'some comment',
-                        'status': 'false_positive'
+                        'status': 'false_positive',
+                        'line': '// codechecker_false_positive  [ all ] '
+                                'some comment\n'
                     }]
 
         self.assertDictEqual(expected[0], source_line_comments[0])
@@ -436,12 +469,16 @@ class SourceCodeCommentTestCase(unittest.TestCase):
         expected = [{
                         'checkers': {'my.checker_1'},
                         'message': 'intentional comment',
-                        'status': 'intentional'
+                        'status': 'intentional',
+                        'line': '// codechecker_intentional [ my.checker_1 ] '
+                                'intentional comment\n'
                     },
                     {
                         'checkers': {'my.checker_2', 'my.checker_1'},
                         'message': 'some comment',
-                        'status': 'false_positive'
+                        'status': 'false_positive',
+                        'line': '// codechecker_false_positive [ '
+                                'my.checker_2, my.checker_1 ] some comment\n'
                     }]
 
         self.assertDictEqual(expected[0], source_line_comments[0])
@@ -474,13 +511,13 @@ class SourceCodeCommentTestCase(unittest.TestCase):
 
         self.assertEqual(len(source_line_comments), 1)
 
-        expected = [{
-                        'checkers': {'my_checker_1'},
-                        'message': 'suppress comment',
-                        'status': 'false_positive'
-                    }]
+        expected = {'checkers': {'my_checker_1'},
+                    'message': 'suppress comment',
+                    'status': 'false_positive',
+                    'line': '/* codechecker_suppress [ my_checker_1 ] '
+                            'suppress comment */\n'}
 
-        self.assertDictEqual(expected[0], source_line_comments[0])
+        self.assertDictEqual(expected, source_line_comments[0])
 
     def test_cstyle_comment_multi_line(self):
         """
@@ -505,13 +542,13 @@ class SourceCodeCommentTestCase(unittest.TestCase):
 
         self.assertEqual(len(source_line_comments), 1)
 
-        expected = [{
-                        'checkers': {'my_checker_1'},
-                        'message': 'some longer comment',
-                        'status': 'false_positive'
-                    }]
+        expected = {'checkers': {'my_checker_1'},
+                    'message': 'some longer comment',
+                    'status': 'false_positive',
+                    'line': '/* codechecker_suppress [ my_checker_1 ]\n '
+                            'some longer\n comment */\n'}
 
-        self.assertDictEqual(expected[0], source_line_comments[0])
+        self.assertDictEqual(expected, source_line_comments[0])
 
     def test_cstyle_comment_multi_nomsg(self):
         """
@@ -538,7 +575,9 @@ class SourceCodeCommentTestCase(unittest.TestCase):
         expected = [{
                         'checkers': {'my_checker_1'},
                         'message': 'WARNING! source code comment is missing',
-                        'status': 'false_positive'
+                        'status': 'false_positive',
+                        'line': '/* codechecker_suppress [ my_checker_1 ]'
+                                '\n */\n'
                     }]
 
         self.assertDictEqual(expected[0], source_line_comments[0])
@@ -570,13 +609,13 @@ class SourceCodeCommentTestCase(unittest.TestCase):
 
         self.assertEqual(len(source_line_comments), 1)
 
-        expected = [{
-                        'checkers': {'my_checker_1'},
-                        'message': 'multi line comment again',
-                        'status': 'false_positive'
-                    }]
+        expected = {'checkers': {'my_checker_1'},
+                    'message': 'multi line comment again',
+                    'status': 'false_positive',
+                    'line': "/* codechecker_suppress [ my_checker_1 ]\n  * "
+                            "multi line\n  * comment\n  * again\n  */\n"}
 
-        self.assertDictEqual(expected[0], source_line_comments[0])
+        self.assertDictEqual(expected, source_line_comments[0])
 
     def test_cstyle_comment_multi_line_mismatch(self):
         """
@@ -607,13 +646,13 @@ class SourceCodeCommentTestCase(unittest.TestCase):
 
         self.assertEqual(len(source_line_comments), 1)
 
-        expected = [{
-                        'checkers': {'my_checker_1'},
-                        'message': 'multi line comment again',
-                        'status': 'false_positive'
-                    }]
+        expected = {'checkers': {'my_checker_1'},
+                    'message': 'multi line comment again',
+                    'status': 'false_positive',
+                    'line': '  codechecker_suppress [ my_checker_1 ]\n   '
+                            'multi line\n   comment\n   again\n  */\n'}
 
-        self.assertDictEqual(expected[0], source_line_comments[0])
+        self.assertDictEqual(expected, source_line_comments[0])
 
     def test_cstyle_multi_comment_multi_line(self):
         """
@@ -642,11 +681,15 @@ class SourceCodeCommentTestCase(unittest.TestCase):
         expected = [{
                         'checkers': {'my.checker_1'},
                         'message': 'intentional comment',
-                        'status': 'intentional'},
+                        'status': 'intentional',
+                        'line': 'codechecker_intentional [ my.checker_1 ] '
+                                'intentional comment */\n'},
                     {
                         'checkers': {'my.checker_1', 'my.checker_2'},
                         'message': 'some comment',
-                        'status': 'false_positive'
+                        'status': 'false_positive',
+                        'line': '/* codechecker_false_positive [ '
+                                'my.checker_2, my.checker_1 ] some comment\n'
                     }]
 
         self.assertDictEqual(expected[0], source_line_comments[0])
@@ -715,11 +758,16 @@ class SourceCodeCommentTestCase(unittest.TestCase):
         expected = [{
                         'checkers': {'my.checker_1'},
                         'message': 'intentional comment long again',
-                        'status': 'intentional'},
+                        'status': 'intentional',
+                        'line': 'codechecker_intentional [ my.checker_1 ] '
+                                'intentional comment\n long\n again */\n'},
                     {
                         'checkers': {'my.checker_1', 'my.checker_2'},
                         'message': 'comment which is long',
-                        'status': 'false_positive'
+                        'status': 'false_positive',
+                        'line': '/* codechecker_false_positive [ '
+                                'my.checker_2, my.checker_1 ] comment\n '
+                                'which\n is\n long\n'
                     }]
 
         self.assertDictEqual(expected[0], source_line_comments[0])
