@@ -246,3 +246,19 @@ class AnalyzeParseTestCase(
 
         self.assertIn('notes', res)
         self.assertTrue(res['notes'])
+
+    def test_invalid_plist_file(self):
+        """ Test parsing invalid plist file. """
+        invalid_plist_file = os.path.join(self.test_workspaces['NORMAL'],
+                                          "test_files", "invalid.plist")
+        with open(invalid_plist_file, "w+",
+                  encoding="utf-8",
+                  errors="ignore") as invalid_plist_f:
+            invalid_plist_f.write("Invalid plist file.")
+
+        extract_cmd = ['CodeChecker', 'parse',
+                       invalid_plist_file]
+
+        out, _ = call_command(extract_cmd, cwd=self.test_dir, env=self.env)
+
+        self.assertTrue("Invalid plist file" in out)

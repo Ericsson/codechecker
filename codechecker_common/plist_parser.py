@@ -81,8 +81,14 @@ class LXMLPlistParser(plistlib._PlistParser):
         self.parser = XMLParser(target=self.event_handler)
 
     def parse(self, fileobj):
-        from lxml.etree import parse
-        parse(fileobj, self.parser)
+        from lxml.etree import parse, XMLSyntaxError
+
+        try:
+            parse(fileobj, self.parser)
+        except XMLSyntaxError as ex:
+            LOG.error("Invalid plist file '%s': %s", fileobj.name, ex)
+            return
+
         return self.root
 
 
@@ -144,6 +150,9 @@ def parse_plist_file(path, source_root=None, allow_plist_update=True):
     try:
         with open(path, 'rb') as plist_file_obj:
             plist = parse_plist(plist_file_obj)
+
+        if not plist:
+            return files, reports
 
         files = plist['files']
 
