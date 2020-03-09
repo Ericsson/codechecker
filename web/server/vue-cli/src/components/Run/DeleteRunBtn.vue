@@ -1,8 +1,11 @@
 <template>
-  <v-dialog
+  <confirm-dialog
     v-model="dialog"
-    persistent
     max-width="600px"
+    cancel-btn-color="primary"
+    confirm-btn-label="Remove"
+    confirm-btn-color="error"
+    @confirm="confirmDelete"
   >
     <template v-slot:activator="{ on }">
       <v-btn
@@ -19,65 +22,36 @@
       </v-btn>
     </template>
 
-    <v-card>
-      <v-card-title
-        class="headline primary white--text"
-        primary-title
+    <template v-slot:title>
+      Confirm deletion of runs
+    </template>
+
+    <template v-slot:content>
+      Are you sure? The following runs will be removed:
+      <v-chip
+        v-for="item in selected"
+        :key="item.name"
+        outlined
+        color="error"
+        class="mr-2 mb-2"
       >
-        Confirm deletion of runs
-
-        <v-spacer />
-
-        <v-btn icon dark @click="dialog = false">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
-      </v-card-title>
-
-      <v-card-text class="pa-0">
-        <v-container>
-          Are you sure? The following runs will be removed:
-          <v-chip
-            v-for="item in selected"
-            :key="item.name"
-            outlined
-            color="error"
-            class="mr-2 mb-2"
-          >
-            {{ item.name }}
-          </v-chip>
-        </v-container>
-      </v-card-text>
-
-      <v-divider />
-
-      <v-card-actions>
-        <v-spacer />
-
-        <v-btn
-          text
-          @click="dialog = false"
-        >
-          Cancel
-        </v-btn>
-
-        <v-btn
-          color="error"
-          text
-          @click="confirmDelete"
-        >
-          Remove
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+        {{ item.name }}
+      </v-chip>
+    </template>
+  </confirm-dialog>
 </template>
 
 <script>
 import { ccService } from "@cc-api";
 import { RunFilter } from "@cc/report-server-types";
 
+import ConfirmDialog from "@/components/ConfirmDialog";
+
 export default {
   name: "DeleteRunBtn",
+  components: {
+    ConfirmDialog
+  },
   props: {
     selected: { type: Array, required: true }
   },
