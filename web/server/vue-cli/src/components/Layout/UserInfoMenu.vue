@@ -51,7 +51,7 @@
             color="success"
             outlined
           >
-            {{ permission }}
+            {{ permissionFromCodeToString(permission) }}
           </v-chip>
         </v-card-text>
       </v-card>
@@ -76,6 +76,10 @@
 <script>
 import { mapActions, mapGetters } from "vuex";
 
+import { authService } from "@cc-api";
+import { PermissionFilter } from "@cc/auth-types";
+import { Permission } from "@cc/shared-types";
+
 import { UserIcon } from "@/components/Icons";
 import { GET_LOGGED_IN_USER, LOGOUT } from "@/store/actions.type";
 
@@ -87,24 +91,63 @@ export default {
   data() {
     return {
       menu: false,
-      // TODO: get these from server.
-      permissions: [ "Admin", "Store", "Access" ]
+      systemPermissions: [],
+      productPermissions: [],
+      permissionFilter: new PermissionFilter({ given: true })
     };
   },
+
   computed: {
     ...mapGetters([
-      "currentUser"
-    ])
+      "currentUser",
+      "currentProduct"
+    ]),
+    permissions() {
+      return this.systemPermissions.concat(this.productPermissions);
+    }
   },
+
+  watch: {
+    currentProduct() {
+      if (!this.currentProduct) {
+        this.productPermissions = [];
+        return;
+      }
+
+      const extraParams = JSON.stringify({
+        productID: this.currentProduct.id.toNumber()
+      });
+
+      authService.getClient().getPermissionsForUser("PRODUCT", extraParams,
+        this.permissionFilter, (err, permissions) => {
+          this.productPermissions = permissions;
+        });
+    }
+  },
+
 
   created() {
     this.getLoggedInUser();
+    this.fetchPermissions();
   },
 
   methods: {
     ...mapActions([
       GET_LOGGED_IN_USER
     ]),
+
+    fetchPermissions() {
+      authService.getClient().getPermissionsForUser("SYSTEM",
+        JSON.stringify({}), this.permissionFilter, (err, permissions) => {
+          this.systemPermissions = permissions;
+        });
+    },
+
+    permissionFromCodeToString(permission) {
+      for (const key in Permission)
+        if (Permission[key] === permission)
+          return key;
+    },
 
     logOut() {
       this.$store

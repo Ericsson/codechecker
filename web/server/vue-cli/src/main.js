@@ -8,7 +8,7 @@ import "splitpanes/dist/splitpanes.css";
 
 import Vue from "vue";
 import vuetify from "@/plugins/vuetify";
-import { GET_AUTH_PARAMS } from "@/store/actions.type";
+import { GET_AUTH_PARAMS, GET_CURRENT_PRODUCT } from "@/store/actions.type";
 
 import router from "./router";
 import store from "./store";
@@ -31,6 +31,7 @@ router.beforeResolve((to, from, next) => {
       to.params.endpoint !== from.params.endpoint
   ) {
     eventHub.$emit("update", to.params.endpoint);
+    store.dispatch(GET_CURRENT_PRODUCT, to.params.endpoint);
   }
 
   store.dispatch(GET_AUTH_PARAMS).then(() => {
