@@ -97,6 +97,7 @@ usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-t {plist}] [-q] [-f]
                          [--timeout TIMEOUT]
                          [-e checker/group/profile] [-d checker/group/profile]
                          [--enable-all] [--print-steps]
+                         [--review-status [REVIEW_STATUS [REVIEW_STATUS ...]]]
                          [--verbose {info,debug,debug_analyzer}]
 
 Run analysis for a project with printing results immediately on the standard
@@ -150,6 +151,10 @@ optional arguments:
                         python regex. If more than one matches an error is
                         given. The whole compilation action text is searched
                         for match. (default: none)
+  --review-status [REVIEW_STATUS [REVIEW_STATUS ...]]
+                        Filter results by review statuses. Valid values are:
+                        confirmed, false_positive, intentional, suppress,
+                        unreviewed (default: ['confirmed', 'unreviewed'])
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level.
 
@@ -1176,6 +1181,7 @@ usage: CodeChecker parse [-h] [-t {plist}] [-e {html,json,codeclimate}]
                          [--export-source-suppress] [--print-steps]
                          [-i SKIPFILE]
                          [--trim-path-prefix [TRIM_PATH_PREFIX [TRIM_PATH_PREFIX ...]]]
+                         [--review-status [REVIEW_STATUS [REVIEW_STATUS ...]]]
                          [--verbose {info,debug,debug_analyzer}]
                          file/folder [file/folder ...]
 
@@ -1217,7 +1223,11 @@ optional arguments:
                         printed. So if you have /a/b/c/x.cpp and /a/b/c/y.cpp
                         then by removing "/a/b/" prefix will print files like
                         c/x.cpp and c/y.cpp. If multiple prefix is given, the
-                        longest match will be removed.                        
+                        longest match will be removed.
+  --review-status [REVIEW_STATUS [REVIEW_STATUS ...]]
+                        Filter results by review statuses. Valid values are:
+                        confirmed, false_positive, intentional, suppress,
+                        unreviewed (default: ['confirmed', 'unreviewed'])
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level.
 

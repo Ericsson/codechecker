@@ -25,10 +25,10 @@ from codechecker_analyzer import analyzer_context, suppress_handler
 from codechecker_common import arg, logger, plist_parser, util
 from codechecker_common.skiplist_handler import SkipListHandler
 from codechecker_common.source_code_comment_handler import \
-    SourceCodeCommentHandler
+    REVIEW_STATUS_VALUES, SourceCodeCommentHandler
 from codechecker_common.output_formatters import twodim_to_str
 from codechecker_common.report import Report
-from codechecker_common.source_code_comment_handler import skip_suppress_status
+
 from codechecker_report_hash.hash import get_report_path_hash
 
 LOG = logger.get_logger('system')
@@ -45,6 +45,7 @@ class PlistToPlaintextFormatter(object):
                  severity_map,
                  processed_path_hashes,
                  trim_path_prefixes,
+                 src_comment_status_filter=None,
                  analyzer_type="clangsa"):
 
         self.__analyzer_type = analyzer_type
@@ -52,6 +53,7 @@ class PlistToPlaintextFormatter(object):
         self.print_steps = False
         self.src_comment_handler = src_comment_handler
         self.skiplist_handler = skip_handler
+        self.src_comment_status_filter = src_comment_status_filter
         self._processed_path_hashes = processed_path_hashes
         self._trim_path_prefixes = trim_path_prefixes
 
@@ -79,8 +81,8 @@ class PlistToPlaintextFormatter(object):
                                               event['message'],
                                               name)
             if review_status:
-                out = '%s [%s]' % (out,
-                                   review_status.capitalize().replace('_', ''))
+                rw_status = review_status.capitalize().replace('_', ' ')
+                out = '%s [%s]' % (out, rw_status)
 
             return out
         else:
@@ -191,7 +193,8 @@ class PlistToPlaintextFormatter(object):
                                 source_file,
                                 report_line,
                                 checker_name,
-                                self.src_comment_handler)
+                                self.src_comment_handler,
+                                self.src_comment_status_filter)
 
                 if skip:
                     continue
@@ -292,7 +295,7 @@ class PlistToPlaintextFormatter(object):
 
 
 def skip_report(report_hash, source_file, report_line, checker_name,
-                src_comment_handler=None):
+                src_comment_handler=None, src_comment_status_filter=None):
     """
     Returns a tuple where the first value will be True if the report was
     suppressed in the source code, otherwise False. The second value will be
@@ -312,7 +315,11 @@ def skip_report(report_hash, source_file, report_line, checker_name,
         report_line,
         checker_name)
 
-    if len(src_comment_data) == 1:
+    if not src_comment_data:
+        skip = True if src_comment_status_filter and \
+            'unreviewed' not in src_comment_status_filter else False
+        return skip, src_comment_data
+    elif len(src_comment_data) == 1:
         status = src_comment_data[0]['status']
 
         LOG.debug("Suppressed by source code comment.")
@@ -325,7 +332,8 @@ def skip_report(report_hash, source_file, report_line, checker_name,
                 message,
                 status)
 
-        if skip_suppress_status(status):
+        if src_comment_status_filter and \
+                status not in src_comment_status_filter:
             return True, src_comment_data
 
     elif len(src_comment_data) > 1:
@@ -456,6 +464,16 @@ def add_arguments_to_parser(parser):
                              "If multiple prefix is given, the longest match "
                              "will be removed.")
 
+    parser.add_argument('--review-status',
+                        nargs='*',
+                        dest="review_status",
+                        metavar='REVIEW_STATUS',
+                        choices=REVIEW_STATUS_VALUES,
+                        default=["confirmed", "unreviewed"],
+                        help="Filter results by review statuses. Valid "
+                             "values are: {0}".format(
+                                 ', '.join(REVIEW_STATUS_VALUES)))
+
     logger.add_verbose_arguments(parser)
     parser.set_defaults(func=main)
 
@@ -580,6 +598,8 @@ def main(args):
 
     original_cwd = os.getcwd()
 
+    src_comment_status_filter = args.review_status
+
     suppr_handler = None
     if 'suppress' in args:
         __make_handler = False
@@ -600,7 +620,8 @@ def main(args):
         if __make_handler:
             suppr_handler = suppress_handler.\
                 GenericSuppressHandler(args.suppress,
-                                       'create_suppress' in args)
+                                       'create_suppress' in args,
+                                       src_comment_status_filter)
     elif 'create_suppress' in args:
         LOG.error("Can't use '--export-source-suppress' unless '--suppress "
                   "SUPPRESS_FILE' is also given.")
@@ -660,7 +681,8 @@ def main(args):
                                                  source_file,
                                                  report_line,
                                                  checker_name,
-                                                 suppr_handler)
+                                                 suppr_handler,
+                                                 src_comment_status_filter)
 
         if skip_handler:
             skip |= skip_handler.should_skip(source_file)
@@ -728,7 +750,8 @@ def main(args):
                                        skip_handler,
                                        context.severity_map,
                                        processed_path_hashes,
-                                       trim_path_prefixes)
+                                       trim_path_prefixes,
+                                       src_comment_status_filter)
         rh.print_steps = 'print_steps' in args
 
         for file_path in files:

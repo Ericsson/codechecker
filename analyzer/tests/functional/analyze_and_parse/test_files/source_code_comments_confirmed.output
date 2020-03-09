@@ -1,7 +1,7 @@
 NORMAL#CodeChecker log --output $LOGFILE$ --build "make source_code_comments" --quiet
 NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy --enable bugprone-sizeof-expression
-NORMAL#CodeChecker parse $OUTPUT$
-CHECK#CodeChecker check --build "make source_code_comments" --output $OUTPUT$ --quiet --analyzers clang-tidy --enable bugprone-sizeof-expression
+NORMAL#CodeChecker parse $OUTPUT$ --review-status confirmed
+CHECK#CodeChecker check --build "make source_code_comments" --output $OUTPUT$ --quiet --analyzers clang-tidy --enable bugprone-sizeof-expression --review-status confirmed
 --------------------------------------------------------------------------------
 [] - Starting build ...
 [] - Build finished successfully.
@@ -22,24 +22,20 @@ CHECK#CodeChecker check --build "make source_code_comments" --output $OUTPUT$ --
   sizeof(43);
   ^
 
-[HIGH] source_code_comments.cpp:15:3: suspicious usage of 'sizeof(K)'; did you mean 'K'? [bugprone-sizeof-expression]
-  sizeof(44);
-  ^
-
-Found 2 defect(s) in source_code_comments.cpp
+Found 1 defect(s) in source_code_comments.cpp
 
 
 ----==== Summary ====----
 ---------------------------------------
 Filename                 | Report count
 ---------------------------------------
-source_code_comments.cpp |            2
+source_code_comments.cpp |            1
 ---------------------------------------
 -----------------------
 Severity | Report count
 -----------------------
-HIGH     |            2
+HIGH     |            1
 -----------------------
 ----=================----
-Total number of reports: 2
+Total number of reports: 1
 ----=================----
