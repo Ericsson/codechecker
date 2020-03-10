@@ -23,6 +23,7 @@
               type="text"
               required
               :rules="[() => !!username || 'This field is required']"
+              :placeholder="placeholder"
               @keyup.enter="login"
             />
 
@@ -36,6 +37,7 @@
               type="password"
               required
               :rules="[() => !!password || 'This field is required']"
+              :placeholder="placeholder"
               @keyup.enter="login"
             />
           </v-form>
@@ -65,8 +67,10 @@ export default {
   components: {
     Alerts
   },
+
   data() {
     return {
+      placeholder: null,
       username: null,
       password: null,
       success: false,
@@ -82,10 +86,23 @@ export default {
     ])
   },
 
+  watch: {
+    username() {
+      this.resetPlaceholder();
+    },
+    password() {
+      this.resetPlaceholder();
+    }
+  },
+
   created() {
     if (this.isAuthenticated) {
       this.$router.replace({ name: "products" });
     }
+  },
+
+  mounted() {
+    this.fixAutocomplete();
   },
 
   methods: {
@@ -103,6 +120,41 @@ export default {
           this.errorMsg = `Failed to log in! ${err.message}`;
           this.error = true;
         });
+    },
+
+    /**
+     * Set placeholder when browser autocompletes username or password to raise
+     * v-text-field labels.
+     * See: https://github.com/vuetifyjs/vuetify/issues/3679
+     */
+    fixAutocomplete() {
+      let times = 0;
+      const interval = setInterval(() => {
+        times += 1;
+        if (this.placeholder || times === 20) {
+          clearInterval(interval);
+        }
+
+        const username =
+          this.$el.querySelector("input[name=\"username\"]:-webkit-autofill");
+        const password =
+          this.$el.querySelector("input[name=\"password\"]:-webkit-autofill");
+
+        if (username || password) {
+          this.$nextTick(() => {
+            this.placeholder = "`\u0020`";
+          });
+        }
+      }, 100);
+    },
+
+    /**
+     * We set the placeholder back to null if the user edited this field.
+     * This way the label of the text field will be moved properly.
+     * See the fixAutocomplete function for more information.
+     */
+    resetPlaceholder() {
+      this.placeholder = null;
     }
   }
 };
