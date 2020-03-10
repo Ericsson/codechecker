@@ -184,7 +184,7 @@
 
     <template v-slot:item.action="{ item }">
       <edit-product-btn
-        v-if="isSuperUser || isAdminOfAnyProduct"
+        v-if="isSuperUser || item.administrating"
         :product="item"
         @on-complete="onCompleteEditProduct"
       />
