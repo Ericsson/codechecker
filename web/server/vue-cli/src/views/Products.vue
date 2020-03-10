@@ -319,7 +319,7 @@ export default {
   },
 
   created() {
-    this.productNameSearch = this.$router.currentRoute.query["name"];
+    this.productNameSearch = this.$router.currentRoute.query["name"] || null;
 
     authService.getClient().hasPermission(Permission.SUPERUSER, "",
       (err, isSuperUser) => {
@@ -340,7 +340,9 @@ export default {
         }
       });
 
-    this.fetchProducts();
+    if (!this.productNameSearch) {
+      this.fetchProducts();
+    }
   },
 
   methods: {
