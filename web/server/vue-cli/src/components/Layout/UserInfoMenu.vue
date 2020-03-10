@@ -44,15 +44,20 @@
       <v-card flat>
         <v-card-text>
           Permissions:
-          <v-chip
-            v-for="permission in permissions"
-            :key="permission"
-            class="ma-2"
-            color="success"
-            outlined
-          >
-            {{ permissionFromCodeToString(permission) }}
-          </v-chip>
+          <span v-if="permissions.length">
+            <v-chip
+              v-for="permission in permissions"
+              :key="permission"
+              class="ma-2"
+              color="success"
+              outlined
+            >
+              {{ permissionFromCodeToString(permission) }}
+            </v-chip>
+          </span>
+          <span v-else>
+            No permission
+          </span>
         </v-card-text>
       </v-card>
 
