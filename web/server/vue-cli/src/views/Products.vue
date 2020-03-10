@@ -29,13 +29,17 @@
             <v-col cols="auto" align="right">
               <v-spacer />
 
-              <edit-announcement-btn />
+              <span
+                v-if="isSuperUser"
+              >
+                <edit-announcement-btn />
 
-              <edit-global-permission-btn />
+                <edit-global-permission-btn />
 
-              <new-product-btn
-                @on-complete="onCompleteNewProduct"
-              />
+                <new-product-btn
+                  @on-complete="onCompleteNewProduct"
+                />
+              </span>
             </v-col>
           </v-row>
         </v-toolbar>
