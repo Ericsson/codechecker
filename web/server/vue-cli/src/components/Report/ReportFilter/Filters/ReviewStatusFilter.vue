@@ -15,7 +15,7 @@
 </template>
 
 <script>
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 
 import { ReportFilter, ReviewStatus } from "@cc/report-server-types";
 import { ReviewStatusIcon } from "@/components/Icons";
@@ -66,7 +66,7 @@ export default {
       reportFilter.reviewStatus = null;
 
       ccService.getClient().getReviewStatusCounts(this.runIds, reportFilter,
-        this.cmpData, (err, res) => {
+        this.cmpData, handleThriftError(res => {
           this.items = Object.keys(ReviewStatus).map(status => {
             const id = ReviewStatus[status];
             return {
@@ -76,7 +76,7 @@ export default {
             };
           });
           this.loading = false;
-        });
+        }));
     }
   }
 };

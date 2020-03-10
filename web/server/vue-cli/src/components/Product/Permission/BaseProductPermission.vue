@@ -79,7 +79,7 @@
 </template>
 
 <script>
-import { authService } from "@cc-api";
+import { authService, handleThriftError } from "@cc-api";
 import { Permission } from "@cc/shared-types";
 
 export default {
@@ -139,8 +139,9 @@ export default {
               this.authRights[userName].indexOf(permission) !== -1
           ) {
             authService.getClient().removePermission(permission, userName,
-              this.isGroup, this.extraParamsJson, (err, success) => {
-                if (err || !success) {
+              this.isGroup, this.extraParamsJson,
+              handleThriftError(success => {
+                if (!success) {
                   this.$emit("update:error", true);
                   return;
                 }
@@ -150,11 +151,14 @@ export default {
                 if (!this.authRights[userName].length) {
                   delete this.authRights[userName];
                 }
-              });
+              }, () => {
+                this.$emit("update:error", true);
+              }));
           } else {
             authService.getClient().addPermission(permission, userName,
-              this.isGroup, this.extraParamsJson, (err, success) => {
-                if (err || !success) {
+              this.isGroup, this.extraParamsJson,
+              handleThriftError(success => {
+                if (!success) {
                   this.$emit("update:error", true);
                   return;
                 }
@@ -163,7 +167,9 @@ export default {
                   this.authRights[userName] = [];
                 }
                 this.authRights[userName].push(permission);
-              });
+              }, () => {
+                this.$emit("update:error", true);
+              }));
           }
         });
       }

@@ -76,7 +76,7 @@
 </template>
 
 <script>
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 
 import EditSourceComponentDialog from "./EditSourceComponentDialog";
 import RemoveSourceComponentDialog from "./RemoveSourceComponentDialog";
@@ -136,9 +136,10 @@ export default {
 
   methods: {
     fetchSourceComponents() {
-      ccService.getClient().getSourceComponents(null, (err, components) => {
-        this.components = components;
-      });
+      ccService.getClient().getSourceComponents(null,
+        handleThriftError(components => {
+          this.components = components;
+        }));
     },
 
     editSourceComponent(component) {

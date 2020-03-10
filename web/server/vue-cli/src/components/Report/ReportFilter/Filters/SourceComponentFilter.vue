@@ -32,7 +32,7 @@
 </template>
 
 <script>
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 
 import {
   ManageSourceComponentDialog
@@ -76,15 +76,16 @@ export default {
       this.loading = true;
 
       const filter = opt.query;
-      ccService.getClient().getSourceComponents(filter, (err, res) => {
-        this.items = res.map(component => {
-          return {
-            id : component.name,
-            title: component.name
-          };
-        });
-        this.loading = false;
-      });
+      ccService.getClient().getSourceComponents(filter,
+        handleThriftError(res => {
+          this.items = res.map(component => {
+            return {
+              id : component.name,
+              title: component.name
+            };
+          });
+          this.loading = false;
+        }));
     }
   }
 };

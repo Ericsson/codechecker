@@ -83,7 +83,7 @@
 </template>
 
 <script>
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 import { SourceComponentData } from "@cc/report-server-types";
 
 export default {
@@ -121,10 +121,14 @@ export default {
     saveSourceComponent() {
       const component = this.component;
       ccService.getClient().addSourceComponent(component.name,
-        component.value, component.description, (/* err, success */) => {
-          this.$emit("save:component");
-          this.dialog = false;
-        });
+        component.value, component.description,
+        handleThriftError(success => {
+          if (success) {
+            this.$emit("save:component");
+            this.dialog = false;
+          }
+          // TODO: handle case when success is false.
+        }));
     }
   }
 };

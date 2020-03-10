@@ -52,7 +52,7 @@
 </template>
 
 <script>
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 
 export default {
   name: "ShowDocumentationButton",
@@ -68,10 +68,11 @@ export default {
   watch: {
     dialog() {
       if (!this.doc) {
-        ccService.getClient().getCheckerDoc(this.value, (err, doc) => {
-          // TODO: mark the documentation.
-          this.doc = doc;
-        });
+        ccService.getClient().getCheckerDoc(this.value,
+          handleThriftError(doc => {
+            // TODO: mark the documentation.
+            this.doc = doc;
+          }));
       }
     },
 

@@ -1,4 +1,4 @@
-import { authService } from "@cc-api";
+import { authService, handleThriftError } from "@cc-api";
 import { PermissionFilter } from "@cc/auth-types";
 
 export default {
@@ -14,10 +14,10 @@ export default {
     populatePermissions(scope, extraParamsJSON) {
       const filter = new PermissionFilter({ canManage: true });
       authService.getClient().getPermissionsForUser(scope, extraParamsJSON,
-        filter, (err, permissions) => {
+        filter, handleThriftError(permissions => {
           this.permissions = permissions;
           this.populateAuthRights(extraParamsJSON);
-        });
+        }));
     },
 
     addAuthRight(authRights, permission, userNames) {
@@ -38,10 +38,10 @@ export default {
 
       this.permissions.forEach(permission => {
         authService.getClient().getAuthorisedNames(permission,
-          extraParamsJSON, (err, res) => {
+          extraParamsJSON, handleThriftError(res => {
             this.addAuthRight(this.userAuthRights, permission, res.users);
             this.addAuthRight(this.groupAuthRights, permission, res.groups);
-          });
+          }));
       });
     }
   }

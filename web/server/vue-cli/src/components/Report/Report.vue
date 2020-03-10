@@ -183,7 +183,7 @@ import Vue from "vue";
 import CodeMirror from "codemirror";
 import { jsPlumb } from "jsplumb";
 
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 import {
   Encoding,
   ExtendedReportDataType,
@@ -265,10 +265,10 @@ export default {
     report() {
       this.loadNumOfComments = true;
       ccService.getClient().getCommentCount(this.report.reportId,
-        (err, numOfComments) => {
+        handleThriftError(numOfComments => {
           this.numOfComments = numOfComments;
           this.loadNumOfComments = false;
-        });
+        }));
     }
   },
 
@@ -355,9 +355,9 @@ export default {
     async setSourceFileData(fileId) {
       const sourceFile = await new Promise(resolve => {
         ccService.getClient().getSourceFileData(fileId, true,
-          Encoding.DEFAULT, (err, sourceFile) => {
+          Encoding.DEFAULT, handleThriftError(sourceFile => {
             resolve(sourceFile);
-          });
+          }));
       });
 
       this.sourceFile = sourceFile;
@@ -398,9 +398,9 @@ export default {
 
       const reportDetail = await new Promise(resolve => {
         ccService.getClient().getReportDetails(reportId,
-          (err, reportDetail) => {
+          handleThriftError(reportDetail => {
             resolve(reportDetail);
-          });
+          }));
       });
 
       const isSameFile = path => path.fileId.equals(this.sourceFile.fileId);
@@ -585,9 +585,7 @@ export default {
 
     confirmReviewStatusChange(reviewData) {
       ccService.getClient().changeReviewStatus(this.report.reportId,
-        reviewData.status, reviewData.comment, () => {
-        // TODO: handle errors.
-        });
+        reviewData.status, reviewData.comment, handleThriftError());
     }
   }
 };

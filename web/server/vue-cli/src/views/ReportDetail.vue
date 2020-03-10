@@ -55,7 +55,7 @@
 import { Pane, Splitpanes } from "splitpanes";
 import { mapState } from "vuex";
 
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 import {
   MAX_QUERY_SIZE,
   Order,
@@ -108,9 +108,10 @@ export default {
     },
 
     loadReportById(reportId) {
-      ccService.getClient().getReport(reportId, (err, reportData) => {
-        this.report = reportData;
-      });
+      ccService.getClient().getReport(reportId,
+        handleThriftError(reportData => {
+          this.report = reportData;
+        }));
     },
 
     loadReportByHash(reportHash) {
@@ -131,9 +132,9 @@ export default {
 
       ccService.getClient().getRunResults(this.runIds, limit, offset,
         [ sortType ], reportFilter, this.cmpData, getDetails,
-        (err, reports) => {
+        handleThriftError(reports => {
           this.report = reports[0];
-        });
+        }));
     },
 
     onReportTreeClick(item) {

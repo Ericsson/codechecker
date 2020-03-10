@@ -56,7 +56,7 @@
 </template>
 
 <script>
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 
 export default {
   name: "RemoveCommentDialog",
@@ -80,10 +80,11 @@ export default {
 
   methods: {
     confirmCommentRemove() {
-      ccService.getClient().removeComment(this.comment.id, () => {
-        this.$emit("on-confirm");
-        this.dialog = false;
-      });
+      ccService.getClient().removeComment(this.comment.id,
+        handleThriftError(() => {
+          this.$emit("on-confirm");
+          this.dialog = false;
+        }));
     }
   }
 };

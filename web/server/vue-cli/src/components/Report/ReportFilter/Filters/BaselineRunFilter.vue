@@ -18,7 +18,7 @@
 </template>
 
 <script>
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 import { ReportFilter, RunFilter } from "@cc/report-server-types";
 
 import SelectOption from "./SelectOption/SelectOption";
@@ -98,7 +98,7 @@ export default {
       reportFilter["runName"] = opt.query;
 
       ccService.getClient().getRunReportCounts(runIds, reportFilter, limit,
-        offset, (err, res) => {
+        offset, handleThriftError(res => {
           this.items = res.map(run => {
             return {
               id: run.name,
@@ -108,7 +108,7 @@ export default {
             };
           });
           this.loading = false;
-        });
+        }));
     },
 
     getRunIdsByRunName(runName) {
@@ -119,9 +119,9 @@ export default {
 
       return new Promise(resolve => {
         ccService.getClient().getRunData(runFilter, limit, offset, sortMode,
-          (err, runs) => {
+          handleThriftError(runs => {
             resolve(runs.map(run => run.runId.toNumber() ));
-          });
+          }));
       });
     },
   }

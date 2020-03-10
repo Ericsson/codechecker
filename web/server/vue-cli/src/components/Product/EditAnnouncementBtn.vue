@@ -41,7 +41,7 @@
 <script>
 import { mapActions, mapGetters, mapMutations } from "vuex";
 
-import { confService } from "@cc-api";
+import { confService, handleThriftError } from "@cc-api";
 
 import { GET_ANNOUNCEMENT } from "@/store/actions.type";
 import { SET_ANNOUNCEMENT } from "@/store/mutations.type";
@@ -93,10 +93,10 @@ export default {
         ? window.btoa(this.value) : window.btoa("");
 
       confService.getClient().setNotificationBannerText(announcementB64,
-        () => {
+        handleThriftError(() => {
           this.dialog = false;
           this.setAnnouncement(this.value);
-        });
+        }));
     }
   }
 };

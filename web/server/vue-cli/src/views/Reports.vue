@@ -69,7 +69,7 @@ import { Pane, Splitpanes } from "splitpanes";
 
 import { mapGetters } from "vuex";
 
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 
 import { FillHeight } from "@/directives";
 import { BugPathLengthColorMixin, DetectionStatusMixin } from "@/mixins";
@@ -246,9 +246,9 @@ export default {
 
     refresh() {
       ccService.getClient().getRunResultCount(this.runIds,
-        this.reportFilter, this.cmpData, (err, res) => {
+        this.reportFilter, this.cmpData, handleThriftError(res => {
           this.totalItems = res.toNumber();
-        });
+        }));
 
       if (this.pagination.page !== 1 && this.initalized) {
         this.pagination.page = 1;
@@ -266,11 +266,12 @@ export default {
       const getDetails = false;
 
       ccService.getClient().getRunResults(this.runIds, limit, offset, sortType,
-        this.reportFilter, this.cmpData, getDetails, (err, reports) => {
+        this.reportFilter, this.cmpData, getDetails,
+        handleThriftError(reports => {
           this.reports = reports;
           this.loading = false;
           this.initalized = true;
-        });
+        }));
     }
   }
 };

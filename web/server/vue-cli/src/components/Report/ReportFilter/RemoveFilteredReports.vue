@@ -31,7 +31,7 @@
 </template>
 
 <script>
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
 export default {
@@ -48,10 +48,10 @@ export default {
   methods: {
     confirmDelete() {
       ccService.getClient().removeRunReports(this.runIds, this.reportFilter,
-        this.cmpData, (/* err, res */) => {
+        this.cmpData, handleThriftError(() => {
           this.$emit("update");
           this.dialog = false;
-        });
+        }));
     }
   }
 };

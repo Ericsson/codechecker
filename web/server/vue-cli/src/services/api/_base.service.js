@@ -6,6 +6,10 @@ import {
   createXHRConnection
 } from "thrift";
 
+import router from "@/router";
+import store from "@/store";
+import { ADD_ERROR, PURGE_AUTH } from "@/store/mutations.type";
+
 // Host should be set explicitly to `hostname` because thrift will use
 // the value of `window.location.host` which will contain port number by
 // default on local host which cause invalid url format.
@@ -40,11 +44,67 @@ class BaseService {
       path: `${productEndpoint}/v${api}/${this._serviceName}`
     });
 
+    // Override parameters of the request object.
+    const getXmlHttpRequestObject = connection.getXmlHttpRequestObject;
+    connection.getXmlHttpRequestObject = function () {
+      const xreq = getXmlHttpRequestObject();
+
+      xreq.addEventListener("readystatechange", function () {
+        if (this.readyState === 4) {
+          if (this.status === 504) {
+            store.commit(ADD_ERROR,
+              `Error ${this.status}: ${this.statusText}`);
+          } else if (this.status === 401) {
+            store.commit(PURGE_AUTH);
+          }
+        }
+      });
+
+      return xreq;
+    };
+
     return createXHRClient(this._serviceClass, connection);
   }
 }
 
+/**
+ * This function will handle the errors of a Thrift API call. If the error
+ * is a 401 error then it will redirect the user to the login page. Otherwise
+ * it will add the error to the vuex store.
+ * @callback [cb] - callback function which will be called on success.
+ * @callback [onError] - callback function which will be called on
+ * error. If it is not given the error will be added to the vuex store.
+ */
+const handleThriftError = function (cb, onError) {
+  return (err, ...args) => {
+    // Call the callback function with the rest of the arguments if it is given
+    // and there are no errors.
+    if (!err) {
+      if (cb) cb.apply(this, args);
+      return;
+    }
+
+    // Handle 401 errors.
+    if (err instanceof Error) {
+      const msg = err.message;
+      if (msg.indexOf("Error code 401:") !== -1) {
+        store.commit(PURGE_AUTH);
+        router.push({ name: "login" }).catch(() => {});
+        onError(err);
+        return;
+      }
+    }
+
+    if (onError) {
+      onError(err);
+    } else if (err instanceof Error) {
+      store.commit(ADD_ERROR, err.message);
+    }
+  };
+};
+
 export {
   eventHub,
+  handleThriftError,
   BaseService
 };

@@ -57,7 +57,7 @@
 </template>
 
 <script>
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 
 export default {
   name: "EditCommentDialog",
@@ -92,10 +92,10 @@ export default {
     confirmCommentChange() {
       // TODO: validate the message.
       ccService.getClient().updateComment(this.comment.id, this.message,
-        () => {
+        handleThriftError(() => {
           this.$emit("on-confirm");
           this.dialog = false;
-        });
+        }));
     }
   }
 };

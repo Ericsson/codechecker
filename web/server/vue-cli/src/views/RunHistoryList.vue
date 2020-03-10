@@ -146,7 +146,7 @@ import {
 } from "@/components/Run";
 import { StrToColorMixin } from "@/mixins";
 
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 import { RunFilter } from "@cc/report-server-types";
 
 export default {
@@ -317,9 +317,9 @@ export default {
       const offset = limit * (this.pagination.page - 1);
 
       ccService.getClient().getRunHistory(runIds, limit, offset, filter,
-        (err, histories) => {
+        handleThriftError(histories => {
           this.histories = histories;
-        });
+        }));
     },
 
     // TODO: Same function in the BaselineRunFilter component.
@@ -331,21 +331,21 @@ export default {
 
       return new Promise(resolve => {
         ccService.getClient().getRunData(runFilter, limit, offset, sortMode,
-          (err, runs) => {
+          handleThriftError(runs => {
             resolve(runs.map(run => run.runId));
-          });
+          }));
       });
     },
 
     openCheckCommandDialog(history) {
       ccService.getClient().getCheckCommand(history.id, null,
-        (err, checkCommand) => {
+        handleThriftError(checkCommand => {
           if (!checkCommand) {
             checkCommand = "Unavailable!";
           }
           this.checkCommand = checkCommand;
           this.showCheckCommandDialog = true;
-        });
+        }));
     },
 
     closeCheckCommandDialog() {

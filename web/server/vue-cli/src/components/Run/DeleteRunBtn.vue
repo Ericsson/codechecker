@@ -42,7 +42,7 @@
 </template>
 
 <script>
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 import { RunFilter } from "@cc/report-server-types";
 
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -67,12 +67,13 @@ export default {
         ids: this.selected.map(run => run.runId)
       });
 
-      ccService.getClient().removeRun(null, runFilter, () => {
-        this.selected.splice(0, this.selected.length);
-        this.dialog = false;
+      ccService.getClient().removeRun(null, runFilter,
+        handleThriftError(() => {
+          this.selected.splice(0, this.selected.length);
+          this.dialog = false;
 
-        this.$emit("on-confirm");
-      });
+          this.$emit("on-confirm");
+        }));
     }
   }
 };

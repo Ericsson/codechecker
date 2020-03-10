@@ -81,7 +81,7 @@
 <script>
 import { mapActions, mapGetters } from "vuex";
 
-import { authService } from "@cc-api";
+import { authService, handleThriftError } from "@cc-api";
 import { PermissionFilter } from "@cc/auth-types";
 import { Permission } from "@cc/shared-types";
 
@@ -124,9 +124,9 @@ export default {
       });
 
       authService.getClient().getPermissionsForUser("PRODUCT", extraParams,
-        this.permissionFilter, (err, permissions) => {
+        this.permissionFilter, handleThriftError(permissions => {
           this.productPermissions = permissions;
-        });
+        }));
     }
   },
 
@@ -143,9 +143,10 @@ export default {
 
     fetchPermissions() {
       authService.getClient().getPermissionsForUser("SYSTEM",
-        JSON.stringify({}), this.permissionFilter, (err, permissions) => {
+        JSON.stringify({}), this.permissionFilter,
+        handleThriftError(permissions => {
           this.systemPermissions = permissions;
-        });
+        }));
     },
 
     permissionFromCodeToString(permission) {

@@ -207,7 +207,7 @@
 <script>
 import _ from "lodash";
 
-import { authService, prodService } from "@cc-api";
+import { authService, handleThriftError, prodService } from "@cc-api";
 import { DBStatus, Permission } from "@cc/shared-types";
 
 import { StrToColorMixin } from "@/mixins";
@@ -328,12 +328,12 @@ export default {
     this.productNameSearch = this.$router.currentRoute.query["name"] || null;
 
     authService.getClient().hasPermission(Permission.SUPERUSER, "",
-      (err, isSuperUser) => {
+      handleThriftError(isSuperUser => {
         this.isSuperUser = isSuperUser;
 
         if (!isSuperUser) {
           prodService.getClient().isAdministratorOfAnyProduct(
-            (err, isAdminOfAnyProduct) => {
+            handleThriftError(isAdminOfAnyProduct => {
               this.isAdminOfAnyProduct = isAdminOfAnyProduct;
 
               // Remove action column from headers.
@@ -342,9 +342,9 @@ export default {
                   return header.value !== "action";
                 });
               }
-            });
+            }));
         }
-      });
+      }));
 
     if (!this.productNameSearch) {
       this.fetchProducts();
@@ -357,9 +357,9 @@ export default {
         ? `*${this.productNameSearch}*` : null;
 
       prodService.getClient().getProducts(null, productNameFilter,
-        (err, products) => {
+        handleThriftError(products => {
           this.products = products;
-        });
+        }));
     },
 
     onCompleteNewProduct() {

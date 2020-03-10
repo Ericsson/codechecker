@@ -15,7 +15,7 @@
 </template>
 
 <script>
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 
 import { ReportFilter, Severity } from "@cc/report-server-types";
 import { SeverityIcon } from "@/components/Icons";
@@ -66,7 +66,7 @@ export default {
       reportFilter.severity = null;
 
       ccService.getClient().getSeverityCounts(this.runIds, reportFilter,
-        this.cmpData, (err, res) => {
+        this.cmpData, handleThriftError(res => {
           this.items = Object.keys(Severity).map(status => {
             const severityId = Severity[status];
             return {
@@ -76,7 +76,7 @@ export default {
             };
           });
           this.loading = false;
-        });
+        }));
     }
   }
 };

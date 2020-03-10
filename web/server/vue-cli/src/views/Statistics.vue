@@ -40,7 +40,7 @@
 import { Pane, Splitpanes } from "splitpanes";
 import { mapState } from "vuex";
 
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 
 import {
   CheckerStatistics,
@@ -82,9 +82,9 @@ export default {
   methods: {
     refresh() {
       ccService.getClient().getRunResultCount(this.runIds,
-        this.reportFilter, null, (err, res) => {
+        this.reportFilter, null, handleThriftError(res => {
           this.reportCount = res.toNumber();
-        });
+        }));
 
       const statistics = this.$refs.statistics;
       statistics.forEach(statistic => statistic.fetchStatistics());

@@ -249,7 +249,7 @@ import {
 import { DetectionStatusMixin, StrToColorMixin } from "@/mixins";
 import { DetectionStatusIcon } from "@/components/Icons";
 
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 import {
   Order,
   RunFilter,
@@ -441,9 +441,10 @@ export default {
         : null;
 
       // Get total item count.
-      ccService.getClient().getRunCount(runFilter, (err, totalItems) => {
-        this.totalItems = totalItems.toNumber();
-      });
+      ccService.getClient().getRunCount(runFilter,
+        handleThriftError(totalItems => {
+          this.totalItems = totalItems.toNumber();
+        }));
 
       // Get the runs.
       const limit = this.pagination.itemsPerPage;
@@ -451,21 +452,21 @@ export default {
       const sortMode = this.getSortMode();
 
       ccService.getClient().getRunData(runFilter, limit, offset, sortMode,
-        (err, runs) => {
+        handleThriftError(runs => {
           this.runs = runs;
           this.loading = false;
-        });
+        }));
     },
 
     openCheckCommandDialog(report) {
       ccService.getClient().getCheckCommand(null, report.runId,
-        (err, checkCommand) => {
+        handleThriftError(checkCommand => {
           if (!checkCommand) {
             checkCommand = "Unavailable!";
           }
           this.checkCommand = checkCommand;
           this.showCheckCommandDialog = true;
-        });
+        }));
     },
 
     openAnalyzerStatisticsDialog(report) {

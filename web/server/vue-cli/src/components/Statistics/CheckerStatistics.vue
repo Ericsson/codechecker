@@ -113,7 +113,7 @@
 <script>
 import { mapState } from "vuex";
 
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 import {
   DetectionStatus,
   ReportFilter,
@@ -212,11 +212,11 @@ export default {
 
         return new Promise(resolve => {
           ccService.getClient().getCheckerCounts(runIds, reportFilter, cmpData,
-            limit, offset, (err, checkerCounts) => {
+            limit, offset, handleThriftError(checkerCounts => {
               const obj = {};
               checkerCounts.forEach(item => { obj[item.name] = item; });
               resolve(obj);
-            });
+            }));
         });
 
       });

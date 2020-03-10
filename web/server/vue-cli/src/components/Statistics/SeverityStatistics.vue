@@ -43,7 +43,7 @@
 
 <script>
 import { mapState } from "vuex";
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 
 import { SeverityIcon } from "@/components/Icons";
 import { SeverityMixin } from "@/mixins";
@@ -95,14 +95,14 @@ export default {
       const cmpData = null;
 
       ccService.getClient().getSeverityCounts(runIds, reportFilter, cmpData,
-        (err, statistics) => {
+        handleThriftError(statistics => {
           this.statistics = Object.keys(statistics).map(severity => {
             return {
               severity: parseInt(severity),
               reports: statistics[severity]
             };
           });
-        });
+        }));
     }
   }
 };

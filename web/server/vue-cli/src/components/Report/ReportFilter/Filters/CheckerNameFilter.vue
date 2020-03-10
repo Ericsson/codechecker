@@ -18,7 +18,7 @@
 </template>
 
 <script>
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 import { ReportFilter } from "@cc/report-server-types";
 
 import SelectOption from "./SelectOption/SelectOption";
@@ -65,7 +65,7 @@ export default {
       const offset = 0;
 
       ccService.getClient().getCheckerCounts(this.runIds, reportFilter,
-        this.cmpData, limit, offset, (err, res) => {
+        this.cmpData, limit, offset, handleThriftError(res => {
           this.items = res.map(checker => {
             return {
               id: checker.name,
@@ -74,7 +74,7 @@ export default {
             };
           });
           this.loading = false;
-        });
+        }));
     }
   }
 };

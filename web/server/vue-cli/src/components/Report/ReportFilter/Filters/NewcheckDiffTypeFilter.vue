@@ -25,7 +25,7 @@
 </template>
 
 <script>
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 import { CompareData, DiffType } from "@cc/report-server-types";
 
 import SelectOption from "./SelectOption/SelectOption";
@@ -86,9 +86,9 @@ export default {
 
         return new Promise(resolve => {
           ccService.getClient().getRunResultCount(this.runIds,
-            this.reportFilter, cmpData, (err, res) => {
+            this.reportFilter, cmpData, handleThriftError(res => {
               resolve({ [key]: res });
-            });
+            }));
         });
       });
 

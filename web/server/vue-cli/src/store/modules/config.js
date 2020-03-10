@@ -1,4 +1,4 @@
-import { confService } from "@cc-api";
+import { confService, handleThriftError } from "@cc-api";
 
 import { GET_ANNOUNCEMENT } from "../actions.type";
 import { SET_ANNOUNCEMENT } from "../mutations.type";
@@ -20,10 +20,10 @@ const actions = {
         resolve(state.announcement);
       } else {
         confService.getClient().getNotificationBannerText(
-          (err, announcement) => {
+          handleThriftError(announcement => {
             commit(SET_ANNOUNCEMENT, window.atob(announcement));
             resolve(announcement);
-          });
+          }));
       }      
     });
   }

@@ -114,7 +114,7 @@
 </template>
 
 <script>
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 import { AnalyzerStatisticsIcon } from "@/components/Icons";
 
 export default {
@@ -159,10 +159,10 @@ export default {
   methods: {
     getAnalysisStatistics() {
       ccService.getClient().getAnalysisStatistics(this.runId,
-        this.runHistoryId, (err, stats) => {
+        this.runHistoryId, handleThriftError(stats => {
           this.analyzerStatistics = stats;
           this.activeExpansionPanels = [ 0 ];
-        });
+        }));
     }
   }
 };

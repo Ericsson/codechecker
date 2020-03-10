@@ -1,4 +1,4 @@
-import { prodService } from "@cc-api";
+import { handleThriftError, prodService } from "@cc-api";
 
 import { GET_CURRENT_PRODUCT } from "../actions.type";
 import { SET_CURRENT_PRODUCT } from "../mutations.type";
@@ -21,10 +21,10 @@ const actions = {
     }
 
     return new Promise(resolve => {
-      prodService.getClient().getCurrentProduct((err, product) => {
+      prodService.getClient().getCurrentProduct(handleThriftError(product => {
         commit(SET_CURRENT_PRODUCT, product);
         resolve(product);
-      });
+      }));
     });
   }
 };

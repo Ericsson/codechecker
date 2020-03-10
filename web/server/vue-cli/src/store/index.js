@@ -3,6 +3,7 @@ import Vuex from "vuex";
 
 import auth from "./modules/auth";
 import config from "./modules/config";
+import error from "./modules/error";
 import product from "./modules/product";
 
 import report from "./modules/report";
@@ -14,6 +15,7 @@ export default new Vuex.Store({
   modules: {
     auth,
     config,
+    error,
     product,
     report,
     statistics

@@ -59,7 +59,7 @@
 <script>
 import Vue from "vue";
 
-import { prodService } from "@cc-api";
+import { handleThriftError, prodService } from "@cc-api";
 import {
   DatabaseConnection,
   ProductConfiguration
@@ -97,20 +97,20 @@ export default {
 
       this.loading = true;
       prodService.getClient().getProductConfiguration(this.product.id,
-        (err, config) => {
+        handleThriftError(config => {
           this.productConfig = config;
           this.loading = false;
-        });
+        }));
     }
   },
 
   methods: {
     save() {
       prodService.getClient().editProduct(this.product.id, this.productConfig,
-        (/* err */) => {
+        handleThriftError(() => {
           this.$emit("on-complete",
             new ProductConfiguration(this.productConfig));
-        });
+        }));
 
       // Save permissions.
       this.bus.$emit("save");

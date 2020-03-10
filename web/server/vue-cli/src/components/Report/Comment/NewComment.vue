@@ -32,7 +32,7 @@
 </template>
 
 <script>
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 import { CommentData } from "@cc/report-server-types";
 
 export default {
@@ -53,10 +53,10 @@ export default {
 
       const commentData = new CommentData({ message: this.message });
       ccService.getClient().addComment(this.report.reportId, commentData,
-        (/* err */) => {
+        handleThriftError(() => {
           this.bus.$emit("update:comments");
           this.message = null;
-        });
+        }));
     }
   }
 };

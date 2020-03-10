@@ -14,7 +14,7 @@ import {
   SET_AUTH_PARAMS,
   SET_LOGGED_IN_USER
 } from "../mutations.type";
-import { authService } from "@cc-api";
+import { authService, handleThriftError } from "@cc-api";
 
 const state = {
   currentUser: "",
@@ -39,10 +39,11 @@ const actions = {
     if (state.authParams) return state.authParams;
 
     return new Promise(resolve => {
-      authService.getClient().getAuthParameters((err, params) => {
-        commit(SET_AUTH_PARAMS, params);
-        resolve(params);
-      });
+      authService.getClient().getAuthParameters(
+        handleThriftError(params => {
+          commit(SET_AUTH_PARAMS, params);
+          resolve(params);
+        }));
     });
   },
 
@@ -53,40 +54,41 @@ const actions = {
     if (state.currentUser) return state.currentUser;
 
     return new Promise(resolve => {
-      authService.getClient().getLoggedInUser((err, loggedInUser) => {
-        commit(SET_LOGGED_IN_USER, loggedInUser);
-        resolve(loggedInUser);
-      });
+      authService.getClient().getLoggedInUser(
+        handleThriftError(loggedInUser => {
+          commit(SET_LOGGED_IN_USER, loggedInUser);
+          resolve(loggedInUser);
+        }));
     });
   },
 
   [LOGIN](context, credentials) {
     return new Promise((resolve, reject) => {
       authService.getClient().performLogin("Username:Password",
-        `${credentials.username}:${credentials.password}`, (err, token) => {
-          if (!err) {
-            context.commit(SET_AUTH, {
-              userName: credentials.username,
-              token: token
-            });
-            resolve(token);
-          } else {
-            reject(err);
-          }
-        });
+        `${credentials.username}:${credentials.password}`,
+        handleThriftError(token => {
+          context.commit(SET_AUTH, {
+            userName: credentials.username,
+            token: token
+          });
+          resolve(token);
+        }, err => {
+          reject(err);
+        }));
     });
   },
 
   [LOGOUT](context) {
     return new Promise((resolve, reject) => {
-      authService.getClient().destroySession((err, success) => {
-        if (!err && success) {
-          context.commit(PURGE_AUTH);
-          resolve();
-        } else {
-          reject();
-        }
-      });
+      authService.getClient().destroySession(
+        handleThriftError(success => {
+          if (success) {
+            context.commit(PURGE_AUTH);
+            resolve();
+          }
+        }, err => {
+          reject(err);
+        }));
     });
   }
 };

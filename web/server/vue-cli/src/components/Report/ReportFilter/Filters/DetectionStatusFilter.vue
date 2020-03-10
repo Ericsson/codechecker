@@ -25,7 +25,7 @@
 </template>
 
 <script>
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 
 import { DetectionStatus, ReportFilter } from "@cc/report-server-types";
 import { DetectionStatusIcon } from "@/components/Icons";
@@ -78,7 +78,7 @@ export default {
       reportFilter.detectionStatus = null;
 
       ccService.getClient().getDetectionStatusCounts(this.runIds, reportFilter,
-        this.cmpData, (err, res) => {
+        this.cmpData, handleThriftError(res => {
           this.items = Object.keys(DetectionStatus).map(status => {
             const id = DetectionStatus[status];
             return {
@@ -88,7 +88,7 @@ export default {
             };
           });
           this.loading = false;
-        });
+        }));
     }
   }
 };

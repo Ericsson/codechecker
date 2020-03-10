@@ -35,7 +35,7 @@
 </template>
 
 <script>
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 import { DetectionStatus, ReportFilter } from "@cc/report-server-types";
 
 import ReportTreeIcon from "./ReportTreeIcon";
@@ -118,7 +118,7 @@ export default {
       const getDetails = false;
 
       ccService.getClient().getRunResults(runIds, limit, offset, sortType,
-        reportFilter, cmpData, getDetails, (err, reports) => {
+        reportFilter, cmpData, getDetails, handleThriftError(reports => {
           reports.forEach(report => {
             const isResolved =
             report.detectionStatus === DetectionStatus.RESOLVED;
@@ -140,7 +140,7 @@ export default {
               getChildren: item => {
                 return new Promise(resolve => {
                   ccService.getClient().getReportDetails(report.reportId,
-                    (err, details) => {
+                    handleThriftError(details => {
                       item.children = formatReportDetails(report, details);
                       resolve();
 
@@ -151,7 +151,7 @@ export default {
 
                         this.activeItems.push(bugItem);
                       }
-                    });
+                    }));
                 });
               }
             });
@@ -160,7 +160,7 @@ export default {
           });
 
           this.removeEmptyRootElements();
-        });
+        }));
     },
 
     getChildren(item) {

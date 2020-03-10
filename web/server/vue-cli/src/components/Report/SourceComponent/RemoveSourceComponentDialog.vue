@@ -56,7 +56,7 @@
 </template>
 
 <script>
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 
 export default {
   name: "RemoveSourceComponentDialog",
@@ -79,10 +79,13 @@ export default {
   methods: {
     removeSourceComponent() {
       ccService.getClient().removeSourceComponent(this.sourceComponent.name,
-        (/* err, success */) => {
-          this.$emit("on:confirm");
-          this.dialog = false;
-        });
+        handleThriftError(success => {
+          if (success) {
+            this.$emit("on:confirm");
+            this.dialog = false;
+          }
+          // TODO: handle cases when success is false.
+        }));
     }
   }
 };

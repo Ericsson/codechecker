@@ -51,7 +51,7 @@
 <script>
 import Vue from "vue";
 
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 import { CommentKind } from "@cc/report-server-types";
 
 import EditCommentDialog from "./EditCommentDialog";
@@ -111,9 +111,9 @@ export default {
       if (!this.report) return;
 
       ccService.getClient().getComments(this.report.reportId,
-        (err, comments) => {
+        handleThriftError(comments => {
           this.comments = comments;
-        });
+        }));
     }
   }
 };

@@ -18,7 +18,7 @@
 </template>
 
 <script>
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 import {
   ReportFilter,
   RunFilter,
@@ -95,7 +95,7 @@ export default {
       reportFilter["runTag"] = opt.query;
 
       ccService.getClient().getRunHistoryTagCounts(this.runIds, reportFilter,
-        this.cmpData, (err, res) => {
+        this.cmpData, handleThriftError(res => {
           this.items = res.map(tag => {
             const title = tag.runName + ":" + tag.name;
             return {
@@ -106,7 +106,7 @@ export default {
             };
           });
           this.loading = false;
-        });
+        }));
     },
 
     getTagIds(tagWithRunName) {
@@ -128,9 +128,9 @@ export default {
           });
 
           ccService.getClient().getRunHistory(runIds, limit, offset,
-            runHistoryFilter, (err, res) => {
+            runHistoryFilter, handleThriftError(res => {
               resolve(res.map(history => history.id.toNumber()));
-            });
+            }));
         });
       });
     },
@@ -143,9 +143,9 @@ export default {
         const runFilter = new RunFilter({ names: [ runName ] });
 
         ccService.getClient().getRunData(runFilter, limit, offset, sortMode,
-          (err, runs) => {
+          handleThriftError(runs => {
             resolve(runs.map(run => run.runId.toNumber()));
-          });
+          }));
       });
     }
   }

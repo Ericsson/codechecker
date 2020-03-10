@@ -27,7 +27,7 @@
 </template>
 
 <script>
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 import { ReportFilter } from "@cc/report-server-types";
 
 import SelectOption from "./SelectOption/SelectOption";
@@ -74,7 +74,7 @@ export default {
       const offset = null;
 
       ccService.getClient().getFileCounts(this.runIds, reportFilter,
-        this.cmpData, limit, offset, (err, res) => {
+        this.cmpData, limit, offset, handleThriftError(res => {
         // Order the results alphabetically.
           this.items = Object.keys(res).sort((a, b) => {
             if (a < b) return -1;
@@ -88,7 +88,7 @@ export default {
             };
           });
           this.loading = false;
-        });
+        }));
     }
   }
 };

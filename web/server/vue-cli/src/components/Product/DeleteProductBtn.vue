@@ -39,7 +39,7 @@
 </template>
 
 <script>
-import { prodService } from "@cc-api";
+import { handleThriftError, prodService } from "@cc-api";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
 export default {
@@ -60,9 +60,11 @@ export default {
   methods: {
     confirmDelete() {
       prodService.getClient().removeProduct(this.product.id,
-        (/* error, success */) => {
-          this.$emit("on-complete", this.product);
-        });
+        handleThriftError(success => {
+          if (success) {
+            this.$emit("on-complete", this.product);
+          }
+        }));
     }
   }
 };

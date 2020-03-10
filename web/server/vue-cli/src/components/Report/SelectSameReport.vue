@@ -24,7 +24,7 @@
 </template>
 
 <script>
-import { ccService } from "@cc-api";
+import { ccService, handleThriftError } from "@cc-api";
 import {
   MAX_QUERY_SIZE,
   Order,
@@ -79,7 +79,8 @@ export default {
       });
 
       ccService.getClient().getRunResults(null, MAX_QUERY_SIZE, 0,
-        [ sortMode ], reportFilter, null, false, (err, res) => {
+        [ sortMode ], reportFilter, null, false,
+        handleThriftError(res => {
           this.getRuns(res).then(runs => {
             this.items = res.map(report => {
               const run =
@@ -95,7 +96,7 @@ export default {
               };
             });
           });
-        });
+        }));
     },
 
     getRuns(reports) {
@@ -105,9 +106,9 @@ export default {
 
       return new Promise(resolve => {
         ccService.getClient().getRunData(runFilter, null, 0, null,
-          (err, res) => {
+          handleThriftError(res => {
             resolve(res);
-          });
+          }));
       });
     },
 

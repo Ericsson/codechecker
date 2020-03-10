@@ -30,7 +30,7 @@
 </template>
 
 <script>
-import { prodService } from "@cc-api";
+import { handleThriftError, prodService } from "@cc-api";
 import {
   DatabaseConnection,
   ProductConfiguration
@@ -56,14 +56,16 @@ export default {
   },
   methods: {
     save() {
-      prodService.getClient().addProduct(this.productConfig, (/* err */) => {
-        this.$emit("on-complete", new ProductConfiguration(this.productConfig));
+      prodService.getClient().addProduct(this.productConfig,
+        handleThriftError(() => {
+          this.$emit("on-complete",
+            new ProductConfiguration(this.productConfig));
 
-        this.dialog = false;
-        this.productConfig = new ProductConfiguration({
-          connection: new DatabaseConnection()
-        });
-      });
+          this.dialog = false;
+          this.productConfig = new ProductConfiguration({
+            connection: new DatabaseConnection()
+          });
+        }));
     }
   }
 };
