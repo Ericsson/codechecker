@@ -1,201 +1,203 @@
 <template>
-  <v-data-table
-    :headers="headers"
-    :items="processedProducts"
-    :hide-default-footer="true"
-    :must-sort="true"
-    item-key="endpoint"
-  >
-    <template v-slot:top>
-      <v-toolbar flat class="mb-4">
-        <v-row>
-          <v-col>
-            <v-text-field
-              v-model="productNameSearch"
-              prepend-inner-icon="mdi-magnify"
-              label="Search for products..."
-              single-line
-              hide-details
-              outlined
-              solo
-              flat
-              dense
-            />
-          </v-col>
+  <v-container fluid>
+    <v-data-table
+      :headers="headers"
+      :items="processedProducts"
+      :hide-default-footer="true"
+      :must-sort="true"
+      item-key="endpoint"
+    >
+      <template v-slot:top>
+        <v-toolbar flat class="mb-4">
+          <v-row>
+            <v-col>
+              <v-text-field
+                v-model="productNameSearch"
+                prepend-inner-icon="mdi-magnify"
+                label="Search for products..."
+                single-line
+                hide-details
+                outlined
+                solo
+                flat
+                dense
+              />
+            </v-col>
 
-          <v-spacer />
-
-          <v-col cols="auto" align="right">
             <v-spacer />
 
-            <edit-announcement-btn />
+            <v-col cols="auto" align="right">
+              <v-spacer />
 
-            <edit-global-permission-btn />
+              <edit-announcement-btn />
 
-            <new-product-btn
-              @on-complete="onCompleteNewProduct"
-            />
-          </v-col>
-        </v-row>
-      </v-toolbar>
-    </template>
+              <edit-global-permission-btn />
 
-    <template #item.displayedName="{ item }">
-      <v-list-item
-        class="pa-0"
-        two-line
-      >
-        <v-list-item-avatar class="my-1">
-          <v-avatar
-            :color="strToColor(item.endpoint)"
-            size="48"
-            class="my-1"
-          >
-            <span class="white--text headline">
-              {{ item.endpoint | productIconName }}
-            </span>
-          </v-avatar>
-        </v-list-item-avatar>
+              <new-product-btn
+                @on-complete="onCompleteNewProduct"
+              />
+            </v-col>
+          </v-row>
+        </v-toolbar>
+      </template>
 
-        <v-list-item-content>
-          <v-list-item-title>
-            <span
-              v-if="item.databaseStatus !== DBStatus.OK || !item.accessible"
-              :style="{ 'text-decoration': 'line-through' }"
-            >
-              {{ item.displayedName }}
-            </span>
-
-            <router-link
-              v-else
-              :to="{ name: 'runs', params: { endpoint: item.endpoint } }"
-            >
-              {{ item.displayedName }}
-            </router-link>
-
-            <span
-              v-if="!item.accessible"
-              color="grey--text"
-            >
-              <v-icon>mdi-alert-outline</v-icon>
-              You do not have access to this product!
-            </span>
-
-            <span
-              v-else-if="item.databaseStatus !== DBStatus.OK"
-              class="error--text"
-            >
-              <v-icon>mdi-alert-outline</v-icon>
-              {{ dbStatusFromCodeToString(item.databaseStatus) }}
-              <span
-                v-if="item.databaseStatus === DBStatus.SCHEMA_MISMATCH_OK ||
-                  item.databaseStatus === DBStatus.SCHEMA_MISSING"
-              >
-                Use <kbd>CodeChecker server</kbd> command for schema
-                upgrade/initialization.
-              </span>
-            </span>
-          </v-list-item-title>
-
-          <v-list-item-subtitle>
-            {{ item.description }}
-          </v-list-item-subtitle>
-        </v-list-item-content>
-      </v-list-item>
-    </template>
-
-    <template #item.description="{ item }">
-      <div
-        v-if="!item.accessible"
-        color="grey--text"
-      >
-        <v-icon>mdi-alert-outline</v-icon>
-        You do not have access to this product!
-      </div>
-
-      <div
-        v-else-if="item.databaseStatus !== DBStatus.OK"
-        class="error--text"
-      >
-        <v-icon>mdi-alert-outline</v-icon>
-        {{ dbStatusFromCodeToString(item.databaseStatus) }}
-        <span
-          v-if="item.databaseStatus === DBStatus.SCHEMA_MISMATCH_OK ||
-            item.databaseStatus === DBStatus.SCHEMA_MISSING"
+      <template #item.displayedName="{ item }">
+        <v-list-item
+          class="pa-0"
+          two-line
         >
-          Use <kbd>CodeChecker server</kbd> command for schema
-          upgrade/initialization.
-        </span>
-      </div>
+          <v-list-item-avatar class="my-1">
+            <v-avatar
+              :color="strToColor(item.endpoint)"
+              size="48"
+              class="my-1"
+            >
+              <span class="white--text headline">
+                {{ item.endpoint | productIconName }}
+              </span>
+            </v-avatar>
+          </v-list-item-avatar>
 
-      {{ item.description }}
-    </template>
+          <v-list-item-content>
+            <v-list-item-title>
+              <span
+                v-if="item.databaseStatus !== DBStatus.OK || !item.accessible"
+                :style="{ 'text-decoration': 'line-through' }"
+              >
+                {{ item.displayedName }}
+              </span>
 
-    <template #item.admins="{ item }">
-      <v-chip
-        v-for="admin in item.admins"
-        :key="admin"
-        color="secondary"
-        class="mr-2"
-      >
-        <v-avatar left>
-          <v-icon>mdi-account-circle</v-icon>
-        </v-avatar>
-        {{ admin }}
-      </v-chip>
-    </template>
+              <router-link
+                v-else
+                :to="{ name: 'runs', params: { endpoint: item.endpoint } }"
+              >
+                {{ item.displayedName }}
+              </router-link>
 
-    <template #item.runCount="{ item }">
-      <v-chip
-        :color="getRunCountColor(item.runCount)"
-        dark
-      >
-        {{ item.runCount }}
-      </v-chip>
-    </template>
+              <span
+                v-if="!item.accessible"
+                color="grey--text"
+              >
+                <v-icon>mdi-alert-outline</v-icon>
+                You do not have access to this product!
+              </span>
 
-    <template #item.latestStoreToProduct="{ item }">
-      <v-chip
-        v-if="item.latestStoreToProduct"
-        class="ma-2"
-        color="primary"
-        outlined
-      >
-        <v-icon left>
-          mdi-calendar-range
-        </v-icon>
-        {{ item.latestStoreToProduct | prettifyDate }}
-      </v-chip>
-    </template>
+              <span
+                v-else-if="item.databaseStatus !== DBStatus.OK"
+                class="error--text"
+              >
+                <v-icon>mdi-alert-outline</v-icon>
+                {{ dbStatusFromCodeToString(item.databaseStatus) }}
+                <span
+                  v-if="item.databaseStatus === DBStatus.SCHEMA_MISMATCH_OK ||
+                    item.databaseStatus === DBStatus.SCHEMA_MISSING"
+                >
+                  Use <kbd>CodeChecker server</kbd> command for schema
+                  upgrade/initialization.
+                </span>
+              </span>
+            </v-list-item-title>
 
-    <template #item.runStoreInProgress="{ item }">
-      <v-chip
-        v-for="runName in item.runStoreInProgress"
-        :key="runName"
-        color="accent"
-        class="mr-2"
-      >
-        <v-avatar left>
-          <v-icon>mdi-play-circle</v-icon>
-        </v-avatar>
-        {{ runName }}
-      </v-chip>
-    </template>
+            <v-list-item-subtitle>
+              {{ item.description }}
+            </v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
+      </template>
 
-    <template v-slot:item.action="{ item }">
-      <edit-product-btn
-        v-if="isSuperUser || item.administrating"
-        :product="item"
-        @on-complete="onCompleteEditProduct"
-      />
+      <template #item.description="{ item }">
+        <div
+          v-if="!item.accessible"
+          color="grey--text"
+        >
+          <v-icon>mdi-alert-outline</v-icon>
+          You do not have access to this product!
+        </div>
 
-      <delete-product-btn
-        v-if="isSuperUser"
-        :product="item"
-        @on-complete="deleteProduct"
-      />
-    </template>
-  </v-data-table>
+        <div
+          v-else-if="item.databaseStatus !== DBStatus.OK"
+          class="error--text"
+        >
+          <v-icon>mdi-alert-outline</v-icon>
+          {{ dbStatusFromCodeToString(item.databaseStatus) }}
+          <span
+            v-if="item.databaseStatus === DBStatus.SCHEMA_MISMATCH_OK ||
+              item.databaseStatus === DBStatus.SCHEMA_MISSING"
+          >
+            Use <kbd>CodeChecker server</kbd> command for schema
+            upgrade/initialization.
+          </span>
+        </div>
+
+        {{ item.description }}
+      </template>
+
+      <template #item.admins="{ item }">
+        <v-chip
+          v-for="admin in item.admins"
+          :key="admin"
+          color="secondary"
+          class="mr-2"
+        >
+          <v-avatar left>
+            <v-icon>mdi-account-circle</v-icon>
+          </v-avatar>
+          {{ admin }}
+        </v-chip>
+      </template>
+
+      <template #item.runCount="{ item }">
+        <v-chip
+          :color="getRunCountColor(item.runCount)"
+          dark
+        >
+          {{ item.runCount }}
+        </v-chip>
+      </template>
+
+      <template #item.latestStoreToProduct="{ item }">
+        <v-chip
+          v-if="item.latestStoreToProduct"
+          class="ma-2"
+          color="primary"
+          outlined
+        >
+          <v-icon left>
+            mdi-calendar-range
+          </v-icon>
+          {{ item.latestStoreToProduct | prettifyDate }}
+        </v-chip>
+      </template>
+
+      <template #item.runStoreInProgress="{ item }">
+        <v-chip
+          v-for="runName in item.runStoreInProgress"
+          :key="runName"
+          color="accent"
+          class="mr-2"
+        >
+          <v-avatar left>
+            <v-icon>mdi-play-circle</v-icon>
+          </v-avatar>
+          {{ runName }}
+        </v-chip>
+      </template>
+
+      <template v-slot:item.action="{ item }">
+        <edit-product-btn
+          v-if="isSuperUser || item.administrating"
+          :product="item"
+          @on-complete="onCompleteEditProduct"
+        />
+
+        <delete-product-btn
+          v-if="isSuperUser"
+          :product="item"
+          @on-complete="deleteProduct"
+        />
+      </template>
+    </v-data-table>
+  </v-container>
 </template>
 
 <script>

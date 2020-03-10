@@ -3,16 +3,7 @@
     <the-header />
 
     <v-content>
-      <v-container
-        class="py-2 pb-2"
-        fluid
-      >
-        <v-row>
-          <v-col class="py-0">
-            <router-view />
-          </v-col>
-        </v-row>
-      </v-container>
+      <router-view />
     </v-content>
 
     <the-footer />
