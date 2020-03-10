@@ -13,13 +13,15 @@
             :error-msg="errorMsg"
           />
 
-          <v-form>
+          <v-form v-model="valid">
             <v-text-field
               v-model="username"
               label="Username"
               name="username"
               prepend-icon="mdi-account"
               type="text"
+              required
+              :rules="[() => !!username || 'This field is required']"
               @keyup.enter="login"
             />
 
@@ -30,6 +32,8 @@
               name="password"
               prepend-icon="mdi-lock"
               type="password"
+              required
+              :rules="[() => !!password || 'This field is required']"
               @keyup.enter="login"
             />
           </v-form>
@@ -65,7 +69,8 @@ export default {
       password: null,
       success: false,
       error: false,
-      errorMsg: null
+      errorMsg: null,
+      valid: false
     };
   },
 
@@ -83,6 +88,8 @@ export default {
 
   methods: {
     login() {
+      if (!this.valid) return;
+
       this.$store
         .dispatch(LOGIN, { username: this.username, password: this.password })
         .then(() => {
