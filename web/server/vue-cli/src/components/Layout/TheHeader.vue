@@ -6,7 +6,7 @@
     dark
   >
     <template
-      v-if="announcement.length"
+      v-if="announcement && announcement.length"
       v-slot:extension
     >
       <v-system-bar
@@ -93,8 +93,9 @@
 </template>
 
 <script>
-import { mapGetters } from "vuex";
-import { confService } from "@cc-api";
+import { mapActions, mapGetters } from "vuex";
+
+import { GET_ANNOUNCEMENT } from "@/store/actions.type";
 
 import HeaderMenuItems from "./HeaderMenuItems";
 import UserInfoMenu from "./UserInfoMenu";
@@ -107,7 +108,6 @@ export default {
   },
   data() {
     return {
-      announcement: "",
       menuButtons: [
         {
           name: "Products",
@@ -146,7 +146,8 @@ export default {
   computed: {
     ...mapGetters([
       "authParams",
-      "isAuthenticated"
+      "isAuthenticated",
+      "announcement"
     ]),
 
     menuItems() {
@@ -164,9 +165,13 @@ export default {
   },
 
   mounted() {
-    confService.getClient().getNotificationBannerText((err, announcement) => {
-      this.announcement = window.atob(announcement);
-    });
+    this.getAnnouncement();
+  },
+
+  methods: {
+    ...mapActions([
+      GET_ANNOUNCEMENT
+    ])
   }
 };
 </script>

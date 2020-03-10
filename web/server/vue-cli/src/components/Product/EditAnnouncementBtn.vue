@@ -23,7 +23,7 @@
 
     <template v-slot:content>
       <v-text-field
-        v-model="announcement"
+        v-model="value"
         append-icon="mdi-bullhorn-outline"
         label="Write your alert here..."
         single-line
@@ -39,7 +39,12 @@
 </template>
 
 <script>
+import { mapActions, mapGetters, mapMutations } from "vuex";
+
 import { confService } from "@cc-api";
+
+import { GET_ANNOUNCEMENT } from "@/store/actions.type";
+import { SET_ANNOUNCEMENT } from "@/store/mutations.type";
 
 import ConfirmDialog from "@/components/ConfirmDialog";
 
@@ -49,25 +54,48 @@ export default {
     ConfirmDialog
   },
 
+  watcher: {
+    announcement() {
+
+    }
+  },
+
   data() {
     return {
       dialog: false,
-      announcement: ""
+      value: null
     };
   },
+
+  computed: {
+    ...mapGetters([
+      "announcement"
+    ])
+  },
+
   mounted() {
-    confService.getClient().getNotificationBannerText((err, announcement) => {
-      this.announcement = window.atob(announcement);
+    this.getAnnouncement().then(announcement => {
+      this.value = announcement;
     });
   },
+
   methods: {
+    ...mapActions([
+      GET_ANNOUNCEMENT
+    ]),
+    ...mapMutations([
+      SET_ANNOUNCEMENT
+    ]),
+
+    // TODO: set announcement back to the original value on cancel.
     confirmAnnouncementChange() {
-      const announcementB64 = this.announcement
-        ? window.btoa(this.announcement) : window.btoa("");
+      const announcementB64 = this.value
+        ? window.btoa(this.value) : window.btoa("");
 
       confService.getClient().setNotificationBannerText(announcementB64,
         () => {
           this.dialog = false;
+          this.setAnnouncement(this.value);
         });
     }
   }

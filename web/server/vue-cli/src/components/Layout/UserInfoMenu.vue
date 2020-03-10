@@ -126,7 +126,7 @@ export default {
   },
 
 
-  created() {
+  mounted() {
     this.getLoggedInUser();
     this.fetchPermissions();
   },

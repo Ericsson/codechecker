@@ -8,3 +8,5 @@ export const SET_REPORT_FILTER = "setReportFilter";
 export const SET_CMP_DATA = "setCmpData";
 
 export const SET_CURRENT_PRODUCT = "setCurrentProduct";
+
+export const SET_ANNOUNCEMENT = "setAnnouncement";
