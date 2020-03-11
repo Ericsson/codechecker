@@ -8,8 +8,9 @@
         <v-data-table
           :headers="headers"
           :items="statistics"
-          :server-items-length.sync="statistics.length"
+          :disable-pagination="true"
           :hide-default-footer="true"
+          :must-sort="true"
           item-key="checker"
         >
           <template v-slot:header.unreviewed="{ header }">

@@ -9,6 +9,7 @@
           :headers="headers"
           :items="statistics"
           :hide-default-footer="true"
+          :must-sort="true"
           item-key="severity"
         >
           <template v-slot:header.reports="{ header }">
