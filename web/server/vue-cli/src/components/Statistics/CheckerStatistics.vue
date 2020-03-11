@@ -12,6 +12,51 @@
           :hide-default-footer="true"
           item-key="checker"
         >
+          <template v-slot:header.unreviewed="{ header }">
+            <review-status-icon
+              :status="ReviewStatus.UNREVIEWED"
+              :size="16"
+              left
+            />
+            {{ header.text }}
+          </template>
+
+          <template v-slot:header.confirmed="{ header }">
+            <review-status-icon
+              :status="ReviewStatus.CONFIRMED"
+              :size="16"
+              left
+            />
+            {{ header.text }}
+          </template>
+
+          <template v-slot:header.falsePositive="{ header }">
+            <review-status-icon
+              :status="ReviewStatus.FALSE_POSITIVE"
+              :size="16"
+              left
+            />
+            {{ header.text }}
+          </template>
+
+          <template v-slot:header.intentional="{ header }">
+            <review-status-icon
+              :status="ReviewStatus.INTENTIONAL"
+              :size="16"
+              left
+            />
+            {{ header.text }}
+          </template>
+
+          <template v-slot:header.reports="{ header }">
+            <detection-status-icon
+              :status="DetectionStatus.UNRESOLVED"
+              :size="16"
+              left
+            />
+            {{ header.text }}
+          </template>
+
           <template #item.checker="{ item }">
             <router-link
               :to="{ name: 'reports', query: {
@@ -114,18 +159,26 @@
 import { mapState } from "vuex";
 
 import { ccService, handleThriftError } from "@cc-api";
+
 import {
   DetectionStatus,
   ReportFilter,
   ReviewStatus
 } from "@cc/report-server-types";
 
-import { SeverityIcon } from "@/components/Icons";
+import {
+  DetectionStatusIcon,
+  ReviewStatusIcon,
+  SeverityIcon
+} from "@/components/Icons";
+
 import { ReviewStatusMixin, SeverityMixin } from "@/mixins";
 
 export default {
   name: "CheckerStatistics",
   components: {
+    DetectionStatusIcon,
+    ReviewStatusIcon,
     SeverityIcon
   },
   mixins: [ ReviewStatusMixin, SeverityMixin ],
@@ -137,6 +190,7 @@ export default {
   data() {
     return {
       ReviewStatus,
+      DetectionStatus,
       headers: [
         {
           text: "Checker",

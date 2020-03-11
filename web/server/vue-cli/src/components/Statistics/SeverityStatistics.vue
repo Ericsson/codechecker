@@ -11,6 +11,15 @@
           :hide-default-footer="true"
           item-key="severity"
         >
+          <template v-slot:header.reports="{ header }">
+            <detection-status-icon
+              :status="DetectionStatus.UNRESOLVED"
+              :size="16"
+              left
+            />
+            {{ header.text }}
+          </template>
+
           <template #item.severity="{ item }">
             <router-link
               class="severity"
@@ -44,13 +53,15 @@
 <script>
 import { mapState } from "vuex";
 import { ccService, handleThriftError } from "@cc-api";
+import { DetectionStatus } from "@cc/report-server-types";
 
-import { SeverityIcon } from "@/components/Icons";
+import { DetectionStatusIcon, SeverityIcon } from "@/components/Icons";
 import { SeverityMixin } from "@/mixins";
 
 export default {
   name: "SeverityStatistics",
   components: {
+    DetectionStatusIcon,
     SeverityIcon
   },
   mixins: [ SeverityMixin ],
@@ -61,6 +72,7 @@ export default {
 
   data() {
     return {
+      DetectionStatus,
       headers: [
         {
           text: "Severity",
