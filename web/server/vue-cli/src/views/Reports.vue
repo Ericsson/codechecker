@@ -9,7 +9,10 @@
       />
     </pane>
     <pane>
-      <v-dialog v-model="showCheckerDocDialog" width="500">
+      <v-dialog
+        v-model="showCheckerDocDialog"
+        width="600"
+      >
         <v-card>
           <v-card-title
             class="headline primary white--text"
@@ -24,9 +27,8 @@
             </v-btn>
           </v-card-title>
           <v-card-text>
-            <v-container>
-              {{ checkerDoc }}
-            </v-container>
+            <!-- eslint-disable vue/no-v-html -->
+            <v-container v-html="prettyCheckerDoc" />
           </v-card-text>
         </v-card>
       </v-dialog>
@@ -99,6 +101,10 @@
 </template>
 
 <script>
+import hljs from "highlight.js";
+import "highlight.js/styles/default.css";
+import marked from "marked";
+
 import { Pane, Splitpanes } from "splitpanes";
 
 import { mapGetters } from "vuex";
@@ -205,7 +211,12 @@ export default {
       cmpDataUnwatch: null,
       initalized: false,
       checkerDoc: null,
-      showCheckerDocDialog: false
+      showCheckerDocDialog: false,
+      markedOptions: {
+        highlight: function(code) {
+          return hljs.highlightAuto(code).value;
+        }
+      }
     };
   },
 
@@ -249,6 +260,12 @@ export default {
         };
       });
     },
+
+    prettyCheckerDoc() {
+      if (!this.checkerDoc) return;
+
+      return marked(this.checkerDoc, this.markedOptions);
+    }
   },
 
   watch: {
