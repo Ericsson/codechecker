@@ -9,6 +9,28 @@
       />
     </pane>
     <pane>
+      <v-dialog v-model="showCheckerDocDialog" width="500">
+        <v-card>
+          <v-card-title
+            class="headline primary white--text"
+            primary-title
+          >
+            Checker documentation
+
+            <v-spacer />
+
+            <v-btn icon dark @click="showCheckerDocDialog = false">
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
+          </v-card-title>
+          <v-card-text>
+            <v-container>
+              {{ checkerDoc }}
+            </v-container>
+          </v-card-text>
+        </v-card>
+      </v-dialog>
+
       <v-data-table
         v-fill-height
         :headers="tableHeaders"
@@ -37,6 +59,18 @@
           >
             {{ item.checkedFile }}
           </router-link>
+        </template>
+
+        <template #item.checkerId="{ item }">
+          <v-btn
+            text
+            small
+            color="primary"
+            class="text-none"
+            @click="openCheckerDocDialog(item.checkerId)"
+          >
+            {{ item.checkerId }}
+          </v-btn>
         </template>
 
         <template #item.severity="{ item }">
@@ -169,7 +203,9 @@ export default {
       runIdsUnwatch: null,
       reportFilterUnwatch: null,
       cmpDataUnwatch: null,
-      initalized: false
+      initalized: false,
+      checkerDoc: null,
+      showCheckerDocDialog: false
     };
   },
 
@@ -225,6 +261,9 @@ export default {
       },
       deep: true
     },
+    showCheckerDocDialog (val) {
+      val || this.closeCheckerDocDialog();
+    },
   },
 
   methods: {
@@ -253,6 +292,19 @@ export default {
       const ord = this.pagination.sortDesc[0] ? Order.DESC : Order.ASC;
 
       return [ new SortMode({ type: type, ord: ord }) ];
+    },
+
+    openCheckerDocDialog(checkerId) {
+      ccService.getClient().getCheckerDoc(checkerId,
+        handleThriftError(checkerDoc => {
+          this.checkerDoc = checkerDoc;
+          this.showCheckerDocDialog = true;
+        }));
+    },
+
+    closeCheckerDocDialog() {
+      this.showCheckerDocDialog = false;
+      this.checkerDoc = null;
     },
 
     updateUrl() {
