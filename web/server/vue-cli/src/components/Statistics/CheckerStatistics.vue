@@ -4,6 +4,13 @@
       <v-col>
         <h3 class="title primary--text">
           Checker statistics
+          <v-btn
+            color="primary"
+            outlined
+            @click="downloadCSV"
+          >
+            Export CSV
+          </v-btn>
         </h3>
         <v-data-table
           :headers="headers"
@@ -173,7 +180,7 @@ import {
   SeverityIcon
 } from "@/components/Icons";
 
-import { ReviewStatusMixin, SeverityMixin } from "@/mixins";
+import { ReviewStatusMixin, SeverityMixin, ToCSV } from "@/mixins";
 
 export default {
   name: "CheckerStatistics",
@@ -182,7 +189,7 @@ export default {
     ReviewStatusIcon,
     SeverityIcon
   },
-  mixins: [ ReviewStatusMixin, SeverityMixin ],
+  mixins: [ ReviewStatusMixin, SeverityMixin,ToCSV ],
 
   props: {
     namespace: { type: String, required: true }
@@ -244,6 +251,24 @@ export default {
   },
 
   methods: {
+    downloadCSV() {
+      const data = [
+        [
+          "Checker", "Severity", "All reports", "Resolved", "Unreviewed",
+          "Confirmed bug", "False positive", "Intentional"
+        ],
+        ...this.statistics.map(stat => {
+          return [
+            stat.checker, this.severityFromCodeToString(stat.severity),
+            stat.reports, stat.resolved, stat.unreviewed, stat.confirmed,
+            stat.falsePositive, stat.intentional
+          ];
+        })
+      ];
+
+      this.toCSV(data, "codechecker_checker_statistics.csv");
+    },
+
     fetchStatistics() {
       const runIds = this.runIds;
       const cmpData = null;
@@ -283,15 +308,19 @@ export default {
           return {
             checker       : key,
             severity      : checkers[key].severity,
-            reports       : checkers[key].count,
-            unreviewed    : res[1][key] !== undefined ? res[1][key].count : 0,
-            confirmed     : res[2][key] !== undefined ? res[2][key].count : 0,
-            falsePositive : res[3][key] !== undefined ? res[3][key].count : 0,
-            intentional   : res[4][key] !== undefined ? res[4][key].count : 0,
-            resolved      : res[5][key] !== undefined ? res[5][key].count : 0
+            reports       : checkers[key].count.toNumber(),
+            unreviewed    : this.resultToNumber(res[1][key]),
+            confirmed     : this.resultToNumber(res[2][key]),
+            falsePositive : this.resultToNumber(res[3][key]),
+            intentional   : this.resultToNumber(res[4][key]),
+            resolved      : this.resultToNumber(res[5][key]),
           };
         });
       });
+    },
+
+    resultToNumber(value) {
+      return value !== undefined ? value.count.toNumber() : 0;
     }
   }
 };

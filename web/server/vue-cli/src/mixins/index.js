@@ -3,11 +3,13 @@ import DetectionStatusMixin from "./detection-status.mixin";
 import ReviewStatusMixin from "./review-status.mixin";
 import SeverityMixin from "./severity.mixin";
 import StrToColorMixin from "./str-to-color.mixin";
+import ToCSV from "./to-csv.mixin";
 
 export {
   BugPathLengthColorMixin,
   DetectionStatusMixin,
   ReviewStatusMixin,
   SeverityMixin,
-  StrToColorMixin
+  StrToColorMixin,
+  ToCSV
 };

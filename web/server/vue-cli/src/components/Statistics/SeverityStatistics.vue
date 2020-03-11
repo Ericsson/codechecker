@@ -4,6 +4,13 @@
       <v-col cols="auto">
         <h3 class="title primary--text">
           Severity statistics
+          <v-btn
+            color="primary"
+            outlined
+            @click="downloadCSV"
+          >
+            Export CSV
+          </v-btn>
         </h3>
         <v-data-table
           :headers="headers"
@@ -57,7 +64,7 @@ import { ccService, handleThriftError } from "@cc-api";
 import { DetectionStatus } from "@cc/report-server-types";
 
 import { DetectionStatusIcon, SeverityIcon } from "@/components/Icons";
-import { SeverityMixin } from "@/mixins";
+import { SeverityMixin, ToCSV } from "@/mixins";
 
 export default {
   name: "SeverityStatistics",
@@ -65,7 +72,7 @@ export default {
     DetectionStatusIcon,
     SeverityIcon
   },
-  mixins: [ SeverityMixin ],
+  mixins: [ SeverityMixin, ToCSV ],
 
   props: {
     namespace: { type: String, required: true }
@@ -102,6 +109,20 @@ export default {
   },
 
   methods: {
+    downloadCSV() {
+      const data = [
+        [ "Severity", "Reports" ],
+        ...this.statistics.map(stat => {
+          return [
+            this.severityFromCodeToString(stat.severity),
+            stat.reports.toNumber()
+          ];
+        })
+      ];
+
+      this.toCSV(data, "codechecker_severity_statistics.csv");
+    },
+
     fetchStatistics() {
       const runIds = this.runIds;
       const reportFilter = this.reportFilter;
