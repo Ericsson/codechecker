@@ -26,5 +26,5 @@ class ResultHandlerClangSA(ResultHandler):
         Override the context sensitive issue hash in the plist files to
         context insensitive if it is enabled during analysis.
         """
-        if self.report_hash_type == 'context-free':
+        if self.report_hash_type in ['context-free', 'context-free-v2']:
             report.use_context_free_hashes(self.analyzer_result_file)

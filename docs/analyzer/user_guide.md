@@ -84,10 +84,11 @@ usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-t {plist}] [-q] [-f]
                          [--keep-gcc-include-fixed] [--keep-gcc-intrin]
                          (-b COMMAND | -l LOGFILE) [-j JOBS] [-c]
                          [--compile-uniqueing COMPILE_UNIQUEING]
-                         [--report-hash {context-free}]
+                         [--report-hash {context-free,context-free-v2}]
                          [-i SKIPFILE | --file FILE [FILE ...]]
                          [--analyzers ANALYZER [ANALYZER ...]]
                          [--add-compiler-defaults] [--capture-analysis-output]
+                         [--config CONFIG_FILE]
                          [--saargs CLANGSA_ARGS_CFG_FILE]
                          [--tidyargs TIDY_ARGS_CFG_FILE]
                          [--tidy-config TIDY_CONFIG] [--timeout TIMEOUT]
@@ -172,15 +173,18 @@ analyzer arguments:
                         directory. (By default, CodeChecker would keep reports
                         and overwrites only those files that were update by
                         the current build command).
-  --report-hash {context-free}
-                        Specify the hash calculation method for reports. If
-                        this option is not set, the default calculation method
-                        for Clang Static Analyzer will be context sensitive
-                        and for Clang Tidy it will be context insensitive. If
-                        this option is set to 'context-free' bugs will be
-                        identified with the CodeChecker generated context free
-                        hash for every analyzers. USE WISELY AND AT YOUR OWN
-                        RISK!
+  --report-hash {context-free,context-free-v2}
+                        Specify the hash calculation method for reports. By
+                        default the calculation method for Clang Static
+                        Analyzer is context sensitive and for Clang Tidy it is
+                        context insensitive.
+                        You can use the following calculation methods:
+                        - context-free: there was a bug and for Clang Tidy not
+                        the context free hash was generated (kept for backward
+                        compatibility).
+                        - context-free-v2: context free hash is used for
+                        ClangSA and Clang Tidy.
+                        USE WISELY AND AT YOUR OWN RISK!
   -i SKIPFILE, --ignore SKIPFILE, --skip SKIPFILE
                         Path to the Skipfile dictating which project files
                         should be omitted from analysis. Please consult the
@@ -509,8 +513,8 @@ usage: CodeChecker analyze [-h] [-j JOBS]
                            [--keep-gcc-include-fixed] [--keep-gcc-intrin]
                            [-t {plist}] [-q] [-c]
                            [--compile-uniqueing COMPILE_UNIQUEING]
-                           [--report-hash {context-free}] [-n NAME]
-                           [--analyzers ANALYZER [ANALYZER ...]]
+                           [--report-hash {context-free,context-free-v2}]
+                           [-n NAME] [--analyzers ANALYZER [ANALYZER ...]]
                            [--add-compiler-defaults]
                            [--capture-analysis-output] [--config CONFIG_FILE]
                            [--saargs CLANGSA_ARGS_CFG_FILE]
@@ -591,15 +595,17 @@ optional arguments:
                         python regex. If more than one matches an error is
                         given. The whole compilation action text is searched
                         for match. (default: none)
-  --report-hash {context-free}
-                        Specify the hash calculation method for reports. If
-                        this option is not set, the default calculation method
-                        for Clang Static Analyzer will be context sensitive
-                        and for Clang Tidy it will be context insensitive. If
-                        this option is set to 'context-free' bugs will be
-                        identified with the CodeChecker generated context free
-                        hash for every analyzers. USE WISELY AND AT YOUR OWN
-                        RISK!
+Specify the hash calculation method for reports. By
+                        default the calculation method for Clang Static
+                        Analyzer is context sensitive and for Clang Tidy it is
+                        context insensitive.
+                        You can use the following calculation methods:
+                        - context-free: there was a bug and for Clang Tidy not
+                        the context free hash was generated (kept for backward
+                        compatibility).
+                        - context-free-v2: context free hash is used for
+                        ClangSA and Clang Tidy.
+                        USE WISELY AND AT YOUR OWN RISK!
   -n NAME, --name NAME  Annotate the run analysis with a custom name in the
                         created metadata file.
   --verbose {info,debug,debug_analyzer}
