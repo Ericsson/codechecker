@@ -70,6 +70,7 @@ import { Pane, Splitpanes } from "splitpanes";
 import { mapGetters } from "vuex";
 
 import { ccService, handleThriftError } from "@cc-api";
+import { Order, SortMode, SortType } from "@cc/report-server-types";
 
 import { FillHeight } from "@/directives";
 import { BugPathLengthColorMixin, DetectionStatusMixin } from "@/mixins";
@@ -110,38 +111,46 @@ export default {
       headers: [
         {
           text: "Report hash",
-          value: "bugHash"
+          value: "bugHash",
+          sortable: false
         },
         {
           text: "File",
-          value: "checkedFile"
+          value: "checkedFile",
+          sortable: true
         },
         {
           text: "Message",
-          value: "checkerMsg"
+          value: "checkerMsg",
+          sortable: false
         },
         {
           text: "Checker name",
-          value: "checkerId"
+          value: "checkerId",
+          sortable: true
         },
         {
           text: "Severity",
-          value: "severity"
+          value: "severity",
+          sortable: true
         },
         {
           text: "Bug path length",
           value: "bugPathLength",
-          align: "center"
+          align: "center",
+          sortable: true
         },
         {
           text: "Review status",
           value: "reviewData",
-          align: "center"
+          align: "center",
+          sortable: true
         },
         {
           text: "Detection status",
           value: "detectionStatus",
-          align: "center"
+          align: "center",
+          sortable: true
         }
       ],
       reports: [],
@@ -219,6 +228,33 @@ export default {
   },
 
   methods: {
+    getSortMode() {
+      let type = null;
+      switch (this.pagination.sortBy[0]) {
+      case "checkedFile":
+        type = SortType.FILENAME;
+        break;
+      case "checkerId":
+        type = SortType.CHECKER_NAME;
+        break;
+      case "detectionStatus":
+        type = SortType.DETECTION_STATUS;
+        break;
+      case "reviewData":
+        type = SortType.REVIEW_STATUS;
+        break;
+      case "bugPathLength":
+        type = SortType.BUG_PATH_LENGTH;
+        break;
+      default:
+        type = SortType.SEVERITY;
+      }
+
+      const ord = this.pagination.sortDesc[0] ? Order.DESC : Order.ASC;
+
+      return [ new SortMode({ type: type, ord: ord }) ];
+    },
+
     updateUrl() {
       const defaultItemsPerPage = this.footerProps.itemsPerPageOptions[0];
       const itemsPerPage =
@@ -262,7 +298,7 @@ export default {
 
       const limit = this.pagination.itemsPerPage;
       const offset = limit * (this.pagination.page - 1);
-      const sortType = null;
+      const sortType = this.getSortMode();
       const getDetails = false;
 
       ccService.getClient().getRunResults(this.runIds, limit, offset, sortType,
