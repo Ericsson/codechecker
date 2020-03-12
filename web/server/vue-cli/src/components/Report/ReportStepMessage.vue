@@ -15,11 +15,12 @@
     />
 
     <v-btn
-      v-if="showArrows"
+      v-if="prevStep"
       left
       text
       icon
       small
+      @click="showPrevReport"
     >
       <v-icon>
         mdi-chevron-left
@@ -30,11 +31,12 @@
     {{ value }}
 
     <v-btn
-      v-if="showArrows"
+      v-if="nextStep"
       right
       text
       icon
       small
+      @click="showNextReport"
     >
       <v-icon>
         mdi-chevron-right
@@ -57,7 +59,9 @@ export default {
     marginLeft: { type: String, default: "" },
     type: { type: String, default: null },
     index: { type: [ Number, String ], default: null },
-    showArrows: { type: Boolean, default: true }
+    bus: { type: Object, default: null },
+    prevStep: { type: Object, default: null },
+    nextStep: { type: Object, default: null }
   },
   computed: {
     color() {
@@ -87,6 +91,18 @@ export default {
       default:
         return "#00546f";
       }
+    }
+  },
+
+  methods: {
+    showPrevReport() {
+      if (this.prevStep && this.bus)
+        this.bus.$emit("jpmToPrevReport", this.prevStep);
+    },
+
+    showNextReport() {
+      if (this.nextStep && this.bus)
+        this.bus.$emit("jpmToNextReport", this.nextStep);
     }
   }
 };

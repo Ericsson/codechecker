@@ -231,7 +231,8 @@ export default {
       numOfComments: null,
       loadNumOfComments: true,
       showComments: false,
-      commentCols: 3
+      commentCols: 3,
+      bus: new Vue()
     };
   },
 
@@ -286,35 +287,55 @@ export default {
     if (this.treeItem) {
       this.init(this.treeItem);
     }
+
+    this.bus.$on("jpmToPrevReport", attrs => {
+      this.loadReportStep(this.report, {
+        stepId: attrs.$id,
+        fileId: attrs.fileId,
+        startLine: attrs.startLine
+      });
+    });
+
+    this.bus.$on("jpmToNextReport", attrs => {
+      this.loadReportStep(this.report, {
+        stepId: attrs.$id,
+        fileId: attrs.fileId,
+        startLine: attrs.startLine
+      });
+    });
   },
 
   methods: {
     init(treeItem) {
       if (treeItem.step) {
-        this.loadReportStep(treeItem.report, treeItem.step);
+        this.loadReportStep(treeItem.report, {
+          stepId: this.treeItem.id,
+          ...treeItem.step
+        });
       } else if (treeItem.data) {
-        this.loadReportStep(treeItem.report, treeItem.data);
+        this.loadReportStep(treeItem.report, {
+          stepId: this.treeItem.id,
+          ...treeItem.data
+        });
       } else {
         this.loadReport(treeItem.report);
       }
     },
 
-    async loadReportStep(report, step) {
-      this.step = step;
-
+    async loadReportStep(report, { stepId, fileId, startLine }) {
       if (!this.report ||
           !this.report.reportId.equals(report.reportId) ||
           !this.sourceFile ||
-          !step.fileId.equals(this.sourceFile.fileId)
+          !fileId.equals(this.sourceFile.fileId)
       ) {
         this.report = report;
 
-        await this.setSourceFileData(step.fileId);
+        await this.setSourceFileData(fileId);
         await this.drawBugPath();
       }
 
-      this.jumpTo(step.startLine.toNumber(), 0);
-      this.highlightReportStep();
+      this.jumpTo(startLine.toNumber(), 0);
+      this.highlightReportStep(stepId);
     },
 
     async loadReport(report) {
@@ -334,8 +355,8 @@ export default {
       this.highlightReport(report);
     },
 
-    highlightReportStep() {
-      this.highlightCurrentBubble(this.treeItem.id);
+    highlightReportStep(stepId) {
+      this.highlightCurrentBubble(stepId);
     },
 
     highlightReport() {
@@ -426,17 +447,26 @@ export default {
       this.addExtendedData(extendedData);
 
       // Add file path events.
+      let prevStep = null;
       const events = reportDetail.pathEvents.map((event, index) => {
         const id = ReportTreeKind.getId(ReportTreeKind.REPORT_STEPS,
           this.report, index);
 
-        return {
+        const currentStep = {
           ...event,
           $id: id,
           $message: event.msg,
           $index: index + 1,
-          $isResult: index === reportDetail.pathEvents.length - 1
+          $isResult: index === reportDetail.pathEvents.length - 1,
+          $prevStep: prevStep
         };
+
+        if (prevStep) {
+          prevStep.$nextStep = currentStep;
+        }
+        prevStep = currentStep;
+
+        return currentStep;
       }).filter(isSameFile);
 
       this.addEvents(events);
@@ -490,7 +520,13 @@ export default {
             ? "error" : event.msg.indexOf(" (fixit)") > -1
               ? "fixit" : "info";
 
-          const props = { type: type, index: event.$index };
+          const props = {
+            type: type,
+            index: event.$index,
+            bus: this.bus,
+            prevStep: event.$prevStep,
+            nextStep: event.$nextStep
+          };
           this.addLineWidget(event, props);
         });
       });
@@ -514,7 +550,7 @@ export default {
             console.warning("Unhandled extended data type", data.type);
           }
 
-          const props = { type: type, showArrows: false, index: value };
+          const props = { type: type, index: value };
           this.addLineWidget(data, props);
         });
       });
