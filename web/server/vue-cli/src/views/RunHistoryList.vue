@@ -62,7 +62,11 @@
       </template>
       <template #item.runName="{ item }">
         <router-link
-          :to="{ name: 'reports', query: { run: item.runName } }"
+          :to="{ name: 'reports', query: {
+            'run': item.runName,
+            'run-tag': item.versionTag,
+            'fix-date': item.time
+          }}"
         >
           {{ item.runName }}
         </router-link>
