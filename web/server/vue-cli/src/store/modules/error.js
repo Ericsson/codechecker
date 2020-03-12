@@ -15,6 +15,7 @@ const actions = {
 
 const mutations = {
   [ADD_ERROR](state, error) {
+    console.warn(error);
     state.errors.push(error);
   },
   [CLEAR_ERRORS](state) {

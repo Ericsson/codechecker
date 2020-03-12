@@ -84,7 +84,7 @@ export default {
             return {
               id: id,
               title: this.encodeValue(id),
-              count: res[id] !== undefined ? res[id] : 0
+              count: res[id] !== undefined ? res[id].toNumber() : 0
             };
           });
           this.loading = false;

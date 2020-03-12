@@ -75,8 +75,11 @@ export default {
 
     updateReportFilter() {
       const selectedRunIds =
-        [].concat(...this.selectedItems.map(item => item.runIds));
-      this.setRunIds(selectedRunIds);
+        [].concat(...this.selectedItems
+          .map(item => item.runIds))
+          .filter(id => id !== undefined);
+
+      this.setRunIds(selectedRunIds.length ? selectedRunIds : null);
     },
 
     onRunIdsChange() {},
@@ -104,7 +107,7 @@ export default {
               id: run.name,
               runIds: [ run.runId.toNumber() ],
               title: run.name,
-              count: run.reportCount
+              count: run.reportCount.toNumber()
             };
           });
           this.loading = false;

@@ -70,7 +70,7 @@ export default {
             return {
               id : msg,
               title: msg,
-              count: res[msg]
+              count: res[msg].toNumber()
             };
           });
           this.loading = false;

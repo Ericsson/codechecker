@@ -90,7 +90,7 @@ export default {
     updateSelectedItems() {
       this.selectedItems.forEach(selectedItem => {
         const item = this.items.find(i => i.id === selectedItem.id);
-        selectedItem.count = item ? item.count.toNumber() : null;
+        selectedItem.count = item ? item.count : null;
       });
     },
 

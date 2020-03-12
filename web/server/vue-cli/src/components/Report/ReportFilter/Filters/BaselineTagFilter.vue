@@ -78,8 +78,13 @@ export default {
 
     updateReportFilter() {
       const selectedTagIds =
-        [].concat(...this.selectedItems.map(item => item.tagIds));
-      this.setReportFilter({ runTag: selectedTagIds });
+        [].concat(...this.selectedItems
+          .map(item => item.tagIds))
+          .filter(id => id !== undefined);
+
+      this.setReportFilter({
+        runTag: selectedTagIds.length ? selectedTagIds : null
+      });
     },
 
     onReportFilterChange(key) {

@@ -69,10 +69,13 @@ export default {
         this.cmpData, handleThriftError(res => {
           this.items = Object.keys(Severity).map(status => {
             const severityId = Severity[status];
+            const count =
+              res[severityId] !== undefined ? res[severityId].toNumber() : 0;
+
             return {
               id: severityId,
               title: this.encodeValue(severityId),
-              count: res[severityId] !== undefined ? res[severityId] : 0
+              count: count
             };
           });
           this.loading = false;

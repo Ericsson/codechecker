@@ -98,7 +98,7 @@ export default {
           return {
             id: id,
             title: this.titleFormatter(id),
-            count: res[index][key]
+            count: res[index][key].toNumber()
           };
         });
         this.loading = false;
