@@ -165,7 +165,7 @@ to the database.
 usage: CodeChecker store [-h] [-t {plist}] [-n NAME] [--tag TAG]
                          [--description DESCRIPTION]
                          [--trim-path-prefix [TRIM_PATH_PREFIX [TRIM_PATH_PREFIX ...]]]
-                         [-f] [--url PRODUCT_URL]
+                         [--config CONFIG_FILE] [-f] [--url PRODUCT_URL]
                          [--verbose {info,debug,debug_analyzer}]
                          [file/folder [file/folder ...]]
 
@@ -199,6 +199,18 @@ optional arguments:
                         removing "/a/b/" prefix will store files like c/x.cpp
                         and c/y.cpp. If multiple prefix is given, the longest
                         match will be removed.
+  --config CONFIG_FILE  Allow the configuration from an explicit JSON based
+                        configuration file. The values configured in the
+                        config file will overwrite the values set in the
+                        command line. The format of configuration file is:
+                        {
+                          "enabled": true,
+                          "store": [
+                            "--name=run_name",
+                            "--tag=my_tag",
+                            "--url=http://codechecker.my/MyProduct"
+                          ]
+                        }. (default: None)
   -f, --force           Delete analysis results stored in the database for the
                         current analysis run's name and store only the results
                         reported in the 'input' files. (By default,

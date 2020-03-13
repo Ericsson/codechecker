@@ -74,8 +74,9 @@ def get_argparser_ctor_args():
         'formatter_class': arg.RawDescriptionDefaultHelpFormatter,
 
         # Description is shown when the command's help is queried directly
-        'description': "Store the results from one or more 'codechecker-"
-                       "analyze' result files in a database.",
+        'description': """
+Store the results from one or more 'codechecker-analyze' result files in a
+database.""",
 
         # Epilogue is shown after the arguments when the help is queried
         # directly.
@@ -85,6 +86,7 @@ environment variables:
                    CodeChecker will use '~/.codechecker.passwords.json' file.
                    It can also be used to setup different credential files to
                    login to the same server with a different user.
+
 
 The results can be viewed by connecting to such a server in a Web browser or
 via 'CodeChecker cmd'.""",
@@ -159,6 +161,23 @@ def add_arguments_to_parser(parser):
                              "If multiple prefix is given, the longest match "
                              "will be removed.")
 
+    parser.add_argument('--config',
+                        dest='config_file',
+                        required=False,
+                        help="R|Allow the configuration from an explicit JSON "
+                             "based configuration file. The values configured "
+                             "in the config file will overwrite the values "
+                             "set in the command line. The format of "
+                             "configuration file is:\n"
+                             "{\n"
+                             "  \"enabled\": true,\n"
+                             "  \"store\": [\n"
+                             "    \"--name=run_name\",\n"
+                             "    \"--tag=my_tag\",\n"
+                             "    \"--url=http://codechecker.my/MyProduct\"\n"
+                             "  ]\n"
+                             "}.")
+
     parser.add_argument('-f', '--force',
                         dest="force",
                         default=argparse.SUPPRESS,
@@ -189,7 +208,18 @@ exist prior to the 'store' command being ran.""")
                                   "'[http[s]://]host:port/Endpoint'.")
 
     logger.add_verbose_arguments(parser)
-    parser.set_defaults(func=main)
+    parser.set_defaults(func=main,
+                        func_process_config_file=process_config_file)
+
+
+def process_config_file(args):
+    """
+    Handler to get config file options.
+    """
+    if args.config_file and os.path.exists(args.config_file):
+        cfg = util.load_json_or_empty(args.config_file, default={})
+        if cfg.get("enabled"):
+            return cfg.get('store', [])
 
 
 def __get_run_name(input_list):

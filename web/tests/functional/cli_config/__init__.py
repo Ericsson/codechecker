@@ -1,4 +1,3 @@
-# coding=utf-8
 # -----------------------------------------------------------------------------
 #                     The CodeChecker Infrastructure
 #   This file is distributed under the University of Illinois Open Source
@@ -10,8 +9,11 @@
 
 import os
 import shutil
+import sys
 
+from libtest import codechecker
 from libtest import env
+from libtest import project
 
 
 # Test workspace should be initialized in this module.
@@ -33,11 +35,23 @@ def setup_package():
     codechecker_cfg = {
         'workspace': TEST_WORKSPACE,
         'check_env': env.test_env(TEST_WORKSPACE),
-        'viewer_host': 'localhost',
-        'viewer_product': 'db_cleanup'
+        'reportdir': os.path.join(TEST_WORKSPACE, 'reports')
     }
 
-    env.export_test_cfg(TEST_WORKSPACE, {'codechecker_cfg': codechecker_cfg})
+    # Start or connect to the running CodeChecker server and get connection
+    # details.
+    print("This test uses a CodeChecker server... connecting...")
+    server_access = codechecker.start_or_get_server()
+    server_access['viewer_product'] = 'config'
+    codechecker.add_test_package_product(server_access, TEST_WORKSPACE)
+
+    # Extend the checker configuration with the server access.
+    codechecker_cfg.update(server_access)
+
+    test_config = {
+        'codechecker_cfg': codechecker_cfg}
+
+    env.export_test_cfg(TEST_WORKSPACE, test_config)
 
 
 def teardown_package():
@@ -46,6 +60,10 @@ def teardown_package():
     # TODO: If environment variable is set keep the workspace
     # and print out the path.
     global TEST_WORKSPACE
+
+    check_env = env.import_test_cfg(TEST_WORKSPACE)[
+        'codechecker_cfg']['check_env']
+    codechecker.remove_test_package_product(TEST_WORKSPACE, check_env)
 
     print("Removing: " + TEST_WORKSPACE)
     shutil.rmtree(TEST_WORKSPACE)
