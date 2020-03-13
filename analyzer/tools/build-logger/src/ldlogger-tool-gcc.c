@@ -548,8 +548,13 @@ int loggerGccParserCollectActions(
   }
   else if (responseFile = getResponseFile(&action->arguments))
   {
+    LOG_INFO("Processing response file: %s", responseFile);
     loggerVectorAdd(&action->sources, responseFile);
     loggerVectorAdd(actions_, action);
+  }
+  else
+  {
+    LOG_WARN("No souce file was found.");
   }
 
   return 1;

@@ -164,7 +164,7 @@ int loggerCollectActionsByProgName(
              "CC_LOGGER_JAVAC_LIKE(%s)",
              prog_,
              getenv("CC_LOGGER_GCC_LIKE"),
-             getenv("CC_LOGGER_JAVAC_LIKE"))
+             getenv("CC_LOGGER_JAVAC_LIKE"));
   }
 
   return 0;
