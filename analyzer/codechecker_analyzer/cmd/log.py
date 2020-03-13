@@ -28,6 +28,13 @@ def get_argparser_ctor_args():
     argparse.ArgumentParser (either directly or as a subparser).
     """
 
+    is_intercept = check_intercept(os.environ)
+    ldlogger_settings = "\nld-logger can be fine-tuned with some " \
+        "environment variables. For details see the following " \
+        "documentation: " \
+        "https://github.com/Ericsson/codechecker/blob/master/analyzer/tools/" \
+        "build-logger/README.md#usage" if not is_intercept else ''
+
     return {
         'prog': 'CodeChecker log',
         'formatter_class': argparse.ArgumentDefaultsHelpFormatter,
@@ -37,8 +44,8 @@ def get_argparser_ctor_args():
                        "compilation steps. These steps are written to the "
                        "output file in a JSON format.\n\nAvailable build "
                        "logger tool that will be used is '" +
-                       ('intercept-build' if check_intercept(os.environ)
-                        else 'ld-logger') + "'.",
+                       ('intercept-build' if is_intercept
+                        else 'ld-logger') + "'." + ldlogger_settings,
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.
