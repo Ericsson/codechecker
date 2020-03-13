@@ -394,6 +394,10 @@ def add_arguments_to_parser(parser):
             args.sqlite = args.sqlite.replace('<CONFIG_DIRECTORY>',
                                               args.config_directory)
 
+        # Convert relative sqlite file path to absolute.
+        if 'sqlite' in args:
+            args.sqlite = os.path.abspath(args.sqlite)
+
         if 'postgresql' not in args:
             # Later called database modules need the argument to be actually
             # present, even though the default is suppressed in the optstring.
