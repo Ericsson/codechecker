@@ -590,6 +590,12 @@ def wait_for_server_start(stdoutfile):
                 out = f.read()
                 if "Server waiting for client requests" in out:
                     return
+
+                # Handle error case when the server failed to start and gave
+                # some error message.
+                if "usage: CodeChecker" in out:
+                    return
+
         time.sleep(1)
         n += 1
         print("Waiting for server to start for " + str(n) + " seconds...")
@@ -640,7 +646,8 @@ def start_server(codechecker_cfg, event, server_args=None, pg_config=None):
 
     return {
         'viewer_host': 'localhost',
-        'viewer_port': codechecker_cfg['viewer_port']
+        'viewer_port': codechecker_cfg['viewer_port'],
+        'server_output_file': server_output_file
     }
 
 
