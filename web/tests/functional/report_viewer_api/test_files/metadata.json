@@ -66,6 +66,5 @@
     "analyze",
     "test_hash_clash.json"],
   "failed": {},
-  "working_directory": "$$$",
   "timestamps": {"begin": 1502964665.566252, "end": 1502964665.777198},
   "output_path": "$$$"}

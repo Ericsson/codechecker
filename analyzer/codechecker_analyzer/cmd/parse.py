@@ -541,8 +541,6 @@ def main(args):
     if isinstance(args.input, str):
         args.input = [args.input]
 
-    original_cwd = os.getcwd()
-
     suppr_handler = None
     if 'suppress' in args:
         __make_handler = False
@@ -636,7 +634,6 @@ def main(args):
 
     for input_path in args.input:
         input_path = os.path.abspath(input_path)
-        os.chdir(original_cwd)
         LOG.debug("Parsing input argument: '%s'", input_path)
 
         if export == 'html':
@@ -666,16 +663,6 @@ def main(args):
             if os.path.exists(metadata_file):
                 metadata_dict = util.load_json_or_empty(metadata_file)
                 LOG.debug(metadata_dict)
-
-                if 'working_directory' in metadata_dict:
-                    working_dir = metadata_dict['working_directory']
-                    try:
-                        os.chdir(working_dir)
-                    except OSError as oerr:
-                        LOG.debug(oerr)
-                        LOG.error("Working directory %s is missing.\n"
-                                  "Can not parse reports safely.", working_dir)
-                        sys.exit(1)
 
             _, _, file_names = next(os.walk(input_path), ([], [], []))
             files = [os.path.join(input_path, file_name) for file_name
@@ -744,5 +731,3 @@ def main(args):
                     "shown and skipped from the statistics. Please "
                     "analyze your project again to update the "
                     "reports!", changed_files)
-
-    os.chdir(original_cwd)
