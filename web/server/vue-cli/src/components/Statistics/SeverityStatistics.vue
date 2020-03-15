@@ -159,7 +159,7 @@ export default {
 };
 </script>
 
-<style lang="sass" scoped>
+<style lang="scss" scoped>
 ::v-deep .severity {
   text-decoration: none;
 }

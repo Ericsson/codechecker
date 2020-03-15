@@ -134,7 +134,7 @@ export default {
 };
 </script>
 
-<style lang="sass">
+<style lang="scss">
 .value textarea::placeholder {
   opacity: 0.5;
 }

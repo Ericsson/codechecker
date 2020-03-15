@@ -160,7 +160,7 @@ export default {
 };
 </script>
 
-<style lang="sass" scoped>
+<style lang="scss" scoped>
 .component-value {
   list-style-type: none;
   padding: 0;
