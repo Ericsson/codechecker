@@ -13,6 +13,14 @@ const METADATA = {
   'CC_API_VERSION': JSON.stringify('6.24')
 };
 
+function sassLoaderOptions(indentedSyntax=false) {
+  return {
+    implementation: require('sass'),
+    prependData: `@import "~@/variables.scss"` + (indentedSyntax ? '' : ';'),
+    sassOptions: { indentedSyntax },
+  }
+}
+
 module.exports = {
   entry: helpers.root('src', 'main.js'),
   output: {
@@ -74,18 +82,24 @@ module.exports = {
         ]
       },
       {
-        test:/\.s(c|a)ss$/,
+        test:/\.sass$/,
         use: [
           'vue-style-loader',
           'css-loader',
           {
             loader: 'sass-loader',
-            options: {
-              implementation: require('sass'),
-              sassOptions: {
-                fiber: require('fibers')
-              }
-            }
+            options: sassLoaderOptions(true)
+          }
+        ]
+      },
+      {
+        test:/\.scss$/,
+        use: [
+          'vue-style-loader',
+          'css-loader',
+          {
+            loader: 'sass-loader',
+            options: sassLoaderOptions(false)
           }
         ]
       },
