@@ -28,10 +28,10 @@ from codechecker_client import client as libclient
 from codechecker_common import logger
 from codechecker_common import util
 from codechecker_common import plist_parser
-from codechecker_common import report as common_report
 from codechecker_common.output_formatters import twodim_to_str
 from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler
+from codechecker_report_hash.hash import HashType, replace_report_hash
 
 from codechecker_web.shared import webserver_context, host_check
 from codechecker_web.shared.env import get_default_workspace
@@ -238,7 +238,7 @@ def assemble_zip(inputs, zip_file, client):
             # plist report files with a context free hash value.
             rep_hash = [rep.report_hash == '0' for rep in reports]
             if all(rep_hash):
-                common_report.use_context_free_hashes(plist_file)
+                replace_report_hash(plist_file, HashType.CONTEXT_FREE)
 
             for f in files:
                 if not os.path.isfile(f):

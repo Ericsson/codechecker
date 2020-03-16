@@ -35,7 +35,7 @@ from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler, SKIP_REVIEW_STATUSES
 from codechecker_common import util
 from codechecker_common.logger import get_logger
-from codechecker_common.report import get_report_path_hash
+from codechecker_report_hash.hash import get_report_path_hash
 
 from codechecker_web.shared import webserver_context
 from codechecker_web.shared import convert
@@ -2533,7 +2533,7 @@ class ThriftRequestHandler(object):
                 bug_paths, bug_events, bug_extended_data = \
                     store_handler.collect_paths_events(report, file_ids,
                                                        files)
-                report_path_hash = get_report_path_hash(report, files)
+                report_path_hash = get_report_path_hash(report.bug_path, files)
                 if report_path_hash in already_added:
                     LOG.debug('Not storing report. Already added')
                     LOG.debug(report)

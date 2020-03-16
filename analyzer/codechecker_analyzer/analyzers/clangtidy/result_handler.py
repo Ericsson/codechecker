@@ -8,8 +8,8 @@ Result handler for Clang Tidy.
 """
 
 
-from codechecker_common import report
 from codechecker_common.logger import get_logger
+from codechecker_report_hash.hash import HashType, replace_report_hash
 
 from ..result_handler_base import ResultHandler
 
@@ -54,4 +54,4 @@ class ClangTidyPlistToFile(ResultHandler):
         # --report-hash option ('context-free-v2') and we still do not use
         # context free hash for 'context-free' choice.
         if self.report_hash_type == 'context-free-v2':
-            report.use_context_free_hashes(output_file)
+            replace_report_hash(output_file, HashType.CONTEXT_FREE)

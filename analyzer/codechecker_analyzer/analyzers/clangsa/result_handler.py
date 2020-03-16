@@ -8,8 +8,8 @@ Result handler for Clang Static Analyzer.
 """
 
 
-from codechecker_common import report
 from codechecker_common.logger import get_logger
+from codechecker_report_hash.hash import HashType, replace_report_hash
 
 from ..result_handler_base import ResultHandler
 
@@ -27,4 +27,5 @@ class ResultHandlerClangSA(ResultHandler):
         context insensitive if it is enabled during analysis.
         """
         if self.report_hash_type in ['context-free', 'context-free-v2']:
-            report.use_context_free_hashes(self.analyzer_result_file)
+            replace_report_hash(self.analyzer_result_file,
+                                HashType.CONTEXT_FREE)
