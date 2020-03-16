@@ -231,6 +231,11 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
         product_endpoint, path = routing.split_client_GET_request(self.path)
 
+        if self.path == '/':
+            self.path = 'index.html'
+            SimpleHTTPRequestHandler.do_GET(self)
+            return
+
         if self.path == '/live':
             self.__handle_liveness()
             return

@@ -66,10 +66,20 @@ gen_userguide:
 	mkdir -p $(CC_BUILD_WEB_DIR) && \
 	$(MAKE) -C $(CC_SERVER)/www/userguide
 
-package_www: package_dir_structure
+package_dojo: package_vendor
 	cp -r $(CC_SERVER)/www/* $(CC_BUILD_WEB_DIR)
+	$(MAKE) package_userguide
+	$(MAKE) package_docs
 
-package_userguide: gen_userguide package_www
+$(CC_SERVER)/vue-cli/dist:
+	cd $(CC_SERVER)/vue-cli && \
+	npm install && \
+	npm run-script build
+
+package_vue: $(CC_SERVER)/vue-cli/dist
+	cp -r $(CC_SERVER)/vue-cli/dist $(CC_BUILD_WEB_DIR)
+
+package_userguide: gen_userguide
 	mkdir -p $(CC_BUILD_WEB_DIR)/images && \
 	mv $(CC_BUILD_WEB_DIR)/userguide/images/* $(CC_BUILD_WEB_DIR)/images && \
 	rm -rf $(CC_BUILD_WEB_DIR)/userguide/images
@@ -80,7 +90,12 @@ package_vendor: package_dir_structure
 # This target should be used from the top level Makefile to build the package
 # together with the analyzer part. This way we will not build plist-to-html
 # multiple times.
-package_web: check_codechecker_api_version package_dir_structure package_userguide package_vendor package_docs
+package_web: check_codechecker_api_version package_dir_structure
+ifeq ($(CLI),vue)
+	$(MAKE) package_vue
+else
+	$(MAKE) package_dojo
+endif
 
 build_plist_to_html:
 	$(MAKE) -C $(ROOT)/tools/plist_to_html build
@@ -126,7 +141,7 @@ package: package_plist_to_html package_report_hash package_web
 # 'package_vendor' target will download the required version.
 check_codechecker_api_version:
 	if ! pip3 install -r ./requirements.txt 2>&1 | grep -q "Requirement already satisfied: codechecker_api"; then \
-		rm -rf $(CC_SERVER)/vendor/codechecker-api-js; \
+		cd server/vue-cli && npm install; \
 	fi
 
 clean_package: clean_userguide clean_plist_to_html
