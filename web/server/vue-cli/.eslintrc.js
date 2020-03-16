@@ -14,7 +14,9 @@ module.exports = {
     "indent": ["error", 2],
     "keyword-spacing": ["error"],
     "max-len": ["error", { "code": 80 }],
-    "no-console": process.env.NODE_ENV === "production" ? "error" : "off",
+    "no-console": process.env.NODE_ENV === "production"
+      ? [ "error", { "allow": ["warn"] } ]
+      : "off",
     "no-debugger": process.env.NODE_ENV === "production" ? "error" : "off",
     "no-duplicate-imports": ["error", { "includeExports": true }],
     "object-curly-spacing": ["error", "always"],

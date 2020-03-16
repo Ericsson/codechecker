@@ -437,7 +437,7 @@ export default {
           kind = ReportTreeKind.MACRO_EXPANSION_ITEM;
           break;
         default:
-          console.warning("Unhandled extended data type", data.type);
+          console.warn("Unhandled extended data type", data.type);
         }
 
         const id = ReportTreeKind.getId(kind, this.report, index);
@@ -547,7 +547,7 @@ export default {
             value = "Macro Expansion";
             break;
           default:
-            console.warning("Unhandled extended data type", data.type);
+            console.warn("Unhandled extended data type", data.type);
           }
 
           const props = { type: type, index: value };

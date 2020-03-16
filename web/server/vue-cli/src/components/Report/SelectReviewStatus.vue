@@ -105,7 +105,7 @@ function reviewStatusFromCodeToString(reviewCode) {
   case ReviewStatus.INTENTIONAL:
     return "Intentional";
   default:
-    console.warning("Non existing review status code: ", reviewCode);
+    console.warn("Non existing review status code: ", reviewCode);
   }
 }
 
