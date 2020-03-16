@@ -1,2 +1,2 @@
-python-ldap==2.4.22.0
+python-ldap==3.2.0
 python-pam==1.8.2
