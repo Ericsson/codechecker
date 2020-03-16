@@ -2,7 +2,7 @@
 #-----------------------------    BUILD STAGE   ------------------------------#
 ###############################################################################
 
-FROM python:2.7.16-slim-stretch as builder
+FROM python:3.6-slim-stretch as builder
 
 ARG CC_VERSION=master
 ENV CC_VERSION ${CC_VERSION}
@@ -33,7 +33,7 @@ RUN find www/scripts/plugins/dojo/ -name *.uncompressed.js -exec rm -rf '{}' \;
 #--------------------------    PRODUCTION STAGE   ----------------------------#
 ###############################################################################
 
-FROM python:2.7.16-slim-stretch
+FROM python:3.6-slim-stretch
 
 ARG CC_GID=950
 ARG CC_UID=950
