@@ -89,7 +89,13 @@ package_plist_to_html: build_plist_to_html package_dir_structure
 	# Copy plist-to-html files.
 	cp -r $(CC_TOOLS)/plist_to_html/build/plist_to_html/plist_to_html $(CC_BUILD_LIB_DIR)
 
-package: package_plist_to_html package_web
+build_report_hash:
+	$(MAKE) -C $(ROOT)/tools/codechecker_report_hash build
+
+package_report_hash: build_report_hash package_dir_structure
+	cp -r $(CC_TOOLS)/codechecker_report_hash/build/codechecker_report_hash/codechecker_report_hash $(CC_BUILD_LIB_DIR)
+
+package: package_plist_to_html package_report_hash package_web
 	# Copy libraries.
 	cp -r $(ROOT)/codechecker_common $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CURRENT_DIR)/codechecker_web $(CC_BUILD_LIB_DIR) && \
