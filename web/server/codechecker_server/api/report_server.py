@@ -2505,6 +2505,7 @@ class ThriftRequestHandler(object):
 
         # Processing PList files.
         _, _, report_files = next(os.walk(report_dir), ([], [], []))
+        all_report_checkers = set()
         for f in report_files:
             if not f.endswith('.plist'):
                 continue
@@ -2525,6 +2526,7 @@ class ThriftRequestHandler(object):
             # Store report.
             for report in reports:
                 checker_name = report.main['check_name']
+                all_report_checkers.add(checker_name)
 
                 source_file = files[report.main['location']['file']]
                 if skip_handler.should_skip(source_file):
@@ -2554,11 +2556,6 @@ class ThriftRequestHandler(object):
                     detection_status = 'reopened' \
                         if old_status == 'resolved' else 'unresolved'
                     detected_at = old_report.detected_at
-
-                if checker_name in disabled_checkers:
-                    detection_status = 'off'
-                elif checker_is_unavailable(checker_name):
-                    detection_status = 'unavailable'
 
                 report_id = store_handler.addReport(
                     session,
@@ -2614,6 +2611,12 @@ class ThriftRequestHandler(object):
                         wrong_src_code_comments.append(wrong_src_code)
 
                 LOG.debug("Storing done for report %d", report_id)
+
+        # If a checker was found in a plist file it can not be disabled so we
+        # will remove these checkers from the disabled checkers list and add
+        # these to the enabled checkers list.
+        disabled_checkers -= all_report_checkers
+        enabled_checkers |= all_report_checkers
 
         reports_to_delete = set()
         for bug_hash, reports in hash_map_reports.items():
