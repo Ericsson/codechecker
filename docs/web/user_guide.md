@@ -900,7 +900,7 @@ usage: CodeChecker cmd diff [-h] [-b BASE_RUNS [BASE_RUNS ...]]
                             [-s] [--filter FILTER]
                             (--new | --resolved | --unresolved)
                             [--url PRODUCT_URL]
-                            [-o {plaintext,rows,table,csv,json,html}]
+                            [-o {plaintext,rows,table,csv,json,html,gerrit}]
                             [-e EXPORT_DIR] [-c]
                             [--verbose {info,debug,debug_analyzer}]
 

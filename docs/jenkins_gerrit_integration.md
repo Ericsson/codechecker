@@ -172,12 +172,6 @@ that is parsed in the following build step.
 
 ### Execute shell <a name="execute-shell"></a>
 In this shell, the project is logged and analyzed by CodeChecker.
-A CodeChecker skipfile is generated from the file containing the changes 
-(see previous section). This is done by the `create_skipfile.py` script. 
-Based on this skipfile, CodeChecker parses the analysis results. After this,
-the Gerrit review message is crafted (with `parse_output_parser.py`).
-Both Python scripts used here are available in CodeChecker's GitHub repository,
-under `scripts/gerrit_jenkins`.
 
 In addition, this shell can run tests. This could be used to
 set Verify -1 or +1, depending on success or failure of the tests
@@ -189,8 +183,8 @@ is not satisfactory to identify all new bugs introduced by the change.
 To ensure that all issues related to the new code are found, a full analysis
 has to be performed. The results of this check can be compared to a baseline
 analysis and all new findings can be saved as HTML. Then the URL of
-`index.html` can be sent as part of the review, shown as a normal
-(non-inline) comment.
+`index.html` can be sent as part of the review by setting the `CC_REPORT_URL`
+environment variable.
 
 Our recommendation for having an up-to-date baseline is to
 create a Jenkins job which is triggered on every merge to the master branch.
@@ -198,9 +192,17 @@ This job can perform a full analysis and store the analysis results on a
 CodeChecker server. After this, `CodeChecker cmd diff` can be used to
 compare the two analysis.
 
-The following script is an example of what could be added 
-to an Execute shell build step, to achieve the above.
-~~~~~~{.sh}
+Multiple environment variable can be set when using `CodeChecker cmd diff` to
+generate the gerrit review data:
+- `CC_REPO_DIR`: Root directory of the sources, i.e. the directory where the
+  repository was cloned.
+- `CC_REPORT_URL`: URL where the report can be found.
+- `CC_CHANGED_FILES`: Path of changed files json from Gerrit.
+
+The following script is an example of what could be added to an Execute shell
+build step, to achieve the above:
+
+```bash
 # Make sure all requirements of the build is fulfilled by this stage!
 # Log the build.
 CodeChecker log -b "build command" -o compile_cmd.json
@@ -209,43 +211,33 @@ CodeChecker log -b "build command" -o compile_cmd.json
 make tests
 
 # Check the project.
-# NOTE: It is possible to use the skipfile of changed files in the analysis,
-# but it is discouraged, since changes can cause errors in other files.
 CodeChecker analyze \
   -e sensitive \
   -j 16 \
   compile_cmd.json \
   -o cc_reports
 
-# Generate skipfile of changed files from Gerrit.
-python create_skipfile.py files-changed skipfile
-
-# Diff to baseline and filter for new findings, i.e. intorudced
+# Diff to baseline and filter for new findings, i.e. introduced
 # by the changes. Save the output as HTML in Jenkins' userContent
-# directory, so it is available on a webserver.
+# directory (so it is available on a webserver) and generate a
+# gerrit_review.json file in this directory that is later going to be loaded
+# as an Environment Variable.
+CC_REPORT_URL="http://your_jenkins_address/userContent/$JOB_NAME/$BUILD_NUMBER/index.html" \
+CC_CHANGED_FILES="$WORKSPACE/files-changed" \
+CC_REPO_DIR="$WORKSPACE/repo_dir" \
 CodeChecker cmd diff \
   -b clangsa_checkers-merge \
   --url your_baseline_url \
   -n cc_reports \
   --new \
-  -o html \
+  -o html gerrit \
   -e $JENKINS_HOME/userContent/$JOB_NAME/$BUILD_NUMBER
-
-# Craft the review message and write it into a file,
-# that is later going to be loaded as an Environment Variable.
-echo DATA_TO_POST=\\ > review
-CodeChecker parse -i skipfile cc_reports |
-  python parse_output_parser.py \
-    $WORKSPACE/repo_dir \
-    --report_url http://your_jenkins_address/userContent/$JOB_NAME/$BUILD_NUMBER/index.html \
-      >> review
-
-~~~~~~
+```
 
 ### Inject environment variable <a name="inject-environment-variable"></a>
 To load the previously crafted review message as an environment variable,
-add an Inject environment variables build step. The file path is the 
-path of the file written at the end of the execute shell step, 
+add an Inject environment variables build step. The file path is
+`$JENKINS_HOME/userContent/$JOB_NAME/$BUILD_NUMBER/gerrit_review.json`
 while the content field can remain empty.
 
 ### HTTP Request (send the review) <a name="http-request-send-the-review"></a>
