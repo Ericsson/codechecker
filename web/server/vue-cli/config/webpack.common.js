@@ -1,3 +1,4 @@
+const CopyPlugin = require('copy-webpack-plugin');
 const HTMLWebpackPlugin = require('html-webpack-plugin');
 const { VueLoaderPlugin } = require('vue-loader');
 const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin');
@@ -132,6 +133,14 @@ module.exports = {
             }
           }
         ]
+      },
+      {
+        test: /\.(md)$/,
+        use: [
+          {
+            loader: 'raw-loader'
+          }
+        ]
       }
     ]
   },
@@ -149,6 +158,12 @@ module.exports = {
       title: 'CodeChecker viewer',
       favicon: helpers.root('src', 'assets', 'favicon.ico'),
       template: helpers.root('src', 'index.html')
-    })
+    }),
+    new CopyPlugin([
+      {
+        from: helpers.root('src', 'assets', 'userguide', 'images'),
+        to: helpers.root('dist', 'images')
+      },
+    ]),
   ]
 }

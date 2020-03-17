@@ -1,13 +1,23 @@
 <template>
-  <v-container fluid>
-    <h1>
-      TODO: Userguide
-    </h1>
-  </v-container>
+  <!-- eslint-disable vue/no-v-html -->
+  <v-container fluid v-html="doc" />
 </template>
 
 <script>
+import marked from "marked";
+
 export default {
-  name: "Userguide"
+  name: "Userguide",
+  data() {
+    return {
+      doc: null
+    };
+  },
+
+  created() {
+    import("@/assets/userguide/userguide.md").then(m => {
+      this.doc = marked(m.default);
+    });
+  }
 };
 </script>
