@@ -429,7 +429,8 @@ def print_prod_status(prod_status):
         db_status_msg = database_status.db_status_msg.get(db_status)
         if schema_ver == package_ver:
             schema_ver += " (up to date)"
-        rows.append([k, db_status_msg, db_location, schema_ver, package_ver])
+        rows.append([k, db_status_msg, db_location, str(schema_ver),
+                     package_ver])
 
     prod_status = output_formatters.twodim_to_str('table',
                                                   header,
