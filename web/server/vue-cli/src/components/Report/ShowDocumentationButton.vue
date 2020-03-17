@@ -43,15 +43,18 @@
       </v-card-title>
 
       <v-card-text class="pa-0">
-        <v-container>
-          {{ doc }}
-        </v-container>
+        <!-- eslint-disable vue/no-v-html -->
+        <v-container v-html="doc" />
       </v-card-text>
     </v-card>
   </v-dialog>
 </template>
 
 <script>
+import hljs from "highlight.js";
+import "highlight.js/styles/default.css";
+import marked from "marked";
+
 import { ccService, handleThriftError } from "@cc-api";
 
 export default {
@@ -62,16 +65,21 @@ export default {
   data() {
     return {
       dialog: false,
-      doc: null
+      doc: null,
+      markedOptions: {
+        highlight: function(code) {
+          return hljs.highlightAuto(code).value;
+        }
+      }
     };
   },
   watch: {
     dialog() {
       if (!this.doc) {
+        // TODO: Same logic can be found in Reports component.
         ccService.getClient().getCheckerDoc(this.value,
           handleThriftError(doc => {
-            // TODO: mark the documentation.
-            this.doc = doc;
+            this.doc = marked(doc, this.markedOptions);
           }));
       }
     },
