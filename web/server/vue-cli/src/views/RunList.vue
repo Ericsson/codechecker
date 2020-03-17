@@ -372,9 +372,9 @@ export default {
         const page = this.pagination.page === 1
           ? undefined : this.pagination.page;
         const sortBy = this.pagination.sortBy.length
-          ? this.pagination.sortBy : undefined;
+          ? this.pagination.sortBy[0] : undefined;
         const sortDesc = this.pagination.sortDesc.length
-          ? this.pagination.sortDesc : undefined;
+          ? this.pagination.sortDesc[0] : undefined;
 
         this.$router.replace({
           query: {
