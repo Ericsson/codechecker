@@ -17,8 +17,10 @@ Set the following environment variables:
 export LD_PRELOAD=ldlogger.so
 export LD_LIBRARY_PATH=`pwd`/build/lib:$LD_LIBRARY_PATH
 export CC_LOGGER_GCC_LIKE="gcc:g++:clang"
-#The output compilation JSON file
+# The output compilation JSON file.
 export CC_LOGGER_FILE=`pwd`/compilation.json
+# Log linker build actions to the JSON file. Optional. Default: false
+export CC_LOGGER_KEEP_LINK=true
 ~~~~~~~
 
 then when you call `gcc` from a sub-shell (e.g. as a part of a Make build process),
@@ -75,3 +77,13 @@ will be converted to absolute PATH when written into the compilation database.
 ### `CC_LOGGER_DEBUG_FILE`
 Output file to print log messages. If this environment variable is not
 defined it will do nothing.
+
+### `CC_LOGGER_KEEP_LINK`
+This environment variable is optional. If its value is not `true` then object
+files will be removed from the build action. For example in case of this build
+command: `gcc main.c object1.o object2.so` the `object1.o` and `object2.so`
+will be removed and only `gcc main.c` will be captured. If only object files
+are provided to the compiler then the complete build action will be thrown
+away. This means that build actions which only perform linking will not be
+captured. We consider a file as object file if its extension is `.o`, `.so` or
+`.a`.

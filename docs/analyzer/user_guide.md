@@ -301,7 +301,10 @@ usage: CodeChecker log [-h] -o LOGFILE -b COMMAND [-q]
 
 Runs the given build command and records the executed compilation steps. These
 steps are written to the output file in a JSON format. Available build logger
-tool that will be used is '...'.
+tool that will be used is '...'. ld-logger can be fine-tuned with some
+environment variables. For details see the following documentation:
+https://github.com/Ericsson/codechecker/blob/master/analyzer/tools/build-
+logger/README.md#usage
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -364,6 +367,11 @@ variable to a different file path.
 ```sh
 export CC_LOGGER_DEBUG_FILE="/path/to/codechecker.debug.log"
 ```
+
+With `CC_LOGGER_KEEP_LINK` environment variable you can set whether linking
+build actions (i.e. those which don't perform compilation but contain only
+object files as input) should be captured. For further details see
+[this documentation](/analyzer/tools/build-logger/README.md).
 
 
 ### Change user inside the build command
