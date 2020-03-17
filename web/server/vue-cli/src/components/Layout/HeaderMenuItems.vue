@@ -81,21 +81,25 @@
         </v-list-item-title>
       </v-list-item>
 
-      <v-list-item>
+      <v-list-item
+        :to="{ name: 'userguide' }"
+      >
         <v-list-item-avatar>
           <v-icon>mdi-information-outline</v-icon>
         </v-list-item-avatar>
         <v-list-item-title>
-          User guide <!-- TODO -->
+          User guide
         </v-list-item-title>
       </v-list-item>
 
-      <v-list-item>
+      <v-list-item
+        :to="{ name: 'new-features' }"
+      >
         <v-list-item-avatar>
           <v-icon>mdi-star-circle-outline</v-icon>
         </v-list-item-avatar>
         <v-list-item-title>
-          New features <!-- TODO -->
+          New features
         </v-list-item-title>
       </v-list-item>
     </v-list>

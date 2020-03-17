@@ -19,6 +19,16 @@ export default new Router({
       component: () => import("@/views/Login")
     },
     {
+      path: "/userguide",
+      name: "userguide",
+      component: () => import("@/views/Userguide")
+    },
+    {
+      path: "/new-features",
+      name: "new-features",
+      component: () => import("@/views/NewFeatures")
+    },
+    {
       path: "/:endpoint",
       meta: {
         requiresAuth: true
