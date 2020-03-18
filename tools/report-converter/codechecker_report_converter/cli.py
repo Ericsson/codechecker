@@ -54,6 +54,15 @@ supported_converters = {
 }
 
 
+def supported_converters_help():
+    """ """
+    return '\n'.join(["{0} - {1}, {2}".format(
+        tool_name,
+        supported_converters[tool_name].NAME,
+        supported_converters[tool_name].URL)
+        for tool_name in sorted(supported_converters)])
+
+
 def output_to_plist(analyzer_result, parser_type, output_dir, clean=False):
     """ Creates .plist files from the given output to the given output dir. """
     if clean and os.path.isdir(output_dir):
@@ -93,7 +102,7 @@ def __add_arguments_to_parser(parser):
                         default=argparse.SUPPRESS,
                         help="Specify the format of the code analyzer output. "
                              "Currently supported output types are: " +
-                              ', '.join(supported_converters) + ".")
+                              ', '.join(sorted(supported_converters)) + ".")
 
     parser.add_argument('-c', '--clean',
                         dest="clean",
@@ -111,10 +120,17 @@ def main():
     """ Report converter main command line. """
     parser = argparse.ArgumentParser(
         prog="report-converter",
-        description="Creates a CodeChecker report directory from the given "
-                    "code analyzer output which can be stored to a "
-                    "CodeChecker web server.",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        description="""
+Creates a CodeChecker report directory from the given code analyzer output
+which can be stored to a CodeChecker web server.""",
+        epilog="""
+Supported analyzers:
+{0}""".format('\n'.join(["  {0} - {1}, {2}".format(
+                         tool_name,
+                         supported_converters[tool_name].NAME,
+                         supported_converters[tool_name].URL)
+                         for tool_name in sorted(supported_converters)])),
+        formatter_class=argparse.RawDescriptionHelpFormatter
     )
     __add_arguments_to_parser(parser)
 
