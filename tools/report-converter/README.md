@@ -12,6 +12,7 @@ a CodeChecker server.
   * [Memory Sanitizer](#memory-sanitizer)
   * [Thread Sanitizer](#thread-sanitizer)
 * [Cppcheck](#cppcheck)
+* [Spotbugs](#spotbugs)
 * [License](#license)
 
 ## Install guide
@@ -41,8 +42,8 @@ optional arguments:
                         This directory will be used to generate CodeChecker
                         report directory files.
   -t TYPE, --type TYPE  Specify the format of the code analyzer output.
-                        Currently supported output types are: asan, tsan,
-                        ubsan, msan, clang-tidy.
+                        Currently supported output types are: asan, clang-
+                        tidy, cppcheck, msan, spotbugs, tsan, ubsan.
   -c, --clean           Delete files stored in the output directory. (default:
                         False)
   -v, --verbose         Set verbosity level. (default: False)
@@ -163,6 +164,29 @@ CppCheck: `analysis statistics`, `analysis duration`, `cppcheck command` etc.
 
 For more information about logging checkout the log section in the
 [user guide](/docs/usage.md).
+
+## [Spotbugs](https://spotbugs.github.io/)
+[Spotbugs](https://spotbugs.github.io/) is a static analysis tool for `Java`
+code.
+
+The recommended way of running the Spotbugs tool is to generate an xml output
+file with messages (`-xml:withMessages`).
+
+The following example shows you how to run SpotBugs and store the results
+found by SpotBugs to the CodeChecker database.
+
+```sh
+# Run SpotBugs.
+# Use the '-xml:withMessages' option to generate xml output.
+spotbugs -xml:withMessages -output ./bugs.xml -textui /path/to/your/project
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of SpotBugs.
+report-converter -t spotbugs -o ./codechecker_spotbugs_reports ./bugs.xml
+
+# Store the SpotBugs reports with CodeChecker.
+CodeChecker store ./codechecker_spotbugs_reports -n spotbugs
+```
 
 ## License
 

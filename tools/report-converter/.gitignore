@@ -1,2 +1,3 @@
 build/
 report_converter.egg-info
+*.class

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<BugCollection version="3.1.12" sequence="0" timestamp="1580211159677" analysisTimestamp="1580211244005" release="">
+  <Project projectName="">
+    <Jar>files</Jar>
+  </Project>
+  <BugInstance type="DLS_DEAD_LOCAL_STORE" priority="2" rank="17" abbrev="DLS" category="STYLE" instanceHash="31d25c93ca824a832958c47cb869f2dd" instanceOccurrenceNum="0" instanceOccurrenceMax="0" cweid="563">
+    <ShortMessage>Dead store to local variable</ShortMessage>
+    <LongMessage>Dead store to $L1 in Assign.main(String[])</LongMessage>
+    <Class classname="Assign" primary="true">
+      <SourceLine classname="Assign" start="1" end="5" sourcefile="Assign.java" sourcepath="Assign.java">
+        <Message>At Assign.java:[lines 1-5]</Message>
+      </SourceLine>
+      <Message>In class Assign</Message>
+    </Class>
+    <Method classname="Assign" name="main" signature="([Ljava/lang/String;)V" isStatic="true" primary="true">
+      <SourceLine classname="Assign" start="4" end="5" startBytecode="0" endBytecode="4" sourcefile="Assign.java" sourcepath="Assign.java"/>
+      <Message>In method Assign.main(String[])</Message>
+    </Method>
+    <LocalVariable name="?" register="1" pc="4" role="LOCAL_VARIABLE_UNKNOWN">
+      <Message>Local variable stored in JVM register 1</Message>
+    </LocalVariable>
+    <SourceLine classname="Assign" primary="true" start="4" end="4" startBytecode="4" endBytecode="4" sourcefile="Assign.java" sourcepath="Assign.java">
+      <Message>At Assign.java:[line 4]</Message>
+    </SourceLine>
+    <Property name="edu.umd.cs.findbugs.detect.DeadLocalStoreProperty.BASE_VALUE" value="true"/>
+    <Property name="edu.umd.cs.findbugs.detect.DeadLocalStoreProperty.KILLED_BY_SUBSEQUENT_STORE" value="true"/>
+    <Property name="edu.umd.cs.findbugs.detect.DeadLocalStoreProperty.LOCAL_NAME" value="?"/>
+    <Property name="edu.umd.cs.findbugs.detect.DeadLocalStoreProperty.NO_LOADS" value="true"/>
+  </BugInstance>
+  <BugInstance type="SA_LOCAL_DOUBLE_ASSIGNMENT" priority="2" rank="17" abbrev="SA" category="STYLE" instanceHash="e1cf1dc4a9b1c3d79dd9c35d9c7ce70f" instanceOccurrenceNum="0" instanceOccurrenceMax="0">
+    <ShortMessage>Double assignment of local variable </ShortMessage>
+    <LongMessage>Double assignment of $L1 in Assign.main(String[])</LongMessage>
+    <Class classname="Assign" primary="true">
+      <SourceLine classname="Assign" start="1" end="5" sourcefile="Assign.java" sourcepath="Assign.java">
+        <Message>At Assign.java:[lines 1-5]</Message>
+      </SourceLine>
+      <Message>In class Assign</Message>
+    </Class>
+    <Method classname="Assign" name="main" signature="([Ljava/lang/String;)V" isStatic="true" primary="true">
+      <SourceLine classname="Assign" start="4" end="5" startBytecode="0" endBytecode="33" sourcefile="Assign.java" sourcepath="Assign.java"/>
+      <Message>In method Assign.main(String[])</Message>
+    </Method>
+    <LocalVariable name="?" register="1" pc="4" role="LOCAL_VARIABLE_UNKNOWN">
+      <Message>Local variable stored in JVM register 1</Message>
+    </LocalVariable>
+    <SourceLine classname="Assign" primary="true" start="4" end="4" startBytecode="4" endBytecode="4" sourcefile="Assign.java" sourcepath="Assign.java">
+      <Message>At Assign.java:[line 4]</Message>
+    </SourceLine>
+  </BugInstance>
+  <BugCategory category="STYLE">
+    <Description>Dodgy code</Description>
+  </BugCategory>
+  <BugPattern type="DLS_DEAD_LOCAL_STORE" abbrev="DLS" category="STYLE">
+    <ShortDescription>Dead store to local variable</ShortDescription>
+    <Details><![CDATA[
+
+<p>
+This instruction assigns a value to a local variable,
+but the value is not read or used in any subsequent instruction.
+Often, this indicates an error, because the value computed is never
+used.
+</p>
+<p>
+Note that Sun's javac compiler often generates dead stores for
+final local variables.  Because SpotBugs is a bytecode-based tool,
+there is no easy way to eliminate these false positives.
+</p>
+
+    ]]></Details>
+  </BugPattern>
+  <BugPattern type="SA_LOCAL_DOUBLE_ASSIGNMENT" abbrev="SA" category="STYLE">
+    <ShortDescription>Double assignment of local variable </ShortDescription>
+    <Details><![CDATA[
+
+<p> This method contains a double assignment of a local variable; e.g.
+</p>
+<pre><code>public void foo() {
+    int x,y;
+    x = x = 17;
+}
+</code></pre>
+<p>Assigning the same value to a variable twice is useless, and may indicate a logic error or typo.</p>
+
+    ]]></Details>
+  </BugPattern>
+  <BugCode abbrev="DLS" cweid="563">
+    <Description>Dead local store</Description>
+  </BugCode>
+  <BugCode abbrev="SA">
+    <Description>Useless self-operation</Description>
+  </BugCode>
+  <Errors errors="0" missingClasses="0"></Errors>
+  <FindBugsSummary timestamp="Tue, 28 Jan 2020 12:32:39 +0100" total_classes="1" referenced_classes="11" total_bugs="2" total_size="6" num_packages="1" java_version="11.0.5" vm_version="11.0.5+10-post-Ubuntu-0ubuntu1.118.04" cpu_seconds="4.41" clock_seconds="0.97" peak_mbytes="122.70" alloc_mbytes="768.00" gc_seconds="0.01" priority_2="2">
+    <FileStats path="Assign.java" bugCount="2" size="6" bugHash="64e76c35ee68a428193cf6e7af447a59"/>
+    <PackageStats package="" total_bugs="2" total_types="1" total_size="6" priority_2="2">
+      <ClassStats class="Assign" sourceFile="Assign.java" interface="false" size="6" bugs="2" priority_2="2"/>
+    </PackageStats>
+    <FindBugsProfile>
+      <ClassProfile name="edu.umd.cs.findbugs.classfile.engine.ClassInfoAnalysisEngine" totalMilliseconds="252" invocations="304" avgMicrosecondsPerInvocation="829" maxMicrosecondsPerInvocation="19808" standardDeviationMicrosecondsPerInvocation="1838"/>
+      <ClassProfile name="edu.umd.cs.findbugs.detect.FieldItemSummary" totalMilliseconds="34" invocations="11" avgMicrosecondsPerInvocation="3178" maxMicrosecondsPerInvocation="16600" standardDeviationMicrosecondsPerInvocation="5174"/>
+      <ClassProfile name="edu.umd.cs.findbugs.OpcodeStack$JumpInfoFactory" totalMilliseconds="30" invocations="39" avgMicrosecondsPerInvocation="788" maxMicrosecondsPerInvocation="4175" standardDeviationMicrosecondsPerInvocation="897"/>
+      <ClassProfile name="edu.umd.cs.findbugs.classfile.engine.ClassDataAnalysisEngine" totalMilliseconds="29" invocations="306" avgMicrosecondsPerInvocation="97" maxMicrosecondsPerInvocation="3262" standardDeviationMicrosecondsPerInvocation="214"/>
+      <ClassProfile name="edu.umd.cs.findbugs.util.TopologicalSort" totalMilliseconds="28" invocations="270" avgMicrosecondsPerInvocation="105" maxMicrosecondsPerInvocation="1671" standardDeviationMicrosecondsPerInvocation="189"/>
+      <ClassProfile name="edu.umd.cs.findbugs.classfile.engine.bcel.MethodGenFactory" totalMilliseconds="25" invocations="2" avgMicrosecondsPerInvocation="12638" maxMicrosecondsPerInvocation="25091" standardDeviationMicrosecondsPerInvocation="12453"/>
+      <ClassProfile name="edu.umd.cs.findbugs.detect.FindNoSideEffectMethods" totalMilliseconds="21" invocations="11" avgMicrosecondsPerInvocation="1913" maxMicrosecondsPerInvocation="9248" standardDeviationMicrosecondsPerInvocation="2797"/>
+      <ClassProfile name="edu.umd.cs.findbugs.classfile.engine.bcel.JavaClassAnalysisEngine" totalMilliseconds="19" invocations="25" avgMicrosecondsPerInvocation="777" maxMicrosecondsPerInvocation="10854" standardDeviationMicrosecondsPerInvocation="2182"/>
+      <ClassProfile name="edu.umd.cs.findbugs.detect.OverridingEqualsNotSymmetrical" totalMilliseconds="14" invocations="11" avgMicrosecondsPerInvocation="1322" maxMicrosecondsPerInvocation="10207" standardDeviationMicrosecondsPerInvocation="2882"/>
+      <ClassProfile name="edu.umd.cs.findbugs.detect.NoteDirectlyRelevantTypeQualifiers" totalMilliseconds="14" invocations="11" avgMicrosecondsPerInvocation="1312" maxMicrosecondsPerInvocation="9057" standardDeviationMicrosecondsPerInvocation="2539"/>
+    </FindBugsProfile>
+  </FindBugsSummary>
+  <ClassFeatures></ClassFeatures>
+  <History></History>
+</BugCollection>
