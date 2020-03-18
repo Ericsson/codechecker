@@ -19,7 +19,14 @@ LOG = logging.getLogger('ReportConverter')
 class AnalyzerResult(object, metaclass=ABCMeta):
     """ Base class to transform analyzer result. """
 
+    # Short name of the analyzer.
     TOOL_NAME = None
+
+    # Full name of the analyzer.
+    NAME = None
+
+    # Link to the official analyzer website.
+    URL = None
 
     def transform(self, analyzer_result, output_dir):
         """ Creates plist files from the given analyzer result to the given

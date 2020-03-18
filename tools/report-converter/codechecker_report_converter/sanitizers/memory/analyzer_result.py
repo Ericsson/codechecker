@@ -15,6 +15,8 @@ class MSANAnalyzerResult(AnalyzerResult):
     """ Transform analyzer result of Clang MemorySanitizer. """
 
     TOOL_NAME = 'msan'
+    NAME = 'MemorySanitizer'
+    URL = 'https://clang.llvm.org/docs/MemorySanitizer.html'
 
     def parse(self, analyzer_result):
         """ Creates plist files from the given analyzer result to the given

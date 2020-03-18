@@ -15,6 +15,8 @@ class ASANAnalyzerResult(AnalyzerResult):
     """ Transform analyzer result of Clang AddressSanitizer. """
 
     TOOL_NAME = 'asan'
+    NAME = 'AddressSanitizer'
+    URL = 'https://clang.llvm.org/docs/AddressSanitizer.html'
 
     def parse(self, analyzer_result):
         """ Creates plist files from the given analyzer result to the given

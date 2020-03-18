@@ -15,6 +15,8 @@ class ClangTidyAnalyzerResult(AnalyzerResult):
     """ Transform analyzer result of Clang Tidy. """
 
     TOOL_NAME = 'clang-tidy'
+    NAME = 'Clang Tidy'
+    URL = 'https://clang.llvm.org/extra/clang-tidy'
 
     def parse(self, analyzer_result):
         """ Creates plist files from the given analyzer result to the given

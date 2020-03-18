@@ -21,6 +21,8 @@ class CppcheckAnalyzerResult(AnalyzerResult):
     """ Transform analyzer result of Cppcheck. """
 
     TOOL_NAME = 'cppcheck'
+    NAME = 'Cppcheck'
+    URL = 'http://cppcheck.sourceforge.net'
 
     def parse(self, analyzer_result):
         """ Creates plist objects from the given analyzer result.

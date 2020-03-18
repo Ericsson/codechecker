@@ -15,6 +15,8 @@ class UBSANAnalyzerResult(AnalyzerResult):
     """ Transform analyzer result of Clang UndefinedBehaviourSanitizer. """
 
     TOOL_NAME = 'ubsan'
+    NAME = 'UndefinedBehaviorSanitizer'
+    URL = 'https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html'
 
     def parse(self, analyzer_result):
         """ Creates plist files from the given analyzer result to the given

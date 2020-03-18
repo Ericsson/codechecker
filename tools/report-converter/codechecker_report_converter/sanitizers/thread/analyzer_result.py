@@ -15,6 +15,8 @@ class TSANAnalyzerResult(AnalyzerResult):
     """ Transform analyzer result of Clang ThreadSanitizer. """
 
     TOOL_NAME = 'tsan'
+    NAME = 'ThreadSanitizer'
+    URL = 'https://clang.llvm.org/docs/ThreadSanitizer.html'
 
     def parse(self, analyzer_result):
         """ Creates plist files from the given analyzer result to the given
