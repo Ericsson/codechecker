@@ -63,8 +63,25 @@ static void tryLog(
   const char* const filename_,
   char* const argv_[], ...)
 {
-  size_t i;
-  const char* loggerArgs[CC_LOGGER_MAX_ARGS];
+  size_t i,argCount,isOnHeap;
+  const char* staticLoggerArgs[CC_LOGGER_MAX_ARGS];
+  const char** largeLoggerArgs;
+  const char** loggerArgs;
+
+  for (i = 0,argCount = 0; argv_[i]; ++i)
+  {
+    argCount++;
+  }
+
+  isOnHeap = argCount >= (CC_LOGGER_MAX_ARGS - 1);
+
+  if(isOnHeap) {
+    largeLoggerArgs = (const char **) malloc(sizeof(char*) * (argCount + 2));
+    loggerArgs = largeLoggerArgs;
+  } else {
+    largeLoggerArgs = NULL;
+    loggerArgs = staticLoggerArgs;
+  }
 
   loggerArgs[0] = filename_;
   for (i = 0; argv_[i]; ++i)
@@ -74,6 +91,9 @@ static void tryLog(
   loggerArgs[i+1] = NULL;
 
   logExec(i+1, loggerArgs);
+
+  if(isOnHeap && largeLoggerArgs != NULL)
+	free(largeLoggerArgs);
 }
 
 __attribute__ ((visibility ("default"))) int execv(const char* filename_, char* const argv_[])
