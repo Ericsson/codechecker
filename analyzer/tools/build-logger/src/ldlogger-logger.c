@@ -150,7 +150,7 @@ static void logProgramArgs(
 
   if (!loggerMakePathAbs(".", workingDir, 1))
   {
-    LOG_WARN("Failed to convert current directory to absolute path!")
+    LOG_WARN("Failed to convert current directory to absolute path!");
     return;
   }
 
@@ -163,7 +163,7 @@ static void logProgramArgs(
   }
   else
   {
-    LOG_WARN("Failed to convert argument vector to a NULL terminated list!")
+    LOG_WARN("Failed to convert argument vector to a NULL terminated list!");
     return;
   }
 
