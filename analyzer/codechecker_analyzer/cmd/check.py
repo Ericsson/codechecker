@@ -421,6 +421,15 @@ is called.""")
                                     "'<OUTPUT_DIR>/ctu-dir'. (These files "
                                     "will not be cleaned up in this mode.)")
 
+        ctu_opts.add_argument('--ctu-reanalyze-on-failure',
+                              action='store_true',
+                              dest='ctu_reanalyze_on_failure',
+                              default=argparse.SUPPRESS,
+                              help="If Cross-TU analysis is enabled and "
+                                   "fails for some reason, try to re analyze "
+                                   "the same translation unit without "
+                                   "Cross-TU enabled.")
+
     if analyzer_types.is_statistics_capable(context):
         stat_opts = parser.add_argument_group(
             "Statistics analysis feature arguments",
@@ -648,6 +657,7 @@ def main(args):
                           'capture_analysis_output',
                           'config_file',
                           'ctu_phases',
+                          'ctu_reanalyze_on_failure',
                           'stats_output',
                           'stats_dir',
                           'stats_enabled',
