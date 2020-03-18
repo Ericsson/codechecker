@@ -1,0 +1,17 @@
+[
+  {
+    "directory": "/tmp",
+    "command": "gcc -c a.c -o a.o",
+    "file": "a.c"
+  },
+  {
+    "directory": "/tmp",
+    "command": "gcc -c b.c -o b.o",
+    "file": "b.c"
+  },
+  {
+    "directory": "/tmp",
+    "command": "gcc a.o b.o -o ab",
+    "file": "a.o"
+  }
+]

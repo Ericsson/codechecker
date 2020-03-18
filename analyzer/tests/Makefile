@@ -8,25 +8,40 @@ REPO_ROOT ?= REPO_ROOT=$(ROOT)
 # Nose test runner configuration options.
 NOSECFG = --config .noserc
 
+CC_ANALYZER_TOOLS=$(ROOT)/analyzer/tools
+
 test_in_env: pycodestyle_in_env pylint_in_env test_unit_in_env test_functional_in_env test_build_logger test_tu_collector_in_env
 
 test: pycodestyle pylint test_unit test_functional test_build_logger test_tu_collector
 
 PYCODESTYLE_TEST_CMD = pycodestyle bin codechecker_analyzer tests
 
-pycodestyle:
+pycodestyle: pycodestyle_compilation_database_transformer
 	$(PYCODESTYLE_TEST_CMD)
 
 pycodestyle_in_env: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(PYCODESTYLE_TEST_CMD)
 
+pycodestyle_compilation_database_transformer:
+	$(REPO_ROOT) make -C $(CC_ANALYZER_TOOLS)/compilation-database-transformer pycodestyle
+
+pycodestyle_compilation_database_transformer_in_env:
+	$(REPO_ROOT) make -C $(CC_ANALYZER_TOOLS)/compilation-database-transformer pycodestyle_in_env
+
+
 PYLINT_TEST_CMD = PYLINTRC=$(ROOT)/.pylintrc \
 	pylint ./bin/** ./codechecker_analyzer ./tests/**
 
-pylint:
+pylint_compilation_database_transformer:
+	$(REPO_ROOT) make -C $(CC_ANALYZER_TOOLS)/compilation-database-transformer pylint
+
+pylint: pylint_compilation_database_transformer
 	$(PYLINT_TEST_CMD)
 
-pylint_in_env: venv_dev
+pylint_compilation_database_transformer_in_env:
+	$(REPO_ROOT) make -C $(CC_ANALYZER_TOOLS)/compilation-database-transformer pylint_in_env
+
+pylint_in_env: venv_dev pylint_compilation_database_transformer_in_env
 	$(ACTIVATE_DEV_VENV) && $(PYLINT_TEST_CMD)
 
 run_test:
@@ -39,20 +54,20 @@ run_test_in_env: venv_dev
 
 UNIT_TEST_CMD = $(REPO_ROOT) nosetests $(NOSECFG) tests/unit
 
-test_unit:
+test_unit: test_unit_compilation_database_transformer
 	$(UNIT_TEST_CMD)
 
-test_unit_in_env: venv_dev
+test_unit_in_env: venv_dev test_unit_compilation_database_transformer_in_env
 	$(ACTIVATE_DEV_VENV) && $(UNIT_TEST_CMD)
 
 FUNCTIONAL_TEST_CMD = $(REPO_ROOT) $(TEST_PROJECT) \
 		nosetests $(NOSECFG) tests/functional || exit 1
 
-test_functional:
+test_functional: test_functional_compilation_database_transformer
 	python3 $(ROOT)/scripts/test/check_clang.py || exit 1;
 	$(FUNCTIONAL_TEST_CMD)
 
-test_functional_in_env: venv_dev
+test_functional_in_env: venv_dev test_functional_compilation_database_transformer_in_env
 		python3 $(ROOT)/scripts/test/check_clang.py || exit 1;
 		$(ACTIVATE_DEV_VENV) && $(FUNCTIONAL_TEST_CMD)
 
@@ -65,3 +80,33 @@ test_tu_collector:
 test_tu_collector_in_env:
 	$(ACTIVATE_DEV_VENV) && \
 	$(REPO_ROOT) make -C $(ROOT)/tools/tu_collector test
+
+
+test_compilation_database_transformer: test_unit_compilation_database_transformer test_functional_compilation_database_transformer
+
+
+test_unit_compilation_database_transformer:
+	$(REPO_ROOT) make -C $(CC_ANALYZER_TOOLS)/compilation-database-transformer test_unit
+
+COMPILATION_DATABASE_PACKAGE_CMD=$(REPO_ROOT) make -C $(CC_ANALYZER_TOOLS)/compilation-database-transformer package
+
+package_compilaton_database_transformer:
+	$(COMPILATION_DATABASE_PACKAGE_CMD)
+
+test_functional_compilation_database_transformer: package_compilaton_database_transformer
+	$(REPO_ROOT) make -C $(CC_ANALYZER_TOOLS)/compilation-database-transformer test_functional
+
+test_compilation_database_transformer_in_env: test_unit_compilation_database_transformer_in_env test_functional_compilation_database_transformer_in_env
+
+package_compilaton_database_transformer_in_env:
+	$(ACTIVATE_DEV_VENV) && \
+	$(COMPILATION_DATABASE_PACKAGE_CMD)
+
+test_unit_compilation_database_transformer_in_env:
+	$(ACTIVATE_DEV_VENV) && \
+	$(REPO_ROOT) make -C $(CC_ANALYZER_TOOLS)/compilation-database-transformer test_unit_in_env
+
+test_functional_compilation_database_transformer_in_env: package_compilaton_database_transformer_in_env
+	$(ACTIVATE_DEV_VENV) && \
+	$(REPO_ROOT) make -C $(CC_ANALYZER_TOOLS)/compilation-database-transformer test_functional_in_env
+

@@ -1,0 +1,17 @@
+[
+  {
+    "directory": "/tmp",
+    "command": "clang -c a.c -o a.o",
+    "file": "a.c"
+  },
+  {
+    "directory": "/tmp",
+    "command": "clang -c b.c -o b.o",
+    "file": "b.c"
+  },
+  {
+    "directory": "/tmp",
+    "command": "clang a.o b.o -o ab",
+    "file": "a.o"
+  }
+]

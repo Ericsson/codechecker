@@ -13,6 +13,7 @@ CC_WEB = $(CURRENT_DIR)/web
 CC_SERVER = $(CC_WEB)/server/
 CC_CLIENT = $(CC_WEB)/client/
 CC_ANALYZER = $(CURRENT_DIR)/analyzer
+CC_ANALYZER_TOOLS = $(CURRENT_DIR)/analyzer/tools
 
 CC_TOOLS = $(CURRENT_DIR)/tools
 
@@ -63,13 +64,23 @@ package_report_converter: build_report_converter package_dir_structure
 	cd $(CC_BUILD_DIR) && \
 	ln -sf ../lib/python3/codechecker_report_converter/cli.py bin/report-converter
 
+build_compilation_database_transformer_tool:
+	$(MAKE) -C $(CC_ANALYZER_TOOLS)/compilation-database-transformer build
+
+package_compilation_database_transformer_tool: build_compilation_database_transformer_tool package_dir_structure
+	# Copy ccdb_tool files.
+	cp -rp $(CC_ANALYZER_TOOLS)/compilation-database-transformer/build/compilation_database_transformer/compilation_database_transformer $(CC_BUILD_LIB_DIR) && \
+	chmod u+x $(CC_BUILD_LIB_DIR)/compilation_database_transformer/cli.py && \
+	cd $(CC_BUILD_DIR) && \
+	ln -sf ../lib/python3/compilation_database_transformer/cli.py bin/ccdb-tool
+
 build_report_hash:
 	$(MAKE) -C $(ROOT)/tools/codechecker_report_hash build
 
 package_report_hash: build_report_hash package_dir_structure
 	cp -r $(CC_TOOLS)/codechecker_report_hash/build/codechecker_report_hash/codechecker_report_hash $(CC_BUILD_LIB_DIR)
 
-package: package_dir_structure set_git_commit_template package_plist_to_html package_tu_collector package_report_converter package_report_hash
+package: package_dir_structure set_git_commit_template package_plist_to_html package_tu_collector package_report_converter package_report_hash package_compilation_database_transformer_tool
 	BUILD_DIR=$(BUILD_DIR) BUILD_LOGGER_64_BIT_ONLY=$(BUILD_LOGGER_64_BIT_ONLY) $(MAKE) -C $(CC_ANALYZER) package_analyzer
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) package_web
 
@@ -134,7 +145,8 @@ clean_venv:
 
 PIP_DEV_DEPS_CMD = make -C $(CC_ANALYZER) pip_dev_deps && \
   make -C $(CC_WEB) pip_dev_deps && \
-  make -C $(CC_TOOLS)/plist_to_html pip_dev_deps
+  make -C $(CC_TOOLS)/plist_to_html pip_dev_deps && \
+  make -C $(CC_ANALYZER_TOOLS)/compilation-database-transformer pip_dev_deps
 
 pip_dev_deps:
 	# Install the depencies for analyze, web and the tools.
@@ -150,6 +162,7 @@ clean_venv_dev:
 	$(MAKE) -C $(CC_ANALYZER) clean_venv_dev
 	$(MAKE) -C $(CC_WEB) clean_venv_dev
 	$(MAKE) -C $(CC_TOOLS)/plist_to_html clean_venv_dev
+	$(MAKE) -C $(CC_ANALYZER_TOOLS)/compilation-database-transformer clean_venv_dev
 
 clean: clean_package clean_vendor
 

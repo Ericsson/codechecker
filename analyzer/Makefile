@@ -54,12 +54,22 @@ package_tu_collector: build_tu_collector package_dir_structure
 	cd $(CC_BUILD_DIR) && \
 	ln -sf ../lib/python3/tu_collector/tu_collector.py bin/tu_collector
 
+build_compilation_database_transformer:
+	$(MAKE) -C tools/compilation-database-transformer build
+
+package_compilation_database_transformer: build_compilation_database_transformer package_dir_structure
+	# Copy compilation_database_transformer_files files.
+	cp -rp tools/compilation-database-transformer/build/compilation_database_transformer/compilation_database_transformer $(CC_BUILD_LIB_DIR) && \
+	chmod u+x $(CC_BUILD_LIB_DIR)/compilation_database_transformer/cli.py && \
+	cd $(CC_BUILD_DIR) && \
+	ln -sf ../lib/python3/compilation_database_transformer/cli.py bin/ccdb-tool
+
 # This target should be used from the top level Makefile to build the package
 # together with the web part. This way we will not build plist-to-html
 # multiple times.
 package_analyzer: package_dir_structure
 
-package: package_plist_to_html package_tu_collector package_analyzer
+package: package_plist_to_html package_tu_collector package_compilation_database_transformer package_analyzer
 	# Copy libraries.
 	cp -r $(ROOT)/codechecker_common $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CURRENT_DIR)/codechecker_analyzer $(CC_BUILD_LIB_DIR)
@@ -109,7 +119,7 @@ else
   endif
 endif
 
-clean_package: clean_plist_to_html clean_tu_collector
+clean_package: clean_plist_to_html clean_tu_collector clean_compilation_database_transformer
 	rm -rf $(BUILD_DIR)
 	find . -name "*.pyc" -delete
 

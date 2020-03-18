@@ -1,0 +1,9 @@
+.idea
+build/
+compilation_database_transformer.egg-info
+dist/
+venv/
+venv_dev/
+*.class
+**/*.pyc
+**/__pycache__/
