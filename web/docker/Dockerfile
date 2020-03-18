@@ -14,7 +14,6 @@ RUN set -x && apt-get update -qq \
     curl \
     doxygen \
     git \
-    thrift-compiler \
     make
 
 # Download CodeChecker release.
