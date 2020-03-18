@@ -22,7 +22,7 @@ CodeChecker result directory which can be stored to a CodeChecker server.
 |                | [Pyflakes](https://github.com/PyCQA/pyflakes)    | ✗ |
 |                | [mypy](http://mypy-lang.org/)    | ✗ |
 |                | [Bandit](https://github.com/PyCQA/bandit)    | ✗ |
-| **JavaScript** | [ESLint](https://eslint.org/)    | ✗ |
+| **JavaScript** | [ESLint](https://eslint.org/)    | ✓ |
 |                | [JSHint](https://jshint.com/)    | ✗ |
 |                | [JSLint](https://jslint.com/)    | ✗ |
 | **Go**         | [Golint](https://github.com/golang/lint)    | ✗ |
