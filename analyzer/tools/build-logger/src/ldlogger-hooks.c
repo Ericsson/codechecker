@@ -21,8 +21,6 @@
 
 #include "ldlogger-hooks.h"
 
-#define CC_LOGGER_MAX_ARGS 4096
-
 #define CC_LOGGER_CALL_EXEC(funName_, arglist, ...) \
   tryLog(__VA_ARGS__); \
   { \
@@ -63,8 +61,15 @@ static void tryLog(
   const char* const filename_,
   char* const argv_[], ...)
 {
-  size_t i;
-  const char* loggerArgs[CC_LOGGER_MAX_ARGS];
+  size_t i,argCount;
+  const char** loggerArgs;
+
+  for (i = 0,argCount = 0; argv_[i]; ++i)
+  {
+    argCount++;
+  }
+
+  loggerArgs = (const char **) malloc(sizeof(char*) * (argCount + 2));
 
   loggerArgs[0] = filename_;
   for (i = 0; argv_[i]; ++i)
@@ -74,6 +79,8 @@ static void tryLog(
   loggerArgs[i+1] = NULL;
 
   logExec(i+1, loggerArgs);
+
+  free(loggerArgs);
 }
 
 __attribute__ ((visibility ("default"))) int execv(const char* filename_, char* const argv_[])
