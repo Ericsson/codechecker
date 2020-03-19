@@ -1,6 +1,7 @@
 <template>
   <v-form v-model="valid">
     <v-text-field
+      v-if="isSuperUser"
       v-model="productConfig.endpoint"
       :rules="rules.endpoint"
       label="URL endpoint*"
@@ -22,6 +23,7 @@
     />
 
     <v-text-field
+      v-if="isSuperUser"
       v-model="productConfig.runLimit"
       label="Run limit"
       prepend-icon="mdi-speedometer"
@@ -32,67 +34,71 @@
       label="Disable review status change"
     />
 
-    <v-divider />
-
-    <v-radio-group
-      v-model="dbConnection.engine"
-      :rules="rules.engine"
-    >
-      <v-radio
-        label="SQLite"
-        value="sqlite"
-      />
-
-      <v-radio
-        label="PostgreSQL"
-        value="postgresql"
-      />
-    </v-radio-group>
-
     <div
-      v-if="dbConnection.engine == 'sqlite'"
+      v-if="isSuperUser"
     >
-      <v-text-field
-        v-model="dbConnection.database"
-        label="Database file*"
-        prepend-icon="mdi-database"
-        :rules="rules.dbFile"
-      />
-    </div>
+      <v-divider />
 
-    <div
-      v-if="dbConnection.engine == 'postgresql'"
-    >
-      <v-text-field
-        v-model="dbConnection.host"
-        label="Server address"
-        prepend-icon="mdi-protocol"
-      />
+      <v-radio-group
+        v-model="dbConnection.engine"
+        :rules="rules.engine"
+      >
+        <v-radio
+          label="SQLite"
+          value="sqlite"
+        />
 
-      <v-text-field
-        v-model="dbConnection.port"
-        label="Port"
-        prepend-icon="mdi-map-marker"
-      />
+        <v-radio
+          label="PostgreSQL"
+          value="postgresql"
+        />
+      </v-radio-group>
 
-      <v-text-field
-        v-model="dbConnection.username"
-        label="User name"
-        prepend-icon="mdi-account-outline"
-      />
+      <div
+        v-if="dbConnection.engine == 'sqlite'"
+      >
+        <v-text-field
+          v-model="dbConnection.database"
+          label="Database file*"
+          prepend-icon="mdi-database"
+          :rules="rules.dbFile"
+        />
+      </div>
 
-      <v-text-field
-        v-model="dbConnection.password"
-        label="Password"
-        prepend-icon="mdi-lock-outline"
-      />
+      <div
+        v-if="dbConnection.engine == 'postgresql'"
+      >
+        <v-text-field
+          v-model="dbConnection.host"
+          label="Server address"
+          prepend-icon="mdi-protocol"
+        />
 
-      <v-text-field
-        v-model="dbConnection.database"
-        label="Database name*"
-        prepend-icon="mdi-database"
-        :rules="rules.dbName"
-      />
+        <v-text-field
+          v-model="dbConnection.port"
+          label="Port"
+          prepend-icon="mdi-map-marker"
+        />
+
+        <v-text-field
+          v-model="dbConnection.username"
+          label="User name"
+          prepend-icon="mdi-account-outline"
+        />
+
+        <v-text-field
+          v-model="dbConnection.password"
+          label="Password"
+          prepend-icon="mdi-lock-outline"
+        />
+
+        <v-text-field
+          v-model="dbConnection.database"
+          label="Database name*"
+          prepend-icon="mdi-database"
+          :rules="rules.dbName"
+        />
+      </div>
     </div>
   </v-form>
 </template>
@@ -102,7 +108,8 @@ export default {
   name: "EditProduct",
   props: {
     productConfig: { type: Object, required: true },
-    isValid: { type: Boolean, default: false }
+    isValid: { type: Boolean, default: false },
+    isSuperUser: { type: Boolean, default: false }
   },
   data() {
     return {

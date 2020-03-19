@@ -23,6 +23,7 @@
     <template v-slot:content>
       <product-config-form
         :is-valid.sync="isValid"
+        :is-super-user="isSuperUser"
         :product-config="productConfig"
       />
     </template>
@@ -44,6 +45,9 @@ export default {
   components: {
     ConfirmDialog,
     ProductConfigForm
+  },
+  props: {
+    isSuperUser: { type: Boolean, default: false }
   },
   data() {
     return {

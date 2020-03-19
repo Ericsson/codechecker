@@ -41,6 +41,7 @@
           <v-container fluid>
             <product-config-form
               :is-valid.sync="isValid"
+              :is-super-user="isSuperUser"
               :product-config="productConfig"
             />
           </v-container>
@@ -78,6 +79,7 @@ export default {
   },
   props: {
     product: { type: Object, required: true },
+    isSuperUser: { type: Boolean, default: false }
   },
   data() {
     return {
