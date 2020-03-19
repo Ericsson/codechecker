@@ -24,15 +24,7 @@
 </template>
 
 <script>
-import { ccService, handleThriftError } from "@cc-api";
-import {
-  MAX_QUERY_SIZE,
-  Order,
-  ReportFilter,
-  RunFilter,
-  SortMode,
-  SortType
-} from "@cc/report-server-types";
+import { ccService } from "@cc-api";
 
 import SelectSameReportItem from "./SelectSameReportItem";
 
@@ -69,46 +61,17 @@ export default {
     },
 
     getSameReports() {
-      var reportFilter = new ReportFilter({
-        reportHash: [ this.report.bugHash ]
-      });
-
-      const sortMode = new SortMode({
-        type: SortType.FILENAME,
-        ord: Order.ASC
-      });
-
-      ccService.getClient().getRunResults(null, MAX_QUERY_SIZE, 0,
-        [ sortMode ], reportFilter, null, false,
-        handleThriftError(res => {
-          this.getRuns(res).then(runs => {
-            this.items = res.map(report => {
-              const run =
-                runs.find(run => run.runId.equals(report.runId)) || {};
-
-              return {
-                id: report.reportId,
-                runName: run.name,
-                fileName: report.checkedFile.replace(/^.*[\\/]/, ""),
-                line: report.line,
-                bugPathLength: report.bugPathLength,
-                detectionStatus: report.detectionStatus
-              };
-            });
-          });
-        }));
-    },
-
-    getRuns(reports) {
-      const runFilter = new RunFilter({
-        ids: reports.map(report => report.runId)
-      });
-
-      return new Promise(resolve => {
-        ccService.getClient().getRunData(runFilter, null, 0, null,
-          handleThriftError(res => {
-            resolve(res);
-          }));
+      ccService.getSameReports(this.report.bugHash).then(reports => {
+        this.items = reports.map(report => {
+          return {
+            id: report.reportId,
+            runName: report.$runName,
+            fileName: report.checkedFile.replace(/^.*[\\/]/, ""),
+            line: report.line,
+            bugPathLength: report.bugPathLength,
+            detectionStatus: report.detectionStatus
+          };
+        });
       });
     },
 
