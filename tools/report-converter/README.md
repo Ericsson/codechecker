@@ -14,6 +14,7 @@ a CodeChecker server.
 * [Cppcheck](#cppcheck)
 * [Spotbugs](#spotbugs)
 * [Facebook Infer](#facebook-infer)
+* [ESLint](#eslint)
 * [License](#license)
 
 ## Install guide
@@ -44,7 +45,8 @@ optional arguments:
                         report directory files.
   -t TYPE, --type TYPE  Specify the format of the code analyzer output.
                         Currently supported output types are: asan, clang-
-                        tidy, cppcheck, fbinfer, msan, spotbugs, tsan, ubsan.
+                        tidy, cppcheck, eslint, fbinfer, msan, spotbugs, tsan,
+                        ubsan.
   -c, --clean           Delete files stored in the output directory.
   -v, --verbose         Set verbosity level.
 
@@ -52,6 +54,7 @@ Supported analyzers:
   asan - AddressSanitizer, https://clang.llvm.org/docs/AddressSanitizer.html
   clang-tidy - Clang Tidy, https://clang.llvm.org/extra/clang-tidy
   cppcheck - Cppcheck, http://cppcheck.sourceforge.net
+  eslint - ESLint, https://eslint.org/
   fbinfer - Facebook Infer, https://fbinfer.com
   msan - MemorySanitizer, https://clang.llvm.org/docs/MemorySanitizer.html
   spotbugs - spotbugs, https://spotbugs.github.io
@@ -220,6 +223,27 @@ report-converter -t fbinfer -o ./codechecker_fbinfer_reports ./infer-out
 
 # Store the Infer reports with CodeChecker.
 CodeChecker store ./codechecker_fbinfer_reports -n fbinfer
+```
+
+## [ESLint](https://eslint.org)
+[ESLint](https://eslint.org) is a static analysis tool for `JavaScript`.
+
+The recommended way of running the ESLint tool is to generate a json output
+file.
+
+The following example shows you how to run ESLint and store the results found
+by ESLint to the CodeChecker database.
+
+```sh
+# Run ESLint.
+eslint -o ./eslint_reports.json -f json /path/to/my/project
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of ESLint.
+report-converter -t eslint -o ./codechecker_eslint_reports ./eslint_reports.json
+
+# Store the ESLint reports with CodeChecker.
+CodeChecker store ./codechecker_eslint_reports -n eslint
 ```
 
 ## License

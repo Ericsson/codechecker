@@ -37,6 +37,8 @@ from codechecker_report_converter.sanitizers.ub.analyzer_result import \
     UBSANAnalyzerResult  # noqa
 from codechecker_report_converter.spotbugs.analyzer_result import \
     SpotBugsAnalyzerResult  # noqa
+from codechecker_report_converter.eslint.analyzer_result import \
+    ESLintAnalyzerResult  # noqa
 
 
 LOG = logging.getLogger('ReportConverter')
@@ -53,6 +55,7 @@ supported_converters = {
     CppcheckAnalyzerResult.TOOL_NAME: CppcheckAnalyzerResult,
     InferAnalyzerResult.TOOL_NAME: InferAnalyzerResult,
     ASANAnalyzerResult.TOOL_NAME: ASANAnalyzerResult,
+    ESLintAnalyzerResult.TOOL_NAME: ESLintAnalyzerResult,
     MSANAnalyzerResult.TOOL_NAME: MSANAnalyzerResult,
     TSANAnalyzerResult.TOOL_NAME: TSANAnalyzerResult,
     UBSANAnalyzerResult.TOOL_NAME: UBSANAnalyzerResult,
