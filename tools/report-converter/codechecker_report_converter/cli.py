@@ -43,6 +43,8 @@ from codechecker_report_converter.pylint.analyzer_result import \
     PylintAnalyzerResult  # noqa
 from codechecker_report_converter.tslint.analyzer_result import \
     TSLintAnalyzerResult  # noqa
+from codechecker_report_converter.golint.analyzer_result import \
+    GolintAnalyzerResult  # noqa
 
 
 LOG = logging.getLogger('ReportConverter')
@@ -58,6 +60,7 @@ supported_converters = {
     ClangTidyAnalyzerResult.TOOL_NAME: ClangTidyAnalyzerResult,
     CppcheckAnalyzerResult.TOOL_NAME: CppcheckAnalyzerResult,
     InferAnalyzerResult.TOOL_NAME: InferAnalyzerResult,
+    GolintAnalyzerResult.TOOL_NAME: GolintAnalyzerResult,
     ASANAnalyzerResult.TOOL_NAME: ASANAnalyzerResult,
     ESLintAnalyzerResult.TOOL_NAME: ESLintAnalyzerResult,
     MSANAnalyzerResult.TOOL_NAME: MSANAnalyzerResult,

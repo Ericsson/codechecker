@@ -17,6 +17,7 @@ a CodeChecker server.
 * [ESLint](#eslint)
 * [Pylint](#pylint)
 * [TSLint](#tslint)
+* [Golint](#golint)
 * [License](#license)
 
 ## Install guide
@@ -47,7 +48,7 @@ optional arguments:
                         report directory files.
   -t TYPE, --type TYPE  Specify the format of the code analyzer output.
                         Currently supported output types are: asan, clang-
-                        tidy, cppcheck, eslint, fbinfer, msan, pylint,
+                        tidy, cppcheck, eslint, fbinfer, golint, msan, pylint,
                         spotbugs, tsan, tslint, ubsan.
   -c, --clean           Delete files stored in the output directory.
   -v, --verbose         Set verbosity level.
@@ -58,6 +59,7 @@ Supported analyzers:
   cppcheck - Cppcheck, http://cppcheck.sourceforge.net
   eslint - ESLint, https://eslint.org/
   fbinfer - Facebook Infer, https://fbinfer.com
+  golint - Golint, https://github.com/golang/lint
   msan - MemorySanitizer, https://clang.llvm.org/docs/MemorySanitizer.html
   pylint - Pylint, https://www.pylint.org
   spotbugs - spotbugs, https://spotbugs.github.io
@@ -291,6 +293,28 @@ report-converter -t tslint -o ./codechecker_tslint_reports ./tslint_reports.json
 
 # Store the TSLint reports with CodeChecker.
 CodeChecker store ./codechecker_tslint_reports -n tslint
+```
+
+## [Golint](https://github.com/golang/lint)
+[Golint](https://github.com/golang/lint) is a static analysis tool for `Go`
+code.
+
+The recommended way of running Golint is to redirect the output to a file and
+give this file to the report converter tool.
+
+The following example shows you how to run Golint and store the results
+found by Golint to the CodeChecker database.
+
+```sh
+# Run Golint.
+golint /path/to/your/project > ./golint_reports.out
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of Golint.
+report-converter -t golint -o ./codechecker_golint_reports ./golint_reports.out
+
+# Store the Golint reports with CodeChecker.
+CodeChecker store ./codechecker_golint_reports -n golint
 ```
 
 ## License
