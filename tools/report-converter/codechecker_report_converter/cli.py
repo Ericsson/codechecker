@@ -25,6 +25,8 @@ from codechecker_report_converter.clang_tidy.analyzer_result import \
     ClangTidyAnalyzerResult  # noqa
 from codechecker_report_converter.cppcheck.analyzer_result import \
     CppcheckAnalyzerResult  # noqa
+from codechecker_report_converter.infer.analyzer_result import \
+    InferAnalyzerResult  # noqa
 from codechecker_report_converter.sanitizers.address.analyzer_result import \
     ASANAnalyzerResult  # noqa
 from codechecker_report_converter.sanitizers.memory.analyzer_result import \
@@ -49,21 +51,13 @@ LOG.addHandler(log_handler)
 supported_converters = {
     ClangTidyAnalyzerResult.TOOL_NAME: ClangTidyAnalyzerResult,
     CppcheckAnalyzerResult.TOOL_NAME: CppcheckAnalyzerResult,
+    InferAnalyzerResult.TOOL_NAME: InferAnalyzerResult,
     ASANAnalyzerResult.TOOL_NAME: ASANAnalyzerResult,
     MSANAnalyzerResult.TOOL_NAME: MSANAnalyzerResult,
     TSANAnalyzerResult.TOOL_NAME: TSANAnalyzerResult,
     UBSANAnalyzerResult.TOOL_NAME: UBSANAnalyzerResult,
     SpotBugsAnalyzerResult.TOOL_NAME: SpotBugsAnalyzerResult
 }
-
-
-def supported_converters_help():
-    """ """
-    return '\n'.join(["{0} - {1}, {2}".format(
-        tool_name,
-        supported_converters[tool_name].NAME,
-        supported_converters[tool_name].URL)
-        for tool_name in sorted(supported_converters)])
 
 
 def output_to_plist(analyzer_result, parser_type, output_dir, clean=False):

@@ -4,28 +4,34 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
+import logging
+
 from codechecker_report_converter.analyzer_result import AnalyzerResult
 
-from .output_parser import SpotBugsParser
-from .plist_converter import SpotBugsPlistConverter
+from .output_parser import InferParser
+from .plist_converter import InferPlistConverter
 
 
-class SpotBugsAnalyzerResult(AnalyzerResult):
-    """ Transform analyzer result of SpotBugs. """
+LOG = logging.getLogger('ReportConverter')
 
-    TOOL_NAME = 'spotbugs'
-    NAME = 'spotbugs'
-    URL = 'https://spotbugs.github.io'
+
+class InferAnalyzerResult(AnalyzerResult):
+    """ Transform analyzer result of the FB Infer. """
+
+    TOOL_NAME = 'fbinfer'
+    NAME = 'Facebook Infer'
+    URL = 'https://fbinfer.com'
 
     def parse(self, analyzer_result):
-        """ Creates plist files from the given analyzer result to the given
-        output directory.
+        """ Creates plist objects from the given analyzer result.
+
+        Returns a list of plist objects.
         """
-        parser = SpotBugsParser()
+        parser = InferParser()
         messages = parser.parse_messages(analyzer_result)
         if not messages:
-            return None
+            return
 
-        plist_converter = SpotBugsPlistConverter(self.TOOL_NAME)
+        plist_converter = InferPlistConverter(self.TOOL_NAME)
         plist_converter.add_messages(messages)
         return plist_converter.get_plist_results()
