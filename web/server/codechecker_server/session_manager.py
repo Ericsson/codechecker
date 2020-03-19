@@ -153,15 +153,12 @@ class SessionManager(object):
     CodeChecker server.
     """
 
-    def __init__(self, configuration_file, session_salt,
-                 root_sha, force_auth=False):
+    def __init__(self, configuration_file, root_sha, force_auth=False):
         """
         Initialise a new Session Manager on the server.
 
         :param configuration_file: The configuration file to read
             authentication backends from.
-        :param session_salt: An initial salt that will be used in hashing
-            the session to the database.
         :param root_sha: The SHA-256 hash of the root user's authentication.
         :param force_auth: If True, the manager will be enabled even if the
             configuration file disables authentication.
@@ -169,8 +166,6 @@ class SessionManager(object):
         self.__database_connection = None
         self.__logins_since_prune = 0
         self.__sessions = []
-        self.__session_salt = hashlib.sha1(
-            session_salt.encode('utf-8')).hexdigest()
         self.__configuration_file = configuration_file
 
         scfg_dict = self.__get_config_dict()

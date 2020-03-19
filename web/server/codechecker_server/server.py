@@ -1037,7 +1037,6 @@ def start_server(config_directory, package_data, port, config_sql_server,
     try:
         manager = session_manager.SessionManager(
             server_cfg_file,
-            config_sql_server.get_connection_string(),
             root_sha,
             force_auth)
     except IOError as ioerr:
