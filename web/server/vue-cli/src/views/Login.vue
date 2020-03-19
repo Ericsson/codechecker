@@ -4,12 +4,21 @@
     fluid
   >
     <v-row align="center" justify="center">
-      <v-col cols="12" sm="8" md="4">
-        <v-card class="elevation-12">
-          <v-toolbar color="primary" dark flat>
-            <v-toolbar-title>Login</v-toolbar-title>
-          </v-toolbar>
-          <v-card-text>
+      <v-col cols="12" sm="8" md="3">
+        <v-card class="elevation-1 pa-8" outlined>
+          <v-card-title>
+            <v-container class="text-center pt-4">
+              <v-avatar id="avatar" color="primary" :size="120">
+                <v-icon :size="100" dark>
+                  mdi-account
+                </v-icon>
+              </v-avatar>
+              <div class="display-1 grey--text">
+                Login
+              </div>
+            </v-container>
+          </v-card-title>
+          <v-card-text class="px-0 pb-0">
             <alerts
               :success="success"
               success-msg="Successfully logged in!"
@@ -23,9 +32,10 @@
                 autocomplete="username"
                 label="Username"
                 name="username"
-                prepend-icon="mdi-account"
+                append-icon="mdi-account"
                 type="text"
                 required
+                outlined
                 :rules="[() => !!username || 'This field is required']"
                 :placeholder="placeholder"
                 @keyup.enter="login"
@@ -37,18 +47,21 @@
                 autocomplete="current-password"
                 label="Password"
                 name="password"
-                prepend-icon="mdi-lock"
+                append-icon="mdi-lock"
                 type="password"
                 required
+                outlined
                 :rules="[() => !!password || 'This field is required']"
                 :placeholder="placeholder"
                 @keyup.enter="login"
               />
             </v-form>
           </v-card-text>
-          <v-card-actions>
-            <v-spacer />
+          <v-card-actions class="justify-center px-0">
             <v-btn
+              id="login-btn"
+              block
+              x-large
               color="primary"
               @click="login"
             >
@@ -164,3 +177,23 @@ export default {
   }
 };
 </script>
+
+<style lang="scss" scoped>
+#avatar {
+  position: absolute;
+  margin: 0 auto;
+  left: 0;
+  right: 0;
+  top: -70px;
+  width: 95px;
+  height: 95px;
+  border-radius: 50%;
+  z-index: 9;
+  padding: 15px;
+  box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.1);
+}
+
+#login-btn {
+  font-size: 1.2em;
+}
+</style>

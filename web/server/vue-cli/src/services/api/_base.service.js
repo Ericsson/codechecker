@@ -90,7 +90,7 @@ const handleThriftError = function (cb, onError) {
       if (msg.indexOf("Error code 401:") !== -1) {
         store.commit(PURGE_AUTH);
         router.push({ name: "login" }).catch(() => {});
-        onError(err);
+        if (onError) onError(err);
         return;
       }
     }
