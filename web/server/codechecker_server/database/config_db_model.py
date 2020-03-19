@@ -28,17 +28,6 @@ CC_META = MetaData(naming_convention={
 Base = declarative_base(metadata=CC_META)
 
 
-class DBVersion(Base):
-    __tablename__ = 'db_version'
-    # TODO: constraint, only one line in this table!
-    major = Column(Integer, primary_key=True)
-    minor = Column(Integer, primary_key=True)
-
-    def __init__(self, major, minor):
-        self.major = major
-        self.minor = minor
-
-
 class Product(Base):
     __tablename__ = 'products'
 
@@ -160,6 +149,5 @@ class Configuration(Base):
 
 IDENTIFIER = {
     'identifier': "ConfigDatabase",
-    'orm_meta': CC_META,
-    'version_class': DBVersion
+    'orm_meta': CC_META
 }
