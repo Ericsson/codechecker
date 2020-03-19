@@ -43,8 +43,62 @@
         :server-items-length.sync="totalItems"
         :footer-props="footerProps"
         :must-sort="true"
-        item-key="name"
+        :expanded.sync="expanded"
+        :show-expand="showExpanded"
+        item-key="$id"
+        @item-expanded="itemExpanded"
       >
+        <template v-slot:expanded-item="{ item }">
+          <td
+            class="pa-0"
+            :colspan="headers.length"
+          >
+            <v-list v-if="item.sameReports">
+              <v-list-item
+                v-for="report in item.sameReports"
+                :key="report.reportId.toNumber()"
+                dense
+              >
+                <v-list-item-content>
+                  <v-list-item-title>
+                    Same report in <kbd>{{ report.$runName }}</kbd> run:
+                    <span>
+                      <detection-status-icon
+                        :status="parseInt(report.detectionStatus)"
+                        :title="report.$detectionStatusTitle"
+                        :size="18"
+                      />
+                      <router-link
+                        :to="{ name: 'report-detail', query: {
+                          ...$router.currentRoute.query,
+                          reportId: report.reportId,
+                          reportHash: undefined
+                        }}"
+                      >
+                        {{ report.checkedFile }}:{{ report.line }}
+                      </router-link>
+                    </span>
+                  </v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+
+            <v-card
+              v-else
+              flat
+              tile
+            >
+              <v-card-text>
+                Loading...
+                <v-progress-linear
+                  indeterminate
+                  class="mb-0"
+                />
+              </v-card-text>
+            </v-card>
+          </td>
+        </template>
+
         <template #item.bugHash="{ item }">
           <span :title="item.bugHash">
             {{ item.bugHash | truncate(10) }}
@@ -191,7 +245,11 @@ export default {
           value: "detectionStatus",
           align: "center",
           sortable: true
-        }
+        },
+        {
+          text: "",
+          value: "data-table-expand"
+        },
       ],
       reports: [],
       namespace: namespace,
@@ -216,7 +274,8 @@ export default {
         highlight: function(code) {
           return hljs.highlightAuto(code).value;
         }
-      }
+      },
+      expanded: []
     };
   },
 
@@ -227,6 +286,10 @@ export default {
       cmpData: "getCmpData"
     }),
 
+    showExpanded() {
+      return this.reportFilter.isUnique;
+    },
+
     tableHeaders() {
       if (!this.headers) return;
 
@@ -235,12 +298,19 @@ export default {
           return !this.reportFilter.isUnique;
         }
 
+        if (header.value === "data-table-expand") {
+          return this.reportFilter.isUnique;
+        }
+
         return true;
       });
     },
 
     formattedReports() {
       return this.reports.map(report => {
+        const reportId = report.reportId ? report.reportId.toString() : "";
+        const id = reportId + report.bugHash;
+
         const detectionStatus =
           this.detectionStatusFromCodeToString(report.detectionStatus);
         const detectedAt = report.detectedAt
@@ -256,7 +326,9 @@ export default {
 
         return {
           ...report,
-          "$detectionStatusTitle": detectionStatusTitle
+          "$detectionStatusTitle": detectionStatusTitle,
+          "$id": id,
+          "sameReports": null
         };
       });
     },
@@ -284,6 +356,15 @@ export default {
   },
 
   methods: {
+    itemExpanded(expandedItem) {
+      if (expandedItem.item.sameReports) return;
+
+      const bugHash = expandedItem.item.bugHash;
+      ccService.getSameReports(bugHash).then(sameReports => {
+        expandedItem.item.sameReports = sameReports;
+      });
+    },
+
     getSortMode() {
       let type = null;
       switch (this.pagination.sortBy[0]) {
