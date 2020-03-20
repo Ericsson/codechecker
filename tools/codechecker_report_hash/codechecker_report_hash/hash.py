@@ -308,8 +308,7 @@ def replace_report_hash(plist_file, hash_type=HashType.CONTEXT_FREE):
                 report_hash = get_report_hash(diag, file_path, hash_type)
                 diag['issue_hash_content_of_line_in_context'] = report_hash
 
-            if plist['diagnostics']:
-                plistlib.dump(plist, pfile)
+            plistlib.dump(plist, pfile)
 
     except (TypeError, AttributeError) as err:
         LOG.warning('Failed to process plist file: %s wrong file format?',

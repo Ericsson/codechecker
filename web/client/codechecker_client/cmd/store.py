@@ -232,6 +232,10 @@ def assemble_zip(inputs, zip_file, client):
 
         try:
             files, reports = plist_parser.parse_plist_file(plist_file)
+
+            if not reports:
+                return missing_files, source_file_mod_times
+
             # CppCheck generates a '0' value for the bug hash.
             # In case all of the reports in a plist file contain only
             # a hash with '0' value oeverwrite the hash values in the

@@ -5,17 +5,15 @@
 # -----------------------------------------------------------------------------
 
 """ Unit tests for the CodeChecker report hash. """
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
 
 import os
 import plistlib
 import unittest
 import shutil
+import tempfile
 
 from codechecker_report_hash.hash import get_report_hash, \
-    get_report_path_hash, HashType
+    get_report_path_hash, HashType, replace_report_hash
 
 
 class CodeCheckerReportHashTest(unittest.TestCase):
@@ -106,3 +104,19 @@ class CodeCheckerReportHashTest(unittest.TestCase):
             actual_report_hash = diag['issue_hash_content_of_line_in_context']
             self.assertEqual(path_hash,
                              expected_path_hash[actual_report_hash])
+
+    def test_replace_report_hash_in_empty_plist(self):
+        """ Test replacing hash in an empty plist file. """
+        with tempfile.NamedTemporaryFile("wb+",
+                                         suffix='.plist') as empty_plist_file:
+            content = {'diagnostics': [], 'files': []}
+            plistlib.dump(content, empty_plist_file)
+            empty_plist_file.flush()
+            empty_plist_file.seek(0)
+
+            replace_report_hash(empty_plist_file.name, HashType.CONTEXT_FREE)
+            empty_plist_file.flush()
+            empty_plist_file.seek(0)
+
+            # Check that plist file is not empty.
+            self.assertNotEqual(empty_plist_file.read(), b'')
