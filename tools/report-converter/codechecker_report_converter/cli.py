@@ -39,6 +39,8 @@ from codechecker_report_converter.spotbugs.analyzer_result import \
     SpotBugsAnalyzerResult  # noqa
 from codechecker_report_converter.eslint.analyzer_result import \
     ESLintAnalyzerResult  # noqa
+from codechecker_report_converter.pylint.analyzer_result import \
+    PylintAnalyzerResult  # noqa
 
 
 LOG = logging.getLogger('ReportConverter')
@@ -57,6 +59,7 @@ supported_converters = {
     ASANAnalyzerResult.TOOL_NAME: ASANAnalyzerResult,
     ESLintAnalyzerResult.TOOL_NAME: ESLintAnalyzerResult,
     MSANAnalyzerResult.TOOL_NAME: MSANAnalyzerResult,
+    PylintAnalyzerResult.TOOL_NAME: PylintAnalyzerResult,
     TSANAnalyzerResult.TOOL_NAME: TSANAnalyzerResult,
     UBSANAnalyzerResult.TOOL_NAME: UBSANAnalyzerResult,
     SpotBugsAnalyzerResult.TOOL_NAME: SpotBugsAnalyzerResult
