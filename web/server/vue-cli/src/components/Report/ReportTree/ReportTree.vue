@@ -119,7 +119,9 @@ export default {
 
       ccService.getClient().getRunResults(runIds, limit, offset, sortType,
         reportFilter, cmpData, getDetails, handleThriftError(reports => {
-          reports.forEach(report => {
+          reports.sort((r1, r2) => {
+            return r1.line - r2.line;
+          }).forEach(report => {
             const isResolved =
             report.detectionStatus === DetectionStatus.RESOLVED;
 
