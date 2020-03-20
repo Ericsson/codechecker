@@ -137,8 +137,26 @@ export default {
         }));
     },
 
+    updateUrl() {
+      const reportId = this.report.reportId.toString();
+      const currentReportId = this.$router.currentRoute.query["reportId"];
+      if (reportId !== currentReportId) {
+        this.$router.replace({
+          query: {
+            ...this.$route.query,
+            "reportId": reportId
+          }
+        }).catch(() => {});
+      }
+    },
+
     onReportTreeClick(item) {
       if (!item) return;
+
+      if (item.report) {
+        this.report = item.report;
+        this.updateUrl();
+      }
 
       this.treeItem = item;
     }
