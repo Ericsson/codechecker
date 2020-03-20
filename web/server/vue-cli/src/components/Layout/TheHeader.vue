@@ -52,7 +52,10 @@
       <v-btn
         v-for="item in menuItems"
         :key="item.name"
-        :to="{ name: item.route }"
+        :to="{
+          name: item.route,
+          query: item.query || {}
+        }"
         :class="$route.name === item.route &&
           'v-btn--active router-link-active'"
         exact
@@ -97,6 +100,8 @@ import { mapActions, mapGetters } from "vuex";
 
 import { GET_ANNOUNCEMENT } from "@/store/actions.type";
 
+import { defaultReportFilterValues } from "@/components/Report/ReportFilter";
+import { defaultStatisticsFilterValues } from "@/components/Statistics";
 import HeaderMenuItems from "./HeaderMenuItems";
 import UserInfoMenu from "./UserInfoMenu";
 
@@ -131,12 +136,14 @@ export default {
           name: "Statistics",
           icon: "mdi-chart-line",
           route: "statistics",
+          query: defaultStatisticsFilterValues,
           hide: [ "products", "login" ]
         },
         {
           name: "Reports",
           icon: "mdi-clipboard-text-multiple-outline",
           route: "reports",
+          query: defaultReportFilterValues,
           hide: [ "products", "login" ]
         }
       ]

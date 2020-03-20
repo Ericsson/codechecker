@@ -44,7 +44,7 @@ export default {
 
   computed: {
     isUnique() {
-      return !!this.$store.state.report.reportFilter.isUnique;
+      return !!this.$store.state[this.namespace].reportFilter.isUnique;
     }
   },
 
@@ -61,7 +61,7 @@ export default {
     },
 
     decodeValue(state) {
-      return state === "off" ? false : true;
+      return state === "on" ? true : false;
     },
 
     getUrlState() {

@@ -87,7 +87,10 @@
           <v-list-item-content>
             <v-list-item-title>
               <router-link
-                :to="{ name: 'reports', query: { run: item.name } }"
+                :to="{ name: 'reports', query: {
+                  run: item.name,
+                  ...defaultReportFilterValues
+                }}"
                 class="mr-2"
               >
                 {{ item.name }}
@@ -130,7 +133,10 @@
               </v-btn>
 
               <v-btn
-                :to="{ name: 'statistics', query: { run: item.name } }"
+                :to="{ name: 'statistics', query: {
+                  run: item.name,
+                  ...defaultStatisticsFilterValues
+                }}"
                 title="Show statistics"
                 color="green"
                 small
@@ -257,6 +263,9 @@ import {
   RunSortType
 } from "@cc/report-server-types";
 
+import { defaultReportFilterValues } from "@/components/Report/ReportFilter";
+import { defaultStatisticsFilterValues } from "@/components/Statistics";
+
 export default {
   name: "RunList",
   components: {
@@ -279,6 +288,8 @@ export default {
     const sortDesc = this.$router.currentRoute.query["sort-desc"];
 
     return {
+      defaultReportFilterValues,
+      defaultStatisticsFilterValues,
       runNameSearch: this.$router.currentRoute.query["name"] || null,
       showCheckCommandDialog: false,
       checkCommand: null,
