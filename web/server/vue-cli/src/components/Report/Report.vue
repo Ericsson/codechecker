@@ -51,7 +51,7 @@
                           {{ reviewData.author }}
                         </v-list-item-title>
                         <v-list-item-subtitle>
-                          {{ reviewData.date }}
+                          {{ reviewData.date | prettifyDate }}
                         </v-list-item-subtitle>
                       </v-list-item-content>
                     </v-list-item>
@@ -619,9 +619,13 @@ export default {
       }, 150);
     },
 
-    confirmReviewStatusChange(reviewData) {
+    confirmReviewStatusChange(comment, status, author) {
       ccService.getClient().changeReviewStatus(this.report.reportId,
-        reviewData.status, reviewData.comment, handleThriftError());
+        status, comment, handleThriftError(() => {
+          this.reviewData.comment = comment;
+          this.reviewData.status = status;
+          this.reviewData.author = author;
+        }));
     }
   }
 };

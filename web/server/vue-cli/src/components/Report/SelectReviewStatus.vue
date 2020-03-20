@@ -53,7 +53,7 @@
       <v-card-text class="pa-0">
         <v-container>
           <v-textarea
-            v-model="value.comment"
+            v-model="reviewStatusMessage"
             solo
             flat
             outlined
@@ -91,6 +91,7 @@
 </template>
 
 <script>
+import { mapGetters } from "vuex";
 import { ReviewStatus } from "@cc/report-server-types";
 import SelectReviewStatusItem from "./SelectReviewStatusItem";
 
@@ -122,8 +123,15 @@ export default {
     return {
       items: [],
       dialog: false,
-      oldReviewStatus: null
+      oldReviewStatus: null,
+      reviewStatusMessage: null
     };
+  },
+
+  computed: {
+    ...mapGetters([
+      "currentUser"
+    ])
   },
 
   created() {
@@ -139,12 +147,15 @@ export default {
     onReviewStatusChange(value) {
       this.oldReviewStatus = this.value.status;
       this.value.status = value;
+      this.reviewStatusMessage = this.value.message;
 
       this.dialog = true;
     },
 
     confirmReviewStatusChange() {
-      this.onConfirm(this.value);
+      const comment = this.reviewStatusMessage || "";
+      const author = this.currentUser || "Anonymous";
+      this.onConfirm(comment, this.value.status, author);
       this.dialog = false;
     },
 
