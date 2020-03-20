@@ -77,7 +77,7 @@ class TestReviewStatus(unittest.TestCase):
         success = self._cc_client.changeReviewStatus(
             bug.reportId,
             status,
-            '')
+            None)
 
         self.assertTrue(success)
         logging.debug("Bug review status changed successfully")
