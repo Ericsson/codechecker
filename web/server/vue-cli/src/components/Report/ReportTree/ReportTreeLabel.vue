@@ -1,27 +1,29 @@
 <template>
-  <span v-if="item.kind === ReportTreeKind.REPORT">
-    L{{ item.report.line }} &ndash; {{ item.report.checkerId }}
-    [{{ item.report.bugPathLength }}]
-  </span>
+  <span :data-id="item.id">
+    <span v-if="item.kind === ReportTreeKind.REPORT">
+      L{{ item.report.line }} &ndash; {{ item.report.checkerId }}
+      [{{ item.report.bugPathLength }}]
+    </span>
 
-  <span v-else-if="item.kind === ReportTreeKind.REPORT_STEPS">
-    {{ fileName }}{{ item.step.startLine }} &ndash; {{ item.step.msg }}
-  </span>
+    <span v-else-if="item.kind === ReportTreeKind.REPORT_STEPS">
+      {{ fileName }}{{ item.step.startLine }} &ndash; {{ item.step.msg }}
+    </span>
 
-  <span v-else-if="item.kind === ReportTreeKind.BUG">
-    <b><u>{{ item.name }}</u></b>
-  </span>
+    <span v-else-if="item.kind === ReportTreeKind.BUG">
+      <b><u>{{ item.name }}</u></b>
+    </span>
 
-  <span v-else-if="isExtendedReportData">
-    <b>{{ item.name }}</b>
-  </span>
+    <span v-else-if="isExtendedReportData">
+      <b>{{ item.name }}</b>
+    </span>
 
-  <span v-else-if="isExtendedReportDataItem">
-    L{{ item.data.startLine }} &ndash; {{ item.name }}
-  </span>
+    <span v-else-if="isExtendedReportDataItem">
+      L{{ item.data.startLine }} &ndash; {{ item.name }}
+    </span>
 
-  <span v-else>
-    {{ item.name }}
+    <span v-else>
+      {{ item.name }}
+    </span>
   </span>
 </template>
 

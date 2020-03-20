@@ -155,9 +155,8 @@ export default {
                 });
               }
             });
-
-            this.openReportItems();
           });
+          this.openReportItems();
 
           this.removeEmptyRootElements();
         }));
@@ -193,6 +192,11 @@ export default {
         const reportNode = rootNode.children.find(item => {
           return item.id === this.report.reportId.toString();
         });
+
+        const node = this.$el.querySelector(`[data-id='${reportNode.id}']`);
+        if (node) {
+          node.scrollIntoView();
+        }
 
         this.openedItems.push(reportNode);
       });
