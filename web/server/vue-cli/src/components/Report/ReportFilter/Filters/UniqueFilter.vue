@@ -1,5 +1,7 @@
 <template>
   <v-checkbox
+    class="ma-0 py-0"
+    :hide-details="true"
     :input-value="isUnique"
     @change="setIsUnique"
   >

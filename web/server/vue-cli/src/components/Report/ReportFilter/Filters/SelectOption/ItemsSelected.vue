@@ -48,7 +48,10 @@
     </v-list-item-group>
   </v-list>
 
-  <v-list-item v-else>
+  <v-list-item
+    v-else
+    dense
+  >
     <v-list-item-content>
       <v-list-item-title>No filter</v-list-item-title>
     </v-list-item-content>
@@ -75,8 +78,8 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-::v-deep .v-list-item.v-list-item--dense {
-  min-height: 30px;
+.v-list-item.v-list-item--dense {
+  min-height: auto;
 }
 
 .selected-item {

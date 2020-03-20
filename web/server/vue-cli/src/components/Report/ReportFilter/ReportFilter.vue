@@ -39,16 +39,6 @@
 
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
-          <report-hash-filter
-            ref="filters"
-            :namespace="namespace"
-            @update:url="updateUrl"
-          />
-        </v-list-item-content>
-      </v-list-item>
-
-      <v-list-item class="pl-1">
-        <v-list-item-content class="pa-0">
           <v-expansion-panels
             v-model="activeBaselinePanelId"
             hover
@@ -113,6 +103,36 @@
         </v-list-item-content>
       </v-list-item>
 
+      <v-list-item class="pl-1">
+        <v-list-item-content class="pa-0">
+          <file-path-filter
+            ref="filters"
+            :namespace="namespace"
+            @update:url="updateUrl"
+          />
+        </v-list-item-content>
+      </v-list-item>
+
+      <v-list-item class="pl-1">
+        <v-list-item-content class="pa-0">
+          <checker-name-filter
+            ref="filters"
+            :namespace="namespace"
+            @update:url="updateUrl"
+          />
+        </v-list-item-content>
+      </v-list-item>
+
+      <v-list-item class="pl-1">
+        <v-list-item-content class="pa-0">
+          <severity-filter
+            ref="filters"
+            :namespace="namespace"
+            @update:url="updateUrl"
+          />
+        </v-list-item-content>
+      </v-list-item>
+
       <v-list-item
         v-if="showReviewStatus"
         class="pl-1"
@@ -138,7 +158,7 @@
 
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
-          <severity-filter
+          <source-component-filter
             ref="filters"
             :namespace="namespace"
             @update:url="updateUrl"
@@ -148,7 +168,7 @@
 
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
-          <bug-path-length-filter
+          <checker-message-filter
             ref="filters"
             :namespace="namespace"
             @update:url="updateUrl"
@@ -168,7 +188,7 @@
 
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
-          <file-path-filter
+          <report-hash-filter
             ref="filters"
             :namespace="namespace"
             @update:url="updateUrl"
@@ -178,27 +198,7 @@
 
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
-          <source-component-filter
-            ref="filters"
-            :namespace="namespace"
-            @update:url="updateUrl"
-          />
-        </v-list-item-content>
-      </v-list-item>
-
-      <v-list-item class="pl-1">
-        <v-list-item-content class="pa-0">
-          <checker-name-filter
-            ref="filters"
-            :namespace="namespace"
-            @update:url="updateUrl"
-          />
-        </v-list-item-content>
-      </v-list-item>
-
-      <v-list-item class="pl-1">
-        <v-list-item-content class="pa-0">
-          <checker-message-filter
+          <bug-path-length-filter
             ref="filters"
             :namespace="namespace"
             @update:url="updateUrl"
@@ -212,6 +212,7 @@
       >
         <v-list-item-content>
           <remove-filtered-reports
+            class="mt-4"
             @update="updateAllFilters"
           />
         </v-list-item-content>
@@ -385,6 +386,10 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.v-expansion-panel-header {
+  min-height: 40px;
+}
+
 .v-expansion-panel-content > ::v-deep .v-expansion-panel-content__wrap {
   padding: 0 4px 0 6px;
 }
