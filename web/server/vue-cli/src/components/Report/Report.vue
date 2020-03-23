@@ -183,6 +183,8 @@ import Vue from "vue";
 import CodeMirror from "codemirror";
 import { jsPlumb } from "jsplumb";
 
+import { format } from "date-fns";
+
 import { ccService, handleThriftError } from "@cc-api";
 import {
   Encoding,
@@ -625,6 +627,7 @@ export default {
           this.reviewData.comment = comment;
           this.reviewData.status = status;
           this.reviewData.author = author;
+          this.reviewData.date = format(new Date(), "yyyy-MM-dd HH:mm:ss");
         }));
     }
   }
