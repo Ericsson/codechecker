@@ -311,9 +311,12 @@ output arguments:
                         reported defect.
 
 environment variables:
-  CC_ANALYZERS_FROM_PATH       Set to `yes` or `1` to enforce taking the
-                               analyzers from the `PATH` instead of the given
-                               binaries.
+  CC_ANALYZERS_FROM_PATH   Set to `yes` or `1` to enforce taking the analyzers
+                           from the `PATH` instead of the given binaries.
+  CC_CLANGSA_PLUGIN_DIR    If the CC_ANALYZERS_FROM_PATH environment variable
+                           is set you can configure the plugin directory of the
+                           Clang Static Analyzer by using this environment
+                           variable.
 
 issue hashes:
 - By default the issue hash calculation method for 'Clang Static Analyzer' is
