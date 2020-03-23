@@ -16,6 +16,7 @@ a CodeChecker server.
 * [Facebook Infer](#facebook-infer)
 * [ESLint](#eslint)
 * [Pylint](#pylint)
+* [TSLint](#tslint)
 * [License](#license)
 
 ## Install guide
@@ -47,7 +48,7 @@ optional arguments:
   -t TYPE, --type TYPE  Specify the format of the code analyzer output.
                         Currently supported output types are: asan, clang-
                         tidy, cppcheck, eslint, fbinfer, msan, pylint,
-                        spotbugs, tsan, ubsan.
+                        spotbugs, tsan, tslint, ubsan.
   -c, --clean           Delete files stored in the output directory.
   -v, --verbose         Set verbosity level.
 
@@ -61,6 +62,7 @@ Supported analyzers:
   pylint - Pylint, https://www.pylint.org
   spotbugs - spotbugs, https://spotbugs.github.io
   tsan - ThreadSanitizer, https://clang.llvm.org/docs/ThreadSanitizer.html
+  tslint - TSLint, https://palantir.github.io/tslint
   ubsan - UndefinedBehaviorSanitizer, https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
 ```
 
@@ -267,6 +269,28 @@ report-converter -t pylint -o ./codechecker_pylint_reports ./pylint_reports.json
 
 # Store the Pylint reports with CodeChecker.
 CodeChecker store ./codechecker_pylint_reports -n pylint
+```
+
+## [TSLint](https://palantir.github.io/tslint)
+[TSLint](https://palantir.github.io/tslint) is a static analysis tool for
+`TypeScript`.
+
+The recommended way of running the TSLint tool is to generate a **json** output
+file.
+
+The following example shows you how to run TSLint and store the results found
+by TSLint to the CodeChecker database.
+
+```sh
+# Run TSLint.
+tslint --format json /path/to/my/ts/file -o ./tslint_reports.json
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of TSLint.
+report-converter -t tslint -o ./codechecker_tslint_reports ./tslint_reports.json
+
+# Store the TSLint reports with CodeChecker.
+CodeChecker store ./codechecker_tslint_reports -n tslint
 ```
 
 ## License
