@@ -6,7 +6,7 @@ logger_dir=$1
 
 export LD_PRELOAD=ldlogger.so
 export LD_LIBRARY_PATH=$logger_dir/lib:$LD_LIBRARY_PATH
-export CC_LOGGER_GCC_LIKE="gcc:g++:clang"
+export CC_LOGGER_GCC_LIKE="gcc:g++:clang:clang++:cc:c++"
 export CC_LOGGER_FILE=/tmp/logger_test_compilation_database.json
 export CC_LOGGER_DEBUG_FILE=/tmp/logger_test_debug.log
 
