@@ -15,7 +15,7 @@
       <v-menu
         v-model="menu"
         :close-on-content-click="false"
-        :nudge-width="200"
+        :nudge-width="300"
         :max-width="600"
         offset-x
       >
