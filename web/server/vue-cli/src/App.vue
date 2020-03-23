@@ -7,20 +7,17 @@
 
       <errors />
     </v-content>
-
-    <the-footer />
   </v-app>
 </template>
 
 <script>
 import Errors from "@/components/Errors";
-import { TheFooter, TheHeader } from "@/components/Layout";
+import { TheHeader } from "@/components/Layout";
 
 export default {
   name: "App",
   components: {
     Errors,
-    TheFooter,
     TheHeader
   }
 };

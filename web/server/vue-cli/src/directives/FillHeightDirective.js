@@ -6,9 +6,12 @@ function fillHeight(el) {
   const top = el.getBoundingClientRect().top;
 
   // Get footer element height.
+  let footerHeight = 0;
   const footerElement = document.querySelector("footer");
-  const footerStyle = window.getComputedStyle(footerElement);
-  const footerHeight = parseFloat(footerStyle.height);
+  if (footerElement) {
+    const footerStyle = window.getComputedStyle(footerElement);
+    footerHeight = parseFloat(footerStyle.height);
+  }
 
   let current = el;
   let style = null;
