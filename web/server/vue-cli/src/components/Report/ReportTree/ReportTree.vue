@@ -36,7 +36,11 @@
 
 <script>
 import { ccService, handleThriftError } from "@cc-api";
-import { DetectionStatus, ReportFilter } from "@cc/report-server-types";
+import {
+  DetectionStatus,
+  MAX_QUERY_SIZE,
+  ReportFilter
+} from "@cc/report-server-types";
 
 import ReportTreeIcon from "./ReportTreeIcon";
 import ReportTreeLabel from "./ReportTreeLabel";
@@ -117,8 +121,18 @@ export default {
       const cmpData = null;
       const getDetails = false;
 
+      // TODO: handle the case when there are more than MAX_QUERY_SIZE reports
+      // in the given file.
       ccService.getClient().getRunResults(runIds, limit, offset, sortType,
         reportFilter, cmpData, getDetails, handleThriftError(reports => {
+          if (reports.length === MAX_QUERY_SIZE) {
+            const currentReport =
+              reports.find(r => r.reportId.equals(this.report.reportId));
+            if (!currentReport) {
+              reports.push(this.report);
+            }
+          }
+
           reports.sort((r1, r2) => {
             return r1.line - r2.line;
           }).forEach(report => {
@@ -195,9 +209,11 @@ export default {
           return item.id === this.report.reportId.toString();
         });
 
-        const node = this.$el.querySelector(`[data-id='${reportNode.id}']`);
-        if (node) {
-          node.scrollIntoView();
+        if (reportNode) {
+          const node = this.$el.querySelector(`[data-id='${reportNode.id}']`);
+          if (node) {
+            node.scrollIntoView();
+          }
         }
 
         this.openedItems.push(reportNode);
