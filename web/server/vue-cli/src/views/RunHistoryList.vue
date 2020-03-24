@@ -71,6 +71,20 @@
                 dense
               />
             </v-col>
+            <v-col align="right">
+              <v-btn
+                color="primary"
+                class="mr-2"
+                outlined
+                :disabled="isDiffBtnDisabled"
+                @click="diffSelectedRunTags"
+              >
+                <v-icon left>
+                  mdi-select-compare
+                </v-icon>
+                Diff
+              </v-btn>
+            </v-col>
           </v-row>
         </v-toolbar>
       </template>
@@ -151,12 +165,27 @@
           {{ item.$codeCheckerVersion }}
         </span>
       </template>
+
+      <template #item.diff="{ item }">
+        <v-row>
+          <v-checkbox
+            v-model="selectedBaselineTags"
+            :value="item"
+          />
+
+          <v-checkbox
+            v-model="selectedNewcheckTags"
+            :value="item"
+          />
+        </v-row>
+      </template>
     </v-data-table>
   </v-card>
 </template>
 
 <script>
 import _ from "lodash";
+import { format, max, min, parse } from "date-fns";
 
 import {
   AnalyzerStatisticsBtn,
@@ -206,6 +235,8 @@ export default {
       },
       totalItems: 0,
       loading: false,
+      selectedBaselineTags: [],
+      selectedNewcheckTags: [],
       headers: [
         {
           text: "Name",
@@ -245,6 +276,12 @@ export default {
           value: "codeCheckerVersion",
           align: "center",
           sortable: true
+        },
+        {
+          text: "Diff",
+          value: "diff",
+          align: "center",
+          sortable: false
         }
       ],
       histories: []
@@ -261,6 +298,10 @@ export default {
           $codeCheckerVersion: ccVersion
         };
       });
+    },
+    isDiffBtnDisabled() {
+      return !this.selectedBaselineTags.length ||
+             !this.selectedNewcheckTags.length;
     }
   },
 
@@ -390,6 +431,54 @@ export default {
     closeCheckCommandDialog() {
       this.showCheckCommandDialog = false;
       this.checkCommand = null;
+    },
+
+    getSelectedTagData(selected) {
+      const tags = [];
+      const times = [];
+
+      selected.forEach(t => {
+        if (t.versionTag)
+          tags.push(t.versionTag);
+
+        times.push(t.time);
+      });
+
+      return { tags, times };
+    },
+
+    diffSelectedRunTags() {
+      const urlState = {};
+
+      const { tags: baselineTags, times: firstDetectionDates } =
+        this.getSelectedTagData(this.selectedBaselineTags);
+
+      urlState["run-tag"] = baselineTags.length ? baselineTags : undefined;
+      if (firstDetectionDates.length) {
+        const minDate = min(firstDetectionDates.map(d =>
+          parse(d, "yyyy-MM-dd HH:mm:ss.SSSSSS", new Date())));
+        urlState["first-detection-date"] =
+          format(minDate, "yyyy-MM-dd HH:mm:ss");
+      }
+
+      const { tags: newcheckTags, times: fixDates } =
+        this.getSelectedTagData(this.selectedNewcheckTags);
+
+      urlState["run-tag-newcheck"] =
+        newcheckTags.length ? newcheckTags : undefined;
+      if (fixDates.length) {
+        const maxDate = max(fixDates.map(d =>
+          parse(d, "yyyy-MM-dd HH:mm:ss.SSSSSS", new Date())));
+        urlState["fix-date"] = format(maxDate, "yyyy-MM-dd HH:mm:ss");
+      }
+
+      this.$router.push({
+        name: "reports",
+        query: {
+          ...this.$router.currentRoute.query,
+          ...urlState
+        }
+      });
     },
 
     openAnalyzerStatisticsDialog(runHistory) {
