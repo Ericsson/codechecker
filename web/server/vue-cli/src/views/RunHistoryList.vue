@@ -43,11 +43,25 @@
       <template v-slot:top>
         <v-toolbar flat class="mb-4">
           <v-row>
-            <v-col>
+            <v-col cols="3">
               <v-text-field
                 v-model="runNameSearch"
                 prepend-inner-icon="mdi-magnify"
                 label="Filter by run name..."
+                clearable
+                single-line
+                hide-details
+                outlined
+                solo
+                flat
+                dense
+              />
+            </v-col>
+            <v-col cols="3">
+              <v-text-field
+                v-model="runTagSearch"
+                prepend-inner-icon="mdi-tag"
+                label="Filter by run tag..."
                 clearable
                 single-line
                 hide-details
@@ -151,7 +165,7 @@ import {
 import { StrToColorMixin } from "@/mixins";
 
 import { ccService, handleThriftError } from "@cc-api";
-import { RunFilter } from "@cc/report-server-types";
+import { RunFilter, RunHistoryFilter } from "@cc/report-server-types";
 
 export default {
   name: "RunHistoryList",
@@ -171,10 +185,12 @@ export default {
     const sortBy = this.$router.currentRoute.query["sort-by"];
     const sortDesc = this.$router.currentRoute.query["sort-desc"];
 
-    const runNameSearch = this.$router.currentRoute.query["name"] || null;
+    const runNameSearch = this.$router.currentRoute.query["run"] || null;
+    const runTagSearch = this.$router.currentRoute.query["run-tag"] || null;
 
     return {
       runNameSearch: runNameSearch,
+      runTagSearch: runTagSearch,
       showCheckCommandDialog: false,
       analyzerStatisticsDialog: false,
       selectedRunHistoryId: null,
@@ -294,7 +310,24 @@ export default {
           this.fetchRunHistories();
         }
       }, 250)
-    }
+    },
+
+    runTagSearch: {
+      handler: _.debounce(function () {
+        this.$router.replace({
+          query: {
+            ...this.$route.query,
+            "run-tag": this.runTagSearch ? this.runTagSearch : undefined
+          }
+        }).catch(() => {});
+
+        if (this.pagination.page !== 1) {
+          this.pagination.page = 1;
+        } else {
+          this.fetchRunHistories();
+        }
+      }, 250)
+    },
   },
 
   methods: {
@@ -308,7 +341,9 @@ export default {
         }
       }
 
-      const filter = null;
+      const filter = new RunHistoryFilter({
+        tagNames: this.runTagSearch ? [ `*${this.runTagSearch}*` ] : null
+      });
 
       // Get total item count.
       ccService.getClient().getRunHistoryCount(runIds, filter,
