@@ -525,15 +525,21 @@ class DiffRemote(unittest.TestCase):
         """Test for diff runs by run tags."""
         run_id = self._update_runid
 
-        def get_run_tag_id(tag_name):
+        def get_run_tags(tag_name):
             run_history_filter = RunHistoryFilter(tagNames=[tag_name])
-            run_tags = self._cc_client.getRunHistory([run_id], None, None,
-                                                     run_history_filter)
-            self.assertEqual(len(run_tags), 1)
-            return run_tags[0].id
+            return self._cc_client.getRunHistory([run_id], None, None,
+                                                 run_history_filter)
 
-        base_tag_id = get_run_tag_id('t1')
-        new_tag_id = get_run_tag_id('t2')
+        get_all_tags = get_run_tags('t*')
+        self.assertEqual(len(get_all_tags), 3)
+
+        base_tags = get_run_tags('t1')
+        self.assertEqual(len(base_tags), 1)
+        base_tag_id = base_tags[0].id
+
+        new_tags = get_run_tags('t2')
+        self.assertEqual(len(new_tags), 1)
+        new_tag_id = new_tags[0].id
 
         tag_filter = ReportFilter(runTag=[base_tag_id])
         cmp_data = CompareData(runIds=[run_id],
