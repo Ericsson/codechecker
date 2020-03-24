@@ -222,6 +222,8 @@
 </template>
 
 <script>
+import { mapState } from "vuex";
+
 import {
   BaselineRunFilter,
   BaselineTagFilter,
@@ -279,8 +281,16 @@ export default {
   data() {
     return {
       activeBaselinePanelId: 0,
-      activeNewcheckPanelId: -1
+      activeNewcheckPanelId: 0
     };
+  },
+
+  computed: {
+    ...mapState({
+      cmpData(state) {
+        return state[this.namespace].cmpData;
+      }
+    }),
   },
 
   mounted() {
@@ -353,6 +363,11 @@ export default {
       Promise.all(results).then(() => {
         filters.forEach(filter => filter.afterInit());
         this.afterInit();
+
+        // Close NEWCHECK expansion panel if no compare data is set.
+        if (!this.cmpData) {
+          this.activeNewcheckPanelId = -1;
+        }
       });
     },
 
