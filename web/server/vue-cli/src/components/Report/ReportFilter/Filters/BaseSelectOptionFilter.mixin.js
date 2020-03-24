@@ -9,7 +9,8 @@ export default {
       id: -1,
       selectedItems: [],
       items: [],
-      loading: false
+      loading: false,
+      defaultValues: null
     };
   },
 
@@ -59,7 +60,11 @@ export default {
 
     initByUrl() {
       return new Promise(resolve => {
-        const state = [].concat(this.$route.query[this.id] || []);
+        let state = [].concat(this.$route.query[this.id] || []);
+        if (!state.length && this.defaultValues) {
+          state = this.defaultValues;
+        }
+
         if (state.length) {
           const selectedItems = state.map(s => {
             const id = this.decodeValue(s);

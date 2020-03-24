@@ -40,7 +40,8 @@ export default {
 
   data() {
     return {
-      id: "diff-type"
+      id: "diff-type",
+      defaultValues: [ this.encodeValue(DiffType.NEW) ]
     };
   },
 
