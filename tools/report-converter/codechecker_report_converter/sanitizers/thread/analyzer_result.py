@@ -25,6 +25,9 @@ class TSANAnalyzerResult(AnalyzerResult):
         parser = TSANParser()
 
         content = self._get_analyzer_result_file_content(analyzer_result)
+        if not content:
+            return
+
         messages = parser.parse_messages(content)
 
         plist_converter = PlistConverter(self.TOOL_NAME)

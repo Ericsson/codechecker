@@ -25,6 +25,9 @@ class ClangTidyAnalyzerResult(AnalyzerResult):
         parser = ClangTidyParser()
 
         content = self._get_analyzer_result_file_content(analyzer_result)
+        if not content:
+            return
+
         messages = parser.parse_messages(content)
 
         plist_converter = ClangTidyPlistConverter(self.TOOL_NAME)

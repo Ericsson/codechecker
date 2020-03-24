@@ -4,25 +4,24 @@
 #   License. See LICENSE.TXT for details.
 # -------------------------------------------------------------------------
 
-
 from codechecker_report_converter.analyzer_result import AnalyzerResult
-from codechecker_report_converter.plist_converter import PlistConverter
 
-from .output_parser import ASANParser
+from .output_parser import PyflakesParser
+from ..plist_converter import PlistConverter
 
 
-class ASANAnalyzerResult(AnalyzerResult):
-    """ Transform analyzer result of Clang AddressSanitizer. """
+class PyflakesAnalyzerResult(AnalyzerResult):
+    """ Transform analyzer result of Pyflakes. """
 
-    TOOL_NAME = 'asan'
-    NAME = 'AddressSanitizer'
-    URL = 'https://clang.llvm.org/docs/AddressSanitizer.html'
+    TOOL_NAME = 'pyflakes'
+    NAME = 'Pyflakes'
+    URL = 'https://github.com/PyCQA/pyflakes'
 
     def parse(self, analyzer_result):
         """ Creates plist files from the given analyzer result to the given
         output directory.
         """
-        parser = ASANParser()
+        parser = PyflakesParser(analyzer_result)
 
         content = self._get_analyzer_result_file_content(analyzer_result)
         if not content:
