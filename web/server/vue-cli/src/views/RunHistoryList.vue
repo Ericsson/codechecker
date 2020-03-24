@@ -341,7 +341,7 @@ export default {
         this.$router.replace({
           query: {
             ...this.$route.query,
-            "name": this.runNameSearch ? this.runNameSearch : undefined
+            "run": this.runNameSearch ? this.runNameSearch : undefined
           }
         }).catch(() => {});
 
@@ -448,7 +448,10 @@ export default {
     },
 
     diffSelectedRunTags() {
-      const urlState = {};
+      const urlState = {
+        "run": undefined,
+        "newcheck": undefined
+      };
 
       const { tags: baselineTags, times: firstDetectionDates } =
         this.getSelectedTagData(this.selectedBaselineTags);
