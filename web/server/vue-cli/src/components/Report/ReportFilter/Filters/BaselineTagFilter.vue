@@ -92,12 +92,14 @@ export default {
       this.update();
     },
 
-    fetchItems(opt={}) {
+    fetchItem() {
       this.loading = true;
       this.items = [];
 
       const reportFilter = new ReportFilter(this.reportFilter);
-      reportFilter["runTag"] = opt.query;
+
+      reportFilter["runTag"] = this.selectedItems.length
+        ? this.selectedItems.map(item => item.tagIds) : null;
 
       ccService.getClient().getRunHistoryTagCounts(this.runIds, reportFilter,
         this.cmpData, handleThriftError(res => {
