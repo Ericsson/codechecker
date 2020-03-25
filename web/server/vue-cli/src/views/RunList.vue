@@ -1,5 +1,5 @@
 <template>
-  <v-card>
+  <v-card flat>
     <v-dialog v-model="showCheckCommandDialog" width="500">
       <v-card>
         <v-card-title
