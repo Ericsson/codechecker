@@ -18,14 +18,7 @@ from codechecker_web.shared.version import SUPPORTED_VERSIONS
 # A list of top-level path elements under the webserver root
 # which should not be considered as a product route.
 NON_PRODUCT_ENDPOINTS = ['index.html',
-                         'login.html',
-                         'products.html',
-                         'fonts',
                          'images',
-                         'scripts',
-                         'style',
-                         'userguide',
-                         'docs',
                          'live',
                          'ready']
 
@@ -39,8 +32,7 @@ NON_PRODUCT_ENDPOINTS += ['Authentication',
 # A list of top-level path elements under the webserver root which should
 # be protected by authentication requirement when accessing the server.
 PROTECTED_ENTRY_POINTS = ['',  # Empty string in a request is 'index.html'.
-                          'index.html',
-                          'products.html']
+                          'index.html']
 
 
 def is_valid_product_endpoint(uripart):

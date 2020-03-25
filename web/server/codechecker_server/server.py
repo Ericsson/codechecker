@@ -218,18 +218,24 @@ class RequestHandler(SimpleHTTPRequestHandler):
         raise IndexError("Invalid address tuple given.")
 
     def do_GET(self):
-        """
-        Handles the browser access (GET requests).
+        """ Handles the SPA browser access (GET requests).
+
+        It will do the following steps:
+         - for requests for index.html ('/'), just respond with the file.
+         - if the requested path contains a product endpoint name
+           ('/prod/app.js', '/prod/runs'), remove the endpoint from the path.
+         - if the requested path is a valid file (e.g: 'app.js'), respond with
+           the file.
+         - otherwise (e.g: 'runs') respond with index.html.
         """
         client_host, client_port, is_ipv6 = \
             RequestHandler._get_client_host_port(self.client_address)
         self.auth_session = self.__check_session_cookie()
+
         username = self.auth_session.user if self.auth_session else 'Anonymous'
         LOG.debug("%s:%s -- [%s] GET %s",
                   client_host if not is_ipv6 else '[' + client_host + ']',
                   client_port, username, self.path)
-
-        product_endpoint, path = routing.split_client_GET_request(self.path)
 
         if self.path == '/':
             self.path = 'index.html'
@@ -244,122 +250,20 @@ class RequestHandler(SimpleHTTPRequestHandler):
             self.__handle_readiness()
             return
 
-        if self.server.manager.is_enabled and not self.auth_session \
-                and routing.is_protected_GET_entrypoint(path):
-            # If necessary, prompt the user for authentication.
-            returnto = '?returnto=' + \
-                urllib.parse.quote_plus(self.path.lstrip('/')) \
-                if self.path != '/' else ''
+        product_endpoint, path = routing.split_client_GET_request(self.path)
 
-            self.send_response(307)  # 307 Temporary Redirect
-            self.send_header('Location', '/login.html' + returnto)
-            self.send_header('Connection', 'close')
-            self.end_headers()
-            self.wfile.write(b'')
-            return
-
+        # Check that path contains a product endpoint.
         if product_endpoint is not None and product_endpoint != '':
-            # Route the user if there is a product endpoint in the request.
-
-            product = self.server.get_product(product_endpoint)
-            if not product:
-                # Give an error if the user tries to access an invalid product.
-                LOG.info("Product endpoint '%s' does not exist.",
-                         product_endpoint)
-                self.send_error(
-                    404,
-                    "The product {0} does not exist."
-                    .format(product_endpoint))
-                return
-
-            # Try to reconnect in these cases.
-            # Do not try to reconnect if there is a schema mismatch.
-            reconnect_cases = [DBStatus.FAILED_TO_CONNECT,
-                               DBStatus.MISSING,
-                               DBStatus.SCHEMA_INIT_ERROR]
-            # If the product is not connected, try reconnecting...
-            if product.db_status in reconnect_cases:
-                LOG.error("Request's product '%s' is not connected! "
-                          "Attempting reconnect...", product_endpoint)
-                product.connect()
-                if product.db_status != DBStatus.OK:
-                    # If the reconnection fails,
-                    # redirect user to the products page.
-                    self.send_response(307)  # 307 Temporary Redirect
-                    self.send_header("Location", '/products.html')
-                    self.end_headers()
-                    return
-
-            if path == '' and not self.__has_access_permission(product):
-                LOG.warning("User '%s' does not have permission to access "
-                            "the '%s' product.", username, product_endpoint)
-
-                self.send_response(307)  # 307 Temporary Redirect
-                self.send_header('Location', '/products.html')
-                self.send_header('Connection', 'close')
-                self.end_headers()
-                self.wfile.write(b'')
-                return
-
-            if path == '' and not self.path.endswith('/'):
-                # /prod must be routed to /prod/index.html first, so later
-                # queries for web resources are '/prod/style...' as
-                # opposed to '/style...', which would result in 'style'
-                # being considered product name.
-                LOG.info("Redirecting user from /%s to /%s/index.html",
-                         product_endpoint, product_endpoint)
-
-                # WARN: Browsers cache '308 Permanent Redirect' responses,
-                # in the event of debugging this, use Private Browsing!
-                self.send_response(308)
-                self.send_header("Location",
-                                 self.path.replace(product_endpoint,
-                                                   product_endpoint + '/',
-                                                   1))
-                self.end_headers()
-                return
-
-            # In other cases when '/prod/' is already in the request,
-            # serve the main page and the resources, for example:
-            # /prod/(index.html) -> /(index.html)
-            # /prod/styles/(...) -> /styles/(...)
             self.path = self.path.replace(
                 "{0}/".format(product_endpoint), "", 1)
+
+        # Check that the given path is a file.
+        if (os.path.exists(self.translate_path(self.path))):
+            self.path = path
         else:
-            # No product endpoint in the request.
+            self.path = 'index.html'
 
-            if self.path in ['/', '/index.html']:
-                # In case the homepage is requested and only one product
-                # exists, try to skip the product list and redirect the user
-                # to the runs immediately.
-                only_product = self.server.get_only_product()
-                if only_product:
-                    if only_product.db_status == DBStatus.OK:
-                        LOG.info("Redirecting '/' to ONLY product '/%s'",
-                                 only_product.endpoint)
-
-                        self.send_response(307)  # 307 Temporary Redirect
-                        self.send_header("Location",
-                                         '/{0}'.format(only_product.endpoint))
-                        self.end_headers()
-                        return
-                    else:
-                        LOG.error("ONLY product '/%s' has database issues...",
-                                  only_product.endpoint)
-
-                        self.send_response(307)  # 307 Temporary Redirect
-                        self.send_header("Location", '/products.html')
-                        self.end_headers()
-                        return
-
-                # If multiple products exist, route homepage queries to
-                # serve the product list.
-                LOG.debug("Serving product list as homepage.")
-                self.path = '/products.html'
-
-            self.send_response(200)  # 200 OK
-
-        SimpleHTTPRequestHandler.do_GET(self)  # Actual serving of file.
+        SimpleHTTPRequestHandler.do_GET(self)
 
     def __check_prod_db(self, product_endpoint):
         """

@@ -26,7 +26,21 @@ module.exports = merge(common, {
   devServer: {
     port: 8080,
     hot: true,
-    historyApiFallback: true,
+    historyApiFallback: {
+      // If the URL contains a product endpoint and we server a static file
+      // we will remove the rewrite the URL and remove the product endpoint
+      // from it.
+      rewrites: [
+        {
+          from: /^\/[^\/]+(\/.*\.(js|css|png|jpe?g|gif|ico|woff2?|eot|ttf|otf))$/i,
+          to: function (ctx) {
+            if (ctx.match) return ctx.match[1];
+
+            return "/index.html";
+          }
+        }
+      ]
+    },
     proxy: [{
       context: CC_SERVICE_ENDPOINTS.map(endpoint => `**/${endpoint}`),
       target: CC_THRIFT_API_HOST + ':' + CC_THRIFT_API_PORT,
