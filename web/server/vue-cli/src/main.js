@@ -8,12 +8,14 @@ import "splitpanes/dist/splitpanes.css";
 
 import Vue from "vue";
 import vuetify from "@/plugins/vuetify";
+import VueCookie from "vue-cookie";
 import { GET_AUTH_PARAMS, GET_CURRENT_PRODUCT } from "@/store/actions.type";
 
 import router from "./router";
 import store from "./store";
 import filters from "./filters";
 
+Vue.use(VueCookie);
 Vue.use(filters);
 
 import App from "./App.vue";
