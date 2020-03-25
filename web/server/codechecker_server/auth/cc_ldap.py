@@ -97,6 +97,25 @@ from codechecker_common.logger import get_logger
 LOG = get_logger('server')
 
 
+def bytes_to_str(data):
+    """ Converts the given data to text.
+
+    The LDAP protocol states that some fields be encoded in UTF-8. Attribute
+    values, on the other hand, MAY contain any type of data, including text.
+    Encoding/decoding to other formats – text, images, etc. – is left to the
+    caller. See:
+    https://www.python-ldap.org/en/python-ldap-3.2.0/bytes_mode.html
+    """
+    if isinstance(data, bytes):
+        try:
+            return data.decode('utf-8')
+        except UnicodeDecodeError as err:
+            LOG.error("Failed to convert byte (%s) to text: %s", data, err)
+            return ''
+
+    return data
+
+
 def log_ldap_error(ldap_error):
     """
     Log the LDAP error details.
@@ -142,11 +161,13 @@ def get_user_dn(con,
     """
 
     with ldap_error_handler():
+        # Attribute values MAY contain any type of data. Before you use a
+        # value, call 'bytes_to_str' helper function to convert it to text.
         user_data = con.search_s(account_base_dn, scope, account_pattern)
 
         if user_data:
             # User found use the user DN from the first result.
-            user_dn = user_data[0][0]
+            user_dn = bytes_to_str(user_data[0][0])
             LOG.debug("Found user: %s", user_dn)
             return user_dn
 
@@ -167,6 +188,8 @@ def check_group_membership(connection,
     LOG.debug(member_query)
 
     with ldap_error_handler():
+        # Attribute values MAY contain any type of data. Before you use a
+        # value, call 'bytes_to_str' helper function to convert it to text.
         group_result = connection.search_s(group_base,
                                            group_scope,
                                            member_query,
@@ -213,7 +236,7 @@ class LDAPConnection(object):
         # Check cert if available but do not fail if not.
         ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_ALLOW)
 
-        self.connection = ldap.initialize(ldap_server)
+        self.connection = ldap.initialize(ldap_server, bytes_mode=False)
 
         LOG.debug('Binding to LDAP server with user: %s', who if who else '')
 
@@ -410,13 +433,15 @@ def get_groups(ldap_config, username, credentials):
 
         groups = []
         with ldap_error_handler():
+            # Attribute values MAY contain any type of data. Before you use a
+            # value, call 'bytes_to_str' helper function to convert it to text.
             group_result = connection.search_s(group_base,
                                                group_scope,
                                                group_pattern,
                                                attr_list)
             if group_result:
                 for g in group_result:
-                    groups.append(g[1][group_name_attr][0])
+                    groups.append(bytes_to_str(g[1][group_name_attr][0]))
 
         LOG.debug("groups:")
         LOG.debug(groups)
