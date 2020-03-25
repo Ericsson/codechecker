@@ -3,6 +3,7 @@
     <v-data-table
       :headers="headers"
       :items="processedProducts"
+      :server-items-length.sync="processedProducts.length"
       :hide-default-footer="true"
       :must-sort="true"
       item-key="endpoint"
@@ -142,7 +143,7 @@
           v-for="admin in item.admins"
           :key="admin"
           color="secondary"
-          class="mr-2"
+          class="mr-2 my-1"
         >
           <v-avatar left>
             <v-icon>mdi-account-circle</v-icon>
@@ -189,18 +190,20 @@
       </template>
 
       <template v-slot:item.action="{ item }">
-        <edit-product-btn
-          v-if="isSuperUser || item.administrating"
-          :product="item"
-          :is-super-user="isSuperUser"
-          @on-complete="onCompleteEditProduct"
-        />
+        <div class="text-no-wrap">
+          <edit-product-btn
+            v-if="isSuperUser || item.administrating"
+            :product="item"
+            :is-super-user="isSuperUser"
+            @on-complete="onCompleteEditProduct"
+          />
 
-        <delete-product-btn
-          v-if="isSuperUser"
-          :product="item"
-          @on-complete="deleteProduct"
-        />
+          <delete-product-btn
+            v-if="isSuperUser"
+            :product="item"
+            @on-complete="deleteProduct"
+          />
+        </div>
       </template>
     </v-data-table>
   </v-container>
