@@ -17,6 +17,7 @@
           :items="statistics"
           :hide-default-footer="true"
           :must-sort="true"
+          :loading="loading"
           item-key="severity"
         >
           <template v-slot:header.reports="{ header }">
@@ -81,6 +82,7 @@ export default {
   data() {
     return {
       DetectionStatus,
+      loading: false,
       headers: [
         {
           text: "Severity",
@@ -141,6 +143,7 @@ export default {
     },
 
     fetchStatistics() {
+      this.loading = true;
       const runIds = this.runIds;
       const reportFilter = this.reportFilter;
       const cmpData = null;
@@ -153,6 +156,7 @@ export default {
               reports: statistics[severity]
             };
           });
+          this.loading = false;
         }));
     }
   }

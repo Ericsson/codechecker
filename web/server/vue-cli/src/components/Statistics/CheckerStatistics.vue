@@ -18,6 +18,7 @@
           :disable-pagination="true"
           :hide-default-footer="true"
           :must-sort="true"
+          :loading="loading"
           item-key="checker"
         >
           <template v-slot:header.unreviewed="{ header }">
@@ -199,6 +200,7 @@ export default {
     return {
       ReviewStatus,
       DetectionStatus,
+      loading: false,
       headers: [
         {
           text: "Checker",
@@ -287,6 +289,7 @@ export default {
     },
 
     fetchStatistics() {
+      this.loading = true;
       const runIds = this.runIds;
       const cmpData = null;
 
@@ -333,6 +336,7 @@ export default {
             resolved      : this.resultToNumber(res[5][key]),
           };
         });
+        this.loading = false;
       });
     },
 

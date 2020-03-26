@@ -6,6 +6,7 @@
       :server-items-length.sync="processedProducts.length"
       :hide-default-footer="true"
       :must-sort="true"
+      :loading="loading"
       item-key="endpoint"
     >
       <template v-slot:top>
@@ -246,6 +247,7 @@ export default {
     return {
       DBStatus,
       productNameSearch: null,
+      loading: false,
       headers: [
         {
           text: "Name",
@@ -358,12 +360,15 @@ export default {
 
   methods: {
     fetchProducts() {
+      this.loading = true;
+
       const productNameFilter = this.productNameSearch
         ? `*${this.productNameSearch}*` : null;
 
       prodService.getClient().getProducts(null, productNameFilter,
         handleThriftError(products => {
           this.products = products;
+          this.loading = false;
         }));
     },
 
