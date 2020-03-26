@@ -19,6 +19,7 @@
           :hide-default-footer="true"
           :must-sort="true"
           :loading="loading"
+          loading-text="Loading checker statistics..."
           item-key="checker"
         >
           <template v-slot:header.unreviewed="{ header }">

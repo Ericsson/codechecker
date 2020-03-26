@@ -7,6 +7,7 @@
       :hide-default-footer="true"
       :must-sort="true"
       :loading="loading"
+      loading-text="Loading products..."
       item-key="endpoint"
     >
       <template v-slot:top>

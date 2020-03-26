@@ -18,6 +18,7 @@
           :hide-default-footer="true"
           :must-sort="true"
           :loading="loading"
+          loading-text="Loading severity statistics..."
           item-key="severity"
         >
           <template v-slot:header.reports="{ header }">
