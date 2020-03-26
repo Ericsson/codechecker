@@ -92,8 +92,8 @@
         <router-link
           :to="{ name: 'reports', query: {
             'run': item.runName,
-            'run-tag': item.versionTag,
-            'fix-date': item.time
+            'run-tag': item.versionTag || undefined,
+            'fix-date': item.versionTag ? undefined : item.time
           }}"
         >
           {{ item.runName }}

@@ -126,7 +126,7 @@ export default {
 
     // Returns UTC timestamp of the parameter.
     getTimeStamp(dateTime) {
-      return dateTime ? this.dateToUTCTime(dateTime) / 1000 : null;
+      return dateTime ? parseInt(this.dateToUTCTime(dateTime) / 1000) : null;
     },
 
     // Converts a date to an UTC format timestamp.
