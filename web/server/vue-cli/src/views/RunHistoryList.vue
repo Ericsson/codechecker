@@ -171,11 +171,13 @@
           <v-checkbox
             v-model="selectedBaselineTags"
             :value="item"
+            multiple
           />
 
           <v-checkbox
             v-model="selectedNewcheckTags"
             :value="item"
+            multiple
           />
         </v-row>
       </template>

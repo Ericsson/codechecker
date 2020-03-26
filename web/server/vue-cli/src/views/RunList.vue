@@ -232,11 +232,13 @@
           <v-checkbox
             v-model="selectedBaselineRuns"
             :value="item.name"
+            multiple
           />
 
           <v-checkbox
             v-model="selectedNewcheckRuns"
             :value="item.name"
+            multiple
           />
         </v-row>
       </template>
