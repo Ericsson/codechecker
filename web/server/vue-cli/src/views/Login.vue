@@ -133,7 +133,8 @@ export default {
           this.success = true;
           this.error = false;
 
-          this.$router.push({ name: "products" });
+          const returnTo = this.$router.currentRoute.query["return_to"];
+          this.$router.replace(returnTo || { name: "products" });
         }).catch(err => {
           this.errorMsg = `Failed to log in! ${err.message}`;
           this.error = true;

@@ -44,7 +44,13 @@ router.beforeResolve((to, from, next) => {
         next();
         return;
       }
-      next("/login");
+
+      // Redirect the user to the login page but keep the original path to
+      // redirect the user back once logged in.
+      next({
+        name: "login",
+        query: { "return_to": to.fullPath }
+      });
     } else {
       next();
     }
