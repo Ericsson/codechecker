@@ -5,6 +5,7 @@
     <div
       v-for="(stats, analyzer) in value"
       :key="analyzer"
+      class="text-no-wrap"
     >
       {{ analyzer }}:
       <span v-if="stats.successful.toNumber() !== 0">

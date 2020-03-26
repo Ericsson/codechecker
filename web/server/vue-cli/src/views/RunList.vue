@@ -228,7 +228,7 @@
       </template>
 
       <template #item.diff="{ item }">
-        <v-row>
+        <v-row class="flex-nowrap">
           <v-checkbox
             v-model="selectedBaselineRuns"
             :value="item.name"

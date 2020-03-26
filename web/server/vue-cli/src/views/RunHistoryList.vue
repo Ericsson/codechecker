@@ -1,5 +1,5 @@
 <template>
-  <v-card>
+  <v-card flat>
     <!-- TODO: Refactor this component and move things which are common
          with RunList component into separate components. -->
     <v-dialog v-model="showCheckCommandDialog" width="500">
@@ -167,7 +167,7 @@
       </template>
 
       <template #item.diff="{ item }">
-        <v-row>
+        <v-row class="flex-nowrap">
           <v-checkbox
             v-model="selectedBaselineTags"
             :value="item"
