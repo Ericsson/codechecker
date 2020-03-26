@@ -332,8 +332,11 @@ def process_run_history_filter(query, run_ids, run_history_filter):
         query = query.filter(RunHistory.run_id.in_(run_ids))
 
     if run_history_filter and run_history_filter.tagNames:
-        query = query.filter(RunHistory.version_tag.in_(
-            run_history_filter.tagNames))
+        OR = [RunHistory.version_tag.ilike('{0}'.format(conv(
+              escape_like(name, '\\'))), escape='\\') for
+              name in run_history_filter.tagNames]
+
+        query = query.filter(or_(*OR))
 
     return query
 
