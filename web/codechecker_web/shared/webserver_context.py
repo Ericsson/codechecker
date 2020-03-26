@@ -21,17 +21,21 @@ LOG = logger.get_logger('system')
 class SeverityMap(Mapping):
     """
     A dictionary which maps checker names to severity levels.
-    If a key is not found in the map and the checker name is a compiler warning
-    it will return severity level of MEDIUM.
+    If a key is not found in the map then it will return MEDIUM severity in
+    case of compiler warnings and CRITICAL in case of compiler errors.
     """
 
     def __init__(self, *args, **kwargs):
         self.store = dict(*args, **kwargs)
 
     def __getitem__(self, key):
-        # Key is not specified in the store and it is a compiler warning.
-        if key not in self.store and key.startswith('clang-diagnostic-'):
-            return "MEDIUM"
+        # Key is not specified in the store and it is a compiler warning
+        # or error.
+        if key not in self.store:
+            if key == 'clang-diagnostic-error':
+                return "CRITICAL"
+            elif key.startswith('clang-diagnostic-'):
+                return "MEDIUM"
 
         return self.store[key] if key in self.store else 'UNSPECIFIED'
 

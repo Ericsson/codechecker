@@ -335,6 +335,11 @@ def handle_failure(source_analyzer, rh, zip_file, result_base, actions_map):
 
     LOG.debug("ZIP file written at '%s'", zip_file)
 
+    # In case of compiler errors the error message still needs to be collected
+    # from the standard output by this postprocess phase so we can present them
+    # as CodeChecker reports.
+    rh.postprocess_result()
+
     # Remove files that successfully analyzed earlier on.
     plist_file = result_base + ".plist"
     if os.path.exists(plist_file):

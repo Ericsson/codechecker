@@ -250,7 +250,7 @@ checker configuration:
   checkers in the "core" package is unsupported by the Clang Static Analyzer,
   so they will remain switched on, regardless of the settings.
 
-  Compiler warnings
+  Compiler warnings and errors
   ------------------------------------------------
   Compiler warnings are diagnostic messages that report constructions that are
   not inherently erroneous but that are risky or suggest there may have been an
@@ -264,6 +264,12 @@ checker configuration:
   '-e Wliteral-conversion', '-d Wno-literal-conversion'). By default '-Wall' and
   '-Wextra' warnings are enabled. For more information see:
   https://clang.llvm.org/docs/DiagnosticsReference.html.
+  Sometimes GCC is more permissive than Clang, so it is possible that a specific
+  construction doesn't compile with Clang but compiles with GCC. These
+  compiler errors are also collected as CodeChecker reports as
+  'clang-diagnostic-error'.
+  Note that compiler errors and warnings are captured by CodeChecker only if it
+  was emitted by clang-tidy.
 
   -e checker/group/profile, --enable checker/group/profile
                         Set a checker (or checker group) to BE USED in the
@@ -929,6 +935,13 @@ or you can use the positive form beginning with `W` (e.g.:
 https://clang.llvm.org/docs/DiagnosticsReference.html.
 
 **Note**: by default `-Wall` and `-Wextra` warnings are enabled.
+
+**Node**: In case a file with a compilation error is analyzed then its
+diagnostics appear as `clang-diagnostic-error`. This doesn't refer to a
+compiler warning, but a compilation action which can't be disabled. You can fix
+this only by modifying the source code so it compiles with Clang compiler.
+The `clang-diagnostic-error` reports will always be visible with "critical"
+severity.
 
 
 #### Checker profiles <a name="checker-profiles"></a>

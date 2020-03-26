@@ -29,6 +29,8 @@ compiler_warning_wno_group:
 	$(CXX) -w compiler_warning.cpp -Wno-unused -o /dev/null
 compiler_warning_unused:
 	$(CXX) -w compiler_warning.cpp -Wunused -o /dev/null
+compiler_error:
+	$(CXX) -w compiler_error.cpp -o /dev/null
 context_hash:
 	$(CXX) -w context_hash.cpp -o /dev/null
 collision:
