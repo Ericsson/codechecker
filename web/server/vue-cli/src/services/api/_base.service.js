@@ -41,7 +41,8 @@ class BaseService {
     const connection = createXHRConnection(host, port, {
       transport: TBufferedTransport,
       protocol: TJSONProtocol,
-      path: `${productEndpoint}/v${api}/${this._serviceName}`
+      path: `${productEndpoint}/v${api}/${this._serviceName}`,
+      https: window.location.protocol === "https:"
     });
 
     // Override parameters of the request object.
