@@ -2864,60 +2864,99 @@ class ThriftRequestHandler(object):
                     # Round the duration to seconds.
                     durations = int(sum(check_durations))
 
-                # This session's transaction buffer stores the actual run data
-                # into the database.
-                with DBSession(self.__Session) as session:
-                    # Load the lock record for "FOR UPDATE" so that the
-                    # transaction that handles the run's store operations
-                    # has a lock on the database row itself.
-                    run_lock = session.query(RunLock) \
-                        .filter(RunLock.name == name) \
-                        .with_for_update(nowait=True).one()
+                # When we use multiple server instances and we try to run
+                # multiple storage to each server which contain at least two
+                # reports which have the same report hash and have source code
+                # comments it is possible that the following exception will be
+                # thrown: (psycopg2.extensions.TransactionRollbackError)
+                # deadlock detected.
+                # The problem is that the report hash is the key for the
+                # review data table and both of the store actions try to
+                # update the same review data row.
+                # Neither of the two processes can continue, and they will wait
+                # for each other indefinitely. PostgreSQL in this case will
+                # terminate one transaction with the above exception.
+                # For this reason in case of failure we will wait some seconds
+                # and try to run the storage again.
+                # For more information see #2655 and #2653 issues on github.
+                max_num_of_tries = 3
+                num_of_tries = 0
+                sec_to_wait_after_failure = 60
+                while True:
+                    try:
+                        # This session's transaction buffer stores the actual
+                        # run data into the database.
+                        with DBSession(self.__Session) as session:
+                            # Load the lock record for "FOR UPDATE" so that the
+                            # transaction that handles the run's store
+                            # operations has a lock on the database row itself.
+                            run_lock = session.query(RunLock) \
+                                .filter(RunLock.name == name) \
+                                .with_for_update(nowait=True).one()
 
-                    # Do not remove this seemingly dummy print, we need to make
-                    # sure that the execution of the SQL statement is not
-                    # optimised away and the fetched row is not garbage
-                    # collected.
-                    LOG.debug("Storing into run '%s' locked at '%s'.",
-                              name, run_lock.locked_at)
+                            # Do not remove this seemingly dummy print, we need
+                            # to make sure that the execution of the SQL
+                            # statement is not optimised away and the fetched
+                            # row is not garbage collected.
+                            LOG.debug("Storing into run '%s' locked at '%s'.",
+                                      name, run_lock.locked_at)
 
-                    # Actual store operation begins here.
-                    user_name = self.__get_username()
-                    run_id = store_handler.addCheckerRun(session,
-                                                         command,
-                                                         name,
-                                                         tag,
-                                                         user_name,
-                                                         run_history_time,
-                                                         version,
-                                                         force,
-                                                         cc_version,
-                                                         statistics)
+                            # Actual store operation begins here.
+                            user_name = self.__get_username()
+                            run_id = \
+                                store_handler.addCheckerRun(session,
+                                                            command,
+                                                            name,
+                                                            tag,
+                                                            user_name,
+                                                            run_history_time,
+                                                            version,
+                                                            force,
+                                                            cc_version,
+                                                            statistics)
 
-                    self.__store_reports(session,
-                                         report_dir,
-                                         source_root,
-                                         run_id,
-                                         file_path_to_id,
-                                         run_history_time,
-                                         self.__context.severity_map,
-                                         wrong_src_code_comments,
-                                         skip_handler,
-                                         checkers)
-
-                    store_handler.setRunDuration(session,
+                            self.__store_reports(session,
+                                                 report_dir,
+                                                 source_root,
                                                  run_id,
-                                                 durations)
+                                                 file_path_to_id,
+                                                 run_history_time,
+                                                 self.__context.severity_map,
+                                                 wrong_src_code_comments,
+                                                 skip_handler,
+                                                 checkers)
 
-                    store_handler.finishCheckerRun(session, run_id)
+                            store_handler.setRunDuration(session,
+                                                         run_id,
+                                                         durations)
 
-                    session.commit()
+                            store_handler.finishCheckerRun(session, run_id)
 
-                    LOG.info("'%s' stored results (%s KB) to run '%s' in %s "
-                             "seconds.", user_name, round(zip_size / 1024),
-                             name, round(time.time() - start_time, 2))
+                            session.commit()
 
-                return run_id
+                            LOG.info("'%s' stored results (%s KB) to run '%s' "
+                                     "in %s seconds.", user_name,
+                                     round(zip_size / 1024), name,
+                                     round(time.time() - start_time, 2))
+
+                            return run_id
+                    except (sqlalchemy.exc.OperationalError,
+                            sqlalchemy.exc.ProgrammingError) as ex:
+                        num_of_tries += 1
+
+                        if num_of_tries == max_num_of_tries:
+                            raise codechecker_api_shared.ttypes.RequestFailed(
+                                codechecker_api_shared.ttypes.
+                                ErrorCode.DATABASE,
+                                "Storing reports to the database failed: "
+                                "{0}".format(ex))
+
+                        LOG.error("Storing reports of '%s' run failed: "
+                                  "%s.\nWaiting %d sec before trying to store "
+                                  "it again!", name, ex,
+                                  sec_to_wait_after_failure)
+                        time.sleep(sec_to_wait_after_failure)
+                        sec_to_wait_after_failure *= 2
         finally:
             # In any case if the "try" block's execution began, a run lock must
             # exist, which can now be removed, as storage either completed
