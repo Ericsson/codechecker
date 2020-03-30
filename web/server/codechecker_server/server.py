@@ -163,11 +163,11 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
             self.send_response(200)
             self.end_headers()
-            self.wfile.write('CODECHECKER_SERVER_IS_READY')
+            self.wfile.write(b'CODECHECKER_SERVER_IS_READY')
         except Exception:
             self.send_response(500)
             self.end_headers()
-            self.wfile.write('CODECHECKER_SERVER_IS_NOT_READY')
+            self.wfile.write(b'CODECHECKER_SERVER_IS_NOT_READY')
         finally:
             if cfg_sess:
                 cfg_sess.close()
@@ -177,7 +177,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         """ Handle liveness probe. """
         self.send_response(200)
         self.end_headers()
-        self.wfile.write('CODECHECKER_SERVER_IS_LIVE')
+        self.wfile.write(b'CODECHECKER_SERVER_IS_LIVE')
 
     def end_headers(self):
         # Sending the authentication cookie
