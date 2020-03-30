@@ -19,3 +19,8 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw?
+
+# Test output files.
+/e2e/__codechecker
+/e2e/output
+/e2e/screenshots
