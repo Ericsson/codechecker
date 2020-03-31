@@ -81,7 +81,7 @@ def main(subcommand=None):
         try:
             shutil.rmtree(tmp_dir)
         except Exception as ex:
-            if type(ex) != OSError or ex.errno != errno.ENOENT:
+            if not isinstance(ex, OSError) or ex.errno != errno.ENOENT:
                 print('Failed to remove temporary directory: ' + tmp_dir)
                 print('Manual cleanup is required.')
                 print(ex)
