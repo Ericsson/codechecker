@@ -300,6 +300,7 @@ For now CodeChecker supports the storage of the following analyzers results:
 | **Java**       | [SpotBugs](/tools/report-converter/README.md#spotbugs)    |
 |                | [Facebook Infer](/tools/report-converter/README.md#fbinfer)    |
 | **JavaScript** | [ESLint](supported_code_analyzers.md#eslint)    |
+| **Python**     | [Pylint](supported_code_analyzers.md#pylint)    |
 
 
 We are planning to support the storage of the results created by other

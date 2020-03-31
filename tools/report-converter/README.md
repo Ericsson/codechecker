@@ -15,6 +15,7 @@ a CodeChecker server.
 * [Spotbugs](#spotbugs)
 * [Facebook Infer](#facebook-infer)
 * [ESLint](#eslint)
+* [Pylint](#pylint)
 * [License](#license)
 
 ## Install guide
@@ -45,8 +46,8 @@ optional arguments:
                         report directory files.
   -t TYPE, --type TYPE  Specify the format of the code analyzer output.
                         Currently supported output types are: asan, clang-
-                        tidy, cppcheck, eslint, fbinfer, msan, spotbugs, tsan,
-                        ubsan.
+                        tidy, cppcheck, eslint, fbinfer, msan, pylint,
+                        spotbugs, tsan, ubsan.
   -c, --clean           Delete files stored in the output directory.
   -v, --verbose         Set verbosity level.
 
@@ -57,6 +58,7 @@ Supported analyzers:
   eslint - ESLint, https://eslint.org/
   fbinfer - Facebook Infer, https://fbinfer.com
   msan - MemorySanitizer, https://clang.llvm.org/docs/MemorySanitizer.html
+  pylint - Pylint, https://www.pylint.org
   spotbugs - spotbugs, https://spotbugs.github.io
   tsan - ThreadSanitizer, https://clang.llvm.org/docs/ThreadSanitizer.html
   ubsan - UndefinedBehaviorSanitizer, https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
@@ -244,6 +246,27 @@ report-converter -t eslint -o ./codechecker_eslint_reports ./eslint_reports.json
 
 # Store the ESLint reports with CodeChecker.
 CodeChecker store ./codechecker_eslint_reports -n eslint
+```
+
+## [Pylint](https://www.pylint.org)
+[Pylint](https://www.pylint.org) is a static analysis tool for `Python`.
+
+The recommended way of running the Pylint tool is to generate a `json` output
+file.
+
+The following example shows you how to run Pylint and store the results found
+by Pylint to the CodeChecker database.
+
+```sh
+# Run Pylint.
+pylint -f json /path/to/my/project > ./pylint_reports.json
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of Pylint.
+report-converter -t pylint -o ./codechecker_pylint_reports ./pylint_reports.json
+
+# Store the Pylint reports with CodeChecker.
+CodeChecker store ./codechecker_pylint_reports -n pylint
 ```
 
 ## License
