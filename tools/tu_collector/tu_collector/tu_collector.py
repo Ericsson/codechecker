@@ -158,7 +158,6 @@ def __gather_dependencies(command, build_dir):
     compiler = __determine_compiler(command)
     command = [compiler, '-E', '-M', '-MT', '__dummy'] \
         + command[command.index(compiler) + 1:]
-    print(command)
 
     # Remove empty arguments
     command = [i for i in command if i]

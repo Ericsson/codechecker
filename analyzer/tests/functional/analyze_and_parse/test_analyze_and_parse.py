@@ -137,63 +137,62 @@ class AnalyzeParseTestCase(
         workspace = self.test_workspaces[mode]
         os.makedirs(os.path.join(workspace, run_name, "reports"))
 
-        try:
-            output = []
-            for command in current_commands:
-                split = command.split('#')
-                command = ''.join(split[1:])
+        output = []
+        for command in current_commands:
+            split = command.split('#')
+            command = ''.join(split[1:])
 
-                command = command.replace("$LOGFILE$",
-                                          os.path.join(workspace,
-                                                       run_name, "build.json"))
-                command = command.replace("$OUTPUT$",
-                                          os.path.join(workspace,
-                                                       run_name, "reports"))
-                command = command.replace("$WORKSPACE$", workspace)
+            command = command.replace("$LOGFILE$",
+                                      os.path.join(workspace,
+                                                   run_name, "build.json"))
+            command = command.replace("$OUTPUT$",
+                                      os.path.join(workspace,
+                                                   run_name, "reports"))
+            command = command.replace("$WORKSPACE$", workspace)
 
+            try:
                 result = subprocess.check_output(
                     shlex.split(command),
                     env=self.env,
                     cwd=self.test_dir,
                     encoding="utf-8",
                     errors="ignore")
+
                 output += result.splitlines(True)
+            except CalledProcessError as cerr:
+                print("Failed to run: " + ' '.join(cerr.cmd))
+                print(cerr.output)
 
-            post_processed_output = []
-            skip_prefixes = ["[] - Analysis length:",
-                             "[] - Previous analysis results",
-                             "[] - Skipping input file"]
-            for line in output:
-                # replace timestamps
-                line = re.sub(r'\[\w+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}\]',
-                              '[]', line)
+        post_processed_output = []
+        skip_prefixes = ["[] - Analysis length:",
+                         "[] - Previous analysis results",
+                         "[] - Skipping input file"]
+        for line in output:
+            # replace timestamps
+            line = re.sub(r'\[\w+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}\]',
+                          '[]', line)
 
-                # Replace full path only to file name on the following
-                # formatted lines:
-                # [severity] /a/b/x.cpp:line:col: message [checker]
-                # The replacement on this line will be the following:
-                # [severity] x.cpp:line:col: message [checker]
-                sep = re.escape(os.sep)
-                line = re.sub(r'^(\[\w+\]\s)(?P<path>.+{0})'
-                              r'(.+\:\d+\:\d+\:\s.*\s\[.*\])$'.format(sep),
-                              r'\1\3', line)
+            # Replace full path only to file name on the following
+            # formatted lines:
+            # [severity] /a/b/x.cpp:line:col: message [checker]
+            # The replacement on this line will be the following:
+            # [severity] x.cpp:line:col: message [checker]
+            sep = re.escape(os.sep)
+            line = re.sub(r'^(\[\w+\]\s)(?P<path>.+{0})'
+                          r'(.+\:\d+\:\d+\:\s.*\s\[.*\])$'.format(sep),
+                          r'\1\3', line)
 
-                if not any([line.startswith(prefix) for prefix
-                            in skip_prefixes]):
-                    post_processed_output.append(line)
+            if not any([line.startswith(prefix) for prefix
+                        in skip_prefixes]):
+                post_processed_output.append(line)
 
-            print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Actual output below:")
-            print(''.join(post_processed_output))
-            print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Expected output below:")
-            print(correct_output)
+        print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Actual output below:")
+        print(''.join(post_processed_output))
+        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Expected output below:")
+        print(correct_output)
 
-            print("Test output file: " + path)
-            self.assertEqual(''.join(post_processed_output), correct_output)
-            return 0
-        except CalledProcessError as cerr:
-            print("Failed to run: " + ' '.join(cerr.cmd))
-            print(cerr.output)
-            return cerr.returncode
+        print("Test output file: " + path)
+        self.assertEqual(''.join(post_processed_output), correct_output)
 
     def test_json_output_for_macros(self):
         """ Test parse json output for macros. """

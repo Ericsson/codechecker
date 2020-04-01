@@ -1,0 +1,37 @@
+NORMAL#CodeChecker log --output $LOGFILE$ --build "make compiler_error" --quiet
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy --quiet
+NORMAL#CodeChecker parse $OUTPUT$
+--------------------------------------------------------------------------------
+[] - Starting static analysis ...
+[] - Analyzing compiler_error.cpp with clang-tidy  failed!
+[] - ----==== Summary ====----
+[] - Failed to analyze
+[] -   clang-tidy: 1
+[] - Total analyzed compilation commands: 1
+[] - ----=================----
+[] - Analysis finished.
+[] - To view results in the terminal use the "CodeChecker parse" command.
+[] - To store results use the "CodeChecker store" command.
+[] - See --help and the user guide for further options about parsing and storing the reports.
+[] - ----=================----
+[CRITICAL] compiler_error.cpp:3:11: expected ';' after return statement [clang-diagnostic-error]
+  return 0
+          ^
+
+Found 1 defect(s) in compiler_error.cpp
+
+
+----==== Summary ====----
+---------------------------------
+Filename           | Report count
+---------------------------------
+compiler_error.cpp |            1
+---------------------------------
+-----------------------
+Severity | Report count
+-----------------------
+CRITICAL |            1
+-----------------------
+----=================----
+Total number of reports: 1
+----=================----

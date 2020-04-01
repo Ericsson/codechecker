@@ -508,7 +508,7 @@ disabled flags starting from the bigger groups and going inwards, e.g.
 certain checkers - such as the 'core' group - is unsupported by the LLVM/Clang
 community, and thus discouraged.
 
-Compiler warnings
+Compiler warnings and errors
 ------------------------------------------------
 Compiler warnings are diagnostic messages that report constructions that are
 not inherently erroneous but that are risky or suggest there may have been an
@@ -521,7 +521,13 @@ enable every 'unused' warnings except 'unused-parameter'. These flags should
 start with a capital 'W' or 'Wno-' prefix followed by the waning name (E.g.:
 '-e Wliteral-conversion', '-d Wno-literal-conversion'). By default '-Wall' and
 '-Wextra' warnings are enabled. For more information see:
-https://clang.llvm.org/docs/DiagnosticsReference.html.""")
+https://clang.llvm.org/docs/DiagnosticsReference.html.
+Sometimes GCC is more permissive than Clang, so it is possible that a specific
+construction doesn't compile with Clang but compiles with GCC. These
+compiler errors are also collected as CodeChecker reports as
+'clang-diagnostic-error'.
+Note that compiler errors and warnings are captured by CodeChecker only if it
+was emitted by clang-tidy.""")
 
     checkers_opts.add_argument('-e', '--enable',
                                dest="enable",
