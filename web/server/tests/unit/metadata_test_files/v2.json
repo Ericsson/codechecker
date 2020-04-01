@@ -1,0 +1,54 @@
+{
+  "version": 2,
+  "num_of_report_dir": 1,
+  "tools": [
+    {
+      "name": "codechecker",
+      "version": "6.11 (930440d6a6cae80f615146547f4b169c7629d558)",
+      "command": [
+        "CodeChecker.py",
+        "analyze",
+        "-o",
+        "/path/to/reports",
+        "/path/to/build.json"
+      ],
+      "output_path": "/path/to/reports",
+      "skipped": 0,
+      "timestamps": {
+        "begin": 1571297867,
+        "end": 1571297868
+      },
+      "working_directory": "/path/to/workspace",
+      "analyzers": {
+        "clang-tidy": {
+          "checkers": {
+            "abseil-string-find-startswith": false,
+            "bugprone-use-after-move": true
+          },
+          "analyzer_statistics": {
+            "failed": 0,
+            "failed_sources": [],
+            "successful": 10,
+            "version": "LLVM version 7.0.0"
+          }
+        },
+        "clangsa": {
+          "checkers": {
+            "alpha.clone.CloneChecker": false,
+            "deadcode.DeadStores": true
+          },
+          "analyzer_statistics": {
+            "failed": 0,
+            "failed_sources": [],
+            "successful": 1,
+            "version": "clang version 7.0.0"
+          }
+        }
+      },
+      "result_source_files": {
+        "/path/to/reports/main.cpp_cd2085addd2b226005b7f9cf1827c082.plist": "/path/to/main.cpp",
+        "/path/to/reports/reports/main.cpp_ed1ce6c18431138a19465e60aa69a4ba.plist": "/path/to/main.cpp"
+      }
+    }
+  ]
+}

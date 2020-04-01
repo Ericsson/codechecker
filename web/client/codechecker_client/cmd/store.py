@@ -24,6 +24,7 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import StoreLimitKind
 from codechecker_api_shared.ttypes import RequestFailed, ErrorCode
 
 from codechecker_client import client as libclient
+from codechecker_client.metadata import merge_metadata_json
 
 from codechecker_common import logger
 from codechecker_common import util
@@ -102,7 +103,9 @@ def add_arguments_to_parser(parser):
                                              'reports'),
                         help="The analysis result files and/or folders "
                              "containing analysis results which should be "
-                             "parsed and printed.")
+                             "parsed and printed. If multiple report "
+                             "directories are given, OFF and UNAVAILABLE "
+                             "detection statuses will not be available.")
 
     parser.add_argument('-t', '--type', '--input-format',
                         dest="input_format",
@@ -180,19 +183,27 @@ def __get_run_name(input_list):
     """Create a runname for the stored analysis from the input list."""
 
     # Try to create a name from the metada JSON(s).
-    names = []
+    names = set()
     for input_path in input_list:
         metafile = os.path.join(input_path, "metadata.json")
         if os.path.isdir(input_path) and os.path.exists(metafile):
             metajson = util.load_json_or_empty(metafile)
 
-            if 'name' in metajson:
-                names.append(metajson['name'])
+            if 'version' in metajson and metajson['version'] >= 2:
+                for tool in metajson.get('tools', {}):
+                    name = tool.get('run_name')
             else:
-                names.append("unnamed result folder")
+                name = metajson.get('name')
 
-    if len(names) == 1 and names[0] != "unnamed result folder":
-        return names[0]
+            if not name:
+                name = "unnamed result folder"
+
+            names.add(name)
+
+    if len(names) == 1:
+        name = names.pop()
+        if name != "unnamed result folder":
+            return name
     elif len(names) > 1:
         return "multiple projects: " + ', '.join(names)
     else:
@@ -276,7 +287,8 @@ def assemble_zip(inputs, zip_file, client):
             traceback.print_stack()
             LOG.error('Parsing the plist failed: %s', str(ex))
 
-    files_to_compress = []
+    files_to_compress = set()
+    metadata_json_to_compress = set()
 
     changed_files = set()
     for input_path in inputs:
@@ -300,7 +312,7 @@ def assemble_zip(inputs, zip_file, client):
                 if not missing_files:
                     LOG.debug("Copying file '%s' to ZIP assembly dir...",
                               plist_file)
-                    files_to_compress.append(os.path.join(input_path, f))
+                    files_to_compress.add(os.path.join(input_path, f))
 
                     plist_mtime = util.get_last_mod_time(plist_file)
 
@@ -314,9 +326,9 @@ def assemble_zip(inputs, zip_file, client):
                                 "the following missing source files: %s",
                                 plist_file, missing_files)
             elif f == 'metadata.json':
-                files_to_compress.append(os.path.join(input_path, f))
+                metadata_json_to_compress.add(os.path.join(input_path, f))
             elif f == 'skip_file':
-                files_to_compress.append(os.path.join(input_path, f))
+                files_to_compress.add(os.path.join(input_path, f))
 
     if changed_files:
         changed_files = '\n'.join([' - ' + f for f in changed_files])
@@ -331,6 +343,11 @@ def assemble_zip(inputs, zip_file, client):
             _, filename = os.path.split(ftc)
             zip_target = os.path.join('reports', filename)
             zipf.write(ftc, zip_target)
+
+        merged_metadata = merge_metadata_json(metadata_json_to_compress,
+                                              len(inputs))
+        zipf.writestr(os.path.join('reports', 'metadata.json'),
+                      json.dumps(merged_metadata))
 
         if not hash_to_file:
             LOG.warning("There is no report to store. After uploading these "

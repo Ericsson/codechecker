@@ -269,6 +269,8 @@ function (declare, dom, ObjectStore, Store, Deferred, topic, Dialog, Button,
               checkCommand = 'Unavailable!';
             }
 
+            checkCommand = checkCommand.replace(/; /g, '<br/>');
+
             that._dialog.set('title', 'Check command');
             that._dialog.set('content', checkCommand);
             that._dialog.show();

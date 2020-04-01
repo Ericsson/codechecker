@@ -12,6 +12,7 @@ from abc import ABCMeta
 import collections
 import os
 import platform
+import subprocess
 import sys
 
 from codechecker_common.logger import get_logger
@@ -72,6 +73,23 @@ class AnalyzerConfigHandler(object, metaclass=ABCMeta):
                             if os.path.isfile(os.path.join(plugin_dir, f))
                             and f.endswith(".so")]
         return analyzer_plugins
+
+    def get_version(self, env=None):
+        """ Get analyzer version information. """
+        version = [self.analyzer_binary, '--version']
+        try:
+            output = subprocess.check_output(version,
+                                             env=env,
+                                             universal_newlines=True,
+                                             encoding="utf-8",
+                                             errors="ignore")
+            return output
+        except (subprocess.CalledProcessError, OSError) as oerr:
+            LOG.warning("Failed to get analyzer version: %s",
+                        ' '.join(version))
+            LOG.warning(oerr)
+
+        return None
 
     def add_checker(self, checker_name, description=None, state=None):
         """

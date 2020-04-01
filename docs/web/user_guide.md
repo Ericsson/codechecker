@@ -173,6 +173,8 @@ database.
 positional arguments:
   file/folder           The analysis result files and/or folders containing
                         analysis results which should be parsed and printed.
+                        If multiple report directories are given, OFF and
+                        UNAVAILABLE detection statuses will not be available.
                         (default: /home/<username>/.codechecker/reports)
 
 optional arguments:

@@ -457,10 +457,17 @@ def parse(plist_file, metadata_dict, rh, file_report_map):
 
     LOG.debug("Parsing input file '%s'", plist_file)
 
-    if 'result_source_files' in metadata_dict and \
-            plist_file in metadata_dict['result_source_files']:
+    result_source_files = {}
+    if 'result_source_files' in metadata_dict:
+        result_source_files = metadata_dict['result_source_files']
+    else:
+        for tool in metadata_dict.get('tools', {}):
+            result_src_files = tool.get('result_source_files', {})
+            result_source_files.update(result_src_files.items())
+
+    if plist_file in result_source_files:
         analyzed_source_file = \
-            metadata_dict['result_source_files'][plist_file]
+            result_source_files[plist_file]
 
         if analyzed_source_file not in file_report_map:
             file_report_map[analyzed_source_file] = []

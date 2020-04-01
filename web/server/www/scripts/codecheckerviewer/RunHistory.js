@@ -163,6 +163,8 @@ function (declare, ObjectStore, Store, Deferred, DataGrid, Dialog, ContentPane,
               checkCommand = 'Unavailable!';
             }
 
+            checkCommand = checkCommand.replace(/; /g, '<br/>');
+
             that._dialog.set('title', 'Check command');
             that._dialog.set('content', checkCommand);
             that._dialog.show();

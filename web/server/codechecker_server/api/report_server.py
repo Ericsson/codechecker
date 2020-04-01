@@ -50,6 +50,7 @@ from ..database.run_db_model import \
     AnalyzerStatistic, Report, ReviewStatus, File, Run, RunHistory, \
     RunLock, Comment, BugPathEvent, BugReportPoint, \
     FileContent, SourceComponent, ExtendedReportData
+from ..metadata import MetadataInfoParser
 from ..tmp import TemporaryDirectory
 
 from .db import DBSession, escape_like
@@ -2816,8 +2817,9 @@ class ThriftRequestHandler(object):
 
                 run_history_time = datetime.now()
 
+                metadata_parser = MetadataInfoParser()
                 check_commands, check_durations, cc_version, statistics, \
-                    checkers = store_handler.metadata_info(metadata_file)
+                    checkers = metadata_parser.get_metadata_info(metadata_file)
 
                 command = ''
                 if len(check_commands) == 1:
