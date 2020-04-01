@@ -19,7 +19,7 @@ import portalocker
 from codechecker_common.logger import get_logger
 from codechecker_common.util import load_json_or_empty
 
-from codechecker_web.shared.env import check_file_owner_rw
+from codechecker_web.shared.env import check_file_owner_rw, get_password_file
 from codechecker_web.shared.version import SESSION_COOKIE_NAME as _SCN
 
 LOG = get_logger('system')
@@ -59,13 +59,12 @@ class UserCredentials(object):
         LOG.debug("Loading clientside session config.")
 
         # Check whether user's configuration exists.
-        user_home = os.path.expanduser("~")
-        session_cfg_file = os.path.join(user_home,
-                                        ".codechecker.passwords.json")
+        session_cfg_file = get_password_file()
         LOG.info("Checking local passwords or tokens in %s", session_cfg_file)
 
         scfg_dict = {}
 
+        user_home = os.path.expanduser("~")
         mistyped_cfg_file = os.path.join(user_home,
                                          ".codechecker.password.json")
 
