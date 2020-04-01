@@ -25,6 +25,7 @@ CodeChecker result directory which can be stored to a CodeChecker server.
 | **JavaScript** | [ESLint](https://eslint.org/)    | ✓ |
 |                | [JSHint](https://jshint.com/)    | ✗ |
 |                | [JSLint](https://jslint.com/)    | ✗ |
+| **TypeScript** | [TSLint](/tools/report-converter/README.md#tslint)    | ✓ |
 | **Go**         | [Golint](https://github.com/golang/lint)    | ✗ |
 |                | [Staticcheck](https://staticcheck.io/)    | ✗ |
 |                | [go-critic](https://github.com/go-critic/go-critic)    | ✗ |
