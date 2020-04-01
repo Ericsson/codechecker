@@ -12,7 +12,7 @@ JQUERY_VERSION = 3.4.1
 DOJO_VERSION = 1.10.4
 HIGHLIGHT_VERSION = 9.0.0
 
-CODECHECKER_API_VERSION = 6.25.0
+CODECHECKER_API_VERSION = 6.26.0
 
 default: build
 
@@ -102,7 +102,7 @@ $(VENDOR_DIR)/highlightjs/css/xcode.min.css: $(VENDOR_DIR)/highlightjs/css
 $(VENDOR_DIR)/codechecker-api-js: vendor_dir
 	[ -d $(VENDOR_DIR)/codechecker-api-js ] && : || (\
 	rm -rf $(VENDOR_DIR)/codechecker-api-js-$(CODECHECKER_API_VERSION).tar.gz && \
-	curl -sSfLk --get https://registry.npmjs.org/codechecker-api-js/-/codechecker-api-js-6.26.0.tgz \
+	curl -sSfLk --get https://registry.npmjs.org/codechecker-api-js/-/codechecker-api-js-$(CODECHECKER_API_VERSION).tgz \
 		-z $(VENDOR_DIR)/codechecker-api-js-$(CODECHECKER_API_VERSION).tar.gz \
 		-o $(VENDOR_DIR)/codechecker-api-js-$(CODECHECKER_API_VERSION).tar.gz && \
 	mkdir -p $(VENDOR_DIR)/codechecker-api-js && \
