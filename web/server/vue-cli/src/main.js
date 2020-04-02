@@ -33,27 +33,27 @@ router.beforeResolve((to, from, next) => {
       to.params.endpoint !== from.params.endpoint
   ) {
     eventHub.$emit("update", to.params.endpoint);
-    store.dispatch(GET_CURRENT_PRODUCT, to.params.endpoint);
   }
 
   store.dispatch(GET_AUTH_PARAMS).then(() => {
     if (to.matched.some(record => record.meta.requiresAuth)) {
-      if (store.getters.isAuthenticated ||
-          !store.getters.authParams.requiresAuthentication
+      if (store.getters.authParams.requiresAuthentication &&
+        !store.getters.isAuthenticated
       ) {
-        next();
-        return;
+        // Redirect the user to the login page but keep the original path to
+        // redirect the user back once logged in.
+        return next({
+          name: "login",
+          query: { "return_to": to.fullPath }
+        });
       }
-
-      // Redirect the user to the login page but keep the original path to
-      // redirect the user back once logged in.
-      next({
-        name: "login",
-        query: { "return_to": to.fullPath }
-      });
-    } else {
-      next();
     }
+
+    // Get current product.
+    if (to.params.endpoint !== from.params.endpoint)
+      store.dispatch(GET_CURRENT_PRODUCT, to.params.endpoint);
+
+    next();
   });
 });
 
