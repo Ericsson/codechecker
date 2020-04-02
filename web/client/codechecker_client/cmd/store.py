@@ -297,7 +297,16 @@ def assemble_zip(inputs, zip_file, client):
             if f.endswith(".plist"):
                 missing_files, source_file_mod_times = \
                     collect_file_hashes_from_plist(plist_file)
-                if not missing_files:
+
+                if missing_files:
+                    LOG.warning("Skipping '%s' because it refers "
+                                "the following missing source files: %s",
+                                plist_file, missing_files)
+                elif not source_file_mod_times:
+                    # If there is no source in the plist we will not upload
+                    # it to the server.
+                    LOG.debug("Skip empty plist file: %s", plist_file)
+                else:
                     LOG.debug("Copying file '%s' to ZIP assembly dir...",
                               plist_file)
                     files_to_compress.append(os.path.join(input_path, f))
@@ -309,10 +318,7 @@ def assemble_zip(inputs, zip_file, client):
                     for k, v in source_file_mod_times.items():
                         if v > plist_mtime:
                             changed_files.add(k)
-                else:
-                    LOG.warning("Skipping '%s' because it refers "
-                                "the following missing source files: %s",
-                                plist_file, missing_files)
+
             elif f == 'metadata.json':
                 files_to_compress.append(os.path.join(input_path, f))
             elif f == 'skip_file':
