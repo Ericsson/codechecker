@@ -1,6 +1,15 @@
 import "core-js/stable";
 import "regenerator-runtime/runtime";
 
+// Thrift uses captureStackTrace function which is not available in Firefox
+// and it will throw an exception. For this reason we define this function as
+// an empty function. There is already a patch which will solve this problem:
+// https://github.com/apache/thrift/pull/2082
+// If this fix is merged and we upgraded the thrift version we can remove this.
+if (!Error.captureStackTrace) {
+  Error.captureStackTrace = () => {};
+}
+
 import "@mdi/font/css/materialdesignicons.css";
 import "codemirror/lib/codemirror.css";
 import "codemirror/mode/clike/clike.js";
