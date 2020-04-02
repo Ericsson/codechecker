@@ -555,6 +555,7 @@
 	<array>
 		<string>files/x.cpp</string>
 		<string>files/y.h</string>
+		<string>files/empty.h</string>
 	</array>
 </dict>
 </plist>
