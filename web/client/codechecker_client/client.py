@@ -18,6 +18,7 @@ from codechecker_api.Authentication_v6 import ttypes as AuthTypes
 
 from codechecker_common.logger import get_logger
 
+from codechecker_web.shared import env
 from codechecker_web.shared.version import CLIENT_API
 
 from . import authentication_helper
@@ -35,9 +36,8 @@ def check_preconfigured_username(username, host, port):
     """
     if not username:
         LOG.error("No username supplied! Please specify the "
-                  "username in your "
-                  "\"~/.codechecker.passwords.json\" file for "
-                  "%s:%d.", host, port)
+                  "username in your \"%s\" file for %s:%d.",
+                  env.get_password_file(), host, port)
         sys.exit(1)
 
 
@@ -162,8 +162,9 @@ def perform_auth_for_handler(auth_client, host, port, manager):
             LOG.error("Invalid pre-configured credentials.")
             LOG.error("Your password has been changed or personal access "
                       "token has been removed which is used by your "
-                      "\"~/.codechecker.passwords.json\" file. Please "
-                      "remove or change invalid credentials.")
+                      "\"%s\" file. Please "
+                      "remove or change invalid credentials.",
+                      env.get_password_file())
         else:
             LOG.error("Access denied. This server requires "
                       "authentication.")

@@ -24,6 +24,13 @@ def get_default_workspace():
     return workspace
 
 
+def get_password_file():
+    """ Return the location of the CodeChecker password file. """
+    return os.environ.get("CC_PASS_FILE",
+                          os.path.join(os.path.expanduser("~"),
+                                       ".codechecker.passwords.json"))
+
+
 def get_user_input(msg):
     """
     Get the user input.

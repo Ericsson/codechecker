@@ -368,6 +368,10 @@ Is it possible to generate a token from command line which can be used to
 authenticate in the name of the given user. This way no need to store passwords
 in text files. For more information [see](#personal-access-token).
 
+The location of the password file can be configured by the `CC_PASS_FILE`
+environment variable. This environment variable can also be used to setup
+different credential files to login to the same server with a different user.
+
 ### Automatic login <a name="automatic-login"></a>
 
 If authentication is required by the server and the user hasn't logged in but
