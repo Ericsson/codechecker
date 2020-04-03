@@ -51,6 +51,7 @@
 
         <v-btn
           text
+          class="cancel-btn"
           :color="cancelBtnColor"
           @click="dialog = false"
         >
@@ -59,6 +60,7 @@
 
         <v-btn
           text
+          class="confirm-btn"
           :color="confirmBtnColor"
           @click="$emit('confirm')"
         >

@@ -6,6 +6,7 @@
   >
     <template v-slot:activator="{ on }">
       <v-btn
+        id="new-product-btn"
         color="primary"
         v-on="on"
       >

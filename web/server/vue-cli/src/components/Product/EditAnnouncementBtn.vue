@@ -6,6 +6,7 @@
   >
     <template v-slot:activator="{ on }">
       <v-btn
+        id="edit-announcement-btn"
         color="primary"
         class="mr-2"
         v-on="on"

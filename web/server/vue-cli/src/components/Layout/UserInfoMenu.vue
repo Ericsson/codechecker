@@ -7,6 +7,7 @@
   >
     <template v-slot:activator="{ on }">
       <v-btn
+        id="user-info-menu-btn"
         text
         class="text-none"
         v-on="on"
@@ -67,6 +68,7 @@
         <v-spacer />
 
         <v-btn
+          id="logout-btn"
           color="primary"
           text
           @click="logOut"

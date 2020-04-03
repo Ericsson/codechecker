@@ -3,7 +3,8 @@ const port = process.env.PORT || 8001;
 
 module.exports = {
   src_folders: [ "e2e/specs" ],
-  page_objects_path: ["e2e/pages"],
+  page_objects_path: [ "e2e/pages" ],
+  custom_commands_path: [ "e2e/commands" ],
   output_folder: "e2e/output",
 
   test_settings: {
