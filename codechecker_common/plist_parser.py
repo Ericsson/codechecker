@@ -105,10 +105,21 @@ def parse_plist(plist_file_obj):
         importlib.import_module('lxml')
         parser = LXMLPlistParser()
         return parser.parse(plist_file_obj)
+    except (ExpatError, TypeError, AttributeError) as err:
+        LOG.warning('Invalid plist file')
+        LOG.warning(err)
+        return
     except ImportError:
         LOG.debug("lxml library is not available. Use plistlib to parse plist "
                   "files.")
-    return plistlib.load(plist_file_obj)
+
+    try:
+        return plistlib.load(plist_file_obj)
+    except (ExpatError, TypeError, AttributeError, ValueError,
+            plistlib.InvalidFileException) as err:
+        LOG.warning('Invalid plist file')
+        LOG.warning(err)
+        return
 
 
 def get_checker_name(diagnostic, path=""):
@@ -133,10 +144,12 @@ def parse_plist_file(path, source_root=None, allow_plist_update=True):
     reports = []
     files = []
     try:
+        plist = None
         with open(path, 'rb') as plist_file_obj:
             plist = parse_plist(plist_file_obj)
 
         if not plist:
+            LOG.error("Failed to parse plist %s", path)
             return files, reports
 
         files = plist['files']
@@ -188,10 +201,6 @@ def parse_plist_file(path, source_root=None, allow_plist_update=True):
             # This way the client will always send a plist file where the
             # report hash field is filled.
             plistlib.dump(plist, path)
-    except (ExpatError, TypeError, AttributeError) as err:
-        LOG.warning('Failed to process plist file: %s wrong file format?',
-                    path)
-        LOG.warning(err)
     except IndexError as iex:
         LOG.warning('Indexing error during processing plist file %s', path)
         LOG.warning(type(iex))
@@ -301,11 +310,12 @@ def remove_report_from_plist(plist_file_obj, skip_handler):
     report_data = None
     try:
         report_data = parse_plist(plist_file_obj)
-    except (ExpatError, TypeError, AttributeError) as ex:
-        LOG.error("Failed to parse plist content, "
-                  "keeping the original version")
+        if not report_data:
+            return
+    except Exception as ex:
+        LOG.error("Plist parsing error")
         LOG.error(ex)
-        return None
+        return
 
     file_ids_to_remove = []
 
@@ -324,7 +334,7 @@ def remove_report_from_plist(plist_file_obj, skip_handler):
     except KeyError:
         LOG.error("Failed to modify plist content, "
                   "keeping the original version")
-        return None
+        return
 
 
 def skip_report_from_plist(plist_file, skip_handler):
@@ -339,3 +349,5 @@ def skip_report_from_plist(plist_file, skip_handler):
     if new_plist_content:
         with open(plist_file, 'wb') as plist:
             plist.write(new_plist_content)
+    else:
+        LOG.error("Failed to skip report from the plist file: %s", plist_file)

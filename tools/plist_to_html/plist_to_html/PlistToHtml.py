@@ -398,7 +398,7 @@ def plist_to_html(file_path, output_path, html_builder,
         print('Html file was generated: {0}'.format(html_output_path))
         return None, changed_source
 
-    except ExpatError as err:
+    except (ExpatError, plistlib.InvalidFileException) as err:
         print('Failed to process plist file: ' + file_path +
               ' wrong file format?', err)
         return file_path, changed_source
