@@ -52,7 +52,7 @@ class TestRemoveReportFromPlist(unittest.TestCase):
                   encoding="utf-8", errors="ignore") as skip_file:
             skip_handler = skiplist_handler.SkipListHandler(skip_file.read())
 
-        with open('x.plist', 'r') as plist_data:
+        with open('x.plist', 'rb') as plist_data:
             data = remove_report_from_plist(plist_data, skip_handler)
 
         with open('skip_all_header.expected.plist', 'rb') as plist_file:
