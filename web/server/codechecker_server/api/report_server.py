@@ -2524,8 +2524,21 @@ class ThriftRequestHandler(object):
                 continue
 
             file_ids = {}
-            for file_name in files:
-                file_ids[file_name] = file_path_to_id[file_name]
+            if reports:
+                missing_ids_for_files = []
+
+                for file_name in files:
+                    file_id = file_path_to_id.get(file_name, -1)
+                    if file_id == -1:
+                        missing_ids_for_files.append(file_name)
+                        continue
+
+                    file_ids[file_name] = file_id
+
+                if missing_ids_for_files:
+                    LOG.error("Failed to get file path id for '%s'!",
+                              file_name)
+                    continue
 
             # Store report.
             for report in reports:

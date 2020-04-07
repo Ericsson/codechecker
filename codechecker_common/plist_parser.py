@@ -317,7 +317,7 @@ def remove_report_from_plist(plist_file_obj, skip_handler):
         kept_diagnostics, kept_files = get_kept_report_data(report_data,
                                                             file_ids_to_remove)
         report_data['diagnostics'] = kept_diagnostics
-        report_data['files'] = kept_files
+        report_data['files'] = kept_files if kept_diagnostics else []
 
         return plistlib.dumps(report_data)
 

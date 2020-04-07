@@ -1,5 +1,6 @@
 #include "x.h"
 #include "y.h"
+#include "empty.h"
 
 long bar2(long a, long b, long c, long d) {
   c = a - b;

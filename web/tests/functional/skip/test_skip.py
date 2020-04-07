@@ -7,15 +7,15 @@
 
 """ skip function test.  """
 
-
-import os
 import logging
+import os
+import plistlib
 import unittest
 
 from libtest.debug_printer import print_run_results
 from libtest.thrift_client_to_db import get_all_run_results
 from libtest.result_compare import find_all
-from libtest import env
+from libtest import codechecker, env
 
 
 class TestSkip(unittest.TestCase):
@@ -25,24 +25,26 @@ class TestSkip(unittest.TestCase):
     def setUp(self):
 
         # TEST_WORKSPACE is automatically set by test package __init__.py
-        test_workspace = os.environ['TEST_WORKSPACE']
+        self.test_workspace = os.environ['TEST_WORKSPACE']
 
         test_class = self.__class__.__name__
-        print('Running ' + test_class + ' tests in ' + test_workspace)
+        print('Running ' + test_class + ' tests in ' + self.test_workspace)
+
+        self._codechecker_cfg = env.import_codechecker_cfg(self.test_workspace)
 
         # Get the clang version which is tested.
         self._clang_to_test = env.clang_to_test()
 
         # Get the test configuration from the prepared test workspace.
-        self._testproject_data = env.setup_test_proj_cfg(test_workspace)
+        self._testproject_data = env.setup_test_proj_cfg(self.test_workspace)
         self.assertIsNotNone(self._testproject_data)
 
         # Setup a viewer client to test viewer API calls.
-        self._cc_client = env.setup_viewer_client(test_workspace)
+        self._cc_client = env.setup_viewer_client(self.test_workspace)
         self.assertIsNotNone(self._cc_client)
 
         # Get the run names which belong to this test.
-        run_names = env.get_run_names(test_workspace)
+        run_names = env.get_run_names(self.test_workspace)
 
         runs = self._cc_client.getRunData(None, None, 0, None)
 
@@ -96,3 +98,31 @@ class TestSkip(unittest.TestCase):
                             "using skip")
 
         self.assertEqual(len(run_results), len(test_proj_res) - len(skipped))
+
+    def test_skip_plist_without_diag(self):
+        """ Store plist file without diagnostics.
+
+        Store plist file which does not contain any diagnostic but it refers
+        some existing source file.
+        """
+        test_dir = os.path.join(self.test_workspace, "no_diag")
+        if not os.path.isdir(test_dir):
+            os.mkdir(test_dir)
+
+        src_file = os.path.join(test_dir, "src.cpp")
+        with open(src_file, 'w', encoding='utf-8', errors='ignore') as src_f:
+            src_f.write("int main() { return 0; }")
+
+        plist_file = os.path.join(test_dir, "no_diag.plist")
+        with open(plist_file, 'wb') as plist_f:
+            data = {
+                'diagnostics': [],
+                'files': [src_file]
+            }
+            plistlib.dump(data, plist_f)
+
+        cfg = dict(self._codechecker_cfg)
+        cfg['reportdir'] = test_dir
+
+        ret = codechecker.store(cfg, 'no_diag')
+        self.assertEqual(ret, 0)
