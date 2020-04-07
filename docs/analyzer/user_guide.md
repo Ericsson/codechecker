@@ -338,7 +338,7 @@ Set `CC_LOGGER_GCC_LIKE` environment variable to a colon separated list.
 For example (default):
 
 ```sh
-export CC_LOGGER_GCC_LIKE="gcc:g++:clang"
+export CC_LOGGER_GCC_LIKE="gcc:g++:clang:clang++:cc:c++"
 ```
 
 This colon separated list may contain compiler names or paths. In case an
@@ -347,7 +347,7 @@ considered a path. The logger will capture only those build actions which have
 this postfix:
 
 ```sh
-export CC_LOGGER_GCC_LIKE="gcc:/bin/g++"
+export CC_LOGGER_GCC_LIKE="gcc:/bin/g++:clang:clang++:cc:c++"
 
 # "gcc" has to be infix of the compiler's name because it contains no slash.
 # "/bin/g++" has to be postfix of the compiler's path because it contains slash.
@@ -786,7 +786,7 @@ CodeChecker will get the hardcoded values for the compilers set in the
 `CC_LOGGER_GCC_LIKE` environment variable.
 
 ```sh
-export CC_LOGGER_GCC_LIKE="gcc:g++:clang"
+export CC_LOGGER_GCC_LIKE="gcc:g++:clang:clang++:cc:c++"
 ```
 
 If there are still compilation errors after using the `--add-compiler-defaults`
