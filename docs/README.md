@@ -302,7 +302,7 @@ For now CodeChecker supports the storage of the following analyzers results:
 | **Python**     | [Pylint](/tools/report-converter/README.md#pylint)    |
 | **JavaScript** | [ESLint](/tools/report-converter/README.md#eslint)    |
 | **TypeScript** | [TSLint](/tools/report-converter/README.md#tslint)    |
-
+| **Go**         | [Golint](/tools/report-converter/README.md#golint)    |
 
 We are planning to support the storage of the results created by other
 analyzers for different languages (Java, Python ...). For more detailed

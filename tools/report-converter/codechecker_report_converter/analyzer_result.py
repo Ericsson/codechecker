@@ -72,6 +72,14 @@ class AnalyzerResult(object, metaclass=ABCMeta):
 
     def _get_analyzer_result_file_content(self, result_file):
         """ Return the content of the given file. """
+        if not os.path.exists(result_file):
+            LOG.error("Result file does not exists: %s", result_file)
+            return
+
+        if os.path.isdir(result_file):
+            LOG.error("Directory is given instead of a file: %s", result_file)
+            return
+
         with open(result_file, 'r', encoding='utf-8',
                   errors='replace') as analyzer_result:
             return analyzer_result.readlines()

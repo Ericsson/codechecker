@@ -98,8 +98,9 @@ class PlistConverter(object, metaclass=ABCMeta):
     def _create_diag(self, message, files):
         """ Creates a new plist diagnostic from the given message. """
         fmap = {files[i]: i for i in range(0, len(files))}
+        checker_name = message.checker if message.checker else self.tool_name
         diag = {'location': self._create_location(message, fmap),
-                'check_name': message.checker,
+                'check_name': checker_name,
                 'description': message.message,
                 'category': self._get_checker_category(message.checker),
                 'type': self._get_analyzer_type(),
