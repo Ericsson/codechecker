@@ -29,6 +29,7 @@ from codechecker_common.logger import get_logger
 from . import gcc_toolchain
 
 from .analyzers import analyzer_types
+from .analyzers.config_handler import CheckerState
 from .analyzers.clangsa.analyzer import ClangSA
 from .analyzers.clangsa.statistics_collector import SpecialReturnValueCollector
 
@@ -323,7 +324,10 @@ def handle_failure(source_analyzer, rh, zip_file, result_base, actions_map):
     # In case of compiler errors the error message still needs to be collected
     # from the standard output by this postprocess phase so we can present them
     # as CodeChecker reports.
-    rh.postprocess_result()
+    checks = source_analyzer.config_handler.checks()
+    state = checks.get('clang-diagnostic-error', (CheckerState.default, ''))[0]
+    if state != CheckerState.disabled:
+        rh.postprocess_result()
 
     # Remove files that successfully analyzed earlier on.
     plist_file = result_base + ".plist"
