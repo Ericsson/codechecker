@@ -310,7 +310,7 @@ def replace_report_hash(plist_file, hash_type=HashType.CONTEXT_FREE):
 
             plistlib.dump(plist, pfile)
 
-    except (TypeError, AttributeError) as err:
+    except (TypeError, AttributeError, plistlib.InvalidFileException) as err:
         LOG.warning('Failed to process plist file: %s wrong file format?',
                     plist_file)
         LOG.warning(err)
