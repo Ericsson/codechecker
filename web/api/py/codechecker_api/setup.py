@@ -1,5 +1,4 @@
 from setuptools import setup, find_packages
-from os import path
 
 # io.open is needed for projects that support Python 2.7
 # Python 3 only projects can skip this import
@@ -9,7 +8,7 @@ from io import open
 with open('README.md', encoding='utf-8', errors="ignore") as f:
     long_description = f.read()
 
-api_version = '6.26.0'
+api_version = '6.26.0-dev1'
 
 setup(
     name='codechecker_api',

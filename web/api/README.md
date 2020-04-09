@@ -1,9 +1,9 @@
 # CodeChecker server Thrift API
 
-This directory contains the API IDL files and the generated API stubs for CodeChecker.
-[Apache Thrift](https://thrift.apache.org/) is used to generate the stubs
-for various programming languages. The stubs are published to [pypi](https://pypi.org/) 
-and to [npmjs](https://www.npmjs.com/).
+This directory contains the API IDL files and the generated API stubs for
+CodeChecker. [Apache Thrift](https://thrift.apache.org/) is used to generate
+the stubs for various programming languages. The stubs are published to
+[pypi](https://pypi.org/) and to [npmjs](https://www.npmjs.com/).
 
 The Thrift compiler is executed inside a [Docker](https://www.docker.com/)
 container so docker needs to be installed to generate the stubs.
@@ -22,18 +22,31 @@ introduced.
   - `js/codechecker-api-js/package.json`
   - `js/codechecker-api-node/package.json`
 
-- Run the command `make build` to generate the stubs.
+- Publish the packages:
+  - If you have access to publish packages to pypi and npm do the following:
+    - Run the command `make build` to generate the stubs.
 
-- Publish python dev versions:
-  - `make publish_py`
-- Publish javascript dev versions with the `dev` tag:
-  - `make publish_js_dev`
-- In the `setup.py` and `package.json` files use the **6.24.0-dev1** version until the api is accepted.
+    - Publish python dev versions:
+      - `make publish_py`
+    - Publish javascript dev versions with the `dev` tag:
+      - `make publish_js_dev`
+  - If you do not have access to publish the packages, create a pull request
+    on github, wait while it will be reviewed, merged and someone will create
+    the packages for you.
+- In the `setup.py` and `package.json` files use the **6.24.0-dev1** version
+until the api is accepted.
 
 ### 2. Server/client implementation for the API change
 
-- Update the requirements.txt and extend the server with the new
-API functionality with the dev API versions as a dependency.
+- Update the *requirements.txt* and the **web/server/vendor/Makefile**.
+- Remove the old files, update the venv and rebuild the package:
+  ```sh
+  rm -rf web/server/vendor/codechecker-api-js/ && \
+  rm -rf venv_dev && make venv_dev && \
+  make clean_package && make package
+  ```
+- Extend the server with the new API functionality with the dev API versions
+  as a dependency.
 - Create a pull request with the changes.
 - Wait while it will be reviewed and approved.
 

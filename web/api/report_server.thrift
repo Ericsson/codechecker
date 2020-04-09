@@ -177,6 +177,7 @@ struct RunData {
   10: AnalyzerStatisticsData   analyzerStatistics,   // Statistics for analyzers. Only number of failed and successfully analyzed
                                                      // files field will be set. To get full analyzer statistics please use the
                                                      // 'getAnalysisStatistics' API function.
+  11: optional string          description,          // A custom textual description.
 }
 typedef list<RunData> RunDataList
 
@@ -192,6 +193,7 @@ struct RunHistoryData {
   9: AnalyzerStatisticsData  analyzerStatistics, // Statistics for analyzers. Only number of failed and successfully analyzed
                                                  // files field will be set. To get full analyzer statistics please use the
                                                  // 'getAnalysisStatistics' API function.
+  11: optional string        description,        // A custom textual description.
 }
 typedef list<RunHistoryData> RunHistoryDataList
 
@@ -632,12 +634,13 @@ service codeCheckerDBAccess {
   // run.
   // The "force" parameter removes existing analysis results for a run.
   // PERMISSION: PRODUCT_STORE
-  i64 massStoreRun(1: string       runName,
-                   2: string       tag,
-                   3: string       version,
-                   4: string       zipfile,
-                   5: bool         force,
-                   6: list<string> trimPathPrefixes)
+  i64 massStoreRun(1: string          runName,
+                   2: string          tag,
+                   3: string          version,
+                   4: string          zipfile,
+                   5: bool            force,
+                   6: list<string>    trimPathPrefixes,
+                   7: optional string description)
                    throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Returns true if analysis statistics information can be sent to the server,

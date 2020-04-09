@@ -138,6 +138,14 @@ def add_arguments_to_parser(parser):
                         help="A uniques identifier for this individual store "
                              "of results in the run's history.")
 
+    parser.add_argument('--description',
+                        type=str,
+                        dest="description",
+                        required=False,
+                        default=argparse.SUPPRESS,
+                        help="A custom textual description to be shown "
+                             "alongside the run.")
+
     parser.add_argument('--trim-path-prefix',
                         type=str,
                         nargs='*',
@@ -578,13 +586,16 @@ def main(args):
         trim_path_prefixes = args.trim_path_prefix if \
             'trim_path_prefix' in args else None
 
+        description = args.description if 'description' in args else None
+
         LOG.info("Storing results to the server...")
         client.massStoreRun(args.name,
                             args.tag if 'tag' in args else None,
                             str(context.version),
                             b64zip,
                             'force' in args,
-                            trim_path_prefixes)
+                            trim_path_prefixes,
+                            description)
 
         # Storing analysis statistics if the server allows them.
         if client.allowsStoringAnalysisStatistics():
