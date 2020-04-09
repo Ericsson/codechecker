@@ -375,17 +375,6 @@ def add_arguments_to_parser(parser):
                              default=argparse.SUPPRESS,
                              help="Store the output in the given folder.")
 
-    output_opts.add_argument('-c', '--clean',
-                             dest="clean",
-                             required=False,
-                             action='store_true',
-                             default=True,
-                             help="DEPRECATED. Delete output results stored "
-                                  "in the output directory. (By default, it "
-                                  "would keep output files and overwrites "
-                                  "only those that belongs to a plist file "
-                                  "given by the input argument.")
-
     parser.add_argument('--suppress',
                         type=str,
                         dest="suppress",

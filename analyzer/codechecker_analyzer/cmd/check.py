@@ -136,20 +136,6 @@ def add_arguments_to_parser(parser):
                              "analyzers' output will not be printed to the "
                              "standard output.")
 
-    parser.add_argument('-f', '--force',
-                        dest="force",
-                        default=argparse.SUPPRESS,
-                        action='store_true',
-                        required=False,
-                        help="DEPRECATED. Delete analysis results stored in "
-                             "the database for the current analysis run's "
-                             "name and store only the results reported in the "
-                             "'input' files. (By default, CodeChecker would "
-                             "keep reports that were coming from files not "
-                             "affected by the analysis, and only "
-                             "incrementally update defect reports for source "
-                             "files that were analysed.)")
-
     parser.add_argument('--keep-gcc-include-fixed',
                         dest="keep_gcc_include_fixed",
                         required=False,
@@ -311,17 +297,6 @@ used to generate a log file on the fly.""")
                                     "are: " +
                                     ', '.join(analyzer_types.
                                               supported_analyzers) + ".")
-
-    analyzer_opts.add_argument('--add-compiler-defaults',
-                               action='store_true',
-                               required=False,
-                               default=argparse.SUPPRESS,
-                               help="DEPRECATED. Always True. Retrieve "
-                                    " compiler-specific configuration "
-                                    "from the analyzers themselves, and use "
-                                    "them with Clang. This is used when the "
-                                    "compiler on the system is special, e.g. "
-                                    "when doing cross-compilation.")
 
     analyzer_opts.add_argument('--capture-analysis-output',
                                dest='capture_analysis_output',
@@ -637,35 +612,25 @@ def main(args):
         if key in source:
             setattr(target, key, getattr(source, key))
 
-    if 'force' in args:
-        LOG.warning('"--force" option has been deprecated and it will be '
-                    'removed in the future version of CodeChecker. Use the '
-                    '"--clean" option to delete analysis reports stored in '
-                    'the output directory.')
-
     # If no output directory is given then the checker results go to a
     # temporary directory. This way the subsequent "quick" checks don't pollute
     # the result list of a previous check. If the detection status function is
     # intended to be used (i.e. by keeping the .plist files) then the output
     # directory has to be provided explicitly.
-    is_temp_output = False
     if 'output_dir' in args:
         output_dir = args.output_dir
     else:
         output_dir = tempfile.mkdtemp()
-        is_temp_output = True
 
     output_dir = os.path.abspath(output_dir)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
     logfile = None
-    is_command = False
     try:
         # --- Step 1.: Perform logging if build command was specified.
         if 'command' in args:
             logfile = tempfile.NamedTemporaryFile().name
-            is_command = True
 
             # Translate the argument list between check and log.
             log_args = argparse.Namespace(
@@ -752,9 +717,9 @@ def main(args):
         import traceback
         traceback.print_exc()
     finally:
-        if is_temp_output:
+        if 'output_dir' not in args:
             shutil.rmtree(output_dir)
-        if is_command:
+        if 'command' in args:
             os.remove(logfile)
 
     LOG.debug("Check finished.")

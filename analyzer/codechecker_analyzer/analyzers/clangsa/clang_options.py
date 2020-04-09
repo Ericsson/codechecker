@@ -13,17 +13,17 @@ from codechecker_common.logger import get_logger
 LOG = get_logger('analyzer')
 
 
-def get_analyzer_checkers_cmd(clang_version_info, env, plugins,
+def get_analyzer_checkers_cmd(clang_version_info, plugins,
                               alpha=True, debug=True):
-    """Return the checkers list which depends on the used clang version.
+    """Return the checkers list getter command which depends on the used clang
+    version.
 
-    plugins should be a list of path to clang plugins (so with checkers)
+    plugins -- A list of paths to clang plugins (so with checkers).
 
     Before clang9 alpha and debug checkers were printed by default.
     Since clang9 there are extra arguments to print the additional checkers.
     """
-    major_version = clang_version_info.major_version
-    command = []
+    command = ["-cc1"]
 
     for plugin in plugins:
         command.extend(["-load", plugin])
@@ -38,10 +38,10 @@ def get_analyzer_checkers_cmd(clang_version_info, env, plugins,
     if clang_version_info.vendor != "clang":
         return command
 
-    if alpha and major_version > 8:
+    if alpha and clang_version_info.major_version > 8:
         command.append("-analyzer-checker-help-alpha")
 
-    if debug and major_version > 8:
+    if debug and clang_version_info.major_version > 8:
         command.append("-analyzer-checker-help-developer")
 
     return command

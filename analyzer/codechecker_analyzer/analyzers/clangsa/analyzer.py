@@ -113,13 +113,10 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         """Return the list of the supported checkers."""
         checkers_list_args = clang_options.get_analyzer_checkers_cmd(
             cfg_handler.version_info,
-            environ,
             cfg_handler.analyzer_plugins,
             alpha=True)
 
-        analyzer_binary = cfg_handler.analyzer_binary
-        command = [analyzer_binary, "-cc1"]
-        command.extend(checkers_list_args)
+        command = [cfg_handler.analyzer_binary] + checkers_list_args
 
         try:
             result = subprocess.check_output(

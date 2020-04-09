@@ -284,17 +284,6 @@ def add_arguments_to_parser(parser):
                                     ', '.join(analyzer_types.
                                               supported_analyzers) + ".")
 
-    analyzer_opts.add_argument('--add-compiler-defaults',
-                               action='store_true',
-                               required=False,
-                               default=argparse.SUPPRESS,
-                               help="DEPRECATED. Always True. Retrieve "
-                                    "compiler-specific configuration "
-                                    "from the compilers themselves, and use "
-                                    "them with Clang. This is used when the "
-                                    "compiler on the system is special, e.g. "
-                                    "when doing cross-compilation.")
-
     analyzer_opts.add_argument('--capture-analysis-output',
                                dest='capture_analysis_output',
                                action='store_true',
