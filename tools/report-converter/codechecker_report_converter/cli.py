@@ -45,6 +45,8 @@ from codechecker_report_converter.tslint.analyzer_result import \
     TSLintAnalyzerResult  # noqa
 from codechecker_report_converter.golint.analyzer_result import \
     GolintAnalyzerResult  # noqa
+from codechecker_report_converter.pyflakes.analyzer_result import \
+    PyflakesAnalyzerResult  # noqa
 
 
 LOG = logging.getLogger('ReportConverter')
@@ -65,6 +67,7 @@ supported_converters = {
     ESLintAnalyzerResult.TOOL_NAME: ESLintAnalyzerResult,
     MSANAnalyzerResult.TOOL_NAME: MSANAnalyzerResult,
     PylintAnalyzerResult.TOOL_NAME: PylintAnalyzerResult,
+    PyflakesAnalyzerResult.TOOL_NAME: PyflakesAnalyzerResult,
     TSANAnalyzerResult.TOOL_NAME: TSANAnalyzerResult,
     TSLintAnalyzerResult.TOOL_NAME: TSLintAnalyzerResult,
     UBSANAnalyzerResult.TOOL_NAME: UBSANAnalyzerResult,

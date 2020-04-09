@@ -18,6 +18,7 @@ a CodeChecker server.
 * [Pylint](#pylint)
 * [TSLint](#tslint)
 * [Golint](#golint)
+* [Pyflakes](#pyflakes)
 * [License](#license)
 
 ## Install guide
@@ -48,8 +49,8 @@ optional arguments:
                         report directory files.
   -t TYPE, --type TYPE  Specify the format of the code analyzer output.
                         Currently supported output types are: asan, clang-
-                        tidy, cppcheck, eslint, fbinfer, golint, msan, pylint,
-                        spotbugs, tsan, tslint, ubsan.
+                        tidy, cppcheck, eslint, fbinfer, golint, msan,
+                        pyflakes, pylint, spotbugs, tsan, tslint, ubsan.
   -c, --clean           Delete files stored in the output directory.
   -v, --verbose         Set verbosity level.
 
@@ -61,6 +62,7 @@ Supported analyzers:
   fbinfer - Facebook Infer, https://fbinfer.com
   golint - Golint, https://github.com/golang/lint
   msan - MemorySanitizer, https://clang.llvm.org/docs/MemorySanitizer.html
+  pyflakes - Pyflakes, https://github.com/PyCQA/pyflakes
   pylint - Pylint, https://www.pylint.org
   spotbugs - spotbugs, https://spotbugs.github.io
   tsan - ThreadSanitizer, https://clang.llvm.org/docs/ThreadSanitizer.html
@@ -271,6 +273,28 @@ report-converter -t pylint -o ./codechecker_pylint_reports ./pylint_reports.json
 
 # Store the Pylint reports with CodeChecker.
 CodeChecker store ./codechecker_pylint_reports -n pylint
+```
+
+## [Pyflakes](https://github.com/PyCQA/pyflakes)
+[Pyflakes](https://github.com/PyCQA/pyflakes) is a static analysis tool for
+`Python` code.
+
+The recommended way of running Pyflakes is to redirect the output to a file and
+give this file to the report converter tool.
+
+The following example shows you how to run Pyflakes and store the results
+found by Pyflakes to the CodeChecker database.
+
+```sh
+# Run Pyflakes.
+pyflakes /path/to/your/project > ./pyflakes_reports.out
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of Pyflakes.
+report-converter -t pyflakes -o ./codechecker_pyflakes_reports ./pyflakes_reports.out
+
+# Store the Pyflakes reports with CodeChecker.
+CodeChecker store ./codechecker_pyflakes_reports -n pyflakes
 ```
 
 ## [TSLint](https://palantir.github.io/tslint)

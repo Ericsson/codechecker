@@ -9,7 +9,8 @@ test: pycodestyle pylint test_unit test_functional
 
 test_in_env: pycodestyle_in_env pylint_in_env test_unit_in_env
 
-PYCODESTYLE_TEST_CMD = pycodestyle codechecker_report_converter tests
+PYCODESTYLE_TEST_CMD = pycodestyle codechecker_report_converter tests \
+	--exclude tests/unit/pyflakes_output_test_files/files
 
 pycodestyle:
 	$(PYCODESTYLE_TEST_CMD)
