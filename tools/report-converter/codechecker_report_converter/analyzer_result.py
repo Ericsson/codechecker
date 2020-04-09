@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -------------------------------------------------------------------------
 #                     The CodeChecker Infrastructure
 #   This file is distributed under the University of Illinois Open Source
@@ -11,6 +10,7 @@ import logging
 import os
 import plistlib
 
+from . import __title__, __version__
 from .report import generate_report_hash
 
 LOG = logging.getLogger('ReportConverter')
@@ -56,19 +56,33 @@ class AnalyzerResult(object, metaclass=ABCMeta):
     def _post_process_result(self, plist_objs):
         """ Post process the parsed result.
 
-        By default it will add report hashes for the diagnostics.
+        By default it will add report hashes and metada information for the
+        diagnostics.
         """
-        self._add_report_hash(plist_objs)
+        for plist_obj in plist_objs:
+            self._add_report_hash(plist_obj)
+            self._add_metadata(plist_obj)
 
-    def _add_report_hash(self, plist_objs):
-        """ Generate report hash for each diagnostics in the plist objects."""
-        for plist_data in plist_objs:
-            files = plist_data['files']
-            for diag in plist_data['diagnostics']:
-                report_hash = \
-                    generate_report_hash(diag,
-                                         files[diag['location']['file']])
-                diag['issue_hash_content_of_line_in_context'] = report_hash
+    def _add_report_hash(self, plist_obj):
+        """ Generate report hash for the given plist data. """
+        files = plist_obj['files']
+        for diag in plist_obj['diagnostics']:
+            report_hash = \
+                generate_report_hash(diag,
+                                     files[diag['location']['file']])
+            diag['issue_hash_content_of_line_in_context'] = report_hash
+
+    def _add_metadata(self, plist_obj):
+        """ Add metada information to the given plist data. """
+        plist_obj['metadata'] = {
+            'analyzer': {
+                'name': self.TOOL_NAME
+            },
+            'generated_by': {
+                'name': __title__,
+                'version': __version__
+            }
+        }
 
     def _get_analyzer_result_file_content(self, result_file):
         """ Return the content of the given file. """

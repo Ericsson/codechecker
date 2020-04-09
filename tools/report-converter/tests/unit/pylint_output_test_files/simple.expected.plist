@@ -255,5 +255,20 @@
 	<array>
 		<string>files/simple.py</string>
 	</array>
+	<key>metadata</key>
+	<dict>
+		<key>analyzer</key>
+		<dict>
+			<key>name</key>
+			<string>pylint</string>
+		</dict>
+		<key>generated_by</key>
+		<dict>
+			<key>name</key>
+			<string>report-converter</string>
+			<key>version</key>
+			<string>x.y.z</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

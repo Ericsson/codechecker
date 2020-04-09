@@ -91,5 +91,20 @@
 	<array>
 		<string>files/index.ts</string>
 	</array>
+	<key>metadata</key>
+	<dict>
+		<key>analyzer</key>
+		<dict>
+			<key>name</key>
+			<string>tslint</string>
+		</dict>
+		<key>generated_by</key>
+		<dict>
+			<key>name</key>
+			<string>report-converter</string>
+			<key>version</key>
+			<string>x.y.z</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

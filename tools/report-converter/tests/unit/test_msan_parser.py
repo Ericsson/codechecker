@@ -65,6 +65,9 @@ class MSANPListConverterTestCase(unittest.TestCase):
             # Use relative path for this test.
             res['files'][0] = 'files/msan.cpp'
 
+            self.assertTrue(res['metadata']['generated_by']['version'])
+            res['metadata']['generated_by']['version'] = "x.y.z"
+
         self.assertEqual(res, exp)
 
 

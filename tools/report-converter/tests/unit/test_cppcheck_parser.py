@@ -61,6 +61,9 @@ class CppcheckAnalyzerResultTestCase(unittest.TestCase):
         with open(plist_file, mode='rb') as pfile:
             res = plistlib.load(pfile)
 
+            self.assertTrue(res['metadata']['generated_by']['version'])
+            res['metadata']['generated_by']['version'] = "x.y.z"
+
         plist_file = os.path.join(self.test_files,
                                   'divide_zero.expected.plist')
         with open(plist_file, mode='rb') as pfile:
@@ -77,6 +80,9 @@ class CppcheckAnalyzerResultTestCase(unittest.TestCase):
                                   'divide_zero_cppcheck.plist')
         with open(plist_file, mode='rb') as pfile:
             res = plistlib.load(pfile)
+
+            self.assertTrue(res['metadata']['generated_by']['version'])
+            res['metadata']['generated_by']['version'] = "x.y.z"
 
         plist_file = os.path.join(self.test_files,
                                   'divide_zero.expected.plist')

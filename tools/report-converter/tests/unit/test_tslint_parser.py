@@ -65,6 +65,9 @@ class TSLintAnalyzerResultTestCase(unittest.TestCase):
             # Use relative path for this test.
             res['files'][0] = os.path.join('files', 'index.ts')
 
+            self.assertTrue(res['metadata']['generated_by']['version'])
+            res['metadata']['generated_by']['version'] = "x.y.z"
+
         plist_file = os.path.join(self.test_files,
                                   'reports.expected.plist')
         with open(plist_file, mode='rb') as pfile:

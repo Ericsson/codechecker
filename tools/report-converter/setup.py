@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
 import setuptools
+import codechecker_report_converter
 
 with open("README.md", "r", encoding="utf-8", errors="ignore") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="report-converter",
-    version="0.1.0",
+    name=codechecker_report_converter.__title__,
+    version=codechecker_report_converter.__version__,
     author='CodeChecker Team (Ericsson)',
     description="Parse and create HTML files from one or more '.plist' "
                 "result files.",

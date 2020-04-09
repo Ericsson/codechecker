@@ -64,6 +64,9 @@ class UBSANPListConverterTestCase(unittest.TestCase):
             # Use relative path for this test.
             res['files'] = source_files
 
+            self.assertTrue(res['metadata']['generated_by']['version'])
+            res['metadata']['generated_by']['version'] = "x.y.z"
+
         with open(expected_plist, mode='rb') as pfile:
             exp = plistlib.load(pfile)
 

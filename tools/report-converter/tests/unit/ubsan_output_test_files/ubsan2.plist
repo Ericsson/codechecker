@@ -91,5 +91,20 @@
 	<array>
 		<string>files/ubsan2.cpp</string>
 	</array>
+	<key>metadata</key>
+	<dict>
+		<key>analyzer</key>
+		<dict>
+			<key>name</key>
+			<string>ubsan</string>
+		</dict>
+		<key>generated_by</key>
+		<dict>
+			<key>name</key>
+			<string>report-converter</string>
+			<key>version</key>
+			<string>x.y.z</string>
+		</dict>
+	</dict>
 </dict>
 </plist>
