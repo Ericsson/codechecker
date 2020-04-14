@@ -20,9 +20,7 @@ from codechecker_client import cmd_line_client
 from codechecker_client import product_client
 from codechecker_client import source_component_client, token_client
 
-from codechecker_common import logger
-from codechecker_common import output_formatters
-from codechecker_common import util
+from codechecker_common import arg, logger, output_formatters, util
 
 
 DEFAULT_FILTER_VALUES = {
@@ -32,33 +30,6 @@ DEFAULT_FILTER_VALUES = {
 }
 
 DEFAULT_OUTPUT_FORMATS = ["plaintext"] + output_formatters.USER_FORMATS
-
-
-class RawDescriptionDefaultHelpFormatter(
-        argparse.RawDescriptionHelpFormatter,
-        argparse.ArgumentDefaultsHelpFormatter
-):
-    """
-    Adds default values to argument help and retains any formatting in
-    descriptions.
-    """
-    pass
-
-
-class NewLineDefaultHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
-
-    def _split_lines(self, text, width):
-        """
-        Split a multi line string into multiple lines and wraps those lines so
-        every line is at most 'width' character long.
-        """
-        lines = []
-        for line in text.splitlines():
-            w_lines = argparse.HelpFormatter._split_lines(self, line, width)
-            for w_line in w_lines:
-                lines.append(w_line)
-
-        return lines
 
 
 def valid_time(t):
@@ -864,7 +835,7 @@ def __register_source_components(parser):
                             metavar='COMPONENT_FILE',
                             default=argparse.SUPPRESS,
                             required=True,
-                            help="Path to the source component file which "
+                            help="R|Path to the source component file which "
                                  "contains multiple file paths. Each file "
                                  "path should start with a '+' or '-' sign. "
                                  "Results will be listed only from paths with "
@@ -908,7 +879,7 @@ def __register_source_components(parser):
 
     add = subcommands.add_parser(
         'add',
-        formatter_class=NewLineDefaultHelpFormatter,
+        formatter_class=arg.RawDescriptionDefaultHelpFormatter,
         description="Creates a new source component or updates an existing "
                     "one.",
         help="Creates/updates a source component.")
@@ -1157,7 +1128,7 @@ def add_arguments_to_parser(parser):
 
     results = subcommands.add_parser(
         'results',
-        formatter_class=RawDescriptionDefaultHelpFormatter,
+        formatter_class=arg.RawDescriptionDefaultHelpFormatter,
         description="Show the individual analysis reports' summary.",
         help="List analysis result (finding) summary for a given run.",
         epilog='''Example scenario: List analysis results
@@ -1183,11 +1154,21 @@ Get analysis results for a run and filter the analysis results:
 
     diff = subcommands.add_parser(
         'diff',
-        formatter_class=RawDescriptionDefaultHelpFormatter,
+        formatter_class=arg.RawDescriptionDefaultHelpFormatter,
         description="Compare two analysis runs to show the results that "
                     "differ between the two.",
         help="Compare two analysis runs and show the difference.",
-        epilog='''Example scenario: Compare multiple analysis runs
+        epilog='''
+envionment variables:
+  CC_REPO_DIR         Root directory of the sources, i.e. the directory where
+                      the repository was cloned. Use it when generating gerrit
+                      output.
+  CC_REPORT_URL       URL where the report can be found. Use it when generating
+                      gerrit output.
+  CC_CHANGED_FILES    Path of changed files json from Gerrit. Use it when
+                      generating gerrit output.
+
+Example scenario: Compare multiple analysis runs
 ------------------------------------------------
 Compare two runs and show results that didn't exist in the 'run1' but appear in
 the 'run2' run:
@@ -1210,7 +1191,7 @@ by multiple severity values:
 
     sum_p = subcommands.add_parser(
         'sum',
-        formatter_class=RawDescriptionDefaultHelpFormatter,
+        formatter_class=arg.RawDescriptionDefaultHelpFormatter,
         description="Show checker statistics for some analysis runs.",
         help="Show statistics of checkers.",
         epilog='''Example scenario: Get checker statistics
@@ -1239,7 +1220,7 @@ Get statistics for all runs and only for severity 'high':
 
     del_p = subcommands.add_parser(
         'del',
-        formatter_class=RawDescriptionDefaultHelpFormatter,
+        formatter_class=arg.RawDescriptionDefaultHelpFormatter,
         description="""
 Remove analysis runs from the server based on some criteria.
 

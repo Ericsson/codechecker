@@ -26,9 +26,7 @@ from codechecker_api_shared.ttypes import RequestFailed, ErrorCode
 from codechecker_client import client as libclient
 from codechecker_client.metadata import merge_metadata_json
 
-from codechecker_common import logger
-from codechecker_common import util
-from codechecker_common import plist_parser
+from codechecker_common import arg, logger, plist_parser, util
 from codechecker_common.output_formatters import twodim_to_str
 from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler
@@ -73,7 +71,7 @@ def get_argparser_ctor_args():
 
     return {
         'prog': 'CodeChecker store',
-        'formatter_class': argparse.ArgumentDefaultsHelpFormatter,
+        'formatter_class': arg.RawDescriptionDefaultHelpFormatter,
 
         # Description is shown when the command's help is queried directly
         'description': "Store the results from one or more 'codechecker-"
@@ -81,8 +79,15 @@ def get_argparser_ctor_args():
 
         # Epilogue is shown after the arguments when the help is queried
         # directly.
-        'epilog': "The results can be viewed by connecting to such a server "
-                  "in a Web browser or via 'CodeChecker cmd'.",
+        'epilog': """
+environment variables:
+  CC_PASS_FILE     The location of the password file for auto login. By default
+                   CodeChecker will use '~/.codechecker.passwords.json' file.
+                   It can also be used to setup different credential files to
+                   login to the same server with a different user.
+
+The results can be viewed by connecting to such a server in a Web browser or
+via 'CodeChecker cmd'.""",
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.
@@ -160,10 +165,10 @@ def add_arguments_to_parser(parser):
                              "reports for source files that were analysed.)")
 
     server_args = parser.add_argument_group(
-        "server arguments",
-        "Specifies a 'CodeChecker server' instance which will be used to "
-        "store the results. This server must be running and listening, and "
-        "the given product must exist prior to the 'store' command being ran.")
+        "server arguments", """
+Specifies a 'CodeChecker server' instance which will be used to store the
+results. This server must be running and listening, and the given product must
+exist prior to the 'store' command being ran.""")
 
     server_args.add_argument('--url',
                              type=str,

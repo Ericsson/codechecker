@@ -292,6 +292,11 @@ output arguments:
   --print-steps         Print the steps the analyzers took in finding the
                         reported defect.
 
+environment variables:
+  CC_ANALYZERS_FROM_PATH       Set to `yes` or `1` to enforce taking the
+                               analyzers from the `PATH` instead of the given
+                               binaries.
+
 issue hashes:
 - By default the issue hash calculation method for 'Clang Static Analyzer' is
 context sensitive. It means the hash will be generated based on the following
@@ -366,6 +371,38 @@ optional arguments:
                         output of this command.
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level.
+
+environment variables:
+  CC_LOGGER_GCC_LIKE       Set to to a colon separated list to change which
+                           compilers should be logged. For example (default):
+                           export CC_LOGGER_GCC_LIKE="gcc:g++:clang:clang++:
+                           cc:c++". The logger will match any compilers with
+                           'gcc', 'g++', 'clang', 'clang++', 'cc' and 'c++' in
+                           their filenames.
+  CC_LOGGER_DEF_DIRS       If the environment variable is defined, the logger
+                           will extend the compiler argument list in the
+                           compilation database with the pre-configured include
+                           paths of the logged compiler.
+  CC_LOGGER_ABS_PATH       If the environment variable is defined, all relative
+                           paths in the compilation commands after '-I,
+                           -idirafter, -imultilib, -iquote, -isysroot -isystem,
+                           -iwithprefix, -iwithprefixbefore, -sysroot,
+                           --sysroot' will be converted to absolute PATH when
+                           written into the compilation database.
+  CC_LOGGER_KEEP_LINK      If its value is not 'true' then object files will be
+                           removed from the build action. For example in case
+                           of this build command: 'gcc main.c object1.o
+                           object2.so' the 'object1.o' and 'object2.so' will be
+                           removed and only 'gcc main.c' will be captured. If
+                           only object files are provided to the compiler then
+                           the complete build action will be thrown away. This
+                           means that build actions which only perform linking
+                           will not be captured. We consider a file as object
+                           file if its extension is '.o', '.so' or '.a'.
+  CC_LOGGER_DEBUG_FILE     Output file to print log messages. By default if we
+                           run the log command in debug mode it will generate
+                           a 'codechecker.logger.debug' file beside the log
+                           file.
 ```
 
 Please note, that only the files that are used in the given `--build` argument
@@ -666,6 +703,11 @@ optional arguments:
                         created metadata file.
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level.
+
+environment variables:
+  CC_ANALYZERS_FROM_PATH       Set to `yes` or `1` to enforce taking the
+                               analyzers from the `PATH` instead of the given
+                               binaries.
 ```
 
 

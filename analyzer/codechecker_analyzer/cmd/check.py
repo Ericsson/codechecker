@@ -15,11 +15,11 @@ import os
 import shutil
 import tempfile
 
-from codechecker_analyzer import arg
 from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.analyzers import analyzer_types
+from codechecker_analyzer.arg import OrderedCheckersAction
 
-from codechecker_common import logger
+from codechecker_common import arg, logger
 
 
 LOG = logger.get_logger('system')
@@ -44,6 +44,11 @@ performs every step of doing the analysis in batch.""",
         # Epilogue is shown after the arguments when the help is queried
         # directly.
         'epilog': """
+environment variables:
+  CC_ANALYZERS_FROM_PATH       Set to `yes` or `1` to enforce taking the
+                               analyzers from the `PATH` instead of the given
+                               binaries.
+
 issue hashes:
 - By default the issue hash calculation method for 'Clang Static Analyzer' is
 context sensitive. It means the hash will be generated based on the following
@@ -575,7 +580,7 @@ was emitted by clang-tidy.""")
                                dest="enable",
                                metavar='checker/group/profile',
                                default=argparse.SUPPRESS,
-                               action=arg.OrderedCheckersAction,
+                               action=OrderedCheckersAction,
                                help="Set a checker (or checker group) "
                                     "to BE USED in the analysis.")
 
@@ -583,7 +588,7 @@ was emitted by clang-tidy.""")
                                dest="disable",
                                metavar='checker/group/profile',
                                default=argparse.SUPPRESS,
-                               action=arg.OrderedCheckersAction,
+                               action=OrderedCheckersAction,
                                help="Set a checker (or checker group) "
                                     "to BE PROHIBITED from use in the "
                                     "analysis.")

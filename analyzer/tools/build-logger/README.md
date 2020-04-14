@@ -64,9 +64,9 @@ You can specify the `javac` like
 compilers that should be logged as a colon separated string list.
 
 ### `CC_LOGGER_DEF_DIRS` 
-If the environment variable is defined, 
-the logger will extend the  compiler argument list in the compilation 
-database  with the pre-configured include paths of the logged compiler.
+If the environment variable is defined, the logger will extend the compiler
+argument list in the compilation database with the pre-configured include paths
+of the logged compiler.
 
 ### `CC_LOGGER_ABS_PATH`
 If the environment variable is defined, 
