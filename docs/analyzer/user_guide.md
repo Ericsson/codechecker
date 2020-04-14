@@ -1255,6 +1255,8 @@ optional arguments:
                         List checkers enabled by the selected profile.
                         'list' is a special option showing details about
                         profiles collectively.
+  --checker-config      Show checker configuration options. These can be
+                        given to 'CodeChecker analyze --checker-config'.
   --only-enabled        Show only the enabled checkers.
   --only-disabled       Show only the disabled checkers.
   -o {rows,table,csv,json}, --output {rows,table,csv,json}

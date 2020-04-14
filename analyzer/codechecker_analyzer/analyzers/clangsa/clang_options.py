@@ -13,8 +13,7 @@ from codechecker_common.logger import get_logger
 LOG = get_logger('analyzer')
 
 
-def get_analyzer_checkers_cmd(clang_version_info, plugins,
-                              alpha=True, debug=True):
+def get_analyzer_checkers_cmd(cfg_handler, alpha=True, debug=True):
     """Return the checkers list getter command which depends on the used clang
     version.
 
@@ -23,9 +22,9 @@ def get_analyzer_checkers_cmd(clang_version_info, plugins,
     Before clang9 alpha and debug checkers were printed by default.
     Since clang9 there are extra arguments to print the additional checkers.
     """
-    command = ["-cc1"]
+    command = [cfg_handler.analyzer_binary, "-cc1"]
 
-    for plugin in plugins:
+    for plugin in cfg_handler.analyzer_plugins:
         command.extend(["-load", plugin])
 
     command.append("-analyzer-checker-help")
@@ -35,14 +34,37 @@ def get_analyzer_checkers_cmd(clang_version_info, plugins,
     # The new checker help printig flags are not available there yet.
     # If the OSX clang will be updated to based on clang v8
     # this early return can be removed.
-    if clang_version_info.vendor != "clang":
+    if cfg_handler.version_info.vendor != "clang":
         return command
 
-    if alpha and clang_version_info.major_version > 8:
+    if alpha and cfg_handler.version_info.major_version > 8:
         command.append("-analyzer-checker-help-alpha")
 
-    if debug and clang_version_info.major_version > 8:
+    if debug and cfg_handler.version_info.major_version > 8:
         command.append("-analyzer-checker-help-developer")
+
+    return command
+
+
+def get_checker_config_cmd(cfg_handler, alpha=True, debug=True):
+    """Return the checker config getter command which depends on the used clang
+    version.
+    """
+    command = [cfg_handler.analyzer_binary, "-cc1"]
+
+    for plugin in cfg_handler.analyzer_plugins:
+        command.extend(["-load", plugin])
+
+    command.append("-analyzer-checker-option-help")
+
+    if cfg_handler.version_info.vendor != "clang":
+        return command
+
+    if alpha and cfg_handler.version_info.major_version > 8:
+        command.append("-analyzer-checker-option-help-alpha")
+
+    if debug and cfg_handler.version_info.major_version > 8:
+        command.append("-analyzer-checker-option-help-developer")
 
     return command
 

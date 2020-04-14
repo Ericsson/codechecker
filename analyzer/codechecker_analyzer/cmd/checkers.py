@@ -139,6 +139,15 @@ def add_arguments_to_parser(parser):
                              "'list' is a special option showing details "
                              "about profiles collectively.")
 
+    parser.add_argument('--checker-config',
+                        dest='checker_config',
+                        default=argparse.SUPPRESS,
+                        action='store_true',
+                        required=False,
+                        help="Show checker configuration options. These can "
+                             "be given to 'CodeChecker analyze "
+                             "--checker-config'.")
+
     filters = parser.add_mutually_exclusive_group(required=False)
 
     filters.add_argument('--only-enabled',
@@ -188,6 +197,10 @@ def main(args):
                                                                working)
 
     def uglify(text):
+        """
+        csv and json format output contain this non human readable header
+        string: no CamelCase and no space.
+        """
         return text.lower().replace(' ', '_')
 
     # List available checker profiles.
@@ -201,6 +214,30 @@ def main(args):
 
         if args.output_format in ['csv', 'json']:
             header = list(map(uglify, header))
+
+        print(output_formatters.twodim_to_str(args.output_format,
+                                              header, rows))
+        return
+
+    # List checker config options.
+    if 'checker_config' in args:
+        if 'details' in args:
+            header = ['Option', 'Description']
+        else:
+            header = ['Option']
+
+        if args.output_format in ['csv', 'json']:
+            header = list(map(uglify, header))
+
+        rows = []
+        for analyzer in working:
+            config_handler = analyzer_config_map.get(analyzer)
+            analyzer_class = analyzer_types.supported_analyzers[analyzer]
+
+            configs = analyzer_class.get_checker_config(config_handler,
+                                                        analyzer_environment)
+            rows.extend((':'.join((analyzer, c[0])), c[1]) if 'details' in args
+                else (':'.join((analyzer, c[0])),) for c in configs)
 
         print(output_formatters.twodim_to_str(args.output_format,
                                               header, rows))

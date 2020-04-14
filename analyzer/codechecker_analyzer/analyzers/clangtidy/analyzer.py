@@ -49,6 +49,16 @@ def parse_checkers(tidy_output):
     return checkers
 
 
+def parse_checker_config(config_dump):
+    """
+    Return the parsed clang-tidy config options as a list of
+    (flag, default_value) tuples.
+    config_dump -- clang-tidy config options YAML dump.
+    """
+    reg = re.compile(r'key:\s+(\S+)\s+value:\s+([^\n]+)')
+    return re.findall(reg, config_dump)
+
+
 class ClangTidy(analyzer_base.SourceAnalyzer):
     """
     Constructs the clang tidy analyzer commands.
@@ -64,19 +74,27 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         """
         Return the list of the supported checkers.
         """
-        analyzer_binary = cfg_handler.analyzer_binary
-
-        command = [analyzer_binary, "-list-checks", "-checks='*'"]
-
         try:
-            command = shlex.split(' '.join(command))
             result = subprocess.check_output(
-                command,
+                [cfg_handler.analyzer_binary, "-list-checks", "-checks=*"],
                 env=environ,
                 universal_newlines=True,
                 encoding="utf-8",
                 errors="ignore")
             return parse_checkers(result)
+        except (subprocess.CalledProcessError, OSError):
+            return []
+
+    @classmethod
+    def get_checker_config(cls, cfg_handler, environ):
+        try:
+            result = subprocess.check_output(
+                [cfg_handler.analyzer_binary, "-dump-config"],
+                env=environ,
+                universal_newlines=True,
+                encoding="utf-8",
+                errors="ignore")
+            return parse_checker_config(result)
         except (subprocess.CalledProcessError, OSError):
             return []
 
