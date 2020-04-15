@@ -10,13 +10,16 @@ Execute analysis over an already existing build.json compilation database.
 
 import argparse
 import collections
+import fnmatch
 import json
 import os
 import re
 import shutil
 import sys
 
-from codechecker_analyzer import analyzer, analyzer_context, env
+from tu_collector import tu_collector
+
+from codechecker_analyzer import analyzer, analyzer_context, arg, env
 from codechecker_analyzer.analyzers import analyzer_types
 from codechecker_analyzer.arg import OrderedCheckersAction
 from codechecker_analyzer.buildlog import log_parser
@@ -642,7 +645,24 @@ def check_config_file(args):
     LOG.debug("Config file '%s' is available but disabled.", args.config_file)
 
 
-def __get_skip_handler(args):
+def __get_source_dependencies(compile_commands):
+    """ Returns a set of dependencies for each files in each translation unit.
+    """
+    dependencies = collections.defaultdict(set)
+    for build_action in compile_commands:
+        files, _ = tu_collector.get_dependent_headers(
+            build_action['command'],
+            build_action['directory'])
+
+        source_file = os.path.join(build_action['directory'],
+                                   build_action['file'])
+        for f in files:
+            dependencies[f].add(source_file)
+
+    return dependencies
+
+
+def __get_skip_handler(args, compile_commands):
     """
     Initialize and return a skiplist handler if
     there is a skip list file in the arguments or files options is provided.
@@ -663,7 +683,51 @@ def __get_skip_handler(args):
 
     if skip_file_content:
         LOG.debug_analyzer("Creating skiplist handler.")
-        return skiplist_handler.SkipListHandler(skip_file_content)
+        handler = skiplist_handler.SkipListHandler(skip_file_content)
+
+        analyze_headers = []
+
+        # Check whether the skip file contains a header file which is not
+        # skipped.
+        for skip_line in handler.skip_file_lines:
+            if skip_line[0] == '+' and \
+              skip_line.lower().endswith((".h", ".hh", ".hpp")):
+
+                norm_skip_path = os.path.normpath(skip_line[1:].strip())
+                rexpr = re.compile(
+                    fnmatch.translate(norm_skip_path + '*'))
+                analyze_headers.append((skip_line, rexpr))
+
+        # Get source files which depend on the previously collected header
+        # files and create a new skip list handler where we include these
+        # files in the beginning.
+        if analyze_headers:
+            LOG.info("Get source files which depend on some header files and "
+                     "should be analyzed by your skip file.")
+
+            dependencies = __get_source_dependencies(compile_commands)
+
+            analyze_header_deps = []
+            for f, deps in dependencies.items():
+                for _, rexpr in analyze_headers:
+                    if rexpr.match(f):
+                        analyze_header_deps.extend(["+" + d for d in deps])
+
+            if analyze_header_deps:
+                LOG.info("Your skip file contained some header files (%s) to "
+                         "be analyzed. Analysis can not be executed on header "
+                         "files only. For this reason CodeChecker will "
+                         "analyze the following source files which include "
+                         "the header files:\n%s",
+                         ', '.join([f for (f, _) in analyze_headers]),
+                         '\n'.join([" " + f for f in analyze_header_deps]))
+
+                skip_file_content = \
+                    "\n".join(analyze_header_deps) + "\n" + skip_file_content
+
+                return skiplist_handler.SkipListHandler(skip_file_content)
+
+        return handler
 
 
 def __update_skip_file(args):
@@ -775,8 +839,10 @@ def main(args):
                 LOG.error("Checker option in wrong format: %s", config)
                 sys.exit(1)
 
+    compile_commands = load_json_or_empty(args.logfile, default={})
+
     # Process the skip list if present.
-    skip_handler = __get_skip_handler(args)
+    skip_handler = __get_skip_handler(args, compile_commands)
 
     # Enable alpha uniqueing by default if ctu analysis is used.
     if 'none' in args.compile_uniqueing and 'ctu_phases' in args:
@@ -817,19 +883,11 @@ def main(args):
     analyzer_env = env.extend(context.path_env_extra,
                               context.ld_lib_path_extra)
 
-    # Parse the JSON CCDBs and retrieve the compile commands.
-    actions = []
-
     # Number of all the compilation commands in the parsed log files,
     # logged by the logger.
-    all_cmp_cmd_count = 0
-    # Number of the skipped compile commands during the
-    # compile command processing.
-    skipped_cmp_cmd_count = 0
+    all_cmp_cmd_count = len(compile_commands)
 
-    compile_commands = load_json_or_empty(args.logfile, default={})
-    all_cmp_cmd_count += len(compile_commands)
-    filtered_parsed_actions, skipped = log_parser.parse_unique_log(
+    actions, skipped_cmp_cmd_count = log_parser.parse_unique_log(
         compile_commands,
         args.output_path,
         args.compile_uniqueing,
@@ -840,8 +898,6 @@ def main(args):
         pre_analysis_skip_handler,
         ctu_or_stats_enabled,
         analyzer_env)
-    actions += filtered_parsed_actions
-    skipped_cmp_cmd_count += skipped
 
     if not actions:
         LOG.info("No analysis is required.\nThere were no compilation "

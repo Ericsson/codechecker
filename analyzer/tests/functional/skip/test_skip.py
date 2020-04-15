@@ -15,7 +15,6 @@ import os
 import plistlib
 import subprocess
 import unittest
-import shutil
 
 from libtest import env
 
@@ -35,33 +34,27 @@ class TestSkip(unittest.TestCase):
         self._codechecker_cmd = env.codechecker_cmd()
         self.report_dir = os.path.join(self.test_workspace, "reports")
         self.test_dir = os.path.join(os.path.dirname(__file__), 'test_files')
-        # Change working dir to testfile dir so CodeChecker can be run easily.
-        self.__old_pwd = os.getcwd()
-        os.chdir(self.test_dir)
-
-    def tearDown(self):
-        """Restore environment after tests have ran."""
-        os.chdir(self.__old_pwd)
-        if os.path.isdir(self.report_dir):
-            shutil.rmtree(self.report_dir)
 
     def test_skip(self):
         """Analyze a project with a skip file."""
+        test_dir = os.path.join(self.test_dir, "simple")
         build_json = os.path.join(self.test_workspace, "build.json")
 
         clean_cmd = ["make", "clean"]
-        out = subprocess.check_output(
-            clean_cmd, encoding="utf-8", errors="ignore")
+        out = subprocess.check_output(clean_cmd,
+                                      cwd=test_dir,
+                                      encoding="utf-8", errors="ignore")
         print(out)
 
         # Create and run log command.
         log_cmd = [self._codechecker_cmd, "log", "-b", "make",
                    "-o", build_json]
-        out = subprocess.check_output(
-            log_cmd, encoding="utf-8", errors="ignore")
+        out = subprocess.check_output(log_cmd,
+                                      cwd=test_dir,
+                                      encoding="utf-8", errors="ignore")
         print(out)
         # Create and run analyze command.
-        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+        analyze_cmd = [self._codechecker_cmd, "analyze", "-c", build_json,
                        "--analyzers", "clangsa", "--verbose", "debug",
                        "--ignore", "skipfile", "-o", self.report_dir]
 
@@ -69,7 +62,7 @@ class TestSkip(unittest.TestCase):
             analyze_cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            cwd=self.test_dir,
+            cwd=test_dir,
             encoding="utf-8",
             errors="ignore")
         out, err = process.communicate()
@@ -111,3 +104,46 @@ class TestSkip(unittest.TestCase):
                                 "Found a location which points to "
                                 "skiped file, this report should "
                                 "have been removed.")
+
+    def test_analyze_only_header(self):
+        """ Analyze source file which depends on a header file. """
+        test_dir = os.path.join(self.test_dir, "multiple")
+        build_json = os.path.join(self.test_workspace, "build.json")
+
+        # Create and run log command.
+        log_cmd = [self._codechecker_cmd, "log", "-b", "make",
+                   "-o", build_json]
+        out = subprocess.check_output(log_cmd,
+                                      cwd=test_dir,
+                                      encoding="utf-8", errors="ignore")
+        print(out)
+
+        # Create and run analyze command.
+        analyze_cmd = [self._codechecker_cmd, "analyze", "-c", build_json,
+                       "--analyzers", "clangsa",
+                       "--ignore", "skipfile",
+                       "-o", self.report_dir]
+
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=test_dir,
+            encoding="utf-8",
+            errors="ignore")
+        out, err = process.communicate()
+
+        print(out)
+        print(err)
+        errcode = process.returncode
+        self.assertEqual(errcode, 0)
+
+        # Check if file is skipped.
+        report_dir_files = os.listdir(self.report_dir)
+
+        # Check that we analyzed all source files which depend on the header
+        # file.
+        self.assertTrue(any(["a.cpp" in f
+                             for f in report_dir_files]))
+        self.assertTrue(any(["b.cpp" in f
+                             for f in report_dir_files]))
