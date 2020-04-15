@@ -13,7 +13,6 @@ sources.
 
 
 import argparse
-import codecs
 import fnmatch
 import json
 import logging
@@ -26,6 +25,16 @@ import subprocess
 import sys
 import zipfile
 from distutils.spawn import find_executable
+
+
+LOG = logging.getLogger('tu_collector')
+
+handler = logging.StreamHandler()
+formatter = logging.Formatter('[%(levelname)s] - %(message)s')
+handler.setFormatter(formatter)
+
+LOG.setLevel(logging.INFO)
+LOG.addHandler(handler)
 
 
 def __random_string(l):
@@ -168,6 +177,8 @@ def __gather_dependencies(command, build_dir):
     # the gcc-toolchain are not added to the output.
     command = __eliminate_argument(command, '--gcc-toolchain')
 
+    LOG.debug("Command: %s", ' '.join(command))
+
     try:
         output = subprocess.check_output(
             command,
@@ -218,7 +229,7 @@ def get_dependent_headers(command, build_dir, collect_toolchain=True):
                          are also collected in case this parameter is True.
     """
 
-    logging.debug("Generating dependent headers via compiler...")
+    LOG.debug("Generating dependent headers via compiler...")
 
     if isinstance(command, str):
         command = shlex.split(command)
@@ -229,24 +240,23 @@ def get_dependent_headers(command, build_dir, collect_toolchain=True):
     try:
         dependencies |= set(__gather_dependencies(command, build_dir))
     except Exception as ex:
-        logging.debug("Couldn't create dependencies:")
-        logging.debug(str(ex))
+        LOG.error("Couldn't create dependencies: %s", str(ex))
         error += str(ex)
 
     toolchain_compiler = __get_toolchain_compiler(command)
 
     if collect_toolchain and toolchain_compiler:
-        logging.debug("Generating gcc-toolchain headers via toolchain "
-                      "compiler...")
+        LOG.debug("Generating gcc-toolchain headers via toolchain "
+                  "compiler...")
         try:
             # Change the original compiler to the compiler from the toolchain.
             command[0] = toolchain_compiler
             dependencies |= set(__gather_dependencies(command, build_dir))
         except Exception as ex:
-            logging.debug("Couldn't create dependencies:")
-            logging.debug(str(ex))
+            LOG.error("Couldn't create dependencies: %s", str(ex))
             error += str(ex)
 
+    LOG.debug("Dependencies: %s", ', '.join(dependencies))
     return dependencies, error
 
 
@@ -271,8 +281,8 @@ def add_sources_to_zip(zip_file, files):
             except KeyError:
                 archive.write(f, archive_path, zipfile.ZIP_DEFLATED)
             else:
-                logging.debug("'%s' is already in the ZIP file, won't add it "
-                              "again!", f)
+                LOG.debug("'%s' is already in the ZIP file, won't add it "
+                          "again!", f)
 
 
 def zip_tu_files(zip_file, compilation_database, write_mode='w'):
@@ -367,13 +377,20 @@ used to generate a log file on the fly.""")
                              "actions of which the compiled source file "
                              "matches this path. E.g.: /path/to/*/files")
 
+    parser.add_argument('-v', '--verbose',
+                        action='store_true',
+                        dest='verbose',
+                        help="Enable debug level logging.")
+
     args = parser.parse_args()
 
     # --- Checking the existence of input files. --- #
 
+    if 'verbose' in args and args.verbose:
+        LOG.setLevel(logging.DEBUG)
+
     if args.logfile and not os.path.isfile(args.logfile):
-        print("Compilation database file doesn't exist: {}".format(
-            args.logfile))
+        LOG.error("Compilation database file doesn't exist: %s", args.logfile)
         sys.exit(1)
 
     # --- Do the job. --- #
@@ -388,14 +405,15 @@ used to generate a log file on the fly.""")
                     action['file'], args.filter)]
     else:
         if args.filter:
-            print('Warning: In case of using build command the filter has no '
-                  'effect.')
+            LOG.warning('In case of using build command the filter has no '
+                        'effect.')
         compilation_db = [{
             'file': '',
             'command': args.command,
             'directory': os.getcwd()}]
 
     zip_tu_files(args.zip, compilation_db)
+    LOG.info("Done.")
 
 
 if __name__ == "__main__":
