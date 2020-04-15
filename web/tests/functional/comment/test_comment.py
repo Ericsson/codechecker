@@ -232,7 +232,8 @@ class TestComment(unittest.TestCase):
         self.assertIsNotNone(run_results_new)
         self.assertNotEqual(len(run_results_new), 0)
 
-        bug_new = run_results_new[0]
+        bug_new = next(x for x in run_results_new
+                       if x.bugHash == bug_base.bugHash)
 
         # Both bug have the same bug hash.
         self.assertEqual(bug_base.bugHash, bug_new.bugHash)

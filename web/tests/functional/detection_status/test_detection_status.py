@@ -399,8 +399,8 @@ int main()
 
         reports = self._cc_client.getRunResults(None, 100, 0, [], None, None,
                                                 False)
-        self.assertTrue([r.detectionStatus == DetectionStatus.UNRESOLVED
-                         for r in reports])
+        self.assertTrue([r for r in reports
+                         if r.detectionStatus == DetectionStatus.UNRESOLVED])
 
         # We turn off all the 'hicpp' checkers too. If we store the results to
         # the server see that 'hicpp' results will be marked as 'OFF' now.

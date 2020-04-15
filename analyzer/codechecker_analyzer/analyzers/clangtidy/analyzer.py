@@ -7,6 +7,7 @@
 """
 
 
+import json
 import os
 import re
 import shlex
@@ -145,7 +146,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             analyzer_cmd.extend(config.analyzer_extra_arguments)
 
             if config.checker_config:
-                analyzer_cmd.append('-config="' + config.checker_config + '"')
+                analyzer_cmd.append('-config=' + config.checker_config)
 
             analyzer_cmd.append(self.source_file)
 
@@ -285,19 +286,30 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             # No clang tidy arguments file was given in the command line.
             LOG.debug_analyzer(aerr)
 
-        try:
-            # The config file dumped by clang-tidy contains "..." at the end.
-            # This has to be emitted, otherwise -config flag of clang-tidy
-            # cannot consume it.
-            with open(args.tidy_config, 'rb') as tidy_config:
-                lines = tidy_config.readlines()
-                lines = [x for x in lines if x != '...\n']
-                handler.checker_config = ''.join(lines)
-        except IOError as ioerr:
-            LOG.debug_analyzer(ioerr)
-        except AttributeError as aerr:
-            # No clang tidy config file was given in the command line.
-            LOG.debug_analyzer(aerr)
+        # TODO: This extra "isinsrance" check is needed for
+        # CodeChecker checkers --checker-config. This command also
+        # runs this function in order to construct a config handler.
+        if 'checker_config' in args and \
+                isinstance(args.checker_config, list):
+            r = re.compile(r'(?P<analyzer>.+?):(?P<key>.+?)=(?P<value>.+)')
+            check_options = []
+
+            for cfg in args.checker_config:
+                m = re.search(r, cfg)
+                if m.group('analyzer') == cls.ANALYZER_NAME:
+                    check_options.append({'key': m.group('key'),
+                                          'value': m.group('value')})
+            handler.checker_config = \
+                json.dumps({'CheckOptions': check_options})
+        else:
+            try:
+                with open(args.tidy_config, 'r') as tidy_config:
+                    handler.checker_config = tidy_config.read()
+            except IOError as ioerr:
+                LOG.debug_analyzer(ioerr)
+            except AttributeError as aerr:
+                # No clang tidy config file was given in the command line.
+                LOG.debug_analyzer(aerr)
 
         check_env = env.extend(context.path_env_extra,
                                context.ld_lib_path_extra)

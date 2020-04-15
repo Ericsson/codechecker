@@ -91,7 +91,9 @@ usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-t {plist}] [-q] [-f]
                          [--config CONFIG_FILE]
                          [--saargs CLANGSA_ARGS_CFG_FILE]
                          [--tidyargs TIDY_ARGS_CFG_FILE]
-                         [--tidy-config TIDY_CONFIG] [--timeout TIMEOUT]
+                         [--tidy-config TIDY_CONFIG]
+                         [--checker-config [CHECKER_CONFIG [CHECKER_CONFIG ...]]]
+                         [--timeout TIMEOUT]
                          [-e checker/group/profile] [-d checker/group/profile]
                          [--enable-all] [--print-steps]
                          [--verbose {info,debug,debug_analyzer}]
@@ -221,6 +223,11 @@ analyzer arguments:
                         clang-tidy checkers. The file can be dumped by
                         'CodeChecker analyzers --dump-config clang-tidy'
                         command.
+  --checker-config [CHECKER_CONFIG [CHECKER_CONFIG ...]]
+                        Checker configuration options in the following format:
+                        analyzer:key=value. The collection of the options can
+                        be printed with 'CodeChecker checkers
+                        --checker-config'.
   --timeout TIMEOUT     The amount of time (in seconds) that each analyzer can
                         spend, individually, to analyze the project. If the
                         analysis of a particular file takes longer than this
@@ -801,6 +808,11 @@ analyzer arguments:
                         clang-tidy checkers. The file can be dumped by
                         'CodeChecker analyzers --dump-config clang-tidy'
                         command.
+  --checker-config [CHECKER_CONFIG [CHECKER_CONFIG ...]]
+                        Checker configuration options in the following format:
+                        analyzer:key=value. The collection of the options can
+                        be printed with 'CodeChecker checkers
+                        --checker-config'.
   --timeout TIMEOUT     The amount of time (in seconds) that each analyzer can
                         spend, individually, to analyze the project. If the
                         analysis of a particular file takes longer than this

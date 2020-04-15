@@ -202,7 +202,7 @@ def check_and_store(codechecker_cfg, test_project_name, test_project_path,
 
     check_cmd = ['CodeChecker', 'check',
                  '-o', output_dir,
-                 '-b', "'" + build_cmd + "'",
+                 '-b', build_cmd,
                  '--quiet']
 
     suppress_file = codechecker_cfg.get('suppress_file')
@@ -221,10 +221,9 @@ def check_and_store(codechecker_cfg, test_project_name, test_project_path,
 
     try:
         print("RUNNING CHECK")
-        print(' '.join(check_cmd))
+        print(check_cmd)
         subprocess.call(
-            shlex.split(
-                ' '.join(check_cmd)),
+            check_cmd,
             cwd=test_project_path,
             env=codechecker_cfg['check_env'],
             encoding="utf-8",

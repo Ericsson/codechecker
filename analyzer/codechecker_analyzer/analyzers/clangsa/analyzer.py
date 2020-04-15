@@ -165,6 +165,14 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                 for cfg in self.__checker_configs:
                     analyzer_cmd.extend(cfg)
 
+            # TODO: This object has a __checker_configs attribute and the
+            # corresponding functions to set it. Either those should be used
+            # for checker configs coming as command line argument, or those
+            # should be eliminated.
+            for cfg in config.checker_config:
+                analyzer_cmd.extend(
+                    ['-Xclang', '-analyzer-config', '-Xclang', cfg])
+
             # Config handler stores which checkers are enabled or disabled.
             for checker_name, value in config.checks().items():
                 state, _ = value
@@ -369,5 +377,19 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             clang_sa_checkers,
             cmdline_checkers,
             'enable_all' in args and args.enable_all)
+
+        handler.checker_config = []
+        r = re.compile(r'(?P<analyzer>.+?):(?P<key>.+?)=(?P<value>.+)')
+
+        # TODO: This extra "isinstance" check is needed for
+        # CodeChecker checkers --checker-config. This command also runs
+        # this function in order to construct a config handler.
+        if 'checker_config' in args and \
+                isinstance(args.checker_config, list):
+            for cfg in args.checker_config:
+                m = re.search(r, cfg)
+                if m.group('analyzer') == cls.ANALYZER_NAME:
+                    handler.checker_config.append(
+                      m.group('key') + '=' + m.group('value'))
 
         return handler

@@ -12,6 +12,7 @@ import argparse
 import collections
 import json
 import os
+import re
 import shutil
 import sys
 
@@ -336,6 +337,16 @@ def add_arguments_to_parser(parser):
                                     "The file can be dumped by "
                                     "'CodeChecker analyzers --dump-config "
                                     "clang-tidy' command.")
+
+    analyzer_opts.add_argument('--checker-config',
+                               dest='checker_config',
+                               nargs='*',
+                               default=argparse.SUPPRESS,
+                               help="Checker configuration options in the "
+                                    "following format: analyzer:key=value. "
+                                    "The collection of the options can be "
+                                    "printed with "
+                                    "'CodeChecker checkers --checker-config'.")
 
     analyzer_opts.add_argument('--timeout',
                                type=int,
@@ -728,6 +739,15 @@ def main(args):
     LOG.debug("args: " + str(args))
     LOG.debug("Output will be stored to: '" + args.output_path + "'")
 
+    # Check the format of checker options.
+    if 'checker_config' in args:
+        checker_option_re = re.compile(r'^({}):.+=.+$'.format(
+            '|'.join(analyzer_types.supported_analyzers)))
+        for config in args.checker_config:
+            if not re.match(checker_option_re, config):
+                LOG.error("Checker option in wrong format: " + config)
+                sys.exit(1)
+
     # Process the skip list if present.
     skip_handler = __get_skip_handler(args)
 
@@ -743,8 +763,6 @@ def main(args):
                       args.compiler_info_file)
             sys.exit(1)
         compiler_info_file = args.compiler_info_file
-
-    report_dir = args.output_path
 
     ctu_or_stats_enabled = False
     # Skip list is applied only in pre-analysis
@@ -786,7 +804,7 @@ def main(args):
     all_cmp_cmd_count += len(compile_commands)
     filtered_parsed_actions, skipped = log_parser.parse_unique_log(
         compile_commands,
-        report_dir,
+        args.output_path,
         args.compile_uniqueing,
         compiler_info_file,
         args.keep_gcc_include_fixed,

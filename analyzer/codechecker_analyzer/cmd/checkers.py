@@ -185,16 +185,15 @@ def main(args):
                         None if args.output_format == 'table' else 'stderr')
 
     context = analyzer_context.get_context()
-    working, errored = analyzer_types.check_supported_analyzers(
+    working_analyzers, errored = analyzer_types.check_supported_analyzers(
         args.analyzers,
         context)
 
     analyzer_environment = env.extend(context.path_env_extra,
                                       context.ld_lib_path_extra)
 
-    analyzer_config_map = analyzer_types.build_config_handlers(args,
-                                                               context,
-                                                               working)
+    analyzer_config_map = analyzer_types.build_config_handlers(
+        args, context, working_analyzers)
 
     def uglify(text):
         """
@@ -230,14 +229,14 @@ def main(args):
             header = list(map(uglify, header))
 
         rows = []
-        for analyzer in working:
+        for analyzer in working_analyzers:
             config_handler = analyzer_config_map.get(analyzer)
             analyzer_class = analyzer_types.supported_analyzers[analyzer]
 
             configs = analyzer_class.get_checker_config(config_handler,
                                                         analyzer_environment)
             rows.extend((':'.join((analyzer, c[0])), c[1]) if 'details' in args
-                else (':'.join((analyzer, c[0])),) for c in configs)
+                        else (':'.join((analyzer, c[0])),) for c in configs)
 
         print(output_formatters.twodim_to_str(args.output_format,
                                               header, rows))
@@ -253,7 +252,7 @@ def main(args):
         header = list(map(uglify, header))
 
     rows = []
-    for analyzer in working:
+    for analyzer in working_analyzers:
         config_handler = analyzer_config_map.get(analyzer)
         analyzer_class = analyzer_types.supported_analyzers[analyzer]
 
