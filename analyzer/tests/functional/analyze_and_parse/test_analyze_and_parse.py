@@ -246,6 +246,31 @@ class AnalyzeParseTestCase(
         self.assertIn('notes', res)
         self.assertTrue(res['notes'])
 
+    def test_codeclimate_output(self):
+        """ Test parse codeclimate output. """
+        test_project_notes = os.path.join(self.test_workspaces['NORMAL'],
+                                          "test_files", "notes")
+        extract_cmd = ['CodeChecker', 'parse', "-e", "codeclimate",
+                       test_project_notes,
+                       '--trim-path-prefix', test_project_notes]
+
+        out, _ = call_command(extract_cmd, cwd=self.test_dir, env=self.env)
+        res = json.loads(out)
+
+        self.assertEqual(res, [{
+            'type': 'issue',
+            'check_name': 'alpha.clone.CloneChecker',
+            'description': 'Duplicate code detected',
+            'categories': ['Bug Risk'],
+            'fingerprint': '3d15184f38c5fa57e479b744fe3f5035',
+            'location': {
+                'path': 'notes.cpp',
+                'lines': {
+                    'begin': 3
+                }
+            }
+        }])
+
     def test_invalid_plist_file(self):
         """ Test parsing invalid plist file. """
         invalid_plist_file = os.path.join(self.test_workspaces['NORMAL'],

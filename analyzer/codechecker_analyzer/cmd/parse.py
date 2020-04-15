@@ -20,11 +20,9 @@ import traceback
 
 from plist_to_html import PlistToHtml
 
-from codechecker_analyzer import analyzer_context, suppress_handler
+from codechecker_analyzer import arg, analyzer_context, suppress_handler
 
-from codechecker_common import logger
-from codechecker_common import plist_parser
-from codechecker_common import util
+from codechecker_common import logger, plist_parser, util
 from codechecker_common.skiplist_handler import SkipListHandler
 from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler
@@ -322,7 +320,7 @@ def get_argparser_ctor_args():
 
     return {
         'prog': 'CodeChecker parse',
-        'formatter_class': argparse.ArgumentDefaultsHelpFormatter,
+        'formatter_class': arg.RawDescriptionDefaultHelpFormatter,
 
         # Description is shown when the command's help is queried directly
         'description': "Parse and pretty-print the summary and results from "
@@ -363,8 +361,14 @@ def add_arguments_to_parser(parser):
     output_opts.add_argument('-e', '--export',
                              dest="export",
                              required=False,
-                             choices=['html', 'json'],
-                             help="Specify extra output format type.")
+                             choices=['html', 'json', 'codeclimate'],
+                             help="R|Specify extra output format type.\n"
+                                  "'codeclimate' format can be used for "
+                                  "Code Climate and for GitLab integration. "
+                                  "For more information see:\n"
+                                  "https://github.com/codeclimate/platform/"
+                                  "blob/master/spec/analyzers/SPEC.md"
+                                  "#data-types")
 
     output_opts.add_argument('-o', '--output',
                              dest="output_path",
@@ -501,8 +505,9 @@ def parse(plist_file, metadata_dict, rh, file_report_map):
     return changed_files
 
 
-def convert_reports_to_json(input_dirs):
-    """ Converts reports found in the input directories to json. """
+def convert_reports(input_dirs, out_format, trim_path_prefixes):
+    """ Converts reports found in the input directories to the given format.
+    """
     res = []
 
     input_files = set()
@@ -522,7 +527,18 @@ def convert_reports_to_json(input_dirs):
 
         _, reports = plist_parser.parse_plist_file(input_file)
         for report in reports:
-            res.append(report.to_json())
+            if trim_path_prefixes:
+                report.trim_path_prefixes(trim_path_prefixes)
+
+            if out_format == "json":
+                out = report.to_json()
+            elif out_format == "codeclimate":
+                out = report.to_codeclimate()
+            else:
+                LOG.error("Unsupported output format: %s", out_format)
+                sys.exit(1)
+
+            res.append(out)
 
     return json.dumps(res)
 
@@ -588,8 +604,8 @@ def main(args):
     trim_path_prefixes = args.trim_path_prefix if \
         'trim_path_prefix' in args else None
 
-    if export == 'json':
-        res = convert_reports_to_json(args.input)
+    if export in ['json', 'codeclimate']:
+        res = convert_reports(args.input, export, trim_path_prefixes)
         if 'output_path' in args:
             output_path = os.path.abspath(args.output_path)
             reports_json = os.path.join(output_path, 'reports.json')

@@ -12,6 +12,7 @@ Report which will be stored.
 import json
 
 from codechecker_common.logger import get_logger
+from codechecker_common import util
 
 LOG = get_logger('report')
 
@@ -67,10 +68,34 @@ class Report(object):
         msg += str(self.__files)
         return msg
 
+    def trim_path_prefixes(self, path_prefixes=None):
+        """ Removes the longest matching leading path from the file paths. """
+        self.__files = [util.trim_path_prefixes(file_path, path_prefixes)
+                        for file_path in self.__files]
+
     def to_json(self):
         """ Converts to json format. """
         ret = self.__main
-        ret["path"] = self.__bug_path
-        ret["files"] = self.__files
+        ret["path"] = self.bug_path
+        ret["files"] = self.files
 
         return ret
+
+    def to_codeclimate(self):
+        """ Convert to Code Climate format. """
+        location = self.main['location']
+        file_id = location['file']
+
+        return {
+            "type": "issue",
+            "check_name": self.main['check_name'],
+            "description": self.main['description'],
+            "categories": ["Bug Risk"],
+            "fingerprint": self.report_hash,
+            "location": {
+                "path": self.files[file_id],
+                "lines": {
+                    "begin": location['line']
+                }
+            }
+        }

@@ -1064,9 +1064,10 @@ Statistics analysis feature arguments:
 `parse` prints analysis results to the standard output.
 
 ```
-usage: CodeChecker parse [-h] [-t {plist}] [-e {html,json}] [-o OUTPUT_PATH]
-                         [-c] [--suppress SUPPRESS] [--export-source-suppress]
-                         [--print-steps] [-i SKIPFILE]
+usage: CodeChecker parse [-h] [-t {plist}] [-e {html,json,codeclimate}]
+                         [-o OUTPUT_PATH] [-c] [--suppress SUPPRESS]
+                         [--export-source-suppress] [--print-steps]
+                         [-i SKIPFILE]
                          [--trim-path-prefix [TRIM_PATH_PREFIX [TRIM_PATH_PREFIX ...]]]
                          [--verbose {info,debug,debug_analyzer}]
                          file/folder [file/folder ...]
@@ -1114,8 +1115,12 @@ optional arguments:
                         Set verbosity level.
 
 export arguments:
-  -e {html,json}, --export {html,json}
-                        Specify extra output format type. (default: None)
+  -e {html,json,codeclimate}, --export {html,json,codeclimate}
+                        Specify extra output format type.
+                        'codeclimate' format can be used for Code Climate and
+                        for GitLab integration. For more information see:
+                        https://github.com/codeclimate/platform/blob/master/sp
+                        ec/analyzers/SPEC.md#data-types (default: None)
   -o OUTPUT_PATH, --output OUTPUT_PATH
                         Store the output in the given folder.
   -c, --clean           DEPRECATED. Delete output results stored in the output
