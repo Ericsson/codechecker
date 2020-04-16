@@ -330,6 +330,7 @@ information check out the
 
 ## Continuous Integration (CI)
 * [Jenkins Gerrit integration](jenkins_gerrit_integration.md)
+* [GitLab integration](gitlab_integration.md)
 * [Daily Scripts](script_daily.md)
 
 ## Database configuration
