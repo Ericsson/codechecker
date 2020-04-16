@@ -16,10 +16,18 @@ import operator
 import shlex
 import subprocess
 import sys
+import os
 
 from compilation_database_transformer.build_action import BuildAction
 from compilation_database_transformer.log_parser import parse_unique_log
 from compilation_database_transformer.pipeline import JsonPipeline
+
+# TODO: This section will not be needed when CodeChecker will be delivered as
+# a python package and will be installed in a virtual environment with all the
+# dependencies.
+if __name__ == '__main__':
+    current_dir = os.path.dirname(os.path.realpath(__file__))
+    os.sys.path.append(os.path.dirname(current_dir))
 
 
 def handle_print(args):
@@ -46,6 +54,9 @@ def handle_clangify(args):
 
 
 def swap_comp_to_clang(entry):
+    """
+    Swap the binary name inside the compilation command to clang or clang++.
+    """
     command = entry['command']
     new_cmd = shlex.split(command)
     new_cmd[0] = 'clang++' if '++' in new_cmd[0] else 'clang'
@@ -58,6 +69,10 @@ def swap_comp_to_clang(entry):
 
 
 def check_command_validity(entry):
+    """
+    Run the compilation command and return a diagnostic entry corresponding to
+    the entry. The error code and the program output is recorded.
+    """
     try:
         proc = subprocess.Popen(
             entry['command'],
@@ -96,7 +111,13 @@ def handle_check(args):
 
 
 def main():
-    argparser = argparse.ArgumentParser(prog='ccdb-tool')
+    argparser = argparse.ArgumentParser(
+        prog='ccdb-tool'
+        description="""
+Transform JSON formatted compilation databases. Prettifying, adapting
+compilation command to be Clang-compatible, and checking the output of the
+compilation are main features of the tool.""",
+    )
     argparser.add_argument(
         'command',
         nargs='?',
