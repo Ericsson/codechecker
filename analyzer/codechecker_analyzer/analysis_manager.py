@@ -163,7 +163,7 @@ def is_ctu_active(source_analyzer):
         source_analyzer.is_ctu_enabled()
 
 
-def prepare_check(action, analyzer_config_map, output_dir,
+def prepare_check(action, analyzer_config, output_dir,
                   severity_map, skip_handler, statistics_data,
                   disable_ctu=False):
     """
@@ -175,7 +175,7 @@ def prepare_check(action, analyzer_config_map, output_dir,
     # Create a source analyzer.
     source_analyzer = \
         analyzer_types.construct_analyzer(action,
-                                          analyzer_config_map)
+                                          analyzer_config)
 
     if disable_ctu:
         # WARNING! can be called only on ClangSA
@@ -452,7 +452,7 @@ def check(check_data):
 
     skiplist handler is None if no skip file was configured.
     """
-    actions_map, action, context, analyzer_config_map, \
+    actions_map, action, context, analyzer_config, \
         output_dir, skip_handler, quiet_output_on_stdout, \
         capture_analysis_output, analysis_timeout, \
         analyzer_environment, ctu_reanalyze_on_failure, \
@@ -468,8 +468,11 @@ def check(check_data):
 
         result_file = ''
 
+        if analyzer_config is None:
+            raise Exception("Analyzer configuration is missing.")
+
         source_analyzer, analyzer_cmd, rh, reanalyzed = \
-            prepare_check(action, analyzer_config_map,
+            prepare_check(action, analyzer_config,
                           output_dir, context.severity_map,
                           skip_handler, statistics_data)
 
@@ -587,7 +590,7 @@ def check(check_data):
                 # Try to reanalyze with CTU disabled.
                 source_analyzer, analyzer_cmd, rh, reanalyzed = \
                     prepare_check(action,
-                                  analyzer_config_map,
+                                  analyzer_config,
                                   output_dir,
                                   context.severity_map,
                                   skip_handler,
@@ -718,7 +721,7 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
     analyzed_actions = [(actions_map,
                          build_action,
                          context,
-                         analyzer_config_map,
+                         analyzer_config_map.get(build_action.analyzer_type),
                          output_path,
                          skip_handler,
                          quiet_analyze,

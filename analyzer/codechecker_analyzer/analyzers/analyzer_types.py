@@ -167,15 +167,13 @@ def check_supported_analyzers(analyzers, context):
 
 
 def construct_analyzer(buildaction,
-                       analyzer_config_map):
+                       analyzer_config):
     try:
         analyzer_type = buildaction.analyzer_type
-        # Get the proper config handler for this analyzer type.
-        config_handler = analyzer_config_map.get(analyzer_type)
 
         LOG.debug_analyzer('Constructing %s analyzer.', analyzer_type)
         if analyzer_type in supported_analyzers:
-            analyzer = supported_analyzers[analyzer_type](config_handler,
+            analyzer = supported_analyzers[analyzer_type](analyzer_config,
                                                           buildaction)
         else:
             analyzer = None
