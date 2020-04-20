@@ -212,7 +212,7 @@ class TestReportFilter(unittest.TestCase):
                                                              None,
                                                              None)
 
-        self.assertEqual(run_result_count, 65)
+        self.assertEqual(run_result_count, 69)
 
         run_results = self._cc_client.getRunResults(self._runids,
                                                     run_result_count,

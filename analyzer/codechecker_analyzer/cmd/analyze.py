@@ -341,7 +341,7 @@ def add_arguments_to_parser(parser):
     analyzer_opts.add_argument('--analyzer-config',
                                dest='analyzer_config',
                                nargs='*',
-                               default=argparse.SUPPRESS,
+                               default=["clang-tidy:HeaderFilterRegex=.*"],
                                help="Analyzer configuration options in the "
                                     "following format: analyzer:key=value. "
                                     "The collection of the options can be "
