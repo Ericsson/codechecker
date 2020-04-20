@@ -69,6 +69,20 @@ def get_checker_config_cmd(cfg_handler, alpha=True, debug=True):
     return command
 
 
+def get_analyzer_config_cmd(cfg_handler):
+    """Return the analyzer config getter command which depends on the used
+    clang version.
+    """
+    command = [cfg_handler.analyzer_binary, "-cc1"]
+
+    for plugin in cfg_handler.analyzer_plugins:
+        command.extend(["-load", plugin])
+
+    command.append("-analyzer-config-help")
+
+    return command
+
+
 def ctu_mapping(clang_version_info):
     """Clang version dependent ctu mapping tool path and mapping file name.
 

@@ -13,6 +13,7 @@ import argparse
 import subprocess
 
 from codechecker_analyzer import analyzer_context
+from codechecker_analyzer import env
 from codechecker_analyzer.analyzers import analyzer_types
 
 from codechecker_common import logger
@@ -70,7 +71,7 @@ def add_arguments_to_parser(parser):
     parser.add_argument('--dump-config',
                         dest='dump_config',
                         required=False,
-                        choices=list(working),
+                        choices=working,
                         help="Dump the available checker options for the "
                              "given analyzer to the standard output. "
                              "Currently only clang-tidy supports this option. "
@@ -81,6 +82,15 @@ def add_arguments_to_parser(parser):
                              "file can also be provided via "
                              "'CodeChecker analyze' and 'CodeChecker check' "
                              "commands.")
+
+    parser.add_argument('--analyzer-config',
+                        dest='analyzer_config',
+                        required=False,
+                        default=argparse.SUPPRESS,
+                        choices=working,
+                        help="Show analyzer configuration options. These can "
+                             "be given to 'CodeChecker analyze "
+                             "--analyzer-options'.")
 
     parser.add_argument('-o', '--output',
                         dest='output_format',
@@ -134,16 +144,49 @@ def main(args):
 
         return
 
-    if args.output_format not in ['csv', 'json']:
-        if 'details' not in args:
-            header = ['Name']
+    analyzer_environment = env.extend(context.path_env_extra,
+                                      context.ld_lib_path_extra)
+    analyzer_config_map = analyzer_types.build_config_handlers(args,
+                                                               context,
+                                                               working)
+
+    def uglify(text):
+        """
+        csv and json format output contain this non human readable header
+        string: no CamelCase and no space.
+        """
+        return text.lower().replace(' ', '_')
+
+    if 'analyzer_config' in args:
+        if 'details' in args:
+            header = ['Option', 'Description']
         else:
-            header = ['Name', 'Path', 'Version']
+            header = ['Option']
+
+        if args.output_format in ['csv', 'json']:
+            header = list(map(uglify, header))
+
+        analyzer = args.analyzer_config
+        config_handler = analyzer_config_map.get(analyzer)
+        analyzer_class = analyzer_types.supported_analyzers[analyzer]
+
+        configs = analyzer_class.get_analyzer_config(config_handler,
+                                                     analyzer_environment)
+        rows = [(':'.join((analyzer, c[0])), c[1]) if 'details' in args
+            else (':'.join((analyzer, c[0])),) for c in configs]
+
+        print(output_formatters.twodim_to_str(args.output_format,
+                                              header, rows))
+
+        return
+
+    if 'details' in args:
+        header = ['Name', 'Path', 'Version']
     else:
-        if 'details' not in args:
-            header = ['name']
-        else:
-            header = ['name', 'path', 'version_string']
+        header = ['Name']
+
+    if args.output_format in ['csv', 'json']:
+        header = list(map(uglify, header))
 
     rows = []
     for analyzer in working:

@@ -60,6 +60,15 @@ def parse_checker_config(config_dump):
     return re.findall(reg, config_dump)
 
 
+def parse_analyzer_config(config_dump):
+    """
+    Return the parsed clang-tidy analyzer options as a list of
+    (flag, default_value) tuples.
+    config_dump -- clang-tidy config options YAML dump.
+    """
+    return re.findall(r'^(\S+):\s+(\S+)$', config_dump, re.MULTILINE)
+
+
 class ClangTidy(analyzer_base.SourceAnalyzer):
     """
     Constructs the clang tidy analyzer commands.
@@ -96,6 +105,19 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                 encoding="utf-8",
                 errors="ignore")
             return parse_checker_config(result)
+        except (subprocess.CalledProcessError, OSError):
+            return []
+
+    @classmethod
+    def get_analyzer_config(cls, cfg_handler, environ):
+        try:
+            result = subprocess.check_output(
+                [cfg_handler.analyzer_binary, "-dump-config"],
+                env=environ,
+                universal_newlines=True,
+                encoding="utf-8",
+                errors="ignore")
+            return parse_analyzer_config(result)
         except (subprocess.CalledProcessError, OSError):
             return []
 

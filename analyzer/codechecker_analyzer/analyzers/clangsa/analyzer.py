@@ -123,6 +123,23 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         except (subprocess.CalledProcessError, OSError):
             return []
 
+    @classmethod
+    def get_analyzer_config(cls, cfg_handler, environ):
+        """Return the list of analyzer config options."""
+        analyzer_config_args = clang_options.get_analyzer_config_cmd(
+            cfg_handler)
+
+        try:
+            result = subprocess.check_output(
+                analyzer_config_args,
+                env=environ,
+                universal_newlines=True,
+                encoding="utf-8",
+                errors="ignore")
+            return parse_clang_help_page(result, 'OPTIONS:')
+        except (subprocess.CalledProcessError, OSError):
+            return []
+
     def construct_analyzer_cmd(self, result_handler):
         """
         Called by the analyzer method.
