@@ -934,14 +934,14 @@ or you can use the positive form beginning with `W` (e.g.:
 `--enable Wliteral-conversion`). For more information see:
 https://clang.llvm.org/docs/DiagnosticsReference.html.
 
-**Note**: by default `-Wall` and `-Wextra` warnings are enabled.
+A warning can be referred in both formats: `-d Wunused-parameter` and
+`-d clang-diagnostic-unused-parameter` are the same.
 
-**Node**: In case a file with a compilation error is analyzed then its
-diagnostics appear as `clang-diagnostic-error`. This doesn't refer to a
-compiler warning, but a compilation action which can't be disabled. You can fix
-this only by modifying the source code so it compiles with Clang compiler.
-The `clang-diagnostic-error` reports will always be visible with "critical"
-severity.
+`clang-diagnostic-error` is a special one, since it doesn't refer a warning but
+a compilation error. This is enabled by default and will be stored as a
+critical severity bug.
+
+**Note**: by default `-Wall` and `-Wextra` warnings are enabled.
 
 
 #### Checker profiles <a name="checker-profiles"></a>
