@@ -353,6 +353,17 @@ used to generate a log file on the fly.""")
                                     "'CodeChecker analyzers --dump-config "
                                     "clang-tidy' command.")
 
+    analyzer_opts.add_argument('--analyzer-config',
+                               dest='analyzer_config',
+                               nargs='*',
+                               default=argparse.SUPPRESS,
+                               help="Analyzer configuration options in the "
+                                    "forllowing format: analyzer:key=value. "
+                                    "The collection of the options can be "
+                                    "printed with "
+                                    "'CodeChecker analyzers "
+                                    "--analyzer-config'.")
+
     analyzer_opts.add_argument('--checker-config',
                                dest='checker_config',
                                nargs='*',
@@ -678,6 +689,7 @@ def main(args):
                           'clangsa_args_cfg_file',
                           'tidy_args_cfg_file',
                           'tidy_config',
+                          'analyzer_config',
                           'checker_config',
                           'capture_analysis_output',
                           'config_file',

@@ -338,6 +338,17 @@ def add_arguments_to_parser(parser):
                                     "'CodeChecker analyzers --dump-config "
                                     "clang-tidy' command.")
 
+    analyzer_opts.add_argument('--analyzer-config',
+                               dest='analyzer_config',
+                               nargs='*',
+                               default=argparse.SUPPRESS,
+                               help="Analyzer configuration options in the "
+                                    "following format: analyzer:key=value. "
+                                    "The collection of the options can be "
+                                    "printed with "
+                                    "'CodeChecker analyzers "
+                                    "--analyzer-config'.")
+
     analyzer_opts.add_argument('--checker-config',
                                dest='checker_config',
                                nargs='*',
@@ -739,13 +750,21 @@ def main(args):
     LOG.debug("args: " + str(args))
     LOG.debug("Output will be stored to: '" + args.output_path + "'")
 
+    config_option_re = re.compile(r'^({}):.+=.+$'.format(
+        '|'.join(analyzer_types.supported_analyzers)))
+
+    # Check the format of analyzer options.
+    if 'analyzer_config' in args:
+        for config in args.analyzer_config:
+            if not re.match(config_option_re, config):
+                LOG.error("Analyzer option in wrong format: %s", config)
+                sys.exit(1)
+
     # Check the format of checker options.
     if 'checker_config' in args:
-        checker_option_re = re.compile(r'^({}):.+=.+$'.format(
-            '|'.join(analyzer_types.supported_analyzers)))
         for config in args.checker_config:
-            if not re.match(checker_option_re, config):
-                LOG.error("Checker option in wrong format: " + config)
+            if not re.match(config_option_re, config):
+                LOG.error("Checker option in wrong format: %s", config)
                 sys.exit(1)
 
     # Process the skip list if present.

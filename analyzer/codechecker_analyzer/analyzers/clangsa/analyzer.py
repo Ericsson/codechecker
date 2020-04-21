@@ -407,6 +407,17 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                 m = re.search(r, cfg)
                 if m.group('analyzer') == cls.ANALYZER_NAME:
                     handler.checker_config.append(
-                      m.group('key') + '=' + m.group('value'))
+                        m.group('key') + '=' + m.group('value'))
+
+        # TODO: This extra "isinstance" check is needed for
+        # CodeChecker analyzers --analyzer-config. This command also runs
+        # this function in order to construct a config handler.
+        if 'analyzer_config' in args and \
+                isinstance(args.analyzer_config, list):
+            for cfg in args.analyzer_config:
+                m = re.search(r, cfg)
+                if m.group('analyzer') == cls.ANALYZER_NAME:
+                    handler.checker_config.append(
+                        m.group('key') + '=' + m.group('value'))
 
         return handler

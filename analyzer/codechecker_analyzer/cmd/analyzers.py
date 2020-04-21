@@ -48,7 +48,7 @@ def add_arguments_to_parser(parser):
     """
 
     context = analyzer_context.get_context()
-    working, _ = analyzer_types.check_supported_analyzers(
+    working_analyzers, _ = analyzer_types.check_supported_analyzers(
         analyzer_types.supported_analyzers,
         context)
 
@@ -71,7 +71,7 @@ def add_arguments_to_parser(parser):
     parser.add_argument('--dump-config',
                         dest='dump_config',
                         required=False,
-                        choices=working,
+                        choices=working_analyzers,
                         help="Dump the available checker options for the "
                              "given analyzer to the standard output. "
                              "Currently only clang-tidy supports this option. "
@@ -87,7 +87,7 @@ def add_arguments_to_parser(parser):
                         dest='analyzer_config',
                         required=False,
                         default=argparse.SUPPRESS,
-                        choices=working,
+                        choices=working_analyzers,
                         help="Show analyzer configuration options. These can "
                              "be given to 'CodeChecker analyze "
                              "--analyzer-options'.")
@@ -116,7 +116,7 @@ def main(args):
     logger.setup_logger(args.verbose if 'verbose' in args else None, stream)
 
     context = analyzer_context.get_context()
-    working, errored = \
+    working_analyzers, errored = \
         analyzer_types.check_supported_analyzers(
             analyzer_types.supported_analyzers,
             context)
@@ -146,9 +146,8 @@ def main(args):
 
     analyzer_environment = env.extend(context.path_env_extra,
                                       context.ld_lib_path_extra)
-    analyzer_config_map = analyzer_types.build_config_handlers(args,
-                                                               context,
-                                                               working)
+    analyzer_config_map = analyzer_types.build_config_handlers(
+        args, context, working_analyzers)
 
     def uglify(text):
         """
@@ -173,7 +172,7 @@ def main(args):
         configs = analyzer_class.get_analyzer_config(config_handler,
                                                      analyzer_environment)
         rows = [(':'.join((analyzer, c[0])), c[1]) if 'details' in args
-            else (':'.join((analyzer, c[0])),) for c in configs]
+                else (':'.join((analyzer, c[0])),) for c in configs]
 
         print(output_formatters.twodim_to_str(args.output_format,
                                               header, rows))
@@ -189,7 +188,7 @@ def main(args):
         header = list(map(uglify, header))
 
     rows = []
-    for analyzer in working:
+    for analyzer in working_analyzers:
         if 'details' not in args:
             rows.append([analyzer])
         else:

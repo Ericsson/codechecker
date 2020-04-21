@@ -92,6 +92,7 @@ usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-t {plist}] [-q] [-f]
                          [--saargs CLANGSA_ARGS_CFG_FILE]
                          [--tidyargs TIDY_ARGS_CFG_FILE]
                          [--tidy-config TIDY_CONFIG]
+                         [--analyzer-config [ANALYZER_CONFIG [ANALYZER_CONFIG ...]]]
                          [--checker-config [CHECKER_CONFIG [CHECKER_CONFIG ...]]]
                          [--timeout TIMEOUT]
                          [-e checker/group/profile] [-d checker/group/profile]
@@ -223,6 +224,11 @@ analyzer arguments:
                         clang-tidy checkers. The file can be dumped by
                         'CodeChecker analyzers --dump-config clang-tidy'
                         command.
+  --analyzer-config [ANALYZER_CONFIG [ANALYZER_CONFIG ...]]
+                        Analyzer configuration options in the following format:
+                        analyzer:key=value. The collection of the options can
+                        be printed with 'CodeChecker analyzers
+                        --analyzer-config'.
   --checker-config [CHECKER_CONFIG [CHECKER_CONFIG ...]]
                         Checker configuration options in the following format:
                         analyzer:key=value. The collection of the options can
@@ -808,6 +814,11 @@ analyzer arguments:
                         clang-tidy checkers. The file can be dumped by
                         'CodeChecker analyzers --dump-config clang-tidy'
                         command.
+  --analyzer-config [ANALYZER_CONFIG [ANALYZER_CONFIG ...]]
+                        Analyzer configuration options in the following format:
+                        analyzer:key=value. The collection of the options can
+                        be printed with 'CodeChecker analyzers
+                        --analyzer-config'.
   --checker-config [CHECKER_CONFIG [CHECKER_CONFIG ...]]
                         Checker configuration options in the following format:
                         analyzer:key=value. The collection of the options can

@@ -167,7 +167,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd.extend(config.analyzer_extra_arguments)
 
-            if config.checker_config:
+            if config.checker_config != '{}':
                 analyzer_cmd.append('-config=' + config.checker_config)
 
             analyzer_cmd.append(self.source_file)
@@ -308,6 +308,18 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             # No clang tidy arguments file was given in the command line.
             LOG.debug_analyzer(aerr)
 
+        analyzer_config = {}
+        # TODO: This extra "isinsrance" check is needed for
+        # CodeChecker analyzers --analyzer-config. This command also
+        # runs this function in order to construct a config handler.
+        if 'analyzer_config' in args and \
+                isinstance(args.analyzer_config, list):
+            r = re.compile(r'(?P<analyzer>.+?):(?P<key>.+?)=(?P<value>.+)')
+            for cfg in args.analyzer_config:
+                m = re.search(r, cfg)
+                if m.group('analyzer') == cls.ANALYZER_NAME:
+                    analyzer_config[m.group('key')] = m.group('value')
+
         # TODO: This extra "isinsrance" check is needed for
         # CodeChecker checkers --checker-config. This command also
         # runs this function in order to construct a config handler.
@@ -321,8 +333,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                 if m.group('analyzer') == cls.ANALYZER_NAME:
                     check_options.append({'key': m.group('key'),
                                           'value': m.group('value')})
-            handler.checker_config = \
-                json.dumps({'CheckOptions': check_options})
+            analyzer_config['CheckOptions'] = check_options
         else:
             try:
                 with open(args.tidy_config, 'r') as tidy_config:
@@ -332,6 +343,9 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             except AttributeError as aerr:
                 # No clang tidy config file was given in the command line.
                 LOG.debug_analyzer(aerr)
+
+        if not handler.checker_config:
+            handler.checker_config = json.dumps(analyzer_config)
 
         check_env = env.extend(context.path_env_extra,
                                context.ld_lib_path_extra)
