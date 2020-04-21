@@ -7,6 +7,7 @@
 
 
 from abc import ABCMeta, abstractmethod
+import json
 import logging
 import os
 import plistlib
@@ -28,7 +29,7 @@ class AnalyzerResult(object, metaclass=ABCMeta):
     # Link to the official analyzer website.
     URL = None
 
-    def transform(self, analyzer_result, output_dir):
+    def transform(self, analyzer_result, output_dir, metadata=None):
         """ Creates plist files from the given analyzer result to the given
         output directory.
         """
@@ -43,6 +44,14 @@ class AnalyzerResult(object, metaclass=ABCMeta):
 
         self._write(plist_objs, output_dir)
 
+        if metadata:
+            self._save_metadata(metadata, output_dir)
+        else:
+            LOG.warning("Use '--metada' option to provide extra information "
+                        "to the CodeChecker server such as analyzer version "
+                        "and analysis command when storing the results to it. "
+                        "For more information see the --help.")
+
         return True
 
     @abstractmethod
@@ -52,6 +61,31 @@ class AnalyzerResult(object, metaclass=ABCMeta):
         Returns a list of plist objects.
         """
         raise NotImplementedError("Subclasses should implement this!")
+
+    def _save_metadata(self, metadata, output_dir):
+        """ Save metadata.json file to the output directory which will be used
+        by CodeChecker.
+        """
+        meta_info = {
+            "version": 2,
+            "num_of_report_dir": 1,
+            "tools": []
+        }
+
+        tool = {"name": self.TOOL_NAME}
+
+        if "analyzer_version" in metadata:
+            tool["version"] = metadata["analyzer_version"]
+
+        if "analyzer_command" in metadata:
+            tool["command"] = metadata["analyzer_command"]
+
+        meta_info["tools"].append(tool)
+
+        metadata_file = os.path.join(output_dir, 'metadata.json')
+        with open(metadata_file, 'w',
+                  encoding="utf-8", errors="ignore") as metafile:
+            json.dump(meta_info, metafile)
 
     def _post_process_result(self, plist_objs):
         """ Post process the parsed result.

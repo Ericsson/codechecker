@@ -33,7 +33,9 @@ make package
 
 ## Usage
 ```sh
-usage: report-converter [-h] -o OUTPUT_DIR -t TYPE [-c] [-v] file
+usage: report-converter [-h] -o OUTPUT_DIR -t TYPE [--meta [META [META ...]]]
+                        [-c] [-v]
+                        file
 
 Creates a CodeChecker report directory from the given code analyzer output
 which can be stored to a CodeChecker web server.
@@ -51,6 +53,12 @@ optional arguments:
                         Currently supported output types are: asan, clang-
                         tidy, cppcheck, eslint, fbinfer, golint, msan,
                         pyflakes, pylint, spotbugs, tsan, tslint, ubsan.
+  --meta [META [META ...]]
+                        Metada information which will be stored alongside the
+                        run when the created report directory will be stored
+                        to a running CodeChecker server. It has the following
+                        format: key=value. Valid key values are:
+                        analyzer_command, analyzer_version.
   -c, --clean           Delete files stored in the output directory.
   -v, --verbose         Set verbosity level.
 

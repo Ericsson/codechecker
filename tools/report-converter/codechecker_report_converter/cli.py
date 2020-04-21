@@ -10,6 +10,7 @@ import argparse
 import logging
 import os
 import shutil
+import sys
 
 # If we run this script in an environment where 'codechecker_report_converter'
 # module is not available we should add the grandparent directory of this file
@@ -74,8 +75,11 @@ supported_converters = {
     SpotBugsAnalyzerResult.TOOL_NAME: SpotBugsAnalyzerResult
 }
 
+supported_metadata_keys = ["analyzer_command", "analyzer_version"]
 
-def output_to_plist(analyzer_result, parser_type, output_dir, clean=False):
+
+def output_to_plist(analyzer_result, parser_type, output_dir, clean=False,
+                    metadata=None):
     """ Creates .plist files from the given output to the given output dir. """
     if clean and os.path.isdir(output_dir):
         LOG.info("Previous analysis results in '%s' have been removed, "
@@ -86,7 +90,24 @@ def output_to_plist(analyzer_result, parser_type, output_dir, clean=False):
         os.makedirs(output_dir)
 
     parser = supported_converters[parser_type]()
-    parser.transform(analyzer_result, output_dir)
+    parser.transform(analyzer_result, output_dir, metadata)
+
+
+def process_metadata(metadata):
+    """ Returns a tuple of valid and invalid metadata values. """
+    if not metadata:
+        return {}, {}
+
+    valid_values = {}
+    invalid_values = {}
+    for m in metadata:
+        key, value = m.split("=", 1)
+        if key in supported_metadata_keys:
+            valid_values[key] = value
+        else:
+            invalid_values[key] = value
+
+    return valid_values, invalid_values
 
 
 def __add_arguments_to_parser(parser):
@@ -115,6 +136,18 @@ def __add_arguments_to_parser(parser):
                         help="Specify the format of the code analyzer output. "
                              "Currently supported output types are: " +
                               ', '.join(sorted(supported_converters)) + ".")
+
+    parser.add_argument('--meta',
+                        nargs='*',
+                        dest='meta',
+                        metavar='META',
+                        required=False,
+                        help="Metada information which will be stored "
+                             "alongside the run when the created report "
+                             "directory will be stored to a running "
+                             "CodeChecker server. It has the following "
+                             "format: key=value. Valid key values are: "
+                             "{0}.".format(', '.join(supported_metadata_keys)))
 
     parser.add_argument('-c', '--clean',
                         dest="clean",
@@ -151,8 +184,18 @@ Supported analyzers:
     if 'verbose' in args and args.verbose:
         LOG.setLevel(logging.DEBUG)
 
+    valid_metadata_values, invalid_metadata_values = \
+        process_metadata(args.meta)
+
+    if invalid_metadata_values:
+        LOG.error("The following metadata keys are invalid: %s. Valid key "
+                  "values are: %s.",
+                  ', '.join(invalid_metadata_values),
+                  ', '.join(supported_metadata_keys))
+        sys.exit(1)
+
     return output_to_plist(args.input, args.type, args.output_dir,
-                           args.clean)
+                           args.clean, valid_metadata_values)
 
 
 if __name__ == "__main__":
