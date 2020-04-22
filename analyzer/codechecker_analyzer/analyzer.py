@@ -248,7 +248,6 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
     manager = SyncManager()
     manager.start(__mgr_init)
 
-    config_map = manager.dict(config_map)
     actions_map = create_actions_map(actions, manager)
 
     # Setting to not None value will enable statistical analysis features.
@@ -276,14 +275,20 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
                 or ("stats_output" in args and args.stats_output)):
             pre_anal_skip_handler = skip_handler
 
-        pre_analysis_manager.run_pre_analysis(pre_analyze,
-                                              context,
-                                              config_map,
-                                              args.jobs,
-                                              pre_anal_skip_handler,
-                                              ctu_data,
-                                              statistics_data,
-                                              manager)
+        clangsa_config = config_map.get(ClangSA.ANALYZER_NAME)
+
+        if clangsa_config is not None:
+            pre_analysis_manager.run_pre_analysis(pre_analyze,
+                                                  context,
+                                                  clangsa_config,
+                                                  args.jobs,
+                                                  pre_anal_skip_handler,
+                                                  ctu_data,
+                                                  statistics_data,
+                                                  manager)
+        else:
+            LOG.error("Can not run pre analysis without clang "
+                      "static analyzer configuration.")
 
     if 'stats_output' in args and args.stats_output:
         return

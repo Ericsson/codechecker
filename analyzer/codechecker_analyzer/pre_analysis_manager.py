@@ -28,13 +28,14 @@ from .analyzers.clangsa.analyzer import ClangSA
 LOG = get_logger('analyzer')
 
 
-def collect_statistics(action, source, config, environ, statistics_data):
+def collect_statistics(action, source, clangsa_config,
+                       environ, statistics_data):
     """
     Run the statistics collection command and save the
     stdout and stderr to a file.
     """
     cmd, can_collect = statistics_collector.build_stat_coll_cmd(action,
-                                                                config,
+                                                                clangsa_config,
                                                                 source)
 
     if not can_collect:
@@ -82,7 +83,7 @@ def init_worker(checked_num, action_num):
 
 def pre_analyze(params):
 
-    action, context, analyzer_config_map, skip_handler, \
+    action, context, clangsa_config, skip_handler, \
         ctu_data, statistics_data = params
 
     analyzer_environment = env.extend(context.path_env_extra,
@@ -101,8 +102,6 @@ def pre_analyze(params):
              progress_checked_num.value,
              progress_actions.value, source_filename)
 
-    config = analyzer_config_map.get(ClangSA.ANALYZER_NAME)
-
     try:
         if ctu_data:
             LOG.debug("running CTU pre analysis")
@@ -111,12 +110,12 @@ def pre_analyze(params):
 
             triple_arch = \
                 ctu_triple_arch.get_triple_arch(action, action.source,
-                                                config,
+                                                clangsa_config,
                                                 analyzer_environment)
             ctu_manager.generate_ast(triple_arch, action, action.source,
-                                     config, analyzer_environment)
+                                     clangsa_config, analyzer_environment)
             ctu_manager.map_functions(triple_arch, action, action.source,
-                                      config, analyzer_environment,
+                                      clangsa_config, analyzer_environment,
                                       ctu_func_map_cmd,
                                       ctu_temp_fnmap_folder)
 
@@ -130,7 +129,7 @@ def pre_analyze(params):
             LOG.debug("running statistics pre analysis")
             collect_statistics(action,
                                action.source,
-                               config,
+                               clangsa_config,
                                analyzer_environment,
                                statistics_data)
 
@@ -140,7 +139,7 @@ def pre_analyze(params):
         raise
 
 
-def run_pre_analysis(actions, context, analyzer_config_map,
+def run_pre_analysis(actions, context, clangsa_config,
                      jobs, skip_handler, ctu_data, statistics_data, manager):
     """
     Run multiple pre analysis jobs before the actual analysis.
@@ -185,7 +184,7 @@ def run_pre_analysis(actions, context, analyzer_config_map,
     try:
         collect_actions = [(build_action,
                             context,
-                            analyzer_config_map,
+                            clangsa_config,
                             skip_handler,
                             ctu_data,
                             statistics_data)
