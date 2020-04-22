@@ -184,6 +184,8 @@ analyzer arguments:
                         compatibility).
                         - context-free-v2: context free hash is used for
                         ClangSA and Clang Tidy.
+                        See the 'issue hashes' section of the help message of
+                        this command below for more information.
                         USE WISELY AND AT YOUR OWN RISK!
   -i SKIPFILE, --ignore SKIPFILE, --skip SKIPFILE
                         Path to the Skipfile dictating which project files
@@ -290,6 +292,43 @@ output arguments:
   --print-steps         Print the steps the analyzers took in finding the
                         reported defect.
 
+issue hashes:
+- By default the issue hash calculation method for 'Clang Static Analyzer' is
+context sensitive. It means the hash will be generated based on the following
+information:
+  * signature of the enclosing function declaration, type declaration or
+    namespace.
+  * content of the line where the bug is.
+  * unique name of the checker.
+  * position (column) within the line.
+
+- By default the issue hash calculation method for 'Clang Tidy' is context
+insensitive. It means the hash will be generated based on the following
+information:
+  * 'file name' from the main diag section.
+  * 'checker name'.
+  * 'checker message'.
+  * 'line content' from the source file if can be read up.
+  * 'column numbers' from the main diag section.
+  * 'range column numbers' only from the control diag sections if column number
+    in the range is not the same as the previous control diag section number in
+    the bug path. If there are no control sections event section column numbers
+    are used.
+
+- context-free: there was a bug and for Clang Tidy the default hash was
+generated and not the context free hash (kept for backward compatibility). Use
+'context-free-v2' instead of this.
+
+- context-free-v2:
+  * 'file name' from the main diag section.
+  * 'checker message'.
+  * 'line content' from the source file if can be read up. All the whitespaces
+    from the source content are removed.
+  * 'column numbers' from the main diag sections location.
+
+OUR RECOMMENDATION: we recommend you to use 'context-free-v2' hash because the
+hash will not be changed so easily for example on code indentation or when a
+checker is renamed.
 ```
 
 # Available CodeChecker analyzer subcommands <a name="available-analyzer-commands"></a>
@@ -609,7 +648,8 @@ optional arguments:
                         python regex. If more than one matches an error is
                         given. The whole compilation action text is searched
                         for match. (default: none)
-Specify the hash calculation method for reports. By
+--report-hash {context-free,context-free-v2}
+                        Specify the hash calculation method for reports. By
                         default the calculation method for Clang Static
                         Analyzer is context sensitive and for Clang Tidy it is
                         context insensitive.
@@ -619,6 +659,8 @@ Specify the hash calculation method for reports. By
                         compatibility).
                         - context-free-v2: context free hash is used for
                         ClangSA and Clang Tidy.
+                        See the 'issue hashes' section of the help message of
+                        this command below for more information.
                         USE WISELY AND AT YOUR OWN RISK!
   -n NAME, --name NAME  Annotate the run analysis with a custom name in the
                         created metadata file.
