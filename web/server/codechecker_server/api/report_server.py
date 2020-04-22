@@ -2665,11 +2665,24 @@ class ThriftRequestHandler(object):
         """
         Store a RunLock record for the given run name into the database.
         """
-
-        # If the run can be stored, we need to lock it first.
-        run_lock = session.query(RunLock) \
-            .filter(RunLock.name == name) \
-            .with_for_update(nowait=True).one_or_none()
+        try:
+            # If the run can be stored, we need to lock it first. If there is
+            # already a lock in the database for the given run name which is
+            # expired and multiple processes are trying to get this entry from
+            # the database for update we may get the following exception:
+            # could not obtain lock on row in relation "run_locks"
+            # This is the reason why we have to wrap this query to a try/except
+            # block.
+            run_lock = session.query(RunLock) \
+                .filter(RunLock.name == name) \
+                .with_for_update(nowait=True).one_or_none()
+        except (sqlalchemy.exc.OperationalError,
+                sqlalchemy.exc.ProgrammingError) as ex:
+            LOG.error("Failed to get run lock for '%s': %s", name, ex)
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                "Someone is already storing to the same run. Please wait "
+                "while the other storage is finished and try it again.")
 
         if not run_lock:
             # If there is no lock record for the given run name, the run
