@@ -32,11 +32,21 @@ from .result_handler import ResultHandlerClangSA
 LOG = get_logger('analyzer')
 
 
-def parse_clang_help_page(help_page, start_label):
+def parse_clang_help_page(command, start_label, environ):
     """
     Parse the clang help page starting from a specific label.
     Returns a list of (flag, description) tuples.
     """
+    try:
+        help_page = subprocess.check_output(
+            command,
+            env=environ,
+            universal_newlines=True,
+            encoding="utf-8",
+            errors="ignore")
+    except (subprocess.CalledProcessError, OSError):
+        return []
+
     help_page = help_page[help_page.index(start_label) + len(start_label):]
     reg = re.compile(r'(\S+)\s+([^\n]+)')
     return re.findall(reg, help_page)
@@ -93,17 +103,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         checker_list_args = clang_options.get_analyzer_checkers_cmd(
             cfg_handler,
             alpha=True)
-
-        try:
-            result = subprocess.check_output(
-                checker_list_args,
-                env=environ,
-                universal_newlines=True,
-                encoding="utf-8",
-                errors="ignore")
-            return parse_clang_help_page(result, 'CHECKERS:')
-        except (subprocess.CalledProcessError, OSError):
-            return []
+        return parse_clang_help_page(checker_list_args, 'CHECKERS:', environ)
 
     @classmethod
     def get_checker_config(cls, cfg_handler, environ):
@@ -111,34 +111,14 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         checker_config_args = clang_options.get_checker_config_cmd(
             cfg_handler,
             alpha=True)
-
-        try:
-            result = subprocess.check_output(
-                checker_config_args,
-                env=environ,
-                universal_newlines=True,
-                encoding="utf-8",
-                errors="ignore")
-            return parse_clang_help_page(result, 'OPTIONS:')
-        except (subprocess.CalledProcessError, OSError):
-            return []
+        return parse_clang_help_page(checker_config_args, 'OPTIONS:', environ)
 
     @classmethod
     def get_analyzer_config(cls, cfg_handler, environ):
         """Return the list of analyzer config options."""
         analyzer_config_args = clang_options.get_analyzer_config_cmd(
             cfg_handler)
-
-        try:
-            result = subprocess.check_output(
-                analyzer_config_args,
-                env=environ,
-                universal_newlines=True,
-                encoding="utf-8",
-                errors="ignore")
-            return parse_clang_help_page(result, 'OPTIONS:')
-        except (subprocess.CalledProcessError, OSError):
-            return []
+        return parse_clang_help_page(analyzer_config_args, 'OPTIONS:', environ)
 
     def construct_analyzer_cmd(self, result_handler):
         """

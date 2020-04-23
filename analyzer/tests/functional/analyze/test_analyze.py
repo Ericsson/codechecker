@@ -712,3 +712,89 @@ class TestAnalyze(unittest.TestCase):
 
         errcode = process.returncode
         self.assertEqual(errcode, 0)
+
+    def test_analyzer_and_checker_config(self):
+        """Test analyzer configuration through command line flags."""
+        build_json = os.path.join(self.test_workspace, "build_success.json")
+        source_file = os.path.join(self.test_dir, "checker_config.cpp")
+        build_log = [{"directory": self.test_workspace,
+                      "command": "gcc -c " + source_file,
+                      "file": source_file}]
+
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
+            json.dump(build_log, outfile)
+
+        analyze_cmd = [self._codechecker_cmd, "check", "-l", build_json,
+                       "--analyzers", "clang-tidy", "-o", self.report_dir,
+                       "--analyzer-config",
+                       "clang-tidy:Checks=hicpp-use-nullptr"]
+
+        print(analyze_cmd)
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
+        out, _ = process.communicate()
+
+        self.assertEqual(out.count('hicpp-use-nullptr'), 1)
+
+        analyze_cmd = [self._codechecker_cmd, "check", "-l", build_json,
+                       "--analyzers", "clang-tidy", "-o", self.report_dir,
+                       "--analyzer-config",
+                       "clang-tidy:Checks=hicpp-use-nullptr",
+                       "--checker-config",
+                       "clang-tidy:hicpp-use-nullptr.NullMacros=MY_NULL"]
+
+        print(analyze_cmd)
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
+        out, _ = process.communicate()
+
+        self.assertEqual(out.count('hicpp-use-nullptr'), 2)
+
+        analyze_cmd = [self._codechecker_cmd, "check", "-l", build_json,
+                       "--analyzers", "clangsa", "-o", self.report_dir,
+                       "--checker-config",
+                       "clangsa:optin.cplusplus.UninitializedObject:Pedantic"
+                       "=true"]
+
+        print(analyze_cmd)
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
+        out, _ = process.communicate()
+
+        self.assertEqual(out.count('UninitializedObject'), 1)
+
+        analyze_cmd = [self._codechecker_cmd, "check", "-l", build_json,
+                       "--analyzers", "clangsa", "-o", self.report_dir,
+                       "--checker-config",
+                       "clangsa:optin.cplusplus.UninitializedObject:Pedantic"
+                       "=true",
+                       "--analyzer-config",
+                       "clangsa:max-nodes=1"]
+
+        print(analyze_cmd)
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
+        out, _ = process.communicate()
+
+        self.assertEqual(out.count('UninitializedObject'), 0)

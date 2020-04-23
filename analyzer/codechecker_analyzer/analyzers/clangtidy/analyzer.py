@@ -336,7 +336,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             analyzer_config['CheckOptions'] = check_options
         else:
             try:
-                with open(args.tidy_config, 'r') as tidy_config:
+                with open(args.tidy_config, 'r',
+                          encoding='utf-8', errors='ignore') as tidy_config:
                     handler.checker_config = tidy_config.read()
             except IOError as ioerr:
                 LOG.debug_analyzer(ioerr)
