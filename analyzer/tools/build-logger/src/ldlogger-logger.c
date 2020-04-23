@@ -101,11 +101,6 @@ static void writeActions(FILE* stream_, char const* wd_, const LoggerVector* act
   long fsize;
   int entryCount = 0;
 
-  if (actions_->size <= 0)
-  {
-    return;
-  }
-
   fseek(stream_, 0L, SEEK_END);
   fsize = ftell(stream_);
   if (fsize == 0)

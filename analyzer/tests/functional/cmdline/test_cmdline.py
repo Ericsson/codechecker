@@ -8,7 +8,7 @@
 This module tests the CodeChecker command line.
 """
 
-
+import json
 import os
 import subprocess
 import unittest
@@ -93,3 +93,19 @@ class TestCmdline(unittest.TestCase):
 
         analyzers_cmd = [env.codechecker_cmd(), 'analyzers']
         self.assertEqual(0, run_cmd(analyzers_cmd)[0])
+
+    def test_log_empty_build_command(self):
+        """ Logging empty build command result will be a valid json file. """
+
+        log_file = os.path.join(self.test_workspace, 'build.json')
+
+        analyzers_cmd = [env.codechecker_cmd(), 'log',
+                         '-b', '',
+                         '-o', log_file]
+        out = run_cmd(analyzers_cmd)
+        print(out)
+
+        self.assertTrue(os.path.exists(log_file))
+        with open(log_file,
+                  encoding="utf-8", errors="ignore") as log_f:
+            self.assertFalse(json.load(log_f))

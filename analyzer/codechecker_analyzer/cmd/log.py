@@ -118,8 +118,15 @@ def main(args):
     logger.setup_logger(args.verbose if 'verbose' in args else None)
 
     args.logfile = os.path.realpath(args.logfile)
-    if os.path.exists(args.logfile):
-        os.remove(args.logfile)
+
+    # It is possible that the log file will not be created or it will be empty
+    # for example when the build command is an empty string or when there is no
+    # compiler command to log. For this reason we will create this log file if
+    # it does not exist and we will insert an empty array to it, so it will be
+    # a valid json file.
+    with open(args.logfile, 'w',
+              encoding="utf-8", errors="ignore") as logfile:
+        logfile.write("[\n]")
 
     context = analyzer_context.get_context()
     verbose = args.verbose if 'verbose' in args else None

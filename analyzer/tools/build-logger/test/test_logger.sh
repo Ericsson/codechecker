@@ -50,7 +50,9 @@ function test_compiler_path2 {
 
   if [ -n $compiler ]; then
     CC_LOGGER_GCC_LIKE="/g++-" bash -c "$compiler $source_file"
-    test ! -s $CC_LOGGER_FILE
+
+    echo -ne "[\n]" > $reference_file
+    diff $reference_file $CC_LOGGER_FILE
   fi
 }
 
@@ -183,6 +185,13 @@ function test_source_abs {
   grep -- "$source_file" $CC_LOGGER_FILE &> /dev/null
 }
 
+function test_valid_json {
+  bash -c "gcc 2>/dev/null"
+  echo -ne "[\n]" > $reference_file
+
+  diff $reference_file $CC_LOGGER_FILE
+}
+
 
 #--- Run tests ---#
 
@@ -202,4 +211,4 @@ for func in $(declare -F); do
   fi
 done
 
-rm a.out
+rm -f a.out
