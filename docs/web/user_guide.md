@@ -185,9 +185,12 @@ optional arguments:
   -n NAME, --name NAME  The name of the analysis run to use in storing the
                         reports to the database. If not specified, the '--
                         name' parameter given to 'codechecker-analyze' will be
-                        used, if exists.
-  --tag TAG             A unique identifier for this individual store of results
-                        in the run's history.
+                        used, if exists, otherwise the branch name will be
+                        used if the project is a git repository.
+  --tag TAG             A unique identifier for this individual store of
+                        results in the run's history. If the analyzed project
+                        is a git repository it will use the latest commit hash
+                        by default.
   --trim-path-prefix [TRIM_PATH_PREFIX [TRIM_PATH_PREFIX ...]]
                         Removes leading path from files which will be stored.
                         So if you have /a/b/c/x.cpp and /a/b/c/y.cpp then by

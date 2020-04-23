@@ -128,15 +128,19 @@ def add_arguments_to_parser(parser):
                         help="The name of the analysis run to use in storing "
                              "the reports to the database. If not specified, "
                              "the '--name' parameter given to 'codechecker-"
-                             "analyze' will be used, if exists.")
+                             "analyze' will be used, if exists, otherwise the "
+                             "branch name will be used if the project "
+                             "is a git repository.")
 
     parser.add_argument('--tag',
                         type=str,
                         dest="tag",
                         required=False,
                         default=argparse.SUPPRESS,
-                        help="A uniques identifier for this individual store "
-                             "of results in the run's history.")
+                        help="A unique identifier for this individual store "
+                             "of results in the run's history. If the "
+                             "analyzed project is a git repository it will "
+                             "use the latest commit hash by default.")
 
     parser.add_argument('--trim-path-prefix',
                         type=str,
@@ -184,35 +188,48 @@ exist prior to the 'store' command being ran.""")
     parser.set_defaults(func=main)
 
 
-def __get_run_name(input_list):
-    """Create a runname for the stored analysis from the input list."""
+def get_default_run_data(result_dirs):
+    """ Get the run name and run tag from metadata.json file if any.
 
-    # Try to create a name from the metada JSON(s).
-    names = set()
-    for input_path in input_list:
+    Run name may come from --name flag at "CodeChecker analyze" command or
+    from git branch name of the project. Run tag is the current commit hash of
+    the git project.
+    """
+    run_names = set()
+    version_tags = set()
+    for input_path in result_dirs:
         metafile = os.path.join(input_path, "metadata.json")
-        if os.path.isdir(input_path) and os.path.exists(metafile):
-            metajson = util.load_json_or_empty(metafile)
+        if not os.path.exists(metafile):
+            LOG.debug("No metadata.json file can be found in %s", input_path)
+            continue
 
-            if 'version' in metajson and metajson['version'] >= 2:
-                for tool in metajson.get('tools', {}):
-                    name = tool.get('run_name')
-            else:
-                name = metajson.get('name')
+        metajson = util.load_json_or_empty(metafile)
 
-            if not name:
-                name = "unnamed result folder"
+        if 'version' in metajson and metajson['version'] >= 2:
+            for tool in metajson.get('tools', {}):
+                git_info = tool.get('git', {})
+                if tool.get('run_name'):
+                    run_names.add(tool.get('run_name'))
+                elif git_info.get('branch_name'):
+                    run_names.add(git_info.get('branch_name'))
 
-            names.add(name)
+                # Use commit hash as the default version tag.
+                commit_hash = git_info.get('commit_hash')
+                if commit_hash:
+                    version_tags.add(commit_hash)
+        elif metajson.get('name'):
+            run_names.add(tool.get('name'))
 
-    if len(names) == 1:
-        name = names.pop()
-        if name != "unnamed result folder":
-            return name
-    elif len(names) > 1:
-        return "multiple projects: " + ', '.join(names)
-    else:
-        return False
+    run_name = None
+    version_tag = None
+
+    if run_names:
+        run_name = ', '.join(run_names)
+
+    if len(version_tags) == 1:
+        version_tag = version_tags.pop()
+
+    return run_name, version_tag
 
 
 def res_handler(results):
@@ -536,16 +553,22 @@ def main(args):
     if isinstance(args.input, str):
         args.input = [args.input]
 
-    if 'name' not in args:
-        LOG.debug("Generating name for analysis...")
-        generated = __get_run_name(args.input)
-        if generated:
-            setattr(args, 'name', generated)
-        else:
-            LOG.error("No suitable name was found in the inputs for the "
-                      "analysis run. Please specify one by passing argument "
-                      "--name run_name in the invocation.")
-            sys.exit(2)  # argparse returns error code 2 for bad invocations.
+    if 'name' not in args or 'version' not in args:
+        run_name, version_tag = get_default_run_data(args.input)
+
+        if 'name' not in args:
+            if run_name:
+                setattr(args, 'name', run_name)
+            else:
+                LOG.error("No suitable name was found in the inputs for the "
+                          "analysis run. Please specify one by passing "
+                          "argument --name run_name in the invocation.")
+
+                # argparse returns error code 2 for bad invocations.
+                sys.exit(2)
+
+        if 'tag' not in args and version_tag:
+            setattr(args, 'tag', version_tag)
 
     LOG.info("Storing analysis results for run '" + args.name + "'")
 

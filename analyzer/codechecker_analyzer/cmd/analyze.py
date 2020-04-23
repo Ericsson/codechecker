@@ -14,6 +14,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 
 from codechecker_analyzer import analyzer, analyzer_context, env
@@ -26,6 +27,47 @@ from codechecker_common.util import load_json_or_empty
 
 
 LOG = logger.get_logger('system')
+
+
+def get_git_info(proj_dir):
+    """ Get git information for the given project. """
+    git_info = {}
+
+    try:
+        git_info["branch_name"] = subprocess.check_output(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            stderr=subprocess.DEVNULL,
+            cwd=proj_dir,
+            encoding="utf-8",
+            errors="ignore").strip()
+
+        git_info["commit_hash"] = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"],
+            stderr=subprocess.DEVNULL,
+            cwd=proj_dir,
+            encoding="utf-8",
+            errors="ignore").strip()
+    except subprocess.CalledProcessError:
+        LOG.debug("No git information is available for the given project: %s",
+                  proj_dir)
+
+    try:
+        # We assume that the remote's name is "origin" which is not necessarily
+        # true. If there is no remote url then this command has an exit
+        # status 1 and the subprocess will throw an exception. We catch this
+        # exception separately so we can return with branch name and commit
+        # hash even if the origin does not exists.
+        git_info["origin"] = subprocess.check_output(
+            ["git", "config", "--get", "remote.origin.url"],
+            stderr=subprocess.DEVNULL,
+            cwd=proj_dir,
+            encoding="utf-8",
+            errors="ignore").strip()
+    except subprocess.CalledProcessError:
+        LOG.debug("No git remote origin url is available for the given "
+                  "project: %s", proj_dir)
+
+    return git_info
 
 
 def get_argparser_ctor_args():
@@ -865,6 +907,10 @@ def main(args):
 
     if 'name' in args:
         metadata_tool['run_name'] = args.name
+
+    git_info = get_git_info(actions[0].directory)
+    if git_info:
+        metadata_tool['git'] = git_info
 
     # Update metadata dictionary with old values.
     metadata_file = os.path.join(args.output_path, 'metadata.json')
