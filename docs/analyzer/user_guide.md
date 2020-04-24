@@ -578,7 +578,7 @@ usage: CodeChecker analyze [-h] [-j JOBS]
                            [-e checker/group/profile]
                            [-d checker/group/profile] [--enable-all]
                            [--verbose {info,debug,debug_analyzer}]
-                           logfile [logfile ...]
+                           logfile
 
 Use the previously created JSON Compilation Database to perform an analysis on
 the project, outputting analysis results in a machine-readable format.
