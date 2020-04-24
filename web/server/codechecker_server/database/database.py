@@ -499,7 +499,9 @@ class PostgreSQLServer(SQLServer):
                                                          self.database,
                                                          self.user)
 
-        extra_args = {'client_encoding': 'utf8'}
+        extra_args = {}
+        if driver == "psycopg2":
+            extra_args = {'client_encoding': 'utf8'}
         return str(URL('postgresql+' + driver,
                        username=self.user,
                        password=password,
