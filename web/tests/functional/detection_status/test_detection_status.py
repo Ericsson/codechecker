@@ -52,6 +52,8 @@ class TestDetectionStatus(unittest.TestCase):
             run_id = max(map(lambda run: run.runId, runs))
             self._cc_client.removeRun(run_id, None)
 
+        self.clang_tidy_cfg = os.path.join(self._test_dir, '.clang-tidy')
+
         # Change working dir to testfile dir so CodeChecker can be run easily.
         self.__old_pwd = os.getcwd()
         os.chdir(self._test_dir)
@@ -135,10 +137,10 @@ int main()
 
     def _create_clang_tidy_cfg_file(self, checkers):
         """ This function will create a .clang-tidy config file. """
-        with open(os.path.join(self._test_dir, '.clang-tidy'), 'w') as f:
+        with open(self.clang_tidy_cfg, 'w') as f:
             f.write("Checks: '{0}'".format(','.join(checkers)))
 
-    def __test_same_file_change(self):
+    def test_same_file_change(self):
         """
         This tests the change of the detection status of bugs when the file
         content changes.
@@ -287,7 +289,7 @@ int main()
                 self.assertIn(report.bugHash,
                               ['ac147b31a745d91be093bd70bbc5567c'])
 
-    def __test_check_without_metadata(self):
+    def test_check_without_metadata(self):
         """
         This test checks whether the storage works without a metadata.json.
         """
@@ -319,7 +321,7 @@ int main()
 
         self.assertEqual(len(reports), 2)
 
-    def _test_detection_status_off(self):
+    def test_detection_status_off(self):
         """
         This test checks reports which have detection status of 'Off'.
         """
@@ -434,6 +436,9 @@ int main()
         offed_reports = [r for r in reports
                          if r.detectionStatus == DetectionStatus.OFF]
         self.assertEqual(len(offed_reports), 1)
+
+        # Remove .clang-tidy configuration file.
+        os.remove(self.clang_tidy_cfg)
 
     def test_store_multiple_dir_no_off(self):
         """
