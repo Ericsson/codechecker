@@ -77,6 +77,11 @@ class ThriftAuthHandler(object):
 
     @timeit
     def performLogin(self, auth_method, auth_string):
+        if not auth_string:
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                "No credentials supplied. Refusing authentication!")
+
         if auth_method == "Username:Password":
             user_name, _ = auth_string.split(':', 1)
             LOG.info("'%s' logged in.", user_name)

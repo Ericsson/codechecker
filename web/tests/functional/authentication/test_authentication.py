@@ -55,6 +55,9 @@ class DictAuth(unittest.TestCase):
             auth_client.performLogin("Username:Password", "invalid:invalid")
             print("Invalid credentials gave us a token!")
 
+        with self.assertRaises(RequestFailed):
+            auth_client.performLogin("Username:Password", None)
+
         # A non-authenticated session should return an empty user.
         user = auth_client.getLoggedInUser()
         self.assertEqual(user, "")
