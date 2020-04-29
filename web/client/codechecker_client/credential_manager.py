@@ -34,7 +34,7 @@ def simplify_credentials(credentials):
     removed if these are given.
     """
     host_entry_pattern = re.compile(
-        r'^(?P<protocol>http[s]?://)*(?P<host>[\w.\*]+):*(?P<port>\d+)*'
+        r'^(?P<protocol>http[s]?://)*(?P<host>[^:\/\s]+):*(?P<port>\d+)*'
         r'/*(?P<product>\w+)*$')
 
     ret = {}
