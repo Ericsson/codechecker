@@ -101,7 +101,6 @@ def add_arguments_to_parser(parser):
 
     parser.add_argument('logfile',
                         type=str,
-                        nargs='+',
                         help="Path to the JSON compilation command database "
                              "files which were created during the build. "
                              "The analyzers will check only the files "
@@ -701,8 +700,8 @@ def main(args):
 
     check_config_file(args)
 
-    if len(args.logfile) != 1:
-        LOG.warning("Only one log file can be processed right now!")
+    if not os.path.exists(args.logfile):
+        LOG.error("The specified logfile '%s' does not exist!", args.logfile)
         sys.exit(1)
 
     args.output_path = os.path.abspath(args.output_path)
@@ -788,26 +787,21 @@ def main(args):
     # compile command processing.
     skipped_cmp_cmd_count = 0
 
-    for log_file in args.logfile:
-        if not os.path.exists(log_file):
-            LOG.error("The specified logfile '%s' does not exist!",
-                      log_file)
-            continue
-        compile_commands = load_json_or_empty(log_file, default={})
-        all_cmp_cmd_count += len(compile_commands)
-        filtered_parsed_actions, skipped = log_parser.parse_unique_log(
-            compile_commands,
-            report_dir,
-            args.compile_uniqueing,
-            compiler_info_file,
-            args.keep_gcc_include_fixed,
-            args.keep_gcc_intrin,
-            skip_handler,
-            pre_analysis_skip_handler,
-            ctu_or_stats_enabled,
-            analyzer_env)
-        actions += filtered_parsed_actions
-        skipped_cmp_cmd_count += skipped
+    compile_commands = load_json_or_empty(args.logfile, default={})
+    all_cmp_cmd_count += len(compile_commands)
+    filtered_parsed_actions, skipped = log_parser.parse_unique_log(
+        compile_commands,
+        report_dir,
+        args.compile_uniqueing,
+        compiler_info_file,
+        args.keep_gcc_include_fixed,
+        args.keep_gcc_intrin,
+        skip_handler,
+        pre_analysis_skip_handler,
+        ctu_or_stats_enabled,
+        analyzer_env)
+    actions += filtered_parsed_actions
+    skipped_cmp_cmd_count += skipped
 
     if not actions:
         LOG.info("No analysis is required.\nThere were no compilation "
@@ -888,7 +882,7 @@ def main(args):
     # WARN: store command will search for this file!!!!
     compile_cmd_json = os.path.join(args.output_path, 'compile_cmd.json')
     try:
-        source = os.path.abspath(args.logfile[0])
+        source = os.path.abspath(args.logfile)
         target = os.path.abspath(compile_cmd_json)
 
         if source != target:

@@ -679,12 +679,8 @@ def main(args):
             logfile = args.logfile
 
         # --- Step 2.: Perform the analysis.
-        if not os.path.exists(logfile):
-            raise OSError("The specified logfile '" + logfile + "' does not "
-                          "exist.")
-
         analyze_args = argparse.Namespace(
-            logfile=[logfile],
+            logfile=logfile,
             output_path=output_dir,
             output_format='plist',
             jobs=args.jobs,
