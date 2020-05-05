@@ -15,6 +15,7 @@ import os
 import re
 import shlex
 import tempfile
+import time
 import zipfile
 import zlib
 
@@ -503,7 +504,7 @@ def unzip(b64zip, output_dir):
     """
     This function unzips the base64 encoded zip file. This zip is extracted
     to a temporary directory and the ZIP is then deleted. The function returns
-    the name of the extracted directory.
+    the size of the extracted zip file.
     """
     with tempfile.NamedTemporaryFile(suffix='.zip') as zip_file:
         LOG.debug("Unzipping mass storage ZIP '%s' to '%s'...",
@@ -513,11 +514,13 @@ def unzip(b64zip, output_dir):
         with zipfile.ZipFile(zip_file, 'r', allowZip64=True) as zipf:
             try:
                 zipf.extractall(output_dir)
+                return os.stat(zip_file.name).st_size
             except Exception:
                 LOG.error("Failed to extract received ZIP.")
                 import traceback
                 traceback.print_exc()
                 raise
+    return 0
 
 
 def create_review_data(review_status):
@@ -2798,6 +2801,7 @@ class ThriftRequestHandler(object):
     def massStoreRun(self, name, tag, version, b64zip, force,
                      trim_path_prefixes):
         self.__require_store()
+        start_time = time.time()
 
         user = self.__auth_session.user if self.__auth_session else None
 
@@ -2810,7 +2814,7 @@ class ThriftRequestHandler(object):
         wrong_src_code_comments = []
         try:
             with TemporaryDirectory() as zip_dir:
-                unzip(b64zip, zip_dir)
+                zip_size = unzip(b64zip, zip_dir)
 
                 LOG.debug("Using unzipped folder '%s'", zip_dir)
 
@@ -2908,6 +2912,10 @@ class ThriftRequestHandler(object):
                     store_handler.finishCheckerRun(session, run_id)
 
                     session.commit()
+
+                    LOG.info("'%s' stored results (%s KB) to run '%s' in %s "
+                             "seconds.", user_name, round(zip_size / 1024),
+                             name, round(time.time() - start_time, 2))
 
                 return run_id
         finally:

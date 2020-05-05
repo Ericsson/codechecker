@@ -360,6 +360,8 @@ def assemble_zip(inputs, zip_file, client):
                         "results the previous reports become resolved.")
 
         file_hashes = list(hash_to_file.keys())
+
+        LOG.debug("Get missing content hashes from the server.")
         necessary_hashes = client.getMissingContentHashes(file_hashes) \
             if file_hashes else []
 
@@ -555,7 +557,10 @@ def main(args):
     try:
         assemble_zip(args.input, zip_file, client)
 
-        if os.stat(zip_file).st_size > MAX_UPLOAD_SIZE:
+        zip_size = os.stat(zip_file).st_size
+        LOG.debug("Zip size is %s. vs %s", sizeof_fmt(zip_size))
+
+        if zip_size > MAX_UPLOAD_SIZE:
             LOG.error("The result list to upload is too big (max: %s).",
                       sizeof_fmt(MAX_UPLOAD_SIZE))
             sys.exit(1)
@@ -568,6 +573,7 @@ def main(args):
         trim_path_prefixes = args.trim_path_prefix if \
             'trim_path_prefix' in args else None
 
+        LOG.info("Storing results to the server...")
         client.massStoreRun(args.name,
                             args.tag if 'tag' in args else None,
                             str(context.version),
