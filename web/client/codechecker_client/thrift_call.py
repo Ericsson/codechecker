@@ -31,8 +31,18 @@ def ThriftClientCall(function):
         self.transport.open()
         func = getattr(self.client, funcName)
         try:
-            res = func(*args, **kwargs)
-            return res
+            try:
+                return func(*args, **kwargs)
+            except TApplicationException as ex:
+                # If the session is expired we will try to reset the token and
+                # call the API function again.
+                if "Error code 401" not in ex.message:
+                    raise ex
+
+                # Generate a new token
+                self._reset_token()
+
+                return func(*args, **kwargs)
         except codechecker_api_shared.ttypes.RequestFailed as reqfailure:
             if reqfailure.errorCode ==\
                     codechecker_api_shared.ttypes.ErrorCode.DATABASE:
