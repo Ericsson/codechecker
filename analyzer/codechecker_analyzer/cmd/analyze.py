@@ -15,12 +15,12 @@ import os
 import shutil
 import sys
 
-from codechecker_analyzer import analyzer, analyzer_context, arg, env
+from codechecker_analyzer import analyzer, analyzer_context, env
 from codechecker_analyzer.analyzers import analyzer_types
+from codechecker_analyzer.arg import OrderedCheckersAction
 from codechecker_analyzer.buildlog import log_parser
 
-from codechecker_common import logger
-from codechecker_common import skiplist_handler
+from codechecker_common import arg, logger, skiplist_handler
 from codechecker_common.util import load_json_or_empty
 
 
@@ -45,6 +45,11 @@ the project, outputting analysis results in a machine-readable format.""",
         # Epilogue is shown after the arguments when the help is queried
         # directly.
         'epilog': """
+environment variables:
+  CC_ANALYZERS_FROM_PATH       Set to `yes` or `1` to enforce taking the
+                               analyzers from the `PATH` instead of the given
+                               binaries.
+
 issue hashes:
 - By default the issue hash calculation method for 'Clang Static Analyzer' is
 context sensitive. It means the hash will be generated based on the following
@@ -82,6 +87,7 @@ generated and not the context free hash (kept for backward compatibility). Use
 OUR RECOMMENDATION: we recommend you to use 'context-free-v2' hash because the
 hash will not be changed so easily for example on code indentation or when a
 checker is renamed.
+
 
 Compilation databases can be created by instrumenting your project's build via
 'CodeChecker log'. To transform the results of the analysis to a human-friendly
@@ -545,7 +551,7 @@ was emitted by clang-tidy.""")
                                dest="enable",
                                metavar='checker/group/profile',
                                default=argparse.SUPPRESS,
-                               action=arg.OrderedCheckersAction,
+                               action=OrderedCheckersAction,
                                help="Set a checker (or checker group) "
                                     "to BE USED in the analysis.")
 
@@ -553,7 +559,7 @@ was emitted by clang-tidy.""")
                                dest="disable",
                                metavar='checker/group/profile',
                                default=argparse.SUPPRESS,
-                               action=arg.OrderedCheckersAction,
+                               action=OrderedCheckersAction,
                                help="Set a checker (or checker group) "
                                     "to BE PROHIBITED from use in the "
                                     "analysis.")

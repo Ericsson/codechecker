@@ -213,6 +213,11 @@ server arguments:
                         the format of '[http[s]://]host:port/Endpoint'.
                         (default: localhost:8001/Default)
 
+environment variables:
+  CC_PASS_FILE     The location of the password file for auto login. By default
+                   CodeChecker will use '~/.codechecker.passwords.json' file.
+                   It can also be used to setup different credential files to
+                   login to the same server with a different user.
 
 The results can be viewed by connecting to such a server in a Web browser or
 via 'CodeChecker cmd'.
@@ -938,6 +943,15 @@ comparison modes:
                         disappeared from the 'new' run.
   --unresolved          Show results that appear in both the 'base' and the
                         'new' run.
+
+envionment variables:
+  CC_REPO_DIR         Root directory of the sources, i.e. the directory where
+                      the repository was cloned. Use it when generating gerrit
+                      output.
+  CC_REPORT_URL       URL where the report can be found. Use it when generating
+                      gerrit output.
+  CC_CHANGED_FILES    Path of changed files json from Gerrit. Use it when
+                      generating gerrit output.
 ```
 
 The command can be used in *local* or *remote* compare modes.

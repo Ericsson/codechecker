@@ -20,9 +20,9 @@ import traceback
 
 from plist_to_html import PlistToHtml
 
-from codechecker_analyzer import arg, analyzer_context, suppress_handler
+from codechecker_analyzer import analyzer_context, suppress_handler
 
-from codechecker_common import logger, plist_parser, util
+from codechecker_common import arg, logger, plist_parser, util
 from codechecker_common.skiplist_handler import SkipListHandler
 from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler
@@ -323,11 +323,11 @@ def get_argparser_ctor_args():
         'formatter_class': arg.RawDescriptionDefaultHelpFormatter,
 
         # Description is shown when the command's help is queried directly
-        'description': "Parse and pretty-print the summary and results from "
-                       "one or more 'codechecker-analyze' result files. Bugs "
-                       "which are commented by using \"false_positive\", "
-                       "\"suppress\" and \"intentional\" source code "
-                       "comments will not be printed by the `parse` command.",
+        'description': """
+Parse and pretty-print the summary and results from one or more
+'codechecker-analyze' result files. Bugs which are commented by using
+"false_positive", "suppress" and "intentional" source code comments will not be
+printed by the `parse` command.""",
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.

@@ -19,7 +19,7 @@ from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.buildlog import build_manager
 from codechecker_analyzer.buildlog.host_check import check_intercept
 
-from codechecker_common import logger
+from codechecker_common import arg, logger
 
 
 def get_argparser_ctor_args():
@@ -29,23 +29,57 @@ def get_argparser_ctor_args():
     """
 
     is_intercept = check_intercept(os.environ)
-    ldlogger_settings = "\nld-logger can be fine-tuned with some " \
-        "environment variables. For details see the following " \
-        "documentation: " \
-        "https://github.com/Ericsson/codechecker/blob/master/analyzer/tools/" \
-        "build-logger/README.md#usage" if not is_intercept else ''
+    ldlogger_settings = """
+ld-logger can be fine-tuned with some environment variables. For details see
+the following documentation:
+https://github.com/Ericsson/codechecker/blob/master/analyzer/tools/
+build-logger/README.md#usage""" if not is_intercept else ""
 
     return {
         'prog': 'CodeChecker log',
-        'formatter_class': argparse.ArgumentDefaultsHelpFormatter,
+        'formatter_class': arg.RawDescriptionDefaultHelpFormatter,
 
         # Description is shown when the command's help is queried directly
-        'description': "Runs the given build command and records the executed "
-                       "compilation steps. These steps are written to the "
-                       "output file in a JSON format.\n\nAvailable build "
-                       "logger tool that will be used is '" +
-                       ('intercept-build' if is_intercept
-                        else 'ld-logger') + "'." + ldlogger_settings,
+        'description': """
+Runs the given build command and records the executed compilation steps. These
+steps are written to the output file in a JSON format.
+
+Available build logger tool that will be used is '{0}'.{1}
+""".format('intercept-build' if is_intercept else 'ld-logger',
+           ldlogger_settings),
+
+        'epilog': """
+environment variables:
+  CC_LOGGER_GCC_LIKE       Set to to a colon separated list to change which
+                           compilers should be logged. For example (default):
+                           export CC_LOGGER_GCC_LIKE="gcc:g++:clang:clang++:
+                           cc:c++". The logger will match any compilers with
+                           'gcc', 'g++', 'clang', 'clang++', 'cc' and 'c++' in
+                           their filenames.
+  CC_LOGGER_DEF_DIRS       If the environment variable is defined, the logger
+                           will extend the compiler argument list in the
+                           compilation database with the pre-configured include
+                           paths of the logged compiler.
+  CC_LOGGER_ABS_PATH       If the environment variable is defined, all relative
+                           paths in the compilation commands after '-I,
+                           -idirafter, -imultilib, -iquote, -isysroot -isystem,
+                           -iwithprefix, -iwithprefixbefore, -sysroot,
+                           --sysroot' will be converted to absolute PATH when
+                           written into the compilation database.
+  CC_LOGGER_KEEP_LINK      If its value is not 'true' then object files will be
+                           removed from the build action. For example in case
+                           of this build command: 'gcc main.c object1.o
+                           object2.so' the 'object1.o' and 'object2.so' will be
+                           removed and only 'gcc main.c' will be captured. If
+                           only object files are provided to the compiler then
+                           the complete build action will be thrown away. This
+                           means that build actions which only perform linking
+                           will not be captured. We consider a file as object
+                           file if its extension is '.o', '.so' or '.a'.
+  CC_LOGGER_DEBUG_FILE     Output file to print log messages. By default if we
+                           run the log command in debug mode it will generate
+                           a 'codechecker.logger.debug' file beside the log
+                           file.""",
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.
