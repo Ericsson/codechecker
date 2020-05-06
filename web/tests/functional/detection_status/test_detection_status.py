@@ -377,6 +377,7 @@ int main()
         # as OFF.
         cfg = dict(self._codechecker_cfg)
         cfg['checkers'] = ['-d', 'modernize']
+        cfg['analyzer_config'] = ['clang-tidy:take-config-from-directory=true']
 
         self._create_source_file(1)
         self._create_clang_tidy_cfg_file(['-*', 'hicpp-*', 'modernize-*'])

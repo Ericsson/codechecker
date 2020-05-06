@@ -225,10 +225,12 @@ analyzer arguments:
                         'CodeChecker analyzers --dump-config clang-tidy'
                         command.
   --analyzer-config [ANALYZER_CONFIG [ANALYZER_CONFIG ...]]
-                        Analyzer configuration options in the following format:
-                        analyzer:key=value. The collection of the options can
-                        be printed with 'CodeChecker analyzers
-                        --analyzer-config'. (default: ['clang-
+                        Analyzer configuration options in the following
+                        format: analyzer:key=value. The collection of the
+                        options can be printed with 'CodeChecker analyzers
+                        --analyzer-config'. To disable the default behaviour
+                        of this option you can use the 'clang-tidy:take-
+                        config-from-directory=true' option. (default: ['clang-
                         tidy:HeaderFilterRegex=.*'])
   --checker-config [CHECKER_CONFIG [CHECKER_CONFIG ...]]
                         Checker configuration options in the following format:
@@ -816,10 +818,12 @@ analyzer arguments:
                         'CodeChecker analyzers --dump-config clang-tidy'
                         command.
   --analyzer-config [ANALYZER_CONFIG [ANALYZER_CONFIG ...]]
-                        Analyzer configuration options in the following format:
-                        analyzer:key=value. The collection of the options can
-                        be printed with 'CodeChecker analyzers
-                        --analyzer-config'. (default: ['clang-
+                        Analyzer configuration options in the following
+                        format: analyzer:key=value. The collection of the
+                        options can be printed with 'CodeChecker analyzers
+                        --analyzer-config'. To disable the default behaviour
+                        of this option you can use the 'clang-tidy:take-
+                        config-from-directory=true' option. (default: ['clang-
                         tidy:HeaderFilterRegex=.*'])
   --checker-config [CHECKER_CONFIG [CHECKER_CONFIG ...]]
                         Checker configuration options in the following format:

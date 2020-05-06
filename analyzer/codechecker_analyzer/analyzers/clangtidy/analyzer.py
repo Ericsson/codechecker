@@ -167,7 +167,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd.extend(config.analyzer_extra_arguments)
 
-            if config.checker_config != '{}':
+            if config.checker_config and config.checker_config != '{}':
                 analyzer_cmd.append('-config=' + config.checker_config)
 
             analyzer_cmd.append(self.source_file)
@@ -345,7 +345,11 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                 # No clang tidy config file was given in the command line.
                 LOG.debug_analyzer(aerr)
 
-        if not handler.checker_config:
+        # 'take-config-from-directory' is a special option which let the user
+        # to use the '.clang-tidy' config files. It will disable analyzer and
+        # checker configuration options.
+        if not handler.checker_config and \
+                analyzer_config.get('take-config-from-directory') != 'true':
             handler.checker_config = json.dumps(analyzer_config)
 
         check_env = env.extend(context.path_env_extra,

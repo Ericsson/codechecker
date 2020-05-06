@@ -347,7 +347,11 @@ def add_arguments_to_parser(parser):
                                     "The collection of the options can be "
                                     "printed with "
                                     "'CodeChecker analyzers "
-                                    "--analyzer-config'.")
+                                    "--analyzer-config'. To disable the "
+                                    "default behaviour of this option you can "
+                                    "use the "
+                                    "'clang-tidy:take-config-from-directory="
+                                    "true' option.")
 
     analyzer_opts.add_argument('--checker-config',
                                dest='checker_config',

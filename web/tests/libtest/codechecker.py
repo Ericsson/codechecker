@@ -217,6 +217,11 @@ def check_and_store(codechecker_cfg, test_project_name, test_project_path,
     if clean:
         check_cmd.extend(['--clean'])
 
+    analyzer_config = codechecker_cfg.get('analyzer_config')
+    if analyzer_config:
+        check_cmd.append('--analyzer-config')
+        check_cmd.extend(analyzer_config)
+
     check_cmd.extend(codechecker_cfg['checkers'])
 
     try:
