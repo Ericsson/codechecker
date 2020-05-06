@@ -24,17 +24,38 @@ LOG = get_logger('system')
 
 class ThriftClientHelper(object):
 
-    def __init__(self, protocol, host, port, uri, session_token=None):
+    def __init__(self, protocol, host, port, uri, session_token=None,
+                 get_new_token=None):
+        """
+        @param get_new_token: a function which can generate a new token.
+        """
         self.__host = host
         self.__port = port
         url = create_product_url(protocol, host, port, uri)
         self.transport = THttpClient.THttpClient(url)
         self.protocol = TJSONProtocol.TJSONProtocol(self.transport)
         self.client = codeCheckerDBAccess.Client(self.protocol)
+        self.get_new_token = get_new_token
 
-        if session_token:
-            headers = {'Cookie': SESSION_COOKIE_NAME + '=' + session_token}
-            self.transport.setCustomHeaders(headers)
+        self._set_token(session_token)
+
+    def _set_token(self, session_token):
+        """ Set the given token in the transport layer. """
+        if not session_token:
+            return
+
+        headers = {'Cookie': SESSION_COOKIE_NAME + '=' + session_token}
+        self.transport.setCustomHeaders(headers)
+
+    def _reset_token(self):
+        """ Get a new token and update the transport layer. """
+        if not self.get_new_token:
+            return
+
+        # get_new_token() function connects to a remote server to get a new
+        # session token.
+        session_token = self.get_new_token()
+        self._set_token(session_token)
 
     @ThriftClientCall
     def getRunData(self, run_name_filter, limit, offset, sort_mode):

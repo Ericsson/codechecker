@@ -210,6 +210,12 @@ def setup_product_client(protocol, host, port, auth_client=None,
     return product_client
 
 
+def get_new_token(protocol, host, port, cred_manager):
+    """ Get a new session token from the remote server. """
+    auth_client = setup_auth_client(protocol, host, port)
+    return perform_auth_for_handler(auth_client, host, port, cred_manager)
+
+
 def setup_client(product_url):
     """Setup the Thrift Product or Service client and
     check API version and authentication needs.
@@ -228,9 +234,7 @@ def setup_client(product_url):
 
     # Local token is missing ask remote server.
     if not session_token:
-        auth_client = setup_auth_client(protocol, host, port)
-        session_token = perform_auth_for_handler(auth_client, host, port,
-                                                 cred_manager)
+        session_token = get_new_token(protocol, host, port, cred_manager)
 
     LOG.debug("Initializing client connecting to %s:%d/%s done.",
               host, port, product_name)
@@ -238,6 +242,7 @@ def setup_client(product_url):
     client = thrift_helper.ThriftClientHelper(
         protocol, host, port,
         '/' + product_name + '/v' + CLIENT_API + '/CodeCheckerService',
-        session_token)
+        session_token,
+        lambda: get_new_token(protocol, host, port, cred_manager))
 
     return client
