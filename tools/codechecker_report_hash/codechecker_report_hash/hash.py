@@ -270,25 +270,27 @@ def get_report_hash(diag, file_path, hash_type):
         raise Exception("Invalid report hash type: " + str(hash_type))
 
 
-def get_report_path_hash(bug_path, files):
+def get_report_path_hash(report):
     """ Returns path hash for the given bug path.
 
     This can be used to filter deduplications of multiple reports.
     """
     report_path_hash = ''
-    events = [i for i in bug_path if i.get('kind') == 'event']
+    events = [i for i in report.bug_path if i.get('kind') == 'event']
 
     for event in events:
-        file_name = os.path.basename(files[event['location']['file']])
+        file_name = os.path.basename(report.files[event['location']['file']])
         line = str(event['location']['line']) if 'location' in event else 0
         col = str(event['location']['col']) if 'location' in event else 0
 
         report_path_hash += line + '|' + col + '|' + event['message'] + \
             file_name
 
+    report_path_hash += report.check_name
+
     if not report_path_hash:
         LOG.error('Failed to generate report path hash!')
-        LOG.error(bug_path)
+        LOG.error(report.bug_path)
 
     LOG.debug(report_path_hash)
     return __str_to_hash(report_path_hash)

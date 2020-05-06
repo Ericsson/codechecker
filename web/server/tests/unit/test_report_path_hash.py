@@ -46,14 +46,14 @@ class ReportPathHashHandler(unittest.TestCase):
 
         report_hash_to_path_hash = {
             '79e31a6ba028f0b7d9779faf4a6cb9cf':
-                'c473c1a55df72ea4c6e055e18370ac65',
+                'acb1d3dc1459f681bd3c743e6c015b37',
             '8714f42d8328bc78d5d7bff6ced918cc':
-                '94f2a6eee8af6462a810218dff35056a',
+                'dcaaf2905d607a16e3fa330edb8e9f89',
             'a6d3464f8aab9eb31a8ea7e167e84322':
-                '11f410136724cf43c63526841007897e'
+                'd089a50f34051c68c7bb4c5ac2c4c5d5'
         }
 
         for report in reports:
-            path_hash = get_report_path_hash(report.bug_path, files)
+            path_hash = get_report_path_hash(report)
             bug_hash = report.main['issue_hash_content_of_line_in_context']
             self.assertEqual(path_hash, report_hash_to_path_hash[bug_hash])
