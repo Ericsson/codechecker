@@ -53,6 +53,32 @@ def expand_whole_protocol_and_port(protocol=None, port=None):
     return protocol, portnum
 
 
+def understand_server_addr(server_addr):
+    """
+    Attempts to understand the given server address and fetch the hostname
+    or host address and optionally the port from it.
+    """
+    parts = server_addr.split(':')
+
+    if len(parts) == 2:
+        return parts[0], int(parts[1])
+    if len(parts) == 1:
+        return parts[0], None
+
+    # Multiple ':'s found in the URL, which means it could be an
+    # IPv6 address, if it is in the right format.
+    if parts[0].startswith('['):
+        if parts[-1].endswith(']'):
+            # The address was [::1], there is no port number.
+            return ':'.join(parts), None
+        if parts[-2].endswith(']'):
+            # The address was such as [::1]:1234.
+            return ':'.join(parts[:-1]), int(parts[-1])
+
+    raise ValueError("The server's address is not in a valid "
+                     "'host:port' or '[host]:port' format!")
+
+
 def split_server_url(url):
     """
     Splits the given CodeChecker server URL into its parts.
@@ -78,14 +104,10 @@ def split_server_url(url):
         parts = url.split('/', 1)
 
         # Something is either a hostname, or a host:port.
-        server_addr = parts[0].split(":")
-        if len(server_addr) == 2:
-            host, port = server_addr[0], int(server_addr[1])
-        elif len(server_addr) == 1:
-            host = server_addr[0]
-        else:
-            raise ValueError("The server's address is not in a valid "
-                             "'host:port' format!")
+        server_addr = parts[0]
+        host, maybe_port = understand_server_addr(server_addr)
+        if maybe_port:
+            port = maybe_port
     except Exception:
         raise ValueError("The specified server URL is invalid.")
 
@@ -142,15 +164,10 @@ def split_product_url(url):
             product_name = parts[1]
 
             # Something is either a hostname, or a host:port.
-            server_addr = parts[0].split(":")
-            if len(server_addr) == 2:
-                host, port = server_addr[0], int(server_addr[1])
-            elif len(server_addr) == 1:
-                # We consider "localhost/product" as "localhost:8001/product".
-                host = server_addr[0]
-            else:
-                raise ValueError("The server's address is not in a valid "
-                                 "'host:port' format!")
+            server_addr = parts[0]
+            host, maybe_port = understand_server_addr(server_addr)
+            if maybe_port:
+                port = maybe_port
         else:
             raise ValueError("Product URL can not contain extra '/' chars.")
     except Exception:

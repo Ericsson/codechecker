@@ -43,6 +43,8 @@ class product_urlTest(unittest.TestCase):
             self.assertEqual(sname, name)
 
         test("localhost", 8001, "Default")
+        test("[::1]", 8001, "Default")
+        test("[f000:baa5::f00d]", 8080, "Foo")
         test("localhost", 8002, "MyProduct")
         test("another.server", 80, "CodeChecker", "http")
         test("very-secure.another.server", 443, "CodeChecker", "https")
@@ -81,6 +83,8 @@ class product_urlTest(unittest.TestCase):
             self.assertEqual(sname, name)
 
         test("localhost", "Default")
+        test("[::1]", "Default")
+        test("[f000:baa5::f00d]", "Default")
         test("otherhost", "awesome123", "http")
 
         # 8080/MyProduct as if 8080 was a host name.
@@ -112,6 +116,9 @@ class product_urlTest(unittest.TestCase):
             # HTTPS, localhost, 443, and "foobar.baz:1234" product name.
             split_product_url("https://foobar.bar:1234")
 
+        with self.assertRaises(ValueError):
+            split_product_url("http://::1:8080/Default")
+
     def testFullServerURL(self):
         """
         Whole server URL understanding.
@@ -137,6 +144,12 @@ class product_urlTest(unittest.TestCase):
         self.assertEqual(shost, 'someserver')
         self.assertEqual(sport, 1234)
 
+        sprotocol, shost, sport = \
+            split_server_url('http://[::1]:1234/Product')
+        self.assertEqual(sprotocol, 'http')
+        self.assertEqual(shost, '[::1]')
+        self.assertEqual(sport, 1234)
+
     def testHostname(self):
         """
         Understanding only a hostname specified for server URLs.
@@ -150,6 +163,7 @@ class product_urlTest(unittest.TestCase):
             self.assertEqual(sport, expected_port(protocol, None))
 
         test("codechecker")  # Port: 8001
+        test("[::1]")  # Port: 8001
         test("codechecker", "http")  # Port: 80
         test("codechecker.local")  # Port: 8001
         test("www.example.org", "https")  # Port: 443
@@ -167,3 +181,6 @@ class product_urlTest(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             split_server_url("whatever://whatev.er")
+
+        with self.assertRaises(ValueError):
+            split_server_url("http://::1:8081")
