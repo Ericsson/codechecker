@@ -49,8 +49,6 @@ def get_diagtool_bin():
     LOG.debug("'diagtool' can not be found next to the clang binary (%s)!",
               clang_bin)
 
-    return None
-
 
 def get_warnings(env=None):
     """
@@ -61,31 +59,16 @@ def get_warnings(env=None):
     if not diagtool_bin:
         return []
 
-    command = [diagtool_bin, 'tree']
     try:
         result = subprocess.check_output(
-            command,
+            [diagtool_bin, 'tree'],
             env=env,
             universal_newlines=True,
             encoding="utf-8",
             errors="ignore")
-        return parse_warnings(result)
+        return result.split()
     except (subprocess.CalledProcessError, OSError):
         return []
-
-
-def parse_warnings(diagtool_output):
-    """
-    Parse diagtool warning list output and return a list of clang warnings.
-    """
-    warnings = []
-
-    for line in diagtool_output.splitlines():
-        if line.startswith('GREEN = enabled by default') or line == '':
-            continue
-        warnings.append(line.strip())
-
-    return warnings
 
 
 def get_argparser_ctor_args():
@@ -126,11 +109,10 @@ def add_arguments_to_parser(parser):
                         metavar='ANALYZER',
                         required=False,
                         choices=analyzer_types.supported_analyzers,
-                        default=argparse.SUPPRESS,
+                        default=list(analyzer_types.supported_analyzers.
+                                     keys()),
                         help="Show checkers only from the analyzers "
-                             "specified. Currently supported analyzers are: " +
-                             ', '.join(analyzer_types.
-                                       supported_analyzers) + ".")
+                             "specified.")
 
     if get_diagtool_bin():
         parser.add_argument('-w', '--warnings',
@@ -156,6 +138,15 @@ def add_arguments_to_parser(parser):
                         help="List checkers enabled by the selected profile. "
                              "'list' is a special option showing details "
                              "about profiles collectively.")
+
+    parser.add_argument('--checker-config',
+                        dest='checker_config',
+                        default=argparse.SUPPRESS,
+                        action='store_true',
+                        required=False,
+                        help="Show checker configuration options. These can "
+                             "be given to 'CodeChecker analyze "
+                             "--checker-config'.")
 
     filters = parser.add_mutually_exclusive_group(required=False)
 
@@ -190,68 +181,80 @@ def main(args):
 
     # If the given output format is not 'table', redirect logger's output to
     # the stderr.
-    stream = None
-    if 'output_format' in args and args.output_format != 'table':
-        stream = 'stderr'
-
-    logger.setup_logger(args.verbose if 'verbose' in args else None, stream)
-
-    # If nothing is set, list checkers for all supported analyzers.
-    analyzers = args.analyzers \
-        if 'analyzers' in args \
-        else analyzer_types.supported_analyzers
+    logger.setup_logger(args.verbose if 'verbose' in args else None,
+                        None if args.output_format == 'table' else 'stderr')
 
     context = analyzer_context.get_context()
-    working, errored = analyzer_types.check_supported_analyzers(analyzers,
-                                                                context)
+    working_analyzers, errored = analyzer_types.check_supported_analyzers(
+        args.analyzers,
+        context)
 
     analyzer_environment = env.extend(context.path_env_extra,
                                       context.ld_lib_path_extra)
 
-    analyzer_config_map = analyzer_types.build_config_handlers(args,
-                                                               context,
-                                                               working)
+    analyzer_config_map = analyzer_types.build_config_handlers(
+        args, context, working_analyzers)
+
+    def uglify(text):
+        """
+        csv and json format output contain this non human readable header
+        string: no CamelCase and no space.
+        """
+        return text.lower().replace(' ', '_')
+
     # List available checker profiles.
     if 'profile' in args and args.profile == 'list':
-        if 'details' not in args:
-            if args.output_format not in ['csv', 'json']:
-                header = ['Profile name']
-            else:
-                header = ['profile_name']
+        if 'details' in args:
+            header = ['Profile name', 'Description']
+            rows = context.available_profiles.items()
         else:
-            if args.output_format not in ['csv', 'json']:
-                header = ['Profile name', 'Description']
-            else:
-                header = ['profile_name', 'description']
+            header = ['Profile name']
+            rows = ([key] for key in context.available_profiles.keys())
 
-        rows = []
-        for profile, description in context.available_profiles.items():
-            if 'details' not in args:
-                rows.append([profile])
-            else:
-                rows.append([profile, description])
+        if args.output_format in ['csv', 'json']:
+            header = list(map(uglify, header))
 
         print(output_formatters.twodim_to_str(args.output_format,
                                               header, rows))
         return
 
-    # Use good looking different headers based on format.
-    if 'details' not in args:
-        if args.output_format not in ['csv', 'json']:
-            header = ['Name']
+    # List checker config options.
+    if 'checker_config' in args:
+        if 'details' in args:
+            header = ['Option', 'Description']
         else:
-            header = ['name']
+            header = ['Option']
+
+        if args.output_format in ['csv', 'json']:
+            header = list(map(uglify, header))
+
+        rows = []
+        for analyzer in working_analyzers:
+            config_handler = analyzer_config_map.get(analyzer)
+            analyzer_class = analyzer_types.supported_analyzers[analyzer]
+
+            configs = analyzer_class.get_checker_config(config_handler,
+                                                        analyzer_environment)
+            rows.extend((':'.join((analyzer, c[0])), c[1]) if 'details' in args
+                        else (':'.join((analyzer, c[0])),) for c in configs)
+
+        print(output_formatters.twodim_to_str(args.output_format,
+                                              header, rows))
+        return
+
+    # List available checkers.
+    if 'details' in args:
+        header = ['Enabled', 'Name', 'Analyzer', 'Severity', 'Description']
     else:
-        if args.output_format not in ['csv', 'json']:
-            header = ['', 'Name', 'Analyzer', 'Severity', 'Description']
-        else:
-            header = ['enabled', 'name', 'analyzer', 'severity', 'description']
+        header = ['Name']
+
+    if args.output_format in ['csv', 'json']:
+        header = list(map(uglify, header))
 
     rows = []
-    for analyzer in working:
+    for analyzer in working_analyzers:
         config_handler = analyzer_config_map.get(analyzer)
-        analyzer_class = \
-            analyzer_types.supported_analyzers[analyzer]
+        analyzer_class = analyzer_types.supported_analyzers[analyzer]
 
         checkers = analyzer_class.get_analyzer_checkers(config_handler,
                                                         analyzer_environment)
@@ -285,28 +288,25 @@ def main(args):
             elif state != CheckerState.enabled and 'only_enabled' in args:
                 continue
 
-            if args.output_format != 'json':
-                state = '+' if state == CheckerState.enabled else '-'
-            else:
+            if args.output_format == 'json':
                 state = state == CheckerState.enabled
-
-            if 'details' not in args:
-                rows.append([checker_name])
             else:
+                state = '+' if state == CheckerState.enabled else '-'
+
+            if 'details' in args:
                 severity = context.severity_map.get(checker_name)
                 rows.append([state, checker_name, analyzer,
                              severity, description])
+            else:
+                rows.append([checker_name])
 
-        show_warnings = True if 'show_warnings' in args and \
-            args.show_warnings else False
-
-        if show_warnings:
+        if 'show_warnings' in args:
             severity = context.severity_map.get('clang-diagnostic-')
             for warning in get_warnings(analyzer_environment):
-                if 'details' not in args:
-                    rows.append([warning])
-                else:
+                if 'details' in args:
                     rows.append(['', warning, '-', severity, '-'])
+                else:
+                    rows.append([warning])
 
     if rows:
         print(output_formatters.twodim_to_str(args.output_format,

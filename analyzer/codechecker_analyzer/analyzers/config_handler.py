@@ -91,16 +91,12 @@ class AnalyzerConfigHandler(object, metaclass=ABCMeta):
 
         return None
 
-    def add_checker(self, checker_name, description=None, state=None):
+    def add_checker(self, checker_name, description='',
+                    state=CheckerState.default):
         """
         Add additional checker. If no state argument is given, the actual usage
         of the checker is handled by the analyzer.
         """
-        if not description:
-            description = ''
-        if state is None:
-            state = CheckerState.default
-
         self.__available_checkers[checker_name] = (state, description)
 
     def set_checker_enabled(self, checker_name, enabled=True):

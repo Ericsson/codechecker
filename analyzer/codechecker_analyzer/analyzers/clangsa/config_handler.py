@@ -23,7 +23,6 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
 
     def __init__(self, environ):
         super(ClangSAConfigHandler, self).__init__()
-        self.__checker_configs = []
         self.ctu_dir = ''
         self.log_file = ''
         self.path_env_extra = ''
@@ -32,12 +31,6 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
         self.enable_z3_refutation = False
         self.environ = environ
         self.version_info = None
-
-    def add_checker_config(self, config):
-        """
-        Add a (checker_name, key, value) tuple to the list.
-        """
-        self.__checker_configs.append(config)
 
     @property
     def ctu_capability(self):

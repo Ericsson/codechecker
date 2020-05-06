@@ -7,6 +7,7 @@
 """
 
 
+import json
 import os
 import re
 import shlex
@@ -49,6 +50,25 @@ def parse_checkers(tidy_output):
     return checkers
 
 
+def parse_checker_config(config_dump):
+    """
+    Return the parsed clang-tidy config options as a list of
+    (flag, default_value) tuples.
+    config_dump -- clang-tidy config options YAML dump.
+    """
+    reg = re.compile(r'key:\s+(\S+)\s+value:\s+([^\n]+)')
+    return re.findall(reg, config_dump)
+
+
+def parse_analyzer_config(config_dump):
+    """
+    Return the parsed clang-tidy analyzer options as a list of
+    (flag, default_value) tuples.
+    config_dump -- clang-tidy config options YAML dump.
+    """
+    return re.findall(r'^(\S+):\s+(\S+)$', config_dump, re.MULTILINE)
+
+
 class ClangTidy(analyzer_base.SourceAnalyzer):
     """
     Constructs the clang tidy analyzer commands.
@@ -64,19 +84,40 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         """
         Return the list of the supported checkers.
         """
-        analyzer_binary = cfg_handler.analyzer_binary
-
-        command = [analyzer_binary, "-list-checks", "-checks='*'"]
-
         try:
-            command = shlex.split(' '.join(command))
             result = subprocess.check_output(
-                command,
+                [cfg_handler.analyzer_binary, "-list-checks", "-checks=*"],
                 env=environ,
                 universal_newlines=True,
                 encoding="utf-8",
                 errors="ignore")
             return parse_checkers(result)
+        except (subprocess.CalledProcessError, OSError):
+            return []
+
+    @classmethod
+    def get_checker_config(cls, cfg_handler, environ):
+        try:
+            result = subprocess.check_output(
+                [cfg_handler.analyzer_binary, "-dump-config"],
+                env=environ,
+                universal_newlines=True,
+                encoding="utf-8",
+                errors="ignore")
+            return parse_checker_config(result)
+        except (subprocess.CalledProcessError, OSError):
+            return []
+
+    @classmethod
+    def get_analyzer_config(cls, cfg_handler, environ):
+        try:
+            result = subprocess.check_output(
+                [cfg_handler.analyzer_binary, "-dump-config"],
+                env=environ,
+                universal_newlines=True,
+                encoding="utf-8",
+                errors="ignore")
+            return parse_analyzer_config(result)
         except (subprocess.CalledProcessError, OSError):
             return []
 
@@ -126,8 +167,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd.extend(config.analyzer_extra_arguments)
 
-            if config.checker_config:
-                analyzer_cmd.append('-config="' + config.checker_config + '"')
+            if config.checker_config != '{}':
+                analyzer_cmd.append('-config=' + config.checker_config)
 
             analyzer_cmd.append(self.source_file)
 
@@ -267,19 +308,45 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             # No clang tidy arguments file was given in the command line.
             LOG.debug_analyzer(aerr)
 
-        try:
-            # The config file dumped by clang-tidy contains "..." at the end.
-            # This has to be emitted, otherwise -config flag of clang-tidy
-            # cannot consume it.
-            with open(args.tidy_config, 'rb') as tidy_config:
-                lines = tidy_config.readlines()
-                lines = [x for x in lines if x != '...\n']
-                handler.checker_config = ''.join(lines)
-        except IOError as ioerr:
-            LOG.debug_analyzer(ioerr)
-        except AttributeError as aerr:
-            # No clang tidy config file was given in the command line.
-            LOG.debug_analyzer(aerr)
+        analyzer_config = {}
+        # TODO: This extra "isinsrance" check is needed for
+        # CodeChecker analyzers --analyzer-config. This command also
+        # runs this function in order to construct a config handler.
+        if 'analyzer_config' in args and \
+                isinstance(args.analyzer_config, list):
+            r = re.compile(r'(?P<analyzer>.+?):(?P<key>.+?)=(?P<value>.+)')
+            for cfg in args.analyzer_config:
+                m = re.search(r, cfg)
+                if m.group('analyzer') == cls.ANALYZER_NAME:
+                    analyzer_config[m.group('key')] = m.group('value')
+
+        # TODO: This extra "isinsrance" check is needed for
+        # CodeChecker checkers --checker-config. This command also
+        # runs this function in order to construct a config handler.
+        if 'checker_config' in args and \
+                isinstance(args.checker_config, list):
+            r = re.compile(r'(?P<analyzer>.+?):(?P<key>.+?)=(?P<value>.+)')
+            check_options = []
+
+            for cfg in args.checker_config:
+                m = re.search(r, cfg)
+                if m.group('analyzer') == cls.ANALYZER_NAME:
+                    check_options.append({'key': m.group('key'),
+                                          'value': m.group('value')})
+            analyzer_config['CheckOptions'] = check_options
+        else:
+            try:
+                with open(args.tidy_config, 'r',
+                          encoding='utf-8', errors='ignore') as tidy_config:
+                    handler.checker_config = tidy_config.read()
+            except IOError as ioerr:
+                LOG.debug_analyzer(ioerr)
+            except AttributeError as aerr:
+                # No clang tidy config file was given in the command line.
+                LOG.debug_analyzer(aerr)
+
+        if not handler.checker_config:
+            handler.checker_config = json.dumps(analyzer_config)
 
         check_env = env.extend(context.path_env_extra,
                                context.ld_lib_path_extra)

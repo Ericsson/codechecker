@@ -12,6 +12,7 @@ import argparse
 import collections
 import json
 import os
+import re
 import shutil
 import sys
 
@@ -284,17 +285,6 @@ def add_arguments_to_parser(parser):
                                     ', '.join(analyzer_types.
                                               supported_analyzers) + ".")
 
-    analyzer_opts.add_argument('--add-compiler-defaults',
-                               action='store_true',
-                               required=False,
-                               default=argparse.SUPPRESS,
-                               help="DEPRECATED. Always True. Retrieve "
-                                    "compiler-specific configuration "
-                                    "from the compilers themselves, and use "
-                                    "them with Clang. This is used when the "
-                                    "compiler on the system is special, e.g. "
-                                    "when doing cross-compilation.")
-
     analyzer_opts.add_argument('--capture-analysis-output',
                                dest='capture_analysis_output',
                                action='store_true',
@@ -347,6 +337,27 @@ def add_arguments_to_parser(parser):
                                     "The file can be dumped by "
                                     "'CodeChecker analyzers --dump-config "
                                     "clang-tidy' command.")
+
+    analyzer_opts.add_argument('--analyzer-config',
+                               dest='analyzer_config',
+                               nargs='*',
+                               default=argparse.SUPPRESS,
+                               help="Analyzer configuration options in the "
+                                    "following format: analyzer:key=value. "
+                                    "The collection of the options can be "
+                                    "printed with "
+                                    "'CodeChecker analyzers "
+                                    "--analyzer-config'.")
+
+    analyzer_opts.add_argument('--checker-config',
+                               dest='checker_config',
+                               nargs='*',
+                               default=argparse.SUPPRESS,
+                               help="Checker configuration options in the "
+                                    "following format: analyzer:key=value. "
+                                    "The collection of the options can be "
+                                    "printed with "
+                                    "'CodeChecker checkers --checker-config'.")
 
     analyzer_opts.add_argument('--timeout',
                                type=int,
@@ -739,6 +750,23 @@ def main(args):
     LOG.debug("args: " + str(args))
     LOG.debug("Output will be stored to: '" + args.output_path + "'")
 
+    config_option_re = re.compile(r'^({}):.+=.+$'.format(
+        '|'.join(analyzer_types.supported_analyzers)))
+
+    # Check the format of analyzer options.
+    if 'analyzer_config' in args:
+        for config in args.analyzer_config:
+            if not re.match(config_option_re, config):
+                LOG.error("Analyzer option in wrong format: %s", config)
+                sys.exit(1)
+
+    # Check the format of checker options.
+    if 'checker_config' in args:
+        for config in args.checker_config:
+            if not re.match(config_option_re, config):
+                LOG.error("Checker option in wrong format: %s", config)
+                sys.exit(1)
+
     # Process the skip list if present.
     skip_handler = __get_skip_handler(args)
 
@@ -754,8 +782,6 @@ def main(args):
                       args.compiler_info_file)
             sys.exit(1)
         compiler_info_file = args.compiler_info_file
-
-    report_dir = args.output_path
 
     ctu_or_stats_enabled = False
     # Skip list is applied only in pre-analysis
@@ -797,7 +823,7 @@ def main(args):
     all_cmp_cmd_count += len(compile_commands)
     filtered_parsed_actions, skipped = log_parser.parse_unique_log(
         compile_commands,
-        report_dir,
+        args.output_path,
         args.compile_uniqueing,
         compiler_info_file,
         args.keep_gcc_include_fixed,

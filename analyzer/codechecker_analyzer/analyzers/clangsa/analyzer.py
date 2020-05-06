@@ -32,35 +32,24 @@ from .result_handler import ResultHandlerClangSA
 LOG = get_logger('analyzer')
 
 
-def parse_checkers(clangsa_output):
+def parse_clang_help_page(command, start_label, environ):
     """
-    Parse clang static analyzer checkers list output.
-    Return a list of (checker name, description) tuples.
+    Parse the clang help page starting from a specific label.
+    Returns a list of (flag, description) tuples.
     """
+    try:
+        help_page = subprocess.check_output(
+            command,
+            env=environ,
+            universal_newlines=True,
+            encoding="utf-8",
+            errors="ignore")
+    except (subprocess.CalledProcessError, OSError):
+        return []
 
-    # Checker name and description in one line.
-    pattern = re.compile(
-        r'^\s\s(?P<checker_name>\S*)\s*(?P<description>.*)')
-    checkers_list = []
-    checker_name = None
-    for line in clangsa_output.splitlines():
-        if line.startswith('CHECKERS:') or line == '':
-            continue
-        elif checker_name and not re.match(r'^\s\s\S', line):
-            # Collect description for the checker name.
-            checkers_list.append((checker_name, line.strip()))
-            checker_name = None
-        elif re.match(r'^\s\s\S+$', line.rstrip()):
-            # Only checker name is in the line.
-            checker_name = line.strip()
-        else:
-            # Checker name and description is in one line.
-            match = pattern.match(line.rstrip())
-            if match:
-                current = match.groupdict()
-                checkers_list.append((current['checker_name'],
-                                      current['description']))
-    return checkers_list
+    help_page = help_page[help_page.index(start_label) + len(start_label):]
+    reg = re.compile(r'(\S+)\s+([^\n]+)')
+    return re.findall(reg, help_page)
 
 
 class ClangSA(analyzer_base.SourceAnalyzer):
@@ -111,26 +100,25 @@ class ClangSA(analyzer_base.SourceAnalyzer):
     @classmethod
     def get_analyzer_checkers(cls, cfg_handler, environ):
         """Return the list of the supported checkers."""
-        checkers_list_args = clang_options.get_analyzer_checkers_cmd(
-            cfg_handler.version_info,
-            environ,
-            cfg_handler.analyzer_plugins,
+        checker_list_args = clang_options.get_analyzer_checkers_cmd(
+            cfg_handler,
             alpha=True)
+        return parse_clang_help_page(checker_list_args, 'CHECKERS:', environ)
 
-        analyzer_binary = cfg_handler.analyzer_binary
-        command = [analyzer_binary, "-cc1"]
-        command.extend(checkers_list_args)
+    @classmethod
+    def get_checker_config(cls, cfg_handler, environ):
+        """Return the list of checker config options."""
+        checker_config_args = clang_options.get_checker_config_cmd(
+            cfg_handler,
+            alpha=True)
+        return parse_clang_help_page(checker_config_args, 'OPTIONS:', environ)
 
-        try:
-            result = subprocess.check_output(
-                command,
-                env=environ,
-                universal_newlines=True,
-                encoding="utf-8",
-                errors="ignore")
-            return parse_checkers(result)
-        except (subprocess.CalledProcessError, OSError):
-            return []
+    @classmethod
+    def get_analyzer_config(cls, cfg_handler, environ):
+        """Return the list of analyzer config options."""
+        analyzer_config_args = clang_options.get_analyzer_config_cmd(
+            cfg_handler)
+        return parse_clang_help_page(analyzer_config_args, 'OPTIONS:', environ)
 
     def construct_analyzer_cmd(self, result_handler):
         """
@@ -173,6 +161,14 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             if self.__checker_configs:
                 for cfg in self.__checker_configs:
                     analyzer_cmd.extend(cfg)
+
+            # TODO: This object has a __checker_configs attribute and the
+            # corresponding functions to set it. Either those should be used
+            # for checker configs coming as command line argument, or those
+            # should be eliminated.
+            for cfg in config.checker_config:
+                analyzer_cmd.extend(
+                    ['-Xclang', '-analyzer-config', '-Xclang', cfg])
 
             # Config handler stores which checkers are enabled or disabled.
             for checker_name, value in config.checks().items():
@@ -378,5 +374,30 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             clang_sa_checkers,
             cmdline_checkers,
             'enable_all' in args and args.enable_all)
+
+        handler.checker_config = []
+        r = re.compile(r'(?P<analyzer>.+?):(?P<key>.+?)=(?P<value>.+)')
+
+        # TODO: This extra "isinstance" check is needed for
+        # CodeChecker checkers --checker-config. This command also runs
+        # this function in order to construct a config handler.
+        if 'checker_config' in args and \
+                isinstance(args.checker_config, list):
+            for cfg in args.checker_config:
+                m = re.search(r, cfg)
+                if m.group('analyzer') == cls.ANALYZER_NAME:
+                    handler.checker_config.append(
+                        m.group('key') + '=' + m.group('value'))
+
+        # TODO: This extra "isinstance" check is needed for
+        # CodeChecker analyzers --analyzer-config. This command also runs
+        # this function in order to construct a config handler.
+        if 'analyzer_config' in args and \
+                isinstance(args.analyzer_config, list):
+            for cfg in args.analyzer_config:
+                m = re.search(r, cfg)
+                if m.group('analyzer') == cls.ANALYZER_NAME:
+                    handler.checker_config.append(
+                        m.group('key') + '=' + m.group('value'))
 
         return handler

@@ -27,8 +27,8 @@ def twodim_to_str(format_name, keys, rows,
         rows.sort(key=itemgetter(sort_by_column_number), reverse=rev)
 
     all_rows = rows
-    if keys is not None and keys:
-        all_rows = [keys] + rows
+    if keys:
+        all_rows = [keys] + list(rows)
 
     if format_name == 'rows':
         return twodim_to_rows(rows)
