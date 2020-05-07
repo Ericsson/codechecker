@@ -317,6 +317,10 @@ information check out the
 
 * [CodeChecker feature overview](feature_comparison.md)
 
+## Deployment
+
+* [Deploy server using docker](web/docker.md#deployment)
+
 ## Static analysis
 
 * [False Positives](analyzer/false_positives.md)

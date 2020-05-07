@@ -18,6 +18,7 @@ sections.
       * [PostgreSQL (no authentication)](#postgresql-no-authentication)
       * [PostgreSQL (authentication)](#postgresql-authentication)
     * [Running your app](#running-your-app)
+    * [Deploy your app in docker swarm](#deploy-your-app-in-docker-swarm)
 * [Kubernetes](#kubernetes)
 
 ## Build Docker image
@@ -108,9 +109,44 @@ contain lines of the following format:
 `hostname:port:database:username:password`. For more information
 [see](https://www.postgresql.org/docs/9.6/libpq-pgpass.html).
 
+*Note*: please change the passwords in the example `pgpass` and
+`postgress-passwd` files to something else, before deploying the service.
+
 ### Running your app
 Run `docker-compose -f web/docker/services/<service-yml-file> up -d` and
 Compose starts and runs your entire app.
+
+### Deploy your app in docker swarm
+
+- [Init](https://docs.docker.com/engine/reference/commandline/swarm_init/) your
+  swarm node:
+
+    ```
+    docker swarm init
+    ```
+
+- [Join](https://docs.docker.com/engine/reference/commandline/swarm_join/)
+  multiple nodes to your swarm if you want.
+
+- [Add labels](https://docs.docker.com/engine/reference/commandline/node_update/)
+  to your nodes:
+
+    ```
+    docker node update codechecker-db=true <node-id>
+    docker node update codechecker-server=true <node-id>
+    docker node update codechecker-nginx=true <node-id>
+    ```
+
+    Use [`docker node ls`](https://docs.docker.com/engine/reference/commandline/node_ls/)
+    command to list nodes in the swarm and to get there id's.
+
+- Run the following command on the manager node to
+  [deploy](https://docs.docker.com/engine/reference/commandline/stack_deploy/)
+  the service:
+
+    ```
+    docker stack deploy -c web/docker/services/docker-compose.swarm.yml --with-registry-auth cc
+    ```
 
 ## Kubernetes
 [![Kubernetes](../images/kubernetes.png)](https://kubernetes.io/)
