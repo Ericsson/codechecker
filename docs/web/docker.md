@@ -11,7 +11,7 @@ sections.
 * [Build Docker image](#build-docker-image)
 * [Pre-built CodeChecker Docker images](#pre-built-codechecker-docker-images)
 * [Usage](#usage)
-* [Docker compose](#docker-compose)
+* [Deployment](#deployment)
   * [docker-compose.yml](#docker-composeyml)
     * [Sqlite setup](#sqlite-setup)
     * [PostgreSQL setup](#postgresql-setup)
@@ -65,11 +65,12 @@ docker run -d \
   codechecker/codechecker-web:latest
 ```
 
-## Docker Compose
+## Deployment
+
+### `docker-compose.yml`
 [Docker Compose](https://docs.docker.com/compose/) is a tool for defining and
 running multi-container Docker applications.
 
-### `docker-compose.yml`
 CodeChecker server can be easily run by defining the services that make up your
 app in `docker-compose.yml` so they can be run together in an isolated
 environment.
@@ -87,38 +88,25 @@ require authentication you have to write a compose file similar to
 [this](../../web/docker/services/docker-compose.psql.yml).
 
 #### PostgreSQL (authentication)
+To run a CodeChecker server and a PostgreSQL database cluster which requires
+authentication you have write a compose file which should be similar to
+[this](../../web/docker/services/docker-compose.psql.auth.yml).
+
 [Docker secrets]((https://docs.docker.com/engine/swarm/secrets/)) can be used
 to define the superuser password in the PostgreSQL instance and to define a
-`.pgpass` file in the CodeChecker server container for database connections.
+`.pgpass` file in the CodeChecker server container for database connections:
 
-Let's create 2 files in your host machine:
+- [`postgres-passwd`](../../web/docker/services/secrets/postgres-passwd): this
+file will contain the superuser password which will be used in the `initdb`
+script during initial container startup. For more information see
+`Docker Secrets` section of the official
+[readme](https://hub.docker.com/_/postgres).
 
-- `/home/$USER/codechecker_secrets/postgres-passwd`: this file will
-contain the superuser password which will be used in the `initdb` script
-during initial container startup. For more information see `Docker Secrets`
-section of the official [readme](https://hub.docker.com/_/postgres).
-E.g.:
-```sh
-mkdir -p /home/$USER/codechecker_secrets/ && \
-echo 'mySecretPassword' > /home/$USER/codechecker_secrets/postgres-passwd && \
-chmod 0600 /home/$USER/codechecker_secrets/postgres-passwd
-```
-- `/home/$USER/codechecker_secrets/pgpass`: this file can contain
+- [`pgpass`](../../web/docker/services/secrets/pgpass): this file can contain
 passwords to be used if the connection requires a password. This file should
 contain lines of the following format:
 `hostname:port:database:username:password`. For more information
 [see](https://www.postgresql.org/docs/9.6/libpq-pgpass.html).
-E.g.:
-```sh
-mkdir -p /home/$USER/codechecker_secrets/ && \
-echo "*:5433:*:$USER:mySecretPassword" > /home/$USER/codechecker_secrets/pgpass && \
-chmod 0600 /home/$USER/codechecker_secrets/pgpass
-```
-
-To run a CodeChecker server and a PostgreSQL database cluster which requires
-authentication you have write a compose file which should be similar to
-[this](../../web/docker/services/docker-compose.psql.auth.yml) and use the
-previously created password files for secrets.
 
 ### Running your app
 Run `docker-compose -f web/docker/services/<service-yml-file> up -d` and
