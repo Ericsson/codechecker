@@ -69,8 +69,13 @@ div.container {
   padding-top: 2px;
 }
 
-#editor-wrapper .header > div > span:nth-child(2) {
+#file-path,
+#checker-name {
   color: #195ea2;
+}
+
+#review-status {
+  padding: 0px 5px;
 }
 
 #file-path {

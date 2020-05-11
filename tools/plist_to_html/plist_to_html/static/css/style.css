@@ -37,3 +37,20 @@ div.container {
   background-color: #ddd;
   color: black;
 }
+
+.review-status {
+  color: white;
+  text-align: center;
+}
+
+.review-status-confirmed {
+  background-color: #e92625;
+}
+
+.review-status-false-positive {
+  background-color: grey;
+}
+
+.review-status-intentional {
+  background-color: #669603;
+}

@@ -25,10 +25,10 @@ from codechecker_analyzer import analyzer_context, suppress_handler
 from codechecker_common import arg, logger, plist_parser, util
 from codechecker_common.skiplist_handler import SkipListHandler
 from codechecker_common.source_code_comment_handler import \
-    SourceCodeCommentHandler
+    REVIEW_STATUS_VALUES, SourceCodeCommentHandler
 from codechecker_common.output_formatters import twodim_to_str
 from codechecker_common.report import Report
-from codechecker_common.source_code_comment_handler import skip_suppress_status
+
 from codechecker_report_hash.hash import get_report_path_hash
 
 LOG = logger.get_logger('system')
@@ -45,6 +45,7 @@ class PlistToPlaintextFormatter(object):
                  severity_map,
                  processed_path_hashes,
                  trim_path_prefixes,
+                 src_comment_status_filter=None,
                  analyzer_type="clangsa"):
 
         self.__analyzer_type = analyzer_type
@@ -52,6 +53,7 @@ class PlistToPlaintextFormatter(object):
         self.print_steps = False
         self.src_comment_handler = src_comment_handler
         self.skiplist_handler = skip_handler
+        self.src_comment_status_filter = src_comment_status_filter
         self._processed_path_hashes = processed_path_hashes
         self._trim_path_prefixes = trim_path_prefixes
 
@@ -67,18 +69,24 @@ class PlistToPlaintextFormatter(object):
         return '%s%s^' % (line.replace('\t', '  '), marker_line)
 
     @staticmethod
-    def __format_bug_event(name, severity, event, source_file):
+    def __format_bug_event(name, severity, event, source_file,
+                           review_status=None):
 
         loc = event['location']
-        fname = os.path.basename(source_file)
         if name:
-            return '[%s] %s:%d:%d: %s [%s]' % (severity,
-                                               source_file,
-                                               loc['line'],
-                                               loc['col'],
-                                               event['message'],
-                                               name)
+            out = '[%s] %s:%d:%d: %s [%s]' % (severity,
+                                              source_file,
+                                              loc['line'],
+                                              loc['col'],
+                                              event['message'],
+                                              name)
+            if review_status:
+                rw_status = review_status.capitalize().replace('_', ' ')
+                out = '%s [%s]' % (out, rw_status)
+
+            return out
         else:
+            fname = os.path.basename(source_file)
             return '%s:%d:%d: %s' % (fname,
                                      loc['line'],
                                      loc['col'],
@@ -180,8 +188,15 @@ class PlistToPlaintextFormatter(object):
                     report.main['issue_hash_content_of_line_in_context']
                 checker_name = report.main['check_name']
 
-                if skip_report(report_hash, source_file, report_line,
-                               checker_name, self.src_comment_handler):
+                skip, source_code_comments = \
+                    skip_report(report_hash,
+                                source_file,
+                                report_line,
+                                checker_name,
+                                self.src_comment_handler,
+                                self.src_comment_status_filter)
+
+                if skip:
                     continue
 
                 file_stats[f_path] += 1
@@ -189,11 +204,22 @@ class PlistToPlaintextFormatter(object):
                 severity_stats[severity] += 1
                 report_count["report_count"] += 1
 
+                review_status = None
+                if len(source_code_comments) == 1:
+                    review_status = source_code_comments[0]['status']
+
                 output.write(self.__format_bug_event(checker_name,
                                                      severity,
                                                      last_report_event,
-                                                     trimmed_source_file))
+                                                     trimmed_source_file,
+                                                     review_status))
                 output.write('\n')
+
+                # Print source code comments.
+                for source_code_comment in source_code_comments:
+                    output.write(source_code_comment['line'].rstrip())
+                    output.write('\n')
+
                 output.write(self.__format_location(last_report_event,
                                                     source_file))
                 output.write('\n')
@@ -269,16 +295,17 @@ class PlistToPlaintextFormatter(object):
 
 
 def skip_report(report_hash, source_file, report_line, checker_name,
-                src_comment_handler=None):
+                src_comment_handler=None, src_comment_status_filter=None):
     """
-    Returns True if the report was suppressed in the source code, otherwise
-    False.
+    Returns a tuple where the first value will be True if the report was
+    suppressed in the source code, otherwise False. The second value will be
+    the list of available source code comments.
     """
     bug = {'hash_value': report_hash, 'file_path': source_file}
     if src_comment_handler and src_comment_handler.get_suppressed(bug):
         LOG.debug("Suppressed by suppress file: %s:%s [%s] %s", source_file,
                   report_line, checker_name, report_hash)
-        return True
+        return True, []
 
     sc_handler = SourceCodeCommentHandler()
 
@@ -288,7 +315,11 @@ def skip_report(report_hash, source_file, report_line, checker_name,
         report_line,
         checker_name)
 
-    if len(src_comment_data) == 1:
+    if not src_comment_data:
+        skip = True if src_comment_status_filter and \
+            'unreviewed' not in src_comment_status_filter else False
+        return skip, src_comment_data
+    elif len(src_comment_data) == 1:
         status = src_comment_data[0]['status']
 
         LOG.debug("Suppressed by source code comment.")
@@ -301,15 +332,16 @@ def skip_report(report_hash, source_file, report_line, checker_name,
                 message,
                 status)
 
-        if skip_suppress_status(status):
-            return True
+        if src_comment_status_filter and \
+                status not in src_comment_status_filter:
+            return True, src_comment_data
 
     elif len(src_comment_data) > 1:
         LOG.warning("Multiple source code comment can be found "
                     "for '%s' checker in '%s' at line %d. "
                     "This bug will not be suppressed!",
                     checker_name, source_file, report_line)
-    return False
+    return False, src_comment_data
 
 
 def get_argparser_ctor_args():
@@ -431,6 +463,16 @@ def add_arguments_to_parser(parser):
                              "will print files like c/x.cpp and c/y.cpp. "
                              "If multiple prefix is given, the longest match "
                              "will be removed.")
+
+    parser.add_argument('--review-status',
+                        nargs='*',
+                        dest="review_status",
+                        metavar='REVIEW_STATUS',
+                        choices=REVIEW_STATUS_VALUES,
+                        default=["confirmed", "unreviewed"],
+                        help="Filter results by review statuses. Valid "
+                             "values are: {0}".format(
+                                 ', '.join(REVIEW_STATUS_VALUES)))
 
     logger.add_verbose_arguments(parser)
     parser.set_defaults(func=main)
@@ -556,6 +598,8 @@ def main(args):
 
     original_cwd = os.getcwd()
 
+    src_comment_status_filter = args.review_status
+
     suppr_handler = None
     if 'suppress' in args:
         __make_handler = False
@@ -576,7 +620,8 @@ def main(args):
         if __make_handler:
             suppr_handler = suppress_handler.\
                 GenericSuppressHandler(args.suppress,
-                                       'create_suppress' in args)
+                                       'create_suppress' in args,
+                                       src_comment_status_filter)
     elif 'create_suppress' in args:
         LOG.error("Can't use '--export-source-suppress' unless '--suppress "
                   "SUPPRESS_FILE' is also given.")
@@ -618,7 +663,10 @@ def main(args):
                                       checker_name, diag, files):
         """
         Report handler which skips bugs which were suppressed by source code
-        comments.
+        comments. This function will return a tuple. The first element
+        will decide whether the report should be skipped or not and the second
+        element will be a list of source code comments related to the actual
+        report.
         """
         report = Report(None, diag['path'], files)
         path_hash = get_report_path_hash(report)
@@ -627,20 +675,22 @@ def main(args):
                       "already processed report!")
             LOG.debug("Path hash: %s", path_hash)
             LOG.debug(diag)
-            return True
+            return True, []
 
-        skip = plist_parser.skip_report(report_hash,
-                                        source_file,
-                                        report_line,
-                                        checker_name,
-                                        suppr_handler)
-        if skip_handler and not skip:
-            skip = skip_handler.should_skip(source_file)
+        skip, source_code_comments = skip_report(report_hash,
+                                                 source_file,
+                                                 report_line,
+                                                 checker_name,
+                                                 suppr_handler,
+                                                 src_comment_status_filter)
+
+        if skip_handler:
+            skip |= skip_handler.should_skip(source_file)
 
         if not skip:
             processed_path_hashes.add(path_hash)
 
-        return skip
+        return skip, source_code_comments
 
     file_change = set()
     severity_stats = defaultdict(int)
@@ -700,7 +750,8 @@ def main(args):
                                        skip_handler,
                                        context.severity_map,
                                        processed_path_hashes,
-                                       trim_path_prefixes)
+                                       trim_path_prefixes,
+                                       src_comment_status_filter)
         rh.print_steps = 'print_steps' in args
 
         for file_path in files:

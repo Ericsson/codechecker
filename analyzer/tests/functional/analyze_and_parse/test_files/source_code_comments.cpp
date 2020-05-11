@@ -12,5 +12,7 @@ int main()
   // codechecker_confirmed [all] Source code comment message
   sizeof(43);
 
+  sizeof(44);
+
   return 0;
 }

@@ -12,8 +12,6 @@ import os
 
 from codechecker_analyzer import suppress_file_handler
 
-from codechecker_common.source_code_comment_handler import \
-    skip_suppress_status
 from codechecker_common.logger import get_logger
 
 # Warning! this logger should only be used in this module.
@@ -22,12 +20,13 @@ LOG = get_logger('system')
 
 class GenericSuppressHandler(object):
 
-    def __init__(self, suppress_file, allow_write):
+    def __init__(self, suppress_file, allow_write, src_comment_status_filter):
         """
         Create a new suppress handler with a suppress_file as backend.
         """
         self.__suppress_info = []
         self.__allow_write = allow_write
+        self.src_comment_status_filter = src_comment_status_filter or []
 
         if suppress_file:
             self.suppress_file = suppress_file
@@ -78,9 +77,16 @@ class GenericSuppressHandler(object):
         self.__revalidate_suppress_data()
         return ret
 
+    def skip_suppress_status(self, status):
+        """ Returns True if the given status should be skipped. """
+        if not self.src_comment_status_filter:
+            return False
+
+        return status not in self.src_comment_status_filter
+
     def get_suppressed(self, bug):
 
         return any([suppress for suppress in self.__suppress_info
                     if suppress[0] == bug['hash_value'] and
                     suppress[1] == os.path.basename(bug['file_path']) and
-                    skip_suppress_status(suppress[3])])
+                    self.skip_suppress_status(suppress[3])])

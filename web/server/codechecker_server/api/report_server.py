@@ -33,7 +33,7 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import BugPathPos, \
 
 from codechecker_common import plist_parser, skiplist_handler
 from codechecker_common.source_code_comment_handler import \
-    SourceCodeCommentHandler, SKIP_REVIEW_STATUSES
+    SourceCodeCommentHandler
 from codechecker_common import util
 from codechecker_common.logger import get_logger
 from codechecker_report_hash.hash import get_report_path_hash
@@ -600,15 +600,15 @@ def filter_unresolved_reports(q):
     """
     Filter reports which are unresolved.
 
-    Note: review status of these reports are not in the SKIP_REVIEW_STATUSES
-    list and detection statuses are not in skip_detection_statuses.
+    Note: review status of these reports are not in skip_review_statuses
+    and detection statuses are not in skip_detection_statuses.
     """
-    skip_review_status = SKIP_REVIEW_STATUSES
+    skip_review_statuses = ['false_positive', 'intentional']
     skip_detection_statuses = ['resolved', 'off', 'unavailable']
 
     return q.filter(Report.detection_status.notin_(skip_detection_statuses)) \
             .filter(or_(ReviewStatus.status.is_(None),
-                        ReviewStatus.status.notin_(skip_review_status))) \
+                        ReviewStatus.status.notin_(skip_review_statuses))) \
             .outerjoin(ReviewStatus,
                        ReviewStatus.bug_hash == Report.bug_id)
 

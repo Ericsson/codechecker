@@ -156,6 +156,7 @@ class HtmlBuilder(object):
               <th id="checker-name">Checker name</th>
               <th id="message">Message</th>
               <th id="bug-path-length">Bug path length</th>
+              <th id="review-status">Review status</th>
             </tr>'''
 
         # Sort reports based on file path levels.
@@ -175,6 +176,9 @@ class HtmlBuilder(object):
             checker = report['checkerName']
             severity = report['severity']
 
+            review_status = report['reviewStatus'] \
+                if 'reviewStatus' in report and report['reviewStatus'] else ''
+
             table_reports += '''
               <tr>
                 <td>{0}</td>
@@ -187,6 +191,7 @@ class HtmlBuilder(object):
                 <td>{6}</td>
                 <td>{7}</td>
                 <td class="bug-path-length">{8}</td>
+                <td class="review-status review-status-{9}">{10}</td>
               </tr>'''.format(i + 1,
                               os.path.basename(html_file),
                               report['reportHash'],
@@ -195,7 +200,9 @@ class HtmlBuilder(object):
                               severity.lower(),
                               checker,
                               events[-1]['message'],
-                              len(events))
+                              len(events),
+                              review_status.lower().replace(' ', '-'),
+                              review_status)
 
         substitute_data = self._tag_contents
         substitute_data.update({'table_reports': table_reports})
@@ -297,14 +304,17 @@ def get_report_data_from_plist(plist, skip_report_handler=None,
         report_line = diag['location']['line']
         report_hash = diag['issue_hash_content_of_line_in_context']
         checker_name = diag['check_name']
+        source_code_comments = []
 
-        if skip_report_handler and skip_report_handler(report_hash,
-                                                       source_file,
-                                                       report_line,
-                                                       checker_name,
-                                                       diag,
-                                                       files):
-            continue
+        if skip_report_handler:
+            skip, source_code_comments = skip_report_handler(report_hash,
+                                                             source_file,
+                                                             report_line,
+                                                             checker_name,
+                                                             diag,
+                                                             files)
+            if skip:
+                continue
 
         # Processing bug path events.
         events = []
@@ -339,12 +349,18 @@ def get_report_data_from_plist(plist, skip_report_handler=None,
         if trim_path_prefixes_handler:
             source_file = trim_path_prefixes_handler(source_file)
 
+        reviewStatus = None
+        if len(source_code_comments) == 1:
+            reviewStatus = source_code_comments[0]['status'] \
+                .capitalize().replace('_', ' ')
+
         reports.append({'events': events,
                         'macros': macros,
                         'notes': notes,
                         'path': source_file,
                         'reportHash': report_hash,
-                        'checkerName': checker_name})
+                        'checkerName': checker_name,
+                        'reviewStatus': reviewStatus})
 
     return {'files': file_sources,
             'reports': reports}

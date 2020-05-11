@@ -20,6 +20,7 @@ from codechecker_analyzer.analyzers import analyzer_types
 from codechecker_analyzer.arg import OrderedCheckersAction
 
 from codechecker_common import arg, logger
+from codechecker_common.source_code_comment_handler import REVIEW_STATUS_VALUES
 
 
 LOG = logger.get_logger('system')
@@ -616,6 +617,16 @@ was emitted by clang-tidy.""")
                              help="Print the steps the analyzers took in "
                                   "finding the reported defect.")
 
+    parser.add_argument('--review-status',
+                        nargs='*',
+                        dest="review_status",
+                        metavar='REVIEW_STATUS',
+                        choices=REVIEW_STATUS_VALUES,
+                        default=["confirmed", "unreviewed"],
+                        help="Filter results by review statuses. Valid "
+                             "values are: {0}".format(
+                                 ', '.join(REVIEW_STATUS_VALUES)))
+
     logger.add_verbose_arguments(parser)
     parser.set_defaults(func=main)
 
@@ -725,6 +736,7 @@ def main(args):
             input_format='plist'
         )
         __update_if_key_exists(args, parse_args, 'print_steps')
+        __update_if_key_exists(args, parse_args, 'review_status')
         __update_if_key_exists(args, parse_args, 'verbose')
         __update_if_key_exists(args, parse_args, 'skipfile')
 

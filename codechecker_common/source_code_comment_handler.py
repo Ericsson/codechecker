@@ -16,16 +16,9 @@ from codechecker_common.logger import get_logger
 
 LOG = get_logger('system')
 
-# Note: codechecker_suppress source code comment will be also
-# marked as false_positive.
-SKIP_REVIEW_STATUSES = ['false_positive', 'intentional']
 
-
-def skip_suppress_status(status):
-    """
-    Returns True if the given status is in the skip list, otherwise False.
-    """
-    return status in SKIP_REVIEW_STATUSES
+REVIEW_STATUS_VALUES = ["confirmed", "false_positive", "intentional",
+                        "suppress", "unreviewed"]
 
 
 class SourceCodeCommentHandler(object):
@@ -93,35 +86,37 @@ class SourceCodeCommentHandler(object):
         ptn = re.compile(pattern)
         res = re.match(ptn, formatted)
 
-        if res:
-            checkers_names = set()
-            review_status = 'false_positive'
-            message = "WARNING! source code comment is missing"
+        if not res:
+            return
 
-            # Get checker names from suppress comment.
-            checkers = res.group('checkers')
-            if checkers == "all":
-                checkers_names.add('all')
-            else:
-                suppress_checker_list = re.findall(r"[^,\s]+",
-                                                   checkers.strip())
-                checkers_names.update(suppress_checker_list)
+        checkers_names = set()
+        review_status = 'false_positive'
+        message = "WARNING! source code comment is missing"
 
-            # Get comment message from suppress comment.
-            comment = res.group('comment')
-            if comment:
-                message = comment
+        # Get checker names from suppress comment.
+        checkers = res.group('checkers')
+        if checkers == "all":
+            checkers_names.add('all')
+        else:
+            suppress_checker_list = re.findall(r"[^,\s]+",
+                                               checkers.strip())
+            checkers_names.update(suppress_checker_list)
 
-            # Get status from suppress comment.
-            status = res.group('status')
-            if status == 'codechecker_intentional':
-                review_status = 'intentional'
-            elif status == 'codechecker_confirmed':
-                review_status = 'confirmed'
+        # Get comment message from suppress comment.
+        comment = res.group('comment')
+        if comment:
+            message = comment
 
-            return {'checkers': checkers_names,
-                    'message': message,
-                    'status': review_status}
+        # Get status from suppress comment.
+        status = res.group('status')
+        if status == 'codechecker_intentional':
+            review_status = 'intentional'
+        elif status == 'codechecker_confirmed':
+            review_status = 'confirmed'
+
+        return {'checkers': checkers_names,
+                'message': message,
+                'status': review_status}
 
     def has_source_line_comments(self, source_file, line):
         """
@@ -179,7 +174,7 @@ class SourceCodeCommentHandler(object):
             if has_any_marker:
                 rev = list(reversed(curr_suppress_comment))
 
-                orig_review_comment = ' '.join(rev).strip()
+                orig_review_comment = ' '.join(rev)
 
                 if rev[0].strip().startswith('//'):
                     review_comment = orig_review_comment.replace('//', '')
@@ -195,14 +190,18 @@ class SourceCodeCommentHandler(object):
 
                     review_comment = ' '.join(r_comment).strip()
 
-                comment = self.__process_source_line_comment(review_comment)
+                comment = \
+                    self.__process_source_line_comment(review_comment)
+
                 if comment:
+                    comment['line'] = orig_review_comment
                     source_line_comments.append(comment)
                 else:
                     _, file_name = os.path.split(source_file)
                     LOG.warning(
                         "Misspelled review status comment in %s@%d: %s",
-                        file_name, previous_line_num, orig_review_comment)
+                        file_name, previous_line_num,
+                        orig_review_comment.strip())
 
                 curr_suppress_comment = []
 
