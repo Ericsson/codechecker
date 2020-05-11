@@ -1,5 +1,6 @@
 {
   "abseil-string-find-startswith":                              "STYLE",
+  "AddressSanitizer":                                           "HIGH",
   "alpha.clone.CloneChecker":                                   "LOW",
   "alpha.core.BoolAssignment":                                  "LOW",
   "alpha.core.CallAndMessageUnInitRefArg":                      "HIGH",
@@ -225,6 +226,7 @@
   "llvm-namespace-comment":                                     "LOW",
   "llvm-qualified-auto":                                        "LOW",
   "llvm-twine-local":                                           "LOW",
+  "MemorySanitizer":                                            "HIGH",
   "misc-argument-comment":                                      "LOW",
   "misc-assert-side-effect":                                    "MEDIUM",
   "misc-bool-pointer-implicit-conversion":                      "LOW",
@@ -381,6 +383,8 @@
   "security.insecureAPI.strcpy":                                "MEDIUM",
   "security.insecureAPI.UncheckedReturn":                       "MEDIUM",
   "security.insecureAPI.vfork":                                 "MEDIUM",
+  "ThreadSanitizer":                                            "HIGH",
+  "UndefinedBehaviorSanitizer":                                 "HIGH",
   "unix.API":                                                   "MEDIUM",
   "unix.cstring.BadSizeArg":                                    "MEDIUM",
   "unix.cstring.NullArg":                                       "MEDIUM",
