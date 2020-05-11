@@ -360,5 +360,20 @@
 		<string>files/test3.hh</string>
 		<string>files/test3.cpp</string>
 	</array>
+	<key>metadata</key>
+	<dict>
+		<key>analyzer</key>
+		<dict>
+			<key>name</key>
+			<string>clang-tidy</string>
+		</dict>
+		<key>generated_by</key>
+		<dict>
+			<key>name</key>
+			<string>report-converter</string>
+			<key>version</key>
+			<string>x.y.z</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

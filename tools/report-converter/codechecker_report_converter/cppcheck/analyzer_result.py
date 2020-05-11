@@ -50,27 +50,29 @@ class CppcheckAnalyzerResult(AnalyzerResult):
 
         return file_to_plist_data
 
-    def _add_report_hash(self, file_to_plist_data):
-        """ Generate report hash for each diagnostics in the plist objects.
+    def _post_process_result(self, file_to_plist_data):
+        """ Post process the parsed result.
+
+        By default it will add report hashes and metada information for the
+        diagnostics.
+        """
+        for _, plist_data in file_to_plist_data.items():
+            self._add_report_hash(plist_data)
+            self._add_metadata(plist_data)
+
+    def _add_report_hash(self, plist_data):
+        """ Generate report hash for the given plist data
 
         It will generate a context free hash for each diagnostics.
         """
-        for file_name, plist_data in file_to_plist_data.items():
-            files = plist_data['files']
-
-            is_changed = False
-            for diag in plist_data['diagnostics']:
-                report_hash = diag.get('issue_hash_content_of_line_in_context')
-                if not report_hash or report_hash == '0':
-                    report_hash = \
-                        generate_report_hash(diag,
-                                             files[diag['location']['file']])
-                    diag['issue_hash_content_of_line_in_context'] = report_hash
-                    is_changed = True
-
-            if not is_changed:
-                LOG.info("Plist file is up to date: '%s'", file_name)
-                file_to_plist_data[file_name] = None
+        files = plist_data['files']
+        for diag in plist_data['diagnostics']:
+            report_hash = diag.get('issue_hash_content_of_line_in_context')
+            if not report_hash or report_hash == '0':
+                report_hash = \
+                    generate_report_hash(diag,
+                                         files[diag['location']['file']])
+                diag['issue_hash_content_of_line_in_context'] = report_hash
 
     def _write(self, file_to_plist_data, output_dir):
         """ Creates plist files from the parse result to the given output. """

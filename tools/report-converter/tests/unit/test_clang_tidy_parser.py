@@ -362,6 +362,9 @@ class ClangTidyAnalyzerResultTestCase(unittest.TestCase):
         with open(expected_plist, mode='rb') as pfile:
             exp = plistlib.load(pfile)
 
+            self.assertTrue(res['metadata']['generated_by']['version'])
+            res['metadata']['generated_by']['version'] = "x.y.z"
+
         self.assertEqual(res, exp)
 
     def test_empty1(self):

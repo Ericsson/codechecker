@@ -63,6 +63,9 @@ class InferAnalyzerResultTestCase(unittest.TestCase):
         with open(plist_file, mode='rb') as pfile:
             res = plistlib.load(pfile)
 
+            self.assertTrue(res['metadata']['generated_by']['version'])
+            res['metadata']['generated_by']['version'] = "x.y.z"
+
         plist_file = os.path.join(self.test_files,
                                   'dead_store.cpp.plist')
         with open(plist_file, mode='rb') as pfile:
@@ -84,6 +87,9 @@ class InferAnalyzerResultTestCase(unittest.TestCase):
                                   'dead_store.cpp_fbinfer.plist')
         with open(plist_file, mode='rb') as pfile:
             res = plistlib.load(pfile)
+
+            self.assertTrue(res['metadata']['generated_by']['version'])
+            res['metadata']['generated_by']['version'] = "x.y.z"
 
         plist_file = os.path.join(self.test_files,
                                   'dead_store.cpp.plist')
@@ -107,6 +113,9 @@ class InferAnalyzerResultTestCase(unittest.TestCase):
         with open(plist_file, mode='rb') as pfile:
             res = plistlib.load(pfile)
 
+            self.assertTrue(res['metadata']['generated_by']['version'])
+            res['metadata']['generated_by']['version'] = "x.y.z"
+
         plist_file = os.path.join(self.test_files,
                                   'NullDereference.java.plist')
         with open(plist_file, mode='rb') as pfile:
@@ -129,6 +138,9 @@ class InferAnalyzerResultTestCase(unittest.TestCase):
 
         with open(plist_file, mode='rb') as pfile:
             res = plistlib.load(pfile)
+
+            self.assertTrue(res['metadata']['generated_by']['version'])
+            res['metadata']['generated_by']['version'] = "x.y.z"
 
         plist_file = os.path.join(self.test_files,
                                   'NullDereference.java.plist')

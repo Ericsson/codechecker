@@ -77,6 +77,9 @@ class SpotBugsAnalyzerResultTestCase(unittest.TestCase):
         with open(plist_file, mode='rb') as pfile:
             res = plistlib.load(pfile)
 
+            self.assertTrue(res['metadata']['generated_by']['version'])
+            res['metadata']['generated_by']['version'] = "x.y.z"
+
         plist_file = os.path.join(self.test_files,
                                   'assign.plist')
         with open(plist_file, mode='rb') as pfile:
