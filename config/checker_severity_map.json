@@ -245,7 +245,6 @@
   "misc-move-constructor-init":                                 "MEDIUM",
   "misc-move-forwarding-reference":                             "MEDIUM",
   "misc-multiple-statement-macro":                              "MEDIUM",
-  "misc-non-private-member-variables-in-classes":               "LOW",
   "misc-new-delete-overloads":                                  "MEDIUM",
   "misc-noexcept-move-constructor":                             "MEDIUM",
   "misc-non-copyable-objects":                                  "HIGH",
