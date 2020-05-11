@@ -26,4 +26,6 @@ paths.
 
 You can set the `CC_ANALYZERS_FROM_PATH` environment variable before running a
 CodeChecker command to `yes` or `1` to enforce taking the analyzers from the
-`PATH` instead of the given binaries.
+`PATH` instead of the given binaries. If this option is set you can also
+configure the plugin directory of the Clang Static Analyzer by using the
+`CC_CLANGSA_PLUGIN_DIR` environment variable.

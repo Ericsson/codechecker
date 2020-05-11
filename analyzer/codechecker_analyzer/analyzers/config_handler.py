@@ -10,7 +10,6 @@ Static analyzer configuration handler.
 
 from abc import ABCMeta
 import collections
-import os
 import platform
 import subprocess
 import sys
@@ -61,18 +60,8 @@ class AnalyzerConfigHandler(object, metaclass=ABCMeta):
 
     @property
     def analyzer_plugins(self):
-        """
-        Full path of the analyzer plugins.
-        """
-        plugin_dir = self.analyzer_plugins_dir
-        if not plugin_dir or not os.path.exists(plugin_dir):
-            return []
-
-        analyzer_plugins = [os.path.join(plugin_dir, f)
-                            for f in os.listdir(plugin_dir)
-                            if os.path.isfile(os.path.join(plugin_dir, f))
-                            and f.endswith(".so")]
-        return analyzer_plugins
+        """ Full path of the analyzer plugins. """
+        return []
 
     def get_version(self, env=None):
         """ Get analyzer version information. """
