@@ -2,26 +2,36 @@ version: '2'
 
 services:
   db:
-    image: postgres:11.2-alpine
-    ports:
-      - 5433:5432
+    image: postgres:12.2-alpine
     volumes:
-      - /home/$USER/codechecker_database:/var/lib/postgresql/data
+      - database:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=$USER
       - POSTGRES_DB=config
+      - POSTGRES_HOST_AUTH_METHOD=trust
     networks:
       - codechecker
 
   codechecker:
     image: codechecker/codechecker-web:latest
+    depends_on:
+      - db
     ports:
       - 8001:8001
     volumes:
-      - /home/$USER/codechecker_workspace:/workspace
+      - workspace:/workspace
+    command: >
+      CodeChecker server
+        --workspace /workspace
+        --postgresql --dbaddress db --dbport 5432 --dbusername $USER
+        --not-host-only
     networks:
       - codechecker
 
 networks:
   codechecker:
     driver: bridge
+
+volumes:
+  database:
+  workspace:

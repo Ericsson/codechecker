@@ -6,4 +6,7 @@ services:
     ports:
       - 8001:8001
     volumes:
-      - /home/$USER/codechecker_workspace:/workspace
+      - workspace:/workspace
+
+volumes:
+  workspace:
