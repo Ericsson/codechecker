@@ -64,7 +64,7 @@ class TestSkip(unittest.TestCase):
         run_results = get_all_run_results(self._cc_client, runid)
         self.assertIsNotNone(run_results)
 
-        skipped_files = ["file_to_be_skipped.cpp", "skip.h"]
+        skipped_files = ["file_to_be_skipped.cpp", "skip.h", "path_end.h"]
 
         test_proj_res = self._testproject_data[self._clang_to_test]['bugs']
         skipped = [x for x in test_proj_res if x['file'] in skipped_files]

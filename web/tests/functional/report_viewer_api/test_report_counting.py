@@ -66,6 +66,7 @@ class TestReportFilter(unittest.TestCase):
              'core.StackAddrEscapeBase': 3,
              'cplusplus.NewDelete': 5,
              'deadcode.DeadStores': 6,
+             'misc-definitions-in-headers': 2,
              'unix.Malloc': 1}
 
         self.run2_checkers = \
@@ -74,22 +75,23 @@ class TestReportFilter(unittest.TestCase):
              'core.NullDereference': 4,
              'cplusplus.NewDelete': 5,
              'deadcode.DeadStores': 6,
+             'misc-definitions-in-headers': 2,
              'unix.MismatchedDeallocator': 1}
 
         self.run1_sev_counts = {Severity.UNSPECIFIED: 3,
-                                Severity.MEDIUM: 1,
+                                Severity.MEDIUM: 3,
                                 Severity.LOW: 6,
                                 Severity.HIGH: 24}
 
-        self.run2_sev_counts = {Severity.MEDIUM: 1,
+        self.run2_sev_counts = {Severity.MEDIUM: 3,
                                 Severity.LOW: 6,
                                 Severity.HIGH: 24}
 
         self.run1_detection_counts = \
-            {DetectionStatus.NEW: 34}
+            {DetectionStatus.NEW: 36}
 
         self.run2_detection_counts = \
-            {DetectionStatus.NEW: 31}
+            {DetectionStatus.NEW: 33}
 
         self.run1_files = \
             {'file_to_be_skipped.cpp': 2,
@@ -101,9 +103,9 @@ class TestReportFilter(unittest.TestCase):
              'divide_zero_duplicate.cpp': 2,
              'has a space.cpp': 1,
              'skip_header.cpp': 1,
-             'skip.h': 1,
+             'skip.h': 2,
              'path_begin.cpp': 2,
-             'path_end.h': 2
+             'path_end.h': 3
              }
 
         self.run2_files = \
@@ -115,9 +117,9 @@ class TestReportFilter(unittest.TestCase):
              'file_to_be_skipped.cpp': 2,
              'has a space.cpp': 1,
              'skip_header.cpp': 1,
-             'skip.h': 1,
+             'skip.h': 2,
              'path_begin.cpp': 2,
-             'path_end.h': 2
+             'path_end.h': 3
              }
 
     def test_run1_all_checkers(self):
@@ -525,6 +527,7 @@ class TestReportFilter(unittest.TestCase):
                'core.NullDereference': 4,
                'core.DivideZero': 10,
                'deadcode.DeadStores': 6,
+               'misc-definitions-in-headers': 2,
                'unix.Malloc': 1}
         self.assertDictEqual(new, checkers_dict)
 
