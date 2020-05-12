@@ -456,6 +456,10 @@ my/gcc/compiler/g++ main.cpp  # Not captured because there is no match.
 my/gcc/compiler/gcc-7 main.c  # Captured because "gcc" is infix of "gcc-7".
 /usr/bin/g++ main.cpp         # Captured because "/bin/g++" is postfix of the compiler path.
 /usr/bin/g++-7 main.cpp       # Not captured because "/bin/g++" is not postfix of the compiler path.
+
+# For an exact compiler binary name match start the binary name with a "/".
+/clang # Will not log clang++ calls only the clang binary calls will be captured.
+clang  # Will capture clang-tidy (which is not wanted) calls too because of a partial match.
 ```
 
 Example:
