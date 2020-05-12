@@ -276,7 +276,7 @@ def is_same_event_path(report_id, events, session):
 
 def addCheckerRun(session, command, name, tag, username,
                   run_history_time, version, force, codechecker_version,
-                  statistics):
+                  statistics, description):
     """
     Store checker run related data to the database.
     By default updates the results if name already exists.
@@ -338,7 +338,8 @@ def addCheckerRun(session, command, name, tag, username,
         compressed_command = zlib.compress(command.encode("utf-8"),
                                            zlib.Z_BEST_COMPRESSION)
         run_history = RunHistory(run_id, tag, username, run_history_time,
-                                 compressed_command, codechecker_version)
+                                 compressed_command, codechecker_version,
+                                 description)
         session.add(run_history)
         session.flush()
         LOG.debug("command store done")

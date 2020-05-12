@@ -152,7 +152,8 @@ function (declare, dom, ObjectStore, Store, Deferred, topic, Dialog, Button,
                            'listOfRunsGrid' : that.listOfRunsGrid },
           detectionstatus : prettifyStatus(runData.detectionStatusCount),
           codeCheckerVersion : runData.codeCheckerVersion,
-          analyzerStatistics : runData.analyzerStatistics
+          analyzerStatistics : runData.analyzerStatistics,
+          description: runData.description
         };
       });
 
@@ -199,6 +200,7 @@ function (declare, dom, ObjectStore, Store, Deferred, topic, Dialog, Button,
         { name : 'Analysis duration', field : 'duration', styles : 'text-align: center;' },
         { name : 'Check command', field : 'checkcmd', styles : 'text-align: center;' },
         { name : '<span title="' + util.getTooltip('versionTag') + '">Version tag</span>', field : 'versionTag', formatter : versionTagFormatter },
+        { name : 'Description', field : 'description' },
         { name : 'CodeChecker version', field : 'codeCheckerVersion' },
         { name : 'Delete', field : 'del', styles : 'text-align: center;', type : 'dojox.grid.cells.Bool', editable : true }
       ];

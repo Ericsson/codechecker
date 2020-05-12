@@ -819,6 +819,7 @@ class ThriftRequestHandler(object):
                               Run.duration,
                               RunHistory.version_tag,
                               RunHistory.cc_version,
+                              RunHistory.description,
                               stmt.c.report_count)
 
             q = process_run_filter(session, q, run_filter)
@@ -830,6 +831,7 @@ class ThriftRequestHandler(object):
                 .group_by(Run.id,
                           RunHistory.version_tag,
                           RunHistory.cc_version,
+                          RunHistory.description,
                           stmt.c.report_count)
 
             q = sort_run_data_query(q, sort_mode)
@@ -883,7 +885,7 @@ class ThriftRequestHandler(object):
             results = []
 
             for run_id, run_date, run_name, duration, tag, cc_version, \
-                report_count \
+                description, report_count \
                     in run_data:
 
                 if report_count is None:
@@ -898,7 +900,8 @@ class ThriftRequestHandler(object):
                                        detectionStatusCount=status_sum[run_id],
                                        versionTag=tag,
                                        codeCheckerVersion=cc_version,
-                                       analyzerStatistics=analyzer_stats))
+                                       analyzerStatistics=analyzer_stats,
+                                       description=description))
             return results
 
     @exc_to_thrift_reqfail
@@ -970,7 +973,8 @@ class ThriftRequestHandler(object):
                     user=history.user,
                     time=str(history.time),
                     codeCheckerVersion=history.cc_version,
-                    analyzerStatistics=analyzer_statistics))
+                    analyzerStatistics=analyzer_statistics,
+                    description=history.description))
 
             return results
 
@@ -2799,7 +2803,7 @@ class ThriftRequestHandler(object):
     @exc_to_thrift_reqfail
     @timeit
     def massStoreRun(self, name, tag, version, b64zip, force,
-                     trim_path_prefixes):
+                     trim_path_prefixes, description):
         self.__require_store()
         start_time = time.time()
 
@@ -2913,7 +2917,8 @@ class ThriftRequestHandler(object):
                                                             version,
                                                             force,
                                                             cc_version,
-                                                            statistics)
+                                                            statistics,
+                                                            description)
 
                             self.__store_reports(session,
                                                  report_dir,

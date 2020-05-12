@@ -374,7 +374,7 @@ def handle_list_runs(args):
     else:  # plaintext, csv
         header = ['Name', 'Number of unresolved reports',
                   'Analyzer statistics', 'Storage date', 'Version tag',
-                  'Duration', 'CodeChecker version']
+                  'Duration', 'Description', 'CodeChecker version']
         rows = []
         for run in runs:
             duration = str(timedelta(seconds=run.duration)) \
@@ -390,6 +390,7 @@ def handle_list_runs(args):
 
             codechecker_version = run.codeCheckerVersion \
                 if run.codeCheckerVersion else ''
+            description = run.description if run.description else ''
 
             rows.append((run.name,
                          str(run.resultCount),
@@ -397,6 +398,7 @@ def handle_list_runs(args):
                          run.runDate,
                          run.versionTag if run.versionTag else '',
                          duration,
+                         description,
                          codechecker_version))
 
         print(twodim_to_str(args.output_format, header, rows))
@@ -1644,7 +1646,7 @@ def handle_list_run_histories(args):
         print(CmdLineOutputEncoder().encode(run_history))
     else:  # plaintext, csv
         header = ['Date', 'Run name', 'Version tag', 'User',
-                  'CodeChecker version', 'Analyzer statistics']
+                  'CodeChecker version', 'Analyzer statistics', 'Description']
         rows = []
         for h in run_history:
             analyzer_statistics = []
@@ -1660,6 +1662,7 @@ def handle_list_run_histories(args):
                          h.versionTag if h.versionTag else '',
                          h.user,
                          h.codeCheckerVersion if h.codeCheckerVersion else '',
-                         ', '.join(analyzer_statistics)))
+                         ', '.join(analyzer_statistics),
+                         h.description if h.description else ''))
 
         print(twodim_to_str(args.output_format, header, rows))

@@ -250,6 +250,10 @@ def check_and_store(codechecker_cfg, test_project_name, test_project_path,
     if force:
         store_cmd.extend(['--force'])
 
+    description = codechecker_cfg.get('description')
+    if description:
+        store_cmd.extend(['--description', "'" + description + "'"])
+
     try:
         print('STORE' + ' '.join(store_cmd))
         subprocess.call(

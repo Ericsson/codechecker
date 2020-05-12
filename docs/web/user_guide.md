@@ -162,8 +162,10 @@ a database.
 to the database.
 
 ```
-usage: CodeChecker store [-h] [-t {plist}] [-n NAME] [--tag TAG] [-f]
-                         [--url PRODUCT_URL]
+usage: CodeChecker store [-h] [-t {plist}] [-n NAME] [--tag TAG]
+                         [--description DESCRIPTION]
+                         [--trim-path-prefix [TRIM_PATH_PREFIX [TRIM_PATH_PREFIX ...]]]
+                         [-f] [--url PRODUCT_URL]
                          [--verbose {info,debug,debug_analyzer}]
                          [file/folder [file/folder ...]]
 
@@ -188,6 +190,9 @@ optional arguments:
                         used, if exists.
   --tag TAG             A unique identifier for this individual store of results
                         in the run's history.
+  --description DESCRIPTION
+                        A custom textual description to be shown alongside the
+                        run.
   --trim-path-prefix [TRIM_PATH_PREFIX [TRIM_PATH_PREFIX ...]]
                         Removes leading path from files which will be stored.
                         So if you have /a/b/c/x.cpp and /a/b/c/y.cpp then by

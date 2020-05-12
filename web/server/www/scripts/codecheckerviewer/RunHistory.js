@@ -71,7 +71,8 @@ function (declare, ObjectStore, Store, Deferred, DataGrid, Dialog, ContentPane,
                         versionTag : runHistory.versionTag },
           codeCheckerVersion : runHistory.codeCheckerVersion,
           analyzerStatistics : runHistory.analyzerStatistics,
-          runCmd: runHistory.checkCommand
+          runCmd: runHistory.checkCommand,
+          description: runHistory.description
         };
       });
     }
@@ -101,6 +102,7 @@ function (declare, ObjectStore, Store, Deferred, DataGrid, Dialog, ContentPane,
         { name : 'User', field : 'user', styles : 'text-align: center;', width : '25%' },
         { name : 'Check command', field : 'checkCommand', styles : 'text-align: center;' },
         { name : '<span title="' + util.getTooltip('versionTag') + '">Version tag</span>', field : 'versionTag', formatter: versionTagFormatter },
+        { name : 'Description', field : 'description', width : '25%' },
         { name : 'CodeChecker version', field : 'codeCheckerVersion', width : '25%' },
       ];
 
