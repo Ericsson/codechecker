@@ -209,7 +209,7 @@ def main(args):
             rows = context.available_profiles.items()
         else:
             header = ['Profile name']
-            rows = ([key] for key in context.available_profiles.keys())
+            rows = [(key, "") for key in context.available_profiles.keys()]
 
         if args.output_format in ['csv', 'json']:
             header = list(map(uglify, header))
