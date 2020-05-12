@@ -73,11 +73,15 @@ def get_argparser_ctor_args():
 
 
 def __add_output_formats(parser, output_formats=None,
-                         allow_multiple_outputs=False):
+                         allow_multiple_outputs=False,
+                         help_msg=None):
     """ Add output arguments to the given parser. """
     if not output_formats:
         # Use default output formats.
         output_formats = DEFAULT_OUTPUT_FORMATS
+
+    if not help_msg:
+        help_msg = "The output format(s) to use in showing the data."
 
     if allow_multiple_outputs:
         parser.add_argument('-o', '--output',
@@ -86,18 +90,17 @@ def __add_output_formats(parser, output_formats=None,
                             required=False,
                             default=["plaintext"],
                             choices=output_formats,
-                            help="The output format(s) to use in showing the "
-                                 "data.")
+                            help=help_msg)
     else:
         parser.add_argument('-o', '--output',
                             dest="output_format",
                             required=False,
                             default="plaintext",
                             choices=output_formats,
-                            help="The output format to use in showing the "
-                                 "data.")
+                            help=help_msg)
 
-    if any(out_f in ["html", "gerrit"] for out_f in output_formats):
+    output_requires_export_dir = ["html", "gerrit", "codeclimate"]
+    if any(out_f in output_requires_export_dir for out_f in output_formats):
         parser.add_argument('-e', '--export-dir',
                             dest="export_dir",
                             default=argparse.SUPPRESS,
@@ -146,6 +149,7 @@ def __add_url_arguments(parser, needs_product_url=True):
 def __add_common_arguments(parser,
                            needs_product_url=True,
                            output_formats=None,
+                           output_help_message=None,
                            allow_multiple_outputs=False):
     """
     Add some common arguments, like server address and verbosity, to parser.
@@ -155,7 +159,8 @@ def __add_common_arguments(parser,
     __add_url_arguments(common_group, needs_product_url)
 
     if output_formats:
-        __add_output_formats(parser, output_formats, allow_multiple_outputs)
+        __add_output_formats(parser, output_formats, allow_multiple_outputs,
+                             output_help_message)
 
     logger.add_verbose_arguments(common_group)
 
@@ -1184,9 +1189,19 @@ by multiple severity values:
     )
     __register_diff(diff)
 
-    diff_output_formats = DEFAULT_OUTPUT_FORMATS + ["html", "gerrit"]
+    diff_output_formats = DEFAULT_OUTPUT_FORMATS + ["html", "gerrit",
+                                                    "codeclimate"]
+    output_help_msg = "R|The output format(s) to use in showing the data.\n" \
+                      "- html: multiple html files will be generated in the " \
+                      "export directory.\n" \
+                      "- gerrit: a 'gerrit_review.json' file will be " \
+                      "generated in the export directory.\n" \
+                      "- codeclimate: a 'codeclimate_issues.json' file will " \
+                      "be generated in the export directory."
+
     __add_common_arguments(diff,
                            output_formats=diff_output_formats,
+                           output_help_message=output_help_msg,
                            allow_multiple_outputs=True)
 
     sum_p = subcommands.add_parser(

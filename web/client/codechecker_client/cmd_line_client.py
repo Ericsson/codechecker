@@ -24,8 +24,7 @@ from plist_to_html import PlistToHtml
 from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
 from codechecker_api_shared.ttypes import RequestFailed
 
-from codechecker_common import logger
-from codechecker_common import plist_parser
+from codechecker_common import logger, plist_parser
 from codechecker_common.output_formatters import twodim_to_str
 from codechecker_common.report import Report
 from codechecker_common.source_code_comment_handler import \
@@ -489,7 +488,7 @@ def handle_diff_results(args):
 
     init_logger(args.verbose if 'verbose' in args else None, stream)
 
-    require_export_dir = any([o in ['html', 'gerrit']
+    require_export_dir = any([o in ['html', 'gerrit', 'codeclimate']
                               for o in args.output_format])
     if require_export_dir and 'export_dir' not in args:
         LOG.error("No export directory given!")
@@ -1080,7 +1079,12 @@ def handle_diff_results(args):
 
         return ret
 
-    def print_gerrit_json(reports, output_dir):
+    def write_gerrit_json(reports, output_dir):
+        """ Converts the given reports to gerrit json format.
+
+        This function will convert the given report to Gerrit json format
+        and writes the issues to the given output directory to a JSON file.
+        """
         repo_dir = os.environ.get('CC_REPO_DIR')
         report_url = os.environ.get('CC_REPORT_URL')
         changed_file_path = os.environ.get('CC_CHANGED_FILES')
@@ -1138,6 +1142,32 @@ def handle_diff_results(args):
         LOG.info("Gerrit review file was created: %s\n",
                  gerrit_review_json)
 
+    def write_codeclimate_json(reports, output_dir):
+        """ Converts the given reports to codeclimate format.
+
+        This function will convert the given report to Code Climate format
+        and writes the issues to the given output directory to a JSON file.
+        """
+        repo_dir = os.environ.get('CC_REPO_DIR')
+
+        issues = []
+        for report in reports:
+            if not isinstance(report, Report):
+                report = Report.from_thrift_report(report)
+
+            if repo_dir:
+                report.trim_path_prefixes([repo_dir])
+
+            issues.append(report.to_codeclimate())
+
+        codeclimate_issues_json = os.path.join(output_dir,
+                                               'codeclimate_issues.json')
+        with open(codeclimate_issues_json, 'w') as issues_f:
+            json.dump(issues, issues_f)
+
+        LOG.info("Code Climate file was created: %s\n",
+                 codeclimate_issues_json)
+
     def print_reports(client, reports, output_formats):
         output_dir = args.export_dir if 'export_dir' in args else None
         if 'clean' in args and os.path.isdir(output_dir):
@@ -1191,13 +1221,22 @@ def handle_diff_results(args):
                                              lines=source_lines[key]))
 
         if 'gerrit' in output_formats:
-            print_gerrit_json(reports, output_dir)
+            write_gerrit_json(reports, output_dir)
 
             # Gerrit was the only format specified.
             if len(output_formats) == 1:
                 return
 
             output_formats.remove('gerrit')
+
+        if 'codeclimate' in output_formats:
+            write_codeclimate_json(reports, output_dir)
+
+            # codeclimate was the only format specified.
+            if len(output_formats) == 1:
+                return
+
+            output_formats.remove('codeclimate')
 
         header = ['File', 'Checker', 'Severity', 'Msg', 'Source']
         rows = []

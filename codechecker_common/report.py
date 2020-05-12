@@ -35,6 +35,24 @@ class Report(object):
         # Dictionary fileid to filepath that bugpath events refer to
         self.__files = files
 
+    @staticmethod
+    def from_thrift_report(report_data):
+        """ Create a report object from the given thrift report data. """
+        main = {
+            "check_name": report_data.checkerId,
+            "description": report_data.checkerMsg,
+            "issue_hash_content_of_line_in_context": report_data.bugHash,
+            "location": {
+                "line": report_data.line,
+                "col": report_data.column,
+                "file": 0
+            }
+        }
+        bug_path = None
+        files = [report_data.checkedFile]
+
+        return Report(main, bug_path, files)
+
     @property
     def main(self):
         return self.__main

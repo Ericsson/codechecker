@@ -469,6 +469,59 @@ class LocalRemote(unittest.TestCase):
 
         shutil.rmtree(export_dir)
 
+    def test_diff_codeclimate_output(self):
+        """ Test codeclimate output when using diff and set env vars. """
+        base_run_name = self._run_names[0]
+
+        export_dir = os.path.join(self._local_reports, "export_dir")
+
+        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
+                    "--unresolved",
+                    "--url", self._url,
+                    "-b", base_run_name,
+                    "-n", self._local_reports,
+                    "-o", "codeclimate",
+                    "-e", export_dir]
+
+        env = self._env.copy()
+        env["CC_REPO_DIR"] = self._local_test_project
+
+        self.run_cmd(diff_cmd, env)
+        codeclimate_issues_file = os.path.join(export_dir,
+                                               'codeclimate_issues.json')
+        self.assertTrue(os.path.exists(codeclimate_issues_file))
+
+        with open(codeclimate_issues_file, 'r',
+                  encoding="utf-8", errors="ignore") as rw_file:
+            issues = json.load(rw_file)
+
+        for issue in issues:
+            self.assertEqual(issue["type"], "issue")
+            self.assertTrue(issue["check_name"])
+            self.assertEqual(issue["categories"], ["Bug Risk"])
+            self.assertTrue(issue["fingerprint"])
+            self.assertTrue(issue["location"]["path"])
+            self.assertTrue(issue["location"]["lines"]["begin"])
+
+        malloc_issues = [i for i in issues if i["check_name"] == "unix.Malloc"]
+        self.assertEqual(malloc_issues, [{
+            "type": "issue",
+            "check_name": "unix.Malloc",
+            "description": "Memory allocated by alloca() should not be "
+                           "deallocated",
+            "categories": [
+                "Bug Risk"
+            ],
+            "fingerprint": "c2132f78ef0e01bdb5eacf616048625f",
+            "location": {
+                "path": "new_delete.cpp",
+                "lines": {
+                    "begin": 31
+                }
+            }}])
+
+        shutil.rmtree(export_dir)
+
     def test_diff_multiple_output(self):
         """ Test multiple output type for diff command. """
         base_run_name = self._run_names[0]
