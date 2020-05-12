@@ -22,6 +22,10 @@ def get_analyzer_checkers_cmd(cfg_handler, alpha=True, debug=True):
     Before clang9 alpha and debug checkers were printed by default.
     Since clang9 there are extra arguments to print the additional checkers.
     """
+    if not cfg_handler.version_info:
+        LOG.debug("No clang version information. Can not get checkers.")
+        return None
+
     command = [cfg_handler.analyzer_binary, "-cc1"]
 
     for plugin in cfg_handler.analyzer_plugins:
@@ -50,6 +54,10 @@ def get_checker_config_cmd(cfg_handler, alpha=True, debug=True):
     """Return the checker config getter command which depends on the used clang
     version.
     """
+    if not cfg_handler.version_info:
+        LOG.debug("No clang version information. Can not get checker configs.")
+        return None
+
     command = [cfg_handler.analyzer_binary, "-cc1"]
 
     for plugin in cfg_handler.analyzer_plugins:

@@ -103,6 +103,10 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         checker_list_args = clang_options.get_analyzer_checkers_cmd(
             cfg_handler,
             alpha=True)
+
+        if not checker_list_args:
+            return []
+
         return parse_clang_help_page(checker_list_args, 'CHECKERS:', environ)
 
     @classmethod
@@ -111,6 +115,10 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         checker_config_args = clang_options.get_checker_config_cmd(
             cfg_handler,
             alpha=True)
+
+        if not checker_config_args:
+            return []
+
         return parse_clang_help_page(checker_config_args, 'OPTIONS:', environ)
 
     @classmethod
