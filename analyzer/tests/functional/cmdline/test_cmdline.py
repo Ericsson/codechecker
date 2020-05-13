@@ -88,6 +88,14 @@ class TestCmdline(unittest.TestCase):
         checkers_cmd = [env.codechecker_cmd(), 'checkers']
         self.assertEqual(0, run_cmd(checkers_cmd)[0])
 
+    def test_checkers_profile(self):
+        """ Listing available checker profiles. """
+
+        checkers_cmd = [env.codechecker_cmd(), 'checkers', '--profile', 'list']
+        out = run_cmd(checkers_cmd)
+        self.assertEqual(0, out[0])
+        self.assertEqual(True, "default" in out[1])
+
     def test_analyzers(self):
         """ Listing available analyzers. """
 
