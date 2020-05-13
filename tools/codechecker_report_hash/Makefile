@@ -21,11 +21,11 @@ all: package
 
 venv:
 	# Create a virtual environment which can be used to run the build package.
-	virtualenv -p python2 venv && $(ACTIVATE_RUNTIME_VENV)
+	virtualenv -p python3 venv && $(ACTIVATE_RUNTIME_VENV)
 
 venv_dev:
 	# Create a virtual environment for development.
-	virtualenv -p python2 venv_dev && \
+	virtualenv -p python3 venv_dev && \
 		$(ACTIVATE_DEV_VENV) && pip install -r $(VENV_DEV_REQ_FILE)
 
 clean_venv_dev:
@@ -35,25 +35,25 @@ include tests/Makefile
 
 package:
 	# Install package in 'development mode'.
-	python setup.py develop
+	python3 setup.py develop
 
 build:
-	python setup.py build --build-purelib $(CC_REPORT_HASH_DIR)
+	python3 setup.py build --build-purelib $(CC_REPORT_HASH_DIR)
 
 dist:
 	# Create a source distribution.
-	python setup.py sdist
+	python3 setup.py sdist
 
 upload_test: dist
 	# Upload package to the TestPyPI repository.
-	$(eval PKG_NAME := $(shell python setup.py --name))
-	$(eval PKG_VERSION := $(shell python setup.py --version))
+	$(eval PKG_NAME := $(shell python3 setup.py --name))
+	$(eval PKG_VERSION := $(shell python3 setup.py --version))
 	twine upload -r testpypi dist/$(PKG_NAME)-$(PKG_VERSION).tar.gz
 
 upload: dist
 	# Upload package to the PyPI repository.
-	$(eval PKG_NAME := $(shell python setup.py --name))
-	$(eval PKG_VERSION := $(shell python setup.py --version))
+	$(eval PKG_NAME := $(shell python3 setup.py --name))
+	$(eval PKG_VERSION := $(shell python3 setup.py --version))
 	twine upload -r pypi dist/$(PKG_NAME)-$(PKG_VERSION).tar.gz
 
 clean:
