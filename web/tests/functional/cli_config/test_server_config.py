@@ -42,7 +42,6 @@ class TestServerConfig(unittest.TestCase):
         with open(self.config_file, 'w+',
                   encoding="utf-8", errors="ignore") as config_f:
             json.dump({
-                'enabled': True,
                 'server': ['--skip-db-cleanup']}, config_f)
 
         event = multiprocessing.Event()
@@ -65,7 +64,6 @@ class TestServerConfig(unittest.TestCase):
         with open(self.config_file, 'w+',
                   encoding="utf-8", errors="ignore") as config_f:
             json.dump({
-                'enabled': True,
                 'server': ['--dummy-option']}, config_f)
 
         event = multiprocessing.Event()

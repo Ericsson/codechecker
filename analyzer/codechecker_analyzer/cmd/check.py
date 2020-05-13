@@ -323,7 +323,6 @@ used to generate a log file on the fly.""")
                                     "line arguments. The format of "
                                     "configuration file is: "
                                     "{"
-                                    "  \"enabled\": true,"
                                     "  \"analyzer\": ["
                                     "    \"--enable=core.DivideZero\","
                                     "    \"--enable=core.CallAndMessage\","

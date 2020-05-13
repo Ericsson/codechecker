@@ -140,7 +140,6 @@ def add_arguments_to_parser(parser):
                              "set in the command line. The format of "
                              "configuration file is: \n"
                              "{\n"
-                             "  \"enabled\": true,\n"
                              "  \"server\": [\n"
                              "    \"--workspace=/home/<username>/workspace\","
                              "\n"
@@ -439,8 +438,7 @@ def process_config_file(args):
     """
     if args.config_file and os.path.exists(args.config_file):
         cfg = util.load_json_or_empty(args.config_file, default={})
-        if cfg.get("enabled"):
-            return cfg.get('server', [])
+        return cfg.get('server', [])
 
 
 def print_prod_status(prod_status):

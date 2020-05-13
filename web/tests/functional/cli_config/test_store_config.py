@@ -46,7 +46,6 @@ class TestStoreConfig(unittest.TestCase):
         with open(self.config_file, 'w+',
                   encoding="utf-8", errors="ignore") as config_f:
             json.dump({
-                'enabled': True,
                 'store': [
                     '--name=' + 'store_config',
                     '--url=' + env.parts_to_url(self.codechecker_cfg),
@@ -63,7 +62,6 @@ class TestStoreConfig(unittest.TestCase):
         with open(self.config_file, 'w+',
                   encoding="utf-8", errors="ignore") as config_f:
             json.dump({
-                'enabled': True,
                 'store': ['--dummy-option']}, config_f)
 
         store_cmd = [env.codechecker_cmd(), 'store',

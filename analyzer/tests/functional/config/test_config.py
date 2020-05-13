@@ -84,7 +84,6 @@ class TestConfig(unittest.TestCase):
         with open(self.config_file, 'w+',
                   encoding="utf-8", errors="ignore") as config_f:
             json.dump({
-                'enabled': True,
                 'analyzer': ['--analyzers', 'clangsa']}, config_f)
 
         out, returncode = self.__run_analyze()

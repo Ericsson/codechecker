@@ -880,7 +880,6 @@ Lets assume you have a configuration file
 [`codechecker.json`](#config/codechecker.json) with the following content:
 ```json
 {
-  "enabled": true,
   "analyzer": [
     "--enable=core.DivideZero",
     "--enable=core.CallAndMessage",

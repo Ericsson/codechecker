@@ -1,5 +1,4 @@
 {
-    "enabled": true,
     "analyzer": [
         "--enable", "core.DivideZero",
         "--enable", "core.CallAndMessage",

@@ -312,7 +312,6 @@ def add_arguments_to_parser(parser):
                                     "line arguments. The format of "
                                     "configuration file is: "
                                     "{"
-                                    "  \"enabled\": true,"
                                     "  \"analyzer\": ["
                                     "    \"--enable=core.DivideZero\","
                                     "    \"--enable=core.CallAndMessage\","
@@ -614,8 +613,7 @@ def process_config_file(args):
     """
     if args.config_file and os.path.exists(args.config_file):
         cfg = load_json_or_empty(args.config_file, default={})
-        if cfg.get("enabled"):
-            return cfg.get('analyzer', [])
+        return cfg.get('analyzer', [])
 
 
 def check_config_file(args):

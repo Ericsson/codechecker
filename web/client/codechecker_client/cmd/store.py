@@ -170,7 +170,6 @@ def add_arguments_to_parser(parser):
                              "set in the command line. The format of "
                              "configuration file is:\n"
                              "{\n"
-                             "  \"enabled\": true,\n"
                              "  \"store\": [\n"
                              "    \"--name=run_name\",\n"
                              "    \"--tag=my_tag\",\n"
@@ -218,8 +217,7 @@ def process_config_file(args):
     """
     if args.config_file and os.path.exists(args.config_file):
         cfg = util.load_json_or_empty(args.config_file, default={})
-        if cfg.get("enabled"):
-            return cfg.get('store', [])
+        return cfg.get('store', [])
 
 
 def __get_run_name(input_list):
