@@ -37,8 +37,6 @@ Table of Contents
             * [Import suppressions between server and suppress file](#import-suppressions)
         * [`products` (Manage product configuration of a server)](#cmd-product)
         * [`login` (Authenticate to the server)](#cmd-login)
-* [Source code comments (review status)](#source-code-comments)
-    * [Supported formats](#supported-formats)
 * [Debugging CodeChecker](#debug)
 
 # CodeChecker <a name="codechecker"></a>
@@ -1288,121 +1286,6 @@ can be used normally.
 The password can be saved on the disk. If such "preconfigured" password is
 not found, the user will be asked, in the command-line, to provide credentials.
 
-
-# Source code comments for review status <a name="source-code-comments"></a>
-
-Source code comments can be used in the source files to change the review
-status of a specific or all checker results found in a particular line of code.
-Source code comment should be above the line where the defect was found, and
-__no__ empty lines are allowed between the line with the bug and the source
-code comment.
-
-Comment lines staring with `//` or C style `/**/` comments are supported.
-Watch out for the comment format!
-
-## Supported formats <a name="supported-formats"></a>
-The source code comment has the following format:
-```sh
-// codechecker comment type [checker name] comment
-```
-
-Multiple source code comment types are allowed:
-
- * `codechecker_suppress`
- * `codechecker_false_positive`
- * `codechecker_intentional`
- * `codechecker_confirmed`
-
-Source code comment change the `review status` of a bug in the following form:
-
- * `codechecker_suppress` and `codechecker_false_positive` to `False positive`
- * `codechecker_intentional` to `Intentional`
- * `codechecker_confirmed` to `Confirmed`.
-
-Note: `codechecker_suppress` does the same as `codechecker_false_positive`.
-
-You can read more about review status [here](https://github.com/Ericsson/codechecker/blob/master/www/userguide/userguide.md#userguide-review-status)
-
-## Change review status of a specific checker result
-```cpp
-void test() {
-  int x;
-  // codechecker_confirmed [deadcode.DeadStores] suppress deadcode
-  x = 1; // warn
-}
-```
-
-## Change review status of a specific checker result by using a substring of the checker name
-There is no need to specify the whole checker name in the source code comment
-like `deadcode.DeadStores`, because it will not be resilient to package name
-changes. You are able to specify only a substring of the checker name for the
-source code comment:
-```cpp
-void test() {
-  int x;
-  // codechecker_confirmed [DeadStores] suppress deadcode
-  x = 1; // warn
-}
-```
-
-
-## Change review status of all checker result
-```cpp
-void test() {
-  int x;
-  // codechecker_false_positive [all] suppress all checker results
-  x = 1; // warn
-}
-```
-
-## Change review status of all checker result with C style comment
-```cpp
-void test() {
-  int x;
-  /* codechecker_false_positive [all] suppress all checker results */
-  x = 1; // warn
-}
-```
-
-## Multi line comments
-```cpp
-void test() {
-  int x;
-
-  // codechecker_suppress [all] suppress all
-  // checker resuls
-  // with a long
-  // comment
-  x = 1; // warn
-}
-```
-
-## Multi line C style comments
-```cpp
-void test() {
-  int x;
-
-  /* codechecker_suppress [all] suppress all
-  checker resuls
-  with a long
-  comment */
-  x = 1; // warn
-}
-```
-
-```cpp
-void test() {
-  int x;
-
-  /*
-    codechecker_suppress [all] suppress all
-    checker resuls
-    with a long
-    comment
-  */
-  x = 1; // warn
-}
-```
 
 ## Exporting source code suppression to suppress file <a name="suppress-file"></a>
 
