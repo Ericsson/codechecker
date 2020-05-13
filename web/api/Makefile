@@ -17,10 +17,10 @@ NODE_JS_API_DIR = "$(API_DIR)/js/codechecker-api-node/lib"
 default: build
 
 install_shared_py:
-	cd codechecker_api_shared && python setup.py install
+	cd codechecker_api_shared && python3 setup.py install
 
 install_api_py:
-	cd codechecker_api && python setup.py install
+	cd codechecker_api && python3 setup.py install
 
 install_py: install_shared_py install_api_py
 
@@ -56,12 +56,12 @@ build: clean target_dirs
 publish: build publish_py publish_js
 
 publish_py:
-	cd py/codechecker_api && python setup.py sdist bdist_wheel && twine upload dist/* --verbose
-	cd py/codechecker_api_shared && python setup.py sdist bdist_wheel && twine upload dist/* --verbose
+	cd py/codechecker_api && python3 setup.py sdist bdist_wheel && twine upload dist/* --verbose
+	cd py/codechecker_api_shared && python3 setup.py sdist bdist_wheel && twine upload dist/* --verbose
 
 publish_test_py:
-	cd py/codechecker_api && python setup.py sdist bdist_wheel && twine upload --repository-url https://test.pypi.org/legacy/ dist/* --verbose
-	cd py/codechecker_api_shared && python setup.py sdist bdist_wheel && twine upload --repository-url https://test.pypi.org/legacy/ dist/* --verbose
+	cd py/codechecker_api && python3 setup.py sdist bdist_wheel && twine upload --repository-url https://test.pypi.org/legacy/ dist/* --verbose
+	cd py/codechecker_api_shared && python3 setup.py sdist bdist_wheel && twine upload --repository-url https://test.pypi.org/legacy/ dist/* --verbose
 
 publish_js:
 	cd js/codechecker-api-js && npm publish
