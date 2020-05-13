@@ -12,7 +12,7 @@ mockldap==0.3.0
 mkdocs==1.0.4
 
 codechecker_api==6.26.0-dev-1
-codechecker_api_shared==6.26.0-dev1
+codechecker_api_shared==6.27.0
 
 # publish packages to pypi
 twine
