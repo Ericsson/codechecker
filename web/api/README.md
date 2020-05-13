@@ -42,6 +42,9 @@ API functionality with the dev API versions as a dependency.
 - After API change approval increment the api versions to **v6.25.0**
 in the setup.py and package.json files.
 - Publish the **v6.25.0** packages to pypi and npm.
+  - Run the command `make build` to generate the stubs.
+  - Publish Python packages: `make publish_py`
+  - Publish JavaScript packages: `make publish_js`
 - Update the latest tag in npmjs for the published packages:
   - `npm dist-tag add codechecker-api@6.25.0 latest`
   - `npm dist-tag add codechecker-api-js@6.25.0 latest`
@@ -55,3 +58,12 @@ in the pull request to use the new client stubs with version **v6.25.0**.
   - `web/server/www/scripts/version.js`
 
 ### 5. Mark the development packages as deprecated on pypi and npmjs
+
+- In case of pypi go to the
+[codechecker-api](https://pypi.org/manage/project/codechecker-api/releases/)
+and
+[codechecker_shared_api](https://pypi.org/manage/project/codechecker-api-shared/releases/)
+*Releases* pages and on the *Options* drop-down list select *Yank* for the `dev` releases.
+- In case of npm run the following commands:
+  - `npm deprecate codechecker-api@6.x.y-dev "new stable release is available"`
+  - `npm deprecate codechecker-api-js@6.x.y-dev "new stable release is available"`
