@@ -165,7 +165,7 @@ to the database.
 usage: CodeChecker store [-h] [-t {plist}] [-n NAME] [--tag TAG]
                          [--description DESCRIPTION]
                          [--trim-path-prefix [TRIM_PATH_PREFIX [TRIM_PATH_PREFIX ...]]]
-                         [-f] [--url PRODUCT_URL]
+                         [--config CONFIG_FILE] [-f] [--url PRODUCT_URL]
                          [--verbose {info,debug,debug_analyzer}]
                          [file/folder [file/folder ...]]
 
@@ -199,6 +199,18 @@ optional arguments:
                         removing "/a/b/" prefix will store files like c/x.cpp
                         and c/y.cpp. If multiple prefix is given, the longest
                         match will be removed.
+  --config CONFIG_FILE  Allow the configuration from an explicit JSON based
+                        configuration file. The values configured in the
+                        config file will overwrite the values set in the
+                        command line. The format of configuration file is:
+                        {
+                          "enabled": true,
+                          "store": [
+                            "--name=run_name",
+                            "--tag=my_tag",
+                            "--url=http://codechecker.my/MyProduct"
+                          ]
+                        }. (default: None)
   -f, --force           Delete analysis results stored in the database for the
                         current analysis run's name and store only the results
                         reported in the 'input' files. (By default,
@@ -269,11 +281,13 @@ or via the `CodeChecker cmd` command-line client.
 ```
 usage: CodeChecker server [-h] [-w WORKSPACE] [-f CONFIG_DIRECTORY]
                           [--host LISTEN_ADDRESS] [-v PORT] [--not-host-only]
+                          [--skip-db-cleanup] [--config CONFIG_FILE]
                           [--sqlite SQLITE_FILE | --postgresql]
                           [--dbaddress DBADDRESS] [--dbport DBPORT]
                           [--dbusername DBUSERNAME] [--dbname DBNAME]
                           [--reset-root] [--force-authentication]
-                          [-l | -s | --stop-all]
+                          [-l | -r | -s | --stop-all]
+                          [--db-status STATUS | --db-upgrade-schema PRODUCT_TO_UPGRADE | --db-force-upgrade]
                           [--verbose {info,debug,debug_analyzer}]
 
 The CodeChecker Web server is used to handle the storage and navigation of
@@ -305,7 +319,18 @@ optional arguments:
                         over the Internet. (Equivalent to specifying '--host
                         ""'.) (default: False)
   --skip-db-cleanup     Skip performing cleanup jobs on the database like
-                        removing unused files.
+                        removing unused files. (default: False)
+  --config CONFIG_FILE  Allow the configuration from an explicit JSON based
+                        configuration file. The values configured in the
+                        config file will overwrite the values set in the
+                        command line. The format of configuration file is:
+                        {
+                          "enabled": true,
+                          "server": [
+                            "--workspace=/home/<username>/workspace",
+                            "--port=9090"
+                          ]
+                        }. (default: None)
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level.
 

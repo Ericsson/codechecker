@@ -24,9 +24,7 @@ from sqlalchemy.orm import sessionmaker
 
 from codechecker_api_shared.ttypes import DBStatus
 
-from codechecker_common import logger
-from codechecker_common import output_formatters
-from codechecker_common import util
+from codechecker_common import arg, logger, output_formatters, util
 
 from codechecker_server import instance_manager, server
 from codechecker_server.database import database
@@ -51,14 +49,13 @@ def get_argparser_ctor_args():
 
     return {
         'prog': 'CodeChecker server',
-        'formatter_class': argparse.ArgumentDefaultsHelpFormatter,
+        'formatter_class': arg.RawDescriptionDefaultHelpFormatter,
 
         # Description is shown when the command's help is queried directly
-        'description': "The CodeChecker Web server is used to handle the "
-                       "storage and navigation of analysis results. A "
-                       "started server can be connected to via a Web "
-                       "browser, or by using the 'CodeChecker cmd' "
-                       "command-line client.",
+        'description': """
+The CodeChecker Web server is used to handle the storage and navigation of
+analysis results. A started server can be connected to via a Web browser, or
+by using the 'CodeChecker cmd' command-line client.""",
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.
@@ -134,6 +131,23 @@ def add_arguments_to_parser(parser):
                         help="Skip performing cleanup jobs on the database "
                              "like removing unused files.")
 
+    parser.add_argument('--config',
+                        dest='config_file',
+                        required=False,
+                        help="R|Allow the configuration from an explicit JSON "
+                             "based configuration file. The values configured "
+                             "in the config file will overwrite the values "
+                             "set in the command line. The format of "
+                             "configuration file is: \n"
+                             "{\n"
+                             "  \"enabled\": true,\n"
+                             "  \"server\": [\n"
+                             "    \"--workspace=/home/<username>/workspace\","
+                             "\n"
+                             "    \"--port=9090\"\n"
+                             "  ]\n"
+                             "}.")
+
     dbmodes = parser.add_argument_group("configuration database arguments")
 
     dbmodes = dbmodes.add_mutually_exclusive_group(required=False)
@@ -196,11 +210,11 @@ def add_arguments_to_parser(parser):
 
     root_account = parser.add_argument_group(
         "root account arguments",
-        "Servers automatically create a root user to access the server's "
-        "configuration via the clients. This user is created at first start "
-        "and saved in the CONFIG_DIRECTORY, and the credentials are printed "
-        "to the server's standard output. The plaintext credentials are "
-        "NEVER accessible again.")
+        """
+Servers automatically create a root user to access the server's configuration
+via the clients. This user is created at first start and saved in the
+CONFIG_DIRECTORY, and the credentials are printed to the server's standard
+output. The plaintext credentials are NEVER accessible again.""")
 
     root_account.add_argument('--reset-root',
                               dest="reset_root",
@@ -267,16 +281,17 @@ def add_arguments_to_parser(parser):
 
     database_mgmnt = parser.add_argument_group(
             "Database management arguments.",
-            """WARNING these commands needs to be called with the same
-            workspace and configuration arguments as the server so the
-            configuration database will be found which is required for the
-            schema migration. Migration can be done without a running server
-            but pay attention to use the same arguments which will be used to
-            start the server.
-            NOTE:
-            Before migration it is advised to create a full a backup of
-            the product databases.
-            """)
+            """
+WARNING these commands needs to be called with the same workspace and
+configuration arguments as the server so the configuration database will be
+found which is required for the schema migration. Migration can be done
+without a running server but pay attention to use the same arguments which
+will be used to start the server.
+
+NOTE:
+Before migration it is advised to create a full a backup of the product
+databases.
+""")
 
     database_mgmnt = database_mgmnt. \
         add_mutually_exclusive_group(required=False)
@@ -414,7 +429,18 @@ def add_arguments_to_parser(parser):
         # If everything is fine, do call the handler for the subcommand.
         main(args)
 
-    parser.set_defaults(func=__handle)
+    parser.set_defaults(func=__handle,
+                        func_process_config_file=process_config_file)
+
+
+def process_config_file(args):
+    """
+    Handler to get config file options.
+    """
+    if args.config_file and os.path.exists(args.config_file):
+        cfg = util.load_json_or_empty(args.config_file, default={})
+        if cfg.get("enabled"):
+            return cfg.get('server', [])
 
 
 def print_prod_status(prod_status):
