@@ -202,7 +202,6 @@ optional arguments:
                         config file will overwrite the values set in the
                         command line. The format of configuration file is:
                         {
-                          "enabled": true,
                           "store": [
                             "--name=run_name",
                             "--tag=my_tag",
@@ -323,7 +322,6 @@ optional arguments:
                         config file will overwrite the values set in the
                         command line. The format of configuration file is:
                         {
-                          "enabled": true,
                           "server": [
                             "--workspace=/home/<username>/workspace",
                             "--port=9090"
