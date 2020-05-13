@@ -116,23 +116,6 @@ def bytes_to_str(data):
     return data
 
 
-def log_ldap_error(ldap_error):
-    """
-    Log the LDAP error details.
-    """
-    toprint = 'LDAP Error: '
-    if ldap_error.message:
-        if 'info' in ldap_error.message:
-            toprint = toprint + ldap_error.message['info']
-        if 'info' in ldap_error.message and 'desc' in ldap_error.message:
-            toprint = toprint + "; "
-        if 'desc' in ldap_error.message:
-            toprint = toprint + ldap_error.message['desc']
-    else:
-        toprint = ldap_error.__repr__()
-    LOG.error(toprint)
-
-
 @contextmanager
 def ldap_error_handler():
     """
@@ -148,7 +131,7 @@ def ldap_error_handler():
         LOG.error("Filter error: %s", str(ex))
 
     except ldap.LDAPError as err:
-        log_ldap_error(err)
+        LOG.error("LDAP Error: %s", str(err))
 
 
 def get_user_dn(con,
