@@ -12,12 +12,15 @@ Table of Contents
         * [_Skip_ file](#skip)
             * [Absolute path examples](#skip-abs-example)
             * [Relative or partial path examples](#skip-rel-example)
-        * [Analyzer configuration](#analyzer-configuration)
+        * [CodeChecker analyzer configuration](#analyzer-configuration)
             * [Configuration file](#analyzer-configuration-file)
-            * [Compiler-specific include path and define detection (cross compilation)](#include-path)
+            * [Analyzer and checker config options](#analyzer-checker-config-option)
+              * [Configuration of analyzer tools](#analyzer-config-option)
+              * [Configuration of checkers](#checker-config-option)
             * [Forwarding compiler options](#forwarding-compiler-options)
               * [_Clang Static Analyzer_](#clang-static-analyzer)
               * [_Clang-Tidy_](#clang-tidy)
+            * [Compiler-specific include path and define detection (cross compilation)](#include-path)
         * [Toggling checkers](#toggling-checkers)
             * [Checker profiles](#checker-profiles)
             * [`--enable-all`](#enable-all)
@@ -64,7 +67,7 @@ CodeChecker check --logfile ./my-build.json
 
 By default, only the report's main messages are printed. To print the
 individual steps the analysers took in discovering the issue, specify
-`--steps`.
+`--print-steps`.
 
 `check` is a wrapper over the following calls:
 
@@ -796,7 +799,7 @@ Please note that when `-i SKIPFILE` is used along with `--stats` or
 that statistics and ctu-pre-analysis will be created for *all* files in the
 *compilation database*.
 
-### Analyzer configuration <a name="analyzer-configuration"></a>
+### CodeChecker analyzer configuration <a name="analyzer-configuration"></a>
 
 ```
 analyzer arguments:
@@ -886,7 +889,11 @@ Lets assume you have a configuration file
   "analyzer": [
     "--enable=core.DivideZero",
     "--enable=core.CallAndMessage",
-    "--clean"
+    "--clean",
+    "--analyzer-config",
+    "clangsa:unroll-loops=true",
+    "--checker-config",
+    "clang-tidy:google-readability-function-size.StatementThreshold=100"
   ]
 }
 ```
@@ -901,47 +908,105 @@ as command line arguments if the `enabled` option in this file is `true`:
 CodeChecker analyze compilation.json -o ./reports --enable=core.DivideZero --enable=core.CallAndMessage --clean
 ```
 
-#### Compiler-specific include path and define detection (cross compilation) <a name="include-path"></a>
+#### Analyzer and checker config options <a name="analyzer-checker-config-option"></a>
 
-Some of the include paths are hardcoded during compiler build. If a (cross)
-compiler is used to build a project it is possible that the wrong include
-paths are searched and the wrong headers will be included which causes
-analyses to fail. These hardcoded include paths and defines can be marked for
-automatically detection by specifying the `--add-compiler-defaults` flag.
+CodeChecker's analyzer module currently handles ClangSA and ClangTidy. The main
+purpose of this analyzer module is to hide the differences between the
+interfaces and parameterization of these two tools. Both ClangSA and ClangTidy
+have a set of checkers with fine-tuning config options and the analyzer tools
+themselves can also be configured.
 
-CodeChecker will get the hardcoded values for the compilers set in the
-`CC_LOGGER_GCC_LIKE` environment variable.
+##### Configuration of analyzer tools <a name="analyzer-config-option"></a>
 
-```sh
-export CC_LOGGER_GCC_LIKE="gcc:g++:clang:clang++:cc:c++"
+ClangSA performs symbolic execution which is a resource consuming method of
+simulating the program run. Some heuristics are guiding the analyzer engine in
+order to prevent too much memory consumption. For example the loops are not
+simulated to the infinity, but at most four iterations are done. If you have
+more resource, you can turn on full loop unrolling if the number of interations
+is determinable by the analyzer.
+
+To list the available analyzer config options use the following commands:
+```
+CodeChecker analyzers --analyzer-config <analyzer_name> --details
+```
+The `<analyzer_name>` can be either `clangsa` or `clang-tidy`. The available
+analyzers can be listed by:
+```
+CodeChecker analyzers --details
+```
+The `--details` flag is always optional. It provides more information about
+the specific output. In case of config options it gives a short description
+about the option and its default value.
+
+The output of the loop-related analyzer options is this:
+```
+clangsa:cfg-loopexit (bool) Whether or not the end of the loop information should be included in the CFG. (default: false)
+clangsa:unroll-loops (bool) Whether the analysis should try to unroll loops with known bounds. (default: false)
+clangsa:widen-loops (bool) Whether the analysis should try to widen loops. (default: false)
 ```
 
-If there are still compilation errors after using the `--add-compiler-defaults`
-argument, it is possible that the wrong build target architecture
-(32bit, 64bit) is used. Please try to forward these compilation flags
-to the analyzers:
+The format of passing the config option to the analyzer is:
+`analyzer_name:key=value`. So if you need the loop unrolling functionality
+then use the following analyzer command:
 
- - `-m32` (32-bit build)
- - `-m64` (64-bit build)
+```
+CodeChecker analyze build.json \
+  --analyzer-config clangsa:unroll-loops=true \
+  -o reports
+```
 
-GCC specific hard-coded values are detected during the analysis and
-recorded int the `<report-directory>/compiler_info.json`.
+##### Configuration of checkers <a href="checker-config-option"></a>
 
-If you want to run the analysis with a specific compiler configuration
-instead of the auto-detection you can pass that to the
-`--compiler-info-file compiler_info.json` parameter.
+Each analyzer tool provides a set of checkers. These can be listed with the
+following command:
+```
+CodeChecker checkers --details
+```
 
-There are some standard locations which compilers use in order to find standard
-header files. These paths are hard-coded in GCC compiler. CodeChecker is able
-to collect these so the analysis process can run in the same environment as the
-original build. However, there are some GCC-specific locations (usually with
-name `include-fixed`) which may be incompatible with other compilers and may
-cause failure in analysis. CodeChecker omits these GCC-specific paths from the
-analysis unless `--keep-gcc-include-fixed` or `--keep-gcc-intrin` flag is
-given. For further information see
-[GCC incompatibilities](gcc_incompatibilities.md).
+Some of these checkers have some fine-tuning config options. For example
+suppose that you'd like to rule the complexity of functions. First you can list
+the available checkers and find the one which checks functions' size:
+```
+CodeChecker checkers --details
+```
+
+After finding `google-readability-function-size` checker, you can list the
+config options with the following command:
+```
+CodeChecker checkers --checker-config --details
+```
+`--details` flag is optional again. It displays the default values and the
+description of the checker options. In the list you can find the appropriate
+configuration on function size. It has to be given in the same format as the
+analyzer options: `analyzer_name:key=value`, but this time use the flag
+`--checker-config`:
+```
+CodeChecker analyze build.json \
+  --checker-config clang-tidy:google-readability-function-size.StatementThreshold=100 \
+  -o reports
+```
+
+:exclamation: Warning: ClangTidy can be configured with a config file named
+`.clang-tidy` located somewhere in the project tree. If either
+`--analyzer-config` or `--checker-config` flag is given to the analyzer
+command, this file will not be used at all. This is important because the
+default value of `--analyzer-config` is `clang-tidy:HeaderFilterRegex=.*` which
+makes ClangTidy report on issues in header files too. If you'd like to
+overwrite this default value so `.clang-tidy` is used then
+`--analyzer-config clang-tidy:take-config-from-directory=true` must be given.
+
+The analyzer and checker configuration options can also be inserted in the
+CodeChecker configuration file. See an example
+[above](#analyzer-configuration-file).
 
 #### Forwarding compiler options <a name="forwarding-compiler-options"></a>
+
+In those rare cases when the specific analyzer tools need an option other than
+the ones listed in the previous section, you can create a file of which the
+content will be forwarded verbatim to the analyzer. The main difficulty here is
+that you need to know the parameterization of the analyzers precisely. The
+usage of this option is not recommended. `--analyzer-config` and
+`--checker-config` is preferred over these!
 
 Forwarded options can modify the compilation actions logged by the build logger
 or created by CMake (when exporting compile commands). The extra compiler
@@ -993,6 +1058,46 @@ Example:
 ```
 
 (where `MY_LIB` is the path of a library code)
+
+#### Compiler-specific include path and define detection (cross compilation) <a name="include-path"></a>
+
+Some of the include paths are hardcoded during compiler build. If a (cross)
+compiler is used to build a project it is possible that the wrong include
+paths are searched and the wrong headers will be included which causes
+analyses to fail. These hardcoded include paths and defines can be marked for
+automatically detection by specifying the `--add-compiler-defaults` flag.
+
+CodeChecker will get the hardcoded values for the compilers set in the
+`CC_LOGGER_GCC_LIKE` environment variable.
+
+```sh
+export CC_LOGGER_GCC_LIKE="gcc:g++:clang:clang++:cc:c++"
+```
+
+If there are still compilation errors after using the `--add-compiler-defaults`
+argument, it is possible that the wrong build target architecture
+(32bit, 64bit) is used. Please try to forward these compilation flags
+to the analyzers:
+
+ - `-m32` (32-bit build)
+ - `-m64` (64-bit build)
+
+GCC specific hard-coded values are detected during the analysis and
+recorded int the `<report-directory>/compiler_info.json`.
+
+If you want to run the analysis with a specific compiler configuration
+instead of the auto-detection you can pass that to the
+`--compiler-info-file compiler_info.json` parameter.
+
+There are some standard locations which compilers use in order to find standard
+header files. These paths are hard-coded in GCC compiler. CodeChecker is able
+to collect these so the analysis process can run in the same environment as the
+original build. However, there are some GCC-specific locations (usually with
+name `include-fixed`) which may be incompatible with other compilers and may
+cause failure in analysis. CodeChecker omits these GCC-specific paths from the
+analysis unless `--keep-gcc-include-fixed` or `--keep-gcc-intrin` flag is
+given. For further information see
+[GCC incompatibilities](gcc_incompatibilities.md).
 
 ### Toggling checkers <a name="toggling-checkers"></a>
 

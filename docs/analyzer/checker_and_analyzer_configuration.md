@@ -1,6 +1,6 @@
 # Configure Clang Static Analyzer and checkers
 
-Checker configuration can be done through the `--saargs` analysis option which
+Analyzer configuration can be done through the `--saargs` analysis option which
 forwards arguments without modification to the Clang Static Analyzer:
 ```
 CodeChecker analyze --saargs static_analyzer.cfg
