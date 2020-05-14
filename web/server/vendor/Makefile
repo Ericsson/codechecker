@@ -176,4 +176,4 @@ clean_vendor:
 	rm -rf jquery
 	rm -rf marked
 	rm -rf thrift
-	rm -rf codechecker_api_js
+	rm -rf codechecker-api-js
