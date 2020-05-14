@@ -1391,6 +1391,8 @@ class ThriftRequestHandler(object):
 
             old_status = review_status.status if review_status.status \
                 else review_status_str(ttypes.ReviewStatus.UNREVIEWED)
+            old_msg = review_status.message.decode('utf-8') \
+                if review_status.message else None
 
             review_status.status = review_status_str(status)
             review_status.author = user
@@ -1398,20 +1400,26 @@ class ThriftRequestHandler(object):
             review_status.date = datetime.now()
             session.add(review_status)
 
-            if message:
-                system_comment_msg = 'rev_st_changed_msg {0} {1} {2}'.format(
-                    escape_whitespaces(old_status.capitalize()),
-                    escape_whitespaces(review_status.status.capitalize()),
-                    escape_whitespaces(message))
-            else:
-                system_comment_msg = 'rev_st_changed {0} {1}'.format(
-                    escape_whitespaces(old_status.capitalize()),
-                    escape_whitespaces(review_status.status.capitalize()))
+            # Create a system comment if the review status or the message is
+            # changed.
+            if old_status != review_status.status or old_msg != message:
+                old_review_status = escape_whitespaces(old_status.capitalize())
+                new_review_status = \
+                    escape_whitespaces(review_status.status.capitalize())
+                if message:
+                    system_comment_msg = \
+                        'rev_st_changed_msg {0} {1} {2}'.format(
+                            old_review_status, new_review_status,
+                            escape_whitespaces(message))
+                else:
+                    system_comment_msg = 'rev_st_changed {0} {1}'.format(
+                        old_review_status, new_review_status)
 
-            system_comment = self.__add_comment(review_status.bug_hash,
-                                                system_comment_msg,
-                                                CommentKindValue.SYSTEM)
-            session.add(system_comment)
+                system_comment = self.__add_comment(review_status.bug_hash,
+                                                    system_comment_msg,
+                                                    CommentKindValue.SYSTEM)
+                session.add(system_comment)
+
             session.flush()
 
             return True

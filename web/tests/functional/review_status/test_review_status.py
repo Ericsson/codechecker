@@ -12,7 +12,8 @@ import logging
 import os
 import unittest
 
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import ReviewStatus
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import CommentKind, \
+    ReviewStatus
 
 from libtest import env
 from libtest.thrift_client_to_db import get_all_run_results
@@ -45,6 +46,11 @@ class TestReviewStatus(unittest.TestCase):
                          'There should be only one run for this test.')
         self._runid = test_runs[0].runId
 
+    def __get_system_comments(self, report_hash):
+        """ Get system comments for the given report hash. """
+        return [c for c in self._cc_client.getComments(report_hash)
+                if c.kind == CommentKind.SYSTEM]
+
     def test_multiple_change_review_status(self):
         """
         Test changing review status of the same bug.
@@ -59,6 +65,10 @@ class TestReviewStatus(unittest.TestCase):
 
         bug = run_results[0]
 
+        # There are no system comments for this bug.
+        comments = self.__get_system_comments(bug.reportId)
+        self.assertEqual(len(comments), 0)
+
         # Change review status to confirmed bug.
         review_comment = 'This is really a bug'
         status = ReviewStatus.CONFIRMED
@@ -71,6 +81,25 @@ class TestReviewStatus(unittest.TestCase):
         report = self._cc_client.getReport(bug.reportId)
         self.assertEqual(report.reviewData.comment, review_comment)
         self.assertEqual(report.reviewData.status, status)
+
+        # There is one system comment for this bug.
+        comments = self.__get_system_comments(bug.reportId)
+        self.assertEqual(len(comments), 1)
+
+        # Try to update the review status again with the same data and check
+        # that no new system comment entry will be created.
+        success = self._cc_client.changeReviewStatus(
+            bug.reportId, status, review_comment)
+        comments = self.__get_system_comments(bug.reportId)
+        self.assertEqual(len(comments), 1)
+
+        # Test that updating only the review status message a new system
+        # comment will be created.
+        success = self._cc_client.changeReviewStatus(
+            bug.reportId, status, "test system comment change")
+        self.assertTrue(success)
+        comments = self.__get_system_comments(bug.reportId)
+        self.assertEqual(len(comments), 2)
 
         # Try to change review status back to unreviewed.
         status = ReviewStatus.UNREVIEWED
