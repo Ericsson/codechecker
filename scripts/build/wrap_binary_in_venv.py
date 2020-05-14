@@ -9,7 +9,7 @@ from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from logging import getLogger, Formatter, StreamHandler, INFO, DEBUG
 from os import stat, chmod, makedirs
 from os.path import abspath, dirname, exists
-from stat import S_IXUSR
+from stat import S_IXUSR, S_IXGRP, S_IXOTH
 from string import Template
 from sys import exit
 
@@ -24,12 +24,13 @@ LOG.addHandler(log_handler)
 
 def add_executable_permission(path):
     """
-    Extend the permissions of a file with owner runnable flag. Ensures that the
-    file is executable when ran by the user it is owned by.
+    Extend the permissions of a file with runnable flag.
+    The file owner, the group and every other user have permission
+    to execute it.
     """
 
     current_stat = stat(path)
-    chmod(path, current_stat.st_mode | S_IXUSR)
+    chmod(path, current_stat.st_mode | S_IXUSR | S_IXGRP | S_IXOTH)
 
 
 def generate_content(binary_path, virtual_environment_path):
