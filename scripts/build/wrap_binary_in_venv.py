@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 """
 Create a wrapper for a runnable file which requires a certain virtualenv to
 provide its dependencies. The wrapper implicitly uses the virtual environment,
