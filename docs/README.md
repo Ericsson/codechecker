@@ -32,6 +32,7 @@ macOS (OS X) development environment.
 
 ![Web interface showing list of analysed projects and bugs](images/demo.gif)
 
+Check out our [DEMO](https://codechecker-demo.eastus.cloudapp.azure.com) showing some analysis results on open-source projects!
 
 # Main features
 ## Command line C/C++ Analysis
