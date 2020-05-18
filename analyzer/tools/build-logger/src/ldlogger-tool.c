@@ -159,12 +159,15 @@ int loggerCollectActionsByProgName(
   {
     return loggerJavacParserCollectActions(prog_, argv_, actions_);
   } else {
+    const char* gccLike = getenv("CC_LOGGER_GCC_LIKE");
+    const char* javacLike = getenv("CC_LOGGER_JAVAC_LIKE");
+
     LOG_INFO("'%s' does not match any program name! Current environment "
              "variables are: CC_LOGGER_GCC_LIKE (%s), "
              "CC_LOGGER_JAVAC_LIKE(%s)",
              prog_,
-             getenv("CC_LOGGER_GCC_LIKE"),
-             getenv("CC_LOGGER_JAVAC_LIKE"));
+             gccLike ? gccLike : "",
+             javacLike ? javacLike : "");
   }
 
   return 0;
