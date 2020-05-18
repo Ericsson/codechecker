@@ -9,7 +9,6 @@ Check host machine for a compile command logger.
 
 
 import errno
-import os
 import subprocess
 
 from codechecker_common.logger import get_logger
@@ -23,14 +22,13 @@ def check_intercept(env):
     """
     intercept_cmd = ['intercept-build', '--help']
     try:
-        with open(os.devnull, 'wb') as null:
-            res = subprocess.check_call(
-                intercept_cmd,
-                env=env,
-                stdout=null,
-                stderr=null,
-                encoding="utf-8",
-                errors="ignore")
+        res = subprocess.check_call(
+            intercept_cmd,
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            encoding="utf-8",
+            errors="ignore")
 
         if not res:
             return True
