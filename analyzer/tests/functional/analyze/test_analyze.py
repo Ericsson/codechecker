@@ -463,6 +463,70 @@ class TestAnalyze(unittest.TestCase):
         self.assertEqual(errcode, 0)
         self.assertFalse(os.path.isdir(failed_dir))
 
+    def test_tidyargs_saargs(self):
+        """
+        Test tidyargs and saargs config files
+        """
+        build_json = os.path.join(self.test_workspace, "build_extra_args.json")
+        report_dir = os.path.join(self.test_workspace, "reports_extra_args")
+        source_file = os.path.join(self.test_dir, "extra_args.c")
+        tidyargs_file = os.path.join(self.test_dir, "tidyargs")
+        saargs_file = os.path.join(self.test_dir, "saargs")
+
+        build_log = [{"directory": self.test_dir,
+                      "command": "cc -c " + source_file,
+                      "file": source_file
+                      }]
+
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
+            json.dump(build_log, outfile)
+
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "-o", report_dir, "--tidyargs", tidyargs_file]
+
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_workspace,
+            encoding="utf-8",
+            errors="ignore")
+        process.communicate()
+
+        process = subprocess.Popen(
+            [self._codechecker_cmd, "parse", report_dir],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_workspace,
+            encoding="utf-8",
+            errors="ignore")
+        out, _ = process.communicate()
+
+        self.assertIn("division by zero", out)
+
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "-o", report_dir, "--saargs", saargs_file]
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_workspace,
+            encoding="utf-8",
+            errors="ignore")
+        process.communicate()
+
+        process = subprocess.Popen(
+            [self._codechecker_cmd, "parse", report_dir],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_workspace,
+            encoding="utf-8",
+            errors="ignore")
+        out, _ = process.communicate()
+
+        self.assertIn("Dereference of null pointer", out)
+
     def unique_json_helper(self, unique_json, is_a, is_b, is_s):
         with open(unique_json,
                   encoding="utf-8", errors="ignore") as json_file:

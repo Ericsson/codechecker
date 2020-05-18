@@ -296,7 +296,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             host_check.get_resource_dir(clang_bin, context)
 
         try:
-            with open(args.tidy_args_cfg_file, 'rb') as tidy_cfg:
+            with open(args.tidy_args_cfg_file, 'r', encoding='utf-8',
+                      errors='ignore') as tidy_cfg:
                 handler.analyzer_extra_arguments = \
                     re.sub(r'\$\((.*?)\)', env.replace_env_var,
                            tidy_cfg.read().strip())
