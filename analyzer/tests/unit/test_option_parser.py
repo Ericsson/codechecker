@@ -275,7 +275,7 @@ class OptionParserTest(unittest.TestCase):
         """
         ignore = ["-Werror", "-fsyntax-only",
                   "-mfloat-gprs=double", "-mfloat-gprs=yes",
-                  "-mabi=spe", "-mabi=eabi"]
+                  "-mabi=spe", "-mabi=eabi", "-fext-numeric-literal"]
         action = {
             'file': 'main.cpp',
             'command': "g++ {} main.cpp".format(' '.join(ignore)),
