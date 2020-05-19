@@ -5,15 +5,17 @@
 // -------------------------------------------------------------------------
 
 define([
-  'dojo/dom-construct',
   'dojo/_base/declare',
   'dojo/Deferred',
   'codechecker/filter/SelectFilter',
   'codechecker/util'],
-function (dom, declare, Deferred, SelectFilter, util) {
+function (declare, Deferred, SelectFilter, util) {
   return declare(SelectFilter, {
     search : {
       enable : true,
+      serverSide : true,
+      regex : true,
+      regexLabel : 'Filter by wildcard pattern (e.g.: myrun*:mytag*, mytag*): ',
       placeHolder : 'Search for run tags...'
     },
 
@@ -29,7 +31,7 @@ function (dom, declare, Deferred, SelectFilter, util) {
 
     getItems : function (opt) {
       var opt = this.initReportFilterOptions(opt);
-      opt.reportFilter.runTag = opt.query ? opt.query : null;
+      opt.reportFilter.runTag = opt.query ? this.getTagIds(opt.query) : null;
 
       var deferred = new Deferred();
       CC_SERVICE.getRunHistoryTagCounts(opt.runIds, opt.reportFilter,
@@ -57,47 +59,57 @@ function (dom, declare, Deferred, SelectFilter, util) {
 
     // Returns selected tag id's. If the ids option is set for the filter item
     // we can use it otherwise we get tag id's from the server.
-    getTagIds : function () {
+    getTagIds : function (runWithTagNames) {
+      if (runWithTagNames === undefined)
+      runWithTagNames = Object.keys(this.selectedItems);
+
       var tagIds =  [];
 
-      for (var key in this.selectedItems) {
-        var item = this.selectedItems[key];
+      var that = this;
+      runWithTagNames.forEach(function (runWithTagName) {
+        var item = that.selectedItems[runWithTagName];
         if (item && item.ids) {
           tagIds = tagIds.concat(item.ids);
         } else {
-          var index = key.indexOf(':');
+          var index = runWithTagName.indexOf(':');
 
-          if (index === -1) continue;
+          var runName, tagName;
+          if (index !== -1) {
+            runName = runWithTagName.substring(0, index);
+            tagName = runWithTagName.substring(index + 1);
+          } else {
+            tagName = runWithTagName;
+          }
 
-          var runName = key.substring(0, index);
-          var tagName = key.substring(index + 1);
-
-          var missingTagIds = this.getIdsByTag(runName, tagName);
+          var missingTagIds = that.getIdsByTag(runName, tagName);
           if (missingTagIds.length) {
             if (item) item.ids = missingTagIds;
             tagIds = tagIds.concat(missingTagIds);
           }
         }
-      }
+      });
 
       return tagIds.length ? tagIds : null;
     },
 
     // Returns tag id's of the tag name in the specified run. This should call
     // API functions synchronously because other filters should depend on it.
+    // If no run name is given we will get tag id's only by tag name.
     getIdsByTag : function (runName, tagName) {
-      if (!runName || !tagName) return [];
+      if (!tagName) return [];
 
-      var runFilter = new CC_OBJECTS.RunFilter();
-      runFilter.names = [runName];
+      var runIds = null;
+      if (runName) {
+        var runFilter = new CC_OBJECTS.RunFilter();
+        runFilter.names = [runName];
 
-      var runIds = [];
-      try {
-        runIds = CC_SERVICE.getRunData(runFilter, null, 0, null).map(
-        function (run) {
-          return run.runId;
-        });
-      } catch (ex) { util.handleThriftException(ex); }
+        try {
+          runIds = CC_SERVICE.getRunData(runFilter, null, 0, null).map(
+          function (run) {
+            return run.runId;
+          });
+        } catch (ex) { util.handleThriftException(ex); }
+      }
 
       var runHistoryFilter = new CC_OBJECTS.RunHistoryFilter();
       runHistoryFilter.tagNames = [tagName];
