@@ -34,8 +34,8 @@ class statistics_collectorsTest(unittest.TestCase):
         special_ret_collector = \
             statistics_collector.SpecialReturnValueCollector(10, 0.85)
 
-        for l in test_input:
-            special_ret_collector.process_line(l)
+        for line in test_input:
+            special_ret_collector.process_line(line)
 
         self.assertEqual({'parsedate': 4}, special_ret_collector.total())
         self.assertEqual({'parsedate': 0}, special_ret_collector.nof_null())
@@ -87,8 +87,8 @@ class statistics_collectorsTest(unittest.TestCase):
         special_ret_collector = \
             statistics_collector.SpecialReturnValueCollector(10, 0.85)
 
-        for l in test_ret_neg:
-            special_ret_collector.process_line(l)
+        for line in test_ret_neg:
+            special_ret_collector.process_line(line)
 
         self.assertEqual({'parsedate': 10, 'myfunc': 6},
                          special_ret_collector.total())
@@ -119,8 +119,8 @@ class statistics_collectorsTest(unittest.TestCase):
 
         ret_val_collector = statistics_collector.ReturnValueCollector(10, 0.85)
 
-        for l in test_ret_neg:
-            ret_val_collector.process_line(l)
+        for line in test_ret_neg:
+            ret_val_collector.process_line(line)
 
         self.assertEqual({'parsedate': 6}, ret_val_collector.total())
         self.assertEqual({'parsedate': 2}, ret_val_collector.nof_unchecked())
@@ -154,8 +154,8 @@ class statistics_collectorsTest(unittest.TestCase):
 
         ret_val_collector = statistics_collector.ReturnValueCollector(10, 0.85)
 
-        for l in test_ret_neg:
-            ret_val_collector.process_line(l)
+        for line in test_ret_neg:
+            ret_val_collector.process_line(line)
 
         self.assertEqual({'parsedate': 10}, ret_val_collector.total())
         self.assertEqual({'parsedate': 1}, ret_val_collector.nof_unchecked())
