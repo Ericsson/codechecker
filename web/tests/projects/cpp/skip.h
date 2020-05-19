@@ -1,8 +1,8 @@
-// -----------------------------------------------------------------------------
-//                     The CodeChecker Infrastructure
-//   This file is distributed under the University of Illinois Open Source
-//   License. See LICENSE.TXT for details.
-// -----------------------------------------------------------------------------
+// -------------------------------------------------------------------------
+//  Part of the CodeChecker project, under the Apache License v2.0 with
+//  LLVM Exceptions. See LICENSE for license information.
+//  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// -------------------------------------------------------------------------
 
 int null_div(int z) {
     int x = z / 0; // warn

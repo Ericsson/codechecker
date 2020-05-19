@@ -35,5 +35,5 @@ optional arguments:
 
 ## License
 
-The project is licensed under University of Illinois/NCSA Open Source License.
+The project is licensed under Apache License v2.0 with LLVM Exceptions.
 See LICENSE.TXT for details.
