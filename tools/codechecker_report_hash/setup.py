@@ -21,7 +21,6 @@ setuptools.setup(
     classifiers=[
         "Environment :: Console",
         "Intended Audience :: Developers",
-        "License :: OSI Approved :: University of Illinois/NCSA Open Source License",
         "Operating System :: MacOS",
         "Operating System :: POSIX",
         "Programming Language :: Python :: 2.7",

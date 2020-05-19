@@ -13,7 +13,7 @@
     "url": "https://github.com/Ericsson/codechecker.git",
     "directory": "web/api"
   },
-  "license": "Apache-2.0",
+  "license": "SEE LICENSE IN LICENSE",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
