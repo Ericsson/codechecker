@@ -508,8 +508,8 @@ class SourceCodeCommentTestCase(unittest.TestCase):
             self.__tmp_srcfile_1,
             bug_line)
 
-        for l in source_line_comments:
-            print(l)
+        for line in source_line_comments:
+            print(line)
 
         self.assertEqual(len(source_line_comments), 1)
 
@@ -539,8 +539,8 @@ class SourceCodeCommentTestCase(unittest.TestCase):
             self.__tmp_srcfile_1,
             bug_line)
 
-        for l in source_line_comments:
-            print(l)
+        for line in source_line_comments:
+            print(line)
 
         self.assertEqual(len(source_line_comments), 1)
 
@@ -569,8 +569,8 @@ class SourceCodeCommentTestCase(unittest.TestCase):
             self.__tmp_srcfile_1,
             bug_line)
 
-        for l in source_line_comments:
-            print(l)
+        for line in source_line_comments:
+            print(line)
 
         self.assertEqual(len(source_line_comments), 1)
 
@@ -605,9 +605,9 @@ class SourceCodeCommentTestCase(unittest.TestCase):
             self.__tmp_srcfile_1,
             bug_line)
 
-        for l in source_line_comments:
+        for line in source_line_comments:
             print('-======')
-            print(l)
+            print(line)
 
         self.assertEqual(len(source_line_comments), 1)
 
@@ -642,9 +642,9 @@ class SourceCodeCommentTestCase(unittest.TestCase):
             self.__tmp_srcfile_1,
             bug_line)
 
-        for l in source_line_comments:
+        for line in source_line_comments:
             print('-======')
-            print(l)
+            print(line)
 
         self.assertEqual(len(source_line_comments), 1)
 
@@ -675,8 +675,8 @@ class SourceCodeCommentTestCase(unittest.TestCase):
             self.__tmp_srcfile_3,
             bug_line)
 
-        for l in source_line_comments:
-            print(l)
+        for line in source_line_comments:
+            print(line)
 
         self.assertEqual(len(source_line_comments), 2)
 
@@ -752,8 +752,8 @@ class SourceCodeCommentTestCase(unittest.TestCase):
             self.__tmp_srcfile_3,
             bug_line)
 
-        for l in source_line_comments:
-            print(l)
+        for line in source_line_comments:
+            print(line)
 
         self.assertEqual(len(source_line_comments), 2)
 

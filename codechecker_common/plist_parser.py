@@ -225,8 +225,8 @@ def fids_in_range(rng):
     """
     fids = []
     for r in rng:
-        for l in r:
-            fids.append(l['file'])
+        for line in r:
+            fids.append(line['file'])
     return fids
 
 
@@ -238,10 +238,10 @@ def fids_in_edge(edges):
     for e in edges:
         start = e['start']
         end = e['end']
-        for l in start:
-            fids.append(l['file'])
-        for l in end:
-            fids.append(l['file'])
+        for line in start:
+            fids.append(line['file'])
+        for line in end:
+            fids.append(line['file'])
     return fids
 
 
