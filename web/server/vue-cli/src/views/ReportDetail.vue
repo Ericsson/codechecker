@@ -16,7 +16,7 @@
               color="primary"
               :to="{ name: 'reports', query: {
                 ...$router.currentRoute.query,
-                reportId: undefined
+                'report-id': undefined
               }}"
             >
               <v-icon
@@ -93,8 +93,8 @@ export default {
   },
 
   mounted() {
-    const reportId = this.$router.currentRoute.query["reportId"];
-    const reportHash = this.$router.currentRoute.query["reportHash"];
+    const reportId = this.$router.currentRoute.query["report-id"];
+    const reportHash = this.$router.currentRoute.query["report-hash"];
     this.loadReport(reportId, reportHash);
   },
 
@@ -139,12 +139,12 @@ export default {
 
     updateUrl() {
       const reportId = this.report.reportId.toString();
-      const currentReportId = this.$router.currentRoute.query["reportId"];
+      const currentReportId = this.$router.currentRoute.query["report-id"];
       if (reportId !== currentReportId) {
         this.$router.replace({
           query: {
             ...this.$route.query,
-            "reportId": reportId
+            "report-id": reportId
           }
         }).catch(() => {});
       }

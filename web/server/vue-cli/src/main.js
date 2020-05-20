@@ -19,6 +19,7 @@ import Vue from "vue";
 import vuetify from "@/plugins/vuetify";
 import VueCookie from "vue-cookie";
 import { GET_AUTH_PARAMS, GET_CURRENT_PRODUCT } from "@/store/actions.type";
+import convertOldUrlToNew from "./router/backward-compatible-url";
 
 import router from "./router";
 import store from "./store";
@@ -35,6 +36,8 @@ import "@/variables.scss";
 
 Vue.config.productionTip = false;
 
+let isFirstRouterResolve = true;
+
 // Ensure we checked auth before each page load.
 router.beforeResolve((to, from, next) => {
   // Update Thrift API services on endpoint change.
@@ -42,6 +45,15 @@ router.beforeResolve((to, from, next) => {
       to.params.endpoint !== from.params.endpoint
   ) {
     eventHub.$emit("update", to.params.endpoint);
+  }
+
+  // To be backward compatible with the old UI url format we will convert old
+  // urls to new format on the first page load.
+  if (isFirstRouterResolve) {
+    isFirstRouterResolve = false;
+    const params = convertOldUrlToNew(to);
+    if (params)
+      return next(params);
   }
 
   store.dispatch(GET_AUTH_PARAMS).then(() => {

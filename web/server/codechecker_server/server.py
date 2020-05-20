@@ -250,17 +250,18 @@ class RequestHandler(SimpleHTTPRequestHandler):
             self.__handle_readiness()
             return
 
-        product_endpoint, path = routing.split_client_GET_request(self.path)
+        product_endpoint, _ = routing.split_client_GET_request(self.path)
 
         # Check that path contains a product endpoint.
         if product_endpoint is not None and product_endpoint != '':
             self.path = self.path.replace(
                 "{0}/".format(product_endpoint), "", 1)
 
+        if self.path == '/':
+            self.path = "index.html"
+
         # Check that the given path is a file.
-        if (os.path.exists(self.translate_path(self.path))):
-            self.path = path
-        else:
+        if not os.path.exists(self.translate_path(self.path)):
             self.path = 'index.html'
 
         SimpleHTTPRequestHandler.do_GET(self)

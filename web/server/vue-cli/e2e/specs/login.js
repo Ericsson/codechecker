@@ -28,6 +28,12 @@ module.exports = {
       .waitForElementVisible('body')
       .assert.urlEquals(`${this.loginPage}?return_to=%2Fe2e%2Fstatistics`);
 
+    // Visiting old statistics page url.
+    browser
+      .url(`${browser.launchUrl}/e2e/#tab=statistics`)
+      .waitForElementVisible('body')
+      .assert.urlEquals(`${this.loginPage}?return_to=%2Fe2e%2Fstatistics`);
+
     // Visiting run history page.
     browser
       .url(`${browser.launchUrl}/e2e/run-history`)

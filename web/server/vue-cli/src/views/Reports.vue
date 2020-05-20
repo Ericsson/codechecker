@@ -71,8 +71,8 @@
                       <router-link
                         :to="{ name: 'report-detail', query: {
                           ...$router.currentRoute.query,
-                          reportId: report.reportId,
-                          reportHash: undefined
+                          'report-id': report.reportId,
+                          'report-hash': undefined
                         }}"
                       >
                         {{ report.checkedFile }}:{{ report.line }}
@@ -109,8 +109,8 @@
           <router-link
             :to="{ name: 'report-detail', query: {
               ...$router.currentRoute.query,
-              reportId: item.reportId ? item.reportId : undefined,
-              reportHash: item.reportId ? undefined : item.bugHash
+              'report-id': item.reportId ? item.reportId : undefined,
+              'report-hash': item.reportId ? undefined : item.bugHash
             }}"
           >
             {{ item.checkedFile }}
