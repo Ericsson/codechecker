@@ -69,7 +69,7 @@
     </span>
 
     <v-divider
-      v-if="isAuthenticated && menuItems.length"
+      v-if="showUserInfo && menuItems.length"
       class="mx-2"
       inset
       vertical
@@ -77,7 +77,7 @@
     />
 
     <user-info-menu
-      v-if="isAuthenticated"
+      v-if="showUserInfo"
     />
 
     <v-menu offset-y>
@@ -166,8 +166,11 @@ export default {
     },
 
     showMenuItems() {
-      return this.authParams && !this.authParams.requiresAuthentication ||
-        this.isAuthenticated;
+      return !this.authParams?.requiresAuthentication || this.isAuthenticated;
+    },
+
+    showUserInfo() {
+      return this.authParams?.requiresAuthentication && this.isAuthenticated;
     }
   },
 
