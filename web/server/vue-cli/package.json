@@ -26,7 +26,7 @@
     "test": "npm run test:lint && npm run test:unit && npm run test:e2e"
   },
   "dependencies": {
-    "codechecker-api": "6.26.0",
+    "codechecker-api": "6.27.0",
     "codemirror": "^5.52.0",
     "date-fns": "^2.10.0",
     "highlight.js": "^9.18.1",
