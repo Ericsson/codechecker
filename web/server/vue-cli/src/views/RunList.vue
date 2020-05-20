@@ -77,6 +77,15 @@
                 </v-icon>
                 Diff
               </v-btn>
+
+              <v-btn
+                icon
+                title="Reload runs"
+                color="primary"
+                @click="fetchRuns"
+              >
+                <v-icon>mdi-refresh</v-icon>
+              </v-btn>
             </v-col>
           </v-row>
         </v-toolbar>

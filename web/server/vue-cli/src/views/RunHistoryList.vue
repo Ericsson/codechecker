@@ -84,6 +84,15 @@
                 </v-icon>
                 Diff
               </v-btn>
+
+              <v-btn
+                icon
+                title="Reload run history"
+                color="primary"
+                @click="fetchRunHistories"
+              >
+                <v-icon>mdi-refresh</v-icon>
+              </v-btn>
             </v-col>
           </v-row>
         </v-toolbar>
@@ -375,11 +384,14 @@ export default {
 
   methods: {
     async fetchRunHistories() {
+      this.loading = true;
+
       let runIds = null;
       if (this.runNameSearch) {
         runIds = await this.getRunIdsByRunName(this.runNameSearch);
         if (!runIds.length) {
           this.histories = [];
+          this.loading = false;
           return;
         }
       }
@@ -401,6 +413,7 @@ export default {
       ccService.getClient().getRunHistory(runIds, limit, offset, filter,
         handleThriftError(histories => {
           this.histories = histories;
+          this.loading = false;
         }));
     },
 
