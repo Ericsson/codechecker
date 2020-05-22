@@ -1,0 +1,3 @@
+build/
+dist/
+codechecker_report_hash.egg-info
