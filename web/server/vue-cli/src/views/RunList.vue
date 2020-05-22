@@ -105,6 +105,11 @@
                 {{ item.name }}
               </router-link>
 
+              <run-description
+                v-if="item.description"
+                :value="item.description"
+              />
+
               <v-chip
                 v-if="item.versionTag"
                 outlined
@@ -261,7 +266,8 @@ import _ from "lodash";
 import {
   AnalyzerStatisticsBtn,
   AnalyzerStatisticsDialog,
-  DeleteRunBtn
+  DeleteRunBtn,
+  RunDescription
 } from "@/components/Run";
 import { DetectionStatusMixin, StrToColorMixin } from "@/mixins";
 import { DetectionStatusIcon } from "@/components/Icons";
@@ -283,7 +289,8 @@ export default {
     AnalyzerStatisticsBtn,
     AnalyzerStatisticsDialog,
     DeleteRunBtn,
-    DetectionStatusIcon
+    DetectionStatusIcon,
+    RunDescription
   },
 
   mixins: [ DetectionStatusMixin, StrToColorMixin ],

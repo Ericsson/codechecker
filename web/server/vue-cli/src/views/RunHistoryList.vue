@@ -107,6 +107,11 @@
         >
           {{ item.runName }}
         </router-link>
+
+        <run-description
+          v-if="item.description"
+          :value="item.description"
+        />
       </template>
 
       <template #item.analyzerStatistics="{ item }">
@@ -200,7 +205,8 @@ import { format, max, min, parse } from "date-fns";
 
 import {
   AnalyzerStatisticsBtn,
-  AnalyzerStatisticsDialog
+  AnalyzerStatisticsDialog,
+  RunDescription
 } from "@/components/Run";
 import { StrToColorMixin } from "@/mixins";
 
@@ -211,7 +217,8 @@ export default {
   name: "RunHistoryList",
   components: {
     AnalyzerStatisticsBtn,
-    AnalyzerStatisticsDialog
+    AnalyzerStatisticsDialog,
+    RunDescription
   },
   mixins: [ StrToColorMixin ],
 
