@@ -63,5 +63,52 @@ module.exports = {
     dialog.expect.elements("@groups").count.to.equal(0);
 
     product.closeGlobalPermissionsDialog();
+  },
+
+  "manage products" (browser) {
+    const product = browser.page.product();
+
+    product
+      .navigate()
+      .showNewProductDialog();
+
+    product
+      .fillNewProductData()
+      .saveProduct();
+
+    product
+      .fillNewProductData({ engine: "sqlite" })
+      .saveProduct();
+
+    product
+      .fillNewProductData({ engine: "postgresql" })
+      .saveProduct();
+
+    product
+      .fillNewProductData({
+        endpoint: "test",
+        displayName: "Test",
+        description: "Test",
+        runLimit: 500,
+        disableReviewStatusChange: true,
+        engine: "sqlite",
+        dbFile: "test.sqlite"
+      })
+      .saveProduct();
+
+    product
+      .filterProducts("Test")
+      .editProduct()
+      .fillNewProductData({
+        endpoint: "edit",
+        displayName: "Test 2",
+        description: "Renamed",
+        runLimit: 600,
+        disableReviewStatusChange: false
+      })
+      .saveProduct();
+
+    product
+      .removeProduct();
   }
 }

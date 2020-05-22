@@ -23,6 +23,7 @@
 
     <template v-slot:content>
       <product-config-form
+        ref="form"
         :is-valid.sync="isValid"
         :is-super-user="isSuperUser"
         :product-config="productConfig"
@@ -61,6 +62,8 @@ export default {
   },
   methods: {
     save() {
+      if (!this.$refs.form.validate()) return;
+
       prodService.getClient().addProduct(this.productConfig,
         handleThriftError(() => {
           this.$emit("on-complete",

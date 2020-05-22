@@ -9,6 +9,7 @@
   >
     <template v-slot:activator="{ on }">
       <v-btn
+        class="remove-btn"
         icon
         color="error"
         v-on="on"

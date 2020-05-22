@@ -7,6 +7,7 @@
   >
     <template v-slot:activator="{ on }">
       <v-btn
+        class="edit-btn"
         icon
         color="primary"
         v-on="on"
