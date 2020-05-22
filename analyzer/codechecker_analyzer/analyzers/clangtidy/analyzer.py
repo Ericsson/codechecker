@@ -174,6 +174,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd.append(self.source_file)
 
+            analyzer_cmd.extend(['--export-fixes', result_handler.fixit_file])
+
             analyzer_cmd.append("--")
 
             analyzer_cmd.append('-Qunused-arguments')
