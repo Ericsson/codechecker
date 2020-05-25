@@ -97,116 +97,16 @@
       </template>
 
       <template #item.name="{ item }">
-        <v-list-item two-line>
-          <v-list-item-content>
-            <v-list-item-title>
-              <router-link
-                :to="{ name: 'reports', query: {
-                  run: item.name,
-                  ...defaultReportFilterValues
-                }}"
-                class="name mr-2"
-              >
-                {{ item.name }}
-              </router-link>
-
-              <run-description
-                v-if="item.description"
-                :value="item.description"
-              />
-
-              <v-chip
-                v-if="item.versionTag"
-                outlined
-                small
-              >
-                <v-avatar
-                  class="mr-0"
-                  left
-                >
-                  <v-icon
-                    :color="strToColor(item.versionTag)"
-                    small
-                  >
-                    mdi-tag-outline
-                  </v-icon>
-                </v-avatar>
-                <span
-                  class="grey--text text--darken-3"
-                >
-                  {{ item.versionTag }}
-                </span>
-              </v-chip>
-            </v-list-item-title>
-
-            <v-list-item-subtitle>
-              <v-btn
-                :to="{ name: 'run-history', query: { run: item.name } }"
-                class="show-history"
-                title="Show history"
-                color="primary"
-                small
-                text
-                icon
-              >
-                <v-icon>mdi-history</v-icon>
-              </v-btn>
-
-              <v-btn
-                :to="{ name: 'statistics', query: {
-                  run: item.name,
-                  ...defaultStatisticsFilterValues
-                }}"
-                class="show-statistics"
-                title="Show statistics"
-                color="green"
-                small
-                text
-                icon
-              >
-                <v-icon>mdi-chart-line</v-icon>
-              </v-btn>
-
-              <v-divider
-                class="mx-2 d-inline"
-                inset
-                vertical
-              />
-
-              <v-btn
-                class="show-check-command"
-                title="Show check command"
-                color="orange"
-                small
-                text
-                icon
-                @click="openCheckCommandDialog(item)"
-              >
-                <v-icon>mdi-apple-keyboard-command</v-icon>
-              </v-btn>
-
-              <v-divider
-                class="mx-2 d-inline"
-                inset
-                vertical
-              />
-
-              <v-btn
-                v-for="(value, name) in item.detectionStatusCount"
-                :key="name"
-                :to="{ name: 'reports', query: {
-                  run: item.name,
-                  'detection-status': detectionStatusFromCodeToString(name)
-                }}"
-                class="detection-status-count pa-0"
-                small
-                text
-              >
-                <detection-status-icon :status="parseInt(name)" /> ({{ value }})
-              </v-btn>
-            </v-list-item-subtitle>
-          </v-list-item-content>
-        </v-list-item>
+        <run-name-column
+          :id="item.runId.toNumber()"
+          :name="item.name"
+          :description="item.description"
+          :version-tag="item.versionTag"
+          :detection-status-count="item.detectionStatusCount"
+          :report-filter-query="getReportFilterQuery(item)"
+          :statistics-filter-query="getStatisticsFilterQuery(item)"
+          :open-check-command-dialog="openCheckCommandDialog"
+        />
       </template>
 
       <template #item.analyzerStatistics="{ item }">
@@ -271,14 +171,15 @@
 <script>
 import _ from "lodash";
 
+import { defaultReportFilterValues } from "@/components/Report/ReportFilter";
+import { defaultStatisticsFilterValues } from "@/components/Statistics";
+
 import {
   AnalyzerStatisticsBtn,
   AnalyzerStatisticsDialog,
   DeleteRunBtn,
-  RunDescription
+  RunNameColumn
 } from "@/components/Run";
-import { DetectionStatusMixin, StrToColorMixin } from "@/mixins";
-import { DetectionStatusIcon } from "@/components/Icons";
 
 import { ccService, handleThriftError } from "@cc-api";
 import {
@@ -288,20 +189,14 @@ import {
   RunSortType
 } from "@cc/report-server-types";
 
-import { defaultReportFilterValues } from "@/components/Report/ReportFilter";
-import { defaultStatisticsFilterValues } from "@/components/Statistics";
-
 export default {
   name: "RunList",
   components: {
     AnalyzerStatisticsBtn,
     AnalyzerStatisticsDialog,
     DeleteRunBtn,
-    DetectionStatusIcon,
-    RunDescription
+    RunNameColumn
   },
-
-  mixins: [ DetectionStatusMixin, StrToColorMixin ],
 
   data() {
     const itemsPerPageOptions = [ 25, 100, 250, 500 ];
@@ -314,8 +209,6 @@ export default {
     const sortDesc = this.$router.currentRoute.query["sort-desc"];
 
     return {
-      defaultReportFilterValues,
-      defaultStatisticsFilterValues,
       runNameSearch: this.$router.currentRoute.query["name"] || null,
       showCheckCommandDialog: false,
       checkCommand: null,
@@ -495,8 +388,8 @@ export default {
         }));
     },
 
-    openCheckCommandDialog(report) {
-      ccService.getClient().getCheckCommand(null, report.runId,
+    openCheckCommandDialog(runId) {
+      ccService.getClient().getCheckCommand(null, runId,
         handleThriftError(checkCommand => {
           if (!checkCommand) {
             checkCommand = "Unavailable!";
@@ -546,6 +439,21 @@ export default {
       if (!version) return version;
 
       return version.split(" ")[0];
+    },
+
+    getReportFilterQuery(run) {
+      return {
+        run: run.name,
+        ...defaultReportFilterValues
+
+      };
+    },
+
+    getStatisticsFilterQuery(run) {
+      return {
+        run: run.name,
+        ...defaultStatisticsFilterValues
+      };
     }
   }
 };

@@ -46,6 +46,7 @@
             <v-col cols="3">
               <v-text-field
                 v-model="runNameSearch"
+                class="search-run-name"
                 prepend-inner-icon="mdi-magnify"
                 label="Filter by run name..."
                 clearable
@@ -60,6 +61,7 @@
             <v-col cols="3">
               <v-text-field
                 v-model="runTagSearch"
+                class="search-run-tag"
                 prepend-inner-icon="mdi-tag"
                 label="Filter by run tag..."
                 clearable
@@ -74,7 +76,7 @@
             <v-col align="right">
               <v-btn
                 color="primary"
-                class="mr-2"
+                class="diff-run-history-btn mr-2"
                 outlined
                 :disabled="isDiffBtnDisabled"
                 @click="diffSelectedRunTags"
@@ -98,19 +100,14 @@
         </v-toolbar>
       </template>
       <template #item.runName="{ item }">
-        <router-link
-          :to="{ name: 'reports', query: {
-            'run': item.runName,
-            'run-tag': item.versionTag || undefined,
-            'fix-date': item.versionTag ? undefined : item.time
-          }}"
-        >
-          {{ item.runName }}
-        </router-link>
-
-        <run-description
-          v-if="item.description"
-          :value="item.description"
+        <run-name-column
+          :id="item.id.toNumber()"
+          :name="item.runName"
+          :description="item.description"
+          :report-filter-query="getReportFilterQuery(item)"
+          :statistics-filter-query="getStatisticsFilterQuery(item)"
+          :show-run-history="false"
+          :open-check-command-dialog="openCheckCommandDialog"
         />
       </template>
 
@@ -146,12 +143,6 @@
           </v-icon>
           {{ item.user }}
         </v-chip>
-      </template>
-
-      <template #item.checkCommand="{ item }">
-        <v-btn text small color="primary" @click="openCheckCommandDialog(item)">
-          Show
-        </v-btn>
       </template>
 
       <template #item.versionTag="{ item }">
@@ -203,10 +194,13 @@
 import _ from "lodash";
 import { format, max, min, parse } from "date-fns";
 
+import { defaultReportFilterValues } from "@/components/Report/ReportFilter";
+import { defaultStatisticsFilterValues } from "@/components/Statistics";
+
 import {
   AnalyzerStatisticsBtn,
   AnalyzerStatisticsDialog,
-  RunDescription
+  RunNameColumn
 } from "@/components/Run";
 import { StrToColorMixin } from "@/mixins";
 
@@ -218,7 +212,7 @@ export default {
   components: {
     AnalyzerStatisticsBtn,
     AnalyzerStatisticsDialog,
-    RunDescription
+    RunNameColumn
   },
   mixins: [ StrToColorMixin ],
 
@@ -259,7 +253,7 @@ export default {
         {
           text: "Name",
           value: "runName",
-          sortable: true
+          sortable: false
         },
         {
           text: "Analyzer statistics",
@@ -270,17 +264,11 @@ export default {
           text: "Storage date",
           value: "time",
           align: "center",
-          sortable: true
+          sortable: false
         },
         {
           text: "User",
           value: "user",
-          align: "center",
-          sortable: true
-        },
-        {
-          text: "Check command",
-          value: "checkCommand",
           align: "center",
           sortable: false
         },
@@ -293,7 +281,7 @@ export default {
           text: "CodeChecker version",
           value: "codeCheckerVersion",
           align: "center",
-          sortable: true
+          sortable: false
         },
         {
           text: "Diff",
@@ -439,8 +427,8 @@ export default {
       });
     },
 
-    openCheckCommandDialog(history) {
-      ccService.getClient().getCheckCommand(history.id, null,
+    openCheckCommandDialog(runHistoryId) {
+      ccService.getClient().getCheckCommand(runHistoryId, null,
         handleThriftError(checkCommand => {
           if (!checkCommand) {
             checkCommand = "Unavailable!";
@@ -516,6 +504,23 @@ export default {
       if (!version) return version;
 
       return version.split(" ")[0];
+    },
+
+    getReportFilterQuery(history) {
+      return {
+        run: history.runName,
+        "run-tag": history.versionTag || undefined,
+        "fix-date": history.versionTag ? undefined : history.time,
+        ...defaultReportFilterValues
+
+      };
+    },
+
+    getStatisticsFilterQuery(history) {
+      return {
+        run: history.runName,
+        ...defaultStatisticsFilterValues
+      };
     }
   }
 };

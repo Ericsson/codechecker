@@ -45,9 +45,7 @@ const RUNS = [
   {
     name: "suppress",
     output: path.join(REPORTS_DIR, "suppress"),
-    url: `http://${host}:${port}/e2e`,
-    tag: "v1.0.1",
-    description: "Contains source code comments."
+    url: `http://${host}:${port}/e2e`
   }
 ];
 
@@ -94,14 +92,20 @@ function addProduct({ endpoint, name, description }) {
 }
 
 function store({ name, output, tag, description, url }) {
-  const cmd = [
+  let cmd = [
     "CodeChecker", "store",
     "-n", `"${name}"`,
     "--url", `"${url}"`,
-    "--tag", `"${tag}"`,
-    "--description", `"${description}"`,
     output
-  ].join(" ");
+  ];
+
+  if (tag)
+    cmd = [ ...cmd, "--tag", `"${tag}"` ];
+
+  if (description)
+    cmd = [ ...cmd, "--description", `"${description}"` ];
+
+  cmd = cmd.join(" ");
 
   console.log("Store command: ", cmd);
 
