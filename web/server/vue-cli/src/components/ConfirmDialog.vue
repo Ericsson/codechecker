@@ -2,6 +2,7 @@
   <v-dialog
     v-model="dialog"
     persistent
+    :content-class="contentClass"
     :max-width="maxWidth"
     :scrollable="scrollable"
   >
@@ -82,7 +83,8 @@ export default {
     confirmBtnColor: { type: String, default: "primary" },
     maxWidth: { type: String, default: "600px" },
     scrollable: { type: Boolean, default: true },
-    loading: { type: Boolean, default: false }
+    loading: { type: Boolean, default: false },
+    contentClass: { type: String, default: null }
   },
   computed: {
     dialog: {

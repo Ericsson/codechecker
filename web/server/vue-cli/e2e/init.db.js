@@ -36,6 +36,13 @@ const RUNS = [
     description: "This is my simple run."
   },
   {
+    name: "remove",
+    output: path.join(REPORTS_DIR, "simple"),
+    url: `http://${host}:${port}/e2e`,
+    tag: "v0.0.1-deprecated",
+    description: "This can can be removed."
+  },
+  {
     name: "suppress",
     output: path.join(REPORTS_DIR, "suppress"),
     url: `http://${host}:${port}/e2e`,

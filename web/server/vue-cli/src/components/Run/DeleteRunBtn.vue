@@ -1,6 +1,7 @@
 <template>
   <confirm-dialog
     v-model="dialog"
+    content-class="delete-run-dialog"
     max-width="600px"
     cancel-btn-color="primary"
     confirm-btn-label="Remove"
@@ -10,7 +11,7 @@
     <template v-slot:activator="{ on }">
       <v-btn
         color="error"
-        class="mr-2"
+        class="delete-run-btn mr-2"
         outlined
         :disabled="!selected.length"
         v-on="on"

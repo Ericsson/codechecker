@@ -1,6 +1,10 @@
 <template>
   <v-card flat>
-    <v-dialog v-model="showCheckCommandDialog" width="500">
+    <v-dialog
+      v-model="showCheckCommandDialog"
+      content-class="check-command"
+      width="500"
+    >
       <v-card>
         <v-card-title
           class="headline primary white--text"
@@ -67,7 +71,7 @@
 
               <v-btn
                 color="primary"
-                class="mr-2"
+                class="diff-runs-btn mr-2"
                 outlined
                 :disabled="isDiffBtnDisabled"
                 @click="diffSelectedRuns"
@@ -80,6 +84,7 @@
 
               <v-btn
                 icon
+                class="reload-runs-btn"
                 title="Reload runs"
                 color="primary"
                 @click="fetchRuns"
@@ -100,7 +105,7 @@
                   run: item.name,
                   ...defaultReportFilterValues
                 }}"
-                class="mr-2"
+                class="name mr-2"
               >
                 {{ item.name }}
               </router-link>
@@ -137,6 +142,7 @@
             <v-list-item-subtitle>
               <v-btn
                 :to="{ name: 'run-history', query: { run: item.name } }"
+                class="show-history"
                 title="Show history"
                 color="primary"
                 small
@@ -151,6 +157,7 @@
                   run: item.name,
                   ...defaultStatisticsFilterValues
                 }}"
+                class="show-statistics"
                 title="Show statistics"
                 color="green"
                 small
@@ -167,6 +174,7 @@
               />
 
               <v-btn
+                class="show-check-command"
                 title="Show check command"
                 color="orange"
                 small
@@ -190,7 +198,7 @@
                   run: item.name,
                   'detection-status': detectionStatusFromCodeToString(name)
                 }}"
-                class="pa-0"
+                class="detection-status-count pa-0"
                 small
                 text
               >
