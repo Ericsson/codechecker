@@ -133,7 +133,7 @@ class SourceCodeCommentHandler(object):
         for a bug line.
         """
         LOG.debug("Checking for source code comments in the source file '%s'"
-                  "at line %s", source_file, bug_line)
+                  " at line %s", source_file, bug_line)
 
         previous_line_num = bug_line - 1
 
