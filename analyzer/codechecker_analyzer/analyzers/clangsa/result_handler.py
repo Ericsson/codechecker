@@ -9,6 +9,7 @@
 Result handler for Clang Static Analyzer.
 """
 
+import os
 
 from codechecker_common.logger import get_logger
 from codechecker_report_hash.hash import HashType, replace_report_hash
@@ -28,6 +29,7 @@ class ResultHandlerClangSA(ResultHandler):
         Override the context sensitive issue hash in the plist files to
         context insensitive if it is enabled during analysis.
         """
-        if self.report_hash_type in ['context-free', 'context-free-v2']:
+        if self.report_hash_type in ['context-free', 'context-free-v2'] and \
+                os.path.exists(self.analyzer_result_file):
             replace_report_hash(self.analyzer_result_file,
                                 HashType.CONTEXT_FREE)
