@@ -2,7 +2,11 @@
   <v-card flat>
     <!-- TODO: Refactor this component and move things which are common
          with RunList component into separate components. -->
-    <v-dialog v-model="showCheckCommandDialog" width="500">
+    <v-dialog
+      v-model="showCheckCommandDialog"
+      content-class="check-command"
+      width="500"
+    >
       <v-card>
         <v-card-title
           class="headline primary white--text"

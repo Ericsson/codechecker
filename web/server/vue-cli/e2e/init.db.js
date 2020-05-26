@@ -32,8 +32,14 @@ const RUNS = [
     name: "simple",
     output: path.join(REPORTS_DIR, "simple"),
     url: `http://${host}:${port}/e2e`,
-    tag: "v0.0.1",
     description: "This is my simple run."
+  },
+  {
+    name: "simple",
+    output: path.join(REPORTS_DIR, "simple"),
+    url: `http://${host}:${port}/e2e`,
+    tag: "v0.0.2",
+    description: "This is my updated run."
   },
   {
     name: "remove",
