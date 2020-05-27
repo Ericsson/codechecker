@@ -204,6 +204,10 @@ export default {
     return {
       headers: [
         {
+          text: "",
+          value: "data-table-expand"
+        },
+        {
           text: "Report hash",
           value: "bugHash",
           sortable: false
@@ -245,11 +249,7 @@ export default {
           value: "detectionStatus",
           align: "center",
           sortable: true
-        },
-        {
-          text: "",
-          value: "data-table-expand"
-        },
+        }
       ],
       reports: [],
       namespace: namespace,
