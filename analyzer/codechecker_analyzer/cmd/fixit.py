@@ -10,9 +10,11 @@ Defines the CodeChecker action for applying fixits.
 """
 
 import argparse
+import json
 import os
 import re
 import subprocess
+import sys
 import tempfile
 import yaml
 
@@ -76,7 +78,21 @@ def add_arguments_to_parser(parser):
     parser.set_defaults(func=main)
 
 
-def clang_tidy_fixit_filter(content, checker_names, file_paths):
+def get_location_by_offset(filename, offset):
+    """
+    This function returns the line and column number in the given file which
+    is located at the given offset.
+    """
+    with open(filename, encoding='utf-8', errors='ignore') as f:
+        for row, line in enumerate(f, 1):
+            length = len(line)
+            if length < offset:
+                offset -= length
+            else:
+                return row, offset + 1
+
+
+def clang_tidy_fixit_filter(content, checker_names, file_paths, reports):
     """
     This function filters the content of a replacement .yaml file.
     content -- The content of a replacement .yaml file parsed to an object by
@@ -87,6 +103,8 @@ def clang_tidy_fixit_filter(content, checker_names, file_paths):
     file_paths -- A list of file paths to which the fixits will be applied.
                   A file path may possibly contain * joker characters. The
                   full path must match in order to apply it.
+    reports -- A list of CodeChecker reports. This can come from
+               "CodeChecker cmd [diff|results] ..." command in JSON format.
     """
     def make_regex(parts):
         if not parts:
@@ -94,17 +112,28 @@ def clang_tidy_fixit_filter(content, checker_names, file_paths):
         parts = map(lambda part: re.escape(part).replace(r'\*', '.*'), parts)
         return re.compile('|'.join(parts) + '$')
 
+    if reports:
+        def match_reports(diag_msg):
+            row, col = get_location_by_offset(diag_msg['FilePath'],
+                                              int(diag_msg['FileOffset']))
+            return any(row == report['line'] and col == report['column'] and
+                       diag_msg['FilePath'] == report['checkedFile']
+                       for report in reports)
+    else:
+        match_reports = bool
+
     checker_names = make_regex(checker_names)
     file_paths = make_regex(file_paths)
 
     content['Diagnostics'] = list(filter(
         lambda diag: checker_names.match(diag['DiagnosticName']) and
         len(diag['DiagnosticMessage']['Replacements']) != 0 and
-        file_paths.match(diag['DiagnosticMessage']['FilePath']),
+        file_paths.match(diag['DiagnosticMessage']['FilePath']) and
+        match_reports(diag['DiagnosticMessage']),
         content['Diagnostics']))
 
 
-def list_fixits(inputs, checker_names, file_paths):
+def list_fixits(inputs, checker_names, file_paths, reports):
     """
     This function dumps the .yaml files to the standard output like a "dry run"
     with the replacements. See clang_tidy_fixit_filter() for the documentation
@@ -122,11 +151,12 @@ def list_fixits(inputs, checker_names, file_paths):
             with open(os.path.join(fixit_dir, fixit_file),
                       encoding='utf-8', errors='ignore') as f:
                 content = yaml.load(f, Loader=yaml.BaseLoader)
-                clang_tidy_fixit_filter(content, checker_names, file_paths)
+                clang_tidy_fixit_filter(content, checker_names, file_paths,
+                                        reports)
             print(yaml.dump(content))
 
 
-def apply_fixits(inputs, checker_names, file_paths):
+def apply_fixits(inputs, checker_names, file_paths, reports):
     """
     This function applies the replacements from the .yaml files.
     inputs -- A list of report directories which contains the fixit dumps in a
@@ -143,7 +173,8 @@ def apply_fixits(inputs, checker_names, file_paths):
                 with open(os.path.join(fixit_dir, fixit_file),
                           encoding='utf-8', errors='ignore') as f:
                     content = yaml.load(f, Loader=yaml.BaseLoader)
-                    clang_tidy_fixit_filter(content, checker_names, file_paths)
+                    clang_tidy_fixit_filter(content, checker_names, file_paths,
+                                            reports)
 
                 if len(content['Diagnostics']) != 0:
                     with open(os.path.join(out_dir, fixit_file), 'w',
@@ -174,7 +205,13 @@ def main(args):
         LOG.error("clang-apply-replacements tool is not found")
         return
 
+    try:
+        reports = None if sys.stdin.isatty() else json.loads(sys.stdin.read())
+    except json.decoder.JSONDecodeError as ex:
+        LOG.error("JSON format error on standard input: %s", ex)
+        sys.exit(1)
+
     if 'list' in args:
-        list_fixits(args.input, args.checker_name, args.file)
+        list_fixits(args.input, args.checker_name, args.file, reports)
     else:
-        apply_fixits(args.input, args.checker_name, args.file)
+        apply_fixits(args.input, args.checker_name, args.file, reports)
