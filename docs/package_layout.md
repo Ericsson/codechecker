@@ -29,3 +29,9 @@ CodeChecker command to `yes` or `1` to enforce taking the analyzers from the
 `PATH` instead of the given binaries. If this option is set you can also
 configure the plugin directory of the Clang Static Analyzer by using the
 `CC_CLANGSA_PLUGIN_DIR` environment variable.
+
+### Replacer section
+This section is a key-value component. The key is `clang-apply-replacements`
+and the value is the same by default. This is the name of a Clang tool which
+applies textual replacements in the source code directly. `CodeChecker fixit`
+command uses this tool, see its documentation for further details.

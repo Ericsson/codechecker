@@ -29,6 +29,7 @@ Table of Contents
         * [Statistical analysis mode](#statistical)
     * [`parse`](#parse)
         * [Exporting source code suppression to suppress file](#suppress-file)
+    * [`fixit`](#fixit)
     * [`checkers`](#checkers)
     * [`analyzers`](#analyzers)
  * [`Configuring Clang version`](#clang_version)
@@ -1376,6 +1377,47 @@ then the results of the analysis can be printed with
 
 ```sh
 CodeChecker parse ./my_plists
+```
+
+## `fixit` <a name="fixit"></a>
+
+ClangTidy is able to provide suggestions on automatic fixes of reported issues.
+For example there is a ClangTidy checker which suggests using
+`collection.empty()` instead of `collection.size() != 0` expression. These
+simple changes can be applied directy in the source code. `CodeChecker fixit`
+command handles these automatic fixes.
+
+```
+usage: CodeChecker fixit [-h] [-l]
+                         [--checker-name [CHECKER_NAME [CHECKER_NAME...]]]
+                         [--file [FILE [FILE ...]]]
+                         [--verbose {info,debug,debug_analyzer}]
+                         folder [folder ...]
+
+Some analyzers may suggest some automatic bugfixes. Most of the times these are
+style issues which can be fixed easily. This command handles the listing and
+application of these automatic fixes.
+
+positional arguments:
+  folder                The analysis result folder(s) containing analysis
+                        results and fixits which should be applied.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -l, --list            List the available automatic fixes.
+  --checker-name [CHECKER_NAME [CHECKER_NAME ...]]
+                        Filter results by checker names. The checker name can
+                        contain multiple * quantifiers which matches any number
+                        of characters (zero or more). So for example
+                        "*DeadStores" will match "deadcode.DeadStores".
+                        (default: None)
+  --file [FILE_PATH [FILE_PATH ...]]
+                        Filter results by file path. The file path can contain
+                        multiple * quantifiers which matches any number of
+                        characters (zero or more). So if you have /a/x.cpp and
+                        /a/y.cpp then "/a/*.cpp" selects both. (default: None)
+  --verbose {info,debug,debug_analyzer}
+                        Set verbosity level.
 ```
 
 ## `checkers`<a name="checkers"></a>
