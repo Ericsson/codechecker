@@ -7,7 +7,9 @@
       flat
     >
       <v-text-field
+        ref="search"
         v-model="searchTxt"
+        autofocus
         hide-details
         prepend-icon="mdi-magnify"
         single-line
@@ -136,6 +138,8 @@
 </template>
 
 <script>
+import _ from "lodash";
+
 export default {
   name: "SelectOptionItems",
   props: {
@@ -190,9 +194,10 @@ export default {
   },
 
   methods: {
-    filter(value) {
-      this.search.filterItems(value);
-    }
+    filter: _.debounce(async function (value) {
+      const items = await this.search.filterItems(value);
+      this.$emit("update:items", items);
+    }, 500)
   }
 };
 </script>

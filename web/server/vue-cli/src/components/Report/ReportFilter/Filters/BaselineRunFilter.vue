@@ -1,7 +1,7 @@
 <template>
   <select-option
     title="Run Filter"
-    :items="items"
+    :bus="bus"
     :fetch-items="fetchItems"
     :selected-items="selectedItems"
     :search="search"
@@ -91,7 +91,6 @@ export default {
 
     fetchItems(opt={}) {
       this.loading = true;
-      this.items = [];
 
       const runIds = null;
       const limit = opt.limit || this.defaultLimit;
@@ -100,18 +99,20 @@ export default {
       const reportFilter = new ReportFilter(this.reportFilter);
       reportFilter["runName"] = opt.query;
 
-      ccService.getClient().getRunReportCounts(runIds, reportFilter, limit,
-        offset, handleThriftError(res => {
-          this.items = res.map(run => {
-            return {
-              id: run.name,
-              runIds: [ run.runId.toNumber() ],
-              title: run.name,
-              count: run.reportCount.toNumber()
-            };
-          });
-          this.loading = false;
-        }));
+      return new Promise(resolve => {
+        ccService.getClient().getRunReportCounts(runIds, reportFilter, limit,
+          offset, handleThriftError(res => {
+            resolve(res.map(run => {
+              return {
+                id: run.name,
+                runIds: [ run.runId.toNumber() ],
+                title: run.name,
+                count: run.reportCount.toNumber()
+              };
+            }));
+            this.loading = false;
+          }));
+      });
     },
 
     getRunIdsByRunName(runName) {

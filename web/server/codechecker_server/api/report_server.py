@@ -2124,7 +2124,7 @@ class ThriftRequestHandler(object):
             if run_ids:
                 tag_q = tag_q.filter(RunHistory.run_id.in_(run_ids))
 
-            if report_filter and report_filter.runTag:
+            if report_filter and report_filter.runTag is not None:
                 tag_q = tag_q.filter(RunHistory.id.in_(report_filter.runTag))
 
             tag_q = tag_q.subquery()

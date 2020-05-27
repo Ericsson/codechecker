@@ -1,3 +1,4 @@
+import Vue from "vue";
 import BaseFilterMixin from "./BaseFilter.mixin";
 
 export default {
@@ -8,28 +9,13 @@ export default {
     return {
       id: -1,
       selectedItems: [],
-      items: [],
+      bus: new Vue(),
       loading: false,
       defaultValues: null
     };
   },
 
-  watch: {
-    items() {
-      this.updateSelectedItems();
-    }
-  },
-
   methods: {
-    update() {
-      if (!this.selectedItems.length) return;
-
-      this.fetchItems({
-        limit: this.selectedItems.length,
-        query: this.selectedItems.map(item => item.id)
-      });
-    },
-
     setSelectedItems(selectedItems, updateUrl=true) {
       this.selectedItems = selectedItems;
       this.updateReportFilter();
@@ -65,48 +51,57 @@ export default {
           state = this.defaultValues;
         }
 
-        if (state.length) {
-          const selectedItems = state.map(s => {
-            const id = this.decodeValue(s);
-            return {
-              id: id,
-              title: this.titleFormatter(id),
-              count: "N/A"
-            };
-          });
-          this.setSelectedItems(selectedItems, false);
-        }
+        if (!state.length) return resolve();
+
+        const selectedItems = state.map(s => {
+          const id = this.decodeValue(s);
+          return {
+            id: id,
+            title: this.titleFormatter(id),
+            count: "N/A"
+          };
+        });
+        this.setSelectedItems(selectedItems, false);
 
         resolve();
       });
     },
 
-    afterInit() {
+    async afterInit() {
       this.registerWatchers();
-
-      if (this.selectedItems.length) {
-        this.fetchItems({
-          limit: this.selectedItems.length,
-          query: this.selectedItems.map(item => item.id)
-        });
-      }
+      this.update();
     },
 
-    updateSelectedItems() {
+    async update() {
+      this.bus.$emit("update");
+
+      if (!this.selectedItems.length) return;
+
+      const items = await this.fetchItems({
+        limit: this.selectedItems.length,
+        query: this.selectedItems.map(item => item.id)
+      });
+
       this.selectedItems.forEach(selectedItem => {
-        const item = this.items.find(i => i.id === selectedItem.id);
+        const item = items.find(i => i.id === selectedItem.id);
         selectedItem.count = item ? item.count : null;
       });
     },
 
     filterItems(value) {
-      this.fetchItems({
-        query: value ? `${value}*` : null
-      });
+      return this.fetchItems({ query: value ? [ `${value}*` ] : null });
     },
 
     clear(updateUrl) {
       this.setSelectedItems([], updateUrl);
+    },
+
+    async onRunIdsChange() {
+      this.update();
+    },
+
+    async onReportFilterChange() {
+      this.update();
     }
   }
 };

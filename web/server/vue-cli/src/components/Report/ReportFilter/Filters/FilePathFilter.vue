@@ -1,7 +1,7 @@
 <template>
   <select-option
     title="File path"
-    :items="items"
+    :bus="bus"
     :fetch-items="fetchItems"
     :selected-items="selectedItems"
     :search="search"
@@ -65,7 +65,6 @@ export default {
 
     fetchItems(opt={}) {
       this.loading = true;
-      this.items = [];
 
       const reportFilter = new ReportFilter(this.reportFilter);
       reportFilter.filepath = opt.query;
@@ -73,22 +72,24 @@ export default {
       const limit = opt.limit || this.defaultLimit;
       const offset = null;
 
-      ccService.getClient().getFileCounts(this.runIds, reportFilter,
-        this.cmpData, limit, offset, handleThriftError(res => {
-        // Order the results alphabetically.
-          this.items = Object.keys(res).sort((a, b) => {
-            if (a < b) return -1;
-            if (a > b) return 1;
-            return 0;
-          }).map(file => {
-            return {
-              id : file,
-              title: file,
-              count : res[file]
-            };
-          });
-          this.loading = false;
-        }));
+      return new Promise(resolve => {
+        ccService.getClient().getFileCounts(this.runIds, reportFilter,
+          this.cmpData, limit, offset, handleThriftError(res => {
+          // Order the results alphabetically.
+            resolve(Object.keys(res).sort((a, b) => {
+              if (a < b) return -1;
+              if (a > b) return 1;
+              return 0;
+            }).map(file => {
+              return {
+                id : file,
+                title: file,
+                count : res[file]
+              };
+            }));
+            this.loading = false;
+          }));
+      });
     }
   }
 };

@@ -1,7 +1,7 @@
 <template>
   <select-option
     title="Tag Filter"
-    :items="items"
+    :bus="bus"
     :fetch-items="fetchItems"
     :selected-items="selectedItems"
     :search="search"
@@ -47,18 +47,12 @@ export default {
 
   methods: {
     getSelectedItems(tagWithRunNames) {
-      return tagWithRunNames.map(s => {
-        return new Promise(resolve => {
-          this.getTagIds(s).then(tagIds => {
-            resolve({
-              id: s,
-              tagIds: tagIds,
-              title: s,
-              count: "N/A"
-            });
-          });
-        });
-      });
+      return tagWithRunNames.map(async s => ({
+        id: s,
+        tagIds: await this.getTagIds(s),
+        title: s,
+        count: "N/A"
+      }));
     },
 
     initByUrl() {
@@ -92,53 +86,55 @@ export default {
       this.update();
     },
 
-    fetchItem() {
+    async fetchItems(opt={}) {
       this.loading = true;
-      this.items = [];
 
       const reportFilter = new ReportFilter(this.reportFilter);
 
-      reportFilter["runTag"] = this.selectedItems.length
-        ? this.selectedItems.map(item => item.tagIds) : null;
+      reportFilter.runTag = opt.query
+        ? (await Promise.all(opt.query?.map(s => this.getTagIds(s)))).flat()
+        : null;
 
-      ccService.getClient().getRunHistoryTagCounts(this.runIds, reportFilter,
-        this.cmpData, handleThriftError(res => {
-          this.items = res.map(tag => {
-            const title = tag.runName + ":" + tag.name;
-            return {
-              id: title,
-              tagIds: [ tag.id.toNumber() ],
-              title: title,
-              count: tag.count.toNumber()
-            };
-          });
-          this.loading = false;
-        }));
+      return new Promise(resolve => {
+        ccService.getClient().getRunHistoryTagCounts(this.runIds, reportFilter,
+          this.cmpData, handleThriftError(res => {
+            resolve(res.map(tag => {
+              const title = tag.runName + ":" + tag.name;
+              return {
+                id: title,
+                tagIds: [ tag.id.toNumber() ],
+                title: title,
+                count: tag.count.toNumber()
+              };
+            }));
+            this.loading = false;
+          }));
+      });
     },
 
-    getTagIds(tagWithRunName) {
+    async getTagIds(runWithTagName) {
+      const index = runWithTagName.indexOf(":");
+
+      let runName, tagName;
+      if (index !== -1) {
+        runName = runWithTagName.substring(0, index);
+        tagName = runWithTagName.substring(index + 1);
+      } else {
+        tagName = runWithTagName;
+      }
+
+      const runIds = runName ? await this.getRunIds(runName) : null;
+      const limit = null;
+      const offset = 0;
+      const runHistoryFilter = new RunHistoryFilter({
+        tagNames: [ tagName ]
+      });
+
       return new Promise(resolve => {
-        const index = tagWithRunName.indexOf(":");
-        if (index === -1) {
-          resolve();
-          return;
-        }
-
-        const runName = tagWithRunName.substring(0, index);
-        const tagName = tagWithRunName.substring(index + 1);
-
-        this.getRunIds(runName).then(runIds => {
-          const limit = null;
-          const offset = 0;
-          const runHistoryFilter = new RunHistoryFilter({
-            tagNames: [ tagName ]
-          });
-
-          ccService.getClient().getRunHistory(runIds, limit, offset,
-            runHistoryFilter, handleThriftError(res => {
-              resolve(res.map(history => history.id.toNumber()));
-            }));
-        });
+        ccService.getClient().getRunHistory(runIds, limit, offset,
+          runHistoryFilter, handleThriftError(res => {
+            resolve(res.map(history => history.id.toNumber()));
+          }));
       });
     },
 

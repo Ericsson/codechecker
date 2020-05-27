@@ -108,12 +108,8 @@ export default {
 
     update() {},
 
-    onRunIdsChange(/* oldVal, newVal */) {
-      this.fetchItems();
-    },
+    onRunIdsChange(/* oldVal, newVal */) {},
 
-    onReportFilterChange(/* key, oldValue, newValue */) {
-      this.fetchItems();
-    },
+    onReportFilterChange(/* key, oldValue, newValue */) {},
   }
 };

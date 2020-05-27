@@ -4,7 +4,7 @@
   >
     <select-option
       title="Source component"
-      :items="items"
+      :bus="bus"
       :fetch-items="fetchItems"
       :selected-items="selectedItems"
       :search="search"
@@ -75,17 +75,19 @@ export default {
     fetchItems(opt={}) {
       this.loading = true;
 
-      const filter = opt.query;
-      ccService.getClient().getSourceComponents(filter,
-        handleThriftError(res => {
-          this.items = res.map(component => {
-            return {
-              id : component.name,
-              title: component.name
-            };
-          });
-          this.loading = false;
-        }));
+      return new Promise(resolve => {
+        const filter = opt.query;
+        ccService.getClient().getSourceComponents(filter,
+          handleThriftError(res => {
+            resolve(res.map(component => {
+              return {
+                id : component.name,
+                title: component.name
+              };
+            }));
+            this.loading = false;
+          }));
+      });
     }
   }
 };

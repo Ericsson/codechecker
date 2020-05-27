@@ -1,7 +1,7 @@
 <template>
   <select-option
     title="Review Status"
-    :items="items"
+    :bus="bus"
     :fetch-items="fetchItems"
     :loading="loading"
     :selected-items="selectedItems"
@@ -60,23 +60,24 @@ export default {
 
     fetchItems() {
       this.loading = true;
-      this.items = [];
 
       const reportFilter = new ReportFilter(this.reportFilter);
       reportFilter.reviewStatus = null;
 
-      ccService.getClient().getReviewStatusCounts(this.runIds, reportFilter,
-        this.cmpData, handleThriftError(res => {
-          this.items = Object.keys(ReviewStatus).map(status => {
-            const id = ReviewStatus[status];
-            return {
-              id: id,
-              title: this.encodeValue(id),
-              count: res[id] !== undefined ? res[id].toNumber() : 0
-            };
-          });
-          this.loading = false;
-        }));
+      return new Promise(resolve => {
+        ccService.getClient().getReviewStatusCounts(this.runIds, reportFilter,
+          this.cmpData, handleThriftError(res => {
+            resolve(Object.keys(ReviewStatus).map(status => {
+              const id = ReviewStatus[status];
+              return {
+                id: id,
+                title: this.encodeValue(id),
+                count: res[id] !== undefined ? res[id].toNumber() : 0
+              };
+            }));
+            this.loading = false;
+          }));
+      });
     }
   }
 };

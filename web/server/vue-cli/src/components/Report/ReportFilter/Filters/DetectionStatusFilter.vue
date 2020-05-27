@@ -1,7 +1,7 @@
 <template>
   <select-option
     title="Detection status"
-    :items="items"
+    :bus="bus"
     :fetch-items="fetchItems"
     :loading="loading"
     :selected-items="selectedItems"
@@ -72,23 +72,24 @@ export default {
 
     fetchItems() {
       this.loading = true;
-      this.items = [];
 
       const reportFilter = new ReportFilter(this.reportFilter);
       reportFilter.detectionStatus = null;
 
-      ccService.getClient().getDetectionStatusCounts(this.runIds, reportFilter,
-        this.cmpData, handleThriftError(res => {
-          this.items = Object.keys(DetectionStatus).map(status => {
-            const id = DetectionStatus[status];
-            return {
-              id: id,
-              title: this.encodeValue(id),
-              count: res[id] !== undefined ? res[id].toNumber() : 0
-            };
-          });
-          this.loading = false;
-        }));
+      return new Promise(resolve => {
+        ccService.getClient().getDetectionStatusCounts(this.runIds,
+          reportFilter, this.cmpData, handleThriftError(res => {
+            resolve(Object.keys(DetectionStatus).map(status => {
+              const id = DetectionStatus[status];
+              return {
+                id: id,
+                title: this.encodeValue(id),
+                count: res[id] !== undefined ? res[id].toNumber() : 0
+              };
+            }));
+            this.loading = false;
+          }));
+      });
     }
   }
 };

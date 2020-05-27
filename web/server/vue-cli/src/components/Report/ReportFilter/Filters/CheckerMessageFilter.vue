@@ -1,7 +1,7 @@
 <template>
   <select-option
     title="Checker message"
-    :items="items"
+    :bus="bus"
     :fetch-items="fetchItems"
     :selected-items="selectedItems"
     :search="search"
@@ -56,7 +56,6 @@ export default {
 
     fetchItems(opt={}) {
       this.loading = true;
-      this.items = [];
 
       const reportFilter = new ReportFilter(this.reportFilter);
       reportFilter.checkerMsg = opt.query;
@@ -64,17 +63,19 @@ export default {
       const limit = opt.limit || this.defaultLimit;
       const offset = null;
 
-      ccService.getClient().getCheckerMsgCounts(this.runIds, reportFilter,
-        this.cmpData, limit, offset, handleThriftError(res => {
-          this.items = Object.keys(res).map(msg => {
-            return {
-              id : msg,
-              title: msg,
-              count: res[msg].toNumber()
-            };
-          });
-          this.loading = false;
-        }));
+      return new Promise(resolve => {
+        ccService.getClient().getCheckerMsgCounts(this.runIds, reportFilter,
+          this.cmpData, limit, offset, handleThriftError(res => {
+            resolve(Object.keys(res).map(msg => {
+              return {
+                id : msg,
+                title: msg,
+                count: res[msg].toNumber()
+              };
+            }));
+            this.loading = false;
+          }));
+      });
     }
   }
 };

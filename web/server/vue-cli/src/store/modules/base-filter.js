@@ -30,14 +30,10 @@ const mutations = {
     } else if (!state.cmpData) {
       state.cmpData = new CompareData({
         diffType: DiffType.NEW,
-        params
-      });
-    } else {
-      Object.assign({
-        diffType: DiffType.NEW,
-        ...state.cmpData,
         ...params
       });
+    } else {
+      Object.assign(state.cmpData, params);
     }
   }
 };

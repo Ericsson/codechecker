@@ -1,7 +1,7 @@
 <template>
   <select-option
     title="Checker name"
-    :items="items"
+    :bus="bus"
     :fetch-items="fetchItems"
     :selected-items="selectedItems"
     :search="search"
@@ -56,7 +56,6 @@ export default {
 
     fetchItems(opt={}) {
       this.loading = true;
-      this.items = [];
 
       const reportFilter = new ReportFilter(this.reportFilter);
       reportFilter.checkerName = opt.query;
@@ -64,17 +63,19 @@ export default {
       const limit = opt.limit || this.defaultLimit;
       const offset = 0;
 
-      ccService.getClient().getCheckerCounts(this.runIds, reportFilter,
-        this.cmpData, limit, offset, handleThriftError(res => {
-          this.items = res.map(checker => {
-            return {
-              id: checker.name,
-              title: checker.name,
-              count: checker.count.toNumber()
-            };
-          });
-          this.loading = false;
-        }));
+      return new Promise(resolve => {
+        ccService.getClient().getCheckerCounts(this.runIds, reportFilter,
+          this.cmpData, limit, offset, handleThriftError(res => {
+            resolve(res.map(checker => {
+              return {
+                id: checker.name,
+                title: checker.name,
+                count: checker.count.toNumber()
+              };
+            }));
+            this.loading = false;
+          }));
+      });
     }
   }
 };

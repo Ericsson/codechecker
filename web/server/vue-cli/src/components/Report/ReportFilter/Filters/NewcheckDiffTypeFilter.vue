@@ -1,7 +1,7 @@
 <template>
   <select-option
     title="Diff type"
-    :items="items"
+    :bus="bus"
     :fetch-items="fetchItems"
     :selected-items="selectedItems"
     :loading="loading"
@@ -65,20 +65,17 @@ export default {
     },
 
     updateReportFilter() {
-      // TODO
-    },
-
-    onReportFilterChange(/* key */) {
-      this.update();
+      this.setCmpData({
+        diffType: this.selectedItems[0].id
+      });
     },
 
     fetchItems() {
       this.loading = true;
 
       if (!this.cmpData) {
-        this.items = [];
         this.loading = false;
-        return;
+        return Promise.resolve([]);
       }
 
       const query = Object.keys(DiffType).map(key => {
@@ -93,16 +90,18 @@ export default {
         });
       });
 
-      Promise.all(query).then(res => {
-        this.items = Object.keys(DiffType).map((key, index) => {
-          const id = DiffType[key];
-          return {
-            id: id,
-            title: this.titleFormatter(id),
-            count: res[index][key].toNumber()
-          };
+      return new Promise(resolve => {
+        Promise.all(query).then(res => {
+          resolve(Object.keys(DiffType).map((key, index) => {
+            const id = DiffType[key];
+            return {
+              id: id,
+              title: this.titleFormatter(id),
+              count: res[index][key].toNumber()
+            };
+          }));
+          this.loading = false;
         });
-        this.loading = false;
       });
     },
 

@@ -14,6 +14,7 @@
     <template v-slot:append-toolbar-items>
       <v-menu
         v-model="menu"
+        class="settings-menu"
         :close-on-content-click="false"
         :nudge-width="300"
         :max-width="600"
@@ -29,6 +30,7 @@
           <v-btn
             icon
             small
+            class="settings-btn"
             v-on="on"
           >
             <v-icon>mdi-settings</v-icon>
@@ -36,7 +38,7 @@
         </template>
 
         <items
-          :items="items"
+          :items.sync="items"
           :selected-items="prevSelectedItems"
           :search="search"
           :multiple="multiple"
@@ -86,7 +88,7 @@ export default {
   },
   props: {
     title: { type: String, required: true },
-    items: { type: Array, required: true },
+    bus: { type: Object, required: true },
     fetchItems: { type: Function, required: true },
     selectedItems: { type: Array, default: () => [] },
     multiple: { type: Boolean, default: true },
@@ -95,16 +97,24 @@ export default {
   },
   data() {
     return {
+      items: [],
+      reloadItems: true,
       menu: false,
-      prevSelectedItems: null,
+      prevSelectedItems: [],
       cancelled: false
     };
   },
 
   watch: {
-    menu(show) {
+    async menu(show) {
       if (show) {
         this.cancelled = false;
+
+        if (this.reloadItems) {
+          this.items = await this.fetchItems();
+          this.reloadItems = false;
+        }
+
         this.prevSelectedItems =
           JSON.parse(JSON.stringify(this.selectedItems));
       } else if (!this.cancelled) {
@@ -112,24 +122,33 @@ export default {
       }
     }
   },
-  created() {
-    const unwatch = this.$watch("menu", () => {
-      if (!this.items.length) {
-        this.fetchItems();
-      }
 
-      unwatch();
-    });
+  mounted() {
+    this.bus.$on("update", () => this.reloadItems = true);
   },
 
   methods: {
     apply() {
-      // TODO: check if the selected items are changed.
-      const changed = true;
-
-      if (!changed) return;
-
+      if (!this.filterIsChanged()) return;
       this.updateSelectedItems(this.prevSelectedItems);
+    },
+
+    /**
+     * Returns true if the filter is changed, else false.
+     */
+    filterIsChanged() {
+      if (this.selectedItems.length !== this.prevSelectedItems.length) {
+        return true;
+      }
+
+      const curr = this.selectedItems.map(item => item.title).sort();
+      const prev = this.prevSelectedItems.map(item => item.title).sort();
+
+      for (let i = 0; i < curr.length; ++i) {
+        if (curr[i] !== prev[i]) return true;
+      }
+
+      return false;
     },
 
     cancel() {

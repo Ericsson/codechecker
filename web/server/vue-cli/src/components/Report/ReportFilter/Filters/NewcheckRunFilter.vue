@@ -23,11 +23,7 @@ export default {
       } else {
         this.setCmpData(null);
       }
-    },
-
-    onReportFilterChange() {
-      this.fetchItems();
-    },
+    }
   }
 };
 </script>

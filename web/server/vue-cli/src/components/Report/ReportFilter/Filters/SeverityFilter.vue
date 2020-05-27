@@ -1,7 +1,7 @@
 <template>
   <select-option
     title="Severity"
-    :items="items"
+    :bus="bus"
     :fetch-items="fetchItems"
     :loading="loading"
     :selected-items="selectedItems"
@@ -60,26 +60,27 @@ export default {
 
     fetchItems() {
       this.loading = true;
-      this.items = [];
 
       const reportFilter = new ReportFilter(this.reportFilter);
       reportFilter.severity = null;
 
-      ccService.getClient().getSeverityCounts(this.runIds, reportFilter,
-        this.cmpData, handleThriftError(res => {
-          this.items = Object.keys(Severity).map(status => {
-            const severityId = Severity[status];
-            const count =
-              res[severityId] !== undefined ? res[severityId].toNumber() : 0;
+      return new Promise(resolve => {
+        ccService.getClient().getSeverityCounts(this.runIds, reportFilter,
+          this.cmpData, handleThriftError(res => {
+            resolve(Object.keys(Severity).map(status => {
+              const severityId = Severity[status];
+              const count =
+                res[severityId] !== undefined ? res[severityId].toNumber() : 0;
 
-            return {
-              id: severityId,
-              title: this.encodeValue(severityId),
-              count: count
-            };
-          });
-          this.loading = false;
-        }));
+              return {
+                id: severityId,
+                title: this.encodeValue(severityId),
+                count: count
+              };
+            }));
+            this.loading = false;
+          }));
+      });
     }
   }
 };
