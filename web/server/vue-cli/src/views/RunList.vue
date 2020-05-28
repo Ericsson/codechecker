@@ -70,11 +70,11 @@
               />
 
               <v-btn
+                outlined
                 color="primary"
                 class="diff-runs-btn mr-2"
-                outlined
+                :to="diffTargetRoute"
                 :disabled="isDiffBtnDisabled"
-                @click="diffSelectedRuns"
               >
                 <v-icon left>
                   mdi-select-compare
@@ -284,10 +284,22 @@ export default {
         };
       });
     },
+
     isDiffBtnDisabled() {
       return !this.selectedBaselineRuns.length ||
              !this.selectedNewcheckRuns.length;
-    }
+    },
+
+    diffTargetRoute() {
+      return {
+        name: "reports",
+        query: {
+          ...this.$router.currentRoute.query,
+          run: this.selectedBaselineRuns,
+          newcheck: this.selectedNewcheckRuns
+        }
+      };
+    },
   },
 
   watch: {
@@ -407,16 +419,6 @@ export default {
     closeCheckCommandDialog() {
       this.showCheckCommandDialog = false;
       this.checkCommand = null;
-    },
-
-    diffSelectedRuns() {
-      this.$router.push({
-        name: "reports",
-        query: {
-          ...this.$router.currentRoute.query,
-          run: this.selectedBaselineRuns,
-          newcheck: this.selectedNewcheckRuns
-        } });
     },
 
     prettifyDuration(seconds) {

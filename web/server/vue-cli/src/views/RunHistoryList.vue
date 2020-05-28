@@ -82,8 +82,8 @@
                 color="primary"
                 class="diff-run-history-btn mr-2"
                 outlined
+                :to="diffTargetRoute"
                 :disabled="isDiffBtnDisabled"
-                @click="diffSelectedRunTags"
               >
                 <v-icon left>
                   mdi-select-compare
@@ -309,10 +309,51 @@ export default {
         };
       });
     },
+
     isDiffBtnDisabled() {
       return !this.selectedBaselineTags.length ||
              !this.selectedNewcheckTags.length;
-    }
+    },
+
+    diffTargetRoute() {
+      const urlState = {};
+
+      const { runs: bRuns, tags: bTags, times: firstDetectionDates } =
+        this.getSelectedTagData(this.selectedBaselineTags);
+
+      urlState["run"] = bRuns;
+      urlState["run-tag"] = bTags.length ? bTags : undefined;
+      if (firstDetectionDates.length) {
+        const minDate = min(firstDetectionDates.map(d =>
+          parse(d, "yyyy-MM-dd HH:mm:ss.SSSSSS", new Date())));
+        urlState["first-detection-date"] =
+          format(minDate, "yyyy-MM-dd HH:mm:ss");
+      }
+
+      const { runs: nRuns, tags: nTags, times: fixDates } =
+        this.getSelectedTagData(this.selectedNewcheckTags);
+
+      urlState["newcheck"] = nRuns;
+      urlState["run-tag-newcheck"] = nTags.length ? nTags : undefined;
+      if (fixDates.length) {
+        const maxDate = max(fixDates.map(d =>
+          parse(d, "yyyy-MM-dd HH:mm:ss.SSSSSS", new Date())));
+
+        // We need to round the date upward because in the url we will save
+        // the dates without milliseconds.
+        maxDate.setMilliseconds(1000);
+
+        urlState["fix-date"] = format(maxDate, "yyyy-MM-dd HH:mm:ss");
+      }
+
+      return {
+        name: "reports",
+        query: {
+          ...this.$router.currentRoute.query,
+          ...urlState
+        }
+      };
+    },
   },
 
   watch: {
@@ -448,54 +489,20 @@ export default {
     },
 
     getSelectedTagData(selected) {
+      const runs = [];
       const tags = [];
       const times = [];
 
       selected.forEach(t => {
-        if (t.versionTag)
-          tags.push(t.versionTag);
-
+        runs.push(t.runName);
         times.push(t.time);
-      });
 
-      return { tags, times };
-    },
-
-    diffSelectedRunTags() {
-      const urlState = {
-        "run": undefined,
-        "newcheck": undefined
-      };
-
-      const { tags: baselineTags, times: firstDetectionDates } =
-        this.getSelectedTagData(this.selectedBaselineTags);
-
-      urlState["run-tag"] = baselineTags.length ? baselineTags : undefined;
-      if (firstDetectionDates.length) {
-        const minDate = min(firstDetectionDates.map(d =>
-          parse(d, "yyyy-MM-dd HH:mm:ss.SSSSSS", new Date())));
-        urlState["first-detection-date"] =
-          format(minDate, "yyyy-MM-dd HH:mm:ss");
-      }
-
-      const { tags: newcheckTags, times: fixDates } =
-        this.getSelectedTagData(this.selectedNewcheckTags);
-
-      urlState["run-tag-newcheck"] =
-        newcheckTags.length ? newcheckTags : undefined;
-      if (fixDates.length) {
-        const maxDate = max(fixDates.map(d =>
-          parse(d, "yyyy-MM-dd HH:mm:ss.SSSSSS", new Date())));
-        urlState["fix-date"] = format(maxDate, "yyyy-MM-dd HH:mm:ss");
-      }
-
-      this.$router.push({
-        name: "reports",
-        query: {
-          ...this.$router.currentRoute.query,
-          ...urlState
+        if (t.versionTag) {
+          tags.push(t.versionTag);
         }
       });
+
+      return { runs, tags, times };
     },
 
     openAnalyzerStatisticsDialog(runHistory) {
