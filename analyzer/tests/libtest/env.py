@@ -33,6 +33,10 @@ def codechecker_cmd():
     return os.path.join(PKG_ROOT, 'bin', 'CodeChecker')
 
 
+def tu_collector_cmd():
+    return os.path.join(PKG_ROOT, 'bin', 'tu_collector')
+
+
 def get_workspace(test_id='test'):
     """ return a temporary workspace for the tests """
     workspace_root = os.environ.get("CC_TEST_WORKSPACE_ROOT")

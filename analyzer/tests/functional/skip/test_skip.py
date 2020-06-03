@@ -34,10 +34,11 @@ class TestSkip(unittest.TestCase):
 
         # Get the CodeChecker cmd if needed for the tests.
         self._codechecker_cmd = env.codechecker_cmd()
+        self._tu_collector_cmd = env.tu_collector_cmd()
         self.report_dir = os.path.join(self.test_workspace, "reports")
         self.test_dir = os.path.join(os.path.dirname(__file__), 'test_files')
 
-    def test_skip(self):
+    def __test_skip(self):
         """Analyze a project with a skip file."""
         test_dir = os.path.join(self.test_dir, "simple")
         build_json = os.path.join(self.test_workspace, "build.json")
@@ -120,10 +121,34 @@ class TestSkip(unittest.TestCase):
                                       encoding="utf-8", errors="ignore")
         print(out)
 
-        # Create and run analyze command.
+        # Use tu_collector to get source file dependencies for a header file
+        # and create a skip file from it.
+        deps_cmd = [self._tu_collector_cmd, "-l", build_json,
+                    "--dependents", "--filter", "*/lib.h"]
+
+        try:
+            output = subprocess.check_output(
+                deps_cmd,
+                cwd=test_dir,
+                encoding="utf-8",
+                errors="ignore")
+
+            source_files = output.splitlines()
+        except subprocess.CalledProcessError as cerr:
+            print("Failed to run: " + ' '.join(cerr.cmd))
+            print(cerr.output)
+
+        skip_file = os.path.join(self.test_workspace, "skipfile")
+        with open(skip_file, 'w', encoding="utf-8", errors="ignore") as skip_f:
+            # Include all source file dependencies.
+            skip_f.write("\n".join(["+" + s for s in source_files]))
+
+            # Skip all other files.
+            skip_f.write("-*")
+
         analyze_cmd = [self._codechecker_cmd, "analyze", "-c", build_json,
                        "--analyzers", "clangsa",
-                       "--ignore", "skipfile",
+                       "--ignore", skip_file,
                        "-o", self.report_dir]
 
         process = subprocess.Popen(

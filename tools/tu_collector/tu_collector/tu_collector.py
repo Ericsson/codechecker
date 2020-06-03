@@ -15,6 +15,7 @@ sources.
 
 
 import argparse
+import collections
 import fnmatch
 import json
 import logging
@@ -346,14 +347,43 @@ def zip_tu_files(zip_file, compilation_database, write_mode='w'):
                          json.dumps(compilation_database, indent=2))
 
 
+def get_dependent_sources(compilation_db, header_path=None):
+    """ Get dependencies for each files in each translation unit. """
+    dependencies = collections.defaultdict(set)
+    for build_action in compilation_db:
+        files, _ = get_dependent_headers(
+            build_action['command'],
+            build_action['directory'])
+
+        source_file = os.path.join(build_action['directory'],
+                                   build_action['file'])
+        for f in files:
+            dependencies[f].add(source_file)
+
+    pattern = None
+    if header_path:
+        norm_header_path = os.path.normpath(header_path.strip())
+        pattern = re.compile(fnmatch.translate(norm_header_path))
+
+    deps = set()
+    for header, source_files in dependencies.items():
+        if not pattern or pattern.match(header):
+            deps.update(source_files)
+
+    return deps
+
+
 def main():
     # --- Handling of command line arguments --- #
 
     parser = argparse.ArgumentParser(
-        description="This script collects all the source files constituting "
-                    "specific translation units. The files are written to a "
-                    "ZIP file which will contain the sources preserving the "
-                    "original directory hierarchy.")
+        description="""
+This script can be used for multiple purposes:
+- It can be used to collect all the source files constituting specific
+translation units. The files are written to a ZIP file which will contain the
+sources preserving the original directory hierarchy.
+- It can be used to get source files which depend on a given header file.""",
+        formatter_class=argparse.RawDescriptionHelpFormatter)
 
     log_args = parser.add_argument_group(
         "log arguments",
@@ -371,13 +401,30 @@ used to generate a log file on the fly.""")
                           help="Use an already existing JSON compilation "
                                "command database file specified at this path.")
 
-    parser.add_argument('-z', '--zip', dest='zip', type=str, required=True,
-                        help="Output ZIP file.")
     parser.add_argument('-f', '--filter', dest='filter',
                         type=str, required=False,
-                        help="This flag restricts the collection on the build "
-                             "actions of which the compiled source file "
-                             "matches this path. E.g.: /path/to/*/files")
+                        help="If '--zip' option is given this flag restricts "
+                             "the collection on the build actions of which "
+                             "the compiled source file matches this path. "
+                             "If '--dependents' option is given this flag "
+                             "specify a header file to get source file "
+                             "dependencies for. E.g.: /path/to/*/files")
+
+    output_args = parser.add_argument_group(
+        "output arguments",
+        "Specify the output type.")
+
+    output_args = output_args.add_mutually_exclusive_group(required=True)
+    output_args.add_argument('-z', '--zip', dest='zip', type=str,
+                             help="Output ZIP file.")
+
+    output_args.add_argument('-d', '--dependents', dest='dependents',
+                             action='store_true',
+                             help="Use this flag to return a list of source "
+                                  "files which depend on some header files "
+                                  "specified by the --filter option. The "
+                                  "result will not contain header files, even "
+                                  "if those are dependents as well.")
 
     parser.add_argument('-v', '--verbose',
                         action='store_true',
@@ -400,22 +447,30 @@ used to generate a log file on the fly.""")
     if args.logfile:
         with open(args.logfile, encoding="utf-8", errors="ignore") as f:
             compilation_db = json.load(f)
-
-        if args.filter:
-            compilation_db = [
-                action for action in compilation_db if fnmatch.fnmatch(
-                    action['file'], args.filter)]
     else:
-        if args.filter:
-            LOG.warning('In case of using build command the filter has no '
-                        'effect.')
         compilation_db = [{
             'file': '',
             'command': args.command,
             'directory': os.getcwd()}]
 
-    zip_tu_files(args.zip, compilation_db)
-    LOG.info("Done.")
+    if args.zip:
+        if args.logfile and args.filter:
+            compilation_db = [
+                action for action in compilation_db if fnmatch.fnmatch(
+                    action['file'], args.filter)]
+        else:
+            LOG.warning('In case of using build command the filter has no '
+                        'effect.')
+
+        zip_tu_files(args.zip, compilation_db)
+        LOG.info("Done.")
+    else:
+        deps = get_dependent_sources(compilation_db, args.filter)
+
+        if deps:
+            print("\n".join(deps))
+        else:
+            LOG.info("No source file dependencies.")
 
 
 if __name__ == "__main__":
