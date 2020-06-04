@@ -27,7 +27,7 @@
         />
       </v-list-item>
 
-      <v-list-item class="pl-1">
+      <v-list-item class="unique-filter pl-1">
         <v-list-item-content>
           <unique-filter
             ref="filters"
@@ -37,7 +37,7 @@
         </v-list-item-content>
       </v-list-item>
 
-      <v-list-item class="pl-1">
+      <v-list-item id="baseline-filters" class="pl-1">
         <v-list-item-content class="pa-0">
           <v-expansion-panels
             v-model="activeBaselinePanelId"
@@ -68,6 +68,7 @@
 
       <v-list-item
         v-if="showNewcheck"
+        id="newcheck-filters"
         class="pl-1"
       >
         <v-list-item-content class="pa-0">
@@ -365,7 +366,7 @@ export default {
         this.afterInit();
 
         // Close NEWCHECK expansion panel if no compare data is set.
-        if (!this.cmpData) {
+        if (!this.cmpData?.runIds && !this.cmpData?.runTag) {
           this.activeNewcheckPanelId = -1;
         }
       });

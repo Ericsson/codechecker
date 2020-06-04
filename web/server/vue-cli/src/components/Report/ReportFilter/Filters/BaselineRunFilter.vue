@@ -64,8 +64,8 @@ export default {
         const state = [].concat(this.$route.query[this.id] || []);
         if (state.length) {
           const selectedItems = this.getSelectedItems(state);
-          Promise.all(selectedItems).then(res => {
-            this.setSelectedItems(res, false);
+          Promise.all(selectedItems).then(async res => {
+            await this.setSelectedItems(res, false);
             resolve();
           });
         } else {

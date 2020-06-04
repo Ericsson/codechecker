@@ -16,9 +16,9 @@ export default {
   },
 
   methods: {
-    setSelectedItems(selectedItems, updateUrl=true) {
+    async setSelectedItems(selectedItems, updateUrl=true) {
       this.selectedItems = selectedItems;
-      this.updateReportFilter();
+      await this.updateReportFilter();
 
       if (updateUrl) {
         this.$emit("update:url");
