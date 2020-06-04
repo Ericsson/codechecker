@@ -12,12 +12,10 @@ export default {
   },
 
   methods: {
-    updateReportFilter() {
-      const selectedTagIds =
-        [].concat(...this.selectedItems.map(item => item.tagIds));
-
-      if (selectedTagIds.length) {
-        this.setCmpData({ runTag: selectedTagIds });
+    async updateReportFilter() {
+      const tagIds = await this.getSelectedTagIds();
+      if (tagIds.length) {
+        this.setCmpData({ runTag: tagIds });
       } else {
         this.setCmpData({ runTag: null });
       }

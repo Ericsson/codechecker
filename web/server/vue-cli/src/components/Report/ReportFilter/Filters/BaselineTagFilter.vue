@@ -1,5 +1,6 @@
 <template>
   <select-option
+    :id="id"
     title="Tag Filter"
     :bus="bus"
     :fetch-items="fetchItems"
@@ -40,6 +41,7 @@ export default {
       id: "run-tag",
       search: {
         placeHolder : "Search for run tags...",
+        regexLabel: "Filter by wildcard pattern (e.g.: mytag*, myrun*:mytag*)",
         filterItems: this.filterItems
       }
     };
@@ -70,15 +72,20 @@ export default {
       });
     },
 
-    updateReportFilter() {
-      const selectedTagIds =
-        [].concat(...this.selectedItems
-          .map(item => item.tagIds))
-          .filter(id => id !== undefined);
+    async getSelectedTagIds() {
+      return [].concat(...await Promise.all(
+        this.selectedItems.map(async item => {
+          if (!item.tagIds) {
+            item.tagIds = await this.getTagIds(item.title);
+          }
 
-      this.setReportFilter({
-        runTag: selectedTagIds.length ? selectedTagIds : null
-      });
+          return Promise.resolve(item.tagIds);
+        })));
+    },
+
+    async updateReportFilter() {
+      const tagIds = await this.getSelectedTagIds();
+      this.setReportFilter({ runTag: tagIds.length ? tagIds : null });
     },
 
     onReportFilterChange(key) {
