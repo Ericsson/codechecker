@@ -1,7 +1,9 @@
 # -------------------------------------------------------------------------
-#                     The CodeChecker Infrastructure
-#   This file is distributed under the University of Illinois Open Source
-#   License. See LICENSE.TXT for details.
+#
+#  Part of the CodeChecker project, under the Apache License v2.0 with
+#  LLVM Exceptions. See LICENSE for license information.
+#  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
 # -------------------------------------------------------------------------
 """
 Defines the CodeChecker action for parsing a set of analysis results into a
@@ -179,9 +181,6 @@ class PlistToPlaintextFormatter(object):
                 last_report_event = report.bug_path[-1]
                 source_file = \
                     report.files[last_report_event['location']['file']]
-                trimmed_source_file = \
-                    util.trim_path_prefixes(source_file,
-                                            self._trim_path_prefixes)
 
                 report_line = last_report_event['location']['line']
                 report_hash = \
@@ -198,6 +197,12 @@ class PlistToPlaintextFormatter(object):
 
                 if skip:
                     continue
+
+                if self._trim_path_prefixes:
+                    report.trim_path_prefixes(self._trim_path_prefixes)
+
+                trimmed_source_file = \
+                    report.files[last_report_event['location']['file']]
 
                 file_stats[f_path] += 1
                 severity = self.__severity_map.get(checker_name)
@@ -269,14 +274,11 @@ class PlistToPlaintextFormatter(object):
                     for index, event in enumerate(events):
                         output.write(index_format % (index + 1))
                         source_file = report.files[event['location']['file']]
-                        trimmed_source_file = \
-                            util.trim_path_prefixes(source_file,
-                                                    self._trim_path_prefixes)
                         output.write(
                             self.__format_bug_event(None,
                                                     None,
                                                     event,
-                                                    trimmed_source_file))
+                                                    source_file))
                         output.write('\n')
                 output.write('\n')
 

@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-# -----------------------------------------------------------------------------
-#                     The CodeChecker Infrastructure
-#   This file is distributed under the University of Illinois Open Source
-#   License. See LICENSE.TXT for details.
-# -----------------------------------------------------------------------------
+# -------------------------------------------------------------------------
+#
+#  Part of the CodeChecker project, under the Apache License v2.0 with
+#  LLVM Exceptions. See LICENSE for license information.
+#  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# -------------------------------------------------------------------------
 """
 Generate a new CodeChecker subcommand and the structure needed for it in the
 working directory.
@@ -62,9 +64,11 @@ def main():
         # Write licensing information to init of module
         s = "# --------------------------------------------------------------"\
             "---------------""""
-#                     The CodeChecker Infrastructure
-#   This file is distributed under the University of Illinois Open Source
-#   License. See LICENSE.TXT for details.
+#
+#  Part of the CodeChecker project, under the Apache License v2.0 with
+#  LLVM Exceptions. See LICENSE for license information.
+#  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
 # -------------------------------------------------------------------------"""\
             "----\n"
 

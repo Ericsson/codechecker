@@ -1,8 +1,10 @@
-# -----------------------------------------------------------------------------
-#                     The CodeChecker Infrastructure
-#   This file is distributed under the University of Illinois Open Source
-#   License. See LICENSE.TXT for details.
-# -----------------------------------------------------------------------------
+# -------------------------------------------------------------------------
+#
+#  Part of the CodeChecker project, under the Apache License v2.0 with
+#  LLVM Exceptions. See LICENSE for license information.
+#  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# -------------------------------------------------------------------------
 
 """ Test the option parsing and filtering form the compilation commands. """
 
@@ -275,7 +277,7 @@ class OptionParserTest(unittest.TestCase):
         """
         ignore = ["-Werror", "-fsyntax-only",
                   "-mfloat-gprs=double", "-mfloat-gprs=yes",
-                  "-mabi=spe", "-mabi=eabi"]
+                  "-mabi=spe", "-mabi=eabi", "-fext-numeric-literal"]
         action = {
             'file': 'main.cpp',
             'command': "g++ {} main.cpp".format(' '.join(ignore)),
