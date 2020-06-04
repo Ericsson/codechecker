@@ -2362,7 +2362,7 @@ class ThriftRequestHandler(object):
             user = self.__auth_session.user if self.__auth_session else None
 
             if component:
-                component.value = value
+                component.value = value.encode('utf-8')
                 component.description = description
                 component.user = user
             else:
