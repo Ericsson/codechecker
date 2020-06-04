@@ -12,9 +12,8 @@ export default {
   },
 
   methods: {
-    updateReportFilter() {
-      const selectedRunIds =
-        [].concat(...this.selectedItems.map(item => item.runIds));
+    async updateReportFilter() {
+      const selectedRunIds = await this.getSelectedRunIds();
 
       if (selectedRunIds.length) {
         this.setCmpData({

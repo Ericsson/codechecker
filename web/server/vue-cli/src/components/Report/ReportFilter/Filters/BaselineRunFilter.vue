@@ -1,5 +1,6 @@
 <template>
   <select-option
+    :id="id"
     title="Run Filter"
     :bus="bus"
     :fetch-items="fetchItems"
@@ -73,12 +74,19 @@ export default {
       });
     },
 
-    updateReportFilter() {
-      const selectedRunIds =
-        [].concat(...this.selectedItems
-          .map(item => item.runIds))
-          .filter(id => id !== undefined);
+    async getSelectedRunIds() {
+      return [].concat(...await Promise.all(
+        this.selectedItems.map(async item => {
+          if (!item.runIds) {
+            item.runIds = await this.getRunIdsByRunName(item.title);
+          }
 
+          return Promise.resolve(item.runIds);
+        })));
+    },
+
+    async updateReportFilter() {
+      const selectedRunIds = await this.getSelectedRunIds();
       this.setRunIds(selectedRunIds.length ? selectedRunIds : null);
     },
 
