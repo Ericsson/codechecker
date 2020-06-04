@@ -5,7 +5,7 @@ import {
   SET_RUN_IDS
 } from "@/store/mutations.type";
 
-import { ReportFilter } from "@cc/report-server-types";
+import { CompareData, ReportFilter } from "@cc/report-server-types";
 
 export default {
   name: "BaseFilterMixin",
@@ -38,6 +38,9 @@ export default {
     },
     runIdsModel() {
       return this.runIds ? this.runIds.slice(0) : null;
+    },
+    cmpDataModel() {
+      return this.cmpData ? new CompareData(this.cmpData) : null;
     }
   },
 
@@ -81,11 +84,25 @@ export default {
       this.runIdsUnwatch = this.$watch("runIdsModel", (oldVal, newVal) => {
         this.onRunIdsChange(oldVal, newVal);
       });
+
+      this.cmpDataUnwatch = this.$watch("cmpDataModel",
+        (newVal, oldVal) => {
+          if (!newVal || !oldVal) {
+            return this.onCmpDataChange(null, oldVal, newVal);
+          }
+
+          Object.keys(newVal).forEach(key => {
+            if (JSON.stringify(newVal[key]) !== JSON.stringify(oldVal[key])) {
+              return this.onCmpDataChange(key, oldVal, newVal);
+            }
+          });
+        }, { deep: true });
     },
 
     unregisterWatchers() {
       if (this.reportFilterUnwatch) this.reportFilterUnwatch();
       if (this.runIdsUnwatch) this.runIdsUnwatch();
+      if (this.cmpDataUnwatch) this.cmpDataUnwatch();
     },
 
     beforeInit() {
@@ -111,5 +128,7 @@ export default {
     onRunIdsChange(/* oldVal, newVal */) {},
 
     onReportFilterChange(/* key, oldValue, newValue */) {},
+
+    onCmpDataChange(/* key, oldValue, newValue */) {},
   }
 };

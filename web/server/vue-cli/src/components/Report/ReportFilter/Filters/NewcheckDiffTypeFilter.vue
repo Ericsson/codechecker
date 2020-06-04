@@ -1,5 +1,6 @@
 <template>
   <select-option
+    :id="id"
     title="Diff type"
     :bus="bus"
     :fetch-items="fetchItems"
@@ -68,6 +69,11 @@ export default {
       this.setCmpData({
         diffType: this.selectedItems[0].id
       });
+    },
+
+    onCmpDataChange(key) {
+      if (key === "diff-type") return;
+      this.update();
     },
 
     fetchItems() {
