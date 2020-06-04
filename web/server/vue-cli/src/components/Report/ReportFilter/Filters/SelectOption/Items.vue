@@ -113,8 +113,9 @@
       <v-spacer />
 
       <v-btn
-        color="grey"
         text
+        class="cancel-btn"
+        color="grey"
         @click="$emit('cancel')"
       >
         <v-icon left>
@@ -124,8 +125,9 @@
       </v-btn>
 
       <v-btn
-        color="primary"
         text
+        class="apply-btn"
+        color="primary"
         @click="$emit('apply')"
       >
         <v-icon left>
@@ -161,11 +163,16 @@ export default {
         const ids = this.selectedItems.map(item => item.id);
         return this.multiple ? ids : ids[0];
       },
-      set(value) {
-        const values = this.multiple ? value : [ value ];
-        const selectedItems = this.items.filter(item => {
-          return values.includes(item.id);
-        });
+      set(id) {
+        const selectedIds = this.multiple ? id : [ id ];
+
+        const selectedItems = this.selectedItems
+          // Filter elements which can be found in the previously selected item
+          // list but not in the current item list.
+          .filter(s => this.items.findIndex(item => item.id === s.id) === -1)
+          // Add new elements which can be found in the current item list and
+          // in the currently selected ids list.
+          .concat(this.items.filter(item => selectedIds.includes(item.id)));
 
         this.$emit("select", selectedItems);
       }
