@@ -3,6 +3,7 @@
     :value.sync="dialog"
   >
     <select-option
+      :id="id"
       title="Source component"
       :bus="bus"
       :fetch-items="fetchItems"
@@ -14,6 +15,7 @@
     >
       <template v-slot:prepend-toolbar-items>
         <v-btn
+          class="manage-components-btn"
           icon
           small
           @click="dialog = true"
@@ -58,6 +60,16 @@ export default {
       },
       dialog: false
     };
+  },
+
+  watch: {
+    dialog(value) {
+      if (value) return;
+
+      // If the source component manager dialog is closed we need to update
+      // the filter items to make sure that new items will be shown.
+      this.bus.$emit("update");
+    }
   },
 
   methods: {
