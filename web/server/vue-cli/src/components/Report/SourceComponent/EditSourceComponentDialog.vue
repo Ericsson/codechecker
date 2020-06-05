@@ -1,6 +1,7 @@
 <template>
   <v-dialog
     v-model="dialog"
+    content-class="edit-source-component-dialog"
     max-width="600px"
     scrollable
   >
@@ -33,27 +34,34 @@
 
       <v-card-text class="pa-0">
         <v-container>
-          <v-text-field
-            v-model="component.name"
-            label="Name*"
-            outlined
-            required
-          />
+          <v-form ref="form">
+            <v-text-field
+              v-model="component.name"
+              class="component-name"
+              label="Name*"
+              autofocus
+              outlined
+              required
+              :rules="rules.name"
+            />
 
-          <v-textarea
-            v-model="component.value"
-            class="value"
-            outlined
-            label="Value"
-            :placeholder="placeHolderValue"
-            required
-          />
+            <v-textarea
+              v-model="component.value"
+              class="component-value value"
+              outlined
+              required
+              label="Value"
+              :placeholder="placeHolderValue"
+              :rules="rules.value"
+            />
 
-          <v-text-field
-            v-model="component.description"
-            label="Description"
-            outlined
-          />
+            <v-text-field
+              v-model="component.description"
+              class="component-description "
+              label="Description"
+              outlined
+            />
+          </v-form>
         </v-container>
       </v-card-text>
 
@@ -63,6 +71,7 @@
         <v-spacer />
 
         <v-btn
+          class="cancel-btn"
           color="error"
           text
           @click="dialog = false"
@@ -71,6 +80,7 @@
         </v-btn>
 
         <v-btn
+          class="save-btn"
           color="primary"
           text
           @click="saveSourceComponent"
@@ -99,7 +109,11 @@ export default {
                       + "listed) or a \"-\" (results from this path should "
                       + "not be listed) sign.\nFor whole directories, a "
                       + "trailing \"*\" must be added.\n"
-                      + "E.g.: +/a/b/x.cpp or -/a/b/*"
+                      + "E.g.: +/a/b/x.cpp or -/a/b/*",
+      rules: {
+        name: [ v => !!v || "Name is required" ],
+        value: [ v => !!v || "Value is required" ]
+      }
     };
   },
   computed: {
@@ -119,6 +133,8 @@ export default {
 
   methods: {
     saveSourceComponent() {
+      if (!this.$refs.form.validate()) return;
+
       const component = this.component;
       ccService.getClient().addSourceComponent(component.name,
         component.value, component.description,
