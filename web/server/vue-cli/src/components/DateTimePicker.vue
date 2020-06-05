@@ -1,12 +1,14 @@
 <template>
   <v-dialog
     v-model="dialog"
+    :content-class="dialogClass"
     width="400"
   >
     <template v-slot:activator="{ on }">
       <v-text-field
         :label="label"
         :value="formattedDatetime"
+        :class="inputClass"
         readonly
         v-on="on"
       />
@@ -51,6 +53,7 @@
 
         <v-btn
           color="grey lighten-1"
+          class="clear-btn"
           text
           @click.native="clear"
         >
@@ -58,6 +61,7 @@
         </v-btn>
 
         <v-btn
+          class="ok-btn"
           color="green darken-1"
           text
           @click="ok"
@@ -79,7 +83,9 @@ export default {
     label: { type: String, default: "" },
     dateFormat: { type: String, default: "yyyy-MM-dd" },
     timeFormat: { type: String, default: "HH:mm:ss" },
-    defaultTime: { type: String, default: "00:00:00" }
+    defaultTime: { type: String, default: "00:00:00" },
+    inputClass: { type: String, default: null },
+    dialogClass: { type: String, default: null }
   },
   data() {
     return {

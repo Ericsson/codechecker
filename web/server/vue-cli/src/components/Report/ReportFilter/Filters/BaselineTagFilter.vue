@@ -104,7 +104,7 @@ export default {
 
       return new Promise(resolve => {
         ccService.getClient().getRunHistoryTagCounts(this.runIds, reportFilter,
-          this.cmpData, handleThriftError(res => {
+          null, handleThriftError(res => {
             resolve(res.map(tag => {
               const title = tag.runName + ":" + tag.name;
               return {

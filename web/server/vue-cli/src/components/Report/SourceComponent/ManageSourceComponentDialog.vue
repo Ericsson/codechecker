@@ -1,6 +1,7 @@
 <template>
   <v-dialog
     v-model="dialog"
+    content-class="manage-source-component-dialog"
     max-width="600px"
     transition="dialog-bottom-transition"
     fullscreen
@@ -20,7 +21,7 @@
 
         <v-spacer />
 
-        <v-btn icon dark @click="dialog = false">
+        <v-btn class="close-btn" icon dark @click="dialog = false">
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-card-title>

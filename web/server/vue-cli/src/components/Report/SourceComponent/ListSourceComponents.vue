@@ -66,6 +66,7 @@
 
     <template v-slot:item.actions="{ item }">
       <v-btn
+        class="remove-btn"
         icon
         color="error"
         @click="removeSourceComponent(item)"
@@ -74,6 +75,7 @@
       </v-btn>
 
       <v-btn
+        class="edit-btn"
         icon
         color="primary"
         @click="editSourceComponent(item)"

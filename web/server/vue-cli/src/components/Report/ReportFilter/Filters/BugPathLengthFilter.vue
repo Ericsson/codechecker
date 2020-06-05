@@ -14,6 +14,7 @@
           class="py-0"
         >
           <v-text-field
+            :id="minId"
             :value="minBugPathLength"
             label="Min..."
             @input="setMinBugPathLength"
@@ -27,6 +28,7 @@
           class="py-0"
         >
           <v-text-field
+            :id="maxId"
             :value="maxBugPathLength"
             label="Max..."
             @input="setMaxBugPathLength"

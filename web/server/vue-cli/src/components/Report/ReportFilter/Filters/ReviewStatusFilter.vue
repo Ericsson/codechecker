@@ -1,5 +1,6 @@
 <template>
   <select-option
+    :id="id"
     title="Review Status"
     :bus="bus"
     :fetch-items="fetchItems"

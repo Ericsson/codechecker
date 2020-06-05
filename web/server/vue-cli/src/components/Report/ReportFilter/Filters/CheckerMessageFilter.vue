@@ -1,5 +1,6 @@
 <template>
   <select-option
+    :id="id"
     title="Checker message"
     :bus="bus"
     :fetch-items="fetchItems"

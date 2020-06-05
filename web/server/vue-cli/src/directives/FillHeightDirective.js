@@ -26,7 +26,7 @@ function fillHeight(el) {
   // TODO: We have to extract -1 from the heigh to hide scrollbar. Find out
   // a better solution for this problem.
   el.style.height =
-    Math.floor(windowHeight - top - paddingBottom - footerHeight - 1) + "px";
+    Math.floor(windowHeight - top - paddingBottom - footerHeight - 2) + "px";
   return el.style.height;
 }
 

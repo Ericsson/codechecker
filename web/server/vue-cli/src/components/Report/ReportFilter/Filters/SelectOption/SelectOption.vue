@@ -14,7 +14,7 @@
     <template v-slot:append-toolbar-items>
       <v-menu
         v-model="menu"
-        class="settings-menu"
+        content-class="settings-menu"
         :close-on-content-click="false"
         :nudge-width="300"
         :max-width="600"

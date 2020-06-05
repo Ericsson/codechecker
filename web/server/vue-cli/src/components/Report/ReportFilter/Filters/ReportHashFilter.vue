@@ -5,6 +5,7 @@
   >
     <v-card-actions class="">
       <v-text-field
+        :id="id"
         :value="reportHash"
         append-icon="mdi-magnify"
         label="Search for report hash (min 5 characters)..."

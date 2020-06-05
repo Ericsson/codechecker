@@ -13,18 +13,15 @@
       elevation="0"
     >
       <v-list-item class="pl-1">
-        <v-list-item-action class="mr-5">
+        <v-list-item-content class="mr-5">
           <clear-all-filters
             :namespace="namespace"
             @clear="clearAllFilters"
           />
-        </v-list-item-action>
-
-        <v-spacer />
-
-        <report-count
-          :value="reportCount"
-        />
+        </v-list-item-content>
+        <v-list-item-avatar :style="{width: 'auto'}">
+          <report-count :value="reportCount" />
+        </v-list-item-avatar>
       </v-list-item>
 
       <v-list-item class="unique-filter pl-1">
@@ -180,6 +177,7 @@
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
           <detection-date-filter
+            id="detection-date-filter"
             ref="filters"
             :namespace="namespace"
             @update:url="updateUrl"
@@ -190,6 +188,7 @@
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
           <report-hash-filter
+            id="report-hash-filter"
             ref="filters"
             :namespace="namespace"
             @update:url="updateUrl"
@@ -200,6 +199,7 @@
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
           <bug-path-length-filter
+            id="bug-path-length-filter"
             ref="filters"
             :namespace="namespace"
             @update:url="updateUrl"

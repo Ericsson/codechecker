@@ -1,5 +1,6 @@
 <template>
   <select-option
+    :id="id"
     title="File path"
     :bus="bus"
     :fetch-items="fetchItems"

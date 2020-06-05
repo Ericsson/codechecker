@@ -1,5 +1,6 @@
 <template>
   <v-btn
+    id="clear-all-filter-btn"
     outlined
     text
     color="primary"

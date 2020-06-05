@@ -1,5 +1,5 @@
 <template>
-  <span class="text-no-wrap">
+  <span class="pa-1 text-no-wrap">
     <v-icon :color="'#ec7672'">mdi-bug</v-icon>
     <b>{{ value }}</b>
   </span>

@@ -1,6 +1,7 @@
 <template>
   <v-dialog
     v-model="dialog"
+    content-class="remove-source-component-dialog"
     max-width="600px"
     scrollable
   >
@@ -38,6 +39,7 @@
 
         <v-btn
           text
+          class="cancel-btn"
           @click="dialog = false"
         >
           Cancel
@@ -46,6 +48,7 @@
         <v-btn
           color="error"
           text
+          class="remove-btn"
           @click="removeSourceComponent"
         >
           Remove

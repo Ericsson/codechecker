@@ -1,5 +1,6 @@
 <template>
   <select-option
+    :id="id"
     title="Detection status"
     :bus="bus"
     :fetch-items="fetchItems"

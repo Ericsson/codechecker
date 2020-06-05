@@ -14,6 +14,8 @@
           class="py-0"
         >
           <date-time-picker
+            :input-class="fromDateTimeId"
+            :dialog-class="fromDateTimeId"
             :value="fromDateTime"
             label="Detection date"
             @input="setFromDateTime"
@@ -27,6 +29,8 @@
           class="py-0"
         >
           <date-time-picker
+            :input-class="toDateTimeId"
+            :dialog-class="toDateTimeId"
             :value="toDateTime"
             label="Fix date"
             @input="setToDateTime"

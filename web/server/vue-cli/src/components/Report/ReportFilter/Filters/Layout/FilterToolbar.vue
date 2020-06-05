@@ -15,6 +15,7 @@
         <v-btn
           icon
           small
+          class="clear-btn"
           @click="clear(true)"
         >
           <v-icon>mdi-delete</v-icon>
