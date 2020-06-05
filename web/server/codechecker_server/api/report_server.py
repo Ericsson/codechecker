@@ -211,8 +211,18 @@ def process_report_filter(session, report_filter):
         AND.append(or_(*OR))
 
     if report_filter.reportHash:
-        OR = [Report.bug_id.ilike(conv(rh))
-              for rh in report_filter.reportHash]
+        OR = []
+        no_joker = []
+
+        for rh in report_filter.reportHash:
+            if '*' in rh:
+                OR.append(Report.bug_id.ilike(conv(rh)))
+            else:
+                no_joker.append(rh)
+
+        if no_joker:
+            OR.append(Report.bug_id.in_(no_joker))
+
         AND.append(or_(*OR))
 
     if report_filter.severity:
