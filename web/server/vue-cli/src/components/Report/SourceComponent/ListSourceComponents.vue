@@ -22,11 +22,20 @@
           <v-col>
             <v-btn
               color="primary"
-              class="mr-2"
+              class="new-component-btn mr-2"
               outlined
               @click="newSourceComponent"
             >
               New
+            </v-btn>
+
+            <v-btn
+              icon
+              title="Reload components"
+              color="primary"
+              @click="fetchSourceComponents"
+            >
+              <v-icon>mdi-refresh</v-icon>
             </v-btn>
           </v-col>
         </v-row>
@@ -136,9 +145,11 @@ export default {
 
   methods: {
     fetchSourceComponents() {
+      this.loading = true;
       ccService.getClient().getSourceComponents(null,
         handleThriftError(components => {
           this.components = components;
+          this.loading = false;
         }));
     },
 
