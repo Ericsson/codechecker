@@ -122,7 +122,11 @@ export default {
       default:
         return "Unknown";
       }
-    }
+    },
+
+    // Override the default clear function because one item has to be always
+    // selected for this filter.
+    clear() {}
   }
 };
 </script>
