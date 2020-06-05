@@ -100,7 +100,9 @@ def add_arguments_to_parser(parser):
                         default="localhost",
                         required=False,
                         help="The IP address or hostname of the server on "
-                             "which it should listen for connections.")
+                             "which it should listen for connections. "
+                             "For IPv6 listening, specify an IPv6 address, "
+                             "such as \"::1\".")
 
     # TODO: -v/--view-port is too verbose. The server's -p/--port is used
     # symmetrically in 'CodeChecker cmd' anyways.
@@ -123,7 +125,7 @@ def add_arguments_to_parser(parser):
                              "will be possible not only by browsers and "
                              "clients running locally, but to everyone, who "
                              "can access the server over the Internet. "
-                             "(Equivalent to specifying '--host \"\"'.)")
+                             "(Equivalent to specifying '--host \"::\"'.)")
 
     parser.add_argument('--skip-db-cleanup',
                         dest="skip_db_cleanup",
@@ -365,11 +367,11 @@ databases.
         if set(arg_match(options)) == set(options):
             parser.error("argument --not-host-only: not allowed with "
                          "argument --host, as it is a shortcut to --host "
-                         "\"\"")
+                         "\"::\"")
         else:
             # Apply the shortcut.
             if arg_match(['--not-host-only']):
-                args.listen_address = ""  # Listen on every interface.
+                args.listen_address = "::"  # Listen on every interface.
 
             # --not-host-only is just a shortcut optstring, no actual use
             # is intended later on.

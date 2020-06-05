@@ -202,17 +202,30 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
         SimpleHTTPRequestHandler.end_headers(self)
 
+    @staticmethod
+    def _get_client_host_port(address):
+        """
+        Returns the host and port of the request's address, and whether it
+        was an IPv6 address.
+        """
+        if len(address) == 2:
+            return address[0], address[1], False
+        if len(address) == 4:
+            return address[0], address[1], True
+
+        raise IndexError("Invalid address tuple given.")
+
     def do_GET(self):
         """
         Handles the browser access (GET requests).
         """
-
+        client_host, client_port, is_ipv6 = \
+            RequestHandler._get_client_host_port(self.client_address)
         self.auth_session = self.__check_session_cookie()
         username = self.auth_session.user if self.auth_session else 'Anonymous'
-        LOG.debug("%s:%s -- [%s] GET %s", self.client_address[0],
-                  str(self.client_address[1]),
-                  self.auth_session.user if self.auth_session else 'Anonymous',
-                  self.path)
+        LOG.debug("%s:%s -- [%s] GET %s",
+                  client_host if not is_ipv6 else '[' + client_host + ']',
+                  client_port, username, self.path)
 
         product_endpoint, path = routing.split_client_GET_request(self.path)
 
@@ -391,10 +404,12 @@ class RequestHandler(SimpleHTTPRequestHandler):
         """
         Handles POST queries, which are usually Thrift messages.
         """
-
-        client_host, client_port = self.client_address
+        client_host, client_port, is_ipv6 = \
+            RequestHandler._get_client_host_port(self.client_address)
         self.auth_session = self.__check_session_cookie()
-        LOG.info("%s:%s -- [%s] POST %s", client_host, str(client_port),
+        LOG.info("%s:%s -- [%s] POST %s",
+                 client_host if not is_ipv6 else '[' + client_host + ']',
+                 client_port,
                  self.auth_session.user if self.auth_session else "Anonymous",
                  self.path)
 
@@ -748,6 +763,7 @@ class CCSimpleHttpServer(HTTPServer):
     """
 
     daemon_threads = False
+    address_family = socket.AF_INET  # IPv4
 
     def __init__(self,
                  server_address,
@@ -954,6 +970,17 @@ class CCSimpleHttpServer(HTTPServer):
             if ep not in endpoints_to_keep]
 
 
+class CCSimpleHttpServerIPv6(CCSimpleHttpServer):
+    """
+    CodeChecker HTTP simple server that listens over an IPv6 socket.
+    """
+
+    address_family = socket.AF_INET6
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
 def __make_root_file(root_file):
     """
     Generate a root username and password SHA. This hash is saved to the
@@ -1051,23 +1078,31 @@ def start_server(config_directory, package_data, port, config_sql_server,
         LOG.error("The server's configuration file is invalid!")
         sys.exit(1)
 
-    http_server = CCSimpleHttpServer(server_addr,
-                                     RequestHandler,
-                                     config_directory,
-                                     config_sql_server,
-                                     skip_db_cleanup,
-                                     package_data,
-                                     context,
-                                     check_env,
-                                     manager)
+    server_clazz = CCSimpleHttpServer
+    if ':' in server_addr[0]:
+        # IPv6 address specified for listening.
+        # FIXME: Python>=3.8 automatically handles IPv6 if ':' is in the bind
+        # address, see https://bugs.python.org/issue24209.
+        server_clazz = CCSimpleHttpServerIPv6
+
+    http_server = server_clazz(server_addr,
+                               RequestHandler,
+                               config_directory,
+                               config_sql_server,
+                               skip_db_cleanup,
+                               package_data,
+                               context,
+                               check_env,
+                               manager)
 
     def signal_handler(signum, frame):
         """
         Handle SIGTERM to stop the server running.
         """
-        LOG.info("Shutting down the WEB server on [%s:%d].",
-                 listen_address, port)
-
+        LOG.info("Shutting down the WEB server on [%s:%d]",
+                 '[' + listen_address + ']'
+                 if server_clazz is CCSimpleHttpServerIPv6 else listen_address,
+                 port)
         http_server.terminate()
         sys.exit(128 + signum)
 
@@ -1091,7 +1126,9 @@ def start_server(config_directory, package_data, port, config_sql_server,
         LOG.debug(ex.strerror)
 
     LOG.info("Server waiting for client requests on [%s:%d]",
-             listen_address, port)
+             '[' + listen_address + ']'
+             if server_clazz is CCSimpleHttpServerIPv6 else listen_address,
+             port)
 
     def unregister_handler(pid):
         """

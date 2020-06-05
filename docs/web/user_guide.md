@@ -306,7 +306,9 @@ optional arguments:
                         (default: /home/<username>/.codechecker)
   --host LISTEN_ADDRESS
                         The IP address or hostname of the server on which it
-                        should listen for connections. (default: localhost)
+                        should listen for connections. For IPv6 listening,
+                        specify an IPv6 address, such as "::1". (default:
+                        localhost)
   -v PORT, --view-port PORT, -p PORT, --port PORT
                         The port which will be used as listen port for the
                         server. (default: 8001)
@@ -314,7 +316,7 @@ optional arguments:
                         possible not only by browsers and clients running
                         locally, but to everyone, who can access the server
                         over the Internet. (Equivalent to specifying '--host
-                        ""'.) (default: False)
+                        "::"'.) (default: False)
   --skip-db-cleanup     Skip performing cleanup jobs on the database like
                         removing unused files. (default: False)
   --config CONFIG_FILE  Allow the configuration from an explicit JSON based
