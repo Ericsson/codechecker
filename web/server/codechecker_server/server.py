@@ -136,10 +136,12 @@ class RequestHandler(SimpleHTTPRequestHandler):
         else:
             # If the user's access cookie is no longer usable (invalid),
             # present an error.
-            client_host, client_port = self.client_address
-            LOG.debug(client_host + ":" + str(client_port) +
-                      " Invalid access, credentials not found " +
-                      "- session refused.")
+            client_host, client_port, is_ipv6 = \
+                RequestHandler._get_client_host_port(self.client_address)
+            LOG.debug("%s:%s Invalid access, credentials not found - "
+                      "session refused",
+                      client_host if not is_ipv6 else '[' + client_host + ']',
+                      str(client_port))
             return None
 
     def __has_access_permission(self, product):
@@ -437,7 +439,9 @@ class RequestHandler(SimpleHTTPRequestHandler):
             # This response has the possibility of melting down Thrift clients,
             # but the user is expected to properly authenticate first.
             LOG.debug("%s:%s Invalid access, credentials not found "
-                      "- session refused.", client_host, str(client_port))
+                      "- session refused.",
+                      client_host if not is_ipv6 else '[' + client_host + ']',
+                      str(client_port))
 
             self.send_thrift_exception("Error code 401: Unauthorized!", iprot,
                                        oprot, otrans)
