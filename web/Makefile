@@ -47,55 +47,21 @@ package_dir_structure:
 	mkdir -p $(CC_BUILD_DIR)/bin && \
 	mkdir -p $(CC_BUILD_LIB_DIR)
 
-gen_docs: build_dir
-	cd $(ROOT) && \
-	doxygen $(ROOT)/Doxyfile.in && \
-	cp -a $(ROOT)/gen-docs $(BUILD_DIR)/gen-docs
-
-package_docs: gen_docs
+package_docs:
 	mkdir -p $(CC_BUILD_DOCS_DIR) && \
 	mkdir -p $(CC_BUILD_DOCS_DIR)/checker_md_docs && \
-	cp -r $(BUILD_DIR)/gen-docs/html/* $(CC_BUILD_DOCS_DIR) && \
 	cp -r $(ROOT)/docs/web/checker_docs/* $(CC_BUILD_DOCS_DIR)/checker_md_docs/
-
-	# Rename gen-docs to doc.
-	rm -rf $(CC_BUILD_WEB_DIR)/userguide/doc && \
-	mv $(CC_BUILD_WEB_DIR)/userguide/gen-docs $(CC_BUILD_WEB_DIR)/userguide/doc
-
-gen_userguide:
-	mkdir -p $(CC_BUILD_WEB_DIR) && \
-	$(MAKE) -C $(CC_SERVER)/www/userguide
-
-package_dojo: package_vendor
-	cp -r $(CC_SERVER)/www/* $(CC_BUILD_WEB_DIR)
-	$(MAKE) package_userguide
-	$(MAKE) package_docs
 
 $(CC_SERVER)/vue-cli/dist:
 	cd $(CC_SERVER)/vue-cli && \
 	npm install && \
 	npm run-script build
 
-package_vue: $(CC_SERVER)/vue-cli/dist
-	cp -r $(CC_SERVER)/vue-cli/dist $(CC_BUILD_WEB_DIR)
-
-package_userguide: gen_userguide
-	mkdir -p $(CC_BUILD_WEB_DIR)/images && \
-	mv $(CC_BUILD_WEB_DIR)/userguide/images/* $(CC_BUILD_WEB_DIR)/images && \
-	rm -rf $(CC_BUILD_WEB_DIR)/userguide/images
-
-package_vendor: package_dir_structure
-	$(MAKE) -C $(CC_SERVER)/vendor build BUILD_DIR=$(CC_BUILD_WEB_PLUGINS_DIR)
-
 # This target should be used from the top level Makefile to build the package
 # together with the analyzer part. This way we will not build plist-to-html
 # multiple times.
-package_web: check_codechecker_api_version package_dir_structure
-ifeq ($(CLI),vue)
-	$(MAKE) package_vue
-else
-	$(MAKE) package_dojo
-endif
+package_web: check_codechecker_api_version package_dir_structure package_docs $(CC_SERVER)/vue-cli/dist
+	cp -r $(CC_SERVER)/vue-cli/dist/* $(CC_BUILD_WEB_DIR)
 
 build_plist_to_html:
 	$(MAKE) -C $(ROOT)/tools/plist_to_html build
@@ -144,13 +110,10 @@ check_codechecker_api_version:
 		cd server/vue-cli && npm install; \
 	fi
 
-clean_package: clean_userguide clean_plist_to_html
+clean_package: clean_plist_to_html
 	rm -rf $(BUILD_DIR)
 	rm -rf gen-docs
 	find . -name "*.pyc" -delete
-
-clean_userguide:
-	rm -rf www/userguide/gen-docs
 
 clean_plist_to_html:
 	rm -rf $(ROOT)/tools/plist_to_html/build
