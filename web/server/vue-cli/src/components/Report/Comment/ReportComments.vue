@@ -26,6 +26,10 @@
           v-if="comments.length"
           dense
         >
+          <v-overlay :absolute="true" :opacity="0.25" :value="loading">
+            <v-progress-circular indeterminate size="64" />
+          </v-overlay>
+
           <template
             v-for="comment in comments"
           >
@@ -80,6 +84,7 @@ export default {
       selected: null,
       editDialog: false,
       removeDialog: false,
+      loading: false,
       bus: new Vue()
     };
   },
@@ -110,9 +115,11 @@ export default {
     fetchComments() {
       if (!this.report) return;
 
+      this.loading = true;
       ccService.getClient().getComments(this.report.reportId,
         handleThriftError(comments => {
           this.comments = comments;
+          this.loading = false;
         }));
     }
   }

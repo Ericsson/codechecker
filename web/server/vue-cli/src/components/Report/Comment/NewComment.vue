@@ -17,8 +17,10 @@
         class="px-0"
       >
         <v-btn
+          class="new-comment-btn"
           color="primary"
           small
+          :loading="loading"
           @click="addNewComment"
         >
           <v-icon small>
@@ -44,18 +46,21 @@ export default {
   },
   data() {
     return {
-      message: null
+      message: null,
+      loading: false
     };
   },
   methods: {
     addNewComment() {
       if (!this.message) return;
 
+      this.loading = true;
       const commentData = new CommentData({ message: this.message });
       ccService.getClient().addComment(this.report.reportId, commentData,
         handleThriftError(() => {
           this.bus.$emit("update:comments");
           this.message = null;
+          this.loading = false;
         }));
     }
   }
