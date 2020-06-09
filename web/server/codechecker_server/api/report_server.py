@@ -1594,7 +1594,7 @@ class ThriftRequestHandler(object):
                         self.__add_comment(comment.bug_hash,
                                            system_comment_msg,
                                            CommentKindValue.SYSTEM)
-                session.add(system_comment)
+                    session.add(system_comment)
 
                 comment.message = content.encode('utf-8')
                 session.add(comment)
