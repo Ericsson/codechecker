@@ -1,5 +1,6 @@
 <template>
   <v-btn
+    class="remove-btn"
     icon
     small
     @click="removeComment"

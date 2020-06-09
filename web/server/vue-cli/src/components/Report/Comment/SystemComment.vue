@@ -1,5 +1,6 @@
 <template>
   <v-timeline-item
+    class="system-comment"
     color="primary"
     icon="mdi-cogs"
     small

@@ -1,5 +1,6 @@
 <template>
   <v-timeline-item
+    class="user-comment"
     color="green"
     icon="mdi-account"
     small

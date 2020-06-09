@@ -1,6 +1,7 @@
 <template>
   <v-dialog
     v-model="dialog"
+    content-class="documentation-dialog"
     persistent
     max-width="600px"
   >
@@ -11,6 +12,7 @@
           class="pa-0 mx-4"
         >
           <v-btn
+            class="show-documentation-btn"
             color="primary"
             outlined
             small
@@ -37,7 +39,7 @@
 
         <v-spacer />
 
-        <v-btn icon dark @click="dialog = false">
+        <v-btn class="close-btn" icon dark @click="dialog = false">
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-card-title>

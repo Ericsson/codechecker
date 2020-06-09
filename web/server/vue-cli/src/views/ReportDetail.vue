@@ -8,6 +8,7 @@
         <v-row no-gutters>
           <v-col class="px-2">
             <v-btn
+              id="back-to-reports-btn"
               block
               outlined
               tile

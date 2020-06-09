@@ -18,7 +18,7 @@
 
           <v-col
             cols="auto"
-            class="pa-0"
+            class="review-status-wrapper pa-0"
             align-self="center"
           >
             <v-row class="px-4">
@@ -30,12 +30,13 @@
 
               <v-menu
                 v-if="reviewData.comment"
+                content-class="review-status-message-dialog"
                 :close-on-content-click="false"
                 :nudge-width="200"
                 offset-x
               >
                 <template v-slot:activator="{ on }">
-                  <v-btn icon v-on="on">
+                  <v-btn class="review-status-message" icon v-on="on">
                     <v-icon>mdi-message-text-outline</v-icon>
                   </v-btn>
                 </template>
@@ -78,7 +79,7 @@
           >
             <v-checkbox
               v-model="showArrows"
-              class="mx-2 my-0 align-center justify-center"
+              class="show-arrows mx-2 my-0 align-center justify-center"
               label="Show arrows"
               dense
               :hide-details="true"
@@ -93,7 +94,7 @@
             align-self="center"
           >
             <v-btn
-              class="mx-2 mr-0"
+              class="comments-btn mx-2 mr-0"
               color="primary"
               outlined
               small
@@ -115,6 +116,12 @@
           id="editor-wrapper"
           class="mx-0"
         >
+          <v-progress-linear
+            v-if="loading"
+            indeterminate
+            class="mb-0"
+          />
+
           <v-col class="pa-0">
             <v-row
               class="header pa-1 mx-0"
@@ -126,6 +133,7 @@
               >
                 <span
                   v-if="sourceFile"
+                  class="file-path"
                   :title="sourceFile.filePath"
                 >
                   {{ sourceFile.filePath }}
@@ -145,7 +153,7 @@
                 >
                   Also found in:
                   <select-same-report
-                    class="ml-2"
+                    class="select-same-report ml-2"
                     :report="report"
                     @update:report="(reportId) =>
                       $emit('update:report', reportId)"
@@ -170,6 +178,7 @@
       >
         <report-comments
           v-fill-height
+          class="comments"
           :report="report"
         />
       </v-col>
@@ -234,6 +243,7 @@ export default {
       loadNumOfComments: true,
       showComments: false,
       commentCols: 3,
+      loading: true,
       bus: new Vue()
     };
   },
@@ -309,6 +319,8 @@ export default {
 
   methods: {
     init(treeItem) {
+      this.loading = true;
+
       if (treeItem.step) {
         this.loadReportStep(treeItem.report, {
           stepId: this.treeItem.id,
@@ -338,11 +350,13 @@ export default {
 
       this.jumpTo(startLine.toNumber(), 0);
       this.highlightReportStep(stepId);
+      this.loading = false;
     },
 
     async loadReport(report) {
       if (this.report && this.report.reportId.equals(report.reportId)) {
         this.highlightReport(report);
+        this.loading = false;
         return;
       }
 
@@ -355,6 +369,7 @@ export default {
 
       this.jumpTo(report.line.toNumber(), 0);
       this.highlightReport(report);
+      this.loading = false;
     },
 
     highlightReportStep(stepId) {

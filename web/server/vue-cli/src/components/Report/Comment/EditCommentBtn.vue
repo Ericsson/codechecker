@@ -1,5 +1,6 @@
 <template>
   <v-btn
+    class="edit-btn"
     icon
     small
     @click="editComment"

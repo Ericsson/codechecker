@@ -1,6 +1,7 @@
 <template>
   <v-dialog
     v-model="dialog"
+    content-class="edit-comment-dialog"
     persistent
     max-width="600px"
   >
@@ -37,6 +38,7 @@
         <v-spacer />
 
         <v-btn
+          class="cancel-btn"
           color="error"
           text
           @click="dialog = false"
@@ -45,6 +47,7 @@
         </v-btn>
 
         <v-btn
+          class="save-btn"
           color="primary"
           text
           @click="confirmCommentChange"

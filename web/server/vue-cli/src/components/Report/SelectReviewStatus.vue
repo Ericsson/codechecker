@@ -1,6 +1,7 @@
 <template>
   <v-dialog
     v-model="dialog"
+    content-class="select-review-status-dialog"
     persistent
     max-width="600px"
   >
@@ -14,10 +15,11 @@
             :value="value.status"
             :items="items"
             :hide-details="true"
+            :menu-props="{ contentClass: 'select-review-status-menu' }"
             label="Set review status"
             item-text="label"
             item-value="id"
-            class="small"
+            class="select-review-status small"
             height="0"
             flat
             dense
@@ -71,6 +73,7 @@
         <v-spacer />
 
         <v-btn
+          class="cancel-btn"
           color="error"
           text
           @click="cancelReviewStatusChange"
@@ -79,6 +82,7 @@
         </v-btn>
 
         <v-btn
+          class="save-btn"
           color="primary"
           text
           @click="confirmReviewStatusChange"
