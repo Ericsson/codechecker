@@ -1,8 +1,9 @@
 const commands = {
-  waitForProgressBarNotPresent() {
-    return this
-      .pause(500) // Wait some time to make sure progressbar appeared.
-      .waitForElementNotPresent("@progressBar");
+  async waitForProgressBarNotPresent() {
+    // Wait some time to make sure progressbar appeared.
+    await this.pause(500);
+
+    return this.waitForElementNotPresent("@progressBar");
   },
 
   back() {
@@ -12,10 +13,10 @@ const commands = {
 
   diffFirstTwoRunHistoryItems() {
     this
-      .assert.attributeEquals("@diffSelectedHistoryBtn", "disabled", "true")
+      .assert.cssClassPresent("@diffSelectedHistoryBtn", "v-btn--disabled")
       .click("@firstHistoryToDiff")
       .click("@secondHistoryToDiff")
-      .assert.attributeEquals("@diffSelectedHistoryBtn", "disabled", null)
+      .assert.not.cssClassPresent("@diffSelectedHistoryBtn", "v-btn--disabled")
       .click("@diffSelectedHistoryBtn");
 
     return this;

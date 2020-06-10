@@ -8,6 +8,7 @@ module.exports = {
 
     const product = browser.page.product();
     product
+      .navigate()
       .waitForElementVisible("@page", 10000)
   },
 
@@ -23,6 +24,7 @@ module.exports = {
 
     product
       .navigate()
+      .waitForElementVisible("@page", 10000)
       .setAnnouncement(msg);
 
     header.assert.containsText("@announcementAppBar", msg);
@@ -35,7 +37,8 @@ module.exports = {
     login.loginAsRoot();
 
     product
-      .navigate()
+      .assert.urlEquals(`${browser.launchUrl}/`)
+      .waitForElementVisible("@page")
       .setAnnouncement("");
 
     header.waitForElementNotPresent("@announcementAppBar");

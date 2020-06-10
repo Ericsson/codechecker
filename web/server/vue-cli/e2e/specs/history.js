@@ -25,10 +25,12 @@ module.exports = {
     const checkCommand = "CodeChecker.py analyze";
 
     runHistoryPage
-      .perform(() => {
+      .perform(async () => {
+        runHistoryPage.clearAndSetValue("@searchRunNameInput", runName);
+
+        await runHistoryPage.waitForProgressBarNotPresent();
+
         runHistoryPage
-          .clearAndSetValue("@searchRunNameInput", runName)
-          .waitForProgressBarNotPresent()
           .getTableRows("@tableRows" , (history) => {
             browser.assert.ok(history.length === 2);
             browser.assert.ok(history[0][0].includes(runName));
@@ -36,20 +38,23 @@ module.exports = {
           })
           .assert.urlContains(`run=${runName}`)
       })
-      .perform(() => {
+      .perform(async () => {
         runHistoryPage
           .diffFirstTwoRunHistoryItems()
           .assert.urlContains("/reports")
           .assert.urlContains(`run-tag=${tag}`)
           .assert.urlContains("first-detection-date=")
           .assert.urlContains("fix-date=")
-          .back()
-          .waitForProgressBarNotPresent();
+          .back();
+
+        await runHistoryPage.waitForProgressBarNotPresent();
       })
-      .perform(() => {
+      .perform(async () => {
+        runHistoryPage.clearAndSetValue("@searchRunTagInput", tag);
+
+        await runHistoryPage.waitForProgressBarNotPresent();
+
         runHistoryPage
-          .clearAndSetValue("@searchRunTagInput", tag)
-          .waitForProgressBarNotPresent()
           .getTableRows("@tableRows" , (history) => {
             browser.assert.ok(history.length === 1);
             browser.assert.ok(history[0][4].includes(tag));
@@ -57,7 +62,7 @@ module.exports = {
           .assert.urlContains(`run=${runName}`)
           .assert.urlContains(`run-tag=${tag}`)
       })
-      .perform(() => {
+      .perform(async () => {
         runHistoryPage
           .click("@showStatisticsBtn")
           .assert.urlContains("/statistics")
@@ -66,8 +71,9 @@ module.exports = {
           .assert.urlContains("detection-status=New")
           .assert.urlContains("detection-status=Reopened")
           .assert.urlContains("detection-status=Unresolved")
-          .back()
-          .waitForProgressBarNotPresent();
+          .back();
+
+        await runHistoryPage.waitForProgressBarNotPresent();
       })
       .perform(() => {
         runHistoryPage

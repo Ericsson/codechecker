@@ -8,13 +8,16 @@ module.exports = {
       .navigate(reportDetailPage.url())
       .loginAsRoot();
 
-    browser.expect.url().to.equal(reportDetailPage.url()).before(5000);
+    browser.expect.url().to.contain(reportDetailPage.url()).before(5000);
 
     reportDetailPage
       .waitForElementVisible("@page", 10000)
-      .pause(500, () => {
-        reportDetailPage.waitForElementNotPresent("@progressBar")
-      });
+      .isVisible({
+        selector: "@progressBar",
+        timeout: 500,
+        suppressNotFoundErrors: true
+      })
+      .waitForElementNotPresent("@progressBar");
   },
 
   after(browser) {
@@ -73,6 +76,10 @@ module.exports = {
       .to.be.visible.before(5000);
 
     reviewStatusMessageMenu.expect.element("@message").text.to.equal(message);
+
+    reportDetailPage.click("@page");
+    reportDetailPage.expect.section(reviewStatusMessageMenu)
+      .to.be.not.present.before(5000);
   },
 
   "change review status without message" (browser) {
@@ -103,7 +110,7 @@ module.exports = {
       .to.be.not.present.before(5000);
   },
 
-  "manage comments" (browser) {
+  async "manage comments" (browser) {
     const reportDetailPage = browser.page.reportDetail();
     const commentsPane = reportDetailPage.section.commentsPane;
     const userCommentSection = commentsPane.section.userComment;
@@ -111,19 +118,21 @@ module.exports = {
     const editCommentDialog = reportDetailPage.section.editCommentDialog;
     const removeCommentDialog = reportDetailPage.section.removeCommentDialog;
 
-    // Open comments.
+    const message = `e2e ${+new Date}`;
+    const newMessage = `${message} renamed`;
+
     reportDetailPage.click("@commentsBtn");
 
     reportDetailPage.expect.section(commentsPane)
       .to.be.visible.before(5000);
 
     // Add new comment.
-    const message = `e2e ${+new Date}`;
     commentsPane.clearAndSetValue("@message", message, commentsPane);
-    commentsPane
-      .click("@addBtn")
-      .pause(500)
-      .waitForElementNotPresent("@overlay");
+    commentsPane.click("@addBtn");
+
+    commentsPane.waitForOverlayNotPresent();
+
+    commentsPane.waitForElementVisible(userCommentSection);
 
     userCommentSection.expect.element("@message").text.to.equal(message);
 
@@ -132,15 +141,12 @@ module.exports = {
     reportDetailPage.expect.section(editCommentDialog)
       .to.be.visible.before(5000);
 
-    const newMessage = `${message} renamed`;
     editCommentDialog
       .clearAndSetValue("@message", newMessage, editCommentDialog);
 
     editCommentDialog.click("@saveBtn");
 
-    commentsPane
-      .pause(500)
-      .waitForElementNotPresent("@overlay");
+    commentsPane.waitForOverlayNotPresent();
 
     userCommentSection.expect.element("@message").text.to.equal(newMessage);
     systemCommentSection.expect.element("@message").text.to.contain(
@@ -153,12 +159,12 @@ module.exports = {
 
     removeCommentDialog.click("@removeBtn");
 
-    commentsPane
-      .pause(500)
-      .waitForElementNotPresent("@overlay");
+    reportDetailPage.expect.section(removeCommentDialog)
+      .to.be.not.present.before(5000);
 
-    userCommentSection.expect.element("@message")
-      .text.to.not.equal(newMessage);
+    commentsPane.waitForOverlayNotPresent();
+
+    commentsPane.waitForElementNotPresent(userCommentSection);
 
     // Close comments.
     reportDetailPage.click("@commentsBtn");
@@ -183,10 +189,11 @@ module.exports = {
     reportDetailPage.expect.section(selectSameReportMenu)
       .to.be.not.present.before(5000);
 
-    reportDetailPage
-      .pause(500, () => {
-        reportDetailPage.waitForElementNotPresent("@progressBar")
-      });
+    // TODO: We need to wait for a couple of seconds to make sure that progress
+    // bar appears while we check that it dissapear.
+    reportDetailPage.pause(1500, () => {
+      reportDetailPage.waitForElementNotPresent("@progressBar");
+    });
   },
 
   async "open bug step" (browser) {
@@ -219,10 +226,6 @@ module.exports = {
     bugTree.click(
       bugTree.getTreeNodeSelector(severityIndex, bugIndex, stepIndex));
 
-    reportDetailPage
-      .pause(500, () => {
-        reportDetailPage.waitForElementNotPresent("@progressBar")
-      });
-  },
-
+    reportDetailPage.waitForProgressBarNotPresent();
+  }
 }

@@ -42,6 +42,12 @@ const RUNS = [
     description: "This is my updated run."
   },
   {
+    name: "duplicated",
+    output: path.join(REPORTS_DIR, "simple"),
+    url: `http://${host}:${port}/e2e`,
+    description: "This is duplication of my simple run."
+  },
+  {
     name: "remove",
     output: path.join(REPORTS_DIR, "simple"),
     url: `http://${host}:${port}/e2e`,

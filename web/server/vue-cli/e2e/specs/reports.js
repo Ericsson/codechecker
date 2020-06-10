@@ -338,7 +338,10 @@ module.exports = {
 
     reportPage.expect.section(dialogSection).to.be.visible.before(5000);
 
+    dialogSection.pause(500);
+
     // Add a new component.
+    dialogSection.waitForElementVisible("@newComponentBtn")
     dialogSection.click("@newComponentBtn");
     reportPage.expect.section(newComponentDialog).to.be.visible.before(5000);
 
@@ -393,6 +396,9 @@ module.exports = {
     section.click("@manageBtn");
     reportPage.expect.section(dialogSection).to.be.visible.before(5000);
 
+    dialogSection.pause(500);
+
+    dialogSection.waitForElementVisible("@removeBtn");
     dialogSection.click({ selector: "@removeBtn", index: 0 });
     reportPage.expect.section(removeComponentDialog)
       .to.be.visible.before(5000);

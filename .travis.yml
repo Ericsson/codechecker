@@ -1,10 +1,12 @@
 language:
     - python
 
+node_js: 10
+
 services:
   - postgresql
 
-matrix:
+jobs:
   include:
     - os: linux
       name: "Analyzer, web (sqlite, psycopg2, pg8000) and tools test cases."
@@ -30,6 +32,22 @@ matrix:
       dist: bionic
       python: "3.6"
       env: DATABASE=psql_pg8000
+    - os: linux
+      name: "GUI test cases."
+      sudo: required
+      dist: bionic
+      python: "3.6"
+      services:
+        - xvfb
+      env:
+        global:
+          - MOZ_HEADLESS=1
+      before_script:
+        - "export DISPLAY=:99.0"
+        - "export PATH=$TRAVIS_BUILD_DIR/build/CodeChecker/bin:$PATH"
+      script: >
+        make clean_travis package &&
+        npm run --prefix web/server/vue-cli test
     - os: osx
       osx_image: xcode10
       name: "Analyzer test cases"
@@ -120,6 +138,8 @@ cache:
     - $HOME/.cache/pip
 
 addons:
+    firefox: "69.0.1"
+    chrome: "80.0"
     apt:
         sources:
             - sourceline: 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-9 main'
@@ -137,12 +157,15 @@ addons:
             - clang-tidy-9
     postgresql: "9.6"
 
+# We will create dist directory to skip installing npm packages and bundling
+# the UI. UI specific job will use different script section in a separate job.
 script:
     - >
       make pip_dev_deps &&
       make pycodestyle &&
       make pylint &&
       make clean_travis &&
+      mkdir -p web/server/vue-cli/dist/dummy &&
       make package &&
       make -C tools/plist_to_html test &&
       make -C tools/report-converter package test &&

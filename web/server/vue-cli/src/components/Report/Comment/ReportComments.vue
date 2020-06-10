@@ -1,7 +1,12 @@
 <template>
   <v-container
     class="py-1"
+    :style="{'position': 'relative'}"
   >
+    <v-overlay :absolute="true" :opacity="0.25" :value="loading">
+      <v-progress-circular indeterminate size="64" />
+    </v-overlay>
+
     <edit-comment-dialog
       :value.sync="editDialog"
       :comment="selected"
@@ -26,10 +31,6 @@
           v-if="comments.length"
           dense
         >
-          <v-overlay :absolute="true" :opacity="0.25" :value="loading">
-            <v-progress-circular indeterminate size="64" />
-          </v-overlay>
-
           <template
             v-for="comment in comments"
           >

@@ -37,8 +37,8 @@ class request_routingTest(unittest.TestCase):
 
         self.assertEqual(GET(''), (None, ''))
         self.assertEqual(GET('index.html'), (None, 'index.html'))
-        self.assertEqual(GET('/scripts/codechecker.js'),
-                         (None, 'scripts/codechecker.js'))
+        self.assertEqual(GET('/images/logo.png'),
+                         (None, 'images/logo.png'))
 
         self.assertEqual(GET('Default'), ('Default', ''))
         self.assertEqual(GET('Default/index.html'), ('Default', 'index.html'))

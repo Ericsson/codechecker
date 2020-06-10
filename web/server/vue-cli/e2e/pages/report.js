@@ -1,7 +1,7 @@
 const commands = {
   waitForProgressBarNotPresent() {
     this.pause(500, () => {
-      this.waitForElementNotPresent("@progressBar")
+      this.waitForElementNotPresent("@progressBar");
     });
     return this;
   },

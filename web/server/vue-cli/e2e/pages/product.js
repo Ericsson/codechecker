@@ -57,7 +57,8 @@ const commands = {
     const section = this.section.editGlobalPermissionsDialog;
 
     section.api.elements("@checkBox", (response) => {
-      response.result.value.map(c => section.api.elementIdClick(c.ELEMENT));
+      response.result.value.map(c => section.api.elementIdClick(
+        c.ELEMENT || c["element-6066-11e4-a52e-4f735466cecf"]));
     });
 
     return this;

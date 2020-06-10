@@ -1,11 +1,30 @@
 const commands = {
+  waitForProgressBarNotPresent() {
+    this.pause(500, () => {
+      this.waitForElementNotPresent("@progressBar");
+    });
+    return this;
+  },
+
   async isCurrentReportStep(index) {
     const elements = await this.api.elements("@reportStepMsg");
 
-    const element = await this.api.elementIdAttribute(
-        elements.value[index].ELEMENT, "class");
+    const value = elements.value[index];
+    const elementId = value.ELEMENT ||
+      value["element-6066-11e4-a52e-4f735466cecf"];
+
+    const element = await this.api.elementIdAttribute(elementId, "class");
 
     return element.value.split(" ").includes("current");
+  }
+};
+
+const commentsPaneCommands = {
+  waitForOverlayNotPresent() {
+    this.pause(500, () => {
+      this.waitForElementNotPresent("@overlay");
+    });
+    return this;
   }
 };
 
@@ -34,7 +53,7 @@ const bugTreeCommands = {
 };
 
 module.exports = {
-  url: function() { 
+  url: function() {
     return this.api.launchUrl
       + "/e2e/report-detail?report-hash=0db7fdfc2bc9d487ca571fbbb68029cc"; 
   },
@@ -83,6 +102,7 @@ module.exports = {
         addBtn: ".new-comment-btn",
         overlay: ".v-overlay.v-overlay--active"
       },
+      commands: [ commentsPaneCommands ],
       sections: {
         userComment: {
           selector: ".user-comment",
@@ -101,14 +121,14 @@ module.exports = {
       }
     },
     editCommentDialog: {
-      selector: ".edit-comment-dialog",
+      selector: ".edit-comment-dialog.v-dialog--active",
       elements: {
         message: "textarea",
         saveBtn: ".save-btn"
       }
     },
     removeCommentDialog: {
-      selector: ".remove-comment-dialog",
+      selector: ".remove-comment-dialog.v-dialog--active",
       elements: {
         removeBtn: ".remove-btn"
       }

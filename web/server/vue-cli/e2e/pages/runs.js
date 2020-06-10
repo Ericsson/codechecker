@@ -105,9 +105,9 @@ const commands = {
 
   removeFirstRun() {
     this
-      .assert.attributeEquals("@deleteSelectedRunsBtn", "disabled", "true")
+      .assert.cssClassPresent("@deleteSelectedRunsBtn", "v-btn--disabled")
       .click("@removeRunCheckbox")
-      .assert.attributeEquals("@deleteSelectedRunsBtn", "disabled", null)
+      .assert.not.cssClassPresent("@deleteSelectedRunsBtn", "v-btn--disabled")
       .click("@deleteSelectedRunsBtn");
 
     this.expect.section("@removeRunDialog").to.be.visible.before(5000);
@@ -122,10 +122,10 @@ const commands = {
 
   diffFirstTwoRuns() {
     this
-      .assert.attributeEquals("@diffSelectedRunsBtn", "disabled", "true")
+      .assert.cssClassPresent("@diffSelectedRunsBtn", "v-btn--disabled")
       .click("@firstRunToDiff")
       .click("@secondRunToDiff")
-      .assert.attributeEquals("@diffSelectedRunsBtn", "disabled", null)
+      .assert.not.cssClassPresent("@diffSelectedRunsBtn", "v-btn--disabled")
       .click("@diffSelectedRunsBtn")
       .assert.urlContains("/reports")
       .assert.urlContains("run=")
