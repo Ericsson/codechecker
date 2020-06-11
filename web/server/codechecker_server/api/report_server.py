@@ -1732,7 +1732,7 @@ class ThriftRequestHandler(object):
                 sourcefile = session.query(File).get(lines_in_file.fileId)
                 cont = session.query(FileContent).get(sourcefile.content_hash)
                 lines = zlib.decompress(
-                    cont.content).decode('utf-8').split('\n')
+                    cont.content).decode('utf-8', 'ignore').split('\n')
                 for line in lines_in_file.lines:
                     content = '' if len(lines) < line else lines[line - 1]
                     if encoding == Encoding.BASE64:
