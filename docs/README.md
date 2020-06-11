@@ -78,6 +78,7 @@ macOS (OS X) development environment.
 
 ## Web based report management
 * [Webserver User Guide](web/user_guide.md)
+* [WEB GUI User Guide](/web/server/www/userguide/userguide.md)
 * [Command line and WEB UI Feature overview](feature_comparison.md)
 * Security configuration 
   * [Configuring Authentication](web/authentication.md)
