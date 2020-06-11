@@ -504,7 +504,7 @@ def handle_diff_results(args):
 
     context = webserver_context.get_context()
 
-    lines_in_files_requested = []
+    source_line_contents = {}
 
     def skip_report_dir_result(report):
         """
@@ -1044,9 +1044,7 @@ def handle_diff_results(args):
             if bug_line is not None:
                 checked_file += ':' + str(bug_line) + ":" + str(bug_col)
             check_msg = report.checkerMsg
-            if lines_in_files_requested:
-                source_line_contents = client.getLinesInSourceFileContents(
-                    lines_in_files_requested, ttypes.Encoding.BASE64)
+            if source_line_contents:
                 source_line = convert.from_b64(
                     source_line_contents[report.fileId][bug_line])
         return bug_line, bug_col, sev, file_name, checked_file, check_name, \
@@ -1219,10 +1217,16 @@ def handle_diff_results(args):
             if not isinstance(report, Report) and report.line is not None:
                 source_lines[report.fileId].add(report.line)
 
-        for key in source_lines:
-            lines_in_files_requested.append(
-                ttypes.LinesInFilesRequested(fileId=key,
-                                             lines=source_lines[key]))
+        # In case both baseline and new check is a local directory.
+        if client:
+            lines_in_files_requested = []
+            for key in source_lines:
+                lines_in_files_requested.append(
+                    ttypes.LinesInFilesRequested(fileId=key,
+                                                 lines=source_lines[key]))
+
+            source_line_contents.update(client.getLinesInSourceFileContents(
+                lines_in_files_requested, ttypes.Encoding.BASE64))
 
         if 'gerrit' in output_formats:
             write_gerrit_json(reports, output_dir)
