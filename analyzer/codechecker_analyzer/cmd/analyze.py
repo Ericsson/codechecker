@@ -651,8 +651,9 @@ def __get_skip_handler(args):
 
     if 'files' in args:
         # Creates a skip file where all source files will be skipped except
-        # the given source files.
+        # the given source files and all the header files.
         skip_files = ['+{0}'.format(f) for f in args.files]
+        skip_files.extend(['+/*.h', '+/*.H', '+/*.tcc'])
         skip_files.append('-*')
 
         skip_file_content = "\n".join(skip_files)
