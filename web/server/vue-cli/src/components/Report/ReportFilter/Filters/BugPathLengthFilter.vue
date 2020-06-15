@@ -3,39 +3,43 @@
     title="Bug path length"
     @clear="clear(true)"
   >
-    <v-container
-      class="py-0"
-    >
-      <v-row>
-        <v-col
-          cols="12"
-          sm="6"
-          md="6"
-          class="py-0"
-        >
-          <v-text-field
-            :id="minId"
-            :value="minBugPathLength"
-            label="Min..."
-            @input="setMinBugPathLength"
-          />
-        </v-col>
+    <v-form ref="form">
+      <v-container
+        class="py-0"
+      >
+        <v-row>
+          <v-col
+            cols="12"
+            sm="6"
+            md="6"
+            class="py-0"
+          >
+            <v-text-field
+              :id="minId"
+              :value="minBugPathLength"
+              :rules="rules.bugPathLength"
+              label="Min..."
+              @input="setMinBugPathLength"
+            />
+          </v-col>
 
-        <v-col
-          cols="12"
-          sm="6"
-          md="6"
-          class="py-0"
-        >
-          <v-text-field
-            :id="maxId"
-            :value="maxBugPathLength"
-            label="Max..."
-            @input="setMaxBugPathLength"
-          />
-        </v-col>
-      </v-row>
-    </v-container>
+          <v-col
+            cols="12"
+            sm="6"
+            md="6"
+            class="py-0"
+          >
+            <v-text-field
+              :id="maxId"
+              :value="maxBugPathLength"
+              :rules="rules.bugPathLength"
+              label="Max..."
+              @input="setMaxBugPathLength"
+            />
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-form>
   </filter-toolbar>
 </template>
 
@@ -56,12 +60,19 @@ export default {
       minId: "min-bug-path-length",
       maxId: "max-bug-path-length",
       minBugPathLength: null,
-      maxBugPathLength: null
+      maxBugPathLength: null,
+      rules: {
+        bugPathLength: [
+          v => (!v || !!v && !isNaN(parseInt(v))) || "Number is required"
+        ]
+      },
     };
   },
 
   methods: {
     setMinBugPathLength(bugPathLength, updateUrl=true) {
+      if (!this.$refs.form.validate()) return;
+
       this.minBugPathLength = bugPathLength;
       this.updateReportFilter();
 
@@ -71,6 +82,8 @@ export default {
     },
 
     setMaxBugPathLength(bugPathLength, updateUrl=true) {
+      if (!this.$refs.form.validate()) return;
+
       this.maxBugPathLength = bugPathLength;
       this.updateReportFilter();
 
@@ -89,12 +102,12 @@ export default {
     initByUrl() {
       return new Promise(resolve => {
         const minBugPathLength = this.$route.query[this.minId];
-        if (minBugPathLength) {
+        if (parseInt(minBugPathLength)) {
           this.setMinBugPathLength(minBugPathLength, false);
         }
 
         const maxBugPathLength = this.$route.query[this.maxId];
-        if (maxBugPathLength) {
+        if (parseInt(maxBugPathLength)) {
           this.setMaxBugPathLength(maxBugPathLength, false);
         }
 
