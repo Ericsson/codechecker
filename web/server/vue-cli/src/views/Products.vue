@@ -155,6 +155,7 @@
           :key="admin"
           color="secondary"
           class="mr-2 my-1"
+          outlined
         >
           <v-avatar left>
             <v-icon>mdi-account-circle</v-icon>
