@@ -10,7 +10,6 @@ Source code comment handling.
 """
 
 
-import os
 import re
 
 from codechecker_common import util
@@ -21,6 +20,27 @@ LOG = get_logger('system')
 
 REVIEW_STATUS_VALUES = ["confirmed", "false_positive", "intentional",
                         "suppress", "unreviewed"]
+
+
+def contains_codechecker_comment(fp):
+    """Returns true if the file content contains any
+    codechecker review comments.
+    The position in the object is restored where it was after the
+    scanning.
+    """
+    pos_before_read = fp.tell()
+    if pos_before_read != 0:
+        fp.seek(0)
+    match = re.search(".*codechecker_.*", fp.read())
+    fp.seek(pos_before_read)
+    if not match:
+        return False
+    return True
+
+
+class SpellException(Exception):
+    """Exception for the review comment spell errors."""
+    pass
 
 
 class SourceCodeCommentHandler(object):
@@ -120,21 +140,45 @@ class SourceCodeCommentHandler(object):
                 'message': message,
                 'status': review_status}
 
-    def has_source_line_comments(self, source_file, line):
+    def has_source_line_comments(self, fp, line):
         """
-        Return True if there is any source code comment or False if not.
+        Return True if there is any source code comment or False if not,
+        for a given line.
         """
-        comments = self.get_source_line_comments(source_file, line)
+        try:
+            comments = self.get_source_line_comments(fp, line)
+        except SpellException as ex:
+            # Misspell in the review status comment.
+            LOG.warning(ex)
+            return False
         return len(comments)
 
-    def get_source_line_comments(self, source_file, bug_line):
-        """
-        This function returns the available preprocessed source code comments
-        for a bug line.
-        """
-        LOG.debug("Checking for source code comments in the source file '%s'"
-                  " at line %s", source_file, bug_line)
+    def scan_source_line_comments(self, fp, line_numbers):
+        """collect all the source line review comments if exists
+        in a source file at the given line numbers.
 
+        returns a list of (line_num, comments) tuples where comments
+        were found.
+        """
+        comments = []
+        misspelled_comments = []
+        if not contains_codechecker_comment(fp):
+            return comments, misspelled_comments
+
+        line_numbers = sorted(line_numbers)
+        for num in line_numbers:
+            try:
+                comments.append((num, self.get_source_line_comments(fp, num)))
+            except SpellException as ex:
+                misspelled_comments.append(str(ex))
+        return comments, misspelled_comments
+
+    def get_source_line_comments(self, fp, bug_line):
+        """ Returns the preprocessed source code comments for a bug line.
+
+        raise: SpellException in case there is a spell error in the
+               codechecker review comment keyword
+        """
         previous_line_num = bug_line - 1
 
         # No more line.
@@ -150,7 +194,7 @@ class SourceCodeCommentHandler(object):
 
         while True:
 
-            source_line = util.get_line(source_file, previous_line_num)
+            source_line = util.get_linef(fp, previous_line_num)
 
             # cpp style comment
             is_comment = \
@@ -199,11 +243,11 @@ class SourceCodeCommentHandler(object):
                     comment['line'] = orig_review_comment
                     source_line_comments.append(comment)
                 else:
-                    _, file_name = os.path.split(source_file)
-                    LOG.warning(
-                        "Misspelled review status comment in %s@%d: %s",
-                        file_name, previous_line_num,
-                        orig_review_comment.strip())
+                    orig_review_comment = orig_review_comment.strip()
+                    raise SpellException(
+                            f"misspelled review status comment "
+                            f"@{previous_line_num}: "
+                            f"{orig_review_comment.strip()}")
 
                 curr_suppress_comment = []
 
@@ -217,7 +261,7 @@ class SourceCodeCommentHandler(object):
 
         return source_line_comments
 
-    def filter_source_line_comments(self, source_file, bug_line, checker_name):
+    def filter_source_line_comments(self, fp, bug_line, checker_name):
         """
         This function filters the available source code comments for bug line
         by the checker name and returns a list of source code comments.
@@ -244,8 +288,7 @@ class SourceCodeCommentHandler(object):
                  comment1 */
 
         """
-        source_line_comments = self.get_source_line_comments(source_file,
-                                                             bug_line)
+        source_line_comments = self.get_source_line_comments(fp, bug_line)
 
         if not source_line_comments:
             return []
@@ -271,8 +314,7 @@ class SourceCodeCommentHandler(object):
                       checker_name)
         elif len(checker_name_comments) > 1:
             LOG.debug("Multiple source code comment can be found for '%s' "
-                      "checker in '%s' at line %s.", checker_name,
-                      source_file, bug_line)
+                      "checker at line %s.", checker_name, bug_line)
             LOG.debug(checker_name_comments)
         else:
             LOG.debug("The following source code comment is found for"

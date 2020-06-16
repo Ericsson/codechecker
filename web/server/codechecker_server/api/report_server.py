@@ -35,7 +35,7 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import BugPathPos, \
 
 from codechecker_common import plist_parser, skiplist_handler
 from codechecker_common.source_code_comment_handler import \
-    SourceCodeCommentHandler
+    SourceCodeCommentHandler, SpellException, contains_codechecker_comment
 from codechecker_common import util
 from codechecker_common.logger import get_logger
 from codechecker_report_hash.hash import get_report_path_hash
@@ -147,6 +147,28 @@ def exc_to_thrift_reqfail(func):
                 codechecker_api_shared.ttypes.ErrorCode.GENERAL, msg)
 
     return wrapper
+
+
+def parse_codechecker_review_comment(source_file_name,
+                                     report_line,
+                                     checker_name):
+    """Parse the CodeChecker review comments from a source file at a given
+    position.  Returns an empty list if there are no comments.
+    """
+    src_comment_data = []
+    with open(source_file_name,
+              encoding='utf-8',
+              errors='ignore') as sf:
+        if contains_codechecker_comment(sf):
+            sc_handler = SourceCodeCommentHandler()
+            try:
+                src_comment_data = sc_handler.filter_source_line_comments(
+                    sf,
+                    report_line,
+                    checker_name)
+            except SpellException as ex:
+                LOG.warning(f"File {source_file_name} contains {ex}")
+    return src_comment_data
 
 
 def get_component_values(session, component_name):
@@ -2542,8 +2564,6 @@ class ThriftRequestHandler(object):
             return not checker_name.startswith('clang-diagnostic-') and \
                 enabled_checkers and checker_name not in enabled_checkers
 
-        sc_handler = SourceCodeCommentHandler()
-
         # Processing PList files.
         _, _, report_files = next(os.walk(report_dir), ([], [], []))
         all_report_checkers = set()
@@ -2634,12 +2654,10 @@ class ThriftRequestHandler(object):
                 if os.path.isfile(source_file_name):
                     report_line = last_report_event['location']['line']
                     source_file = os.path.basename(file_name)
-
-                    src_comment_data = sc_handler.filter_source_line_comments(
-                        source_file_name,
-                        report_line,
-                        checker_name)
-
+                    src_comment_data = \
+                        parse_codechecker_review_comment(source_file_name,
+                                                         report_line,
+                                                         checker_name)
                     if len(src_comment_data) == 1:
                         status = src_comment_data[0]['status']
                         rw_status = ttypes.ReviewStatus.FALSE_POSITIVE

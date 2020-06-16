@@ -30,7 +30,7 @@ from codechecker_common import logger, plist_parser
 from codechecker_common.output_formatters import twodim_to_str
 from codechecker_common.report import Report
 from codechecker_common.source_code_comment_handler import \
-    SourceCodeCommentHandler
+    SourceCodeCommentHandler, SpellException
 from codechecker_report_hash.hash import get_report_path_hash
 
 from codechecker_web.shared import webserver_context
@@ -623,10 +623,17 @@ def handle_diff_results(args):
             bug_line = rep.main['location']['line']
             checker_name = rep.main['check_name']
 
-            src_comment_data = sc_handler.filter_source_line_comments(
-                source_file,
-                bug_line,
-                checker_name)
+            src_comment_data = []
+            with open(source_file, encoding='utf-8', errors='ignore') as sf:
+                try:
+                    src_comment_data = sc_handler.filter_source_line_comments(
+                        sf,
+                        bug_line,
+                        checker_name)
+                except SpellException as ex:
+                    LOG.warning("%s contains %s",
+                                os.path.basename(source_file),
+                                str(ex))
 
             if len(src_comment_data) == 1:
                 suppressed_in_code.append(bughash)

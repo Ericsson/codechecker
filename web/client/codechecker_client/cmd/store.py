@@ -22,6 +22,10 @@ import tempfile
 import zipfile
 import zlib
 
+import concurrent.futures
+
+from collections import namedtuple
+
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import StoreLimitKind
 from codechecker_api_shared.ttypes import RequestFailed, ErrorCode
 
@@ -40,6 +44,42 @@ from codechecker_web.shared.env import get_default_workspace
 LOG = logger.get_logger('system')
 
 MAX_UPLOAD_SIZE = 1 * 1024 * 1024 * 1024  # 1GiB
+
+
+"""Minimal required information for a report position in a source file.
+
+line: line number where the report was generated
+fileidx: is the file index in the generated plist report file
+filepath: the absolute path to the souce file
+"""
+ReportLineInfo = namedtuple('ReportLineInfo',
+                            ['line', 'fileidx', 'filepath'])
+
+
+"""Contains information about the report file after parsing.
+
+store_it: True if every information is availabe and the
+            report can be stored
+main_report_positions: list of ReportLineInfo containing
+                        the main report positions
+"""
+ReportFileInfo = namedtuple('ReportFileInfo',
+                            ['store_it', 'main_report_positions'])
+
+
+"""Contains information about the source files mentioned in a report file.
+
+source_info: a dictionary about all the mentioned source files
+             the key is the source file, the value is content hash and last
+             modification time if the file exists if not the value is empty
+missing: a set of the missing source files (absoute path)
+changed_since_report_gen: set of source files where the last modification
+                        timestamp is newer then the report file which
+                        mentiones it.
+"""
+SourceFilesInReport = namedtuple('SourceFilesInReport',
+                                 ['source_info', 'missing',
+                                  'changed_since_report_gen'])
 
 
 def sizeof_fmt(num, suffix='B'):
@@ -262,78 +302,11 @@ def res_handler(results):
     LOG.info("Successful %d/%d", results.count(0), len(results))
 
 
-def assemble_zip(inputs, zip_file, client):
-    hash_to_file = {}
-    # There can be files with same hash,
-    # but different path.
-    file_to_hash = {}
-    missing_source_files = set()
-    file_hash_with_review_status = set()
-
-    def collect_file_hashes_from_plist(plist_file):
-        """
-        Collects file content hashes and last modification times for the
-        source files which can be found in the given plist file.
-
-        :returns List of file paths which are in the processed plist file but
-        missing from the user's disk and the source file modification times
-        for the still available source files.
-
-        """
-        source_file_mod_times = {}
-        missing_files = []
-        sc_handler = SourceCodeCommentHandler()
-
-        try:
-            files, reports = plist_parser.parse_plist_file(plist_file)
-
-            if not reports:
-                return missing_files, source_file_mod_times
-
-            # CppCheck generates a '0' value for the bug hash.
-            # In case all of the reports in a plist file contain only
-            # a hash with '0' value oeverwrite the hash values in the
-            # plist report files with a context free hash value.
-            rep_hash = [rep.report_hash == '0' for rep in reports]
-            if all(rep_hash):
-                replace_report_hash(plist_file, HashType.CONTEXT_FREE)
-
-            for f in files:
-                if not os.path.isfile(f):
-                    missing_files.append(f)
-                    missing_source_files.add(f)
-                    continue
-
-                content_hash = get_file_content_hash(f)
-                hash_to_file[content_hash] = f
-                file_to_hash[f] = content_hash
-                source_file_mod_times[f] = util.get_last_mod_time(f)
-
-            # Get file hashes which contain source code comments.
-            for report in reports:
-                last_report_event = report.bug_path[-1]
-                file_path = files[last_report_event['location']['file']]
-                if not os.path.isfile(file_path):
-                    continue
-
-                file_hash = file_to_hash[file_path]
-                if file_hash in file_hash_with_review_status:
-                    continue
-
-                report_line = last_report_event['location']['line']
-                if sc_handler.has_source_line_comments(file_path, report_line):
-                    file_hash_with_review_status.add(file_hash)
-
-            return missing_files, source_file_mod_times
-        except Exception as ex:
-            import traceback
-            traceback.print_stack()
-            LOG.error('Parsing the plist failed: %s', str(ex))
-
-    files_to_compress = set()
-    metadata_json_to_compress = set()
-
-    changed_files = set()
+def collect_report_files(inputs):
+    """Collect all the plist report files in the inputs directories.
+       returns the list of files with .plist extension.
+    """
+    plist_report_files = []
     for input_path in inputs:
         input_path = os.path.abspath(input_path)
 
@@ -347,37 +320,266 @@ def assemble_zip(inputs, zip_file, client):
             _, _, files = next(os.walk(input_path), ([], [], []))
 
         for f in files:
-
             plist_file = os.path.join(input_path, f)
             if f.endswith(".plist"):
-                missing_files, source_file_mod_times = \
-                    collect_file_hashes_from_plist(plist_file)
+                plist_report_files.append(plist_file)
 
-                if missing_files:
-                    LOG.warning("Skipping '%s' because it refers "
-                                "the following missing source files: %s",
-                                plist_file, missing_files)
-                elif not source_file_mod_times:
-                    # If there is no source in the plist we will not upload
-                    # it to the server.
-                    LOG.debug("Skip empty plist file: %s", plist_file)
-                else:
-                    LOG.debug("Copying file '%s' to ZIP assembly dir...",
-                              plist_file)
-                    files_to_compress.add(os.path.join(input_path, f))
+    return plist_report_files
 
-                    plist_mtime = util.get_last_mod_time(plist_file)
 
-                    # Check if any source file corresponding to a plist
-                    # file changed since the plist file was generated.
-                    for k, v in source_file_mod_times.items():
-                        if v > plist_mtime:
-                            changed_files.add(k)
+def parse_report_file(plist_file):
+    """Parse a plist report file and return the list of reports and the
+    list of source files mentioned in the report file.
+    """
+    files = []
+    reports = []
 
-            elif f == 'metadata.json':
-                metadata_json_to_compress.add(os.path.join(input_path, f))
-            elif f == 'skip_file':
-                files_to_compress.add(os.path.join(input_path, f))
+    try:
+        files, reports = plist_parser.parse_plist_file(plist_file)
+    except Exception as ex:
+        import traceback
+        traceback.print_stack()
+        LOG.error('Parsing the plist failed: %s', str(ex))
+    finally:
+        return files, reports
+
+
+def collect_file_info(files):
+    """Collect file information about given list of files like:
+       - last modification time
+       - content hash
+       If the file is missing the corresponding data will
+       be empty.
+    """
+    res = {}
+    for sf in files:
+        res[sf] = {}
+        if os.path.isfile(sf):
+            res[sf]["hash"] = get_file_content_hash(sf)
+            res[sf]["mtime"] = util.get_last_mod_time(sf)
+
+    return res
+
+
+def find_files(directory, file_name):
+    """Return the list of files with the exact name match under
+    the given directory.
+    """
+    res = set()
+    for input_path in directory:
+        input_path = os.path.abspath(input_path)
+
+        if not os.path.exists(input_path):
+            return res
+
+        _, _, files = next(os.walk(input_path), ([], [], []))
+
+        for f in files:
+            if f == file_name:
+                res.add(os.path.join(input_path, f))
+    return res
+
+
+def check_missing_files(source_file_info):
+    """Return a set of the missing files from the source_file_info dict.
+    """
+    return {k for k, v in source_file_info.items() if not bool(v)}
+
+
+def overwrite_cppcheck_report_hash(reports, plist_file):
+    """CppCheck generates a '0' value for the bug hash.
+    In case all of the reports in a plist file contain only
+    a hash with '0' value overwrite the hash values in the
+    plist report files with a context free hash value.
+    """
+    rep_hash = [rep.report_hash == '0' for rep in reports]
+    if all(rep_hash):
+        replace_report_hash(plist_file, HashType.CONTEXT_FREE)
+        return True
+    return False
+
+
+def get_report_data(reports):
+    """Return the minimal required report information to be able
+    to collect review comments from the source code.
+    """
+    report_main = []
+    for report in reports:
+        last_report_event = report.bug_path[-1]
+        file_path_index = last_report_event['location']['file']
+        report_line = last_report_event['location']['line']
+        report_main.append(ReportLineInfo(report_line,
+                                          file_path_index,
+                                          ""))
+    return report_main
+
+
+def scan_for_review_comment(job):
+    """Scan a file for review comments returns
+    all the found review comments.
+    """
+    file_path, lines = job
+    sc_handler = SourceCodeCommentHandler()
+    comments = []
+    with open(file_path, mode='r',
+              encoding='utf-8',
+              errors='ignore') as sf:
+        comments, misspelled_comments = \
+                sc_handler.scan_source_line_comments(sf, lines)
+
+        if misspelled_comments:
+            LOG.warning("There are misspelled review status comments in %s",
+                        file_path)
+        for mc in misspelled_comments:
+            LOG.warning(mc)
+
+    return comments
+
+
+def filter_source_files_with_comments(source_file_info, main_report_positions):
+    """Collect the source files where there is any codechecker review
+    comment at the main report positions.
+    """
+
+    files_with_comment = set()
+    jobs = []
+    for file_path, v in source_file_info.items():
+        if not bool(v):
+            # missing file
+            continue
+        lines = [rep.line for rep in main_report_positions
+                 if rep.filepath == file_path]
+
+        jobs.append((file_path, lines))
+
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        for job, comments in zip(jobs,
+                                 executor.map(scan_for_review_comment, jobs)):
+            file_path, _ = job
+            if comments:
+                files_with_comment.add(file_path)
+
+    return files_with_comment
+
+
+def parse_collect_plist_info(plist_file):
+    """Parse one plist report file and collect information
+    about the source files mentioned in the report file.
+    """
+
+    source_files, reports = parse_report_file(plist_file)
+
+    if len(source_files) == 0:
+        # If there is no source in the plist we will not upload
+        # it to the server.
+        LOG.debug("Skip empty plist file: %s", plist_file)
+        rli = ReportFileInfo(store_it=False, main_report_positions=[])
+        sfir = SourceFilesInReport(source_info={},
+                                   missing=set(),
+                                   changed_since_report_gen=set())
+        return rli, sfir
+
+    source_info = collect_file_info(source_files)
+
+    missing_files = set()
+    missing_files = check_missing_files(source_info)
+    if missing_files:
+        LOG.warning("Skipping '%s' because it refers "
+                    "the following missing source files: %s",
+                    plist_file, missing_files)
+        for mf in missing_files:
+            missing_files.add(mf)
+
+        rli = ReportFileInfo(store_it=False, main_report_positions=[])
+        sfir = SourceFilesInReport(source_info=source_info,
+                                   missing=missing_files,
+                                   changed_since_report_gen=set())
+        return rli, sfir
+
+    if overwrite_cppcheck_report_hash(reports, plist_file):
+        # If overwrite was needed parse it back again to update the hashes.
+        source_files, reports = parse_report_file(plist_file)
+
+    main_report_positions = []
+    rdata = get_report_data(reports)
+    # Replace the file index values to source file path.
+    for rda in rdata:
+        rda = rda._replace(filepath=source_files[rda.fileidx])
+        main_report_positions.append(rda)
+
+    plist_mtime = util.get_last_mod_time(plist_file)
+
+    changed_files = set()
+    # Check if any source file corresponding to a plist
+    # file changed since the plist file was generated.
+    for k, v in source_info.items():
+        if bool(v):
+            if v['mtime'] > plist_mtime:
+                changed_files.add(k)
+    rli = ReportFileInfo(store_it=True,
+                         main_report_positions=main_report_positions)
+    sfir = SourceFilesInReport(source_info=source_info,
+                               missing=missing_files,
+                               changed_since_report_gen=changed_files)
+
+    return rli, sfir
+
+
+def parse_report_files(report_files):
+    """Parse and collect source code information mentioned in a report file.
+
+    Collect any mentioned source files wich are missing or changed
+    since the report generation. If there are missing or changed files
+    the report will not be stored.
+    """
+
+    files_to_compress = set()
+    source_file_info = {}
+    main_report_positions = []
+    changed_files = set()
+    missing_source_files = set()
+
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        for report_f, v in zip(report_files,
+                               executor.map(parse_collect_plist_info,
+                                            report_files)):
+
+            report_file_info, source_in_reports = v
+
+            if report_file_info.store_it:
+                files_to_compress.add(report_f)
+
+            source_file_info.update(source_in_reports.source_info)
+            changed_files = \
+                changed_files | source_in_reports.changed_since_report_gen
+            main_report_positions.extend(
+                report_file_info.main_report_positions)
+            missing_source_files = \
+                missing_source_files | source_in_reports.missing
+
+    return (source_file_info,
+            main_report_positions,
+            files_to_compress,
+            changed_files,
+            missing_source_files)
+
+
+def assemble_zip(inputs, zip_file, client):
+    """Collect and compress report and source files, together with files
+    contanining analysis related information into a zip file which
+    will be sent to the server.
+    """
+    report_files = collect_report_files(inputs)
+
+    LOG.debug("Processing report files ...")
+
+    (source_file_info,
+     main_report_positions,
+     files_to_compress,
+     changed_files,
+     missing_source_files) = parse_report_files(report_files)
+
+    LOG.info("Processing report files done.")
 
     if changed_files:
         changed_files = '\n'.join([' - ' + f for f in changed_files])
@@ -386,27 +588,57 @@ def assemble_zip(inputs, zip_file, client):
                     "again to update the reports!", changed_files)
         sys.exit(1)
 
-    with zipfile.ZipFile(zip_file, 'a', allowZip64=True) as zipf:
+    hash_to_file = {}
+    # There can be files with same hash,
+    # but different path.
+    file_to_hash = {}
+
+    for source_file, info in source_file_info.items():
+        if bool(info):
+            file_to_hash[source_file] = info['hash']
+            hash_to_file[info['hash']] = source_file
+
+    LOG.info("Collecting review comments ...")
+    files_with_comment = \
+        filter_source_files_with_comments(source_file_info,
+                                          main_report_positions)
+
+    LOG.info("Collecting review comments done.")
+    file_hash_with_review_status = set()
+    for file_path in files_with_comment:
+        file_hash = file_to_hash.get(file_path)
+        if file_hash:
+            file_hash_with_review_status.add(file_hash)
+
+    metadata_files_to_merge = find_files(inputs, "metadata.json")
+    merged_metadata = merge_metadata_json(metadata_files_to_merge,
+                                          len(inputs))
+
+    skip_files = find_files(inputs, "skip_file")
+    for skf in skip_files:
+        files_to_compress.add(skf)
+
+    file_hashes = list(hash_to_file.keys())
+
+    LOG.debug("Get missing content hashes from the server.")
+    necessary_hashes = client.getMissingContentHashes(file_hashes) \
+        if file_hashes else []
+
+    if not hash_to_file:
+        LOG.warning("There is no report to store. After uploading these "
+                    "results the previous reports become resolved.")
+
+    LOG.debug("Building report zip file.")
+    with zipfile.ZipFile(zip_file, 'a',
+                         allowZip64=True) as zipf:
         # Add the files to the zip which will be sent to the server.
         for ftc in files_to_compress:
             _, filename = os.path.split(ftc)
             zip_target = os.path.join('reports', filename)
             zipf.write(ftc, zip_target)
 
-        merged_metadata = merge_metadata_json(metadata_json_to_compress,
-                                              len(inputs))
         zipf.writestr(os.path.join('reports', 'metadata.json'),
                       json.dumps(merged_metadata))
-
-        if not hash_to_file:
-            LOG.warning("There is no report to store. After uploading these "
-                        "results the previous reports become resolved.")
-
-        file_hashes = list(hash_to_file.keys())
-
-        LOG.debug("Get missing content hashes from the server.")
-        necessary_hashes = client.getMissingContentHashes(file_hashes) \
-            if file_hashes else []
 
         for f, h in file_to_hash.items():
             if h in necessary_hashes or h in file_hash_with_review_status:
@@ -429,6 +661,8 @@ def assemble_zip(inputs, zip_file, client):
     if missing_source_files:
         LOG.warning("Missing source files: \n%s", '\n'.join(
             [" - " + f_ for f_ in missing_source_files]))
+
+    LOG.debug("Building report zip done.")
 
 
 def should_be_zipped(input_file, input_files):
@@ -598,10 +832,17 @@ def main(args):
     LOG.debug("Will write mass store ZIP to '%s'...", zip_file)
 
     try:
-        assemble_zip(args.input, zip_file, client)
+        LOG.debug("Assembling zip file.")
+        try:
+            assemble_zip(args.input, zip_file, client)
+        except Exception as ex:
+            print(ex)
+            import traceback
+            traceback.print_stack()
 
         zip_size = os.stat(zip_file).st_size
-        LOG.debug("Zip size is %s.", sizeof_fmt(zip_size))
+        LOG.debug("Assembling zip done, size is %s",
+                  sizeof_fmt(zip_size))
 
         if zip_size > MAX_UPLOAD_SIZE:
             LOG.error("The result list to upload is too big (max: %s).",
@@ -643,6 +884,8 @@ def main(args):
                         "%s\n %s", reqfail.message, table)
         sys.exit(1)
     except Exception as ex:
+        import traceback
+        traceback.print_stack()
         LOG.info("Storage failed: %s", str(ex))
         sys.exit(1)
     finally:
