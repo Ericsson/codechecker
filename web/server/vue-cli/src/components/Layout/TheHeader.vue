@@ -41,7 +41,7 @@
     </v-app-bar-nav-icon>
 
     <v-toolbar-title class="pl-0">
-      CodeChecker
+      CodeChecker {{ packageVersion }}
     </v-toolbar-title>
 
     <v-spacer />
@@ -98,7 +98,7 @@
 <script>
 import { mapActions, mapGetters } from "vuex";
 
-import { GET_ANNOUNCEMENT } from "@/store/actions.type";
+import { GET_ANNOUNCEMENT, GET_PACKAGE_VERSION } from "@/store/actions.type";
 
 import { defaultReportFilterValues } from "@/components/Report/ReportFilter";
 import { defaultStatisticsFilterValues } from "@/components/Statistics";
@@ -154,7 +154,8 @@ export default {
     ...mapGetters([
       "authParams",
       "isAuthenticated",
-      "announcement"
+      "announcement",
+      "packageVersion"
     ]),
 
     menuItems() {
@@ -174,13 +175,22 @@ export default {
     }
   },
 
+  watch: {
+    isAuthenticated() {
+      if (!this.isAuthenticated) return;
+
+      this.getPackageVersion();
+    }
+  },
+
   mounted() {
     this.getAnnouncement();
   },
 
   methods: {
     ...mapActions([
-      GET_ANNOUNCEMENT
+      GET_ANNOUNCEMENT,
+      GET_PACKAGE_VERSION
     ])
   }
 };

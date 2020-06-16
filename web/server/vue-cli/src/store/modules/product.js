@@ -1,15 +1,19 @@
 import { handleThriftError, prodService } from "@cc-api";
 
-import { GET_CURRENT_PRODUCT } from "../actions.type";
-import { SET_CURRENT_PRODUCT } from "../mutations.type";
+import { GET_CURRENT_PRODUCT, GET_PACKAGE_VERSION } from "../actions.type";
+import { SET_CURRENT_PRODUCT, SET_PACKAGE_VERSION } from "../mutations.type";
 
 const state = {
-  currentProduct: null
+  currentProduct: null,
+  packageVersion: undefined
 };
 
 const getters = {
   currentProduct(state) {
     return state.currentProduct;
+  },
+  packageVersion(state) {
+    return state.packageVersion;
   }
 };
 
@@ -26,12 +30,27 @@ const actions = {
         resolve(product);
       }));
     });
+  },
+
+  [GET_PACKAGE_VERSION]({ commit }) {
+    return new Promise(resolve => {
+      if (state.packageVersion !== undefined)
+        return resolve(state.packageVersion);
+
+      prodService.getClient().getPackageVersion(handleThriftError(version => {
+        commit(SET_PACKAGE_VERSION, version);
+        resolve(version);
+      }));
+    });
   }
 };
 
 const mutations = {
   [SET_CURRENT_PRODUCT](state, product) {
     state.currentProduct = product;
+  },
+  [SET_PACKAGE_VERSION](state, version) {
+    state.packageVersion = version;
   }
 };
 

@@ -4,5 +4,6 @@ export const LOGIN = "login";
 export const LOGOUT = "logout";
 
 export const GET_CURRENT_PRODUCT = "getCurrentProduct";
+export const GET_PACKAGE_VERSION = "getPackageVersion";
 
 export const GET_ANNOUNCEMENT = "getAnnouncement";

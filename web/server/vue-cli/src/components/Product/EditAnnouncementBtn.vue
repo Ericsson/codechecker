@@ -55,12 +55,6 @@ export default {
     ConfirmDialog
   },
 
-  watcher: {
-    announcement() {
-
-    }
-  },
-
   data() {
     return {
       dialog: false,
