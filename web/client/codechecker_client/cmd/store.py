@@ -601,7 +601,7 @@ def main(args):
         assemble_zip(args.input, zip_file, client)
 
         zip_size = os.stat(zip_file).st_size
-        LOG.debug("Zip size is %s. vs %s", sizeof_fmt(zip_size))
+        LOG.debug("Zip size is %s.", sizeof_fmt(zip_size))
 
         if zip_size > MAX_UPLOAD_SIZE:
             LOG.error("The result list to upload is too big (max: %s).",
