@@ -151,18 +151,23 @@
       </template>
 
       <template #item.admins="{ item }">
-        <v-chip
+        <span
           v-for="admin in item.admins"
           :key="admin"
-          color="secondary"
-          class="mr-2 my-1"
-          outlined
+          class="v-chip-max-width-wrapper"
         >
-          <v-avatar left>
-            <v-icon>mdi-account-circle</v-icon>
-          </v-avatar>
-          {{ admin }}
-        </v-chip>
+          <v-chip
+            color="secondary"
+            class="mr-2 my-1"
+            outlined
+            :title="admin"
+          >
+            <v-avatar>
+              <v-icon>mdi-account-circle</v-icon>
+            </v-avatar>
+            {{ admin }}
+          </v-chip>
+        </span>
       </template>
 
       <template #item.runCount="{ item }">
@@ -189,17 +194,21 @@
       </template>
 
       <template #item.runStoreInProgress="{ item }">
-        <v-chip
+        <span
           v-for="runName in item.runStoreInProgress"
           :key="runName"
-          color="accent"
-          class="mr-2"
+          class="v-chip-max-width-wrapper"
         >
-          <v-avatar left>
-            <v-icon>mdi-play-circle</v-icon>
-          </v-avatar>
-          {{ runName }}
-        </v-chip>
+          <v-chip
+            class="mr-2 my-1"
+            color="accent"
+          >
+            <v-avatar>
+              <v-icon>mdi-play-circle</v-icon>
+            </v-avatar>
+            {{ runName }}
+          </v-chip>
+        </span>
       </template>
 
       <template v-slot:item.action="{ item }">
@@ -434,5 +443,19 @@ export default {
 <style lang="scss" scoped>
 .v-list-item__subtitle {
   white-space: normal;
+}
+
+.v-chip-max-width-wrapper {
+  display: inline-block;
+  max-width: 150px;
+
+  ::v-deep .v-chip__content {
+    line-height: 32px;
+    display: inline-block !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    position: relative;
+  }
 }
 </style>
