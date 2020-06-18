@@ -42,6 +42,7 @@
       :server-items-length.sync="totalItems"
       :footer-props="footerProps"
       :must-sort="true"
+      :mobile-breakpoint="1000"
       item-key="name"
     >
       <template v-slot:top>

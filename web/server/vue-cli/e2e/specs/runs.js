@@ -1,5 +1,7 @@
 module.exports = {
   before(browser) {
+    browser.resizeWindow(1600, 1000);
+
     const login = browser.page.login();
 
     const runs = browser.page.runs();

@@ -7,6 +7,7 @@
       :hide-default-footer="true"
       :must-sort="true"
       :loading="loading"
+      :mobile-breakpoint="1000"
       loading-text="Loading products..."
       item-key="endpoint"
     >
@@ -429,3 +430,9 @@ export default {
   }
 };
 </script>
+
+<style lang="scss" scoped>
+.v-list-item__subtitle {
+  white-space: normal;
+}
+</style>

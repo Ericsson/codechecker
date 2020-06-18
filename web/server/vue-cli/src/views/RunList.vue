@@ -1,5 +1,5 @@
 <template>
-  <v-card flat>
+  <v-card flat tile>
     <v-dialog
       v-model="showCheckCommandDialog"
       content-class="check-command"
@@ -41,6 +41,7 @@
       :server-items-length.sync="totalItems"
       :footer-props="footerProps"
       :must-sort="true"
+      :mobile-breakpoint="1000"
       item-key="name"
       show-select
     >

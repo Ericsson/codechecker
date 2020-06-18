@@ -45,6 +45,7 @@
         :must-sort="true"
         :expanded.sync="expanded"
         :show-expand="showExpanded"
+        :mobile-breakpoint="1100"
         item-key="$id"
         @item-expanded="itemExpanded"
       >
@@ -112,6 +113,7 @@
               'report-id': item.reportId ? item.reportId : undefined,
               'report-hash': item.reportId ? undefined : item.bugHash
             }}"
+            class="file-name"
           >
             {{ item.checkedFile }}
           </router-link>
@@ -468,5 +470,9 @@ export default {
   .splitpanes__pane {
     background-color: inherit;
   }
+}
+
+.v-data-table .file-name {
+  word-break: break-word;
 }
 </style>

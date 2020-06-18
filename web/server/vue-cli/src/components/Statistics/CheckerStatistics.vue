@@ -19,6 +19,7 @@
           :hide-default-footer="true"
           :must-sort="true"
           :loading="loading"
+          :mobile-breakpoint="1000"
           loading-text="Loading checker statistics..."
           item-key="checker"
         >
