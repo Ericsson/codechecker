@@ -51,7 +51,7 @@ module.exports = {
       {
         test: /\.js$/,
         loader: 'babel-loader',
-        exclude: [/node_modules/],
+        exclude: [/node_modules\/(?!vuetify)/],
         options: {
           presets: [
             ["@babel/preset-env", {
@@ -164,6 +164,10 @@ module.exports = {
         from: helpers.root('src', 'assets', 'userguide', 'images'),
         to: helpers.root('dist', 'images')
       },
+      {
+        from: helpers.root('src', 'browsersupport.js'),
+        to: helpers.root('dist')
+      }
     ]),
   ]
 }
