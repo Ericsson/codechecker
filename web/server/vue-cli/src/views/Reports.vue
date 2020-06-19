@@ -433,6 +433,8 @@ export default {
     },
 
     refresh() {
+      this.expanded = [];
+
       ccService.getClient().getRunResultCount(this.runIds,
         this.reportFilter, this.cmpData, handleThriftError(res => {
           this.totalItems = res.toNumber();
