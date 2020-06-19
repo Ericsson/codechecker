@@ -24,9 +24,18 @@ function sassLoaderOptions(indentedSyntax=false) {
 
 module.exports = {
   entry: helpers.root('src', 'main.js'),
-  output: {
-    path: helpers.root('dist'),
-    filename: 'app.bundler.js'
+  optimization: {
+    moduleIds: 'hashed',
+    runtimeChunk: 'single',
+     splitChunks: {
+      cacheGroups: {
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendors',
+          chunks: 'all',
+        },
+      },
+    },
   },
   resolve: {
     extensions: ['.js', '.vue'],

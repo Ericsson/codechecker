@@ -5,7 +5,7 @@
   "author": "Márton Csordás",
   "private": true,
   "scripts": {
-    "build": "cross-env NODE_ENV=production webpack --config config/webpack.prod.js",
+    "build": "rimraf dist && cross-env NODE_ENV=production webpack --config config/webpack.prod.js",
     "server:codechecker": "CodeChecker server -w e2e/__codechecker/workspace > e2e/__codechecker/server.log",
     "server:dev": "cross-env NODE_ENV=development webpack-dev-server --hot --inline --progress --config config/webpack.dev.js",
     "server:prod": "http-server dist -c-1 --cors",

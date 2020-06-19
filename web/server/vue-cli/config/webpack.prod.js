@@ -2,6 +2,7 @@ const merge = require('webpack-merge');
 const { DefinePlugin } = require('webpack');
 
 const common = require('./webpack.common.js');
+const helpers = require('./helpers');
 
 const METADATA = merge(common.METADATA, {
   'CC_SERVER_HOST': process.env.CC_SERVER_HOST || null,
@@ -10,6 +11,10 @@ const METADATA = merge(common.METADATA, {
 
 module.exports = merge(common, {
   mode: 'production',
+  output: {
+    path: helpers.root('dist'),
+    filename: '[name].[contenthash].js'
+  },
   plugins: [
     new DefinePlugin({
       'process.env': {

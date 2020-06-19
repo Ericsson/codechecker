@@ -22,6 +22,9 @@ const METADATA = merge(common.METADATA, {
 
 module.exports = merge(common, {
   mode: 'development',
+  output: {
+    filename: '[name].[hash].js'
+  },
   devtool: 'inline-source-map',
   devServer: {
     port: 8080,
