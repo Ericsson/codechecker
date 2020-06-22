@@ -161,7 +161,10 @@ export default {
       ccService.getClient().getAnalysisStatistics(this.runId,
         this.runHistoryId, handleThriftError(stats => {
           this.analyzerStatistics = stats;
-          this.activeExpansionPanels = [ 0 ];
+
+          // Open all expansion panel.
+          this.activeExpansionPanels = [ ...Array(
+            Object.keys(stats).length).keys() ];
         }));
     }
   }
