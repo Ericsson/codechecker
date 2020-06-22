@@ -43,6 +43,7 @@
               v-model="time"
               full-width
               use-seconds
+              format="24hr"
             />
           </v-tab-item>
         </v-tabs>
