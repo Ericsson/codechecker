@@ -59,13 +59,12 @@ from .tmp import get_tmp_dir_hash
 
 from .api.authentication import ThriftAuthHandler as AuthHandler_v6
 from .api.config_handler import ThriftConfigHandler as ConfigHandler_v6
-from .api.db import DBSession
 from .api.product_server import ThriftProductHandler as ProductHandler_v6
 from .api.report_server import ThriftRequestHandler as ReportHandler_v6
-from .database import database
-from .database import db_cleanup
+from .database import database, db_cleanup
 from .database.config_db_model import Product as ORMProduct, \
     Configuration as ORMConfiguration
+from .database.database import DBSession
 from .database.run_db_model import IDENTIFIER as RUN_META, Run, RunLock
 
 LOG = get_logger('server')
@@ -646,29 +645,16 @@ class Product(object):
         """
         Cleanup the run database which belongs to this product.
         """
-        connection_str = self.__connection_string
-        prod_db = \
-            database.SQLServer.from_connection_string(connection_str,
-                                                      RUN_META,
-                                                      None,
-                                                      interactive=False,
-                                                      env=self.__check_env)
-        with database.DBContext(prod_db) as db:
-            try:
-                LOG.info("Garbage collection for product '%s' started...",
-                         self.endpoint)
-                db_cleanup.remove_expired_run_locks(db.session)
-                db_cleanup.remove_unused_files(db.session)
-                db_cleanup.upgrade_severity_levels(db.session,
-                                                   self.__context.severity_map)
-                db.session.commit()
-                LOG.info("Garbage collection finished.")
-                return True
-            except Exception as ex:
-                db.session.rollback()
-                LOG.error("Database cleanup failed.")
-                LOG.error(ex)
-                return False
+        LOG.info("Garbage collection for product '%s' started...",
+                 self.endpoint)
+
+        db_cleanup.remove_expired_run_locks(self.session_factory)
+        db_cleanup.remove_unused_files(self.session_factory)
+        db_cleanup.upgrade_severity_levels(self.session_factory,
+                                           self.__context.severity_map)
+
+        LOG.info("Garbage collection finished.")
+        return True
 
 
 class CCSimpleHttpServer(HTTPServer):

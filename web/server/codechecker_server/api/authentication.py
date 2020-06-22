@@ -21,12 +21,11 @@ from codechecker_common.logger import get_logger
 from codechecker_server.profiler import timeit
 
 from ..database.config_db_model import Session
+from ..database.database import DBSession
 from ..permissions import handler_from_scope_params as make_handler
 from ..permissions import require_manager, require_permission
 from ..server import permissions
 from ..session_manager import generate_session_token
-
-from .db import DBSession
 
 LOG = get_logger('server')
 

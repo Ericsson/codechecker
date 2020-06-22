@@ -25,10 +25,8 @@ from codechecker_web.shared import convert
 
 from .. import permissions
 from ..database.config_db_model import IDENTIFIER, Product, ProductPermission
-from ..database.database import SQLServer, conv
+from ..database.database import DBSession, SQLServer, conv, escape_like
 from ..routing import is_valid_product_endpoint
-
-from .db import DBSession, escape_like
 
 LOG = get_logger('server')
 
