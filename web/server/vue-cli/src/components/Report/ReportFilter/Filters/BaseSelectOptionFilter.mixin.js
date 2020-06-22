@@ -44,6 +44,8 @@ export default {
       return { [this.id]: state.length ? state : undefined };
     },
 
+    getIconClass() {},
+
     initByUrl() {
       return new Promise(resolve => {
         let state = [].concat(this.$route.query[this.id] || []);
@@ -58,7 +60,8 @@ export default {
           return {
             id: id,
             title: this.titleFormatter(id),
-            count: "N/A"
+            count: "N/A",
+            icon: this.getIconClass(id)
           };
         });
         this.setSelectedItems(selectedItems, false);

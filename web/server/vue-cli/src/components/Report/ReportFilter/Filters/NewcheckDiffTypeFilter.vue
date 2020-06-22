@@ -10,9 +10,9 @@
     @clear="clear(true)"
     @input="setSelectedItems"
   >
-    <template v-slot:icon>
+    <template v-slot:icon="{ item }">
       <v-icon color="grey">
-        mdi-select-compare
+        {{ item.icon }}
       </v-icon>
     </template>
 
@@ -76,6 +76,19 @@ export default {
       this.update();
     },
 
+    getIconClass(id) {
+      switch (id) {
+      case DiffType.NEW:
+        return "mdi-set-right";
+      case DiffType.RESOLVED:
+        return "mdi-set-left";
+      case DiffType.UNRESOLVED:
+        return "mdi-set-all";
+      default:
+        console.warn("Unknown diff type: ", id);
+      }
+    },
+
     fetchItems() {
       this.loading = true;
 
@@ -103,7 +116,8 @@ export default {
             return {
               id: id,
               title: this.titleFormatter(id),
-              count: res[index][key].toNumber()
+              count: res[index][key].toNumber(),
+              icon: this.getIconClass(id)
             };
           }));
           this.loading = false;
