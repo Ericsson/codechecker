@@ -99,7 +99,8 @@
           small
           text
         >
-          <detection-status-icon :status="parseInt(status)" /> ({{ value }})
+          <detection-status-icon class="mr-1" :status="parseInt(status)" />
+          ({{ value }})
         </v-btn>
       </v-list-item-subtitle>
     </v-list-item-content>

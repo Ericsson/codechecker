@@ -107,7 +107,7 @@
               >
                 mdi-comment-multiple-outline
               </v-icon>
-              Comments({{ numOfComments }})
+              Comments ({{ numOfComments }})
             </v-btn>
           </v-col>
         </v-row>
