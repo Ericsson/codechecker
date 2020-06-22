@@ -73,13 +73,13 @@
         <v-btn
           class="show-check-command"
           title="Show check command"
-          color="orange"
+          color="grey darken-1"
           small
           text
           icon
           @click="openCheckCommandDialog(id)"
         >
-          <v-icon>mdi-apple-keyboard-command</v-icon>
+          <v-icon>mdi-console</v-icon>
         </v-btn>
 
         <v-divider
