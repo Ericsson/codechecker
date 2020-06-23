@@ -144,7 +144,7 @@ def __add_arguments_to_parser(parser):
                         dest='meta',
                         metavar='META',
                         required=False,
-                        help="Metada information which will be stored "
+                        help="Metadata information which will be stored "
                              "alongside the run when the created report "
                              "directory will be stored to a running "
                              "CodeChecker server. It has the following "

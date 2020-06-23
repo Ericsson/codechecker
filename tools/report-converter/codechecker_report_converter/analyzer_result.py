@@ -49,7 +49,7 @@ class AnalyzerResult(object, metaclass=ABCMeta):
         if metadata:
             self._save_metadata(metadata, output_dir)
         else:
-            LOG.warning("Use '--metada' option to provide extra information "
+            LOG.warning("Use '--meta' option to provide extra information "
                         "to the CodeChecker server such as analyzer version "
                         "and analysis command when storing the results to it. "
                         "For more information see the --help.")
