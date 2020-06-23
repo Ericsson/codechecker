@@ -125,22 +125,20 @@
           <v-col class="pa-0">
             <v-row
               class="header pa-1 mx-0"
+              justify="space-between"
             >
               <v-col
-                cols="auto"
                 class="file-path py-0"
                 align-self="center"
               >
                 <span
                   v-if="sourceFile"
                   class="file-path"
-                  :title="sourceFile.filePath"
+                  :title="`\u200E${sourceFile.filePath}`"
                 >
                   {{ sourceFile.filePath }}
                 </span>
               </v-col>
-
-              <v-spacer />
 
               <v-col
                 cols="auto"
@@ -660,13 +658,18 @@ export default {
       font-family: monospace;
       color: var(--v-grey-darken4);
 
-      max-width: 40%;
+      max-width: 100%;
       display: inline-block;
       text-align: left;
+      vertical-align: middle;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       direction: rtl;
+
+      &::before {
+        content: '\200e';
+      }
     }
   }
 
