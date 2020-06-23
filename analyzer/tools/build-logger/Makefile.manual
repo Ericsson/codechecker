@@ -65,17 +65,33 @@ pack64bit: 64bit packbin
 	done
 	rm -f ldlogger_64.so
 
+pack64bit_only: 64bit_only packbin64
+	for x8664dir in 'x86_64'; do \
+		mkdir -p $(LIB_DIR)/$$x8664dir ; \
+		cp ldlogger_64.so $(LIB_DIR)/$$x8664dir/ldlogger.so ; \
+	done
+	rm -f ldlogger_64.so
+
 # pack binary
 packbin:
 	mkdir -p $(BIN_DIR)
 	cp ldlogger $(BIN_DIR)
 	rm -f ldlogger
 
+# pack binary
+packbin64:
+	mkdir -p $(BIN_DIR)
+	cp ldlogger64 $(BIN_DIR)/ldlogger
+	rm -f ldlogger64
+
 # Build only 32 bit lib
 32bit: ldlogger ldlogger_32.so
 
 # Build only 64 bit lib
 64bit: ldlogger ldlogger_64.so
+
+# Build only 64 bit lib and logger
+64bit_only: ldlogger64 ldlogger_64.so
 
 # Cleaner rule
 clean:
@@ -85,6 +101,10 @@ clean:
 # ldlogger executable
 ldlogger: $(LDLOGGER_SOURCES) $(LDLOGGER_HEADERS)
 	$(CC) -m32 $(CPPFLAGS) $(CFLAGS) -D__LOGGER_MAIN__ $(LDFLAGS) $(LDLOGGER_SOURCES) -o $@
+
+# ldlogger executable
+ldlogger64: $(LDLOGGER_SOURCES) $(LDLOGGER_HEADERS)
+	$(CC) -m64 $(CPPFLAGS) $(CFLAGS) -D__LOGGER_MAIN__ $(LDFLAGS) $(LDLOGGER_SOURCES) -o $@
 
 # ldlogger lib 32
 ldlogger_32.so: $(LDLOGGER_LIB_SOURCES) $(LDLOGGER_LIB_HEADERS)
