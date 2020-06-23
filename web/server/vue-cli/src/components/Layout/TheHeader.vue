@@ -44,6 +44,14 @@
       CodeChecker {{ packageVersion }}
     </v-toolbar-title>
 
+    <v-chip
+      v-if="currentProductDisplayName"
+      class="mx-2"
+      outlined
+    >
+      {{ currentProductDisplayName }}
+    </v-chip>
+
     <v-spacer />
 
     <span
@@ -155,8 +163,15 @@ export default {
       "authParams",
       "isAuthenticated",
       "announcement",
-      "packageVersion"
+      "packageVersion",
+      "currentProduct"
     ]),
+
+    currentProductDisplayName() {
+      return this.currentProduct
+        ? window.atob(this.currentProduct.displayedName_b64)
+        : null;
+    },
 
     menuItems() {
       if (!this.$route.name) return [];
