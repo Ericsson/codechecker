@@ -54,7 +54,7 @@ optional arguments:
                         tidy, cppcheck, eslint, fbinfer, golint, msan,
                         pyflakes, pylint, spotbugs, tsan, tslint, ubsan.
   --meta [META [META ...]]
-                        Metada information which will be stored alongside the
+                        Metadata information which will be stored alongside the
                         run when the created report directory will be stored
                         to a running CodeChecker server. It has the following
                         format: key=value. Valid key values are:
