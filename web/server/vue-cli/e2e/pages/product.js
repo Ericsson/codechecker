@@ -178,6 +178,19 @@ const commands = {
     return this.clearAndSetValue("@searchInput", search)
       .waitForElementNotPresent("@progressBar", 5000)
       .pause(3000);
+  },
+
+  sortProducts(column, isSorted) {
+    this
+      .click({ selector: "th", index: column })
+      .pause(500) // Wait some time to make sure progressbar appeared.
+      .waitForElementNotPresent("@progressBar");
+
+    this.getTableRows("@tableRows", (data) => {
+      this.api.assert.ok(isSorted(data), "runs are not sorted");
+    });
+
+    return this;
   }
 };
 
@@ -193,6 +206,7 @@ module.exports = {
     newProductBtn: "#new-product-btn",
     productRows: "table tbody > tr",
     emptyTable: ".v-data-table__empty-wrapper",
+    tableRows: "tbody tr",
     searchInput: ".v-toolbar__content input[type='text']",
     progressBar: ".v-data-table__progress",
     editBtn: "tr .edit-btn",

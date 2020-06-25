@@ -2,8 +2,9 @@
   <v-container fluid>
     <v-data-table
       :headers="headers"
-      :items="processedProducts"
-      :server-items-length.sync="processedProducts.length"
+      :items="products"
+      :options.sync="pagination"
+      :server-items-length.sync="products.length"
       :hide-default-footer="true"
       :must-sort="true"
       :loading="loading"
@@ -265,10 +266,17 @@ export default {
   mixins: [ StrToColorMixin ],
 
   data() {
+    const sortBy = this.$router.currentRoute.query["sort-by"];
+    const sortDesc = this.$router.currentRoute.query["sort-desc"];
+
     return {
       DBStatus,
       productNameSearch: null,
       loading: false,
+      pagination: {
+        sortBy: sortBy ? [ sortBy ] : [],
+        sortDesc: sortDesc !== undefined ? [ !!sortDesc ] : []
+      },
       headers: [
         {
           text: "Name",
@@ -308,37 +316,27 @@ export default {
     };
   },
 
-  computed: {
-    processedProducts() {
-      const products = [ ...this.products ];
-      return products.map(product => {
-        product.description = product.description_b64 ?
-          window.atob(product.description_b64) : null;
-        product.displayedName = product.displayedName_b64 ?
-          window.atob(product.displayedName_b64) : null;
-
-        return product;
-      }).sort((p1, p2) => {
-        // By default sort runs by displayed name and put products to the end
-        // of list which are not accessible by the current user.
-        if (p1.accessible === p2.accessible) {
-          if (p1.displayedName.toLowerCase() < p2.displayedName.toLowerCase()) {
-            return -1;
-          }
-
-          if (p1.displayedName.toLowerCase() > p2.displayedName.toLowerCase()) {
-            return 1;
-          }
-
-          return 0;
-        } else {
-          return p1.accessible ? -1 : 1;
-        }
-      });
-    }
-  },
-
   watch: {
+    pagination: {
+      handler() {
+        const sortBy = this.pagination.sortBy.length
+          ? this.pagination.sortBy[0] : undefined;
+        const sortDesc = this.pagination.sortDesc.length
+          ? this.pagination.sortDesc[0] : undefined;
+
+        this.$router.replace({
+          query: {
+            ...this.$route.query,
+            "sort-by": sortBy,
+            "sort-desc": sortDesc,
+          }
+        }).catch(() => {});
+
+        this.products.sort(this.sortProducts);
+      },
+      deep: true
+    },
+
     productNameSearch: _.debounce(function () {
       this.$router.replace({
         query: {
@@ -388,9 +386,62 @@ export default {
 
       prodService.getClient().getProducts(null, productNameFilter,
         handleThriftError(products => {
-          this.products = products;
+          this.products = products.map(product => {
+            const description = product.description_b64 ?
+              window.atob(product.description_b64) : null;
+            const displayedName = product.displayedName_b64 ?
+              window.atob(product.displayedName_b64) : null;
+
+            return {
+              description,
+              displayedName,
+              ...product
+            };
+          }).sort(this.sortProducts);
+
           this.loading = false;
         }));
+    },
+
+    sortProducts(p1, p2) {
+      const sortBy = this.pagination.sortBy.length
+        ? this.pagination.sortBy[0] : undefined;
+      const sortDesc = this.pagination.sortDesc.length
+        ? this.pagination.sortDesc[0] : undefined;
+
+      let p1Value = null;
+      let p2Value = null;
+
+      if (sortBy === undefined) {
+        // By default sort runs by displayed name and put products to the end
+        // of list which are not accessible by the current user.
+        if (p1.accessible !== p2.accessible) return p1.accessible ? -1 : 1;
+
+        p1Value = p1.displayedName.toLowerCase();
+        p2Value = p2.displayedName.toLowerCase();
+      } else if (sortBy === "displayedName") {
+        p1Value = p1.displayedName.toLowerCase();
+        p2Value = p2.displayedName.toLowerCase();
+      } else if (sortBy === "runCount") {
+        p1Value = p1.runCount;
+        p2Value = p2.runCount;
+      } else if (sortBy === "latestStoreToProduct") {
+        p1Value = p1.latestStoreToProduct
+          ? new Date(p1.latestStoreToProduct)
+          : null;
+        p2Value = p2.latestStoreToProduct
+          ? new Date(p2.latestStoreToProduct)
+          : null;
+      } else {
+        console.warn("Invalid sort field: ", sortBy);
+      }
+
+      if (sortDesc) [ p1Value, p2Value ] = [ p2Value, p1Value ];
+
+      if (p1Value < p2Value) return -1;
+      if (p1Value > p2Value) return 1;
+
+      return 0;
     },
 
     onCompleteNewProduct() {

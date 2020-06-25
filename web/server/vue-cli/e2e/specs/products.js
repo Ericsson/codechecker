@@ -115,5 +115,38 @@ module.exports = {
 
     product
       .removeProduct();
+  },
+
+  "sort products" (browser) {
+    const product = browser.page.product();
+
+    product.filterProducts("");
+
+    // Sort by product name.
+    product
+      .sortProducts(0, (data) => {
+        return data.every((e, ind, a) => !ind || a[ind - 1][1] <= e[1]);
+      })
+      .sortProducts(0, (data) => {
+        return data.every((e, ind, a) => !ind || a[ind - 1][1] >= e[1]);
+      });
+
+    // Sort by number of runs column.
+    product
+      .sortProducts(2, (data) => {
+        return data.every((e, ind, a) => !ind || a[ind - 1][1] <= e[1]);
+      })
+      .sortProducts(2, (data) => {
+        return data.every((e, ind, a) => !ind || a[ind - 1][1] >= e[1]);
+      });
+
+    // Sort by latest store to date column.
+    product
+      .sortProducts(3, (data) => {
+        return data.every((e, ind, a) => !ind || a[ind - 1][1] <= e[1]);
+      })
+      .sortProducts(3, (data) => {
+        return data.every((e, ind, a) => !ind || a[ind - 1][1] >= e[1]);
+      });
   }
 }
