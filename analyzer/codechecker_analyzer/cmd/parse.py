@@ -523,6 +523,11 @@ def parse(plist_file, metadata_dict, rh, file_report_map):
             continue
 
         file_mtime = util.get_last_mod_time(source_file)
+        if not file_mtime:
+            changed_files.add(source_file)
+            LOG.warning('%s does not exist.', source_file)
+            continue
+
         if file_mtime > plist_mtime:
             changed_files.add(source_file)
             LOG.warning('%s did change since the last analysis.', source_file)
