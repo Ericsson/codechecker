@@ -295,6 +295,7 @@
   "modernize-raw-string-literal":                               "STYLE",
   "modernize-redundant-void-arg":                               "STYLE",
   "modernize-replace-auto-ptr":                                 "LOW",
+  "modernize-replace-disallow-copy-and-assign-macro":           "LOW",
   "modernize-replace-random-shuffle":                           "LOW",
   "modernize-return-braced-init-list":                          "STYLE",
   "modernize-shrink-to-fit":                                    "STYLE",
@@ -378,6 +379,7 @@
   "readability-string-compare":                                 "LOW",
   "readability-uniqueptr-delete-release":                       "STYLE",
   "readability-uppercase-literal-suffix":                       "STYLE",
+  "readability-use-anyofallof":                                 "STYLE",
   "security.FloatLoopCounter":                                  "MEDIUM",
   "security.insecureAPI.bcmp":                                  "LOW",
   "security.insecureAPI.bcopy":                                 "LOW",
@@ -401,5 +403,7 @@
   "unix.Vfork":                                                 "MEDIUM",
   "valist.CopyToSelf":                                          "MEDIUM",
   "valist.Uninitialized":                                       "MEDIUM",
-  "valist.Unterminated":                                        "MEDIUM"
+  "valist.Unterminated":                                        "MEDIUM",
+  "webkit.NoUncountedMemberChecker":                            "MEDIUM",
+  "webkit.RefCntblBaseVirtualDtor":                             "MEDIUM"
 }
