@@ -1398,6 +1398,10 @@ Some analyzers may suggest some automatic bugfixes. Most of the times these are
 style issues which can be fixed easily. This command handles the listing and
 application of these automatic fixes.
 
+Besides the provided filter options you can pipe the JSON format output of
+"CodeChecker cmd diff" command to apply automatic fixes only for new reports:
+CodeChecker cmd diff -b dir1 -n dir2 -o json --new | CodeChecker fixit dir2
+
 positional arguments:
   folder                The analysis result folder(s) containing analysis
                         results and fixits which should be applied.
@@ -1405,17 +1409,20 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   -l, --list            List the available automatic fixes.
+  -i, --interactive     Interactive selection of fixits to apply. Fixit items
+                        are enumerated one by one and you may choose which
+                        ones are to be applied. (default: False)
   --checker-name [CHECKER_NAME [CHECKER_NAME ...]]
                         Filter results by checker names. The checker name can
                         contain multiple * quantifiers which matches any number
                         of characters (zero or more). So for example
                         "*DeadStores" will match "deadcode.DeadStores".
-                        (default: None)
+                        (default: [])
   --file [FILE_PATH [FILE_PATH ...]]
                         Filter results by file path. The file path can contain
                         multiple * quantifiers which matches any number of
                         characters (zero or more). So if you have /a/x.cpp and
-                        /a/y.cpp then "/a/*.cpp" selects both. (default: None)
+                        /a/y.cpp then "/a/*.cpp" selects both. (default: [])
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level.
 ```

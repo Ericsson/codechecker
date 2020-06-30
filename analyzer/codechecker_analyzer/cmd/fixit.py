@@ -36,7 +36,11 @@ def get_argparser_ctor_args():
         'description': """
 Some analyzers may suggest some automatic bugfixes. Most of the times these are
 style issues which can be fixed easily. This command handles the listing and
-application of these automatic fixes.""",
+application of these automatic fixes.
+
+Besides the provided filter options you can pipe the JSON format output of
+"CodeChecker cmd diff" command to apply automatic fixes only for new reports:
+CodeChecker cmd diff -b dir1 -n dir2 -o json --new | CodeChecker fixit dir2""",
         'help': "Apply automatic fixes based on the suggestions of the "
                 "analyzers"
     }
@@ -58,8 +62,15 @@ def add_arguments_to_parser(parser):
                         action='store_true',
                         default=argparse.SUPPRESS,
                         help="List the available automatic fixes.")
+    parser.add_argument('-i', '--interactive',
+                        action='store_true',
+                        default=False,
+                        help="Interactive selection of fixits to apply. Fixit "
+                             "items are enumerated one by one and you may "
+                             "choose which ones are to be applied.")
     parser.add_argument('--checker-name',
                         nargs='*',
+                        default=[],
                         help='Filter results by checker names. The checker '
                              'name can contain multiple * quantifiers which '
                              'matches any number of characters (zero or '
@@ -68,6 +79,7 @@ def add_arguments_to_parser(parser):
     parser.add_argument('--file',
                         metavar='FILE_PATH',
                         nargs='*',
+                        default=[],
                         help='Filter results by file path. The file path can '
                              'contain multiple * quantifiers which matches '
                              'any number of characters (zero or more). So if '
@@ -92,7 +104,8 @@ def get_location_by_offset(filename, offset):
                 return row, offset + 1
 
 
-def clang_tidy_fixit_filter(content, checker_names, file_paths, reports):
+def clang_tidy_fixit_filter(content, checker_names, file_paths, interactive,
+                            reports):
     """
     This function filters the content of a replacement .yaml file.
     content -- The content of a replacement .yaml file parsed to an object by
@@ -105,12 +118,19 @@ def clang_tidy_fixit_filter(content, checker_names, file_paths, reports):
                   full path must match in order to apply it.
     reports -- A list of CodeChecker reports. This can come from
                "CodeChecker cmd [diff|results] ..." command in JSON format.
+    interactive -- Interactive filtering. If True then user will be asked about
+                   each fixit one by one.
     """
     def make_regex(parts):
         if not parts:
             return re.compile('.*')
         parts = map(lambda part: re.escape(part).replace(r'\*', '.*'), parts)
         return re.compile('|'.join(parts) + '$')
+
+    def ask_user(item):
+        print(yaml.dump(item))
+        prompt = "y/<Enter> - Yes\nOther     - No\nCtrl-C    - Cancel\nApply: "
+        return input(prompt) in "Yy"
 
     if reports:
         def match_reports(diag_msg):
@@ -125,15 +145,20 @@ def clang_tidy_fixit_filter(content, checker_names, file_paths, reports):
     checker_names = make_regex(checker_names)
     file_paths = make_regex(file_paths)
 
-    content['Diagnostics'] = list(filter(
+    items = filter(
         lambda diag: checker_names.match(diag['DiagnosticName']) and
         len(diag['DiagnosticMessage']['Replacements']) != 0 and
         file_paths.match(diag['DiagnosticMessage']['FilePath']) and
         match_reports(diag['DiagnosticMessage']),
-        content['Diagnostics']))
+        content['Diagnostics'])
+
+    if interactive:
+        items = filter(ask_user, items)
+
+    content['Diagnostics'] = list(items)
 
 
-def list_fixits(inputs, checker_names, file_paths, reports):
+def list_fixits(inputs, checker_names, file_paths, interactive, reports):
     """
     This function dumps the .yaml files to the standard output like a "dry run"
     with the replacements. See clang_tidy_fixit_filter() for the documentation
@@ -152,11 +177,11 @@ def list_fixits(inputs, checker_names, file_paths, reports):
                       encoding='utf-8', errors='ignore') as f:
                 content = yaml.load(f, Loader=yaml.BaseLoader)
                 clang_tidy_fixit_filter(content, checker_names, file_paths,
-                                        reports)
+                                        interactive, reports)
             print(yaml.dump(content))
 
 
-def apply_fixits(inputs, checker_names, file_paths, reports):
+def apply_fixits(inputs, checker_names, file_paths, interactive, reports):
     """
     This function applies the replacements from the .yaml files.
     inputs -- A list of report directories which contains the fixit dumps in a
@@ -174,7 +199,7 @@ def apply_fixits(inputs, checker_names, file_paths, reports):
                           encoding='utf-8', errors='ignore') as f:
                     content = yaml.load(f, Loader=yaml.BaseLoader)
                     clang_tidy_fixit_filter(content, checker_names, file_paths,
-                                            reports)
+                                            interactive, reports)
 
                 if len(content['Diagnostics']) != 0:
                     with open(os.path.join(out_dir, fixit_file), 'w',
@@ -212,6 +237,8 @@ def main(args):
         sys.exit(1)
 
     if 'list' in args:
-        list_fixits(args.input, args.checker_name, args.file, reports)
+        list_fixits(args.input, args.checker_name, args.file,
+                    args.interactive, reports)
     else:
-        apply_fixits(args.input, args.checker_name, args.file, reports)
+        apply_fixits(args.input, args.checker_name, args.file,
+                     args.interactive, reports)
