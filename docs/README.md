@@ -147,6 +147,12 @@ The following commands are used to bootstrap CodeChecker on Ubuntu 18.04 LTS:
 sudo apt-get install clang clang-tidy build-essential curl doxygen gcc-multilib \
       git python-virtualenv python3-dev
 
+# Install nodejs dependency for web. In case of debian/ubuntu you can use the
+# following commands. For more information see the official docs:
+# https://nodejs.org/en/download/package-manager/
+curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
 # Check out CodeChecker source code.
 git clone https://github.com/Ericsson/CodeChecker.git --depth 1 ~/codechecker
 cd ~/codechecker
