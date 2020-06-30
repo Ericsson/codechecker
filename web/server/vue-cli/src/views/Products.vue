@@ -45,16 +45,16 @@
                   :is-super-user="isSuperUser"
                   @on-complete="onCompleteNewProduct"
                 />
-
-                <v-btn
-                  icon
-                  title="Reload products"
-                  color="primary"
-                  @click="fetchProducts"
-                >
-                  <v-icon>mdi-refresh</v-icon>
-                </v-btn>
               </span>
+
+              <v-btn
+                icon
+                title="Reload products"
+                color="primary"
+                @click="fetchProducts"
+              >
+                <v-icon>mdi-refresh</v-icon>
+              </v-btn>
             </v-col>
           </v-row>
         </v-toolbar>
