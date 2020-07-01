@@ -586,7 +586,9 @@ service codeCheckerDBAccess {
   // PERMISSION: PRODUCT_ACCESS
   RunTagCounts getRunHistoryTagCounts(1: list<i64>    runIds,
                                       2: ReportFilter reportFilter,
-                                      3: CompareData  cmpData)
+                                      3: CompareData  cmpData,
+                                      4: i64          limit,
+                                      5: i64          offset)
                                       throws (1: codechecker_api_shared.RequestFailed requestError),
 
   //============================================

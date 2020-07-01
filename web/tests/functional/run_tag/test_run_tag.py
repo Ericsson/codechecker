@@ -94,12 +94,14 @@ int main()
         codechecker.check_and_store(self._codechecker_cfg,
                                     run_name, self._test_dir)
 
-    def __get_run_tag_counts(self, run_id):
+    def __get_run_tag_counts(self, run_id, limit=None, offset=0):
         """
         Get run history tag for the given run.
         """
-        test_run_tags = self._cc_client.getRunHistoryTagCounts([run_id],
-                                                               None, None)
+        test_run_tags = \
+            self._cc_client.getRunHistoryTagCounts([run_id], None, None,
+                                                   limit, offset)
+
         self.assertGreater(len(test_run_tags), 0)
 
         return test_run_tags
@@ -156,7 +158,7 @@ int main()
         self.assertEqual(len(test_run_ids), 2)
 
         run_id = test_run_ids[1]
-        test_run_tags = self.__get_run_tag_counts(run_id)
+        test_run_tags = self.__get_run_tag_counts(run_id, 100, 0)
         run_tags_v0 = [t for t in test_run_tags if t.name == self.tags[0]]
 
         self.assertEqual(len(run_tags_v0), 1)

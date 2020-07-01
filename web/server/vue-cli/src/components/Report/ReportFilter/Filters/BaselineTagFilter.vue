@@ -98,13 +98,16 @@ export default {
 
       const reportFilter = new ReportFilter(this.reportFilter);
 
+      const limit = opt.limit || this.defaultLimit;
+      const offset = 0;
+
       reportFilter.runTag = opt.query
         ? (await Promise.all(opt.query?.map(s => this.getTagIds(s)))).flat()
         : null;
 
       return new Promise(resolve => {
         ccService.getClient().getRunHistoryTagCounts(this.runIds, reportFilter,
-          null, handleThriftError(res => {
+          null, limit, offset, handleThriftError(res => {
             resolve(res.map(tag => {
               const title = tag.runName + ":" + tag.name;
               return {
