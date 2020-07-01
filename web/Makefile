@@ -117,3 +117,7 @@ clean_package: clean_plist_to_html
 
 clean_plist_to_html:
 	rm -rf $(ROOT)/tools/plist_to_html/build
+
+clean:
+	rm -rf $(CC_SERVER)/vue-cli/dist
+	rm -rf $(CC_SERVER)/vue-cli/node_modules
