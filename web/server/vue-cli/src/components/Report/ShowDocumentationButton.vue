@@ -2,7 +2,6 @@
   <v-dialog
     v-model="dialog"
     content-class="documentation-dialog"
-    persistent
     max-width="600px"
   >
     <template v-slot:activator="{ on }">
