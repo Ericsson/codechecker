@@ -402,7 +402,7 @@ export default {
         } else {
           this.fetchRunHistories();
         }
-      }, 250)
+      }, 500)
     },
 
     runTagSearch: {
@@ -419,7 +419,7 @@ export default {
         } else {
           this.fetchRunHistories();
         }
-      }, 250)
+      }, 500)
     },
   },
 

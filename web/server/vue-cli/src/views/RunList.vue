@@ -348,7 +348,7 @@ export default {
         }).catch(() => {});
 
         this.fetchRuns();
-      }, 250)
+      }, 500)
     }
   },
 
