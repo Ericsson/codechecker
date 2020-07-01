@@ -17,6 +17,7 @@
           </v-col>
 
           <v-col
+            v-if="!isReviewStatusDisabled"
             cols="auto"
             class="review-status-wrapper pa-0"
             align-self="center"
@@ -199,6 +200,8 @@ import {
   ReviewData
 } from "@cc/report-server-types";
 
+import { mapGetters } from "vuex";
+
 import { FillHeight } from "@/directives";
 import { UserIcon } from "@/components/Icons";
 
@@ -247,6 +250,10 @@ export default {
   },
 
   computed: {
+    ...mapGetters([
+      "currentProductConfig",
+    ]),
+
     checkerId() {
       return this.report ? this.report.checkerId : null;
     },
@@ -257,6 +264,13 @@ export default {
       return this.showComments
         ? maxCols - this.commentCols
         : maxCols;
+    },
+
+    isReviewStatusDisabled() {
+      // Disable by default.
+      if (!this.currentProductConfig) return true;
+
+      return this.currentProductConfig.isReviewStatusChangeDisabled;
     }
   },
 

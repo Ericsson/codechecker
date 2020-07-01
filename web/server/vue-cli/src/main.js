@@ -18,7 +18,11 @@ import "splitpanes/dist/splitpanes.css";
 import Vue from "vue";
 import vuetify from "@/plugins/vuetify";
 import VueCookie from "vue-cookie";
-import { GET_AUTH_PARAMS, GET_CURRENT_PRODUCT } from "@/store/actions.type";
+import {
+  GET_AUTH_PARAMS,
+  GET_CURRENT_PRODUCT,
+  GET_CURRENT_PRODUCT_CONFIG
+} from "@/store/actions.type";
 import convertOldUrlToNew from "./router/backward-compatible-url";
 
 import router from "./router";
@@ -70,9 +74,13 @@ router.beforeResolve((to, from, next) => {
       }
     }
 
-    // Get current product.
+    // Get current product and configuration.
     if (to.params.endpoint !== from.params.endpoint)
-      store.dispatch(GET_CURRENT_PRODUCT, to.params.endpoint);
+      store
+        .dispatch(GET_CURRENT_PRODUCT, to.params.endpoint)
+        .then(product => {
+          store.dispatch(GET_CURRENT_PRODUCT_CONFIG, product?.id);
+        });
 
     next();
   });
