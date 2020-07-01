@@ -139,7 +139,7 @@ cache:
 
 addons:
     firefox: "69.0.1"
-    chrome: "80.0"
+    chrome: stable
     apt:
         sources:
             - sourceline: 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-9 main'

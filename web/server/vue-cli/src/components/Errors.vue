@@ -3,7 +3,7 @@
     vertical
     color="error"
     :value="errors.length"
-    :timeout="0"
+    :timeout="-1"
   >
     <v-alert
       v-for="(error, idx) in errors"

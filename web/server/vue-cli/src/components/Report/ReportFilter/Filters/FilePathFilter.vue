@@ -12,7 +12,7 @@
   >
     <template v-slot:icon>
       <v-icon color="grey">
-        mdi-file-document-box-outline
+        mdi-file-document-outline
       </v-icon>
     </template>
 

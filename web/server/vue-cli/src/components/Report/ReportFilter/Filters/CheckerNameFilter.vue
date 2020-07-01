@@ -12,7 +12,7 @@
   >
     <template v-slot:icon>
       <v-icon color="grey">
-        mdi-account-card-details
+        mdi-card-account-details
       </v-icon>
     </template>
   </select-option>

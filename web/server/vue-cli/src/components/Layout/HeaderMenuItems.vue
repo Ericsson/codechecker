@@ -31,7 +31,7 @@
                   icon
                   color="primary"
                 >
-                  <v-icon>mdi-github-circle</v-icon>
+                  <v-icon>mdi-github</v-icon>
                 </v-btn>
               </v-list-item-avatar>
 
@@ -51,7 +51,7 @@
         target="_blank"
       >
         <v-list-item-avatar>
-          <v-icon>mdi-github-circle</v-icon>
+          <v-icon>mdi-github</v-icon>
         </v-list-item-avatar>
         <v-list-item-title>
           CodeChecker @ GitHub

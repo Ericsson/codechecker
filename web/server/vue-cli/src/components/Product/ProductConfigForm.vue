@@ -9,7 +9,7 @@
       :rules="rules.endpoint"
       label="URL endpoint*"
       name="endpoint"
-      prepend-icon="mdi-account-card-details-outline"
+      prepend-icon="mdi-card-account-details-outline"
       required
     />
 

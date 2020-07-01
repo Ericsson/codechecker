@@ -22,7 +22,7 @@
               class="mr-1"
               small
             >
-              mdi-file-document-box-outline
+              mdi-file-document-outline
             </v-icon>
             Show documentation
           </v-btn>

@@ -168,15 +168,17 @@ module.exports = {
       favicon: helpers.root('src', 'assets', 'favicon.ico'),
       template: helpers.root('src', 'index.html')
     }),
-    new CopyPlugin([
-      {
-        from: helpers.root('src', 'assets', 'userguide', 'images'),
-        to: helpers.root('dist', 'images')
-      },
-      {
-        from: helpers.root('src', 'browsersupport.js'),
-        to: helpers.root('dist')
-      }
-    ]),
+    new CopyPlugin({
+      patterns: [
+        {
+          from: helpers.root('src', 'assets', 'userguide', 'images'),
+          to: helpers.root('dist', 'images')
+        },
+        {
+          from: helpers.root('src', 'browsersupport.js'),
+          to: helpers.root('dist')
+        }
+      ]
+    }),
   ]
 }

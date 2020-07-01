@@ -2,11 +2,11 @@
   <v-app id="app">
     <the-header />
 
-    <v-content>
+    <v-main>
       <router-view />
 
       <errors />
-    </v-content>
+    </v-main>
   </v-app>
 </template>
 

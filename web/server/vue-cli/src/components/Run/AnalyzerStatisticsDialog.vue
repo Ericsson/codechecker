@@ -74,7 +74,7 @@
                   </v-row>
                   <v-row v-if="stats.failed">
                     <v-icon class="mr-2">
-                      mdi-file-document-box-multiple-outline
+                      mdi-text-box-multiple-outline
                     </v-icon>
                     <b>Files which failed to analyze:</b>
                     <v-container class="pl-8">

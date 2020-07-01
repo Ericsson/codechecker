@@ -12,12 +12,7 @@ module.exports = {
 
     reportDetailPage
       .waitForElementVisible("@page", 10000)
-      .isVisible({
-        selector: "@progressBar",
-        timeout: 500,
-        suppressNotFoundErrors: true
-      })
-      .waitForElementNotPresent("@progressBar");
+      .waitForProgressBarNotPresent();
   },
 
   after(browser) {
