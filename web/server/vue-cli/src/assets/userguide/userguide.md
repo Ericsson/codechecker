@@ -59,20 +59,18 @@ domain.
 ## <a name="userguide-managing-products"></a> Managing products
 ![Products](images/products.png)
 
-After enabling the administrative actions by clicking on the
-*Show administration* button in the top right corner, click *Add new product*,
-then fill the form presented. The values that need to be filled here are the
-same as the arguments for `CodeChecker cmd products add`.
-These buttons are visible only for *Super Users*.
+Click *Add new product*, then fill the form presented. The values that need to
+be filled here are the same as the arguments for
+`CodeChecker cmd products add`. These buttons are visible only for
+*Super Users*.
 
 ![New product](images/new_product.png)
 
 If the product creation is successful, the window will disappear and the
 product will appear in the product list.
 
-Editing a product is done through the pencil icon, which is visible when
-administrative actions are enabled. This window lets you edit the product's
-configuration.
+Editing a product is done through the pencil icon. This window lets you edit
+the product's configuration.
 
 ![Edit product](images/edit_product.png)
 
@@ -93,15 +91,14 @@ but **no analysis results are deleted**.
 * Product-level permissions can be edited by clicking the edit icon for the
 product you want to configure the permissions.
 
-From the dropdown, select the permission you want to configure. The two lists
-show the users and groups known to the system - if a tick is present in its row,
-the given user or group has the permission directly granted. (Users who only
-have a certain permission through permission inheritance are not shown with a
-tick.)
+The two lists show the users and groups known to the system - if a tick is
+present in its row, the given user or group has the permission directly
+granted. (Users who only have a certain permission through permission
+inheritance are not shown with a tick.)
 
 ![Product permissions](images/product_permissions.png)
 
-Only the permissions you have rights to manage are shown in the dropdown.
+Only the permissions you have rights to manage are shown.
 
 You can edit multiple permissions opening the window only once. Simply tick or
 untick the users/groups you want to give the permission to or revoke from them.
@@ -243,7 +240,7 @@ option. If the report count could not be determined this value will be *N/A*.
 
 ### <a name="userguide-remove-filtered-reports"></a>Remove filtered reports
 Filtered reports can be removed by clicking on the **Remove filtered reports**
-button at the top of the filter bar.
+button at the bottom of the filter bar.
 
 **!!!WARNING!!!** Once you have removed filtered reports it can not be undone.
 Please make sure that you want to remove all filtered results before clicking
@@ -255,6 +252,8 @@ on this button.
 Filter options can be cleared separately by clicking on the trash icon beside
 a filter or all filters can be cleared by using *Clear All Filters* button at
 the top of the filter bar.
+
+![Clear all filters](images/clear_all_filters.png)
 
 ![Clear report filters](images/clear_report_filters.png)
 
@@ -376,6 +375,7 @@ positive*, *Intentional*, along with an optional comment on why this status was
 applied. We can change the review status from the default
 <span class="customIcon review-status-unreviewed"></span> _Unreviewed_ option
 to something else in the report details view above the file view.
+
 ![Unreviewed](images/review_status_unreviewed.png)
 
 If you changed the review status, you can optionally explain the reason why
@@ -425,11 +425,13 @@ the reports' state in the selected run event.
 
 # <a name="userguide-server-config"></a> Server Configuration
 ## <a name="userguide-notification"></a> Global Notification banner
-There is an option to set a global notification text, that will show on top of every page over the CodeChecker logo. For every connecting client. 
+There is an option to set a global notification text, that will show on top of
+every page over the CodeChecker logo. For every connecting client. 
 
 ![Notification](images/notification.png)
 
-You can edit this alert on the products page, after enabling administration buttons, with "Edit announcement" button, but **Super User** permissions are necessary.
+You can edit this alert on the products page with "Edit announcement" button,
+but **Super User** permissions are necessary.
 
 ![Products](images/products.png)
 
