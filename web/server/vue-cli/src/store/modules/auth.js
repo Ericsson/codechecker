@@ -1,6 +1,4 @@
 
-import JwtService from "@/services/jwt.service";
-
 import {
   GET_AUTH_PARAMS,
   GET_LOGGED_IN_USER,
@@ -18,7 +16,7 @@ import { authService, handleThriftError } from "@cc-api";
 
 const state = {
   currentUser: "",
-  isAuthenticated: !!JwtService.getToken(),
+  isAuthenticated: !!authService.getToken(),
   authParams: null
 };
 
@@ -97,7 +95,7 @@ const mutations = {
   [SET_AUTH](state, payload) {
     state.isAuthenticated = true;
     state.currentUser = payload.userName;
-    JwtService.saveToken(payload.token);
+    authService.saveToken(payload.token);
   },
   [SET_AUTH_PARAMS](state, params) {
     state.authParams = params;
@@ -108,7 +106,7 @@ const mutations = {
   [PURGE_AUTH](state) {
     state.isAuthenticated = false;
     state.currentUser = null;
-    JwtService.destroyToken();
+    authService.destroyToken();
   }
 };
 
