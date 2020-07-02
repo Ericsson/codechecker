@@ -64,7 +64,7 @@
           name: item.route,
           query: item.query || {}
         }"
-        :class="$route.name === item.route &&
+        :class="item.active.includes($route.name) &&
           'v-btn--active router-link-active'"
         exact
         text
@@ -126,24 +126,28 @@ export default {
           name: "Products",
           icon: "mdi-briefcase-outline",
           route: "products",
+          active: [ "products" ],
           hide: [ "products", "login" ]
         },
         {
           name: "Runs",
           icon: "mdi-run-fast",
           route: "runs",
+          active: [ "runs", "main_runs" ],
           hide: [ "products", "login" ]
         },
         {
           name: "Run history",
           icon: "mdi-history",
           route: "run-history",
+          active: [ "run-history" ],
           hide: [ "products", "login" ]
         },
         {
           name: "Statistics",
           icon: "mdi-chart-line",
           route: "statistics",
+          active: [ "statistics" ],
           query: defaultStatisticsFilterValues,
           hide: [ "products", "login" ]
         },
@@ -151,6 +155,7 @@ export default {
           name: "Reports",
           icon: "mdi-clipboard-text-multiple-outline",
           route: "reports",
+          active: [ "reports" ],
           query: defaultReportFilterValues,
           hide: [ "products", "login" ]
         }
