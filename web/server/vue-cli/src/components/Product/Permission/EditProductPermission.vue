@@ -1,29 +1,5 @@
 <template>
   <v-container fluid>
-    <v-alert
-      v-model="success"
-      dismissible
-      color="success"
-      border="left"
-      elevation="2"
-      colored-border
-      icon="mdi-check"
-    >
-      Permission changes saved successfully!
-    </v-alert>
-
-    <v-alert
-      v-model="error"
-      dismissible
-      color="error"
-      border="left"
-      elevation="2"
-      colored-border
-      icon="mdi-alert-outline"
-    >
-      Some permission changes could not be saved!
-    </v-alert>
-
     <v-row justify="center">
       <v-col cols="auto">
         <product-user-permission
@@ -32,8 +8,10 @@
           :bus="bus"
           :extra-params-json="extraParamsJSON"
           :is-group="false"
-          :success.sync="success"
-          :error.sync="error"
+          :success="success"
+          :error="error"
+          @update:success="(success) => $emit('update:success', success)"
+          @update:error="(error) => $emit('update:error', error)"
         />
       </v-col>
       <v-col cols="auto">
@@ -43,8 +21,10 @@
           :bus="bus"
           :extra-params-json="extraParamsJSON"
           :is-group="true"
-          :success.sync="success"
-          :error.sync="error"
+          :success="success"
+          :error="error"
+          @update:success="(success) => $emit('update:success', success)"
+          @update:error="(error) => $emit('update:error', error)"
         />
       </v-col>
     </v-row>
@@ -65,7 +45,9 @@ export default {
   mixins: [ PopulatePermissionsMixin ],
   props: {
     product: { type: Object, required: true },
-    bus: { type: Object, required: true }
+    bus: { type: Object, required: true },
+    success: { type: Boolean, default: false },
+    error: { type: Boolean, default: false }
   },
 
   data() {
@@ -73,9 +55,7 @@ export default {
       scope: "PRODUCT",
       extraParamsJSON: JSON.stringify({
         productID: this.product.id.toNumber()
-      }),
-      success: false,
-      error: false
+      })
     };
   },
 

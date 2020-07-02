@@ -21,6 +21,30 @@
     </template>
 
     <template v-slot:content>
+      <v-alert
+        v-model="success"
+        dismissible
+        color="success"
+        border="left"
+        elevation="2"
+        colored-border
+        icon="mdi-check"
+      >
+        Successfully saved.
+      </v-alert>
+
+      <v-alert
+        v-model="error"
+        dismissible
+        color="error"
+        border="left"
+        elevation="2"
+        colored-border
+        icon="mdi-alert-outline"
+      >
+        Failed to save product changes.
+      </v-alert>
+
       <v-tabs
         v-model="tab"
         background-color="transparent"
@@ -51,6 +75,8 @@
           <edit-product-permission
             :product="product"
             :bus="bus"
+            :success.sync="success"
+            :error.sync="error"
           />
         </v-tab-item>
       </v-tabs-items>
@@ -91,6 +117,8 @@ export default {
       tab: null,
       loading: false,
       isValid: false,
+      success: false,
+      error: false,
       bus: new Vue()
     };
   },
@@ -110,9 +138,17 @@ export default {
   methods: {
     save() {
       prodService.getClient().editProduct(this.product.id, this.productConfig,
-        handleThriftError(() => {
+        handleThriftError(success => {
+          if (!success) {
+            this.error = true;
+            return;
+          }
+
+          this.success = true;
           this.$emit("on-complete",
             new ProductConfiguration(this.productConfig));
+        }, () => {
+          this.error = true;
         }));
 
       // Save permissions.
