@@ -19,8 +19,9 @@
     </v-toolbar>
 
     <v-list
-      class="pa-2"
+      class="pa-2 overflow-y-auto"
       dense
+      :max-height="300"
     >
       <v-list-item-group
         v-if="searchTxt && search.regexLabel"
