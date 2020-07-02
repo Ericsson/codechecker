@@ -24,6 +24,8 @@
         </v-list-item-avatar>
       </v-list-item>
 
+      <v-divider />
+
       <v-list-item class="unique-filter pl-1">
         <v-list-item-content>
           <unique-filter
@@ -33,6 +35,8 @@
           />
         </v-list-item-content>
       </v-list-item>
+
+      <v-divider />
 
       <v-list-item id="baseline-filters" class="pl-1">
         <v-list-item-content class="pa-0">
@@ -52,6 +56,9 @@
                   :namespace="namespace"
                   @update:url="updateUrl"
                 />
+
+                <v-divider />
+
                 <baseline-tag-filter
                   ref="filters"
                   :namespace="namespace"
@@ -62,6 +69,8 @@
           </v-expansion-panels>
         </v-list-item-content>
       </v-list-item>
+
+      <v-divider v-if="showNewcheck" />
 
       <v-list-item
         v-if="showNewcheck"
@@ -85,11 +94,17 @@
                   :namespace="namespace"
                   @update:url="updateUrl"
                 />
+
+                <v-divider />
+
                 <newcheck-tag-filter
                   ref="filters"
                   :namespace="namespace"
                   @update:url="updateUrl"
                 />
+
+                <v-divider />
+
                 <newcheck-diff-type-filter
                   ref="filters"
                   :namespace="namespace"
@@ -101,6 +116,8 @@
         </v-list-item-content>
       </v-list-item>
 
+      <v-divider />
+
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
           <file-path-filter
@@ -110,6 +127,8 @@
           />
         </v-list-item-content>
       </v-list-item>
+
+      <v-divider />
 
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
@@ -121,6 +140,8 @@
         </v-list-item-content>
       </v-list-item>
 
+      <v-divider />
+
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
           <severity-filter
@@ -130,6 +151,8 @@
           />
         </v-list-item-content>
       </v-list-item>
+
+      <v-divider v-if="showReviewStatus" />
 
       <v-list-item
         v-if="showReviewStatus"
@@ -144,6 +167,8 @@
         </v-list-item-content>
       </v-list-item>
 
+      <v-divider />
+
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
           <detection-status-filter
@@ -153,6 +178,8 @@
           />
         </v-list-item-content>
       </v-list-item>
+
+      <v-divider />
 
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
@@ -164,6 +191,8 @@
         </v-list-item-content>
       </v-list-item>
 
+      <v-divider />
+
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
           <checker-message-filter
@@ -173,6 +202,8 @@
           />
         </v-list-item-content>
       </v-list-item>
+
+      <v-divider />
 
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
@@ -185,6 +216,8 @@
         </v-list-item-content>
       </v-list-item>
 
+      <v-divider />
+
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
           <report-hash-filter
@@ -196,6 +229,8 @@
         </v-list-item-content>
       </v-list-item>
 
+      <v-divider />
+
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
           <bug-path-length-filter
@@ -206,6 +241,8 @@
           />
         </v-list-item-content>
       </v-list-item>
+
+      <v-divider v-if="showRemoveFilteredReports" />
 
       <v-list-item
         v-if="showRemoveFilteredReports"
