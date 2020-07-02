@@ -200,7 +200,7 @@ export default {
   },
 
   data() {
-    const itemsPerPageOptions = [ 25, 100, 250, 500 ];
+    const itemsPerPageOptions = [ 25, 50, 100 ];
 
     const page = parseInt(this.$router.currentRoute.query["page"]) || 1;
     const itemsPerPage =
