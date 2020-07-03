@@ -126,7 +126,7 @@ class MetadataInfoParser(object):
         # detection status. To solve this problem we will return with an empty
         # checker set. This way detection statuses will be calculated properly
         # but OFF and UNAVAILABLE checker statuses will never be used.
-        num_of_report_dir = metadata_dict.get('num_of_report_dir')
+        num_of_report_dir = metadata_dict.get('num_of_report_dir', 0)
         if num_of_report_dir > 1:
             checkers = {}
 

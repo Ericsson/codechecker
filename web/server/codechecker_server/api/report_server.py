@@ -2985,6 +2985,11 @@ class ThriftRequestHandler(object):
                                   sec_to_wait_after_failure)
                         time.sleep(sec_to_wait_after_failure)
                         sec_to_wait_after_failure *= 2
+        except Exception as ex:
+            LOG.error("Failed to store results: %s", ex)
+            import traceback
+            traceback.print_exc()
+            raise
         finally:
             # In any case if the "try" block's execution began, a run lock must
             # exist, which can now be removed, as storage either completed
