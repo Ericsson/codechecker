@@ -149,7 +149,7 @@ class MetadataInfoParserTest(unittest.TestCase):
 
         self.assertEqual(len(check_commands), 1)
         self.assertEqual(' '.join(metadata_cc_info['check_commands']),
-                         ' '.join(check_commands[0]))
+                         list(check_commands)[0])
 
         self.assertEqual(metadata_cc_info['analysis_duration'][0],
                          check_durations[0])
@@ -170,7 +170,6 @@ class MetadataInfoParserTest(unittest.TestCase):
             checkers = self.__parser.get_metadata_info(metadata_multiple)
 
         self.assertEqual(len(check_commands), 2)
-        check_commands = [' '.join(c) for c in check_commands]
         for command in metadata_multiple_info['check_commands']:
             self.assertTrue(command in check_commands)
 
@@ -192,7 +191,6 @@ class MetadataInfoParserTest(unittest.TestCase):
             checkers = self.__parser.get_metadata_info(metadata_multiple)
 
         self.assertEqual(len(check_commands), 2)
-        check_commands = [' '.join(c) for c in check_commands]
         for command in metadata_mult_cppcheck_info['check_commands']:
             self.assertTrue(command in check_commands)
 

@@ -51,6 +51,17 @@
       }
     },
     {
+      "name": "codechecker",
+      "version": "6.11 (930440d6a6cae80f615146547f4b169c7629d558)",
+      "command": [
+        "CodeChecker.py",
+        "analyze",
+        "-o",
+        "/path/to/reports",
+        "/path/to/build.json"
+      ]
+    },
+    {
       "name": "cppcheck",
       "analyzer_statistics": {
         "failed": 0,

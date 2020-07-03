@@ -2905,11 +2905,10 @@ class ThriftRequestHandler(object):
 
                 command = ''
                 if len(check_commands) == 1:
-                    command = ' '.join(check_commands[0])
+                    command = list(check_commands)[0]
                 elif len(check_commands) > 1:
                     command = "multiple analyze calls: " + \
-                              '; '.join([' '.join(com)
-                                         for com in check_commands])
+                              '; '.join(check_commands)
 
                 durations = 0
                 if check_durations:
