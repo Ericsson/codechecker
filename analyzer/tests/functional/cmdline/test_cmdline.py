@@ -119,3 +119,36 @@ class TestCmdline(unittest.TestCase):
         with open(log_file,
                   encoding="utf-8", errors="ignore") as log_f:
             self.assertFalse(json.load(log_f))
+
+    def test_checkers_guideline(self):
+        """ Listing checkers by guideline. """
+
+        checkers_cmd = [env.codechecker_cmd(), 'checkers',
+                        '--guideline', 'sei-cert']
+        _, out, _ = run_cmd(checkers_cmd)
+
+        self.assertNotIn('readability', out)
+        self.assertIn('SizeofPtr', out)
+
+        checkers_cmd = [env.codechecker_cmd(), 'checkers',
+                        '--guideline', 'mem35-c']
+        _, out, _ = run_cmd(checkers_cmd)
+
+        self.assertIn('SizeofPtr', out)
+        self.assertNotIn('CastToStruct', out)
+
+        checkers_cmd = [env.codechecker_cmd(), 'checkers',
+                        '--guideline', 'mem35-c', '-o', 'json', '--details']
+        _, out, _ = run_cmd(checkers_cmd)
+        out = json.loads(out)
+
+        for checker in out:
+            self.assertTrue(checker['name'].endswith('sizeof-expression') or
+                            checker['name'].endswith('SizeofPtr') or
+                            checker['name'].endswith('CastSize') or
+                            checker['name'].endswith('MallocSizeof'))
+
+        checkers_cmd = [env.codechecker_cmd(), 'checkers', '--guideline']
+        _, out, _ = run_cmd(checkers_cmd)
+
+        self.assertTrue(out.strip().startswith('Guideline: sei-cert'))
