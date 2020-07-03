@@ -156,6 +156,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                         compiler_warnings.append('-Wno-' + warning_name)
 
                     continue
+                elif checker_name.startswith('clang-diagnostic'):
+                    checker_name += '*'
 
                 if state == CheckerState.enabled:
                     checkers_cmdline.append(checker_name)
