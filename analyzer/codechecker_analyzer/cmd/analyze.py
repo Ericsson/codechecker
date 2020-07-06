@@ -304,19 +304,21 @@ def add_arguments_to_parser(parser):
     analyzer_opts.add_argument('--config',
                                dest='config_file',
                                required=False,
-                               help="Allow the configuration from an explicit "
-                                    "JSON based configuration file. The "
-                                    "value of the 'analyzer' key in the "
+                               help="R|Allow the configuration from an "
+                                    "explicit JSON based configuration file. "
+                                    "The value of the 'analyzer' key in the "
                                     "config file will be emplaced as command "
                                     "line arguments. The format of "
-                                    "configuration file is: "
-                                    "{"
-                                    "  \"analyzer\": ["
-                                    "    \"--enable=core.DivideZero\","
-                                    "    \"--enable=core.CallAndMessage\","
-                                    "    \"--clean\""
-                                    "  ]"
-                                    "}.")
+                                    "configuration file is:\n"
+                                    "{\n"
+                                    "  \"analyzer\": [\n"
+                                    "    \"--enable=core.DivideZero\",\n"
+                                    "    \"--enable=core.CallAndMessage\",\n"
+                                    "    \"--report-hash=context-free-v2\",\n"
+                                    "    \"--verbose=debug\",\n"
+                                    "    \"--clean\"\n"
+                                    "  ]\n"
+                                    "}")
 
     analyzer_opts.add_argument('--saargs',
                                dest="clangsa_args_cfg_file",

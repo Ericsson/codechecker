@@ -820,10 +820,16 @@ analyzer arguments:
   --config CONFIG_FILE  Allow the configuration from an explicit JSON based
                         configuration file. The value of the 'analyzer' key in
                         the config file will be emplaced as command line
-                        arguments. The format of configuration file is: {
-                        "analyzer": [ "--enable=core.DivideZero", "--
-                        enable=core.CallAndMessage", "--clean" ]}. (default:
-                        ~/.codechecker.json)
+                        arguments. The format of configuration file is:
+                        {
+                          "analyzer": [
+                            "--enable=core.DivideZero",
+                            "--enable=core.CallAndMessage",
+                            "--report-hash=context-free-v2",
+                            "--verbose=debug",
+                            "--clean"
+                          ]
+                        } (default: None)
   --saargs CLANGSA_ARGS_CFG_FILE
                         File containing argument which will be forwarded
                         verbatim for the Clang Static Analyzer.
@@ -889,11 +895,13 @@ Lets assume you have a configuration file
   "analyzer": [
     "--enable=core.DivideZero",
     "--enable=core.CallAndMessage",
-    "--clean",
     "--analyzer-config",
     "clangsa:unroll-loops=true",
     "--checker-config",
     "clang-tidy:google-readability-function-size.StatementThreshold=100"
+    "--report-hash", "context-free-v2"
+    "--verbose=debug",
+    "--clean"
   ]
 }
 ```
@@ -903,10 +911,18 @@ If you run the following command:
 CodeChecker analyze compilation.json -o ./reports --config ./codechecker.json
 ```
 then the analyzer parameters from the `codechecker.json` file will be emplaced
-as command line arguments if the `enabled` option in this file is `true`:
+as command line arguments:
 ```sh
-CodeChecker analyze compilation.json -o ./reports --enable=core.DivideZero --enable=core.CallAndMessage --clean
+CodeChecker analyze compilation.json -o ./reports --enable=core.DivideZero --enable=core.CallAndMessage --analyzer-config clangsa:unroll-loops=true --checker-config clang-tidy:google-readability-function-size.StatementThreshold=100 --report-hash context-free-v2 --verbose debug --clean
 ```
+
+Note: Options which require parameters have to be in either of the following
+formats:
+
+- Use equal to separate option and parameter in quotes:
+  `{ "analyzer": [ "--verbose=debug" ] }`
+- Use separated values for option and parameter:
+  `{ "analyzer": [ "--verbose", "debug" ] }`
 
 #### Analyzer and checker config options <a name="analyzer-checker-config-option"></a>
 
