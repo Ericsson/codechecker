@@ -30,12 +30,13 @@
 
     <v-text-field
       v-if="isSuperUser"
-      v-model="productConfig.runLimit"
+      :value="productConfig.runLimit"
       type="number"
       label="Run limit"
       name="run-limit"
       prepend-icon="mdi-speedometer"
       :rules="rules.runLimit"
+      @input="productConfig.runLimit = $event || null"
     />
 
     <v-checkbox
