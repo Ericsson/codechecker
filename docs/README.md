@@ -184,7 +184,7 @@ virtualenv -p /usr/bin/python3 .
 ```
 
 ## Mac OS X
-For installation instructions for Mac OS X see [Mac OS X Installation Guide](installation_macosx.md) documentation. 
+For installation instructions for Mac OS X see [Mac OS X Installation Guide](install_macosx.md) documentation.
 
 ## Docker
 To run CodeChecker server in Docker see the [Docker](web/docker.md) documentation.

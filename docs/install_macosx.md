@@ -1,4 +1,4 @@
-#Mac OS X Installation Guide
+# Mac OS X Installation Guide
 
 In OSX environment the intercept-build tool from
 [scan-build](https://github.com/rizsotto/scan-build) is used to log the
