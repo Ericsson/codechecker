@@ -151,14 +151,12 @@ clean_venv_dev:
 	$(MAKE) -C $(CC_WEB) clean_venv_dev
 	$(MAKE) -C $(CC_TOOLS)/plist_to_html clean_venv_dev
 
-clean: clean_package clean_vendor
+clean: clean_package
+	$(MAKE) -C $(CC_WEB) clean
 
 clean_package: clean_plist_to_html clean_tu_collector clean_report_converter clean_report_hash
 	rm -rf $(BUILD_DIR)
 	find . -name "*.pyc" -delete
-
-clean_vendor:
-	$(MAKE) -C $(CC_SERVER)/vendor clean_vendor
 
 clean_plist_to_html:
 	$(MAKE) -C $(CC_TOOLS)/plist_to_html clean

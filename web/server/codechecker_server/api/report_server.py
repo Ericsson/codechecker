@@ -2066,13 +2066,17 @@ class ThriftRequestHandler(object):
 
     @exc_to_thrift_reqfail
     @timeit
-    def getRunHistoryTagCounts(self, run_ids, report_filter, cmp_data):
+    def getRunHistoryTagCounts(self, run_ids, report_filter, cmp_data, limit,
+                               offset):
         """
           If the run id list is empty the metrics will be counted
           for all of the runs and in compare mode all of the runs
           will be used as a baseline excluding the runs in compare data.
         """
         self.__require_access()
+
+        limit = verify_limit_range(limit)
+
         results = []
         with DBSession(self.__Session) as session:
             if cmp_data:
@@ -2124,7 +2128,7 @@ class ThriftRequestHandler(object):
             if run_ids:
                 tag_q = tag_q.filter(RunHistory.run_id.in_(run_ids))
 
-            if report_filter and report_filter.runTag:
+            if report_filter and report_filter.runTag is not None:
                 tag_q = tag_q.filter(RunHistory.id.in_(report_filter.runTag))
 
             tag_q = tag_q.subquery()
@@ -2143,6 +2147,9 @@ class ThriftRequestHandler(object):
                 .filter(RunHistory.version_tag.isnot(None)) \
                 .group_by(tag_q.c.run_history_id, RunHistory.time) \
                 .order_by(RunHistory.time.desc())
+
+            if limit:
+                q = q.limit(limit).offset(offset)
 
             for _, run_name, tag_id, version_time, tag, count in q:
                 if tag:

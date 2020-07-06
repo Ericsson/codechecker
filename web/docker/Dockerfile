@@ -14,7 +14,9 @@ RUN set -x && apt-get update -qq \
     curl \
     doxygen \
     git \
-    make
+    make \
+    && curl -sL https://deb.nodesource.com/setup_12.x | bash - \
+    && apt-get install -y nodejs
 
 # Download CodeChecker release.
 RUN git clone https://github.com/Ericsson/CodeChecker.git /codechecker
@@ -23,10 +25,6 @@ RUN git checkout ${CC_VERSION}
 
 # Build CodeChecker web.
 RUN make -C /codechecker/web package
-
-# Remove dojo uncompressed files.
-WORKDIR /codechecker/web/build/CodeChecker
-RUN find www/scripts/plugins/dojo/ -name *.uncompressed.js -exec rm -rf '{}' \;
 
 ###############################################################################
 #--------------------------    PRODUCTION STAGE   ----------------------------#
