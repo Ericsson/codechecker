@@ -86,12 +86,19 @@ package_ld_logger:
 	cd $(CC_BUILD_DIR) && \
 	ln -sf ../ld_logger/bin/ldlogger bin/ldlogger
 
+define LOGGER_BUILD_ERROR_MSG
+Failed to compile logger for 32bit and 64bit targets please check if
+gcc-multilib is installed if both targets are needed or set the
+BUILD_LOGGER_64_BIT_ONLY=YES environment variable for a 64bit only build.
+endef
+
+export LOGGER_BUILD_ERROR_MSG
 build_ld_logger:
-  ifeq ($(BUILD_LOGGER_64_BIT_ONLY),YES)
-		$(MAKE) -C tools/build-logger -f Makefile.manual pack64bit 2> /dev/null
-  else
-		$(MAKE) -C tools/build-logger -f Makefile.manual 2> /dev/null
-  endif
+ifeq ($(BUILD_LOGGER_64_BIT_ONLY),YES)
+	$(MAKE) -C tools/build-logger -f Makefile.manual pack64bit_only 2> /dev/null
+else
+	$(MAKE) -C tools/build-logger -f Makefile.manual 2> /dev/null || (echo "$$LOGGER_BUILD_ERROR_MSG" && false)
+endif
 
 # NOTE: extra spaces are allowed and ignored at the beginning of the
 # conditional directive line, but a tab is not allowed.
