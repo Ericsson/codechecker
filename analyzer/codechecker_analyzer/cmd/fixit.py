@@ -108,6 +108,8 @@ def clang_tidy_fixit_filter(content, checker_names, file_paths, interactive,
                             reports):
     """
     This function filters the content of a replacement .yaml file.
+    The function returns the set of not-existing files which to which the
+    fixits couldn't apply, and the set of changed files.
     content -- The content of a replacement .yaml file parsed to an object by
                yaml module.
     checker_names -- A list of checker names possibly containing * joker
@@ -132,6 +134,12 @@ def clang_tidy_fixit_filter(content, checker_names, file_paths, interactive,
         prompt = "y/<Enter> - Yes\nOther     - No\nCtrl-C    - Cancel\nApply: "
         return input(prompt) in "Yy"
 
+    def exists_collect(file_path):
+        if not os.path.isfile(file_path):
+            not_existing_files.add(file_path)
+            return False
+        return True
+
     if reports:
         def match_reports(diag_msg):
             row, col = get_location_by_offset(diag_msg['FilePath'],
@@ -142,6 +150,9 @@ def clang_tidy_fixit_filter(content, checker_names, file_paths, interactive,
     else:
         match_reports = bool
 
+    not_existing_files = set()
+    existing_files = set()
+
     checker_names = make_regex(checker_names)
     file_paths = make_regex(file_paths)
 
@@ -149,13 +160,19 @@ def clang_tidy_fixit_filter(content, checker_names, file_paths, interactive,
         lambda diag: checker_names.match(diag['DiagnosticName']) and
         len(diag['DiagnosticMessage']['Replacements']) != 0 and
         file_paths.match(diag['DiagnosticMessage']['FilePath']) and
-        match_reports(diag['DiagnosticMessage']),
+        match_reports(diag['DiagnosticMessage']) and
+        exists_collect(diag['DiagnosticMessage']['FilePath']),
         content['Diagnostics'])
 
     if interactive:
         items = filter(ask_user, items)
 
     content['Diagnostics'] = list(items)
+
+    for diag in content['Diagnostics']:
+        existing_files.add(diag['DiagnosticMessage']['FilePath'])
+
+    return existing_files, not_existing_files
 
 
 def list_fixits(inputs, checker_names, file_paths, interactive, reports):
@@ -166,6 +183,9 @@ def list_fixits(inputs, checker_names, file_paths, interactive, reports):
     inputs -- A list of report directories which contains the fixit dumps in a
               subdirectory named "fixit".
     """
+    not_existing_files = set()
+    existing_files = set()
+
     for i in inputs:
         fixit_dir = os.path.join(i, 'fixit')
 
@@ -176,9 +196,22 @@ def list_fixits(inputs, checker_names, file_paths, interactive, reports):
             with open(os.path.join(fixit_dir, fixit_file),
                       encoding='utf-8', errors='ignore') as f:
                 content = yaml.load(f, Loader=yaml.BaseLoader)
-                clang_tidy_fixit_filter(content, checker_names, file_paths,
-                                        interactive, reports)
+
+                existing, not_existing = clang_tidy_fixit_filter(
+                    content, checker_names, file_paths, interactive, reports)
+
+                existing_files.update(existing)
+                not_existing_files.update(not_existing)
             print(yaml.dump(content))
+
+    if existing_files:
+        print("Updated files:\n{}".format(
+            '\n'.join(sorted(existing_files))),
+            file=sys.stderr)
+    if not_existing_files:
+        print("Not existing files:\n{}".format(
+            '\n'.join(sorted(not_existing_files))),
+            file=sys.stderr)
 
 
 def apply_fixits(inputs, checker_names, file_paths, interactive, reports):
@@ -187,6 +220,9 @@ def apply_fixits(inputs, checker_names, file_paths, interactive, reports):
     inputs -- A list of report directories which contains the fixit dumps in a
               subdirectory named "fixit".
     """
+    not_existing_files = set()
+    existing_files = set()
+
     for i in inputs:
         fixit_dir = os.path.join(i, 'fixit')
 
@@ -198,8 +234,13 @@ def apply_fixits(inputs, checker_names, file_paths, interactive, reports):
                 with open(os.path.join(fixit_dir, fixit_file),
                           encoding='utf-8', errors='ignore') as f:
                     content = yaml.load(f, Loader=yaml.BaseLoader)
-                    clang_tidy_fixit_filter(content, checker_names, file_paths,
-                                            interactive, reports)
+
+                    existing, not_existing = clang_tidy_fixit_filter(
+                        content, checker_names, file_paths, interactive,
+                        reports)
+
+                    existing_files.update(existing)
+                    not_existing_files.update(not_existing)
 
                 if len(content['Diagnostics']) != 0:
                     with open(os.path.join(out_dir, fixit_file), 'w',
@@ -210,6 +251,15 @@ def apply_fixits(inputs, checker_names, file_paths, interactive, reports):
                 analyzer_context.get_context().replacer_binary,
                 out_dir])
             proc.communicate()
+
+    if existing_files:
+        print("Updated files:\n{}".format(
+            '\n'.join(sorted(existing_files))),
+            file=sys.stderr)
+    if not_existing_files:
+        print("Not existing files:\n{}".format(
+            '\n'.join(sorted(not_existing_files))),
+            file=sys.stderr)
 
 
 def main(args):
@@ -229,6 +279,11 @@ def main(args):
     if not context.replacer_binary:
         LOG.error("clang-apply-replacements tool is not found")
         return
+
+    if not sys.stdin.isatty() and args.interactive:
+        LOG.error("Interactive mode can't be used in case of JSON data "
+                  "arriving from standard input.")
+        sys.exit(1)
 
     try:
         reports = None if sys.stdin.isatty() else json.loads(sys.stdin.read())
