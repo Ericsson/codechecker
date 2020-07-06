@@ -33,6 +33,19 @@ def arg_match(options, args):
     return matched_args
 
 
+def get_linef(fp, line_no):
+    """'fp' should be (readable) file object.
+    Return the line content at line_no or an empty line
+    if there is less lines than line_no.
+    """
+    fp.seek(0)
+    for line in fp:
+        line_no -= 1
+        if line_no == 0:
+            return line
+    return ''
+
+
 def get_line(file_name, line_no, errors='ignore'):
     """
     Return the given line from the file. If line_no is larger than the number

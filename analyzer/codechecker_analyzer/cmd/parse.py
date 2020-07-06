@@ -27,7 +27,7 @@ from codechecker_analyzer import analyzer_context, suppress_handler
 from codechecker_common import arg, logger, plist_parser, util
 from codechecker_common.skiplist_handler import SkipListHandler
 from codechecker_common.source_code_comment_handler import \
-    REVIEW_STATUS_VALUES, SourceCodeCommentHandler
+    REVIEW_STATUS_VALUES, SourceCodeCommentHandler, SpellException
 from codechecker_common.output_formatters import twodim_to_str
 from codechecker_common.report import Report
 
@@ -311,11 +311,18 @@ def skip_report(report_hash, source_file, report_line, checker_name,
 
     sc_handler = SourceCodeCommentHandler()
 
+    src_comment_data = []
     # Check for source code comment.
-    src_comment_data = sc_handler.filter_source_line_comments(
-        source_file,
-        report_line,
-        checker_name)
+    with open(source_file, encoding='utf-8', errors='ignore') as sf:
+        try:
+            src_comment_data = sc_handler.filter_source_line_comments(
+                sf,
+                report_line,
+                checker_name)
+        except SpellException as ex:
+            LOG.warning("%s contains %s",
+                        os.path.basename(source_file),
+                        str(ex))
 
     if not src_comment_data:
         skip = True if src_comment_status_filter and \
