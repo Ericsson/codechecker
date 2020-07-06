@@ -98,6 +98,7 @@
           label="User name"
           name="db-username"
           prepend-icon="mdi-account-outline"
+          autocomplete="new-password"
         />
 
         <v-text-field
@@ -106,6 +107,7 @@
           label="Password"
           name="db-password"
           prepend-icon="mdi-lock-outline"
+          autocomplete="new-password"
         />
 
         <v-text-field
