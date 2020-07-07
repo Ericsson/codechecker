@@ -79,8 +79,8 @@ class MetadataInfoParser(object):
 
     def __get_metadata_info_v2(self, metadata_dict):
         """ Get metadata information from the new version format json file. """
-        cc_version = []
-        check_commands = []
+        cc_version = set()
+        check_commands = set()
         check_durations = []
         analyzer_statistics = {}
         checkers = {}
@@ -88,10 +88,10 @@ class MetadataInfoParser(object):
         tools = metadata_dict.get('tools', {})
         for tool in tools:
             if tool['name'] == 'codechecker' and 'version' in tool:
-                cc_version.append(tool['version'])
+                cc_version.add(tool['version'])
 
             if 'command' in tool:
-                check_commands.append(tool['command'])
+                check_commands.add(' '.join(tool['command']))
 
             if 'timestamps' in tool:
                 check_durations.append(
