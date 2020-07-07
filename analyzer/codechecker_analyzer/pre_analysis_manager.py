@@ -21,9 +21,11 @@ import uuid
 from codechecker_analyzer import env
 from codechecker_common.logger import get_logger
 
+from codechecker_statistics_collector import post_process_stats
+
 from .analyzers import analyzer_base
 from .analyzers.clangsa import ctu_manager, ctu_triple_arch
-from .analyzers.clangsa import statistics_collector
+from .analyzers.clangsa import statistics
 from .analyzers.clangsa.analyzer import ClangSA
 
 
@@ -36,9 +38,8 @@ def collect_statistics(action, source, clangsa_config,
     Run the statistics collection command and save the
     stdout and stderr to a file.
     """
-    cmd, can_collect = statistics_collector.build_stat_coll_cmd(action,
-                                                                clangsa_config,
-                                                                source)
+    cmd, can_collect = statistics.build_stat_coll_cmd(action, clangsa_config,
+                                                      source)
 
     if not can_collect:
         LOG.debug('Can not collect statistical data.')
@@ -172,16 +173,13 @@ def run_pre_analysis(actions, context, clangsa_config,
     if statistics_data:
         # Statistics collection is enabled setup temporary
         # directories.
-        stat_tmp_dir = os.path.join(statistics_data.get('stats_out_dir'),
-                                    'tmp')
+        stat_tmp_dir = statistics_data['stat_tmp_dir']
 
         # Cleaning previous outputs.
         if os.path.exists(stat_tmp_dir):
             shutil.rmtree(stat_tmp_dir)
 
         os.makedirs(stat_tmp_dir)
-
-        statistics_data['stat_tmp_dir'] = stat_tmp_dir
 
     try:
         collect_actions = [(build_action,
@@ -202,7 +200,7 @@ def run_pre_analysis(actions, context, clangsa_config,
 
     # Postprocessing the pre analysis results.
     if ctu_data:
-        ctu_manager.merge_ctu_func_maps(
+        ctu_manager.merge_clang_extdef_mappings(
                 ctu_data.get('ctu_dir'),
                 ctu_data.get('ctu_func_map_file'),
                 ctu_data.get('ctu_temp_fnmap_folder'))
@@ -212,12 +210,11 @@ def run_pre_analysis(actions, context, clangsa_config,
         stats_in = statistics_data.get('stat_tmp_dir')
         stats_out = statistics_data.get('stats_out_dir')
 
-        statistics_collector.postprocess_stats(stats_in, stats_out,
-                                               statistics_data.get(
-                                                   'stats_min_sample_count'),
-                                               statistics_data.get(
-                                                   'stats_relevance_threshold')
-                                               )
+        post_process_stats.process(stats_in, stats_out,
+                                   statistics_data.get(
+                                      'stats_min_sample_count'),
+                                   statistics_data.get(
+                                      'stats_relevance_threshold'))
 
         if os.path.exists(stats_in):
             LOG.debug('Cleaning up temporary statistics directory')

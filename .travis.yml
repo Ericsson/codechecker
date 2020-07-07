@@ -174,7 +174,9 @@ script:
         BUILD_DIR=$TRAVIS_BUILD_DIR/build make -C analyzer \
           test_unit \
           test_functional \
-          test_tu_collector &&
+          test_tu_collector \
+          test_merge_clang_extdef_mappings \
+          test_statistics_collector &&
         if [[ "$TRAVIS_OS_NAME" = "linux" ]]; then
           make -C analyzer test_build_logger
         fi

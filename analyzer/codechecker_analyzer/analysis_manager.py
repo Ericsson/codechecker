@@ -28,12 +28,14 @@ from codechecker_analyzer import env
 from codechecker_common import plist_parser
 from codechecker_common.logger import get_logger
 
+from codechecker_statistics_collector.collectors.special_return_value import \
+    SpecialReturnValueCollector
+
 from . import gcc_toolchain
 
 from .analyzers import analyzer_types
 from .analyzers.config_handler import CheckerState
 from .analyzers.clangsa.analyzer import ClangSA
-from .analyzers.clangsa.statistics_collector import SpecialReturnValueCollector
 
 LOG = get_logger('analyzer')
 
@@ -166,15 +168,9 @@ def is_ctu_active(source_analyzer):
         source_analyzer.is_ctu_enabled()
 
 
-def prepare_check(action, analyzer_config, output_dir,
-                  severity_map, skip_handler, statistics_data,
-                  disable_ctu=False):
-    """
-    Construct the source analyzer build the analysis command
-    and result handler for the analysis.
-    """
-    reanalyzed = False
-
+def prepare_check(action, analyzer_config, output_dir, severity_map,
+                  skip_handler, statistics_data, disable_ctu=False):
+    """ Construct the source analyzer and result handler. """
     # Create a source analyzer.
     source_analyzer = \
         analyzer_types.construct_analyzer(action,
@@ -198,7 +194,11 @@ def prepare_check(action, analyzer_config, output_dir,
         stats_cfg = \
             SpecialReturnValueCollector.checker_analyze_cfg(stats_dir)
 
-        source_analyzer.add_checker_config(stats_cfg)
+        if os.path.exists(SpecialReturnValueCollector.stats_file(stats_dir)):
+            source_analyzer.add_checker_config(stats_cfg)
+        else:
+            LOG.debug('No checker statistics file was found for %s',
+                      SpecialReturnValueCollector.checker_analyze)
 
     # Source is the currently analyzed source file
     # there can be more in one buildaction.
@@ -217,14 +217,7 @@ def prepare_check(action, analyzer_config, output_dir,
     # The analyzer output file is based on the currently
     # analyzed source.
     rh.analyzed_source_file = action.source
-
-    if os.path.exists(rh.analyzer_result_file):
-        reanalyzed = True
-
-    # Construct the analyzer cmd.
-    analyzer_cmd = source_analyzer.construct_analyzer_cmd(rh)
-
-    return source_analyzer, analyzer_cmd, rh, reanalyzed
+    return source_analyzer, rh
 
 
 def handle_success(rh, result_file, result_base, skip_handler,
@@ -477,10 +470,14 @@ def check(check_data):
         if analyzer_config is None:
             raise Exception("Analyzer configuration is missing.")
 
-        source_analyzer, analyzer_cmd, rh, reanalyzed = \
-            prepare_check(action, analyzer_config,
-                          output_dir, context.severity_map,
-                          skip_handler, statistics_data)
+        source_analyzer, rh = prepare_check(action, analyzer_config,
+                                            output_dir, context.severity_map,
+                                            skip_handler, statistics_data)
+
+        reanalyzed = os.path.exists(rh.analyzer_result_file)
+
+        # Construct the analyzer cmd.
+        analyzer_cmd = source_analyzer.construct_analyzer_cmd(rh)
 
         # The analyzer invocation calls __create_timeout as a callback
         # when the analyzer starts. This callback creates the timeout
@@ -594,14 +591,15 @@ def check(check_data):
             if ctu_active and ctu_reanalyze_on_failure:
                 LOG.error("Try to reanalyze without CTU")
                 # Try to reanalyze with CTU disabled.
-                source_analyzer, analyzer_cmd, rh, reanalyzed = \
-                    prepare_check(action,
-                                  analyzer_config,
-                                  output_dir,
-                                  context.severity_map,
-                                  skip_handler,
-                                  statistics_data,
+                source_analyzer, rh = \
+                    prepare_check(action, analyzer_config,
+                                  output_dir, context.severity_map,
+                                  skip_handler, statistics_data,
                                   True)
+                reanalyzed = os.path.exists(rh.analyzer_result_file)
+
+                # Construct the analyzer cmd.
+                analyzer_cmd = source_analyzer.construct_analyzer_cmd(rh)
 
                 # Fills up the result handler with
                 # the analyzer information.

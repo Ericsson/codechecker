@@ -31,7 +31,8 @@ class AnalyzerResult(object, metaclass=ABCMeta):
     # Link to the official analyzer website.
     URL = None
 
-    def transform(self, analyzer_result, output_dir, metadata=None):
+    def transform(self, analyzer_result, output_dir,
+                  file_name="{source_file}_{analyzer}", metadata=None):
         """ Creates plist files from the given analyzer result to the given
         output directory.
         """
@@ -44,7 +45,7 @@ class AnalyzerResult(object, metaclass=ABCMeta):
 
         self._post_process_result(plist_objs)
 
-        self._write(plist_objs, output_dir)
+        self._write(plist_objs, output_dir, file_name)
 
         if metadata:
             self._save_metadata(metadata, output_dir)
@@ -134,15 +135,19 @@ class AnalyzerResult(object, metaclass=ABCMeta):
                   errors='replace') as analyzer_result:
             return analyzer_result.readlines()
 
-    def _write(self, plist_objs, output_dir):
+    def _write(self, plist_objs, output_dir, file_name):
         """ Creates plist files from the parse result to the given output.
 
         It will generate a context free hash for each diagnostics.
         """
         output_dir = os.path.abspath(output_dir)
         for plist_data in plist_objs:
-            file_name = os.path.basename(plist_data['files'][0])
-            out_file_name = '{0}_{1}.plist'.format(file_name, self.TOOL_NAME)
+            source_file = os.path.basename(plist_data['files'][0])
+
+            out_file_name = file_name \
+                .replace("{source_file}", source_file) \
+                .replace("{analyzer}", self.TOOL_NAME)
+            out_file_name = '{0}.plist'.format(out_file_name)
             out_file = os.path.join(output_dir, out_file_name)
 
             LOG.info("Create/modify plist file: '%s'.", out_file)

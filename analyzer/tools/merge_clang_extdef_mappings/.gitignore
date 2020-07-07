@@ -1,0 +1,3 @@
+build/
+dist/
+merge_clang_extdef_mappings.egg-info

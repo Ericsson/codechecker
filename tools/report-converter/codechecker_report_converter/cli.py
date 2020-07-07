@@ -55,7 +55,7 @@ from codechecker_report_converter.pyflakes.analyzer_result import \
 LOG = logging.getLogger('ReportConverter')
 
 msg_formatter = logging.Formatter('[%(levelname)s] - %(message)s')
-log_handler = logging.StreamHandler()
+log_handler = logging.StreamHandler(sys.stdout)
 log_handler.setFormatter(msg_formatter)
 LOG.setLevel(logging.INFO)
 LOG.addHandler(log_handler)
@@ -80,8 +80,8 @@ supported_converters = {
 supported_metadata_keys = ["analyzer_command", "analyzer_version"]
 
 
-def output_to_plist(analyzer_result, parser_type, output_dir, clean=False,
-                    metadata=None):
+def output_to_plist(analyzer_result, parser_type, output_dir, file_name,
+                    clean=False, metadata=None):
     """ Creates .plist files from the given output to the given output dir. """
     if clean and os.path.isdir(output_dir):
         LOG.info("Previous analysis results in '%s' have been removed, "
@@ -92,7 +92,7 @@ def output_to_plist(analyzer_result, parser_type, output_dir, clean=False,
         os.makedirs(output_dir)
 
     parser = supported_converters[parser_type]()
-    parser.transform(analyzer_result, output_dir, metadata)
+    parser.transform(analyzer_result, output_dir, file_name, metadata)
 
 
 def process_metadata(metadata):
@@ -151,6 +151,25 @@ def __add_arguments_to_parser(parser):
                              "format: key=value. Valid key values are: "
                              "{0}.".format(', '.join(supported_metadata_keys)))
 
+    parser.add_argument('--filename',
+                        type=str,
+                        dest='filename',
+                        metavar='FILENAME',
+                        default="{source_file}_{analyzer}",
+                        help="This option can be used to override the default "
+                             "plist file name output of this tool. This tool "
+                             "can produce multiple plist files on the given "
+                             "code analyzer output result file. The problem "
+                             "is if we run this tool multiple times on the "
+                             "same directory, it may override some plist "
+                             "files. To prevent this we can generate a unique "
+                             "hash into the plist file names with this "
+                             "option. For example: "
+                             "'{source_file}_{analyzer}_xxxxx'. {source_file} "
+                             "and {analyzer} are special values which will "
+                             "be replaced with the current analyzer and "
+                             "source file name where the bug was found.")
+
     parser.add_argument('-c', '--clean',
                         dest="clean",
                         required=False,
@@ -197,7 +216,7 @@ Supported analyzers:
         sys.exit(1)
 
     return output_to_plist(args.input, args.type, args.output_dir,
-                           args.clean, valid_metadata_values)
+                           args.filename, args.clean, valid_metadata_values)
 
 
 if __name__ == "__main__":

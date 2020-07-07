@@ -34,7 +34,7 @@ make package
 ## Usage
 ```sh
 usage: report-converter [-h] -o OUTPUT_DIR -t TYPE [--meta [META [META ...]]]
-                        [-c] [-v]
+                        [--filename FILENAME] [-c] [-v]
                         file
 
 Creates a CodeChecker report directory from the given code analyzer output
@@ -59,6 +59,17 @@ optional arguments:
                         to a running CodeChecker server. It has the following
                         format: key=value. Valid key values are:
                         analyzer_command, analyzer_version.
+  --filename FILENAME   This option can be used to override the default plist
+                        file name output of this tool. This tool can produce
+                        multiple plist files on the given code analyzer output
+                        result file. The problem is if we run this tool
+                        multiple times on the same directory, it may override
+                        some plist files. To prevent this we can generate a
+                        unique hash into the plist file names with this
+                        option. For example: '{source_file}_{analyzer}_xxxxx'.
+                        {source_file} and {analyzer} are special values which
+                        will be replaced with the current analyzer and source
+                        file name where the bug was found.
   -c, --clean           Delete files stored in the output directory.
   -v, --verbose         Set verbosity level.
 

@@ -172,7 +172,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             analyzer_cmd.extend(config.analyzer_extra_arguments)
 
             if config.checker_config and config.checker_config != '{}':
-                analyzer_cmd.append('-config=' + config.checker_config)
+                analyzer_cmd.append("-config=" + config.checker_config)
 
             analyzer_cmd.append(self.source_file)
 

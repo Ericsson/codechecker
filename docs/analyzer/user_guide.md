@@ -695,6 +695,12 @@ optional arguments:
   -t {plist}, --type {plist}, --output-format {plist}
                         Specify the format the analysis results should use.
                         (default: plist)
+  --makefile            Generate a Makefile in the given output directory from
+                        the analyzer commands and do not execute the analysis.
+                        The analysis can be executed by calling the make
+                        command like 'make -f output_dir/Makefile'. You can
+                        ignore errors with the -i/--ignore-errors options:
+                        'make -f output_dir/Makefile -i'. (default: False)
   -q, --quiet           Do not print the output or error of the analyzers to
                         the standard output of CodeChecker.
   -c, --clean           Delete analysis reports stored in the output

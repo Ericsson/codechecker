@@ -197,6 +197,19 @@ def add_arguments_to_parser(parser):
                         help="Specify the format the analysis results should "
                              "use.")
 
+    parser.add_argument('--makefile',
+                        dest="makefile",
+                        required=False,
+                        action='store_true',
+                        default=False,
+                        help="Generate a Makefile in the given output "
+                             "directory from the analyzer commands and do not "
+                             "execute the analysis. The analysis can be "
+                             "executed by calling the make command like "
+                             "'make -f output_dir/Makefile'. You can ignore "
+                             "errors with the -i/--ignore-errors options: "
+                             "'make -f output_dir/Makefile -i'.")
+
     parser.add_argument('-q', '--quiet',
                         dest="quiet",
                         action='store_true',

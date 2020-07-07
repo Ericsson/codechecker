@@ -15,6 +15,7 @@ CC_CLIENT = $(CC_WEB)/client/
 CC_ANALYZER = $(CURRENT_DIR)/analyzer
 
 CC_TOOLS = $(CURRENT_DIR)/tools
+CC_ANALYZER_TOOLS = $(CC_ANALYZER)/tools
 
 # Root of the repository.
 ROOT = $(CURRENT_DIR)
@@ -69,7 +70,27 @@ build_report_hash:
 package_report_hash: build_report_hash package_dir_structure
 	cp -r $(CC_TOOLS)/codechecker_report_hash/build/codechecker_report_hash/codechecker_report_hash $(CC_BUILD_LIB_DIR)
 
-package: package_dir_structure set_git_commit_template package_plist_to_html package_tu_collector package_report_converter package_report_hash
+build_merge_clang_extdef_mappings:
+	$(MAKE) -C $(CC_ANALYZER)/tools/merge_clang_extdef_mappings build
+
+package_merge_clang_extdef_mappings: build_merge_clang_extdef_mappings package_dir_structure
+	# Copy merge-clang-extdef-mappings files.
+	cp -r $(CC_ANALYZER)/tools/merge_clang_extdef_mappings/build/merge_clang_extdef_mappings/codechecker_merge_clang_extdef_mappings $(CC_BUILD_LIB_DIR) && \
+	chmod u+x $(CC_BUILD_LIB_DIR)/codechecker_merge_clang_extdef_mappings/cli.py && \
+	cd $(CC_BUILD_DIR) && \
+	ln -sf ../lib/python3/codechecker_merge_clang_extdef_mappings/cli.py bin/merge-clang-extdef-mappings
+
+build_statistics_collector:
+	$(MAKE) -C $(CC_ANALYZER_TOOLS)/statistics_collector build
+
+package_statistics_collector: build_statistics_collector package_dir_structure
+	# Copy statistics-collector files.
+	cp -r $(CC_ANALYZER_TOOLS)/statistics_collector/build/statistics_collector/codechecker_statistics_collector $(CC_BUILD_LIB_DIR) && \
+	chmod u+x $(CC_BUILD_LIB_DIR)/codechecker_statistics_collector/cli.py && \
+	cd $(CC_BUILD_DIR) && \
+	ln -sf ../lib/python3/codechecker_statistics_collector/cli.py bin/post-process-stats
+
+package: package_dir_structure set_git_commit_template package_plist_to_html package_tu_collector package_report_converter package_report_hash package_merge_clang_extdef_mappings package_statistics_collector
 	BUILD_DIR=$(BUILD_DIR) BUILD_LOGGER_64_BIT_ONLY=$(BUILD_LOGGER_64_BIT_ONLY) $(MAKE) -C $(CC_ANALYZER) package_analyzer
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) package_web
 
@@ -154,7 +175,7 @@ clean_venv_dev:
 clean: clean_package
 	$(MAKE) -C $(CC_WEB) clean
 
-clean_package: clean_plist_to_html clean_tu_collector clean_report_converter clean_report_hash
+clean_package: clean_plist_to_html clean_tu_collector clean_report_converter clean_report_hash clean_statistics_collector
 	rm -rf $(BUILD_DIR)
 	find . -name "*.pyc" -delete
 
@@ -169,6 +190,9 @@ clean_report_converter:
 
 clean_report_hash:
 	$(MAKE) -C $(CC_TOOLS)/codechecker_report_hash clean
+
+clean_statistics_collector:
+	$(MAKE) -C $(CC_ANALYZER_TOOLS)/statistics_collector clean
 
 clean_travis:
 	# Clean CodeChecker config files stored in the users home directory.

@@ -11,7 +11,7 @@
 Test case for the CodeChecker analyze command's direct functionality.
 """
 
-
+import glob
 import json
 import os
 import re
@@ -809,7 +809,59 @@ class TestAnalyze(unittest.TestCase):
         self.assertTrue("other.missing.checker" in out)
 
         errcode = process.returncode
+
         self.assertEqual(errcode, 0)
+
+    def test_makefile_generation(self):
+        """ Test makefile generation. """
+        build_json = os.path.join(self.test_workspace, "build_extra_args.json")
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "-o", self.report_dir, '--makefile']
+
+        source_file = os.path.join(self.test_dir, "extra_args.c")
+        build_log = [{"directory": self.test_workspace,
+                      "command": "gcc -DTIDYARGS -c " + source_file,
+                      "file": source_file
+                      },
+                     {"directory": self.test_workspace,
+                      "command": "gcc -DSAARGS -DTIDYARGS -c " + source_file,
+                      "file": source_file
+                      }]
+
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
+            json.dump(build_log, outfile)
+
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
+        process.communicate()
+
+        errcode = process.returncode
+        self.assertEqual(errcode, 0)
+
+        # Check the existence of the Makefile.
+        makefile = os.path.join(self.report_dir, 'Makefile')
+        self.assertTrue(os.path.exists(makefile))
+
+        # Run the generated Makefile and check the return code of it.
+        process = subprocess.Popen(["make"],
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE,
+                                   cwd=self.report_dir,
+                                   encoding="utf-8",
+                                   errors="ignore")
+        process.communicate()
+
+        errcode = process.returncode
+        self.assertEqual(errcode, 0)
+
+        plist_files = glob.glob(os.path.join(self.report_dir, '*.plist'))
+        self.assertEqual(len(plist_files), 4)
 
     def test_analyzer_and_checker_config(self):
         """Test analyzer configuration through command line flags."""
