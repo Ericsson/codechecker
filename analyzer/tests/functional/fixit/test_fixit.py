@@ -14,6 +14,7 @@ Test case for the CodeChecker fixit command's direct functionality.
 
 import json
 import os
+import pathlib
 import shutil
 import subprocess
 import unittest
@@ -111,8 +112,7 @@ int main()
             content = f.read()
             self.assertIn("v.empty()", content)
 
-        fixit_list_cmd = [self._codechecker_cmd, "fixit", "--list",
-                          self.report_dir]
+        fixit_list_cmd = [self._codechecker_cmd, "fixit", self.report_dir]
 
         process = subprocess.Popen(
             fixit_list_cmd,
@@ -124,7 +124,8 @@ int main()
 
         self.assertIn("v.empty()", out)
 
-        fixit_apply_cmd = [self._codechecker_cmd, "fixit", self.report_dir]
+        fixit_apply_cmd = [self._codechecker_cmd, "fixit", "-a",
+                           self.report_dir]
 
         process = subprocess.Popen(
             fixit_apply_cmd,
@@ -138,6 +139,87 @@ int main()
             new_source_file = f.read()
             self.assertIn("v.empty()", new_source_file)
             self.assertNotIn("v.size()", new_source_file)
+
+    @unittest.skipIf(find_executable('clang-apply-replacements') is None,
+                     "clang-apply-replacements clang tool must be available "
+                     "in the environment.")
+    def test_fixit_file_modification(self):
+        # GIVEN
+        build_json = os.path.join(self.test_workspace, "build_simple.json")
+        source_file_cpp = os.path.join(self.test_workspace, "main.cpp")
+
+        # Create a compilation database.
+        build_log = [{"directory": self.test_workspace,
+                      "command": "clang++ -c " + source_file_cpp,
+                      "file": source_file_cpp
+                      }]
+
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
+            json.dump(build_log, outfile)
+
+        # Test file contents
+        simple_file_content = """
+#include <vector>
+int main()
+{
+  std::vector<int> v;
+  if (v.size() == 0)
+    v.push_back(42);
+}
+"""
+
+        # Write content to the test file
+        with open(source_file_cpp, 'w',
+                  encoding="utf-8", errors="ignore") as source:
+            source.write(simple_file_content)
+
+        # Create analyze command.
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "--analyzers", "clang-tidy", "-o", self.report_dir,
+                       "--enable-all"]
+
+        # WHEN
+        # Run analyze.
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding="utf-8",
+            errors="ignore")
+        process.communicate()
+
+        # THEN
+        errcode = process.returncode
+        self.assertEqual(errcode, 0)
+
+        fixit_dir = os.path.join(self.report_dir, 'fixit')
+        self.assertTrue(os.path.isdir(fixit_dir))
+
+        process = subprocess.Popen(
+            [self._codechecker_cmd, 'fixit', self.report_dir],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding="utf-8",
+            errors="ignore")
+        _, err = process.communicate()
+
+        self.assertNotIn(
+            'Skipped files due to modification since last analysis',
+            err)
+
+        pathlib.Path(source_file_cpp).touch()
+
+        process = subprocess.Popen(
+            [self._codechecker_cmd, 'fixit', self.report_dir],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding="utf-8",
+            errors="ignore")
+        _, err = process.communicate()
+
+        self.assertIn('Skipped files due to modification since last analysis',
+                      err)
 
     @unittest.skipIf(find_executable('clang-apply-replacements') is None,
                      "clang-apply-replacements clang tool must be available "
@@ -198,7 +280,7 @@ int main()
 
         # --- Test fixit --- #
 
-        fixit_cmd = [self._codechecker_cmd, "fixit", report_dir2, "-l"]
+        fixit_cmd = [self._codechecker_cmd, "fixit", report_dir2]
 
         process = subprocess.Popen(
             fixit_cmd,

@@ -889,8 +889,8 @@ def main(args):
     if not os.path.exists(fixit_dir):
         os.makedirs(fixit_dir)
 
-    LOG.debug("args: " + str(args))
-    LOG.debug("Output will be stored to: '" + args.output_path + "'")
+    LOG.debug("args: %s", str(args))
+    LOG.debug("Output will be stored to: '%s'", args.output_path)
 
     actions, skipped_cmp_cmd_count = log_parser.parse_unique_log(
         compile_commands,

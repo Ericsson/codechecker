@@ -1399,7 +1399,7 @@ style issues which can be fixed easily. This command handles the listing and
 application of these automatic fixes.
 
 Besides the provided filter options you can pipe the JSON format output of
-"CodeChecker cmd diff" command to apply automatic fixes only for new reports:
+"CodeChecker cmd diff" command to filter automatic fixes only on new reports:
 CodeChecker cmd diff -b dir1 -n dir2 -o json --new | CodeChecker fixit dir2
 
 positional arguments:
