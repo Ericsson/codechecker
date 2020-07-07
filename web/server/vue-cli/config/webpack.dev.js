@@ -45,7 +45,10 @@ module.exports = merge(common, {
       ]
     },
     proxy: [{
-      context: CC_SERVICE_ENDPOINTS.map(endpoint => `**/${endpoint}`),
+      context: [
+        ...CC_SERVICE_ENDPOINTS.map(endpoint => `**/${endpoint}`),
+        "/docs/**"
+      ],
       target: CC_THRIFT_API_HOST + ':' + CC_THRIFT_API_PORT,
       changeOrigin: true,
       secure: false
