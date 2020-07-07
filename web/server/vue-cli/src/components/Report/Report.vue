@@ -308,6 +308,10 @@ export default {
     });
     this.editor.setSize("100%", "100%");
 
+    this.editor.on("viewportChange", (cm, from, to) => {
+      this.drawLines(from, to);
+    });
+
     if (this.treeItem) {
       this.init(this.treeItem);
     }
@@ -604,36 +608,50 @@ export default {
       });
 
       const range = this.editor.getViewport();
-
-      // Use setTimeout to make sure that the previously marked texts are
-      // rendered.
-      setTimeout(() => {
-        this.drawLines(range.from, range.to);
-      }, 0);
+      this.drawLines(range.from, range.to);
     },
 
-    drawLines(/*from, to*/) {
+    drawLines(from, to) {
       if (!this.lineMarks.length) {
         return;
       }
 
+      this.resetJsPlumb();
+
       let prev = null;
-      this.lineMarks.forEach(textMarker => {
-        const current = this.getDomToMarker(textMarker);
+      this.lineMarks
+        .filter(textMarker => {
+          let line = null;
 
-        if (!current) {
-          return;
-        }
+          // If not in viewport.
+          try {
+            line = textMarker.lines[0].lineNo();
+          } catch (ex) {
+            return false;
+          }
 
-        if (prev) {
-          this.jsPlumbInstance.connect({
-            source : prev,
-            target : current
-          });
-        }
+          if (line < from || line >= to) {
+            return false;
+          }
 
-        prev = current;
-      });
+          return true;
+        })
+        .forEach(textMarker => {
+          const current = this.getDomToMarker(textMarker);
+
+          if (!current) {
+            return;
+          }
+
+          if (prev) {
+            this.jsPlumbInstance.connect({
+              source : prev,
+              target : current
+            });
+          }
+
+          prev = current;
+        });
     },
 
     getDomToMarker(textMarker) {
