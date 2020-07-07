@@ -19,6 +19,7 @@ from codechecker_web.shared.version import SUPPORTED_VERSIONS
 # which should not be considered as a product route.
 NON_PRODUCT_ENDPOINTS = ['index.html',
                          'images',
+                         'docs',
                          'live',
                          'ready']
 
