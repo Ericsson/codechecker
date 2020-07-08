@@ -1265,9 +1265,11 @@ cross translation unit analysis arguments:
                         analysis, using already available extra files in
                         '<OUTPUT_DIR>/ctu-dir'. (These files will not be
                         cleaned up in this mode.)
-  --ctu-on-the-fly      If specified, the 'collect' phase will not create the
-                        extra AST dumps, but rather analysis will be run with
-                        an in-memory recompilation of the source files.
+  --ctu-reanalyze-on-failure
+                        DEPRECATED. The flag will be removed. If Cross-TU
+                        analysis is enabled and fails for some reason, try to
+                        re analyze the same translation unit without Cross-TU
+                        enabled.
 ```
 
 ### Statistical analysis mode <a name="statistical"></a>

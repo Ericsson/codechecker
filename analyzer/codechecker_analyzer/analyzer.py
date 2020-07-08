@@ -166,6 +166,13 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
     Additionally, insert statistical information into the metadata dict.
     """
 
+    ctu_reanalyze_on_failure = 'ctu_reanalyze_on_failure' in args and \
+        args.ctu_reanalyze_on_failure
+    if ctu_reanalyze_on_failure:
+        LOG.warning("Usage of a DEPRECATED FLAG!\n"
+                    "The --ctu-reanalyze-on-failure flag will be removed "
+                    "in the upcoming releases!")
+
     analyzers = args.analyzers if 'analyzers' in args \
         else analyzer_types.supported_analyzers
     analyzers, _ = analyzer_types.check_supported_analyzers(
@@ -322,9 +329,6 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
 
     if 'stats_dir' in args and args.stats_dir:
         statistics_data = manager.dict({'stats_out_dir': args.stats_dir})
-
-    ctu_reanalyze_on_failure = 'ctu_reanalyze_on_failure' in args and \
-        args.ctu_reanalyze_on_failure
 
     if ctu_analyze or statistics_data or (not ctu_analyze and not ctu_collect):
 
