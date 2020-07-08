@@ -48,7 +48,7 @@ from codechecker_server.profiler import timeit
 from .. import permissions
 from ..database import db_cleanup
 from ..database.config_db_model import Product
-from ..database.database import conv
+from ..database.database import conv, DBSession, escape_like
 from ..database.run_db_model import \
     AnalyzerStatistic, Report, ReviewStatus, File, Run, RunHistory, \
     RunLock, Comment, BugPathEvent, BugReportPoint, \
@@ -56,7 +56,6 @@ from ..database.run_db_model import \
 from ..metadata import MetadataInfoParser
 from ..tmp import TemporaryDirectory
 
-from .db import DBSession, escape_like
 from .thrift_enum_helper import detection_status_enum, \
     detection_status_str, review_status_enum, review_status_str, \
     report_extended_data_type_enum
@@ -2298,17 +2297,19 @@ class ThriftRequestHandler(object):
                 if reports_to_delete:
                     self.__removeReports(session, reports_to_delete)
 
-                # Delete files and contents that are not present
-                # in any bug paths.
-                db_cleanup.remove_unused_files(session)
                 session.commit()
                 session.close()
-                return True
             except Exception as ex:
                 session.rollback()
                 LOG.error("Database cleanup failed.")
                 LOG.error(ex)
                 return False
+
+        # Delete files and contents that are not present
+        # in any bug paths.
+        db_cleanup.remove_unused_files(self.__Session)
+
+        return True
 
     @exc_to_thrift_reqfail
     @timeit
@@ -2326,15 +2327,17 @@ class ThriftRequestHandler(object):
             q = process_run_filter(session, q, run_filter)
             q.delete(synchronize_session=False)
 
-            # Delete files and contents that are not present
-            # in any bug paths.
-            db_cleanup.remove_unused_files(session)
-
             session.commit()
             session.close()
 
-            LOG.info("Run '%s' was removed by '%s'.", run_id,
+            runs = run_filter.names if run_filter.names else run_filter.ids
+            LOG.info("Runs '%s' were removed by '%s'.", runs,
                      self.__get_username())
+
+        # Delete files and contents that are not present
+        # in any bug paths.
+        db_cleanup.remove_unused_files(self.__Session)
+
         return True
 
     @exc_to_thrift_reqfail

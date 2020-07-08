@@ -19,7 +19,7 @@ from codechecker_server.profiler import timeit
 from codechecker_web.shared import convert
 
 from ..database.config_db_model import Configuration
-from .db import DBSession
+from ..database.database import DBSession
 
 LOG = get_logger('server')
 
