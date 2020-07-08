@@ -74,11 +74,20 @@
         "unix",
         "valist"
       ],
-      "security": [
-        "alpha.security",
+      "security":[
+        "alpha.core.PointerSub",
+        "alpha.core.PointerArithm",
+        "alpha.core.Conversion",
+        "alpha.core.CastToStruct",
+        "alpha.cplusplus.PlacementNew",
+        "option.cplusplus.VirtualCall",
         "alpha.unix.Chroot",
-        "apiModeling",
-        "security.insecureAPI"
+        "alpha.security",
+        "alpha.unix.cstring.OutOfBounds",
+        "alpha.unix.cstring.BufferOverlap",
+        "alpha.unix.PthreadLock",
+        "alpha.unix.Stream",
+        "option.cplusplus.VirtualCall"
       ],
       "portability": [
         "apiModeling",
@@ -240,7 +249,16 @@
         "performance"
       ],
       "security": [
-        "cert"
+        "cert",
+        "bugprone-exception-escape",
+        "bugprone-undefined-memory-manipulation",
+        "bugprone-use-after-move",
+        "bugprone-narrowing-conversions",
+        "bugprone-suspicious-memset-usage",
+        "bugprone-sizeof-expression",
+        "cppcoreguidelines-slicing",
+        "bugprone-unhandled-self-assignment",
+        "bugprone-macro-repeated-side-effects"
       ],
       "portability": [
         "bugprone-misplaced-widening",
