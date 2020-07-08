@@ -27,6 +27,7 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
     def __init__(self, environ):
         super(ClangSAConfigHandler, self).__init__()
         self.ctu_dir = ''
+        self.ctu_on_demand = False
         self.log_file = ''
         self.path_env_extra = ''
         self.ld_lib_path_extra = ''

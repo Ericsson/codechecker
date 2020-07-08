@@ -9,7 +9,6 @@
 Run pre analysis, collect statistics or CTU data.
 """
 
-
 import multiprocessing
 import os
 import shutil
@@ -27,7 +26,6 @@ from .analyzers import analyzer_base
 from .analyzers.clangsa import ctu_manager, ctu_triple_arch
 from .analyzers.clangsa import statistics
 from .analyzers.clangsa.analyzer import ClangSA
-
 
 LOG = get_logger('analyzer')
 
@@ -85,7 +83,6 @@ def init_worker(checked_num, action_num):
 
 
 def pre_analyze(params):
-
     action, context, clangsa_config, skip_handler, \
         ctu_data, statistics_data = params
 
@@ -115,8 +112,22 @@ def pre_analyze(params):
                 ctu_triple_arch.get_triple_arch(action, action.source,
                                                 clangsa_config,
                                                 analyzer_environment)
-            ctu_manager.generate_ast(triple_arch, action, action.source,
-                                     clangsa_config, analyzer_environment)
+
+            # TODO: reorganize the various ctu modes parameters
+            # Dump-based analysis requires serialized ASTs.
+            if clangsa_config.ctu_on_demand:
+                ctu_manager.generate_invocation_list(triple_arch, action,
+                                                     action.source,
+                                                     clangsa_config,
+                                                     analyzer_environment)
+            else:
+                ctu_manager.generate_ast(triple_arch, action, action.source,
+                                         clangsa_config, analyzer_environment)
+            # On-demand analysis does not require AST-dumps.
+            # We map the function names to corresponding sources of ASTs.
+            # In case of On-demand analysis this source is the original source
+            # code. In case of AST-dump based analysis these sources are the
+            # generated AST-dumps.
             ctu_manager.map_functions(triple_arch, action, action.source,
                                       clangsa_config, analyzer_environment,
                                       ctu_func_map_cmd,

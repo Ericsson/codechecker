@@ -86,21 +86,23 @@ here. For example the CTU related arguments are documented at `analyze`
 subcommand.
 
 ```
-usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-t {plist}] [-q] [-f]
+usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-t {plist}] [-q]
                          [--keep-gcc-include-fixed] [--keep-gcc-intrin]
                          (-b COMMAND | -l LOGFILE) [-j JOBS] [-c]
                          [--compile-uniqueing COMPILE_UNIQUEING]
                          [--report-hash {context-free,context-free-v2}]
                          [-i SKIPFILE | --file FILE [FILE ...]]
                          [--analyzers ANALYZER [ANALYZER ...]]
-                         [--add-compiler-defaults] [--capture-analysis-output]
-                         [--config CONFIG_FILE]
+                         [--capture-analysis-output] [--config CONFIG_FILE]
                          [--saargs CLANGSA_ARGS_CFG_FILE]
                          [--tidyargs TIDY_ARGS_CFG_FILE]
                          [--tidy-config TIDY_CONFIG]
                          [--analyzer-config [ANALYZER_CONFIG [ANALYZER_CONFIG ...]]]
                          [--checker-config [CHECKER_CONFIG [CHECKER_CONFIG ...]]]
                          [--timeout TIMEOUT]
+                         [--ctu | --ctu-collect | --ctu-analyze]
+                         [--ctu-reanalyze-on-failure]
+                         [--ctu-ast-mode {load-from-pch,parse-on-demand}]
                          [-e checker/group/profile] [-d checker/group/profile]
                          [--enable-all] [--print-steps]
                          [--review-status [REVIEW_STATUS [REVIEW_STATUS ...]]]
@@ -121,18 +123,11 @@ optional arguments:
                         (default: plist)
   -q, --quiet           If specified, the build tool's and the analyzers'
                         output will not be printed to the standard output.
-  -f, --force           DEPRECATED. Delete analysis results stored in the
-                        database for the current analysis run's name and store
-                        only the results reported in the 'input' files. (By
-                        default, CodeChecker would keep reports that were
-                        coming from files not affected by the analysis, and
-                        only incrementally update defect reports for source
-                        files that were analysed.)
   --keep-gcc-include-fixed
-                        There are some implicit include paths which
-                        are only used by GCC (include-fixed). This flag
-                        determines whether these should be kept among the
-                        implicit include paths. (default: False)
+                        There are some implicit include paths which are only
+                        used by GCC (include-fixed). This flag determines
+                        whether these should be kept among the implicit
+                        include paths. (default: False)
   --keep-gcc-intrin     There are some implicit include paths which contain
                         GCC-specific header files (those which end with
                         intrin.h). This flag determines whether these should
@@ -215,15 +210,23 @@ analyzer arguments:
                         Run analysis only with the analyzers specified.
                         Currently supported analyzers are: clangsa, clang-
                         tidy.
-  --add-compiler-defaults
-                        DEPRECATED. Always True. Retrieve compiler-specific
-                        configuration from the analyzers themselves, and use
-                        them with Clang. This is used when the compiler on the
-                        system is special, e.g. when doing cross-compilation.
   --capture-analysis-output
                         Store standard output and standard error of successful
                         analyzer invocations into the '<OUTPUT_DIR>/success'
                         directory.
+  --config CONFIG_FILE  Allow the configuration from an explicit JSON based
+                        configuration file. The value of the 'analyzer' key in
+                        the config file will be emplaced as command line
+                        arguments. The format of configuration file is:
+                        {
+                          "analyzer": [
+                            "--enable=core.DivideZero",
+                            "--enable=core.CallAndMessage",
+                            "--report-hash=context-free-v2",
+                            "--verbose=debug",
+                            "--clean"
+                          ]
+                        } (default: None)
   --saargs CLANGSA_ARGS_CFG_FILE
                         File containing argument which will be forwarded
                         verbatim for the Clang Static analyzer.
@@ -246,8 +249,8 @@ analyzer arguments:
   --checker-config [CHECKER_CONFIG [CHECKER_CONFIG ...]]
                         Checker configuration options in the following format:
                         analyzer:key=value. The collection of the options can
-                        be printed with 'CodeChecker checkers
-                        --checker-config'.
+                        be printed with 'CodeChecker checkers --checker-
+                        config'.
   --timeout TIMEOUT     The amount of time (in seconds) that each analyzer can
                         spend, individually, to analyze the project. If the
                         analysis of a particular file takes longer than this
@@ -265,8 +268,42 @@ analyzer arguments:
                         cause that much of a slowdown compared to using the Z3
                         solver only. (default: on)
 
-checker configuration:
+cross translation unit analysis arguments:
+  
+  These arguments are only available if the Clang Static Analyzer supports
+  Cross-TU analysis. By default, no CTU analysis is run when 'CodeChecker check'
+  is called.
 
+  --ctu, --ctu-all      Perform Cross Translation Unit (CTU) analysis, both
+                        'collect' and 'analyze' phases. In this mode, the
+                        extra files created by 'collect' are cleaned up after
+                        the analysis.
+  --ctu-collect         Perform the first, 'collect' phase of Cross-TU
+                        analysis. This phase generates extra files needed by
+                        CTU analysis, and puts them into '<OUTPUT_DIR>/ctu-
+                        dir'. NOTE: If this argument is present, CodeChecker
+                        will NOT execute the analyzers!
+  --ctu-analyze         Perform the second, 'analyze' phase of Cross-TU
+                        analysis, using already available extra files in
+                        '<OUTPUT_DIR>/ctu-dir'. (These files will not be
+                        cleaned up in this mode.)
+  --ctu-reanalyze-on-failure
+                        If Cross-TU analysis is enabled and fails for some
+                        reason, try to re analyze the same translation unit
+                        without Cross-TU enabled.
+                         [--ctu-ast-mode {load-from-pch,parse-on-demand}]
+  --ctu-ast-mode {load-from-pch,parse-on-demand}
+                        Choose the way ASTs are loaded during CTU analysis.
+                        Mode 'load-from-pch' generates PCH format serialized
+                        ASTs during the 'collect' phase. Mode 'parse-on-
+                        demand' only generates the invocations needed to parse
+                        the ASTs. Mode 'load-from-pch' can use significant
+                        disk-space for the serialized ASTs, while mode 'parse-
+                        on-demand' can incur some runtime CPU overhead in the
+                        second phase of the analysis. (default: load-from-pch)
+
+checker configuration:
+  
   Checkers
   ------------------------------------------------
   The analyzer performs checks that are categorized into families or "checkers".
@@ -276,9 +313,9 @@ checker configuration:
   '-e core -d core.uninitialized -e core.uninitialized.Assign' will enable every
   'core' checker, but only 'core.uninitialized.Assign' from the
   'core.uninitialized' group. Please consult the manual for details. Disabling
-  checkers in the "core" package is unsupported by the Clang Static Analyzer,
-  so they will remain switched on, regardless of the settings.
-
+  certain checkers - such as the 'core' group - is unsupported by the LLVM/Clang
+  community, and thus discouraged.
+  
   Compiler warnings and errors
   ------------------------------------------------
   Compiler warnings are diagnostic messages that report constructions that are
@@ -364,6 +401,15 @@ generated and not the context free hash (kept for backward compatibility). Use
 OUR RECOMMENDATION: we recommend you to use 'context-free-v2' hash because the
 hash will not be changed so easily for example on code indentation or when a
 checker is renamed.
+
+If you wish to reuse the logfile resulting from executing the build, see
+'CodeChecker log'. To keep analysis results for later, see and use
+'CodeChecker analyze'. To print human-readable output from previously saved
+analysis results, see 'CodeChecker parse'. 'CodeChecker check' exposes a
+wrapper calling these three commands in succession. Please make sure your build
+command actually builds the files -- it is advised to execute builds on empty
+trees, aka. after a 'make clean', as CodeChecker only analyzes files that had
+been used by the build system.
 ```
 
 # Available CodeChecker analyzer subcommands <a name="available-analyzer-commands"></a>
@@ -645,6 +691,7 @@ usage: CodeChecker analyze [-h] [-j JOBS]
                            [--tidyargs TIDY_ARGS_CFG_FILE]
                            [--tidy-config TIDY_CONFIG] [--timeout TIMEOUT]
                            [--ctu | --ctu-collect | --ctu-analyze]
+                           [--ctu-ast-mode {load-from-pch, parse-on-demand}]
                            [--ctu-reanalyze-on-failure]
                            [-e checker/group/profile]
                            [-d checker/group/profile] [--enable-all]
@@ -1265,11 +1312,16 @@ cross translation unit analysis arguments:
                         analysis, using already available extra files in
                         '<OUTPUT_DIR>/ctu-dir'. (These files will not be
                         cleaned up in this mode.)
-  --ctu-reanalyze-on-failure
-                        DEPRECATED. The flag will be removed. If Cross-TU
-                        analysis is enabled and fails for some reason, try to
-                        re analyze the same translation unit without Cross-TU
-                        enabled.
+
+  --ctu-ast-mode {load-from-pch,parse-on-demand}
+                        Choose the way ASTs are loaded during CTU analysis.
+                        Mode 'load-from-pch' generates PCH format serialized
+                        ASTs during the 'collect' phase. Mode 'parse-on-
+                        demand' only generates the invocations needed to parse
+                        the ASTs. Mode 'load-from-pch' can use significant
+                        disk-space for the serialized ASTs, while mode 'parse-
+                        on-demand' can incur some runtime CPU overhead in the
+                        second phase of the analysis. (default: load-from-pch)
 ```
 
 ### Statistical analysis mode <a name="statistical"></a>

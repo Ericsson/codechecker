@@ -11,7 +11,6 @@ giving an easy way to perform analysis from a log command and print results to
 stdout.
 """
 
-
 import argparse
 import os
 import shutil
@@ -23,7 +22,6 @@ from codechecker_analyzer.arg import OrderedCheckersAction
 
 from codechecker_common import arg, logger
 from codechecker_common.source_code_comment_handler import REVIEW_STATUS_VALUES
-
 
 LOG = logger.get_logger('system')
 
@@ -486,6 +484,26 @@ is called.""")
                                    "the same translation unit without "
                                    "Cross-TU enabled.")
 
+        # Only check for AST loading modes if CTU is available.
+        if analyzer_types.is_ctu_on_demand_available(context):
+            ctu_opts.add_argument('--ctu-ast-mode',
+                                  action='store',
+                                  dest='ctu_ast_mode',
+                                  choices=['load-from-pch', 'parse-on-demand'],
+                                  default='load-from-pch',
+                                  help="Choose the way ASTs are loaded during "
+                                       "CTU analysis. Mode 'load-from-pch' "
+                                       "generates PCH format serialized ASTs "
+                                       "during the 'collect' phase. Mode "
+                                       "'parse-on-demand' only generates the "
+                                       "invocations needed to parse the ASTs. "
+                                       "Mode 'load-from-pch' can use "
+                                       "significant disk-space for the "
+                                       "serialized ASTs, while mode "
+                                       "'parse-on-demand' can incur some "
+                                       "runtime CPU overhead in the second "
+                                       "phase of the analysis.")
+
     if analyzer_types.is_statistics_capable(context):
         stat_opts = parser.add_argument_group(
             "Statistics analysis feature arguments",
@@ -637,7 +655,7 @@ was emitted by clang-tidy.""")
                         default=["confirmed", "unreviewed"],
                         help="Filter results by review statuses. Valid "
                              "values are: {0}".format(
-                                 ', '.join(REVIEW_STATUS_VALUES)))
+                            ', '.join(REVIEW_STATUS_VALUES)))
 
     logger.add_verbose_arguments(parser)
     parser.set_defaults(func=main)

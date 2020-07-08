@@ -9,7 +9,6 @@
 Clang Static Analyzer related functions.
 """
 
-
 import subprocess
 
 from codechecker_common.logger import get_logger
@@ -17,6 +16,8 @@ from codechecker_analyzer import host_check
 from codechecker_analyzer.analyzers.clangsa import clang_options, version
 
 LOG = get_logger('analyzer.clangsa')
+
+CTU_ON_DEMAND_OPTION_NAME = 'ctu-invocation-list'
 
 
 def invoke_binary_checked(binary_path, args=None, environ=None):
@@ -170,3 +171,19 @@ class CTUAutodetection(object):
 
         return invoke_binary_checked(tool_path, ['-version'], self.environ) \
             is not False
+
+    @property
+    def is_on_demand_ctu_available(self):
+        """
+        Detects if the current Clang supports on-demand parsing of ASTs for
+        CTU analysis.
+        """
+
+        analyzer_options = invoke_binary_checked(
+            self.__analyzer_binary, ['-cc1', '-analyzer-config-help'],
+            self.environ)
+
+        if analyzer_options is False:
+            return False
+
+        return CTU_ON_DEMAND_OPTION_NAME in analyzer_options
