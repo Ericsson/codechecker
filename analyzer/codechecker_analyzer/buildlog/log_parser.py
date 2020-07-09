@@ -83,6 +83,7 @@ IGNORED_OPTIONS_GCC = [
     '-fipa-sra',
     '-fno-aggressive-loop-optimizations',
     '-fno-delete-null-pointer-checks',
+    '-fno-extended-identifiers',
     '-fno-jump-table',
     '-fno-keep-static-consts',
     '-fno-strength-reduce',
