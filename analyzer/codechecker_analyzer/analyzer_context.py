@@ -53,6 +53,72 @@ class SeverityMap(Mapping):
         return len(self.store)
 
 
+class GuidelineMap(Mapping):
+    def __init__(self, guideline_map_file):
+        self.store = load_json_or_empty(guideline_map_file, {})
+        self.__check_json_format(guideline_map_file)
+
+    def __check_json_format(self, guideline_map_file):
+        """
+        This function checks the format of checker_guideline_map.json config
+        file. If this config file doesn't meet the requirements, then
+        CodeChecker exits with status 1.
+
+        {
+          "guidelines": {
+            "guideline_1": "url_1",
+            "guideline_2": "url_2"
+          },
+          "mapping": {
+            "checker_1": {
+              "guideline_1": ["id_1", "id_2"]
+            }
+          }
+        }
+
+        "guidelines" and "mapping" attributes are mandatory, the list of IDs
+        must be a list, and the guideline name must be enumerated at
+        "guidelines" attribute
+        """
+        if 'guidelines' not in self.store:
+            LOG.error('Format error in %s: "guideline" key not found',
+                      guideline_map_file)
+            sys.exit(1)
+        if 'mapping' not in self.store:
+            LOG.error('Format error in %s: "mapping" key not found',
+                      guideline_map_file)
+            sys.exit(1)
+
+        for checker, guidelines in self.store['mapping'].items():
+            if not isinstance(guidelines, dict):
+                LOG.error('Format error in %s: value of %s must be a '
+                          'dictionary', guideline_map_file, checker)
+                sys.exit(1)
+
+            diff = set(guidelines) - set(self.store['guidelines'])
+            if diff:
+                LOG.error('Format error in %s: %s at %s not documented under '
+                          '"guidelines"',
+                          guideline_map_file, ', '.join(diff), checker)
+                sys.exit(1)
+
+            for guideline, ids in guidelines.items():
+                if not isinstance(ids, list):
+                    LOG.error('Format error in %s: value of %s at checker %s '
+                              'must be a list',
+                              guideline_map_file, guideline, checker)
+                    sys.exit(1)
+
+    def __getitem__(self, key):
+        return self.store['mapping'][key]
+
+    def __iter__(self):
+        return iter(self.store['mapping'])
+
+    def __len__(self):
+        return len(self.store)
+
+
 # -----------------------------------------------------------------------------
 class Context(object):
     """ Generic package specific context. """
@@ -69,6 +135,7 @@ class Context(object):
         self._package_root = package_root
         self._severity_map = SeverityMap(
             load_json_or_empty(self.checkers_severity_map_file, {}))
+        self._guideline_map = GuidelineMap(self.checkers_guideline_map_file)
         self.__package_version = None
         self.__package_build_date = None
         self.__package_git_hash = None
@@ -256,6 +323,11 @@ class Context(object):
 
     @property
     def checkers_severity_map_file(self):
+        """
+        Returns the path of checker-severity mapping config file. This file
+        may come from a custom location provided by CC_SEVERITY_MAP_FILE
+        environment variable.
+        """
         # Get severity map file from the environment.
         if 'CC_SEVERITY_MAP_FILE' in os.environ:
             severity_map_file = os.environ.get('CC_SEVERITY_MAP_FILE')
@@ -270,8 +342,32 @@ class Context(object):
                             'checker_severity_map.json')
 
     @property
+    def checkers_guideline_map_file(self):
+        """
+        Returns the path of checker-guideline mapping config file. This file
+        may come from a custom location provided by CC_GUIDELINE_MAP_FILE
+        environment variable.
+        """
+        # Get coding guideline map file from the environment.
+        if 'CC_GUIDELINE_MAP_FILE' in os.environ:
+            guideline_map_file = os.environ.get('CC_GUIDELINE_MAP_FILE')
+
+            LOG.warning("Coding guideline map file set through the "
+                        "'CC_GUIDELINE_MAP_FILE' environment variable: %s",
+                        guideline_map_file)
+
+            return guideline_map_file
+
+        return os.path.join(self._package_root, 'config',
+                            'checker_guideline_map.json')
+
+    @property
     def severity_map(self):
         return self._severity_map
+
+    @property
+    def guideline_map(self):
+        return self._guideline_map
 
 
 def get_context():

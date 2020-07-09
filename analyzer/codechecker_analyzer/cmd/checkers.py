@@ -14,11 +14,13 @@ import argparse
 import os
 import subprocess
 import sys
+from collections import defaultdict
 
 from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.analyzers import analyzer_types
 from codechecker_analyzer.analyzers.clangsa.analyzer import ClangSA
 
+from codechecker_common import arg
 from codechecker_common import logger
 from codechecker_common import output_formatters
 from codechecker_analyzer import env
@@ -79,9 +81,11 @@ def get_argparser_ctor_args():
     argparse.ArgumentParser (either directly or as a subparser).
     """
 
+    package_root = analyzer_context.get_context().package_root
+
     return {
         'prog': 'CodeChecker checkers',
-        'formatter_class': argparse.ArgumentDefaultsHelpFormatter,
+        'formatter_class': arg.RawDescriptionDefaultHelpFormatter,
 
         # Description is shown when the command's help is queried directly
         'description': "Get the list of checkers available and their enabled "
@@ -89,10 +93,18 @@ def get_argparser_ctor_args():
 
         # Epilogue is shown after the arguments when the help is queried
         # directly.
-        'epilog': "The list of checkers that are enabled of disabled by "
-                  "default can be edited by editing the file '" +
-                  os.path.join(analyzer_context.get_context()
-                               .package_root, 'config', 'config.json') + "'.",
+        'epilog': """
+The list of checkers that are enabled or disabled by default can be edited by
+editing the file '{}'.
+
+environment variables:
+  CC_SEVERITY_MAP_FILE   Path of the checker-severity mapping config file.
+                         Default: '{}'
+  CC_GUIDELINE_MAP_FILE  Path of the checker-guideline mapping config file.
+                         Default: '{}'
+""".format(os.path.join(package_root, 'config', 'config.json'),
+           os.path.join(package_root, 'config', 'checker_severity_map.json'),
+           os.path.join(package_root, 'config', 'checker_guideline_map.json')),
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.
@@ -140,6 +152,17 @@ def add_arguments_to_parser(parser):
                         help="List checkers enabled by the selected profile. "
                              "'list' is a special option showing details "
                              "about profiles collectively.")
+
+    parser.add_argument('--guideline',
+                        dest='guideline',
+                        nargs='*',
+                        required=False,
+                        default=None,
+                        help="List checkers that report on a specific "
+                             "guideline rule. Here you can add the guideline "
+                             "name or the ID of a rule. Without additional "
+                             "parameter, the available guidelines and their "
+                             "corresponding rules will be listed.")
 
     parser.add_argument('--checker-config',
                         dest='checker_config',
@@ -204,6 +227,29 @@ def main(args):
         """
         return text.lower().replace(' ', '_')
 
+    def match_guideline(checker_name, selected_guidelines):
+        """
+        Returns True if checker_name gives reports related to any of the
+        selected guideline rule.
+        checker_name -- A full checker name.
+        selected_guidelines -- A list of guideline names or guideline rule IDs.
+        """
+        guideline = context.guideline_map.get(checker_name, {})
+        guideline_set = set(guideline)
+        for value in guideline.values():
+            guideline_set |= set(value)
+
+        return any(g in guideline_set for g in selected_guidelines)
+
+    def format_guideline(guideline):
+        """
+        Convert guideline rules to human-readable format.
+        guideline -- Dictionary in the following format:
+                     {"guideline_1": ["rule_1", "rule_2"]}
+        """
+        return ' '.join('Related {} rules: {}'.format(g, ', '.join(r))
+                        for g, r in guideline.items())
+
     # List available checker profiles.
     if 'profile' in args and args.profile == 'list':
         if 'details' in args:
@@ -244,9 +290,35 @@ def main(args):
                                               header, rows))
         return
 
+    if args.guideline is not None and len(args.guideline) == 0:
+        result = defaultdict(set)
+
+        for _, guidelines in context.guideline_map.items():
+            for guideline, rules in guidelines.items():
+                result[guideline] |= set(rules)
+
+        header = ['Guideline', 'Rules']
+        if args.output_format in ['csv', 'json']:
+            header = list(map(uglify, header))
+
+        if args.output_format == 'json':
+            rows = [(g, sorted(list(r))) for g, r in result.items()]
+        else:
+            rows = [(g, ', '.join(sorted(r))) for g, r in result.items()]
+
+        if args.output_format == 'rows':
+            for row in rows:
+                print('Guideline: {}'.format(row[0]))
+                print('Rules: {}'.format(row[1]))
+        else:
+            print(output_formatters.twodim_to_str(args.output_format,
+                                                  header, rows))
+        return
+
     # List available checkers.
     if 'details' in args:
-        header = ['Enabled', 'Name', 'Analyzer', 'Severity', 'Description']
+        header = ['Enabled', 'Name', 'Analyzer', 'Severity', 'Guideline',
+                  'Description']
     else:
         header = ['Name']
 
@@ -295,20 +367,37 @@ def main(args):
             else:
                 state = '+' if state == CheckerState.enabled else '-'
 
+            if args.guideline is not None:
+                if not match_guideline(checker_name, args.guideline):
+                    continue
+
             if 'details' in args:
                 severity = context.severity_map.get(checker_name)
+                guideline = context.guideline_map.get(checker_name, {})
+                if args.output_format != 'json':
+                    guideline = format_guideline(guideline)
                 rows.append([state, checker_name, analyzer,
-                             severity, description])
+                             severity, guideline, description])
             else:
                 rows.append([checker_name])
 
-        if 'show_warnings' in args:
-            severity = context.severity_map.get('clang-diagnostic-')
-            for warning in get_warnings(analyzer_environment):
-                if 'details' in args:
-                    rows.append(['', warning, '-', severity, '-'])
-                else:
-                    rows.append([warning])
+    if 'show_warnings' in args:
+        severity = context.severity_map.get('clang-diagnostic-')
+        for warning in get_warnings(analyzer_environment):
+            warning = 'clang-diagnostic-' + warning[2:]
+
+            if 'guideline' in args:
+                if not match_guideline(warning, args.guideline):
+                    continue
+
+            guideline = context.guideline_map.get(warning, {})
+            if args.output_format != 'json':
+                guideline = format_guideline(guideline)
+
+            if 'details' in args:
+                rows.append(['', warning, '-', severity, guideline, '-'])
+            else:
+                rows.append([warning])
 
     if rows:
         print(output_formatters.twodim_to_str(args.output_format,
