@@ -150,6 +150,7 @@ class Context(object):
 
         self.__set_version()
         self.__populate_analyzers()
+        self.__populate_replacer()
 
     def set_env(self, env_vars):
         """
@@ -217,6 +218,16 @@ class Context(object):
                     continue
 
                 self.__analyzers[name] = os.path.realpath(compiler_binary)
+
+    def __populate_replacer(self):
+        """ Set clang-apply-replacements tool. """
+        replacer_binary = self.pckg_layout.get('clang-apply-replacements')
+
+        if os.path.dirname(replacer_binary):
+            # Check if it is a package relative path.
+            self.__replacer = os.path.join(self._package_root, replacer_binary)
+        else:
+            self.__replacer = find_executable(replacer_binary)
 
     @property
     def checker_config(self):
@@ -308,6 +319,10 @@ class Context(object):
     @property
     def analyzer_binaries(self):
         return self.__analyzers
+
+    @property
+    def replacer_binary(self):
+        return self.__replacer
 
     @property
     def package_root(self):

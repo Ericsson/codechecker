@@ -254,6 +254,21 @@ action).
 
 ![Analysis results in static HTML files](images/static_html.png)
 
+Some CodeChecker reports are so easy to fix that even static analyzer tools may
+provide automatic fixes on them. In CodeChecker you can list these with the
+following command after having analysis reports in `reports` directory:
+```sh
+CodeChecker fixit --list reports
+```
+
+The listed automatic fixes can be applied by omitting `--list` flag. See
+`--help` on details of filtering automatic fixes. You can also use the JSON
+format output of `CodeChecker cmd diff` command if you want to fix only new
+findings:
+```sh
+CodeChecker cmd diff -b reports1 -n reports2 --new -o json | CodeChecker fixit
+```
+
 ## Step 4: Store analysis results in a CodeChecker DB and visualize results <a name="step-4"></a>
 
 You can store the analysis results in a central database and view the results

@@ -58,6 +58,7 @@ class ResultHandler(object, metaclass=ABCMeta):
         self.__buildaction = action
 
         self.__result_file = None
+        self.__fixit_file = None
 
         # Report hash type can influence the post processing
         # of the results by rewriting the generated
@@ -79,37 +80,52 @@ class ResultHandler(object, metaclass=ABCMeta):
         return self.__workspace
 
     @property
+    def analyzer_action_str(self):
+        """
+        Generate a string which is unique to the analyzed build action. The
+        returned string contains information of the analyzed file, the analyzer
+        and the build command.
+        """
+        analyzed_file_name = os.path.basename(self.analyzed_source_file)
+
+        source_file = os.path.normpath(
+            os.path.join(self.buildaction.directory,
+                         self.analyzed_source_file))
+
+        build_info = source_file + '_' + \
+            self.buildaction.original_command
+
+        return analyzed_file_name + '_' + \
+            str(self.buildaction.analyzer_type) + '_' + \
+            hashlib.md5(build_info.encode(errors='ignore')).hexdigest() \
+
+    @property
     def analyzer_result_file(self):
         """
         Generate a result filename where the analyzer should put the results.
         Result file should be removed by the result handler eventually.
         """
         if not self.__result_file:
-            analyzed_file_name = os.path.basename(self.analyzed_source_file)
-
-            source_file = os.path.normpath(
-                os.path.join(self.buildaction.directory,
-                             self.analyzed_source_file))
-
-            build_info = source_file + '_' + \
-                self.buildaction.original_command
-
-            out_file_name = analyzed_file_name + '_' + \
-                str(self.buildaction.analyzer_type) + '_' + \
-                hashlib.md5(build_info.encode(errors='ignore')).hexdigest() \
-                + '.plist'
-
-            out_file = os.path.join(self.__workspace, out_file_name)
-            self.__result_file = out_file
+            self.__result_file = os.path.join(
+                self.__workspace,
+                self.analyzer_action_str + '.plist')
 
         return self.__result_file
 
-    @analyzer_result_file.setter
-    def analyzer_result_file(self, file_path):
+    @property
+    def fixit_file(self):
         """
-        The result of the analysis which will be processed afterwards.
+        Generate a filename where the analyzer should put the fixit results.
+        This is a .yaml file which contains the replacements which can be
+        applied by clang-apply-replacements tool.
         """
-        self.__result_file = file_path
+        if not self.__fixit_file:
+            self.__fixit_file = os.path.join(
+                self.__workspace,
+                'fixit',
+                self.analyzer_action_str + '.yaml')
+
+        return self.__fixit_file
 
     def clean_results(self):
         """

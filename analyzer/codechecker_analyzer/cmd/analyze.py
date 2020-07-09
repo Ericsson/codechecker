@@ -776,25 +776,6 @@ def main(args):
     if 'enable_all' in args:
         LOG.info("'--enable-all' was supplied for this analysis.")
 
-    # We clear the output directory in the following cases.
-    ctu_dir = os.path.join(args.output_path, 'ctu-dir')
-    if 'ctu_phases' in args and args.ctu_phases[0] and \
-            os.path.isdir(ctu_dir):
-        # Clear the CTU-dir if the user turned on the collection phase.
-        LOG.debug("Previous CTU contents have been deleted.")
-        shutil.rmtree(ctu_dir)
-
-    if 'clean' in args and os.path.isdir(args.output_path):
-        LOG.info("Previous analysis results in '%s' have been removed, "
-                 "overwriting with current result", args.output_path)
-        shutil.rmtree(args.output_path)
-
-    if not os.path.exists(args.output_path):
-        os.makedirs(args.output_path)
-
-    LOG.debug("args: " + str(args))
-    LOG.debug("Output will be stored to: '" + args.output_path + "'")
-
     config_option_re = re.compile(r'^({}):.+=.+$'.format(
         '|'.join(analyzer_types.supported_analyzers)))
 
@@ -861,6 +842,30 @@ def main(args):
     # Number of all the compilation commands in the parsed log files,
     # logged by the logger.
     all_cmp_cmd_count = len(compile_commands)
+
+    # We clear the output directory in the following cases.
+    ctu_dir = os.path.join(args.output_path, 'ctu-dir')
+    if 'ctu_phases' in args and args.ctu_phases[0] and \
+            os.path.isdir(ctu_dir):
+        # Clear the CTU-dir if the user turned on the collection phase.
+        LOG.debug("Previous CTU contents have been deleted.")
+        shutil.rmtree(ctu_dir)
+
+    if 'clean' in args and os.path.isdir(args.output_path):
+        LOG.info("Previous analysis results in '%s' have been removed, "
+                 "overwriting with current result", args.output_path)
+        shutil.rmtree(args.output_path)
+
+    if not os.path.exists(args.output_path):
+        os.makedirs(args.output_path)
+
+    # TODO: I'm not sure that this directory should be created here.
+    fixit_dir = os.path.join(args.output_path, 'fixit')
+    if not os.path.exists(fixit_dir):
+        os.makedirs(fixit_dir)
+
+    LOG.debug("args: %s", str(args))
+    LOG.debug("Output will be stored to: '%s'", args.output_path)
 
     actions, skipped_cmp_cmd_count = log_parser.parse_unique_log(
         compile_commands,
