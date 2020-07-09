@@ -46,6 +46,7 @@ jobs:
         - "export DISPLAY=:99.0"
         - "export PATH=$TRAVIS_BUILD_DIR/build/CodeChecker/bin:$PATH"
       script: >
+        make pip_dev_deps &&
         make clean_travis package &&
         npm run --prefix web/server/vue-cli test
     - os: osx
