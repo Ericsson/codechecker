@@ -854,7 +854,9 @@ def main(args):
     analyzer_env = env.extend(context.path_env_extra,
                               context.ld_lib_path_extra)
 
-    compile_commands = load_json_or_empty(args.logfile, default={})
+    compile_commands = load_json_or_empty(args.logfile)
+    if compile_commands is None:
+        sys.exit(1)
 
     # Number of all the compilation commands in the parsed log files,
     # logged by the logger.
