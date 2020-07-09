@@ -61,6 +61,15 @@ LOG.setLevel(logging.INFO)
 LOG.addHandler(log_handler)
 
 
+class RawDescriptionDefaultHelpFormatter(
+        argparse.RawDescriptionHelpFormatter,
+        argparse.ArgumentDefaultsHelpFormatter
+):
+    """ Adds default values to argument help and retains any formatting in
+    descriptions. """
+    pass
+
+
 supported_converters = {
     ClangTidyAnalyzerResult.TOOL_NAME: ClangTidyAnalyzerResult,
     CppcheckAnalyzerResult.TOOL_NAME: CppcheckAnalyzerResult,
@@ -196,7 +205,7 @@ Supported analyzers:
                          supported_converters[tool_name].NAME,
                          supported_converters[tool_name].URL)
                          for tool_name in sorted(supported_converters)])),
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=RawDescriptionDefaultHelpFormatter
     )
     __add_arguments_to_parser(parser)
 

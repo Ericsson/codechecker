@@ -54,11 +54,11 @@ optional arguments:
                         tidy, cppcheck, eslint, fbinfer, golint, msan,
                         pyflakes, pylint, spotbugs, tsan, tslint, ubsan.
   --meta [META [META ...]]
-                        Metadata information which will be stored alongside the
-                        run when the created report directory will be stored
-                        to a running CodeChecker server. It has the following
-                        format: key=value. Valid key values are:
-                        analyzer_command, analyzer_version.
+                        Metadata information which will be stored alongside
+                        the run when the created report directory will be
+                        stored to a running CodeChecker server. It has the
+                        following format: key=value. Valid key values are:
+                        analyzer_command, analyzer_version. (default: None)
   --filename FILENAME   This option can be used to override the default plist
                         file name output of this tool. This tool can produce
                         multiple plist files on the given code analyzer output
@@ -69,9 +69,11 @@ optional arguments:
                         option. For example: '{source_file}_{analyzer}_xxxxx'.
                         {source_file} and {analyzer} are special values which
                         will be replaced with the current analyzer and source
-                        file name where the bug was found.
-  -c, --clean           Delete files stored in the output directory.
-  -v, --verbose         Set verbosity level.
+                        file name where the bug was found. (default:
+                        {source_file}_{analyzer})
+  -c, --clean           Delete files stored in the output directory. (default:
+                        False)
+  -v, --verbose         Set verbosity level. (default: False)
 
 Supported analyzers:
   asan - AddressSanitizer, https://clang.llvm.org/docs/AddressSanitizer.html
