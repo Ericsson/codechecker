@@ -40,6 +40,18 @@ def is_ctu_capable(context):
     return clangsa_cfg.ctu_capability.is_ctu_capable
 
 
+def is_ctu_on_demand_available(context):
+    """ Detects if the current clang is capable of on-demand AST loading. """
+    enabled_analyzers, _ = \
+        check_supported_analyzers([ClangSA.ANALYZER_NAME], context)
+    if not enabled_analyzers:
+        return False
+
+    clangsa_cfg = ClangSA.construct_config_handler([], context)
+
+    return clangsa_cfg.ctu_capability.is_on_demand_ctu_available
+
+
 def is_statistics_capable(context):
     """ Detects if the current clang is Statistics compatible. """
     # Resolve potentially missing binaries.

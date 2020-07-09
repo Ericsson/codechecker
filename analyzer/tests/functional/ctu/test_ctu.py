@@ -19,6 +19,24 @@ from libtest import env
 from libtest.codechecker import call_command
 
 NO_CTU_MESSAGE = "CTU is not supported"
+NO_CTU_ON_DEMAND_MESSAGE = "CTU-on-demand is not supported"
+
+
+def makeSkipUnlessAttributeFound(attribute, message):
+    def deco(f):
+        def wrapper(self, *args, **kwargs):
+            if not getattr(self, attribute):
+                self.skipTest(message)
+            else:
+                f(self, *args, **kwargs)
+        return wrapper
+    return deco
+
+
+skipUnlessCTUCapable = makeSkipUnlessAttributeFound(
+    'ctu_capable', NO_CTU_MESSAGE)
+skipUnlessCTUOnDemandCapable = makeSkipUnlessAttributeFound(
+    'ctu_on_demand_capable', NO_CTU_ON_DEMAND_MESSAGE)
 
 
 class TestCtu(unittest.TestCase):
@@ -46,6 +64,10 @@ class TestCtu(unittest.TestCase):
         self.ctu_capable = '--ctu-' in output
         print("'analyze' reported CTU-compatibility? " + str(self.ctu_capable))
 
+        self.ctu_on_demand_capable = '--ctu-ast-mode' in output
+        print("'analyze' reported CTU-on-demand-compatibility? "
+              + str(self.ctu_on_demand_capable))
+
         # Fix the "template" build JSONs to contain a proper directory
         # so the tests work.
         raw_buildlog = os.path.join(self.test_dir, 'buildlog.json')
@@ -68,64 +90,90 @@ class TestCtu(unittest.TestCase):
         shutil.rmtree(self.report_dir, ignore_errors=True)
         os.chdir(self.__old_pwd)
 
-    def test_ctu_all_no_reparse(self):
-        """ Test full CTU without reparse. """
+    @skipUnlessCTUCapable
+    def test_ctu_all_ast_dump_based(self):
+        """ Test full CTU AST-dump based analysis. """
 
-        self.__test_ctu_all()
+        self.__test_ctu_all(on_demand=False)
 
-    def test_ctu_collect_no_reparse(self):
-        """ Test CTU collect phase without reparse. """
+    @skipUnlessCTUCapable
+    @skipUnlessCTUOnDemandCapable
+    def test_ctu_all_on_demand_parsed(self):
+        """ Test full CTU on-demand-parsed ASTs. """
 
-        self.__test_ctu_collect()
+        self.__test_ctu_all(on_demand=True)
 
-    def test_ctu_analyze_no_reparse(self):
-        """ Test CTU analyze phase without reparse. """
+    @skipUnlessCTUCapable
+    def test_ctu_collect_ast_dump_based(self):
+        """ Test CTU collect phase with AST-dump based analysis. """
 
-        self.__test_ctu_analyze()
+        self.__test_ctu_collect(on_demand=False)
 
-    def __test_ctu_all(self):
+    @skipUnlessCTUCapable
+    @skipUnlessCTUOnDemandCapable
+    def test_ctu_collect_on_demand_parsed(self):
+        """
+        Test CTU collect phase with on-demand-parsed AST based analysis.
+        """
+
+        self.__test_ctu_collect(on_demand=True)
+
+    @skipUnlessCTUCapable
+    def test_ctu_analyze_ast_dump_based(self):
+        """ Test CTU analyze phase with AST-dump based analysis. """
+
+        self.__test_ctu_analyze(on_demand=False)
+
+    @skipUnlessCTUCapable
+    @skipUnlessCTUOnDemandCapable
+    def test_ctu_analyze_on_demand_parsed(self):
+        """
+        Test CTU analyze phase with on-demand-parsed AST based analysis.
+        """
+
+        self.__test_ctu_analyze(on_demand=True)
+
+    def __test_ctu_all(self, on_demand=False):
         """ Test full CTU. """
 
-        if not self.ctu_capable:
-            self.skipTest(NO_CTU_MESSAGE)
-        output = self.__do_ctu_all()
+        output = self.__do_ctu_all(on_demand=on_demand)
         self.__check_ctu_analyze(output)
 
-    def __test_ctu_collect(self):
+    def __test_ctu_collect(self, on_demand=False):
         """ Test CTU collect phase. """
 
-        if not self.ctu_capable:
-            self.skipTest(NO_CTU_MESSAGE)
-        self.__do_ctu_collect()
-        self.__check_ctu_collect()
+        self.__do_ctu_collect(on_demand=on_demand)
+        self.__check_ctu_collect(on_demand=on_demand)
 
-    def __test_ctu_analyze(self):
+    def __test_ctu_analyze(self, on_demand=False):
         """ Test CTU analyze phase. """
 
-        if not self.ctu_capable:
-            self.skipTest(NO_CTU_MESSAGE)
-        self.__do_ctu_collect()
-        output = self.__do_ctu_analyze()
+        self.__do_ctu_collect(on_demand=on_demand)
+        output = self.__do_ctu_analyze(on_demand=on_demand)
         self.__check_ctu_analyze(output)
 
-    def __do_ctu_all(self):
+    def __do_ctu_all(self, on_demand):
         """ Execute a full CTU run. """
 
         cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
                '--analyzers', 'clangsa', '--ctu-all']
+        if on_demand:
+            cmd.append('--ctu-ast-mode=parse-on-demand')
         cmd.append(self.buildlog)
         out, _ = call_command(cmd, cwd=self.test_dir, env=self.env)
         return out
 
-    def __do_ctu_collect(self):
+    def __do_ctu_collect(self, on_demand):
         """ Execute CTU collect phase. """
 
         cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
                '--analyzers', 'clangsa', '--ctu-collect']
+        if on_demand:
+            cmd.append('--ctu-ast-mode=parse-on-demand')
         cmd.append(self.buildlog)
         call_command(cmd, cwd=self.test_dir, env=self.env)
 
-    def __check_ctu_collect(self):
+    def __check_ctu_collect(self, on_demand):
         """ Check artifacts of CTU collect phase. """
 
         ctu_dir = os.path.join(self.report_dir, 'ctu-dir')
@@ -135,12 +183,17 @@ class TestCtu(unittest.TestCase):
             new_map_file = os.path.join(ctu_dir, arch, 'externalDefMap.txt')
             self.assertTrue(any(os.path.isfile(mapfile) for mapfile in
                                 [old_map_file, new_map_file]))
+            if not on_demand:
+                ast_dir = os.path.join(ctu_dir, arch, 'ast')
+                self.assertTrue(os.path.isdir(ast_dir))
 
-    def __do_ctu_analyze(self):
+    def __do_ctu_analyze(self, on_demand):
         """ Execute CTU analyze phase. """
 
         cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
                '--analyzers', 'clangsa', '--ctu-analyze']
+        if on_demand:
+            cmd.append('--ctu-ast-mode=parse-on-demand')
         cmd.append(self.buildlog)
         out, _ = call_command(cmd, cwd=self.test_dir, env=self.env)
         return out
@@ -159,10 +212,9 @@ class TestCtu(unittest.TestCase):
         self.assertIn("lib.c:3:", output)
         self.assertIn("[core.NullDereference]", output)
 
+    @skipUnlessCTUCapable
     def test_ctu_makefile_generation(self):
         """ Test makefile generation in CTU mode. """
-        if not self.ctu_capable:
-            self.skipTest(NO_CTU_MESSAGE)
 
         cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
                '--analyzers', 'clangsa', '--ctu', '--makefile']

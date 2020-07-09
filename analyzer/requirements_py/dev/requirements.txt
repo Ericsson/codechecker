@@ -5,3 +5,4 @@ psutil==5.7.0
 portalocker==1.7.0
 pylint==2.4.4
 mkdocs==1.0.4
+PyYAML==5.3.1

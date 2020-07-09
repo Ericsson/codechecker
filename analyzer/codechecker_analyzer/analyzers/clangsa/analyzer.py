@@ -207,6 +207,14 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                 if ctu_display_progress:
                     analyzer_cmd.extend(ctu_display_progress)
 
+                if config.ctu_on_demand:
+                    invocation_list_path = \
+                        os.path.join(self.get_ctu_dir(), 'invocation-list.yml')
+                    analyzer_cmd.extend(
+                        ['-Xclang', '-analyzer-config', '-Xclang',
+                         f'ctu-invocation-list={invocation_list_path}'
+                         ])
+
             compile_lang = self.buildaction.lang
             if not has_flag('-x', analyzer_cmd):
                 analyzer_cmd.extend(['-x', compile_lang])
@@ -220,7 +228,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                     self.buildaction.compiler_standard.get(compile_lang, "") \
                     != "":
                 analyzer_cmd.append(
-                        self.buildaction.compiler_standard[compile_lang])
+                    self.buildaction.compiler_standard[compile_lang])
 
             analyzer_cmd.extend(config.analyzer_extra_arguments)
 
@@ -251,6 +259,44 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         ctu_dir = os.path.join(config.ctu_dir, triple_arch)
         return ctu_dir
 
+    def analyzer_mentioned_file_real_path(self, mentioned_path):
+        """
+        PCH-based an On-demand-parsed CTU modes use different paths and file
+        suffixes. PCH-based mode uses ast dump files that are suffixed with
+        '.ast', and they are supposed to be under the
+        '<ctu-dir>/ast/<original-full-path>'. On-demand-parsed mode uses the
+        full paths of the original source files.
+        """
+        pch_suffix = '.ast'
+        # Detect the mode based on the path.
+        suffix_index = mentioned_path.rfind(pch_suffix)
+        # If the file does not have the suffix, the mode is On-demand-parsed.
+        # Return the original path.
+        if suffix_index == -1:
+            LOG.debug("Analyzer mentioned path path: '%s', "
+                      "corresponding source file: '%s'",
+                      mentioned_path, mentioned_path)
+            return mentioned_path
+
+        # PCH-based mode stores files with their full path structure recreated
+        # under <ctu-dir>/ast.
+        ctu_ast_dir = os.path.join(self.get_ctu_dir(), 'ast')
+
+        source_path = mentioned_path[len(ctu_ast_dir):suffix_index]
+
+        LOG.debug("Analyzer mentioned path path: '%s', "
+                  "corresponding source file: '%s'",
+                  mentioned_path, source_path)
+
+        if not mentioned_path.startswith(ctu_ast_dir):
+            LOG.error(
+                "Mentioned path '%s' ends with suffix '%s', but does "
+                "not begin with supposed ast dir '%s'.", mentioned_path,
+                pch_suffix, ctu_ast_dir)
+
+        # Strip the prefix ast directory and the suffix.
+        return mentioned_path[len(ctu_ast_dir):suffix_index]
+
     def get_analyzer_mentioned_files(self, output):
         """
         Parse ClangSA's output to generate a list of files that were mentioned
@@ -260,18 +306,15 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             return set()
 
         regex_for_ctu_ast_load = re.compile(
-            r"CTU loaded AST file: (.*).ast")
+            r"CTU loaded AST file: (.*)")
 
         paths = set()
-
-        ctu_ast_dir = os.path.join(self.get_ctu_dir(), "ast")
 
         for line in output.splitlines():
             match = re.match(regex_for_ctu_ast_load, line)
             if match:
                 path = match.group(1)
-                if ctu_ast_dir in path:
-                    paths.add(path[len(ctu_ast_dir):])
+                paths.add(self.analyzer_mentioned_file_real_path(path))
 
         return paths
 
@@ -336,7 +379,9 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         if 'ctu_phases' in args:
             handler.ctu_dir = os.path.join(args.output_path,
                                            args.ctu_dir)
-
+            handler.ctu_on_demand = \
+                'ctu_ast_mode' in args and \
+                args.ctu_ast_mode == 'parse-on-demand'
             handler.log_file = args.logfile
             handler.path_env_extra = context.path_env_extra
             handler.ld_lib_path_extra = context.ld_lib_path_extra
