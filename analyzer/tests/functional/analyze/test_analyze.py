@@ -948,3 +948,26 @@ class TestAnalyze(unittest.TestCase):
         out, _ = process.communicate()
 
         self.assertEqual(out.count('UninitializedObject'), 0)
+
+    def test_invalid_compilation_database(self):
+        """ Warn in case of an invalid enabled checker. """
+        build_json = os.path.join(self.test_workspace, "build_corrupted.json")
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "-o", self.report_dir]
+
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
+            outfile.write("Corrupted JSON file!")
+
+        print(analyze_cmd)
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
+
+        process.communicate()
+
+        self.assertEqual(process.returncode, 1)
