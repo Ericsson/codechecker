@@ -176,6 +176,8 @@ clean: clean_package
 	$(MAKE) -C $(CC_WEB) clean
 
 clean_package: clean_plist_to_html clean_tu_collector clean_report_converter clean_report_hash clean_statistics_collector
+	$(MAKE) -C $(CC_ANALYZER) clean_package
+	$(MAKE) -C $(CC_WEB) clean_package
 	rm -rf $(BUILD_DIR)
 	find . -name "*.pyc" -delete
 

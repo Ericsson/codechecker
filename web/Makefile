@@ -113,6 +113,7 @@ check_codechecker_api_version:
 clean_package: clean_plist_to_html
 	rm -rf $(BUILD_DIR)
 	rm -rf gen-docs
+	rm -rf $(CC_SERVER)/vue-cli/dist
 	find . -name "*.pyc" -delete
 
 clean_plist_to_html:
