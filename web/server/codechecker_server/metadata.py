@@ -33,7 +33,7 @@ class MetadataInfoParser(object):
         checkers = {}
 
         if 'command' in metadata_dict:
-            check_commands.append(metadata_dict['command'])
+            check_commands.append(' '.join(metadata_dict['command']))
         if 'timestamps' in metadata_dict:
             check_durations.append(
                 float(metadata_dict['timestamps']['end'] -
