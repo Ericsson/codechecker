@@ -128,7 +128,7 @@ class MetadataInfoParserTest(unittest.TestCase):
 
         self.assertEqual(len(check_commands), 1)
         self.assertEqual(' '.join(metadata_cc_info['check_commands']),
-                         ' '.join(check_commands[0]))
+                         check_commands[0])
 
         self.assertEqual(metadata_cc_info['analysis_duration'][0],
                          check_durations[0])
