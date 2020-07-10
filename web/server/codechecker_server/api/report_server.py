@@ -2299,6 +2299,9 @@ class ThriftRequestHandler(object):
 
                 session.commit()
                 session.close()
+
+                LOG.info("The following reports were removed by '%s': %s",
+                         self.__get_username(), reports_to_delete)
             except Exception as ex:
                 session.rollback()
                 LOG.error("Database cleanup failed.")

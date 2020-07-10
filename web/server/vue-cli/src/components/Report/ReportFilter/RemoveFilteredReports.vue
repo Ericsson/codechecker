@@ -33,12 +33,14 @@
 <script>
 import { ccService, handleThriftError } from "@cc-api";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import BaseFilterMixin from "./Filters/BaseFilter.mixin";
 
 export default {
   name: "RemoveFileteredReports",
   components: {
     ConfirmDialog
   },
+  mixins: [ BaseFilterMixin ],
   data() {
     return {
       dialog: false

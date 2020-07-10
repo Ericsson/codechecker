@@ -251,6 +251,7 @@
         <v-list-item-content>
           <remove-filtered-reports
             class="mt-4"
+            :namespace="namespace"
             @update="updateAllFilters"
           />
         </v-list-item-content>
