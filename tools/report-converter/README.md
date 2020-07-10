@@ -19,6 +19,7 @@ a CodeChecker server.
 * [TSLint](#tslint)
 * [Golint](#golint)
 * [Pyflakes](#pyflakes)
+* [Markdownlint](#markdownlint)
 * [License](#license)
 
 ## Install guide
@@ -82,6 +83,7 @@ Supported analyzers:
   eslint - ESLint, https://eslint.org/
   fbinfer - Facebook Infer, https://fbinfer.com
   golint - Golint, https://github.com/golang/lint
+  mdl - Markdownlint, https://github.com/markdownlint/markdownlint
   msan - MemorySanitizer, https://clang.llvm.org/docs/MemorySanitizer.html
   pyflakes - Pyflakes, https://github.com/PyCQA/pyflakes
   pylint - Pylint, https://www.pylint.org
@@ -360,6 +362,28 @@ report-converter -t golint -o ./codechecker_golint_reports ./golint_reports.out
 
 # Store the Golint reports with CodeChecker.
 CodeChecker store ./codechecker_golint_reports -n golint
+```
+
+## [Markdownlint](https://github.com/markdownlint/markdownlint)
+[Markdownlint](https://github.com/markdownlint/markdownlint) is a static
+analysis tool for markdown files.
+
+The recommended way of running Markdownlint is to redirect the output to a file
+and give this file to the report converter tool.
+
+The following example shows you how to run Markdownlint and store the results
+found by Markdownlint to the CodeChecker database.
+
+```sh
+# Run Markdownlint.
+mdl /path/to/your/project > ./mdl_reports.out
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of Markdownlint.
+report-converter -t mdl -o ./codechecker_mdl_reports ./mdl_reports.out
+
+# Store Markdownlint reports with CodeChecker.
+CodeChecker store ./codechecker_mdl_reports -n mdl
 ```
 
 ## License
