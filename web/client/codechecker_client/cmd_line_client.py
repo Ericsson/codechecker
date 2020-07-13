@@ -487,7 +487,7 @@ def handle_list_results(args):
         print(CmdLineOutputEncoder().encode(all_results))
     else:
         header = ['File', 'Checker', 'Severity', 'Message', 'Bug path length',
-                  'Review status', 'Detection status']
+                  'Analyzer name', 'Review status', 'Detection status']
 
         rows = []
         max_msg_len = 50
@@ -515,7 +515,8 @@ def handle_list_results(args):
                 msg = msg[:max_msg_len] + '...'
 
             rows.append((checked_file, res.checkerId, sev, msg,
-                         res.bugPathLength, rw_status, dt_status))
+                         res.bugPathLength, res.analyzerName, rw_status,
+                         dt_status))
 
         print(twodim_to_str(args.output_format, header, rows))
 

@@ -239,6 +239,7 @@ struct ReportData {
   14: string          fixedAt          // Date when the report was fixed.
   15: i64             bugPathLength,   // Length of the bug path.
   16: optional ReportDetails details,  // Details of the report.
+  17: optional string analyzerName,    // Analyzer name.
 }
 typedef list<ReportData> ReportDataList
 

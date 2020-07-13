@@ -1199,7 +1199,7 @@ class ThriftRequestHandler(object):
                                   Report.severity, Report.detected_at,
                                   Report.fixed_at, ReviewStatus,
                                   File.filename, File.filepath,
-                                  Report.path_length) \
+                                  Report.path_length, Report.analyzer_name) \
                     .outerjoin(File, Report.file_id == File.id) \
                     .outerjoin(ReviewStatus,
                                ReviewStatus.bug_hash == Report.bug_id) \
@@ -1224,7 +1224,7 @@ class ThriftRequestHandler(object):
 
                 for report_id, bug_id, checker_msg, checker, severity, \
                     detected_at, fixed_at, status, filename, path, \
-                        bug_path_len in query_result:
+                        bug_path_len, analyzer_name in query_result:
                     review_data = create_review_data(status)
 
                     results.append(
@@ -1237,7 +1237,8 @@ class ThriftRequestHandler(object):
                                    detectedAt=str(detected_at),
                                    fixedAt=str(fixed_at),
                                    bugPathLength=bug_path_len,
-                                   details=report_details.get(report_id)))
+                                   details=report_details.get(report_id),
+                                   analyzerName=analyzer_name))
             else:
                 q = session.query(Report.run_id, Report.id, Report.file_id,
                                   Report.line, Report.column,
@@ -1246,7 +1247,7 @@ class ThriftRequestHandler(object):
                                   Report.severity, Report.detected_at,
                                   Report.fixed_at, ReviewStatus,
                                   File.filepath,
-                                  Report.path_length) \
+                                  Report.path_length, Report.analyzer_name) \
                     .outerjoin(File, Report.file_id == File.id) \
                     .outerjoin(ReviewStatus,
                                ReviewStatus.bug_hash == Report.bug_id) \
@@ -1276,7 +1277,7 @@ class ThriftRequestHandler(object):
 
                 for run_id, report_id, file_id, line, column, d_status, \
                     bug_id, checker_msg, checker, severity, detected_at,\
-                    fixed_at, r_status, path, bug_path_len \
+                    fixed_at, r_status, path, bug_path_len, analyzer_name \
                         in query_result:
 
                     review_data = create_review_data(r_status)
@@ -1297,7 +1298,8 @@ class ThriftRequestHandler(object):
                                    detectedAt=str(detected_at),
                                    fixedAt=str(fixed_at) if fixed_at else None,
                                    bugPathLength=bug_path_len,
-                                   details=report_details.get(report_id)))
+                                   details=report_details.get(report_id),
+                                   analyzerName=analyzer_name))
 
             return results
 
@@ -2543,15 +2545,20 @@ class ThriftRequestHandler(object):
         # Get checker names which was enabled during the analysis.
         enabled_checkers = set()
         disabled_checkers = set()
-        for analyzer_checkers in checkers.values():
+        checker_to_analyzer = dict()
+        for analyzer_name, analyzer_checkers in checkers.items():
             if isinstance(analyzer_checkers, dict):
                 for checker_name, enabled in analyzer_checkers.items():
+                    checker_to_analyzer[checker_name] = analyzer_name
                     if enabled:
                         enabled_checkers.add(checker_name)
                     else:
                         disabled_checkers.add(checker_name)
             else:
                 enabled_checkers.update(analyzer_checkers)
+
+                for checker_name in analyzer_checkers:
+                    checker_to_analyzer[checker_name] = analyzer_name
 
         def checker_is_unavailable(checker_name):
             """
@@ -2565,6 +2572,15 @@ class ThriftRequestHandler(object):
             """
             return not checker_name.startswith('clang-diagnostic-') and \
                 enabled_checkers and checker_name not in enabled_checkers
+
+        def get_analyzer_name(report):
+            """ Get analyzer name for the given report. """
+            analyzer_name = checker_to_analyzer.get(report.check_name)
+            if analyzer_name:
+                return analyzer_name
+
+            if report.metadata:
+                return report.metadata.get("analyzer", {}).get("name")
 
         # Processing PList files.
         _, _, report_files = next(os.walk(report_dir), ([], [], []))
@@ -2633,6 +2649,7 @@ class ThriftRequestHandler(object):
                         if old_status == 'resolved' else 'unresolved'
                     detected_at = old_report.detected_at
 
+                analyzer_name = get_analyzer_name(report)
                 report_id = store_handler.addReport(
                     session,
                     run_id,
@@ -2643,7 +2660,8 @@ class ThriftRequestHandler(object):
                     bug_extended_data,
                     detection_status,
                     detected_at,
-                    severity_map)
+                    severity_map,
+                    analyzer_name)
 
                 new_bug_hashes.add(bug_id)
                 already_added.add(report_path_hash)
