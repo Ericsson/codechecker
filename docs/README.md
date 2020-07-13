@@ -49,7 +49,7 @@ macOS (OS X) development environment.
     For a complete list see [Supported Analyzers](docs/supported_code_analyzers.md)
   * **Web application** for viewing discovered code defects with a streamlined,
     easy experience (with PostgreSQL, or SQLite backend)
-  * **Gerrit and GitLab integration** Shows analysis results as [Gitlab](docs/gitlab_integration.md) or [Gerrit](docs/jenkins_gerrit_integration.md) reviews
+  * **Gerrit and GitLab integration** Shows analysis results as [Gitlab](gitlab_integration.md) or [Gerrit](jenkins_gerrit_integration.md) reviews
   * **Filterable** (defect checker name, severity, source paths, ...) and
     **comparable** (calculates difference between two analyses of the project,
     showing which bugs have been fixed and which are newly introduced) result
