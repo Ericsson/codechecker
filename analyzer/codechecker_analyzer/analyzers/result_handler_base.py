@@ -97,7 +97,7 @@ class ResultHandler(object, metaclass=ABCMeta):
 
         return analyzed_file_name + '_' + \
             str(self.buildaction.analyzer_type) + '_' + \
-            hashlib.md5(build_info.encode(errors='ignore')).hexdigest() \
+            hashlib.md5(build_info.encode(errors='ignore')).hexdigest()
 
     @property
     def analyzer_result_file(self):
