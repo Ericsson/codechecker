@@ -65,11 +65,11 @@ def perform_build_command(logfile, command, context, keep_link, silent=False,
                            original_env_file)
 
         with open(original_env_file, 'rb') as env_file:
-            original_env = pickle.load(env_file)
+            original_env = pickle.load(env_file, encoding='utf-8')
 
     except Exception as ex:
         LOG.warning(str(ex))
-        LOG.warning('Failed to get saved original_env'
+        LOG.warning('Failed to get saved original_env '
                     'using a current copy for logging.')
         original_env = os.environ.copy()
 
