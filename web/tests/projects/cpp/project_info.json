@@ -43,6 +43,7 @@
         ],
         "filter_severity_levels": [{"MEDIUM": 3}, {"LOW": 6}, {"HIGH": 24}, {"STYLE": 0}, {"UNSPECIFIED": 3}, {"CRITICAL": 0}],
         "filter_checker_id": [{"*unix*": 1}, {"core*": 22}, {"*DeadStores": 6}],
+        "filter_analyzer_name": [{"clang-tidy": 2}, {"clangsa": 34}],
         "filter_filepath": [{"*null*": 5}],
         "filter_filepath_case_insensitive": [{"*null*": 5}, {"*nULl*": 5}, {"*NULL*": 5}, {"*Null*": 5}],
         "filter_review_status": [{"UNREVIEWED": 0}, {"CONFIRMED": 36}, {"FALSE_POSITIVE": 0}, {"INTENTIONAL": 0}],

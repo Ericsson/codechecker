@@ -1,3 +1,4 @@
+import AnalyzerNameFilter from "./AnalyzerNameFilter";
 import UniqueFilter from "./UniqueFilter";
 import ReportHashFilter from "./ReportHashFilter";
 import BaselineRunFilter from "./BaselineRunFilter";
@@ -18,6 +19,7 @@ import BaseFilterMixin from "./BaseFilter.mixin";
 import BugPathLengthFilter from "./BugPathLengthFilter";
 
 export {
+  AnalyzerNameFilter,
   UniqueFilter,
   ReportHashFilter,
   BaselineRunFilter,

@@ -399,3 +399,29 @@ class TestReportFilter(unittest.TestCase):
                                                     None, report_filter, None,
                                                     False)
         self.assertNotEqual(len(run_results), 0)
+
+    def test_filter_analyzer_name(self):
+        """ Filter by analyzer name. """
+        runid = self._runids[0]
+
+        analyzer_name_test_data = self._testproject_data[self._clang_to_test][
+            'filter_analyzer_name']
+
+        for level in analyzer_name_test_data:
+            for analyzer_name_filter, test_result_count in level.items():
+                logging.debug('Analyzer name filter ' + analyzer_name_filter +
+                              ' test result count: ' + str(test_result_count))
+                sort_types = None
+                an_f = ReportFilter(analyzerNames=[analyzer_name_filter])
+
+                run_results = self._cc_client.getRunResults([runid],
+                                                            500,
+                                                            0,
+                                                            sort_types,
+                                                            an_f,
+                                                            None,
+                                                            False)
+                for r in run_results:
+                    print(r)
+                self.assertIsNotNone(run_results)
+                self.assertEqual(test_result_count, len(run_results))

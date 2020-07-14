@@ -28,6 +28,7 @@ module.exports = {
       reportPage.section.checkerMessageFilter,
       reportPage.section.checkerMessageFilter,
       reportPage.section.reportHashFilter,
+      reportPage.section.analyzerNameFilter,
       reportPage.section.bugPathLengthFilter
     ].forEach(section => {
       section.click("@expansionBtn");
@@ -56,6 +57,7 @@ module.exports = {
       reportPage.section.severityFilter,
       reportPage.section.reviewStatusFilter,
       reportPage.section.detectionStatusFilter,
+      reportPage.section.analyzerNameFilter,
       reportPage.section.sourceComponentFilter,
       reportPage.section.checkerMessageFilter
     ].forEach(section => {
@@ -330,6 +332,23 @@ module.exports = {
 
     section.api.elements("@selectedItems", ({result}) => {
       browser.assert.ok(result.value.length === 4);
+    });
+  },
+
+  "set analyzer name filter" (browser) {
+    const reportPage = browser.page.report();
+    const section = reportPage.section.analyzerNameFilter;
+
+    section.openFilterSettings();
+
+    reportPage.section.settingsMenu
+      .toggleMenuItem(0)
+      .applyFilter();
+
+    section.closeFilterSettings();
+
+    section.api.elements("@selectedItems", ({result}) => {
+      browser.assert.ok(result.value.length === 1);
     });
   },
 

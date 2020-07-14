@@ -304,6 +304,9 @@ def add_filter_conditions(client, report_filter, args):
     if 'checker_msg' in args:
         report_filter.checkerMsg = args.checker_msg
 
+    if 'analyzer_name' in args:
+        report_filter.analyzerNames = args.analyzer_name
+
     if 'component' in args:
         report_filter.componentNames = args.component
 

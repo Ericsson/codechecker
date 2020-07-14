@@ -275,6 +275,18 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                               "quantifiers which matches any number of "
                               "characters (zero or more).")
 
+    f_group.add_argument('--analyzer-name',
+                         nargs='*',
+                         dest="analyzer_name",
+                         metavar='ANALYZER_NAME',
+                         default=init_default('analyzer_name'),
+                         help="Filter results by analyzer names. "
+                              "The analyzer name can contain multiple * "
+                              "quantifiers which match any number of "
+                              "characters (zero or more). So for example "
+                              "\"clang*\" will match \"clangsa\" and "
+                              "\"clang-tidy\".")
+
     f_group.add_argument('--component',
                          nargs='*',
                          dest="component",

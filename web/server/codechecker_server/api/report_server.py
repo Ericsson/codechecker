@@ -226,6 +226,11 @@ def process_report_filter(session, report_filter):
               for cn in report_filter.checkerName]
         AND.append(or_(*OR))
 
+    if report_filter.analyzerNames:
+        OR = [Report.analyzer_name.ilike(conv(an))
+              for an in report_filter.analyzerNames]
+        AND.append(or_(*OR))
+
     if report_filter.runName:
         OR = [Run.name.ilike(conv(rn))
               for rn in report_filter.runName]
@@ -1863,6 +1868,63 @@ class ThriftRequestHandler(object):
                                              severity=severity,
                                              count=count)
                 results.append(checker_count)
+        return results
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getAnalyzerNameCounts(self, run_ids, report_filter, cmp_data, limit,
+                              offset):
+        """
+          If the run id list is empty the metrics will be counted
+          for all of the runs and in compare mode all of the runs
+          will be used as a baseline excluding the runs in compare data.
+        """
+        self.__require_access()
+
+        limit = verify_limit_range(limit)
+
+        results = {}
+        with DBSession(self.__Session) as session:
+            diff_hashes = None
+            if cmp_data:
+                diff_hashes, run_ids = self._cmp_helper(session,
+                                                        run_ids,
+                                                        report_filter,
+                                                        cmp_data)
+                if not diff_hashes:
+                    # There is no difference.
+                    return results
+
+            filter_expression = process_report_filter(session, report_filter)
+
+            is_unique = report_filter is not None and report_filter.isUnique
+            if is_unique:
+                q = session.query(func.max(Report.analyzer_name).label(
+                                      'analyzer_name'),
+                                  Report.bug_id)
+            else:
+                q = session.query(Report.analyzer_name,
+                                  func.count(Report.id))
+
+            q = filter_report_filter(q, filter_expression, run_ids, cmp_data,
+                                     diff_hashes)
+
+            if is_unique:
+                q = q.group_by(Report.bug_id).subquery()
+                analyzer_name_q = session.query(q.c.analyzer_name,
+                                                func.count(q.c.bug_id)) \
+                    .group_by(q.c.analyzer_name) \
+                    .order_by(q.c.analyzer_name)
+            else:
+                analyzer_name_q = q.group_by(Report.analyzer_name) \
+                    .order_by(Report.analyzer_name)
+
+            if limit:
+                analyzer_name_q = analyzer_name_q.limit(limit).offset(offset)
+
+            for name, count in analyzer_name_q:
+                results[name] = count
+
         return results
 
     @exc_to_thrift_reqfail

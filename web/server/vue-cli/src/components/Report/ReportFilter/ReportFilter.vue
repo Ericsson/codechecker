@@ -181,6 +181,18 @@
 
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
+          <analyzer-name-filter
+            ref="filters"
+            :namespace="namespace"
+            @update:url="updateUrl"
+          />
+        </v-list-item-content>
+      </v-list-item>
+
+      <v-divider />
+
+      <v-list-item class="pl-1">
+        <v-list-item-content class="pa-0">
           <source-component-filter
             ref="filters"
             :namespace="namespace"
@@ -280,6 +292,7 @@
 import { mapState } from "vuex";
 
 import {
+  AnalyzerNameFilter,
   BaselineRunFilter,
   BaselineTagFilter,
   BugPathLengthFilter,
@@ -306,6 +319,7 @@ import ReportCount from "./ReportCount";
 export default {
   name: "ReportFilter",
   components: {
+    AnalyzerNameFilter,
     ClearAllFilters,
     ReportCount,
     UniqueFilter,
