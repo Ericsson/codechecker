@@ -9,6 +9,7 @@ export default new Router({
     {
       path: "/",
       name: "products",
+      alias: [ "/products.html" ],
       meta: {
         requiresAuth: true
       },
@@ -17,6 +18,7 @@ export default new Router({
     {
       path: "/login",
       name: "login",
+      alias: [ "/login.html" ],
       component: () => import("@/views/Login")
     },
     {
