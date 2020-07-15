@@ -98,6 +98,10 @@ const handleThriftError = function (cb, onError) {
 
         if (onError) onError(err);
         return;
+      } else if (msg.search(/The product .* does not exist!/) > -1) {
+        return router.replace({
+          name: "404"
+        }).catch(() => {});
       }
     }
 
