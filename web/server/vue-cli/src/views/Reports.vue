@@ -120,15 +120,18 @@
         </template>
 
         <template #item.checkerId="{ item }">
-          <v-btn
-            text
-            small
-            color="primary"
-            class="text-none"
+          <span
+            class="checker-name primary--text"
             @click="openCheckerDocDialog(item.checkerId)"
           >
             {{ item.checkerId }}
-          </v-btn>
+          </span>
+        </template>
+
+        <template #item.checkerMsg="{ item }">
+          <span class="checker-message">
+            {{ item.checkerMsg }}
+          </span>
         </template>
 
         <template #item.severity="{ item }">
@@ -474,7 +477,15 @@ export default {
   }
 }
 
-.v-data-table .file-name {
-  word-break: break-word;
+.v-data-table {
+  .file-name,
+  .checker-name,
+  .checker-message {
+    word-break: break-word;
+  }
+
+  .checker-name {
+    cursor: pointer;
+  }
 }
 </style>
