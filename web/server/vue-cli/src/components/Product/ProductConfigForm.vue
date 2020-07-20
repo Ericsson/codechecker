@@ -95,7 +95,7 @@
         />
 
         <v-text-field
-          v-model="dbConnection.username"
+          v-model="dbUserName"
           label="User name"
           name="db-username"
           prepend-icon="mdi-account-outline"
@@ -103,7 +103,7 @@
         />
 
         <v-text-field
-          v-model="dbConnection.password"
+          v-model="dbPassword"
           type="password"
           label="Password"
           name="db-password"
@@ -166,6 +166,31 @@ export default {
     dbConnection() {
       return this.productConfig.connection;
     },
+
+    dbUserName: {
+      get() {
+        if (!this.productConfig.connection.username_b64) return "";
+
+        return window.atob(this.productConfig.connection.username_b64);
+      },
+      set(value) {
+        this.productConfig.connection.username_b64 =
+          value.length ? window.btoa(value) : null;
+      }
+    },
+
+    dbPassword: {
+      get() {
+        if (!this.productConfig.connection.password_b64) return "";
+
+        return window.atob(this.productConfig.connection.password_b64);
+      },
+      set(value) {
+        this.productConfig.connection.password_b64 =
+          value.length ? window.btoa(value) : null;
+      }
+    },
+
     description: {
       get() {
         if (!this.productConfig.description_b64) return "";
@@ -177,6 +202,7 @@ export default {
           value.length ? window.btoa(value) : null;
       }
     },
+
     displayName: {
       get() {
         if (!this.productConfig.displayedName_b64) return "";
