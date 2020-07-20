@@ -7,6 +7,7 @@ services:
   - postgresql
 
 jobs:
+  fast_finish: true
   include:
     - os: linux
       name: "Analyzer, web (sqlite, psycopg2, pg8000) and tools test cases."
@@ -49,6 +50,7 @@ jobs:
         make pip_dev_deps &&
         make clean_travis package &&
         npm run --prefix web/server/vue-cli test
+  allow_failures:
     - os: osx
       osx_image: xcode10
       name: "Analyzer test cases"
