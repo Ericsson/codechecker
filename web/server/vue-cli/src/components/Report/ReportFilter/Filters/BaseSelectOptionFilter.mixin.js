@@ -88,6 +88,7 @@ export default {
       this.selectedItems.forEach(selectedItem => {
         const item = items.find(i => i.id === selectedItem.id);
         selectedItem.count = item ? item.count : null;
+        selectedItem.value = item ? item.value : null;
       });
     },
 

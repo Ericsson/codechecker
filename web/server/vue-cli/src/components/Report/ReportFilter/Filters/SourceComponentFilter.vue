@@ -29,6 +29,39 @@
           mdi-puzzle-outline
         </v-icon>
       </template>
+
+      <template v-slot:title="{ item }">
+        <v-tooltip
+          right
+          color="white"
+        >
+          <template v-slot:activator="{ on, attrs }">
+            <v-list-item-title
+              class="mr-1 filter-item-title"
+              :title="item.title"
+              v-bind="attrs"
+              v-on="on"
+            >
+              {{ item.title }}
+            </v-list-item-title>
+          </template>
+
+          <v-card
+            v-if="item.value"
+            class="mx-auto"
+            outlined
+          >
+            <v-list-item
+              v-for="value in item.value.split('\n')"
+              :key="value"
+              :class="[ value[0] === '+' ? 'include' : 'exclude' ]"
+              dense
+            >
+              {{ value }}
+            </v-list-item>
+          </v-card>
+        </v-tooltip>
+      </template>
     </select-option>
   </manage-source-component-dialog>
 </template>
@@ -94,7 +127,8 @@ export default {
             resolve(res.map(component => {
               return {
                 id : component.name,
-                title: component.name
+                title: component.name,
+                value: component.value
               };
             }));
             this.loading = false;
@@ -104,3 +138,23 @@ export default {
   }
 };
 </script>
+
+<style lang="scss" scoped>
+.v-tooltip__content {
+  padding: 0px;
+
+  .v-list-item {
+    min-height: auto;
+  }
+
+  .theme--light.v-list-item {
+    &.include {
+      color: green !important;
+    }
+
+    &.exclude {
+      color: red !important;
+    }
+  }
+}
+</style>
