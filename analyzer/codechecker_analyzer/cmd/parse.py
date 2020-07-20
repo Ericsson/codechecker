@@ -359,6 +359,8 @@ def get_argparser_ctor_args():
     argparse.ArgumentParser (either directly or as a subparser).
     """
 
+    package_root = analyzer_context.get_context().package_root
+
     return {
         'prog': 'CodeChecker parse',
         'formatter_class': arg.RawDescriptionDefaultHelpFormatter,
@@ -369,6 +371,12 @@ Parse and pretty-print the summary and results from one or more
 'codechecker-analyze' result files. Bugs which are commented by using
 "false_positive", "suppress" and "intentional" source code comments will not be
 printed by the `parse` command.""",
+
+        'epilog': """
+environment variables:
+  CC_SEVERITY_MAP_FILE   Path of the checker-severity mapping config file.
+                         Default: {}
+""".format(os.path.join(package_root, 'config', 'checker_severity_map.json')),
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.
