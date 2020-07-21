@@ -30,6 +30,11 @@ export default new Router({
       component: () => import("@/views/NewFeatures")
     },
     {
+      path: "/404",
+      name: "404",
+      component: () => import("@/views/NotFound")
+    },
+    {
       path: "/:endpoint",
       meta: {
         requiresAuth: true

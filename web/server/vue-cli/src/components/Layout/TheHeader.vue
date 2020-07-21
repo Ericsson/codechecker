@@ -127,21 +127,21 @@ export default {
           icon: "mdi-briefcase-outline",
           route: "products",
           active: [ "products" ],
-          hide: [ "products", "login" ]
+          hide: [ "products", "login", "404" ]
         },
         {
           name: "Runs",
           icon: "mdi-run-fast",
           route: "runs",
           active: [ "runs", "main_runs" ],
-          hide: [ "products", "login" ]
+          hide: [ "products", "login", "404" ]
         },
         {
           name: "Run history",
           icon: "mdi-history",
           route: "run-history",
           active: [ "run-history" ],
-          hide: [ "products", "login" ]
+          hide: [ "products", "login", "404" ]
         },
         {
           name: "Statistics",
@@ -149,7 +149,7 @@ export default {
           route: "statistics",
           active: [ "statistics" ],
           query: defaultStatisticsFilterValues,
-          hide: [ "products", "login" ]
+          hide: [ "products", "login", "404" ]
         },
         {
           name: "Reports",
@@ -157,7 +157,7 @@ export default {
           route: "reports",
           active: [ "reports" ],
           query: defaultReportFilterValues,
-          hide: [ "products", "login" ]
+          hide: [ "products", "login", "404" ]
         }
       ]
     };
