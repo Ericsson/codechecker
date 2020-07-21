@@ -15,6 +15,7 @@
         :key="item.id"
         :value="item"
         class="selected-item pa-0 px-1 ma-0 mb-1"
+        :disabled="!multiple"
         dense
       >
         <v-list-item-icon class="ma-1 mr-2">
@@ -62,7 +63,8 @@
 export default {
   name: "ItemsSelected",
   props: {
-    selectedItems: { type: Array, required: true }
+    selectedItems: { type: Array, required: true },
+    multiple: { type: Boolean, default: true }
   },
   computed: {
     selected: {

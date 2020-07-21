@@ -61,6 +61,7 @@
 
     <items-selected
       :selected-items="selectedItems"
+      :multiple="multiple"
       @update:select="updateSelectedItems"
     >
       <template v-slot:icon="{ item }">
