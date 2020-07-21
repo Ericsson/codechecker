@@ -17,7 +17,10 @@
               color="primary"
               :to="{ name: 'reports', query: {
                 ...$router.currentRoute.query,
-                'report-id': undefined
+                'report-id': undefined,
+                ...(
+                  reportFilter.reportHash ? {} : { 'report-hash' : undefined }
+                )
               }}"
             >
               <v-icon
