@@ -22,7 +22,7 @@ pycodestyle:
 pycodestyle_in_env: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(PYCODESTYLE_TEST_CMD)
 
-PYLINT_TEST_CMD = pylint ./plist_to_html ./tests \
+PYLINT_TEST_CMD = pylint -j0 ./plist_to_html ./tests \
   --disable=all \
   --enable=logging-format-interpolation,old-style-class,unused-import,unused-variable,len-as-condition,bad-indentation
 
