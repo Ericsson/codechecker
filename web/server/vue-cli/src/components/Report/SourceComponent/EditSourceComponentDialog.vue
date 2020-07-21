@@ -132,8 +132,17 @@ export default {
   },
 
   methods: {
-    saveSourceComponent() {
+    async saveSourceComponent() {
       if (!this.$refs.form.validate()) return;
+
+      // Remove the original component because the user would like to change
+      // the name.
+      if (this.sourceComponent &&
+          this.sourceComponent.name !== this.component.name
+      ) {
+        await ccService.getClient().removeSourceComponent(
+          this.sourceComponent.name, handleThriftError);
+      }
 
       const component = this.component;
       ccService.getClient().addSourceComponent(component.name,
