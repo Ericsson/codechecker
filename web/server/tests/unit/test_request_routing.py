@@ -48,10 +48,10 @@ class request_routingTest(unittest.TestCase):
         Test if the server properly splits query addresses for POST.
         """
 
-        # The splitter returns None as these are invalid paths.
+        # The splitter returns (None, None, None) as these are invalid paths.
         # It is the server code's responsibility to give a 404 Not Found.
-        self.assertIsNone(POST(''))
-        self.assertIsNone(POST('CodeCheckerService'))
+        self.assertEqual(POST(''), (None, None, None))
+        self.assertEqual(POST('CodeCheckerService'), (None, None, None))
 
         # Raise an exception if URL is malformed, such as contains a
         # product-endpoint-like component which is badly encoded version
