@@ -67,6 +67,7 @@
           :key="item.id"
           :value="item.id"
           class="my-1"
+          :disabled="!multiple && selected === item.id"
         >
           <template v-slot:default="{ active }">
             <v-list-item-action class="ma-1 mr-5">
