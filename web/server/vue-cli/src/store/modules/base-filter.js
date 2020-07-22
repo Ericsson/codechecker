@@ -13,6 +13,11 @@ const getters = {
     return state.reportFilter;
   },
   getCmpData(state) {
+    // If only the diff type is set we will return with null to identify that
+    // no compare data is set.
+    if (state.cmpData && !state.cmpData.runIds && !state.cmpData.runTag)
+      return null;
+
     return state.cmpData;
   }
 };
