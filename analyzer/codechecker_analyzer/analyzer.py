@@ -10,6 +10,7 @@ Prepare and start different analysis types
 """
 
 
+from collections import defaultdict
 from multiprocessing.managers import SyncManager
 import os
 import shlex
@@ -240,6 +241,8 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
     check_env = env.extend(context.path_env_extra,
                            context.ld_lib_path_extra)
 
+    enabled_checkers = defaultdict(list)
+
     # Save some metadata information.
     for analyzer in analyzers:
         metadata_info = {
@@ -254,11 +257,15 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
             state, _ = data
             metadata_info['checkers'].update({
                 check: state == CheckerState.enabled})
+            enabled_checkers[analyzer].append(check)
 
         version = config_map[analyzer].get_version(check_env)
         metadata_info['analyzer_statistics']['version'] = version
 
         metadata_tool['analyzers'][analyzer] = metadata_info
+
+    LOG.info("Enabled checkers:\n%s", '\n'.join(
+        k + ': ' + ', '.join(v) for k, v in enabled_checkers.items()))
 
     if 'makefile' in args and args.makefile:
         statistics_data = __get_statistics_data(args)

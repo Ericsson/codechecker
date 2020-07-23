@@ -890,7 +890,9 @@ class TestAnalyze(unittest.TestCase):
             errors="ignore")
         out, _ = process.communicate()
 
-        self.assertEqual(out.count('hicpp-use-nullptr'), 1)
+        # First it's printed as the member of enabled checkers at the beginning
+        # of the output. Second it is printed as a found report.
+        self.assertEqual(out.count('hicpp-use-nullptr'), 2)
 
         analyze_cmd = [self._codechecker_cmd, "check", "-l", build_json,
                        "--analyzers", "clang-tidy", "-o", self.report_dir,
@@ -909,7 +911,9 @@ class TestAnalyze(unittest.TestCase):
             errors="ignore")
         out, _ = process.communicate()
 
-        self.assertEqual(out.count('hicpp-use-nullptr'), 2)
+        # First it's printed as the member of enabled checkers at the beginning
+        # of the output. Second and third it is printed as a found report.
+        self.assertEqual(out.count('hicpp-use-nullptr'), 3)
 
         analyze_cmd = [self._codechecker_cmd, "check", "-l", build_json,
                        "--analyzers", "clangsa", "-o", self.report_dir,
@@ -927,7 +931,9 @@ class TestAnalyze(unittest.TestCase):
             errors="ignore")
         out, _ = process.communicate()
 
-        self.assertEqual(out.count('UninitializedObject'), 1)
+        # First it's printed as the member of enabled checkers at the beginning
+        # of the output. Second it is printed as a found report.
+        self.assertEqual(out.count('UninitializedObject'), 2)
 
         analyze_cmd = [self._codechecker_cmd, "check", "-l", build_json,
                        "--analyzers", "clangsa", "-o", self.report_dir,
@@ -947,7 +953,9 @@ class TestAnalyze(unittest.TestCase):
             errors="ignore")
         out, _ = process.communicate()
 
-        self.assertEqual(out.count('UninitializedObject'), 0)
+        # It is printed as the member of enabled checkers, but it gives no
+        # report.
+        self.assertEqual(out.count('UninitializedObject'), 1)
 
     def test_invalid_compilation_database(self):
         """ Warn in case of an invalid enabled checker. """
