@@ -314,35 +314,25 @@ def process_report_filter(session, report_filter):
         for component_name in report_filter.componentNames:
             skip, include = get_component_values(session, component_name)
 
-            skip_q, include_q = None, None
-
-            if include:
-                and_q = [File.filepath.like(conv(fp)) for fp in include]
-                include_q = select([File.id]).where(or_(*and_q))
-
-            if skip:
-                and_q = [(File.filepath.like(conv(fp))) for fp in skip]
-                skip_q = select([File.id]).where(or_(*and_q))
-
-            file_ids = []
             if skip and include:
-                skip_q = include_q.except_(skip_q).alias('component')
-                file_ids = session.query(skip_q) \
-                    .distinct() \
-                    .all()
-            elif include:
-                file_ids = session.query(include_q.alias('include')).all()
-            elif skip:
-                and_q = [not_(File.filepath.like(conv(fp))) for fp in skip]
-                skip_q = select([File.id]).where(and_(*and_q))
-                file_ids = session.query(skip_q.alias('skip')).all()
+                include_q = select([File.id]) \
+                    .where(or_(*[
+                        File.filepath.like(conv(fp)) for fp in include])) \
+                    .distinct()
 
-            if file_ids:
-                OR.append(or_(File.id.in_([f_id[0] for f_id in file_ids])))
-            else:
-                # File id list can be empty for example when the user skips
-                # everything.
-                OR.append(False)
+                skip_q = select([File.id]) \
+                    .where(or_(*[
+                        File.filepath.like(conv(fp)) for fp in skip])) \
+                    .distinct()
+
+                OR.append(or_(File.id.in_(
+                    include_q.except_(skip_q))))
+            elif include:
+                include_q = [File.filepath.like(conv(fp)) for fp in include]
+                OR.append(or_(*include_q))
+            elif skip:
+                skip_q = [not_(File.filepath.like(conv(fp))) for fp in skip]
+                OR.append(and_(*skip_q))
 
         AND.append(or_(*OR))
 
