@@ -401,21 +401,20 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         checkers = ClangSA.get_analyzer_checkers(handler, environ)
 
         # Read clang-sa checkers from the config file.
-        clang_sa_checkers = context.checker_config.get(cls.ANALYZER_NAME +
-                                                       '_checkers')
+        profile_checker_map = context.checker_config.get(cls.ANALYZER_NAME +
+                                                         '_checkers', {})
 
         try:
             cmdline_checkers = args.ordered_checkers
         except AttributeError:
             LOG.debug_analyzer('No checkers were defined in '
                                'the command line for %s', cls.ANALYZER_NAME)
-            cmdline_checkers = None
+            cmdline_checkers = []
 
         handler.initialize_checkers(
-            context.available_profiles,
             context.package_root,
             checkers,
-            clang_sa_checkers,
+            profile_checker_map,
             cmdline_checkers,
             'enable_all' in args and args.enable_all)
 

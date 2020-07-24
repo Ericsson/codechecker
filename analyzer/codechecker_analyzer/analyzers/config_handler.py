@@ -11,6 +11,7 @@ Static analyzer configuration handler.
 
 
 from abc import ABCMeta
+from operator import itemgetter
 import collections
 import platform
 import subprocess
@@ -128,11 +129,10 @@ class AnalyzerConfigHandler(object, metaclass=ABCMeta):
         return reserved_names
 
     def initialize_checkers(self,
-                            available_profiles,
                             package_root,
                             checkers,
-                            checker_config=None,
-                            cmdline_checkers=None,
+                            profile_checker_map={},
+                            cmdline_checkers=[],
                             enable_all=False):
         """
         Initializes the checker list for the specified config handler based on
@@ -140,20 +140,26 @@ class AnalyzerConfigHandler(object, metaclass=ABCMeta):
         analyzer-retrieved checker list.
         """
 
+        if 'profile:list' in map(itemgetter(0), cmdline_checkers):
+            LOG.error("'list' is a reserved profile keyword. ")
+            LOG.error("Please choose another profile name in "
+                      "'%s'/config/config.json and rebuild.",
+                      package_root)
+            sys.exit(1)
+
         # Add all checkers marked as default. This means the analyzer should
         # manage whether it is enabled or disabled.
         for checker_name, description in checkers:
             self.add_checker(checker_name, description)
 
         # Set default enabled or disabled checkers, based on the config file.
-        if checker_config:
+        if 'default' not in profile_checker_map:
             # Check whether a default profile exists.
-            if 'default' not in checker_config:
-                LOG.warning("No default profile found!")
-            else:
-                # Turn default checkers on.
-                for checker in checker_config['default']:
-                    self.set_checker_enabled(checker)
+            LOG.warning("No default profile found!")
+        else:
+            # Turn default checkers on.
+            for checker in profile_checker_map['default']:
+                self.set_checker_enabled(checker)
 
         # If enable_all is given, almost all checkers should be enabled.
         if enable_all:
@@ -171,34 +177,24 @@ class AnalyzerConfigHandler(object, metaclass=ABCMeta):
                     self.set_checker_enabled(checker_name)
 
         # Set user defined enabled or disabled checkers from the command line.
-        if cmdline_checkers:
 
-            # Construct a list of reserved checker names.
-            # (It is used to check if a profile name is valid.)
-            reserved_names = self.__gen_name_variations()
+        # Construct a list of reserved checker names.
+        # (It is used to check if a profile name is valid.)
+        reserved_names = self.__gen_name_variations()
 
-            for identifier, enabled in cmdline_checkers:
+        for identifier, enabled in cmdline_checkers:
 
-                # The identifier is a profile name.
-                if identifier in available_profiles:
-                    profile_name = identifier
-
-                    if profile_name == "list":
-                        LOG.error("'list' is a reserved profile keyword. ")
-                        LOG.error("Please choose another profile name in "
-                                  "'%s'/config/config.json and rebuild.",
-                                  package_root)
-                        sys.exit(1)
-
-                    if profile_name in reserved_names:
-                        LOG.warning("Profile name '%s' conflicts with a "
-                                    "checker(-group) name.", profile_name)
-
-                    # Enable or disable all checkers belonging to the profile.
-                    for checker in checker_config[profile_name]:
-                        self.set_checker_enabled(checker, enabled)
-
-                # The identifier is a checker(-group) name.
-                else:
-                    checker_name = identifier
-                    self.set_checker_enabled(checker_name, enabled)
+            if identifier.startswith('profile:'):
+                profile_name = identifier[len('profile:'):]
+                for checker in profile_checker_map[profile_name]:
+                    self.set_checker_enabled(checker, enabled)
+            elif identifier in profile_checker_map:
+                if identifier in reserved_names:
+                    # For reverse-compatibility reasons a profile name is
+                    # stronger than a checker name.
+                    LOG.warning("Profile name '%s' conflicts with a "
+                                "checker(-group) name.", identifier)
+                for checker in profile_checker_map[identifier]:
+                    self.set_checker_enabled(checker, enabled)
+            else:
+                self.set_checker_enabled(identifier, enabled)

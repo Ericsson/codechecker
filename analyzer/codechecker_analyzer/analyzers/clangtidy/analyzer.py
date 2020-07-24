@@ -358,8 +358,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         checkers = ClangTidy.get_analyzer_checkers(handler, check_env)
 
         # Read clang-tidy checkers from the config file.
-        clang_tidy_checkers = context.checker_config.get(cls.ANALYZER_NAME +
-                                                         '_checkers')
+        profile_checker_map = context.checker_config.get(cls.ANALYZER_NAME +
+                                                         '_checkers', {})
 
         try:
             cmdline_checkers = args.ordered_checkers
@@ -367,13 +367,12 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             LOG.debug_analyzer('No checkers were defined in '
                                'the command line for %s',
                                cls.ANALYZER_NAME)
-            cmdline_checkers = None
+            cmdline_checkers = []
 
         handler.initialize_checkers(
-            context.available_profiles,
             context.package_root,
             checkers,
-            clang_tidy_checkers,
+            profile_checker_map,
             cmdline_checkers,
             'enable_all' in args and args.enable_all)
 

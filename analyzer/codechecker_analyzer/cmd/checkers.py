@@ -332,10 +332,10 @@ def main(args):
 
         checkers = analyzer_class.get_analyzer_checkers(config_handler,
                                                         analyzer_environment)
-        default_checker_cfg = context.checker_config.get(
-            analyzer + '_checkers')
+        profile_checker_map = context.checker_config.get(
+            analyzer + '_checkers', {})
 
-        profile_checkers = None
+        profile_checkers = []
         if 'profile' in args:
             if args.profile not in context.available_profiles:
                 LOG.error("Checker profile '%s' does not exist!",
@@ -343,12 +343,11 @@ def main(args):
                 LOG.error("To list available profiles, use '--profile list'.")
                 sys.exit(1)
 
-            profile_checkers = [(args.profile, True)]
+            profile_checkers = [('profile:' + args.profile, True)]
 
-        config_handler.initialize_checkers(context.available_profiles,
-                                           context.package_root,
+        config_handler.initialize_checkers(context.package_root,
                                            checkers,
-                                           default_checker_cfg,
+                                           profile_checker_map,
                                            profile_checkers)
 
         for checker_name, value in config_handler.checks().items():
