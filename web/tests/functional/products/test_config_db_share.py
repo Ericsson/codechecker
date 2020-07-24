@@ -81,7 +81,7 @@ class TestProductConfigShare(unittest.TestCase):
         # Setup a product client to test product API calls which requires root.
         self._root_client = env.setup_product_client(self.test_workspace_main,
                                                      session_token=root_token)
-        self.assertIsNotNone(self._pr_client)
+        self.assertIsNotNone(self._root_client)
 
         # Get the run names which belong to this test.
         run_names = env.get_run_names(self.test_workspace_main)
@@ -212,7 +212,7 @@ class TestProductConfigShare(unittest.TestCase):
         self.assertTrue(self._root_client.removeProduct(p_id),
                         "Main server reported error while removing product.")
 
-        self.assertEqual(len(self._pr_client.getProducts('_second', None)),
+        self.assertEqual(len(self._pr_client_2.getProducts('_second', None)),
                          0,
                          "Secondary server still sees the removed product.")
 

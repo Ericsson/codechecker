@@ -866,7 +866,7 @@ class CCSimpleHttpServer(HTTPServer):
         endpoints specified in :endpoints_to_keep.
         """
         [self.remove_product(ep)
-            for ep in self.__products.keys()
+            for ep in list(self.__products)
             if ep not in endpoints_to_keep]
 
 
