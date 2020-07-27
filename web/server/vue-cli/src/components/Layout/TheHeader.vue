@@ -137,6 +137,14 @@ export default {
           hide: [ "products", "login", "404" ]
         },
         {
+          name: "Reports",
+          icon: "mdi-clipboard-text-multiple-outline",
+          route: "reports",
+          active: [ "reports" ],
+          query: defaultReportFilterValues,
+          hide: [ "products", "login", "404" ]
+        },
+        {
           name: "Run history",
           icon: "mdi-history",
           route: "run-history",
@@ -149,14 +157,6 @@ export default {
           route: "statistics",
           active: [ "statistics" ],
           query: defaultStatisticsFilterValues,
-          hide: [ "products", "login", "404" ]
-        },
-        {
-          name: "Reports",
-          icon: "mdi-clipboard-text-multiple-outline",
-          route: "reports",
-          active: [ "reports" ],
-          query: defaultReportFilterValues,
           hide: [ "products", "login", "404" ]
         }
       ]
