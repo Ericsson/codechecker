@@ -304,7 +304,7 @@ cross translation unit analysis arguments:
                         the ASTs. Mode 'load-from-pch' can use significant
                         disk-space for the serialized ASTs, while mode 'parse-
                         on-demand' can incur some runtime CPU overhead in the
-                        second phase of the analysis. (default: load-from-pch)
+                        second phase of the analysis. (default: parse-on-demand)
 
 checker configuration:
   
@@ -1355,7 +1355,7 @@ cross translation unit analysis arguments:
                         the ASTs. Mode 'load-from-pch' can use significant
                         disk-space for the serialized ASTs, while mode 'parse-
                         on-demand' can incur some runtime CPU overhead in the
-                        second phase of the analysis. (default: load-from-pch)
+                        second phase of the analysis. (default: parse-on-demand)
 ```
 
 ### Statistical analysis mode <a name="statistical"></a>
