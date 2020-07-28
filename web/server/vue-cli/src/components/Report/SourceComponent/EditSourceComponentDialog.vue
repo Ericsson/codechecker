@@ -36,7 +36,7 @@
         <v-container>
           <v-form ref="form">
             <v-text-field
-              v-model="component.name"
+              v-model.trim="component.name"
               class="component-name"
               label="Name*"
               autofocus
@@ -46,17 +46,18 @@
             />
 
             <v-textarea
-              v-model="component.value"
+              v-model.trim="component.value"
               class="component-value value"
               outlined
               required
+              validate-on-blur
               label="Value"
               :placeholder="placeHolderValue"
               :rules="rules.value"
             />
 
             <v-text-field
-              v-model="component.description"
+              v-model.trim="component.description"
               class="component-description "
               label="Description"
               outlined
@@ -96,6 +97,19 @@
 import { ccService, handleThriftError } from "@cc-api";
 import { SourceComponentData } from "@cc/report-server-types";
 
+function isValidComponentValue (value) {
+  const lines = value.trim().split(/\r|\n/);
+  for (let i = 0; i < lines.length; ++i) {
+    if (!lines[i].startsWith("+") && !lines[i].startsWith("-") ||
+         lines[i].trim().length < 2
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export default {
   name: "NewSourceComponentDialog",
   props: {
@@ -112,7 +126,12 @@ export default {
                       + "E.g.: +/a/b/x.cpp or -/a/b/*",
       rules: {
         name: [ v => !!v || "Name is required" ],
-        value: [ v => !!v || "Value is required" ]
+        value: [
+          v => !!v || "Value is required",
+          v => isValidComponentValue(v) || "Component value format is "
+            + "invalid! Every line should start with + or - sign followed by "
+            + "one or more character."
+        ]
       }
     };
   },
