@@ -168,7 +168,8 @@ class File(Base):
     content_hash = Column(String,
                           ForeignKey('file_contents.content_hash',
                                      deferrable=True,
-                                     initially="DEFERRED", ondelete='CASCADE'))
+                                     initially="DEFERRED", ondelete='CASCADE'),
+                          index=True)
 
     __table_args__ = (UniqueConstraint('filepath', 'content_hash'),)
 
