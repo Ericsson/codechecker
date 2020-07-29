@@ -18,8 +18,11 @@ def available(ordered_checkers, available_checkers):
     Returns the set of checker names without any match.
     """
     missing_checkers = set()
-    for checker in ordered_checkers:
-        checker_name, _ = checker
+    for checker_name, _ in ordered_checkers:
+        if checker_name.startswith('profile:') or \
+                checker_name.startswith('guideline:'):
+            continue
+
         name_match = False
         for available_checker in available_checkers:
             regex = "^" + re.escape(str(checker_name)) + ".*$"

@@ -203,7 +203,7 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
     available_checkers = set()
     # Add profile names to the checkers list so we will not warn
     # if a profile is enabled but there is no checker with that name.
-    available_checkers.update(context.available_profiles.keys())
+    available_checkers.update(context.profile_map.available_profiles())
 
     # Collect all the available checkers from the enabled analyzers.
     for analyzer in config_map.items():

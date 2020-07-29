@@ -15,16 +15,41 @@ import unittest
 
 from codechecker_analyzer.analyzers.clangsa.analyzer import ClangSA
 from codechecker_analyzer.analyzers.clangtidy.analyzer import ClangTidy
+from codechecker_analyzer.analyzers.config_handler import CheckerState
 
 from codechecker_analyzer.buildlog import log_parser
 
 
 class MockContextSA(object):
+    class ProfileMap(object):
+        def __getitem__(self, key):
+            return 'profile1'
+
+        def by_profile(self, profile):
+            if profile == 'default':
+                return ['core', 'deadcode', 'security.FloatLoopCounter']
+            elif profile == 'security':
+                return ['alpha.security']
+
+        def available_profiles(self):
+            return {'default': 'description', 'security': 'description'}
+
+    class GuidelineMap(object):
+        def __getitem__(self, key):
+            return {'sei-cert': ['rule1', 'rule2']}
+
+        def by_guideline(self, guideline):
+            return ['alpha.core.CastSize', 'alpha.core.CastToStruct']
+
+        def available_guidelines(self):
+            return {'sei-cert': 'description'}
+
     path_env_extra = None
     ld_lib_path_extra = None
     checker_plugin = None
     analyzer_binaries = {'clangsa': 'clang'}
-    checker_config = {'clangsa_checkers': ['a.b']}
+    profile_map = ProfileMap()
+    guideline_map = GuidelineMap()
     available_profiles = ['profile1']
     package_root = './'
 
@@ -93,13 +118,130 @@ class CheckerHandlingClangSATest(unittest.TestCase):
             any(arg.startswith('-analyzer-disable-checker')
                 for arg in self.__class__.cmd))
 
+    def test_checker_initializer(self):
+        """
+        Test initialize_checkers() function.
+        """
+        def add_description(checker):
+            return checker, ''
+
+        def all_with_status(status):
+            def f(checks, checkers):
+                result = set(check for check, data in checks.items()
+                             if data[0] == status)
+                return set(checkers) <= result
+            return f
+
+        args = []
+        context = MockContextSA()
+
+        # "security" profile, but alpha -> not in default.
+        security_profile_alpha = [
+                'alpha.security.ArrayBound',
+                'alpha.security.MallocOverflow']
+
+        # "default" profile.
+        default_profile = [
+                'security.FloatLoopCounter',
+                'deadcode.DeadStores']
+
+        # Checkers covering some "sei-cert" rules.
+        cert_guideline = [
+                'alpha.core.CastSize',
+                'alpha.core.CastToStruct']
+
+        checkers = []
+        checkers.extend(map(add_description, security_profile_alpha))
+        checkers.extend(map(add_description, default_profile))
+        checkers.extend(map(add_description, cert_guideline))
+
+        # "default" profile checkers are enabled explicitly. Others are in
+        # "default" state.
+        cfg_handler = ClangSA.construct_config_handler(args, context)
+        cfg_handler.initialize_checkers(context, checkers)
+        self.assertTrue(all_with_status(CheckerState.enabled)
+                        (cfg_handler.checks(), default_profile))
+        self.assertTrue(all_with_status(CheckerState.default)
+                        (cfg_handler.checks(), security_profile_alpha))
+
+        # "--enable-all" leaves alpha checkers in "default" state. Others
+        # become enabled.
+        cfg_handler = ClangSA.construct_config_handler(args, context)
+        cfg_handler.initialize_checkers(context, checkers, enable_all=True)
+        self.assertTrue(all_with_status(CheckerState.default)
+                        (cfg_handler.checks(), security_profile_alpha))
+        self.assertTrue(all_with_status(CheckerState.enabled)
+                        (cfg_handler.checks(), default_profile))
+
+        # Enable alpha checkers explicitly.
+        cfg_handler = ClangSA.construct_config_handler(args, context)
+        cfg_handler.initialize_checkers(context, checkers, [('alpha', True)])
+        self.assertTrue(all_with_status(CheckerState.enabled)
+                        (cfg_handler.checks(), security_profile_alpha))
+        self.assertTrue(all_with_status(CheckerState.enabled)
+                        (cfg_handler.checks(), default_profile))
+
+        # Enable "security" profile checkers.
+        cfg_handler = ClangSA.construct_config_handler(args, context)
+        cfg_handler.initialize_checkers(context, checkers,
+                                        [('profile:security', True)])
+        self.assertTrue(all_with_status(CheckerState.enabled)
+                        (cfg_handler.checks(), security_profile_alpha))
+        self.assertTrue(all_with_status(CheckerState.enabled)
+                        (cfg_handler.checks(), default_profile))
+
+        # Enable "security" profile checkers without "profile:" prefix.
+        cfg_handler = ClangSA.construct_config_handler(args, context)
+        cfg_handler.initialize_checkers(context, checkers,
+                                        [('security', True)])
+        self.assertTrue(all_with_status(CheckerState.enabled)
+                        (cfg_handler.checks(), security_profile_alpha))
+        self.assertTrue(all_with_status(CheckerState.enabled)
+                        (cfg_handler.checks(), default_profile))
+
+        # Enable "sei-cert" guideline checkers.
+        cfg_handler = ClangSA.construct_config_handler(args, context)
+        cfg_handler.initialize_checkers(context, checkers,
+                                        [('guideline:sei-cert', True)])
+        self.assertTrue(all_with_status(CheckerState.enabled)
+                        (cfg_handler.checks(), cert_guideline))
+
+        # Enable "sei-cert" guideline checkers.
+        cfg_handler = ClangSA.construct_config_handler(args, context)
+        cfg_handler.initialize_checkers(context, checkers,
+                                        [('sei-cert', True)])
+        self.assertTrue(all_with_status(CheckerState.enabled)
+                        (cfg_handler.checks(), cert_guideline))
+
+        # Disable "sei-cert" guideline checkers.
+        cfg_handler = ClangSA.construct_config_handler(args, context)
+        cfg_handler.initialize_checkers(context, checkers,
+                                        [('guideline:sei-cert', False)])
+        self.assertTrue(all_with_status(CheckerState.disabled)
+                        (cfg_handler.checks(), cert_guideline))
+
+        # Disable "sei-cert" guideline checkers.
+        cfg_handler = ClangSA.construct_config_handler(args, context)
+        cfg_handler.initialize_checkers(context, checkers,
+                                        [('sei-cert', False)])
+        self.assertTrue(all_with_status(CheckerState.disabled)
+                        (cfg_handler.checks(), cert_guideline))
+
 
 class MockContextTidy(object):
+    class ProfileMap(object):
+        def __getitem__(self, key):
+            return 'profile1'
+
+        def by_profile(self, profile):
+            return 'd-e'
+
     path_env_extra = None
     ld_lib_path_extra = None
     checker_plugin = None
     analyzer_binaries = {'clang-tidy': 'clang-tidy'}
-    checker_config = {'clangtidy_checkers': ['d-e']}
+    profile_map = ProfileMap()
+    guideline_map = {'d-e': {'guideline1': ['rule1', 'rule2']}}
     available_profiles = ['profile1']
     package_root = './'
 

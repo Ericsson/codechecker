@@ -129,22 +129,48 @@ class AnalyzerConfigHandler(object, metaclass=ABCMeta):
         return reserved_names
 
     def initialize_checkers(self,
-                            package_root,
+                            analyzer_context,
                             checkers,
-                            profile_checker_map={},
-                            cmdline_checkers=[],
+                            cmdline_enable=[],
                             enable_all=False):
         """
-        Initializes the checker list for the specified config handler based on
-        given checker profiles, commandline arguments and the
-        analyzer-retrieved checker list.
+        Add checkers and set their "enabled/disabled" status. The following
+        inputs are considered in this order:
+        - First the default state is taken based on the analyzer tool.
+        - Members of "default" profile are enabled.
+        - In case of "--enable-all" every checker is enabled except for "alpha"
+          and "debug" checker groups. "osx" checker group is also not included
+          unless the target platform is Darwin.
+        - Command line "--enable/--disable" flags.
+          - Their arguments may start with "profile:" or "guideline:" prefix
+            which makes the choice explicit.
+          - Without prefix it means a profile name, a guideline name or a
+            checker group/name in this priority order.
+
+        analyzer_context -- Context object.
+        checkers -- [(checker name, description), ...] Checkers to add with
+                    their description.
+        cmdline_enable -- [(argument, enabled), ...] Arguments of
+                          "--enable/--disable" flags and a boolean value
+                          whether it is after "--enable" or not.
+        enable_all -- Boolean value whether "--enable-all" is given.
         """
 
-        if 'profile:list' in map(itemgetter(0), cmdline_checkers):
+        profile_map = analyzer_context.profile_map
+        guideline_map = analyzer_context.guideline_map
+
+        if 'profile:list' in map(itemgetter(0), cmdline_enable):
             LOG.error("'list' is a reserved profile keyword. ")
             LOG.error("Please choose another profile name in "
-                      "'%s'/config/config.json and rebuild.",
-                      package_root)
+                      "%s/config/checker_profile_map.json and rebuild.",
+                      analyzer_context.package_root)
+            sys.exit(1)
+
+        if 'guideline:list' in map(itemgetter(0), cmdline_enable):
+            LOG.error("'list' is a reserved guideline keyword. ")
+            LOG.error("Please choose another guideline name in "
+                      "%s/config/checker_guideline_map.json and rebuild.",
+                      analyzer_context.package_root)
             sys.exit(1)
 
         # Add all checkers marked as default. This means the analyzer should
@@ -153,12 +179,13 @@ class AnalyzerConfigHandler(object, metaclass=ABCMeta):
             self.add_checker(checker_name, description)
 
         # Set default enabled or disabled checkers, based on the config file.
-        if 'default' not in profile_checker_map:
+        default_profile_checkers = profile_map.by_profile('default')
+        if not default_profile_checkers:
             # Check whether a default profile exists.
             LOG.warning("No default profile found!")
         else:
             # Turn default checkers on.
-            for checker in profile_checker_map['default']:
+            for checker in default_profile_checkers:
                 self.set_checker_enabled(checker)
 
         # If enable_all is given, almost all checkers should be enabled.
@@ -182,19 +209,32 @@ class AnalyzerConfigHandler(object, metaclass=ABCMeta):
         # (It is used to check if a profile name is valid.)
         reserved_names = self.__gen_name_variations()
 
-        for identifier, enabled in cmdline_checkers:
-
+        for identifier, enabled in cmdline_enable:
             if identifier.startswith('profile:'):
                 profile_name = identifier[len('profile:'):]
-                for checker in profile_checker_map[profile_name]:
+                if profile_name not in profile_map.available_profiles():
+                    LOG.error('No such profile: %s', profile_name)
+                    sys.exit(1)
+                for checker in profile_map.by_profile(profile_name):
                     self.set_checker_enabled(checker, enabled)
-            elif identifier in profile_checker_map:
+            if identifier.startswith('guideline:'):
+                guideline_name = identifier[len('guideline:'):]
+                if guideline_name not in guideline_map.available_guidelines():
+                    LOG.error('No such guideline: %s', guideline_name)
+                    sys.exit(1)
+                for checker in guideline_map.by_guideline(guideline_name):
+                    self.set_checker_enabled(checker, enabled)
+            elif identifier in profile_map.available_profiles():
                 if identifier in reserved_names:
-                    # For reverse-compatibility reasons a profile name is
-                    # stronger than a checker name.
                     LOG.warning("Profile name '%s' conflicts with a "
                                 "checker(-group) name.", identifier)
-                for checker in profile_checker_map[identifier]:
+                for checker in profile_map.by_profile(identifier):
+                    self.set_checker_enabled(checker, enabled)
+            elif identifier in guideline_map.available_guidelines():
+                if identifier in reserved_names:
+                    LOG.warning("Guideline name '%s' conflicts with a "
+                                "checker(-group) name.", identifier)
+                for checker in guideline_map.by_guideline(identifier):
                     self.set_checker_enabled(checker, enabled)
             else:
                 self.set_checker_enabled(identifier, enabled)
