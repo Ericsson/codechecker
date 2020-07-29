@@ -2,9 +2,9 @@ import UniqueFilter from "./UniqueFilter";
 import ReportHashFilter from "./ReportHashFilter";
 import BaselineRunFilter from "./BaselineRunFilter";
 import BaselineTagFilter from "./BaselineTagFilter";
-import NewcheckDiffTypeFilter from "./NewcheckDiffTypeFilter";
-import NewcheckRunFilter from "./NewcheckRunFilter";
-import NewcheckTagFilter from "./NewcheckTagFilter";
+import ComparedToDiffTypeFilter from "./ComparedToDiffTypeFilter";
+import ComparedToRunFilter from "./ComparedToRunFilter";
+import ComparedToTagFilter from "./ComparedToTagFilter";
 import ReviewStatusFilter from "./ReviewStatusFilter";
 import DetectionStatusFilter from "./DetectionStatusFilter";
 import SeverityFilter from "./SeverityFilter";
@@ -21,9 +21,9 @@ export {
   ReportHashFilter,
   BaselineRunFilter,
   BaselineTagFilter,
-  NewcheckDiffTypeFilter,
-  NewcheckRunFilter,
-  NewcheckTagFilter,
+  ComparedToDiffTypeFilter,
+  ComparedToRunFilter,
+  ComparedToTagFilter,
   ReviewStatusFilter,
   DetectionStatusFilter,
   SeverityFilter,

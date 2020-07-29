@@ -71,13 +71,13 @@
       </v-list-item>
 
       <v-list-item
-        v-if="showNewcheck"
-        id="newcheck-filters"
+        v-if="showCompareTo"
+        id="compare-to-filters"
         class="pl-0"
       >
         <v-list-item-content class="pa-0">
           <v-expansion-panels
-            v-model="activeNewcheckPanelId"
+            v-model="activeCompareToPanelId"
             hover
           >
             <v-expansion-panel>
@@ -85,11 +85,11 @@
                 class="pa-0 px-1 primary--text"
               >
                 <header>
-                  <b>NEWCHECK</b>
+                  <b>COMPARE TO</b>
                 </header>
               </v-expansion-panel-header>
               <v-expansion-panel-content class="pa-1">
-                <newcheck-run-filter
+                <compared-to-run-filter
                   ref="filters"
                   :namespace="namespace"
                   @update:url="updateUrl"
@@ -97,7 +97,7 @@
 
                 <v-divider />
 
-                <newcheck-tag-filter
+                <compared-to-tag-filter
                   ref="filters"
                   :namespace="namespace"
                   @update:url="updateUrl"
@@ -105,7 +105,7 @@
 
                 <v-divider />
 
-                <newcheck-diff-type-filter
+                <compared-to-diff-type-filter
                   ref="filters"
                   :namespace="namespace"
                   @update:url="updateUrl"
@@ -267,12 +267,12 @@ import {
   BugPathLengthFilter,
   CheckerMessageFilter,
   CheckerNameFilter,
+  ComparedToDiffTypeFilter,
+  ComparedToRunFilter,
+  ComparedToTagFilter,
   DetectionDateFilter,
   DetectionStatusFilter,
   FilePathFilter,
-  NewcheckDiffTypeFilter,
-  NewcheckRunFilter,
-  NewcheckTagFilter,
   ReportHashFilter,
   ReviewStatusFilter,
   SeverityFilter,
@@ -293,9 +293,9 @@ export default {
     ReportHashFilter,
     BaselineRunFilter,
     BaselineTagFilter,
-    NewcheckDiffTypeFilter,
-    NewcheckRunFilter,
-    NewcheckTagFilter,
+    ComparedToDiffTypeFilter,
+    ComparedToRunFilter,
+    ComparedToTagFilter,
     ReviewStatusFilter,
     DetectionStatusFilter,
     SeverityFilter,
@@ -309,7 +309,7 @@ export default {
   },
   props: {
     namespace: { type: String, required: true },
-    showNewcheck: { type: Boolean, default: true },
+    showCompareTo: { type: Boolean, default: true },
     showReviewStatus: { type: Boolean, default: true },
     showRemoveFilteredReports: { type: Boolean, default: true },
     reportCount: { type: Number, required: true }
@@ -318,7 +318,7 @@ export default {
   data() {
     return {
       activeBaselinePanelId: 0,
-      activeNewcheckPanelId: 0
+      activeCompareToPanelId: 0
     };
   },
 
@@ -401,9 +401,9 @@ export default {
         filters.forEach(filter => filter.afterInit());
         this.afterInit();
 
-        // Close NEWCHECK expansion panel if no compare data is set.
+        // Close COMPARE TO expansion panel if no compare data is set.
         if (!this.cmpData?.runIds && !this.cmpData?.runTag) {
-          this.activeNewcheckPanelId = -1;
+          this.activeCompareToPanelId = -1;
         }
       });
     },
@@ -448,11 +448,11 @@ export default {
 }
 
 #baseline-filters,
-#newcheck-filters {
+#compare-to-filters {
   border: 1px solid rgba(0, 0, 0, 0.12);
 }
 
-#newcheck-filters {
+#compare-to-filters {
   border-top: 0;
 }
 

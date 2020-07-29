@@ -163,32 +163,32 @@ module.exports = {
     });
   },
 
-  "open newcheck expansion panel" (browser) {
+  "open compare to expansion panel" (browser) {
     const reportPage = browser.page.report();
-    const newcheckSection = reportPage.section.newcheckFilters;
+    const compareToSection = reportPage.section.compareToFilters;
 
-    reportPage.click(newcheckSection);
-    newcheckSection.expect.section("@newcheckRunFilter")
+    reportPage.click(compareToSection);
+    compareToSection.expect.section("@compareToRunFilter")
       .to.be.visible.before(5000);
 
     [
-      newcheckSection.section.newcheckRunFilter,
-      newcheckSection.section.newcheckTagFilter,
-      newcheckSection.section.newcheckDiffTypeFilter,
+      compareToSection.section.compareToRunFilter,
+      compareToSection.section.compareToTagFilter,
+      compareToSection.section.compareToDiffTypeFilter,
     ].forEach(section => {
       section.click("@expansionBtn");
     });
   },
 
-  async "set newcheck run filter" (browser) {
+  async "set compare to run filter" (browser) {
     const reportPage = browser.page.report();
-    const newcheckSection = reportPage.section.newcheckFilters;
-    const section = newcheckSection.section.newcheckRunFilter;
+    const compareToSection = reportPage.section.compareToFilters;
+    const section = compareToSection.section.compareToRunFilter;
 
-    const res = await newcheckSection.api.element("@active");
+    const res = await compareToSection.api.element("@active");
     if (res.status === -1) {
-      reportPage.click(newcheckSection);
-      newcheckSection.expect.section("@newcheckRunFilter")
+      reportPage.click(compareToSection);
+      compareToSection.expect.section("@compareToRunFilter")
         .to.be.visible.before(5000);
     }
 
@@ -206,15 +206,15 @@ module.exports = {
     });
   },
 
-  async "set newcheck tag filter" (browser) {
+  async "set compare to tag filter" (browser) {
     const reportPage = browser.page.report();
-    const newcheckSection = reportPage.section.newcheckFilters;
-    const section = newcheckSection.section.newcheckTagFilter;
+    const compareToSection = reportPage.section.compareToFilters;
+    const section = compareToSection.section.compareToTagFilter;
 
-    const res = await newcheckSection.api.element("@active");
+    const res = await compareToSection.api.element("@active");
     if (res.status === -1) {
-      reportPage.click(newcheckSection);
-      newcheckSection.expect.section("@newcheckTagFilter")
+      reportPage.click(compareToSection);
+      compareToSection.expect.section("@compareToTagFilter")
         .to.be.visible.before(5000);
     }
 
@@ -232,15 +232,15 @@ module.exports = {
     });
   },
 
-  async "set newcheck diff type" (browser) {
+  async "set compare to diff type" (browser) {
     const reportPage = browser.page.report();
-    const newcheckSection = reportPage.section.newcheckFilters;
-    const section = newcheckSection.section.newcheckDiffTypeFilter;
+    const compareToSection = reportPage.section.compareToFilters;
+    const section = compareToSection.section.compareToDiffTypeFilter;
 
-    const res = await newcheckSection.api.element("@active");
+    const res = await compareToSection.api.element("@active");
     if (res.status === -1) {
-      reportPage.click(newcheckSection);
-      newcheckSection.expect.section("@newcheckDiffTypeFilter")
+      reportPage.click(compareToSection);
+      compareToSection.expect.section("@compareToDiffTypeFilter")
         .to.be.visible.before(5000);
     }
 

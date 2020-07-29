@@ -20,7 +20,7 @@
       <v-list-item-icon>
         <v-icon>mdi-alert-outline</v-icon>
       </v-list-item-icon>
-      At least one run should be selected at Newcheck!
+      At least one run should be selected at Compare to!
     </template>
   </select-option>
 </template>
@@ -33,7 +33,7 @@ import SelectOption from "./SelectOption/SelectOption";
 import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
 
 export default {
-  name: "NewcheckDiffTypeFilter",
+  name: "ComparedToDiffTypeFilter",
   components: {
     SelectOption
   },
@@ -128,11 +128,11 @@ export default {
     titleFormatter(diffType) {
       switch (diffType) {
       case DiffType.NEW:
-        return "Only in Newcheck";
+        return "Only in Compare to";
       case DiffType.RESOLVED:
         return "Only in Baseline";
       case DiffType.UNRESOLVED:
-        return "Both in Baseline and Newcheck";
+        return "Both in Baseline and Compare to";
       default:
         return "Unknown";
       }

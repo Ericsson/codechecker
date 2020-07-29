@@ -2,7 +2,7 @@
 import BaselineTagFilter from "./BaselineTagFilter";
 
 export default {
-  name: "NewcheckTagFilter",
+  name: "ComparedToTagFilter",
   mixins: [ BaselineTagFilter ],
 
   data() {

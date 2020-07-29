@@ -2,7 +2,7 @@
 import BaselineRunFilter from "./BaselineRunFilter";
 
 export default {
-  name: "NewcheckRunFilter",
+  name: "ComparedToRunFilter",
   mixins: [ BaselineRunFilter ],
 
   data() {
