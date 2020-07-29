@@ -899,7 +899,8 @@ def parse_options(compilation_db_entry,
                   keep_gcc_include_fixed=False,
                   keep_gcc_intrin=False,
                   get_clangsa_version_func=None,
-                  env=None):
+                  env=None,
+                  analyzer_clang_version=None):
     """
     This function parses a GCC compilation action and returns a BuildAction
     object which can be the input of Clang analyzer tools.
@@ -925,6 +926,8 @@ def parse_options(compilation_db_entry,
                             get_clangsa_version_func(compiler_binary, env)
                             Should return false for a non clang compiler.
     env -- Is the environment where a subprocess call should be executed.
+    analyzer_clang_version -- version information about the clang which is
+                              used to execute the analysis
     """
     details = {
         'analyzer_options': [],
@@ -1003,11 +1006,17 @@ def parse_options(compilation_db_entry,
     ImplicitCompilerInfo.compiler_versions[details['compiler']] \
         = compiler_version_info
 
-    using_clang_to_compile_and_analyze = False
-    if ImplicitCompilerInfo.compiler_versions[details['compiler']]:
+    using_same_clang_to_compile_and_analyze = False
+    compiler_clang = \
+        ImplicitCompilerInfo.compiler_versions.get(details['compiler'])
+
+    if compiler_clang:
         # Based on the version information the compiler is clang.
-        using_clang_to_compile_and_analyze = True
         flag_processors = clang_flag_collectors
+        if compiler_clang.installed_dir == \
+                analyzer_clang_version.installed_dir:
+            LOG.debug("Same clang is used for compilation and analysis.")
+            using_same_clang_to_compile_and_analyze = True
 
     for it in OptionIterator(gcc_command[1:]):
         for flag_processor in flag_processors:
@@ -1054,7 +1063,7 @@ def parse_options(compilation_db_entry,
     # Store the compiler built in include paths and defines.
     # If clang compiler is used for compilation and analysis,
     # do not collect the implicit include paths.
-    if (not toolchain and not using_clang_to_compile_and_analyze) or \
+    if (not toolchain and not using_same_clang_to_compile_and_analyze) or \
             (compiler_info_file and os.path.exists(compiler_info_file)):
         ImplicitCompilerInfo.set(details, compiler_info_file)
 
@@ -1181,7 +1190,8 @@ def parse_unique_log(compilation_database,
                      analysis_skip_handler=None,
                      pre_analysis_skip_handler=None,
                      ctu_or_stats_enabled=False,
-                     env=None):
+                     env=None,
+                     analyzer_clang_version=None):
     """
     This function reads up the compilation_database
     and returns with a list of build actions that is
@@ -1231,6 +1241,8 @@ def parse_unique_log(compilation_database,
     ctu_or_stats_enabled -- ctu or statistics based analysis was enabled
                             influences the behavior which files are skipped.
     env -- Is the environment where a subprocess call should be executed.
+    analyzer_clang_version -- version information about the clang which is
+                              used to execute the analysis
     """
     try:
         uniqued_build_actions = dict()
@@ -1268,7 +1280,8 @@ def parse_unique_log(compilation_database,
                                    keep_gcc_include_fixed,
                                    keep_gcc_intrin,
                                    clangsa.version.get,
-                                   env)
+                                   env,
+                                   analyzer_clang_version)
 
             if not action.lang:
                 continue
