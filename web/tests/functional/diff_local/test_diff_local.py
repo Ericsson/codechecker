@@ -188,3 +188,31 @@ class DiffLocal(unittest.TestCase):
         print(out_json)
         unresolved_results = json.loads(out_json)
         self.assertNotEqual(len(unresolved_results), 0)
+
+    def test_missing_source_file(self):
+        """ Get reports when a source file is missing. """
+        new_diff_cmd = [self._codechecker_cmd, 'cmd', 'diff',
+                        '-b', self.base_reports,
+                        '-n', self.new_reports,
+                        '--new']
+
+        # Rename an existing source file related to a report to make sure
+        # there is at least one missing source file.
+        old_file_path = os.path.join(
+            self._testproject_data["project_path_new"],
+            "null_dereference.cpp")
+        new_file_path = old_file_path + "_renamed"
+        os.rename(old_file_path, new_file_path)
+
+        proc = subprocess.Popen(
+            new_diff_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding="utf-8",
+            errors="ignore")
+
+        _, err = proc.communicate()
+        self.assertIn("source file contents changed", err)
+
+        # Rename the file back.
+        os.rename(new_file_path, old_file_path)
