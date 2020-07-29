@@ -41,6 +41,10 @@ module.exports = merge(common, {
 
             return "/index.html";
           }
+        },
+        {
+          from: /^\/(products|login)\.html$/i,
+          to: "/index.html"
         }
       ]
     },
