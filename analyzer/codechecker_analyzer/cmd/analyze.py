@@ -329,9 +329,13 @@ def add_arguments_to_parser(parser):
                                     "    \"--enable=core.CallAndMessage\",\n"
                                     "    \"--report-hash=context-free-v2\",\n"
                                     "    \"--verbose=debug\",\n"
+                                    "    \"--skip=$HOME/project/skip.txt\",\n"
                                     "    \"--clean\"\n"
                                     "  ]\n"
-                                    "}")
+                                    "}.\n"
+                                    "You can use any environment variable "
+                                    "inside this file and it will be "
+                                    "expaneded.")
 
     analyzer_opts.add_argument('--saargs',
                                dest="clangsa_args_cfg_file",

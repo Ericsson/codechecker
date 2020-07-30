@@ -225,9 +225,12 @@ analyzer arguments:
                             "--enable=core.CallAndMessage",
                             "--report-hash=context-free-v2",
                             "--verbose=debug",
+                            "--skip=$HOME/project/skip.txt",
                             "--clean"
                           ]
-                        } (default: None)
+                        }.
+                        You can use any environment variable inside this file
+                        and it will be expaneded. (default: None)
   --saargs CLANGSA_ARGS_CFG_FILE
                         File containing argument which will be forwarded
                         verbatim for the Clang Static analyzer.
@@ -881,9 +884,12 @@ analyzer arguments:
                             "--enable=core.CallAndMessage",
                             "--report-hash=context-free-v2",
                             "--verbose=debug",
+                            "--skip=$HOME/project/skip.txt",
                             "--clean"
                           ]
-                        } (default: None)
+                        }.
+                        You can use any environment variable inside this file
+                        and it will be expaneded. (default: None)
   --saargs CLANGSA_ARGS_CFG_FILE
                         File containing argument which will be forwarded
                         verbatim for the Clang Static Analyzer.
@@ -977,6 +983,9 @@ formats:
   `{ "analyzer": [ "--verbose=debug" ] }`
 - Use separated values for option and parameter:
   `{ "analyzer": [ "--verbose", "debug" ] }`
+
+Note: environment variables inside this config file will be expanded:
+`{ "analyzer": [ "--skip=$HOME/project/skip.txt" ] }`
 
 #### Analyzer and checker config options <a name="analyzer-checker-config-option"></a>
 

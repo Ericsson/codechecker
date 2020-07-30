@@ -328,9 +328,13 @@ used to generate a log file on the fly.""")
                                     "    \"--enable=core.CallAndMessage\",\n"
                                     "    \"--report-hash=context-free-v2\",\n"
                                     "    \"--verbose=debug\",\n"
+                                    "    \"--skip=$HOME/project/skip.txt\",\n"
                                     "    \"--clean\"\n"
                                     "  ]\n"
-                                    "}")
+                                    "}.\n"
+                                    "You can use any environment variable "
+                                    "inside this file and it will be "
+                                    "expaneded.")
 
     # TODO: One day, get rid of these. See Issue #36, #427.
     analyzer_opts.add_argument('--saargs',

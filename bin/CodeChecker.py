@@ -123,6 +123,9 @@ output.
         if 'func_process_config_file' in args:
             cfg_args = args.func_process_config_file(args)
             if cfg_args:
+                # Expand environment variables in the arguments.
+                cfg_args = map(lambda cfg: os.path.expandvars(cfg), cfg_args)
+
                 sys.argv.extend(cfg_args)
                 args = parser.parse_args()
 

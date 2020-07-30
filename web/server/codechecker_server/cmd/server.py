@@ -145,11 +145,12 @@ def add_arguments_to_parser(parser):
                              "configuration file is: \n"
                              "{\n"
                              "  \"server\": [\n"
-                             "    \"--workspace=/home/<username>/workspace\","
-                             "\n"
+                             "    \"--workspace=$HOME/workspace\",\n"
                              "    \"--port=9090\"\n"
                              "  ]\n"
-                             "}.")
+                             "}.\n"
+                             "You can use any environment variable inside "
+                             "this file and it will be expaneded.")
 
     dbmodes = parser.add_argument_group("configuration database arguments")
 
