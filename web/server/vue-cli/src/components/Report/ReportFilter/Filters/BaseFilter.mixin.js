@@ -119,7 +119,7 @@ export default {
 
     updateReportFilter() {},
 
-    fetchItems(/* {  limit  } */) {},
+    fetchItems(/* {  limit  } */) { return []; },
 
     clear(/* updateUrl */) {},
 
