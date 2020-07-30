@@ -66,6 +66,9 @@
     "bugprone-exception-escape": {
       "sei-cert": ["dcl57-cpp", "err55-cpp", "msc53-cpp"]
     },
+    "bugprone-macro-repeated-side-effects": {
+      "sei-cert": ["pre31-c"]
+    },
     "bugprone-narrowing-conversions": {
       "sei-cert": ["exp45-c", "fio34-c", "flp34-c", "flp36-c"]
     },
