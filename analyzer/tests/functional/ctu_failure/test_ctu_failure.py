@@ -20,29 +20,18 @@ from codechecker_analyzer import host_check
 from libtest import env
 from libtest import project
 from libtest.codechecker import call_command
+from libtest.ctu_decorators import makeSkipUnlessCTUCapable, \
+    makeSkipUnlessCTUOnDemandCapable, makeSkipUnlessCTUDisplayCapable
 
-NO_CTU_MESSAGE = "CTU is not supported"
-NO_DISPLAY_CTU_PROGRESS = "-analyzer-display-ctu-progress is not supported"
-NO_CTU_ON_DEMAND_MESSAGE = "CTU-on-demand is not supported"
+CTU_ATTR = 'ctu_capable'
+ON_DEMAND_ATTR = 'ctu_on_demand_capable'
+DISPLAY_PROGRESS_ATTR = 'ctu_display_progress_capable'
 
-
-def makeSkipUnlessAttributeFound(attribute, message):
-    def deco(f):
-        def wrapper(self, *args, **kwargs):
-            if not getattr(self, attribute):
-                self.skipTest(message)
-            else:
-                f(self, *args, **kwargs)
-        return wrapper
-    return deco
-
-
-skipUnlessCTUCapable = makeSkipUnlessAttributeFound(
-    'ctu_capable', NO_CTU_MESSAGE)
-skipUnlessCTUDisplayCapable = makeSkipUnlessAttributeFound(
-    'ctu_display_progress_capable', NO_DISPLAY_CTU_PROGRESS)
-skipUnlessCTUOnDemandCapable = makeSkipUnlessAttributeFound(
-    'ctu_on_demand_capable', NO_CTU_ON_DEMAND_MESSAGE)
+skipUnlessCTUCapable = makeSkipUnlessCTUCapable(attribute=CTU_ATTR)
+skipUnlessCTUOnDemandCapable = \
+    makeSkipUnlessCTUOnDemandCapable(attribute=ON_DEMAND_ATTR)
+skipUnlessCTUDisplayCapable = \
+    makeSkipUnlessCTUDisplayCapable(attribute=DISPLAY_PROGRESS_ATTR)
 
 
 class TestCtuFailure(unittest.TestCase):
@@ -63,26 +52,28 @@ class TestCtuFailure(unittest.TestCase):
         self.report_dir = os.path.join(self.test_workspace, 'reports')
         os.makedirs(self.report_dir)
 
-    def __set_up_test_dir(self, project_path):
-        self.test_dir = project.path(project_path)
-
         # Get if clang is CTU-capable or not.
         cmd = [self._codechecker_cmd, 'analyze', '-h']
-        output, _ = call_command(cmd, cwd=self.test_dir, env=self.env)
-        self.ctu_capable = '--ctu-' in output
-        print("'analyze' reported CTU-compatibility? " + str(self.ctu_capable))
+        output, _ = call_command(cmd, cwd=self.test_workspace, env=self.env)
+        setattr(self, CTU_ATTR, '--ctu-' in output)
+        print("'analyze' reported CTU compatibility? " +
+              str(getattr(self, CTU_ATTR)))
 
-        self.ctu_on_demand_capable = '--ctu-ast-mode' in output
-        print("'analyze' reported CTU-on-demand-compatibility? "
-              + str(self.ctu_on_demand_capable))
+        setattr(self, ON_DEMAND_ATTR, '--ctu-ast-mode' in output)
+        print("'analyze' reported CTU-on-demand-compatibility? " +
+              str(getattr(self, ON_DEMAND_ATTR)))
 
-        self.ctu_display_progress_capable = \
-            host_check.has_analyzer_config_option(self.__getClangSaPath(),
-                                                  'display-ctu-progress',
-                                                  self.env)
+        setattr(self, DISPLAY_PROGRESS_ATTR,
+                host_check.has_analyzer_config_option(
+                    self.__getClangSaPath(), 'display-ctu-progress', self.env))
 
         print("Has display-ctu-progress=true? " +
-              str(self.ctu_display_progress_capable))
+              str(getattr(self, DISPLAY_PROGRESS_ATTR)))
+
+        self.__old_pwd = os.getcwd()
+
+    def __set_up_test_dir(self, project_path):
+        self.test_dir = project.path(project_path)
 
         # Fix the "template" build JSONs to contain a proper directory
         # so the tests work.
@@ -93,7 +84,6 @@ class TestCtuFailure(unittest.TestCase):
             for command in build_json:
                 command['directory'] = self.test_dir
 
-        self.__old_pwd = os.getcwd()
         os.chdir(self.test_workspace)
         self.buildlog = os.path.join(self.test_workspace, 'buildlog.json')
         with open(self.buildlog, 'w',
@@ -410,7 +400,7 @@ class TestCtuFailure(unittest.TestCase):
 
     def __getClangSaPath(self):
         cmd = [self._codechecker_cmd, 'analyzers', '--details', '-o', 'json']
-        output, _ = call_command(cmd, cwd=self.test_dir, env=self.env)
+        output, _ = call_command(cmd, cwd=self.test_workspace, env=self.env)
         json_data = json.loads(output)
         if json_data[0]["name"] == "clangsa":
             return json_data[0]["path"]
