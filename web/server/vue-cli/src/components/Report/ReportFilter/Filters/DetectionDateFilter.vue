@@ -105,7 +105,15 @@ export default {
 
         const toDateTime = this.$route.query[this.toDateTimeId];
         if (toDateTime) {
-          this.setToDateTime(new Date(toDateTime), false);
+          const dateTime = new Date(toDateTime);
+
+          // We need to round the date upward because we will send the dates
+          // to the server without milliseconds.
+          if (dateTime.getMilliseconds()) {
+            dateTime.setMilliseconds(1000);
+          }
+
+          this.setToDateTime(dateTime, false);
         }
 
         resolve();

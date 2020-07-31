@@ -324,27 +324,24 @@ export default {
 
       urlState["run"] = bRuns;
       urlState["run-tag"] = bTags.length ? bTags : undefined;
-      if (firstDetectionDates.length) {
-        const minDate = min(firstDetectionDates.map(d =>
-          parse(d, "yyyy-MM-dd HH:mm:ss.SSSSSS", new Date())));
-        urlState["first-detection-date"] =
-          format(minDate, "yyyy-MM-dd HH:mm:ss");
-      }
 
       const { runs: nRuns, tags: nTags, times: fixDates } =
         this.getSelectedTagData(this.selectedNewcheckTags);
 
       urlState["newcheck"] = nRuns;
       urlState["run-tag-newcheck"] = nTags.length ? nTags : undefined;
-      if (fixDates.length) {
-        const maxDate = max(fixDates.map(d =>
+
+      if (firstDetectionDates.length || fixDates.length) {
+        const dates = [ ...firstDetectionDates, ...fixDates ];
+
+        const minDate = min(dates.map(d =>
+          parse(d, "yyyy-MM-dd HH:mm:ss.SSSSSS", new Date())));
+        const maxDate = max(dates.map(d =>
           parse(d, "yyyy-MM-dd HH:mm:ss.SSSSSS", new Date())));
 
-        // We need to round the date upward because in the url we will save
-        // the dates without milliseconds.
-        maxDate.setMilliseconds(1000);
-
-        urlState["fix-date"] = format(maxDate, "yyyy-MM-dd HH:mm:ss");
+        urlState["first-detection-date"] =
+            format(minDate, "yyyy-MM-dd HH:mm:ss.SSSSS");
+        urlState["fix-date"] = format(maxDate, "yyyy-MM-dd HH:mm:ss.SSSSS");
       }
 
       return {
