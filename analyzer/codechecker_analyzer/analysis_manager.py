@@ -760,6 +760,8 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
         finally:
             pool.join()
     else:
+        pool.close()
+        pool.join()
         LOG.info("----==== Summary ====----")
 
     for skp in skipped_actions:
