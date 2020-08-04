@@ -97,36 +97,3 @@ def has_analyzer_option(clang_bin, feature, env=None):
         except OSError:
             LOG.error('Failed to run: "%s"', ' '.join(cmd))
             return False
-
-
-def get_resource_dir(clang_bin, context, env=None):
-    """
-    Returns the resource_dir of Clang or None if the switch is not supported by
-    Clang.
-    """
-    if context.compiler_resource_dir:
-        return context.compiler_resource_dir
-    # If not set then ask the binary for the resource dir.
-    cmd = [clang_bin, "-print-resource-dir"]
-    LOG.debug('run: "%s"', ' '.join(cmd))
-    try:
-        proc = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            env=env,
-            universal_newlines=True,
-            encoding="utf-8",
-            errors="ignore")
-        out, err = proc.communicate()
-
-        LOG.debug("stdout:\n%s", out)
-        LOG.debug("stderr:\n%s", err)
-
-        if proc.returncode == 0:
-            return out.rstrip()
-        else:
-            return None
-    except OSError:
-        LOG.error('Failed to run: "%s"', ' '.join(cmd))
-        return False

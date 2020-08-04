@@ -17,7 +17,6 @@ import subprocess
 
 from codechecker_common.logger import get_logger
 
-from codechecker_analyzer import host_check
 from codechecker_analyzer import env
 
 from .. import analyzer_base
@@ -364,8 +363,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         handler.analyzer_plugins_dir = context.checker_plugin
         handler.analyzer_binary = context.analyzer_binaries.get(
             cls.ANALYZER_NAME)
-        handler.compiler_resource_dir = \
-            host_check.get_resource_dir(handler.analyzer_binary, context)
         handler.version_info = version.get(handler.analyzer_binary, environ)
 
         handler.report_hash = args.report_hash \

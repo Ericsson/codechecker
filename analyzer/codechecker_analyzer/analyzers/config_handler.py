@@ -49,7 +49,6 @@ class AnalyzerConfigHandler(object, metaclass=ABCMeta):
 
         self.analyzer_binary = None
         self.analyzer_plugins_dir = None
-        self.compiler_resource_dir = ''
         self.analyzer_extra_arguments = []
         self.checker_config = ''
         self.report_hash = None

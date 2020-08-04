@@ -288,13 +288,6 @@ class Context(object):
                             'plist_to_html', 'static')
 
     @property
-    def compiler_resource_dir(self):
-        resource_dir = self.pckg_layout.get('compiler_resource_dir')
-        if not resource_dir:
-            return ""
-        return os.path.join(self._package_root, resource_dir)
-
-    @property
     def path_env_extra(self):
         if env.is_analyzer_from_path():
             return []
