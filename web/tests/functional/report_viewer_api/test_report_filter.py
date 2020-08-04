@@ -10,13 +10,15 @@
 Test report filtering.
 """
 
+from datetime import datetime, timedelta
 
 import logging
 import os
 import unittest
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import BugPathLengthRange, \
-    ReportFilter, ReviewStatus, Severity, RunSortMode, RunSortType, Order
+    DateInterval, DetectionStatus, ReportFilter, ReviewStatus, Severity, \
+    ReportDate, RunSortMode, RunSortType, Order
 
 from libtest import env
 
@@ -354,3 +356,46 @@ class TestReportFilter(unittest.TestCase):
             if len_min:
                 self.assertTrue(all(r.bugPathLength >= len_min
                                     for r in run_results))
+
+    def test_detection_date_filters(self):
+        """ Filter by detection dates. """
+        run_results = self._cc_client.getRunResults(self._runids, 1, 0, None,
+                                                    None, None, False)
+        self.assertEqual(len(run_results), 1)
+
+        detected_after = datetime.strptime(run_results[0].detectedAt,
+                                           '%Y-%m-%d %H:%M:%S.%f')
+        detected_before = detected_after + timedelta(0, 1)
+
+        before = detected_before.timestamp()
+        after = detected_after.timestamp()
+        detected = DateInterval(before=int(before), after=int(after))
+        report_filter = ReportFilter(date=ReportDate(detected=detected))
+
+        run_results = self._cc_client.getRunResults(self._runids, None, 0,
+                                                    None, report_filter, None,
+                                                    False)
+        self.assertEqual(len(run_results), 36)
+
+    def test_fix_date_filters(self):
+        """ Filter by fix dates. """
+        report_filter = ReportFilter(
+            detectionStatus=[DetectionStatus.RESOLVED])
+        run_results = self._cc_client.getRunResults(None, None, 0,
+                                                    None, report_filter, None,
+                                                    False)
+        self.assertNotEqual(len(run_results), 0)
+
+        fixed_after = datetime.strptime(run_results[0].fixedAt,
+                                        '%Y-%m-%d %H:%M:%S.%f')
+        fixed_before = fixed_after + timedelta(0, 1)
+
+        before = fixed_before.timestamp()
+        after = fixed_after.timestamp()
+        fixed = DateInterval(before=int(before), after=int(after))
+        report_filter = ReportFilter(date=ReportDate(fixed=fixed))
+
+        run_results = self._cc_client.getRunResults(None, None, 0,
+                                                    None, report_filter, None,
+                                                    False)
+        self.assertNotEqual(len(run_results), 0)

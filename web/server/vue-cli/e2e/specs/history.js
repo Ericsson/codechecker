@@ -45,8 +45,8 @@ module.exports = {
           .diffFirstTwoRunHistoryItems()
           .assert.urlContains("/reports")
           .assert.urlContains(`run-tag=${tag}`)
-          .assert.urlContains("first-detection-date=")
-          .assert.urlContains("fix-date=")
+          .assert.urlContains("detected-after=")
+          .assert.urlContains("detected-before=")
           .back();
 
         await runHistoryPage.waitForProgressBarNotPresent();

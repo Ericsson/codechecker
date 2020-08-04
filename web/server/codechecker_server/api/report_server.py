@@ -265,28 +265,34 @@ def process_report_filter(session, report_filter):
 
         AND.append(or_(*OR))
 
-    detection_status = report_filter.detectionStatus
     if report_filter.firstDetectionDate is not None:
         date = datetime.fromtimestamp(report_filter.firstDetectionDate)
-
-        OR = []
-        if detection_status is not None and len(detection_status) == 1 and \
-           ttypes.DetectionStatus.RESOLVED in detection_status:
-            OR.append(Report.fixed_at >= date)
-        else:
-            OR.append(Report.detected_at >= date)
-        AND.append(or_(*OR))
+        AND.append(Report.detected_at >= date)
 
     if report_filter.fixDate is not None:
         date = datetime.fromtimestamp(report_filter.fixDate)
+        AND.append(Report.detected_at < date)
 
-        OR = []
-        if detection_status is not None and len(detection_status) == 1 and \
-           ttypes.DetectionStatus.RESOLVED in detection_status:
-            OR.append(Report.fixed_at < date)
-        else:
-            OR.append(Report.detected_at < date)
-        AND.append(or_(*OR))
+    if report_filter.date:
+        detected_at = report_filter.date.detected
+        if detected_at:
+            if detected_at.before:
+                detected_before = datetime.fromtimestamp(detected_at.before)
+                AND.append(Report.detected_at <= detected_before)
+
+            if detected_at.after:
+                detected_after = datetime.fromtimestamp(detected_at.after)
+                AND.append(Report.detected_at >= detected_after)
+
+        fixed_at = report_filter.date.fixed
+        if fixed_at:
+            if fixed_at.before:
+                fixed_before = datetime.fromtimestamp(fixed_at.before)
+                AND.append(Report.fixed_at <= fixed_before)
+
+            if fixed_at.after:
+                fixed_after = datetime.fromtimestamp(fixed_at.after)
+                AND.append(Report.fixed_at >= fixed_after)
 
     if report_filter.runHistoryTag:
         OR = []

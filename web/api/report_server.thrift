@@ -247,6 +247,16 @@ struct BugPathLengthRange {
   2: i64  max, // Maximum value of bug path length.
 }
 
+struct DateInterval {
+  1: i64  before, // Unix (epoch) time.
+  2: i64  after,  // Unix (epoch) time.
+}
+
+struct ReportDate {
+  1: DateInterval detected,  // Date interval when the report was detected at.
+  2: DateInterval fixed,     // Date interval when the report was fixed at.
+}
+
 /**
  * Members of this struct are interpreted in "OR" relation with each other.
  * Between the elements of the list there is "AND" relation.
@@ -260,13 +270,14 @@ struct ReportFilter {
   6: list<ReviewStatus>    reviewStatus,
   7: list<DetectionStatus> detectionStatus,
   8: list<string>          runHistoryTag,      // Date of the run tag. !Deprecated!
-  9: optional i64          firstDetectionDate,
-  10: optional i64         fixDate,
+  9: optional i64          firstDetectionDate, // !Deprecated! Use reportDate instead of this.
+  10: optional i64         fixDate,            // !Deprecated! Use reportDate instead of this.
   11: optional bool        isUnique,
   12: list<string>         runName,
   13: list<i64>            runTag,             // Ids of the run history tags.
   14: list<string>         componentNames,     // Names of the source components.
   15: optional BugPathLengthRange bugPathLength, // Minimum and maximum values of bug path length.
+  16: optional ReportDate         date,          // Dates of the report.
 }
 
 struct RunReportCount {
