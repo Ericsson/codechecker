@@ -2,6 +2,550 @@
   <!-- eslint-disable max-len -->
   <v-container fluid>
     <v-timeline align-top>
+      <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
+        <new-release-item color="green lighten-1">
+          <template v-slot:title>
+            <a
+              href="https://github.com/Ericsson/codechecker/releases/tag/v6.13.0"
+              target="_blank"
+              class="white--text"
+            >
+              Highlights of CodeChecker 6.13.0 release
+            </a>
+          </template>
+
+          <new-feature-item>
+            <template v-slot:title>
+              New web UI
+            </template>
+            In this release the UI framework was completely replaced to
+            increase usability, stability and performance. <br>
+            The new framework allows a lot of improvements like:
+            <ul>
+              <li>faster page load</li>
+              <li>faster navigation</li>
+              <li>improved front-end testing</li>
+              <li>less load on the server</li>
+            </ul>
+            With the new UI the permalinks are backward compatible so the saved
+            URLs should work as before.<br>
+
+            Additionally to the UI improvements there is a new feature.<br>
+
+            If <i>Unique reports</i> is enabled on the reports view there is a
+            drop down list for each report showing the similar reports with the
+            same report hash (but maybe with a different execution path)<br>
+
+            <b>Note!</b> When building the package nodejs newer than v10.14.2
+            is required! Please check the install guide for further
+            instructions on how to install the dependencies.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Apply checker fixits
+            </template>
+            Some checkers in
+            <a href="https://clang.llvm.org/extra/clang-tidy/">Clang-Tidy</a>
+            can provide source code changes (fixits) to automatically modify
+            the source code and fix a report. This feature can also be used to
+            modernize the source code. To use this feature the
+            <i>clang-tidy</i> analyzer and the <i>clang-apply-replacements</i>
+            tools needs to be available in the PATH. <br>
+            During the clang-tidy analyzer execution the fixits are
+            automatically collected.
+            <code>CodeChecker analyze -o report_dir -j4 -e modernize -e
+              performance -e readability compile_command.json
+              --analyzers clang-tidy
+            </code><br>
+            Use the <code>CodeChecker fixit report_dir</code> command to list
+            all collected fixits. <br>
+            Fixits can be applied for a source file automatically like this:
+            <code>CodeChecker fixit report_dir --apply --file "*mylib.h"</code>
+            or in interactive mode where every source code modification needs
+            to be approved: <code>CodeChecker fixit report_dir --interactive
+              --file "*mylib.h"</code><br>
+
+            Fixits can be applied based on a checker name, so to cleanup all
+            the <i>readability-redundant-declaration</i> results execute this
+            command: <code>CodeChecker fixit report_dir --apply --checker-name
+              readability-redundant-declaration</code>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Coding guideline mapping to checkers (SEI-CERT)
+            </template>
+            There are  coding guidelines like
+            <a href="https://wiki.sei.cmu.edu/confluence/display/seccode/SEI+CERT+Coding+Standards">SEI-CERT</a>,
+            <a href="https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines">C++ Core Guidelines</a>,
+            etc.) which contain best practices on avoiding common programming
+            mistakes. To easily identify which checker maps to which guideline
+            the <i>--guideline</i> flag was introduced.<br>
+            <br>
+            To list the available guidelines where the mapping was done, use
+            this command: <code>CodeChecker checkers --guideline</code><br>
+            <br>
+            The checkers which cover a selected guideline can be listed like
+            this: <code>CodeChecker checkers --guideline sei-cert</code><br>
+            <br>
+            If we want to get which checker checks the sei-cert rule
+            <i>err55-cpp</i> by executing the command below we can get that the
+            <i>bugprone-exception-escape</i> checker should be enabled if the
+            <i>err55-cpp</i> rule needs to be checked.
+            <code>CodeChecker checkers --guideline err55-cpp
+              bugprone-exception-escape</code><br>
+            <br>
+            More detailed information about the checkers and the guideline
+            mapping can be found by executing this command:<br>
+            <code>CodeChecker checkers --guideline sei-cert --details</code>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Makefile output
+            </template>
+            CodeChecker can generate a Makefile without executing the analysis.
+            The Makefile will contain all the necessary analysis commands as
+            build targets. With this Makefile the analysis can be executed by
+            <b>make</b> or by some distributed build system which can use a
+            Makefile to distribute the analysis commands. <br>
+
+            Locally with a simple `make` it can be executed like this:
+            <code>CodeChecker analyze --makefile -o makefile_reports
+              compile_command.json make -f makefile_reports/Makefile -j8</code>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              On demand CTU analysis support
+            </template>
+            With this new flag (<b>--ctu-ast-mode</b>) the user can choose the
+            way ASTs are loaded during CTU analysis. <br>
+            There are two options:
+            <ul>
+              <li>
+                <b>load-from-pch</b> (the default behavior now, works with
+                older clang versions v9 or v10)
+              </li>
+              <li>
+                <b>parse-on-demand</b> (needs clang master branch or clang 11)
+              </li>
+            </ul>
+
+            The mode <b>load-from-pch</b> can use significant disk-space for
+            the serialized ASTs. By using the <b>parse-on-demand</b> mode some
+            runtime CPU overhead can incur in the second phase of the analysis
+            but uses much less disk space is used. <br>
+            Execute this command to enable the <b>on-demand</b> mode:
+            <code>CodeChecker analyze -j4 -o reports_ctu_demand --ctu
+              --ctu-ast-mode parse-on-demand</code><br>
+
+            See the <a href="https://github.com/Ericsson/codechecker/pull/2240">pull request</a>
+            for more information.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Disable all warnings like checker groups
+            </template>
+            Clang compiler warnings are reported (Clang Tidy) by checker names
+            staring with <b>clang-diagnostic-</b>. Disabling them could be done
+            previously only one-by-one. In this release the warnings can be
+            disabled now with the corresponding checker group.
+            <code>CodeChecker analyze --analyzers clang-tidy -d
+              clang-diagnostic</code>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              IPv6 support
+            </template>
+            The CodeChecker server can be configured to listen on IPv6
+            addresses.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Performance improvements
+            </template>
+            <ul>
+              <li>
+                diff command printing out source code lines got a performance
+                improvement
+              </li>
+              <li>report storage performance got improved</li>
+            </ul>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              DEPRECATED flag!
+            </template>
+            <b>--ctu-reanalyze-on-failure</b> flag is marked as deprecated and
+            it will be removed in one of the upcoming releases. <br>
+            It will be removed because the
+            <a href="https://clang.llvm.org/docs/analyzer/user-docs/CrossTranslationUnit.html">Cross Translation Unit (CTU)</a>
+            analysis functionality got more stable in the Clang Static analyzer
+            so this feature can be removed.
+          </new-feature-item>
+        </new-release-item>
+      </v-timeline-item>
+
+      <v-timeline-item fill-dot icon="mdi-star">
+        <new-release-item>
+          <template v-slot:title>
+            <a
+              href="https://github.com/Ericsson/codechecker/releases/tag/v6.12.0"
+              target="_blank"
+              class="white--text"
+            >
+              Highlights of CodeChecker 6.12.0 release
+            </a>
+          </template>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Show Clang Tidy reports in headers
+            </template>
+            Clang Tidy reports are shown from headers (non system) now, this
+            change can increase the number of new results! Use the following
+            analyzer configuration to turn back the old behavior by setting the
+            <i>HeaderFilterRegex</i> value to an empty string:
+            <code>
+              CodeChecker analyze compile_command.json --analyzer-config clang-tidy:HeaderFilterRegex=\"\"
+            </code>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Python 3 only
+            </template>
+            Because of Python 2 sunset at the beginning of 2020 CodeChecker was
+            ported to Python 3 the minimal required version is <b>3.6</b>.
+            Because of the Python version change and a lot of 3pp dependencies
+            were updated it is required to remove the old and create a new
+            virtual environment to build the package!
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Store results from multiple static and dynamic analyzer tools
+            </template>
+            Starting with this version CodeChecker can store the results of
+            multiple static and dynamic analyzers for different programming
+            languages:
+            <ul>
+              <li>Facebook Infer (C/C++, Java)</li>
+              <li>Clang Sanitizers (C/C++)</li>
+              <li>Spotbugs (Java)</li>
+              <li>Pylint (Python)</li>
+              <li>Eslint (Javascript)</li>
+              <li>...</li>
+            </ul>
+            The complete list of the supported analyzers can be found
+            <a href="https://github.com/Ericsson/codechecker/blob/master/docs/supported_code_analyzers.md">
+              here
+            </a>.
+            To be able to store the reports of an analyzer a
+            <a href="https://github.com/Ericsson/codechecker/tree/master/tools/report-converter">
+              report converter tool
+            </a> is available which can convert the reports of the supported
+            analyzers to a format which can be stored by the CodeChecker store
+            command.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              GitLab integration
+            </template>
+            Inside a GitLab Runner CodeChecker can executed to provide a code
+            quality report for each GitLab review request. The codeclimate json
+            output format was added to the <code>Codechecker parse</code> and
+            <code>CodeChecker cmd diff</code> commands to generate a json file
+            which can be parsed by GitLab as a quality report. See the
+            <a href="https://github.com/Ericsson/codechecker/blob/master/docs/gitlab_integration.md">
+              GitLab integration guide
+            </a> for more details how to configure the GitLab runners and
+            CodeChecker.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Simplify Gerrit integration
+            </template>
+            Integration was simplified, no extra output parsing and converter
+            scripts are needed.  The <code>CodeChecker cmd diff -o gerrit ...</code>
+            command can generate an output format which can be sent to gerrit
+            as a review result.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Bazel build system support
+            </template>
+            Compilation commands executed by the Bazel build system can now be
+            logged with the Codechecker logger to run the static analyzers on
+            the source files. Check out the Bazel build system
+            <a href="https://github.com/Ericsson/codechecker/blob/e506338a7e5f1b5e2d5d405e0e75584f0a645b7d/docs/analyzer/user_guide.md#bazel">
+              integration guide
+            </a> for more details.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Compilation errors as reports
+            </template>
+            Compilation errors occurred during the analysis are now captured as
+            reports by the <b>clang-diagnostic-error</b> checker.  These types
+            of reports can be disabled as a normal checker like this:
+            <code>CodeChecker analyze --disable clang-diagnostic-error ...</code>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Analyzer and checker configuration from the command line
+            </template>
+            The Clang and Clang Tidy static analyzers and the checkers can be
+            configured from the command line with the newly introduced
+            <b>--analyzer-config</b> and <b>--checker-config</b> options.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Analyzer configuration
+            </template>
+            Use these commands to list the available analyzer config options
+            (use the <b>--details</b> flag for the default values and more
+            description):
+            <ul>
+              <li>
+                <code>CodeChecker analyzers --analyzer-config clangsa</code>
+              </li>
+              <li>
+                <code>CodeChecker analyzers --analyzer-config clang-tidy</code>
+              </li>
+            </ul>
+            A Clang Static Analyzer configuration option can be enabled during
+            analysis like this:<br>
+            <code>CodeChecker analyze compile_command.json -o reports
+              --analyzer-config clangsa:suppress-c++-stdlib=false -c</code>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Checker configuration
+            </template>
+            Use the <code>CodeChecker checkers --checker-config</code> command
+            to list the checker options, or the
+            <code>CodeChecker checkers --checker-config --details</code>
+            command to get the checker options with the default values.
+            A checker option can be set like this:<br>
+            <code>CodeChecker analyze compile_command.json -o reports -e
+              cplusplus.Move --checker-config
+              clangsa:cplusplus.Move:WarnOn="All"</code>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Select only a few files to be analyzed from the compile command
+              database
+            </template>
+            There is no need for a complex skip file or to create smaller
+            compile command database files to execute the analysis only on a
+            few files. With the <b>--file</b> option the important files can be
+            selected the analysis for the other files will be skipped:<br>
+            <code>CodeChecker analyze compile_command.json --file "*main.cpp"
+              "*lib.cpp"</code>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Incremenetal Analysis Extension: Analyze c/cpp files that are
+              dependencies of a changed header
+            </template>
+            Header files can not be analyzed without a c/cpp file. If a skip
+            file contains a header file (with a "+" tag) like this:
+            <pre>
+    +*lib.h
+    -*
+            </pre>
+            Which means the header file should be analyzed. CodeChecker tries
+            to find all the c/cpp files including that header file and execute
+            the analysis on those c/cpp files too so the header file will be
+            analyzed. The only limitation is that the full compilation database
+            is required to collect this information.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              CodeChecker CLI configuration files
+            </template>
+            The CodeChecker commands can be saved in a config file which can be
+            put into a version control system or distributed between multiple
+            developers much easier. In the previous release v6.11.0 the support
+            for the analyzer configuration file was added. In this release it
+            was extended to the web server related commands (store, server) so
+            they can be stored into a configuration file too.
+            It is not required to type out the options in the command line all
+            the time to store the analysis reports. With an example
+            `store_cfg.json` config file like this:
+            <pre>
+    {
+      "store":
+        [
+          "--name=run_name",
+          "--tag=my_tag",
+          "--url=http://codechecker.my/MyProduct"
+        ]
+    }
+            </pre>
+            The CodeChecker store command can be this short:
+            <code>CodeChecker store reports --config store_cfg.json</code>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Other new features worth mentioning
+            </template>
+            <ul>
+              <li>
+                The review comments in the source code are shown by the
+                <code>CodeChecker parse</code> command
+              </li>
+              <li>
+                A free text description can be store to every run which can
+                contain any compilation or analysis related description.
+                <code>CodeChecker store --description "analysis related extra
+                  information" ...</code>
+              </li>
+            </ul>
+          </new-feature-item>
+        </new-release-item>
+      </v-timeline-item>
+
+      <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
+        <new-release-item color="green lighten-1">
+          <template v-slot:title>
+            <a
+              href="https://github.com/Ericsson/codechecker/releases/tag/v6.11.0"
+              target="_blank"
+              class="white--text"
+            >
+              Highlights of CodeChecker 6.11.0 release
+            </a>
+          </template>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Show system comments for bugs
+            </template>
+            Review status changes by the users are automatically stored and
+            shown at the report comment section for each report. With this
+            feature the status changes of the reports can be easily tracked.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Introduce different compiler argument filtering if the original
+              compiler was clang
+            </template>
+            If the original compiler used to build a project was clang/clang++
+            only a minimal compilation flag filtering or modification is done.
+            In the case where the original compiler was gcc/g++ many non
+            compatible compiler flags were filtered which is not required if
+            the original compiler is clang.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Store the Cppcheck plist reports
+            </template>
+            Plist reports generated by Cppcheck can be stored by the
+            <code>CodeChecker store</code> command. For a more detailed example
+            how to configure Cppcheck to generate the reports in the right
+            format see the
+            <a href="https://github.com/Ericsson/codechecker/blob/v6.11.0/docs/cppcheck.md">
+              documentation
+            </a>.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              CodeChecker config file support for the analysis arguments
+            </template>
+            The arguments for a <code>CodeChecker analyze</code> command can be
+            given in a config file. A more detailed description about the usage
+            and the config file format can be found
+            <a href="https://github.com/Ericsson/codechecker/blob/v6.11.0/docs/analyzer/user_guide.md#analyzer-configuration-file">
+              here
+            </a>.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Log compile commands with absolute paths
+            </template>
+            With the introduction of a new environment variable
+            (<b>CC_LOGGER_ABS_PATH</b>) the compiler include paths will be
+            converted to an absoute path. This conversion can be necessary if
+            the compiler command database created by CodeChecker will be used
+            by other static analyzers (E.g. <i>Cppcheck</i>). For more
+            information
+            <a href="https://github.com/Ericsson/codechecker/blob/v6.11.0/analyzer/tools/build-logger#cc_logger_abs_path">
+              see
+            </a>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Enforce taking the analyzers from PATH
+            </template>
+            With the newly introduced environment variable
+            (<b>CC_ANALYZERS_FROM_PATH</b>) the usage of the static analyzers
+            in the PATH can be forced even if the configuration contains
+            analyzers not from the PATH.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              List ClangSA checker options
+            </template>
+            The Clang Static Analyzer options can be listed now (requires
+            clang v9.0.0 or newer). Use the command
+            <code>CodeChecker analyzers --dump-config clangsa</code> to print
+            the static analyzer configuration.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Support json output for parse command
+            </template>
+            The parse command can generate json output from the reports if
+            required: <code>CodeChecker parse -e json analyzer_reports</code>.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Use CodeChecker parse with multiple directories
+            </template>
+            The <code>CodeChecker cmd parse</code> command now accepts multiple
+            directories to parse the reports from.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Update the name of a run from the command line (CLI)
+            </template>
+            Allow the user to rename a run from command line.
+            For more information
+            <a href="https://github.com/Ericsson/codechecker/blob/dbd3feaffd389703a4c59c8d24b5f14f6d54374d/docs/web/user_guide.md#cmd-update">
+              see
+            </a>.
+          </new-feature-item>
+        </new-release-item>
+      </v-timeline-item>
+
       <v-timeline-item fill-dot icon="mdi-star">
         <new-release-item>
           <template v-slot:title>
