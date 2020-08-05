@@ -13,6 +13,16 @@
       <detection-date-filter-icon :value="item.id" />
     </template>
 
+    <template v-slot:append-toolbar-title>
+      <span
+        v-if="selectedDetectionDateTitle"
+        class="selected-items"
+        :title="selectedDetectionDateTitle"
+      >
+        ({{ selectedDetectionDateTitle }})
+      </span>
+    </template>
+
     <v-container
       class="py-0"
     >
@@ -78,6 +88,17 @@ export default {
       fromDateTime: null,
       toDateTime: null
     };
+  },
+
+  computed: {
+    selectedDetectionDateTitle() {
+      return [
+        ...(this.fromDateTime
+          ? [ `after: ${this.dateTimeToStr(this.fromDateTime)}` ]: []),
+        ...(this.toDateTime
+          ? [ `before: ${this.dateTimeToStr(this.toDateTime)}` ]: [])
+      ].join(", ");
+    }
   },
 
   methods: {

@@ -13,7 +13,7 @@
       <detection-status-icon :status="item.id" />
     </template>
 
-    <template v-slot:prepend-toolbar-title>
+    <template v-slot:append-toolbar-title>
       <v-icon
         v-if="reportFilter.isUnique"
         color="error"
@@ -21,6 +21,11 @@
       >
         mdi-alert
       </v-icon>
+
+      <selected-toolbar-title-items
+        v-if="selectedItems"
+        :value="selectedItems"
+      />
     </template>
   </select-option>
 </template>
@@ -32,14 +37,15 @@ import { DetectionStatus, ReportFilter } from "@cc/report-server-types";
 import { DetectionStatusIcon } from "@/components/Icons";
 import { DetectionStatusMixin } from "@/mixins";
 
-import SelectOption from "./SelectOption/SelectOption";
+import { SelectOption, SelectedToolbarTitleItems } from "./SelectOption";
 import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
 
 export default {
   name: "DetectionStatusFilter",
   components: {
     SelectOption,
-    DetectionStatusIcon
+    DetectionStatusIcon,
+    SelectedToolbarTitleItems
   },
   mixins: [ BaseSelectOptionFilterMixin, DetectionStatusMixin ],
 

@@ -61,6 +61,7 @@ const createOptionFilterSection = (selector) => {
   return {
     selector,
     elements: {
+      expansionBtn: ".expansion-btn",
       settings: ".settings-btn",
       clearBtn: ".clear-btn",
       selectedItems: ".selected-item"
@@ -90,6 +91,7 @@ module.exports = {
     newcheckFilters: {
       selector: "#newcheck-filters",
       elements: {
+        expansionBtn: ".v-expansion-panel-header__icon",
         active: ".v-expansion-panel--active"
       },
       sections: {
@@ -107,6 +109,7 @@ module.exports = {
     bugPathLengthFilter: {
       selector: "#bug-path-length-filter",
       elements: {
+        expansionBtn: ".expansion-btn",
         min: "#min-bug-path-length",
         max: "#max-bug-path-length",
         clearBtn: ".clear-btn",
@@ -115,21 +118,15 @@ module.exports = {
     reportHashFilter: {
       selector: "#report-hash-filter",
       elements: {
+        expansionBtn: ".expansion-btn",
         reportHash: "#report-hash",
-        clearBtn: ".clear-btn"
-      }
-    },
-    detectionDateFilter: {
-      selector: "#detection-date-filter",
-      elements: {
-        from: "#first-detection-date",
-        to: "#fix-date",
         clearBtn: ".clear-btn"
       }
     },
     sourceComponentFilter: {
       selector: "#source-component",
       elements: {
+        expansionBtn: ".expansion-btn",
         manageBtn: ".manage-components-btn",
         settings: ".settings-btn",
         clearBtn: ".clear-btn",
@@ -168,6 +165,7 @@ module.exports = {
     detectionDateFilter: {
       selector: "#detection-date-filter",
       elements: {
+        expansionBtn: ".expansion-btn",
         from: ".first-detection-date",
         to: ".fix-date",
         settings: ".settings-btn",

@@ -3,6 +3,16 @@
     title="Report hash filter"
     @clear="clear(true)"
   >
+    <template v-slot:append-toolbar-title>
+      <span
+        v-if="reportHash"
+        class="selected-items"
+        :title="reportHash"
+      >
+        ({{ reportHash }})
+      </span>
+    </template>
+
     <v-card-actions class="">
       <v-text-field
         :id="id"

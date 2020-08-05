@@ -18,7 +18,7 @@
           class="manage-components-btn"
           icon
           small
-          @click="dialog = true"
+          @click.stop="dialog = true"
         >
           <v-icon>mdi-pencil</v-icon>
         </v-btn>

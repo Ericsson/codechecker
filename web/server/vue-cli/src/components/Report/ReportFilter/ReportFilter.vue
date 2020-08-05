@@ -36,9 +36,7 @@
         </v-list-item-content>
       </v-list-item>
 
-      <v-divider />
-
-      <v-list-item id="baseline-filters" class="pl-1">
+      <v-list-item id="baseline-filters" class="pl-0">
         <v-list-item-content class="pa-0">
           <v-expansion-panels
             v-model="activeBaselinePanelId"
@@ -48,7 +46,9 @@
               <v-expansion-panel-header
                 class="pa-0 px-1 primary--text"
               >
-                <b>BASELINE</b>
+                <header>
+                  <b>BASELINE</b>
+                </header>
               </v-expansion-panel-header>
               <v-expansion-panel-content class="pa-1">
                 <baseline-run-filter
@@ -70,12 +70,10 @@
         </v-list-item-content>
       </v-list-item>
 
-      <v-divider v-if="showNewcheck" />
-
       <v-list-item
         v-if="showNewcheck"
         id="newcheck-filters"
-        class="pl-1"
+        class="pl-0"
       >
         <v-list-item-content class="pa-0">
           <v-expansion-panels
@@ -86,7 +84,9 @@
               <v-expansion-panel-header
                 class="pa-0 px-1 primary--text"
               >
-                <b>NEWCHECK</b>
+                <header>
+                  <b>NEWCHECK</b>
+                </header>
               </v-expansion-panel-header>
               <v-expansion-panel-content class="pa-1">
                 <newcheck-run-filter
@@ -115,8 +115,6 @@
           </v-expansion-panels>
         </v-list-item-content>
       </v-list-item>
-
-      <v-divider />
 
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
@@ -439,12 +437,29 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
+.v-expansion-panel--active > .v-expansion-panel-header,
 .v-expansion-panel-header {
   min-height: 40px;
 }
 
-.v-expansion-panel-content > ::v-deep .v-expansion-panel-content__wrap {
+.v-expansion-panel-content > .v-expansion-panel-content__wrap {
   padding: 0 4px 0 6px;
+}
+
+#baseline-filters,
+#newcheck-filters {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+#newcheck-filters {
+  border-top: 0;
+}
+
+.v-expansion-panel-header__icon {
+  order: 1;
+}
+.v-expansion-panel-header header {
+  order: 2;
 }
 </style>
