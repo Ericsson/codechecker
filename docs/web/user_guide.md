@@ -202,11 +202,12 @@ optional arguments:
                         config file will overwrite the values set in the
                         command line. The format of configuration file is:
                         {
-                          "server": [
-                            "--workspace=$HOME/workspace",
-                            "--port=9090"
+                          "store": [
+                            "--name=run_name",
+                            "--tag=my_tag",
+                            "--url=http://codechecker.my:9090/MyProduct"
                           ]
-                        }.
+                        }. (default: None)
                         You can use any environment variable inside this file
                         and it will be expaneded. (default: None)
   -f, --force           Delete analysis results stored in the database for the

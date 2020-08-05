@@ -220,7 +220,7 @@ analyzer arguments:
                         the config file will be emplaced as command line
                         arguments. The format of configuration file is:
                         {
-                          "analyzer": [
+                          "analyze": [
                             "--enable=core.DivideZero",
                             "--enable=core.CallAndMessage",
                             "--report-hash=context-free-v2",
@@ -886,7 +886,7 @@ analyzer arguments:
                         the config file will be emplaced as command line
                         arguments. The format of configuration file is:
                         {
-                          "analyzer": [
+                          "analyze": [
                             "--enable=core.DivideZero",
                             "--enable=core.CallAndMessage",
                             "--report-hash=context-free-v2",
@@ -956,10 +956,10 @@ The parameters in the config file will be emplaced as command line arguments.
 
 **Example**:
 Lets assume you have a configuration file
-[`codechecker.json`](#config/codechecker.json) with the following content:
+[`codechecker.json`](../../config/codechecker.json) with the following content:
 ```json
 {
-  "analyzer": [
+  "analyze": [
     "--enable=core.DivideZero",
     "--enable=core.CallAndMessage",
     "--analyzer-config",
@@ -969,9 +969,26 @@ Lets assume you have a configuration file
     "--report-hash", "context-free-v2"
     "--verbose=debug",
     "--clean"
+  ],
+  "parse": [
+    "--trim-path-prefix",
+    "/$HOME/workspace"
+  ],
+  "server": [
+    "--workspace=$HOME/workspace",
+    "--port=9090"
+  ],
+  "store": [
+    "--name=run_name",
+    "--tag=my_tag",
+    "--url=http://codechecker.my:9090/MyProduct"
   ]
 }
 ```
+This configuration file example contains configuration options for multiple
+codechecker subcommands (analyze, parse, server, store) so not just the
+`analyze` subcommand can be configured like this.  
+The focus is on the `analyze` subcommand configuration in the next examples.
 
 If you run the following command:
 ```sh
@@ -987,12 +1004,12 @@ Note: Options which require parameters have to be in either of the following
 formats:
 
 - Use equal to separate option and parameter in quotes:
-  `{ "analyzer": [ "--verbose=debug" ] }`
+  `{ "analyze": [ "--verbose=debug" ] }`
 - Use separated values for option and parameter:
-  `{ "analyzer": [ "--verbose", "debug" ] }`
+  `{ "analyze": [ "--verbose", "debug" ] }`
 
 Note: environment variables inside this config file will be expanded:
-`{ "analyzer": [ "--skip=$HOME/project/skip.txt" ] }`
+`{ "analyze": [ "--skip=$HOME/project/skip.txt" ] }`
 
 #### Analyzer and checker config options <a name="analyzer-checker-config-option"></a>
 
@@ -1409,6 +1426,16 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
+  --config CONFIG_FILE  Allow the configuration from an explicit JSON based
+                        configuration file. The value of the 'parse' key in
+                        the config file will be emplaced as command line
+                        arguments. The format of configuration file is:
+                        {
+                          "parse": [
+                            "--trim-path-prefix",
+                            "$HOME/workspace"
+                          ]
+                        } (default: None)
   -t {plist}, --type {plist}, --input-format {plist}
                         Specify the format the analysis results were created
                         as. (default: plist)

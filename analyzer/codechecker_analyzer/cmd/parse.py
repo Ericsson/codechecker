@@ -24,7 +24,7 @@ from plist_to_html import PlistToHtml
 
 from codechecker_analyzer import analyzer_context, suppress_handler
 
-from codechecker_common import arg, logger, plist_parser, util
+from codechecker_common import arg, logger, plist_parser, util, cmd_config
 from codechecker_common.skiplist_handler import SkipListHandler
 from codechecker_common.source_code_comment_handler import \
     REVIEW_STATUS_VALUES, SourceCodeCommentHandler, SpellException
@@ -398,6 +398,22 @@ def add_arguments_to_parser(parser):
                              "containing analysis results which should be "
                              "parsed and printed.")
 
+    parser.add_argument('--config',
+                        dest='config_file',
+                        required=False,
+                        help="R|Allow the configuration from an "
+                             "explicit JSON based configuration file. "
+                             "The value of the 'parse' key in the "
+                             "config file will be emplaced as command "
+                             "line arguments. The format of "
+                             "configuration file is:\n"
+                             "{\n"
+                             "  \"parse\": [\n"
+                             "    \"--trim-path-prefix\",\n"
+                             "    \"$HOME/workspace\"\n"
+                             "  ]\n"
+                             "}")
+
     parser.add_argument('-t', '--type', '--input-format',
                         dest="input_format",
                         required=False,
@@ -492,7 +508,8 @@ def add_arguments_to_parser(parser):
                                  ', '.join(REVIEW_STATUS_VALUES)))
 
     logger.add_verbose_arguments(parser)
-    parser.set_defaults(func=main)
+    parser.set_defaults(
+        func=main, func_process_config_file=cmd_config.process_config_file)
 
 
 def parse(plist_file, metadata_dict, rh, file_report_map):
@@ -603,6 +620,12 @@ def main(args):
     """
 
     logger.setup_logger(args.verbose if 'verbose' in args else None)
+
+    try:
+        cmd_config.check_config_file(args)
+    except FileNotFoundError as fnerr:
+        LOG.error(fnerr)
+        sys.exit(1)
 
     export = args.export if 'export' in args else None
     if export == 'html' and 'output_path' not in args:

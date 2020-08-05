@@ -81,10 +81,64 @@ class TestConfig(unittest.TestCase):
         out, _ = process.communicate()
         return out, process.returncode
 
+    def __run_parse(self):
+        """
+        Run the CodeChecker analyze command with a configuration file.
+        """
+        # Create analyze command.
+        analyze_cmd = [self._codechecker_cmd, "parse", self.reports_dir,
+                       "--config", self.config_file]
+
+        # Run analyze.
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding="utf-8",
+            errors="ignore")
+        out, _ = process.communicate()
+        return out, process.returncode
+
     def test_only_clangsa_config(self):
         """
         Run analyze command with a config file which enables the clangsa
         analyzer only.
+        """
+        with open(self.config_file, 'w+',
+                  encoding="utf-8", errors="ignore") as config_f:
+            json.dump({
+                'analyze': ['--analyzers', 'clangsa']}, config_f)
+
+        out, returncode = self.__run_analyze()
+
+        self.assertEqual(returncode, 0)
+        self.assertIn("clangsa analyzed simple.cpp", out)
+        self.assertNotIn("clang-tidy analyzed simple.cpp", out)
+
+    def test_only_clangsa_config_backward_compatible_mixed(self):
+        """
+        Test the 'analyzer' configuration option backward compatibility.
+        The config name should be 'analyze' to be in sync with the
+        subcommand names.
+        """
+        with open(self.config_file, 'w+',
+                  encoding="utf-8", errors="ignore") as config_f:
+            json.dump({
+                'analyze': ['--analyzers', 'clangsa'],
+                'analyzer': ['--analyzers', 'clang-tidy']},
+                config_f)
+
+        out, returncode = self.__run_analyze()
+
+        self.assertEqual(returncode, 0)
+        self.assertIn("clangsa analyzed simple.cpp", out)
+        self.assertNotIn("clang-tidy analyzed simple.cpp", out)
+
+    def test_only_clangsa_config_backward_compatibility(self):
+        """
+        Test the 'analyzer' configuration option backward compatibility.
+        The config name should be 'analyze' to be in sync with the
+        subcommand names.
         """
         with open(self.config_file, 'w+',
                   encoding="utf-8", errors="ignore") as config_f:
@@ -127,3 +181,26 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(returncode, 0)
         self.assertIn("clangsa analyzed simple.cpp", out)
         self.assertIn("clang-tidy analyzed simple.cpp", out)
+
+    def test_parse_config(self):
+        """
+        Run analyze command with a config file which enables the clangsa
+        analyzer only and parse the results with a parse command
+        config.
+        """
+        with open(self.config_file, 'w+',
+                  encoding="utf-8", errors="ignore") as config_f:
+            json.dump({
+                'analyzer': ['--analyzers', 'clangsa'],
+                'parse': ['--trim-path-prefix', '/workspace']},
+                config_f)
+
+        out, returncode = self.__run_analyze()
+
+        self.assertEqual(returncode, 0)
+        self.assertIn("clangsa analyzed simple.cpp", out)
+        self.assertNotIn("clang-tidy analyzed simple.cpp", out)
+
+        out, returncode = self.__run_parse()
+        print(out)
+        self.assertEqual(returncode, 0)

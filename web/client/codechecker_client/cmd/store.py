@@ -32,7 +32,7 @@ from codechecker_api_shared.ttypes import RequestFailed, ErrorCode
 from codechecker_client import client as libclient
 from codechecker_client.metadata import merge_metadata_json
 
-from codechecker_common import arg, logger, plist_parser, util
+from codechecker_common import arg, logger, plist_parser, util, cmd_config
 from codechecker_common.output_formatters import twodim_to_str
 from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler
@@ -249,17 +249,8 @@ exist prior to the 'store' command being ran.""")
                                   "'[http[s]://]host:port/Endpoint'.")
 
     logger.add_verbose_arguments(parser)
-    parser.set_defaults(func=main,
-                        func_process_config_file=process_config_file)
-
-
-def process_config_file(args):
-    """
-    Handler to get config file options.
-    """
-    if args.config_file and os.path.exists(args.config_file):
-        cfg = util.load_json_or_empty(args.config_file, default={})
-        return cfg.get('store', [])
+    parser.set_defaults(
+        func=main, func_process_config_file=cmd_config.process_config_file)
 
 
 def __get_run_name(input_list):
@@ -798,6 +789,12 @@ def main(args):
     database.
     """
     logger.setup_logger(args.verbose if 'verbose' in args else None)
+
+    try:
+        cmd_config.check_config_file(args)
+    except FileNotFoundError as fnerr:
+        LOG.error(fnerr)
+        sys.exit(1)
 
     if not host_check.check_zlib():
         raise Exception("zlib is not available on the system!")

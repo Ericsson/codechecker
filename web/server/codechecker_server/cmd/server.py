@@ -26,7 +26,7 @@ from sqlalchemy.orm import sessionmaker
 
 from codechecker_api_shared.ttypes import DBStatus
 
-from codechecker_common import arg, logger, output_formatters, util
+from codechecker_common import arg, logger, output_formatters, util, cmd_config
 
 from codechecker_server import instance_manager, server
 from codechecker_server.database import database
@@ -433,17 +433,8 @@ databases.
         # If everything is fine, do call the handler for the subcommand.
         main(args)
 
-    parser.set_defaults(func=__handle,
-                        func_process_config_file=process_config_file)
-
-
-def process_config_file(args):
-    """
-    Handler to get config file options.
-    """
-    if args.config_file and os.path.exists(args.config_file):
-        cfg = util.load_json_or_empty(args.config_file, default={})
-        return cfg.get('server', [])
+    parser.set_defaults(
+        func=__handle, func_process_config_file=cmd_config.process_config_file)
 
 
 def print_prod_status(prod_status):
@@ -1007,4 +998,9 @@ def main(args):
     manage the CodeChecker server.
     """
     with logger.LOG_CFG_SERVER(args.verbose if 'verbose' in args else None):
+        try:
+            cmd_config.check_config_file(args)
+        except FileNotFoundError as fnerr:
+            LOG.error(fnerr)
+            sys.exit(1)
         server_init_start(args)
