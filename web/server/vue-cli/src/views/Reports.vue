@@ -115,7 +115,7 @@
             }}"
             class="file-name"
           >
-            {{ item.checkedFile }}
+            {{ item.checkedFile }} @&nbsp;Line&nbsp;{{ item.line }}
           </router-link>
         </template>
 
