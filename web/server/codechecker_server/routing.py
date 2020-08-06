@@ -126,6 +126,8 @@ def split_client_POST_request(path):
 
         return None, version_tag, remainder
 
+    return None, None, None
+
 
 def is_protected_GET_entrypoint(path):
     """

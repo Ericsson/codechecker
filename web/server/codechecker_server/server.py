@@ -362,6 +362,9 @@ class RequestHandler(SimpleHTTPRequestHandler):
         try:
             product_endpoint, api_ver, request_endpoint = \
                 routing.split_client_POST_request(self.path)
+            if product_endpoint is None and api_ver is None and\
+                    request_endpoint is None:
+                raise Exception("Invalid request endpoint path.")
 
             product = None
             if product_endpoint:
