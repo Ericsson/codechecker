@@ -46,7 +46,7 @@ macOS (OS X) development environment.
 ## Web based report storage
   * **You can store & visualize thousands of analysis reports** of many analyzers like
     Clang Static Analyzer (C/C++), Clang Tidy (C/C++), Facebook Infer (C/C++, Java), Clang Sanitizers (C/C++), Spotbugs (Java), Pylint (Python), Eslint (Javascript) ...  
-    For a complete list see [Supported Analyzers](docs/supported_code_analyzers.md)
+    For a complete list see [Supported Analyzers](supported_code_analyzers.md)
   * **Web application** for viewing discovered code defects with a streamlined,
     easy experience (with PostgreSQL, or SQLite backend)
   * **Gerrit and GitLab integration** Shows analysis results as [Gitlab](gitlab_integration.md) or [Gerrit](jenkins_gerrit_integration.md) reviews
