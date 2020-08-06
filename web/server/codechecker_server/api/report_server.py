@@ -133,15 +133,14 @@ def exc_to_thrift_reqfail(func):
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
             # Convert SQLAlchemy exceptions.
             msg = str(alchemy_ex)
-            LOG.warning("%s:\n%s", func_name, msg)
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
         except codechecker_api_shared.ttypes.RequestFailed as rf:
-            LOG.warning(rf.message)
+            LOG.warning("%s:\n%s", func_name, rf.message)
             raise
         except Exception as ex:
             msg = str(ex)
-            LOG.warning(msg)
+            LOG.warning("%s:\n%s", func_name, msg)
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.GENERAL, msg)
 
@@ -1756,6 +1755,10 @@ class ThriftRequestHandler(object):
         with DBSession(self.__Session) as session:
             res = defaultdict(lambda: defaultdict(str))
             for lines_in_file in lines_in_files_requested:
+                if lines_in_file.fileId is None:
+                    LOG.warning("File content requested without a fileId.")
+                    LOG.warning(lines_in_file)
+                    continue
                 sourcefile = session.query(File).get(lines_in_file.fileId)
                 cont = session.query(FileContent).get(sourcefile.content_hash)
                 lines = zlib.decompress(
@@ -1765,7 +1768,6 @@ class ThriftRequestHandler(object):
                     if encoding == Encoding.BASE64:
                         content = convert.to_b64(content)
                     res[lines_in_file.fileId][line] = content
-
             return res
 
     @exc_to_thrift_reqfail
@@ -2456,7 +2458,7 @@ class ThriftRequestHandler(object):
     def __store_reports(self, session, report_dir, source_root, run_id,
                         file_path_to_id, run_history_time, severity_map,
                         wrong_src_code_comments, skip_handler,
-                        checkers):
+                        checkers, trim_path_prefixes):
         """
         Parse up and store the plist report files.
         """
@@ -2526,7 +2528,7 @@ class ThriftRequestHandler(object):
 
             try:
                 files, reports = plist_parser.parse_plist_file(
-                    os.path.join(report_dir, f), source_root)
+                    os.path.join(report_dir, f), None)
             except Exception as ex:
                 LOG.error('Parsing the plist failed: %s', str(ex))
                 continue
@@ -2535,7 +2537,10 @@ class ThriftRequestHandler(object):
             if reports:
                 missing_ids_for_files = []
 
-                for file_name in files:
+                for file_name in files.values():
+
+                    file_name = util.trim_path_prefixes(file_name,
+                                                        trim_path_prefixes)
                     file_id = file_path_to_id.get(file_name, -1)
                     if file_id == -1:
                         missing_ids_for_files.append(file_name)
@@ -2553,10 +2558,11 @@ class ThriftRequestHandler(object):
                 checker_name = report.main['check_name']
                 all_report_checkers.add(checker_name)
 
-                source_file = files[report.main['location']['file']]
+                source_file = util.trim_path_prefixes(
+                    report.main['location']['file'], trim_path_prefixes)
+
                 if skip_handler.should_skip(source_file):
                     continue
-
                 bug_paths, bug_events, bug_extended_data = \
                     store_handler.collect_paths_events(report, file_ids,
                                                        files)
@@ -2929,7 +2935,8 @@ class ThriftRequestHandler(object):
                                                  self.__context.severity_map,
                                                  wrong_src_code_comments,
                                                  skip_handler,
-                                                 checkers)
+                                                 checkers,
+                                                 trim_path_prefixes)
 
                             store_handler.setRunDuration(session,
                                                          run_id,

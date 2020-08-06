@@ -65,8 +65,6 @@ class LocalRemote(unittest.TestCase):
         if not r_env:
             r_env = self._env
 
-        diff_cmd.extend(["--verbose", "debug"])
-
         print(diff_cmd)
         try:
             out = subprocess.check_output(diff_cmd,
@@ -103,16 +101,17 @@ class LocalRemote(unittest.TestCase):
             diff_cmd.extend(extra_args)
 
         print(diff_cmd)
-        out = subprocess.check_output(
-            diff_cmd,
-            env=self._env,
-            cwd=os.environ['TEST_WORKSPACE'],
-            encoding="utf-8",
-            errors="ignore")
-        print(out)
+        try:
+            out = subprocess.check_output(
+                diff_cmd,
+                env=self._env,
+                cwd=os.environ['TEST_WORKSPACE'],
+                encoding="utf-8",
+                errors="ignore")
+        except subprocess.CalledProcessError as cerr:
+            print(cerr.output)
 
         out = self.run_cmd(diff_cmd)
-
         return out
 
     def test_local_to_remote_compare_count_new(self):
@@ -365,7 +364,10 @@ class LocalRemote(unittest.TestCase):
                 errors="ignore")
 
     def test_diff_gerrit_output(self):
-        """ Test gerrit output. """
+        """Test gerrit output.
+
+        Every report should be in the gerrit review json.
+        """
         base_run_name = self._run_names[0]
 
         export_dir = os.path.join(self._local_reports, "export_dir1")
@@ -412,7 +414,11 @@ class LocalRemote(unittest.TestCase):
         shutil.rmtree(export_dir)
 
     def test_set_env_diff_gerrit_output(self):
-        """ Test gerrit output when using diff and set env vars. """
+        """Test gerrit output when using diff and set env vars.
+
+        Only the reports which belong to the changed files should
+        be in the gerrit review json.
+        """
         base_run_name = self._run_names[0]
 
         export_dir = os.path.join(self._local_reports, "export_dir2")
@@ -444,7 +450,6 @@ class LocalRemote(unittest.TestCase):
             changed_file.write(json.dumps(changed_files))
 
         env["CC_CHANGED_FILES"] = changed_file_path
-
         self.run_cmd(diff_cmd, env)
         gerrit_review_file = os.path.join(export_dir, 'gerrit_review.json')
         self.assertTrue(os.path.exists(gerrit_review_file))
@@ -461,7 +466,7 @@ class LocalRemote(unittest.TestCase):
                          "See: '{0}'".format(report_url))
         self.assertEqual(review_data["tag"], "jenkins")
 
-        # Because the CC_CHANGED_FILES is set we will se reports only for
+        # Because the CC_CHANGED_FILES is set we will see reports only for
         # the divide_zero.cpp function.
         comments = review_data["comments"]
         self.assertEqual(len(comments), 1)

@@ -7,10 +7,10 @@
 # -------------------------------------------------------------------------
 """
 Parsers for the analyzer output formats (plist ...) should create this
-Report which will be stored.
+type of Report which will be printed or stored.
 """
 
-
+from typing import Dict, List
 import json
 
 from codechecker_common.logger import get_logger
@@ -20,12 +20,19 @@ LOG = get_logger('report')
 
 
 class Report(object):
+    """Represents an analyzer report.
+
+    The main section is where the analyzer reported the issue.
+    The bugpath contains additional locations (and messages) which lead to
+    the main section.
     """
-    Just a minimal separation of the main section
-    from the path section for easier skip/suppression handling
-    and result processing.
-    """
-    def __init__(self, main, bugpath, files, metadata=None):
+
+    def __init__(self,
+                 main: Dict,
+                 bugpath: Dict,
+                 files: Dict[int, str],
+                 metadata: Dict[str, str]):
+
         # Dictionary containing checker name, report hash,
         # main report position, report message ...
         self.__main = main
@@ -37,61 +44,75 @@ class Report(object):
         # Dictionary fileid to filepath that bugpath events refer to
         self.__files = files
 
+        # Can contain the soruce line where the main section was reported.
+        self.__source_line = ""
+
         # Dictionary containing metadata information (analyzer name, version).
         self.__metadata = metadata
 
-    @staticmethod
-    def from_thrift_report(report_data):
-        """ Create a report object from the given thrift report data. """
-        main = {
-            "check_name": report_data.checkerId,
-            "description": report_data.checkerMsg,
-            "issue_hash_content_of_line_in_context": report_data.bugHash,
-            "location": {
-                "line": report_data.line,
-                "col": report_data.column,
-                "file": 0
-            }
-        }
-        bug_path = None
-        files = [report_data.checkedFile]
-
-        return Report(main, bug_path, files)
+    @property
+    def line(self) -> int:
+        return self.__main['location']['line']
 
     @property
-    def main(self):
+    def col(self) -> int:
+        return self.__main['location']['col']
+
+    @property
+    def description(self) -> str:
+        return self.__main['description']
+
+    @property
+    def main(self) -> Dict:
         return self.__main
 
     @property
-    def report_hash(self):
+    def report_hash(self) -> str:
         return self.__main['issue_hash_content_of_line_in_context']
 
     @property
-    def check_name(self):
+    def check_name(self) -> str:
         return self.__main['check_name']
 
     @property
-    def bug_path(self):
+    def bug_path(self) -> Dict:
         return self.__bug_path
 
     @property
-    def notes(self):
+    def notes(self) -> List[str]:
         return self.__main.get('notes', [])
 
     @property
-    def macro_expansions(self):
+    def macro_expansions(self) -> List[str]:
         return self.__main.get('macro_expansions', [])
 
     @property
-    def files(self):
+    def files(self) -> Dict[int, str]:
         return self.__files
 
     @property
-    def file_path(self):
-        return self.__files[self.__main['location']['file']]
+    def file_path(self) -> str:
+        """ Get the filepath for the main report location. """
+        return self.__main['location']['file']
 
     @property
-    def metadata(self):
+    def source_line(self) -> str:
+        """Get the source line for the main location.
+
+        If the source line is already set returns that
+        if not tries to read it from the disk.
+        """
+        if not self.__source_line:
+            self.__source_line = \
+                util.get_line(self.__main['location']['file'], self.line)
+        return self.__source_line
+
+    @source_line.setter
+    def source_line(self, sl):
+        self.__source_line = sl
+
+    @property
+    def metadata(self) -> Dict:
         return self.__metadata
 
     def __str__(self):
@@ -101,32 +122,16 @@ class Report(object):
 
     def trim_path_prefixes(self, path_prefixes=None):
         """ Removes the longest matching leading path from the file paths. """
-        self.__files = [util.trim_path_prefixes(file_path, path_prefixes)
-                        for file_path in self.__files]
+        self.__files = {i: util.trim_path_prefixes(file_path, path_prefixes)
+                        for i, file_path in self.__files.items()}
 
     def to_json(self):
-        """ Converts to json format. """
+        """Converts to a special json format.
+
+        This format is used by the parse command when the reports are printed
+        to the stdout in json format."""
         ret = self.__main
         ret["path"] = self.bug_path
-        ret["files"] = self.files
+        ret["files"] = self.files.values()
 
         return ret
-
-    def to_codeclimate(self):
-        """ Convert to Code Climate format. """
-        location = self.main['location']
-        file_id = location['file']
-
-        return {
-            "type": "issue",
-            "check_name": self.main['check_name'],
-            "description": self.main['description'],
-            "categories": ["Bug Risk"],
-            "fingerprint": self.report_hash,
-            "location": {
-                "path": self.files[file_id],
-                "lines": {
-                    "begin": location['line']
-                }
-            }
-        }

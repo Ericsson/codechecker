@@ -11,7 +11,7 @@ Argument handlers for the 'CodeChecker cmd token' subcommands.
 
 
 from codechecker_common import logger
-from codechecker_common.output_formatters import twodim_to_str
+from codechecker_common.output import twodim
 
 from .client import setup_auth_client, perform_auth_for_handler
 from .cmd_line import CmdLineOutputEncoder
@@ -87,7 +87,7 @@ def handle_list_tokens(args):
                          res.description if res.description else '',
                          res.lastAccess))
 
-        print(twodim_to_str(args.output_format, header, rows))
+        print(twodim.to_str(args.output_format, header, rows))
 
 
 def handle_del_token(args):

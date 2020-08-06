@@ -20,6 +20,7 @@ import re
 import sys
 import shutil
 import time
+from typing import Dict, List, Tuple, Union
 
 from plist_to_html import PlistToHtml
 
@@ -27,8 +28,8 @@ from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
 from codechecker_api_shared.ttypes import RequestFailed
 
 from codechecker_common import logger, plist_parser, util
-from codechecker_common.output_formatters import twodim_to_str
 from codechecker_common.report import Report
+from codechecker_common.output import twodim, gerrit, codeclimate
 from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler, SpellException
 from codechecker_report_hash.hash import get_report_path_hash
@@ -36,6 +37,7 @@ from codechecker_report_hash.hash import get_report_path_hash
 from codechecker_web.shared import webserver_context
 from codechecker_web.shared import convert
 
+from codechecker_client import report_type_converter
 from .client import login_user, setup_client
 from .cmd_line import CmdLineOutputEncoder
 from .product import split_server_url
@@ -53,6 +55,21 @@ def init_logger(level, stream=None, logger_name='system'):
     logger.setup_logger(level, stream)
     global LOG
     LOG = logger.get_logger(logger_name)
+
+
+def filter_localdir_remote_run(
+        run_args: List[str]) -> Tuple[List[str], List[str]]:
+    """Filter out arguments which are local directory or remote run names."""
+    local_dirs = []
+    run_names = []
+
+    for r in run_args:
+        if os.path.isdir(r):
+            local_dirs.append(os.path.abspath(r))
+        else:
+            run_names.append(r)
+
+    return local_dirs, run_names
 
 
 def run_sort_type_str(value):
@@ -83,34 +100,290 @@ def run_sort_type_enum(value):
         return ttypes.RunSortType.CC_VERSION
 
 
-def report_to_report_data(report, context=None):
+def get_diff_type(args) -> Union[ttypes.DiffType, None]:
     """
-    Convert a report object to a Thrift ReportData type.
+    Returns Thrift DiffType value by processing the arguments.
     """
-    events = [i for i in report.bug_path if i.get('kind') == 'event']
+    if 'new' in args:
+        return ttypes.DiffType.NEW
 
-    report_hash = report.main['issue_hash_content_of_line_in_context']
-    checker_name = report.main['check_name']
+    if 'unresolved' in args:
+        return ttypes.DiffType.UNRESOLVED
 
-    severity = None
-    if context:
-        severity_name = context.severity_map.get(checker_name)
-        severity = ttypes.Severity._NAMES_TO_VALUES[severity_name]
+    if 'resolved' in args:
+        return ttypes.DiffType.RESOLVED
 
-    return ttypes.ReportData(checkerId=checker_name,
-                             bugHash=report_hash,
-                             checkedFile=report.main['location']['file_name'],
-                             checkerMsg=report.main['description'],
-                             line=report.main['location']['line'],
-                             column=report.main['location']['col'],
-                             severity=severity,
-                             bugPathLength=len(events))
+    return None
+
+
+def reports_to_html_report_data(reports: List[Report]) -> Dict:
+    """
+    Converts reports from Report class from one plist file
+    to report data events for the HTML plist parser.
+    """
+    file_sources = {}
+    report_data = []
+
+    for report in reports:
+        # Not all report in this list may refer to the same files
+        # thus we need to create a single file list with
+        # all files from all reports.
+        for file_index, file_path in report.files.items():
+            if file_index not in file_sources:
+                try:
+                    with open(file_path, 'r', encoding='utf-8',
+                              errors='ignore') as source_data:
+                        content = source_data.read()
+                except (OSError, IOError):
+                    content = file_path + " NOT FOUND."
+                file_sources[file_index] = {'id': file_index,
+                                            'path': file_path,
+                                            'content': content}
+
+        events = []
+        for element in report.bug_path:
+            kind = element['kind']
+            if kind == 'event':
+                events.append({'location': element['location'],
+                               'message':  element['message']})
+
+        macros = []
+        for macro in report.macro_expansions:
+            macros.append({'location': macro['location'],
+                           'expansion': macro['expansion'],
+                           'name': macro['name']})
+
+        notes = []
+        for note in report.notes:
+            notes.append({'location': note['location'],
+                          'message': note['message']})
+
+        report_hash = report.main['issue_hash_content_of_line_in_context']
+        report_data.append({
+            'events': events,
+            'macros': macros,
+            'notes': notes,
+            'path': report.main['location']['file'],
+            'reportHash': report_hash,
+            'checkerName': report.main['check_name']})
+
+    return {'files': file_sources,
+            'reports': report_data}
+
+
+def get_run_tag(client, run_ids, tag_name):
+    """Return run tag information for the given tag name in the given runs."""
+    run_history_filter = ttypes.RunHistoryFilter()
+    run_history_filter.tagNames = [tag_name]
+    run_histories = client.getRunHistory(run_ids, None, None,
+                                         run_history_filter)
+
+    return run_histories[0] if run_histories else None
+
+
+def process_run_args(client, run_args_with_tag):
+    """Process the argument and returns run ids and run tag ids.
+
+    The elemnts inside the given run_args_with_tag list has the following
+    format: <run_name>:<run_tag>
+    """
+    run_ids = []
+    run_names = []
+    run_tags = []
+
+    for run_arg_with_tag in run_args_with_tag:
+        run_with_tag = run_arg_with_tag.split(':')
+        run_name = run_with_tag[0]
+        run_filter = ttypes.RunFilter(names=[run_name])
+
+        runs = get_run_data(client, run_filter)
+        if not runs:
+            LOG.warning("No run names match the given pattern: %s",
+                        run_arg_with_tag)
+            sys.exit(1)
+
+        r_ids = [run.runId for run in runs]
+        run_ids.extend(r_ids)
+
+        r_names = [run.name for run in runs]
+        run_names.extend(r_names)
+
+        # Set base run tag if it is available.
+        run_tag_name = run_with_tag[1] if len(run_with_tag) > 1 else None
+        if run_tag_name:
+            tag = get_run_tag(client, r_ids, run_tag_name)
+            if tag:
+                run_tags.append(tag.id)
+
+    return run_ids, run_names, run_tags
+
+
+def get_suppressed_reports(reports: List[Report]) -> List[str]:
+    """Returns a list of suppressed report hashes."""
+    suppressed_in_code = []
+    sc_handler = SourceCodeCommentHandler()
+
+    for rep in reports:
+        bughash = rep.report_hash
+        source_file = rep.main['location']['file']
+        bug_line = rep.main['location']['line']
+        checker_name = rep.main['check_name']
+        src_comment_data = []
+        with open(source_file, encoding='utf-8', errors='ignore') as sf:
+            try:
+                src_comment_data = sc_handler.filter_source_line_comments(
+                    sf,
+                    bug_line,
+                    checker_name)
+            except SpellException as ex:
+                LOG.warning("%s contains %s",
+                            os.path.basename(source_file),
+                            str(ex))
+
+        if len(src_comment_data) == 1:
+            suppressed_in_code.append(bughash)
+            LOG.debug("Bug %s is suppressed in code. file: %s Line %s",
+                      bughash, source_file, bug_line)
+        elif len(src_comment_data) > 1:
+            LOG.warning(
+                "Multiple source code comment can be found "
+                "for '%s' checker in '%s' at line %s. "
+                "This bug will not be suppressed!",
+                checker_name, source_file, bug_line)
+    return suppressed_in_code
+
+
+def get_report_dir_results(report_dirs: List[str],
+                           args: List[str],
+                           severity_map: Dict[str, str]) -> List[Report]:
+    """Get reports from the given report directories.
+
+    Absolute paths are expected to the given report directories.
+    """
+    all_reports = []
+    processed_path_hashes = set()
+    for report_dir in report_dirs:
+        for filename in os.listdir(report_dir):
+            if not filename.endswith(".plist"):
+                continue
+
+            file_path = os.path.join(report_dir, filename)
+            LOG.debug("Parsing: %s", file_path)
+            _, reports = plist_parser.parse_plist_file(file_path)
+            LOG.debug("Parsing: %s done %s", file_path, len(reports))
+            for report in reports:
+                LOG.debug("get report hash")
+                path_hash = get_report_path_hash(report)
+                if path_hash in processed_path_hashes:
+                    LOG.debug("Not showing report because it is a "
+                              "deduplication of an already processed "
+                              "report!")
+                    LOG.debug("Path hash: %s", path_hash)
+                    LOG.debug(report)
+                    continue
+
+                if skip_report_dir_result(report, args, severity_map):
+                    continue
+
+                processed_path_hashes.add(path_hash)
+                all_reports.append(report)
+
+    return all_reports
+
+
+def print_stats(report_count, file_stats, severity_stats):
+    """Print summary of the report statistics."""
+    print("\n----==== Summary ====----")
+    if file_stats:
+        vals = [[os.path.basename(k), v] for k, v in
+                list(dict(file_stats).items())]
+        vals.sort(key=itemgetter(0))
+        keys = ['Filename', 'Report count']
+        table = twodim.to_str('table', keys, vals, 1, True)
+        print(table)
+
+    if severity_stats:
+        vals = [[k, v] for k, v in list(dict(severity_stats).items())]
+        vals.sort(key=itemgetter(0))
+        keys = ['Severity', 'Report count']
+        table = twodim.to_str('table', keys, vals, 1, True)
+        print(table)
+
+    print("----=================----")
+    print("Total number of reports: {}".format(report_count))
+    print("----=================----\n")
+
+
+def skip_report_dir_result(report, args, severity_map):
+    """Returns True if the report should be skipped from the results.
+
+    Skipping is done based on the given filter set.
+    """
+    f_severities, f_checkers, f_file_path, _, _, _ = check_filter_values(args)
+
+    if f_severities:
+        severity_name = severity_map.get(report.main['check_name'])
+        if severity_name.lower() not in list(map(str.lower, f_severities)):
+            return True
+
+    if f_checkers:
+        checker_name = report.main['check_name']
+        if not any([re.match(r'^' + c.replace("*", ".*") + '$',
+                             checker_name, re.IGNORECASE)
+                    for c in f_checkers]):
+            return True
+
+    if f_file_path:
+        if not any([re.match(r'^' + f.replace("*", ".*") + '$',
+                             report.file_path, re.IGNORECASE)
+                    for f in f_file_path]):
+            return True
+
+    if 'checker_msg' in args:
+        checker_msg = report.main['description']
+        if not any([re.match(r'^' + c.replace("*", ".*") + '$',
+                             checker_msg, re.IGNORECASE)
+                    for c in args.checker_msg]):
+            return True
+
+    return False
+
+
+def get_diff_base_results(client, args, baseids, base_hashes,
+                          suppressed_hashes):
+    """Get the run results from the server."""
+    report_filter = ttypes.ReportFilter()
+    add_filter_conditions(client, report_filter, args)
+    report_filter.reportHash = base_hashes + suppressed_hashes
+
+    sort_mode = [(ttypes.SortMode(
+        ttypes.SortType.FILENAME,
+        ttypes.Order.ASC))]
+
+    limit = constants.MAX_QUERY_SIZE
+    offset = 0
+
+    base_results = []
+    while True:
+        results = client.getRunResults(baseids,
+                                       limit,
+                                       offset,
+                                       sort_mode,
+                                       report_filter,
+                                       None,
+                                       False)
+
+        base_results.extend(results)
+        offset += limit
+
+        if len(results) < limit:
+            break
+
+    return base_results
 
 
 def str_to_timestamp(date_str):
-    """
-    Return timestamp parsed from the given string parameter.
-    """
+    """Return timestamp parsed from the given string parameter."""
     dateformat = '%Y-%m-%d %H:%M:%S.%f'
     date_time = date_str if isinstance(date_str, datetime) else \
         datetime.strptime(date_str, dateformat)
@@ -119,11 +392,12 @@ def str_to_timestamp(date_str):
 
 
 def check_run_names(client, check_names):
-    """
-    Check if the given names are valid runs on the server. If any of the names
-    is not found then the script finishes. Otherwise a dictionary returns which
-    maps run names to runs. The dictionary contains only the runs in
-    check_names or all runs if check_names is empty or None.
+    """Check if the given names are valid runs on the server.
+
+    If any of the names is not found then the script finishes.
+    Otherwise a dictionary returns which maps run names to runs.
+    The dictionary contains only the runs in check_names or
+    all runs if check_names is empty or None.
     """
     run_filter = ttypes.RunFilter()
     run_filter.names = check_names
@@ -412,6 +686,9 @@ def handle_list_runs(args):
     runs = get_run_data(client, run_filter, sort_mode)
 
     if args.output_format == 'json':
+        # This json is different from the json format printed by the
+        # parse command. This json converts the ReportData type report
+        # to a json format.
         results = []
         for run in runs:
             results.append({run.name: run})
@@ -447,7 +724,7 @@ def handle_list_runs(args):
                          description,
                          codechecker_version))
 
-        print(twodim_to_str(args.output_format, header, rows))
+        print(twodim.to_str(args.output_format, header, rows))
 
 
 def handle_list_results(args):
@@ -525,7 +802,7 @@ def handle_list_results(args):
                          res.bugPathLength, res.analyzerName, rw_status,
                          dt_status))
 
-        print(twodim_to_str(args.output_format, header, rows))
+        print(twodim.to_str(args.output_format, header, rows))
 
 
 def handle_diff_results(args):
@@ -544,170 +821,19 @@ def handle_diff_results(args):
         sys.exit(1)
 
     check_deprecated_arg_usage(args)
-
-    f_severities, f_checkers, f_file_path, _, _, _ = check_filter_values(args)
-
     context = webserver_context.get_context()
-
     source_line_contents = {}
 
-    def skip_report_dir_result(report):
-        """
-        Returns True if the report should be skipped from the results based on
-        the given filter set.
-        """
-        if f_severities:
-            severity_name = context.severity_map.get(report.main['check_name'])
-            if severity_name.lower() not in list(map(str.lower, f_severities)):
-                return True
-
-        if f_checkers:
-            checker_name = report.main['check_name']
-            if not any([re.match(r'^' + c.replace("*", ".*") + '$',
-                                 checker_name, re.IGNORECASE)
-                        for c in f_checkers]):
-                return True
-
-        if f_file_path:
-            file_path = report.files[int(report.main['location']['file'])]
-            if not any([re.match(r'^' + f.replace("*", ".*") + '$',
-                                 file_path, re.IGNORECASE)
-                        for f in f_file_path]):
-                return True
-
-        if 'checker_msg' in args:
-            checker_msg = report.main['description']
-            if not any([re.match(r'^' + c.replace("*", ".*") + '$',
-                                 checker_msg, re.IGNORECASE)
-                        for c in args.checker_msg]):
-                return True
-
-        return False
-
-    def get_report_dir_results(report_dirs):
-        """ Get reports from the given report directories.
-
-        Absolute paths are expected to the given report directories.
-        """
-        all_reports = []
-        processed_path_hashes = set()
-        for report_dir in report_dirs:
-            for filename in os.listdir(report_dir):
-                if filename.endswith(".plist"):
-                    file_path = os.path.join(report_dir, filename)
-                    LOG.debug("Parsing: %s", file_path)
-                    files, reports = plist_parser.parse_plist_file(file_path)
-                    for report in reports:
-                        path_hash = get_report_path_hash(report)
-                        if path_hash in processed_path_hashes:
-                            LOG.debug("Not showing report because it is a "
-                                      "deduplication of an already processed "
-                                      "report!")
-                            LOG.debug("Path hash: %s", path_hash)
-                            LOG.debug(report)
-                            continue
-
-                        if skip_report_dir_result(report):
-                            continue
-
-                        processed_path_hashes.add(path_hash)
-                        report.main['location']['file_name'] = \
-                            files[int(report.main['location']['file'])]
-                        all_reports.append(report)
-        return all_reports
-
-    def get_diff_base_results(client, baseids, base_hashes, suppressed_hashes):
-        report_filter = ttypes.ReportFilter()
-        add_filter_conditions(client, report_filter, args)
-        report_filter.reportHash = base_hashes + suppressed_hashes
-
-        sort_mode = [(ttypes.SortMode(
-            ttypes.SortType.FILENAME,
-            ttypes.Order.ASC))]
-
-        limit = constants.MAX_QUERY_SIZE
-        offset = 0
-
-        base_results = []
-        while True:
-            results = client.getRunResults(baseids,
-                                           limit,
-                                           offset,
-                                           sort_mode,
-                                           report_filter,
-                                           None,
-                                           False)
-
-            base_results.extend(results)
-            offset += limit
-
-            if len(results) < limit:
-                break
-
-        return base_results
-
-    def get_suppressed_reports(reports):
-        """
-        Returns suppressed reports.
-        """
-        suppressed_in_code = []
-        sc_handler = SourceCodeCommentHandler()
-
-        for rep in reports:
-            bughash = rep.report_hash
-            source_file = rep.main['location']['file_name']
-            bug_line = rep.main['location']['line']
-            checker_name = rep.main['check_name']
-
-            src_comment_data = []
-            with open(source_file, encoding='utf-8', errors='ignore') as sf:
-                try:
-                    src_comment_data = sc_handler.filter_source_line_comments(
-                        sf,
-                        bug_line,
-                        checker_name)
-                except SpellException as ex:
-                    LOG.warning("%s contains %s",
-                                os.path.basename(source_file),
-                                str(ex))
-
-            if len(src_comment_data) == 1:
-                suppressed_in_code.append(bughash)
-                LOG.debug("Bug %s is suppressed in code. file: %s Line %s",
-                          bughash, source_file, bug_line)
-            elif len(src_comment_data) > 1:
-                LOG.warning(
-                    "Multiple source code comment can be found "
-                    "for '%s' checker in '%s' at line %s. "
-                    "This bug will not be suppressed!",
-                    checker_name, source_file, bug_line)
-        return suppressed_in_code
-
-    def get_diff_type():
-        """
-        Returns Thrift DiffType value by processing the arguments.
-        """
-        if 'new' in args:
-            return ttypes.DiffType.NEW
-
-        if 'unresolved' in args:
-            return ttypes.DiffType.UNRESOLVED
-
-        if 'resolved' in args:
-            return ttypes.DiffType.RESOLVED
-
-        return None
-
     def get_diff_local_dir_remote_run(client, report_dirs, remote_run_names):
-        """
-        Compares a local report directory with a remote run.
-        """
+        """Compare a local report directory with a remote run."""
         filtered_reports = []
-        report_dir_results = get_report_dir_results(report_dirs)
+        report_dir_results = get_report_dir_results(report_dirs,
+                                                    args,
+                                                    context.severity_map)
         suppressed_in_code = get_suppressed_reports(report_dir_results)
 
-        diff_type = get_diff_type()
-        run_ids, run_names, _ = process_run_args(remote_run_names)
+        diff_type = get_diff_type(args)
+        run_ids, run_names, _ = process_run_args(client, remote_run_names)
         local_report_hashes = set([r.report_hash for r in report_dir_results])
 
         if diff_type == ttypes.DiffType.NEW:
@@ -718,7 +844,7 @@ def handle_diff_results(args):
                                           ttypes.DiffType.RESOLVED,
                                           None)
 
-            results = get_diff_base_results(client, run_ids,
+            results = get_diff_base_results(client, args, run_ids,
                                             remote_hashes,
                                             suppressed_in_code)
             for result in results:
@@ -746,7 +872,6 @@ def handle_diff_results(args):
             for result in report_dir_results:
                 if result.report_hash not in remote_hashes:
                     filtered_reports.append(result)
-
         return filtered_reports, run_names
 
     def get_diff_remote_run_local_dir(client, remote_run_names, report_dirs):
@@ -754,11 +879,13 @@ def handle_diff_results(args):
         Compares a remote run with a local report directory.
         """
         filtered_reports = []
-        report_dir_results = get_report_dir_results(report_dirs)
+        report_dir_results = get_report_dir_results(report_dirs,
+                                                    args,
+                                                    context.severity_map)
         suppressed_in_code = get_suppressed_reports(report_dir_results)
 
-        diff_type = get_diff_type()
-        run_ids, run_names, _ = process_run_args(remote_run_names)
+        diff_type = get_diff_type(args)
+        run_ids, run_names, _ = process_run_args(client, remote_run_names)
         local_report_hashes = set([r.report_hash for r in report_dir_results])
 
         remote_hashes = client.getDiffResultsHash(run_ids,
@@ -778,6 +905,7 @@ def handle_diff_results(args):
             # Show bugs in the baseline (server) which are not present in
             # the report dir or suppressed.
             results = get_diff_base_results(client,
+                                            args,
                                             run_ids,
                                             remote_hashes,
                                             suppressed_in_code)
@@ -795,14 +923,14 @@ def handle_diff_results(args):
         add_filter_conditions(client, report_filter, args)
 
         base_ids, base_run_names, base_run_tags = \
-            process_run_args(remote_base_run_names)
+            process_run_args(client, remote_base_run_names)
         report_filter.runTag = base_run_tags
 
         cmp_data = ttypes.CompareData()
-        cmp_data.diffType = get_diff_type()
+        cmp_data.diffType = get_diff_type(args)
 
         new_ids, new_run_names, new_run_tags = \
-            process_run_args(remote_new_run_names)
+            process_run_args(client, remote_new_run_names)
         cmp_data.runIds = new_ids
         cmp_data.runTag = new_run_tags
 
@@ -842,13 +970,17 @@ def handle_diff_results(args):
         Compares two report directories and returns the filtered results.
         """
         filtered_reports = []
-        base_results = get_report_dir_results(base_run_names)
-        new_results = get_report_dir_results(new_run_names)
+        base_results = get_report_dir_results(base_run_names,
+                                              args,
+                                              context.severity_map)
+        new_results = get_report_dir_results(new_run_names,
+                                             args,
+                                             context.severity_map)
 
         base_hashes = set([res.report_hash for res in base_results])
         new_hashes = set([res.report_hash for res in new_results])
 
-        diff_type = get_diff_type()
+        diff_type = get_diff_type(args)
         if diff_type == ttypes.DiffType.NEW:
             for res in new_results:
                 if res.report_hash not in base_hashes:
@@ -934,99 +1066,20 @@ def handle_diff_results(args):
         return {'files': file_sources,
                 'reports': report_data}
 
-    def reports_to_report_data(reports):
-        """
-        Converts reports from Report class from one plist file
-        to report data events for the HTML plist parser.
-        """
-        file_sources = {}
-        report_data = []
-
-        for report in reports:
-            # Not all report in this list may refer to the same files
-            # thus we need to create a single file list with
-            # all files from all reports.
-            for file_index, file_path in enumerate(report.files):
-                if file_index not in file_sources:
-                    try:
-                        with open(file_path, 'r', encoding='utf-8',
-                                  errors='ignore') as source_data:
-                            content = source_data.read()
-                    except (OSError, IOError):
-                        content = file_path + " NOT FOUND."
-                    file_sources[file_index] = {'id': file_index,
-                                                'path': file_path,
-                                                'content': content}
-
-            events = []
-            for element in report.bug_path:
-                kind = element['kind']
-                if kind == 'event':
-                    events.append({'location': element['location'],
-                                   'message':  element['message']})
-
-            macros = []
-            for macro in report.macro_expansions:
-                macros.append({'location': macro['location'],
-                               'expansion': macro['expansion'],
-                               'name': macro['name']})
-
-            notes = []
-            for note in report.notes:
-                notes.append({'location': note['location'],
-                              'message': note['message']})
-
-            report_hash = report.main['issue_hash_content_of_line_in_context']
-            report_data.append({
-                'events': events,
-                'macros': macros,
-                'notes': notes,
-                'path': report.main['location']['file_name'],
-                'reportHash': report_hash,
-                'checkerName': report.main['check_name']})
-
-        return {'files': file_sources,
-                'reports': report_data}
-
-    def print_stats(reports, file_stats, severity_stats):
-        """
-        Print summary of the diff results.
-        """
-        print("\n----==== Summary ====----")
-        if file_stats:
-            vals = [[os.path.basename(k), v] for k, v in
-                    list(dict(file_stats).items())]
-            vals.sort(key=itemgetter(0))
-            keys = ['Filename', 'Report count']
-            table = twodim_to_str('table', keys, vals, 1, True)
-            print(table)
-
-        if severity_stats:
-            vals = [[k, v] for k, v in list(dict(severity_stats).items())]
-            vals.sort(key=itemgetter(0))
-            keys = ['Severity', 'Report count']
-            table = twodim_to_str('table', keys, vals, 1, True)
-            print(table)
-
-        print("----=================----")
-        print("Total number of reports: {}".format(len(reports)))
-        print("----=================----\n")
-
     def report_to_html(client, reports, output_dir):
         """
         Generate HTML output files for the given reports in the given output
-        directory by using the Plist To HTML parser.
+        directory by using the Plist To HTML builder.
         """
         html_builder = PlistToHtml.HtmlBuilder(
             context.path_plist_to_html_dist,
             context.severity_map)
-
         file_stats = defaultdict(int)
         severity_stats = defaultdict(int)
         file_report_map = defaultdict(list)
         for report in reports:
             if isinstance(report, Report):
-                file_path = report.main['location']['file_name']
+                file_path = report.main['location']['file']
 
                 check_name = report.main['check_name']
                 sev = context.severity_map.get(check_name)
@@ -1048,7 +1101,7 @@ def handle_diff_results(args):
                 16) % (10 ** 8)
 
             if isinstance(file_reports[0], Report):
-                report_data = reports_to_report_data(file_reports)
+                report_data = reports_to_html_report_data(file_reports)
             else:
                 report_data = get_report_data(client, file_reports, file_cache)
 
@@ -1059,180 +1112,22 @@ def handle_diff_results(args):
                 checked_file, output_path))
 
         html_builder.create_index_html(output_dir)
-        print_stats(reports, file_stats, severity_stats)
+        print_stats(len(reports), file_stats, severity_stats)
 
-    def get_report_show_info(report):
-        """ Get information from report which will be used during print. """
-        source_line = None
-
-        if isinstance(report, Report):
-            # Report is coming from a plist file.
-            bug_line = report.main['location']['line']
-            bug_col = report.main['location']['col']
-            check_name = report.main['check_name']
-            sev = context.severity_map.get(check_name)
-            file_name = report.main['location']['file_name']
-            checked_file = file_name \
-                + ':' + str(bug_line) + ":" + str(bug_col)
-            check_msg = report.main['description']
-            if os.path.exists(file_name):
-                source_line = util.get_line(file_name, bug_line)
-        else:
-            # Report is coming from CodeChecker server.
-            bug_line = report.line
-            bug_col = report.column
-            check_name = report.checkerId
-            sev = ttypes.Severity._VALUES_TO_NAMES[report.severity]
-            file_name = report.checkedFile
-            checked_file = file_name
-            if bug_line is not None:
-                checked_file += ':' + str(bug_line) + ":" + str(bug_col)
-            check_msg = report.checkerMsg
-            if source_line_contents:
-                source_line = convert.from_b64(
-                    source_line_contents[report.fileId][bug_line])
-        return bug_line, bug_col, sev, file_name, checked_file, check_name, \
-            check_msg, source_line
-
-    def get_gerrit_review_changed_files(changed_file_path):
-        """ Return a list of changed files.
-
-        Process the given gerrit changed file object and return a list of
-        file paths which changed.
-
-        The file can contain some garbage values at start, so we use regex
-        to find a json object.
-        """
-        ret = []
-
-        if not changed_file_path:
-            return ret
-
-        with open(changed_file_path) as changed_file:
-            content = changed_file.read()
-
-            # The file can contain some garbage values at start, so we use
-            # regex search to find a json object.
-            match = re.search(r'\{[\s\S]*\}', content)
-            if not match:
-                return ret
-
-            for filename in json.loads(match.group(0)):
-                if "/COMMIT_MSG" in filename:
-                    continue
-
-                ret.append(filename)
-
-        return ret
-
-    def write_gerrit_json(reports, output_dir):
-        """ Converts the given reports to gerrit json format.
-
-        This function will convert the given report to Gerrit json format
-        and writes the issues to the given output directory to a JSON file.
-        """
-        repo_dir = os.environ.get('CC_REPO_DIR')
-        report_url = os.environ.get('CC_REPORT_URL')
-        changed_file_path = os.environ.get('CC_CHANGED_FILES')
-        changed_files = get_gerrit_review_changed_files(changed_file_path)
-
-        review_comments = {}
-
-        report_count = 0
-        for report in reports:
-            bug_line, bug_col, sev, file_name, checked_file, check_name, \
-                check_msg, source_line = get_report_show_info(report)
-
-            # Skip the report if it is not in the changed files.
-            if changed_file_path and not any([file_name.endswith(c)
-                                              for c in changed_files]):
-                continue
-
-            report_count += 1
-
-            rel_file_path = os.path.relpath(file_name, repo_dir) \
-                if repo_dir else file_name
-
-            if rel_file_path not in review_comments:
-                review_comments[rel_file_path] = []
-
-            review_comment_msg = "[{0}] {1}: {2} [{3}]\n{4}".format(
-                sev, checked_file, check_msg, check_name, source_line)
-
-            review_comments[rel_file_path].append({
-                "range": {
-                    "start_line": bug_line,
-                    "start_character": bug_col,
-                    "end_line": bug_line,
-                    "end_character": bug_col},
-                "message": review_comment_msg})
-
-        message = "CodeChecker found {0} issue(s) in the code.".format(
-            report_count)
-
-        if report_url:
-            message += " See: '{0}'".format(report_url)
-
-        review = {"tag": "jenkins",
-                  "message": message,
-                  "labels": {
-                      "Code-Review": -1 if report_count else 1,
-                      "Verified": -1 if report_count else 1},
-                  "comments": review_comments}
-
-        gerrit_review_json = os.path.join(output_dir,
-                                          'gerrit_review.json')
-        with open(gerrit_review_json, 'w') as review_file:
-            json.dump(review, review_file)
-
-        LOG.info("Gerrit review file was created: %s\n",
-                 gerrit_review_json)
-
-    def write_codeclimate_json(reports, output_dir):
-        """ Converts the given reports to codeclimate format.
-
-        This function will convert the given report to Code Climate format
-        and writes the issues to the given output directory to a JSON file.
-        """
-        repo_dir = os.environ.get('CC_REPO_DIR')
-
-        issues = []
-        for report in reports:
-            if not isinstance(report, Report):
-                report = Report.from_thrift_report(report)
-
-            if repo_dir:
-                report.trim_path_prefixes([repo_dir])
-
-            issues.append(report.to_codeclimate())
-
-        codeclimate_issues_json = os.path.join(output_dir,
-                                               'codeclimate_issues.json')
-        with open(codeclimate_issues_json, 'w') as issues_f:
-            json.dump(issues, issues_f)
-
-        LOG.info("Code Climate file was created: %s\n",
-                 codeclimate_issues_json)
-
-    def print_reports(client, reports, output_formats):
-        output_dir = args.export_dir if 'export_dir' in args else None
-        if 'clean' in args and os.path.isdir(output_dir):
-            print("Previous analysis results in '{0}' have been removed, "
-                  "overwriting with current results.".format(output_dir))
-            shutil.rmtree(output_dir)
-
-        if output_dir and not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-
+    def print_reports(client,
+                      reports: List[Report],
+                      output_formats: List[str]):
         if 'json' in output_formats:
-            output = []
+            out = []
             for report in reports:
                 if isinstance(report, Report):
-                    report = report_to_report_data(report, context)
-                    output.append(report)
+                    report = \
+                        report_type_converter.report_to_reportData(
+                            report, context.severity_map)
+                    out.append(report)
                 else:
-                    output.append(report)
-            print(CmdLineOutputEncoder().encode(output))
+                    out.append(report)
+            print(CmdLineOutputEncoder().encode(out))
 
             # Json was the only format specified.
             if len(output_formats) == 1:
@@ -1247,7 +1142,7 @@ def handle_diff_results(args):
             report_to_html(client, reports, output_dir)
 
             print('\nTo view the results in a browser run:\n'
-                  '  $ firefox {0}\n'.format(os.path.join(args.export_dir,
+                  '  $ firefox {0}\n'.format(os.path.join(output_dir,
                                                           'index.html')))
 
             # HTML was the only format specified.
@@ -1256,12 +1151,11 @@ def handle_diff_results(args):
 
             output_formats.remove('html')
 
+        # Collect source line contents for the report type got from the server.
         source_lines = defaultdict(set)
         for report in reports:
             if not isinstance(report, Report) and report.line is not None:
                 source_lines[report.fileId].add(report.line)
-
-        # In case both baseline and new check is a local directory.
         if client:
             lines_in_files_requested = []
             for key in source_lines:
@@ -1272,17 +1166,47 @@ def handle_diff_results(args):
             source_line_contents.update(client.getLinesInSourceFileContents(
                 lines_in_files_requested, ttypes.Encoding.BASE64))
 
+        # Convert all the reports to the common Report
+        # type for printing and formatting to various formats.
+        converted_reports = []
+        for report in reports:
+            if not isinstance(report, Report):
+                r = report_type_converter.reportData_to_report(report)
+                if source_line_contents:
+                    source_line = convert.from_b64(
+                        source_line_contents[report.fileId][report.line])
+                    r.source_line = source_line
+                converted_reports.append(r)
+            else:
+                converted_reports.append(report)
+        reports = converted_reports
+
         if 'gerrit' in output_formats:
-            write_gerrit_json(reports, output_dir)
+            gerrit_reports = gerrit.convert(reports, context.severity_map)
+
+            gerrit_review_json = os.path.join(output_dir,
+                                              'gerrit_review.json')
+            with open(gerrit_review_json, 'w') as review_file:
+                json.dump(gerrit_reports, review_file)
+            LOG.info("Gerrit review file was created: %s\n",
+                     gerrit_review_json)
 
             # Gerrit was the only format specified.
             if len(output_formats) == 1:
                 return
-
             output_formats.remove('gerrit')
 
         if 'codeclimate' in output_formats:
-            write_codeclimate_json(reports, output_dir)
+            repo_dir = os.environ.get('CC_REPO_DIR')
+            cc_reports = codeclimate.convert(reports, [repo_dir])
+
+            codeclimate_issues_json = os.path.join(output_dir,
+                                                   'codeclimate_issues.json')
+            with open(codeclimate_issues_json, 'w') as issues_f:
+                json.dump(cc_reports, issues_f)
+
+            LOG.info("Code Climate file was created: %s\n",
+                     codeclimate_issues_json)
 
             # codeclimate was the only format specified.
             if len(output_formats) == 1:
@@ -1298,17 +1222,26 @@ def handle_diff_results(args):
 
         changed_files = set()
         for report in reports:
-            _, _, sev, file_name, checked_file, check_name, \
-                check_msg, source_line = get_report_show_info(report)
-
+            severity = context.severity_map.get(report.check_name,
+                                                'UNSPECIFIED')
+            file_name = report.file_path
+            checked_file = file_name \
+                + ':' + str(report.line) + ":" + str(report.col)
+            check_msg = report.description
+            source_line = None
+            if os.path.exists(file_name):
+                source_line = util.get_line(file_name, report.line)
             if source_line is None:
                 changed_files.add(file_name)
                 continue
 
-            rows.append(
-                (sev, checked_file, check_msg, check_name, source_line))
+            rows.append((severity,
+                         checked_file,
+                         check_msg,
+                         report.check_name,
+                         report.source_line))
 
-            severity_stats[sev] += 1
+            severity_stats[severity] += 1
             file_stats[file_name] += 1
 
         for output_format in output_formats:
@@ -1317,9 +1250,9 @@ def handle_diff_results(args):
                     print("[{0}] {1}: {2} [{3}]\n{4}\n".format(
                         row[0], row[1], row[2], row[3], row[4]))
             else:
-                print(twodim_to_str(output_format, header, rows))
+                print(twodim.to_str(output_format, header, rows))
 
-        print_stats(reports, file_stats, severity_stats)
+        print_stats(len(reports), file_stats, severity_stats)
 
         if changed_files:
             changed_f = '\n'.join([' - ' + f for f in changed_files])
@@ -1329,85 +1262,11 @@ def handle_diff_results(args):
                         "analyze your project again to update the "
                         "reports!", changed_f)
 
-    def get_run_tag(client, run_ids, tag_name):
-        """
-        Returns run tag information for the given tag name in the given runs.
-        """
-        run_history_filter = ttypes.RunHistoryFilter()
-        run_history_filter.tagNames = [tag_name]
-        run_histories = client.getRunHistory(run_ids, None, None,
-                                             run_history_filter)
-
-        return run_histories[0] if run_histories else None
-
-    def process_run_args(run_args_with_tag):
-        """ Process the argument and returns run ids and run tag ids.
-
-        The elemnts inside the given run_args_with_tag list has the following
-        format: <run_name>:<run_tag>
-        """
-        run_ids = []
-        run_names = []
-        run_tags = []
-
-        for run_arg_with_tag in run_args_with_tag:
-            run_with_tag = run_arg_with_tag.split(':')
-            run_name = run_with_tag[0]
-            run_filter = ttypes.RunFilter(names=[run_name])
-
-            runs = get_run_data(client, run_filter)
-            if not runs:
-                LOG.warning("No run names match the given pattern: %s",
-                            run_arg_with_tag)
-                sys.exit(1)
-
-            r_ids = [run.runId for run in runs]
-            run_ids.extend(r_ids)
-
-            r_names = [run.name for run in runs]
-            run_names.extend(r_names)
-
-            # Set base run tag if it is available.
-            run_tag_name = run_with_tag[1] if len(run_with_tag) > 1 else None
-            if run_tag_name:
-                tag = get_run_tag(client, r_ids, run_tag_name)
-                if tag:
-                    run_tags.append(tag.id)
-
-        return run_ids, run_names, run_tags
-
-    def print_diff_results(reports):
-        """
-        Print the results.
-        """
-        if reports:
-            print_reports(client, reports, args.output_format)
-        else:
-            LOG.info("No results.")
-
-    client = None
-
-    def preprocess_run_args(run_args):
-        """ Preprocess the given run argument.
-        Get a list of local directories and remote runs by processing the
-        given argument.
-        """
-        local_dirs = []
-        run_names = []
-
-        for r in run_args:
-            if os.path.isdir(r):
-                local_dirs.append(os.path.abspath(r))
-            else:
-                run_names.append(r)
-
-        return local_dirs, run_names
-
     basename_local_dirs, basename_run_names = \
-        preprocess_run_args(args.base_run_names)
+        filter_localdir_remote_run(args.base_run_names)
 
     newname_local_dirs, newname_run_names = \
-        preprocess_run_args(args.new_run_names)
+        filter_localdir_remote_run(args.new_run_names)
 
     has_different_run_args = False
     if basename_local_dirs and basename_run_names:
@@ -1427,13 +1286,23 @@ def handle_diff_results(args):
     if has_different_run_args:
         sys.exit(1)
 
+    client = None
     # We set up the client if we are not comparing two local report directory.
     if basename_run_names or newname_run_names:
         client = setup_client(args.product_url)
 
+    output_dir = args.export_dir if 'export_dir' in args else None
+    if 'clean' in args and os.path.isdir(output_dir):
+        print("Previous analysis results in '{0}' have been removed, "
+              "overwriting with current results.".format(output_dir))
+        shutil.rmtree(output_dir)
+
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
     if basename_local_dirs and newname_local_dirs:
         reports = get_diff_local_dirs(basename_local_dirs, newname_local_dirs)
-        print_diff_results(reports)
+        print_reports(client, reports, args.output_format)
         LOG.info("Compared the following local report directories: %s and %s",
                  ', '.join(basename_local_dirs),
                  ', '.join(newname_local_dirs))
@@ -1442,7 +1311,7 @@ def handle_diff_results(args):
             get_diff_remote_run_local_dir(client,
                                           basename_run_names,
                                           newname_local_dirs)
-        print_diff_results(reports)
+        print_reports(client, reports, args.output_format)
         LOG.info("Compared remote run(s) %s (matching: %s) and local report "
                  "directory(s) %s",
                  ', '.join(basename_run_names),
@@ -1453,7 +1322,8 @@ def handle_diff_results(args):
             get_diff_local_dir_remote_run(client,
                                           basename_local_dirs,
                                           newname_run_names)
-        print_diff_results(reports)
+
+        print_reports(client, reports, args.output_format)
         LOG.info("Compared local report directory(s) %s and remote run(s) %s "
                  "(matching: %s).",
                  ', '.join(basename_local_dirs),
@@ -1462,7 +1332,7 @@ def handle_diff_results(args):
     else:
         reports, matching_base_run_names, matching_new_run_names = \
             get_diff_remote_runs(client, basename_run_names, newname_run_names)
-        print_diff_results(reports)
+        print_reports(client, reports, args.output_format)
         LOG.info("Compared multiple remote runs %s (matching: %s) and %s "
                  "(matching: %s)",
                  ', '.join(basename_run_names),
@@ -1591,7 +1461,7 @@ def handle_list_result_types(args):
                      str(total['total_intentional']),
                      str(total['total_reports'])))
 
-        print(twodim_to_str(args.output_format, header, rows,
+        print(twodim.to_str(args.output_format, header, rows,
                             separate_footer=True))
 
         # Print severity counts
@@ -1604,7 +1474,7 @@ def handle_list_result_types(args):
 
         rows.append(('Total', str(severity_total)))
 
-        print(twodim_to_str(args.output_format, header, rows,
+        print(twodim.to_str(args.output_format, header, rows,
                             separate_footer=True))
 
 
@@ -1728,4 +1598,4 @@ def handle_list_run_histories(args):
                          ', '.join(analyzer_statistics),
                          h.description if h.description else ''))
 
-        print(twodim_to_str(args.output_format, header, rows))
+        print(twodim.to_str(args.output_format, header, rows))

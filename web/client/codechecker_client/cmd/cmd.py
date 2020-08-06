@@ -22,8 +22,8 @@ from codechecker_client import cmd_line_client
 from codechecker_client import product_client
 from codechecker_client import source_component_client, token_client
 
-from codechecker_common import arg, logger, output_formatters, util
-
+from codechecker_common import arg, logger, util
+from codechecker_common.output import USER_FORMATS
 
 DEFAULT_FILTER_VALUES = {
     'review_status': ['unreviewed', 'confirmed'],
@@ -31,7 +31,7 @@ DEFAULT_FILTER_VALUES = {
     'uniqueing': 'off'
 }
 
-DEFAULT_OUTPUT_FORMATS = ["plaintext"] + output_formatters.USER_FORMATS
+DEFAULT_OUTPUT_FORMATS = ["plaintext"] + USER_FORMATS
 
 
 def valid_time(t):

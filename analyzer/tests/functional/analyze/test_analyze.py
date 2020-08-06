@@ -890,6 +890,7 @@ class TestAnalyze(unittest.TestCase):
             errors="ignore")
         out, _ = process.communicate()
 
+        print(out)
         # First it's printed as the member of enabled checkers at the beginning
         # of the output. Second it is printed as a found report.
         self.assertEqual(out.count('hicpp-use-nullptr'), 2)
@@ -930,7 +931,7 @@ class TestAnalyze(unittest.TestCase):
             encoding="utf-8",
             errors="ignore")
         out, _ = process.communicate()
-
+        print(out)
         # First it's printed as the member of enabled checkers at the beginning
         # of the output. Second it is printed as a found report.
         self.assertEqual(out.count('UninitializedObject'), 2)
@@ -953,6 +954,7 @@ class TestAnalyze(unittest.TestCase):
             errors="ignore")
         out, _ = process.communicate()
 
+        print(out)
         # It is printed as the member of enabled checkers, but it gives no
         # report.
         self.assertEqual(out.count('UninitializedObject'), 1)

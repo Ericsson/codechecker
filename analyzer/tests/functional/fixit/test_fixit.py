@@ -315,7 +315,8 @@ int main()
             cwd=self.test_workspace,
             encoding="utf-8",
             errors="ignore")
-        out, _ = process.communicate()
+        out, err = process.communicate()
+        print('\n' + out + '\n')
 
         process = subprocess.Popen(
             fixit_cmd,
@@ -324,6 +325,6 @@ int main()
             stdin=subprocess.PIPE,
             encoding="utf-8",
             errors="ignore")
-        out, _ = process.communicate(input=out)
-
+        out, err = process.communicate(input=out)
+        print('\n' + out + '\n')
         self.assertEqual(out.count("DiagnosticMessage"), 1)

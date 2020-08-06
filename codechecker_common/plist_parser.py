@@ -36,6 +36,7 @@ import os
 import sys
 import traceback
 import plistlib
+from typing import List, Dict, Union, Tuple
 from xml.parsers.expat import ExpatError
 
 from codechecker_common.logger import get_logger
@@ -136,7 +137,10 @@ def get_checker_name(diagnostic, path=""):
     return checker_name
 
 
-def parse_plist_file(path, source_root=None, allow_plist_update=True):
+def parse_plist_file(path: str,
+                     source_root: Union[str, None] = None,
+                     allow_plist_update=True) \
+                             -> Tuple[Dict[int, str], List[Report]]:
     """
     Parse the reports from a plist file.
     One plist file can contain multiple reports.
@@ -144,7 +148,8 @@ def parse_plist_file(path, source_root=None, allow_plist_update=True):
     LOG.debug("Parsing plist: %s", path)
 
     reports = []
-    files = []
+    source_files = {}
+
     try:
         plist = None
         with open(path, 'rb') as plist_file_obj:
@@ -152,13 +157,17 @@ def parse_plist_file(path, source_root=None, allow_plist_update=True):
 
         if not plist:
             LOG.error("Failed to parse plist %s", path)
-            return files, reports
+            return {}, []
 
-        files = plist['files']
         metadata = plist.get('metadata')
 
+        mentioned_files = plist.get('files', [])
+
+        # file index to filepath that bugpath events refer to
+        source_files = \
+            {i: filepath for i, filepath in enumerate(mentioned_files)}
         diag_changed = False
-        for diag in plist['diagnostics']:
+        for diag in plist.get('diagnostics', []):
 
             available_keys = list(diag.keys())
 
@@ -174,10 +183,10 @@ def parse_plist_file(path, source_root=None, allow_plist_update=True):
 
             # We need to extend information for plist files generated
             # by older clang version (before 3.8).
-            file_path = files[diag['location']['file']]
+            file_path = mentioned_files[diag['location']['file']]
             if source_root:
                 file_path = os.path.join(source_root, file_path.lstrip('/'))
-
+            main_section['location']['file'] = file_path
             report_hash = diag.get('issue_hash_content_of_line_in_context')
 
             if not report_hash:
@@ -195,9 +204,10 @@ def parse_plist_file(path, source_root=None, allow_plist_update=True):
                 diag_changed = True
 
             bug_path_items = [item for item in diag['path']]
-
-            report = Report(main_section, bug_path_items, files, metadata)
-            reports.append(report)
+            reports.append(Report(main_section,
+                                  bug_path_items,
+                                  source_files,
+                                  metadata))
 
         if diag_changed and allow_plist_update:
             # If the diagnostic section has changed we update the plist file.
@@ -217,7 +227,7 @@ def parse_plist_file(path, source_root=None, allow_plist_update=True):
         LOG.warning(type(ex))
         LOG.warning(ex)
     finally:
-        return files, reports
+        return source_files, reports
 
 
 def fids_in_range(rng):

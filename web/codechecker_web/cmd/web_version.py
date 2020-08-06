@@ -14,7 +14,7 @@ import argparse
 import json
 
 from codechecker_common import logger
-from codechecker_common import output_formatters
+from codechecker_common.output import USER_FORMATS, twodim
 
 from codechecker_web.shared import webserver_context, version
 
@@ -49,7 +49,7 @@ def add_arguments_to_parser(parser):
                         dest='output_format',
                         required=False,
                         default='table',
-                        choices=output_formatters.USER_FORMATS,
+                        choices=USER_FORMATS,
                         help="The format to use when printing the version.")
 
     logger.add_verbose_arguments(parser)
@@ -79,9 +79,9 @@ def print_version(output_format=None):
     ]
 
     if output_format != "json":
-        print(output_formatters.twodim_to_str(output_format,
-                                              ["Kind", "Version"],
-                                              rows))
+        print(twodim.to_str(output_format,
+                            ["Kind", "Version"],
+                            rows))
     elif output_format == "json":
         # Use a special JSON format here, instead of
         # [ {"kind": "something", "version": "0.0.0"}, {"kind": "foo", ... } ]
