@@ -17,14 +17,12 @@ import subprocess
 
 from codechecker_common.logger import get_logger
 
-from codechecker_analyzer import host_check
 from codechecker_analyzer import env
 
 from .. import analyzer_base
 from ..config_handler import CheckerState
 from ..flag import has_flag
 from ..flag import prepend_all
-from ..clangsa.analyzer import ClangSA
 
 from . import config_handler
 from . import result_handler
@@ -296,11 +294,6 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         # Overwrite PATH to contain only the parent of the clang binary.
         if os.path.isabs(handler.analyzer_binary):
             check_env['PATH'] = os.path.dirname(handler.analyzer_binary)
-        clang_bin = ClangSA.resolve_missing_binary('clang',
-                                                   check_env)
-        handler.compiler_resource_dir = \
-            host_check.get_resource_dir(clang_bin, context)
-
         try:
             with open(args.tidy_args_cfg_file, 'r', encoding='utf-8',
                       errors='ignore') as tidy_cfg:

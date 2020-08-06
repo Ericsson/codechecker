@@ -6,7 +6,6 @@
     },
     "clang-apply-replacements": "clang-apply-replacements"
   },
-  "compiler_resource_dir" : null,
   "ld_lib_path_extra" : [],
   "path_env_extra" : []
 }
