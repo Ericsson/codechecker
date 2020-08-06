@@ -19,7 +19,7 @@ pycodestyle_in_env: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(PYCODESTYLE_TEST_CMD)
 
 PYLINT_TEST_CMD = PYLINTRC=$(ROOT)/.pylintrc \
-	pylint ./codechecker_report_converter ./tests/**
+	pylint -j0 ./codechecker_report_converter ./tests/**
 
 pylint:
 	$(PYLINT_TEST_CMD)

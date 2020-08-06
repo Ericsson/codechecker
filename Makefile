@@ -200,7 +200,7 @@ clean_travis:
 
 PYLINT_CMD = $(MAKE) -C $(CC_ANALYZER) pylint && \
   $(MAKE) -C $(CC_WEB) pylint && \
-  pylint ./bin/** ./codechecker_common \
+  pylint -j0 ./bin/** ./codechecker_common \
 	./scripts/** ./scripts/build/** ./scripts/debug_tools/** \
 	./scripts/gerrit_jenkins/** ./scripts/resources/** \
 	./scripts/test/** \

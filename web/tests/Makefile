@@ -40,7 +40,7 @@ pycodestyle_in_env: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(PYCODESTYLE_TEST_CMD)
 
 PYLINT_TEST_CMD = PYLINTRC=$(ROOT)/.pylintrc \
-  pylint ./bin/** \
+  pylint -j0 ./bin/** \
     ./codechecker_web \
     ./client/bin/** ./client/codechecker_client \
     ./server/bin/** ./server/codechecker_server ./server/tests/unit \
