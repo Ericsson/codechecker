@@ -568,13 +568,6 @@ def check(check_data):
             if result_file_exists:
                 LOG.warning("Previous analysis results in '%s' has been "
                             "overwritten.", rh.analyzer_result_file)
-
-            if skip_handler:
-                # We need to check the plist content because skipping
-                # reports in headers can be done only this way.
-                plist_parser.skip_report_from_plist(result_file,
-                                                    skip_handler)
-
         else:
             LOG.error("Analyzing %s with %s %s failed!",
                       source_file_name,
@@ -626,7 +619,6 @@ def check(check_data):
                                     rh.analyzer_result_file)
 
                 else:
-
                     LOG.error("Analyzing '%s' with %s without CTU failed.",
                               source_file_name, action.analyzer_type)
 
@@ -634,6 +626,12 @@ def check(check_data):
                     zip_file = os.path.join(failed_dir, zip_file)
                     handle_failure(source_analyzer, rh, zip_file,
                                    result_base, actions_map)
+
+        if skip_handler and os.path.exists(result_file):
+            # We need to check the plist content because skipping
+            # reports in headers can be done only this way.
+            plist_parser.skip_report_from_plist(result_file,
+                                                skip_handler)
 
         if not quiet_output_on_stdout:
             if rh.analyzer_returncode:
