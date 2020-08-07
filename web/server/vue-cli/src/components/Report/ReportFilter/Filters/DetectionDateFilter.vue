@@ -1,8 +1,18 @@
 <template>
-  <filter-toolbar
+  <select-option
     title="Detection date"
+    :bus="bus"
+    :fetch-items="fetchItems"
+    :selected-items="selectedItems"
+    :loading="loading"
+    :multiple="false"
     @clear="clear(true)"
+    @input="setSelectedItems"
   >
+    <template v-slot:icon="{ item }">
+      <detection-date-filter-icon :value="item.id" />
+    </template>
+
     <v-container
       class="py-0"
     >
@@ -38,23 +48,29 @@
         </v-col>
       </v-row>
     </v-container>
-  </filter-toolbar>
+  </select-option>
 </template>
 
 <script>
 import { format } from "date-fns";
 
 import DateTimePicker from "@/components/DateTimePicker";
-import BaseFilterMixin from "./BaseFilter.mixin";
-import FilterToolbar from "./Layout/FilterToolbar";
+import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
+import SelectOption from "./SelectOption/SelectOption";
+import DetectionDateFilterItems, {
+  getDateInterval,
+  titleFormatter
+} from "./DetectionDateFilterItems";
+import DetectionDateFilterIcon from "./DetectionDateFilterIcon";
 
 export default {
   name: "DetectionDateFilter",
   components: {
     DateTimePicker,
-    FilterToolbar
+    DetectionDateFilterIcon,
+    SelectOption
   },
-  mixins: [ BaseFilterMixin ],
+  mixins: [ BaseSelectOptionFilterMixin ],
   data() {
     return {
       fromDateTimeId: "first-detection-date",
@@ -64,8 +80,17 @@ export default {
     };
   },
 
-
   methods: {
+    setSelectedItems(selectedItems/*, updateUrl=true*/) {
+      this.selectedItems = selectedItems;
+      const interval = getDateInterval(selectedItems[0].id);
+
+      this.setFromDateTime(interval.from, false);
+      this.setToDateTime(interval.to, false);
+
+      this.$emit("update:url");
+    },
+
     setFromDateTime(dateTime, updateUrl=true) {
       this.fromDateTime = dateTime;
       this.updateReportFilter();
@@ -129,6 +154,17 @@ export default {
       this.setReportFilter({
         firstDetectionDate: firstDetectionDate,
         fixDate: fixDate
+      });
+    },
+
+    fetchItems() {
+      return Object.keys(DetectionDateFilterItems).map(key => {
+        const id = DetectionDateFilterItems[key];
+
+        return {
+          id: id,
+          title: titleFormatter(id)
+        };
       });
     },
 

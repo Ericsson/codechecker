@@ -59,19 +59,21 @@
       </v-menu>
     </template>
 
-    <items-selected
-      :selected-items="selectedItems"
-      :multiple="multiple"
-      @update:select="updateSelectedItems"
-    >
-      <template v-slot:icon="{ item }">
-        <slot name="icon" :item="item" />
-      </template>
+    <slot>
+      <items-selected
+        :selected-items="selectedItems"
+        :multiple="multiple"
+        @update:select="updateSelectedItems"
+      >
+        <template v-slot:icon="{ item }">
+          <slot name="icon" :item="item" />
+        </template>
 
-      <template v-slot:title="{ item }">
-        <slot name="title" :item="item" />
-      </template>
-    </items-selected>
+        <template v-slot:title="{ item }">
+          <slot name="title" :item="item" />
+        </template>
+      </items-selected>
+    </slot>
   </filter-toolbar>
 </template>
 
