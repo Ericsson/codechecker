@@ -10,13 +10,12 @@ ENV CC_VERSION ${CC_VERSION}
 ARG DEBIAN_FRONTEND=noninteractive
 RUN set -x && apt-get update -qq \
   && apt-get install -qqy --no-install-recommends \
+    build-essential \
     ca-certificates \
     curl \
     doxygen \
-    git \
-    make \
-    && curl -sL https://deb.nodesource.com/setup_12.x | bash - \
-    && apt-get install -y nodejs
+    gcc-multilib \
+    git
 
 # Download CodeChecker release.
 RUN git clone https://github.com/Ericsson/CodeChecker.git /codechecker
@@ -24,7 +23,33 @@ WORKDIR /codechecker
 RUN git checkout ${CC_VERSION}
 
 # Build CodeChecker web.
-RUN make -C /codechecker/web package
+RUN make -C /codechecker/analyzer package
+
+###############################################################################
+#--------------------------      OBTAIN   LLVM    ----------------------------#
+###############################################################################
+
+FROM alpine:3.12.0 as llvmfetch
+
+RUN apk add -qf --no-progress \
+  wget
+
+RUN wget -qO - http://api.github.com/repos/llvm/llvm-project/releases/latest \
+    # Get the link for the binary release for an Ubuntu.
+    | grep "clang%2Bllvm-"       \
+    | grep "$(arch)"             \
+    | grep "ubuntu"              \
+    | grep -v "sig"              \
+    | cut -d ":" -f 2,3          \
+    | sed -E 's/^ "(.*)",?$/\1/' \
+    # Actually download the file. LLVM binary builds are huge, show progress
+    # but don't flood the console with a lot of progress dots! 8M seems fine
+    # for ~600 MiB downloads.
+    | wget --progress=dot -e dotbytes=8M \
+      -O llvm.tar.xz -i -   \
+  && tar xf llvm.tar.xz \
+  && mv clang+llvm* llvm \
+  && rm llvm.tar.xz
 
 ###############################################################################
 #--------------------------    PRODUCTION STAGE   ----------------------------#
@@ -38,39 +63,22 @@ ARG CC_UID=950
 ENV CC_GID ${CC_GID}
 ENV CC_UID ${CC_UID}
 
-ARG INSTALL_AUTH=yes
-ARG INSTALL_PG8000=no
-ARG INSTALL_PSYCOPG2=yes
-
 ENV TINI_VERSION v0.18.0
 
 RUN set -x && apt-get update -qq \
-  # Prevent fail when install postgresql-client.
-  && mkdir -p /usr/share/man/man1 \
-  && mkdir -p /usr/share/man/man7 \
-  \
-  && apt-get install -qqy --no-install-recommends ca-certificates \
-    postgresql-client \
+  && apt-get install -qqy --no-install-recommends \
     # To switch user and exec command.
     gosu
 
-RUN if [ "$INSTALL_AUTH" = "yes" ] ; then \
-      apt-get install -qqy --no-install-recommends \
-        libldap2-dev \
-        libsasl2-dev \
-        libssl-dev; \
-    fi
-
-RUN if [ "$INSTALL_PSYCOPG2" = "yes" ] ; then \
-      apt-get install -qqy --no-install-recommends \
-        libpq-dev; \
-    fi
-
-COPY --from=builder /codechecker/web/build/CodeChecker /codechecker
+COPY --from=builder /codechecker/analyzer/build/CodeChecker /codechecker
 
 # Copy python requirements.
-COPY --from=builder /codechecker/web/requirements_py /requirements_py
-COPY --from=builder /codechecker/web/requirements.txt /requirements_py
+COPY --from=builder /codechecker/analyzer/requirements_py /requirements_py
+COPY --from=builder /codechecker/analyzer/requirements.txt /requirements_py
+
+# Copy binary LLVM release.
+COPY --from=llvmfetch /llvm /llvm
+ENV PATH="/llvm/bin:$PATH"
 
 # Install python requirements.
 RUN apt-get install -qqy --no-install-recommends \
@@ -80,16 +88,6 @@ RUN apt-get install -qqy --no-install-recommends \
   \
   # Install necessary runtime environment files.
   && pip3 install -r /requirements_py/requirements.txt \
-  && if [ "$INSTALL_AUTH" = "yes" ] ; then \
-       pip3 install -r /requirements_py/auth/requirements.txt; \
-     fi \
-  && if [ "$INSTALL_PG8000" = "yes" ] ; then \
-       pip3 install -r /requirements_py/db_pg8000/requirements.txt; \
-     fi \
-  && if [ "$INSTALL_PSYCOPG2" = "yes" ] ; then \
-       pip3 install -r /requirements_py/db_psycopg2/requirements.txt; \
-     fi \
-  \
   # Remove unnecessary packages.
   && pip3 uninstall -y wheel \
   && apt-get purge -y --auto-remove \
@@ -116,8 +114,6 @@ RUN chmod a+x /usr/local/bin/entrypoint.sh \
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 
-EXPOSE 8001
-
 ENTRYPOINT ["/tini", "--", "/usr/local/bin/entrypoint.sh"]
 
-CMD ["CodeChecker", "server", "--workspace", "/workspace", "--not-host-only"]
+CMD ["CodeChecker", "analyzers", "--details", "--output", "table"]

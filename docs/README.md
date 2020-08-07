@@ -72,6 +72,7 @@ macOS (OS X) development environment.
 
 ## C/C++ Analysis
 * [Analyzer User guide](analyzer/user_guide.md)
+  * [Running build and analysis of project inside a Docker container](analyzer/docker.md)
 * [Avoiding or suppressing false positives](analyzer/false_positives.md)
 * [Checker and Static Analyzer configuration](analyzer/checker_and_analyzer_configuration.md)
 * [GCC incompatibilities](analyzer/gcc_incompatibilities.md)
