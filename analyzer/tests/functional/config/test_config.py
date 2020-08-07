@@ -59,7 +59,7 @@ class TestConfig(unittest.TestCase):
                   encoding="utf-8", errors="ignore") as source:
             source.write(simple_file_content)
 
-    def __run_analyze(self):
+    def __run_analyze(self, extra_options=None):
         """
         Run the CodeChecker analyze command with a configuration file.
         """
@@ -67,6 +67,9 @@ class TestConfig(unittest.TestCase):
         analyze_cmd = [self._codechecker_cmd, "analyze", self.build_json,
                        "-o", self.reports_dir,
                        "--config", self.config_file]
+
+        if extra_options:
+            analyze_cmd.extend(extra_options)
 
         # Run analyze.
         process = subprocess.Popen(
@@ -89,6 +92,23 @@ class TestConfig(unittest.TestCase):
                 'analyzer': ['--analyzers', 'clangsa']}, config_f)
 
         out, returncode = self.__run_analyze()
+
+        self.assertEqual(returncode, 0)
+        self.assertIn("clangsa analyzed simple.cpp", out)
+        self.assertNotIn("clang-tidy analyzed simple.cpp", out)
+
+    def test_override_config_file(self):
+        """
+        Run analyze command with a config file which enables the clang-tidy
+        analyzer only and override this option from the command line and enable
+        only clangsa analyze.
+        """
+        with open(self.config_file, 'w+',
+                  encoding="utf-8", errors="ignore") as config_f:
+            json.dump({
+                'analyzer': ['--analyzers', 'clang-tidy']}, config_f)
+
+        out, returncode = self.__run_analyze(['--analyzers', 'clangsa'])
 
         self.assertEqual(returncode, 0)
         self.assertIn("clangsa analyzed simple.cpp", out)

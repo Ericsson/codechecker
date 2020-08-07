@@ -124,9 +124,14 @@ output.
             cfg_args = args.func_process_config_file(args)
             if cfg_args:
                 # Expand environment variables in the arguments.
-                cfg_args = map(lambda cfg: os.path.expandvars(cfg), cfg_args)
+                cfg_args = [os.path.expandvars(cfg) for cfg in cfg_args]
 
-                sys.argv.extend(cfg_args)
+                # Replace --config option with the options inside the config
+                # file.
+                cfg_idx = sys.argv.index("--config")
+                sys.argv = sys.argv[:cfg_idx] + cfg_args + \
+                    sys.argv[cfg_idx + 2:]
+
                 args = parser.parse_args()
 
         try:
