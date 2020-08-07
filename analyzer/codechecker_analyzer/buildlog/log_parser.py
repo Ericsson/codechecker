@@ -82,6 +82,7 @@ IGNORED_OPTIONS_GCC = [
     '-finline-local-initialisers',
     '-fipa-sra',
     '-fno-aggressive-loop-optimizations',
+    '-fno-canonical-system-headers',
     '-fno-delete-null-pointer-checks',
     '-fno-extended-identifiers',
     '-fno-jump-table',
@@ -245,7 +246,7 @@ INCLUDE_OPTIONS_MERGED = \
     re.compile('(' + '|'.join(INCLUDE_OPTIONS_MERGED) + ')')
 
 
-PRECOMPILATION_OPTION = re.compile('-(E|M[G|T|Q|F|J|P|V|M]*)$')
+PRECOMPILATION_OPTION = re.compile('-(E|M[G|T|Q|F|J|P|V|M|D]*)$')
 
 # Match for all of the compiler flags.
 CLANG_OPTIONS = re.compile('.*')
