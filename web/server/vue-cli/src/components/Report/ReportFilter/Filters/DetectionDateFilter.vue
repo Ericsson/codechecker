@@ -96,6 +96,7 @@ export default {
       this.updateReportFilter();
 
       if (updateUrl) {
+        this.selectedItems = [];
         this.$emit("update:url");
       }
     },
@@ -105,6 +106,7 @@ export default {
       this.updateReportFilter();
 
       if (updateUrl) {
+        this.selectedItems = [];
         this.$emit("update:url");
       }
     },
@@ -192,6 +194,7 @@ export default {
     clear(updateUrl) {
       this.setFromDateTime(null, false);
       this.setToDateTime(null, false);
+      this.selectedItems = [];
 
       if (updateUrl) {
         this.$emit("update:url");
