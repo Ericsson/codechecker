@@ -64,14 +64,14 @@ package_web: check_codechecker_api_version package_dir_structure package_docs $(
 	cp -r $(CC_SERVER)/vue-cli/dist/* $(CC_BUILD_WEB_DIR)
 
 build_plist_to_html:
-	$(MAKE) -C $(ROOT)/tools/plist_to_html build
+	$(MAKE) -C $(CC_TOOLS)/plist_to_html build
 
 package_plist_to_html: build_plist_to_html package_dir_structure
 	# Copy plist-to-html files.
 	cp -r $(CC_TOOLS)/plist_to_html/build/plist_to_html/plist_to_html $(CC_BUILD_LIB_DIR)
 
 build_report_hash:
-	$(MAKE) -C $(ROOT)/tools/codechecker_report_hash build
+	$(MAKE) -C $(CC_TOOLS)/codechecker_report_hash build
 
 package_report_hash: build_report_hash package_dir_structure
 	cp -r $(CC_TOOLS)/codechecker_report_hash/build/codechecker_report_hash/codechecker_report_hash $(CC_BUILD_LIB_DIR)
@@ -110,13 +110,16 @@ check_codechecker_api_version:
 		cd server/vue-cli && npm install; \
 	fi
 
-clean_package: clean_plist_to_html
+clean_package: clean_plist_to_html clean_report_hash
 	rm -rf $(BUILD_DIR)
 	rm -rf gen-docs
 	find . -name "*.pyc" -delete
 
 clean_plist_to_html:
-	rm -rf $(ROOT)/tools/plist_to_html/build
+	rm -rf $(CC_TOOLS)/plist_to_html/build
+
+clean_report_hash:
+	rm -rf $(CC_TOOLS)/codechecker_report_hash/build
 
 clean:
 	rm -rf $(CC_SERVER)/vue-cli/dist
