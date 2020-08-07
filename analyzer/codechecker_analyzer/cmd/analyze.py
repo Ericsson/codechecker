@@ -36,6 +36,8 @@ def get_argparser_ctor_args():
     argparse.ArgumentParser (either directly or as a subparser).
     """
 
+    package_root = analyzer_context.get_context().package_root
+
     return {
         'prog': 'CodeChecker analyze',
         'formatter_class': arg.RawDescriptionDefaultHelpFormatter,
@@ -55,6 +57,8 @@ environment variables:
                            is set you can configure the plugin directory of the
                            Clang Static Analyzer by using this environment
                            variable.
+  CC_SEVERITY_MAP_FILE     Path of the checker-severity mapping config file.
+                           Default: {}
 
 
 issue hashes:
@@ -98,7 +102,8 @@ checker is renamed.
 
 Compilation databases can be created by instrumenting your project's build via
 'CodeChecker log'. To transform the results of the analysis to a human-friendly
-format, please see the commands 'CodeChecker parse' or 'CodeChecker store'.""",
+format, please see the commands 'CodeChecker parse' or 'CodeChecker store'.
+""".format(os.path.join(package_root, 'config', 'checker_severity_map.json')),
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.

@@ -367,6 +367,8 @@ environment variables:
                            is set you can configure the plugin directory of the
                            Clang Static Analyzer by using this environment
                            variable.
+  CC_SEVERITY_MAP_FILE     Path of the checker-severity mapping config file.
+                           Default: <package>/config/checker_severity_map.json
 
 issue hashes:
 - By default the issue hash calculation method for 'Clang Static Analyzer' is
@@ -796,9 +798,14 @@ optional arguments:
                         Set verbosity level.
 
 environment variables:
-  CC_ANALYZERS_FROM_PATH       Set to `yes` or `1` to enforce taking the
-                               analyzers from the `PATH` instead of the given
-                               binaries.
+  CC_ANALYZERS_FROM_PATH   Set to `yes` or `1` to enforce taking the analyzers
+                           from the `PATH` instead of the given binaries.
+  CC_CLANGSA_PLUGIN_DIR    If the CC_ANALYZERS_FROM_PATH environment variable
+                           is set you can configure the plugin directory of the
+                           Clang Static Analyzer by using this environment
+                           variable.
+  CC_SEVERITY_MAP_FILE     Path of the checker-severity mapping config file.
+                           Default: <package>/config/checker_severity_map.json
 ```
 
 
@@ -1450,6 +1457,10 @@ export arguments:
                         directory. (By default, it would keep output files and
                         overwrites only those that belongs to a plist file
                         given by the input argument. (default: True)
+
+environment variables:
+  CC_SEVERITY_MAP_FILE   Path of the checker-severity mapping config file.
+                         Default: <package>/config/checker_severity_map.json
 ```
 
 For example, if the analysis was run like:
