@@ -83,7 +83,7 @@
 
             <v-list-item-content>
               <slot name="title" :item="item">
-                <v-list-item-title>
+                <v-list-item-title :title="item.title">
                   {{ item.title }}
                 </v-list-item-title>
               </slot>
