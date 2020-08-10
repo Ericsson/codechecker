@@ -246,7 +246,7 @@ INCLUDE_OPTIONS_MERGED = \
     re.compile('(' + '|'.join(INCLUDE_OPTIONS_MERGED) + ')')
 
 
-PRECOMPILATION_OPTION = re.compile('-(E|M[G|T|Q|F|J|P|V|M|D]*)$')
+PRECOMPILATION_OPTION = re.compile('-(E|M[G|T|Q|F|J|P|V|M]*)$')
 
 # Match for all of the compiler flags.
 CLANG_OPTIONS = re.compile('.*')
