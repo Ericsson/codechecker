@@ -1,8 +1,18 @@
 <template>
   <filter-toolbar
     :title="title"
+    :panel="panel"
     @clear="clear"
   >
+    <template v-slot:append-toolbar-title>
+      <slot name="append-toolbar-title">
+        <selected-toolbar-title-items
+          v-if="selectedItems"
+          :value="selectedItems"
+        />
+      </slot>
+    </template>
+
     <template v-slot:prepend-toolbar-title>
       <slot name="prepend-toolbar-title" />
     </template>
@@ -81,13 +91,15 @@
 import FilterToolbar from "../Layout/FilterToolbar";
 import Items from "./Items";
 import ItemsSelected from "./ItemsSelected";
+import SelectedToolbarTitleItems from "./SelectedToolbarTitleItems";
 
 export default {
   name: "SelectOption",
   components: {
     FilterToolbar,
     Items,
-    ItemsSelected
+    ItemsSelected,
+    SelectedToolbarTitleItems
   },
   props: {
     title: { type: String, required: true },
@@ -96,7 +108,8 @@ export default {
     selectedItems: { type: Array, default: () => [] },
     multiple: { type: Boolean, default: true },
     search: { type: Object, default: null },
-    loading: { type: Boolean, default: false }
+    loading: { type: Boolean, default: false },
+    panel: { type: Boolean, default: false }
   },
   data() {
     return {

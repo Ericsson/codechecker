@@ -1,39 +1,60 @@
 <template>
-  <v-card flat>
-    <v-toolbar flat dense>
-      <v-toolbar-title class="font-weight-bold body-2">
-        {{ title }}
-      </v-toolbar-title>
+  <v-expansion-panels
+    v-model="value"
+    flat
+  >
+    <v-expansion-panel>
+      <v-expansion-panel-header class="pa-0" hide-actions>
+        <v-toolbar flat dense>
+          <v-toolbar-title class="font-weight-bold body-2">
+            <v-icon class="expansion-btn">
+              {{ value == 0 ? "mdi-chevron-up" : "mdi-chevron-down" }}
+            </v-icon>
+            {{ title }}
 
-      <slot name="prepend-toolbar-title" />
+            <slot name="append-toolbar-title" />
+          </v-toolbar-title>
 
-      <v-spacer />
+          <slot name="prepend-toolbar-title" />
 
-      <v-toolbar-items>
-        <slot name="prepend-toolbar-items" />
+          <v-spacer />
 
-        <v-btn
-          icon
-          small
-          class="clear-btn"
-          @click="clear(true)"
-        >
-          <v-icon>mdi-delete</v-icon>
-        </v-btn>
+          <v-toolbar-items>
+            <slot name="prepend-toolbar-items" />
 
-        <slot name="append-toolbar-items" />
-      </v-toolbar-items>
-    </v-toolbar>
+            <v-btn
+              icon
+              small
+              class="clear-btn"
+              @click.stop="clear"
+            >
+              <v-icon>mdi-delete</v-icon>
+            </v-btn>
 
-    <slot />
-  </v-card>
+            <slot name="append-toolbar-items" />
+          </v-toolbar-items>
+        </v-toolbar>
+      </v-expansion-panel-header>
+
+      <v-expansion-panel-content>
+        <slot />
+      </v-expansion-panel-content>
+    </v-expansion-panel>
+  </v-expansion-panels>
 </template>
 
 <script>
 export default {
   name: "FilterToolbar",
   props: {
-    title: { type: String, required: true }
+    title: { type: String, required: true },
+    panel: { type: Boolean, default: false }
+  },
+
+  data() {
+    return {
+      value: this.panel ? 0 : null
+    };
   },
 
   methods: {
@@ -47,5 +68,9 @@ export default {
 <style lang="scss" scoped>
 ::v-deep .v-toolbar > .v-toolbar__content {
   padding: 0;
+}
+
+::v-deep .selected-items {
+  color: grey;
 }
 </style>

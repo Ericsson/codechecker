@@ -15,6 +15,24 @@ module.exports = {
     reportPage
       .waitForElementVisible("@page", 10000)
       .waitForProgressBarNotPresent();
+
+    [
+      reportPage.section.baselineRunFilter,
+      reportPage.section.baselineTagFilter,
+      reportPage.section.filePathFilter,
+      reportPage.section.checkerNameFilter,
+      reportPage.section.severityFilter,
+      reportPage.section.reviewStatusFilter,
+      reportPage.section.detectionStatusFilter,
+      reportPage.section.sourceComponentFilter,
+      reportPage.section.checkerMessageFilter,
+      reportPage.section.checkerMessageFilter,
+      reportPage.section.detectionDateFilter,
+      reportPage.section.reportHashFilter,
+      reportPage.section.bugPathLengthFilter
+    ].forEach(section => {
+      section.click("@expansionBtn");
+    });
   },
 
   after(browser) {
@@ -25,7 +43,6 @@ module.exports = {
 
   "clear all filters" (browser) {
     const reportPage = browser.page.report();
-    const newcheckSection = reportPage.section.newcheckFilters;
 
     reportPage.click("@clearAllFilterBtn");
     reportPage
@@ -35,8 +52,6 @@ module.exports = {
     [
       reportPage.section.baselineRunFilter,
       reportPage.section.baselineTagFilter,
-      newcheckSection.section.newcheckRunFilter,
-      newcheckSection.section.newcheckTagFilter,
       reportPage.section.filePathFilter,
       reportPage.section.checkerNameFilter,
       reportPage.section.severityFilter,
@@ -155,6 +170,14 @@ module.exports = {
     reportPage.click(newcheckSection);
     newcheckSection.expect.section("@newcheckRunFilter")
       .to.be.visible.before(5000);
+
+    [
+      newcheckSection.section.newcheckRunFilter,
+      newcheckSection.section.newcheckTagFilter,
+      newcheckSection.section.newcheckDiffTypeFilter,
+    ].forEach(section => {
+      section.click("@expansionBtn");
+    });
   },
 
   async "set newcheck run filter" (browser) {

@@ -3,6 +3,16 @@
     title="Bug path length"
     @clear="clear(true)"
   >
+    <template v-slot:append-toolbar-title>
+      <span
+        v-if="selectedBugPathLengthTitle"
+        class="selected-items"
+        :title="selectedBugPathLengthTitle"
+      >
+        ({{ selectedBugPathLengthTitle }})
+      </span>
+    </template>
+
     <v-form ref="form">
       <v-container
         class="py-0"
@@ -69,9 +79,18 @@ export default {
     };
   },
 
+  computed: {
+    selectedBugPathLengthTitle() {
+      return [
+        ...(this.minBugPathLength ? [ `min: ${this.minBugPathLength}` ]: []),
+        ...(this.maxBugPathLength ? [ `max: ${this.maxBugPathLength}` ]: [])
+      ].join(", ");
+    }
+  },
+
   methods: {
     setMinBugPathLength(bugPathLength, updateUrl=true) {
-      if (!this.$refs.form.validate()) return;
+      if (this.$refs.form && !this.$refs.form.validate()) return;
 
       this.minBugPathLength = bugPathLength;
       this.updateReportFilter();
@@ -82,7 +101,7 @@ export default {
     },
 
     setMaxBugPathLength(bugPathLength, updateUrl=true) {
-      if (!this.$refs.form.validate()) return;
+      if (this.$refs.form && !this.$refs.form.validate()) return;
 
       this.maxBugPathLength = bugPathLength;
       this.updateReportFilter();
