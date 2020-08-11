@@ -4,8 +4,6 @@
       <report-filter
         v-fill-height
         :namespace="namespace"
-        :show-newcheck="false"
-        :show-review-status="false"
         :show-remove-filtered-reports="false"
         :report-count="reportCount"
         @refresh="refresh"
