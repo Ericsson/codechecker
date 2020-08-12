@@ -55,8 +55,26 @@ export default new Router({
         },
         {
           path: "statistics",
-          name: "statistics",
-          component: () => import("@/views/Statistics")
+          component: () => import("@/views/Statistics"),
+          children: [
+            {
+              path: "",
+              name: "statistics",
+              redirect: "checker"
+            },
+            {
+              path: "checker",
+              name: "checker-statistics",
+              component: () =>
+                import("@/components/Statistics/CheckerStatistics"),
+            },
+            {
+              path: "severity",
+              name: "severity-statistics",
+              component: () =>
+                import("@/components/Statistics/SeverityStatistics"),
+            }
+          ]
         },
         {
           path: "run-history",

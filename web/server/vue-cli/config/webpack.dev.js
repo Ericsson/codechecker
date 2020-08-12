@@ -23,7 +23,8 @@ const METADATA = merge(common.METADATA, {
 module.exports = merge(common, {
   mode: 'development',
   output: {
-    filename: '[name].[hash].js'
+    filename: '[name].[hash].js',
+    publicPath: "/"
   },
   devtool: 'inline-source-map',
   devServer: {

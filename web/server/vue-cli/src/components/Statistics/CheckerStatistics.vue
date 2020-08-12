@@ -3,7 +3,6 @@
     <v-row>
       <v-col>
         <h3 class="title primary--text">
-          Checker statistics
           <v-btn
             color="primary"
             outlined
@@ -185,6 +184,8 @@ import {
 
 import { ReviewStatusMixin, SeverityMixin, ToCSV } from "@/mixins";
 
+import BaseStatistics from "./BaseStatistics";
+
 export default {
   name: "CheckerStatistics",
   components: {
@@ -192,7 +193,7 @@ export default {
     ReviewStatusIcon,
     SeverityIcon
   },
-  mixins: [ ReviewStatusMixin, SeverityMixin,ToCSV ],
+  mixins: [ BaseStatistics, ReviewStatusMixin, SeverityMixin,ToCSV ],
 
   props: {
     namespace: { type: String, required: true }

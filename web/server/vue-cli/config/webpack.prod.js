@@ -13,7 +13,8 @@ module.exports = merge(common, {
   mode: 'production',
   output: {
     path: helpers.root('dist'),
-    filename: '[name].[contenthash].js'
+    filename: '[name].[contenthash].js',
+    publicPath: "/"
   },
   plugins: [
     new DefinePlugin({

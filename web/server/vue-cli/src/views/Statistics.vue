@@ -12,39 +12,42 @@
     </pane>
     <pane>
       <div v-fill-height>
-        <!--
-          'refs' becomes an Array if used inside a v-for. This is the reason
-          why we use this.
-        -->
-        <span
-          v-for="i in 1"
-          :key="i"
+        <v-tabs
+          v-model="tab"
         >
-          <checker-statistics
-            ref="statistics"
-            :namespace="namespace"
-          />
+          <v-tab
+            v-for="t in tabs"
+            :key="t.name"
+            :to="{ ...t.to, query: {
+              ...$router.currentRoute.query
+            }}"
+            exact
+          >
+            <v-icon class="mr-2">
+              {{ t.icon }}
+            </v-icon>
+            {{ t.name }}
+          </v-tab>
+        </v-tabs>
 
-          <severity-statistics
-            ref="statistics"
+        <keep-alive>
+          <router-view
+            :bus="bus"
             :namespace="namespace"
           />
-        </span>
+        </keep-alive>
       </div>
     </pane>
   </splitpanes>
 </template>
 
 <script>
+import Vue from "vue";
 import { Pane, Splitpanes } from "splitpanes";
 import { mapState } from "vuex";
 
 import { ccService, handleThriftError } from "@cc-api";
 
-import {
-  CheckerStatistics,
-  SeverityStatistics
-} from "@/components/Statistics";
 import { FillHeight } from "@/directives";
 import { ReportFilter } from "@/components/Report/ReportFilter";
 
@@ -55,15 +58,39 @@ export default {
   components: {
     Splitpanes,
     Pane,
-    CheckerStatistics,
-    ReportFilter,
-    SeverityStatistics
+    ReportFilter
   },
   directives: { FillHeight },
   data() {
+    const tabs = [
+      {
+        name: "Checker Statistics",
+        icon: "mdi-card-account-details",
+        to: { name: "checker-statistics" }
+      },
+      {
+        name: "Severity Statistics",
+        icon: "mdi-speedometer",
+        to: { name: "severity-statistics" }
+      },
+    ];
+
     return {
       namespace: namespace,
-      reportCount: 0
+      reportCount: 0,
+      tab: null,
+      tabs: tabs,
+      bus: new Vue(),
+
+      // Map the tab link names to boolean values. If the value of a key is
+      // true, it means that on the next tab change the tab needs to be
+      // updated.
+      refreshTabs: tabs.reduce((map, tab) => {
+        const resolve = this.$router.resolve(tab.to);
+        map[resolve.route.name] = false;
+
+        return map;
+      }, {})
     };
   },
 
@@ -78,6 +105,21 @@ export default {
     })
   },
 
+  watch: {
+    /**
+     * Refresh the current statistics tab if the tab is marked as true in the
+     * refresh tab map.
+     */
+    tab() {
+      if (!this.tab) return;
+
+      const resolve = this.$router.resolve(this.tab);
+      if (this.refreshTabs[resolve.route.name]) {
+        this.refreshCurrentTab();
+      }
+    }
+  },
+
   methods: {
     refresh() {
       ccService.getClient().getRunResultCount(this.runIds,
@@ -85,8 +127,22 @@ export default {
           this.reportCount = res.toNumber();
         }));
 
-      const statistics = this.$refs.statistics;
-      statistics.forEach(statistic => statistic.fetchStatistics());
+      this.tabs.forEach(tab => {
+        const resolve = this.$router.resolve(tab.to);
+        this.refreshTabs[resolve.route.name] = true;
+      });
+
+      this.refreshCurrentTab();
+    },
+
+    /**
+     * Refresh the current statistics tab.
+     */
+    refreshCurrentTab() {
+      this.bus.$emit("refresh");
+
+      const resolve = this.$router.resolve(this.tab);
+      this.refreshTabs[resolve.route.name] = false;
     }
   }
 };

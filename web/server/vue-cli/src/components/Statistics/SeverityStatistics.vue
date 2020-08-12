@@ -3,13 +3,21 @@
     <v-row>
       <v-col cols="auto">
         <h3 class="title primary--text">
-          Severity statistics
           <v-btn
             color="primary"
             outlined
             @click="downloadCSV"
           >
             Export CSV
+          </v-btn>
+
+          <v-btn
+            icon
+            title="Reload statistics"
+            color="primary"
+            @click="fetchStatistics"
+          >
+            <v-icon>mdi-refresh</v-icon>
           </v-btn>
         </h3>
         <v-data-table
@@ -68,13 +76,15 @@ import { DetectionStatus } from "@cc/report-server-types";
 import { DetectionStatusIcon, SeverityIcon } from "@/components/Icons";
 import { SeverityMixin, ToCSV } from "@/mixins";
 
+import BaseStatistics from "./BaseStatistics";
+
 export default {
   name: "SeverityStatistics",
   components: {
     DetectionStatusIcon,
     SeverityIcon
   },
-  mixins: [ SeverityMixin, ToCSV ],
+  mixins: [ BaseStatistics, SeverityMixin, ToCSV ],
 
   props: {
     namespace: { type: String, required: true }
@@ -109,23 +119,6 @@ export default {
         return getters[`${this.namespace}/getReportFilter`];
       }
     })
-  },
-
-  mounted() {
-    // The fetchStatistics function which initalizes this component is called
-    // dynamically by the parent component. If Hot Module Replacement is
-    // enabled and this component will be replaced then this initialization
-    // will not be made. For this reason on component replacement we will save
-    // the data and we will initalize the new component with this data.
-    if (process.env.NODE_ENV !== "production") {
-      if (module.hot) {
-        if (module.hot.data) {
-          this.statistics = module.hot.data.statistics;
-        }
-
-        module.hot.dispose(data => data["statistics"] = this.statistics);
-      }
-    }
   },
 
   methods: {
