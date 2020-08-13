@@ -42,10 +42,6 @@
               />
             </v-list-item-action>
 
-            <v-list-item-icon class="ma-1 mr-2">
-              <v-icon>mdi-regex</v-icon>
-            </v-list-item-icon>
-
             <v-list-item-content>
               <v-list-item-title>
                 {{ search.regexLabel }}: {{ searchTxt }}
