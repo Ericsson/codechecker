@@ -192,7 +192,11 @@ def get_component_values(session, component_name):
     for component in components:
         values = component.value.decode('utf-8').split('\n')
         for value in values:
-            v = value[1:].strip()
+            value = value.strip()
+            if not value:
+                continue
+
+            v = value[1:]
             if value[0] == '+':
                 include.append(v)
             elif value[0] == '-':

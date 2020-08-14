@@ -73,6 +73,12 @@ export default new Router({
               name: "severity-statistics",
               component: () =>
                 import("@/components/Statistics/SeverityStatistics"),
+            },
+            {
+              path: "component",
+              name: "component-statistics",
+              component: () =>
+                import("@/components/Statistics/ComponentStatistics"),
             }
           ]
         },

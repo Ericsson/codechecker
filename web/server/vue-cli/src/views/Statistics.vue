@@ -73,6 +73,11 @@ export default {
         icon: "mdi-speedometer",
         to: { name: "severity-statistics" }
       },
+      {
+        name: "Component Statistics",
+        icon: "mdi-puzzle-outline",
+        to: { name: "component-statistics" }
+      },
     ];
 
     return {
