@@ -8,8 +8,11 @@ function resultToNumber(value) {
   return value.count !== undefined ? value.count.toNumber() : value.toNumber();
 }
 
-function getCheckerStatistics(runIds, reportFilter) {
-  const cmpData = null;
+function initDiffField(count) {
+  return { count: resultToNumber(count), new: null, resolved: null };
+}
+
+function getCheckerStatistics(runIds, reportFilter, cmpData) {
   const limit = null;
   const offset = null;
 
@@ -43,11 +46,11 @@ function getCheckerStatistics(runIds, reportFilter) {
     return checkerNames.map(key => ({
       checker       : key,
       severity      : checkers[key].severity,
-      reports       : checkers[key].count.toNumber(),
-      unreviewed    : resultToNumber(res[1][key]),
-      confirmed     : resultToNumber(res[2][key]),
-      falsePositive : resultToNumber(res[3][key]),
-      intentional   : resultToNumber(res[4][key])
+      reports       : initDiffField(checkers[key]),
+      unreviewed    : initDiffField(res[1][key]),
+      confirmed     : initDiffField(res[2][key]),
+      falsePositive : initDiffField(res[3][key]),
+      intentional   : initDiffField(res[4][key])
     }));
   });
 }
@@ -60,9 +63,9 @@ function getComponents() {
   });
 }
 
-async function getComponentStatistics(component, runIds, reportFilter) {
-  const cmpData = null;
-
+async function getComponentStatistics(component, runIds, reportFilter,
+  cmpData
+) {
   const queries = [
     { field: null, values: null },
     { field: "reviewStatus", values: [ ReviewStatus.UNREVIEWED ] },
@@ -76,7 +79,7 @@ async function getComponentStatistics(component, runIds, reportFilter) {
       filter[q.field] = q.values;
     }
 
-    filter["componentNames"] = [ component ];
+    filter["componentNames"] = [ component.name ];
 
     return new Promise(resolve => {
       ccService.getClient().getRunResultCount(runIds, filter, cmpData,
@@ -91,5 +94,6 @@ export {
   getCheckerStatistics,
   getComponents,
   getComponentStatistics,
+  initDiffField,
   resultToNumber
 };

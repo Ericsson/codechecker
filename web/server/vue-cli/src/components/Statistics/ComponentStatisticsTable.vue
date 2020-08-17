@@ -9,12 +9,12 @@
     class="elevation-1"
     loading-text="Loading component statistics..."
     no-data-text="No component statistics available"
-    item-key="name"
+    item-key="component"
     show-expand
     :expanded.sync="expanded"
     @item-expanded="itemExpanded"
   >
-    <template v-slot:header.name="{ header }">
+    <template v-slot:header.component="{ header }">
       <v-icon size="16">
         mdi-puzzle-outline
       </v-icon>
@@ -89,17 +89,17 @@
       </td>
     </template>
 
-    <template #item.name="{ item }">
+    <template #item.component="{ item }">
       <source-component-tooltip :value="item.value">
         <template v-slot="{ on }">
           <span v-on="on">
             <router-link
               :to="{ name: 'reports', query: {
                 ...$router.currentRoute.query,
-                'source-component': item.name
+                'source-component': item.component
               }}"
             >
-              {{ item.name }}
+              {{ item.component }}
             </router-link>
           </span>
         </template>
@@ -108,70 +108,118 @@
 
     <template #item.unreviewed="{ item }">
       <router-link
-        v-if="item.unreviewed"
+        v-if="item.unreviewed.count"
         :to="{ name: 'reports', query: {
           ...$router.currentRoute.query,
-          'source-component': item.name,
+          'source-component': item.component,
           'review-status': reviewStatusFromCodeToString(
             ReviewStatus.UNREVIEWED)
         }}"
       >
-        {{ item.unreviewed }}
+        {{ item.unreviewed.count }}
       </router-link>
+
+      <report-diff-count
+        :num-of-new-reports="item.unreviewed.new"
+        :num-of-resolved-reports="item.unreviewed.resolved"
+        :extra-query-params="{
+          'source-component': item.component,
+          'review-status': reviewStatusFromCodeToString(
+            ReviewStatus.UNREVIEWED)
+        }"
+      />
     </template>
 
     <template #item.confirmed="{ item }">
       <router-link
-        v-if="item.confirmed"
+        v-if="item.confirmed.count"
         :to="{ name: 'reports', query: {
           ...$router.currentRoute.query,
-          'source-component': item.name,
+          'source-component': item.component,
           'review-status': reviewStatusFromCodeToString(
             ReviewStatus.CONFIRMED)
         }}"
       >
-        {{ item.confirmed }}
+        {{ item.confirmed.count }}
       </router-link>
+
+      <report-diff-count
+        :num-of-new-reports="item.confirmed.new"
+        :num-of-resolved-reports="item.confirmed.resolved"
+        :extra-query-params="{
+          'source-component': item.component,
+          'review-status': reviewStatusFromCodeToString(
+            ReviewStatus.CONFIRMED)
+        }"
+      />
     </template>
 
     <template #item.falsePositive="{ item }">
       <router-link
-        v-if="item.falsePositive"
+        v-if="item.falsePositive.count"
         :to="{ name: 'reports', query: {
           ...$router.currentRoute.query,
-          'source-component': item.name,
+          'source-component': item.component,
           'review-status': reviewStatusFromCodeToString(
             ReviewStatus.FALSE_POSITIVE)
         }}"
       >
-        {{ item.falsePositive }}
+        {{ item.falsePositive.count }}
       </router-link>
+
+      <report-diff-count
+        :num-of-new-reports="item.falsePositive.new"
+        :num-of-resolved-reports="item.falsePositive.resolved"
+        :extra-query-params="{
+          'source-component': item.component,
+          'review-status': reviewStatusFromCodeToString(
+            ReviewStatus.FALSE_POSITIVE)
+        }"
+      />
     </template>
 
     <template #item.intentional="{ item }">
       <router-link
-        v-if="item.intentional"
+        v-if="item.intentional.count"
         :to="{ name: 'reports', query: {
           ...$router.currentRoute.query,
-          'source-component': item.name,
+          'source-component': item.component,
           'review-status': reviewStatusFromCodeToString(
             ReviewStatus.INTENTIONAL)
         }}"
       >
-        {{ item.intentional }}
+        {{ item.intentional.count }}
       </router-link>
+
+      <report-diff-count
+        :num-of-new-reports="item.intentional.new"
+        :num-of-resolved-reports="item.intentional.resolved"
+        :extra-query-params="{
+          'source-component': item.component,
+          'review-status': reviewStatusFromCodeToString(
+            ReviewStatus.INTENTIONAL)
+        }"
+      />
     </template>
 
     <template #item.reports="{ item }">
       <router-link
-        v-if="item.reports"
+        v-if="item.reports.count"
         :to="{ name: 'reports', query: {
           ...$router.currentRoute.query,
-          'source-component': item.name
+          'source-component': item.component
         }}"
       >
-        {{ item.reports }}
+        {{ item.reports.count }}
       </router-link>
+
+      <report-diff-count
+        :num-of-new-reports="item.reports.new"
+        :num-of-resolved-reports="item.reports.resolved"
+        :extra-query-params="{
+          'source-component': item.component
+        }"
+      />
     </template>
   </v-data-table>
 </template>
@@ -193,19 +241,22 @@ import { SourceComponentTooltip } from "@/components/Report/SourceComponent";
 
 import CheckerStatisticsTable from "./CheckerStatisticsTable";
 import { getCheckerStatistics } from "./StatisticsHelper";
+import ReportDiffCount from "./ReportDiffCount";
 
 export default {
   name: "ComponentStatisticsTable",
   components: {
     CheckerStatisticsTable,
     DetectionStatusIcon,
+    ReportDiffCount,
     ReviewStatusIcon,
     SourceComponentTooltip
   },
   mixins: [ ReviewStatusMixin ],
   props: {
     items: { type: Array, required: true },
-    loading: { type: Boolean, default: false }
+    loading: { type: Boolean, default: false },
+    filters: { type: Object, default: () => {} }
   },
   data() {
     return {
@@ -219,7 +270,7 @@ export default {
         },
         {
           text: "Component",
-          value: "name",
+          value: "component",
           align: "center"
         },
         {
@@ -255,7 +306,7 @@ export default {
       if (this.loading) return;
 
       this.expanded.forEach(e => {
-        const item = this.items.find(i => i.name === e.name);
+        const item = this.items.find(i => i.component === e.component);
         this.itemExpanded({ item : item });
       });
     }
@@ -266,12 +317,13 @@ export default {
 
       expandedItem.item.loading = true;
 
-      const component = expandedItem.item.name;
-      const runIds = this.runIds;
-      const reportFilter = new ReportFilter(this.reportFilter);
+      const component = expandedItem.item.component;
+      const runIds = this.filters.runIds;
+      const reportFilter = new ReportFilter(this.filters.reportFilter);
       reportFilter["componentNames"] = [ component ];
+      const cmpData = this.filters.cmpData;
 
-      const stats = await getCheckerStatistics(runIds, reportFilter);
+      const stats = await getCheckerStatistics(runIds, reportFilter, cmpData);
       expandedItem.item.checkerStatistics = stats.map(stat => ({
         ...stat,
         $queryParams: { "source-component": component }

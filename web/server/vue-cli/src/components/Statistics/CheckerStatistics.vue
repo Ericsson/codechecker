@@ -31,8 +31,6 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
-
 import { ReviewStatusMixin, SeverityMixin, ToCSV } from "@/mixins";
 import BaseStatistics from "./BaseStatistics";
 import CheckerStatisticsTable from "./CheckerStatisticsTable";
@@ -56,17 +54,6 @@ export default {
     };
   },
 
-  computed: {
-    ...mapState({
-      runIds(state, getters) {
-        return getters[`${this.namespace}/getRunIds`];
-      },
-      reportFilter(state, getters) {
-        return getters[`${this.namespace}/getReportFilter`];
-      }
-    })
-  },
-
   methods: {
     downloadCSV() {
       const data = [
@@ -86,12 +73,16 @@ export default {
       this.toCSV(data, "codechecker_checker_statistics.csv");
     },
 
+    getStatistics: getCheckerStatistics,
+
     async fetchStatistics() {
       this.loading = true;
-      const runIds = this.runIds;
-      const reportFilter = this.reportFilter;
 
-      this.statistics = await getCheckerStatistics(runIds, reportFilter);
+      const { runIds, reportFilter, cmpData } = this.getStatisticsFilters();
+      this.statistics =
+        await getCheckerStatistics(runIds, reportFilter, cmpData);
+
+      await this.fetchDifference("component");
 
       this.loading = false;
     }

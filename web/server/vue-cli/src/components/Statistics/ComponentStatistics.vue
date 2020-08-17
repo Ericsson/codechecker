@@ -24,6 +24,7 @@
         <component-statistics-table
           :items="statistics"
           :loading="loading"
+          :filters="statisticsFilters"
         />
       </v-col>
     </v-row>
@@ -31,8 +32,12 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
-import { ReviewStatus } from "@cc/report-server-types";
+import {
+  CompareData,
+  DiffType,
+  ReportFilter,
+  ReviewStatus
+} from "@cc/report-server-types";
 import { ToCSV } from "@/mixins";
 
 import BaseStatistics from "./BaseStatistics";
@@ -40,7 +45,7 @@ import ComponentStatisticsTable from "./ComponentStatisticsTable";
 import {
   getComponentStatistics,
   getComponents,
-  resultToNumber
+  initDiffField
 } from "./StatisticsHelper";
 
 export default {
@@ -58,19 +63,10 @@ export default {
     return {
       ReviewStatus,
       loading: false,
-      statistics: []
+      statistics: [],
+      components: [],
+      statisticsFilters: {}
     };
-  },
-
-  computed: {
-    ...mapState({
-      runIds(state, getters) {
-        return getters[`${this.namespace}/getRunIds`];
-      },
-      reportFilter(state, getters) {
-        return getters[`${this.namespace}/getReportFilter`];
-      }
-    })
   },
 
   methods: {
@@ -82,7 +78,7 @@ export default {
         ],
         ...this.statistics.map(stat => {
           return [
-            stat.name, stat.reports, stat.unreviewed, stat.confirmed,
+            stat.component, stat.reports, stat.unreviewed, stat.confirmed,
             stat.falsePositive, stat.intentional
           ];
         })
@@ -91,27 +87,105 @@ export default {
       this.toCSV(data, "codechecker_component_statistics.csv");
     },
 
+    /**
+     * If compare data is set this function will get the number of new and
+     * resolved bugs and update the statistics.
+     */
+    async fetchDifference() {
+      if (!this.cmpData) return;
+
+      return Promise.all(this.components.map(component => {
+        const fieldToUpdate = [ "reports", "unreviewed", "confirmed",
+          "falsePositive", "intentional" ];
+
+        const q1 = this.getNewReports(component).then(newReports => {
+          const row = this.statistics.find(s =>
+            s.component === component.name);
+
+          if (row)
+            fieldToUpdate.forEach(f => row[f].new = newReports[f].count);
+        });
+
+        const q2 = this.getResolvedReports(component).then(resolvedReports => {
+          const row = this.statistics.find(s =>
+            s.component === component.name);
+
+          if (row)
+            fieldToUpdate.forEach(f =>
+              row[f].resolved = resolvedReports[f].count);
+        });
+
+        return Promise.all([ q1, q2 ]);
+      }));
+    },
+
+    getNewReports(component) {
+      const runIds = this.runIds;
+
+      const reportFilter = new ReportFilter(this.reportFilter);
+      reportFilter["componentNames"] = [ component.name ];
+
+      const cmpData = new CompareData(this.cmpData);
+      cmpData.diffType = DiffType.NEW;
+
+      return this.getStatistics(component, runIds, reportFilter, cmpData);
+    },
+
+    getResolvedReports(component) {
+      const runIds = this.runIds;
+
+      const reportFilter = new ReportFilter(this.reportFilter);
+      reportFilter["componentNames"] = [ component.name ];
+
+      const cmpData = new CompareData(this.cmpData);
+      cmpData.diffType = DiffType.RESOLVED;
+
+      return this.getStatistics(component, runIds, reportFilter, cmpData);
+    },
+
+    async getStatistics(component, runIds, reportFilter, cmpData) {
+      const res = await getComponentStatistics(component, runIds, reportFilter,
+        cmpData);
+
+      return {
+        component     : component.name,
+        value         : component.value,
+        reports       : initDiffField(res[0]),
+        unreviewed    : initDiffField(res[1]),
+        confirmed     : initDiffField(res[2]),
+        falsePositive : initDiffField(res[3]),
+        intentional   : initDiffField(res[4])
+      };
+    },
+
     async fetchStatistics() {
       this.loading = true;
       this.statistics = [];
 
-      const components = await getComponents();
-      this.statistics = components.map(c => ({
-        name: c.name,
-        value: c.value
+      this.components = await getComponents();
+
+      this.statistics = this.components.map(component => ({
+        component     : component.name,
+        value         : component.value,
+        reports       : initDiffField(undefined),
+        unreviewed    : initDiffField(undefined),
+        confirmed     : initDiffField(undefined),
+        falsePositive : initDiffField(undefined),
+        intentional   : initDiffField(undefined)
       }));
 
-      const queries = components.map(async component => {
-        const res = await getComponentStatistics(component.name);
-        const idx = this.statistics.findIndex(s => s.name === component.name);
+      this.statisticsFilters = this.getStatisticsFilters();
+      const { runIds, reportFilter, cmpData } = this.statisticsFilters;
+
+      const queries = this.components.map(async component => {
+        const res = await this.getStatistics(component, runIds, reportFilter,
+          cmpData);
+
+        const idx = this.statistics.findIndex(s =>
+          s.component === component.name);
+
         this.statistics[idx] = {
-          name          : component.name,
-          value         : component.value,
-          reports       : resultToNumber(res[1]),
-          unreviewed    : resultToNumber(res[1]),
-          confirmed     : resultToNumber(res[2]),
-          falsePositive : resultToNumber(res[3]),
-          intentional   : resultToNumber(res[4]),
+          ...res,
           loading       : false,
           checkerStatistics: null
         };
@@ -121,10 +195,12 @@ export default {
         return this.statistics[idx];
       });
 
-      Promise.all(queries).then(statistics => {
-        this.statistics = statistics;
-        this.loading = false;
-      });
+      await Promise.all(queries).then(statistics =>
+        this.statistics = statistics);
+
+      await this.fetchDifference();
+
+      this.loading = false;
     }
   }
 };

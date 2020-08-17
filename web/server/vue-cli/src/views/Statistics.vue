@@ -7,6 +7,7 @@
         :show-compare-to="false"
         :show-remove-filtered-reports="false"
         :report-count="reportCount"
+        :show-diff-type="false"
         @refresh="refresh"
       />
     </pane>

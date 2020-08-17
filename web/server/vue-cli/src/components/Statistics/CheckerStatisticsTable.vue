@@ -87,7 +87,7 @@
 
     <template #item.unreviewed="{ item }">
       <router-link
-        v-if="item.unreviewed"
+        v-if="item.unreviewed.count"
         :to="{ name: 'reports', query: {
           ...$router.currentRoute.query,
           ...(item.$queryParams || {}),
@@ -96,13 +96,18 @@
             ReviewStatus.UNREVIEWED)
         }}"
       >
-        {{ item.unreviewed }}
+        {{ item.unreviewed.count }}
       </router-link>
+
+      <report-diff-count
+        :num-of-new-reports="item.unreviewed.new"
+        :num-of-resolved-reports="item.unreviewed.resolved"
+      />
     </template>
 
     <template #item.confirmed="{ item }">
       <router-link
-        v-if="item.confirmed"
+        v-if="item.confirmed.count"
         :to="{ name: 'reports', query: {
           ...$router.currentRoute.query,
           ...(item.$queryParams || {}),
@@ -111,13 +116,18 @@
             ReviewStatus.CONFIRMED)
         }}"
       >
-        {{ item.confirmed }}
+        {{ item.confirmed.count }}
       </router-link>
+
+      <report-diff-count
+        :num-of-new-reports="item.confirmed.new"
+        :num-of-resolved-reports="item.confirmed.resolved"
+      />
     </template>
 
     <template #item.falsePositive="{ item }">
       <router-link
-        v-if="item.falsePositive"
+        v-if="item.falsePositive.count"
         :to="{ name: 'reports', query: {
           ...$router.currentRoute.query,
           ...(item.$queryParams || {}),
@@ -126,13 +136,18 @@
             ReviewStatus.FALSE_POSITIVE)
         }}"
       >
-        {{ item.falsePositive }}
+        {{ item.falsePositive.count }}
       </router-link>
+
+      <report-diff-count
+        :num-of-new-reports="item.falsePositive.new"
+        :num-of-resolved-reports="item.falsePositive.resolved"
+      />
     </template>
 
     <template #item.intentional="{ item }">
       <router-link
-        v-if="item.intentional"
+        v-if="item.intentional.count"
         :to="{ name: 'reports', query: {
           ...$router.currentRoute.query,
           ...(item.$queryParams || {}),
@@ -141,21 +156,31 @@
             ReviewStatus.INTENTIONAL)
         }}"
       >
-        {{ item.intentional }}
+        {{ item.intentional.count }}
       </router-link>
+
+      <report-diff-count
+        :num-of-new-reports="item.intentional.new"
+        :num-of-resolved-reports="item.intentional.resolved"
+      />
     </template>
 
     <template #item.reports="{ item }">
       <router-link
-        v-if="item.reports"
+        v-if="item.reports.count"
         :to="{ name: 'reports', query: {
           ...$router.currentRoute.query,
           ...(item.$queryParams || {}),
           'checker-name': item.checker
         }}"
       >
-        {{ item.reports }}
+        {{ item.reports.count }}
       </router-link>
+
+      <report-diff-count
+        :num-of-new-reports="item.reports.new"
+        :num-of-resolved-reports="item.reports.resolved"
+      />
     </template>
   </v-data-table>
 </template>
@@ -169,18 +194,19 @@ import {
 } from "@/components/Icons";
 
 import { ReviewStatusMixin, SeverityMixin } from "@/mixins";
+import ReportDiffCount from "./ReportDiffCount";
 
 export default {
   name: "CheckerStatisticsTable",
   components: {
     DetectionStatusIcon,
+    ReportDiffCount,
     ReviewStatusIcon,
     SeverityIcon
   },
   mixins: [ ReviewStatusMixin, SeverityMixin ],
   props: {
     items: { type: Array, required: true },
-    extraQueryParams: { type: Object, default: () => {} },
     loading: { type: Boolean, default: false }
   },
   data() {
