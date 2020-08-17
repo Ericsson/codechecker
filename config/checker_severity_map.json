@@ -384,6 +384,7 @@
   "security.insecureAPI.bcmp":                                  "LOW",
   "security.insecureAPI.bcopy":                                 "LOW",
   "security.insecureAPI.bzero":                                 "LOW",
+  "security.insecureAPI.DeprecatedOrUnsafeBufferHandling":      "MEDIUM",
   "security.insecureAPI.getpw":                                 "MEDIUM",
   "security.insecureAPI.gets":                                  "MEDIUM",
   "security.insecureAPI.mkstemp":                               "MEDIUM",
