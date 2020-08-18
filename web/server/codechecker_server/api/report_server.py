@@ -23,7 +23,7 @@ import zlib
 
 import sqlalchemy
 from sqlalchemy.sql.expression import or_, and_, not_, func, \
-    asc, desc, text, union_all, select, bindparam, literal_column, cast
+    asc, desc, union_all, select, bindparam, literal_column, cast
 
 import codechecker_api_shared
 from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
@@ -205,24 +205,20 @@ def get_component_values(session, component_name):
     return skip, include
 
 
-def get_open_reports_date_filter_query(timestamp):
-    """ Get query for open reports date filter. """
-    date = datetime.fromtimestamp(timestamp)
-
-    return and_(Report.detected_at <= date,
-                or_(Report.fixed_at.is_(None),
-                    Report.fixed_at >= date))
-
-
-def process_report_filter(session, report_filter):
+def process_report_filter(session, run_ids, report_filter, cmp_data=None):
     """
     Process the new report filter.
     """
+    AND = []
+
+    cmp_filter_expr = process_cmp_data_filter(session, run_ids, report_filter,
+                                              cmp_data)
+    if cmp_filter_expr is not None:
+        AND.append(cmp_filter_expr)
 
     if report_filter is None:
-        return text('')
+        return and_(*AND)
 
-    AND = []
     if report_filter.filepath:
         OR = [File.filepath.ilike(conv(fp))
               for fp in report_filter.filepath]
@@ -321,21 +317,6 @@ def process_report_filter(session, report_filter):
                 Report.fixed_at.is_(None), Report.fixed_at >= date)))
         AND.append(or_(*OR))
 
-    if report_filter.runTag:
-        OR = []
-        for tag_id in report_filter.runTag:
-            history = session.query(RunHistory).get(tag_id)
-
-            OR.append(and_(Report.run_id == history.run_id,
-                           and_(Report.detected_at <= history.time,
-                                or_(Report.fixed_at.is_(None),
-                                    Report.fixed_at >= history.time))))
-        AND.append(or_(*OR))
-
-    if report_filter.openReportsDate:
-        AND.append(get_open_reports_date_filter_query(
-            report_filter.openReportsDate))
-
     if report_filter.componentNames:
         OR = []
 
@@ -375,6 +356,101 @@ def process_report_filter(session, report_filter):
 
     filter_expr = and_(*AND)
     return filter_expr
+
+
+def get_open_reports_date_filter_query(tbl=Report, date=RunHistory.time):
+    """ Get open reports date filter. """
+    return and_(tbl.detected_at <= date,
+                or_(tbl.fixed_at.is_(None),
+                    tbl.fixed_at > date))
+
+
+def get_diff_bug_id_query(session, run_ids, tag_ids, open_reports_date):
+    """ Get bug id query for diff. """
+    q = session.query(Report.bug_id.distinct())
+    if run_ids:
+        q = q.filter(Report.run_id.in_(run_ids))
+
+    if tag_ids:
+        q = q.outerjoin(RunHistory,
+                        RunHistory.run_id == Report.run_id) \
+             .filter(RunHistory.id.in_(tag_ids)) \
+             .filter(get_open_reports_date_filter_query())
+
+    if open_reports_date:
+        date = datetime.fromtimestamp(open_reports_date)
+
+        q = q.filter(get_open_reports_date_filter_query(Report, date))
+
+    return q
+
+
+def get_diff_run_id_query(session, run_ids, tag_ids):
+    """ Get run id query for diff. """
+    q = session.query(Run.id.distinct())
+
+    if run_ids:
+        q = q.filter(Run.id.in_(run_ids))
+
+    if tag_ids:
+        q = q.outerjoin(RunHistory,
+                        RunHistory.run_id == Run.id) \
+             .filter(RunHistory.id.in_(tag_ids))
+
+    return q
+
+
+def is_cmp_data_empty(cmp_data):
+    """ True if the parameter is None or no filter fields are set. """
+    if not cmp_data:
+        return True
+
+    return not any([cmp_data.runIds,
+                    cmp_data.runTag,
+                    cmp_data.openReportsDate])
+
+
+def process_cmp_data_filter(session, run_ids, report_filter, cmp_data):
+    """ Process compare data filter. """
+    base_tag_ids = report_filter.runTag if report_filter else None
+    base_open_reports_date = report_filter.openReportsDate \
+        if report_filter else None
+    query_base = get_diff_bug_id_query(session, run_ids, base_tag_ids,
+                                       base_open_reports_date)
+    query_base_runs = get_diff_run_id_query(session, run_ids, base_tag_ids)
+
+    if is_cmp_data_empty(cmp_data):
+        if not run_ids and (not report_filter or not report_filter.runTag):
+            return None
+
+        return and_(Report.bug_id.in_(query_base),
+                    Report.run_id.in_(query_base_runs))
+
+    query_new = get_diff_bug_id_query(session, cmp_data.runIds,
+                                      cmp_data.runTag,
+                                      cmp_data.openReportsDate)
+    query_new_runs = get_diff_run_id_query(session, cmp_data.runIds,
+                                           cmp_data.runTag)
+
+    AND = []
+    if cmp_data.diffType == DiffType.NEW:
+        return and_(Report.bug_id.in_(query_new.except_(query_base)),
+                    Report.run_id.in_(query_new_runs))
+
+    elif cmp_data.diffType == DiffType.RESOLVED:
+        return and_(Report.bug_id.in_(query_base.except_(query_new)),
+                    Report.run_id.in_(query_base_runs))
+
+    elif cmp_data.diffType == DiffType.UNRESOLVED:
+        return and_(Report.bug_id.in_(query_base.intersect(query_new)),
+                    Report.run_id.in_(query_new_runs))
+
+    else:
+        raise codechecker_api_shared.ttypes.RequestFailed(
+            codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+            'Unsupported diff type: ' + str(cmp_data.diffType))
+
+    return and_(*AND)
 
 
 def process_run_history_filter(query, run_ids, run_history_filter):
@@ -440,32 +516,6 @@ def process_run_filter(session, query, run_filter):
             query = query.filter(Run.date > run.date)
 
     return query
-
-
-def get_diff_hashes_for_query(base_run_ids, base_line_hashes, new_run_ids,
-                              new_check_hashes, diff_type):
-    """
-    Get the report hash list for the result comparison.
-
-    Returns the list of hashes (NEW, RESOLVED, UNRESOLVED) and
-    the run ids which should be queried for the reports.
-    """
-    if diff_type == DiffType.NEW:
-        df = [] + list(new_check_hashes.difference(base_line_hashes))
-        return df, new_run_ids
-
-    elif diff_type == DiffType.RESOLVED:
-        df = [] + list(base_line_hashes.difference(new_check_hashes))
-        return df, base_run_ids
-
-    elif diff_type == DiffType.UNRESOLVED:
-        df = [] + list(base_line_hashes.intersection(new_check_hashes))
-        return df, new_run_ids
-    else:
-        msg = 'Unsupported diff type: ' + str(diff_type)
-        LOG.error(msg)
-        raise codechecker_api_shared.ttypes.RequestFailed(
-            codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
 
 
 def get_report_details(session, report_ids):
@@ -594,19 +644,16 @@ def create_count_expression(report_filter):
         return func.count(literal_column('*'))
 
 
-def filter_report_filter(q, filter_expression, run_ids=None, cmp_data=None,
-                         diff_hashes=None):
-    if run_ids:
-        q = q.filter(Report.run_id.in_(run_ids))
-
+def apply_report_filter(q, filter_expression):
+    """
+    Applies the given filter expression and joins the File and ReviewStatus
+    tables.
+    """
     q = q.outerjoin(File,
                     Report.file_id == File.id) \
         .outerjoin(ReviewStatus,
                    ReviewStatus.bug_hash == Report.bug_id) \
         .filter(filter_expression)
-
-    if cmp_data:
-        q = q.filter(Report.bug_id.in_(diff_hashes))
 
     return q
 
@@ -665,30 +712,6 @@ def filter_unresolved_reports(q):
                         ReviewStatus.status.notin_(skip_review_statuses))) \
             .outerjoin(ReviewStatus,
                        ReviewStatus.bug_hash == Report.bug_id)
-
-
-def get_report_hashes(session, run_ids, tag_ids, open_reports_date):
-    """
-    Get report hash list for the reports which can be found in the given runs
-    and the given tags.
-    """
-    q = session.query(Report.bug_id)
-
-    if run_ids:
-        q = q.filter(Report.run_id.in_(run_ids))
-
-    if tag_ids:
-        q = q.outerjoin(RunHistory,
-                        RunHistory.run_id == Report.run_id) \
-            .filter(RunHistory.id.in_(tag_ids)) \
-            .filter(Report.detected_at <= RunHistory.time) \
-            .filter(or_(Report.fixed_at.is_(None),
-                        Report.fixed_at > RunHistory.time))
-
-    if open_reports_date:
-        q = q.filter(get_open_reports_date_filter_query(open_reports_date))
-
-    return set([t[0] for t in q])
 
 
 def check_remove_runs_lock(session, run_ids):
@@ -820,22 +843,6 @@ class ThriftRequestHandler(object):
 
     def __require_store(self):
         self.__require_permission([permissions.PRODUCT_STORE])
-
-    @staticmethod
-    def __get_run_ids_to_query(session, cmp_data=None):
-        """
-        Return run id list for the queries.
-        If compare data is set remove those run ids from the returned list.
-        The returned run id list can be used as a baseline for comparisons.
-        """
-        res = session.query(Run.id).all()
-        run_ids = [r[0] for r in res]
-        if cmp_data:
-            all_rids = set(run_ids)
-            cmp_rids = set(cmp_data.runIds) if cmp_data.runIds else set()
-            run_ids = list(all_rids.difference(cmp_rids))
-
-        return run_ids
 
     def __add_comment(self, bug_id, message, kind=CommentKindValue.USER):
         """ Creates a new comment object. """
@@ -1174,17 +1181,9 @@ class ThriftRequestHandler(object):
 
         with DBSession(self.__Session) as session:
             results = []
-            diff_hashes = None
-            if cmp_data:
-                diff_hashes, run_ids = self._cmp_helper(session,
-                                                        run_ids,
-                                                        report_filter,
-                                                        cmp_data)
-                if not diff_hashes:
-                    # There is no difference.
-                    return results
 
-            filter_expression = process_report_filter(session, report_filter)
+            filter_expression = process_report_filter(session, run_ids,
+                                                      report_filter, cmp_data)
 
             is_unique = report_filter is not None and report_filter.isUnique
             if is_unique:
@@ -1200,11 +1199,8 @@ class ThriftRequestHandler(object):
                                            .label(sorttype[1]))
 
                 unique_reports = session.query(*selects)
-                unique_reports = filter_report_filter(unique_reports,
-                                                      filter_expression,
-                                                      run_ids,
-                                                      cmp_data,
-                                                      diff_hashes)
+                unique_reports = apply_report_filter(unique_reports,
+                                                     filter_expression)
                 unique_reports = unique_reports \
                     .group_by(Report.bug_id) \
                     .subquery()
@@ -1281,12 +1277,6 @@ class ThriftRequestHandler(object):
                                ReviewStatus.bug_hash == Report.bug_id) \
                     .filter(filter_expression)
 
-                if run_ids:
-                    q = q.filter(Report.run_id.in_(run_ids))
-
-                if cmp_data:
-                    q = q.filter(Report.bug_id.in_(diff_hashes))
-
                 sort_types, sort_type_map, order_type_map = \
                     get_sort_map(sort_types)
 
@@ -1344,16 +1334,14 @@ class ThriftRequestHandler(object):
 
         results = []
         with DBSession(self.__Session) as session:
-            filter_expression = process_report_filter(session, report_filter)
+            filter_expression = process_report_filter(session, run_ids,
+                                                      report_filter)
 
             count_expr = create_count_expression(report_filter)
             q = session.query(Run.id,
                               Run.name,
                               count_expr) \
                 .select_from(Report)
-
-            if run_ids:
-                q = q.filter(Report.run_id.in_(run_ids))
 
             q = q.outerjoin(File, Report.file_id == File.id) \
                 .outerjoin(ReviewStatus,
@@ -1381,20 +1369,11 @@ class ThriftRequestHandler(object):
         self.__require_access()
 
         with DBSession(self.__Session) as session:
-            diff_hashes = None
-            if cmp_data:
-                diff_hashes, run_ids = self._cmp_helper(session,
-                                                        run_ids,
-                                                        report_filter,
-                                                        cmp_data)
-                if not diff_hashes:
-                    # There is no difference.
-                    return 0
+            filter_expression = process_report_filter(session, run_ids,
+                                                      report_filter, cmp_data)
 
-            filter_expression = process_report_filter(session, report_filter)
             q = session.query(Report.bug_id)
-            q = filter_report_filter(q, filter_expression, run_ids, cmp_data,
-                                     diff_hashes)
+            q = apply_report_filter(q, filter_expression)
 
             if report_filter is not None and report_filter.isUnique:
                 q = q.group_by(Report.bug_id)
@@ -1788,54 +1767,6 @@ class ThriftRequestHandler(object):
 
             return res
 
-    def _cmp_helper(self, session, run_ids, report_filter, cmp_data):
-        """
-        Get the report hashes for all of the runs.
-        Return the hash list which should be queried
-        in the returned run id list.
-        """
-        if not run_ids:
-            run_ids = ThriftRequestHandler.__get_run_ids_to_query(session,
-                                                                  cmp_data)
-
-        base_run_ids = run_ids
-        new_run_ids = cmp_data.runIds
-        diff_type = cmp_data.diffType
-
-        tag_ids = report_filter.runTag if report_filter else None
-        open_reports_date = report_filter.openReportsDate \
-            if report_filter else None
-        base_line_hashes = get_report_hashes(session,
-                                             base_run_ids,
-                                             tag_ids,
-                                             open_reports_date)
-
-        # If run tag/open reports date is set in compare data, after
-        # base line hashes are calculated remove it from the report filter
-        # because we will filter results by these hashes and there is no need
-        # to filter results by these tags/date again.
-        if cmp_data.runTag:
-            report_filter.runTag = None
-        if cmp_data.openReportsDate:
-            report_filter.openReportsDate = None
-
-        if not new_run_ids and not cmp_data.runTag and \
-           not cmp_data.openReportsDate:
-            return base_line_hashes, base_run_ids
-
-        new_check_hashes = get_report_hashes(session,
-                                             new_run_ids,
-                                             cmp_data.runTag,
-                                             cmp_data.openReportsDate)
-
-        report_hashes, run_ids = \
-            get_diff_hashes_for_query(base_run_ids,
-                                      base_line_hashes,
-                                      new_run_ids,
-                                      new_check_hashes,
-                                      diff_type)
-        return report_hashes, run_ids
-
     @exc_to_thrift_reqfail
     @timeit
     def getCheckerCounts(self, run_ids, report_filter, cmp_data, limit,
@@ -1851,17 +1782,8 @@ class ThriftRequestHandler(object):
 
         results = []
         with DBSession(self.__Session) as session:
-            diff_hashes = None
-            if cmp_data:
-                diff_hashes, run_ids = self._cmp_helper(session,
-                                                        run_ids,
-                                                        report_filter,
-                                                        cmp_data)
-                if not diff_hashes:
-                    # There is no difference.
-                    return results
-
-            filter_expression = process_report_filter(session, report_filter)
+            filter_expression = process_report_filter(session, run_ids,
+                                                      report_filter, cmp_data)
 
             is_unique = report_filter is not None and report_filter.isUnique
             if is_unique:
@@ -1875,8 +1797,7 @@ class ThriftRequestHandler(object):
                                   Report.severity,
                                   func.count(Report.id))
 
-            q = filter_report_filter(q, filter_expression, run_ids, cmp_data,
-                                     diff_hashes)
+            q = apply_report_filter(q, filter_expression)
 
             if is_unique:
                 q = q.group_by(Report.bug_id).subquery()
@@ -1915,17 +1836,8 @@ class ThriftRequestHandler(object):
 
         results = {}
         with DBSession(self.__Session) as session:
-            diff_hashes = None
-            if cmp_data:
-                diff_hashes, run_ids = self._cmp_helper(session,
-                                                        run_ids,
-                                                        report_filter,
-                                                        cmp_data)
-                if not diff_hashes:
-                    # There is no difference.
-                    return results
-
-            filter_expression = process_report_filter(session, report_filter)
+            filter_expression = process_report_filter(session, run_ids,
+                                                      report_filter, cmp_data)
 
             is_unique = report_filter is not None and report_filter.isUnique
             if is_unique:
@@ -1936,8 +1848,7 @@ class ThriftRequestHandler(object):
                 q = session.query(Report.analyzer_name,
                                   func.count(Report.id))
 
-            q = filter_report_filter(q, filter_expression, run_ids, cmp_data,
-                                     diff_hashes)
+            q = apply_report_filter(q, filter_expression)
 
             if is_unique:
                 q = q.group_by(Report.bug_id).subquery()
@@ -1968,17 +1879,8 @@ class ThriftRequestHandler(object):
         self.__require_access()
         results = {}
         with DBSession(self.__Session) as session:
-            diff_hashes = None
-            if cmp_data:
-                diff_hashes, run_ids = self._cmp_helper(session,
-                                                        run_ids,
-                                                        report_filter,
-                                                        cmp_data)
-                if not diff_hashes:
-                    # There is no difference.
-                    return results
-
-            filter_expression = process_report_filter(session, report_filter)
+            filter_expression = process_report_filter(session, run_ids,
+                                                      report_filter, cmp_data)
 
             is_unique = report_filter is not None and report_filter.isUnique
             if is_unique:
@@ -1988,8 +1890,7 @@ class ThriftRequestHandler(object):
                 q = session.query(Report.severity,
                                   func.count(Report.id))
 
-            q = filter_report_filter(q, filter_expression, run_ids, cmp_data,
-                                     diff_hashes)
+            q = apply_report_filter(q, filter_expression)
 
             if is_unique:
                 q = q.group_by(Report.bug_id).subquery()
@@ -2017,17 +1918,8 @@ class ThriftRequestHandler(object):
 
         results = {}
         with DBSession(self.__Session) as session:
-            diff_hashes = None
-            if cmp_data:
-                diff_hashes, run_ids = self._cmp_helper(session,
-                                                        run_ids,
-                                                        report_filter,
-                                                        cmp_data)
-                if not diff_hashes:
-                    # There is no difference.
-                    return results
-
-            filter_expression = process_report_filter(session, report_filter)
+            filter_expression = process_report_filter(session, run_ids,
+                                                      report_filter, cmp_data)
 
             is_unique = report_filter is not None and report_filter.isUnique
             if is_unique:
@@ -2038,8 +1930,7 @@ class ThriftRequestHandler(object):
                 q = session.query(Report.checker_message,
                                   func.count(Report.id))
 
-            q = filter_report_filter(q, filter_expression, run_ids, cmp_data,
-                                     diff_hashes)
+            q = apply_report_filter(q, filter_expression)
 
             if is_unique:
                 q = q.group_by(Report.bug_id).subquery()
@@ -2068,17 +1959,8 @@ class ThriftRequestHandler(object):
         self.__require_access()
         results = defaultdict(int)
         with DBSession(self.__Session) as session:
-            diff_hashes = None
-            if cmp_data:
-                diff_hashes, run_ids = self._cmp_helper(session,
-                                                        run_ids,
-                                                        report_filter,
-                                                        cmp_data)
-                if not diff_hashes:
-                    # There is no difference.
-                    return results
-
-            filter_expression = process_report_filter(session, report_filter)
+            filter_expression = process_report_filter(session, run_ids,
+                                                      report_filter, cmp_data)
 
             is_unique = report_filter is not None and report_filter.isUnique
             if is_unique:
@@ -2090,8 +1972,7 @@ class ThriftRequestHandler(object):
                                   ReviewStatus.status,
                                   func.count(Report.id))
 
-            q = filter_report_filter(q, filter_expression, run_ids, cmp_data,
-                                     diff_hashes)
+            q = apply_report_filter(q, filter_expression)
 
             if is_unique:
                 q = q.group_by(Report.bug_id).subquery()
@@ -2126,27 +2007,12 @@ class ThriftRequestHandler(object):
 
         results = {}
         with DBSession(self.__Session) as session:
-            if cmp_data:
-                diff_hashes, run_ids = self._cmp_helper(session,
-                                                        run_ids,
-                                                        report_filter,
-                                                        cmp_data)
-                if not diff_hashes:
-                    # There is no difference.
-                    return results
-
-            filter_expression = process_report_filter(session, report_filter)
+            filter_expression = process_report_filter(session, run_ids,
+                                                      report_filter, cmp_data)
 
             stmt = session.query(Report.bug_id,
-                                 Report.file_id) \
-                .outerjoin(ReviewStatus,
-                           ReviewStatus.bug_hash == Report.bug_id) \
-                .outerjoin(File,
-                           File.id == Report.file_id) \
-                .filter(filter_expression)
-
-            if run_ids:
-                stmt = stmt.filter(Report.run_id.in_(run_ids))
+                                 Report.file_id)
+            stmt = apply_report_filter(stmt, filter_expression)
 
             if report_filter is not None and report_filter.isUnique:
                 stmt = stmt.group_by(Report.bug_id, Report.file_id)
@@ -2190,16 +2056,8 @@ class ThriftRequestHandler(object):
 
         results = []
         with DBSession(self.__Session) as session:
-            if cmp_data:
-                diff_hashes, run_ids = self._cmp_helper(session,
-                                                        run_ids,
-                                                        report_filter,
-                                                        cmp_data)
-                if not diff_hashes:
-                    # There is no difference.
-                    return results
-
-            filter_expression = process_report_filter(session, report_filter)
+            filter_expression = process_report_filter(session, run_ids,
+                                                      report_filter, cmp_data)
 
             tag_run_ids = session.query(RunHistory.run_id.distinct()) \
                 .filter(RunHistory.version_tag.isnot(None)) \
@@ -2230,10 +2088,7 @@ class ThriftRequestHandler(object):
                 .outerjoin(report_cnt_q,
                            report_cnt_q.c.run_id == RunHistory.run_id) \
                 .filter(RunHistory.version_tag.isnot(None)) \
-                .filter(and_(report_cnt_q.c.detected_at <= RunHistory.time,
-                             or_(report_cnt_q.c.fixed_at.is_(None),
-                                 report_cnt_q.c.fixed_at >=
-                                 RunHistory.time))) \
+                .filter(get_open_reports_date_filter_query(report_cnt_q.c)) \
                 .group_by(RunHistory.id) \
                 .subquery()
 
@@ -2289,25 +2144,15 @@ class ThriftRequestHandler(object):
         self.__require_access()
         results = {}
         with DBSession(self.__Session) as session:
-            diff_hashes = None
-            if cmp_data:
-                diff_hashes, run_ids = self._cmp_helper(session,
-                                                        run_ids,
-                                                        report_filter,
-                                                        cmp_data)
-                if not diff_hashes:
-                    # There is no difference.
-                    return results
-
-            filter_expression = process_report_filter(session, report_filter)
+            filter_expression = process_report_filter(session, run_ids,
+                                                      report_filter, cmp_data)
 
             count_expr = func.count(literal_column('*'))
 
             q = session.query(Report.detection_status,
                               count_expr)
 
-            q = filter_report_filter(q, filter_expression, run_ids, cmp_data,
-                                     diff_hashes)
+            q = apply_report_filter(q, filter_expression)
 
             detection_stats = q.group_by(Report.detection_status).all()
 
@@ -2365,30 +2210,15 @@ class ThriftRequestHandler(object):
             check_remove_runs_lock(session, run_ids)
 
             try:
-                diff_hashes = None
-                if cmp_data:
-                    diff_hashes, _ = self._cmp_helper(session,
-                                                      run_ids,
-                                                      report_filter,
-                                                      cmp_data)
-                    if not diff_hashes:
-                        # There is no difference.
-                        return True
-
-                filter_expression = process_report_filter(session,
-                                                          report_filter)
+                filter_expression = process_report_filter(session, run_ids,
+                                                          report_filter,
+                                                          cmp_data)
 
                 q = session.query(Report.id) \
                     .outerjoin(File, Report.file_id == File.id) \
                     .outerjoin(ReviewStatus,
                                ReviewStatus.bug_hash == Report.bug_id) \
                     .filter(filter_expression)
-
-                if run_ids:
-                    q = q.filter(Report.run_id.in_(run_ids))
-
-                if cmp_data:
-                    q = q.filter(Report.bug_id.in_(diff_hashes))
 
                 reports_to_delete = [r[0] for r in q]
                 if reports_to_delete:

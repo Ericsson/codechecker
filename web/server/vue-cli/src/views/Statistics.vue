@@ -4,7 +4,6 @@
       <report-filter
         v-fill-height
         :namespace="namespace"
-        :show-compare-to="false"
         :show-remove-filtered-reports="false"
         :report-count="reportCount"
         :show-diff-type="false"
