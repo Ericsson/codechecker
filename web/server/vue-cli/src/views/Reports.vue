@@ -44,7 +44,7 @@
         :footer-props="footerProps"
         :must-sort="true"
         :expanded.sync="expanded"
-        :show-expand="showExpanded"
+        show-expand
         :mobile-breakpoint="1100"
         item-key="$id"
         @item-expanded="itemExpanded"
@@ -290,10 +290,6 @@ export default {
       reportFilter: "getReportFilter",
       cmpData: "getCmpData"
     }),
-
-    showExpanded() {
-      return this.reportFilter.isUnique;
-    },
 
     tableHeaders() {
       if (!this.headers) return;
