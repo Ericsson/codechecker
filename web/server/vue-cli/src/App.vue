@@ -3,8 +3,9 @@
     <the-header />
 
     <v-main>
-      <router-view />
-
+      <keep-alive include="Products">
+        <router-view />
+      </keep-alive>
       <errors />
     </v-main>
   </v-app>
