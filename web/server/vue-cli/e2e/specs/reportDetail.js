@@ -168,7 +168,7 @@ module.exports = {
       .to.be.not.present.before(5000);
   },
 
-  "also found in" (browser) {
+  "found in" (browser) {
     const reportDetailPage = browser.page.reportDetail();
     const selectSameReportMenu = reportDetailPage.section.selectSameReportMenu;
 
