@@ -185,7 +185,7 @@
           />
 
           <v-checkbox
-            v-model="selectedNewcheckTags"
+            v-model="selectedComparedToTags"
             :value="item"
             multiple
           />
@@ -253,7 +253,7 @@ export default {
       totalItems: 0,
       loading: false,
       selectedBaselineTags: [],
-      selectedNewcheckTags: [],
+      selectedComparedToTags: [],
       headers: [
         {
           text: "Name",
@@ -313,7 +313,7 @@ export default {
 
     isDiffBtnDisabled() {
       return !this.selectedBaselineTags.length ||
-             !this.selectedNewcheckTags.length;
+             !this.selectedComparedToTags.length;
     },
 
     diffTargetRoute() {
@@ -326,7 +326,7 @@ export default {
       urlState["run-tag"] = bTags.length ? bTags : undefined;
 
       const { runs: nRuns, tags: nTags, times: fixDates } =
-        this.getSelectedTagData(this.selectedNewcheckTags);
+        this.getSelectedTagData(this.selectedComparedToTags);
 
       urlState["newcheck"] = nRuns;
       urlState["run-tag-newcheck"] = nTags.length ? nTags : undefined;

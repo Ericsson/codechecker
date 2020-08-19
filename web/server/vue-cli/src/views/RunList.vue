@@ -159,7 +159,7 @@
           />
 
           <v-checkbox
-            v-model="selectedNewcheckRuns"
+            v-model="selectedComparedToRuns"
             :value="item.name"
             multiple
           />
@@ -226,7 +226,7 @@ export default {
       loading: false,
       selected: [],
       selectedBaselineRuns: [],
-      selectedNewcheckRuns: [],
+      selectedComparedToRuns: [],
       analyzerStatisticsDialog: false,
       selectedRunId: null,
       headers: [
@@ -288,7 +288,7 @@ export default {
 
     isDiffBtnDisabled() {
       return !this.selectedBaselineRuns.length ||
-             !this.selectedNewcheckRuns.length;
+             !this.selectedComparedToRuns.length;
     },
 
     diffTargetRoute() {
@@ -297,7 +297,7 @@ export default {
         query: {
           ...this.$router.currentRoute.query,
           run: this.selectedBaselineRuns,
-          newcheck: this.selectedNewcheckRuns
+          newcheck: this.selectedComparedToRuns
         }
       };
     },

@@ -88,16 +88,16 @@ module.exports = {
   sections: {
     baselineRunFilter: createOptionFilterSection("#run"),
     baselineTagFilter: createOptionFilterSection("#run-tag"),
-    newcheckFilters: {
-      selector: "#newcheck-filters",
+    compareToFilters: {
+      selector: "#compare-to-filters",
       elements: {
         expansionBtn: ".v-expansion-panel-header__icon",
         active: ".v-expansion-panel--active"
       },
       sections: {
-        newcheckRunFilter: createOptionFilterSection("#newcheck"),
-        newcheckTagFilter: createOptionFilterSection("#run-tag-newcheck"),
-        newcheckDiffTypeFilter: createOptionFilterSection("#diff-type"),
+        compareToRunFilter: createOptionFilterSection("#newcheck"),
+        compareToTagFilter: createOptionFilterSection("#run-tag-newcheck"),
+        compareToDiffTypeFilter: createOptionFilterSection("#diff-type"),
       }
     },
     filePathFilter: createOptionFilterSection("#filepath"),

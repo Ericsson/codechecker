@@ -118,8 +118,9 @@ You can do the following on this page:
 
 
 The meaning of the table columns:
-- **Diff** - In this column you can select two runs (*baseline* and *newcheck*)
-which will be compared to each other by click on the *Diff* button.
+- **Diff** - In this column you can select two runs (*baseline* and
+*compared to*) which will be compared to each other by click on the *Diff*
+button.
 - **Name** - Name of the run.
 - **Number of unresolved reports** - Number of non unique reports excluding
 *Resolved*, *False positive* and *Intentional* reports.
@@ -198,13 +199,13 @@ selected in which case the reports from all runs are visible.
 name), then the specific runs can be tagged in order to be easier to identify
 them. By this field you can select the reports found during a specific run
 event.
-- [**Newcheck**](#userguide-diff-mode)
+- [**Compare to**](#userguide-diff-mode)
   - **Run name** - Here you can select multiple run name which you want to
 compare against the baseline filter set.
   - **Run tag** - Here you can select multiple run tags which you want to
 compare against the baseline filter set.
   - **Diff type** - Here you can set if you'd like to see the bugs which appear
-only in the **Baseline**, **Newcheck** or both.
+only in the **Baseline**, **Compare to** or both.
 - [**Review status**](#userguide-review-status) - You can select the reports
 with the given review status to check only *False positive*, *Unreviewed*, etc.
 reports.
@@ -274,7 +275,7 @@ which can be fined in all runs.
 At the **Baseline** filter section you can select the run names and run tags
 against which you want to check the difference.
 
-At the **Newcheck** filter section you can select the run names and run tags
+At the **Compare to** filter section you can select the run names and run tags
 which you want to compare against the *Baseline* runs and run tags.
 
 ### <a name="userguide-diff-runs"></a> Compare two different runs
