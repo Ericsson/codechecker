@@ -5,7 +5,7 @@
     :hide-details="true"
     :menu-props="{ contentClass: 'select-same-report-menu' }"
     class="select-same-report small"
-    label="Also found in"
+    label="Found in"
     item-text="label"
     item-value="id"
     height="0"

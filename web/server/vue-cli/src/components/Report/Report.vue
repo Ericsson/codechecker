@@ -150,7 +150,7 @@
                   align="center"
                   class="text-no-wrap"
                 >
-                  Also found in:
+                  Found in:
                   <select-same-report
                     class="select-same-report ml-2"
                     :report="report"
