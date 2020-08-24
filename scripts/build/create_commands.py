@@ -24,6 +24,8 @@ def copy_entry_points(input_data, build_dir):
     """
     package_root = os.path.join(build_dir, 'CodeChecker')
     package_bin = os.path.join(package_root, 'bin')
+    package_bin_cmd = os.path.join(package_bin, 'subcmd')
+    os.makedirs(package_bin_cmd, exist_ok=True)
     target_cc = os.path.join(package_root, 'cc_bin')
 
     available_commands = {}
@@ -40,16 +42,14 @@ def copy_entry_points(input_data, build_dir):
                 if file_name.startswith("codechecker-"):
                     command_name = file_name.replace("codechecker-", "")
 
-                    file_name = command_name.replace('-', '_')
-                    module_path = module_name + '/' + file_name + '.py'
+                    module_path = module_name + '/' + \
+                        command_name.replace('-', '_') + '.py'
                     available_commands[command_name] = module_path
 
                     skip_content = "# DO_NOT_INSTALL_TO_PATH"
                     with open(input_file, 'r',
                               encoding="utf-8", errors="ignore") as file:
                         if file.readline().strip() == skip_content:
-                            LOG.info("Registering sub-command '%s'",
-                                     command_name)
                             # If the file is marked not to install, do not
                             # install it. This happens with entry points
                             # whom should not act as "lowercase" entries,
@@ -57,9 +57,14 @@ def copy_entry_points(input_data, build_dir):
                             # command.
                             continue
 
-                    LOG.info("Registering sub-command '%s' installed to "
-                             "PATH", command_name)
-                shutil.copy2(input_file, package_bin)
+                # Only the CodeChecker top level script should be copied
+                # into the bin directory and every other subcommand should be
+                # called through that.
+                if file_name.startswith("codechecker-"):
+                    shutil.copy2(input_file, package_bin_cmd)
+                else:
+                    shutil.copy2(input_file, package_bin)
+
             else:
                 # .py files are Python code that must run in a valid env.
                 shutil.copy2(input_file, target_cc)
