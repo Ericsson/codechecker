@@ -1,9 +1,24 @@
 {
-    "analyzer": [
-        "--enable", "core.DivideZero",
-        "--enable", "core.CallAndMessage",
-        "--disable", "alpha",
-        "--analyzers", "clangsa", "clang-tidy",
-        "--clean"
-    ]
+  "analyze": [
+    "--enable=core.DivideZero",
+    "--enable=core.CallAndMessage",
+    "--analyzer-config",
+    "clangsa:unroll-loops=true",
+    "--checker-config",
+    "clang-tidy:google-readability-function-size.StatementThreshold=100"
+    "--report-hash", "context-free-v2"
+    "--verbose=debug",
+    "--clean"
+  ],
+  "parse": [
+    "--trim-path-prefix",
+    "/$HOME/workspace"
+  ],
+  "server": [
+    "--workspace=$HOME/workspace",
+    "--port=9090"
+  ],
+  "store": [
+    "--url", "localhost:9090/Default"
+  ]
 }

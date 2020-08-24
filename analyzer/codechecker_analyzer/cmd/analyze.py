@@ -23,7 +23,7 @@ from codechecker_analyzer.analyzers import analyzer_types
 from codechecker_analyzer.arg import OrderedCheckersAction
 from codechecker_analyzer.buildlog import log_parser
 
-from codechecker_common import arg, logger, skiplist_handler
+from codechecker_common import arg, logger, skiplist_handler, cmd_config
 from codechecker_common.util import load_json_or_empty
 
 
@@ -647,44 +647,8 @@ was emitted by clang-tidy.""")
                                     "OWN RISK!")
 
     logger.add_verbose_arguments(parser)
-    parser.set_defaults(func=main,
-                        func_process_config_file=process_config_file)
-
-
-def process_config_file(args):
-    """
-    Handler to get config file options.
-    """
-    if args.config_file and os.path.exists(args.config_file):
-        cfg = load_json_or_empty(args.config_file, default={})
-        return cfg.get('analyzer', [])
-
-
-def check_config_file(args):
-    """
-    LOG and check about the config file usage.
-
-    If a config file is set but does not exist the program will
-    exit.
-    LOG is not initialized in the process_config_file function yet
-    so we can not log the usage there. Using print will
-    always print out the config file data which can mess up the
-    tests depending on the output.
-    """
-
-    if args.config_file and not os.path.exists(args.config_file):
-        LOG.error("Configuration file '%s' does not exist.",
-                  args.config_file)
-        sys.exit(1)
-    elif not args.config_file:
-        return
-
-    cfg = load_json_or_empty(args.config_file, default={})
-    if cfg.get("enabled"):
-        LOG.debug("Using config file: '%s'.", args.config_file)
-        return cfg.get('analyzer', [])
-
-    LOG.debug("Config file '%s' is available but disabled.", args.config_file)
+    parser.set_defaults(
+        func=main, func_process_config_file=cmd_config.process_config_file)
 
 
 def __get_skip_handler(args):
@@ -769,7 +733,11 @@ def main(args):
     """
     logger.setup_logger(args.verbose if 'verbose' in args else None)
 
-    check_config_file(args)
+    try:
+        cmd_config.check_config_file(args)
+    except FileNotFoundError as fnerr:
+        LOG.error(fnerr)
+        sys.exit(1)
 
     if not os.path.exists(args.logfile):
         LOG.error("The specified logfile '%s' does not exist!", args.logfile)
