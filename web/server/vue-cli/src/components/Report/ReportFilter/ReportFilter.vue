@@ -201,20 +201,38 @@
         </v-list-item-content>
       </v-list-item>
 
-      <v-divider />
-
-      <v-list-item class="pl-1">
+      <v-list-item id="date-filters" class="pl-0">
         <v-list-item-content class="pa-0">
-          <detection-date-filter
-            id="detection-date-filter"
-            ref="filters"
-            :namespace="namespace"
-            @update:url="updateUrl"
-          />
+          <v-expansion-panels v-model="activeDatePanelId" hover>
+            <v-expansion-panel>
+              <v-expansion-panel-header
+                class="pa-0 px-1"
+              >
+                <header>
+                  <b>Dates</b>
+                </header>
+              </v-expansion-panel-header>
+              <v-expansion-panel-content class="pa-1">
+                <detection-date-filter
+                  id="detection-date-filter"
+                  ref="filters"
+                  :namespace="namespace"
+                  @update:url="updateUrl"
+                />
+
+                <v-divider />
+
+                <fix-date-filter
+                  id="fix-date-filter"
+                  ref="filters"
+                  :namespace="namespace"
+                  @update:url="updateUrl"
+                />
+              </v-expansion-panel-content>
+            </v-expansion-panel>
+          </v-expansion-panels>
         </v-list-item-content>
       </v-list-item>
-
-      <v-divider />
 
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
@@ -273,6 +291,7 @@ import {
   DetectionDateFilter,
   DetectionStatusFilter,
   FilePathFilter,
+  FixDateFilter,
   ReportHashFilter,
   ReviewStatusFilter,
   SeverityFilter,
@@ -301,6 +320,7 @@ export default {
     SeverityFilter,
     DetectionDateFilter,
     FilePathFilter,
+    FixDateFilter,
     SourceComponentFilter,
     CheckerNameFilter,
     CheckerMessageFilter,
@@ -318,12 +338,16 @@ export default {
   data() {
     return {
       activeBaselinePanelId: 0,
-      activeCompareToPanelId: 0
+      activeCompareToPanelId: 0,
+      activeDatePanelId: 0
     };
   },
 
   computed: {
     ...mapState({
+      reportFilter(state) {
+        return state[this.namespace].reportFilter;
+      },
       cmpData(state) {
         return state[this.namespace].cmpData;
       }
@@ -405,7 +429,21 @@ export default {
         if (!this.cmpData?.runIds && !this.cmpData?.runTag) {
           this.activeCompareToPanelId = -1;
         }
+
+        this.closePanelsOnInit();
       });
+    },
+
+    closePanelsOnInit() {
+      // Close NEWCHECK expansion panel if no compare data is set.
+      if (!this.cmpData?.runIds && !this.cmpData?.runTag) {
+        this.activeNewcheckPanelId = -1;
+      }
+
+      // Close Dates expansion panel if no dates are set.
+      if (!this.reportFilter.date) {
+        this.activeDatePanelId = -1;
+      }
     },
 
     clearAllFilters() {
@@ -448,7 +486,8 @@ export default {
 }
 
 #baseline-filters,
-#compare-to-filters {
+#compare-to-filters,
+#date-filters {
   border: 1px solid rgba(0, 0, 0, 0.12);
 }
 

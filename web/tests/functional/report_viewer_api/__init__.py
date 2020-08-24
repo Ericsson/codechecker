@@ -112,6 +112,16 @@ def setup_package():
         sys.exit(1)
     print("Third analysis of the test project was successful.")
 
+    # Let's run the second analysis and updat the same run.
+    codechecker_cfg['checkers'] = ['-d', 'core.StackAddressEscape']
+    ret = codechecker.check_and_store(codechecker_cfg,
+                                      test_project_name_third,
+                                      project.path(test_project))
+
+    if ret:
+        sys.exit(1)
+    print("4th analysis of the test project was successful.")
+
     codechecker_cfg['run_names'] = [test_project_name,
                                     test_project_name_new]
 

@@ -288,8 +288,14 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                          dest="detected_at",
                          metavar='TIMESTAMP',
                          default=argparse.SUPPRESS,
-                         help="Filter results by detection date. The format "
-                              " of TIMESTAMP is "
+                         help="DEPRECATED. Use the '--detected-after/"
+                              "--detected-before' options to filter results "
+                              "by detection date. Filter results by fix date "
+                              "(fixed after the given date) if the "
+                              "--detection-status filter option is set only "
+                              "to Resolved otherwise it filters the results "
+                              "by detection date (detected after the given "
+                              "date). The format of TIMESTAMP is "
                               "'year:month:day:hour:minute:second' (the "
                               "\"time\" part can be omitted, in which case "
                               "midnight (00:00:00) is used).")
@@ -299,8 +305,64 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                          dest="fixed_at",
                          metavar='TIMESTAMP',
                          default=argparse.SUPPRESS,
-                         help="Filter results by fix date. The format "
-                              " of TIMESTAMP is "
+                         help="DEPRECATED. Use the '--fixed-after/"
+                              "--fixed-before' options to filter results "
+                              "by fix date. Filter results by fix date (fixed "
+                              "before the given date) if the "
+                              "--detection-status filter option is set only "
+                              "to Resolved otherwise it filters the results "
+                              "by detection date (detected before the given "
+                              "date). The format of TIMESTAMP is "
+                              "'year:month:day:hour:minute:second' (the "
+                              "\"time\" part can be omitted, in which case "
+                              "midnight (00:00:00) is used).")
+
+    f_group.add_argument('--detected-before',
+                         type=valid_time,
+                         dest="detected_before",
+                         metavar='TIMESTAMP',
+                         default=argparse.SUPPRESS,
+                         help="Get results which were detected before the "
+                              "given date. The detection date of a report is "
+                              "the storage date when the report was stored to "
+                              "the server for the first time. The format of "
+                              "TIMESTAMP is "
+                              "'year:month:day:hour:minute:second' (the "
+                              "\"time\" part can be omitted, in which case "
+                              "midnight (00:00:00) is used).")
+
+    f_group.add_argument('--detected-after',
+                         type=valid_time,
+                         dest="detected_after",
+                         metavar='TIMESTAMP',
+                         default=argparse.SUPPRESS,
+                         help="Get results which were detected after the "
+                              "given date. The detection date of a report is "
+                              "the storage date when the report was stored to "
+                              "the server for the first time. The format of "
+                              "TIMESTAMP is "
+                              "'year:month:day:hour:minute:second' (the "
+                              "\"time\" part can be omitted, in which case "
+                              "midnight (00:00:00) is used).")
+
+    f_group.add_argument('--fixed-before',
+                         type=valid_time,
+                         dest="fixed_before",
+                         metavar='TIMESTAMP',
+                         default=argparse.SUPPRESS,
+                         help="Get results which were fixed before the "
+                              "given date. The format of TIMESTAMP is "
+                              "'year:month:day:hour:minute:second' (the "
+                              "\"time\" part can be omitted, in which case "
+                              "midnight (00:00:00) is used).")
+
+    f_group.add_argument('--fixed-after',
+                         type=valid_time,
+                         dest="fixed_after",
+                         metavar='TIMESTAMP',
+                         default=argparse.SUPPRESS,
+                         help="Get results which were fixed after the "
+                              "given date. The format of TIMESTAMP is "
                               "'year:month:day:hour:minute:second' (the "
                               "\"time\" part can be omitted, in which case "
                               "midnight (00:00:00) is used).")

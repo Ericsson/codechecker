@@ -1,6 +1,6 @@
 <template>
   <select-option
-    title="Detection date"
+    :title="title"
     :bus="bus"
     :fetch-items="fetchItems"
     :selected-items="selectedItems"
@@ -37,7 +37,7 @@
             :input-class="fromDateTimeId"
             :dialog-class="fromDateTimeId"
             :value="fromDateTime"
-            label="Detection date"
+            :label="fromDateTimeLabel"
             @input="setFromDateTime"
           />
         </v-col>
@@ -52,7 +52,7 @@
             :input-class="toDateTimeId"
             :dialog-class="toDateTimeId"
             :value="toDateTime"
-            label="Fix date"
+            :label="toDateTimeLabel"
             @input="setToDateTime"
           />
         </v-col>
@@ -63,6 +63,8 @@
 
 <script>
 import { format } from "date-fns";
+
+import { DateInterval, ReportDate } from "@cc/report-server-types";
 
 import DateTimePicker from "@/components/DateTimePicker";
 import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
@@ -83,10 +85,14 @@ export default {
   mixins: [ BaseSelectOptionFilterMixin ],
   data() {
     return {
-      fromDateTimeId: "first-detection-date",
-      toDateTimeId: "fix-date",
+      title: "Detection date",
+      fromDateTimeId: "detected-after",
+      toDateTimeId: "detected-before",
+      fromDateTimeLabel: "Detected after...",
+      toDateTimeLabel: "Detected before...",
       fromDateTime: null,
-      toDateTime: null
+      toDateTime: null,
+      filterFieldName: "detected"
     };
   },
 
@@ -169,15 +175,20 @@ export default {
     },
 
     updateReportFilter() {
-      const firstDetectionDate = this.fromDateTime
-        ? this.getTimeStamp(this.fromDateTime) : null;
-      const fixDate = this.toDateTime
-        ? this.getTimeStamp(this.toDateTime) : null;
+      const date = new ReportDate(this.reportFilter.date);
+      if (this.fromDateTime || this.toDateTime) {
+        if (!date[this.filterFieldName])
+          date[this.filterFieldName] = new DateInterval();
 
-      this.setReportFilter({
-        firstDetectionDate: firstDetectionDate,
-        fixDate: fixDate
-      });
+        date[this.filterFieldName].before = this.toDateTime
+          ? this.getTimeStamp(this.toDateTime) : null;
+        date[this.filterFieldName].after = this.fromDateTime
+          ? this.getTimeStamp(this.fromDateTime) : null;
+      } else if (date) {
+        date[this.filterFieldName] = null;
+      }
+
+      this.setReportFilter({ date: date });
     },
 
     fetchItems() {

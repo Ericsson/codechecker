@@ -27,7 +27,6 @@ module.exports = {
       reportPage.section.sourceComponentFilter,
       reportPage.section.checkerMessageFilter,
       reportPage.section.checkerMessageFilter,
-      reportPage.section.detectionDateFilter,
       reportPage.section.reportHashFilter,
       reportPage.section.bugPathLengthFilter
     ].forEach(section => {
@@ -453,11 +452,57 @@ module.exports = {
     });
   },
 
+  "open date expansion panel" (browser) {
+    const reportPage = browser.page.report();
+    const dateSection = reportPage.section.dateFilters;
+    const detectionDateFilterSection = dateSection.section.detectionDateFilter;
+
+    reportPage.click(dateSection);
+    dateSection.expect.section(detectionDateFilterSection)
+      .to.be.visible.before(5000);
+
+    [
+      dateSection.section.detectionDateFilter,
+      dateSection.section.fixDateFilter
+    ].forEach(section => {
+      section.click("@expansionBtn");
+    });
+  },
+
   "set detection date filters" (browser) {
     const reportPage = browser.page.report();
-    const section = reportPage.section.detectionDateFilter;
-    const fromDateDialog = reportPage.section.fromDetectionDateDialog;
-    const toDateDialog = reportPage.section.toDetectionDateDialog;
+    const dateSection = reportPage.section.dateFilters;
+    const section = dateSection.section.detectionDateFilter;
+    const fromDateDialog = reportPage.section.fromDateDialog;
+    const toDateDialog = reportPage.section.toDateDialog;
+
+    section.click("@from");
+    reportPage.expect.section(fromDateDialog).to.be.visible.before(5000);
+
+    fromDateDialog
+      .click("@date")
+      .click("@ok");
+
+    section.click("@to");
+    reportPage.expect.section(toDateDialog).to.be.visible.before(5000);
+
+    toDateDialog
+      .click("@date")
+      .click("@ok");
+
+    section.click("@clearBtn");
+
+    reportPage
+      .pause(500)
+      .waitForElementNotPresent("@progressBar");
+  },
+
+  "set fix date filters" (browser) {
+    const reportPage = browser.page.report();
+    const dateSection = reportPage.section.dateFilters;
+    const section = dateSection.section.fixDateFilter;
+    const fromDateDialog = reportPage.section.fromDateDialog;
+    const toDateDialog = reportPage.section.toDateDialog;
 
     section.click("@from");
     reportPage.expect.section(fromDateDialog).to.be.visible.before(5000);

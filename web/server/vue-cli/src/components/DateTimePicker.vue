@@ -8,7 +8,8 @@
       <v-text-field
         :label="label"
         :value="formattedDatetime"
-        :class="inputClass"
+        :class="[ inputClass, 'pa-0', 'ma-0' ]"
+        hide-details
         readonly
         v-on="on"
       />

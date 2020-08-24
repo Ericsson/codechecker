@@ -638,11 +638,50 @@ filter arguments:
                         only if basename or newname is a run name (on the
                         remote server).
   --detected-at TIMESTAMP
-                        Filter results by detection date. The format of
+                        DEPRECATED. Use the '--detected-after/--detected-
+                        before' options to filter results by detection date.
+                        Filter results by fix date (fixed after the given
+                        date) if the --detection-status filter option is set
+                        only to Resolved otherwise it filters the results by
+                        detection date (detected after the given date). The
+                        format of TIMESTAMP is
+                        'year:month:day:hour:minute:second' (the "time" part
+                        can be omitted, in which case midnight (00:00:00) is
+                        used).
+  --fixed-at TIMESTAMP  DEPRECATED. Use the '--fixed-after/--fixed-before'
+                        options to filter results by fix date. Filter results
+                        by fix date (fixed before the given date) if the
+                        --detection-status filter option is set only to
+                        Resolved otherwise it filters the results by detection
+                        date (detected before the given date). The format of
                         TIMESTAMP is 'year:month:day:hour:minute:second' (the
                         "time" part can be omitted, in which case midnight
                         (00:00:00) is used).
-  --fixed-at TIMESTAMP  Filter results by fix date. The format of TIMESTAMP is
+  --detected-before TIMESTAMP
+                        Get results which were detected before the given date.
+                        The detection date of a report is the storage date
+                        when the report was stored to the server for the first
+                        time. The format of TIMESTAMP is
+                        'year:month:day:hour:minute:second' (the "time" part
+                        can be omitted, in which case midnight (00:00:00) is
+                        used).
+  --detected-after TIMESTAMP
+                        Get results which were detected after the given date.
+                        The detection date of a report is the storage date
+                        when the report was stored to the server for the first
+                        time. The format of TIMESTAMP is
+                        'year:month:day:hour:minute:second' (the "time" part
+                        can be omitted, in which case midnight (00:00:00) is
+                        used).
+  --fixed-before TIMESTAMP
+                        Get results which were fixed before the given date.
+                        The format of TIMESTAMP is
+                        'year:month:day:hour:minute:second' (the "time" part
+                        can be omitted, in which case midnight (00:00:00) is
+                        used).
+  --fixed-after TIMESTAMP
+                        Get results which were fixed after the given date. The
+                        format of TIMESTAMP is
                         'year:month:day:hour:minute:second' (the "time" part
                         can be omitted, in which case midnight (00:00:00) is
                         used).
@@ -871,8 +910,12 @@ usage: CodeChecker cmd results [-h] [--details] [--uniqueing {on,off}]
                                [--checker-msg [CHECKER_MSG [CHECKER_MSG ...]]]
                                [--component [COMPONENT [COMPONENT ...]]]
                                [--detected-at TIMESTAMP]
-                               [--fixed-at TIMESTAMP] [-s] [--filter FILTER]
-                               [--url PRODUCT_URL]
+                               [--fixed-at TIMESTAMP]
+                               [--detected-before TIMESTAMP]
+                               [--detected-after TIMESTAMP]
+                               [--fixed-before TIMESTAMP]
+                               [--fixed-after TIMESTAMP] [-s]
+                               [--filter FILTER] [--url PRODUCT_URL]
                                [-o {plaintext,rows,table,csv,json}]
                                [--verbose {info,debug,debug_analyzer}]
                                RUN_NAMES [RUN_NAMES ...]
@@ -934,7 +977,10 @@ usage: CodeChecker cmd diff [-h] [-b BASE_RUNS [BASE_RUNS ...]]
                             [--checker-msg [CHECKER_MSG [CHECKER_MSG ...]]]
                             [--component [COMPONENT [COMPONENT ...]]]
                             [--detected-at TIMESTAMP] [--fixed-at TIMESTAMP]
-                            [-s] [--filter FILTER]
+                            [--detected-before TIMESTAMP]
+                            [--detected-after TIMESTAMP]
+                            [--fixed-before TIMESTAMP]
+                            [--fixed-after TIMESTAMP] [-s] [--filter FILTER]
                             (--new | --resolved | --unresolved)
                             [--url PRODUCT_URL]
                             [-o {plaintext,rows,table,csv,json,html,gerrit,codeclimate} [{plaintext,rows,table,csv,json,html,gerrit,codeclimate} ...]]
@@ -1115,7 +1161,11 @@ usage: CodeChecker cmd sum [-h] (-n RUN_NAME [RUN_NAME ...] | -a)
                            [--checker-msg [CHECKER_MSG [CHECKER_MSG ...]]]
                            [--component [COMPONENT [COMPONENT ...]]]
                            [--detected-at TIMESTAMP] [--fixed-at TIMESTAMP]
-                           [-s] [--filter FILTER] [--url PRODUCT_URL]
+                           [--detected-before TIMESTAMP]
+                           [--detected-after TIMESTAMP]
+                           [--fixed-before TIMESTAMP]
+                           [--fixed-after TIMESTAMP] [-s] [--filter FILTER]
+                           [--url PRODUCT_URL]
                            [-o {plaintext,rows,table,csv,json}]
                            [--verbose {info,debug,debug_analyzer}]
 

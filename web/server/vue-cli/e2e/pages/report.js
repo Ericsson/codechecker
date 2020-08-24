@@ -70,6 +70,20 @@ const createOptionFilterSection = (selector) => {
   };
 };
 
+const createDateFilterSection = (selector) => {
+  return {
+    selector,
+    elements: {
+      expansionBtn: ".expansion-btn",
+      settings: ".settings-btn",
+      clearBtn: ".clear-btn",
+      selectedItems: ".selected-item",
+      from: ".row > div:first-child .v-input",
+      to: ".row > div:last-child .v-input"
+    }
+  };
+};
+
 module.exports = {
   url: function() {
     return this.api.launchUrl + "/e2e/reports?review-status=Unreviewed&"
@@ -162,26 +176,26 @@ module.exports = {
         cancelBtn: ".cancel-btn",
       }
     },
-    detectionDateFilter: {
-      selector: "#detection-date-filter",
+    dateFilters: {
+      selector: "#date-filters",
       elements: {
-        expansionBtn: ".expansion-btn",
-        from: ".first-detection-date",
-        to: ".fix-date",
-        settings: ".settings-btn",
-        clearBtn: ".clear-btn"
+        expansionBtn: ".v-expansion-panel-header__icon",
+        active: ".v-expansion-panel--active"
       },
-      commands: [ filterCommands ]
+      sections: {
+        detectionDateFilter: createDateFilterSection("#detection-date-filter"),
+        fixDateFilter: createDateFilterSection("#fix-date-filter")
+      }
     },
-    fromDetectionDateDialog: {
-      selector: ".first-detection-date.v-dialog--active",
+    fromDateDialog: {
+      selector: ".v-dialog--active",
       elements: {
         date: ".v-date-picker-table td button",
         ok: ".ok-btn"
       }
     },
-    toDetectionDateDialog: {
-      selector: ".fix-date.v-dialog--active",
+    toDateDialog: {
+      selector: ".v-dialog--active",
       elements: {
         date: ".v-date-picker-table td button",
         ok: ".ok-btn"

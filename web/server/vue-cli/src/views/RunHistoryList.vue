@@ -338,10 +338,8 @@ export default {
           parse(d, "yyyy-MM-dd HH:mm:ss.SSSSSS", new Date())));
         const maxDate = max(dates.map(d =>
           parse(d, "yyyy-MM-dd HH:mm:ss.SSSSSS", new Date())));
-
-        urlState["first-detection-date"] =
-            format(minDate, "yyyy-MM-dd HH:mm:ss.SSSSS");
-        urlState["fix-date"] = format(maxDate, "yyyy-MM-dd HH:mm:ss.SSSSS");
+        urlState["detected-after"] = format(minDate, "yyyy-MM-dd HH:mm:ss");
+        urlState["detected-before"] = format(maxDate, "yyyy-MM-dd HH:mm:ss");
       }
 
       return {
@@ -519,7 +517,7 @@ export default {
       return {
         run: history.runName,
         "run-tag": history.versionTag || undefined,
-        "fix-date": history.versionTag ? undefined : history.time,
+        "detected-before": history.versionTag ? undefined : history.time,
         ...defaultReportFilterValues
 
       };

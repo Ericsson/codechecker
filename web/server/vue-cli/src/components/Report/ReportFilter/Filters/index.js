@@ -7,6 +7,7 @@ import ComparedToRunFilter from "./ComparedToRunFilter";
 import ComparedToTagFilter from "./ComparedToTagFilter";
 import ReviewStatusFilter from "./ReviewStatusFilter";
 import DetectionStatusFilter from "./DetectionStatusFilter";
+import FixDateFilter from "./FixDateFilter";
 import SeverityFilter from "./SeverityFilter";
 import DetectionDateFilter from "./DetectionDateFilter";
 import FilePathFilter from "./FilePathFilter";
@@ -26,6 +27,7 @@ export {
   ComparedToTagFilter,
   ReviewStatusFilter,
   DetectionStatusFilter,
+  FixDateFilter,
   SeverityFilter,
   DetectionDateFilter,
   FilePathFilter,

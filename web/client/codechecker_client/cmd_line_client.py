@@ -154,6 +154,18 @@ def check_deprecated_arg_usage(args):
                     'separate filter options of this command to filter the '
                     'results. For more information see the help.')
 
+    if 'detected_at' in args:
+        LOG.warning('"--detected-at" option has been deprecated. Use '
+                    '--detected-before/--detected-after options to filter the '
+                    'results by detection date. For more information see the '
+                    'help.')
+
+    if 'fixed_at' in args:
+        LOG.warning('"--fixed-at" option has been deprecated. Use '
+                    '--fixed-before/--fixed-after options to filter the '
+                    'results by fix date. For more information see the '
+                    'help.')
+
 
 def get_run_data(client, run_filter, sort_mode=None,
                  limit=constants.MAX_QUERY_SIZE):
@@ -319,6 +331,31 @@ def add_filter_conditions(client, report_filter, args):
 
     if 'fixed_at' in args:
         report_filter.fixDate = int(str_to_timestamp(args.fixed_at))
+
+    detected_at = None
+    fixed_at = None
+
+    if 'detected_before' in args or 'detected_after' in args:
+        detected_at = ttypes.DateInterval()
+
+        if 'detected_before' in args:
+            detected_at.before = int(str_to_timestamp(args.detected_before))
+
+        if 'detected_after' in args:
+            detected_at.after = int(str_to_timestamp(args.detected_after))
+
+    if 'fixed_before' in args or 'fixed_after' in args:
+        fixed_at = ttypes.DateInterval()
+
+        if 'fixed_before' in args:
+            fixed_at.before = int(str_to_timestamp(args.fixed_before))
+
+        if 'fixed_after' in args:
+            fixed_at.after = int(str_to_timestamp(args.fixed_after))
+
+    if detected_at or fixed_at:
+        report_filter.date = ttypes.ReportDate(detected=detected_at,
+                                               fixed=fixed_at)
 
 
 def process_run_filter_conditions(args):
