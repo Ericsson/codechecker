@@ -30,8 +30,8 @@ def execute(cmd):
             errors="ignore")
         out, err = proc.communicate()
 
-        print("stdout:\n\n" + out.decode("utf-8"))
-        print("stderr:\n\n" + err.decode("utf-8"))
+        print("stdout:\n\n" + out)
+        print("stderr:\n\n" + err)
 
         if proc.returncode != 0:
             print('Unsuccessful run: "' + ' '.join(cmd) + '"')

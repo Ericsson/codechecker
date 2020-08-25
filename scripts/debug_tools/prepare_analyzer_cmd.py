@@ -26,8 +26,17 @@ class AnalyzerCommandPathModifier(object):
 
     def __call__(self, path):
 
-        if re.search('clang$', path):
+        if re.search('clang(-(\d)+)?$', path):
             return self.opts.clang
+
+        if re.search('\.plist$', path):
+            # put a plist (seemingly analyzer output) file into the report_debug directory
+            # that is 2 levels above ctu-dir
+            return os.path.join(
+                os.path.dirname(
+                    os.path.dirname(
+                        self.opts.ctu_dir.rstrip(os.path.sep))),
+                os.path.basename(path))
 
         if self.opts.clang_plugin_name is not None and\
                 re.search(self.opts.clang_plugin_name, path):
