@@ -616,9 +616,16 @@ filter arguments:
                         <minimum_bug_path_length>:<maximum_bug_path_length>.
                         Valid values are: "4:10", "4:", ":10"
   --tag [TAG [TAG ...]]
-                        Filter results by version tag names. This can be used
-                        only if basename or newname is a run name (on the
-                        remote server).
+                        Filter results by version tag names.
+  --open-reports-date TIMESTAMP
+                        Get results which were detected BEFORE the given date
+                        and NOT FIXED BEFORE the given date. The detection
+                        date of a report is the storage date when the report
+                        was stored to the server for the first time. The
+                        format of TIMESTAMP is
+                        'year:month:day:hour:minute:second' (the "time" part
+                        can be omitted, in which case midnight (00:00:00) is
+                        used).
   --file [FILE_PATH [FILE_PATH ...]]
                         Filter results by file path. The file path can contain
                         multiple * quantifiers which matches any number of
@@ -910,6 +917,7 @@ usage: CodeChecker cmd results [-h] [--details] [--uniqueing {on,off}]
                                [--severity [SEVERITY [SEVERITY ...]]]
                                [--bug-path-length BUG_PATH_LENGTH]
                                [--tag [TAG [TAG ...]]]
+                               [--open-reports-date TIMESTAMP]
                                [--file [FILE_PATH [FILE_PATH ...]]]
                                [--checker-name [CHECKER_NAME [CHECKER_NAME ...]]]
                                [--checker-msg [CHECKER_MSG [CHECKER_MSG ...]]]
@@ -978,6 +986,7 @@ usage: CodeChecker cmd diff [-h] [-b BASE_RUNS [BASE_RUNS ...]]
                             [--severity [SEVERITY [SEVERITY ...]]]
                             [--bug-path-length BUG_PATH_LENGTH]
                             [--tag [TAG [TAG ...]]]
+                            [--open-reports-date TIMESTAMP]
                             [--file [FILE_PATH [FILE_PATH ...]]]
                             [--checker-name [CHECKER_NAME [CHECKER_NAME ...]]]
                             [--checker-msg [CHECKER_MSG [CHECKER_MSG ...]]]
@@ -1163,6 +1172,7 @@ usage: CodeChecker cmd sum [-h] (-n RUN_NAME [RUN_NAME ...] | -a)
                            [--severity [SEVERITY [SEVERITY ...]]]
                            [--bug-path-length BUG_PATH_LENGTH]
                            [--tag [TAG [TAG ...]]]
+                           [--open-reports-date TIMESTAMP]
                            [--file [FILE_PATH [FILE_PATH ...]]]
                            [--checker-name [CHECKER_NAME [CHECKER_NAME ...]]]
                            [--checker-msg [CHECKER_MSG [CHECKER_MSG ...]]]

@@ -70,7 +70,7 @@ const createOptionFilterSection = (selector) => {
   };
 };
 
-const createDateFilterSection = (selector) => {
+const createDateRageFilterSection = (selector) => {
   return {
     selector,
     elements: {
@@ -83,6 +83,18 @@ const createDateFilterSection = (selector) => {
     }
   };
 };
+
+const createDateFilterSection = (selector) => {
+  return {
+    selector,
+    elements: {
+      expansionBtn: ".expansion-btn",
+      clearBtn: ".clear-btn",
+      input: ".v-input",
+    }
+  };
+};
+
 
 module.exports = {
   url: function() {
@@ -102,6 +114,8 @@ module.exports = {
   sections: {
     baselineRunFilter: createOptionFilterSection("#run"),
     baselineTagFilter: createOptionFilterSection("#run-tag"),
+    baselineOpenReportsDateFilter:
+      createDateFilterSection("#open-reports-date"),
     compareToFilters: {
       selector: "#compare-to-filters",
       elements: {
@@ -111,6 +125,8 @@ module.exports = {
       sections: {
         compareToRunFilter: createOptionFilterSection("#newcheck"),
         compareToTagFilter: createOptionFilterSection("#run-tag-newcheck"),
+        compareToOpenReportsDateFilter:
+          createDateFilterSection("#compared-to-open-reports-date"),
         compareToDiffTypeFilter: createOptionFilterSection("#diff-type"),
       }
     },
@@ -184,8 +200,16 @@ module.exports = {
         active: ".v-expansion-panel--active"
       },
       sections: {
-        detectionDateFilter: createDateFilterSection("#detection-date-filter"),
-        fixDateFilter: createDateFilterSection("#fix-date-filter")
+        detectionDateFilter:
+          createDateRageFilterSection("#detection-date-filter"),
+        fixDateFilter: createDateRageFilterSection("#fix-date-filter")
+      }
+    },
+    openReportsDateDialog: {
+      selector: ".v-dialog--active",
+      elements: {
+        date: ".v-date-picker-table td button",
+        ok: ".ok-btn"
       }
     },
     fromDateDialog: {

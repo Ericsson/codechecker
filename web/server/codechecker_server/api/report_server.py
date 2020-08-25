@@ -201,6 +201,15 @@ def get_component_values(session, component_name):
     return skip, include
 
 
+def get_open_reports_date_filter_query(timestamp):
+    """ Get query for open reports date filter. """
+    date = datetime.fromtimestamp(timestamp)
+
+    return and_(Report.detected_at <= date,
+                or_(Report.fixed_at.is_(None),
+                    Report.fixed_at >= date))
+
+
 def process_report_filter(session, report_filter):
     """
     Process the new report filter.
@@ -318,6 +327,10 @@ def process_report_filter(session, report_filter):
                                 or_(Report.fixed_at.is_(None),
                                     Report.fixed_at >= history.time))))
         AND.append(or_(*OR))
+
+    if report_filter.openReportsDate:
+        AND.append(get_open_reports_date_filter_query(
+            report_filter.openReportsDate))
 
     if report_filter.componentNames:
         OR = []
@@ -647,7 +660,7 @@ def filter_unresolved_reports(q):
                        ReviewStatus.bug_hash == Report.bug_id)
 
 
-def get_report_hashes(session, run_ids, tag_ids):
+def get_report_hashes(session, run_ids, tag_ids, open_reports_date):
     """
     Get report hash list for the reports which can be found in the given runs
     and the given tags.
@@ -664,6 +677,9 @@ def get_report_hashes(session, run_ids, tag_ids):
             .filter(Report.detected_at <= RunHistory.time) \
             .filter(or_(Report.fixed_at.is_(None),
                         Report.fixed_at > RunHistory.time))
+
+    if open_reports_date:
+        q = q.filter(get_open_reports_date_filter_query(open_reports_date))
 
     return set([t[0] for t in q])
 
@@ -1780,23 +1796,30 @@ class ThriftRequestHandler(object):
         diff_type = cmp_data.diffType
 
         tag_ids = report_filter.runTag if report_filter else None
+        open_reports_date = report_filter.openReportsDate \
+            if report_filter else None
         base_line_hashes = get_report_hashes(session,
                                              base_run_ids,
-                                             tag_ids)
+                                             tag_ids,
+                                             open_reports_date)
 
-        # If run tag is set in compare data, after base line hashes are
-        # calculated remove it from the report filter because we will filter
-        # results by these hashes and there is no need to filter results by
-        # these tags again.
+        # If run tag/open reports date is set in compare data, after
+        # base line hashes are calculated remove it from the report filter
+        # because we will filter results by these hashes and there is no need
+        # to filter results by these tags/date again.
         if cmp_data.runTag:
             report_filter.runTag = None
+        if cmp_data.openReportsDate:
+            report_filter.openReportsDate = None
 
-        if not new_run_ids and not cmp_data.runTag:
+        if not new_run_ids and not cmp_data.runTag and \
+           not cmp_data.openReportsDate:
             return base_line_hashes, base_run_ids
 
         new_check_hashes = get_report_hashes(session,
                                              new_run_ids,
-                                             cmp_data.runTag)
+                                             cmp_data.runTag,
+                                             cmp_data.openReportsDate)
 
         report_hashes, run_ids = \
             get_diff_hashes_for_query(base_run_ids,

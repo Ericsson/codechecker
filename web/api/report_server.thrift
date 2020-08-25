@@ -280,6 +280,7 @@ struct ReportFilter {
   15: optional BugPathLengthRange bugPathLength, // Minimum and maximum values of bug path length.
   16: optional ReportDate         date,          // Dates of the report.
   17: optional list<string>       analyzerNames, // Names of the code analyzers.
+  18: optional i64                openReportsDate, // Open reports date in unix time format.
 }
 
 struct RunReportCount {
@@ -329,9 +330,10 @@ struct RunFilter {
 // (to what the results/metrics will be copared to) and the new run ids and the
 // diff type should be set in the CompareData type.
 struct CompareData {
-  1: list<i64>  runIds,
-  2: DiffType   diffType,
-  3: list<i64>  runTag,    // Ids of the run history tags.
+  1: list<i64>    runIds,
+  2: DiffType     diffType,
+  3: list<i64>    runTag,          // Ids of the run history tags.
+  4: optional i64 openReportsDate, // Open reports date in unix time format.
 }
 
 // This type is used to get line content information for the given file at the

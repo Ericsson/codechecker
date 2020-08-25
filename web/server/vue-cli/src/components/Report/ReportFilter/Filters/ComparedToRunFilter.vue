@@ -14,14 +14,9 @@ export default {
   methods: {
     async updateReportFilter() {
       const selectedRunIds = await this.getSelectedRunIds();
-
-      if (selectedRunIds.length) {
-        this.setCmpData({
-          runIds: selectedRunIds
-        });
-      } else {
-        this.setCmpData(null);
-      }
+      this.setCmpData({
+        runIds: selectedRunIds.length ? selectedRunIds : null
+      });
     }
   }
 };
