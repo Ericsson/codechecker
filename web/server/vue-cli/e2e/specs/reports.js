@@ -69,15 +69,15 @@ module.exports = {
     const reportPage = browser.page.report();
 
     // Sort reports in ascending order by bug path length.
-    reportPage.sortReports(6, (data) => {
+    reportPage.sortReports(7, (data) => {
       return data.every((e, ind, a) =>
-        !ind || parseInt(a[ind - 1][5]) <= parseInt(e[5]));
+        !ind || parseInt(a[ind - 1][6]) <= parseInt(e[6]));
     });
 
     // Sort reports in descending order by bug path length.
-    reportPage.sortReports(6, (data) => {
+    reportPage.sortReports(7, (data) => {
       return data.every((e, ind, a) =>
-        !ind || parseInt(a[ind - 1][5]) >= parseInt(e[5]));
+        !ind || parseInt(a[ind - 1][6]) >= parseInt(e[6]));
     });
   },
 
