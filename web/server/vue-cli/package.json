@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@mdi/font": "^5.3.45",
-    "codechecker-api": "6.28.0-dev3",
+    "codechecker-api": "6.29.0",
     "codemirror": "^5.55.0",
     "date-fns": "^2.14.0",
     "highlight.js": "^10.1.1",
@@ -50,7 +50,7 @@
     "babel-eslint": "^10.1.0",
     "babel-jest": "^26.1.0",
     "babel-loader": "^8.1.0",
-    "chromedriver": "^83.0.0",
+    "chromedriver": "^85.0.0",
     "copy-webpack-plugin": "^6.0.3",
     "core-js": "^3.6.5",
     "css-loader": "^3.6.0",

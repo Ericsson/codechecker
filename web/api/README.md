@@ -38,11 +38,9 @@ until the api is accepted.
 
 ### 2. Server/client implementation for the API change
 
-- Update the *requirements.txt* and the **web/server/vendor/Makefile**.
+- Update the *requirements.txt* and the *web/server/vue-cli/package.json*.
 - Remove the old files, update the venv and rebuild the package:
   ```sh
-  rm -rf web/server/vendor/codechecker-api-js/ && \
-  rm -rf venv_dev && make venv_dev && \
   make clean_package && make package
   ```
 - Extend the server with the new API functionality with the dev API versions
@@ -68,7 +66,7 @@ in the setup.py and package.json files.
 in the pull request to use the new client stubs with version **v6.25.0**.
 - Update the supported api versions to **v6.25** in the server files:
   - `web/codechecker_web/shared/version.py`
-  - `web/server/www/scripts/version.js`
+  - `web/server/vue-cli/config/webpack.common.js`
 
 ### 5. Mark the development packages as deprecated on pypi and npmjs
 
