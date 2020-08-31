@@ -29,6 +29,7 @@ CodeChecker result directory which can be stored to a CodeChecker server.
 | **Go**         | [Golint](/tools/report-converter/README.md#golint)    | ✓ |
 |                | [Staticcheck](https://staticcheck.io/)    | ✗ |
 |                | [go-critic](https://github.com/go-critic/go-critic)    | ✗ |
+| **Markdown**   | [Markdownlint](https://github.com/markdownlint/markdownlint)    | ✓ |
 
 ## Clang Sanitizers
 | Name         | Support storage of analyzer results |

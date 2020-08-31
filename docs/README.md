@@ -114,6 +114,7 @@ The following tools are supported:
 | **JavaScript** | [ESLint](/tools/report-converter/README.md#eslint)    |
 | **TypeScript** | [TSLint](/tools/report-converter/README.md#tslint)    |
 | **Go**         | [Golint](/tools/report-converter/README.md#golint)    |
+| **Markdown**   | [Markdownlint](/tools/report-converter/README.md#markdownlint)    |
 
 
 For details see 
