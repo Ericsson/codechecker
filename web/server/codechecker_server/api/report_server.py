@@ -387,6 +387,9 @@ def process_run_history_filter(query, run_ids, run_history_filter):
 
         query = query.filter(or_(*OR))
 
+    if run_history_filter and run_history_filter.tagIds:
+        query = query.filter(RunHistory.id.in_(run_history_filter.tagIds))
+
     return query
 
 
@@ -2196,7 +2199,12 @@ class ThriftRequestHandler(object):
 
             tag_run_ids = session.query(RunHistory.run_id.distinct()) \
                 .filter(RunHistory.version_tag.isnot(None)) \
-                .subquery()
+
+            if run_ids:
+                tag_run_ids = tag_run_ids.filter(
+                    RunHistory.run_id.in_(run_ids))
+
+            tag_run_ids = tag_run_ids.subquery()
 
             report_cnt_q = session.query(Report.run_id,
                                          Report.bug_id,
@@ -2238,6 +2246,7 @@ class ThriftRequestHandler(object):
             tag_q = tag_q.subquery()
 
             q = session.query(tag_q.c.run_history_id,
+                              func.max(Run.id),
                               func.max(Run.name).label('run_name'),
                               func.max(RunHistory.id),
                               func.max(RunHistory.time),
@@ -2255,12 +2264,13 @@ class ThriftRequestHandler(object):
             if limit:
                 q = q.limit(limit).offset(offset)
 
-            for _, run_name, tag_id, version_time, tag, count in q:
+            for _, run_id, run_name, tag_id, version_time, tag, count in q:
                 if tag:
                     results.append(RunTagCount(id=tag_id,
                                                time=str(version_time),
                                                name=tag,
                                                runName=run_name,
+                                               runId=run_id,
                                                count=count if count else 0))
         return results
 

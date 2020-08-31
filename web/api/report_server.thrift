@@ -203,15 +203,17 @@ typedef list<RunHistoryData> RunHistoryDataList
  * If exactMatch field is True it will use exact match for run names.
  */
 struct RunHistoryFilter {
-  1: list<string> tagNames,   // Part of the tag names.
+  1: list<string> tagNames,     // Part of the tag names.
+  2: optional list<i64> tagIds, // Tag ids.
 }
 
 struct RunTagCount {
-  1: string          time,   // Date time of the last run.
-  2: string          name,   // Name of the tag.
-  3: i64             count,  // Count of the reports.
-  4: i64             id,     // Id of the run tag.
-  5: string          runName // Name of the run which the tag belongs to.
+  1: string          time,    // Date time of the last run.
+  2: string          name,    // Name of the tag.
+  3: i64             count,   // Count of the reports.
+  4: i64             id,      // Id of the run tag.
+  5: string          runName, // Name of the run which the tag belongs to.
+  6: optional i64    runId,   // Id of the run.
 }
 typedef list<RunTagCount> RunTagCounts
 
