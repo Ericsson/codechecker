@@ -168,7 +168,12 @@ class AnalyzeParseTestCase(
         post_processed_output = []
         skip_prefixes = ["[] - Analysis length:",
                          "[] - Previous analysis results",
-                         "[] - Skipping input file"]
+                         "[] - Skipping input file",
+                         # Enabled checkers are listed in the beginning of
+                         # analysis.
+                         "[] - Enabled checkers:",
+                         "clang-tidy:",
+                         "clangsa:"]
         for line in output:
             # replace timestamps
             line = re.sub(r'\[\w+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}\]',
