@@ -53,6 +53,7 @@ typedef list<Product> Products
 service codeCheckerProductService {
 
   // Returns the CodeChecker version that is running on the server.
+  // !DEPRECATED Use ServerInfo API to get the package version.
   string getPackageVersion(),
 
   // *** Handling of product lists and metadata querying *** //

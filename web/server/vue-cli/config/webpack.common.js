@@ -49,6 +49,7 @@ module.exports = {
       '@cc/db-access': join('codechecker-api', 'lib', 'codeCheckerDBAccess.js'),
       '@cc/prod': join('codechecker-api', 'lib', 'codeCheckerProductService.js'),
       '@cc/prod-types': join('codechecker-api', 'lib', 'products_types.js'),
+      '@cc/server-info': join('codechecker-api', 'lib', 'serverInfoService.js'),
       '@cc/report-server-types': join('codechecker-api', 'lib', 'report_server_types.js'),
       '@cc/shared-types': join('codechecker-api', 'lib', 'codechecker_api_shared_types.js'),
       'thrift': join('thrift', 'lib', 'nodejs', 'lib', 'thrift', 'browser.js'),

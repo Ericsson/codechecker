@@ -195,16 +195,9 @@ export default {
     }
   },
 
-  watch: {
-    isAuthenticated() {
-      if (!this.isAuthenticated) return;
-
-      this.getPackageVersion();
-    }
-  },
-
   mounted() {
     this.getAnnouncement();
+    this.getPackageVersion();
   },
 
   methods: {

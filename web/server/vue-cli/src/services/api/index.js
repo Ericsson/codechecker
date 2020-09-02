@@ -6,6 +6,7 @@ import {
   handleThriftError
 } from "./_base.service";
 import prodService from "./product.service";
+import serverInfoService from "./server-info.service";
 
 export {
   authService,
@@ -13,5 +14,6 @@ export {
   confService,
   eventHub,
   handleThriftError,
-  prodService
+  prodService,
+  serverInfoService
 };
