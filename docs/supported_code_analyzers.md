@@ -15,6 +15,7 @@ CodeChecker result directory which can be stored to a CodeChecker server.
 |                | [Clang Sanitizers](#clang-sanitizers)    | ✓ |
 |                | [Cppcheck](/tools/report-converter/README.md#cppcheck)    | ✓ |
 |                | [Facebook Infer](/tools/report-converter/README.md#fbinfer)    | ✓ |
+|                | [Coccinelle](/tools/report-converter/README.md#coccinelle)   | ✓ |
 | **Java**       | [FindBugs](http://findbugs.sourceforge.net/)    | ✗ |
 |                | [SpotBugs](/tools/report-converter/README.md#spotbugs)    | ✓ |
 |                | [Facebook Infer](/tools/report-converter/README.md#fbinfer)    | ✓ |
