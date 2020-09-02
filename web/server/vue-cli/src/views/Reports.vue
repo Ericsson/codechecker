@@ -250,13 +250,13 @@ export default {
           sortable: true
         },
         {
-          text: "Review status",
+          text: "Latest review status",
           value: "reviewData",
           align: "center",
           sortable: true
         },
         {
-          text: "Detection status",
+          text: "Latest detection status",
           value: "detectionStatus",
           align: "center",
           sortable: true

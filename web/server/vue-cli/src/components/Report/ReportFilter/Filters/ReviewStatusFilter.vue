@@ -1,7 +1,7 @@
 <template>
   <select-option
     :id="id"
-    title="Review Status"
+    title="Latest Review Status"
     :bus="bus"
     :fetch-items="fetchItems"
     :loading="loading"
@@ -12,6 +12,29 @@
     <template v-slot:icon="{ item }">
       <review-status-icon :status="item.id" />
     </template>
+
+    <template v-slot:append-toolbar-title>
+      <tooltip-help-icon>
+        Filter reports by the <b>latest</b> review status.<br><br>
+
+        Reports can be assigned a review status of the following values:
+        <ul>
+          <li>
+            <b>Unreviewed</b>: Nobody has seen this report.
+          </li>
+          <li>
+            <b>Confirmed:</b> This is really a bug.
+          </li>
+          <li>
+            <b>False positive:</b> This is not a bug.
+          </li>
+          <li>
+            <b>Intentional:</b> This report is a bug but we don't want to fix
+            it.
+          </li>
+        </ul>
+      </tooltip-help-icon>
+    </template>
   </select-option>
 </template>
 
@@ -19,6 +42,7 @@
 import { ccService, handleThriftError } from "@cc-api";
 
 import { ReportFilter, ReviewStatus } from "@cc/report-server-types";
+import TooltipHelpIcon from "@/components/TooltipHelpIcon";
 import { ReviewStatusIcon } from "@/components/Icons";
 import { ReviewStatusMixin } from "@/mixins";
 
@@ -29,7 +53,8 @@ export default {
   name: "ReviewStatusFilter",
   components: {
     SelectOption,
-    ReviewStatusIcon
+    ReviewStatusIcon,
+    TooltipHelpIcon
   },
   mixins: [ BaseSelectOptionFilterMixin, ReviewStatusMixin ],
 

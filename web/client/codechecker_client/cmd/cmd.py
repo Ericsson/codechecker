@@ -57,7 +57,7 @@ def get_argparser_ctor_args():
 
     return {
         'prog': 'CodeChecker cmd',
-        'formatter_class': argparse.ArgumentDefaultsHelpFormatter,
+        'formatter_class': arg.RawDescriptionDefaultHelpFormatter,
 
         # Description is shown when the command's help is queried directly
         'description': "The command-line client is used to connect to a "
@@ -206,16 +206,42 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                          dest="review_status",
                          metavar='REVIEW_STATUS',
                          default=init_default('review_status'),
-                         help="Filter results by review statuses." +
-                         warn_diff_mode)
+                         help="R|Filter results by review statuses.\n"
+                              "Reports can be assigned a review status of the "
+                              "following values:\n"
+                              "- Unreviewed: Nobody has seen this report.\n"
+                              "- Confirmed: This is really a bug.\n"
+                              "- False positive: This is not a bug.\n"
+                              "- Intentional: This report is a bug but we "
+                              "don't want to fix it." +
+                              warn_diff_mode)
 
     f_group.add_argument('--detection-status',
                          nargs='*',
                          dest="detection_status",
                          metavar='DETECTION_STATUS',
                          default=init_default('detection_status'),
-                         help="Filter results by detection statuses." +
-                         warn_diff_mode)
+                         help="R|Filter results by detection statuses.\n"
+                              "The detection status is the latest state of a "
+                              "bug report in a run. When a unique report is "
+                              "first detected it will be marked as New. When "
+                              "the report is stored again with the same run "
+                              "name then the detection status changes to one "
+                              "of the following options:\n"
+                              "- Resolved: when the bug report can't be found "
+                              "after the subsequent storage.\n"
+                              "- Unresolved: when the bug report is still "
+                              "among the results after the subsequent "
+                              "storage.\n"
+                              "- Reopened: when a Resolved bug appears "
+                              "again.\n"
+                              "- Off: The bug was reported by a checker that "
+                              "was switched off during the last analysis "
+                              "which results were stored.\n"
+                              "- Unavailable: were reported by a checker that "
+                              "does not exists in the analyzer anymore "
+                              "because it was removed or renamed." +
+                              warn_diff_mode)
 
     f_group.add_argument('--severity',
                          nargs='*',
