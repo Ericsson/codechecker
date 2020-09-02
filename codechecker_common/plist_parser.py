@@ -155,6 +155,7 @@ def parse_plist_file(path, source_root=None, allow_plist_update=True):
             return files, reports
 
         files = plist['files']
+        metadata = plist.get('metadata')
 
         diag_changed = False
         for diag in plist['diagnostics']:
@@ -195,7 +196,7 @@ def parse_plist_file(path, source_root=None, allow_plist_update=True):
 
             bug_path_items = [item for item in diag['path']]
 
-            report = Report(main_section, bug_path_items, files)
+            report = Report(main_section, bug_path_items, files, metadata)
             reports.append(report)
 
         if diag_changed and allow_plist_update:

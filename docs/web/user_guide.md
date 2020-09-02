@@ -633,6 +633,11 @@ filter arguments:
                         Filter results by checker messages.The checker message
                         can contain multiple * quantifiers which matches any
                         number of characters (zero or more).
+  --analyzer-name [ANALYZER_NAME [ANALYZER_NAME ...]]
+                        Filter results by analyzer names. The analyzer name
+                        can contain multiple * quantifiers which match any
+                        number of characters (zero or more). So for example
+                        "clang*" will match "clangsa" and "clang-tidy".
   --component [COMPONENT [COMPONENT ...]]
                         Filter results by source components. This can be used
                         only if basename or newname is a run name (on the
@@ -908,6 +913,7 @@ usage: CodeChecker cmd results [-h] [--details] [--uniqueing {on,off}]
                                [--file [FILE_PATH [FILE_PATH ...]]]
                                [--checker-name [CHECKER_NAME [CHECKER_NAME ...]]]
                                [--checker-msg [CHECKER_MSG [CHECKER_MSG ...]]]
+                               [--analyzer-name [ANALYZER_NAME [ANALYZER_NAME ...]]]
                                [--component [COMPONENT [COMPONENT ...]]]
                                [--detected-at TIMESTAMP]
                                [--fixed-at TIMESTAMP]
@@ -975,6 +981,7 @@ usage: CodeChecker cmd diff [-h] [-b BASE_RUNS [BASE_RUNS ...]]
                             [--file [FILE_PATH [FILE_PATH ...]]]
                             [--checker-name [CHECKER_NAME [CHECKER_NAME ...]]]
                             [--checker-msg [CHECKER_MSG [CHECKER_MSG ...]]]
+                            [--analyzer-name [ANALYZER_NAME [ANALYZER_NAME ...]]]
                             [--component [COMPONENT [COMPONENT ...]]]
                             [--detected-at TIMESTAMP] [--fixed-at TIMESTAMP]
                             [--detected-before TIMESTAMP]
@@ -1159,6 +1166,7 @@ usage: CodeChecker cmd sum [-h] (-n RUN_NAME [RUN_NAME ...] | -a)
                            [--file [FILE_PATH [FILE_PATH ...]]]
                            [--checker-name [CHECKER_NAME [CHECKER_NAME ...]]]
                            [--checker-msg [CHECKER_MSG [CHECKER_MSG ...]]]
+                           [--analyzer-name [ANALYZER_NAME [ANALYZER_NAME ...]]]
                            [--component [COMPONENT [COMPONENT ...]]]
                            [--detected-at TIMESTAMP] [--fixed-at TIMESTAMP]
                            [--detected-before TIMESTAMP]

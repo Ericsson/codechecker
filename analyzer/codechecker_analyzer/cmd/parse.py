@@ -713,7 +713,8 @@ def main(args):
         element will be a list of source code comments related to the actual
         report.
         """
-        report = Report({'check_name': checker_name}, diag['path'], files)
+        report = Report({'check_name': checker_name}, diag['path'], files,
+                        metadata=None)
         path_hash = get_report_path_hash(report)
         if path_hash in processed_path_hashes:
             LOG.debug("Skip report because it is a deduplication of an "

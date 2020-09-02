@@ -239,6 +239,7 @@ struct ReportData {
   14: string          fixedAt          // Date when the report was fixed.
   15: i64             bugPathLength,   // Length of the bug path.
   16: optional ReportDetails details,  // Details of the report.
+  17: optional string analyzerName,    // Analyzer name.
 }
 typedef list<ReportData> ReportDataList
 
@@ -278,6 +279,7 @@ struct ReportFilter {
   14: list<string>         componentNames,     // Names of the source components.
   15: optional BugPathLengthRange bugPathLength, // Minimum and maximum values of bug path length.
   16: optional ReportDate         date,          // Dates of the report.
+  17: optional list<string>       analyzerNames, // Names of the code analyzers.
 }
 
 struct RunReportCount {
@@ -601,6 +603,17 @@ service codeCheckerDBAccess {
                                       4: i64          limit,
                                       5: i64          offset)
                                       throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // If the run id list is empty the metrics will be counted
+  // for all of the runs and in compare mode all of the runs
+  // will be used as a baseline excluding the runs in compare data.
+  // PERMISSION: PRODUCT_ACCESS
+  map<string, i64> getAnalyzerNameCounts(1: list<i64>    runIds,
+                                         2: ReportFilter reportFilter,
+                                         3: CompareData  cmpData,
+                                         4: i64          limit,
+                                         5: i64          offset)
+                                         throws (1: codechecker_api_shared.RequestFailed requestError),
 
   //============================================
   // Source component related API calls.

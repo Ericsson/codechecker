@@ -28,6 +28,7 @@ module.exports = {
       reportPage.section.checkerMessageFilter,
       reportPage.section.checkerMessageFilter,
       reportPage.section.reportHashFilter,
+      reportPage.section.analyzerNameFilter,
       reportPage.section.bugPathLengthFilter
     ].forEach(section => {
       section.click("@expansionBtn");
@@ -56,6 +57,7 @@ module.exports = {
       reportPage.section.severityFilter,
       reportPage.section.reviewStatusFilter,
       reportPage.section.detectionStatusFilter,
+      reportPage.section.analyzerNameFilter,
       reportPage.section.sourceComponentFilter,
       reportPage.section.checkerMessageFilter
     ].forEach(section => {
@@ -68,16 +70,18 @@ module.exports = {
   "sort reports by bug path length" (browser) {
     const reportPage = browser.page.report();
 
+    const colIdx = 8;
+
     // Sort reports in ascending order by bug path length.
-    reportPage.sortReports(7, (data) => {
+    reportPage.sortReports(colIdx, (data) => {
       return data.every((e, ind, a) =>
-        !ind || parseInt(a[ind - 1][6]) <= parseInt(e[6]));
+        !ind || parseInt(a[ind - 1][colIdx - 1]) <= parseInt(e[colIdx - 1]));
     });
 
     // Sort reports in descending order by bug path length.
-    reportPage.sortReports(7, (data) => {
+    reportPage.sortReports(colIdx, (data) => {
       return data.every((e, ind, a) =>
-        !ind || parseInt(a[ind - 1][6]) >= parseInt(e[6]));
+        !ind || parseInt(a[ind - 1][colIdx - 1]) >= parseInt(e[colIdx - 1]));
     });
   },
 
@@ -328,6 +332,23 @@ module.exports = {
 
     section.api.elements("@selectedItems", ({result}) => {
       browser.assert.ok(result.value.length === 4);
+    });
+  },
+
+  "set analyzer name filter" (browser) {
+    const reportPage = browser.page.report();
+    const section = reportPage.section.analyzerNameFilter;
+
+    section.openFilterSettings();
+
+    reportPage.section.settingsMenu
+      .toggleMenuItem(0)
+      .applyFilter();
+
+    section.closeFilterSettings();
+
+    section.api.elements("@selectedItems", ({result}) => {
+      browser.assert.ok(result.value.length === 1);
     });
   },
 

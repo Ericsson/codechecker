@@ -120,6 +120,7 @@ module.exports = {
     severityFilter: createOptionFilterSection("#severity"),
     reviewStatusFilter: createOptionFilterSection("#review-status"),
     detectionStatusFilter: createOptionFilterSection("#detection-status"),
+    analyzerNameFilter: createOptionFilterSection("#analyzer-name"),
     bugPathLengthFilter: {
       selector: "#bug-path-length-filter",
       elements: {

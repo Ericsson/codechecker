@@ -25,7 +25,7 @@ class Report(object):
     from the path section for easier skip/suppression handling
     and result processing.
     """
-    def __init__(self, main, bugpath, files):
+    def __init__(self, main, bugpath, files, metadata=None):
         # Dictionary containing checker name, report hash,
         # main report position, report message ...
         self.__main = main
@@ -36,6 +36,9 @@ class Report(object):
 
         # Dictionary fileid to filepath that bugpath events refer to
         self.__files = files
+
+        # Dictionary containing metadata information (analyzer name, version).
+        self.__metadata = metadata
 
     @staticmethod
     def from_thrift_report(report_data):
@@ -86,6 +89,10 @@ class Report(object):
     @property
     def file_path(self):
         return self.__files[self.__main['location']['file']]
+
+    @property
+    def metadata(self):
+        return self.__metadata
 
     def __str__(self):
         msg = json.dumps(self.__main, sort_keys=True, indent=2)

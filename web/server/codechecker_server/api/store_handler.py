@@ -430,7 +430,8 @@ def addReport(session,
               bug_extended_data,
               detection_status,
               detection_time,
-              severity_map):
+              severity_map,
+              analyzer_name=None):
     """
     """
     try:
@@ -451,7 +452,8 @@ def addReport(session,
                         severity,
                         detection_status,
                         detection_time,
-                        len(events))
+                        len(events),
+                        analyzer_name)
 
         session.add(report)
         session.flush()

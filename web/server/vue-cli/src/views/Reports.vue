@@ -233,6 +233,12 @@ export default {
           sortable: true
         },
         {
+          text: "Analyzer",
+          value: "analyzerName",
+          align: "center",
+          sortable: false
+        },
+        {
           text: "Severity",
           value: "severity",
           sortable: true
