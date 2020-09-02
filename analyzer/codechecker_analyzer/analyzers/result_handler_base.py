@@ -13,6 +13,7 @@ Result handlers to manage the output of the static analyzers.
 from abc import ABCMeta
 import hashlib
 import os
+import shlex
 
 from codechecker_common.logger import get_logger
 
@@ -92,8 +93,36 @@ class ResultHandler(object, metaclass=ABCMeta):
             os.path.join(self.buildaction.directory,
                          self.analyzed_source_file))
 
-        build_info = source_file + '_' + \
-            self.buildaction.original_command
+        # In case of "make 4.3" depending on compile-time options "make" tool
+        # can be built so a subprocess named cc1build will be logged by
+        # "CodeChecker log".
+        # See posix_spawn() option:
+        # https://lists.gnu.org/archive/html/info-gnu/2020-01/msg00004.html
+        # In this case the -o output argument of cc1build command is a randomly
+        # named temporary file. We can't afford dynamic parts in the original
+        # build command, because its hash is used for identification in the
+        # plist file name.
+        #
+        # TODO: This solution is considered a workaround, because the real
+        # question is why such a subprocess is logged? Can cc1build be always
+        # used as a traditional g++ command?
+        #
+        # Note that some information loss occurs during the following algorithm
+        # because ' '.join(shlex.split(cmd)) is not necessarily equal to cmd:
+        # g++ -DVAR="hello world" main.cpp
+
+        args = shlex.split(self.buildaction.original_command)
+        indices = [idx for idx, v in enumerate(args) if v.startswith('-o')]
+
+        for idx in reversed(indices):
+            # Output can be given separate or joint:
+            # -o a.out vs. -oa.out
+            # In the first case we delete its argument too.
+            if args[idx] == '-o':
+                del args[idx]
+            del args[idx]
+
+        build_info = source_file + '_' + ' '.join(args)
 
         return analyzed_file_name + '_' + \
             str(self.buildaction.analyzer_type) + '_' + \
