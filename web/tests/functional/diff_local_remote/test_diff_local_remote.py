@@ -387,7 +387,7 @@ class LocalRemote(unittest.TestCase):
             review_data = json.load(rw_file)
 
         lbls = review_data["labels"]
-        self.assertEqual(lbls["Verified"], 1)
+        self.assertEqual(lbls["Verified"], -1)
         self.assertEqual(lbls["Code-Review"], -1)
         self.assertEqual(review_data["message"],
                          "CodeChecker found 4 issue(s) in the code.")
@@ -454,7 +454,7 @@ class LocalRemote(unittest.TestCase):
             review_data = json.load(rw_file)
 
         lbls = review_data["labels"]
-        self.assertEqual(lbls["Verified"], 1)
+        self.assertEqual(lbls["Verified"], -1)
         self.assertEqual(lbls["Code-Review"], -1)
         self.assertEqual(review_data["message"],
                          "CodeChecker found 4 issue(s) in the code. "
