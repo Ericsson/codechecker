@@ -1181,7 +1181,7 @@ def handle_diff_results(args):
                   "message": message,
                   "labels": {
                       "Code-Review": -1 if report_count else 1,
-                      "Verified": 1},
+                      "Verified": -1 if report_count else 1},
                   "comments": review_comments}
 
         gerrit_review_json = os.path.join(output_dir,
