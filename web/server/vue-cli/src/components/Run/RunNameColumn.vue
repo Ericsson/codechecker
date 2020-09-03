@@ -3,7 +3,14 @@
     <v-list-item-content>
       <v-list-item-title>
         <router-link
-          :to="{ name: 'reports', query: reportFilterQuery }"
+          :to="{ name: 'reports',
+                 query: {
+                   ...(queries['reports'] === undefined
+                     ? defaultReportFilterValues
+                     : queries['reports']),
+                   ...reportFilterQuery
+                 }
+          }"
           class="name mr-2"
         >
           {{ name }}
@@ -53,7 +60,13 @@
         </v-btn>
 
         <v-btn
-          :to="{ name: 'statistics', query: statisticsFilterQuery }"
+          :to="{ name: 'statistics',
+                 query: {
+                   ...(queries['statistics'] === undefined
+                     ? defaultStatisticsFilterValues
+                     : queries['statistics']),
+                   ...statisticsFilterQuery
+                 } }"
           class="show-statistics"
           title="Show statistics"
           color="green"
@@ -108,7 +121,11 @@
 </template>
 
 <script>
+import { mapGetters } from "vuex";
 import { RunDescription } from "@/components/Run";
+
+import { defaultReportFilterValues } from "@/components/Report/ReportFilter";
+import { defaultStatisticsFilterValues } from "@/components/Statistics";
 
 import { DetectionStatusMixin, StrToColorMixin } from "@/mixins";
 import { DetectionStatusIcon } from "@/components/Icons";
@@ -130,6 +147,17 @@ export default {
     openCheckCommandDialog: { type: Function, default: () => {} },
     reportFilterQuery: { type: Object, default: () => {} },
     statisticsFilterQuery: { type: Object, default: () => {} },
+  },
+  data() {
+    return {
+      defaultReportFilterValues,
+      defaultStatisticsFilterValues
+    };
+  },
+  computed: {
+    ...mapGetters([
+      "queries"
+    ])
   }
 };
 </script>

@@ -1,8 +1,6 @@
 <template>
   <v-container id="product" fluid>
-    <keep-alive>
-      <router-view />
-    </keep-alive>
+    <router-view />
   </v-container>
 </template>
 

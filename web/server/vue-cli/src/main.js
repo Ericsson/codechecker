@@ -22,6 +22,7 @@ import {
   GET_CURRENT_PRODUCT,
   GET_CURRENT_PRODUCT_CONFIG
 } from "@/store/actions.type";
+import { CLEAR_QUERIES, SET_QUERIES } from "@/store/mutations.type";
 import convertOldUrlToNew from "./router/backward-compatible-url";
 
 import router from "./router";
@@ -82,6 +83,13 @@ router.beforeResolve((to, from, next) => {
 
     next();
   });
+});
+
+router.afterEach(to => {
+  if (to.name === "products")
+    store.commit(CLEAR_QUERIES, { except: [ "products" ] });
+
+  store.commit(SET_QUERIES, { location: to.name, query: to.query });
 });
 
 new Vue({
