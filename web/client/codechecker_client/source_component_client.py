@@ -29,16 +29,6 @@ def init_logger(level, stream=None, logger_name='system'):
     LOG = logger.get_logger(logger_name)
 
 
-def check_unicode_string(check_str, var_name):
-    try:
-        check_str.decode()
-    except UnicodeDecodeError as ex:
-        LOG.error("%s contains unicode characters which is not "
-                  "supported by this client!", var_name)
-        LOG.debug(ex)
-        sys.exit(1)
-
-
 def handle_add_component(args):
     init_logger(args.verbose if 'verbose' in args else None)
 
@@ -49,11 +39,6 @@ def handle_add_component(args):
         value = component_file.read().strip()
 
     description = args.description if 'description' in args else None
-
-    check_unicode_string(args.name, "Component name")
-
-    if description:
-        check_unicode_string(args.description, "Component description")
 
     # Check that the given source component is exists.
     source_component = client.getSourceComponents([args.name])

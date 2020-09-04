@@ -14,6 +14,7 @@ This module tests the CodeChecker command line.
 import json
 import os
 import subprocess
+import tempfile
 import unittest
 
 from libtest import env
@@ -252,3 +253,48 @@ class TestCmdline(unittest.TestCase):
 
         self.assertEqual(0, ret)
         self.assertEqual(2, len(json.loads(res)))
+
+    def test_cmd_component_manage(self):
+        """ Manage component from command line. """
+        component_name = "cmd ஜ۩۞۩ஜ"
+        description = "component from command line"
+        value = '\n'.join(['+*/divide_zero.cpp',
+                           '-*/new_delete.cpp',
+                           '-árvíztűrő tükörfúrógép'])
+
+        env = self._test_config['codechecker_cfg']['check_env']
+
+        # Add new source component.
+        with tempfile.NamedTemporaryFile() as component_f:
+            component_f.write(value.encode('utf-8'))
+
+            add_cmd = [self._codechecker_cmd, 'cmd', 'components', 'add',
+                       '--description', description,
+                       '-i', component_f.name,
+                       component_name,
+                       '--url', str(self.server_url)]
+
+            ret, out, _ = run_cmd(add_cmd, env=env)
+
+        self.assertEqual(0, ret)
+
+        # List source components.
+        list_cmd = [self._codechecker_cmd, 'cmd', 'components', 'list',
+                    '-o', 'json',
+                    '--url', str(self.server_url)]
+
+        ret, out, _ = run_cmd(list_cmd, env=env)
+        self.assertEqual(0, ret)
+
+        res = json.loads(out)
+        self.assertNotEqual(0, len(res))
+        self.assertEqual(1,
+                         len([r for r in res if r['name'] == component_name]))
+
+        # Remove source component.
+        rm_cmd = [self._codechecker_cmd, 'cmd', 'components', 'del',
+                  component_name,
+                  '--url', str(self.server_url)]
+
+        ret, _, _ = run_cmd(rm_cmd, env=env)
+        self.assertEqual(0, ret)
