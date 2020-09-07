@@ -24,7 +24,7 @@
 
         <v-list-item-content class="pa-0">
           <slot name="title" :item="item">
-            <v-list-item-title>
+            <v-list-item-title :title="item.title">
               {{ item.title }}
             </v-list-item-title>
           </slot>
