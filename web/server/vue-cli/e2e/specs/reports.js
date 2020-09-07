@@ -19,6 +19,7 @@ module.exports = {
     [
       reportPage.section.baselineRunFilter,
       reportPage.section.baselineTagFilter,
+      reportPage.section.baselineOpenReportsDateFilter,
       reportPage.section.filePathFilter,
       reportPage.section.checkerNameFilter,
       reportPage.section.severityFilter,
@@ -166,7 +167,26 @@ module.exports = {
     });
   },
 
-  "open compare to expansion panel" (browser) {
+  "set baseline open reports date filter" (browser) {
+    const reportPage = browser.page.report();
+    const section = reportPage.section.baselineOpenReportsDateFilter;
+    const dateDialog = reportPage.section.openReportsDateDialog;
+
+    section.click("@input");
+    reportPage.expect.section(dateDialog).to.be.visible.before(5000);
+
+    dateDialog
+      .click("@date")
+      .click("@ok");
+
+    section.click("@clearBtn");
+
+    reportPage
+      .pause(500)
+      .waitForElementNotPresent("@progressBar");
+  },
+
+  "open compared to expansion panel" (browser) {
     const reportPage = browser.page.report();
     const compareToSection = reportPage.section.compareToFilters;
 
@@ -177,6 +197,7 @@ module.exports = {
     [
       compareToSection.section.compareToRunFilter,
       compareToSection.section.compareToTagFilter,
+      compareToSection.section.compareToOpenReportsDateFilter,
       compareToSection.section.compareToDiffTypeFilter,
     ].forEach(section => {
       section.click("@expansionBtn");
@@ -233,6 +254,34 @@ module.exports = {
     section.api.elements("@selectedItems", ({result}) => {
       browser.assert.ok(result.value.length === 1);
     });
+  },
+
+  async "set compare to open reports date filter" (browser) {
+    const reportPage = browser.page.report();
+    const compareToSection = reportPage.section.compareToFilters;
+    const section = compareToSection.section.compareToOpenReportsDateFilter;
+    const dateDialog = reportPage.section.openReportsDateDialog;
+
+    const res = await compareToSection.api.element("@active");
+    if (res.status === -1) {
+      reportPage.click(compareToSection);
+      compareToSection.expect.section("@compareToOpenReportsDateFilter")
+        .to.be.visible.before(5000);
+    }
+
+    section.click("@input");
+    reportPage.expect.section(dateDialog).to.be.visible.before(5000);
+
+    dateDialog
+      .click("@date")
+      .click("@ok");
+
+    section.click("@clearBtn");
+
+    await reportPage.pause(500);
+
+    reportPage
+      .waitForElementNotPresent("@progressBar");
   },
 
   async "set compare to diff type" (browser) {

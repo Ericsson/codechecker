@@ -64,6 +64,14 @@
                   :namespace="namespace"
                   @update:url="updateUrl"
                 />
+
+                <v-divider />
+
+                <baseline-open-reports-date-filter
+                  ref="filters"
+                  :namespace="namespace"
+                  @update:url="updateUrl"
+                />
               </v-expansion-panel-content>
             </v-expansion-panel>
           </v-expansion-panels>
@@ -98,6 +106,14 @@
                 <v-divider />
 
                 <compared-to-tag-filter
+                  ref="filters"
+                  :namespace="namespace"
+                  @update:url="updateUrl"
+                />
+
+                <v-divider />
+
+                <compared-to-open-reports-date-filter
                   ref="filters"
                   :namespace="namespace"
                   @update:url="updateUrl"
@@ -293,12 +309,14 @@ import { mapState } from "vuex";
 
 import {
   AnalyzerNameFilter,
+  BaselineOpenReportsDateFilter,
   BaselineRunFilter,
   BaselineTagFilter,
   BugPathLengthFilter,
   CheckerMessageFilter,
   CheckerNameFilter,
   ComparedToDiffTypeFilter,
+  ComparedToOpenReportsDateFilter,
   ComparedToRunFilter,
   ComparedToTagFilter,
   DetectionDateFilter,
@@ -326,7 +344,9 @@ export default {
     ReportHashFilter,
     BaselineRunFilter,
     BaselineTagFilter,
+    BaselineOpenReportsDateFilter,
     ComparedToDiffTypeFilter,
+    ComparedToOpenReportsDateFilter,
     ComparedToRunFilter,
     ComparedToTagFilter,
     ReviewStatusFilter,
@@ -440,7 +460,9 @@ export default {
         this.afterInit();
 
         // Close COMPARE TO expansion panel if no compare data is set.
-        if (!this.cmpData?.runIds && !this.cmpData?.runTag) {
+        if (!this.cmpData?.runIds && !this.cmpData?.runTag &&
+            !this.cmpData?.openReportsDate
+        ) {
           this.activeCompareToPanelId = -1;
         }
 

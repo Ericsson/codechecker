@@ -92,7 +92,9 @@ export default {
     fetchItems() {
       this.loading = true;
 
-      if (!this.cmpData || !(this.cmpData.runIds || this.cmpData.runTag)) {
+      if (!this.cmpData || !(this.cmpData.runIds || this.cmpData.runTag ||
+          this.cmpData.openReportsDate)
+      ) {
         this.loading = false;
         return Promise.resolve([]);
       }

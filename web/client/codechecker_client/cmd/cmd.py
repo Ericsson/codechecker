@@ -241,6 +241,21 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                          help="Filter results by version tag names." +
                          warn_diff_mode)
 
+    f_group.add_argument('--open-reports-date',
+                         type=valid_time,
+                         dest="open_reports_date",
+                         metavar='TIMESTAMP',
+                         default=argparse.SUPPRESS,
+                         help="Get results which were detected BEFORE the "
+                              "given date and NOT FIXED BEFORE the given "
+                              "date. The detection date of a report is "
+                              "the storage date when the report was stored to "
+                              "the server for the first time. The format of "
+                              "TIMESTAMP is "
+                              "'year:month:day:hour:minute:second' (the "
+                              "\"time\" part can be omitted, in which case "
+                              "midnight (00:00:00) is used).")
+
     f_group.add_argument('--file',
                          nargs='*',
                          dest="file_path",

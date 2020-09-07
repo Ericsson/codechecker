@@ -62,12 +62,11 @@
 </template>
 
 <script>
-import { format } from "date-fns";
-
 import { DateInterval, ReportDate } from "@cc/report-server-types";
 
 import DateTimePicker from "@/components/DateTimePicker";
 import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
+import DateMixin from "@/mixins/date.mixin";
 import SelectOption from "./SelectOption/SelectOption";
 import DetectionDateFilterItems, {
   getDateInterval,
@@ -82,7 +81,7 @@ export default {
     DetectionDateFilterIcon,
     SelectOption
   },
-  mixins: [ BaseSelectOptionFilterMixin ],
+  mixins: [ BaseSelectOptionFilterMixin, DateMixin ],
   data() {
     return {
       title: "Detection date",
@@ -181,9 +180,9 @@ export default {
           date[this.filterFieldName] = new DateInterval();
 
         date[this.filterFieldName].before = this.toDateTime
-          ? this.getTimeStamp(this.toDateTime) : null;
+          ? this.getUnixTime(this.toDateTime) : null;
         date[this.filterFieldName].after = this.fromDateTime
-          ? this.getTimeStamp(this.fromDateTime) : null;
+          ? this.getUnixTime(this.fromDateTime) : null;
       } else if (date) {
         date[this.filterFieldName] = null;
       }
@@ -200,27 +199,6 @@ export default {
           title: titleFormatter(id)
         };
       });
-    },
-
-    dateTimeToStr(date) {
-      return format(date, "yyyy-MM-dd HH:mm:ss", new Date());
-    },
-
-    // Returns UTC timestamp of the parameter.
-    getTimeStamp(dateTime) {
-      return dateTime ? parseInt(this.dateToUTCTime(dateTime) / 1000) : null;
-    },
-
-    // Converts a date to an UTC format timestamp.
-    dateToUTCTime(date) {
-      return Date.UTC(
-        date.getUTCFullYear(),
-        date.getUTCMonth(),
-        date.getUTCDate(),
-        date.getUTCHours(),
-        date.getUTCMinutes(),
-        date.getUTCSeconds(),
-        date.getUTCMilliseconds());
     },
 
     clear(updateUrl) {

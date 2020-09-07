@@ -18,6 +18,7 @@ import os
 import re
 import subprocess
 import unittest
+from datetime import datetime, timedelta
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import CompareData, \
     DiffType, Order, ReportFilter, ReviewStatus, RunHistoryFilter, \
@@ -33,6 +34,15 @@ def get_severity_level(name):
     Convert severity level from the name to value.
     """
     return Severity._NAMES_TO_VALUES[name]
+
+
+def str_to_date(date_str):
+    """ Converts the given string to date.
+
+    If the given string and the format code passed to the strptime() doesn't
+    match, it will throw a ValueError exception.
+    """
+    return datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S.%f')
 
 
 class DiffRemote(unittest.TestCase):
@@ -547,6 +557,64 @@ class DiffRemote(unittest.TestCase):
         cmp_data = CompareData(runIds=[run_id],
                                diffType=DiffType.NEW,
                                runTag=[new_tag_id])
+
+        diff_res = self._cc_client.getRunResults([run_id],
+                                                 500,
+                                                 0,
+                                                 [],
+                                                 tag_filter,
+                                                 cmp_data,
+                                                 False)
+
+        # 5 new core.CallAndMessage issues.
+        self.assertEqual(len(diff_res), 5)
+
+        cmp_data.diffType = DiffType.RESOLVED
+        diff_res = self._cc_client.getRunResults([run_id],
+                                                 500,
+                                                 0,
+                                                 [],
+                                                 tag_filter,
+                                                 cmp_data,
+                                                 False)
+        self.assertEqual(len(diff_res), 3)
+
+        cmp_data.diffType = DiffType.UNRESOLVED
+        diff_res = self._cc_client.getRunResults([run_id],
+                                                 500,
+                                                 0,
+                                                 [],
+                                                 tag_filter,
+                                                 cmp_data,
+                                                 False)
+        self.assertEqual(len(diff_res), 26)
+
+    def test_diff_open_reports_date(self):
+        """Test for diff results by open reports date."""
+        run_id = self._update_runid
+
+        def get_run_tags(tag_name):
+            run_history_filter = RunHistoryFilter(tagNames=[tag_name])
+            return self._cc_client.getRunHistory([run_id], None, None,
+                                                 run_history_filter)
+
+        get_all_tags = get_run_tags('t*')
+        self.assertEqual(len(get_all_tags), 3)
+
+        base_tags = get_run_tags('t1')
+        self.assertEqual(len(base_tags), 1)
+        base_tag_time = str_to_date(base_tags[0].time) + timedelta(0, 1)
+        base_tag_timestamp = int(base_tag_time.timestamp())
+
+        new_tags = get_run_tags('t2')
+        self.assertEqual(len(new_tags), 1)
+        new_tag_time = str_to_date(new_tags[0].time) + timedelta(0, 1)
+        new_tag_timestamp = int(new_tag_time.timestamp())
+
+        tag_filter = ReportFilter(openReportsDate=base_tag_timestamp)
+        cmp_data = CompareData(runIds=[run_id],
+                               diffType=DiffType.NEW,
+                               openReportsDate=new_tag_timestamp)
 
         diff_res = self._cc_client.getRunResults([run_id],
                                                  500,

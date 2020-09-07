@@ -328,6 +328,10 @@ def add_filter_conditions(client, report_filter, args):
         if run_histories:
             report_filter.runTag = [t.id for t in run_histories]
 
+    if 'open_reports_date' in args:
+        report_filter.openReportsDate = \
+            int(str_to_timestamp(args.open_reports_date))
+
     if 'detected_at' in args:
         report_filter.firstDetectionDate = \
             int(str_to_timestamp(args.detected_at))

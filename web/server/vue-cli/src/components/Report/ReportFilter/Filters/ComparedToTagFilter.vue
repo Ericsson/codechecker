@@ -14,11 +14,9 @@ export default {
   methods: {
     async updateReportFilter() {
       const tagIds = await this.getSelectedTagIds();
-      if (tagIds.length) {
-        this.setCmpData({ runTag: tagIds });
-      } else {
-        this.setCmpData({ runTag: null });
-      }
+      this.setCmpData({
+        runTag: tagIds.length ? tagIds : null
+      });
     },
   }
 };
