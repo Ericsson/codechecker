@@ -17,26 +17,15 @@ import unittest
 
 from libtest import env
 from libtest.codechecker import call_command
+from libtest.ctu_decorators import makeSkipUnlessCTUCapable, \
+    makeSkipUnlessCTUOnDemandCapable
 
-NO_CTU_MESSAGE = "CTU is not supported"
-NO_CTU_ON_DEMAND_MESSAGE = "CTU-on-demand is not supported"
+CTU_ATTR = 'ctu_capable'
+ON_DEMAND_ATTR = 'ctu_on_demand_capable'
 
-
-def makeSkipUnlessAttributeFound(attribute, message):
-    def deco(f):
-        def wrapper(self, *args, **kwargs):
-            if not getattr(self, attribute):
-                self.skipTest(message)
-            else:
-                f(self, *args, **kwargs)
-        return wrapper
-    return deco
-
-
-skipUnlessCTUCapable = makeSkipUnlessAttributeFound(
-    'ctu_capable', NO_CTU_MESSAGE)
-skipUnlessCTUOnDemandCapable = makeSkipUnlessAttributeFound(
-    'ctu_on_demand_capable', NO_CTU_ON_DEMAND_MESSAGE)
+skipUnlessCTUCapable = makeSkipUnlessCTUCapable(attribute=CTU_ATTR)
+skipUnlessCTUOnDemandCapable = \
+    makeSkipUnlessCTUOnDemandCapable(attribute=ON_DEMAND_ATTR)
 
 
 class TestCtu(unittest.TestCase):
@@ -61,12 +50,13 @@ class TestCtu(unittest.TestCase):
         # Get if clang is CTU-capable or not.
         cmd = [self._codechecker_cmd, 'analyze', '-h']
         output, _ = call_command(cmd, cwd=self.test_dir, env=self.env)
-        self.ctu_capable = '--ctu-' in output
-        print("'analyze' reported CTU-compatibility? " + str(self.ctu_capable))
+        setattr(self, CTU_ATTR, '--ctu-' in output)
+        print("'analyze' reported CTU-compatibility? " +
+              str(getattr(self, CTU_ATTR)))
 
-        self.ctu_on_demand_capable = '--ctu-ast-mode' in output
-        print("'analyze' reported CTU-on-demand-compatibility? "
-              + str(self.ctu_on_demand_capable))
+        setattr(self, ON_DEMAND_ATTR, '--ctu-ast-mode' in output)
+        print("'analyze' reported CTU-on-demand-compatibility? " +
+              str(getattr(self, ON_DEMAND_ATTR)))
 
         # Fix the "template" build JSONs to contain a proper directory
         # so the tests work.
