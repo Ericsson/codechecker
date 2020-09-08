@@ -113,6 +113,8 @@ IGNORED_OPTIONS_GCC = [
     '-m(no-)?dsbt',
     '-m(no-)?fixed-ssp',
     '-m(no-)?pointers-to-nested-functions',
+    '-mno-fp-ret-in-387',
+    '-mpreferred-stack-boundary',
     '-mpcrel-func-addr',
     '-maccumulate-outgoing-args',
     '-mcall-aixdesc',
