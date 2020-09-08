@@ -7,7 +7,8 @@ const CC_SERVICE_ENDPOINTS = [
   'Authentication',
   'Configuration',
   'CodeCheckerService',
-  'Products'
+  'Products',
+  'ServerInfo'
 ];
 
 // Location of the Thrift API server.

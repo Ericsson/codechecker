@@ -17,7 +17,8 @@ import { authService, handleThriftError } from "@cc-api";
 const state = {
   currentUser: "",
   isAuthenticated: !!authService.getToken(),
-  authParams: null
+  authParams: null,
+  packageVersion: undefined
 };
 
 const getters = {
