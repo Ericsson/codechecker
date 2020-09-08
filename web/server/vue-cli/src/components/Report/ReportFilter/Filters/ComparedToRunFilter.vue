@@ -7,16 +7,24 @@ export default {
 
   data() {
     return {
-      id: "newcheck"
+      id: "newcheck",
+      runTagId: "run-tag-newcheck",
     };
   },
 
   methods: {
     async updateReportFilter() {
       const selectedRunIds = await this.getSelectedRunIds();
-      this.setCmpData({
-        runIds: selectedRunIds.length ? selectedRunIds : null
-      });
+      const selectedTagIds = this.selectedTagItems.map(t => t.id);
+
+      if (selectedRunIds.length || selectedTagIds.length) {
+        this.setCmpData({
+          runIds: selectedRunIds.length ? selectedRunIds : null,
+          runTag: selectedTagIds.length ? selectedTagIds : null
+        });
+      } else {
+        this.setCmpData(null);
+      }
     }
   }
 };

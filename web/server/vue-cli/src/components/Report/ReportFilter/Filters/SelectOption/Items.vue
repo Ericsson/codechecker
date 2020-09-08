@@ -126,7 +126,7 @@
         text
         class="apply-btn"
         color="primary"
-        @click="$emit('apply')"
+        @click="$emit('apply', selectedItems)"
       >
         <v-icon left>
           mdi-check-circle-outline

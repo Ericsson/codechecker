@@ -47,29 +47,38 @@
           </v-btn>
         </template>
 
-        <items
-          :items.sync="items"
-          :selected-items="prevSelectedItems"
-          :search="search"
-          :multiple="multiple"
-          @apply="apply"
-          @cancel="cancel"
-          @select="select"
+        <slot
+          name="menu-content"
+          :items="items"
+          :prevSelectedItems="prevSelectedItems"
+          :apply="apply"
+          :cancel="cancel"
+          :select="select"
         >
-          <template v-slot:icon="{ item }">
-            <slot name="icon" :item="item" />
-          </template>
-          <template v-slot:no-items>
-            <slot name="no-items" />
-          </template>
-          <template v-slot:title="{ item }">
-            <slot name="title" :item="item" />
-          </template>
-        </items>
+          <items
+            :items.sync="items"
+            :selected-items="prevSelectedItems"
+            :search="search"
+            :multiple="multiple"
+            @apply="apply"
+            @cancel="cancel"
+            @select="select"
+          >
+            <template v-slot:icon="{ item }">
+              <slot name="icon" :item="item" />
+            </template>
+            <template v-slot:no-items>
+              <slot name="no-items" />
+            </template>
+            <template v-slot:title="{ item }">
+              <slot name="title" :item="item" />
+            </template>
+          </items>
+        </slot>
       </v-menu>
     </template>
 
-    <slot>
+    <slot :updateSelectedItems="updateSelectedItems">
       <items-selected
         :selected-items="selectedItems"
         :multiple="multiple"
@@ -89,9 +98,12 @@
 
 <script>
 import FilterToolbar from "../Layout/FilterToolbar";
-import Items from "./Items";
-import ItemsSelected from "./ItemsSelected";
-import SelectedToolbarTitleItems from "./SelectedToolbarTitleItems";
+import {
+  Items,
+  ItemsSelected,
+  SelectedToolbarTitleItems,
+  filterIsChanged,
+} from ".";
 
 export default {
   name: "SelectOption",
@@ -109,7 +121,16 @@ export default {
     multiple: { type: Boolean, default: true },
     search: { type: Object, default: null },
     loading: { type: Boolean, default: false },
-    panel: { type: Boolean, default: false }
+    panel: { type: Boolean, default: false },
+    apply: {
+      type: Function,
+      default: function selectedItems(selectedItems) {
+        if (!filterIsChanged(this.selectedItems, selectedItems))
+          return;
+
+        this.updateSelectedItems(selectedItems);
+      }
+    }
   },
   data() {
     return {
@@ -124,6 +145,8 @@ export default {
   watch: {
     async menu(show) {
       if (show) {
+        this.$emit("on-menu-show");
+
         this.cancelled = false;
 
         if (this.reloadItems) {
@@ -131,10 +154,9 @@ export default {
           this.reloadItems = false;
         }
 
-        this.prevSelectedItems =
-          JSON.parse(JSON.stringify(this.selectedItems));
+        this.select(JSON.parse(JSON.stringify(this.selectedItems)));
       } else if (!this.cancelled) {
-        this.apply();
+        this.apply(this.prevSelectedItems);
       }
     }
   },
@@ -144,11 +166,6 @@ export default {
   },
 
   methods: {
-    apply() {
-      if (!this.filterIsChanged()) return;
-      this.updateSelectedItems(this.prevSelectedItems);
-    },
-
     /**
      * Returns true if the filter is changed, else false.
      */
@@ -174,6 +191,7 @@ export default {
 
     select(selectedItems) {
       this.prevSelectedItems = selectedItems;
+      this.$emit("select", this.prevSelectedItems);
     },
 
     updateSelectedItems(selectedItems) {

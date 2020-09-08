@@ -70,6 +70,19 @@ const createOptionFilterSection = (selector) => {
   };
 };
 
+const createRunFilterSection = (selector) => {
+  return {
+    selector,
+    elements: {
+      expansionBtn: ".expansion-btn",
+      settings: ".settings-btn",
+      clearBtn: ".clear-btn",
+      selectedItems: ".selected-item"
+    },
+    commands: [ filterCommands ]
+  };
+};
+
 const createDateRageFilterSection = (selector) => {
   return {
     selector,
@@ -84,7 +97,7 @@ const createDateRageFilterSection = (selector) => {
   };
 };
 
-const createDateFilterSection = (selector) => {
+const createOpenReportsDateFilterSection = (selector) => {
   return {
     selector,
     elements: {
@@ -95,6 +108,15 @@ const createDateFilterSection = (selector) => {
   };
 };
 
+
+const settingsMenuElements = {
+  searchInput: "header input[type='text']",
+  progressBar: ".v-progress-linear",
+  regexItem: ".v-item-group > .v-list-item",
+  item: ".v-item-group:last-child > .v-list-item",
+  applyBtn: ".apply-btn",
+  cancelBtn: ".cancel-btn"
+};
 
 module.exports = {
   url: function() {
@@ -112,10 +134,9 @@ module.exports = {
     expandBtn: "button.v-data-table__expand-icon",
   },
   sections: {
-    baselineRunFilter: createOptionFilterSection("#run"),
-    baselineTagFilter: createOptionFilterSection("#run-tag"),
+    baselineRunFilter: createRunFilterSection("#run"),
     baselineOpenReportsDateFilter:
-      createDateFilterSection("#open-reports-date"),
+    createOpenReportsDateFilterSection("#open-reports-date"),
     compareToFilters: {
       selector: "#compare-to-filters",
       elements: {
@@ -123,10 +144,9 @@ module.exports = {
         active: ".v-expansion-panel--active"
       },
       sections: {
-        compareToRunFilter: createOptionFilterSection("#newcheck"),
-        compareToTagFilter: createOptionFilterSection("#run-tag-newcheck"),
+        compareToRunFilter: createRunFilterSection("#newcheck"),
         compareToOpenReportsDateFilter:
-          createDateFilterSection("#compared-to-open-reports-date"),
+        createOpenReportsDateFilterSection("#compared-to-open-reports-date"),
         compareToDiffTypeFilter: createOptionFilterSection("#diff-type"),
       }
     },
@@ -226,16 +246,24 @@ module.exports = {
         ok: ".ok-btn"
       }
     },
-    settingsMenu: {
+    runSettingsMenu: {
       selector: ".settings-menu.menuable__content__active",
       elements: {
-        searchInput: "header input[type='text']",
-        progressBar: ".v-progress-linear",
-        regexItem: ".v-item-group > .v-list-item",
-        item: ".v-item-group:last-child > .v-list-item",
-        applyBtn: ".apply-btn",
-        cancelBtn: ".cancel-btn"
+        ...Object.keys(settingsMenuElements).reduce((acc, k) => {
+          acc[k] = `.v-window-item--active ${settingsMenuElements[k]}`;
+          return acc;
+        }, {}),
+        runTab: ".v-tab:first-child",
+        runTabItem: ".run-tab-item",
+        tagTab: ".v-tab:last-child",
+        activeTagTab: ".v-tab:last-child.v-tab--active",
+        tagTabItem: ".tag-tab-item"
       },
+      commands: [ menuCommands ]
+    },
+    settingsMenu: {
+      selector: ".settings-menu.menuable__content__active",
+      elements: settingsMenuElements,
       commands: [ menuCommands ]
     },
     expanded: {

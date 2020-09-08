@@ -59,14 +59,6 @@
 
                 <v-divider />
 
-                <baseline-tag-filter
-                  ref="filters"
-                  :namespace="namespace"
-                  @update:url="updateUrl"
-                />
-
-                <v-divider />
-
                 <baseline-open-reports-date-filter
                   ref="filters"
                   :namespace="namespace"
@@ -98,14 +90,6 @@
               </v-expansion-panel-header>
               <v-expansion-panel-content class="pa-1">
                 <compared-to-run-filter
-                  ref="filters"
-                  :namespace="namespace"
-                  @update:url="updateUrl"
-                />
-
-                <v-divider />
-
-                <compared-to-tag-filter
                   ref="filters"
                   :namespace="namespace"
                   @update:url="updateUrl"
@@ -311,14 +295,12 @@ import {
   AnalyzerNameFilter,
   BaselineOpenReportsDateFilter,
   BaselineRunFilter,
-  BaselineTagFilter,
   BugPathLengthFilter,
   CheckerMessageFilter,
   CheckerNameFilter,
   ComparedToDiffTypeFilter,
   ComparedToOpenReportsDateFilter,
   ComparedToRunFilter,
-  ComparedToTagFilter,
   DetectionDateFilter,
   DetectionStatusFilter,
   FilePathFilter,
@@ -343,12 +325,10 @@ export default {
     UniqueFilter,
     ReportHashFilter,
     BaselineRunFilter,
-    BaselineTagFilter,
     BaselineOpenReportsDateFilter,
     ComparedToDiffTypeFilter,
     ComparedToOpenReportsDateFilter,
     ComparedToRunFilter,
-    ComparedToTagFilter,
     ReviewStatusFilter,
     DetectionStatusFilter,
     SeverityFilter,

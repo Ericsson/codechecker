@@ -1,3 +1,10 @@
+function getSelectedItemText(browser, element, cb) {
+  const elementId = element.ELEMENT ||
+    element["element-6066-11e4-a52e-4f735466cecf"];
+
+  browser.elementIdText(elementId, result => cb(result));
+}
+
 module.exports = {
   before(browser) {
     browser.resizeWindow(1600, 1000);
@@ -18,7 +25,6 @@ module.exports = {
 
     [
       reportPage.section.baselineRunFilter,
-      reportPage.section.baselineTagFilter,
       reportPage.section.baselineOpenReportsDateFilter,
       reportPage.section.filePathFilter,
       reportPage.section.checkerNameFilter,
@@ -52,7 +58,6 @@ module.exports = {
 
     [
       reportPage.section.baselineRunFilter,
-      reportPage.section.baselineTagFilter,
       reportPage.section.filePathFilter,
       reportPage.section.checkerNameFilter,
       reportPage.section.severityFilter,
@@ -131,39 +136,45 @@ module.exports = {
     });
   },
 
-  "set baseline run filter" (browser) {
+  "set baseline run filter with tag" (browser) {
     const reportPage = browser.page.report();
     const section = reportPage.section.baselineRunFilter;
+    const menu = reportPage.section.runSettingsMenu;
 
     section.openFilterSettings();
 
-    reportPage.section.settingsMenu
+    menu.waitForElementVisible("@runTabItem");
+    menu.waitForElementNotPresent("@activeTagTab");
+
+    menu
       .search("*")
       .click("@regexItem")
       .applyFilter();
 
     section.closeFilterSettings();
 
-    section.api.elements("@selectedItems", ({result}) => {
+    section.api.elements("@selectedItems", ({ result }) => {
       browser.assert.ok(result.value.length === 1);
+
+      getSelectedItemText(browser, result.value[0], text => {
+        browser.assert.ok(text.value.startsWith("*"));
+      });
     });
-  },
-
-  "set baseline tag filter" (browser) {
-    const reportPage = browser.page.report();
-    const section = reportPage.section.baselineTagFilter;
 
     section.openFilterSettings();
 
-    reportPage.section.settingsMenu
-      .search("*")
-      .click("@regexItem")
+    menu
+      .click("@tagTab")
+      .waitForElementVisible("@tagTabItem")
+      .toggleMenuItem(0)
       .applyFilter();
 
-    section.closeFilterSettings();
-
-    section.api.elements("@selectedItems", ({result}) => {
+    section.api.elements("@selectedItems", ({ result }) => {
       browser.assert.ok(result.value.length === 1);
+
+      getSelectedItemText(browser, result.value[0], text => {
+        browser.assert.ok(text.value.startsWith("*:"));
+      });
     });
   },
 
@@ -196,7 +207,6 @@ module.exports = {
 
     [
       compareToSection.section.compareToRunFilter,
-      compareToSection.section.compareToTagFilter,
       compareToSection.section.compareToOpenReportsDateFilter,
       compareToSection.section.compareToDiffTypeFilter,
     ].forEach(section => {
@@ -208,6 +218,7 @@ module.exports = {
     const reportPage = browser.page.report();
     const compareToSection = reportPage.section.compareToFilters;
     const section = compareToSection.section.compareToRunFilter;
+    const menu = reportPage.section.runSettingsMenu;
 
     const res = await compareToSection.api.element("@active");
     if (res.status === -1) {
@@ -218,41 +229,38 @@ module.exports = {
 
     section.openFilterSettings();
 
-    reportPage.section.settingsMenu
+    menu.waitForElementVisible("@runTabItem");
+    menu.waitForElementNotPresent("@activeTagTab");
+
+    menu
       .search("*")
       .click("@regexItem")
       .applyFilter();
 
     section.closeFilterSettings();
 
-    section.api.elements("@selectedItems", ({result}) => {
+    section.api.elements("@selectedItems", ({ result }) => {
       browser.assert.ok(result.value.length === 1);
+
+      getSelectedItemText(browser, result.value[0], text => {
+        browser.assert.ok(text.value.startsWith("*"));
+      });
     });
-  },
-
-  async "set compare to tag filter" (browser) {
-    const reportPage = browser.page.report();
-    const compareToSection = reportPage.section.compareToFilters;
-    const section = compareToSection.section.compareToTagFilter;
-
-    const res = await compareToSection.api.element("@active");
-    if (res.status === -1) {
-      reportPage.click(compareToSection);
-      compareToSection.expect.section("@compareToTagFilter")
-        .to.be.visible.before(5000);
-    }
 
     section.openFilterSettings();
 
-    reportPage.section.settingsMenu
-      .search("*")
-      .click("@regexItem")
+    menu
+      .click("@tagTab")
+      .waitForElementVisible("@tagTabItem")
+      .toggleMenuItem(0)
       .applyFilter();
 
-    section.closeFilterSettings();
-
-    section.api.elements("@selectedItems", ({result}) => {
+    section.api.elements("@selectedItems", ({ result }) => {
       browser.assert.ok(result.value.length === 1);
+
+      getSelectedItemText(browser, result.value[0], text => {
+        browser.assert.ok(text.value.startsWith("*:"));
+      });
     });
   },
 
