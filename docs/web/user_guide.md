@@ -600,13 +600,32 @@ filter arguments:
   --report-hash [REPORT_HASH [REPORT_HASH ...]]
                         Filter results by report hashes.
   --review-status [REVIEW_STATUS [REVIEW_STATUS ...]]
-                        Filter results by review statuses. This can be used
-                        only if basename or newname is a run name (on the
-                        remote server). (default: ['unreviewed', 'confirmed'])
+                        Filter results by review statuses.
+                        Reports can be assigned a review status of the
+                        following values:
+                        - Unreviewed: Nobody has seen this report.
+                        - Confirmed: This is really a bug.
+                        - False positive: This is not a bug.
+                        - Intentional: This report is a bug but we don't want
+                        to fix it. (default: ['unreviewed', 'confirmed'])
   --detection-status [DETECTION_STATUS [DETECTION_STATUS ...]]
-                        Filter results by detection statuses. This can be used
-                        only if basename or newname is a run name (on the
-                        remote server). (default: ['new', 'reopened',
+                        Filter results by detection statuses.
+                        The detection status is the latest state of a bug
+                        report in a run. When a unique report is first
+                        detected it will be marked as New. When the report is
+                        stored again with the same run name then the detection
+                        status changes to one of the following options:
+                        - Resolved: when the bug report can't be found after
+                        the subsequent storage.
+                        - Unresolved: when the bug report is still among the
+                        results after the subsequent storage.
+                        - Reopened: when a Resolved bug appears again.
+                        - Off: The bug was reported by a checker that was
+                        switched off during the last analysis which results
+                        were stored.
+                        - Unavailable: were reported by a checker that does
+                        not exists in the analyzer anymore because it was
+                        removed or renamed. (default: ['new', 'reopened',
                         'unresolved'])
   --severity [SEVERITY [SEVERITY ...]]
                         Filter results by severities.

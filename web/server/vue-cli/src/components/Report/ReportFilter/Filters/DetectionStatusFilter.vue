@@ -1,7 +1,7 @@
 <template>
   <select-option
     :id="id"
-    title="Detection status"
+    title="Latest Detection Status"
     :bus="bus"
     :fetch-items="fetchItems"
     :loading="loading"
@@ -14,6 +14,36 @@
     </template>
 
     <template v-slot:append-toolbar-title>
+      <tooltip-help-icon>
+        Filter reports by the <b>latest</b> detection status.<br><br>
+
+        The detection status is the latest state of a bug report in a run. When
+        a report id is first detected it will be marked as <b>New</b>. When the
+        reports stored again with the same run name then the detection status
+        can change to one of the following options:
+        <ul>
+          <li>
+            <b>Resolved:</b> when the bug report can't be found after the
+            subsequent storage.
+          </li>
+          <li>
+            <b>Unresolved:</b> when the bug report is still among the results
+            after the subsequent storage.
+          </li>
+          <li>
+            <b>Reopened:</b> when a resolved bug appears again.
+          </li>
+          <li>
+            <b>Off:</b> were reported by a checker that is switched off
+            during the last analysis which results were stored.
+          </li>
+          <li>
+            <b>Unavailable:</b> were reported by a checker that does not
+            exists anymore because it was removed or renamed.
+          </li>
+        </ul>
+      </tooltip-help-icon>
+
       <v-icon
         v-if="reportFilter.isUnique"
         color="error"
@@ -34,6 +64,7 @@
 import { ccService, handleThriftError } from "@cc-api";
 
 import { DetectionStatus, ReportFilter } from "@cc/report-server-types";
+import TooltipHelpIcon from "@/components/TooltipHelpIcon";
 import { DetectionStatusIcon } from "@/components/Icons";
 import { DetectionStatusMixin } from "@/mixins";
 
@@ -45,7 +76,8 @@ export default {
   components: {
     SelectOption,
     DetectionStatusIcon,
-    SelectedToolbarTitleItems
+    SelectedToolbarTitleItems,
+    TooltipHelpIcon
   },
   mixins: [ BaseSelectOptionFilterMixin, DetectionStatusMixin ],
 
