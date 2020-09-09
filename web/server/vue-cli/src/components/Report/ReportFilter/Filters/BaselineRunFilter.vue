@@ -249,7 +249,7 @@ export default {
       const tags2 = tagWithRunNames.length
         ? (await Promise.all(tagWithRunNames.map(async s => {
           const { runName, tagName } = this.extractTagWithRunName(s);
-          const tags = await this.getTags(s);
+          const tags = await this.getTags(null, s);
           return {
             id: tags[0].id,
             runName: runName ? runName : tags[0].runName,
