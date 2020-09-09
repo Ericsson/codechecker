@@ -19,7 +19,7 @@ import shutil
 import sys
 
 from codechecker_analyzer import analyzer, analyzer_context, arg, env
-from codechecker_analyzer.analyzers import analyzer_types
+from codechecker_analyzer.analyzers import analyzer_types, clangsa
 from codechecker_analyzer.arg import OrderedCheckersAction
 from codechecker_analyzer.buildlog import log_parser
 
@@ -844,6 +844,12 @@ def main(args):
     LOG.debug("args: %s", str(args))
     LOG.debug("Output will be stored to: '%s'", args.output_path)
 
+    analyzer_clang_binary = \
+        context.analyzer_binaries.get(
+            clangsa.analyzer.ClangSA.ANALYZER_NAME)
+    analyzer_clang_version = clangsa.version.get(analyzer_clang_binary,
+                                                 analyzer_env)
+
     actions, skipped_cmp_cmd_count = log_parser.parse_unique_log(
         compile_commands,
         args.output_path,
@@ -854,7 +860,8 @@ def main(args):
         skip_handler,
         pre_analysis_skip_handler,
         ctu_or_stats_enabled,
-        analyzer_env)
+        analyzer_env,
+        analyzer_clang_version)
 
     if not actions:
         LOG.info("No analysis is required.\nThere were no compilation "
