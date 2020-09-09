@@ -1016,7 +1016,9 @@ def parse_options(compilation_db_entry,
     if compiler_clang:
         # Based on the version information the compiler is clang.
         flag_processors = clang_flag_collectors
-        if compiler_clang.installed_dir == \
+
+        if analyzer_clang_version and \
+            compiler_clang.installed_dir == \
                 analyzer_clang_version.installed_dir:
             LOG.debug("Same clang is used for compilation and analysis.")
             using_same_clang_to_compile_and_analyze = True
