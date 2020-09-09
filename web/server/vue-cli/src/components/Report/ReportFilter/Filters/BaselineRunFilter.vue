@@ -271,7 +271,8 @@ export default {
       if (runs.length || tags.length) {
         const selectedRuns = await this.getSelectedRunItems(runs);
         const selectedTags = await this.getSelectedTagItems(tags);
-        this.setSelectedItems(selectedRuns, selectedTags, false);
+
+        await this.setSelectedItems(selectedRuns, selectedTags, false);
       }
     },
 
@@ -281,8 +282,8 @@ export default {
       this.setSelectedItems(selectedRunItems, this.prevSelectedTagItems);
     },
 
-    clear(updateUrl) {
-      this.setSelectedItems([], [], updateUrl);
+    async clear(updateUrl) {
+      await this.setSelectedItems([], [], updateUrl);
     },
 
     selectRunTags(selectedItems) {

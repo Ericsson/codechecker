@@ -464,7 +464,7 @@ export default {
       }
     },
 
-    clearAllFilters() {
+    async clearAllFilters() {
       const filters = this.$refs.filters;
 
       // Unregister watchers.
@@ -472,7 +472,7 @@ export default {
       filters.forEach(filter => filter.unregisterWatchers());
 
       // Clear all filters and update the url.
-      filters.forEach(filter => filter.clear(false) );
+      await Promise.all(filters.map(filter => filter.clear(false)));
       this.updateUrl();
 
       // Update filters after clear.
