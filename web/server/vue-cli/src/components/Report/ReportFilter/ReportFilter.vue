@@ -103,9 +103,10 @@
                   @update:url="updateUrl"
                 />
 
-                <v-divider />
+                <v-divider v-if="showDiffType" />
 
                 <compared-to-diff-type-filter
+                  v-if="showDiffType"
                   ref="filters"
                   :namespace="namespace"
                   @update:url="updateUrl"
@@ -346,6 +347,7 @@ export default {
     showCompareTo: { type: Boolean, default: true },
     showReviewStatus: { type: Boolean, default: true },
     showRemoveFilteredReports: { type: Boolean, default: true },
+    showDiffType: { type: Boolean, default: true },
     reportCount: { type: Number, required: true }
   },
 

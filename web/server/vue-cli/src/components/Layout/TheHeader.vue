@@ -68,7 +68,7 @@
         }"
         :class="item.active.includes($route.name) &&
           'v-btn--active router-link-active'"
-        exact
+        :exact="item.exact"
         text
       >
         <v-icon left>
@@ -129,6 +129,7 @@ export default {
           icon: "mdi-briefcase-outline",
           route: "products",
           active: [ "products" ],
+          exact: true,
           hide: [ "products", "login", "404" ]
         },
         {
@@ -136,6 +137,7 @@ export default {
           icon: "mdi-run-fast",
           route: "runs",
           active: [ "runs", "main_runs" ],
+          exact: true,
           hide: [ "products", "login", "404" ]
         },
         {
@@ -143,6 +145,7 @@ export default {
           icon: "mdi-clipboard-text-multiple-outline",
           route: "reports",
           active: [ "reports" ],
+          exact: true,
           query: defaultReportFilterValues,
           hide: [ "products", "login", "404" ]
         },
@@ -151,6 +154,7 @@ export default {
           icon: "mdi-history",
           route: "run-history",
           active: [ "run-history" ],
+          exact: true,
           hide: [ "products", "login", "404" ]
         },
         {
@@ -158,6 +162,7 @@ export default {
           icon: "mdi-chart-line",
           route: "statistics",
           active: [ "statistics" ],
+          exact: false,
           query: defaultStatisticsFilterValues,
           hide: [ "products", "login", "404" ]
         }

@@ -31,36 +31,17 @@
       </template>
 
       <template v-slot:title="{ item }">
-        <v-tooltip
-          right
-          color="white"
-        >
-          <template v-slot:activator="{ on, attrs }">
+        <source-component-tooltip :value="item.value">
+          <template v-slot="{ on }">
             <v-list-item-title
               class="mr-1 filter-item-title"
               :title="item.title"
-              v-bind="attrs"
               v-on="on"
             >
               {{ item.title }}
             </v-list-item-title>
           </template>
-
-          <v-card
-            v-if="item.value"
-            class="mx-auto"
-            outlined
-          >
-            <v-list-item
-              v-for="value in item.value.split('\n')"
-              :key="value"
-              :class="[ value[0] === '+' ? 'include' : 'exclude' ]"
-              dense
-            >
-              {{ value }}
-            </v-list-item>
-          </v-card>
-        </v-tooltip>
+        </source-component-tooltip>
       </template>
     </select-option>
   </manage-source-component-dialog>
@@ -70,7 +51,8 @@
 import { ccService, handleThriftError } from "@cc-api";
 
 import {
-  ManageSourceComponentDialog
+  ManageSourceComponentDialog,
+  SourceComponentTooltip
 } from "@/components/Report/SourceComponent";
 
 import SelectOption from "./SelectOption/SelectOption";
@@ -80,7 +62,8 @@ export default {
   name: "SourceComponentFilter",
   components: {
     ManageSourceComponentDialog,
-    SelectOption
+    SelectOption,
+    SourceComponentTooltip
   },
   mixins: [ BaseSelectOptionFilterMixin ],
 
@@ -138,23 +121,3 @@ export default {
   }
 };
 </script>
-
-<style lang="scss" scoped>
-.v-tooltip__content {
-  padding: 0px;
-
-  .v-list-item {
-    min-height: auto;
-  }
-
-  .theme--light.v-list-item {
-    &.include {
-      color: green !important;
-    }
-
-    &.exclude {
-      color: red !important;
-    }
-  }
-}
-</style>

@@ -3,7 +3,6 @@
     <v-row>
       <v-col cols="auto">
         <h3 class="title primary--text">
-          Severity statistics
           <v-btn
             color="primary"
             outlined
@@ -11,70 +10,40 @@
           >
             Export CSV
           </v-btn>
+
+          <v-btn
+            icon
+            title="Reload statistics"
+            color="primary"
+            @click="fetchStatistics"
+          >
+            <v-icon>mdi-refresh</v-icon>
+          </v-btn>
         </h3>
-        <v-data-table
-          :headers="headers"
+
+        <severity-statistics-table
           :items="statistics"
-          :hide-default-footer="true"
-          :must-sort="true"
           :loading="loading"
-          loading-text="Loading severity statistics..."
-          item-key="severity"
-        >
-          <template v-slot:header.reports="{ header }">
-            <detection-status-icon
-              :status="DetectionStatus.UNRESOLVED"
-              :size="16"
-              left
-            />
-            {{ header.text }}
-          </template>
-
-          <template #item.severity="{ item }">
-            <router-link
-              class="severity"
-              :to="{ name: 'reports', query: {
-                ...$router.currentRoute.query,
-                'severity': severityFromCodeToString(
-                  item.severity)
-              }}"
-            >
-              <severity-icon :status="item.severity" />
-            </router-link>
-          </template>
-
-          <template #item.reports="{ item }">
-            <router-link
-              :to="{ name: 'reports', query: {
-                ...$router.currentRoute.query,
-                'severity': severityFromCodeToString(
-                  item.severity)
-              }}"
-            >
-              {{ item.reports }}
-            </router-link>
-          </template>
-        </v-data-table>
+        />
       </v-col>
     </v-row>
   </v-container>
 </template>
 
 <script>
-import { mapState } from "vuex";
 import { ccService, handleThriftError } from "@cc-api";
-import { DetectionStatus } from "@cc/report-server-types";
-
-import { DetectionStatusIcon, SeverityIcon } from "@/components/Icons";
 import { SeverityMixin, ToCSV } from "@/mixins";
+
+import BaseStatistics from "./BaseStatistics";
+import SeverityStatisticsTable from "./SeverityStatisticsTable";
+import { initDiffField, resultToNumber } from "./StatisticsHelper";
 
 export default {
   name: "SeverityStatistics",
   components: {
-    DetectionStatusIcon,
-    SeverityIcon
+    SeverityStatisticsTable
   },
-  mixins: [ SeverityMixin, ToCSV ],
+  mixins: [ BaseStatistics, SeverityMixin, ToCSV ],
 
   props: {
     namespace: { type: String, required: true }
@@ -82,50 +51,9 @@ export default {
 
   data() {
     return {
-      DetectionStatus,
       loading: false,
-      headers: [
-        {
-          text: "Severity",
-          value: "severity",
-          align: "center"
-        },
-        {
-          text: "All reports",
-          value: "reports",
-          align: "center"
-        }
-      ],
       statistics: []
     };
-  },
-
-  computed: {
-    ...mapState({
-      runIds(state, getters) {
-        return getters[`${this.namespace}/getRunIds`];
-      },
-      reportFilter(state, getters) {
-        return getters[`${this.namespace}/getReportFilter`];
-      }
-    })
-  },
-
-  mounted() {
-    // The fetchStatistics function which initalizes this component is called
-    // dynamically by the parent component. If Hot Module Replacement is
-    // enabled and this component will be replaced then this initialization
-    // will not be made. For this reason on component replacement we will save
-    // the data and we will initalize the new component with this data.
-    if (process.env.NODE_ENV !== "production") {
-      if (module.hot) {
-        if (module.hot.data) {
-          this.statistics = module.hot.data.statistics;
-        }
-
-        module.hot.dispose(data => data["statistics"] = this.statistics);
-      }
-    }
   },
 
   methods: {
@@ -143,22 +71,52 @@ export default {
       this.toCSV(data, "codechecker_severity_statistics.csv");
     },
 
-    fetchStatistics() {
-      this.loading = true;
-      const runIds = this.runIds;
-      const reportFilter = this.reportFilter;
-      const cmpData = null;
+    getStatistics(runIds, reportFilter, cmpData) {
+      return new Promise(resolve => {
+        ccService.getClient().getSeverityCounts(runIds, reportFilter, cmpData,
+          handleThriftError(statistics => resolve(statistics)));
+      });
+    },
 
-      ccService.getClient().getSeverityCounts(runIds, reportFilter, cmpData,
-        handleThriftError(statistics => {
-          this.statistics = Object.keys(statistics).map(severity => {
-            return {
-              severity: parseInt(severity),
-              reports: statistics[severity]
-            };
-          });
-          this.loading = false;
-        }));
+    /**
+     * If compare data is set this function will get the number of new and
+     * resolved bugs and update the statistics.
+     */
+    async fetchDifference() {
+      if (!this.cmpData) return;
+
+      const q1 = this.getNewReports().then(newReports => {
+        this.statistics.forEach(s => {
+          s.reports.new = resultToNumber(newReports[s.severity]);
+        });
+      });
+
+      const q2 = this.getResolvedReports().then(resolvedReports => {
+        this.statistics.forEach(s => {
+          s.reports.resolved = resultToNumber(resolvedReports[s.severity]);
+        });
+      });
+
+      return Promise.all([ q1, q2 ]);
+    },
+
+    async fetchStatistics() {
+      this.loading = true;
+
+      const { runIds, reportFilter, cmpData } = this.getStatisticsFilters();
+      const statistics =
+        await this.getStatistics(runIds, reportFilter, cmpData);
+
+      this.statistics = Object.keys(statistics).map(severity => {
+        return {
+          severity: parseInt(severity),
+          reports: initDiffField(statistics[severity])
+        };
+      });
+
+      await this.fetchDifference();
+
+      this.loading = false;
     }
   }
 };
