@@ -62,7 +62,9 @@
         :key="item.name"
         :to="{
           name: item.route,
-          query: item.query || {}
+          query: queries[item.route] === undefined
+            ? item.query || {}
+            : queries[item.route]
         }"
         :class="item.active.includes($route.name) &&
           'v-btn--active router-link-active'"
@@ -165,6 +167,7 @@ export default {
 
   computed: {
     ...mapGetters([
+      "queries",
       "authParams",
       "isAuthenticated",
       "announcement",

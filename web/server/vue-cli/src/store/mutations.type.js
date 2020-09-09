@@ -15,3 +15,6 @@ export const SET_ANNOUNCEMENT = "setAnnouncement";
 
 export const ADD_ERROR = "addError";
 export const CLEAR_ERRORS = "clearErrors";
+
+export const CLEAR_QUERIES = "clearQueries";
+export const SET_QUERIES = "setQueries";

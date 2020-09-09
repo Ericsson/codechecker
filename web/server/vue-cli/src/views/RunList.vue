@@ -172,9 +172,6 @@
 <script>
 import _ from "lodash";
 
-import { defaultReportFilterValues } from "@/components/Report/ReportFilter";
-import { defaultStatisticsFilterValues } from "@/components/Statistics";
-
 import {
   AnalyzerStatisticsBtn,
   AnalyzerStatisticsDialog,
@@ -446,16 +443,14 @@ export default {
 
     getReportFilterQuery(run) {
       return {
-        run: run.name,
-        ...defaultReportFilterValues
+        run: run.name
 
       };
     },
 
     getStatisticsFilterQuery(run) {
       return {
-        run: run.name,
-        ...defaultStatisticsFilterValues
+        run: run.name
       };
     }
   }

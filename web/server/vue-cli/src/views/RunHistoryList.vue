@@ -199,9 +199,6 @@
 import _ from "lodash";
 import { format, max, min, parse } from "date-fns";
 
-import { defaultReportFilterValues } from "@/components/Report/ReportFilter";
-import { defaultStatisticsFilterValues } from "@/components/Statistics";
-
 import {
   AnalyzerStatisticsBtn,
   AnalyzerStatisticsDialog,
@@ -517,16 +514,14 @@ export default {
       return {
         run: history.runName,
         "run-tag": history.versionTag || undefined,
-        "detected-before": history.versionTag ? undefined : history.time,
-        ...defaultReportFilterValues
+        "detected-before": history.versionTag ? undefined : history.time
 
       };
     },
 
     getStatisticsFilterQuery(history) {
       return {
-        run: history.runName,
-        ...defaultStatisticsFilterValues
+        run: history.runName
       };
     }
   }
