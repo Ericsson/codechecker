@@ -51,7 +51,7 @@
           name="menu-content"
           :items="items"
           :prevSelectedItems="prevSelectedItems"
-          :apply="apply"
+          :apply="applyFilters"
           :cancel="cancel"
           :select="select"
         >
@@ -60,7 +60,7 @@
             :selected-items="prevSelectedItems"
             :search="search"
             :multiple="multiple"
-            @apply="apply"
+            @apply="applyFilters"
             @cancel="cancel"
             @select="select"
           >
@@ -124,7 +124,7 @@ export default {
     panel: { type: Boolean, default: false },
     apply: {
       type: Function,
-      default: function selectedItems(selectedItems) {
+      default: function (selectedItems) {
         if (!filterIsChanged(this.selectedItems, selectedItems))
           return;
 
@@ -142,6 +142,15 @@ export default {
     };
   },
 
+  computed: {
+    // Vue doesn't automatically bind functions passed to props property with
+    // any Vue instance. For this reason we need to use this computed property
+    // instead of apply function where we bind this to its parent Vue instance.
+    applyFilters() {
+      return this.apply.bind(this);
+    }
+  },
+
   watch: {
     async menu(show) {
       if (show) {
@@ -156,7 +165,7 @@ export default {
 
         this.select(JSON.parse(JSON.stringify(this.selectedItems)));
       } else if (!this.cancelled) {
-        this.apply(this.prevSelectedItems);
+        this.applyFilters(this.prevSelectedItems);
       }
     }
   },
