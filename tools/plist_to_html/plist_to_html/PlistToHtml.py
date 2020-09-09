@@ -9,6 +9,7 @@
 
 
 import argparse
+import io
 import json
 import os
 import plistlib
@@ -149,18 +150,6 @@ class HtmlBuilder(object):
         bug to the created html file where the bug can be found.
         """
 
-        # Create table header.
-        table_reports = '''
-            <tr>
-              <th id="report-id">&nbsp;</th>
-              <th id="file-path">File</th>
-              <th id="severity">Severity</th>
-              <th id="checker-name">Checker name</th>
-              <th id="message">Message</th>
-              <th id="bug-path-length">Bug path length</th>
-              <th id="review-status">Review status</th>
-            </tr>'''
-
         # Sort reports based on file path levels.
         report_data = []
         for html_file in self.generated_html_reports:
@@ -169,45 +158,57 @@ class HtmlBuilder(object):
         report_data = sorted(report_data,
                              key=lambda d: d['report']['path'])
 
-        # Create table lines.
-        for i, data in enumerate(report_data):
-            html_file = data['html_file']
-            report = data['report']
+        with io.StringIO() as table_reports:
+            # Create table header.
+            table_reports.write('''
+                <tr>
+                  <th id="report-id">&nbsp;</th>
+                  <th id="file-path">File</th>
+                  <th id="severity">Severity</th>
+                  <th id="checker-name">Checker name</th>
+                  <th id="message">Message</th>
+                  <th id="bug-path-length">Bug path length</th>
+                  <th id="review-status">Review status</th>
+                </tr>''')
 
-            events = report['events']
-            checker = report['checkerName']
-            severity = report['severity']
+            # Create table lines.
+            for i, data in enumerate(report_data):
+                html_file = os.path.basename(data['html_file'])
+                report = data['report']
 
-            review_status = report['reviewStatus'] \
-                if 'reviewStatus' in report and report['reviewStatus'] else ''
+                events = report['events']
+                checker = report['checkerName']
+                severity = report['severity']
 
-            table_reports += '''
-              <tr>
-                <td>{0}</td>
-                <td file="{3}" line="{4}">
-                  <a href="{1}#reportHash={2}">{3} @ Line {4}</a>
-                </td>
-                <td class="severity" severity="{5}">
-                  <i class="severity-{5}"></i>
-                </td>
-                <td>{6}</td>
-                <td>{7}</td>
-                <td class="bug-path-length">{8}</td>
-                <td class="review-status review-status-{9}">{10}</td>
-              </tr>'''.format(i + 1,
-                              os.path.basename(html_file),
-                              report['reportHash'],
-                              report['path'],
-                              events[-1]['location']['line'],
-                              severity.lower(),
-                              checker,
-                              events[-1]['message'],
-                              len(events),
-                              review_status.lower().replace(' ', '-'),
-                              review_status)
+                review_status = report['reviewStatus'] \
+                    if 'reviewStatus' in report and report['reviewStatus'] \
+                    else ''
 
-        substitute_data = self._tag_contents
-        substitute_data.update({'table_reports': table_reports})
+                line = events[-1]['location']['line']
+                rs = review_status.lower().replace(' ', '-')
+
+                table_reports.write(f'''
+                  <tr>
+                    <td>{i + 1}</td>
+                    <td file="{report['path']}" line="{line}">
+                      <a href="{html_file}#reportHash={report['reportHash']}">
+                        {report['path']} @ Line&nbsp;{line}
+                      </a>
+                    </td>
+                    <td class="severity" severity="{severity.lower()}">
+                      <i class="severity-{severity.lower()}"
+                         title="{severity.lower()}"></i>
+                    </td>
+                    <td>{checker}</td>
+                    <td>{events[-1]['message']}</td>
+                    <td class="bug-path-length">{len(events)}</td>
+                    <td class="review-status review-status-{rs}">
+                      {review_status}
+                    </td>
+                  </tr>''')
+
+            substitute_data = self._tag_contents
+            substitute_data.update({'table_reports': table_reports.getvalue()})
 
         content = self._index.substitute(substitute_data)
         output_path = os.path.join(output_dir, 'index.html')
@@ -220,6 +221,16 @@ class HtmlBuilder(object):
         Creates an statistics.html file which contains statistics information
         from the HTML generation process.
         """
+        def severity_order(severity):
+            """
+            This function determines in which order severities should be
+            printed to the output. This function can be given via "key"
+            attribute to sort() function.
+            """
+            severities = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'STYLE',
+                          'UNSPECIFIED']
+            return severities.index(severity)
+
         num_of_plist_files = len(self.generated_html_reports)
 
         num_of_reports = 0
@@ -232,22 +243,50 @@ class HtmlBuilder(object):
                 checker = report['checkerName']
                 checker_statistics[checker] += 1
 
-        rows = []
-        checker_statistics_content = ''
-        for checker_name in sorted(checker_statistics):
-            checker_statistics_content += '''
-              <tr>
-                <td>{0}</td>
-                <td>{1}</td>
-              </tr>
-            '''.format(checker_name, checker_statistics[checker_name])
-            rows.append([checker_name, checker_statistics[checker_name]])
+        checker_rows = []
+        severity_statistics = defaultdict(int)
+
+        with io.StringIO() as content:
+            for checker_name in sorted(checker_statistics):
+                severity = self._severity_map.get(checker_name, 'UNSPECIFIED')
+                content.write('''
+                  <tr>
+                    <td>{0}</td>
+                    <td class="severity" severity="{1}">
+                      <i class="severity-{1}" title="{1}"></i>
+                    </td>
+                    <td>{2}</td>
+                  </tr>
+                '''.format(checker_name, severity.lower(),
+                           checker_statistics[checker_name]))
+                checker_rows.append([checker_name, severity,
+                                    checker_statistics[checker_name]])
+                severity_statistics[severity] += \
+                    checker_statistics[checker_name]
+            checker_statistics_content = content.getvalue()
+
+        severity_rows = []
+
+        with io.StringIO() as content:
+            for severity in sorted(severity_statistics, key=severity_order):
+                num = severity_statistics[severity]
+                content.write('''
+                  <tr>
+                    <td class="severity" severity="{0}">
+                      <i class="severity-{0}" title="{0}"></i>
+                    </td>
+                    <td>{1}</td>
+                  </tr>
+                '''.format(severity.lower(), num))
+                severity_rows.append([severity, num])
+            severity_statistics_content = content.getvalue()
 
         substitute_data = self._tag_contents
         substitute_data.update({
             'number_of_plist_files': num_of_plist_files,
             'number_of_reports': num_of_reports,
-            'checker_statistics': checker_statistics_content})
+            'checker_statistics': checker_statistics_content,
+            'severity_statistics': severity_statistics_content})
 
         content = self._statistics.substitute(substitute_data)
 
@@ -269,8 +308,12 @@ class HtmlBuilder(object):
         print(twodim_to_table(statistics_rows, False))
 
         print("\n----==== Checker Statistics ====----")
-        header = ["Checker name", "Number of reports"]
-        print(twodim_to_table([header] + rows))
+        header = ["Checker name", "Severity", "Number of reports"]
+        print(twodim_to_table([header] + checker_rows))
+
+        print("\n----==== Severity Statistics ====----")
+        header = ["Severity", "Number of reports"]
+        print(twodim_to_table([header] + severity_rows))
 
 
 def get_report_data_from_plist(plist, skip_report_handler=None,
