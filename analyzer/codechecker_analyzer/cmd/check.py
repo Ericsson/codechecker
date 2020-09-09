@@ -499,7 +499,7 @@ is called.""")
                                   action='store',
                                   dest='ctu_ast_mode',
                                   choices=['load-from-pch', 'parse-on-demand'],
-                                  default='load-from-pch',
+                                  default='parse-on-demand',
                                   help="Choose the way ASTs are loaded during "
                                        "CTU analysis. Mode 'load-from-pch' "
                                        "generates PCH format serialized ASTs "
