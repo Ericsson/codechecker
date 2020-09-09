@@ -147,8 +147,11 @@ class TestCtu(unittest.TestCase):
 
         cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
                '--analyzers', 'clangsa', '--ctu-all']
-        cmd.extend(['--ctu-ast-mode',
-                    'parse-on-demand' if on_demand else 'load-from-pch'])
+
+        if getattr(self, ON_DEMAND_ATTR):
+            cmd.extend(['--ctu-ast-mode',
+                        'parse-on-demand' if on_demand else 'load-from-pch'])
+
         cmd.append(self.buildlog)
         out, _ = call_command(cmd, cwd=self.test_dir, env=self.env)
         return out
@@ -158,8 +161,11 @@ class TestCtu(unittest.TestCase):
 
         cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
                '--analyzers', 'clangsa', '--ctu-collect']
-        cmd.extend(['--ctu-ast-mode',
-                    'parse-on-demand' if on_demand else 'load-from-pch'])
+
+        if getattr(self, ON_DEMAND_ATTR):
+            cmd.extend(['--ctu-ast-mode',
+                        'parse-on-demand' if on_demand else 'load-from-pch'])
+
         cmd.append(self.buildlog)
         call_command(cmd, cwd=self.test_dir, env=self.env)
 
@@ -182,8 +188,11 @@ class TestCtu(unittest.TestCase):
 
         cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
                '--analyzers', 'clangsa', '--ctu-analyze']
-        cmd.extend(['--ctu-ast-mode',
-                    'parse-on-demand' if on_demand else 'load-from-pch'])
+
+        if getattr(self, ON_DEMAND_ATTR):
+            cmd.extend(['--ctu-ast-mode',
+                        'parse-on-demand' if on_demand else 'load-from-pch'])
+
         cmd.append(self.buildlog)
         out, _ = call_command(cmd, cwd=self.test_dir, env=self.env)
         return out
