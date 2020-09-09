@@ -8,7 +8,7 @@
     loading-text="Loading severity statistics..."
     item-key="severity"
   >
-    <template v-slot:header.reports="{ header }">
+    <template v-slot:header.reports.count="{ header }">
       <detection-status-icon
         :status="DetectionStatus.UNRESOLVED"
         :size="16"
@@ -30,7 +30,7 @@
       </router-link>
     </template>
 
-    <template #item.reports="{ item }">
+    <template #item.reports.count="{ item }">
       <router-link
         :to="{ name: 'reports', query: {
           ...$router.currentRoute.query,
@@ -45,6 +45,17 @@
         :num-of-new-reports="item.reports.new"
         :num-of-resolved-reports="item.reports.resolved"
       />
+    </template>
+
+    <template slot="body.append">
+      <tr>
+        <td class="text-center">
+          <strong>Total</strong>
+        </td>
+        <td class="text-center">
+          <strong>{{ total.reports }}</strong>
+        </td>
+      </tr>
     </template>
   </v-data-table>
 </template>
@@ -79,11 +90,20 @@ export default {
         },
         {
           text: "All reports",
-          value: "reports",
+          value: "reports.count",
           align: "center"
         }
       ]
     };
-  }
+  },
+
+  computed: {
+    total() {
+      return {
+        reports: this.items.reduce((total, curr) =>
+          curr.reports.count + total, 0)
+      };
+    }
+  },
 };
 </script>
