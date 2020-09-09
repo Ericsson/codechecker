@@ -389,8 +389,11 @@ class TestCtuFailure(unittest.TestCase):
 
         cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
                '--analyzers', 'clangsa', '--ctu-all']
-        cmd.extend(['--ctu-ast-mode',
-                    'parse-on-demand' if on_demand else 'load-from-pch'])
+
+        if getattr(self, ON_DEMAND_ATTR):
+            cmd.extend(['--ctu-ast-mode',
+                        'parse-on-demand' if on_demand else 'load-from-pch'])
+
         if extra_args is not None:
             cmd.extend(extra_args)
         cmd.append(self.buildlog)
