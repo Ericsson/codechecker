@@ -21,7 +21,7 @@
       {{ header.text }}
     </template>
 
-    <template v-slot:header.unreviewed="{ header }">
+    <template v-slot:header.unreviewed.count="{ header }">
       <review-status-icon
         :status="ReviewStatus.UNREVIEWED"
         :size="16"
@@ -30,7 +30,7 @@
       {{ header.text }}
     </template>
 
-    <template v-slot:header.confirmed="{ header }">
+    <template v-slot:header.confirmed.count="{ header }">
       <review-status-icon
         :status="ReviewStatus.CONFIRMED"
         :size="16"
@@ -39,7 +39,7 @@
       {{ header.text }}
     </template>
 
-    <template v-slot:header.falsePositive="{ header }">
+    <template v-slot:header.falsePositive.count="{ header }">
       <review-status-icon
         :status="ReviewStatus.FALSE_POSITIVE"
         :size="16"
@@ -48,7 +48,7 @@
       {{ header.text }}
     </template>
 
-    <template v-slot:header.intentional="{ header }">
+    <template v-slot:header.intentional.count="{ header }">
       <review-status-icon
         :status="ReviewStatus.INTENTIONAL"
         :size="16"
@@ -57,7 +57,7 @@
       {{ header.text }}
     </template>
 
-    <template v-slot:header.reports="{ header }">
+    <template v-slot:header.reports.count="{ header }">
       <detection-status-icon
         :status="DetectionStatus.UNRESOLVED"
         :size="16"
@@ -106,7 +106,7 @@
       </source-component-tooltip>
     </template>
 
-    <template #item.unreviewed="{ item }">
+    <template #item.unreviewed.count="{ item }">
       <router-link
         v-if="item.unreviewed.count"
         :to="{ name: 'reports', query: {
@@ -130,7 +130,7 @@
       />
     </template>
 
-    <template #item.confirmed="{ item }">
+    <template #item.confirmed.count="{ item }">
       <router-link
         v-if="item.confirmed.count"
         :to="{ name: 'reports', query: {
@@ -154,7 +154,7 @@
       />
     </template>
 
-    <template #item.falsePositive="{ item }">
+    <template #item.falsePositive.count="{ item }">
       <router-link
         v-if="item.falsePositive.count"
         :to="{ name: 'reports', query: {
@@ -178,7 +178,7 @@
       />
     </template>
 
-    <template #item.intentional="{ item }">
+    <template #item.intentional.count="{ item }">
       <router-link
         v-if="item.intentional.count"
         :to="{ name: 'reports', query: {
@@ -202,7 +202,7 @@
       />
     </template>
 
-    <template #item.reports="{ item }">
+    <template #item.reports.count="{ item }">
       <router-link
         v-if="item.reports.count"
         :to="{ name: 'reports', query: {
@@ -220,6 +220,22 @@
           'source-component': item.component
         }"
       />
+    </template>
+
+    <template slot="body.append">
+      <tr>
+        <td class="text-center" colspan="2">
+          <strong>Total</strong>
+        </td>
+        <td
+          v-for="col in ['unreviewed', 'confirmed', 'falsePositive',
+                         'intentional', 'reports']"
+          :key="col"
+          class="text-center"
+        >
+          <strong>{{ total[col] }}</strong>
+        </td>
+      </tr>
     </template>
   </v-data-table>
 </template>
@@ -275,31 +291,47 @@ export default {
         },
         {
           text: "Unreviewed",
-          value: "unreviewed",
+          value: "unreviewed.count",
           align: "center"
         },
         {
           text: "Confirmed bug",
-          value: "confirmed",
+          value: "confirmed.count",
           align: "center"
         },
         {
           text: "False positive",
-          value: "falsePositive",
+          value: "falsePositive.count",
           align: "center"
         },
         {
           text: "Intentional",
-          value: "intentional",
+          value: "intentional.count",
           align: "center"
         },
         {
           text: "All reports",
-          value: "reports",
+          value: "reports.count",
           align: "center"
         }
       ],
     };
+  },
+  computed: {
+    total() {
+      const cols = [ "unreviewed", "confirmed", "falsePositive", "intentional",
+        "reports" ];
+
+      const initVal = cols.reduce((acc, curr) => {
+        acc[curr] = 0;
+        return acc;
+      }, {});
+
+      return this.items.reduce((total, curr) => {
+        cols.forEach(c => total[c] += curr[c].count);
+        return total;
+      }, initVal);
+    }
   },
   watch: {
     loading() {
