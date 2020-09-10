@@ -1434,41 +1434,22 @@ def handle_diff_results(args):
     if basename_local_dirs and newname_local_dirs:
         reports = get_diff_local_dirs(basename_local_dirs, newname_local_dirs)
         print_diff_results(reports)
-        LOG.info("Compared the following local report directories: %s and %s",
-                 ', '.join(basename_local_dirs),
-                 ', '.join(newname_local_dirs))
     elif newname_local_dirs:
-        reports, matching_base_run_names = \
+        reports, _ = \
             get_diff_remote_run_local_dir(client,
                                           basename_run_names,
                                           newname_local_dirs)
         print_diff_results(reports)
-        LOG.info("Compared remote run(s) %s (matching: %s) and local report "
-                 "directory(s) %s",
-                 ', '.join(basename_run_names),
-                 ', '.join(matching_base_run_names),
-                 ', '.join(newname_local_dirs))
     elif basename_local_dirs:
-        reports, matching_new_run_names = \
+        reports, _ = \
             get_diff_local_dir_remote_run(client,
                                           basename_local_dirs,
                                           newname_run_names)
         print_diff_results(reports)
-        LOG.info("Compared local report directory(s) %s and remote run(s) %s "
-                 "(matching: %s).",
-                 ', '.join(basename_local_dirs),
-                 ', '.join(newname_run_names),
-                 ', '.join(matching_new_run_names))
     else:
-        reports, matching_base_run_names, matching_new_run_names = \
+        reports, _, _ = \
             get_diff_remote_runs(client, basename_run_names, newname_run_names)
         print_diff_results(reports)
-        LOG.info("Compared multiple remote runs %s (matching: %s) and %s "
-                 "(matching: %s)",
-                 ', '.join(basename_run_names),
-                 ', '.join(matching_base_run_names),
-                 ', '.join(newname_run_names),
-                 ', '.join(matching_new_run_names))
 
 
 def handle_list_result_types(args):
