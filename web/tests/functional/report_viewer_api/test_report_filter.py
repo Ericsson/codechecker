@@ -359,8 +359,8 @@ class TestReportFilter(unittest.TestCase):
 
     def test_detection_date_filters(self):
         """ Filter by detection dates. """
-        run_results = self._cc_client.getRunResults(self._runids, 1, 0, None,
-                                                    None, None, False)
+        run_results = self._cc_client.getRunResults([self._runids[0]], 1, 0,
+                                                    None, None, None, False)
         self.assertEqual(len(run_results), 1)
 
         detected_after = datetime.strptime(run_results[0].detectedAt,
