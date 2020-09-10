@@ -26,7 +26,7 @@ from plist_to_html import PlistToHtml
 from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
 from codechecker_api_shared.ttypes import RequestFailed
 
-from codechecker_common import logger, plist_parser
+from codechecker_common import logger, plist_parser, util
 from codechecker_common.output_formatters import twodim_to_str
 from codechecker_common.report import Report
 from codechecker_common.source_code_comment_handler import \
@@ -616,15 +616,6 @@ def handle_diff_results(args):
                         all_reports.append(report)
         return all_reports
 
-    def get_line_from_file(filename, lineno):
-        with open(filename, 'r', encoding='utf-8', errors='ignore') as f:
-            i = 1
-            for line in f:
-                if i == lineno:
-                    return line
-                i += 1
-        return ""
-
     def get_diff_base_results(client, baseids, base_hashes, suppressed_hashes):
         report_filter = ttypes.ReportFilter()
         add_filter_conditions(client, report_filter, args)
@@ -1072,6 +1063,8 @@ def handle_diff_results(args):
 
     def get_report_show_info(report):
         """ Get information from report which will be used during print. """
+        source_line = None
+
         if isinstance(report, Report):
             # Report is coming from a plist file.
             bug_line = report.main['location']['line']
@@ -1082,9 +1075,8 @@ def handle_diff_results(args):
             checked_file = file_name \
                 + ':' + str(bug_line) + ":" + str(bug_col)
             check_msg = report.main['description']
-            source_line =\
-                get_line_from_file(report.main['location']['file_name'],
-                                   bug_line)
+            if os.path.exists(file_name):
+                source_line = util.get_line(file_name, bug_line)
         else:
             # Report is coming from CodeChecker server.
             bug_line = report.line
@@ -1304,9 +1296,14 @@ def handle_diff_results(args):
         file_stats = defaultdict(int)
         severity_stats = defaultdict(int)
 
+        changed_files = set()
         for report in reports:
             _, _, sev, file_name, checked_file, check_name, \
                 check_msg, source_line = get_report_show_info(report)
+
+            if source_line is None:
+                changed_files.add(file_name)
+                continue
 
             rows.append(
                 (sev, checked_file, check_msg, check_name, source_line))
@@ -1323,6 +1320,14 @@ def handle_diff_results(args):
                 print(twodim_to_str(output_format, header, rows))
 
         print_stats(reports, file_stats, severity_stats)
+
+        if changed_files:
+            changed_f = '\n'.join([' - ' + f for f in changed_files])
+            LOG.warning("The following source file contents changed since the "
+                        "latest analysis:\n%s\nMultiple reports were not "
+                        "shown and skipped from the statistics. Please "
+                        "analyze your project again to update the "
+                        "reports!", changed_f)
 
     def get_run_tag(client, run_ids, tag_name):
         """
