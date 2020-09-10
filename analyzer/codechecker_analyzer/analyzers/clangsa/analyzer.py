@@ -267,6 +267,12 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         full paths of the original source files.
         """
         pch_suffix = '.ast'
+
+        # We convert the given file path to absolute path because we suppose
+        # that in the clang's output the PCH files in CTU mode are relative
+        # paths.
+        mentioned_path = os.path.join(self.get_ctu_dir(), mentioned_path)
+
         # Detect the mode based on the path.
         suffix_index = mentioned_path.rfind(pch_suffix)
         # If the file does not have the suffix, the mode is On-demand-parsed.

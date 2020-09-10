@@ -114,7 +114,7 @@ class TestCtuFailure(unittest.TestCase):
         """ Test that Clang indeed logs the AST import events when using
         on-demand mode.
         """
-        self.__set_up_test_dir('ctu_on_demand_failure')
+        self.__set_up_test_dir('ctu_failure')
 
         output = self.__do_ctu_all(on_demand=True,
                                    extra_args=["--verbose", "debug"])
@@ -176,7 +176,7 @@ class TestCtuFailure(unittest.TestCase):
         """ Test the failure zip contains the source of imported TU when using
         on-demand mode.
         """
-        self.__set_up_test_dir('ctu_on_demand_failure')
+        self.__set_up_test_dir('ctu_failure')
 
         # The below special checker `ExprInspection` crashes when a function
         # with a specified name is analyzed.
@@ -280,7 +280,7 @@ class TestCtuFailure(unittest.TestCase):
         Test the failure zip contains the source of imported TU and all the
         headers on which the TU depends when using on-demand mode.
         """
-        self.__set_up_test_dir('ctu_on_demand_failure_with_headers')
+        self.__set_up_test_dir('ctu_failure_with_headers')
 
         # The below special checker `ExprInspection` crashes when a function
         # with a specified name is analyzed.
@@ -359,7 +359,7 @@ class TestCtuFailure(unittest.TestCase):
         """ In case of ctu failure the non ctu analysis will be triggered when
         using on-demand-mode.
         """
-        self.__set_up_test_dir('ctu_on_demand_failure')
+        self.__set_up_test_dir('ctu_failure')
 
         output = self.__do_ctu_all(on_demand=True,
                                    extra_args=[
