@@ -610,24 +610,55 @@ construction doesn't compile with Clang but compiles with GCC. These
 compiler errors are also collected as CodeChecker reports as
 'clang-diagnostic-error'.
 Note that compiler errors and warnings are captured by CodeChecker only if it
-was emitted by clang-tidy.""")
+was emitted by clang-tidy.
+
+Profiles
+------------------------------------------------
+In CodeCheckers there is a manual grouping of checkers. These groups are called
+profiles. The collection of profiles is found in
+config/checker_profile_map.json file. The goal of these profile is that you can
+enable or disable checkers by these profiles. See the output of "CodeChecker
+checkers --profile list" command.
+
+Guidelines
+------------------------------------------------
+There are several coding guidelines like CppCoreGuideline, SEI-CERT, etc. These
+are collections of best programming practices to avoid common programming
+errors. Some checkers cover the rules of these guidelines. In CodeChecker there
+is a mapping between guidelines and checkers. This way you can list and enable
+those checkers which check the fulfillment of certain guideline rules. See the
+output of "CodeChecker checkers --guideline" command.""")
 
     checkers_opts.add_argument('-e', '--enable',
                                dest="enable",
                                metavar='checker/group/profile',
                                default=argparse.SUPPRESS,
                                action=OrderedCheckersAction,
-                               help="Set a checker (or checker group) "
-                                    "to BE USED in the analysis.")
+                               help="Set a checker (or checker group), "
+                                    "profile or guideline "
+                                    "to BE USED in the analysis. In case of "
+                                    "ambiguity the priority order is profile, "
+                                    "guideline, checker name (e.g. security "
+                                    "means the profile, not the checker "
+                                    "group). Profiles and guidelines can be "
+                                    "labeled: 'profile:security' or "
+                                    "'guideline:sei-cert'.")
 
     checkers_opts.add_argument('-d', '--disable',
                                dest="disable",
                                metavar='checker/group/profile',
                                default=argparse.SUPPRESS,
                                action=OrderedCheckersAction,
-                               help="Set a checker (or checker group) "
+                               help="Set a checker (or checker group), "
+                                    "profile or guideline "
                                     "to BE PROHIBITED from use in the "
-                                    "analysis.")
+                                    "analysis. In case of "
+                                    "ambiguity the priority order is profile, "
+                                    "guideline, checker name (e.g. security "
+                                    "means the profile, not the checker "
+                                    "group). Profiles and guidelines can be "
+                                    "labeled: 'profile:security' or "
+                                    "'guideline:sei-cert'.")
 
     checkers_opts.add_argument('--enable-all',
                                dest="enable_all",

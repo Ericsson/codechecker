@@ -323,8 +323,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         # TODO: This extra "isinsrance" check is needed for
         # CodeChecker checkers --checker-config. This command also
         # runs this function in order to construct a config handler.
-        if 'checker_config' in args and \
-                isinstance(args.checker_config, list):
+        if 'checker_config' in args and isinstance(args.checker_config, list):
             r = re.compile(r'(?P<analyzer>.+?):(?P<key>.+?)=(?P<value>.+)')
             check_options = []
 
@@ -357,23 +356,17 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
         checkers = ClangTidy.get_analyzer_checkers(handler, check_env)
 
-        # Read clang-tidy checkers from the config file.
-        clang_tidy_checkers = context.checker_config.get(cls.ANALYZER_NAME +
-                                                         '_checkers')
-
         try:
             cmdline_checkers = args.ordered_checkers
         except AttributeError:
             LOG.debug_analyzer('No checkers were defined in '
                                'the command line for %s',
                                cls.ANALYZER_NAME)
-            cmdline_checkers = None
+            cmdline_checkers = []
 
         handler.initialize_checkers(
-            context.available_profiles,
-            context.package_root,
+            context,
             checkers,
-            clang_tidy_checkers,
             cmdline_checkers,
             'enable_all' in args and args.enable_all)
 

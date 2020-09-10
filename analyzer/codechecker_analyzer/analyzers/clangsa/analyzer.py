@@ -406,22 +406,16 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
         checkers = ClangSA.get_analyzer_checkers(handler, environ)
 
-        # Read clang-sa checkers from the config file.
-        clang_sa_checkers = context.checker_config.get(cls.ANALYZER_NAME +
-                                                       '_checkers')
-
         try:
             cmdline_checkers = args.ordered_checkers
         except AttributeError:
             LOG.debug_analyzer('No checkers were defined in '
                                'the command line for %s', cls.ANALYZER_NAME)
-            cmdline_checkers = None
+            cmdline_checkers = []
 
         handler.initialize_checkers(
-            context.available_profiles,
-            context.package_root,
+            context,
             checkers,
-            clang_sa_checkers,
             cmdline_checkers,
             'enable_all' in args and args.enable_all)
 
@@ -431,8 +425,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         # TODO: This extra "isinstance" check is needed for
         # CodeChecker checkers --checker-config. This command also runs
         # this function in order to construct a config handler.
-        if 'checker_config' in args and \
-                isinstance(args.checker_config, list):
+        if 'checker_config' in args and isinstance(args.checker_config, list):
             for cfg in args.checker_config:
                 m = re.search(r, cfg)
                 if m.group('analyzer') == cls.ANALYZER_NAME:

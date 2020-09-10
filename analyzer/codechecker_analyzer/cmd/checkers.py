@@ -102,9 +102,12 @@ environment variables:
                          Default: '{}'
   CC_GUIDELINE_MAP_FILE  Path of the checker-guideline mapping config file.
                          Default: '{}'
-""".format(os.path.join(package_root, 'config', 'config.json'),
+  CC_PROFILE_MAP_FILE    Path of the checker-profile mapping config file.
+                         Default: '{}'
+""".format(os.path.join(package_root, 'config', 'checker_profile_map.json'),
            os.path.join(package_root, 'config', 'checker_severity_map.json'),
-           os.path.join(package_root, 'config', 'checker_guideline_map.json')),
+           os.path.join(package_root, 'config', 'checker_guideline_map.json'),
+           os.path.join(package_root, 'config', 'checker_profile_map.json')),
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.
@@ -254,10 +257,11 @@ def main(args):
     if 'profile' in args and args.profile == 'list':
         if 'details' in args:
             header = ['Profile name', 'Description']
-            rows = context.available_profiles.items()
+            rows = context.profile_map.available_profiles().items()
         else:
             header = ['Profile name']
-            rows = [(key, "") for key in context.available_profiles.keys()]
+            rows = [(key, "") for key in
+                    context.profile_map.available_profiles()]
 
         if args.output_format in ['csv', 'json']:
             header = list(map(uglify, header))
@@ -332,23 +336,19 @@ def main(args):
 
         checkers = analyzer_class.get_analyzer_checkers(config_handler,
                                                         analyzer_environment)
-        default_checker_cfg = context.checker_config.get(
-            analyzer + '_checkers')
 
-        profile_checkers = None
+        profile_checkers = []
         if 'profile' in args:
-            if args.profile not in context.available_profiles:
+            if args.profile not in context.profile_map.available_profiles():
                 LOG.error("Checker profile '%s' does not exist!",
                           args.profile)
                 LOG.error("To list available profiles, use '--profile list'.")
                 sys.exit(1)
 
-            profile_checkers = [(args.profile, True)]
+            profile_checkers = [('profile:' + args.profile, True)]
 
-        config_handler.initialize_checkers(context.available_profiles,
-                                           context.package_root,
+        config_handler.initialize_checkers(context,
                                            checkers,
-                                           default_checker_cfg,
                                            profile_checkers)
 
         for checker_name, value in config_handler.checks().items():

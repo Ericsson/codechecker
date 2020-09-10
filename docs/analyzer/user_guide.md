@@ -341,12 +341,38 @@ checker configuration:
   Note that compiler errors and warnings are captured by CodeChecker only if it
   was emitted by clang-tidy.
 
+  Profiles
+  ------------------------------------------------
+  In CodeCheckers there is a manual grouping of checkers. These groups are
+  called profiles. The collection of profiles is found in
+  config/checker_profile_map.json file. The goal of these profile is that you
+  can enable or disable checkers by these profiles. See the output of
+  "CodeChecker checkers --profile list" command.
+
+  Guidelines
+  ------------------------------------------------
+  There are several coding guidelines like CppCoreGuideline, SEI-CERT, etc.
+  These are collections of best programming practices to avoid common
+  programming errors. Some checkers cover the rules of these guidelines. In
+  CodeChecker there is a mapping between guidelines and checkers. This way you
+  can list and enable those checkers which check the fulfillment of certain
+  guideline rules. See the output of "CodeChecker checkers --guideline"
+  command.
+
   -e checker/group/profile, --enable checker/group/profile
-                        Set a checker (or checker group) to BE USED in the
-                        analysis.
+                        Set a checker (or checker group), profile or guideline
+                        to BE USED in the analysis. In case of ambiguity the
+                        priority order is profile, guideline, checker name
+                        (e.g. security means the profile, not the checker
+                        group). Profiles and guidelines can be labeled:
+                        'profile:security' or 'guideline:sei-cert'.
   -d checker/group/profile, --disable checker/group/profile
-                        Set a checker (or checker group) to BE PROHIBITED from
-                        use in the analysis.
+                        Set a checker (or checker group), profile or guideline
+                        to BE PROHIBITED from use in the analysis. In case of
+                        ambiguity the priority order is profile, guideline,
+                        checker name (e.g. security means the profile, not the
+                        checker group). Profiles and guidelines can be
+                        labeled: 'profile:security' or 'guideline:sei-cert'.
   --enable-all          Force the running analyzers to use almost every
                         checker available. The checker groups 'alpha.',
                         'debug.' and 'osx.' (on Linux) are NOT enabled
@@ -1213,10 +1239,18 @@ checker configuration:
 
   -e checker/group/profile, --enable checker/group/profile
                         Set a checker (or checker group or checker profile)
-                        to BE USED in the analysis.
+                        to BE USED in the analysis. In case of ambiguity the
+                        priority order is profile, guideline, checker name
+                        (e.g. security means the profile, not the checker
+                        group). Profiles and guidelines can be labeled:
+                        'profile:security' or 'guideline:sei-cert'.
   -d checker/group/profile, --disable checker/group/profile
                         Set a checker (or checker group or checker profile)
-                        to BE PROHIBITED from use in the analysis.
+                        to BE PROHIBITED from use in the analysis. In case of
+                        ambiguity the priority order is profile, guideline,
+                        checker name (e.g. security means the profile, not the
+                        checker group). Profiles and guidelines can be
+                        labeled: 'profile:security' or 'guideline:sei-cert'.
   --enable-all          Force the running analyzers to use almost every
                         checker available. The checker groups 'alpha.',
                         'debug.' and 'osx.' (on Linux) are NOT enabled
@@ -1239,6 +1273,19 @@ specified ones. For example
 will enable every checker of the `extreme` profile that do not belong to the
  `core.uninitialized` group, with the exception of `core.uninitialized.Assign`,
 which will be enabled after all.
+
+Checkers are taken into account based on the following order:
+
+- First the default state is taken based on the analyzer tool.
+- Members of "default" profile are enabled.
+- In case of `--enable-all` every checker is enabled except for `alpha` and
+  "debug" checker groups. `osx` checker group is also not included unless the
+  target platform is Darwin.
+- Command line `--enable/--disable` flags.
+  - Their arguments may start with `profile:` of `guideline:` prefix which
+    makes the choice explicit.
+  - Without prefix it means a profile name, a guideline name or a checker
+    group/name in this priority order.
 
 Disabling certain checkers - such as the `core` group - is unsupported by
 the LLVM/Clang community, and thus discouraged.
@@ -1282,14 +1329,14 @@ critical severity bug.
 #### Checker profiles <a name="checker-profiles"></a>
 
 Checker profiles describe custom sets of enabled checks which can be specified
-in the `{INSTALL_DIR}/config/config.json` file. Three built-in options are
-available grouping checkers by their quality (measured by their false positive
-rate): `default`, `sensitive` and `extreme`. In addition, profile `portability`
-contains checkers for detecting platform-dependent code issues. These issues
-can arise when migrating code from 32-bit to 64-bit architectures, and the root
-causes of the bugs tend to be overflows, sign extensions and widening
-conversions or casts. Detailed information about profiles can be retrieved by
-the `CodeChecker checkers` command.
+in the `{INSTALL_DIR}/config/checker_profile_map.json` file. Three built-in
+options are available grouping checkers by their quality (measured by their
+false positive rate): `default`, `sensitive` and `extreme`. In addition,
+profile `portability` contains checkers for detecting platform-dependent code
+issues. These issues can arise when migrating code from 32-bit to 64-bit
+architectures, and the root causes of the bugs tend to be overflows, sign
+extensions and widening conversions or casts. Detailed information about
+profiles can be retrieved by the `CodeChecker checkers` command.
 
 Note: `list` is a reserved keyword used to show all the available profiles and
 thus should not be used as a profile name. Profile names should also be
@@ -1597,13 +1644,15 @@ optional arguments:
                         Set verbosity level.
 
 The list of checkers that are enabled of disabled by default can be edited by
-editing the file '.../config/config.json'.
+editing the file '.../config/checker_profile_map.json'.
 
 environment variables:
   CC_SEVERITY_MAP_FILE   Path of the checker-severity mapping config file.
                          Default: '<package>/config/checker_severity_map.json'
   CC_GUIDELINE_MAP_FILE  Path of the checker-guideline mapping config file.
                          Default: '<package>/config/checker_guideline_map.json'
+  CC_PROFILE_MAP_FILE    Path of the checker-profile mapping config file.
+                         Default: '<package>/config/checker_profile_map.json'
 ```
 
 The list provided by default is formatted for easy machine and human
@@ -1618,8 +1667,8 @@ A machine-readable `csv` or `json` output can be generated by supplying the
 `--output csv` or `--output json` argument.
 
 The _default_ list of enabled and disabled checkers can be altered by editing
-`{INSTALL_DIR}/config/config.json`. Note, that this file is overwritten when
-the package is reinstalled!
+`{INSTALL_DIR}/config/checker_profile_map.json`. Note, that this file is
+overwritten when the package is reinstalled!
 
 There are some coding guidelines which contain best practices on avoiding
 common programming mistakes
