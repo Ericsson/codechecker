@@ -5,9 +5,7 @@
         <router-link
           :to="{ name: 'reports',
                  query: {
-                   ...(queries['reports'] === undefined
-                     ? defaultReportFilterValues
-                     : queries['reports']),
+                   ...defaultReportFilterValues,
                    ...reportFilterQuery
                  }
           }"
@@ -62,9 +60,7 @@
         <v-btn
           :to="{ name: 'statistics',
                  query: {
-                   ...(queries['statistics'] === undefined
-                     ? defaultStatisticsFilterValues
-                     : queries['statistics']),
+                   ...defaultStatisticsFilterValues,
                    ...statisticsFilterQuery
                  } }"
           class="show-statistics"
