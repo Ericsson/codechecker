@@ -2,6 +2,174 @@
   <!-- eslint-disable max-len -->
   <v-container fluid>
     <v-timeline align-top>
+      <v-timeline-item fill-dot icon="mdi-star">
+        <new-release-item>
+          <template v-slot:title>
+            <a
+              href="https://github.com/Ericsson/codechecker/releases/tag/v6.14.0"
+              target="_blank"
+              class="white--text"
+            >
+              Highlights of CodeChecker 6.14.0 release
+            </a>
+          </template>
+
+          <new-feature-item>
+            <template v-slot:title>
+              New statistics page in the Web UI
+            </template>
+            The statistics page got a new design with a lot of new features:
+
+            <ul>
+              <li>
+                Statistics shown in separate tabs instead of one page for
+                better visibility.
+              </li>
+              <li>
+                New, component statistics page, where reports are distributed
+                per statistics, components can represent a part of a repository
+                (directory, files).
+              </li>
+              <li>
+                Statistics comparison mode: you will be able compare the report
+                statistics of two different analysis runs or time snapshot
+              </li>
+              <li>
+                Diff and review status filters are available on the statistics
+                page.
+              </li>
+            </ul>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Redesigned date selectors for the web UI filter and CLI
+            </template>
+            You will be able to list the open reports of your project for any
+            date. Open reports at a date are which were <i>DETECTED BEFORE</i>
+            the given date and <i>NOT FIXED BEFORE</i> the given date.<br>
+            From the CLI the open reports can be queried like this:<br>
+            <code>CodeChecker cmd results --open-reports-date 2020:09:11:12:20 --url ...</code>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Remember filters when navigate between pages
+            </template>
+            Filters are remembered during navigating between the pages. The
+            report list and statistics related filters are saved separately.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Show analyzer name alongside the reports
+            </template>
+            Analysis results from multiple static analyzers can be stored to
+            the database, with this change for each report the analyzer name
+            can be viewed which produced the result.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Always show similar reports
+            </template>
+            Reports with the same hash can be seen in a drop down list for
+            each report without uniqueing.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Enable and disable checker profiles and guidelines
+              (like <i>sei-cert</i>) in the analyzer CLI.
+            </template>
+            There is a new syntax extended with guideline support which can be
+            used to enable checker sets. With the new syntax the checkers,
+            profiles and guideline can be enabled or disabled even if there is
+            a conflict in their name. The arguments may start with
+            <i>profile:</i> of <i>guideline:</i> prefix which makes the choice
+            explicit. Without prefix it means a profile name, a guideline
+            name or a checker group/name in this priority order.<br>
+            <code>
+              CodeChecker analyze -o reports -e profile:sensitive -e guideline:sei-cert compile_command.json
+            </code><br><br>
+            Use these commands to list the available profiles:<br>
+            <code>CodeChecker checkers --profile list</code><br>
+            or guidelines:<br>
+            <code>CodeChecker checkers --guideline</code>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              New report converter for Markdownlint results
+            </template>
+            The reports from Markdownlint can be converted and stored to the
+            report serve like this:
+
+            <pre>
+    # Run Markdownlint.
+    mdl /path/to/your/project > ./mdl_reports.out
+
+    # Use 'report-converter' to create a CodeChecker report directory from the
+    # analyzer result of Markdownlint.
+    report-converter -t mdl -o ./codechecker_mdl_reports ./mdl_reports.out
+
+    # Store Markdownlint reports with CodeChecker.
+    CodeChecker store ./codechecker_mdl_reports -n mdl
+            </pre>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              The codechecker config file was extended with a parse section
+              which can be used by the parse subcommand.
+            </template>
+            It can be used to set the path prefixes in the CodeChecker config
+            file which should be trimmed by the parse subcommand when the
+            reports are printed:<br>
+            <pre>
+    {
+      "parse": [
+        "--trim-path-prefix",
+        "/$HOME/workspace"
+      ]
+    }
+            </pre><br>
+            The config file for the parse command can be set like this:
+            <code>CodeChecker parse report --config codechecker_cfg.json</code>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Environment variables can be used in the CodeChecker config file
+            </template>
+            Environment variables can be used in the CodeChecker config file,
+            they will be expanded automatically:
+            <pre>
+    {
+      "analyzer": [
+        "--skip=$HOME/project/skip.txt"
+      ]
+    }
+            </pre>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              On-demand Cross Translation Unit Analysis will be the default
+              CTU analysis mode
+            </template>
+            The On-demand CTU analysis support introduced in the previous
+            release is enabled by default now if the used Clang Static Analyzer
+            supports it. CTU analysis will be performed without the huge
+            temporary disc space allocation.<br>
+
+            With the <i>--ctu-ast-mode</i> the analysis mode can be switched
+            back to the old behavior if the new consumes too much memory:<br>
+            <code>CodeChecker analyze --ctu-ast-mode lod-from-pch ....</code>
+          </new-feature-item>
+        </new-release-item>
+      </v-timeline-item>
+
       <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
         <new-release-item color="green lighten-1">
           <template v-slot:title>
