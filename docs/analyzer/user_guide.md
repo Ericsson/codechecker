@@ -1098,6 +1098,8 @@ the available checkers and find the one which checks functions' size:
 ```
 CodeChecker checkers --details
 ```
+Every supported checker is reported by the `checkers` command and all of its
+subcommands.
 
 After finding `google-readability-function-size` checker, you can list the
 config options with the following command:
@@ -1633,8 +1635,10 @@ optional arguments:
                         a rule. Without additional parameter, the available
                         guidelines and their corresponding rules will be
                         listed.
-  --checker-config      Show checker configuration options. These can be
-                        given to 'CodeChecker analyze --checker-config'.
+  --checker-config      Show checker configuration options for all
+                        existing checkers supported by the analyzer.
+                        These can be given to 'CodeChecker analyze
+                        --checker-config'.
   --only-enabled        Show only the enabled checkers.
   --only-disabled       Show only the disabled checkers.
   -o {rows,table,csv,json}, --output {rows,table,csv,json}

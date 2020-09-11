@@ -327,6 +327,9 @@ CodeChecker checkers --details
 ```
 those marked with (+) are enabled by default.
 
+Every supported checker is reported by the `checkers` command and all of its
+subcommands.
+
 You may want to enable more checkers or disable some of them using the -e, -d
 switches of the analyze command.
 
