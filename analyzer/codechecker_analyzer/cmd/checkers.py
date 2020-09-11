@@ -172,8 +172,9 @@ def add_arguments_to_parser(parser):
                         default=argparse.SUPPRESS,
                         action='store_true',
                         required=False,
-                        help="Show checker configuration options. These can "
-                             "be given to 'CodeChecker analyze "
+                        help="Show checker configuration options for all "
+                             "existing checkers supported by the analyzer. "
+                             "These can be given to 'CodeChecker analyze "
                              "--checker-config'.")
 
     filters = parser.add_mutually_exclusive_group(required=False)

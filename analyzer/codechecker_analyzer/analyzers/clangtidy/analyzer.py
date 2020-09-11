@@ -82,7 +82,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
     @classmethod
     def get_analyzer_checkers(cls, cfg_handler, environ):
         """
-        Return the list of the supported checkers.
+        Return the list of the all of the supported checkers.
         """
         try:
             result = subprocess.check_output(
@@ -97,9 +97,12 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
     @classmethod
     def get_checker_config(cls, cfg_handler, environ):
+        """
+        Return the checker configuration of the all of the supported checkers.
+        """
         try:
             result = subprocess.check_output(
-                [cfg_handler.analyzer_binary, "-dump-config"],
+                [cfg_handler.analyzer_binary, "-dump-config", "-checks=*"],
                 env=environ,
                 universal_newlines=True,
                 encoding="utf-8",
@@ -110,9 +113,12 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
     @classmethod
     def get_analyzer_config(cls, cfg_handler, environ):
+        """
+        Return the analyzer configuration with all checkers enabled.
+        """
         try:
             result = subprocess.check_output(
-                [cfg_handler.analyzer_binary, "-dump-config"],
+                [cfg_handler.analyzer_binary, "-dump-config", "-checks=*"],
                 env=environ,
                 universal_newlines=True,
                 encoding="utf-8",
