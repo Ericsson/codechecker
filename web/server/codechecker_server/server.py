@@ -348,7 +348,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
         if self.server.manager.is_enabled and \
                 not self.path.endswith(('/Authentication',
-                                        '/Configuration')) and \
+                                        '/Configuration',
+                                        '/ServerInfo')) and \
                 not self.auth_session:
             # Bail out if the user is not authenticated...
             # This response has the possibility of melting down Thrift clients,
