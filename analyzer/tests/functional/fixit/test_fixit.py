@@ -118,9 +118,10 @@ int main()
             fixit_list_cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE,
             encoding="utf-8",
             errors="ignore")
-        out, _ = process.communicate()
+        out, _ = process.communicate(input='[]')
 
         self.assertIn("v.empty()", out)
 
@@ -131,9 +132,10 @@ int main()
             fixit_apply_cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE,
             encoding="utf-8",
             errors="ignore")
-        process.communicate()
+        process.communicate(input='[]')
 
         with open(source_file_cpp, encoding="utf-8", errors="ignore") as f:
             new_source_file = f.read()
@@ -200,9 +202,10 @@ int main()
             [self._codechecker_cmd, 'fixit', self.report_dir],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE,
             encoding="utf-8",
             errors="ignore")
-        _, err = process.communicate()
+        _, err = process.communicate(input='[]')
 
         self.assertNotIn(
             'Skipped files due to modification since last analysis',
@@ -214,9 +217,10 @@ int main()
             [self._codechecker_cmd, 'fixit', self.report_dir],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE,
             encoding="utf-8",
             errors="ignore")
-        _, err = process.communicate()
+        _, err = process.communicate(input='[]')
 
         self.assertIn('Skipped files due to modification since last analysis',
                       err)
@@ -286,10 +290,11 @@ int main()
             fixit_cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE,
             cwd=self.test_workspace,
             encoding="utf-8",
             errors="ignore")
-        out, err = process.communicate()
+        out, err = process.communicate(input='[]')
         print(out, err)
 
         self.assertEqual(out.count('DiagnosticMessage'), 2)
