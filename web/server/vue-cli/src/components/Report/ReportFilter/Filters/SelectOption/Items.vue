@@ -105,6 +105,14 @@
           No items
         </slot>
       </v-list-item>
+
+      <div
+        v-if="limit"
+        class="text-center text--secondary"
+      >
+        Showed <span v-if="limit === items.length">first</span>
+        <i>{{ items.length }}</i> items.
+      </div>
     </v-list>
 
     <v-card-actions>
@@ -144,6 +152,7 @@ export default {
   name: "SelectOptionItems",
   props: {
     items: { type: Array, required: true },
+    limit: { type: Number, default: null },
     selectedItems: { type: Array, required: true },
     multiple: { type: Boolean, default: true },
     search: { type: Object, default: null },

@@ -60,6 +60,7 @@
             :selected-items="prevSelectedItems"
             :search="search"
             :multiple="multiple"
+            :limit="limit"
             @apply="applyFilters"
             @cancel="cancel"
             @select="select"
@@ -122,6 +123,7 @@ export default {
     search: { type: Object, default: null },
     loading: { type: Boolean, default: false },
     panel: { type: Boolean, default: false },
+    limit: { type: Number, default: null },
     apply: {
       type: Function,
       default: function (selectedItems) {

@@ -7,6 +7,7 @@
     :selected-items="selectedItems"
     :search="search"
     :loading="loading"
+    :limit="defaultLimit"
     @clear="clear(true)"
     @input="setSelectedItems"
   >

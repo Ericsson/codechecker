@@ -59,6 +59,7 @@
             :items="items"
             :selected-items="prevSelectedItems"
             :search="search"
+            :limit="defaultLimit"
             @apply="apply"
             @cancel="cancel"
             @select="select"
