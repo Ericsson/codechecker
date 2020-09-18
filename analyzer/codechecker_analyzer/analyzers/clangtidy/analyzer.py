@@ -200,6 +200,10 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                     "--target=" + self.buildaction.target.get(compile_lang,
                                                               ""))
 
+            if not has_flag('-arch', analyzer_cmd) and \
+                    self.buildaction.arch != "":
+                analyzer_cmd.extend(["-arch ", self.buildaction.arch])
+
             analyzer_cmd.extend(self.buildaction.analyzer_options)
 
             analyzer_cmd.extend(prepend_all(

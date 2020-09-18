@@ -132,7 +132,7 @@ class OptionParserTest(unittest.TestCase):
         print(res)
 
         self.assertTrue('main.c' == res.source)
-        self.assertEqual(arch['c'], res.target['c'])
+        self.assertEqual(arch['c'], res.arch)
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
     def test_compile_optimized(self):
@@ -310,6 +310,19 @@ class OptionParserTest(unittest.TestCase):
         res = log_parser.parse_options(warning_action_clang)
 
         self.assertEqual(["-std=gnu++14"], res.analyzer_options)
+
+    def test_target_parsing_clang(self):
+        """Parse compilation target."""
+
+        warning_action_clang = {
+            "directory": "/tmp",
+            "command":
+            "clang++ -target compilation-target -B/tmp/dir -c /tmp/a.cpp",
+            "file": "/tmp/a.cpp"}
+
+        res = log_parser.parse_options(warning_action_clang)
+        self.assertEqual(["-B/tmp/dir"], res.analyzer_options)
+        self.assertEqual("compilation-target", res.target['c++'])
 
     def test_ignore_xclang_flags_clang(self):
         """Skip some specific xclang constructs"""

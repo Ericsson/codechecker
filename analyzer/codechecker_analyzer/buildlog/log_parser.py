@@ -825,6 +825,23 @@ def __get_arch(flag_iterator, details):
     return False
 
 
+def __get_target(flag_iterator, details):
+    """
+    This function consumes --target or -target flag which is followed by the
+    compilation target architecture.
+    This target might be different from the default compilation target
+    collected from the compiler if cross compilation is done for
+    another target.
+    This is then collected to the buildaction object.
+    """
+    if flag_iterator.item in ['--target', '-target']:
+        next(flag_iterator)
+        details['compilation_target'] = flag_iterator.item
+        return True
+
+    return False
+
+
 def __get_language(flag_iterator, details):
     """
     This function consumes -x flag which is followed by the language. This
@@ -936,6 +953,7 @@ def parse_options(compilation_db_entry,
         'analyzer_options': [],
         'compiler_includes': defaultdict(dict),  # For each language c/cpp.
         'compiler_standard': defaultdict(dict),  # For each language c/cpp.
+        'compilation_target': '',  # Compilation target in the compilation cmd.
         'analyzer_type': -1,
         'original_command': '',
         'directory': '',
@@ -972,6 +990,7 @@ def parse_options(compilation_db_entry,
         __get_output,
         __determine_action_type,
         __get_arch,
+        __get_target,
         __get_language,
         __collect_transform_include_opts,
         __collect_clang_compile_opts
@@ -985,6 +1004,7 @@ def parse_options(compilation_db_entry,
         __determine_action_type,
         __skip_sources,
         __get_arch,
+        __get_target,
         __get_language,
         __get_output]
 
@@ -1050,7 +1070,7 @@ def parse_options(compilation_db_entry,
     # Option parser detects target architecture but does not know about the
     # language during parsing. Set the collected compilation target for the
     # language detected language.
-    details['target'][lang] = details['arch']
+    details['target'][lang] = details['compilation_target']
 
     # With gcc-toolchain a non default compiler toolchain can be set. Clang
     # will search for include paths and libraries based on the gcc-toolchain
