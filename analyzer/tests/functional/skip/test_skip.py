@@ -163,7 +163,7 @@ class TestSkip(unittest.TestCase):
         print(out)
         print(err)
         errcode = process.returncode
-        self.assertEqual(errcode, 0)
+        self.assertEqual(errcode, 2)
 
         # Check if file is skipped.
         report_dir_files = os.listdir(self.report_dir)

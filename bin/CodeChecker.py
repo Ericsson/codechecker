@@ -138,7 +138,7 @@ output.
                 args = parser.parse_args()
 
         if 'func' in args:
-            args.func(args)
+            sys.exit(args.func(args))
         else:
             # Print the help message of the current command if no subcommand
             # is given.

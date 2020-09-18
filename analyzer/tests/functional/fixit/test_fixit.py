@@ -102,7 +102,7 @@ int main()
 
         # THEN
         errcode = process.returncode
-        self.assertEqual(errcode, 0)
+        self.assertEqual(errcode, 2)
 
         fixit_dir = os.path.join(self.report_dir, 'fixit')
         self.assertTrue(os.path.isdir(fixit_dir))
@@ -194,7 +194,7 @@ int main()
 
         # THEN
         errcode = process.returncode
-        self.assertEqual(errcode, 0)
+        self.assertEqual(errcode, 2)
 
         fixit_dir = os.path.join(self.report_dir, 'fixit')
         self.assertTrue(os.path.isdir(fixit_dir))

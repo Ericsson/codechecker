@@ -376,7 +376,8 @@ Parse and pretty-print the summary and results from one or more
 printed by the `parse` command.""",
 
         'epilog': """
-environment variables:
+Environment variables
+------------------------------------------------
   CC_SEVERITY_MAP_FILE   Path of the checker-severity mapping config file.
   CC_REPO_DIR         Root directory of the sources, i.e. the directory where
                       the repository was cloned. Use it when generating gerrit

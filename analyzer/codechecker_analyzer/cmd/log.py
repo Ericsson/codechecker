@@ -51,7 +51,8 @@ Available build logger tool that will be used is '{0}'.{1}
            ldlogger_settings),
 
         'epilog': """
-environment variables:
+Environment variables
+------------------------------------------------
   CC_LOGGER_GCC_LIKE       Set to to a colon separated list to change which
                            compilers should be logged. For example (default):
                            export CC_LOGGER_GCC_LIKE="gcc:g++:clang:clang++:

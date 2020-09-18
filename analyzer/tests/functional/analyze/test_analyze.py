@@ -84,7 +84,10 @@ class TestAnalyze(unittest.TestCase):
         print(err)
 
         errcode = process.returncode
-        self.assertEqual(errcode, 0)
+        # This function checks incremental analysis. There are some test cases
+        # for failed analysis during incremental analysis, do the error code
+        # can also be 3.
+        self.assertIn(errcode, [0, 3])
 
         # Check the count of the plist files.
         plist_files = [os.path.join(reports_dir, filename)
@@ -163,7 +166,7 @@ class TestAnalyze(unittest.TestCase):
 
         # THEN
         errcode = process.returncode
-        self.assertEqual(errcode, 0)
+        self.assertEqual(errcode, 2)
 
         info_File = os.path.join(reports_dir, 'compiler_info.json')
         self.assertEqual(os.path.exists(info_File), True)
@@ -273,7 +276,7 @@ class TestAnalyze(unittest.TestCase):
         print(out)
         print(err)
         errcode = process.returncode
-        self.assertEqual(errcode, 0)
+        self.assertEqual(errcode, 2)
 
         # We expect the sucess stderr file in the success directory.
         success_files = os.listdir(success_dir)
@@ -318,7 +321,7 @@ class TestAnalyze(unittest.TestCase):
         print(out)
         print(err)
         errcode = process.returncode
-        self.assertEqual(errcode, 0)
+        self.assertEqual(errcode, 3)
 
         # We expect a failure archive to be in the failed directory.
         failed_files = os.listdir(failed_dir)
@@ -384,7 +387,7 @@ class TestAnalyze(unittest.TestCase):
         process.communicate()
 
         errcode = process.returncode
-        self.assertEqual(errcode, 0)
+        self.assertEqual(errcode, 3)
 
         # We expect a failure archive to be in the failed directory.
         failed_files = os.listdir(failed_dir)
@@ -591,7 +594,7 @@ class TestAnalyze(unittest.TestCase):
         process.communicate()
 
         errcode = process.returncode
-        self.assertEqual(errcode, 0)
+        self.assertEqual(errcode, 2)
         self.assertFalse(os.path.isdir(failed_dir))
 
         self.unique_json_helper(unique_json, True, False, True)
@@ -610,7 +613,7 @@ class TestAnalyze(unittest.TestCase):
         process.communicate()
 
         errcode = process.returncode
-        self.assertEqual(errcode, 0)
+        self.assertEqual(errcode, 2)
         self.assertFalse(os.path.isdir(failed_dir))
 
         self.unique_json_helper(unique_json, False, True, True)
@@ -667,7 +670,7 @@ class TestAnalyze(unittest.TestCase):
         process.communicate()
 
         errcode = process.returncode
-        self.assertEqual(errcode, 0)
+        self.assertEqual(errcode, 2)
         self.assertFalse(os.path.isdir(failed_dir))
         self.unique_json_helper(unique_json, True, True, True)
 
@@ -703,7 +706,7 @@ class TestAnalyze(unittest.TestCase):
         self.assertTrue("non-existing-checker-name" in out)
 
         errcode = process.returncode
-        self.assertEqual(errcode, 0)
+        self.assertEqual(errcode, 2)
 
     def test_disable_all_warnings(self):
         """Test disabling warnings as checker groups."""
@@ -769,7 +772,7 @@ class TestAnalyze(unittest.TestCase):
         self.assertTrue("non-existing-checker-name" in out)
 
         errcode = process.returncode
-        self.assertEqual(errcode, 0)
+        self.assertEqual(errcode, 2)
 
     def test_multiple_invalid_checker_names(self):
         """Warn in case of multiple invalid checker names."""
@@ -810,7 +813,7 @@ class TestAnalyze(unittest.TestCase):
 
         errcode = process.returncode
 
-        self.assertEqual(errcode, 0)
+        self.assertEqual(errcode, 2)
 
     def test_makefile_generation(self):
         """ Test makefile generation. """

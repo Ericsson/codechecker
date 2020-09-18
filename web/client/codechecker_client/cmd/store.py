@@ -125,7 +125,8 @@ database.""",
         # Epilogue is shown after the arguments when the help is queried
         # directly.
         'epilog': """
-environment variables:
+Environment variables
+------------------------------------------------
   CC_PASS_FILE     The location of the password file for auto login. By default
                    CodeChecker will use '~/.codechecker.passwords.json' file.
                    It can also be used to setup different credential files to

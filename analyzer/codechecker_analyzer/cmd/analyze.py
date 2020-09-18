@@ -50,7 +50,8 @@ the project, outputting analysis results in a machine-readable format.""",
         # Epilogue is shown after the arguments when the help is queried
         # directly.
         'epilog': """
-environment variables:
+Environment variables
+------------------------------------------------
   CC_ANALYZERS_FROM_PATH   Set to `yes` or `1` to enforce taking the analyzers
                            from the `PATH` instead of the given binaries.
   CC_CLANGSA_PLUGIN_DIR    If the CC_ANALYZERS_FROM_PATH environment variable
@@ -61,7 +62,8 @@ environment variables:
                            Default: {}
 
 
-issue hashes:
+Issue hashes
+------------------------------------------------
 - By default the issue hash calculation method for 'Clang Static Analyzer' is
 context sensitive. It means the hash will be generated based on the following
 information:
@@ -98,6 +100,14 @@ generated and not the context free hash (kept for backward compatibility). Use
 OUR RECOMMENDATION: we recommend you to use 'context-free-v2' hash because the
 hash will not be changed so easily for example on code indentation or when a
 checker is renamed.
+
+Exit status
+------------------------------------------------
+0 - Successful analysis and no new reports
+1 - CodeChecker error
+2 - At least one report emitted by an analyzer and there is no analyzer failure
+3 - Analysis of at least one translation unit failed
+128+signum - Terminating on a fatal signal whose number is signum
 
 
 Compilation databases can be created by instrumenting your project's build via
@@ -757,6 +767,36 @@ def __get_result_source_files(metadata):
     return result_src_files
 
 
+def __have_new_report(plist_timestamps, output_path):
+    """
+    This is a lightweight implementation of checking whether new reports are
+    found during analysis. The function checks if a new plist file contains
+    "check_name" string. There is no plist parsing or "CodeChecker parse" run,
+    but we say that a report was emitted if any checker writes anything to a
+    plist file. "New plist file" means that it is either created during the
+    analysis or its timestamp is greater than before analysis.
+
+    plist_timestamps -- A dict storing file names and timestamps before
+                        analysis.
+    output_path -- Path of the output directory containing plist files.
+    """
+    for f in os.listdir(output_path):
+        if not f.endswith('.plist'):
+            continue
+
+        abs_f = os.path.join(output_path, f)
+        if f not in plist_timestamps or \
+                os.path.getmtime(abs_f) > plist_timestamps[f]:
+            with open(abs_f, encoding='utf-8', errors='ignore') as plist:
+                # 'check_name' is a tag value in .plist files which is followed
+                # by a checker name. In case there is no such tag in the .plist
+                # file, then no checker found anything.
+                if 'check_name' in plist.read():
+                    return True
+
+    return False
+
+
 def main(args):
     """
     Perform analysis on the given logfiles and store the results in a machine-
@@ -866,6 +906,13 @@ def main(args):
 
     if not os.path.exists(args.output_path):
         os.makedirs(args.output_path)
+
+    plist_timestamps = {}
+    for f in os.listdir(args.output_path):
+        if not f.endswith('.plist'):
+            continue
+        plist_timestamps[f] = os.path.getmtime(
+            os.path.join(args.output_path, f))
 
     # TODO: I'm not sure that this directory should be created here.
     fixit_dir = os.path.join(args.output_path, 'fixit')
@@ -989,3 +1036,19 @@ def main(args):
         analyzer_statistics.collect(metadata, "analyze")
     except Exception:
         pass
+
+    # Generally exit status is set by sys.exit() call in CodeChecker. However,
+    # exit codes 2 and 3 have a special meaning in case of an analysis:
+    # 2 is returned in case of analyzer report emitted, 3 in case of analyzer
+    # failed.
+    # "CodeChecker analyze" is special in the sense that in can be invoked
+    # either top-level or through "CodeChecker check". In the latter case
+    # "CodeChecker check" should have the same exit status. Calling sys.exit()
+    # at this specific point is not an option, because the remaining statements
+    # of "CodeChecker check" after the analysis wouldn't execute.
+    for analyzer_data in metadata_tool['analyzers'].values():
+        if analyzer_data['analyzer_statistics']['failed'] != 0:
+            return 3
+
+    if __have_new_report(plist_timestamps, args.output_path):
+        return 2

@@ -2,6 +2,8 @@ NORMAL#CodeChecker log --output $LOGFILE$ --build "make compiler_error" --quiet
 NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy --quiet
 NORMAL#CodeChecker parse $OUTPUT$
 --------------------------------------------------------------------------------
+[] - Starting build ...
+[] - Build failed.
 [] - Starting static analysis ...
 [] - Analyzing compiler_error.cpp with clang-tidy  failed!
 [] - ----==== Summary ====----
