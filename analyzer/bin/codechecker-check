@@ -1,3 +1,0 @@
-# DO_NOT_INSTALL_TO_PATH
-This file marks 'CodeChecker check' to be a valid command, but prohibits
-use as 'codechecker-check'.

@@ -28,9 +28,9 @@ test_in_env: pycodestyle_in_env pylint_in_env test_unit_in_env test_functional_n
 
 PYCODESTYLE_TEST_CMD = pycodestyle \
   --exclude=server/codechecker_server/migrations \
-  bin codechecker_web tests \
-  client/bin client/codechecker_client \
-  server/bin server/codechecker_server server/tests \
+  codechecker_web tests \
+  client/codechecker_client \
+  server/codechecker_server server/tests \
   tests
 
 pycodestyle:

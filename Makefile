@@ -117,11 +117,13 @@ package: package_dir_structure set_git_commit_template package_plist_to_html pac
 
 	mkdir -p $(CC_BUILD_DIR)/cc_bin && \
 	./scripts/build/create_commands.py -b $(BUILD_DIR) \
-		$(ROOT)/bin:codechecker_common/cmd \
-		$(CC_WEB)/bin:codechecker_web/cmd \
-		$(CC_SERVER)/bin:codechecker_server/cmd \
-		$(CC_CLIENT)/bin:codechecker_client/cmd \
-		$(CC_ANALYZER)/bin:codechecker_analyzer/cmd
+	  --cmd-dir codechecker_common/cmd \
+	    $(CC_WEB)/codechecker_web/cmd \
+	    $(CC_SERVER)/codechecker_server/cmd \
+	    $(CC_CLIENT)/codechecker_client/cmd \
+	    $(CC_ANALYZER)/codechecker_analyzer/cmd \
+	  --bin-file $(ROOT)/bin/CodeChecker \
+	  --cc-bin-file $(ROOT)/bin/CodeChecker.py
 
 	# Copy license file.
 	cp $(ROOT)/LICENSE.TXT $(CC_BUILD_DIR)

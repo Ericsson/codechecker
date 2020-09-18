@@ -12,7 +12,7 @@ test_in_env: pycodestyle_in_env pylint_in_env test_unit_in_env test_functional_i
 
 test: pycodestyle pylint test_unit test_functional test_build_logger test_tu_collector
 
-PYCODESTYLE_TEST_CMD = pycodestyle bin codechecker_analyzer tests
+PYCODESTYLE_TEST_CMD = pycodestyle codechecker_analyzer tests
 
 pycodestyle:
 	$(PYCODESTYLE_TEST_CMD)
