@@ -106,7 +106,7 @@ The following tools are supported:
 |                | [Clang Tidy](https://clang.llvm.org/extra/clang-tidy/)  |
 |                | [Clang Sanitizers](supported_code_analyzers.md#clang-sanitizers)    |
 |                | [Cppcheck](/tools/report-converter/README.md#cppcheck)    |
-|                | [Facebook Infer](/tools/report-converter/README.md#fbinfer)    |
+|                | [Facebook Infer](/tools/report-converter/README.md#facebook-infer)    |
 | **Java**       | [SpotBugs](/tools/report-converter/README.md#spotbugs)    |
 |                | [Facebook Infer](/tools/report-converter/README.md#fbinfer)    |
 | **Python**     | [Pylint](/tools/report-converter/README.md#pylint)    |
