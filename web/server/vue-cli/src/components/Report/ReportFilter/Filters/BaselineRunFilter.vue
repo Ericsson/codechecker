@@ -240,8 +240,8 @@ export default {
           id: t.id.toNumber(),
           runName: t.runName,
           runId: t.runId.toNumber(),
-          tagName : t.versionTag,
-          title: t.versionTag,
+          tagName : t.versionTag ? t.versionTag : t.time,
+          title: t.versionTag ? t.versionTag : t.time,
           count: "N/A"
         }))
         : [];
@@ -266,12 +266,22 @@ export default {
     },
 
     async initByUrl() {
-      const runs = [].concat(this.$route.query[this.id] || []);
+      let runs = [].concat(this.$route.query[this.id] || []);
       const tags = [].concat(this.$route.query[this.runTagId] || []);
 
       if (runs.length || tags.length) {
+        let selectedTags = null;
+        if (tags.length) {
+          selectedTags = await this.getSelectedTagItems(tags);
+
+          // Add runs related to tags.
+          runs.push(...selectedTags.map(t => t.runName));
+
+          // Filter out duplicates.
+          runs = [ ...new Set(runs) ];
+        }
+
         const selectedRuns = await this.getSelectedRunItems(runs);
-        const selectedTags = await this.getSelectedTagItems(tags);
 
         await this.setSelectedItems(selectedRuns, selectedTags, false);
       }

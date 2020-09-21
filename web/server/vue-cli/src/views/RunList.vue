@@ -29,21 +29,25 @@
     <analyzer-statistics-dialog
       :value.sync="analyzerStatisticsDialog"
       :run-id="selectedRunId"
+      :run-history-id="selectedRunHistoryId"
     />
 
     <v-data-table
       v-model="selected"
       :headers="headers"
-      :items="formattedRuns"
+      :items="runs"
       :options.sync="pagination"
       :loading="loading"
       loading-text="Loading runs..."
       :server-items-length.sync="totalItems"
       :footer-props="footerProps"
+      :expanded.sync="expanded"
+      show-expand
       :must-sort="true"
       :mobile-breakpoint="1000"
       item-key="name"
       show-select
+      @item-expanded="runExpanded"
     >
       <template v-slot:top>
         <v-toolbar flat class="mb-4">
@@ -97,6 +101,32 @@
         </v-toolbar>
       </template>
 
+      <template v-slot:expanded-item="{ item }">
+        <td
+          v-if="item.$history"
+          :colspan="headers.length + 1"
+        >
+          <expanded-run
+            :histories="item.$history.values"
+            :run="item"
+            :open-check-command-dialog="openCheckCommandDialog"
+            :open-analyzer-statistics-dialog="openAnalyzerStatisticsDialog"
+            :selected-baseline-tags.sync="selectedBaselineTags"
+            :selected-compared-to-tags.sync="selectedComparedToTags"
+          >
+            <v-btn
+              v-if="item.$history.values.length % item.$history.limit === 0"
+              class="mb-4"
+              color="primary"
+              :loading="loadingMoreRunHistories"
+              @click="loadMoreRunHistory(item)"
+            >
+              Load more (+{{ item.$history.limit }})
+            </v-btn>
+          </expanded-run>
+        </td>
+      </template>
+
       <template #item.name="{ item }">
         <run-name-column
           :id="item.runId.toNumber()"
@@ -114,6 +144,8 @@
         <analyzer-statistics-btn
           v-if="Object.keys(item.analyzerStatistics).length"
           :value="item.analyzerStatistics"
+          :show-dividers="false"
+          tag="div"
           @click.native="openAnalyzerStatisticsDialog(item)"
         />
       </template>
@@ -151,19 +183,25 @@
       </template>
 
       <template #item.diff="{ item }">
-        <v-row class="flex-nowrap">
-          <v-checkbox
-            v-model="selectedBaselineRuns"
-            :value="item.name"
-            multiple
-          />
+        <v-container class="py-0">
+          <v-row class="flex-nowrap py-0">
+            <v-checkbox
+              v-model="selectedBaselineRuns"
+              :value="item.name"
+              class="ma-0"
+              hide-details
+              multiple
+            />
 
-          <v-checkbox
-            v-model="selectedComparedToRuns"
-            :value="item.name"
-            multiple
-          />
-        </v-row>
+            <v-checkbox
+              v-model="selectedComparedToRuns"
+              :value="item.name"
+              class="ma-0"
+              hide-details
+              multiple
+            />
+          </v-row>
+        </v-container>
       </template>
     </v-data-table>
   </v-card>
@@ -176,6 +214,7 @@ import {
   AnalyzerStatisticsBtn,
   AnalyzerStatisticsDialog,
   DeleteRunBtn,
+  ExpandedRun,
   RunNameColumn
 } from "@/components/Run";
 
@@ -193,6 +232,7 @@ export default {
     AnalyzerStatisticsBtn,
     AnalyzerStatisticsDialog,
     DeleteRunBtn,
+    ExpandedRun,
     RunNameColumn
   },
 
@@ -207,6 +247,7 @@ export default {
     const sortDesc = this.$router.currentRoute.query["sort-desc"];
 
     return {
+      initialized: false,
       runNameSearch: this.$router.currentRoute.query["name"] || null,
       showCheckCommandDialog: false,
       checkCommand: null,
@@ -214,7 +255,7 @@ export default {
         page: page,
         itemsPerPage: itemsPerPage,
         sortBy: sortBy ? [ sortBy ] : [],
-        sortDesc: sortDesc !== undefined ? [ !!sortDesc ] : []
+        sortDesc: sortDesc !== undefined ? [ sortDesc === "true" ] : []
       },
       footerProps: {
         itemsPerPageOptions: itemsPerPageOptions
@@ -223,10 +264,19 @@ export default {
       loading: false,
       selected: [],
       selectedBaselineRuns: [],
+      selectedBaselineTags: [],
       selectedComparedToRuns: [],
+      selectedComparedToTags: [],
       analyzerStatisticsDialog: false,
       selectedRunId: null,
+      selectedRunHistoryId: null,
+      expanded: [],
+      loadingMoreRunHistories: false,
       headers: [
+        {
+          text: "",
+          value: "data-table-expand"
+        },
         {
           text: "Name",
           value: "name",
@@ -244,7 +294,7 @@ export default {
           sortable: false
         },
         {
-          text: "Storage date",
+          text: "Latest storage date",
           value: "runDate",
           align: "center",
           sortable: true
@@ -265,7 +315,8 @@ export default {
           text: "Diff",
           value: "diff",
           align: "center",
-          sortable: false
+          sortable: false,
+          width: "100px"
         }
       ],
       runs: []
@@ -273,19 +324,11 @@ export default {
   },
 
   computed: {
-    formattedRuns() {
-      return this.runs.map(run => {
-        return {
-          ...run,
-          $duration: this.prettifyDuration(run.duration),
-          $codeCheckerVersion: this.prettifyCCVersion(run.codeCheckerVersion)
-        };
-      });
-    },
-
     isDiffBtnDisabled() {
-      return !this.selectedBaselineRuns.length ||
-             !this.selectedComparedToRuns.length;
+      return (!this.selectedBaselineRuns.length &&
+              !this.selectedBaselineTags.length) ||
+             (!this.selectedComparedToRuns.length &&
+              !this.selectedComparedToTags.length);
     },
 
     diffTargetRoute() {
@@ -293,8 +336,14 @@ export default {
         name: "reports",
         query: {
           ...this.$router.currentRoute.query,
-          run: this.selectedBaselineRuns,
-          newcheck: this.selectedComparedToRuns
+          "run": this.selectedBaselineRuns.length
+            ? this.selectedBaselineRuns : undefined,
+          "run-tag": this.selectedBaselineTags.length
+            ? this.selectedBaselineTags : undefined,
+          "newcheck": this.selectedComparedToRuns.length
+            ? this.selectedComparedToRuns : undefined,
+          "run-tag-newcheck": this.selectedComparedToTags.length
+            ? this.selectedComparedToTags : undefined,
         }
       };
     },
@@ -303,6 +352,8 @@ export default {
   watch: {
     pagination: {
       handler() {
+        if (!this.initialized) return;
+
         const defaultItemsPerPage = this.footerProps.itemsPerPageOptions[0];
         const itemsPerPage =
           this.pagination.itemsPerPage === defaultItemsPerPage
@@ -316,15 +367,12 @@ export default {
         const sortDesc = this.pagination.sortDesc.length
           ? this.pagination.sortDesc[0] : undefined;
 
-        this.$router.replace({
-          query: {
-            ...this.$route.query,
-            "items-per-page": itemsPerPage,
-            "page": page,
-            "sort-by": sortBy,
-            "sort-desc": sortDesc,
-          }
-        }).catch(() => {});
+        this.updateUrl({
+          "items-per-page": itemsPerPage,
+          "page": page,
+          "sort-by": sortBy,
+          "sort-desc": sortDesc,
+        });
 
         this.fetchRuns();
       },
@@ -337,19 +385,117 @@ export default {
 
     runNameSearch: {
       handler: _.debounce(function () {
-        this.$router.replace({
-          query: {
-            ...this.$route.query,
-            "name": this.runNameSearch ? this.runNameSearch : undefined
-          }
-        }).catch(() => {});
+        this.updateUrl({
+          "name": this.runNameSearch ? this.runNameSearch : undefined
+        });
 
         this.fetchRuns();
       }, 500)
     }
   },
 
+  async mounted() {
+    await this.fetchRuns();
+    await this.initExpandedItems();
+
+    this.initialized = true;
+  },
+
   methods: {
+    async initExpandedItems() {
+      const expanded = this.$router.currentRoute.query["expanded"];
+      if (!expanded)
+        return;
+
+      const expandedItems = JSON.parse(expanded);
+      for (const [ key, val ] of Object.entries(expandedItems)) {
+        const limit = val.limit;
+        const offset = val.offset;
+        const runId = +key;
+
+        const run = this.runs.find(r => r.runId.toNumber() === runId);
+
+        run.$history = {
+          limit,
+          offset,
+          values: await this.getRunHistory(runId, limit + offset, 0)
+        };
+
+        this.expanded.push(run);
+      }
+    },
+
+    updateUrl(params) {
+      this.$router.replace({
+        query: {
+          ...this.$route.query,
+          ...params
+        }
+      }).catch(() => {});
+    },
+
+    updateExpandedUrlParam() {
+      const expanded = this.expanded.reduce((acc, curr) => {
+        acc[curr.runId] = {
+          limit: curr.$history.limit,
+          offset: curr.$history.offset
+        };
+
+        return acc;
+      }, {});
+
+      this.updateUrl({
+        expanded: this.expanded.length ? JSON.stringify(expanded) : undefined
+      });
+    },
+
+    async loadMoreRunHistory(run) {
+      this.loadingMoreRunHistories = true;
+
+      const limit = run.$history.limit;
+
+      const offset = run.$history.offset + limit;
+      run.$history.offset = offset;
+
+      const histories = await this.getRunHistory(run.runId, limit, offset);
+      run.$history.values.push(...histories);
+
+      this.updateExpandedUrlParam();
+
+      this.loadingMoreRunHistories = false;
+    },
+
+    async runExpanded(run, limit=10, offset=0) {
+      if (run.item.$history) {
+        // Use nextTick to wait while expanded array is updated.
+        return this.$nextTick(this.updateExpandedUrlParam);
+      }
+
+      this.loading = true;
+
+      run.item.$history = {
+        limit,
+        offset,
+        values: await this.getRunHistory(run.item.runId, limit, offset)
+      };
+
+      this.updateExpandedUrlParam();
+
+      this.loading = false;
+    },
+
+    getRunHistory(runId, limit=10, offset=null, filter=null) {
+      return new Promise(resolve => {
+        ccService.getClient().getRunHistory([ runId ], limit, offset, filter,
+          handleThriftError(histories => {
+            resolve(histories.map(h => ({
+              ...h,
+              $codeCheckerVersion: this.prettifyCCVersion(h.codeCheckerVersion)
+            })));
+          }));
+      });
+    },
+
     getSortMode() {
       let type = null;
       switch (this.pagination.sortBy[0]) {
@@ -391,15 +537,34 @@ export default {
       const offset = limit * (this.pagination.page - 1);
       const sortMode = this.getSortMode();
 
-      ccService.getClient().getRunData(runFilter, limit, offset, sortMode,
-        handleThriftError(runs => {
-          this.runs = runs;
-          this.loading = false;
-        }));
+      return new Promise(resolve => {
+        ccService.getClient().getRunData(runFilter, limit, offset, sortMode,
+          handleThriftError(runs => {
+
+            this.runs = runs.map(r => {
+              const version = this.prettifyCCVersion(r.codeCheckerVersion);
+
+              // Init run history by the expanded array.
+              const oldRun = this.expanded.find(e =>
+                e.runId.toNumber() === r.runId.toNumber());
+
+              return {
+                ...r,
+                $history: oldRun ? oldRun.$history : null,
+                $duration: this.prettifyDuration(r.duration),
+                $codeCheckerVersion: version
+              };
+            });
+
+            this.loading = false;
+
+            resolve(this.runs);
+          }));
+      });
     },
 
-    openCheckCommandDialog(runId) {
-      ccService.getClient().getCheckCommand(null, runId,
+    openCheckCommandDialog(runId, runHistoryId=null) {
+      ccService.getClient().getCheckCommand(runHistoryId, runId,
         handleThriftError(checkCommand => {
           if (!checkCommand) {
             checkCommand = "Unavailable!";
@@ -409,8 +574,9 @@ export default {
         }));
     },
 
-    openAnalyzerStatisticsDialog(report) {
-      this.selectedRunId = report.runId;
+    openAnalyzerStatisticsDialog(report, history=null) {
+      this.selectedRunId = report ? report.runId : null;
+      this.selectedRunHistoryId = history ? history.id : null;
       this.analyzerStatisticsDialog = true;
     },
 
@@ -456,3 +622,9 @@ export default {
   }
 };
 </script>
+
+<style lang="scss" scoped>
+.v-data-table ::v-deep tbody tr.v-data-table__expanded__content {
+  box-shadow: none;
+}
+</style>

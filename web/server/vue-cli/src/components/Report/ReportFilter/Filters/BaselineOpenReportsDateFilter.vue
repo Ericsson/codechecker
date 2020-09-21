@@ -99,14 +99,18 @@ export default {
     },
 
     initByUrl() {
-      return new Promise(resolve => {
-        const date = this.$route.query[this.id];
-        if (date) {
-          this.setDateTime(this.strToDateTime(date), false);
+      const date = this.$route.query[this.id];
+      if (date) {
+        const dateTime = new Date(date);
+
+        // We need to round the date upward because we will send the dates
+        // to the server without milliseconds.
+        if (dateTime.getMilliseconds()) {
+          dateTime.setMilliseconds(1000);
         }
 
-        resolve();
-      });
+        this.setDateTime(dateTime, false);
+      }
     },
 
     clear(updateUrl) {

@@ -149,6 +149,9 @@ export default {
   watch: {
     runId() {
       this.getAnalysisStatistics();
+    },
+    runHistoryId() {
+      this.getAnalysisStatistics();
     }
   },
 
@@ -158,6 +161,8 @@ export default {
 
   methods: {
     getAnalysisStatistics() {
+      if (!this.runId && !this.runHistoryId) return;
+
       ccService.getClient().getAnalysisStatistics(this.runId,
         this.runHistoryId, handleThriftError(stats => {
           this.analyzerStatistics = stats;

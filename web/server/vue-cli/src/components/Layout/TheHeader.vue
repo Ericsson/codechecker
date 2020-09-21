@@ -150,14 +150,6 @@ export default {
           hide: [ "products", "login", "404" ]
         },
         {
-          name: "Run history",
-          icon: "mdi-history",
-          route: "run-history",
-          active: [ "run-history" ],
-          exact: true,
-          hide: [ "products", "login", "404" ]
-        },
-        {
           name: "Statistics",
           icon: "mdi-chart-line",
           route: "statistics",

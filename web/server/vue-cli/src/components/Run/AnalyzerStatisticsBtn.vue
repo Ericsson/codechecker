@@ -1,23 +1,39 @@
 <template>
-  <v-container
+  <span
     class="analyzer-statistics"
+    :title="'Analysis statistics: shows the number of successfully analyzed ' +
+      'files and the number of files which failed to analyze.'"
   >
-    <div
-      v-for="(stats, analyzer) in value"
+    <component
+      :is="tag"
+      v-for="(analyzer, idx) in Object.keys(value)"
       :key="analyzer"
       class="text-no-wrap"
     >
       {{ analyzer }}:
-      <span v-if="stats.successful.toNumber() !== 0">
+      <span
+        v-if="value[analyzer].successful.toNumber() !== 0"
+        title="Number of successfully analyzed files."
+      >
         <analyzer-statistics-icon value="successful" />
-        ({{ stats.successful }})
+        ({{ value[analyzer].successful }})
       </span>
-      <span v-if="stats.failed.toNumber() !== 0">
+      <span
+        v-if="value[analyzer].failed.toNumber() !== 0"
+        title="Number of files which failed to analyze."
+      >
         <analyzer-statistics-icon value="failed" />
-        ({{ stats.failed }})
+        ({{ value[analyzer].failed }})
       </span>
-    </div>
-  </v-container>
+
+      <v-divider
+        v-if="showDividers && idx !== size - 1"
+        class="mx-2 d-inline"
+        inset
+        vertical
+      />
+    </component>
+  </span>
 </template>
 
 <script>
@@ -29,7 +45,14 @@ export default {
     AnalyzerStatisticsIcon
   },
   props: {
-    value: { type: Object, required: true }
+    value: { type: Object, required: true },
+    tag: { type: String, default: "span" },
+    showDividers: { type: Boolean, default: true }
+  },
+  computed: {
+    size() {
+      return Object.keys(this.value).length;
+    }
   }
 };
 </script>

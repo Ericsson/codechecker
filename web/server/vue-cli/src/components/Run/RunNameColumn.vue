@@ -19,59 +19,14 @@
           :value="description"
         />
 
-        <v-chip
+        <version-tag
           v-if="versionTag"
-          outlined
-          small
-        >
-          <v-avatar
-            class="mr-0"
-            left
-          >
-            <v-icon
-              :color="strToColor(versionTag)"
-              small
-            >
-              mdi-tag-outline
-            </v-icon>
-          </v-avatar>
-          <span
-            class="grey--text text--darken-3"
-          >
-            {{ versionTag }}
-          </span>
-        </v-chip>
+          :value="versionTag"
+        />
       </v-list-item-title>
 
       <v-list-item-subtitle>
-        <v-btn
-          v-if="showRunHistory"
-          :to="{ name: 'run-history', query: { run: name } }"
-          class="show-history"
-          title="Show history"
-          color="primary"
-          small
-          text
-          icon
-        >
-          <v-icon>mdi-history</v-icon>
-        </v-btn>
-
-        <v-btn
-          :to="{ name: 'statistics',
-                 query: {
-                   ...defaultStatisticsFilterValues,
-                   ...statisticsFilterQuery
-                 } }"
-          class="show-statistics"
-          title="Show statistics"
-          color="green"
-          small
-          text
-          icon
-        >
-          <v-icon>mdi-chart-line</v-icon>
-        </v-btn>
+        <show-statistics-btn :extra-queries="statisticsFilterQuery" />
 
         <v-divider
           class="mx-2 d-inline"
@@ -79,17 +34,9 @@
           vertical
         />
 
-        <v-btn
-          class="show-check-command"
-          title="Show check command"
-          color="grey darken-1"
-          small
-          text
-          icon
+        <show-check-command-btn
           @click="openCheckCommandDialog(id)"
-        >
-          <v-icon>mdi-console</v-icon>
-        </v-btn>
+        />
 
         <v-divider
           class="mx-2 d-inline"
@@ -123,16 +70,22 @@ import { RunDescription } from "@/components/Run";
 import { defaultReportFilterValues } from "@/components/Report/ReportFilter";
 import { defaultStatisticsFilterValues } from "@/components/Statistics";
 
-import { DetectionStatusMixin, StrToColorMixin } from "@/mixins";
+import { DetectionStatusMixin } from "@/mixins";
 import { DetectionStatusIcon } from "@/components/Icons";
+import ShowCheckCommandBtn from "./ShowCheckCommandBtn";
+import ShowStatisticsBtn from "./ShowStatisticsBtn";
+import VersionTag from "./VersionTag";
 
 export default {
   name: "RunNameColumn",
   components: {
     DetectionStatusIcon,
-    RunDescription
+    RunDescription,
+    ShowCheckCommandBtn,
+    ShowStatisticsBtn,
+    VersionTag
   },
-  mixins: [ DetectionStatusMixin, StrToColorMixin ],
+  mixins: [ DetectionStatusMixin ],
   props: {
     id: { type: Number, required: true },
     name: { type: String, required: true },
