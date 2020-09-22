@@ -50,55 +50,15 @@
       @item-expanded="runExpanded"
     >
       <template v-slot:top>
-        <v-toolbar flat class="mb-4">
-          <v-row>
-            <v-col>
-              <v-text-field
-                v-model="runNameSearch"
-                prepend-inner-icon="mdi-magnify"
-                label="Search for runs..."
-                single-line
-                hide-details
-                outlined
-                solo
-                flat
-                dense
-              />
-            </v-col>
-
-            <v-spacer />
-
-            <v-col align="right">
-              <delete-run-btn
-                :selected="selected"
-                @on-confirm="fetchRuns"
-              />
-
-              <v-btn
-                outlined
-                color="primary"
-                class="diff-runs-btn mr-2"
-                :to="diffTargetRoute"
-                :disabled="isDiffBtnDisabled"
-              >
-                <v-icon left>
-                  mdi-select-compare
-                </v-icon>
-                Diff
-              </v-btn>
-
-              <v-btn
-                icon
-                class="reload-runs-btn"
-                title="Reload runs"
-                color="primary"
-                @click="fetchRuns"
-              >
-                <v-icon>mdi-refresh</v-icon>
-              </v-btn>
-            </v-col>
-          </v-row>
-        </v-toolbar>
+        <run-filter-toolbar
+          :selected="selected"
+          :selected-baseline-runs="selectedBaselineRuns"
+          :selected-baseline-tags="selectedBaselineTags"
+          :selected-compared-to-runs="selectedComparedToRuns"
+          :selected-compared-to-tags="selectedComparedToTags"
+          @on-run-filter-changed="onRunFilterChanged"
+          @on-run-history-filter-changed="onRunHistoryFilterChanged"
+        />
       </template>
 
       <template v-slot:expanded-item="{ item }">
@@ -115,7 +75,7 @@
             :selected-compared-to-tags.sync="selectedComparedToTags"
           >
             <v-btn
-              v-if="item.$history.values.length % item.$history.limit === 0"
+              v-if="item.$history.hasMore"
               class="mb-4"
               color="primary"
               :loading="loadingMoreRunHistories"
@@ -208,32 +168,30 @@
 </template>
 
 <script>
-import _ from "lodash";
+import { mapGetters } from "vuex";
+import { ccService, handleThriftError } from "@cc-api";
+import {
+  Order,
+  RunSortMode,
+  RunSortType
+} from "@cc/report-server-types";
 
 import {
   AnalyzerStatisticsBtn,
   AnalyzerStatisticsDialog,
-  DeleteRunBtn,
   ExpandedRun,
+  RunFilterToolbar,
   RunNameColumn
 } from "@/components/Run";
-
-import { ccService, handleThriftError } from "@cc-api";
-import {
-  Order,
-  RunFilter,
-  RunSortMode,
-  RunSortType
-} from "@cc/report-server-types";
 
 export default {
   name: "RunList",
   components: {
     AnalyzerStatisticsBtn,
     AnalyzerStatisticsDialog,
-    DeleteRunBtn,
     ExpandedRun,
-    RunNameColumn
+    RunNameColumn,
+    RunFilterToolbar
   },
 
   data() {
@@ -248,7 +206,6 @@ export default {
 
     return {
       initialized: false,
-      runNameSearch: this.$router.currentRoute.query["name"] || null,
       showCheckCommandDialog: false,
       checkCommand: null,
       pagination: {
@@ -324,29 +281,10 @@ export default {
   },
 
   computed: {
-    isDiffBtnDisabled() {
-      return (!this.selectedBaselineRuns.length &&
-              !this.selectedBaselineTags.length) ||
-             (!this.selectedComparedToRuns.length &&
-              !this.selectedComparedToTags.length);
-    },
-
-    diffTargetRoute() {
-      return {
-        name: "reports",
-        query: {
-          ...this.$router.currentRoute.query,
-          "run": this.selectedBaselineRuns.length
-            ? this.selectedBaselineRuns : undefined,
-          "run-tag": this.selectedBaselineTags.length
-            ? this.selectedBaselineTags : undefined,
-          "newcheck": this.selectedComparedToRuns.length
-            ? this.selectedComparedToRuns : undefined,
-          "run-tag-newcheck": this.selectedComparedToTags.length
-            ? this.selectedComparedToTags : undefined,
-        }
-      };
-    },
+    ...mapGetters("run", [
+      "runFilter",
+      "runHistoryFilter"
+    ])
   },
 
   watch: {
@@ -381,16 +319,6 @@ export default {
 
     showCheckCommandDialog (val) {
       val || this.closeCheckCommandDialog();
-    },
-
-    runNameSearch: {
-      handler: _.debounce(function () {
-        this.updateUrl({
-          "name": this.runNameSearch ? this.runNameSearch : undefined
-        });
-
-        this.fetchRuns();
-      }, 500)
     }
   },
 
@@ -402,6 +330,26 @@ export default {
   },
 
   methods: {
+    onRunFilterChanged() {
+      if (this.pagination.page !== 1) {
+        this.pagination.page = 1;
+      } else {
+        this.fetchRuns();
+      }
+    },
+
+    onRunHistoryFilterChanged() {
+      this.expanded.forEach(async run => {
+        const { limit, offset } = run.$history;
+
+        const { histories, hasMore } =
+          await this.getRunHistory(run.runId, limit + offset);
+
+        run.$history.hasMore = hasMore;
+        run.$history.values = histories;
+      });
+    },
+
     async initExpandedItems() {
       const expanded = this.$router.currentRoute.query["expanded"];
       if (!expanded)
@@ -414,11 +362,14 @@ export default {
         const runId = +key;
 
         const run = this.runs.find(r => r.runId.toNumber() === runId);
+        const { histories, hasMore } =
+          await this.getRunHistory(runId, limit + offset, 0);
 
         run.$history = {
           limit,
           offset,
-          values: await this.getRunHistory(runId, limit + offset, 0)
+          hasMore,
+          values: histories
         };
 
         this.expanded.push(run);
@@ -457,7 +408,10 @@ export default {
       const offset = run.$history.offset + limit;
       run.$history.offset = offset;
 
-      const histories = await this.getRunHistory(run.runId, limit, offset);
+      const { histories, hasMore } =
+        await this.getRunHistory(run.runId, limit, offset);
+
+      run.$history.hasMore = hasMore;
       run.$history.values.push(...histories);
 
       this.updateExpandedUrlParam();
@@ -473,10 +427,14 @@ export default {
 
       this.loading = true;
 
+      const { histories, hasMore } =
+        await this.getRunHistory(run.item.runId, limit, offset);
+
       run.item.$history = {
         limit,
         offset,
-        values: await this.getRunHistory(run.item.runId, limit, offset)
+        hasMore,
+        values: histories
       };
 
       this.updateExpandedUrlParam();
@@ -484,14 +442,18 @@ export default {
       this.loading = false;
     },
 
-    getRunHistory(runId, limit=10, offset=null, filter=null) {
+    getRunHistory(runId, limit=10, offset=null) {
       return new Promise(resolve => {
-        ccService.getClient().getRunHistory([ runId ], limit, offset, filter,
-          handleThriftError(histories => {
-            resolve(histories.map(h => ({
-              ...h,
-              $codeCheckerVersion: this.prettifyCCVersion(h.codeCheckerVersion)
-            })));
+        ccService.getClient().getRunHistory([ runId ], limit, offset,
+          this.runHistoryFilter, handleThriftError(histories => {
+            resolve({
+              hasMore: histories.length === limit,
+              histories: histories.map(h => ({
+                ...h,
+                $codeCheckerVersion:
+                  this.prettifyCCVersion(h.codeCheckerVersion)
+              }))
+            });
           }));
       });
     },
@@ -522,12 +484,9 @@ export default {
 
     fetchRuns() {
       this.loading = true;
-      const runFilter = this.runNameSearch
-        ? new RunFilter({ names: [ `*${this.runNameSearch}*` ] })
-        : null;
 
       // Get total item count.
-      ccService.getClient().getRunCount(runFilter,
+      ccService.getClient().getRunCount(this.runFilter,
         handleThriftError(totalItems => {
           this.totalItems = totalItems.toNumber();
         }));
@@ -538,9 +497,8 @@ export default {
       const sortMode = this.getSortMode();
 
       return new Promise(resolve => {
-        ccService.getClient().getRunData(runFilter, limit, offset, sortMode,
-          handleThriftError(runs => {
-
+        ccService.getClient().getRunData(this.runFilter, limit, offset,
+          sortMode, handleThriftError(runs => {
             this.runs = runs.map(r => {
               const version = this.prettifyCCVersion(r.codeCheckerVersion);
 
@@ -610,7 +568,6 @@ export default {
     getReportFilterQuery(run) {
       return {
         run: run.name
-
       };
     },
 

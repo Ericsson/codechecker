@@ -9,10 +9,17 @@
         :label="label"
         :value="formattedDatetime"
         :class="[ inputClass, 'pa-0', 'ma-0' ]"
+        :prepend-inner-icon="prependInnerIcon"
+        :outlined="outlined"
+        :dense="dense"
         hide-details
         readonly
         v-on="on"
-      />
+      >
+        <template #append>
+          <slot name="append" />
+        </template>
+      </v-text-field>
     </template>
 
     <v-card>
@@ -87,7 +94,10 @@ export default {
     timeFormat: { type: String, default: "HH:mm:ss" },
     defaultTime: { type: String, default: "00:00:00" },
     inputClass: { type: String, default: null },
-    dialogClass: { type: String, default: null }
+    dialogClass: { type: String, default: null },
+    outlined: { type: Boolean, default: false },
+    dense: { type: Boolean, default: false },
+    prependInnerIcon: { type: String, default: null },
   },
   data() {
     return {

@@ -1,5 +1,9 @@
 <template>
-  <v-card class="mb-2" flat>
+  <v-card
+    v-if="Object.keys(formattedHistories).length"
+    class="mb-2"
+    flat
+  >
     <v-timeline
       v-for="(group, date) in formattedHistories"
       :key="date"
@@ -118,6 +122,11 @@
     </v-timeline>
 
     <slot />
+  </v-card>
+
+  <v-card v-else flat>
+    <v-icon>mdi-alert-circle-outline</v-icon>
+    <strong>No history events matched your search.</strong>
   </v-card>
 </template>
 

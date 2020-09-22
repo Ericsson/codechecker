@@ -459,15 +459,26 @@ def process_run_history_filter(query, run_ids, run_history_filter):
     if run_ids:
         query = query.filter(RunHistory.run_id.in_(run_ids))
 
-    if run_history_filter and run_history_filter.tagNames:
-        OR = [RunHistory.version_tag.ilike('{0}'.format(conv(
-              escape_like(name, '\\'))), escape='\\') for
-              name in run_history_filter.tagNames]
+    if run_history_filter:
+        if run_history_filter.tagNames:
+            OR = [RunHistory.version_tag.ilike('{0}'.format(conv(
+                escape_like(name, '\\'))), escape='\\') for
+                name in run_history_filter.tagNames]
 
-        query = query.filter(or_(*OR))
+            query = query.filter(or_(*OR))
 
-    if run_history_filter and run_history_filter.tagIds:
-        query = query.filter(RunHistory.id.in_(run_history_filter.tagIds))
+        if run_history_filter.tagIds:
+            query = query.filter(RunHistory.id.in_(run_history_filter.tagIds))
+
+        stored = run_history_filter.stored
+        if stored:
+            if stored.before:
+                stored_before = datetime.fromtimestamp(stored.before)
+                query = query.filter(RunHistory.time <= stored_before)
+
+            if stored.after:
+                stored_after = datetime.fromtimestamp(stored.after)
+                query = query.filter(RunHistory.time >= stored_after)
 
     return query
 

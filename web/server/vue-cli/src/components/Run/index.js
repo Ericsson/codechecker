@@ -4,6 +4,7 @@ import DeleteRunBtn from "./DeleteRunBtn";
 import ExpandedRun from "./ExpandedRun";
 import RunDescription from "./RunDescription";
 import RunNameColumn from "./RunNameColumn";
+import RunFilterToolbar from "./RunFilterToolbar";
 
 export {
   AnalyzerStatisticsBtn,
@@ -11,5 +12,6 @@ export {
   DeleteRunBtn,
   ExpandedRun,
   RunDescription,
-  RunNameColumn
+  RunNameColumn,
+  RunFilterToolbar
 };
