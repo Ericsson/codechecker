@@ -1,0 +1,6 @@
+main.c:7:5: warning: incorrect type in argument 2 (different address spaces)
+main.c:7:5:    expected long int
+main.c:7:5:    got int
+main.c:5:17: warning: symbol 'n' was not declared. Should it be static?
+
+
