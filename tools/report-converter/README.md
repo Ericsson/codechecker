@@ -100,6 +100,7 @@ Supported analyzers:
   tsan - ThreadSanitizer, https://clang.llvm.org/docs/ThreadSanitizer.html
   tslint - TSLint, https://palantir.github.io/tslint
   ubsan - UndefinedBehaviorSanitizer, https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
+  sparse - Sparse, https://sparse.docs.kernel.org/en/latest/ 
 ```
 
 ## Sanitizers
