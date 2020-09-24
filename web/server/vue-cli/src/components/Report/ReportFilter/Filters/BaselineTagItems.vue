@@ -3,6 +3,7 @@
     :items.sync="tags"
     :selected-items="selectedItems"
     :search="search"
+    :limit="defaultLimit"
     @apply="apply"
     @cancel="cancel"
     @select="select"
