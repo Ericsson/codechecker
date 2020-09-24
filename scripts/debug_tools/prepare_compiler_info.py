@@ -25,13 +25,13 @@ def prepare(compiler_info_file, sources_root):
             lines = json_data[compiler][language]['compiler_includes']
             changed_lines = []
             for line in lines:
-                changed_lines.append(
-                    lib.change_paths(line,
-                                     lib.IncludePathModifier(sources_root_abs)))
+                changed_lines.append(lib.change_paths(
+                    line, lib.IncludePathModifier(sources_root_abs)))
             new_json_data[compiler][language] = {
                 'compiler_includes': changed_lines,
                 'target': json_data[compiler][language]['target'],
-                'compiler_standard': json_data[compiler][language]['compiler_standard']
+                'compiler_standard':
+                    json_data[compiler][language]['compiler_standard']
             }
     return new_json_data
 

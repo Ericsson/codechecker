@@ -29,12 +29,13 @@ class AnalyzerCommandPathModifier(object):
         # Find a clang executable that can be "clang" or "clang-<version>".
         # The version here is only a simple number (no point inside),
         # clang should generate only version with whole release number.
-        if re.search('clang(-(\d)+)?$', path):
+        if re.search(r'clang(-(\d)+)?$', path):
             return self.opts.clang
 
-        if re.search('\.plist$', path):
-            # Put a plist (seemingly analyzer output) file into the report_debug directory,
-            # that is 2 levels above ctu_dir ("report_debug/ctu-dir/<target>").
+        if re.search(r'\.plist$', path):
+            # Put a plist (seemingly analyzer output) file into the
+            # report_debug directory, that is 2 levels above ctu_dir
+            # ("report_debug/ctu-dir/<target>").
             return os.path.join(
                 os.path.dirname(
                     os.path.dirname(
