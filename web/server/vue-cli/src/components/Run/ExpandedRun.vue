@@ -39,7 +39,7 @@
                        'run-tag': history.id
                      }
               }"
-              class="name mr-2"
+              class="date mr-2"
             >
               <strong>{{ history.time | prettifyDate }}</strong>
             </router-link>
@@ -98,19 +98,25 @@
 
           <v-spacer />
 
-          <v-col align="right" cols="auto" width="100px" align-self="center">
+          <v-col
+            class="compare-events"
+            align="right"
+            cols="auto"
+            width="100px"
+            align-self="center"
+          >
             <v-container class="py-0">
               <v-row class="flex-nowrap py-0">
                 <v-checkbox
                   v-model="baselineTags"
-                  :value="history.id"
+                  :value="history.id.toNumber()"
                   class="ma-0 pa-0"
                   hide-details
                 />
 
                 <v-checkbox
                   v-model="comparedToTags"
-                  :value="history.id"
+                  :value="history.id.toNumber()"
                   class="ma-0 pa-0"
                   hide-details
                 />

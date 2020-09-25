@@ -240,8 +240,8 @@ export default {
           id: t.id.toNumber(),
           runName: t.runName,
           runId: t.runId.toNumber(),
-          tagName : t.versionTag ? t.versionTag : t.time,
-          title: t.versionTag ? t.versionTag : t.time,
+          tagName : t.versionTag || t.time,
+          title: t.versionTag || t.time,
           count: "N/A"
         }))
         : [];
@@ -270,7 +270,7 @@ export default {
       const tags = [].concat(this.$route.query[this.runTagId] || []);
 
       if (runs.length || tags.length) {
-        let selectedTags = null;
+        let selectedTags = [];
         if (tags.length) {
           selectedTags = await this.getSelectedTagItems(tags);
 

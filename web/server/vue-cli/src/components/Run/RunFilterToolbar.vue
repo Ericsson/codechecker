@@ -1,9 +1,10 @@
 <template>
-  <v-toolbar flat class="mb-4">
+  <v-toolbar flat class="run-filter-toolbar mb-4">
     <v-row>
       <v-col align-self="center">
         <v-text-field
           :value="runName"
+          class="run-name"
           prepend-inner-icon="mdi-magnify"
           label="Search for runs..."
           single-line
@@ -19,7 +20,7 @@
       <v-col align-self="center">
         <v-text-field
           :value="runTag"
-          class="search-run-tag"
+          class="run-tag"
           prepend-inner-icon="mdi-tag"
           label="Filter events by tag name..."
           clearable
@@ -181,45 +182,40 @@ export default {
     },
   },
 
-  watch: {
-    runName: {
-      handler: _.debounce(function () {
-        const runName = this.runName ? this.runName : undefined;
-        this.updateUrl({ "run": runName });
-
-        this.$emit("on-run-filter-changed");
-      }, 500)
-    },
-    runTag: {
-      handler: _.debounce(function () {
-        const runTag = this.runTag ? this.runTag : undefined;
-        this.updateUrl({ "run-tag": runTag });
-
-        this.$emit("on-run-history-filter-changed");
-      }, 500)
-    },
-    storedAfter: {
-      handler: _.debounce(function () {
-        const date = this.storedAfter
-          ? this.dateTimeToStr(this.storedAfter) : undefined;
-        this.updateUrl({ "stored-after": date });
-
-        this.$emit("on-run-history-filter-changed");
-      }, 500)
-    },
-    storedBefore: {
-      handler: _.debounce(function () {
-        const date = this.storedBefore
-          ? this.dateTimeToStr(this.storedBefore) : undefined;
-        this.updateUrl({ "stored-before": date });
-
-        this.$emit("on-run-history-filter-changed");
-      }, 500)
-    }
-  },
-
   created() {
+    // Initalize the URLs.
     this.initByUrl();
+
+    // Watch for filter changes.
+    this.$watch("runName", _.debounce(() => {
+      const runName = this.runName ? this.runName : undefined;
+      this.updateUrl({ "run": runName });
+
+      this.$emit("on-run-filter-changed");
+    }, 500));
+
+    this.$watch("runTag", _.debounce(() => {
+      const runTag = this.runTag ? this.runTag : undefined;
+      this.updateUrl({ "run-tag": runTag });
+
+      this.$emit("on-run-history-filter-changed");
+    }, 500));
+
+    this.$watch("storedAfter", _.debounce(() => {
+      const date = this.storedAfter
+        ? this.dateTimeToStr(this.storedAfter) : undefined;
+      this.updateUrl({ "stored-after": date });
+
+      this.$emit("on-run-history-filter-changed");
+    }, 500));
+
+    this.$watch("storedBefore", _.debounce(() => {
+      const date = this.storedBefore
+        ? this.dateTimeToStr(this.storedBefore) : undefined;
+      this.updateUrl({ "stored-before": date });
+
+      this.$emit("on-run-history-filter-changed");
+    }, 500));
   },
 
   methods: {

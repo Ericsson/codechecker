@@ -35,13 +35,14 @@ const RUNS = [
     url: `http://${host}:${port}/e2e`,
     description: "This is my simple run."
   },
-  {
+  // We store this run so many times to test the run history load more feature.
+  ...[ ...Array(10).keys() ].map(idx => ({
     name: "simple",
     output: path.join(REPORTS_DIR, "simple"),
     url: `http://${host}:${port}/e2e`,
-    tag: "v0.0.2",
+    tag: `v0.0.${idx}`,
     description: "This is my updated run."
-  },
+  })),
   {
     name: "duplicated",
     output: path.join(REPORTS_DIR, "simple"),

@@ -58,6 +58,7 @@
           :selected-compared-to-tags="selectedComparedToTags"
           @on-run-filter-changed="onRunFilterChanged"
           @on-run-history-filter-changed="onRunHistoryFilterChanged"
+          @update="fetchRuns"
         />
       </template>
 
@@ -76,7 +77,7 @@
           >
             <v-btn
               v-if="item.$history.hasMore"
-              class="mb-4"
+              class="load-more-btn mb-4"
               color="primary"
               :loading="loadingMoreRunHistories"
               @click="loadMoreRunHistory(item)"
@@ -338,8 +339,10 @@ export default {
       }
     },
 
-    onRunHistoryFilterChanged() {
-      this.expanded.forEach(async run => {
+    async onRunHistoryFilterChanged() {
+      this.loading = true;
+
+      await Promise.all(this.expanded.map(async run => {
         const { limit, offset } = run.$history;
 
         const { histories, hasMore } =
@@ -347,7 +350,9 @@ export default {
 
         run.$history.hasMore = hasMore;
         run.$history.values = histories;
-      });
+      }));
+
+      this.loading = false;
     },
 
     async initExpandedItems() {
