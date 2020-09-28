@@ -223,6 +223,10 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                 analyzer_cmd.append("--target=" +
                                     self.buildaction.target.get(compile_lang))
 
+            if not has_flag('-arch', analyzer_cmd) and \
+                    self.buildaction.arch != "":
+                analyzer_cmd.extend(["-arch ", self.buildaction.arch])
+
             if not has_flag('-std', analyzer_cmd) and \
                     self.buildaction.compiler_standard.get(compile_lang, "") \
                     != "":

@@ -24,6 +24,7 @@ class BuildAction(object):
                  'lang',
                  'target',
                  'source',
+                 'arch',
                  'action_type']
 
     LINK = 0
