@@ -165,6 +165,7 @@
   "cppcoreguidelines-no-malloc":                                "LOW",
   "cppcoreguidelines-non-private-member-variables-in-classes":  "LOW",
   "cppcoreguidelines-owning-memory":                            "STYLE",
+  "cppcoreguidelines-prefer-member-initializer":                "STYLE",
   "cppcoreguidelines-pro-bounds-array-to-pointer-decay":        "LOW",
   "cppcoreguidelines-pro-bounds-constant-array-index":          "LOW",
   "cppcoreguidelines-pro-bounds-pointer-arithmetic":            "LOW",
