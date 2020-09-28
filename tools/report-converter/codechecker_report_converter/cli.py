@@ -52,6 +52,8 @@ from codechecker_report_converter.pyflakes.analyzer_result import \
     PyflakesAnalyzerResult  # noqa
 from codechecker_report_converter.markdownlint.analyzer_result import \
     MarkdownlintAnalyzerResult  # noqa
+from codechecker_report_converter.coccinelle.analyzer_result import \
+    CoccinelleAnalyzerResult  # noqa
 
 
 LOG = logging.getLogger('ReportConverter')
@@ -86,7 +88,8 @@ supported_converters = {
     TSLintAnalyzerResult.TOOL_NAME: TSLintAnalyzerResult,
     UBSANAnalyzerResult.TOOL_NAME: UBSANAnalyzerResult,
     SpotBugsAnalyzerResult.TOOL_NAME: SpotBugsAnalyzerResult,
-    MarkdownlintAnalyzerResult.TOOL_NAME: MarkdownlintAnalyzerResult
+    MarkdownlintAnalyzerResult.TOOL_NAME: MarkdownlintAnalyzerResult,
+    CoccinelleAnalyzerResult.TOOL_NAME: CoccinelleAnalyzerResult
 }
 
 supported_metadata_keys = ["analyzer_command", "analyzer_version"]
