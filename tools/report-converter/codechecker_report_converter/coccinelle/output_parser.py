@@ -23,6 +23,11 @@ class CoccinelleParser(BaseParser):
         super(CoccinelleParser, self).__init__()
 
         self.analyzer_result = analyzer_result
+        self.checker_name = None
+
+        self.checker_name_re = re.compile(
+            r'^Processing (?P<checker_name>[\S ]+)\.cocci$'
+        )
 
         self.message_line_re = re.compile(
             # File path followed by a ':'.
@@ -39,6 +44,11 @@ class CoccinelleParser(BaseParser):
         Actual Parsing function for the given line
         """
         match = self.message_line_re.match(line)
+
+        checker_match = self.checker_name_re.match(line)
+        if checker_match:
+            self.checker_name = checker_match.group('checker_name')
+
         if match is None:
             return None, next(it)
 
@@ -46,14 +56,12 @@ class CoccinelleParser(BaseParser):
             os.path.join(os.path.dirname(self.analyzer_result),
                          match.group('path')))
 
-        checker_name = None
-
         message = Message(
             file_path,
             int(match.group('line')),
             int(match.group('column')),
             match.group('message').strip(),
-            checker_name)
+            self.checker_name)
 
         try:
             return message, next(it)
