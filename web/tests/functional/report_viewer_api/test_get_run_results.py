@@ -151,7 +151,7 @@ class RunResults(unittest.TestCase):
         for run_res in run_results:
             self.assertTrue(re.match(r'.*\.c(pp)?$', run_res.checkedFile))
 
-            logging.debug('Getting the content of ' + run_res.checkedFile)
+            print('Getting the content of ' + run_res.checkedFile)
 
             file_data = self._cc_client.getSourceFileData(run_res.fileId,
                                                           True,
@@ -162,9 +162,8 @@ class RunResults(unittest.TestCase):
             self.assertIsNotNone(file_content1)
 
             with codecs.open(run_res.checkedFile, 'r', encoding='utf-8',
-                             errors='replace') as source_file:
+                             errors='ignore') as source_file:
                 file_content2 = source_file.read()
-
             self.assertEqual(file_content1, file_content2)
 
             file_data_b64 = self._cc_client.getSourceFileData(
@@ -176,7 +175,58 @@ class RunResults(unittest.TestCase):
 
             self.assertEqual(file_content1_b64, file_content2)
 
-        logging.debug('got ' + str(len(run_results)) + ' files')
+        print('got ' + str(len(run_results)) + ' files')
+
+        self.assertEqual(run_result_count, len(run_results))
+
+    def test_get_source_file_content_latin1_encoding(self):
+        """ Test if the source file was saved with latin1 encoding.
+        Test if the source file can be read back from the
+        database even if it was not saved with utf-8 encoding.
+        """
+        runid = self._runid
+        report_filter = ReportFilter(checkerName=['*'],
+                                     filepath=['*call_and_message.cpp*'])
+
+        run_result_count = self._cc_client.getRunResultCount([runid],
+                                                             report_filter,
+                                                             None)
+        self.assertTrue(run_result_count)
+
+        run_results = get_all_run_results(self._cc_client,
+                                          runid,
+                                          [],
+                                          report_filter)
+        self.assertIsNotNone(run_results)
+        self.assertIsNotNone(run_results)
+
+        for run_res in run_results:
+
+            print('Getting the content of ' + run_res.checkedFile)
+
+            file_data = self._cc_client.getSourceFileData(run_res.fileId,
+                                                          True,
+                                                          None)
+            self.assertIsNotNone(file_data)
+
+            file_content1 = file_data.fileContent
+            self.assertIsNotNone(file_content1)
+
+            with codecs.open(run_res.checkedFile, 'r', encoding='utf-8',
+                             errors='ignore') as source_file:
+                file_content2 = source_file.read()
+            self.assertEqual(file_content1, file_content2)
+
+            file_data_b64 = self._cc_client.getSourceFileData(
+                run_res.fileId, True, Encoding.BASE64)
+            self.assertIsNotNone(file_data_b64)
+
+            file_content1_b64 = convert.from_b64(file_data_b64.fileContent)
+            self.assertIsNotNone(file_content1_b64)
+
+            self.assertEqual(file_content1_b64, file_content2)
+
+        print('got ' + str(len(run_results)) + ' files')
 
         self.assertEqual(run_result_count, len(run_results))
 

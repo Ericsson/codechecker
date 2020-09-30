@@ -1741,9 +1741,10 @@ class ThriftRequestHandler(object):
                 if encoding == Encoding.BASE64:
                     source = base64.b64encode(source)
 
+                source = source.decode('utf-8', errors='ignore')
                 return SourceFileData(fileId=sourcefile.id,
                                       filePath=sourcefile.filepath,
-                                      fileContent=source.decode('utf-8'))
+                                      fileContent=source)
             else:
                 return SourceFileData(fileId=sourcefile.id,
                                       filePath=sourcefile.filepath)

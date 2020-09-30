@@ -43,5 +43,5 @@ void test4() {
 
 void test5() {
   C *pc = 0;
-  pc->f(); // warn: object pointer is null
+  pc->f(); // warn: object pointer is null <- non breaking space here save the file in latin1 (ISO-8895-1)
 }
