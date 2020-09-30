@@ -2511,6 +2511,9 @@ class ThriftRequestHandler(object):
             if report.metadata:
                 return report.metadata.get("analyzer", {}).get("name")
 
+            if report.check_name.startswith('clang-diagnostic-'):
+                return 'clang-tidy'
+
         # Processing PList files.
         _, _, report_files = next(os.walk(report_dir), ([], [], []))
         all_report_checkers = set()

@@ -1,6 +1,6 @@
 OBJS = $(SRCS:.cpp=.o)
 
-CXXFLAGS = -Wno-all -Wno-extra -Wno-division-by-zero
+CXXFLAGS = -Wno-all -Wno-extra
 
 SRCS = call_and_message.cpp \
 	   divide_zero.cpp \
