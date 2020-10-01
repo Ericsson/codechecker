@@ -83,19 +83,15 @@ class CodeCheckerService extends BaseService {
     });
   }
 
-  async getTags(tagIds, runWithTagName) {
-    let runIds = null;
-    let tagNames = null;
-
-    if (runWithTagName) {
-      const { runName, tagName } = extractTagWithRunName(runWithTagName);
-      runIds = runName ? await this.getRunIds(runName) : null;
-      tagNames = [ tagName ];
-    }
-
+  async getTags(runIds, tagIds, tagNames, stored) {
     const limit = null;
     const offset = 0;
-    const runHistoryFilter = new RunHistoryFilter({ tagIds, tagNames });
+
+    const runHistoryFilter = new RunHistoryFilter({
+      tagIds,
+      tagNames,
+      stored
+    });
 
     return new Promise(resolve => {
       this.getClient().getRunHistory(runIds, limit, offset,

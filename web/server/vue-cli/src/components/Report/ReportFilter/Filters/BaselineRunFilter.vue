@@ -30,9 +30,10 @@
     >
       <v-menu
         v-model="selectTagMenu"
+        content-class="select-tag-menu"
         :close-on-content-click="false"
         :nudge-width="300"
-        :max-width="500"
+        :max-width="550"
         offset-x
       >
         <template v-slot:activator="{ on: menu }">
@@ -47,6 +48,13 @@
             @select="select"
             @update:items="items.splice(0, items.length, ...$event)"
           >
+            <template v-slot:append-toolbar>
+              <bulb-message>
+                Use the <v-icon>mdi-cog</v-icon> button beside each run after
+                hovering on the run to specify a tag.
+              </bulb-message>
+            </template>
+
             <template v-slot:prepend-count="{ hover, item }">
               <v-tooltip
                 v-if="hover || selectTagForRun === item"
@@ -56,13 +64,11 @@
                 <template v-slot:activator="{ on: tooltip }">
                   <v-btn
                     icon
-                    color="primary"
+                    small
                     v-on="{ ...tooltip, ...menu }"
                     @click.stop="specifyTag(item)"
                   >
-                    <v-icon>
-                      mdi-tag
-                    </v-icon>
+                    <v-icon>mdi-cog</v-icon>
                   </v-btn>
                 </template>
 
@@ -75,7 +81,9 @@
             </template>
 
             <template v-slot:title="{ item }">
-              {{ item.title }}
+              <v-list-item-title :title="item.title">
+                {{ item.title }}
+              </v-list-item-title>
             </template>
 
             <template v-slot:icon>
@@ -118,7 +126,9 @@
         </template>
 
         <template v-slot:title="{ item }">
-          {{ titles[item.id] }}
+          <v-list-item-title :title="titles[item.id]">
+            {{ titles[item.id] }}
+          </v-list-item-title>
         </template>
       </items-selected>
     </template>
@@ -131,6 +141,7 @@ import _ from "lodash";
 import { ccService, extractTagWithRunName, handleThriftError } from "@cc-api";
 import { ReportFilter } from "@cc/report-server-types";
 
+import BulbMessage from "@/components/BulbMessage";
 import {
   Items,
   ItemsSelected,
@@ -145,6 +156,7 @@ export default {
   name: "BaselineRunFilter",
   components: {
     BaselineTagItems,
+    BulbMessage,
     Items,
     ItemsSelected,
     SelectOption,
@@ -191,7 +203,7 @@ export default {
         .map(s => s.tagName);
 
       run.title = tagNames.length
-        ? `${run.id}:${tagNames.join(",")}`
+        ? `${run.id}:${tagNames.join(", ")}`
         : run.id;
 
       return run;
@@ -240,15 +252,15 @@ export default {
 
       // Get tags by tag ids.
       const tags1 = tagIds.length
-        ? (await ccService.getTags(tagIds)).map(t => {
-          const name = t.versionTag || "N/A";
+        ? (await ccService.getTags(null, tagIds)).map(t => {
           const time = this.$options.filters.prettifyDate(t.time);
           return {
             id: t.id.toNumber(),
             runName: t.runName,
             runId: t.runId.toNumber(),
             tagName : t.versionTag || time,
-            title: `${name} (${time})`,
+            time: time,
+            title: t.versionTag,
             count: "N/A"
           };
         })
@@ -258,11 +270,13 @@ export default {
       const tags2 = tagWithRunNames.length
         ? (await Promise.all(tagWithRunNames.map(async s => {
           const { runName, tagName } = extractTagWithRunName(s);
-          const tags = await ccService.getTags(null, s);
+          const runIds = runName ? await ccService.getRunIds(runName) : null;
+          const tags = await ccService.getTags(runIds, null, [ tagName ]);
           return {
             id: tags[0].id,
             runName: runName ? runName : tags[0].runName,
             runId: tags[0].runId.toNumber(),
+            time: tags[0].time,
             tagName,
             title: s,
             count: "N/A"
@@ -314,6 +328,9 @@ export default {
 
     applyTagSelection() {
       this.selectTagMenu = false;
+      this.prevSelectedTagItems.forEach(t => {
+        this.bus.$emit("select", item => item.runIds.includes(t.runId));
+      });
     },
 
     async clear(updateUrl) {

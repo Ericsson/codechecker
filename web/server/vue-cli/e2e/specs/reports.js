@@ -137,18 +137,31 @@ module.exports = {
   },
 
   "set baseline run filter with tag" (browser) {
+    const runName = "macros";
+    const tagName = "v1.0.0";
+
     const reportPage = browser.page.report();
     const section = reportPage.section.baselineRunFilter;
-    const menu = reportPage.section.runSettingsMenu;
+    const runMenu = reportPage.section.runSettingsMenu;
+    const tagMenu = reportPage.section.tagSettingsMenu;
 
     section.openFilterSettings();
 
-    menu.waitForElementVisible("@runTabItem");
-    menu.waitForElementNotPresent("@activeTagTab");
+    runMenu
+      .search(runName)
+      .moveToElement("@item", 0, 0)
+      .click("@selectTagButton");
 
-    menu
-      .search("*")
-      .click("@regexItem")
+    // Select a tag.
+    tagMenu
+      .click("@item")
+      .applyFilter();
+
+    reportPage.expect.section(tagMenu).to.not.be.present.before(5000);
+
+    // Select the run with tag.
+    runMenu
+      .click("@item")
       .applyFilter();
 
     section.closeFilterSettings();
@@ -157,23 +170,8 @@ module.exports = {
       browser.assert.ok(result.value.length === 1);
 
       getSelectedItemText(browser, result.value[0], text => {
-        browser.assert.ok(text.value.startsWith("*"));
-      });
-    });
-
-    section.openFilterSettings();
-
-    menu
-      .click("@tagTab")
-      .waitForElementVisible("@tagTabItem")
-      .toggleMenuItem(0)
-      .applyFilter();
-
-    section.api.elements("@selectedItems", ({ result }) => {
-      browser.assert.ok(result.value.length === 1);
-
-      getSelectedItemText(browser, result.value[0], text => {
-        browser.assert.ok(text.value.startsWith("*:"));
+        console.log(text.value);
+        browser.assert.ok(text.value.startsWith(`${runName}:${tagName}`));
       });
     });
   },
@@ -215,10 +213,14 @@ module.exports = {
   },
 
   async "set compare to run filter" (browser) {
+    const runName = "macros";
+    const tagName = "v1.0.0";
+
     const reportPage = browser.page.report();
     const compareToSection = reportPage.section.compareToFilters;
     const section = compareToSection.section.compareToRunFilter;
-    const menu = reportPage.section.runSettingsMenu;
+    const runMenu = reportPage.section.runSettingsMenu;
+    const tagMenu = reportPage.section.tagSettingsMenu;
 
     const res = await compareToSection.api.element("@active");
     if (res.status === -1) {
@@ -229,12 +231,21 @@ module.exports = {
 
     section.openFilterSettings();
 
-    menu.waitForElementVisible("@runTabItem");
-    menu.waitForElementNotPresent("@activeTagTab");
+    runMenu
+      .search(runName)
+      .moveToElement("@item", 0, 0)
+      .click("@selectTagButton");
 
-    menu
-      .search("*")
-      .click("@regexItem")
+    // Select a tag.
+    tagMenu
+      .click("@item")
+      .applyFilter();
+
+    reportPage.expect.section(tagMenu).to.not.be.present.before(5000);
+
+    // Select the run with tag.
+    runMenu
+      .click("@item")
       .applyFilter();
 
     section.closeFilterSettings();
@@ -243,23 +254,8 @@ module.exports = {
       browser.assert.ok(result.value.length === 1);
 
       getSelectedItemText(browser, result.value[0], text => {
-        browser.assert.ok(text.value.startsWith("*"));
-      });
-    });
-
-    section.openFilterSettings();
-
-    menu
-      .click("@tagTab")
-      .waitForElementVisible("@tagTabItem")
-      .toggleMenuItem(0)
-      .applyFilter();
-
-    section.api.elements("@selectedItems", ({ result }) => {
-      browser.assert.ok(result.value.length === 1);
-
-      getSelectedItemText(browser, result.value[0], text => {
-        browser.assert.ok(text.value.startsWith("*:"));
+        console.log(text.value);
+        browser.assert.ok(text.value.startsWith(`${runName}:${tagName}`));
       });
     });
   },

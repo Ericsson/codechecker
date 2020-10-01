@@ -1,5 +1,7 @@
 <template>
   <v-card flat>
+    <slot name="prepend-toolbar" />
+
     <v-toolbar
       v-if="search"
       class="pa-2"
@@ -17,6 +19,8 @@
         @input="filter"
       />
     </v-toolbar>
+
+    <slot name="append-toolbar" />
 
     <v-list
       class="pa-2 overflow-y-auto"
@@ -115,15 +119,15 @@
           No items
         </slot>
       </v-list-item>
-
-      <div
-        v-if="limit"
-        class="text-center text--secondary"
-      >
-        Showed <span v-if="limit === items.length">first</span>
-        <i>{{ items.length }}</i> items.
-      </div>
     </v-list>
+
+    <div
+      v-if="limit"
+      class="text-center text--secondary"
+    >
+      <span v-if="limit === items.length">Only the first</span>
+      <i>{{ items.length }}</i> item(s) shown.
+    </div>
 
     <v-card-actions>
       <v-spacer />

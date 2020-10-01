@@ -2135,11 +2135,11 @@ class ThriftRequestHandler(object):
 
             for _, run_id, run_name, tag_id, version_time, tag, count in q:
                 results.append(RunTagCount(id=tag_id,
-                                            time=str(version_time),
-                                            name=tag,
-                                            runName=run_name,
-                                            runId=run_id,
-                                            count=count if count else 0))
+                                           time=str(version_time),
+                                           name=tag,
+                                           runName=run_name,
+                                           runId=run_id,
+                                           count=count if count else 0))
         return results
 
     @exc_to_thrift_reqfail
