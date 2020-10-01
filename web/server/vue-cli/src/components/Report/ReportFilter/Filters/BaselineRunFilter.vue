@@ -8,9 +8,10 @@
     :search="search"
     :loading="loading"
     :apply="apply"
+    @cancel="cancelRunSelection"
     @select="prevSelectedRuns = $event"
     @clear="clear(true)"
-    @on-menu-show="onMenuShow"
+    @on-menu-show="selectTagForRun = null"
   >
     <template v-slot:append-toolbar-title>
       <selected-toolbar-title-items
@@ -20,70 +21,80 @@
     </template>
 
     <template
-      v-slot:menu-content="{ items, prevSelectedItems, cancel, select }"
+      v-slot:menu-content="{
+        items,
+        prevSelectedItems,
+        cancel: cancelItemSelection,
+        select
+      }"
     >
-      <v-tabs
-        v-model="tab"
-        fixed-tabs
-        hide-slider
+      <v-menu
+        v-model="selectTagMenu"
+        :close-on-content-click="false"
+        :nudge-width="300"
+        :max-width="500"
+        offset-x
       >
-        <v-tab>Select Runs</v-tab>
-        <v-tab
-          :disabled="prevSelectedRuns.length === 0"
-          class="tags"
-          @click="specifyTagsTab"
-        >
-          Select Tags
-          <v-tooltip max-width="200" right>
-            <template v-slot:activator="{ on }">
-              <v-icon
-                color="accent"
-                class="ml-1"
-                small
-                v-on="on"
-              >
-                mdi-help-circle
-              </v-icon>
-            </template>
-
-            <span>
-              Specify run tags of the selected runs to filter reports that
-              were <i>DETECTED</i> and <i>NOT FIXED BEFORE</i> the date when
-              the selected tag was created.
-            </span>
-          </v-tooltip>
-        </v-tab>
-
-        <v-tab-item class="run-tab-item">
+        <template v-slot:activator="{ on: menu }">
           <items
             :items="items"
             :selected-items="prevSelectedItems"
             :search="search"
             :limit="defaultLimit"
+            :format="formatRunTitle"
             @apply="apply"
-            @cancel="cancel"
+            @cancel="cancelItemSelection"
             @select="select"
             @update:items="items.splice(0, items.length, ...$event)"
           >
+            <template v-slot:prepend-count="{ hover, item }">
+              <v-tooltip
+                v-if="hover || selectTagForRun === item"
+                max-width="200"
+                right
+              >
+                <template v-slot:activator="{ on: tooltip }">
+                  <v-btn
+                    icon
+                    color="primary"
+                    v-on="{ ...tooltip, ...menu }"
+                    @click.stop="specifyTag(item)"
+                  >
+                    <v-icon>
+                      mdi-tag
+                    </v-icon>
+                  </v-btn>
+                </template>
+
+                <span>
+                  Specify a run tag for this run to filter reports that
+                  were <i>DETECTED</i> and <i>NOT FIXED BEFORE</i> the date
+                  when the selected tag was created.
+                </span>
+              </v-tooltip>
+            </template>
+
+            <template v-slot:title="{ item }">
+              {{ item.title }}
+            </template>
+
             <template v-slot:icon>
               <v-icon color="grey">
                 mdi-play-circle
               </v-icon>
             </template>
           </items>
-        </v-tab-item>
-        <v-tab-item class="tag-tab-item">
+        </template>
+
+        <v-card v-if="selectTagForRun" flat>
           <baseline-tag-items
             :namespace="namespace"
-            :bus="bus"
-            :load-event-bus="tabEventBus"
-            :selected-items="selectedTagItems"
-            :selected-run-items="prevSelectedItems"
-            :fetch-tags="fetchTags"
-            @apply="apply"
-            @cancel="cancel"
+            :selected-items="prevSelectedTagItems"
+            :run-id="selectTagForRun.runIds[0]"
+            :limit="defaultLimit"
+            @apply="applyTagSelection"
+            @cancel="cancelTagSelection"
             @select="selectRunTags"
-            @back-to-runs="backToRunsTab"
           >
             <template v-slot:icon>
               <v-icon color="grey">
@@ -91,8 +102,8 @@
               </v-icon>
             </template>
           </baseline-tag-items>
-        </v-tab-item>
-      </v-tabs>
+        </v-card>
+      </v-menu>
     </template>
 
     <template>
@@ -107,7 +118,7 @@
         </template>
 
         <template v-slot:title="{ item }">
-          {{ titles[item.title] }}
+          {{ titles[item.id] }}
         </template>
       </items-selected>
     </template>
@@ -115,15 +126,10 @@
 </template>
 
 <script>
-import Vue from "vue";
 import _ from "lodash";
 
-import { ccService, handleThriftError } from "@cc-api";
-import {
-  ReportFilter,
-  RunFilter,
-  RunHistoryFilter
-} from "@cc/report-server-types";
+import { ccService, extractTagWithRunName, handleThriftError } from "@cc-api";
+import { ReportFilter } from "@cc/report-server-types";
 
 import {
   Items,
@@ -150,8 +156,8 @@ export default {
     return {
       id: "run",
       runTagId: "run-tag",
-      tab: null,
-      tabEventBus: new Vue(),
+      selectTagMenu: false,
+      selectTagForRun: null,
       prevSelectedRuns: [],
       selectedTagItems: [],
       prevSelectedTagItems: [],
@@ -165,40 +171,38 @@ export default {
 
   computed: {
     titles() {
-      return this.selectedItems.reduce((acc, curr) => {
-        const tagNames = this.selectedTagItems
-          .filter(s => curr.runIds.includes(s.runId))
-          .map(s => s.tagName);
-
-        const title = tagNames.length
-          ? `${curr.title}:${tagNames.join(",")}`
-          : curr.title;
-
-        return {
-          ...acc,
-          [curr.title]: title
-        };
-      }, {});
+      return this.selectedItems.reduce((acc, curr) => ({
+        ...acc,
+        [curr.id]: this.getSelectedRunTitle(curr).title
+      }), {});
     },
 
     selectedToolbarTitleItems() {
       return this.selectedItems.map(item => ({
-        title: this.titles[item.title]
+        title: this.titles[item.id]
       }));
     }
   },
 
   methods: {
-    onMenuShow() {
-      this.tab = null;
+    formatRunItemWithTags(run, tags) {
+      const tagNames = tags
+        .filter(s => run.runIds.includes(s.runId))
+        .map(s => s.tagName);
+
+      run.title = tagNames.length
+        ? `${run.id}:${tagNames.join(",")}`
+        : run.id;
+
+      return run;
     },
 
-    backToRunsTab() {
-      this.tab = null;
+    formatRunTitle(run) {
+      return this.formatRunItemWithTags(run, this.prevSelectedTagItems);
     },
 
-    specifyTagsTab() {
-      this.tabEventBus.$emit("reload");
+    getSelectedRunTitle(run) {
+      return this.formatRunItemWithTags(run, this.selectedTagItems);
     },
 
     runFilterIsChanged() {
@@ -216,7 +220,7 @@ export default {
     getSelectedRunItems(runNames) {
       return Promise.all(runNames.map(async s => ({
         id: s,
-        runIds: await this.getRunIds(s),
+        runIds: await ccService.getRunIds(s),
         title: s,
         count: "N/A"
       })));
@@ -236,21 +240,25 @@ export default {
 
       // Get tags by tag ids.
       const tags1 = tagIds.length
-        ? (await this.getTags(tagIds)).map(t => ({
-          id: t.id.toNumber(),
-          runName: t.runName,
-          runId: t.runId.toNumber(),
-          tagName : t.versionTag || t.time,
-          title: t.versionTag || t.time,
-          count: "N/A"
-        }))
+        ? (await ccService.getTags(tagIds)).map(t => {
+          const name = t.versionTag || "N/A";
+          const time = this.$options.filters.prettifyDate(t.time);
+          return {
+            id: t.id.toNumber(),
+            runName: t.runName,
+            runId: t.runId.toNumber(),
+            tagName : t.versionTag || time,
+            title: `${name} (${time})`,
+            count: "N/A"
+          };
+        })
         : [];
 
       // Get tags by tag names (backward compatibility).
       const tags2 = tagWithRunNames.length
         ? (await Promise.all(tagWithRunNames.map(async s => {
-          const { runName, tagName } = this.extractTagWithRunName(s);
-          const tags = await this.getTags(null, s);
+          const { runName, tagName } = extractTagWithRunName(s);
+          const tags = await ccService.getTags(null, s);
           return {
             id: tags[0].id,
             runName: runName ? runName : tags[0].runName,
@@ -287,10 +295,25 @@ export default {
       }
     },
 
+    cancelTagSelection() {
+      this.prevSelectedTagItems = _.cloneDeep(this.selectedTagItems);
+      this.selectTagMenu = false;
+      this.selectTagForRun = null;
+    },
+
+    cancelRunSelection() {
+      this.prevSelectedRuns = _.cloneDeep(this.selectedItems);
+      this.cancelTagSelection();
+    },
+
     apply(selectedRunItems) {
       if (!this.runFilterIsChanged() && !this.tagFilterIsChanged()) return;
 
       this.setSelectedItems(selectedRunItems, this.prevSelectedTagItems);
+    },
+
+    applyTagSelection() {
+      this.selectTagMenu = false;
     },
 
     async clear(updateUrl) {
@@ -298,7 +321,7 @@ export default {
     },
 
     selectRunTags(selectedItems) {
-      this.prevSelectedTagItems = selectedItems;
+      this.prevSelectedTagItems = _.cloneDeep(selectedItems);
     },
 
     getUrlState() {
@@ -383,101 +406,14 @@ export default {
       });
     },
 
-    getRunIds(runName) {
-      const runFilter = new RunFilter({ names: [ runName ] });
-      const limit = null;
-      const offset = null;
-      const sortMode = null;
-
-      return new Promise(resolve => {
-        ccService.getClient().getRunData(runFilter, limit, offset, sortMode,
-          handleThriftError(runs => {
-            resolve(runs.map(run => run.runId.toNumber() ));
-          }));
-      });
-    },
-
-    async fetchTags(opt={}) {
-      this.loading = true;
-      this.filterOpt = opt;
-
-      const reportFilter = new ReportFilter(this.reportFilter);
-
-      const limit = opt.limit || this.defaultLimit;
-      const offset = 0;
-
-      reportFilter.runTag = opt.query
-        ? (await Promise.all(opt.query?.map(s => this.getTagIds(s)))).flat()
-        : null;
-
-      const runIds = (await Promise.all(this.prevSelectedRuns.map(async r => {
-        if (!r.runIds) {
-          r.runIds = await this.getRunIds(r.id);
-        }
-
-        return r.runIds;
-      }))).flat();
-
-      return new Promise(resolve => {
-        ccService.getClient().getRunHistoryTagCounts(runIds, reportFilter,
-          null, limit, offset, handleThriftError(res => {
-            resolve(res.map(tag => {
-              const title = tag.runName + ":" + tag.name;
-              const id = tag.id.toNumber();
-              return {
-                id,
-                runName: tag.runName,
-                runId: tag.runId.toNumber(),
-                tagName: tag.name,
-                title: title,
-                count: tag.count.toNumber()
-              };
-            }));
-            this.loading = false;
-          }));
-      });
-    },
-
-    extractTagWithRunName(runWithTagName) {
-      const index = runWithTagName.indexOf(":");
-
-      let runName, tagName;
-      if (index !== -1) {
-        runName = runWithTagName.substring(0, index);
-        tagName = runWithTagName.substring(index + 1);
-      } else {
-        tagName = runWithTagName;
+    specifyTag(run) {
+      if (this.selectTagForRun === run) {
+        this.selectTagForRun = null;
+        return;
       }
 
-      return { runName, tagName };
-    },
-
-    async getTagIds(runWithTagName) {
-      const tags = await this.getTags(null, runWithTagName);
-      return tags.map(t => t.id.toNumber());
-    },
-
-    async getTags(tagIds, runWithTagName) {
-      let runIds = null;
-      let tagNames = null;
-
-      if (runWithTagName) {
-        const { runName, tagName } =
-          this.extractTagWithRunName(runWithTagName);
-        runIds = runName ? await this.getRunIds(runName) : null;
-        tagNames = [ tagName ];
-      }
-
-      const limit = null;
-      const offset = 0;
-      const runHistoryFilter = new RunHistoryFilter({ tagIds, tagNames });
-
-      return new Promise(resolve => {
-        ccService.getClient().getRunHistory(runIds, limit, offset,
-          runHistoryFilter, handleThriftError(res => {
-            resolve(res);
-          }));
-      });
+      this.selectTagForRun = run;
+      setTimeout(() => this.selectTagMenu = true, 0);
     }
   }
 };

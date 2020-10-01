@@ -198,6 +198,7 @@ export default {
     cancel() {
       this.cancelled = true;
       this.menu = false;
+      this.$emit("cancel");
     },
 
     select(selectedItems) {

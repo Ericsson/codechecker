@@ -15,6 +15,10 @@
 </template>
 
 <script>
+import { mapState } from "vuex";
+import { ccService, handleThriftError } from "@cc-api";
+import { ReportFilter } from "@cc/report-server-types";
+
 import BaseFilterMixin from "./BaseFilter.mixin";
 import Items from "./SelectOption/Items";
 
@@ -23,11 +27,9 @@ export default {
   components: { Items },
   mixins: [ BaseFilterMixin ],
   props: {
+    runId: { type: Number, required: true },
     selectedItems: { type: Array, default: null },
-    selectedRunItems: { type: Array, default: null },
-    bus: { type: Object, required: true },
-    loadEventBus: { type: Object, required: true },
-    fetchTags: { type: Function, required: true }
+    limit: { type: Number, required: true }
   },
   data() {
     return {
@@ -37,47 +39,69 @@ export default {
         filterItems: this.filterItems
       },
       tags: [],
-      reloadItems: false,
       filterOpt: {}
     };
   },
   computed: {
-    selectedRunIds() {
-      return this.selectedRunItems.map(i => i.runIds).flat();
+    ...mapState({
+      reportFilter(state) {
+        return state[this.namespace].reportFilter;
+      }
+    })
+  },
+  watch: {
+    async runId() {
+      this.tags = await this.fetchTags(this.filterOpt);
     }
   },
 
   async mounted() {
-    this.bus.$on("update", () => this.reloadItems = true);
-
-    // Initalize tags.
-    this.tags = await this.fetchTags();
-
-    // Register on load events to update the items.
-    this.loadEventBus.$on("load", async () => {
-      if (!this.reloadItems) return;
-
-      this.reload();
-      this.reloadItems = false;
-    });
-
-    this.loadEventBus.$on("reload", async () => {
-      this.reload();
-      this.reloadItems = false;
-    });
+    this.tags = await this.fetchTags(this.filterOpt);
   },
 
   methods: {
+    async getTagIds(runWithTagName) {
+      const tags = await ccService.getTags(null, runWithTagName);
+      return tags.map(t => t.id.toNumber());
+    },
+
+    async fetchTags(opt={}) {
+      this.filterOpt = opt;
+
+      const reportFilter = new ReportFilter(this.reportFilter);
+      const limit = opt.limit || this.limit;
+      const offset = 0;
+
+      reportFilter.runTag = opt.query
+        ? (await Promise.all(opt.query?.map(s => this.getTagIds(s)))).flat()
+        : null;
+
+      return new Promise(resolve => {
+        ccService.getClient().getRunHistoryTagCounts([ this.runId ],
+          reportFilter, null, limit, offset, handleThriftError(res => {
+            resolve(res.map(tag => {
+              const id = tag.id.toNumber();
+              const name = tag.name || "N/A";
+              const time = this.$options.filters.prettifyDate(tag.time);
+              return {
+                id,
+                runName: tag.runName,
+                runId: tag.runId.toNumber(),
+                tagName: tag.name || time,
+                title: `${name} (${time})`,
+                count: tag.count.toNumber()
+              };
+            }));
+          }));
+      });
+    },
+
     filterItems(value) {
       return this.fetchTags({ query: value ? [ `${value}*` ] : null });
     },
 
-    async reload() {
-      this.tags = await this.fetchTags(this.filterOpt);
-    },
-
     apply() {
-      this.$emit("apply", this.selectedRunItems);
+      this.$emit("apply");
     },
 
     select(selectedItems) {
@@ -86,11 +110,6 @@ export default {
 
     cancel() {
       this.$emit("cancel");
-      this.backToRuns();
-    },
-
-    backToRuns() {
-      this.$emit("back-to-runs");
     }
   }
 };
