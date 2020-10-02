@@ -115,7 +115,8 @@
             }}"
             class="file-name"
           >
-            {{ item.checkedFile }} @&nbsp;Line&nbsp;{{ item.line }}
+            {{ item.checkedFile }}
+            <span v-if="item.line">@&nbsp;Line&nbsp;{{ item.line }}</span>
           </router-link>
         </template>
 
