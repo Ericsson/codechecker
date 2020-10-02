@@ -92,25 +92,33 @@ package_statistics_collector: build_statistics_collector package_dir_structure
 
 package: package_dir_structure set_git_commit_template package_plist_to_html package_tu_collector package_report_converter package_report_hash package_merge_clang_extdef_mappings package_statistics_collector
 	BUILD_DIR=$(BUILD_DIR) BUILD_LOGGER_64_BIT_ONLY=$(BUILD_LOGGER_64_BIT_ONLY) $(MAKE) -C $(CC_ANALYZER) package_analyzer
+ifndef NO_WEB
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) package_web
+endif
 
 	# Copy libraries.
 	mkdir -p $(CC_BUILD_LIB_DIR)/codechecker && \
 	cp -r $(ROOT)/codechecker_common $(CC_BUILD_LIB_DIR) && \
-	cp -r $(CC_ANALYZER)/codechecker_analyzer $(CC_BUILD_LIB_DIR) && \
+	cp -r $(CC_ANALYZER)/codechecker_analyzer $(CC_BUILD_LIB_DIR)
+ifndef NO_WEB
 	cp -r $(CC_WEB)/codechecker_web $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CC_SERVER)/codechecker_server $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CC_CLIENT)/codechecker_client $(CC_BUILD_LIB_DIR)
+endif
 
 	# Copy config files and extend 'version.json' file with git information.
 	cp -r $(ROOT)/config $(CC_BUILD_DIR) && \
 	cp -r $(CC_ANALYZER)/config/* $(CC_BUILD_DIR)/config && \
+	./scripts/build/extend_version_file.py -r $(ROOT) \
+	  $(CC_BUILD_DIR)/config/analyzer_version.json
+ifndef NO_WEB
 	cp -r $(CC_WEB)/config/* $(CC_BUILD_DIR)/config && \
 	cp -r $(CC_SERVER)/config/* $(CC_BUILD_DIR)/config && \
 	./scripts/build/extend_version_file.py -r $(ROOT) \
-	  $(CC_BUILD_DIR)/config/analyzer_version.json \
 	  $(CC_BUILD_DIR)/config/web_version.json
+endif
 
+ifndef NO_WEB
 	mkdir -p $(CC_BUILD_DIR)/cc_bin && \
 	./scripts/build/create_commands.py -b $(BUILD_DIR) \
 		$(ROOT)/bin:codechecker_common/cmd \
@@ -118,6 +126,12 @@ package: package_dir_structure set_git_commit_template package_plist_to_html pac
 		$(CC_SERVER)/bin:codechecker_server/cmd \
 		$(CC_CLIENT)/bin:codechecker_client/cmd \
 		$(CC_ANALYZER)/bin:codechecker_analyzer/cmd
+else
+	mkdir -p $(CC_BUILD_DIR)/cc_bin && \
+	./scripts/build/create_commands.py -b $(BUILD_DIR) \
+		$(ROOT)/bin:codechecker_common/cmd \
+		$(CC_ANALYZER)/bin:codechecker_analyzer/cmd
+endif
 
 	# Copy license file.
 	cp $(ROOT)/LICENSE.TXT $(CC_BUILD_DIR)
@@ -138,24 +152,41 @@ standalone_package: venv package
 
 venv:
 	# Create a virtual environment which can be used to run the build package.
+ifndef NO_WEB
 	virtualenv -p python3 venv && \
 		$(ACTIVATE_RUNTIME_VENV) && \
 		pip3 install -r $(CC_ANALYZER)/requirements.txt && \
 		pip3 install -r $(CC_WEB)/requirements.txt
+else
+	virtualenv -p python3 venv && \
+		$(ACTIVATE_RUNTIME_VENV) && \
+		pip3 install -r $(CC_ANALYZER)/requirements.txt
+endif
 
 venv_osx:
 	# Create a virtual environment which can be used to run the build package.
+ifndef NO_WEB
 	virtualenv -p python3 venv && \
 		$(ACTIVATE_RUNTIME_VENV) && \
 		pip3 install -r $(CC_ANALYZER)/requirements_py/osx/requirements.txt && \
 		pip3 install -r $(CC_WEB)/requirements_py/osx/requirements.txt
+else
+	virtualenv -p python3 venv && \
+		$(ACTIVATE_RUNTIME_VENV) && \
+		pip3 install -r $(CC_ANALYZER)/requirements_py/osx/requirements.txt
+endif
 
 clean_venv:
 	rm -rf venv
 
+ifndef NO_WEB
 PIP_DEV_DEPS_CMD = make -C $(CC_ANALYZER) pip_dev_deps && \
   make -C $(CC_WEB) pip_dev_deps && \
   make -C $(CC_TOOLS)/plist_to_html pip_dev_deps
+else
+PIP_DEV_DEPS_CMD = make -C $(CC_ANALYZER) pip_dev_deps && \
+  make -C $(CC_TOOLS)/plist_to_html pip_dev_deps
+endif
 
 pip_dev_deps:
 	# Install the depencies for analyze, web and the tools.
@@ -222,9 +253,17 @@ pycodestyle:
 pycodestyle_in_env:
 	$(ACTIVATE_DEV_VENV) && $(PYCODE_CMD)
 
+ifndef NO_WEB
 test: test_analyzer test_web
+else
+test: test_analyzer
+endif
 
+ifndef NO_WEB
 test_in_env: test_analyzer_in_env test_web_in_env
+else
+test_in_env: test_analyzer_in_env
+endif
 
 test_analyzer:
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) test
@@ -258,6 +297,7 @@ test_web_feature:
 test_web_in_env:
 	$(MAKE) -C $(CC_WEB) test_in_env
 
+ifndef NO_WEB
 test_unit:
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) test_unit
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) test_unit
@@ -273,6 +313,19 @@ test_functional:
 test_functional_in_env:
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) test_functional_in_env
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) test_functional_in_env
+else
+test_unit:
+	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) test_unit
+
+test_unit_in_env:
+	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) test_unit_in_env
+
+test_functional:
+	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) test_functional
+
+test_functional_in_env:
+	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) test_functional_in_env
+endif
 
 set_git_commit_template:
 	if [ -d "$(CURRENT_DIR)/.git" ]; then git config --local commit.template .gitmessage; fi
