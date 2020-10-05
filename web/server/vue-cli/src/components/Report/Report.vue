@@ -11,6 +11,18 @@
             class="pa-0 mr-2"
             align-self="center"
           >
+            <show-report-info-dialog :value="report">
+              <template v-slot="{ on }">
+                <report-info-button :on="on" />
+              </template>
+            </show-report-info-dialog>
+          </v-col>
+
+          <v-col
+            cols="auto"
+            class="pa-0 mr-2"
+            align-self="center"
+          >
             <show-documentation-button
               :value="checkerId"
             />
@@ -211,6 +223,7 @@ import { ReportComments } from "./Comment";
 import SelectReviewStatus from "./SelectReviewStatus";
 import SelectSameReport from "./SelectSameReport";
 import ShowDocumentationButton from "./ShowDocumentationButton";
+import { ReportInfoButton, ShowReportInfoDialog } from "./ReportInfo";
 
 import ReportStepMessage from "./ReportStepMessage";
 const ReportStepMessageClass = Vue.extend(ReportStepMessage);
@@ -220,9 +233,11 @@ export default {
   name: "Report",
   components: {
     ReportComments,
+    ReportInfoButton,
     SelectReviewStatus,
     SelectSameReport,
     ShowDocumentationButton,
+    ShowReportInfoDialog,
     UserIcon
   },
   directives: { FillHeight },
