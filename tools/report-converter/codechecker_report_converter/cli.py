@@ -54,6 +54,8 @@ from codechecker_report_converter.markdownlint.analyzer_result import \
     MarkdownlintAnalyzerResult  # noqa
 from codechecker_report_converter.coccinelle.analyzer_result import \
     CoccinelleAnalyzerResult  # noqa
+from codechecker_report_converter.smatch.analyzer_result import \
+    SmatchAnalyzerResult  # noqa
 
 
 LOG = logging.getLogger('ReportConverter')
@@ -89,7 +91,8 @@ supported_converters = {
     UBSANAnalyzerResult.TOOL_NAME: UBSANAnalyzerResult,
     SpotBugsAnalyzerResult.TOOL_NAME: SpotBugsAnalyzerResult,
     MarkdownlintAnalyzerResult.TOOL_NAME: MarkdownlintAnalyzerResult,
-    CoccinelleAnalyzerResult.TOOL_NAME: CoccinelleAnalyzerResult
+    CoccinelleAnalyzerResult.TOOL_NAME: CoccinelleAnalyzerResult,
+    SmatchAnalyzerResult.TOOL_NAME: SmatchAnalyzerResult
 }
 
 supported_metadata_keys = ["analyzer_command", "analyzer_version"]
