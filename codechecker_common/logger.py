@@ -25,7 +25,7 @@ ERROR = logging.ERROR
 CRITICAL = logging.CRITICAL
 NOTSET = logging.NOTSET
 
-CMDLINE_LOG_LEVELS = ['info', 'debug', 'debug_analyzer']
+CMDLINE_LOG_LEVELS = ['info', 'debug_analyzer', 'debug']
 
 DEBUG_ANALYZER = logging.DEBUG_ANALYZER = 15
 logging.addLevelName(DEBUG_ANALYZER, 'DEBUG_ANALYZER')
