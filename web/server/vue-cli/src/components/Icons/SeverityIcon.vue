@@ -2,8 +2,8 @@
   <v-avatar
     v-if="status === Severity.UNSPECIFIED"
     tile
-    color="#666666"
-    size="24"
+    :color="color"
+    :size="size"
     title="Unspecified"
   >
     <span class="white--text font-weight-bold">U</span>
@@ -12,8 +12,8 @@
   <v-avatar
     v-else-if="status === Severity.STYLE"
     tile
-    color="#9932cc"
-    size="24"
+    :color="color"
+    :size="size"
     title="Style"
   >
     <span class="white--text font-weight-bold">S</span>
@@ -22,8 +22,8 @@
   <v-avatar
     v-else-if="status === Severity.LOW"
     tile
-    color="#669603"
-    size="24"
+    :color="color"
+    :size="size"
     title="Low"
   >
     <span class="white--text font-weight-bold">L</span>
@@ -32,8 +32,8 @@
   <v-avatar
     v-else-if="status === Severity.MEDIUM"
     tile
-    color="#a9d323"
-    size="24"
+    :color="color"
+    :size="size"
     title="Medium"
   >
     <span class="white--text font-weight-bold">M</span>
@@ -42,8 +42,8 @@
   <v-avatar
     v-else-if="status === Severity.HIGH"
     tile
-    color="#ffa800"
-    size="24"
+    :color="color"
+    :size="size"
     title="High"
   >
     <span class="white--text font-weight-bold">H</span>
@@ -52,8 +52,8 @@
   <v-avatar
     v-else-if="status === Severity.CRITICAL"
     tile
-    color="#e92625"
-    size="24"
+    :color="color"
+    :size="size"
     title="Critical"
   >
     <span class="white--text font-weight-bold">C</span>
@@ -62,18 +62,19 @@
 
 <script>
 import { Severity } from "@cc/report-server-types";
+import { SeverityMixin } from "@/mixins";
 
 export default {
   name: "SeverityIcon",
+  mixins: [ SeverityMixin ],
   props: {
-    status: {
-      type: Number,
-      required: true
-    }
+    status: { type: Number, required: true },
+    size: { type: Number, default: 24 }
   },
   data() {
     return {
-      Severity
+      Severity,
+      color: this.severityFromCodeToColor(this.status)
     };
   }
 };

@@ -32,7 +32,10 @@
 
 <script>
 import { ReviewStatusMixin, SeverityMixin, ToCSV } from "@/mixins";
-import { BaseStatistics, getCheckerStatistics } from "@/components/Statistics";
+import { BaseStatistics } from "@/components/Statistics";
+import {
+  getCheckerStatistics
+} from "@/components/Statistics/StatisticsHelper";
 import CheckerStatisticsTable from "./CheckerStatisticsTable";
 
 export default {
@@ -41,10 +44,6 @@ export default {
     CheckerStatisticsTable
   },
   mixins: [ BaseStatistics, ReviewStatusMixin, SeverityMixin, ToCSV ],
-
-  props: {
-    namespace: { type: String, required: true }
-  },
 
   data() {
     return {

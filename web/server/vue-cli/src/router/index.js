@@ -60,7 +60,13 @@ export default new Router({
             {
               path: "",
               name: "statistics",
-              redirect: "checker"
+              redirect: "overview"
+            },
+            {
+              path: "overview",
+              name: "product-overview",
+              component: () =>
+                import("@/components/Statistics/Overview/Overview"),
             },
             {
               path: "checker",

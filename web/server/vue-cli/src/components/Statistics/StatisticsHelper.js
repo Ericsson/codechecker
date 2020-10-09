@@ -1,4 +1,3 @@
-
 import { ccService, handleThriftError } from "@cc-api";
 import { ReportFilter, ReviewStatus } from "@cc/report-server-types";
 
@@ -141,7 +140,15 @@ async function getComponentStatistics(component, runIds, reportFilter,
     });
   });
 
-  return Promise.all(queries);
+  return (await Promise.all(queries)).map(res => ({
+    reports       : res[0],
+    unreviewed    : res[1],
+    confirmed     : res[2],
+    outstanding   : (res[1]?.toNumber() || 0) + (res[2]?.toNumber() || 0),
+    falsePositive : res[3],
+    intentional   : res[4],
+    suppressed    : (res[3]?.toNumber() || 0) + (res[4]?.toNumber() || 0)
+  }));
 }
 
 export {

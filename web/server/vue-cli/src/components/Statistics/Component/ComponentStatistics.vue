@@ -42,10 +42,12 @@ import { ToCSV } from "@/mixins";
 
 import {
   BaseStatistics,
-  getComponentStatistics,
   getComponents,
   initDiffField
 } from "@/components/Statistics";
+import {
+  getComponentStatistics
+} from "@/components/Statistics/StatisticsHelper";
 
 import ComponentStatisticsTable from "./ComponentStatisticsTable";
 
@@ -56,17 +58,15 @@ export default {
   },
   mixins: [ BaseStatistics, ToCSV ],
 
-  props: {
-    namespace: { type: String, required: true }
-  },
-
   data() {
     return {
       ReviewStatus,
       loading: false,
       statistics: [],
       components: [],
-      statisticsFilters: {}
+      statisticsFilters: {},
+      fieldsToUpdate: [ "reports", "unreviewed", "confirmed",
+        "falsePositive", "intentional" ]
     };
   },
 
@@ -99,15 +99,12 @@ export default {
       if (!this.cmpData) return;
 
       return Promise.all(this.components.map(component => {
-        const fieldToUpdate = [ "reports", "unreviewed", "confirmed",
-          "falsePositive", "intentional" ];
-
         const q1 = this.getNewReports(component).then(newReports => {
           const row = this.statistics.find(s =>
             s.component === component.name);
 
           if (row) {
-            fieldToUpdate.forEach(f => row[f].new = newReports[f].count);
+            this.fieldsToUpdate.forEach(f => row[f].new = newReports[f].count);
             this.updateCalculatedFields(row, newReports, "new");
           }
         });
@@ -117,7 +114,7 @@ export default {
             s.component === component.name);
 
           if (row) {
-            fieldToUpdate.forEach(f =>
+            this.fieldsToUpdate.forEach(f =>
               row[f].resolved = resolvedReports[f].count);
             this.updateCalculatedFields(row, resolvedReports, "resolved");
           }
@@ -151,30 +148,8 @@ export default {
       return this.getStatistics(component, runIds, reportFilter, cmpData);
     },
 
-    async getStatistics(component, runIds, reportFilter, cmpData) {
-      const res = await getComponentStatistics(component, runIds, reportFilter,
-        cmpData);
-
-      return {
-        component     : component.name,
-        value         : component.value || component.description,
-        reports       : initDiffField(res[0]),
-        unreviewed    : initDiffField(res[1]),
-        confirmed     : initDiffField(res[2]),
-        outstanding   : initDiffField(res[1].toNumber() + res[2].toNumber()),
-        falsePositive : initDiffField(res[3]),
-        intentional   : initDiffField(res[4]),
-        suppressed    : initDiffField(res[3].toNumber() + res[4].toNumber())
-      };
-    },
-
-    async fetchStatistics() {
-      this.loading = true;
-      this.statistics = [];
-
-      this.components = await getComponents();
-
-      this.statistics = this.components.map(component => ({
+    initStatistics(components) {
+      this.statistics = components.map(component => ({
         component     : component.name,
         value         : component.value || component.description,
         reports       : initDiffField(undefined),
@@ -185,6 +160,31 @@ export default {
         intentional   : initDiffField(undefined),
         suppressed    : initDiffField(undefined)
       }));
+    },
+
+    async getStatistics(component, runIds, reportFilter, cmpData) {
+      const res = await getComponentStatistics(component, runIds, reportFilter,
+        cmpData);
+
+      return {
+        component     : component.name,
+        value         : component.value || component.description,
+        reports       : initDiffField(res.reports),
+        unreviewed    : initDiffField(res.unreviewed),
+        confirmed     : initDiffField(res.confirmed),
+        outstanding   : initDiffField(res.outstanding),
+        falsePositive : initDiffField(res.falsePositive),
+        intentional   : initDiffField(res.intentional),
+        suppressed    : initDiffField(res.suppressed)
+      };
+    },
+
+    async fetchStatistics() {
+      this.loading = true;
+      this.statistics = [];
+
+      this.components = await getComponents();
+      this.initStatistics(this.components);
 
       this.statisticsFilters = this.getStatisticsFilters();
       const { runIds, reportFilter, cmpData } = this.statisticsFilters;

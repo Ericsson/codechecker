@@ -5,9 +5,9 @@ import { CompareData, DiffType, ReportFilter } from "@cc/report-server-types";
 export default {
   name: "BaseStatistics",
   props: {
-    bus: { type: Object, required: true }
+    bus: { type: Object, required: true },
+    namespace: { type: String, required: true }
   },
-
   data() {
     return {
       statistics: []
@@ -57,11 +57,15 @@ export default {
     fetchStatistics() {},
 
     updateCalculatedFields(oldValues, newValues, type) {
-      oldValues["outstanding"][type] =
-        newValues["unreviewed"].count + newValues["confirmed"].count;
+      if (oldValues["outstanding"] !== undefined) {
+        oldValues["outstanding"][type] =
+          newValues["unreviewed"].count + newValues["confirmed"].count;
+      }
 
-      oldValues["suppressed"][type] =
-        newValues["falsePositive"].count + newValues["intentional"].count;
+      if (oldValues["suppressed"] !== undefined) {
+        oldValues["suppressed"][type] =
+          newValues["falsePositive"].count + newValues["intentional"].count;
+      }
     },
 
     updateStatistics(reports, name, type) {

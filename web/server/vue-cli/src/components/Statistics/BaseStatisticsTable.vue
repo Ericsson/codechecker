@@ -339,14 +339,17 @@ export default {
   mixins: [ ReviewStatusMixin, SeverityMixin ],
   props: {
     items: { type: Array, required: true },
-    colspan: { type: Number, default: 2 }
+    colspan: { type: Number, default: 2 },
+    totalColumns: {
+      type: Array,
+      default: () => [ "unreviewed", "confirmed", "outstanding",
+        "falsePositive", "intentional", "suppressed","reports" ]
+    }
   },
   data() {
     return {
       ReviewStatus,
-      DetectionStatus,
-      totalColumns: [ "unreviewed", "confirmed", "outstanding",
-        "falsePositive", "intentional", "suppressed", "reports" ]
+      DetectionStatus
     };
   },
   computed: {

@@ -5,6 +5,7 @@
     :items="items"
     :loading="loading"
     :mobile-breakpoint="1000"
+    :total-columns="totalColumns"
     loading-text="Loading component statistics..."
     no-data-text="No component statistics available"
     item-key="component"
@@ -13,26 +14,14 @@
     @item-expanded="itemExpanded"
   >
     <template v-slot:expanded-item="{ item }">
-      <td
-        class="pa-0"
-        :colspan="headers.length"
-      >
-        <v-card flat tile>
-          <v-card-text v-if="item.loading || !item.checkerStatistics">
-            Loading...
-            <v-progress-linear
-              indeterminate
-              class="mb-0"
-            />
-          </v-card-text>
+      <expanded-item :item="item" :colspan="headers.length" />
+    </template>
 
-          <checker-statistics-table
-            v-else
-            :items="item.checkerStatistics"
-            :loading="item.loading"
-          />
-        </v-card>
-      </td>
+    <template
+      v-for="(_, slot) of $scopedSlots"
+      v-slot:[slot]="scope"
+    >
+      <slot :name="slot" v-bind="scope" />
     </template>
   </base-statistics-table>
 </template>
@@ -41,19 +30,20 @@
 import { ReportFilter } from "@cc/report-server-types";
 import {
   BaseStatisticsTable,
-  CheckerStatisticsTable,
   getCheckerStatistics
 } from "@/components/Statistics";
+import ExpandedItem from "./ExpandedItem";
 
 export default {
   name: "ComponentStatisticsTable",
   components: {
     BaseStatisticsTable,
-    CheckerStatisticsTable
+    ExpandedItem
   },
   props: {
     items: { type: Array, required: true },
     loading: { type: Boolean, default: false },
+    totalColumns: { type: Array, default: undefined },
     filters: { type: Object, default: () => {} }
   },
   data() {

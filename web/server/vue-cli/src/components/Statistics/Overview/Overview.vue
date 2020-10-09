@@ -1,0 +1,134 @@
+<template>
+  <v-container fluid>
+    <reports
+      :bus="bus"
+      :get-statistics-filters="getStatisticsFilters"
+    />
+
+    <v-row>
+      <v-col>
+        <single-line-widget
+          icon="mdi-bell-ring"
+          color="red"
+          label="Outstanding reports"
+          help-message="Number of reports which are not fixed yet."
+          :bus="bus"
+          :get-value="getNumberOfOutstandingReports"
+        >
+          <template #append-value>
+            <v-icon color="red">
+              mdi-arrow-down-bold
+            </v-icon>
+          </template>
+        </single-line-widget>
+      </v-col>
+
+      <v-col>
+        <single-line-widget
+          icon="mdi-close"
+          color="red"
+          label="Number of failed files (TODO)"
+          :bus="bus"
+          :get-value="getNumberOfFailedFiles"
+        >
+          <template #append-value>
+            <v-icon color="red">
+              mdi-arrow-down-bold
+            </v-icon>
+          </template>
+        </single-line-widget>
+      </v-col>
+
+      <v-col>
+        <single-line-widget
+          icon="mdi-card-account-details"
+          color="grey"
+          label="Number of checkers reporting faults"
+          help-message="Number of checkers which found some report in the
+            current product."
+          :bus="bus"
+          :get-value="getNumberOfActiveCheckers"
+        />
+      </v-col>
+    </v-row>
+
+    <v-row class="my-4">
+      <v-col>
+        <outstanding-reports-chart
+          :bus="bus"
+          :get-statistics-filters="getStatisticsFilters"
+          :styles="{
+            height: '400px',
+            position: 'relative'
+          }"
+        />
+      </v-col>
+    </v-row>
+
+    <v-row>
+      <v-col>
+        <component-severity-statistics
+          :bus="bus"
+          :namespace="namespace"
+        />
+      </v-col>
+    </v-row>
+  </v-container>
+</template>
+
+<script>
+import { ccService, handleThriftError } from "@cc-api";
+import { ReportFilter } from "@cc/report-server-types";
+import { DateMixin } from "@/mixins";
+import { BaseStatistics } from "@/components/Statistics";
+import Reports from "./Reports";
+import { ComponentSeverityStatistics } from "./ComponentSeverityStatistics";
+import OutstandingReportsChart from "./OutstandingReportsChart";
+import SingleLineWidget from "./SingleLineWidget";
+
+export default {
+  name: "Overview",
+  components: {
+    ComponentSeverityStatistics,
+    OutstandingReportsChart,
+    Reports,
+    SingleLineWidget
+  },
+  mixins: [ BaseStatistics, DateMixin ],
+  methods: {
+    getNumberOfReports(runIds, reportFilter, cmpData) {
+      return new Promise(resolve => {
+        ccService.getClient().getRunResultCount(runIds, reportFilter, cmpData,
+          handleThriftError(res => {
+            resolve(res.toNumber());
+          }));
+      });
+    },
+
+    getNumberOfOutstandingReports() {
+      const { runIds, reportFilter, cmpData } = this.getStatisticsFilters();
+
+      const repFilter = new ReportFilter(reportFilter);
+      repFilter.openReportsDate = this.getUnixTime(new Date);
+
+      return this.getNumberOfReports(runIds, repFilter, cmpData);
+    },
+
+    // TODO: get data from the server.
+    getNumberOfFailedFiles() { return 42; },
+
+    getNumberOfActiveCheckers() {
+      const { runIds, reportFilter, cmpData } = this.getStatisticsFilters();
+      const limit = null;
+      const offset = 0;
+
+      return new Promise(resolve => {
+        ccService.getClient().getCheckerCounts(runIds, reportFilter, cmpData,
+          limit, offset, handleThriftError(res => {
+            resolve(res.length);
+          }));
+      });
+    }
+  }
+};
+</script>

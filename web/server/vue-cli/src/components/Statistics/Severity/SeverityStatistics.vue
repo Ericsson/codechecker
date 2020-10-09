@@ -33,10 +33,11 @@
 <script>
 import { SeverityMixin, ToCSV } from "@/mixins";
 
+import { BaseStatistics } from "@/components/Statistics";
 import {
-  BaseStatistics,
   getSeverityStatistics
-} from "@/components/Statistics";
+} from "@/components/Statistics/StatisticsHelper";
+
 import SeverityStatisticsTable from "./SeverityStatisticsTable";
 
 export default {
@@ -45,10 +46,6 @@ export default {
     SeverityStatisticsTable
   },
   mixins: [ BaseStatistics, SeverityMixin, ToCSV ],
-
-  props: {
-    namespace: { type: String, required: true }
-  },
 
   data() {
     return {

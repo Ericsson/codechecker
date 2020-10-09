@@ -64,6 +64,11 @@ export default {
   data() {
     const tabs = [
       {
+        name: "Product Overview",
+        icon: "mdi-briefcase-outline",
+        to: { name: "product-overview" }
+      },
+      {
         name: "Checker Statistics",
         icon: "mdi-card-account-details",
         to: { name: "checker-statistics" }
