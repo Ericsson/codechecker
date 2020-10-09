@@ -65,7 +65,9 @@ def perform_build_command(logfile, command, context, keep_link, silent=False,
                            original_env_file)
 
         with open(original_env_file, 'rb') as env_file:
-            original_env = pickle.load(env_file, encoding='utf-8')
+            original_env = pickle.load(env_file,
+                                       encoding='utf-8',
+                                       errors='ignore')
 
     except Exception as ex:
         LOG.warning(str(ex))

@@ -16,6 +16,7 @@ invoked and ran.
 
 import argparse
 import os
+import pickle
 
 from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.buildlog import build_manager
@@ -30,7 +31,15 @@ def get_argparser_ctor_args():
     argparse.ArgumentParser (either directly or as a subparser).
     """
 
-    is_intercept = check_intercept(os.environ)
+    original_env = os.environ.copy()
+    original_env_file = os.environ.get('CODECHECKER_ORIGINAL_BUILD_ENV')
+    if original_env_file:
+        with open(original_env_file, 'rb') as env_file:
+            original_env = pickle.load(env_file,
+                                       encoding='utf-8',
+                                       errors='ignore')
+
+    is_intercept = check_intercept(original_env)
     ldlogger_settings = """
 ld-logger can be fine-tuned with some environment variables. For details see
 the following documentation:
