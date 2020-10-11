@@ -1,0 +1,1 @@
+files/sample.c:4 check_sample() warn: passing zero to 'ERR_PTR'
