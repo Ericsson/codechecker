@@ -21,6 +21,7 @@ a CodeChecker server.
 * [Pyflakes](#pyflakes)
 * [Markdownlint](#markdownlint)
 * [Coccinelle](#coccinelle)
+* [Smatch](#smatch)
 * [License](#license)
 
 ## Install guide
@@ -80,6 +81,7 @@ optional arguments:
 Supported analyzers:
   asan - AddressSanitizer, https://clang.llvm.org/docs/AddressSanitizer.html
   clang-tidy - Clang Tidy, https://clang.llvm.org/extra/clang-tidy
+  coccinelle - Coccinelle, https://github.com/coccinelle/coccinelle
   cppcheck - Cppcheck, http://cppcheck.sourceforge.net
   eslint - ESLint, https://eslint.org/
   fbinfer - Facebook Infer, https://fbinfer.com
@@ -88,6 +90,7 @@ Supported analyzers:
   msan - MemorySanitizer, https://clang.llvm.org/docs/MemorySanitizer.html
   pyflakes - Pyflakes, https://github.com/PyCQA/pyflakes
   pylint - Pylint, https://www.pylint.org
+  smatch - smatch, https://repo.or.cz/w/smatch.git
   spotbugs - spotbugs, https://spotbugs.github.io
   tsan - ThreadSanitizer, https://clang.llvm.org/docs/ThreadSanitizer.html
   tslint - TSLint, https://palantir.github.io/tslint
@@ -385,6 +388,7 @@ report-converter -t mdl -o ./codechecker_mdl_reports ./mdl_reports.out
 
 # Store Markdownlint reports with CodeChecker.
 CodeChecker store ./codechecker_mdl_reports -n mdl
+```
 
 ## [Coccinelle](https://github.com/coccinelle/coccinelle)
 [Coccinelle](https://github.com/coccinelle/coccinelle) allows programmers to easily 
@@ -409,7 +413,30 @@ report-converter -t coccinelle -o ./codechecker_coccinelle_reports ./coccinelle_
 
 # Store the Cocccinelle reports with CodeChecker.
 CodeChecker store ./codechecker_coccinelle_reports -n coccinelle
+```
 
+## [Smatch](https://repo.or.cz/w/smatch.git)
+[Smatch](https://repo.or.cz/w/smatch.git) is a static analysis tool for C that is used on the kernel.
+
+The recommended way of running Smatch is to redirect the output to a file and
+give this file to the report converter tool.
+
+The following example shows you how to run Smatch on kernel sources 
+and store the results found by Smatch to the CodeChecker database.
+```sh
+# Change Directory to your project
+cd path/to/linux/kernel/repository
+
+# Run Smatch 
+# Note: The warnings will be stored by default into smatch_warns.txt after executing the following command
+path/to/smatch/smatch_scripts/test_kernel.sh
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of Smatch
+report-converter -t smatch -o ./codechecker_smatch_reports ./smatch_warns.txt
+
+# Store the Smatch reports with CodeChecker.
+CodeChecker store ./codechecker_smatch_reports -n smatch
 ```
 
 ## License
