@@ -12,6 +12,7 @@
             { "file": "divide_zero.cpp", "line": 12, "checker": "core.DivideZero", "hash": "0db7fdfc2bc9d487ca571fbbb68029cc" },
             { "file": "divide_zero.cpp", "line": 17, "checker": "core.DivideZero", "hash": "5c5190f9153be2ea5e0b523a1af5faa1" },
             { "file": "divide_zero.cpp", "line": 12, "checker": "deadcode.DeadStores", "hash": "2bd08e713b88b6ae4da2671b87870a62" },
+            { "file": "divide_zero.cpp", "line": 17, "checker": "clang-diagnostic-division-by-zero", "hash": "0ac7dc80f8597ab3663bd9b87d016672" },
             { "file": "divide_zero.cpp", "line": 17, "checker": "deadcode.DeadStores", "hash": "c71054be96fe0483cebf5bdda7ae07d5" },
             { "file": "divide_zero_duplicate.cpp", "line": 12, "checker": "core.DivideZero", "hash": "0db7fdfc2bc9d487ca571fbbb68029cc" },
             { "file": "divide_zero_duplicate.cpp", "line": 12, "checker": "deadcode.DeadStores", "hash": "2bd08e713b88b6ae4da2671b87870a62" },
@@ -36,17 +37,19 @@
             { "file": "stack_address_escape.cpp", "line": 18, "checker": "core.StackAddrEscapeBase", "hash": "afb5b4e0f6ed01dff585689bcf458a7e" },
             { "file": "stack_address_escape.cpp", "line": 25, "checker": "core.StackAddrEscapeBase", "hash": "ab4781a0c24cd271c0da36b8b8ed0dc0" },
             { "file": "skip_header.cpp", "line": 15, "checker": "core.DivideZero", "hash": "6323bb2b22ffeff5c265eb14ae402d29" },
+            { "file": "skip_header.cpp", "line": 15, "checker": "clang-diagnostic-division-by-zero", "hash": "480caff35245121deb7d14f7fcf6787c" },
             { "file": "skip.h", "line": 8, "checker": "core.DivideZero", "hash": "269d82a20d38f23bbf730a2cf1d1668b" },
             { "file": "skip.h", "line": 7, "checker": "misc-definitions-in-headers", "hash": "3fa3c4f09e3bb769a68e377bd5ab3222" },
+            { "file": "skip.h", "line": 8, "checker": "clang-diagnostic-division-by-zero", "hash": "4608dd0c3faa82830a43f529a6c76a7f" },
             { "file": "path_begin.cpp", "line": 12, "checker": "core.DivideZero", "hash": "73e6a2e1091295da065a6527f8540366" },
             { "file": "path_begin.cpp", "line": 18, "checker": "core.DivideZero", "hash": "73e6a2e1091295da065a6527f8540366" }
         ],
-        "filter_severity_levels": [{"MEDIUM": 3}, {"LOW": 6}, {"HIGH": 24}, {"STYLE": 0}, {"UNSPECIFIED": 3}, {"CRITICAL": 0}],
+        "filter_severity_levels": [{"MEDIUM": 6}, {"LOW": 6}, {"HIGH": 24}, {"STYLE": 0}, {"UNSPECIFIED": 3}, {"CRITICAL": 0}],
         "filter_checker_id": [{"*unix*": 1}, {"core*": 22}, {"*DeadStores": 6}],
-        "filter_analyzer_name": [{"clang-tidy": 2}, {"clangsa": 34}],
+        "filter_analyzer_name": [{"clang-tidy": 5}, {"clangsa": 34}],
         "filter_filepath": [{"*null*": 5}],
         "filter_filepath_case_insensitive": [{"*null*": 5}, {"*nULl*": 5}, {"*NULL*": 5}, {"*Null*": 5}],
-        "filter_review_status": [{"UNREVIEWED": 0}, {"CONFIRMED": 36}, {"FALSE_POSITIVE": 0}, {"INTENTIONAL": 0}],
+        "filter_review_status": [{"UNREVIEWED": 0}, {"CONFIRMED": 39}, {"FALSE_POSITIVE": 0}, {"INTENTIONAL": 0}],
         "diff_res_types_filter": [{"deadcode.DeadStores": 6},  {"cplusplus.NewDelete": 5}, {"unix.Malloc": 1}]
     }
 }

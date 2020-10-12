@@ -62,7 +62,8 @@ class TestReportFilter(unittest.TestCase):
         self._runids = [r.runId for r in self._test_runs]
 
         self.run1_checkers = \
-            {'core.CallAndMessage': 5,
+            {'clang-diagnostic-division-by-zero': 3,
+             'core.CallAndMessage': 5,
              'core.DivideZero': 10,
              'core.NullDereference': 4,
              'core.StackAddrEscapeBase': 3,
@@ -72,7 +73,8 @@ class TestReportFilter(unittest.TestCase):
              'unix.Malloc': 1}
 
         self.run2_checkers = \
-            {'core.CallAndMessage': 5,
+            {'clang-diagnostic-division-by-zero': 3,
+             'core.CallAndMessage': 5,
              'core.DivideZero': 10,
              'core.NullDereference': 4,
              'cplusplus.NewDelete': 5,
@@ -81,19 +83,19 @@ class TestReportFilter(unittest.TestCase):
              'unix.MismatchedDeallocator': 1}
 
         self.run1_sev_counts = {Severity.UNSPECIFIED: 3,
-                                Severity.MEDIUM: 3,
+                                Severity.MEDIUM: 6,
                                 Severity.LOW: 6,
                                 Severity.HIGH: 24}
 
-        self.run2_sev_counts = {Severity.MEDIUM: 3,
+        self.run2_sev_counts = {Severity.MEDIUM: 6,
                                 Severity.LOW: 6,
                                 Severity.HIGH: 24}
 
         self.run1_detection_counts = \
-            {DetectionStatus.NEW: 36}
+            {DetectionStatus.NEW: 39}
 
         self.run2_detection_counts = \
-            {DetectionStatus.NEW: 33}
+            {DetectionStatus.NEW: 36}
 
         self.run1_files = \
             {'file_to_be_skipped.cpp': 2,
@@ -101,11 +103,11 @@ class TestReportFilter(unittest.TestCase):
              'new_delete.cpp': 6,
              'stack_address_escape.cpp': 3,
              'call_and_message.cpp': 5,
-             'divide_zero.cpp': 4,
+             'divide_zero.cpp': 5,
              'divide_zero_duplicate.cpp': 2,
              'has a space.cpp': 1,
-             'skip_header.cpp': 1,
-             'skip.h': 2,
+             'skip_header.cpp': 2,
+             'skip.h': 3,
              'path_begin.cpp': 2,
              'path_end.h': 3
              }
@@ -113,13 +115,13 @@ class TestReportFilter(unittest.TestCase):
         self.run2_files = \
             {'call_and_message.cpp': 5,
              'new_delete.cpp': 6,
-             'divide_zero.cpp': 4,
+             'divide_zero.cpp': 5,
              'divide_zero_duplicate.cpp': 2,
              'null_dereference.cpp': 5,
              'file_to_be_skipped.cpp': 2,
              'has a space.cpp': 1,
-             'skip_header.cpp': 1,
-             'skip.h': 2,
+             'skip_header.cpp': 2,
+             'skip.h': 3,
              'path_begin.cpp': 2,
              'path_end.h': 3
              }
@@ -523,7 +525,8 @@ class TestReportFilter(unittest.TestCase):
                                                        0)
         checkers_dict = dict((res.name, res.count) for res in new_reports)
 
-        new = {'core.CallAndMessage': 5,
+        new = {'clang-diagnostic-division-by-zero': 3,
+               'core.CallAndMessage': 5,
                'core.StackAddrEscapeBase': 3,
                'cplusplus.NewDelete': 5,
                'core.NullDereference': 4,
