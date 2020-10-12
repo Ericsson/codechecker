@@ -385,6 +385,7 @@ report-converter -t mdl -o ./codechecker_mdl_reports ./mdl_reports.out
 
 # Store Markdownlint reports with CodeChecker.
 CodeChecker store ./codechecker_mdl_reports -n mdl
+```
 
 ## [Coccinelle](https://github.com/coccinelle/coccinelle)
 [Coccinelle](https://github.com/coccinelle/coccinelle) allows programmers to easily 
@@ -393,6 +394,8 @@ like for instance to perform some refactorings.
 
 The recommended way of running Coccinelle is to redirect the output to a file and
 give this file to the report converter tool.
+
+Note: the checker name will be the file name of the `.cocci` file.
 
 The following example shows you how to run Coccinelle on kernel sources 
 and store the results found by Coccinelle to the CodeChecker database.
