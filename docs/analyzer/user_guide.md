@@ -594,6 +594,9 @@ su myuser  -c "CodeChecker log -o log_dir/compile_commands.json -b 'g++ main.cpp
 
 
 ### BitBake
+
+Note: for an alternative integration, check-out [meta-codechecker](https://github.com/dl9pf/meta-codechecker).
+
 Do the following steps to log compiler calls made by
 [BitBake](https://github.com/openembedded/bitbake) using CodeChecker.
 
