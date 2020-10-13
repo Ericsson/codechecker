@@ -294,6 +294,7 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
     manager = SyncManager()
     manager.start(__mgr_init)
 
+    config_map = manager.dict(config_map)
     actions_map = create_actions_map(actions, manager)
 
     # Setting to not None value will enable statistical analysis features.
