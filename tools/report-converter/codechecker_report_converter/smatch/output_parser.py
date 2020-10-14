@@ -29,6 +29,10 @@ class SmatchParser(BaseParser):
             r'^(?P<path>[\S ]+?):'
             # Line number followed by a whitespace.
             r'(?P<line>\d+?)\s'
+            # Function name followed by a whitespace.
+            r'(?P<function_name>\S+)\s'
+            # Checker name followed by a whitespace
+            r'\[smatch\.(?P<checker_name>\S+)\]\s'
             # Message.
             r'(?P<message>[\S \t]+)\s*')
 
@@ -45,7 +49,6 @@ class SmatchParser(BaseParser):
             os.path.join(os.path.dirname(self.analyzer_result),
                          match.group('path')))
 
-        checker_name = None
         column = 0
 
         message = Message(
@@ -53,7 +56,7 @@ class SmatchParser(BaseParser):
             int(match.group('line')),
             column,
             match.group('message').strip(),
-            checker_name)
+            match.group('checker_name'))
 
         try:
             return message, next(it)
