@@ -40,13 +40,14 @@ import {
 } from "@cc/report-server-types";
 import { ToCSV } from "@/mixins";
 
-import BaseStatistics from "./BaseStatistics";
-import ComponentStatisticsTable from "./ComponentStatisticsTable";
 import {
+  BaseStatistics,
   getComponentStatistics,
   getComponents,
   initDiffField
-} from "./StatisticsHelper";
+} from "@/components/Statistics";
+
+import ComponentStatisticsTable from "./ComponentStatisticsTable";
 
 export default {
   name: "ComponentStatistics",

@@ -66,19 +66,19 @@ export default new Router({
               path: "checker",
               name: "checker-statistics",
               component: () =>
-                import("@/components/Statistics/CheckerStatistics"),
+                import("@/components/Statistics/Checker/CheckerStatistics"),
             },
             {
               path: "severity",
               name: "severity-statistics",
               component: () =>
-                import("@/components/Statistics/SeverityStatistics"),
+                import("@/components/Statistics/Severity/SeverityStatistics"),
             },
             {
               path: "component",
               name: "component-statistics",
-              component: () =>
-                import("@/components/Statistics/ComponentStatistics"),
+              component: () => import(
+                "@/components/Statistics/Component/ComponentStatistics"),
             }
           ]
         },

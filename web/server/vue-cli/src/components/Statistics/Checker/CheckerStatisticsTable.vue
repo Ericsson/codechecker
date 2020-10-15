@@ -1,23 +1,22 @@
 <template>
   <base-statistics-table
-    class="severity-statistics"
+    class="checker-statistics"
     :headers="headers"
     :items="items"
     :loading="loading"
     :mobile-breakpoint="1000"
-    :colspan="1"
-    loading-text="Loading severity statistics..."
-    item-key="severity"
+    loading-text="Loading checker statistics..."
+    item-key="checker"
     sort-by="severity"
     sort-desc
   />
 </template>
 
 <script>
-import BaseStatisticsTable from "./BaseStatisticsTable";
+import { BaseStatisticsTable } from "@/components/Statistics";
 
 export default {
-  name: "SeverityStatisticsTable",
+  name: "CheckerStatisticsTable",
   components: {
     BaseStatisticsTable
   },
@@ -25,10 +24,13 @@ export default {
     items: { type: Array, required: true },
     loading: { type: Boolean, default: false }
   },
-
   data() {
     return {
       headers: [
+        {
+          text: "Checker",
+          value: "checker"
+        },
         {
           text: "Severity",
           value: "severity",
@@ -76,9 +78,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-$class-name: ".severity-statistics > ::v-deep .v-data-table__wrapper";
-$unreviewed_col: 2;
-$colspan: 0;
-
-@import "./style.scss";
+$class-name: ".checker-statistics > ::v-deep .v-data-table__wrapper";
+@import "@/components/Statistics/style.scss";
 </style>

@@ -39,9 +39,11 @@
 
 <script>
 import { ReportFilter } from "@cc/report-server-types";
-import { getCheckerStatistics } from "./StatisticsHelper";
-import BaseStatisticsTable from "./BaseStatisticsTable";
-import CheckerStatisticsTable from "./CheckerStatisticsTable";
+import {
+  BaseStatisticsTable,
+  CheckerStatisticsTable,
+  getCheckerStatistics
+} from "@/components/Statistics";
 
 export default {
   name: "ComponentStatisticsTable",
@@ -140,5 +142,5 @@ export default {
 
 <style lang="scss" scoped>
 $class-name: ".component-statistics > ::v-deep .v-data-table__wrapper";
-@import "./style.scss";
+@import "@/components/Statistics/style.scss";
 </style>

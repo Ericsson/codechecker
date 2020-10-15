@@ -1,7 +1,7 @@
 <template>
   <v-container fluid>
     <v-row>
-      <v-col>
+      <v-col cols="auto">
         <h3 class="title primary--text mb-2">
           <v-btn
             color="primary"
@@ -21,7 +21,7 @@
           </v-btn>
         </h3>
 
-        <checker-statistics-table
+        <severity-statistics-table
           :items="statistics"
           :loading="loading"
         />
@@ -31,17 +31,20 @@
 </template>
 
 <script>
-import { ReviewStatusMixin, SeverityMixin, ToCSV } from "@/mixins";
-import BaseStatistics from "./BaseStatistics";
-import CheckerStatisticsTable from "./CheckerStatisticsTable";
-import { getCheckerStatistics } from "./StatisticsHelper";
+import { SeverityMixin, ToCSV } from "@/mixins";
+
+import {
+  BaseStatistics,
+  getSeverityStatistics
+} from "@/components/Statistics";
+import SeverityStatisticsTable from "./SeverityStatisticsTable";
 
 export default {
-  name: "CheckerStatistics",
+  name: "SeverityStatistics",
   components: {
-    CheckerStatisticsTable
+    SeverityStatisticsTable
   },
-  mixins: [ BaseStatistics, ReviewStatusMixin, SeverityMixin, ToCSV ],
+  mixins: [ BaseStatistics, SeverityMixin, ToCSV ],
 
   props: {
     namespace: { type: String, required: true }
@@ -57,38 +60,43 @@ export default {
   methods: {
     downloadCSV() {
       const data = [
-        [
-          "Checker", "Severity", "Unreviewed",
-          "Confirmed bug", "Outstanding reports (Unreviewed + Confirmed)",
-          "False positive", "Intentional",
-          "Suppressed reports (False positive + Intentional)", "All reports"
+        [ "Severity", "Unreviewed", "Confirmed bug",
+          "Outstanding reports (Unreviewed + Confirmed)", "False positive",
+          "Intentional", "Suppressed reports (False positive + Intentional)",
+          "All reports"
         ],
         ...this.statistics.map(stat => {
           return [
-            stat.checker, this.severityFromCodeToString(stat.severity),
+            this.severityFromCodeToString(stat.severity),
             stat.unreviewed.count, stat.confirmed.count,
             stat.outstanding.count, stat.falsePositive.count,
-            stat.intentional.count, stat.suppressed.count, stat.reports.count,
+            stat.intentional.count, stat.suppressed.count, stat.reports.count
           ];
         })
       ];
 
-      this.toCSV(data, "codechecker_checker_statistics.csv");
+      this.toCSV(data, "codechecker_severity_statistics.csv");
     },
 
-    getStatistics: getCheckerStatistics,
+    getStatistics: getSeverityStatistics,
 
     async fetchStatistics() {
       this.loading = true;
 
       const { runIds, reportFilter, cmpData } = this.getStatisticsFilters();
       this.statistics =
-        await getCheckerStatistics(runIds, reportFilter, cmpData);
+        await getSeverityStatistics(runIds, reportFilter, cmpData);
 
-      await this.fetchDifference("component");
+      await this.fetchDifference("severity");
 
       this.loading = false;
     }
   }
 };
 </script>
+
+<style lang="scss" scoped>
+::v-deep .severity {
+  text-decoration: none;
+}
+</style>
