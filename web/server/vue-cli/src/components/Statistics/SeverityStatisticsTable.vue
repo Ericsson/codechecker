@@ -1,79 +1,26 @@
 <template>
-  <v-data-table
+  <base-statistics-table
+    class="severity-statistics"
     :headers="headers"
     :items="items"
-    :hide-default-footer="true"
-    :must-sort="true"
     :loading="loading"
+    :mobile-breakpoint="1000"
+    :colspan="1"
     loading-text="Loading severity statistics..."
     item-key="severity"
-  >
-    <template v-slot:header.reports.count="{ header }">
-      <detection-status-icon
-        :status="DetectionStatus.UNRESOLVED"
-        :size="16"
-        left
-      />
-      {{ header.text }}
-    </template>
-
-    <template #item.severity="{ item }">
-      <router-link
-        class="severity"
-        :to="{ name: 'reports', query: {
-          ...$router.currentRoute.query,
-          'severity': severityFromCodeToString(
-            item.severity)
-        }}"
-      >
-        <severity-icon :status="item.severity" />
-      </router-link>
-    </template>
-
-    <template #item.reports.count="{ item }">
-      <router-link
-        :to="{ name: 'reports', query: {
-          ...$router.currentRoute.query,
-          'severity': severityFromCodeToString(
-            item.severity)
-        }}"
-      >
-        {{ item.reports.count }}
-      </router-link>
-
-      <report-diff-count
-        :num-of-new-reports="item.reports.new"
-        :num-of-resolved-reports="item.reports.resolved"
-      />
-    </template>
-
-    <template slot="body.append">
-      <tr>
-        <td class="text-center">
-          <strong>Total</strong>
-        </td>
-        <td class="text-center">
-          <strong>{{ total.reports }}</strong>
-        </td>
-      </tr>
-    </template>
-  </v-data-table>
+    sort-by="severity"
+    sort-desc
+  />
 </template>
 
 <script>
-import { DetectionStatus } from "@cc/report-server-types";
-import { DetectionStatusIcon, SeverityIcon } from "@/components/Icons";
-import { SeverityMixin } from "@/mixins";
-import ReportDiffCount from "./ReportDiffCount";
+import BaseStatisticsTable from "./BaseStatisticsTable";
 
 export default {
   name: "SeverityStatisticsTable",
   components: {
-    DetectionStatusIcon,
-    ReportDiffCount,
-    SeverityIcon
+    BaseStatisticsTable
   },
-  mixins: [ SeverityMixin ],
   props: {
     items: { type: Array, required: true },
     loading: { type: Boolean, default: false }
@@ -81,11 +28,40 @@ export default {
 
   data() {
     return {
-      DetectionStatus,
       headers: [
         {
           text: "Severity",
           value: "severity",
+          align: "center"
+        },
+        {
+          text: "Unreviewed",
+          value: "unreviewed.count",
+          align: "center"
+        },
+        {
+          text: "Confirmed bug",
+          value: "confirmed.count",
+          align: "center"
+        },
+        {
+          text: "Outstanding reports",
+          value: "outstanding.count",
+          align: "center"
+        },
+        {
+          text: "False positive",
+          value: "falsePositive.count",
+          align: "center"
+        },
+        {
+          text: "Intentional",
+          value: "intentional.count",
+          align: "center"
+        },
+        {
+          text: "Suppressed reports",
+          value: "suppressed.count",
           align: "center"
         },
         {
@@ -95,15 +71,14 @@ export default {
         }
       ]
     };
-  },
-
-  computed: {
-    total() {
-      return {
-        reports: this.items.reduce((total, curr) =>
-          curr.reports.count + total, 0)
-      };
-    }
-  },
+  }
 };
 </script>
+
+<style lang="scss" scoped>
+$class-name: ".severity-statistics > ::v-deep .v-data-table__wrapper";
+$unreviewed_col: 2;
+$colspan: 0;
+
+@import "./style.scss";
+</style>

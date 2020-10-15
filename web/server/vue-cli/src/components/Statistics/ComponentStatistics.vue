@@ -2,7 +2,7 @@
   <v-container fluid>
     <v-row>
       <v-col>
-        <h3 class="title primary--text">
+        <h3 class="title primary--text mb-2">
           <v-btn
             color="primary"
             outlined
@@ -73,13 +73,16 @@ export default {
     downloadCSV() {
       const data = [
         [
-          "Component", "All reports", "Unreviewed", "Confirmed bug",
-          "False positive", "Intentional"
+          "Component", "Unreviewed", "Confirmed bug",
+          "Outstanding reports (Unreviewed + Confirmed)", "False positive",
+          "Intentional", "Suppressed reports (False positive + Intentional)",
+          "All reports"
         ],
         ...this.statistics.map(stat => {
           return [
-            stat.component, stat.reports, stat.unreviewed, stat.confirmed,
-            stat.falsePositive, stat.intentional
+            stat.component, stat.unreviewed.count, stat.confirmed.count,
+            stat.outstanding.count, stat.falsePositive.count,
+            stat.intentional.count, stat.suppressed.count, stat.reports.count
           ];
         })
       ];
@@ -102,17 +105,21 @@ export default {
           const row = this.statistics.find(s =>
             s.component === component.name);
 
-          if (row)
+          if (row) {
             fieldToUpdate.forEach(f => row[f].new = newReports[f].count);
+            this.updateCalculatedFields(row, newReports, "new");
+          }
         });
 
         const q2 = this.getResolvedReports(component).then(resolvedReports => {
           const row = this.statistics.find(s =>
             s.component === component.name);
 
-          if (row)
+          if (row) {
             fieldToUpdate.forEach(f =>
               row[f].resolved = resolvedReports[f].count);
+            this.updateCalculatedFields(row, resolvedReports, "resolved");
+          }
         });
 
         return Promise.all([ q1, q2 ]);
@@ -153,8 +160,10 @@ export default {
         reports       : initDiffField(res[0]),
         unreviewed    : initDiffField(res[1]),
         confirmed     : initDiffField(res[2]),
+        outstanding   : initDiffField(res[1].toNumber() + res[2].toNumber()),
         falsePositive : initDiffField(res[3]),
-        intentional   : initDiffField(res[4])
+        intentional   : initDiffField(res[4]),
+        suppressed    : initDiffField(res[3].toNumber() + res[4].toNumber())
       };
     },
 
@@ -170,8 +179,10 @@ export default {
         reports       : initDiffField(undefined),
         unreviewed    : initDiffField(undefined),
         confirmed     : initDiffField(undefined),
+        outstanding   : initDiffField(undefined),
         falsePositive : initDiffField(undefined),
-        intentional   : initDiffField(undefined)
+        intentional   : initDiffField(undefined),
+        suppressed    : initDiffField(undefined)
       }));
 
       this.statisticsFilters = this.getStatisticsFilters();

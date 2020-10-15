@@ -2,7 +2,7 @@
   <v-container fluid>
     <v-row>
       <v-col cols="auto">
-        <h3 class="title primary--text">
+        <h3 class="title primary--text mb-2">
           <v-btn
             color="primary"
             outlined
@@ -31,12 +31,11 @@
 </template>
 
 <script>
-import { ccService, handleThriftError } from "@cc-api";
 import { SeverityMixin, ToCSV } from "@/mixins";
 
 import BaseStatistics from "./BaseStatistics";
 import SeverityStatisticsTable from "./SeverityStatisticsTable";
-import { initDiffField, resultToNumber } from "./StatisticsHelper";
+import { getSeverityStatistics } from "./StatisticsHelper";
 
 export default {
   name: "SeverityStatistics",
@@ -59,11 +58,17 @@ export default {
   methods: {
     downloadCSV() {
       const data = [
-        [ "Severity", "Reports" ],
+        [ "Severity", "Unreviewed", "Confirmed bug",
+          "Outstanding reports (Unreviewed + Confirmed)", "False positive",
+          "Intentional", "Suppressed reports (False positive + Intentional)",
+          "All reports"
+        ],
         ...this.statistics.map(stat => {
           return [
             this.severityFromCodeToString(stat.severity),
-            stat.reports.toNumber()
+            stat.unreviewed.count, stat.confirmed.count,
+            stat.outstanding.count, stat.falsePositive.count,
+            stat.intentional.count, stat.suppressed.count, stat.reports.count
           ];
         })
       ];
@@ -71,50 +76,16 @@ export default {
       this.toCSV(data, "codechecker_severity_statistics.csv");
     },
 
-    getStatistics(runIds, reportFilter, cmpData) {
-      return new Promise(resolve => {
-        ccService.getClient().getSeverityCounts(runIds, reportFilter, cmpData,
-          handleThriftError(statistics => resolve(statistics)));
-      });
-    },
-
-    /**
-     * If compare data is set this function will get the number of new and
-     * resolved bugs and update the statistics.
-     */
-    async fetchDifference() {
-      if (!this.cmpData) return;
-
-      const q1 = this.getNewReports().then(newReports => {
-        this.statistics.forEach(s => {
-          s.reports.new = resultToNumber(newReports[s.severity]);
-        });
-      });
-
-      const q2 = this.getResolvedReports().then(resolvedReports => {
-        this.statistics.forEach(s => {
-          s.reports.resolved = resultToNumber(resolvedReports[s.severity]);
-        });
-      });
-
-      return Promise.all([ q1, q2 ]);
-    },
+    getStatistics: getSeverityStatistics,
 
     async fetchStatistics() {
       this.loading = true;
 
       const { runIds, reportFilter, cmpData } = this.getStatisticsFilters();
-      const statistics =
-        await this.getStatistics(runIds, reportFilter, cmpData);
+      this.statistics =
+        await getSeverityStatistics(runIds, reportFilter, cmpData);
 
-      this.statistics = Object.keys(statistics).map(severity => {
-        return {
-          severity: parseInt(severity),
-          reports: initDiffField(statistics[severity])
-        };
-      });
-
-      await this.fetchDifference();
+      await this.fetchDifference("severity");
 
       this.loading = false;
     }

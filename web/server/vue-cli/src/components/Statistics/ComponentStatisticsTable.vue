@@ -1,12 +1,10 @@
 <template>
-  <v-data-table
+  <base-statistics-table
+    class="component-statistics"
     :headers="headers"
     :items="items"
-    :disable-pagination="true"
-    :hide-default-footer="true"
     :loading="loading"
     :mobile-breakpoint="1000"
-    class="elevation-1"
     loading-text="Loading component statistics..."
     no-data-text="No component statistics available"
     item-key="component"
@@ -14,58 +12,6 @@
     :expanded.sync="expanded"
     @item-expanded="itemExpanded"
   >
-    <template v-slot:header.component="{ header }">
-      <v-icon size="16">
-        mdi-puzzle-outline
-      </v-icon>
-      {{ header.text }}
-    </template>
-
-    <template v-slot:header.unreviewed.count="{ header }">
-      <review-status-icon
-        :status="ReviewStatus.UNREVIEWED"
-        :size="16"
-        left
-      />
-      {{ header.text }}
-    </template>
-
-    <template v-slot:header.confirmed.count="{ header }">
-      <review-status-icon
-        :status="ReviewStatus.CONFIRMED"
-        :size="16"
-        left
-      />
-      {{ header.text }}
-    </template>
-
-    <template v-slot:header.falsePositive.count="{ header }">
-      <review-status-icon
-        :status="ReviewStatus.FALSE_POSITIVE"
-        :size="16"
-        left
-      />
-      {{ header.text }}
-    </template>
-
-    <template v-slot:header.intentional.count="{ header }">
-      <review-status-icon
-        :status="ReviewStatus.INTENTIONAL"
-        :size="16"
-        left
-      />
-      {{ header.text }}
-    </template>
-
-    <template v-slot:header.reports.count="{ header }">
-      <detection-status-icon
-        :status="DetectionStatus.UNRESOLVED"
-        :size="16"
-        left
-      />
-      {{ header.text }}
-    </template>
-
     <template v-slot:expanded-item="{ item }">
       <td
         class="pa-0"
@@ -88,187 +34,21 @@
         </v-card>
       </td>
     </template>
-
-    <template #item.component="{ item }">
-      <source-component-tooltip :value="item.value">
-        <template v-slot="{ on }">
-          <span v-on="on">
-            <router-link
-              :to="{ name: 'reports', query: {
-                ...$router.currentRoute.query,
-                'source-component': item.component
-              }}"
-            >
-              {{ item.component }}
-            </router-link>
-          </span>
-        </template>
-      </source-component-tooltip>
-    </template>
-
-    <template #item.unreviewed.count="{ item }">
-      <router-link
-        v-if="item.unreviewed.count"
-        :to="{ name: 'reports', query: {
-          ...$router.currentRoute.query,
-          'source-component': item.component,
-          'review-status': reviewStatusFromCodeToString(
-            ReviewStatus.UNREVIEWED)
-        }}"
-      >
-        {{ item.unreviewed.count }}
-      </router-link>
-
-      <report-diff-count
-        :num-of-new-reports="item.unreviewed.new"
-        :num-of-resolved-reports="item.unreviewed.resolved"
-        :extra-query-params="{
-          'source-component': item.component,
-          'review-status': reviewStatusFromCodeToString(
-            ReviewStatus.UNREVIEWED)
-        }"
-      />
-    </template>
-
-    <template #item.confirmed.count="{ item }">
-      <router-link
-        v-if="item.confirmed.count"
-        :to="{ name: 'reports', query: {
-          ...$router.currentRoute.query,
-          'source-component': item.component,
-          'review-status': reviewStatusFromCodeToString(
-            ReviewStatus.CONFIRMED)
-        }}"
-      >
-        {{ item.confirmed.count }}
-      </router-link>
-
-      <report-diff-count
-        :num-of-new-reports="item.confirmed.new"
-        :num-of-resolved-reports="item.confirmed.resolved"
-        :extra-query-params="{
-          'source-component': item.component,
-          'review-status': reviewStatusFromCodeToString(
-            ReviewStatus.CONFIRMED)
-        }"
-      />
-    </template>
-
-    <template #item.falsePositive.count="{ item }">
-      <router-link
-        v-if="item.falsePositive.count"
-        :to="{ name: 'reports', query: {
-          ...$router.currentRoute.query,
-          'source-component': item.component,
-          'review-status': reviewStatusFromCodeToString(
-            ReviewStatus.FALSE_POSITIVE)
-        }}"
-      >
-        {{ item.falsePositive.count }}
-      </router-link>
-
-      <report-diff-count
-        :num-of-new-reports="item.falsePositive.new"
-        :num-of-resolved-reports="item.falsePositive.resolved"
-        :extra-query-params="{
-          'source-component': item.component,
-          'review-status': reviewStatusFromCodeToString(
-            ReviewStatus.FALSE_POSITIVE)
-        }"
-      />
-    </template>
-
-    <template #item.intentional.count="{ item }">
-      <router-link
-        v-if="item.intentional.count"
-        :to="{ name: 'reports', query: {
-          ...$router.currentRoute.query,
-          'source-component': item.component,
-          'review-status': reviewStatusFromCodeToString(
-            ReviewStatus.INTENTIONAL)
-        }}"
-      >
-        {{ item.intentional.count }}
-      </router-link>
-
-      <report-diff-count
-        :num-of-new-reports="item.intentional.new"
-        :num-of-resolved-reports="item.intentional.resolved"
-        :extra-query-params="{
-          'source-component': item.component,
-          'review-status': reviewStatusFromCodeToString(
-            ReviewStatus.INTENTIONAL)
-        }"
-      />
-    </template>
-
-    <template #item.reports.count="{ item }">
-      <router-link
-        v-if="item.reports.count"
-        :to="{ name: 'reports', query: {
-          ...$router.currentRoute.query,
-          'source-component': item.component
-        }}"
-      >
-        {{ item.reports.count }}
-      </router-link>
-
-      <report-diff-count
-        :num-of-new-reports="item.reports.new"
-        :num-of-resolved-reports="item.reports.resolved"
-        :extra-query-params="{
-          'source-component': item.component
-        }"
-      />
-    </template>
-
-    <template slot="body.append">
-      <tr>
-        <td class="text-center" colspan="2">
-          <strong>Total</strong>
-        </td>
-        <td
-          v-for="col in ['unreviewed', 'confirmed', 'falsePositive',
-                         'intentional', 'reports']"
-          :key="col"
-          class="text-center"
-        >
-          <strong>{{ total[col] }}</strong>
-        </td>
-      </tr>
-    </template>
-  </v-data-table>
+  </base-statistics-table>
 </template>
 
 <script>
-import {
-  DetectionStatus,
-  ReportFilter,
-  ReviewStatus
-} from "@cc/report-server-types";
-import {
-  DetectionStatusIcon,
-  ReviewStatusIcon
-} from "@/components/Icons";
-
-import { ReviewStatusMixin } from "@/mixins";
-
-import { SourceComponentTooltip } from "@/components/Report/SourceComponent";
-
-import CheckerStatisticsTable from "./CheckerStatisticsTable";
+import { ReportFilter } from "@cc/report-server-types";
 import { getCheckerStatistics } from "./StatisticsHelper";
-import ReportDiffCount from "./ReportDiffCount";
+import BaseStatisticsTable from "./BaseStatisticsTable";
+import CheckerStatisticsTable from "./CheckerStatisticsTable";
 
 export default {
   name: "ComponentStatisticsTable",
   components: {
-    CheckerStatisticsTable,
-    DetectionStatusIcon,
-    ReportDiffCount,
-    ReviewStatusIcon,
-    SourceComponentTooltip
+    BaseStatisticsTable,
+    CheckerStatisticsTable
   },
-  mixins: [ ReviewStatusMixin ],
   props: {
     items: { type: Array, required: true },
     loading: { type: Boolean, default: false },
@@ -276,8 +56,6 @@ export default {
   },
   data() {
     return {
-      ReviewStatus,
-      DetectionStatus,
       expanded: [],
       headers: [
         {
@@ -300,6 +78,11 @@ export default {
           align: "center"
         },
         {
+          text: "Outstanding reports",
+          value: "outstanding.count",
+          align: "center"
+        },
+        {
           text: "False positive",
           value: "falsePositive.count",
           align: "center"
@@ -310,28 +93,17 @@ export default {
           align: "center"
         },
         {
+          text: "Suppressed reports",
+          value: "suppressed.count",
+          align: "center"
+        },
+        {
           text: "All reports",
           value: "reports.count",
           align: "center"
         }
       ],
     };
-  },
-  computed: {
-    total() {
-      const cols = [ "unreviewed", "confirmed", "falsePositive", "intentional",
-        "reports" ];
-
-      const initVal = cols.reduce((acc, curr) => {
-        acc[curr] = 0;
-        return acc;
-      }, {});
-
-      return this.items.reduce((total, curr) => {
-        cols.forEach(c => total[c] += curr[c].count);
-        return total;
-      }, initVal);
-    }
   },
   watch: {
     loading() {
@@ -365,3 +137,8 @@ export default {
   }
 };
 </script>
+
+<style lang="scss" scoped>
+$class-name: ".component-statistics > ::v-deep .v-data-table__wrapper";
+@import "./style.scss";
+</style>
