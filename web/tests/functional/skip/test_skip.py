@@ -68,8 +68,16 @@ class TestSkip(unittest.TestCase):
 
         skipped_files = ["file_to_be_skipped.cpp", "skip.h", "path_end.h"]
 
+        # IMPORTANT: This test is checking whether some reports are really not
+        # stored because they were skipped during analysis with --skip flag.
+        # However, since clang-tidy is not run, there will be no reports from
+        # "clang-diagnostic" checker. These are handled separately here,
+        # otherwise the test would believe they're missing because of --skip
+        # which is not the case.
+
         test_proj_res = self._testproject_data[self._clang_to_test]['bugs']
-        skipped = [x for x in test_proj_res if x['file'] in skipped_files]
+        skipped = [x for x in test_proj_res if x['file'] in skipped_files
+                   or x['checker'].startswith('clang-diagnostic-')]
 
         print("Analysis:")
         for res in run_results:
@@ -93,7 +101,8 @@ class TestSkip(unittest.TestCase):
 
         if missing_results:
             for bug in missing_results:
-                self.assertIn(bug['file'], skipped_files)
+                if not bug['checker'].startswith('clang-diagnostic-'):
+                    self.assertIn(bug['file'], skipped_files)
         else:
             self.assertTrue(True,
                             "There should be missing results because"
