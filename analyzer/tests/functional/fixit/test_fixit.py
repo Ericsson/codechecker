@@ -12,11 +12,12 @@ Test case for the CodeChecker fixit command's direct functionality.
 """
 
 
+import datetime
 import json
 import os
-import pathlib
 import shutil
 import subprocess
+import time
 import unittest
 
 from distutils.spawn import find_executable
@@ -211,7 +212,12 @@ int main()
             'Skipped files due to modification since last analysis',
             err)
 
-        pathlib.Path(source_file_cpp).touch()
+        # We're setting the timestamp if the file one hour forward so we
+        # simulate file modification. In this case the fixits are not applied
+        # and this is also printed to the standard output.
+        date = datetime.datetime.now() + datetime.timedelta(hours=1)
+        mod_time = time.mktime(date.timetuple())
+        os.utime(source_file_cpp, (mod_time, mod_time))
 
         process = subprocess.Popen(
             [self._codechecker_cmd, 'fixit', self.report_dir],
