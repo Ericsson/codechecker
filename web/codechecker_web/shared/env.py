@@ -33,6 +33,13 @@ def get_password_file():
                                        ".codechecker.passwords.json"))
 
 
+def get_session_file():
+    """ Return the location of the CodeChecker session file. """
+    return os.environ.get("CC_SESSION_FILE",
+                          os.path.join(os.path.expanduser("~"),
+                                       ".codechecker.session.json"))
+
+
 def get_user_input(msg):
     """
     Get the user input.

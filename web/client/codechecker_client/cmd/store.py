@@ -129,6 +129,14 @@ environment variables:
                    It can also be used to setup different credential files to
                    login to the same server with a different user.
 
+  CC_SESSION_FILE  The location of the session file where valid sessions are
+                   stored. This file will be automatically created by
+                   CodeChecker. By default CodeChecker will use
+                   '~/.codechecker.session.json'. This can be used if
+                   restrictive permissions forbid CodeChecker from creating
+                   files in the users home directory (e.g. in a CI
+                   environment).
+
 
 The results can be viewed by connecting to such a server in a Web browser or
 via 'CodeChecker cmd'.""",
