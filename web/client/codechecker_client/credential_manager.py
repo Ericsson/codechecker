@@ -10,7 +10,6 @@ Handles the management of stored user credentials and currently known session
 tokens.
 """
 
-
 import json
 import os
 import re
@@ -21,7 +20,8 @@ import portalocker
 from codechecker_common.logger import get_logger
 from codechecker_common.util import load_json_or_empty
 
-from codechecker_web.shared.env import check_file_owner_rw, get_password_file
+from codechecker_web.shared.env import check_file_owner_rw, get_password_file,\
+    get_session_file
 from codechecker_web.shared.version import SESSION_COOKIE_NAME as _SCN
 
 LOG = get_logger('system')
@@ -95,7 +95,7 @@ class UserCredentials(object):
         self.__save = scfg_dict
         self.__autologin = scfg_dict.get('client_autologin', True)
         # Check and load token storage for user.
-        self.token_file = os.path.join(user_home, ".codechecker.session.json")
+        self.token_file = get_session_file()
         LOG.info("Checking for local valid sessions.")
 
         if os.path.exists(self.token_file):

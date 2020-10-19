@@ -9,6 +9,7 @@ const url = `http://${host}:${port}`;
 const CC_DIR = path.join(__dirname, "__codechecker");
 const REPORTS_DIR = path.join(CC_DIR, "reports");
 const PASSWORD_FILE = path.join(CC_DIR, "codechecker.passwords.json");
+const SESSION_FILE = path.join(CC_DIR, "codechecker.session.json");
 
 // List of products which will be added to the server.
 const PRODUCTS = [
@@ -73,7 +74,8 @@ async function login (username) {
     stdio: "inherit",
     env: {
       ...process.env,
-      "CC_PASS_FILE": PASSWORD_FILE
+      "CC_PASS_FILE": PASSWORD_FILE,
+      "CC_SESSION_FILE": SESSION_FILE
     }
   });
 }
