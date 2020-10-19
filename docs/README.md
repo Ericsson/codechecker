@@ -108,6 +108,7 @@ The following tools are supported:
 |                | [Cppcheck](/tools/report-converter/README.md#cppcheck)    |
 |                | [Facebook Infer](/tools/report-converter/README.md#facebook-infer)    |
 |                | [Coccinelle](/tools/report-converter/README.md#coccinelle)    |
+|                | [Smatch](/tools/report-converter/README.md#smatch)    |
 | **Java**       | [SpotBugs](/tools/report-converter/README.md#spotbugs)    |
 |                | [Facebook Infer](/tools/report-converter/README.md#fbinfer)    |
 | **Python**     | [Pylint](/tools/report-converter/README.md#pylint)    |

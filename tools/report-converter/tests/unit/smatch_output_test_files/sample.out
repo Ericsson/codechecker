@@ -1,0 +1,1 @@
+files/sample.c:4 check_sample() [smatch.check_zero_to_err_ptr] warn: passing zero to 'ERR_PTR'
