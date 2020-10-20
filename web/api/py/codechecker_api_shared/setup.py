@@ -8,9 +8,11 @@ from io import open
 with open('README.md', encoding='utf-8', errors="ignore") as f:
     long_description = f.read()
 
+api_version = '6.33.0-dev1'
+
 setup(
     name='codechecker_api_shared',
-    version='6.33.0-dev1',
+    version=api_version,
     description='Shared API stub types package for the CodeChecker API.',
     long_description_content_type='text/markdown',
     long_description=long_description,
