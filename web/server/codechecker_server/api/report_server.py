@@ -2223,6 +2223,32 @@ class ThriftRequestHandler(object):
 
         return results
 
+    @exc_to_thrift_reqfail
+    @timeit
+    def getFailedFilesCount(self, run_ids):
+        """
+          Count the number of failed files in the latest storage of each given
+          run. If the run id list is empty the number of failed files will be
+          counted for all of the runs.
+        """
+        self.__require_access()
+        with DBSession(self.__Session) as session:
+            sub_q = session.query(func.max(RunHistory.id).label('history_id'))
+            if run_ids:
+                sub_q = sub_q.filter(RunHistory.run_id.in_(run_ids))
+
+            sub_q = sub_q \
+                .group_by(RunHistory.run_id) \
+                .subquery()
+
+            query = session.query(func.sum(AnalyzerStatistic.failed)) \
+                .outerjoin(sub_q,
+                           AnalyzerStatistic.run_history_id == \
+                               sub_q.c.history_id) \
+                .filter(AnalyzerStatistic.run_history_id == sub_q.c.history_id)
+
+            return query.scalar()
+
     # -----------------------------------------------------------------------
     @timeit
     def getPackageVersion(self):

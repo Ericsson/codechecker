@@ -438,6 +438,13 @@ service codeCheckerDBAccess {
                         3: CompareData  cmpData)
                         throws (1: codechecker_api_shared.RequestFailed requestError),
 
+  // Get the number of failed files in the latest storage of the given runs.
+  // If an empty run id list is provided the number of failed files will be
+  // calculated for all of the available runs.
+  // PERMISSION: PRODUCT_ACCESS
+  i64 getFailedFilesCount(1: list<i64> runIds)
+                          throws (1: codechecker_api_shared.RequestFailed requestError),
+
   // gives back the all marked region and message for a report
   // PERMISSION: PRODUCT_ACCESS
   ReportDetails getReportDetails(1: i64 reportId)

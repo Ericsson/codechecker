@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@mdi/font": "^5.3.45",
-    "codechecker-api": "6.34.0",
+    "codechecker-api": "6.34.0-dev1",
     "chart.js": "^2.9.3",
     "codemirror": "^5.55.0",
     "date-fns": "^2.14.0",

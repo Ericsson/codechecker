@@ -27,7 +27,8 @@
         <single-line-widget
           icon="mdi-close"
           color="red"
-          label="Number of failed files (TODO)"
+          label="Number of failed files"
+          help-message="Number of failed files in the current product."
           :bus="bus"
           :get-value="getNumberOfFailedFiles"
         >
@@ -114,8 +115,14 @@ export default {
       return this.getNumberOfReports(runIds, repFilter, cmpData);
     },
 
-    // TODO: get data from the server.
-    getNumberOfFailedFiles() { return 42; },
+    getNumberOfFailedFiles() {
+      return new Promise(resolve => {
+        ccService.getClient().getFailedFilesCount(this.runIds,
+          handleThriftError(res => {
+            resolve(res);
+          }));
+      });
+    },
 
     getNumberOfActiveCheckers() {
       const { runIds, reportFilter, cmpData } = this.getStatisticsFilters();
