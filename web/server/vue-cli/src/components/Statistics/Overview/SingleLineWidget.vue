@@ -18,7 +18,9 @@
             </tooltip-help-icon>
           </div>
           <div class="text-h3 font-weight-bold">
-            {{ value }}
+            <slot name="value" :value="value">
+              {{ value }}
+            </slot>
 
             <slot name="append-value" />
           </div>

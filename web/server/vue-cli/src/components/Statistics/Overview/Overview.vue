@@ -15,10 +15,22 @@
           :bus="bus"
           :get-value="getNumberOfOutstandingReports"
         >
-          <template #append-value>
-            <v-icon color="red">
-              mdi-arrow-down-bold
-            </v-icon>
+          <template #value="{ value }">
+            <router-link
+              :to="{
+                name: 'reports',
+                query: {
+                  ...$router.currentRoute.query,
+                  ...{
+                    'open-reports-date': dateTimeToStr(new Date),
+                  }
+                }
+              }"
+              class="link"
+              color="inherit"
+            >
+              {{ value }}
+            </router-link>
           </template>
         </single-line-widget>
       </v-col>
@@ -139,3 +151,14 @@ export default {
   }
 };
 </script>
+
+<style lang="scss" scoped>
+.link {
+  text-decoration: none;
+  color: inherit;
+
+  &:hover {
+    color: var(--v-primary-lighten1);
+  }
+}
+</style>
