@@ -44,10 +44,14 @@
           :bus="bus"
           :get-value="getNumberOfFailedFiles"
         >
-          <template #append-value>
-            <v-icon color="red">
-              mdi-arrow-down-bold
-            </v-icon>
+          <template #value="{ value }">
+            <failed-files-dialog>
+              <template #default="{ on }">
+                <span class="num-of-failed-files" v-on="on">
+                  {{ value }}
+                </span>
+              </template>
+            </failed-files-dialog>
           </template>
         </single-line-widget>
       </v-col>
@@ -96,6 +100,7 @@ import { DateMixin } from "@/mixins";
 import { BaseStatistics } from "@/components/Statistics";
 import Reports from "./Reports";
 import { ComponentSeverityStatistics } from "./ComponentSeverityStatistics";
+import FailedFilesDialog from "./FailedFilesDialog";
 import OutstandingReportsChart from "./OutstandingReportsChart";
 import SingleLineWidget from "./SingleLineWidget";
 
@@ -103,6 +108,7 @@ export default {
   name: "Overview",
   components: {
     ComponentSeverityStatistics,
+    FailedFilesDialog,
     OutstandingReportsChart,
     Reports,
     SingleLineWidget
@@ -160,5 +166,9 @@ export default {
   &:hover {
     color: var(--v-primary-lighten1);
   }
+}
+
+.num-of-failed-files {
+  cursor: pointer;
 }
 </style>

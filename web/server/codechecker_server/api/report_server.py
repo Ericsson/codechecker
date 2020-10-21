@@ -838,6 +838,34 @@ def escape_whitespaces(s, whitespaces=None):
     return escaped
 
 
+def get_failed_files_query(session, run_ids, query_fields,
+                           extra_sub_query_fields=None):
+    """
+    General function to get query to fetch the list of failed files and to get
+    the number of failed files.
+    """
+    sub_query_fields = [func.max(RunHistory.id).label('history_id')]
+    if extra_sub_query_fields:
+        sub_query_fields.extend(extra_sub_query_fields)
+
+    sub_q = session.query(*sub_query_fields)
+
+    if run_ids:
+        sub_q = sub_q.filter(RunHistory.run_id.in_(run_ids))
+
+    sub_q = sub_q \
+        .group_by(RunHistory.run_id) \
+        .subquery()
+
+    query = session \
+        .query(*query_fields) \
+        .outerjoin(sub_q,
+                   AnalyzerStatistic.run_history_id == sub_q.c.history_id) \
+        .filter(AnalyzerStatistic.run_history_id == sub_q.c.history_id)
+
+    return query, sub_q
+
+
 class ThriftRequestHandler(object):
     """
     Connect to database and handle thrift client requests.
@@ -2233,21 +2261,43 @@ class ThriftRequestHandler(object):
         """
         self.__require_access()
         with DBSession(self.__Session) as session:
-            sub_q = session.query(func.max(RunHistory.id).label('history_id'))
-            if run_ids:
-                sub_q = sub_q.filter(RunHistory.run_id.in_(run_ids))
+            query, _ = get_failed_files_query(
+                session, run_ids, [func.sum(AnalyzerStatistic.failed)])
 
-            sub_q = sub_q \
-                .group_by(RunHistory.run_id) \
-                .subquery()
+            return query.scalar() or 0
 
-            query = session.query(func.sum(AnalyzerStatistic.failed)) \
-                .outerjoin(sub_q,
-                           AnalyzerStatistic.run_history_id == \
-                               sub_q.c.history_id) \
-                .filter(AnalyzerStatistic.run_history_id == sub_q.c.history_id)
+    @exc_to_thrift_reqfail
+    @timeit
+    def getFailedFiles(self, run_ids):
+        """
+        Get files which failed to analyze in the latest storage of the given
+        runs. For each files it will return a list where each element contains
+        information in which run the failure happened.
+        """
+        self.__require_access()
 
-            return query.scalar()
+        res = defaultdict(list)
+        with DBSession(self.__Session) as session:
+            query, sub_q = get_failed_files_query(
+                session, run_ids, [AnalyzerStatistic.failed_files, Run.name],
+                [RunHistory.run_id])
+
+            query = query \
+                .outerjoin(Run, Run.id == sub_q.c.run_id) \
+                .filter(AnalyzerStatistic.failed_files.isnot(None))
+
+            for failed_files, run_name in query.all():
+                failed_files = zlib.decompress(failed_files).decode('utf-8')
+
+                for failed_file in failed_files.split('\n'):
+                    already_exists = \
+                        any(i.runName == run_name for i in res[failed_file])
+
+                    if not already_exists:
+                        res[failed_file].append(
+                            ttypes.AnalysisFailureInfo(runName=run_name))
+
+        return res
 
     # -----------------------------------------------------------------------
     @timeit

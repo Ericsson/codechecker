@@ -70,7 +70,7 @@ class TestStorageOfAnalysisStatistics(unittest.TestCase):
         self.__old_pwd = os.getcwd()
         os.chdir(self._test_dir)
 
-        self._source_file = "main.cpp"
+        self._source_file = os.path.join(self._test_dir, "main.cpp")
 
         # Init project dir.
         makefile_content = "all:\n\t$(CXX) -c main.cpp -o /dev/null\n"
@@ -105,8 +105,7 @@ int main()
         os.chdir(self.__old_pwd)
 
     def _create_source_file(self, version):
-        source_file = os.path.join(self._test_dir, self._source_file)
-        with open(source_file, 'w',
+        with open(self._source_file, 'w',
                   encoding='utf-8', errors='ignore') as source_f:
             source_f.write(self.sources[version])
 
@@ -116,13 +115,13 @@ int main()
         build_log = [
             {
                 "directory": self.test_workspace,
-                "command": "gcc -c " + source_file,
-                "file": source_file
+                "command": "gcc -c " + self._source_file,
+                "file": self._source_file
             },
             {
                 "directory": self.test_workspace,
-                "command": "clang -c " + source_file,
-                "file": source_file
+                "command": "clang -c " + self._source_file,
+                "file": self._source_file
             }
         ]
 
@@ -213,5 +212,27 @@ int main()
         Checks if compilation database and failed zips can be found in the
         uploaded zip.
         """
+        run_ids = None
+
+        # Check if there is no failed files in the database yet.
+        num_of_failed_files = self._cc_client.getFailedFilesCount(run_ids)
+        self.assertEqual(num_of_failed_files, 0)
+
+        failed_files = self._cc_client.getFailedFiles(run_ids)
+        self.assertEqual(len(failed_files), 0)
+
+        # Store the failure.
         self._create_source_file(1)
         self._check_analyzer_statistics_zip()
+
+        # Check the failed files again in the database.
+        num_of_failed_files = self._cc_client.getFailedFilesCount(run_ids)
+        self.assertEqual(num_of_failed_files, 2)
+
+        failed_files = self._cc_client.getFailedFiles(run_ids)
+        self.assertEqual(len(failed_files), 1)
+        self.assertTrue(self._source_file in failed_files)
+
+        failed_file_info = failed_files[self._source_file]
+        self.assertEqual(len(failed_file_info), 1)
+        self.assertEqual(failed_file_info[0].runName, 'example')
