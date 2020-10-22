@@ -32,7 +32,7 @@ class SmatchParser(BaseParser):
             # Function name followed by a whitespace.
             r'(?P<function_name>\S+)\s'
             # Checker name followed by a whitespace
-            r'\[smatch\.(?P<checker_name>\S+)\]\s'
+            r'\[(?P<checker_name>smatch\.\S+)\]\s'
             # Message.
             r'(?P<message>[\S \t]+)\s*')
 
