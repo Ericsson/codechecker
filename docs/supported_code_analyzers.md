@@ -17,6 +17,7 @@ CodeChecker result directory which can be stored to a CodeChecker server.
 |                | [Facebook Infer](/tools/report-converter/README.md#fbinfer)    | ✓ |
 |                | [Coccinelle](/tools/report-converter/README.md#coccinelle)   | ✓ |
 |                | [Smatch](/tools/report-converter/README.md#smatch)   | ✓ |
+|                | [Kernel-Doc](/tools/report-converter/README.md#kernel-doc)   | ✓ |
 | **Java**       | [FindBugs](http://findbugs.sourceforge.net/)    | ✗ |
 |                | [SpotBugs](/tools/report-converter/README.md#spotbugs)    | ✓ |
 |                | [Facebook Infer](/tools/report-converter/README.md#fbinfer)    | ✓ |
