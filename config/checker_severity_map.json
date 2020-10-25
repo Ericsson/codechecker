@@ -353,6 +353,7 @@
   "readability-deleted-default":                                "STYLE",
   "readability-delete-null-pointer":                            "STYLE",
   "readability-else-after-return":                              "STYLE",
+  "readability-function-cognitive-complexity":                  "STYLE",
   "readability-function-size":                                  "STYLE",
   "readability-identifier-naming":                              "STYLE",
   "readability-implicit-bool-cast":                             "STYLE",
