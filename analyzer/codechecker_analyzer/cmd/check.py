@@ -12,6 +12,7 @@ stdout.
 """
 
 import argparse
+import multiprocessing
 import os
 import shutil
 import sys
@@ -174,7 +175,7 @@ used to generate a log file on the fly.""")
                                type=int,
                                dest="jobs",
                                required=False,
-                               default=1,
+                               default=multiprocessing.cpu_count(),
                                help="Number of threads to use in analysis. "
                                     "More threads mean faster analysis at "
                                     "the cost of using more memory.")
