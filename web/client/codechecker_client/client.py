@@ -218,7 +218,7 @@ def get_new_token(protocol, host, port, cred_manager):
     return perform_auth_for_handler(auth_client, host, port, cred_manager)
 
 
-def setup_client(product_url):
+def setup_client(product_url) -> thrift_helper.ThriftClientHelper:
     """Setup the Thrift Product or Service client and
     check API version and authentication needs.
     """

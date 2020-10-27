@@ -60,8 +60,12 @@ class TestStoreConfig(unittest.TestCase):
         store_cmd = [env.codechecker_cmd(), 'store', '--config',
                      self.config_file]
 
-        subprocess.check_output(
-            store_cmd, env=cc_env, encoding="utf-8", errors="ignore")
+        try:
+            subprocess.check_output(
+                store_cmd, env=cc_env, encoding="utf-8", errors="ignore")
+        except subprocess.CalledProcessError as cerr:
+            print(cerr.output)
+            raise
 
     def test_invalid_config(self):
         """ Store with an invalid configuration file. """
@@ -92,5 +96,9 @@ class TestStoreConfig(unittest.TestCase):
                      '--url', env.parts_to_url(self.codechecker_cfg),
                      self.codechecker_cfg['reportdir']]
 
-        subprocess.check_output(
-            store_cmd, encoding="utf-8", errors="ignore")
+        try:
+            subprocess.check_output(
+                store_cmd, encoding="utf-8", errors="ignore")
+        except subprocess.CalledProcessError as cerr:
+            print(cerr.output)
+            raise

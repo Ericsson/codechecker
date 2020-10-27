@@ -19,7 +19,7 @@ from codechecker_analyzer import env
 from codechecker_analyzer.analyzers import analyzer_types
 
 from codechecker_common import logger
-from codechecker_common import output_formatters
+from codechecker_common.output import twodim, USER_FORMATS
 
 LOG = logger.get_logger('system')
 
@@ -98,7 +98,7 @@ def add_arguments_to_parser(parser):
                         dest='output_format',
                         required=False,
                         default='rows',
-                        choices=output_formatters.USER_FORMATS,
+                        choices=USER_FORMATS,
                         help="Specify the format of the output list.")
 
     logger.add_verbose_arguments(parser)
@@ -176,8 +176,7 @@ def main(args):
         rows = [(':'.join((analyzer, c[0])), c[1]) if 'details' in args
                 else (':'.join((analyzer, c[0])),) for c in configs]
 
-        print(output_formatters.twodim_to_str(args.output_format,
-                                              header, rows))
+        print(twodim.to_str(args.output_format, header, rows))
 
         return
 
@@ -215,5 +214,4 @@ def main(args):
                              err_reason])
 
     if rows:
-        print(output_formatters.twodim_to_str(args.output_format,
-                                              header, rows))
+        print(twodim.to_str(args.output_format, header, rows))

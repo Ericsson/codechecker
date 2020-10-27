@@ -16,7 +16,7 @@ from codechecker_api.ProductManagement_v6.ttypes import DatabaseConnection, \
     ProductConfiguration
 
 from codechecker_common import logger
-from codechecker_common.output_formatters import twodim_to_str
+from codechecker_common.output import twodim
 
 from codechecker_web.shared import database_status, convert
 
@@ -72,7 +72,7 @@ def handle_list_products(args):
             rows.append((db_status_msg,
                          product.endpoint, name, description))
 
-        print(twodim_to_str(args.output_format, header, rows))
+        print(twodim.to_str(args.output_format, header, rows))
 
 
 def handle_add_product(args):

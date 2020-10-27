@@ -13,7 +13,7 @@ Defines a subcommand for CodeChecker which prints version information.
 import argparse
 
 from codechecker_common import logger
-from codechecker_common import output_formatters
+from codechecker_common.output import USER_FORMATS
 
 
 def get_argparser_ctor_args():
@@ -45,7 +45,7 @@ def add_arguments_to_parser(parser):
                         dest='output_format',
                         required=False,
                         default='table',
-                        choices=output_formatters.USER_FORMATS,
+                        choices=USER_FORMATS,
                         help="The format to use when printing the version.")
 
     logger.add_verbose_arguments(parser)

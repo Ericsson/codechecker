@@ -93,9 +93,9 @@ run_test:
 run_test_in_env: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(RUN_TEST_CMD)
 
-test_unit: test_unit_server
+test_unit: test_unit_server test_unit_client
 
-test_unit_in_env: test_unit_server_in_env
+test_unit_in_env: test_unit_server_in_env test_unit_client_in_env
 
 test_functional: test_sqlite test_psql
 

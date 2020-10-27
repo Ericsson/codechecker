@@ -20,9 +20,8 @@ from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.analyzers import analyzer_types
 from codechecker_analyzer.analyzers.clangsa.analyzer import ClangSA
 
-from codechecker_common import arg
-from codechecker_common import logger
-from codechecker_common import output_formatters
+from codechecker_common import arg, logger
+from codechecker_common.output import USER_FORMATS, twodim
 from codechecker_analyzer import env
 from codechecker_analyzer.analyzers.config_handler import CheckerState
 
@@ -195,7 +194,7 @@ def add_arguments_to_parser(parser):
                         dest='output_format',
                         required=False,
                         default='rows',
-                        choices=output_formatters.USER_FORMATS,
+                        choices=USER_FORMATS,
                         help="The format to list the applicable checkers as.")
 
     logger.add_verbose_arguments(parser)
@@ -267,8 +266,7 @@ def main(args):
         if args.output_format in ['csv', 'json']:
             header = list(map(uglify, header))
 
-        print(output_formatters.twodim_to_str(args.output_format,
-                                              header, rows))
+        print(twodim.to_str(args.output_format, header, rows))
         return
 
     # List checker config options.
@@ -291,8 +289,7 @@ def main(args):
             rows.extend((':'.join((analyzer, c[0])), c[1]) if 'details' in args
                         else (':'.join((analyzer, c[0])),) for c in configs)
 
-        print(output_formatters.twodim_to_str(args.output_format,
-                                              header, rows))
+        print(twodim.to_str(args.output_format, header, rows))
         return
 
     if args.guideline is not None and len(args.guideline) == 0:
@@ -316,8 +313,7 @@ def main(args):
                 print('Guideline: {}'.format(row[0]))
                 print('Rules: {}'.format(row[1]))
         else:
-            print(output_formatters.twodim_to_str(args.output_format,
-                                                  header, rows))
+            print(twodim.to_str(args.output_format, header, rows))
         return
 
     # List available checkers.
@@ -401,8 +397,7 @@ def main(args):
                 rows.append([warning])
 
     if rows:
-        print(output_formatters.twodim_to_str(args.output_format,
-                                              header, rows))
+        print(twodim.to_str(args.output_format, header, rows))
 
     for analyzer_binary, reason in errored:
         LOG.error("Failed to get checkers for '%s'!"

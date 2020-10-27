@@ -13,7 +13,7 @@ Argument handlers for the 'CodeChecker cmd components' subcommands.
 import sys
 
 from codechecker_common import logger
-from codechecker_common.output_formatters import twodim_to_str
+from codechecker_common.output import twodim
 from codechecker_web.shared.env import get_user_input
 
 from .client import setup_client
@@ -83,7 +83,7 @@ def handle_list_components(args):
                     if idx == 0 and res.description else ''
                 rows.append((name, value, description))
 
-        print(twodim_to_str(args.output_format, header, rows))
+        print(twodim.to_str(args.output_format, header, rows))
 
 
 def handle_del_component(args):

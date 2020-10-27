@@ -27,6 +27,7 @@ VENV_DEV_REQ_FILE ?= requirements_py/dev/requirements.txt
 
 include tests/Makefile
 include server/tests/Makefile
+include client/tests/Makefile
 
 pip_dev_deps:
 	pip3 install -r $(VENV_DEV_REQ_FILE)

@@ -26,7 +26,8 @@ from sqlalchemy.orm import sessionmaker
 
 from codechecker_api_shared.ttypes import DBStatus
 
-from codechecker_common import arg, logger, output_formatters, util, cmd_config
+from codechecker_common import arg, logger, util, cmd_config
+from codechecker_common.output import twodim
 
 from codechecker_server import instance_manager, server
 from codechecker_server.database import database
@@ -456,10 +457,10 @@ def print_prod_status(prod_status):
         rows.append([k, db_status_msg, db_location, str(schema_ver),
                      package_ver])
 
-    prod_status = output_formatters.twodim_to_str('table',
-                                                  header,
-                                                  rows,
-                                                  sort_by_column_number=0)
+    prod_status = twodim.to_str('table',
+                                header,
+                                rows,
+                                sort_by_column_number=0)
     LOG.info('Status of products:\n%s', prod_status)
 
 
@@ -695,7 +696,7 @@ def __instance_management(args):
                              str(instance['port'])))
 
         print("Your running CodeChecker servers:")
-        print(output_formatters.twodim_to_str('table', head, rows))
+        print(twodim.to_str('table', head, rows))
     elif 'stop' in args or 'stop_all' in args:
         for i in instance_manager.get_instances():
             if i['hostname'] != socket.gethostname():

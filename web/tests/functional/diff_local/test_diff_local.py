@@ -116,9 +116,11 @@ class DiffLocal(unittest.TestCase):
                              '--severity', 'high',
                              '--new', '-o', 'json']
         print(high_severity_cmd)
-        out_json = subprocess.check_output(
-            high_severity_cmd, encoding="utf-8", errors="ignore")
-        print(out_json)
+        try:
+            out_json = subprocess.check_output(
+                high_severity_cmd, encoding="utf-8", errors="ignore")
+        except subprocess.CalledProcessError as cerr:
+            print(cerr.output)
         high_severity_res = json.loads(out_json)
         self.assertEqual((len(high_severity_res)), 4)
 
@@ -150,11 +152,14 @@ class DiffLocal(unittest.TestCase):
                              '--severity', 'high', 'low',
                              '--unresolved']
         print(high_severity_cmd)
-        out = subprocess.check_output(
-            high_severity_cmd,
-            encoding="utf-8",
-            errors="ignore")
-        print(out)
+        try:
+            out = subprocess.check_output(
+                high_severity_cmd,
+                encoding="utf-8",
+                errors="ignore")
+        except subprocess.CalledProcessError as cerr:
+            print(cerr.stdout)
+            print(cerr.stderr)
         self.assertEqual(len(re.findall(r'\[HIGH\]', out)), 15)
         self.assertEqual(len(re.findall(r'\[LOW\]', out)), 6)
 

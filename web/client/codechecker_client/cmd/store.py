@@ -19,6 +19,7 @@ import json
 import os
 import sys
 import tempfile
+from typing import Dict, List, Tuple
 import zipfile
 import zlib
 
@@ -33,7 +34,8 @@ from codechecker_client import client as libclient
 from codechecker_client.metadata import merge_metadata_json
 
 from codechecker_common import arg, logger, plist_parser, util, cmd_config
-from codechecker_common.output_formatters import twodim_to_str
+from codechecker_common.report import Report
+from codechecker_common.output import twodim
 from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler
 from codechecker_report_hash.hash import HashType, replace_report_hash
@@ -326,11 +328,12 @@ def collect_report_files(inputs):
     return plist_report_files
 
 
-def parse_report_file(plist_file):
+def parse_report_file(plist_file: str) \
+        -> Tuple[Dict[int, str], List[Report]]:
     """Parse a plist report file and return the list of reports and the
     list of source files mentioned in the report file.
     """
-    files = []
+    files = {}
     reports = []
 
     try:
@@ -343,7 +346,7 @@ def parse_report_file(plist_file):
         return files, reports
 
 
-def collect_file_info(files):
+def collect_file_info(files: Dict[int, str]) -> Dict:
     """Collect file information about given list of files like:
        - last modification time
        - content hash
@@ -351,7 +354,7 @@ def collect_file_info(files):
        be empty.
     """
     res = {}
-    for sf in files:
+    for sf in files.values():
         res[sf] = {}
         if os.path.isfile(sf):
             res[sf]["hash"] = get_file_content_hash(sf)
@@ -881,9 +884,8 @@ def main(args):
     except RequestFailed as reqfail:
         if reqfail.errorCode == ErrorCode.SOURCE_FILE:
             header = ['File', 'Line', 'Checker name']
-            table = twodim_to_str('table',
-                                  header,
-                                  [c.split('|') for c in reqfail.extraInfo])
+            table = twodim.to_str(
+                'table', header, [c.split('|') for c in reqfail.extraInfo])
             LOG.warning("Setting the review statuses for some reports failed "
                         "because of non valid source code comments: "
                         "%s\n %s", reqfail.message, table)

@@ -276,12 +276,14 @@ def get_report_path_hash(report):
     """ Returns path hash for the given bug path.
 
     This can be used to filter deduplications of multiple reports.
+
+    report type should be codechecker_common.Report
     """
     report_path_hash = ''
     events = [i for i in report.bug_path if i.get('kind') == 'event']
-
     for event in events:
-        file_name = os.path.basename(report.files[event['location']['file']])
+        file_name = \
+            os.path.basename(report.files.get(event['location']['file']))
         line = str(event['location']['line']) if 'location' in event else 0
         col = str(event['location']['col']) if 'location' in event else 0
 

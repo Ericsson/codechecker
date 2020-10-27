@@ -19,16 +19,17 @@ import os
 from operator import itemgetter
 import sys
 import traceback
+from typing import List, Dict, Tuple, Set
 
 from plist_to_html import PlistToHtml
 
 from codechecker_analyzer import analyzer_context, suppress_handler
 
 from codechecker_common import arg, logger, plist_parser, util, cmd_config
+from codechecker_common.output import json as out_json, twodim, codeclimate
 from codechecker_common.skiplist_handler import SkipListHandler
 from codechecker_common.source_code_comment_handler import \
     REVIEW_STATUS_VALUES, SourceCodeCommentHandler, SpellException
-from codechecker_common.output_formatters import twodim_to_str
 from codechecker_common.report import Report
 
 from codechecker_report_hash.hash import get_report_path_hash
@@ -120,14 +121,11 @@ class PlistToPlaintextFormatter(object):
                                                           macro['expansion'])
 
     @staticmethod
-    def parse(plist_file):
+    def parse(plist_file) -> Tuple[Dict[int, str], List[Report]]:
         """
         Parse a plist report file.
-        Returns:
-            - list of source files
-            - list of reports (type Report)
         """
-        files, reports = [], []
+        files, reports = {}, []
         try:
             files, reports = plist_parser.parse_plist_file(plist_file)
         except Exception as ex:
@@ -137,7 +135,9 @@ class PlistToPlaintextFormatter(object):
         finally:
             return files, reports
 
-    def write(self, file_report_map, output=sys.stdout):
+    def write(self,
+              file_report_map: Dict[str, List[Report]],
+              output=sys.stdout):
         """
         Format an already parsed plist report file to a more
         human readable format.
@@ -512,10 +512,11 @@ def add_arguments_to_parser(parser):
         func=main, func_process_config_file=cmd_config.process_config_file)
 
 
-def parse(plist_file, metadata_dict, rh, file_report_map):
-    """
-    Prints the results in the given file to the standard output in a human-
-    readable format.
+def parse_with_plt_formatter(plist_file: str,
+                             metadata: Dict,
+                             plist_pltf: PlistToPlaintextFormatter,
+                             file_report_map: Dict[str, List[Report]]) -> Set:
+    """Parse a plist with plaintext formatter and collect changed source files.
 
     Returns the report statistics collected by the result handler.
     """
@@ -527,10 +528,10 @@ def parse(plist_file, metadata_dict, rh, file_report_map):
     LOG.debug("Parsing input file '%s'", plist_file)
 
     result_source_files = {}
-    if 'result_source_files' in metadata_dict:
-        result_source_files = metadata_dict['result_source_files']
+    if 'result_source_files' in metadata:
+        result_source_files = metadata['result_source_files']
     else:
-        for tool in metadata_dict.get('tools', {}):
+        for tool in metadata.get('tools', {}):
             result_src_files = tool.get('result_source_files', {})
             result_source_files.update(result_src_files.items())
 
@@ -541,12 +542,11 @@ def parse(plist_file, metadata_dict, rh, file_report_map):
         if analyzed_source_file not in file_report_map:
             file_report_map[analyzed_source_file] = []
 
-    files, reports = rh.parse(plist_file)
-
+    files, reports = plist_pltf.parse(plist_file)
     plist_mtime = util.get_last_mod_time(plist_file)
 
     changed_files = set()
-    for source_file in files:
+    for _, source_file in files.items():
         if plist_mtime is None:
             # Failed to get the modification time for
             # a file mark it as changed.
@@ -575,8 +575,13 @@ def parse(plist_file, metadata_dict, rh, file_report_map):
     return changed_files
 
 
-def convert_reports(input_dirs, out_format, trim_path_prefixes):
-    """ Converts reports found in the input directories to the given format.
+def parse_convert_reports(input_dirs: List[str],
+                          out_format: str,
+                          trim_path_prefixes: List[str]) -> Dict:
+    """Parse and convert the reports from the input dirs to the out_format.
+
+    Retuns a dictionary which can be converted to the out_format type of
+    json to be printed out or saved on the disk.
     """
     res = []
 
@@ -596,21 +601,18 @@ def convert_reports(input_dirs, out_format, trim_path_prefixes):
             continue
 
         _, reports = plist_parser.parse_plist_file(input_file)
+        if out_format == "codeclimate":
+            cc_reports = codeclimate.convert(reports, trim_path_prefixes)
+            res.extend(cc_reports)
+
         for report in reports:
             if trim_path_prefixes:
                 report.trim_path_prefixes(trim_path_prefixes)
-
             if out_format == "json":
-                out = report.to_json()
-            elif out_format == "codeclimate":
-                out = report.to_codeclimate()
-            else:
-                LOG.error("Unsupported output format: %s", out_format)
-                sys.exit(1)
+                out = out_json.convert_to_parse(report)
+                res.append(out)
 
-            res.append(out)
-
-    return json.dumps(res)
+    return res
 
 
 def main(args):
@@ -684,16 +686,16 @@ def main(args):
         'trim_path_prefix' in args else None
 
     if export in ['json', 'codeclimate']:
-        res = convert_reports(args.input, export, trim_path_prefixes)
+        res = parse_convert_reports(args.input, export, trim_path_prefixes)
         if 'output_path' in args:
             output_path = os.path.abspath(args.output_path)
             reports_json = os.path.join(output_path, 'reports.json')
             with open(reports_json,
                       mode='w',
                       encoding='utf-8', errors="ignore") as output_f:
-                output_f.write(res)
+                output_f.write(json.dumps(res))
 
-        return print(res)
+        return print(json.dumps(res))
 
     def trim_path_prefixes_handler(source_file):
         """
@@ -713,7 +715,10 @@ def main(args):
         element will be a list of source code comments related to the actual
         report.
         """
-        report = Report({'check_name': checker_name}, diag['path'], files,
+        files_dict = {k: v for k, v in enumerate(files)}
+        report = Report({'check_name': checker_name},
+                        diag['path'],
+                        files_dict,
                         metadata=None)
         path_hash = get_report_path_hash(report)
         if path_hash in processed_path_hashes:
@@ -792,19 +797,22 @@ def main(args):
 
         file_report_map = defaultdict(list)
 
-        rh = PlistToPlaintextFormatter(suppr_handler,
-                                       skip_handler,
-                                       context.severity_map,
-                                       processed_path_hashes,
-                                       trim_path_prefixes,
-                                       src_comment_status_filter)
-        rh.print_steps = 'print_steps' in args
+        plist_pltf = PlistToPlaintextFormatter(suppr_handler,
+                                               skip_handler,
+                                               context.severity_map,
+                                               processed_path_hashes,
+                                               trim_path_prefixes,
+                                               src_comment_status_filter)
+        plist_pltf.print_steps = 'print_steps' in args
 
         for file_path in files:
-            f_change = parse(file_path, metadata_dict, rh, file_report_map)
+            f_change = parse_with_plt_formatter(file_path,
+                                                metadata_dict,
+                                                plist_pltf,
+                                                file_report_map)
             file_change = file_change.union(f_change)
 
-        report_stats = rh.write(file_report_map)
+        report_stats = plist_pltf.write(file_report_map)
         sev_stats = report_stats.get('severity')
         for severity in sev_stats:
             severity_stats[severity] += sev_stats[severity]
@@ -833,14 +841,14 @@ def main(args):
                     dict(file_stats).items()]
             vals.sort(key=itemgetter(0))
             keys = ['Filename', 'Report count']
-            table = twodim_to_str('table', keys, vals, 1, True)
+            table = twodim.to_str('table', keys, vals, 1, True)
             print(table)
 
         if severity_stats:
             vals = [[k, v] for k, v in dict(severity_stats).items()]
             vals.sort(key=itemgetter(0))
             keys = ['Severity', 'Report count']
-            table = twodim_to_str('table', keys, vals, 1, True)
+            table = twodim.to_str('table', keys, vals, 1, True)
             print(table)
 
         print("----=================----")

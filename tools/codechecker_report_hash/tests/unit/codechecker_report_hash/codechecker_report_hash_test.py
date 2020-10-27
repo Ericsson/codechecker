@@ -101,7 +101,8 @@ class CodeCheckerReportHashTest(unittest.TestCase):
 
         for diag in plist['diagnostics']:
             diag['bug_path'] = diag['path']
-            diag['files'] = plist['files']
+            diag['files'] = \
+                {i: filepath for i, filepath in enumerate(plist['files'])}
             path_hash = get_report_path_hash(
                     namedtuple('Report', diag.keys())(*diag.values()))
             actual_report_hash = diag['issue_hash_content_of_line_in_context']

@@ -13,14 +13,10 @@ Contains functions to format and pretty-print data from two-dimensional arrays.
 import json
 from operator import itemgetter
 
-# The supported formats the users should specify. (This is not an exhaustive
-# list of ALL formats available.)
-USER_FORMATS = ['rows', 'table', 'csv', 'json']
 
-
-def twodim_to_str(format_name, keys, rows,
-                  sort_by_column_number=None, rev=False,
-                  separate_footer=False):
+def to_str(format_name, keys, rows,
+           sort_by_column_number=None, rev=False,
+           separate_footer=False):
     """
     Converts the given two-dimensional array (with the specified keys)
     to the given format.
@@ -33,21 +29,21 @@ def twodim_to_str(format_name, keys, rows,
         all_rows = [keys] + list(rows)
 
     if format_name == 'rows':
-        return twodim_to_rows(rows)
+        return __to_rows(rows)
     elif format_name == 'table' or format_name == 'plaintext':
         # TODO: 'plaintext' for now to support the 'CodeChecker cmd' interface.
-        return twodim_to_table(all_rows, True, separate_footer)
+        return __to_table(all_rows, True, separate_footer)
     elif format_name == 'csv':
-        return twodim_to_csv(all_rows)
+        return __to_csv(all_rows)
     elif format_name == 'dictlist':
-        return twodim_to_dictlist(keys, rows)
+        return __to_dictlist(keys, rows)
     elif format_name == 'json':
-        return json.dumps(twodim_to_dictlist(keys, rows))
+        return json.dumps(__to_dictlist(keys, rows))
     else:
         raise ValueError("Unsupported format")
 
 
-def twodim_to_rows(lines):
+def __to_rows(lines):
     """
     Prints the given rows with minimal formatting.
     """
@@ -85,7 +81,7 @@ def twodim_to_rows(lines):
     return '\n'.join(str_parts)
 
 
-def twodim_to_table(lines, separate_head=True, separate_footer=False):
+def __to_table(lines, separate_head=True, separate_footer=False):
     """
     Pretty-prints the given two-dimensional array's lines.
     """
@@ -127,7 +123,7 @@ def twodim_to_table(lines, separate_head=True, separate_footer=False):
     return '\n'.join(str_parts)
 
 
-def twodim_to_csv(lines):
+def __to_csv(lines):
     """
     Pretty-print the given two-dimensional array's lines in CSV format.
     """
@@ -159,7 +155,7 @@ def twodim_to_csv(lines):
     return '\n'.join(str_parts)
 
 
-def twodim_to_dictlist(key_list, lines):
+def __to_dictlist(key_list, lines):
     """
     Pretty-print the given two-dimensional array's lines into a JSON
     object list. The key_list acts as the "header" of the table, specifying the
@@ -175,23 +171,3 @@ def twodim_to_dictlist(key_list, lines):
         res.append({key: value for (key, value) in zip(key_list, line)})
 
     return res
-
-
-def dictlist_to_twodim(key_list, dictlist, key_convert=None):
-    """
-    Converts the given list of dict objects to a two-dimensional array.
-
-    If key_convert is specified, the resulting array will have the converted
-    strings in its "header" row. key_list and key_convert must correspond with
-    each other in order.
-    """
-
-    if not key_convert:
-        lines = [key_list]
-    else:
-        lines = [key_convert]
-
-    for d in dictlist:
-        lines.append([d[key] for key in key_list])
-
-    return lines
