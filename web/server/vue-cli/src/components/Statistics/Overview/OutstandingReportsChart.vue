@@ -1,6 +1,7 @@
 <script>
 import { endOfMonth, format, subMonths } from "date-fns";
 import { Line, mixins } from "vue-chartjs";
+import ChartDataLabels from "chartjs-plugin-datalabels";
 
 import { ccService, handleThriftError } from "@cc-api";
 import { ReportFilter, Severity } from "@cc/report-server-types";
@@ -60,7 +61,7 @@ export default {
           return date;
         }),
         datasets: [
-          ...Object.keys(Severity).map(s => {
+          ...Object.keys(Severity).reverse().map(s => {
             const severityId = Severity[s];
             const color = this.severityFromCodeToColor(severityId);
 
@@ -73,6 +74,14 @@ export default {
               fill: false,
               pointRadius: 5,
               pointHoverRadius: 10,
+              datalabels: {
+                backgroundColor: color,
+                color: "white",
+                borderRadius: 4,
+                font: {
+                  weight: "bold"
+                },
+              },
               data: dates.map(() => null)
             };
           })
@@ -81,6 +90,8 @@ export default {
     };
   },
   mounted() {
+    this.addPlugin(ChartDataLabels);
+
     // Initialize the chart.
     this.renderChart(this.chartData, this.options);
   },
@@ -93,7 +104,7 @@ export default {
         const reportCount = await this.fetchOutstandingReports(d);
         const datasets = this.chartData.datasets;
 
-        Object.keys(Severity).forEach((s, i) => {
+        Object.keys(Severity).reverse().forEach((s, i) => {
           const severityId = Severity[s];
           const numOfReports = reportCount[severityId]?.toNumber() || 0;
 

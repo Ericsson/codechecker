@@ -1,5 +1,6 @@
 <script>
 import { Pie, mixins } from "vue-chartjs";
+import ChartDataLabels from "chartjs-plugin-datalabels";
 import { Severity } from "@cc/report-server-types";
 import { SeverityMixin } from "@/mixins";
 
@@ -34,14 +35,28 @@ export default {
           text: "Report severities"
         },
         responsive: true,
-        maintainAspectRatio: false
+        maintainAspectRatio: false,
+        plugins: {
+          datalabels: {
+            backgroundColor: colors
+          }
+        }
       },
       chartData: {
         labels: labels,
         datasets: [
           {
             data: [],
-            backgroundColor: colors
+            backgroundColor: colors,
+            datalabels: {
+              color: "white",
+              borderColor: "white",
+              borderRadius: 25,
+              borderWidth: 2,
+              font: {
+                weight: "bold"
+              },
+            }
           }
         ]
       }
@@ -62,6 +77,8 @@ export default {
     }
   },
   mounted() {
+    this.addPlugin(ChartDataLabels);
+
     this.renderChart(this.chartData, this.options);
   }
 };

@@ -13,8 +13,14 @@ if (!Error.captureStackTrace) {
 import "@mdi/font/css/materialdesignicons.css";
 import "splitpanes/dist/splitpanes.css";
 
+import Chart from "chart.js";
+import ChartDataLabels from "chartjs-plugin-datalabels";
+
+Chart.plugins.unregister(ChartDataLabels);
+
 import Vue from "vue";
 import vuetify from "@/plugins/vuetify";
+
 import {
   GET_AUTH_PARAMS,
   GET_CURRENT_PRODUCT,

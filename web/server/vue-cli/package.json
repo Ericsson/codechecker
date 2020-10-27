@@ -29,6 +29,7 @@
     "@mdi/font": "^5.3.45",
     "codechecker-api": "6.34.0-dev3",
     "chart.js": "^2.9.3",
+    "chartjs-plugin-datalabels": "^0.7.0",
     "codemirror": "^5.55.0",
     "date-fns": "^2.14.0",
     "highlight.js": "^10.1.1",
