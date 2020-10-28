@@ -71,14 +71,35 @@
 
     <v-row class="my-4">
       <v-col>
-        <outstanding-reports-chart
-          :bus="bus"
-          :get-statistics-filters="getStatisticsFilters"
-          :styles="{
-            height: '400px',
-            position: 'relative'
-          }"
-        />
+        <v-card flat>
+          <div class="last-month-selector">
+            <v-text-field
+              v-model="lastMonth"
+              class="last-month align-center"
+              type="number"
+              hide-details
+              dense
+              solo
+            >
+              <template v-slot:prepend>
+                Last
+              </template>
+
+              <template v-slot:append-outer>
+                months.
+              </template>
+            </v-text-field>
+          </div>
+          <outstanding-reports-chart
+            :bus="bus"
+            :get-statistics-filters="getStatisticsFilters"
+            :last-month="lastMonth"
+            :styles="{
+              height: '400px',
+              position: 'relative'
+            }"
+          />
+        </v-card>
       </v-col>
     </v-row>
 
@@ -114,6 +135,11 @@ export default {
     SingleLineWidget
   },
   mixins: [ BaseStatistics, DateMixin ],
+  data() {
+    return {
+      lastMonth: "6"
+    };
+  },
   methods: {
     getNumberOfReports(runIds, reportFilter, cmpData) {
       return new Promise(resolve => {
@@ -170,5 +196,18 @@ export default {
 
 .num-of-failed-files {
   cursor: pointer;
+}
+
+.last-month-selector {
+  position: absolute;
+  right: 50px;
+  top: 0px;
+  z-index: 1000;
+
+  .last-month {
+    width: 180px;
+    border: 1px dashed grey;
+    padding: 6px;
+  }
 }
 </style>

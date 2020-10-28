@@ -1,4 +1,5 @@
 <script>
+import _ from "lodash";
 import { endOfMonth, format, subMonths } from "date-fns";
 import { Line, mixins } from "vue-chartjs";
 import ChartDataLabels from "chartjs-plugin-datalabels";
@@ -15,16 +16,12 @@ export default {
   mixins: [ DateMixin, reactiveData, SeverityMixin ],
   props: {
     bus: { type: Object, required: true },
-    getStatisticsFilters: { type: Function, required: true }
+    getStatisticsFilters: { type: Function, required: true },
+    lastMonth: { type: String, required: true }
   },
   data() {
-    const startOfCurrentMonth = endOfMonth(new Date());
-
-    const dates = [ ...new Array(12).keys() ].map(i =>
-      subMonths(startOfCurrentMonth, i));
-
     return {
-      dates,
+      dates: [],
       options: {
         legend: {
           display: true,
@@ -52,14 +49,18 @@ export default {
           mode: "nearest",
           intersect: true
         },
+        scales: {
+          xAxes: [
+            {
+              ticks: {
+                padding: 10
+              }
+            }
+          ]
+        }
       },
       chartData: {
-        labels: [ ...dates ].reverse().map((d, idx) => {
-          const date = format(d, "yyyy MMM");
-          if (idx === dates.length - 1)
-            return `${date} (Current)`;
-          return date;
-        }),
+        labels: [],
         datasets: [
           ...Object.keys(Severity).reverse().map(s => {
             const severityId = Severity[s];
@@ -82,25 +83,80 @@ export default {
                   weight: "bold"
                 },
               },
-              data: dates.map(() => null)
+              data: []
             };
           })
         ]
       }
     };
   },
+
+  watch: {
+    lastMonth: {
+      handler: _.debounce(function () {
+        const oldSize = this.dates.length;
+        const newSize = parseInt(this.lastMonth);
+
+        this.setChartData();
+
+        if (newSize > oldSize) {
+          this.fetchData(this.dates.slice(oldSize));
+        }
+      }, 500)
+    }
+  },
+
+  created() {
+    this.setChartData();
+  },
+
   mounted() {
     this.addPlugin(ChartDataLabels);
 
     // Initialize the chart.
     this.renderChart(this.chartData, this.options);
   },
+
   activated() {
-    this.bus.$on("refresh", () => this.fetchData());
+    this.bus.$on("refresh", () => this.fetchData(this.dates));
   },
+
   methods: {
-    fetchData() {
+    setChartData() {
+      const lastMonth = parseInt(this.lastMonth);
+      if (isNaN(lastMonth) || lastMonth <=0)
+        return;
+
+      const startOfCurrentMonth = endOfMonth(new Date());
+
+      this.dates = [ ...new Array(lastMonth).keys() ].map(i =>
+        subMonths(startOfCurrentMonth, i));
+
+      this.chartData.labels = [ ...this.dates ].reverse().map((d, idx) => {
+        const date = format(d, "yyyy MMM");
+        if (idx === this.dates.length - 1)
+          return `${date} (Current)`;
+        return date;
+      });
+
+      this.chartData.datasets.forEach(d => {
+        if (this.dates.length > d.data.length) {
+          d.data = [
+            ...new Array(this.dates.length - d.data.length).fill(null),
+            ...d.data
+          ];
+        } else {
+          d.data = d.data.slice(d.data.length - this.dates.length,
+            d.data.length);
+        }
+      });
+
+      this.chartData = { ...this.chartData };
+    },
+    fetchData(datesToUpdate) {
       this.dates.forEach(async (d, idx) => {
+        if (!datesToUpdate.includes(d)) return;
+
         const reportCount = await this.fetchOutstandingReports(d);
         const datasets = this.chartData.datasets;
 
