@@ -13,21 +13,16 @@ from typing import Dict, List
 from codechecker_common.report import Report
 
 
-def convert(reports: List[Report], repo_dirs: List[str]) -> Dict:
+def convert(reports: List[Report]) -> Dict:
     """Convert the given reports to codeclimate format.
 
     This function will convert the given report to Code Climate format.
     reports - list of reports type Report
-    repo_dir - Root directory of the sources, i.e. the directory where the
-               repository was cloned, which will be trimmed if set.
 
     returns a list of reports converted to codeclimate format
     """
     codeclimate_reports = []
     for report in reports:
-        if repo_dirs:
-            report.trim_path_prefixes(repo_dirs)
-
         codeclimate_reports.append(__to_codeclimate(report))
     return codeclimate_reports
 

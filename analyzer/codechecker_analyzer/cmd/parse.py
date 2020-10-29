@@ -577,13 +577,13 @@ def parse_with_plt_formatter(plist_file: str,
 
 def parse_convert_reports(input_dirs: List[str],
                           out_format: str,
+                          severity_map: Dict,
                           trim_path_prefixes: List[str]) -> Dict:
     """Parse and convert the reports from the input dirs to the out_format.
 
     Retuns a dictionary which can be converted to the out_format type of
     json to be printed out or saved on the disk.
     """
-    res = []
 
     input_files = set()
     for input_path in input_dirs:
@@ -596,23 +596,25 @@ def parse_convert_reports(input_dirs: List[str],
                            in file_names]
             input_files.update(input_paths)
 
+    all_reports = []
     for input_file in input_files:
         if not input_file.endswith('.plist'):
             continue
-
         _, reports = plist_parser.parse_plist_file(input_file)
-        if out_format == "codeclimate":
-            cc_reports = codeclimate.convert(reports, trim_path_prefixes)
-            res.extend(cc_reports)
+        all_reports.extend(reports)
 
-        for report in reports:
-            if trim_path_prefixes:
-                report.trim_path_prefixes(trim_path_prefixes)
-            if out_format == "json":
-                out = out_json.convert_to_parse(report)
-                res.append(out)
+    if trim_path_prefixes:
+        for report in all_reports:
+            report.trim_path_prefixes(trim_path_prefixes)
 
-    return res
+    if out_format == "codeclimate":
+        return codeclimate.convert(all_reports)
+
+    if out_format == "json":
+        return [out_json.convert_to_parse(r) for r in all_reports]
+
+    LOG.error(f"Unknown export format: {out_format}")
+    return {}
 
 
 def main(args):
@@ -685,17 +687,28 @@ def main(args):
     trim_path_prefixes = args.trim_path_prefix if \
         'trim_path_prefix' in args else None
 
-    if export in ['json', 'codeclimate']:
-        res = parse_convert_reports(args.input, export, trim_path_prefixes)
-        if 'output_path' in args:
-            output_path = os.path.abspath(args.output_path)
-            reports_json = os.path.join(output_path, 'reports.json')
-            with open(reports_json,
-                      mode='w',
-                      encoding='utf-8', errors="ignore") as output_f:
-                output_f.write(json.dumps(res))
+    if export:
+        if export not in ['json', 'codeclimate']:
+            LOG.error(f"Unknown export format: {export}")
+            return
 
-        return print(json.dumps(res))
+        try:
+            res = parse_convert_reports(args.input,
+                                        export,
+                                        context.severity_map,
+                                        trim_path_prefixes)
+            if 'output_path' in args:
+                output_path = os.path.abspath(args.output_path)
+                reports_json = os.path.join(output_path, 'reports.json')
+                with open(reports_json,
+                          mode='w',
+                          encoding='utf-8', errors="ignore") as output_f:
+                    output_f.write(json.dumps(res))
+
+            return print(json.dumps(res))
+        except Exception as ex:
+            LOG.error(ex)
+            return
 
     def trim_path_prefixes_handler(source_file):
         """
