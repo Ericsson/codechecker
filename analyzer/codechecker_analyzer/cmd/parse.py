@@ -26,7 +26,8 @@ from plist_to_html import PlistToHtml
 from codechecker_analyzer import analyzer_context, suppress_handler
 
 from codechecker_common import arg, logger, plist_parser, util, cmd_config
-from codechecker_common.output import json as out_json, twodim, codeclimate
+from codechecker_common.output import json as out_json, twodim, \
+    codeclimate, gerrit
 from codechecker_common.skiplist_handler import SkipListHandler
 from codechecker_common.source_code_comment_handler import \
     REVIEW_STATUS_VALUES, SourceCodeCommentHandler, SpellException
@@ -35,6 +36,8 @@ from codechecker_common.report import Report
 from codechecker_report_hash.hash import get_report_path_hash
 
 LOG = logger.get_logger('system')
+
+EXPORT_TYPES = ['html', 'json', 'codeclimate', 'gerrit']
 
 
 class PlistToPlaintextFormatter(object):
@@ -375,7 +378,15 @@ printed by the `parse` command.""",
         'epilog': """
 environment variables:
   CC_SEVERITY_MAP_FILE   Path of the checker-severity mapping config file.
+  CC_REPO_DIR         Root directory of the sources, i.e. the directory where
+                      the repository was cloned. Use it when generating gerrit
+                      output.
+  CC_REPORT_URL       URL where the report can be found. Use it when generating
+                      gerrit output.
+  CC_CHANGED_FILES    Path of changed files json from Gerrit. Use it when
+                      generating gerrit output.
                          Default: {}
+
 """.format(os.path.join(package_root, 'config', 'checker_severity_map.json')),
 
         # Help is shown when the "parent" CodeChecker command lists the
@@ -426,7 +437,7 @@ def add_arguments_to_parser(parser):
     output_opts.add_argument('-e', '--export',
                              dest="export",
                              required=False,
-                             choices=['html', 'json', 'codeclimate'],
+                             choices=EXPORT_TYPES,
                              help="R|Specify extra output format type.\n"
                                   "'codeclimate' format can be used for "
                                   "Code Climate and for GitLab integration. "
@@ -610,6 +621,9 @@ def parse_convert_reports(input_dirs: List[str],
     if out_format == "codeclimate":
         return codeclimate.convert(all_reports)
 
+    if out_format == "gerrit":
+        return gerrit.convert(all_reports, severity_map)
+
     if out_format == "json":
         return [out_json.convert_to_parse(r) for r in all_reports]
 
@@ -688,7 +702,7 @@ def main(args):
         'trim_path_prefix' in args else None
 
     if export:
-        if export not in ['json', 'codeclimate']:
+        if export not in EXPORT_TYPES:
             LOG.error(f"Unknown export format: {export}")
             return
 

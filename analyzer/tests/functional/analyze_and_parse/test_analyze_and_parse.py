@@ -278,6 +278,58 @@ class AnalyzeParseTestCase(
             }
         }])
 
+    def test_gerrit_output(self):
+        """ Test gerrit output of the parse command. """
+
+        env = self.env.copy()
+        report_url = "localhost:8080/index.html"
+        env["CC_REPORT_URL"] = report_url
+
+        changed_file_path = os.path.join(self.test_dir, 'files_changed')
+
+        with open(changed_file_path, 'w',
+                  encoding="utf-8", errors="ignore") as changed_file:
+            # Print some garbage value to the file.
+            changed_file.write(")]}'\n")
+
+            changed_files = {
+                "/COMMIT_MSG": {},
+                "macros.cpp": {}}
+            changed_file.write(json.dumps(changed_files))
+
+        env["CC_CHANGED_FILES"] = changed_file_path
+
+        test_project_macros = os.path.join(self.test_workspaces['NORMAL'],
+                                           "test_files", "macros")
+        env["CC_REPO_DIR"] = test_project_macros
+
+        extract_cmd = ['CodeChecker', 'parse', test_project_macros,
+                       '-e', 'gerrit']
+
+        print(" ".join(extract_cmd))
+        out, _ = call_command(extract_cmd, cwd=self.test_dir, env=env)
+        print(out)
+
+        review_data = json.loads(out)
+
+        lbls = review_data["labels"]
+        self.assertEqual(lbls["Verified"], -1)
+        self.assertEqual(lbls["Code-Review"], -1)
+        self.assertEqual(review_data["message"],
+                         "CodeChecker found 1 issue(s) in the code. "
+                         "See: '{0}'".format(report_url))
+        self.assertEqual(review_data["tag"], "jenkins")
+
+        # Because the CC_CHANGED_FILES is set we will see reports only for
+        # the macro.cpp file.
+        comments = review_data["comments"]
+        self.assertEqual(len(comments), 1)
+
+        reports = comments["macros.cpp"]
+        self.assertEqual(len(reports), 1)
+
+        os.remove(changed_file_path)
+
     def test_invalid_plist_file(self):
         """ Test parsing invalid plist file. """
         invalid_plist_file = os.path.join(self.test_workspaces['NORMAL'],
