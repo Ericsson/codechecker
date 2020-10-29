@@ -66,7 +66,7 @@ class TestReportFilter(unittest.TestCase):
              'core.CallAndMessage': 5,
              'core.DivideZero': 10,
              'core.NullDereference': 4,
-             'core.StackAddrEscapeBase': 3,
+             'core.StackAddressEscape': 3,
              'cplusplus.NewDelete': 5,
              'deadcode.DeadStores': 6,
              'misc-definitions-in-headers': 2,
@@ -82,10 +82,9 @@ class TestReportFilter(unittest.TestCase):
              'misc-definitions-in-headers': 2,
              'unix.MismatchedDeallocator': 1}
 
-        self.run1_sev_counts = {Severity.UNSPECIFIED: 3,
-                                Severity.MEDIUM: 6,
+        self.run1_sev_counts = {Severity.MEDIUM: 6,
                                 Severity.LOW: 6,
-                                Severity.HIGH: 24}
+                                Severity.HIGH: 27}
 
         self.run2_sev_counts = {Severity.MEDIUM: 6,
                                 Severity.LOW: 6,
@@ -527,7 +526,7 @@ class TestReportFilter(unittest.TestCase):
 
         new = {'clang-diagnostic-division-by-zero': 3,
                'core.CallAndMessage': 5,
-               'core.StackAddrEscapeBase': 3,
+               'core.StackAddressEscape': 3,
                'cplusplus.NewDelete': 5,
                'core.NullDereference': 4,
                'core.DivideZero': 10,

@@ -214,15 +214,15 @@ class LocalRemote(unittest.TestCase):
 
         res = self.get_local_remote_diff(['--severity', 'high'])
         self.assertEqual(len(re.findall(r'\[LOW\]', res)), 0)
-        self.assertEqual(len(re.findall(r'\[HIGH\]', res)), 15)
+        self.assertEqual(len(re.findall(r'\[HIGH\]', res)), 18)
 
         res = self.get_local_remote_diff(['--severity', 'high', 'low'])
         self.assertEqual(len(re.findall(r'\[LOW\]', res)), 6)
-        self.assertEqual(len(re.findall(r'\[HIGH\]', res)), 15)
+        self.assertEqual(len(re.findall(r'\[HIGH\]', res)), 18)
 
         res = self.get_local_remote_diff()
         self.assertEqual(len(re.findall(r'\[LOW\]', res)), 6)
-        self.assertEqual(len(re.findall(r'\[HIGH\]', res)), 15)
+        self.assertEqual(len(re.findall(r'\[HIGH\]', res)), 18)
 
     def test_local_cmp_filter_unres_filepath(self):
         """Filter unresolved results by file path."""

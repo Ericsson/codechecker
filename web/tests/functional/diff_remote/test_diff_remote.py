@@ -250,7 +250,7 @@ class DiffRemote(unittest.TestCase):
         diff_dict = dict((res.name, res.count) for res in diff_res)
 
         # Unresolved core checkers.
-        test_res = {'core.StackAddrEscapeBase': 3, 'core.DivideZero': 10}
+        test_res = {'core.StackAddressEscape': 3, 'core.DivideZero': 10}
         self.assertDictContainsSubset(test_res, diff_dict)
 
     def test_get_diff_res_count_unresolved(self):
@@ -294,8 +294,8 @@ class DiffRemote(unittest.TestCase):
         new_run_id = self._new_runid
 
         filter_severity_levels = [{"MEDIUM": 1}, {"LOW": 6},
-                                  {"HIGH": 15}, {"STYLE": 0},
-                                  {"UNSPECIFIED": 3}, {"CRITICAL": 0}]
+                                  {"HIGH": 18}, {"STYLE": 0},
+                                  {"CRITICAL": 0}]
 
         cmp_data = CompareData(runIds=[new_run_id],
                                diffType=DiffType.UNRESOLVED)
@@ -331,7 +331,7 @@ class DiffRemote(unittest.TestCase):
         test_res = {'unix.Malloc': 1,
                     'cplusplus.NewDelete': 5,
                     'deadcode.DeadStores': 6,
-                    'core.StackAddrEscapeBase': 3,
+                    'core.StackAddressEscape': 3,
                     'core.DivideZero': 10}
         self.assertDictContainsSubset(diff_dict, test_res)
 
@@ -348,10 +348,9 @@ class DiffRemote(unittest.TestCase):
         sev_res = self._cc_client.getSeverityCounts([base_run_id],
                                                     None,
                                                     cmp_data)
-        test_res = {Severity.HIGH: 15,
+        test_res = {Severity.HIGH: 18,
                     Severity.LOW: 6,
-                    Severity.MEDIUM: 1,
-                    Severity.UNSPECIFIED: 3}
+                    Severity.MEDIUM: 1}
         self.assertDictEqual(sev_res, test_res)
 
     def test_get_diff_severity_counts_all_new(self):
@@ -465,7 +464,7 @@ class DiffRemote(unittest.TestCase):
         test_res = {'unix.Malloc': 1,
                     'cplusplus.NewDelete': 5,
                     'deadcode.DeadStores': 6,
-                    'core.StackAddrEscapeBase': 3,
+                    'core.StackAddressEscape': 3,
                     'core.DivideZero': 10}
         self.assertDictEqual(diff_dict, test_res)
 
