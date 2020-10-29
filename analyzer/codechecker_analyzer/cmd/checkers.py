@@ -383,7 +383,7 @@ def main(args):
         for warning in get_warnings(analyzer_environment):
             warning = 'clang-diagnostic-' + warning[2:]
 
-            if 'guideline' in args:
+            if args.guideline is not None:
                 if not match_guideline(warning, args.guideline):
                     continue
 
