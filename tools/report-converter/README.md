@@ -22,6 +22,7 @@ a CodeChecker server.
 * [Markdownlint](#markdownlint)
 * [Coccinelle](#coccinelle)
 * [Smatch](#smatch)
+* [Kernel-Doc](#kernel-doc)
 * [License](#license)
 
 ## Install guide
@@ -54,8 +55,9 @@ optional arguments:
                         report directory files.
   -t TYPE, --type TYPE  Specify the format of the code analyzer output.
                         Currently supported output types are: asan, clang-
-                        tidy, cppcheck, eslint, fbinfer, golint, msan,
-                        pyflakes, pylint, spotbugs, tsan, tslint, ubsan.
+                        tidy, coccinelle, cppcheck, eslint, fbinfer, golint,
+                        kernel-doc, msan, pyflakes, pylint, smatch, spotbugs, 
+                        tsan, tslint, ubsan.
   --meta [META [META ...]]
                         Metadata information which will be stored alongside
                         the run when the created report directory will be
@@ -86,6 +88,7 @@ Supported analyzers:
   eslint - ESLint, https://eslint.org/
   fbinfer - Facebook Infer, https://fbinfer.com
   golint - Golint, https://github.com/golang/lint
+  kernel-doc - Kernel-Doc, https://github.com/torvalds/linux/blob/master/scripts/kernel-doc
   mdl - Markdownlint, https://github.com/markdownlint/markdownlint
   msan - MemorySanitizer, https://clang.llvm.org/docs/MemorySanitizer.html
   pyflakes - Pyflakes, https://github.com/PyCQA/pyflakes
@@ -439,6 +442,33 @@ report-converter -t smatch -o ./codechecker_smatch_reports ./smatch_warns.txt
 
 # Store the Smatch reports with CodeChecker.
 CodeChecker store ./codechecker_smatch_reports -n smatch
+```
+
+## [Kernel-Doc](https://github.com/torvalds/linux/blob/master/scripts/kernel-doc)
+[Kernel-Doc](https://github.com/torvalds/linux/blob/master/scripts/kernel-doc) structure is extracted 
+from the comments, and proper Sphinx C Domain function and type descriptions with anchors are generated 
+from them. The descriptions are filtered for special kernel-doc highlights and cross-references.
+
+The recommended way of running Kernel-Doc is to redirect the output to a file and
+give this file to the report converter tool.
+
+The following example shows you how to run Kernel-Doc on kernel sources 
+and store the results found by Kernel-Doc to the CodeChecker database.
+```sh
+# Change Directory to your project
+cd path/to/linux/kernel/repository
+
+# Run Kernel-Doc
+# Note: The output of the following command will be both of sphinx and kernel-doc, 
+# but the parser will parse only kernel-doc output
+make htmldocs 2>&1 | tee kernel-docs.out
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of Kernel-Doc
+report-converter -t kernel-doc -o ./codechecker_kernel_doc_reports ./sphinx_output.out
+
+# Store the Kernel-Doc reports with CodeChecker.
+CodeChecker store ./codechecker_kernel_doc_reports -n kernel-doc
 ```
 
 ## License
