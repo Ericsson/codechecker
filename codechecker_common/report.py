@@ -124,6 +124,9 @@ class Report(object):
         """ Removes the longest matching leading path from the file paths. """
         self.__files = {i: util.trim_path_prefixes(file_path, path_prefixes)
                         for i, file_path in self.__files.items()}
+        self.__main['location']['file'] = \
+            util.trim_path_prefixes(self.__main['location']['file'],
+                                    path_prefixes)
 
     def to_json(self):
         """Converts to a special json format.
