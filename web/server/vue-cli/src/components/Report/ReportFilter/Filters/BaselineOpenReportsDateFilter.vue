@@ -1,7 +1,7 @@
 <template>
   <filter-toolbar
     :id="id"
-    title="Open Reports Date"
+    title="Outstanding reports on a given date"
     @clear="clear(true)"
   >
     <template v-slot:append-toolbar-title>

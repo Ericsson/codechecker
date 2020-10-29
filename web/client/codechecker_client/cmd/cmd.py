@@ -267,7 +267,7 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                          help="Filter results by version tag names." +
                          warn_diff_mode)
 
-    f_group.add_argument('--open-reports-date',
+    f_group.add_argument('--outstanding-reports-date', '--open-reports-date',
                          type=valid_time,
                          dest="open_reports_date",
                          metavar='TIMESTAMP',
