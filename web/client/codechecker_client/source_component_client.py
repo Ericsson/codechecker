@@ -22,6 +22,8 @@ from .cmd_line import CmdLineOutputEncoder
 # Needs to be set in the handler functions.
 LOG = None
 
+GEN_OTHER_COMPONENT_NAME = "Other (auto-generated)"
+
 
 def init_logger(level, stream=None, logger_name='system'):
     logger.setup_logger(level, stream)
@@ -33,6 +35,11 @@ def handle_add_component(args):
     init_logger(args.verbose if 'verbose' in args else None)
 
     client = setup_client(args.product_url)
+
+    if args.name == GEN_OTHER_COMPONENT_NAME:
+        LOG.error("'%s' is a special virtual component which can not be "
+                  "modified.", GEN_OTHER_COMPONENT_NAME)
+        sys.exit(1)
 
     with open(args.component_file, 'r',
               encoding="utf-8", errors="ignore") as component_file:
@@ -77,6 +84,9 @@ def handle_list_components(args):
         header = ['Name', 'Value', 'Description']
         rows = []
         for res in components:
+            if res.name == GEN_OTHER_COMPONENT_NAME:
+                res.value = ''
+
             for idx, value in enumerate(res.value.split('\n')):
                 name = res.name if idx == 0 else ''
                 description = res.description \
@@ -91,6 +101,11 @@ def handle_del_component(args):
     init_logger(args.verbose if 'verbose' in args else None)
 
     client = setup_client(args.product_url)
+
+    if args.name == GEN_OTHER_COMPONENT_NAME:
+        LOG.error("'%s' is a special virtual component which can not be "
+                  "removed.", GEN_OTHER_COMPONENT_NAME)
+        sys.exit(1)
 
     # Check that the given source component is exists.
     source_component = client.getSourceComponents([args.name])

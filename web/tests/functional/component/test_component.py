@@ -20,6 +20,8 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import ReportFilter
 
 from libtest import env
 
+GEN_OTHER_COMPONENT_NAME = "Other (auto-generated)"
+
 
 class TestComponent(unittest.TestCase):
 
@@ -129,19 +131,61 @@ class TestComponent(unittest.TestCase):
         ret = self._cc_client.removeSourceComponent(name)
         self.assertTrue(ret)
 
+    def __get_user_defined_source_components(self):
+        """ Get user defined source components. """
+        components = self._cc_client.getSourceComponents(None)
+        self.assertNotEqual(len(components), 0)
+
+        return [c for c in components
+                if GEN_OTHER_COMPONENT_NAME not in c.name]
+
+    def __test_other_component(self, components, excluded_from_other,
+                               included_in_other=None):
+        """
+        Test that the results filtered by the given components and the Other
+        components covers all the reports and the results filtered by the
+        Other component doesn't contain reports which are covered by rest of
+        the component.
+        """
+        all_results = self._cc_client.getRunResults(None, 500, 0, None, None,
+                                                    None, False)
+
+        r_filter = ReportFilter(componentNames=[c['name'] for c in components])
+        component_results = self._cc_client.getRunResults(None, 500, 0, None,
+                                                          r_filter, None,
+                                                          False)
+        self.assertNotEqual(len(component_results), 0)
+
+        r_filter = ReportFilter(componentNames=[GEN_OTHER_COMPONENT_NAME])
+        other_results = self._cc_client.getRunResults(None, 500, 0, None,
+                                                      r_filter, None, False)
+        self.assertNotEqual(len(other_results), 0)
+
+        self.assertEqual(len(all_results),
+                         len(component_results) + len(other_results))
+
+        for f_path in excluded_from_other:
+            self.assertEqual(len([r for r in other_results if
+                                  r.checkedFile.endswith(f_path)]), 0)
+
+        if included_in_other:
+            for f_path in included_in_other:
+                self.assertNotEqual(len([r for r in other_results if
+                                         r.checkedFile.endswith(f_path)]), 0)
+
     def test_component_management(self):
         """
         Test management of the components.
         """
         test_component = self.components[0]
 
-        # There are no source components available.
-        components = self._cc_client.getSourceComponents(None)
+        # There are no user defined source components available.
+        components = self.__get_user_defined_source_components()
         self.assertEqual(len(components), 0)
 
         self.__add_new_component(test_component)
 
-        components = self._cc_client.getSourceComponents(None)
+        components = self.__get_user_defined_source_components()
         self.assertEqual(len(components), 1)
         self.assertEqual(components[0].name, test_component['name'])
         self.assertEqual(components[0].value, test_component['value'])
@@ -150,8 +194,8 @@ class TestComponent(unittest.TestCase):
 
         self.__remove_source_component(test_component['name'])
 
-        # There are no source components available.
-        components = self._cc_client.getSourceComponents(None)
+        # There are no user defined source components available.
+        components = self.__get_user_defined_source_components()
         self.assertEqual(len(components), 0)
 
     def test_filter_report_by_component(self):
@@ -160,7 +204,7 @@ class TestComponent(unittest.TestCase):
         """
         test_component = self.components[0]
 
-        components = self._cc_client.getSourceComponents(None)
+        components = self.__get_user_defined_source_components()
         self.assertEqual(len(components), 0)
 
         self.__add_new_component(test_component)
@@ -203,7 +247,7 @@ class TestComponent(unittest.TestCase):
         """
         test_component = self.components[2]
 
-        components = self._cc_client.getSourceComponents(None)
+        components = self.__get_user_defined_source_components()
         self.assertEqual(len(components), 0)
 
         self.__add_new_component(test_component)
@@ -253,13 +297,13 @@ class TestComponent(unittest.TestCase):
         test_component1 = self.components[3]
         test_component2 = self.components[4]
 
-        components = self._cc_client.getSourceComponents(None)
+        components = self.__get_user_defined_source_components()
         self.assertEqual(len(components), 0)
 
         self.__add_new_component(test_component1)
         self.__add_new_component(test_component2)
 
-        components = self._cc_client.getSourceComponents(None)
+        components = self.__get_user_defined_source_components()
         self.assertEqual(len(components), 2)
 
         r_filter = ReportFilter(componentNames=[test_component1['name'],
@@ -303,7 +347,7 @@ class TestComponent(unittest.TestCase):
         """
         test_component = self.components[5]
 
-        components = self._cc_client.getSourceComponents(None)
+        components = self.__get_user_defined_source_components()
         self.assertEqual(len(components), 0)
 
         self.__add_new_component(test_component)
@@ -332,3 +376,74 @@ class TestComponent(unittest.TestCase):
 
         self.__add_new_component(test_component)
         self.__remove_source_component(test_component['name'])
+
+    def test_no_user_defined_component(self):
+        """
+        When there is no user defined component in the database, the
+        auto-generated Other component will not filter the results.
+        """
+        components = self.__get_user_defined_source_components()
+        self.assertEqual(len(components), 0)
+
+        all_results = self._cc_client.getRunResults(None, 500, 0, None, None,
+                                                    None, False)
+        self.assertIsNotNone(all_results)
+
+        r_filter = ReportFilter(componentNames=[GEN_OTHER_COMPONENT_NAME])
+        other_results = self._cc_client.getRunResults(None, 500, 0, None,
+                                                      r_filter, None, False)
+
+        self.assertEqual(len(all_results), len(other_results))
+
+    def test_other_with_single_user_defined_component(self):
+        """
+        Test that the Other component will not contain reports which are
+        covered by a single component.
+        """
+        component = {
+            'name': 'UserDefined',
+            'value': '\n'.join(['+*/divide_zero.cpp',
+                                '+*/new_delete.cpp'])}
+
+        self.__add_new_component(component)
+
+        excluded_from_other = ['divide_zero.cpp', 'new_delete.cpp']
+        self.__test_other_component([component], excluded_from_other)
+        self.__remove_source_component(component['name'])
+
+    def test_other_with_multiple_user_defined_component(self):
+        """
+        Test that the Other component will not contain reports which are
+        covered by multiple components.
+        """
+        components = [
+            {
+                'name': 'UserDefined1',
+                'value': '+*/divide_zero.cpp'
+            },
+            {
+                'name': 'UserDefined2',
+                'value': '+*/new_delete.cpp'
+            },
+            {
+                'name': 'UserDefined3',
+                'value': '\n'.join([
+                    '+*/null_dereference.cpp',
+                    '-*/call_and_message.cpp',
+                ])
+            }
+        ]
+
+        for c in components:
+            self.__add_new_component(c)
+
+        excluded_from_other = ['divide_zero.cpp', 'new_delete.cpp',
+                               'null_dereference.cpp']
+
+        included_in_other = ['call_and_message.cpp']
+
+        self.__test_other_component(components, excluded_from_other,
+                                    included_in_other)
+
+        for c in components:
+            self.__remove_source_component(c['name'])

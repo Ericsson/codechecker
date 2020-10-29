@@ -150,7 +150,8 @@ export default {
       this.loading = true;
       ccService.getClient().getSourceComponents(null,
         handleThriftError(components => {
-          this.components = components;
+          this.components = components.filter(c =>
+            !c.name.includes("auto-generated"));
           this.loading = false;
         }));
     },
