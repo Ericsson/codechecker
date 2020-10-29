@@ -69,7 +69,7 @@ def get_warnings(env=None):
             universal_newlines=True,
             encoding="utf-8",
             errors="ignore")
-        return result.split()
+        return [w[2:] for w in result.split() if w.startswith("-W")]
     except (subprocess.CalledProcessError, OSError):
         return []
 
@@ -381,7 +381,7 @@ def main(args):
     if 'show_warnings' in args:
         severity = context.severity_map.get('clang-diagnostic-')
         for warning in get_warnings(analyzer_environment):
-            warning = 'clang-diagnostic-' + warning[2:]
+            warning = 'clang-diagnostic-' + warning
 
             if args.guideline is not None:
                 if not match_guideline(warning, args.guideline):
