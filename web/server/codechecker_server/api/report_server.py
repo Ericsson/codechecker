@@ -2509,7 +2509,7 @@ class ThriftRequestHandler(object):
                 # have the content. Let's check if we already have a file
                 # record in the database or we need to add one.
 
-                LOG.debug(file_name + ' not found or already stored.')
+                LOG.debug('%s not found or already stored.', trimmed_file_path)
                 with DBSession(self.__Session) as session:
                     fid = store_handler.addFileRecord(session,
                                                       trimmed_file_path,
@@ -2518,12 +2518,12 @@ class ThriftRequestHandler(object):
                     LOG.error("File ID for %s is not found in the DB with "
                               "content hash %s. Missing from ZIP?",
                               source_file_name, file_hash)
-                file_path_to_id[file_name] = fid
+                file_path_to_id[trimmed_file_path] = fid
                 LOG.debug("%d fileid found", fid)
                 continue
 
             with DBSession(self.__Session) as session:
-                file_path_to_id[file_name] = \
+                file_path_to_id[trimmed_file_path] = \
                     store_handler.addFileContent(session,
                                                  trimmed_file_path,
                                                  source_file_name,
@@ -2609,15 +2609,17 @@ class ThriftRequestHandler(object):
             except Exception as ex:
                 LOG.error('Parsing the plist failed: %s', str(ex))
                 continue
-
+            trimmed_files = {}
             file_ids = {}
             if reports:
                 missing_ids_for_files = []
 
-                for file_name in files.values():
+                for k, v in files.items():
+                    trimmed_files[k] = \
+                        util.trim_path_prefixes(v, trim_path_prefixes)
 
-                    file_name = util.trim_path_prefixes(file_name,
-                                                        trim_path_prefixes)
+                for file_name in trimmed_files.values():
+
                     file_id = file_path_to_id.get(file_name, -1)
                     if file_id == -1:
                         missing_ids_for_files.append(file_name)
@@ -2627,7 +2629,7 @@ class ThriftRequestHandler(object):
 
                 if missing_ids_for_files:
                     LOG.error("Failed to get file path id for '%s'!",
-                              file_name)
+                              ' '.join(missing_ids_for_files))
                     continue
 
             # Store report.
@@ -2635,14 +2637,14 @@ class ThriftRequestHandler(object):
                 checker_name = report.main['check_name']
                 all_report_checkers.add(checker_name)
 
-                source_file = util.trim_path_prefixes(
-                    report.main['location']['file'], trim_path_prefixes)
+                report.trim_path_prefixes(trim_path_prefixes)
+                source_file = report.file_path
 
                 if skip_handler.should_skip(source_file):
                     continue
                 bug_paths, bug_events, bug_extended_data = \
                     store_handler.collect_paths_events(report, file_ids,
-                                                       files)
+                                                       trimmed_files)
                 report_path_hash = get_report_path_hash(report)
                 if report_path_hash in already_added:
                     LOG.debug('Not storing report. Already added')
@@ -2683,7 +2685,8 @@ class ThriftRequestHandler(object):
                 already_added.add(report_path_hash)
 
                 last_report_event = report.bug_path[-1]
-                file_name = files[last_report_event['location']['file']]
+                file_name = \
+                    trimmed_files[last_report_event['location']['file']]
                 source_file_name = os.path.realpath(
                     os.path.join(source_root, file_name.strip("/")))
 
