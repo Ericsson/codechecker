@@ -668,6 +668,9 @@ def unzip(b64zip, output_dir):
     to a temporary directory and the ZIP is then deleted. The function returns
     the size of the extracted zip file.
     """
+    if len(b64zip) == 0:
+        return 0
+
     with tempfile.NamedTemporaryFile(suffix='.zip') as zip_file:
         LOG.debug("Unzipping mass storage ZIP '%s' to '%s'...",
                   zip_file.name, output_dir)
@@ -2900,6 +2903,12 @@ class ThriftRequestHandler(object):
         try:
             with TemporaryDirectory() as zip_dir:
                 zip_size = unzip(b64zip, zip_dir)
+                if zip_size == 0:
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.
+                        ErrorCode.GENERAL,
+                        "The received zip file content is empty"
+                        " nothing was stored.")
 
                 LOG.debug("Using unzipped folder '%s'", zip_dir)
 
