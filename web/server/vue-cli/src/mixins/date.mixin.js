@@ -14,10 +14,14 @@ export default {
       return format(date, this.format, new Date());
     },
 
-    strToDateTime(date) {
+    strToDateTime(date, format=null) {
       if (!date) return null;
 
-      return parse(date, this.format, new Date());
+
+      if (!format)
+        format = this.format;
+
+      return parse(date, format, new Date());
     },
 
     // Returns Unix time.

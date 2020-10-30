@@ -83,11 +83,6 @@ export default new Router({
           ]
         },
         {
-          path: "run-history",
-          name: "run-history",
-          component: () => import("@/views/RunHistoryList")
-        },
-        {
           path: "reports",
           name: "reports",
           component: () => import("@/views/Reports")
