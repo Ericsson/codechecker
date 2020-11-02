@@ -152,3 +152,14 @@ class TestCmdline(unittest.TestCase):
         _, out, _ = run_cmd(checkers_cmd)
 
         self.assertTrue(out.strip().startswith('Guideline: sei-cert'))
+
+    def test_checkers_warnings(self):
+        """ Listing checkers for compiler warnings. """
+
+        checkers_cmd = [env.codechecker_cmd(), 'checkers', '--warnings']
+        retcode, out, _ = run_cmd(checkers_cmd)
+
+        self.assertEqual(retcode, 0)
+        self.assertIn('clang-diagnostic-vla', out)
+        # Make sure the header from `diagtool --tree` is ignored.
+        self.assertNotIn('EEN', out)
