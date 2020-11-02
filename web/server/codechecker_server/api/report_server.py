@@ -409,6 +409,15 @@ def is_cmp_data_empty(cmp_data):
                     cmp_data.openReportsDate])
 
 
+def is_baseline_empty(report_filter):
+    """ True if the parameter is None or no baseline filter fields are set. """
+    if not report_filter:
+        return True
+
+    return not any([report_filter.runTag,
+                    report_filter.openReportsDate])
+
+
 def process_cmp_data_filter(session, run_ids, report_filter, cmp_data):
     """ Process compare data filter. """
     base_tag_ids = report_filter.runTag if report_filter else None
@@ -419,7 +428,7 @@ def process_cmp_data_filter(session, run_ids, report_filter, cmp_data):
     query_base_runs = get_diff_run_id_query(session, run_ids, base_tag_ids)
 
     if is_cmp_data_empty(cmp_data):
-        if not run_ids and (not report_filter or not report_filter.runTag):
+        if not run_ids and is_baseline_empty(report_filter):
             return None
 
         return and_(Report.bug_id.in_(query_base),
