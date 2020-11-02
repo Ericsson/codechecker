@@ -8,7 +8,7 @@
 			<key>category</key>
 			<string>unknown</string>
 			<key>check_name</key>
-			<string>sample</string>
+			<string>coccinelle.sample</string>
 			<key>description</key>
 			<string>WARNING comparing pointer to 0</string>
 			<key>issue_hash_content_of_line_in_context</key>

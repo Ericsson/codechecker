@@ -401,7 +401,7 @@ like for instance to perform some refactorings.
 The recommended way of running Coccinelle is to redirect the output to a file and
 give this file to the report converter tool.
 
-Note: the checker name will be the file name of the `.cocci` file.
+Note: the checker name will be the file name of the `.cocci` file along with `cocinelle` prefix.
 
 The following example shows you how to run Coccinelle on kernel sources 
 and store the results found by Coccinelle to the CodeChecker database.

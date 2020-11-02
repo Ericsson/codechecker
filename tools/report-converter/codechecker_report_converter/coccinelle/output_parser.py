@@ -47,7 +47,8 @@ class CoccinelleParser(BaseParser):
 
         checker_match = self.checker_name_re.match(line)
         if checker_match:
-            self.checker_name = checker_match.group('checker_name')
+            self.checker_name = 'coccinelle.' + \
+                checker_match.group('checker_name')
 
         if match is None:
             return None, next(it)
