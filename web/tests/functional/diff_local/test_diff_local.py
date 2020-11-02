@@ -160,7 +160,7 @@ class DiffLocal(unittest.TestCase):
         except subprocess.CalledProcessError as cerr:
             print(cerr.stdout)
             print(cerr.stderr)
-        self.assertEqual(len(re.findall(r'\[HIGH\]', out)), 15)
+        self.assertEqual(len(re.findall(r'\[HIGH\]', out)), 18)
         self.assertEqual(len(re.findall(r'\[LOW\]', out)), 6)
 
     @unittest.skip("fix test if severity will be"
