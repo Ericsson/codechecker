@@ -5,5 +5,5 @@ psycopg2-binary==2.8.5
 psutil==5.7.0
 portalocker==1.7.0
 
-codechecker_api==6.33.0-dev1
-codechecker_api_shared==6.33.0-dev1
+codechecker_api==6.34.0
+codechecker_api_shared==6.34.0

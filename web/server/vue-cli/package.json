@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@mdi/font": "^5.3.45",
-    "codechecker-api": "6.33.0-dev1",
+    "codechecker-api": "6.34.0",
     "codemirror": "^5.55.0",
     "date-fns": "^2.14.0",
     "highlight.js": "^10.1.1",

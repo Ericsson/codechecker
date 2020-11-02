@@ -8,7 +8,7 @@ from io import open
 with open('README.md', encoding='utf-8', errors="ignore") as f:
     long_description = f.read()
 
-api_version = '6.33.0-dev1'
+api_version = '6.34.0'
 
 setup(
     name='codechecker_api',
