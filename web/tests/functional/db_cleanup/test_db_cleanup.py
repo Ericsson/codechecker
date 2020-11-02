@@ -211,12 +211,13 @@ int f(int x) { return 1 / x; }
         self._cc_client = env.setup_viewer_client(self.test_workspace)
         self.assertIsNotNone(self._cc_client)
 
-        self.assertEqual(len(files_in_report_before & files_in_report_after),
-                         0)
+        self.assertNotEqual(
+            len(files_in_report_before & files_in_report_after),
+            0)
 
         for file_id in files_in_report_before:
             f = self._cc_client.getSourceFileData(file_id, False, None)
-            self.assertIsNone(f.fileId)
+            self.assertIsNotNone(f.fileId)
 
         # Checker severity levels.
         self.__check_serverity_of_reports()

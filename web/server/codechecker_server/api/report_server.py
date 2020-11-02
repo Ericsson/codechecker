@@ -367,6 +367,11 @@ def get_open_reports_date_filter_query(tbl=Report, date=RunHistory.time):
 def get_diff_bug_id_query(session, run_ids, tag_ids, open_reports_date):
     """ Get bug id query for diff. """
     q = session.query(Report.bug_id.distinct())
+    return process_baseline_filters(q, run_ids, tag_ids, open_reports_date)
+
+
+def process_baseline_filters(q, run_ids, tag_ids, open_reports_date):
+    """ Process the baseline filter values. """
     if run_ids:
         q = q.filter(Report.run_id.in_(run_ids))
 
@@ -414,16 +419,20 @@ def process_cmp_data_filter(session, run_ids, report_filter, cmp_data):
     base_tag_ids = report_filter.runTag if report_filter else None
     base_open_reports_date = report_filter.openReportsDate \
         if report_filter else None
-    query_base = get_diff_bug_id_query(session, run_ids, base_tag_ids,
-                                       base_open_reports_date)
-    query_base_runs = get_diff_run_id_query(session, run_ids, base_tag_ids)
 
     if is_cmp_data_empty(cmp_data):
         if not run_ids and (not report_filter or not report_filter.runTag):
             return None
 
-        return and_(Report.bug_id.in_(query_base),
-                    Report.run_id.in_(query_base_runs))
+        query_base = session.query(Report.id)
+        query_base = process_baseline_filters(query_base, run_ids,
+                                              base_tag_ids,
+                                              base_open_reports_date)
+        return and_(Report.id.in_(query_base))
+
+    query_base = get_diff_bug_id_query(session, run_ids, base_tag_ids,
+                                       base_open_reports_date)
+    query_base_runs = get_diff_run_id_query(session, run_ids, base_tag_ids)
 
     query_new = get_diff_bug_id_query(session, cmp_data.runIds,
                                       cmp_data.runTag,
@@ -2660,29 +2669,22 @@ class ThriftRequestHandler(object):
         disabled_checkers -= all_report_checkers
         enabled_checkers |= all_report_checkers
 
-        reports_to_delete = set()
-        for bug_hash, reports in hash_map_reports.items():
-            if bug_hash in new_bug_hashes:
-                reports_to_delete.update([x.id for x in reports])
-            else:
-                for report in reports:
-                    # We set the fix date of a report only if the report
-                    # has not been fixed before.
-                    if report.fixed_at:
-                        continue
+        for reports in hash_map_reports.values():
+            for report in reports:
+                # We set the fix date of a report only if the report
+                # has not been fixed before.
+                if report.fixed_at:
+                    continue
 
-                    checker = report.checker_id
-                    if checker in disabled_checkers:
-                        report.detection_status = 'off'
-                    elif checker_is_unavailable(checker):
-                        report.detection_status = 'unavailable'
-                    else:
-                        report.detection_status = 'resolved'
+                checker = report.checker_id
+                if checker in disabled_checkers:
+                    report.detection_status = 'off'
+                elif checker_is_unavailable(checker):
+                    report.detection_status = 'unavailable'
+                else:
+                    report.detection_status = 'resolved'
 
-                    report.fixed_at = run_history_time
-
-        if reports_to_delete:
-            self.__removeReports(session, list(reports_to_delete))
+                report.fixed_at = run_history_time
 
     @staticmethod
     @exc_to_thrift_reqfail

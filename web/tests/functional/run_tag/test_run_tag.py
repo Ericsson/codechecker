@@ -172,13 +172,16 @@ int main()
         # Check the second file version.
         self._create_source_file(1, 'test_run_tag_update')
 
+        test_run_tags = self.__get_run_tag_counts(run_id, 100, 0)
+        run_tags_v0 = [t for t in test_run_tags if t.name == self.tags[0]]
+        self.assertEqual(len(run_tags_v0), 1)
+        run_tags_v0 = run_tags_v0[0]
+
         # We do not show future bugs for later tags.
         reports = self.__reports_by_tag([run_tags_v0.id])
         self.assertEqual(run_tags_v0.count, len(reports))
 
-        test_run_tags = self.__get_run_tag_counts(run_id)
         run_tags_v1 = [t for t in test_run_tags if t.name == self.tags[1]]
-
         self.assertEqual(len(run_tags_v1), 1)
         run_tags_v1 = run_tags_v1[0]
         self.__check_reports(run_tags_v1)

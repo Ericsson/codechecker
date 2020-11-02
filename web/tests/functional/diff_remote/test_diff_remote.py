@@ -566,7 +566,7 @@ class DiffRemote(unittest.TestCase):
                                                  False)
 
         # 5 new core.CallAndMessage issues.
-        self.assertEqual(len(diff_res), 5)
+        self.assertEqual(len(diff_res), 10)
 
         cmp_data.diffType = DiffType.RESOLVED
         diff_res = self._cc_client.getRunResults([run_id],
@@ -586,7 +586,7 @@ class DiffRemote(unittest.TestCase):
                                                  tag_filter,
                                                  cmp_data,
                                                  False)
-        self.assertEqual(len(diff_res), 26)
+        self.assertEqual(len(diff_res), 78)
 
     def test_diff_open_reports_date(self):
         """Test for diff results by open reports date."""
@@ -624,7 +624,7 @@ class DiffRemote(unittest.TestCase):
                                                  False)
 
         # 5 new core.CallAndMessage issues.
-        self.assertEqual(len(diff_res), 5)
+        self.assertEqual(len(diff_res), 10)
 
         cmp_data.diffType = DiffType.RESOLVED
         diff_res = self._cc_client.getRunResults([run_id],
@@ -644,7 +644,7 @@ class DiffRemote(unittest.TestCase):
                                                  tag_filter,
                                                  cmp_data,
                                                  False)
-        self.assertEqual(len(diff_res), 26)
+        self.assertEqual(len(diff_res), 78)
 
     def test_multiple_runs(self):
         """ Count the unresolved results in multiple runs without filter. """

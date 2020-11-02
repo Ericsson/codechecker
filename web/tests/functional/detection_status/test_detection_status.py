@@ -186,7 +186,10 @@ int main()
                 self.assertIn(report.bugHash,
                               ['cbd629ba2ee25c41cdbf5e2e336b1b1c'])
             else:
-                self.assertTrue(False)
+                self.assertIn(report.bugHash,
+                              ['3cfc9ec31117e138b052abfb064517e5',
+                               '209be2f6905590d99853ce01d52a78e0',
+                               'e8f47588c8095f02a53e338984ce52ba'])
 
         # Check the third file version
         self._create_source_file(2)
@@ -201,17 +204,18 @@ int main()
         for report in reports:
             if report.detectionStatus == DetectionStatus.RESOLVED:
                 self.assertIn(report.bugHash,
-                              ['209be2f6905590d99853ce01d52a78e0',
-                               'e8f47588c8095f02a53e338984ce52ba'])
+                              ['3cfc9ec31117e138b052abfb064517e5',
+                               '209be2f6905590d99853ce01d52a78e0',
+                               'e8f47588c8095f02a53e338984ce52ba',
+                               'cbd629ba2ee25c41cdbf5e2e336b1b1c'])
 
                 file_content = self._cc_client.getSourceFileData(
                     report.fileId,
                     True,
                     Encoding.DEFAULT).fileContent
 
-                self.assertEqual(
-                    file_content,
-                    self.sources[1],
+                self.assertTrue(
+                    file_content in [self.sources[0], self.sources[1]],
                     "Resolved bugs should be shown with the old file content.")
 
             elif report.detectionStatus == DetectionStatus.NEW:
@@ -233,6 +237,9 @@ int main()
                     "Unresolved bug should be shown with the new file "
                     "content.")
 
+            elif report.detectionStatus == DetectionStatus.REOPENED:
+                self.assertIn(report.bugHash,
+                              ['3cfc9ec31117e138b052abfb064517e5'])
             else:
                 self.assertTrue(False)
 
@@ -254,10 +261,16 @@ int main()
             elif report.detectionStatus == DetectionStatus.REOPENED:
                 self.assertIn(report.bugHash,
                               ['209be2f6905590d99853ce01d52a78e0',
-                               'e8f47588c8095f02a53e338984ce52ba'])
+                               'e8f47588c8095f02a53e338984ce52ba',
+                               '3cfc9ec31117e138b052abfb064517e5',
+                               'cbd629ba2ee25c41cdbf5e2e336b1b1c'])
             elif report.detectionStatus == DetectionStatus.RESOLVED:
                 self.assertIn(report.bugHash,
-                              ['ac147b31a745d91be093bd70bbc5567c'])
+                              ['ac147b31a745d91be093bd70bbc5567c',
+                               '209be2f6905590d99853ce01d52a78e0',
+                               '3cfc9ec31117e138b052abfb064517e5',
+                               'e8f47588c8095f02a53e338984ce52ba',
+                               'cbd629ba2ee25c41cdbf5e2e336b1b1c'])
 
         # Check the fourth file version
         self._create_source_file(3)
@@ -289,7 +302,11 @@ int main()
 
             elif report.detectionStatus == DetectionStatus.RESOLVED:
                 self.assertIn(report.bugHash,
-                              ['ac147b31a745d91be093bd70bbc5567c'])
+                              ['ac147b31a745d91be093bd70bbc5567c',
+                               '209be2f6905590d99853ce01d52a78e0',
+                               '3cfc9ec31117e138b052abfb064517e5',
+                               'cbd629ba2ee25c41cdbf5e2e336b1b1c',
+                               'e8f47588c8095f02a53e338984ce52ba'])
 
     def test_check_without_metadata(self):
         """
