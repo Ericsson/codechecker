@@ -1,5 +1,8 @@
 -include Makefile.local
 
+# Set it to NO if you would not like to build the UI code.
+BUILD_UI_DIST ?= YES
+
 CURRENT_DIR = $(shell pwd)
 BUILD_DIR ?= $(CURRENT_DIR)/build
 
@@ -65,16 +68,20 @@ package_docs:
 	cp -r $(ROOT)/docs/web/checker_docs/* $(CC_BUILD_DOCS_DIR)/checker_md_docs/
 
 $(DIST_DIR):
+ifeq ($(BUILD_UI_DIST),YES)
 	cd $(CC_SERVER)/vue-cli && \
 	npm install && \
 	npm run-script build && \
 	echo $(LATEST_COMMIT) > $(LATEST_COMMIT_FILE)
+endif
 
 # This target should be used from the top level Makefile to build the package
 # together with the analyzer part. This way we will not build plist-to-html
 # multiple times.
 package_web: check_codechecker_api_version check_dist package_dir_structure package_docs $(DIST_DIR)
+ifeq ($(BUILD_UI_DIST),YES)
 	cp -r $(DIST_DIR)/* $(CC_BUILD_WEB_DIR)
+endif
 
 build_plist_to_html:
 	$(MAKE) -C $(ROOT)/tools/plist_to_html build
@@ -119,7 +126,9 @@ package: package_plist_to_html package_report_hash package_web
 # removes the dist directory to make sure the the UI part will be built again.
 check_codechecker_api_version:
 	if ! pip3 install -r ./requirements.txt 2>&1 | grep -q "Requirement already satisfied: codechecker_api"; then \
-		cd server/vue-cli && npm install && rm -rf $(DIST_DIR); \
+		if [ "$(BUILD_UI_DIST)" = "YES" ]; then \
+		  cd server/vue-cli && npm install && rm -rf $(DIST_DIR); \
+		fi \
 	fi
 
 # This target will check if the 'dist' directory exists and the vue-cli folder
