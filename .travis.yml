@@ -49,61 +49,8 @@ jobs:
         make pip_dev_deps &&
         make clean_travis package &&
         npm run --prefix web/server/vue-cli test
-    - os: osx
-      osx_image: xcode10
-      name: "Analyzer test cases"
-      sudo: false
-      language: generic
-      env: CC_MODULE=analyzer
-    - os: osx
-      osx_image: xcode10
-      name: "Server/client test cases (sqlite)"
-      sudo: false
-      language: generic
-      env: DATABASE=sqlite
-    - os: osx
-      osx_image: xcode10
-      name: "Server/client test cases (psycopg2)"
-      sudo: false
-      language: generic
-      env:
-        - DATABASE=psql_psycopg2
-        - POSTGRESQL_VERSION=9.6
-    - os: osx
-      osx_image: xcode10
-      name: "Analyzer, web (sqlite, psycopg2, pg8000) and tools test cases."
-      sudo: false
-      language: generic
-      env:
-        - DATABASE=psql_pg8000
-        - POSTGRESQL_VERSION=9.6
-
-before_install:
-    # Download macOS specific extra dependencies.
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then git clone https://github.com/llvm-mirror/clang.git ~/llvm --branch master --single-branch --depth 1; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update-reset; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install doxygen; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install llvm@11; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/usr/local/opt/llvm@11/bin:$PATH; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PYTHONPATH=~/llvm/tools/scan-build-py/; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=~/llvm/tools/scan-build-py/bin:$PATH; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then chmod a+x ~/llvm/tools/scan-build-py/bin/intercept-build; fi
-
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then which clang; which clang-tidy; fi
-
-    # Set the proper Clang versions early in the PATH.
-    - export PATH=$HOME:$PATH
-
-    # PostgreSQL is not started automatically on macOS.
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then rm -rf /usr/local/var/postgres; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then initdb /usr/local/var/postgres; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew services start postgres; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then while ! pg_isready; do sleep 1; done; createuser -s postgres; fi
 
 install:
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip3 install --ignore-installed nose --user; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/Users/travis/Library/Python/3.7/bin:$PATH; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip3 install virtualenv; fi
 
     # Remove clang symlinks from the travis base install.
     # The update-alternatives changes will not change the used clang version without this.
@@ -128,7 +75,6 @@ install:
 # Run brew cleanup at before_cache stage otherwise, the cache will grow
 # indefinitely as new package versions are released.
 before_cache:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew cleanup; fi
   - rm -f $HOME/.cache/pip/log/debug.log
 
 # Cache downloaded bottles (binary packages) to speed up our build process.
