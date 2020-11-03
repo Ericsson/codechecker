@@ -25,6 +25,17 @@ ACTIVATE_DEV_VENV ?= . venv_dev/bin/activate
 
 VENV_DEV_REQ_FILE ?= requirements_py/dev/requirements.txt
 
+DIST_DIR = $(CC_SERVER)/vue-cli/dist
+LATEST_COMMIT_FILE = $(DIST_DIR)/.build-commit
+
+ifneq (, $(shell which git))
+# Get the latest commit in which the vue-cli directory was changed.
+LATEST_COMMIT = $(shell git log -n 1 --pretty=format:%H $(CC_SERVER)/vue-cli)
+
+# Get the latest build command from the dist directory.
+LATEST_BUILD_COMMIT = $(shell cat ${LATEST_COMMIT_FILE} 2>/dev/null)
+endif
+
 include tests/Makefile
 include server/tests/Makefile
 include client/tests/Makefile
@@ -53,16 +64,17 @@ package_docs:
 	mkdir -p $(CC_BUILD_DOCS_DIR)/checker_md_docs && \
 	cp -r $(ROOT)/docs/web/checker_docs/* $(CC_BUILD_DOCS_DIR)/checker_md_docs/
 
-$(CC_SERVER)/vue-cli/dist:
+$(DIST_DIR):
 	cd $(CC_SERVER)/vue-cli && \
 	npm install && \
-	npm run-script build
+	npm run-script build && \
+	echo $(LATEST_COMMIT) > $(LATEST_COMMIT_FILE)
 
 # This target should be used from the top level Makefile to build the package
 # together with the analyzer part. This way we will not build plist-to-html
 # multiple times.
-package_web: check_codechecker_api_version package_dir_structure package_docs $(CC_SERVER)/vue-cli/dist
-	cp -r $(CC_SERVER)/vue-cli/dist/* $(CC_BUILD_WEB_DIR)
+package_web: check_codechecker_api_version check_dist package_dir_structure package_docs $(DIST_DIR)
+	cp -r $(DIST_DIR)/* $(CC_BUILD_WEB_DIR)
 
 build_plist_to_html:
 	$(MAKE) -C $(ROOT)/tools/plist_to_html build
@@ -103,12 +115,19 @@ package: package_plist_to_html package_report_hash package_web
 	cp $(ROOT)/LICENSE.TXT $(CC_BUILD_DIR)
 
 # This target will check that 'codecheck_api' and 'codechecker_api_shared'
-# python packages are up to date. If not, it will update these packages
-# and remove the JavaScript package from the vendor directory so the
-# 'package_vendor' target will download the required version.
+# python packages are up to date. If not, it will update these packages and
+# removes the dist directory to make sure the the UI part will be built again.
 check_codechecker_api_version:
 	if ! pip3 install -r ./requirements.txt 2>&1 | grep -q "Requirement already satisfied: codechecker_api"; then \
-		cd server/vue-cli && npm install; \
+		cd server/vue-cli && npm install && rm -rf $(DIST_DIR); \
+	fi
+
+# This target will check if the 'dist' directory exists and the vue-cli folder
+# is changed. In this case it will remove the dist directory so the UI will
+# be built again.
+check_dist:
+	if [ -d $(DIST_DIR) ] && [ "$(LATEST_COMMIT)" != "$(LATEST_BUILD_COMMIT)" ]; then \
+	  rm -rf $(DIST_DIR); \
 	fi
 
 clean_package: clean_plist_to_html
