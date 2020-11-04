@@ -32,6 +32,7 @@
           "accountBase" : null,
           "accountScope" : "subtree",
           "accountPattern" : "(&(objectClass=person)(sAMAccountName=$USN$))",
+          "user_dn_postfix_preference": null,
           "groupBase" : null,
           "groupScope" : "subtree",
           "groupPattern" : "(&(objectClass=group)(member=$USERDN$))",

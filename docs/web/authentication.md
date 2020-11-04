@@ -219,6 +219,17 @@ servers as it can elongate the authentication process.
 
    Example configuration: `(&(objectClass=person)(sAMAccountName=$USN$))`
 
+ * `user_dn_postfix_preference`
+
+    User DN postfix preference value can be used to select out one prefered
+    user DN if multiple DN entries are found by the LDAP search.
+    The configured value will be matched and the first matching will be used.
+    If only one DN was found this postfix matching will not be used.
+    If not set and multiple values are found the first value
+    in the search result list will be used.
+
+   Example configuration: `OU=people,DC=example,DC=com`
+
  * `groupBase`
 
    Root tree containing all the groups.
@@ -250,6 +261,7 @@ servers as it can elongate the authentication process.
       "accountBase" : null,
       "accountScope" : "subtree",
       "accountPattern" : "(&(objectClass=person)(sAMAccountName=$USN$))",
+      "user_dn_postfix_preference": null,
       "groupBase" : null,
       "groupScope" : "subtree",
       "groupPattern" : "(&(objectClass=group)(member=$USERDN$))",
