@@ -15,7 +15,9 @@
       <v-list-item
         v-for="v in value.split('\n')"
         :key="v"
-        :class="[ v[0] === '+' ? 'include' : 'exclude' ]"
+        :class="[
+          v[0] === '+' ? 'include' : v[0] === '-' ? 'exclude': 'other'
+        ]"
         dense
       >
         {{ v }}
@@ -48,6 +50,10 @@ export default {
 
     &.exclude {
       color: red !important;
+    }
+
+    &.other {
+      color: black !important;
     }
   }
 }

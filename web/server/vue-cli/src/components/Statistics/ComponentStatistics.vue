@@ -149,7 +149,7 @@ export default {
 
       return {
         component     : component.name,
-        value         : component.value,
+        value         : component.value || component.description,
         reports       : initDiffField(res[0]),
         unreviewed    : initDiffField(res[1]),
         confirmed     : initDiffField(res[2]),
@@ -166,7 +166,7 @@ export default {
 
       this.statistics = this.components.map(component => ({
         component     : component.name,
-        value         : component.value,
+        value         : component.value || component.description,
         reports       : initDiffField(undefined),
         unreviewed    : initDiffField(undefined),
         confirmed     : initDiffField(undefined),

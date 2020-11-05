@@ -64,6 +64,8 @@ from . import store_handler
 
 LOG = get_logger('server')
 
+GEN_OTHER_COMPONENT_NAME = "Other (auto-generated)"
+
 
 class CommentKindValue(object):
     USER = 0
@@ -317,32 +319,8 @@ def process_report_filter(session, run_ids, report_filter, cmp_data=None):
         AND.append(or_(*OR))
 
     if report_filter.componentNames:
-        OR = []
-
-        for component_name in report_filter.componentNames:
-            skip, include = get_component_values(session, component_name)
-
-            if skip and include:
-                include_q = select([File.id]) \
-                    .where(or_(*[
-                        File.filepath.like(conv(fp)) for fp in include])) \
-                    .distinct()
-
-                skip_q = select([File.id]) \
-                    .where(or_(*[
-                        File.filepath.like(conv(fp)) for fp in skip])) \
-                    .distinct()
-
-                OR.append(or_(File.id.in_(
-                    include_q.except_(skip_q))))
-            elif include:
-                include_q = [File.filepath.like(conv(fp)) for fp in include]
-                OR.append(or_(*include_q))
-            elif skip:
-                skip_q = [not_(File.filepath.like(conv(fp))) for fp in skip]
-                OR.append(and_(*skip_q))
-
-        AND.append(or_(*OR))
+        AND.append(process_source_component_filter(
+            session, report_filter.componentNames))
 
     if report_filter.bugPathLength is not None:
         min_path_length = report_filter.bugPathLength.min
@@ -355,6 +333,67 @@ def process_report_filter(session, run_ids, report_filter, cmp_data=None):
 
     filter_expr = and_(*AND)
     return filter_expr
+
+
+def process_source_component_filter(session, component_names):
+    """ Process source component filter.
+
+    The virtual auto-generated Other component will be handled separately and
+    the query part will be added to the filter.
+    """
+    OR = []
+
+    for component_name in component_names:
+        if component_name == GEN_OTHER_COMPONENT_NAME:
+            OR.append(or_(*get_other_source_component_file_query(session)))
+            continue
+
+        OR.append(or_(*get_source_component_file_query(session,
+                                                       component_name)))
+
+    return or_(*OR)
+
+
+def get_source_component_file_query(session, component_name):
+    """ Get filter query for a single source component. """
+    skip, include = get_component_values(session, component_name)
+
+    if skip and include:
+        include_q = select([File.id]) \
+            .where(or_(*[
+                File.filepath.like(conv(fp)) for fp in include])) \
+            .distinct()
+
+        skip_q = select([File.id]) \
+            .where(or_(*[
+                File.filepath.like(conv(fp)) for fp in skip])) \
+            .distinct()
+
+        return [File.id.in_(include_q.except_(skip_q))]
+    elif include:
+        return [File.filepath.like(conv(fp)) for fp in include]
+    elif skip:
+        return [not_(File.filepath.like(conv(fp))) for fp in skip]
+
+
+def get_other_source_component_file_query(session):
+    """ Get filter query for the auto-generated Others component. """
+    OR = []
+
+    component_names = session.query(SourceComponent.name).all()
+
+    # If there are no user defined source components we don't have to filter.
+    if not component_names:
+        return []
+
+    for (component_name, ) in component_names:
+        OR.extend(get_source_component_file_query(session, component_name))
+
+    q = select([File.id]) \
+        .where(or_(*OR)) \
+        .distinct()
+
+    return [File.id.notin_(q)]
 
 
 def get_open_reports_date_filter_query(tbl=Report, date=RunHistory.time):
@@ -2372,16 +2411,31 @@ class ThriftRequestHandler(object):
         with DBSession(self.__Session) as session:
             q = session.query(SourceComponent)
 
-            if component_filter and component_filter:
+            if component_filter:
                 sql_component_filter = [SourceComponent.name.ilike(conv(cf))
                                         for cf in component_filter]
                 q = q.filter(*sql_component_filter)
 
             q = q.order_by(SourceComponent.name)
 
-            return list([SourceComponentData(c.name,
-                                             c.value.decode('utf-8'),
-                                             c.description) for c in q])
+            components = [SourceComponentData(c.name, c.value.decode('utf-8'),
+                                              c.description) for c in q]
+
+            # If no filter is set or the auto generated component name can
+            # be found in the filter list we will return with this
+            # component too.
+            if not component_filter or \
+                    GEN_OTHER_COMPONENT_NAME in component_filter:
+                component_other = \
+                    SourceComponentData(GEN_OTHER_COMPONENT_NAME, None,
+                                        "Special auto-generated source "
+                                        "component which contains files that "
+                                        "are uncovered by the rest of the "
+                                        "components.")
+
+                components.append(component_other)
+
+            return components
 
     @exc_to_thrift_reqfail
     @timeit

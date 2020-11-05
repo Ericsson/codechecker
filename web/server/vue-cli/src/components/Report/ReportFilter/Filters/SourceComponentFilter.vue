@@ -111,7 +111,7 @@ export default {
               return {
                 id : component.name,
                 title: component.name,
-                value: component.value
+                value: component.value || component.description
               };
             }));
             this.loading = false;
