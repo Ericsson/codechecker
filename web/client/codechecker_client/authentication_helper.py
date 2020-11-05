@@ -9,34 +9,17 @@
 Helper for tha authentication api.
 """
 
-
-from thrift.transport import THttpClient
-from thrift.protocol import TJSONProtocol
-
 from codechecker_api.Authentication_v6 import codeCheckerAuthentication
 
-from codechecker_common.logger import get_logger
-
-from .credential_manager import SESSION_COOKIE_NAME
-from .product import create_product_url
+from .base_client_helper import BaseClientHelper
 from .thrift_call import ThriftClientCall
 
-LOG = get_logger('system')
 
+class ThriftAuthHelper(BaseClientHelper):
+    def __init__(self, protocol, host, port, uri, session_token=None):
+        super().__init__(protocol, host, port, uri, session_token)
 
-class ThriftAuthHelper(object):
-    def __init__(self, protocol, host, port, uri,
-                 session_token=None):
-        self.__host = host
-        self.__port = port
-        url = create_product_url(protocol, host, port, uri)
-        self.transport = THttpClient.THttpClient(url)
-        self.protocol = TJSONProtocol.TJSONProtocol(self.transport)
         self.client = codeCheckerAuthentication.Client(self.protocol)
-
-        if session_token:
-            headers = {'Cookie': SESSION_COOKIE_NAME + '=' + session_token}
-            self.transport.setCustomHeaders(headers)
 
     @ThriftClientCall
     def checkAPIVersion(self):

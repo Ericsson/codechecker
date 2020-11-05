@@ -190,15 +190,18 @@ def setup_product_client(protocol, host, port, auth_client=None,
     if not product_name:
         # Attach to the server-wide product service.
         product_client = product_helper.ThriftProductHelper(
-            protocol, host, port, '/v' + CLIENT_API + '/Products',
-            session_token)
+            protocol, host, port,
+            '/v' + CLIENT_API + '/Products',
+            session_token,
+            lambda: get_new_token(protocol, host, port, cred_manager))
     else:
         # Attach to the product service and provide a product name
         # as "viewpoint" from which the product service is called.
         product_client = product_helper.ThriftProductHelper(
             protocol, host, port,
             '/' + product_name + '/v' + CLIENT_API + '/Products',
-            session_token)
+            session_token,
+            lambda: get_new_token(protocol, host, port, cred_manager))
 
         # However, in this case, the specified product might not exist,
         # which means we can't communicate with the server orderly.
