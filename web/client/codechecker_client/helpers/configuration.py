@@ -11,8 +11,8 @@ Helper for the configuration thrift api.
 
 from codechecker_api.Configuration_v6 import configurationService
 
-from .base_client_helper import BaseClientHelper
-from .thrift_call import ThriftClientCall
+from codechecker_client.thrift_call import ThriftClientCall
+from .base import BaseClientHelper
 
 
 class ThriftConfigHelper(BaseClientHelper):

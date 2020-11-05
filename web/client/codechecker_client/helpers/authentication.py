@@ -11,8 +11,8 @@ Helper for tha authentication api.
 
 from codechecker_api.Authentication_v6 import codeCheckerAuthentication
 
-from .base_client_helper import BaseClientHelper
-from .thrift_call import ThriftClientCall
+from codechecker_client.thrift_call import ThriftClientCall
+from .base import BaseClientHelper
 
 
 class ThriftAuthHelper(BaseClientHelper):

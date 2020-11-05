@@ -11,8 +11,8 @@ Helper for the product thrift api.
 
 from codechecker_api.ProductManagement_v6 import codeCheckerProductService
 
-from .base_client_helper import BaseClientHelper
-from .thrift_call import ThriftClientCall
+from codechecker_client.thrift_call import ThriftClientCall
+from .base import BaseClientHelper
 
 
 class ThriftProductHelper(BaseClientHelper):

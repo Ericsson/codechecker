@@ -11,11 +11,11 @@ Helper functions for Thrift api calls.
 
 from codechecker_api.codeCheckerDBAccess_v6 import codeCheckerDBAccess
 
-from .base_client_helper import BaseClientHelper
-from .thrift_call import ThriftClientCall
+from codechecker_client.thrift_call import ThriftClientCall
+from .base import BaseClientHelper
 
 
-class ThriftClientHelper(BaseClientHelper):
+class ThriftResultsHelper(BaseClientHelper):
 
     def __init__(self, protocol, host, port, uri, session_token=None,
                  get_new_token=None):

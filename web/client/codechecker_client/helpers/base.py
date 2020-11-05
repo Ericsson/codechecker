@@ -13,8 +13,8 @@ Base Helper class for Thrift api calls.
 from thrift.transport import THttpClient
 from thrift.protocol import TJSONProtocol
 
-from .credential_manager import SESSION_COOKIE_NAME
-from .product import create_product_url
+from codechecker_client.credential_manager import SESSION_COOKIE_NAME
+from codechecker_client.product import create_product_url
 
 
 class BaseClientHelper(object):
