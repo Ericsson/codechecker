@@ -1458,19 +1458,19 @@ Statistics analysis feature arguments:
 `parse` prints analysis results to the standard output.
 
 ```
-usage: CodeChecker parse [-h] [-t {plist}] [-e {html,json,codeclimate}]
-                         [-o OUTPUT_PATH] [-c] [--suppress SUPPRESS]
-                         [--export-source-suppress] [--print-steps]
-                         [-i SKIPFILE]
+Usage: CodeChecker parse [-h] [--config CONFIG_FILE] [-t {plist}]
+                         [-e {html,json,codeclimate,gerrit}] [-o OUTPUT_PATH]
+                         [--suppress SUPPRESS] [--export-source-suppress]
+                         [--print-steps] [-i SKIPFILE]
                          [--trim-path-prefix [TRIM_PATH_PREFIX [TRIM_PATH_PREFIX ...]]]
                          [--review-status [REVIEW_STATUS [REVIEW_STATUS ...]]]
-                         [--verbose {info,debug,debug_analyzer}]
+                         [--verbose {info,debug_analyzer,debug}]
                          file/folder [file/folder ...]
 
-Parse and pretty-print the summary and results from one or more 'codechecker-
-analyze' result files. Bugs which are commented by using "false_positive",
-"suppress" and "intentional" source code comments will not be printed by the
-`parse` command.
+Parse and pretty-print the summary and results from one or more
+'codechecker-analyze' result files. Bugs which are commented by using
+"false_positive", "suppress" and "intentional" source code comments will not be
+printed by the `parse` command.
 
 positional arguments:
   file/folder           The analysis result files and/or folders containing
@@ -1511,20 +1511,20 @@ optional arguments:
                         should be omitted from analysis. Please consult the
                         User guide on how a Skipfile should be laid out.
   --trim-path-prefix [TRIM_PATH_PREFIX [TRIM_PATH_PREFIX ...]]
-                        Removes leading path from files which will be
-                        printed. So if you have /a/b/c/x.cpp and /a/b/c/y.cpp
-                        then by removing "/a/b/" prefix will print files like
-                        c/x.cpp and c/y.cpp. If multiple prefix is given, the
-                        longest match will be removed.
+                        Removes leading path from files which will be printed.
+                        So if you have /a/b/c/x.cpp and /a/b/c/y.cpp then by
+                        removing "/a/b/" prefix will print files like c/x.cpp
+                        and c/y.cpp. If multiple prefix is given, the longest
+                        match will be removed.
   --review-status [REVIEW_STATUS [REVIEW_STATUS ...]]
                         Filter results by review statuses. Valid values are:
                         confirmed, false_positive, intentional, suppress,
                         unreviewed (default: ['confirmed', 'unreviewed'])
-  --verbose {info,debug,debug_analyzer}
+  --verbose {info,debug_analyzer,debug}
                         Set verbosity level.
 
 export arguments:
-  -e {html,json,codeclimate}, --export {html,json,codeclimate}
+  -e {html,json,codeclimate,gerrit}, --export {html,json,codeclimate,gerrit}
                         Specify extra output format type.
                         'codeclimate' format can be used for Code Climate and
                         for GitLab integration. For more information see:
@@ -1532,13 +1532,16 @@ export arguments:
                         ec/analyzers/SPEC.md#data-types (default: None)
   -o OUTPUT_PATH, --output OUTPUT_PATH
                         Store the output in the given folder.
-  -c, --clean           DEPRECATED. Delete output results stored in the output
-                        directory. (By default, it would keep output files and
-                        overwrites only those that belongs to a plist file
-                        given by the input argument. (default: True)
 
 environment variables:
   CC_SEVERITY_MAP_FILE   Path of the checker-severity mapping config file.
+  CC_REPO_DIR         Root directory of the sources, i.e. the directory where
+                      the repository was cloned. Use it when generating gerrit
+                      output.
+  CC_REPORT_URL       URL where the report can be found. Use it when generating
+                      gerrit output.
+  CC_CHANGED_FILES    Path of changed files json from Gerrit. Use it when
+                      generating gerrit output.
                          Default: <package>/config/checker_severity_map.json
 ```
 

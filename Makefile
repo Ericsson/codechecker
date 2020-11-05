@@ -13,6 +13,7 @@ CC_WEB = $(CURRENT_DIR)/web
 CC_SERVER = $(CC_WEB)/server/
 CC_CLIENT = $(CC_WEB)/client/
 CC_ANALYZER = $(CURRENT_DIR)/analyzer
+CC_COMMON = $(CURRENT_DIR)/codechecker_common
 
 CC_TOOLS = $(CURRENT_DIR)/tools
 CC_ANALYZER_TOOLS = $(CC_ANALYZER)/tools
@@ -261,6 +262,7 @@ test_web_in_env:
 test_unit:
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) test_unit
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) test_unit
+	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_COMMON)/tests/unit test_unit
 
 test_unit_in_env:
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) test_unit_in_env

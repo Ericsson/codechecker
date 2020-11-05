@@ -26,17 +26,16 @@ def convert(reports: List[Report], severity_map: Dict[str, str]) -> Dict:
     changed_file_path = os.environ.get('CC_CHANGED_FILES')
     changed_files = __get_changed_files(changed_file_path)
 
-    gerrit_reports = __convert_reports(reports, repo_dir, report_url,
-                                       changed_files, changed_file_path,
-                                       severity_map)
-    return gerrit_reports
+    return __convert_reports(reports, repo_dir, report_url,
+                             changed_files, changed_file_path,
+                             severity_map)
 
 
 def __convert_reports(reports: List[Report],
-                      repo_dir: str,
-                      report_url: str,
+                      repo_dir: Union[str, None],
+                      report_url: Union[str, None],
                       changed_files: List[str],
-                      changed_file_path: str,
+                      changed_file_path: Union[str, None],
                       severity_map: Dict[str, str]) -> Dict:
     """Convert the given reports to gerrit json format.
 
@@ -60,18 +59,21 @@ def __convert_reports(reports: List[Report],
         check_name = report.check_name
         severity = severity_map.get(check_name, "UNSPECIFIED")
         file_name = report.file_path
-        checked_file = file_name \
-            + ':' + str(bug_line) + ":" + str(bug_col)
         check_msg = report.description
         source_line = report.line
+
         # Skip the report if it is not in the changed files.
         if changed_file_path and not \
                 any([file_name.endswith(c) for c in changed_files]):
             continue
 
         report_count += 1
+        # file_name can be without a path in the report.
         rel_file_path = os.path.relpath(file_name, repo_dir) \
-            if repo_dir else file_name
+            if repo_dir and os.path.dirname(file_name) != "" else file_name
+
+        checked_file = rel_file_path \
+            + ':' + str(bug_line) + ":" + str(bug_col)
 
         if rel_file_path not in review_comments:
             review_comments[rel_file_path] = []

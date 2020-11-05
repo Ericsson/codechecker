@@ -1181,6 +1181,11 @@ def handle_diff_results(args):
                 converted_reports.append(report)
         reports = converted_reports
 
+        repo_dir = os.environ.get('CC_REPO_DIR')
+        if repo_dir:
+            for report in reports:
+                report.trim_path_prefixes([repo_dir])
+
         if 'gerrit' in output_formats:
             gerrit_reports = gerrit.convert(reports, context.severity_map)
 
@@ -1197,8 +1202,7 @@ def handle_diff_results(args):
             output_formats.remove('gerrit')
 
         if 'codeclimate' in output_formats:
-            repo_dir = os.environ.get('CC_REPO_DIR')
-            cc_reports = codeclimate.convert(reports, [repo_dir])
+            cc_reports = codeclimate.convert(reports)
 
             codeclimate_issues_json = os.path.join(output_dir,
                                                    'codeclimate_issues.json')
