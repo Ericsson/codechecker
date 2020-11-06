@@ -1,5 +1,7 @@
 <template>
   <v-card flat>
+    <slot name="prepend-toolbar" />
+
     <v-toolbar
       v-if="search"
       class="pa-2"
@@ -17,6 +19,8 @@
         @input="filter"
       />
     </v-toolbar>
+
+    <slot name="append-toolbar" />
 
     <v-list
       class="pa-2 overflow-y-auto"
@@ -58,43 +62,53 @@
         active-class="light-blue--text"
         lighten-4
       >
-        <v-list-item
-          v-for="item in items"
+        <v-hover
+          v-for="item in formattedItems"
           :key="item.id"
-          :value="item.id"
-          class="my-1"
-          :disabled="!multiple && selected === item.id"
+          v-slot:default="{ hover }"
         >
-          <template v-slot:default="{ active }">
-            <v-list-item-action class="ma-1 mr-5">
-              <v-checkbox
-                :input-value="active"
-                color="#28a745"
+          <v-list-item
+            :value="item.id"
+            class="my-1"
+            :disabled="!multiple && selected === item.id"
+          >
+            <template v-slot:default="{ active }">
+              <v-list-item-action class="ma-1 mr-5">
+                <v-checkbox
+                  :input-value="active"
+                  color="#28a745"
+                />
+              </v-list-item-action>
+
+              <v-list-item-icon class="ma-1 mr-2">
+                <slot name="icon" :item="item" />
+              </v-list-item-icon>
+
+              <v-list-item-content>
+                <slot name="title" :item="item">
+                  <v-list-item-title :title="item.title">
+                    {{ item.title }}
+                  </v-list-item-title>
+                </slot>
+              </v-list-item-content>
+
+              <slot
+                name="prepend-count"
+                :item="item"
+                :hover="hover"
               />
-            </v-list-item-action>
 
-            <v-list-item-icon class="ma-1 mr-2">
-              <slot name="icon" :item="item" />
-            </v-list-item-icon>
-
-            <v-list-item-content>
-              <slot name="title" :item="item">
-                <v-list-item-title :title="item.title">
-                  {{ item.title }}
-                </v-list-item-title>
-              </slot>
-            </v-list-item-content>
-
-            <v-chip
-              v-if="item.count !== undefined"
-              color="#878d96"
-              outlined
-              small
-            >
-              {{ item.count }}
-            </v-chip>
-          </template>
-        </v-list-item>
+              <v-chip
+                v-if="item.count !== undefined"
+                color="#878d96"
+                outlined
+                small
+              >
+                {{ item.count }}
+              </v-chip>
+            </template>
+          </v-list-item>
+        </v-hover>
       </v-list-item-group>
 
       <v-list-item v-else>
@@ -105,15 +119,15 @@
           No items
         </slot>
       </v-list-item>
-
-      <div
-        v-if="limit"
-        class="text-center text--secondary"
-      >
-        Showed <span v-if="limit === items.length">first</span>
-        <i>{{ items.length }}</i> items.
-      </div>
     </v-list>
+
+    <div
+      v-if="limit"
+      class="text-center text--secondary"
+    >
+      <span v-if="limit === items.length">Only the first</span>
+      <i>{{ items.length }}</i> item(s) shown.
+    </div>
 
     <v-card-actions>
       <v-spacer />
@@ -152,6 +166,7 @@ export default {
   name: "SelectOptionItems",
   props: {
     items: { type: Array, required: true },
+    format: { type: Function, default: null },
     limit: { type: Number, default: null },
     selectedItems: { type: Array, required: true },
     multiple: { type: Boolean, default: true },
@@ -165,6 +180,12 @@ export default {
   },
 
   computed: {
+    formattedItems() {
+      if (!this.format) return this.items;
+
+      return this.items.map(i => this.format(i));
+    },
+
     selected: {
       get() {
         const ids = this.selectedItems.map(item => item.id);

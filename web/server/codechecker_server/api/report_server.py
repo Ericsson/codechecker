@@ -2121,8 +2121,7 @@ class ThriftRequestHandler(object):
             filter_expression = process_report_filter(session, run_ids,
                                                       report_filter, cmp_data)
 
-            tag_run_ids = session.query(RunHistory.run_id.distinct()) \
-                .filter(RunHistory.version_tag.isnot(None)) \
+            tag_run_ids = session.query(RunHistory.run_id.distinct())
 
             if run_ids:
                 tag_run_ids = tag_run_ids.filter(
@@ -2149,14 +2148,12 @@ class ThriftRequestHandler(object):
                                     count_expr.label('report_count')) \
                 .outerjoin(report_cnt_q,
                            report_cnt_q.c.run_id == RunHistory.run_id) \
-                .filter(RunHistory.version_tag.isnot(None)) \
                 .filter(get_open_reports_date_filter_query(report_cnt_q.c)) \
                 .group_by(RunHistory.id) \
                 .subquery()
 
             tag_q = session.query(RunHistory.run_id.label('run_id'),
-                                  RunHistory.id.label('run_history_id')) \
-                .filter(RunHistory.version_tag.isnot(None))
+                                  RunHistory.id.label('run_history_id'))
 
             if run_ids:
                 tag_q = tag_q.filter(RunHistory.run_id.in_(run_ids))
@@ -2178,7 +2175,6 @@ class ThriftRequestHandler(object):
                 .outerjoin(Run, Run.id == tag_q.c.run_id) \
                 .outerjoin(count_q,
                            count_q.c.run_history_id == RunHistory.id) \
-                .filter(RunHistory.version_tag.isnot(None)) \
                 .group_by(tag_q.c.run_history_id, RunHistory.time) \
                 .order_by(RunHistory.time.desc())
 
@@ -2186,13 +2182,12 @@ class ThriftRequestHandler(object):
                 q = q.limit(limit).offset(offset)
 
             for _, run_id, run_name, tag_id, version_time, tag, count in q:
-                if tag:
-                    results.append(RunTagCount(id=tag_id,
-                                               time=str(version_time),
-                                               name=tag,
-                                               runName=run_name,
-                                               runId=run_id,
-                                               count=count if count else 0))
+                results.append(RunTagCount(id=tag_id,
+                                           time=str(version_time),
+                                           name=tag,
+                                           runName=run_name,
+                                           runId=run_id,
+                                           count=count if count else 0))
         return results
 
     @exc_to_thrift_reqfail

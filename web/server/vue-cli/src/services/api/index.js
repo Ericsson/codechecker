@@ -1,5 +1,5 @@
 import authService from "./auth.service";
-import ccService from "./cc.service";
+import ccService, { extractTagWithRunName } from "./cc.service";
 import confService from "./config.service";
 import {
   eventHub,
@@ -13,6 +13,7 @@ export {
   ccService,
   confService,
   eventHub,
+  extractTagWithRunName,
   handleThriftError,
   prodService,
   serverInfoService

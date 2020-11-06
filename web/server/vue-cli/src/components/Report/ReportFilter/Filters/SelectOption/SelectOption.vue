@@ -174,6 +174,16 @@ export default {
 
   mounted() {
     this.bus.$on("update", () => this.reloadItems = true);
+
+    this.bus.$on("select", predicate => {
+      const item = this.items.find(predicate);
+      if (item &&
+          this.prevSelectedItems.findIndex(i => i.id === item.id) === -1
+      ) {
+        // The item is not selected yet.
+        this.prevSelectedItems.push(item);
+      }
+    });
   },
 
   methods: {
@@ -198,6 +208,7 @@ export default {
     cancel() {
       this.cancelled = true;
       this.menu = false;
+      this.$emit("cancel");
     },
 
     select(selectedItems) {

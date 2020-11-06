@@ -4,11 +4,26 @@ import {
   Order,
   ReportFilter,
   RunFilter,
+  RunHistoryFilter,
   SortMode,
   SortType
 } from "@cc/report-server-types";
 
 import { BaseService, handleThriftError } from "./_base.service";
+
+function extractTagWithRunName(runWithTagName) {
+  const index = runWithTagName.indexOf(":");
+
+  let runName, tagName;
+  if (index !== -1) {
+    runName = runWithTagName.substring(0, index);
+    tagName = runWithTagName.substring(index + 1);
+  } else {
+    tagName = runWithTagName;
+  }
+
+  return { runName, tagName };
+}
 
 class CodeCheckerService extends BaseService {
   constructor() {
@@ -53,8 +68,43 @@ class CodeCheckerService extends BaseService {
         }));
     });
   }
+
+  getRunIds(runName) {
+    const runFilter = new RunFilter({ names: [ runName ] });
+    const limit = null;
+    const offset = null;
+    const sortMode = null;
+
+    return new Promise(resolve => {
+      this.getClient().getRunData(runFilter, limit, offset, sortMode,
+        handleThriftError(runs => {
+          resolve(runs.map(run => run.runId.toNumber() ));
+        }));
+    });
+  }
+
+  async getTags(runIds, tagIds, tagNames, stored) {
+    const limit = null;
+    const offset = 0;
+
+    const runHistoryFilter = new RunHistoryFilter({
+      tagIds,
+      tagNames,
+      stored
+    });
+
+    return new Promise(resolve => {
+      this.getClient().getRunHistory(runIds, limit, offset,
+        runHistoryFilter, handleThriftError(res => {
+          resolve(res);
+        }));
+    });
+  }
 }
 
 const ccService = new CodeCheckerService();
 
-export default ccService;
+export {
+  ccService as default,
+  extractTagWithRunName
+};
