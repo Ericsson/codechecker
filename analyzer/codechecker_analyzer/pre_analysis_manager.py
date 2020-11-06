@@ -200,7 +200,10 @@ def run_pre_analysis(actions, context, clangsa_config,
                             ctu_data,
                             statistics_data)
                            for build_action in actions]
-
+        # FIXME: Ensure all shared data structures are wrapped in manager
+        #        proxy objects before passing them to other processes via
+        #        map_async.
+        #        Note that even deep-copying is known to be insufficient.
         pool.map_async(pre_analyze, collect_actions)
         pool.close()
     except Exception:

@@ -743,6 +743,11 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
             # while map or map_async function is running.
             # It is a python bug, this does not happen if a timeout is
             # specified, then receive the interrupt immediately.
+
+            # FIXME: Ensure all shared data structures are wrapped in manager
+            #        proxy objects before passing them to other processes via
+            #        map_async.
+            #        Note that even deep-copying is known to be insufficient.
             pool.map_async(check,
                            analyzed_actions,
                            1,
