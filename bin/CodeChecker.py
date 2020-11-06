@@ -137,10 +137,14 @@ output.
 
                 args = parser.parse_args()
 
-        try:
+        if 'func' in args:
             args.func(args)
-        except AttributeError:
-            parser.print_help()
+        else:
+            # Print the help message of the current command if no subcommand
+            # is given.
+            sys.argv.append("--help")
+            args = parser.parse_args()
+            args.func(args)
 
     except KeyboardInterrupt as kb_err:
         print(str(kb_err))
