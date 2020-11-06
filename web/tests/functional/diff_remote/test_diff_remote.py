@@ -588,6 +588,17 @@ class DiffRemote(unittest.TestCase):
                                                  False)
         self.assertEqual(len(diff_res), 26)
 
+    def test_only_open_report_date_filter_is_set(self):
+        """ Test if only the open reports date filter is set for the baseline,
+        and the date is really old there will be no reports.
+        """
+        d = datetime(1992, 1, 1)
+        tag_filter = ReportFilter(openReportsDate=int(d.timestamp()))
+        res = self._cc_client.getRunResults(None, 500, 0, [], tag_filter,
+                                            None, False)
+
+        self.assertEqual(len(res), 0)
+
     def test_diff_open_reports_date(self):
         """Test for diff results by open reports date."""
         run_id = self._update_runid
