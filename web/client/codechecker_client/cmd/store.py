@@ -847,6 +847,8 @@ def main(args):
             print(ex)
             import traceback
             traceback.print_stack()
+            LOG.error("Failed to assemble zip file.")
+            sys.exit(1)
 
         zip_size = os.stat(zip_file).st_size
         LOG.debug("Assembling zip done, size is %s",
@@ -857,8 +859,12 @@ def main(args):
                       sizeof_fmt(MAX_UPLOAD_SIZE))
             sys.exit(1)
 
+        b64zip = ""
         with open(zip_file, 'rb') as zf:
             b64zip = base64.b64encode(zf.read()).decode("utf-8")
+        if len(b64zip) == 0:
+            LOG.info("Zip content is empty, nothing to store!")
+            sys.exit(1)
 
         context = webserver_context.get_context()
 

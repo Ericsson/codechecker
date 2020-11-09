@@ -2,7 +2,7 @@
 
 CURRENT_DIR = $(shell pwd)
 # Root of the repository.
-REPO_ROOT = $(CURRENT_DIR)/../../../
+REPO_ROOT ?= REPO_ROOT=$(CURRENT_DIR)/../../../
 
 # Nose test runner configuration options.
 NOSECFG = --config .noserc
