@@ -23,9 +23,9 @@ from codechecker_common.logger import get_logger
 from codechecker_web.shared import env
 from codechecker_web.shared.version import CLIENT_API
 
-from . import authentication_helper
-from . import product_helper
-from . import thrift_helper
+from codechecker_client.helpers.authentication import ThriftAuthHelper
+from codechecker_client.helpers.product import ThriftProductHelper
+from codechecker_client.helpers.results import ThriftResultsHelper
 from .credential_manager import UserCredentials
 from .product import split_product_url
 
@@ -48,10 +48,9 @@ def setup_auth_client(protocol, host, port, session_token=None):
     Setup the Thrift authentication client. Returns the client object and the
     session token for the session.
     """
-    client = authentication_helper.ThriftAuthHelper(protocol, host, port,
-                                                    '/v' + CLIENT_API +
-                                                    '/Authentication',
-                                                    session_token)
+    client = ThriftAuthHelper(protocol, host, port,
+                              '/v' + CLIENT_API + '/Authentication',
+                              session_token)
 
     return client
 
@@ -62,11 +61,8 @@ def login_user(protocol, host, port, username, login=False):
     If login is False the user will be logged out.
     """
     session = UserCredentials()
-    auth_client = authentication_helper.ThriftAuthHelper(protocol, host,
-                                                         port,
-                                                         '/v' +
-                                                         CLIENT_API +
-                                                         '/Authentication')
+    auth_client = ThriftAuthHelper(protocol, host, port,
+                                   '/v' + CLIENT_API + '/Authentication')
 
     if not login:
         logout_done = auth_client.destroySession()
@@ -189,16 +185,19 @@ def setup_product_client(protocol, host, port, auth_client=None,
 
     if not product_name:
         # Attach to the server-wide product service.
-        product_client = product_helper.ThriftProductHelper(
-            protocol, host, port, '/v' + CLIENT_API + '/Products',
-            session_token)
+        product_client = ThriftProductHelper(
+            protocol, host, port,
+            '/v' + CLIENT_API + '/Products',
+            session_token,
+            lambda: get_new_token(protocol, host, port, cred_manager))
     else:
         # Attach to the product service and provide a product name
         # as "viewpoint" from which the product service is called.
-        product_client = product_helper.ThriftProductHelper(
+        product_client = ThriftProductHelper(
             protocol, host, port,
             '/' + product_name + '/v' + CLIENT_API + '/Products',
-            session_token)
+            session_token,
+            lambda: get_new_token(protocol, host, port, cred_manager))
 
         # However, in this case, the specified product might not exist,
         # which means we can't communicate with the server orderly.
@@ -218,7 +217,7 @@ def get_new_token(protocol, host, port, cred_manager):
     return perform_auth_for_handler(auth_client, host, port, cred_manager)
 
 
-def setup_client(product_url) -> thrift_helper.ThriftClientHelper:
+def setup_client(product_url) -> ThriftResultsHelper:
     """Setup the Thrift Product or Service client and
     check API version and authentication needs.
     """
@@ -241,10 +240,8 @@ def setup_client(product_url) -> thrift_helper.ThriftClientHelper:
     LOG.debug("Initializing client connecting to %s:%d/%s done.",
               host, port, product_name)
 
-    client = thrift_helper.ThriftClientHelper(
+    return ThriftResultsHelper(
         protocol, host, port,
         '/' + product_name + '/v' + CLIENT_API + '/CodeCheckerService',
         session_token,
         lambda: get_new_token(protocol, host, port, cred_manager))
-
-    return client
