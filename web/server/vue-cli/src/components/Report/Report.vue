@@ -191,9 +191,17 @@ import Vue from "vue";
 import CodeMirror from "codemirror";
 import "codemirror/lib/codemirror.css";
 import "codemirror/mode/clike/clike.js";
+
+// Import libaries for code highlights.
 import "codemirror/addon/scroll/annotatescrollbar.js";
 import "codemirror/addon/search/match-highlighter.js";
 import "codemirror/addon/search/matchesonscrollbar.js";
+
+// Import libaries to support code search.
+import "codemirror/addon/dialog/dialog.js";
+import "codemirror/addon/dialog/dialog.css";
+import "codemirror/addon/search/search.js";
+import "codemirror/addon/search/searchcursor.js";
 
 import { jsPlumb } from "jsplumb";
 
@@ -303,6 +311,14 @@ export default {
     }
   },
 
+  created() {
+    document.addEventListener("keydown", this.findText);
+  },
+
+  destoryed() {
+    document.removeEventListener("keydown", this.findText);
+  },
+
   mounted() {
     this.editor = CodeMirror.fromTextArea(this.$refs.editor, {
       lineNumbers: true,
@@ -393,6 +409,16 @@ export default {
       this.jumpTo(report.line.toNumber(), 0);
       this.highlightReport(report);
       this.loading = false;
+    },
+
+    findText(evt) {
+      if (evt.ctrlKey && evt.keyCode === 13) // Enter
+        this.editor.execCommand("findPersistentNext");
+
+      if (evt.ctrlKey && evt.keyCode === 70) { // Ctrl-f
+        evt.preventDefault();
+        this.editor.execCommand("findPersistent");
+      }
     },
 
     highlightReportStep(stepId) {
@@ -716,7 +742,7 @@ export default {
     font-size: initial;
     line-height: initial;
 
-    ::v-deep .cm-matchhighlight {
+    ::v-deep .cm-matchhighlight:not(.cm-searching) {
       background-color: lightgreen;
     }
 
