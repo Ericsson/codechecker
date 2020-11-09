@@ -189,6 +189,12 @@
 import Vue from "vue";
 
 import CodeMirror from "codemirror";
+import "codemirror/lib/codemirror.css";
+import "codemirror/mode/clike/clike.js";
+import "codemirror/addon/scroll/annotatescrollbar.js";
+import "codemirror/addon/search/match-highlighter.js";
+import "codemirror/addon/search/matchesonscrollbar.js";
+
 import { jsPlumb } from "jsplumb";
 
 import { format } from "date-fns";
@@ -304,7 +310,8 @@ export default {
       mode: "text/x-c++src",
       gutters: [ "CodeMirror-linenumbers", "bugInfo" ],
       extraKeys: {},
-      viewportMargin: 500
+      viewportMargin: 500,
+      highlightSelectionMatches : { showToken: /\w/, annotateScrollbar: true }
     });
     this.editor.setSize("100%", "100%");
 
@@ -708,6 +715,14 @@ export default {
   .editor {
     font-size: initial;
     line-height: initial;
+
+    ::v-deep .cm-matchhighlight {
+      background-color: lightgreen;
+    }
+
+    ::v-deep .CodeMirror-selection-highlight-scrollbar {
+      background-color: green;
+    }
   }
 }
 
