@@ -118,6 +118,7 @@ The following tools are supported:
 | **TypeScript** | [TSLint](/tools/report-converter/README.md#tslint)    |
 | **Go**         | [Golint](/tools/report-converter/README.md#golint)    |
 | **Markdown**   | [Markdownlint](/tools/report-converter/README.md#markdownlint)    |
+|                | [Sphinx](/tools/report-converter/Readme.md#sphinx)    |
 
 
 For details see 
