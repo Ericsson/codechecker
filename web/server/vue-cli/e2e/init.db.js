@@ -63,14 +63,7 @@ const RUNS = [
   }
 ];
 
-async function login (username) {
-  const cmd = [
-    "CodeChecker", "cmd", "login", username,
-    "--url", url
-  ].join(" ");
-
-  console.log("Login command: ", cmd);
-
+function runCommand(cmd) {
   execSync(cmd, {
     stdio: "inherit",
     env: {
@@ -81,6 +74,17 @@ async function login (username) {
   });
 }
 
+async function login (username) {
+  const cmd = [
+    "CodeChecker", "cmd", "login", username,
+    "--url", url
+  ].join(" ");
+
+  console.log("Login command: ", cmd);
+
+  runCommand(cmd);
+}
+
 function logout() {
   const cmd = [
     "CodeChecker", "cmd", "login", "-d",
@@ -89,7 +93,7 @@ function logout() {
 
   console.log("Logout command: ", cmd);
 
-  execSync(cmd, { stdio: "inherit" });
+  runCommand(cmd);
 }
 
 function addProduct({ endpoint, name, description }) {
@@ -103,7 +107,7 @@ function addProduct({ endpoint, name, description }) {
 
   console.log("Add product command: ", cmd);
 
-  execSync(cmd, { stdio: "inherit" });
+  runCommand(cmd);
 }
 
 function store({ name, output, tag, description, url }) {
@@ -124,7 +128,7 @@ function store({ name, output, tag, description, url }) {
 
   console.log("Store command: ", cmd);
 
-  execSync(cmd, { stdio: "inherit" });
+  runCommand(cmd);
 }
 
 login("root");
