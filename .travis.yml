@@ -99,7 +99,6 @@ addons:
             - gcc-multilib
             - libc6-dev-i386
             - libpq-dev
-            - thrift-compiler
             - clang-11
             - clang-tidy-11
     postgresql: "9.6"
