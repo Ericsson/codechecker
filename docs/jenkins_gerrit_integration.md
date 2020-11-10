@@ -200,9 +200,16 @@ CodeChecker log -b "build command" -o compile_cmd.json
 # Run the tests. If this fails, the result will be verified -1.
 make tests
 
+export CC_CHANGED_FILES="$WORKSPACE/files-changed"
+export CC_SKIPFILE="$WORKSPACE/skipfile"
+
+# gerrit_changed_files_to_skipfile.py script can be found in the bin directory in the CodeChecker package.
+python gerrit_changed_files_to_skipfile.py $CC_CHANGED_FILES $CC_SKIPFILE
+
 # Check the project.
 CodeChecker analyze \
   -e sensitive \
+  --ignore $CC_SKIPFILE \
   -j 16 \
   compile_cmd.json \
   -o cc_reports
@@ -213,7 +220,6 @@ CodeChecker analyze \
 # gerrit_review.json file in this directory that is later going to be loaded
 # as an Environment Variable.
 CC_REPORT_URL="http://your_jenkins_address/userContent/$JOB_NAME/$BUILD_NUMBER/index.html" \
-CC_CHANGED_FILES="$WORKSPACE/files-changed" \
 CC_REPO_DIR="$WORKSPACE/repo_dir" \
 CodeChecker cmd diff \
   -b clangsa_checkers-merge \
@@ -222,6 +228,11 @@ CodeChecker cmd diff \
   --new \
   -o html gerrit \
   -e $JENKINS_HOME/userContent/$JOB_NAME/$BUILD_NUMBER
+
+# Craft the review message and write it into a file,
+# that is later going to be loaded as an Environment Variable.
+echo DATA_TO_POST=\\ > review
+CodeChecker parse --ignore $CC_SKIPFILE cc_reports -e gerrit >> review
 ```
 
 ### Inject environment variable <a name="inject-environment-variable"></a>
