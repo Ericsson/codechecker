@@ -375,12 +375,15 @@ checker configuration:
                         labeled: 'profile:security' or 'guideline:sei-cert'.
   --enable-all          Force the running analyzers to use almost every
                         checker available. The checker groups 'alpha.',
-                        'debug.' and 'osx.' (on Linux) are NOT enabled
-                        automatically and must be EXPLICITLY specified.
-                        WARNING! Enabling all checkers might result in the
-                        analysis losing precision and stability, and could
-                        even result in a total failure of the analysis. USE
-                        WISELY AND AT YOUR OWN RISK!
+                        'debug.','osx.', 'abseil-', 'android-', 'darwin-',
+                        'objc-', 'cppcoreguidelines-', 'fuchsia.', 'fuchsia-',
+                        'hicpp-', 'llvm-', 'llvmlibc-', 'google-', 'zircon-',
+                        'osx.' (on Linux) are NOT enabled automatically and
+                        must be EXPLICITLY specified. WARNING! Enabling all
+                        checkers might result in the analysis losing precision
+                        and stability, and could even result in a total
+                        failure of the analysis. USE WISELY AND AT YOUR OWN
+                        RISK!
 
 output arguments:
   --print-steps         Print the steps the analyzers took in finding the
@@ -1258,12 +1261,15 @@ checker configuration:
                         labeled: 'profile:security' or 'guideline:sei-cert'.
   --enable-all          Force the running analyzers to use almost every
                         checker available. The checker groups 'alpha.',
-                        'debug.' and 'osx.' (on Linux) are NOT enabled
-                        automatically and must be EXPLICITLY specified.
-                        WARNING! Enabling all checkers might result in the
-                        analysis losing precision and stability, and could
-                        even result in a total failure of the analysis. USE
-                        WISELY AND AT YOUR OWN RISK!
+                        'debug.','osx.', 'abseil-', 'android-', 'darwin-',
+                        'objc-', 'cppcoreguidelines-', 'fuchsia.', 'fuchsia-',
+                        'hicpp-', 'llvm-', 'llvmlibc-', 'google-', 'zircon-',
+                        'osx.' (on Linux) are NOT enabled automatically and
+                        must be EXPLICITLY specified. WARNING! Enabling all
+                        checkers might result in the analysis losing precision
+                        and stability, and could even result in a total
+                        failure of the analysis. USE WISELY AND AT YOUR OWN
+                        RISK!
 ```
 
 Both `--enable` and `--disable` take individual checkers, checker groups or

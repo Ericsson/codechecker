@@ -189,11 +189,15 @@ class AnalyzerConfigHandler(object, metaclass=ABCMeta):
                 self.set_checker_enabled(checker)
 
         # If enable_all is given, almost all checkers should be enabled.
+        disabled_groups = ["alpha.", "debug.", "osx.", "abseil-", "android-",
+                           "darwin-", "objc-", "cppcoreguidelines-",
+                           "fuchsia.", "fuchsia-", "hicpp-", "llvm-",
+                           "llvmlibc-", "google-", "zircon-"]
         if enable_all:
-            for checker_name, enabled in checkers:
-                if not checker_name.startswith("alpha.") and \
-                        not checker_name.startswith("debug.") and \
-                        not checker_name.startswith("osx."):
+            for checker_name, _ in checkers:
+                if not any(checker_name.startswith(d_grp) for d_grp in
+                           disabled_groups):
+
                     # There are a few exceptions, though, which still need to
                     # be manually enabled by the user: alpha and debug.
                     self.set_checker_enabled(checker_name)

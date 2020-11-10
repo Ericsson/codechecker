@@ -667,7 +667,12 @@ output of "CodeChecker checkers --guideline" command.""")
                                default=argparse.SUPPRESS,
                                help="Force the running analyzers to use "
                                     "almost every checker available. The "
-                                    "checker groups 'alpha.', 'debug.' and "
+                                    "checker groups 'alpha.', 'debug.',"
+                                    "'osx.', 'abseil-', 'android-', "
+                                    "'darwin-', 'objc-', "
+                                    "'cppcoreguidelines-', 'fuchsia.', "
+                                    "'fuchsia-', 'hicpp-', 'llvm-', "
+                                    "'llvmlibc-', 'google-', 'zircon-', "
                                     "'osx.' (on Linux) are NOT enabled "
                                     "automatically and must be EXPLICITLY "
                                     "specified. WARNING! Enabling all "
