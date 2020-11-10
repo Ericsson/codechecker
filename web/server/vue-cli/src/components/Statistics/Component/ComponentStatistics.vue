@@ -2,7 +2,7 @@
   <v-container fluid>
     <v-row>
       <v-col>
-        <h3 class="title primary--text">
+        <h3 class="title primary--text mb-2">
           <v-btn
             color="primary"
             outlined
@@ -40,13 +40,16 @@ import {
 } from "@cc/report-server-types";
 import { ToCSV } from "@/mixins";
 
-import BaseStatistics from "./BaseStatistics";
-import ComponentStatisticsTable from "./ComponentStatisticsTable";
 import {
-  getComponentStatistics,
+  BaseStatistics,
   getComponents,
   initDiffField
-} from "./StatisticsHelper";
+} from "@/components/Statistics";
+import {
+  getComponentStatistics
+} from "@/components/Statistics/StatisticsHelper";
+
+import ComponentStatisticsTable from "./ComponentStatisticsTable";
 
 export default {
   name: "ComponentStatistics",
@@ -55,17 +58,15 @@ export default {
   },
   mixins: [ BaseStatistics, ToCSV ],
 
-  props: {
-    namespace: { type: String, required: true }
-  },
-
   data() {
     return {
       ReviewStatus,
       loading: false,
       statistics: [],
       components: [],
-      statisticsFilters: {}
+      statisticsFilters: {},
+      fieldsToUpdate: [ "reports", "unreviewed", "confirmed",
+        "falsePositive", "intentional" ]
     };
   },
 
@@ -73,13 +74,16 @@ export default {
     downloadCSV() {
       const data = [
         [
-          "Component", "All reports", "Unreviewed", "Confirmed bug",
-          "False positive", "Intentional"
+          "Component", "Unreviewed", "Confirmed bug",
+          "Outstanding reports (Unreviewed + Confirmed)", "False positive",
+          "Intentional", "Suppressed reports (False positive + Intentional)",
+          "All reports"
         ],
         ...this.statistics.map(stat => {
           return [
-            stat.component, stat.reports, stat.unreviewed, stat.confirmed,
-            stat.falsePositive, stat.intentional
+            stat.component, stat.unreviewed.count, stat.confirmed.count,
+            stat.outstanding.count, stat.falsePositive.count,
+            stat.intentional.count, stat.suppressed.count, stat.reports.count
           ];
         })
       ];
@@ -95,24 +99,25 @@ export default {
       if (!this.cmpData) return;
 
       return Promise.all(this.components.map(component => {
-        const fieldToUpdate = [ "reports", "unreviewed", "confirmed",
-          "falsePositive", "intentional" ];
-
         const q1 = this.getNewReports(component).then(newReports => {
           const row = this.statistics.find(s =>
             s.component === component.name);
 
-          if (row)
-            fieldToUpdate.forEach(f => row[f].new = newReports[f].count);
+          if (row) {
+            this.fieldsToUpdate.forEach(f => row[f].new = newReports[f].count);
+            this.updateCalculatedFields(row, newReports, "new");
+          }
         });
 
         const q2 = this.getResolvedReports(component).then(resolvedReports => {
           const row = this.statistics.find(s =>
             s.component === component.name);
 
-          if (row)
-            fieldToUpdate.forEach(f =>
+          if (row) {
+            this.fieldsToUpdate.forEach(f =>
               row[f].resolved = resolvedReports[f].count);
+            this.updateCalculatedFields(row, resolvedReports, "resolved");
+          }
         });
 
         return Promise.all([ q1, q2 ]);
@@ -143,6 +148,20 @@ export default {
       return this.getStatistics(component, runIds, reportFilter, cmpData);
     },
 
+    initStatistics(components) {
+      this.statistics = components.map(component => ({
+        component     : component.name,
+        value         : component.value || component.description,
+        reports       : initDiffField(undefined),
+        unreviewed    : initDiffField(undefined),
+        confirmed     : initDiffField(undefined),
+        outstanding   : initDiffField(undefined),
+        falsePositive : initDiffField(undefined),
+        intentional   : initDiffField(undefined),
+        suppressed    : initDiffField(undefined)
+      }));
+    },
+
     async getStatistics(component, runIds, reportFilter, cmpData) {
       const res = await getComponentStatistics(component, runIds, reportFilter,
         cmpData);
@@ -150,11 +169,13 @@ export default {
       return {
         component     : component.name,
         value         : component.value || component.description,
-        reports       : initDiffField(res[0]),
-        unreviewed    : initDiffField(res[1]),
-        confirmed     : initDiffField(res[2]),
-        falsePositive : initDiffField(res[3]),
-        intentional   : initDiffField(res[4])
+        reports       : initDiffField(res.reports),
+        unreviewed    : initDiffField(res.unreviewed),
+        confirmed     : initDiffField(res.confirmed),
+        outstanding   : initDiffField(res.outstanding),
+        falsePositive : initDiffField(res.falsePositive),
+        intentional   : initDiffField(res.intentional),
+        suppressed    : initDiffField(res.suppressed)
       };
     },
 
@@ -163,16 +184,7 @@ export default {
       this.statistics = [];
 
       this.components = await getComponents();
-
-      this.statistics = this.components.map(component => ({
-        component     : component.name,
-        value         : component.value || component.description,
-        reports       : initDiffField(undefined),
-        unreviewed    : initDiffField(undefined),
-        confirmed     : initDiffField(undefined),
-        falsePositive : initDiffField(undefined),
-        intentional   : initDiffField(undefined)
-      }));
+      this.initStatistics(this.components);
 
       this.statisticsFilters = this.getStatisticsFilters();
       const { runIds, reportFilter, cmpData } = this.statisticsFilters;

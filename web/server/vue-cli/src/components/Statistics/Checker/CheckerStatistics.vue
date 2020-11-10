@@ -2,7 +2,7 @@
   <v-container fluid>
     <v-row>
       <v-col>
-        <h3 class="title primary--text">
+        <h3 class="title primary--text mb-2">
           <v-btn
             color="primary"
             outlined
@@ -32,9 +32,11 @@
 
 <script>
 import { ReviewStatusMixin, SeverityMixin, ToCSV } from "@/mixins";
-import BaseStatistics from "./BaseStatistics";
+import { BaseStatistics } from "@/components/Statistics";
+import {
+  getCheckerStatistics
+} from "@/components/Statistics/StatisticsHelper";
 import CheckerStatisticsTable from "./CheckerStatisticsTable";
-import { getCheckerStatistics } from "./StatisticsHelper";
 
 export default {
   name: "CheckerStatistics",
@@ -42,10 +44,6 @@ export default {
     CheckerStatisticsTable
   },
   mixins: [ BaseStatistics, ReviewStatusMixin, SeverityMixin, ToCSV ],
-
-  props: {
-    namespace: { type: String, required: true }
-  },
 
   data() {
     return {
@@ -58,14 +56,17 @@ export default {
     downloadCSV() {
       const data = [
         [
-          "Checker", "Severity", "All reports", "Unreviewed",
-          "Confirmed bug", "False positive", "Intentional"
+          "Checker", "Severity", "Unreviewed",
+          "Confirmed bug", "Outstanding reports (Unreviewed + Confirmed)",
+          "False positive", "Intentional",
+          "Suppressed reports (False positive + Intentional)", "All reports"
         ],
         ...this.statistics.map(stat => {
           return [
             stat.checker, this.severityFromCodeToString(stat.severity),
-            stat.reports, stat.unreviewed, stat.confirmed,
-            stat.falsePositive, stat.intentional
+            stat.unreviewed.count, stat.confirmed.count,
+            stat.outstanding.count, stat.falsePositive.count,
+            stat.intentional.count, stat.suppressed.count, stat.reports.count,
           ];
         })
       ];

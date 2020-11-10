@@ -1,18 +1,19 @@
 <template>
   <v-data-table
-    :headers="headers"
-    :items="items"
     :disable-pagination="true"
     :hide-default-footer="true"
     :must-sort="true"
-    sort-by="severity"
-    sort-desc
-    :loading="loading"
-    :mobile-breakpoint="1000"
-    class="elevation-1"
-    loading-text="Loading checker statistics..."
-    item-key="checker"
+    class="elevation-0"
+    v-bind="{ ...$props, ...$attrs }"
+    v-on="$listeners"
   >
+    <template v-slot:header.component="{ header }">
+      <v-icon size="16">
+        mdi-puzzle-outline
+      </v-icon>
+      {{ header.text }}
+    </template>
+
     <template v-slot:header.unreviewed.count="{ header }">
       <review-status-icon
         :status="ReviewStatus.UNREVIEWED"
@@ -29,6 +30,14 @@
         left
       />
       {{ header.text }}
+    </template>
+
+    <template v-slot:header.outstanding.count="{ header }">
+      <v-icon color="red" :size="16">
+        mdi-sigma
+      </v-icon>
+      {{ header.text }}<br>
+      <span class="pl-4">(Unreviewed + Confirmed)</span>
     </template>
 
     <template v-slot:header.falsePositive.count="{ header }">
@@ -49,25 +58,54 @@
       {{ header.text }}
     </template>
 
+    <template v-slot:header.suppressed.count="{ header }">
+      <v-icon color="grey" :size="16">
+        mdi-sigma
+      </v-icon>
+      {{ header.text }}<br>
+      <span class="pl-4">(False positive + Intentional)</span>
+    </template>
+
     <template v-slot:header.reports.count="{ header }">
       <detection-status-icon
         :status="DetectionStatus.UNRESOLVED"
         :size="16"
         left
       />
-      {{ header.text }}
+      {{ header.text }}<br>
+      <span class="pl-4">(Outstanding + Suppressed)</span>
     </template>
 
     <template #item.checker="{ item }">
-      <router-link
-        :to="{ name: 'reports', query: {
-          ...$router.currentRoute.query,
-          ...(item.$queryParams || {}),
-          'checker-name': item.checker
-        }}"
-      >
-        {{ item.checker }}
-      </router-link>
+      <div>
+        <router-link
+          class="checker-name"
+          :to="{ name: 'reports', query: {
+            ...$router.currentRoute.query,
+            ...(item.$queryParams || {}),
+            'checker-name': item.checker
+          }}"
+        >
+          {{ item.checker }}
+        </router-link>
+      </div>
+    </template>
+
+    <template #item.component="{ item }">
+      <source-component-tooltip :value="item.value">
+        <template v-slot="{ on }">
+          <span v-on="on">
+            <router-link
+              :to="{ name: 'reports', query: {
+                ...$router.currentRoute.query,
+                'source-component': item.component
+              }}"
+            >
+              {{ item.component }}
+            </router-link>
+          </span>
+        </template>
+      </source-component-tooltip>
     </template>
 
     <template #item.severity="{ item }">
@@ -77,8 +115,7 @@
           ...$router.currentRoute.query,
           ...(item.$queryParams || {}),
           'checker-name': item.checker,
-          'severity': severityFromCodeToString(
-            item.severity)
+          'severity': severityFromCodeToString(item.severity)
         }}"
       >
         <severity-icon :status="item.severity" />
@@ -92,6 +129,10 @@
           ...$router.currentRoute.query,
           ...(item.$queryParams || {}),
           'checker-name': item.checker,
+          'source-component': item.component,
+          'severity': item.severity
+            ? severityFromCodeToString(item.severity)
+            : undefined,
           'review-status': reviewStatusFromCodeToString(
             ReviewStatus.UNREVIEWED)
         }}"
@@ -112,6 +153,10 @@
           ...$router.currentRoute.query,
           ...(item.$queryParams || {}),
           'checker-name': item.checker,
+          'source-component': item.component,
+          'severity': item.severity
+            ? severityFromCodeToString(item.severity)
+            : undefined,
           'review-status': reviewStatusFromCodeToString(
             ReviewStatus.CONFIRMED)
         }}"
@@ -125,6 +170,32 @@
       />
     </template>
 
+    <template #item.outstanding.count="{ item }">
+      <router-link
+        v-if="item.outstanding.count"
+        :to="{ name: 'reports', query: {
+          ...$router.currentRoute.query,
+          ...(item.$queryParams || {}),
+          'checker-name': item.checker,
+          'source-component': item.component,
+          'severity': item.severity
+            ? severityFromCodeToString(item.severity)
+            : undefined,
+          'review-status': [
+            reviewStatusFromCodeToString(ReviewStatus.UNREVIEWED),
+            reviewStatusFromCodeToString(ReviewStatus.CONFIRMED)
+          ]
+        }}"
+      >
+        {{ item.outstanding.count }}
+      </router-link>
+
+      <report-diff-count
+        :num-of-new-reports="item.outstanding.new"
+        :num-of-resolved-reports="item.outstanding.resolved"
+      />
+    </template>
+
     <template #item.falsePositive.count="{ item }">
       <router-link
         v-if="item.falsePositive.count"
@@ -132,6 +203,10 @@
           ...$router.currentRoute.query,
           ...(item.$queryParams || {}),
           'checker-name': item.checker,
+          'source-component': item.component,
+          'severity': item.severity
+            ? severityFromCodeToString(item.severity)
+            : undefined,
           'review-status': reviewStatusFromCodeToString(
             ReviewStatus.FALSE_POSITIVE)
         }}"
@@ -152,6 +227,10 @@
           ...$router.currentRoute.query,
           ...(item.$queryParams || {}),
           'checker-name': item.checker,
+          'source-component': item.component,
+          'severity': item.severity
+            ? severityFromCodeToString(item.severity)
+            : undefined,
           'review-status': reviewStatusFromCodeToString(
             ReviewStatus.INTENTIONAL)
         }}"
@@ -165,13 +244,43 @@
       />
     </template>
 
+    <template #item.suppressed.count="{ item }">
+      <router-link
+        v-if="item.suppressed.count"
+        :to="{ name: 'reports', query: {
+          ...$router.currentRoute.query,
+          ...(item.$queryParams || {}),
+          'checker-name': item.checker,
+          'source-component': item.component,
+          'severity': item.severity
+            ? severityFromCodeToString(item.severity)
+            : undefined,
+          'review-status': [
+            reviewStatusFromCodeToString(ReviewStatus.FALSE_POSITIVE),
+            reviewStatusFromCodeToString(ReviewStatus.INTENTIONAL)
+          ]
+        }}"
+      >
+        {{ item.suppressed.count }}
+      </router-link>
+
+      <report-diff-count
+        :num-of-new-reports="item.suppressed.new"
+        :num-of-resolved-reports="item.suppressed.resolved"
+      />
+    </template>
+
     <template #item.reports.count="{ item }">
       <router-link
         v-if="item.reports.count"
         :to="{ name: 'reports', query: {
           ...$router.currentRoute.query,
           ...(item.$queryParams || {}),
-          'checker-name': item.checker
+          'checker-name': item.checker,
+          'source-component': item.component,
+          'severity': item.severity
+            ? severityFromCodeToString(item.severity)
+            : undefined,
         }}"
       >
         {{ item.reports.count }}
@@ -185,18 +294,24 @@
 
     <template slot="body.append">
       <tr>
-        <td class="text-center" colspan="2">
+        <td class="text-center" :colspan="colspan">
           <strong>Total</strong>
         </td>
         <td
-          v-for="col in ['unreviewed', 'confirmed', 'falsePositive',
-                         'intentional', 'reports']"
+          v-for="col in totalColumns"
           :key="col"
           class="text-center"
         >
           <strong>{{ total[col] }}</strong>
         </td>
       </tr>
+    </template>
+
+    <template
+      v-for="(_, slot) of $scopedSlots"
+      v-slot:[slot]="scope"
+    >
+      <slot :name="slot" v-bind="scope" />
     </template>
   </v-data-table>
 </template>
@@ -208,78 +323,44 @@ import {
   ReviewStatusIcon,
   SeverityIcon
 } from "@/components/Icons";
-
 import { ReviewStatusMixin, SeverityMixin } from "@/mixins";
+import { SourceComponentTooltip } from "@/components/Report/SourceComponent";
 import ReportDiffCount from "./ReportDiffCount";
 
 export default {
-  name: "CheckerStatisticsTable",
+  name: "ReviewStatusStatisticsTable",
   components: {
     DetectionStatusIcon,
     ReportDiffCount,
     ReviewStatusIcon,
-    SeverityIcon
+    SeverityIcon,
+    SourceComponentTooltip
   },
   mixins: [ ReviewStatusMixin, SeverityMixin ],
   props: {
     items: { type: Array, required: true },
-    loading: { type: Boolean, default: false }
+    colspan: { type: Number, default: 2 },
+    totalColumns: {
+      type: Array,
+      default: () => [ "unreviewed", "confirmed", "outstanding",
+        "falsePositive", "intentional", "suppressed","reports" ]
+    }
   },
   data() {
     return {
       ReviewStatus,
-      DetectionStatus,
-      headers: [
-        {
-          text: "Checker",
-          value: "checker"
-        },
-        {
-          text: "Severity",
-          value: "severity",
-          align: "center"
-        },
-        {
-          text: "Unreviewed",
-          value: "unreviewed.count",
-          align: "center"
-        },
-        {
-          text: "Confirmed bug",
-          value: "confirmed.count",
-          align: "center"
-        },
-        {
-          text: "False positive",
-          value: "falsePositive.count",
-          align: "center"
-        },
-        {
-          text: "Intentional",
-          value: "intentional.count",
-          align: "center"
-        },
-        {
-          text: "All reports",
-          value: "reports.count",
-          align: "center"
-        }
-      ]
+      DetectionStatus
     };
   },
-
   computed: {
     total() {
-      const cols = [ "unreviewed", "confirmed", "falsePositive", "intentional",
-        "reports" ];
-
-      const initVal = cols.reduce((acc, curr) => {
+      const initVal = this.totalColumns.reduce((acc, curr) => {
         acc[curr] = 0;
         return acc;
       }, {});
 
       return this.items.reduce((total, curr) => {
-        cols.forEach(c => total[c] += curr[c].count);
+        this.totalColumns.forEach(c => total[c] += curr[c].count);
         return total;
       }, initVal);
     }
@@ -288,7 +369,15 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-::v-deep .severity {
+::v-deep table {
+  border: thin solid rgba(0, 0, 0, 0.12);
+}
+
+::v-deep a {
   text-decoration: none;
+
+  &:not(.severity):hover {
+    text-decoration: underline;
+  }
 }
 </style>

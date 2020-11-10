@@ -60,25 +60,31 @@ export default new Router({
             {
               path: "",
               name: "statistics",
-              redirect: "checker"
+              redirect: "overview"
+            },
+            {
+              path: "overview",
+              name: "product-overview",
+              component: () =>
+                import("@/components/Statistics/Overview/Overview"),
             },
             {
               path: "checker",
               name: "checker-statistics",
               component: () =>
-                import("@/components/Statistics/CheckerStatistics"),
+                import("@/components/Statistics/Checker/CheckerStatistics"),
             },
             {
               path: "severity",
               name: "severity-statistics",
               component: () =>
-                import("@/components/Statistics/SeverityStatistics"),
+                import("@/components/Statistics/Severity/SeverityStatistics"),
             },
             {
               path: "component",
               name: "component-statistics",
-              component: () =>
-                import("@/components/Statistics/ComponentStatistics"),
+              component: () => import(
+                "@/components/Statistics/Component/ComponentStatistics"),
             }
           ]
         },

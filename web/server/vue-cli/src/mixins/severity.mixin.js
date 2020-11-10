@@ -38,6 +38,25 @@ export default {
       default:
         return -1;
       }
+    },
+
+    severityFromCodeToColor(severity) {
+      switch (severity) {
+      case Severity.UNSPECIFIED:
+        return "#666666";
+      case Severity.STYLE:
+        return "#9932cc";
+      case Severity.LOW:
+        return "#669603";
+      case Severity.MEDIUM:
+        return "#a9d323";
+      case Severity.HIGH:
+        return "#ffa800";
+      case Severity.CRITICAL:
+        return "#e92625";
+      default:
+        return "";
+      }
     }
   }
 };

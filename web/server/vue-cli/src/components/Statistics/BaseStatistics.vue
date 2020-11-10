@@ -5,9 +5,9 @@ import { CompareData, DiffType, ReportFilter } from "@cc/report-server-types";
 export default {
   name: "BaseStatistics",
   props: {
-    bus: { type: Object, required: true }
+    bus: { type: Object, required: true },
+    namespace: { type: String, required: true }
   },
-
   data() {
     return {
       statistics: []
@@ -56,6 +56,31 @@ export default {
   methods: {
     fetchStatistics() {},
 
+    updateCalculatedFields(oldValues, newValues, type) {
+      if (oldValues["outstanding"] !== undefined) {
+        oldValues["outstanding"][type] =
+          newValues["unreviewed"].count + newValues["confirmed"].count;
+      }
+
+      if (oldValues["suppressed"] !== undefined) {
+        oldValues["suppressed"][type] =
+          newValues["falsePositive"].count + newValues["intentional"].count;
+      }
+    },
+
+    updateStatistics(reports, name, type) {
+      const fieldToUpdate = [ "reports", "unreviewed", "confirmed",
+        "falsePositive", "intentional" ];
+
+      this.statistics.forEach(s => {
+        const row = reports.find(n => n[name] === s[name]);
+        if (row) {
+          fieldToUpdate.forEach(f => s[f][type] = row[f].count);
+          this.updateCalculatedFields(s, row, type);
+        }
+      });
+    },
+
     /**
      * If compare data is set this function will get the number of new and
      * resolved bugs and update the statistics.
@@ -63,23 +88,12 @@ export default {
     async fetchDifference(name) {
       if (!this.cmpData) return;
 
-      const fieldToUpdate = [ "reports", "unreviewed", "confirmed",
-        "falsePositive", "intentional" ];
-
       const q1 = this.getNewReports().then(newReports => {
-        this.statistics.forEach(s => {
-          const row = newReports.find(n => n[name] === s[name]);
-          if (row)
-            fieldToUpdate.forEach(f => s[f].new = row[f].count);
-        });
+        this.updateStatistics(newReports, name, "new");
       });
 
       const q2 = this.getResolvedReports().then(resolvedReports => {
-        this.statistics.forEach(s => {
-          const row = resolvedReports.find(n => n[name] === s[name]);
-          if (row)
-            fieldToUpdate.forEach(f => s[f].resolved = row[f].count);
-        });
+        this.updateStatistics(resolvedReports, name, "resolved");
       });
 
       return Promise.all([ q1, q2 ]);

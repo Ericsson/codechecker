@@ -356,6 +356,11 @@ struct SourceComponentData {
 }
 typedef list<SourceComponentData> SourceComponentDataList
 
+struct AnalysisFailureInfo {
+  1: string runName,  // Name of the run where the file is failed to analyze.
+}
+typedef map<string, list<AnalysisFailureInfo>> FailedFiles
+
 service codeCheckerDBAccess {
 
   // Gives back all analyzed runs.
@@ -437,6 +442,22 @@ service codeCheckerDBAccess {
                         2: ReportFilter reportFilter,
                         3: CompareData  cmpData)
                         throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // Get the number of failed files in the latest storage of the given runs.
+  // If an empty run id list is provided the number of failed files will be
+  // calculated for all of the available runs.
+  // PERMISSION: PRODUCT_ACCESS
+  i64 getFailedFilesCount(1: list<i64> runIds)
+                          throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // Get files which failed to analyze in the latest storage of the given runs.
+  // If an empty run id list is provided the failed files will be returned for
+  // all of the available runs.
+  // For each files it will return a list where each element contains
+  // information in which run the failure happened.
+  // PERMISSION: PRODUCT_ACCESS
+  FailedFiles getFailedFiles(1: list<i64> runIds)
+                             throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // gives back the all marked region and message for a report
   // PERMISSION: PRODUCT_ACCESS
