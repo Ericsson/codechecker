@@ -444,6 +444,30 @@ def setup_process_timeout(proc, timeout,
     return __cleanup_timeout
 
 
+def collect_ctu_involved_files(result_handler, source_analyzer, output_dir):
+    """
+    This function collects the list of source files involved by CTU analysis.
+    The list of files are written to output_dir.
+    """
+    if source_analyzer.ANALYZER_NAME != ClangSA.ANALYZER_NAME:
+        return
+
+    involved_files = set()
+
+    involved_files.update(source_analyzer.get_analyzer_mentioned_files(
+        result_handler.analyzer_stdout))
+    involved_files.update(source_analyzer.get_analyzer_mentioned_files(
+        result_handler.analyzer_stderr))
+
+    out = os.path.join(output_dir, result_handler.analyzer_action_str)
+
+    if involved_files:
+        with open(out, 'w', encoding='utf-8', errors='ignore') as f:
+            f.write('\n'.join(involved_files))
+    elif os.path.exists(out):
+        os.remove(out)
+
+
 def check(check_data):
     """
     Invoke clang with an action which called by processes.
@@ -627,6 +651,9 @@ def check(check_data):
                     handle_failure(source_analyzer, rh, zip_file,
                                    result_base, actions_map)
 
+        collect_ctu_involved_files(rh, source_analyzer,
+                                   output_dirs['ctu_connections'])
+
         if skip_handler and os.path.exists(result_file):
             # We need to check the plist content because skipping
             # reports in headers can be done only this way.
@@ -702,19 +729,24 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
                                 initargs=(checked_var,
                                           actions_num))
 
-    failed_dir = os.path.join(output_path, "failed")
     # If the analysis has failed, we help debugging.
+    failed_dir = os.path.join(output_path, "failed")
     if not os.path.exists(failed_dir):
         os.makedirs(failed_dir)
 
-    success_dir = os.path.join(output_path, "success")
-
     # Analysis was successful processing results.
+    success_dir = os.path.join(output_path, "success")
     if not os.path.exists(success_dir):
         os.makedirs(success_dir)
 
+    # Collect what other TUs were involved during CTU analysis.
+    ctu_connections_dir = os.path.join(output_path, "ctu_connections")
+    if not os.path.exists(ctu_connections_dir):
+        os.makedirs(ctu_connections_dir)
+
     output_dirs = {'success': success_dir,
-                   'failed': failed_dir}
+                   'failed': failed_dir,
+                   'ctu_connections': ctu_connections_dir}
 
     # Construct analyzer env.
     analyzer_environment = env.extend(context.path_env_extra,
