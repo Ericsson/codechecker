@@ -443,9 +443,8 @@ def check_deprecated_arg_usage(args):
 
 def get_run_data(client, run_filter, sort_mode=None,
                  limit=constants.MAX_QUERY_SIZE):
-    """
-    Get all runs based on the given run filter.
-    """
+    """Get all runs based on the given run filter."""
+
     all_runs = []
 
     offset = 0
@@ -458,6 +457,37 @@ def get_run_data(client, run_filter, sort_mode=None,
             break
 
     return all_runs
+
+
+def get_run_results(client,
+                    run_ids,
+                    limit,
+                    offset,
+                    sort_type,
+                    report_filter,
+                    compare_data,
+                    query_report_details):
+    """Get all the results with multiple api request.
+
+    In each api request get the limit ammount of reports.
+    Collect and return all the reports based on the filters.
+    """
+
+    all_results = []
+    while True:
+        results = client.getRunResults(run_ids,
+                                       limit,
+                                       offset,
+                                       sort_type,
+                                       report_filter,
+                                       compare_data,
+                                       query_report_details)
+        all_results.extend(results)
+        offset += limit
+        if len(results) < limit:
+            break
+
+    return all_results
 
 
 def validate_filter_values(user_values, valid_values, value_type):
@@ -741,14 +771,11 @@ def handle_list_results(args):
     client = setup_client(args.product_url)
 
     run_filter = ttypes.RunFilter(names=args.names)
-    run_ids = [run.runId for run in get_run_data(client, run_filter)]
 
+    run_ids = [run.runId for run in get_run_data(client, run_filter)]
     if not run_ids:
         LOG.warning("No runs were found!")
         sys.exit(1)
-
-    limit = constants.MAX_QUERY_SIZE
-    offset = 0
 
     report_filter = ttypes.ReportFilter()
     add_filter_conditions(client, report_filter, args)
@@ -756,16 +783,14 @@ def handle_list_results(args):
     query_report_details = args.details and args.output_format == 'json' \
         if 'details' in args else None
 
-    all_results = []
-    while True:
-        results = client.getRunResults(run_ids, limit, offset, None,
-                                       report_filter, None,
-                                       query_report_details)
-        all_results.extend(results)
-        offset += limit
-
-        if len(results) < limit:
-            break
+    all_results = get_run_results(client,
+                                  run_ids,
+                                  constants.MAX_QUERY_SIZE,
+                                  0,
+                                  None,
+                                  report_filter,
+                                  None,
+                                  query_report_details)
 
     if args.output_format == 'json':
         print(CmdLineOutputEncoder().encode(all_results))
@@ -944,24 +969,15 @@ def handle_diff_results(args):
         sort_mode = [(ttypes.SortMode(
             ttypes.SortType.FILENAME,
             ttypes.Order.ASC))]
-        limit = constants.MAX_QUERY_SIZE
-        offset = 0
 
-        all_results = []
-        while True:
-            results = client.getRunResults(base_ids,
-                                           limit,
-                                           offset,
-                                           sort_mode,
-                                           report_filter,
-                                           cmp_data,
-                                           False)
-
-            all_results.extend(results)
-            offset += limit
-
-            if len(results) < limit:
-                break
+        all_results = get_run_results(client,
+                                      base_ids,
+                                      constants.MAX_QUERY_SIZE,
+                                      0,
+                                      sort_mode,
+                                      report_filter,
+                                      cmp_data,
+                                      False)
 
         return all_results, base_run_names, new_run_names
 
@@ -1290,11 +1306,6 @@ def handle_diff_results(args):
     if has_different_run_args:
         sys.exit(1)
 
-    client = None
-    # We set up the client if we are not comparing two local report directory.
-    if basename_run_names or newname_run_names:
-        client = setup_client(args.product_url)
-
     output_dir = args.export_dir if 'export_dir' in args else None
     if 'clean' in args and os.path.isdir(output_dir):
         print("Previous analysis results in '{0}' have been removed, "
@@ -1304,8 +1315,14 @@ def handle_diff_results(args):
     if output_dir and not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
+    client = None
+    # We set up the client if we are not comparing two local report directory.
+    if basename_run_names or newname_run_names:
+        client = setup_client(args.product_url)
+
     if basename_local_dirs and newname_local_dirs:
-        reports = get_diff_local_dirs(basename_local_dirs, newname_local_dirs)
+        reports = get_diff_local_dirs(basename_local_dirs,
+                                      newname_local_dirs)
         print_reports(client, reports, args.output_format)
         LOG.info("Compared the following local report directories: %s and %s",
                  ', '.join(basename_local_dirs),
@@ -1413,6 +1430,7 @@ def handle_list_result_types(args):
     add_filter_conditions(client, report_filter, args)
 
     sev_count = client.getSeverityCounts(run_ids, report_filter, None)
+
     severities = []
     severity_total = 0
     for key, count in sorted(list(sev_count.items()),
@@ -1509,6 +1527,9 @@ def handle_update_run(args):
 
     run_info = check_run_names(client, [args.run_name])
     run = run_info.get(args.run_name)
+    if not run:
+        LOG.warning("No run name with the name '%s' was found.", args.name)
+        return
 
     try:
         client.updateRunData(run.runId, args.new_run_name)
@@ -1529,6 +1550,9 @@ def handle_suppress(args):
 
     run_info = check_run_names(client, [args.name])
     run = run_info.get(args.name)
+    if not run:
+        LOG.warning("No run name with the name '%s' was found.", args.name)
+        return
 
     if 'input' in args:
         with open(args.input, encoding='utf-8', errors='ignore') as supp_file:
