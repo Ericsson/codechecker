@@ -209,6 +209,18 @@ class TestCtu(unittest.TestCase):
         self.assertIn("lib.c:3:", output)
         self.assertIn("[core.NullDereference]", output)
 
+        # We assume that only main.c has been analyzed with CTU and it involves
+        # lib.c during its analysis.
+        connections_dir = os.path.join(self.report_dir, 'ctu_connections')
+        connections_files = os.listdir(connections_dir)
+        self.assertEqual(len(connections_files), 1)
+
+        connections_file = connections_files[0]
+        self.assertTrue(connections_file.startswith('main.c'))
+
+        with open(os.path.join(connections_dir, connections_file)) as f:
+            self.assertTrue(f.readline().endswith('lib.c'))
+
     @skipUnlessCTUCapable
     def test_ctu_makefile_generation(self):
         """ Test makefile generation in CTU mode. """
