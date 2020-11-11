@@ -119,36 +119,34 @@ function getComponents() {
 async function getComponentStatistics(component, runIds, reportFilter,
   cmpData
 ) {
-  const queries = [
-    { field: null, values: null },
-    { field: "reviewStatus", values: [ ReviewStatus.UNREVIEWED ] },
-    { field: "reviewStatus", values: [ ReviewStatus.CONFIRMED ] },
-    { field: "reviewStatus", values: [ ReviewStatus.FALSE_POSITIVE ] },
-    { field: "reviewStatus", values: [ ReviewStatus.INTENTIONAL ] }
-  ].map(q => {
-    const filter = new ReportFilter(reportFilter);
+  const filter = new ReportFilter(reportFilter);
+  filter["reviewStatus"] = null;
+  filter["componentNames"] = [ component.name ];
 
-    if (q.field) {
-      filter[q.field] = q.values;
-    }
+  const res = await new Promise(resolve =>
+    ccService.getClient().getReviewStatusCounts(runIds, filter, cmpData,
+      handleThriftError(res => resolve(res))));
 
-    filter["componentNames"] = [ component.name ];
+  const outstanding = (res[ReviewStatus.UNREVIEWED]?.toNumber() || 0) +
+    (res[ReviewStatus.CONFIRMED]?.toNumber() || 0);
 
-    return new Promise(resolve => {
-      ccService.getClient().getRunResultCount(runIds, filter, cmpData,
-        handleThriftError(resultCount => resolve(resultCount)));
-    });
-  });
+  const suppressed = (res[ReviewStatus.FALSE_POSITIVE]?.toNumber() || 0) +
+    (res[ReviewStatus.INTENTIONAL]?.toNumber() || 0);
 
-  return (await Promise.all(queries)).map(res => ({
-    reports       : res[0],
-    unreviewed    : res[1],
-    confirmed     : res[2],
-    outstanding   : (res[1]?.toNumber() || 0) + (res[2]?.toNumber() || 0),
-    falsePositive : res[3],
-    intentional   : res[4],
-    suppressed    : (res[3]?.toNumber() || 0) + (res[4]?.toNumber() || 0)
-  }));
+  const reports = Object.keys(res).reduce((acc, curr) => {
+    acc += res[curr].toNumber();
+    return acc;
+  }, 0);
+
+  return {
+    reports       : reports,
+    unreviewed    : res[ReviewStatus.UNREVIEWED],
+    confirmed     : res[ReviewStatus.CONFIRMED],
+    outstanding   : outstanding,
+    falsePositive : res[ReviewStatus.FALSE_POSITIVE],
+    intentional   : res[ReviewStatus.INTENTIONAL],
+    suppressed    : suppressed
+  };
 }
 
 export {
