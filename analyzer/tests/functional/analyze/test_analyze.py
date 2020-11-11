@@ -893,7 +893,7 @@ class TestAnalyze(unittest.TestCase):
         print(out)
         # First it's printed as the member of enabled checkers at the beginning
         # of the output. Second it is printed as a found report.
-        self.assertEqual(out.count('hicpp-use-nullptr'), 2)
+        self.assertEqual(out.count('hicpp-use-nullptr'), 1)
 
         analyze_cmd = [self._codechecker_cmd, "check", "-l", build_json,
                        "--analyzers", "clang-tidy", "-o", self.report_dir,
@@ -914,7 +914,7 @@ class TestAnalyze(unittest.TestCase):
 
         # First it's printed as the member of enabled checkers at the beginning
         # of the output. Second and third it is printed as a found report.
-        self.assertEqual(out.count('hicpp-use-nullptr'), 3)
+        self.assertEqual(out.count('hicpp-use-nullptr'), 2)
 
         analyze_cmd = [self._codechecker_cmd, "check", "-l", build_json,
                        "--analyzers", "clangsa", "-o", self.report_dir,
