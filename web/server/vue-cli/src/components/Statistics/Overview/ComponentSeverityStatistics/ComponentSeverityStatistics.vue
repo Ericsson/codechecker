@@ -136,30 +136,13 @@ export default {
   },
   methods: {
     getComponentStatistics(component, runIds, reportFilter, cmpData) {
-      const queries = [
-        { field: null, values: null },
-        { field: "severity", values: [ Severity.CRITICAL ] },
-        { field: "severity", values: [ Severity.HIGH ] },
-        { field: "severity", values: [ Severity.MEDIUM ] },
-        { field: "severity", values: [ Severity.LOW ] },
-        { field: "severity", values: [ Severity.STYLE ] },
-        { field: "severity", values: [ Severity.UNSPECIFIED ] },
-      ].map(q => {
-        const filter = new ReportFilter(reportFilter);
+      const filter = new ReportFilter(reportFilter);
+      filter["severity"] = null;
+      filter["componentNames"] = [ component.name ];
 
-        if (q.field) {
-          filter[q.field] = q.values;
-        }
-
-        filter["componentNames"] = [ component.name ];
-
-        return new Promise(resolve => {
-          ccService.getClient().getRunResultCount(runIds, filter, cmpData,
-            handleThriftError(resultCount => resolve(resultCount)));
-        });
-      });
-
-      return Promise.all(queries);
+      return new Promise(resolve =>
+        ccService.getClient().getSeverityCounts(runIds, filter, cmpData,
+          handleThriftError(res => resolve(res))));
     },
 
     initStatistics(components) {
@@ -180,16 +163,21 @@ export default {
       const res = await this.getComponentStatistics(component, runIds,
         reportFilter, cmpData);
 
+      const reports = Object.keys(res).reduce((acc, curr) => {
+        acc += res[curr].toNumber();
+        return acc;
+      }, 0);
+
       return {
         component   : component.name,
         value       : component.value || component.description,
-        reports     : initDiffField(res[0]),
-        critical    : initDiffField(res[1]),
-        high        : initDiffField(res[2]),
-        medium      : initDiffField(res[3]),
-        low         : initDiffField(res[4]),
-        style       : initDiffField(res[5]),
-        unspecified : initDiffField(res[6])
+        reports     : initDiffField(reports),
+        critical    : initDiffField(res[Severity.CRITICAL]),
+        high        : initDiffField(res[Severity.HIGH]),
+        medium      : initDiffField(res[Severity.MEDIUM]),
+        low         : initDiffField(res[Severity.LOW]),
+        style       : initDiffField(res[Severity.STYLE]),
+        unspecified : initDiffField(res[Severity.UNSPECIFIED])
       };
     },
   }
