@@ -162,6 +162,7 @@ class AnalyzeParseTestCase(
 
                 output += result.splitlines(True)
             except CalledProcessError as cerr:
+                output += cerr.output.splitlines(True)
                 print("Failed to run: " + ' '.join(cerr.cmd))
                 print(cerr.output)
 

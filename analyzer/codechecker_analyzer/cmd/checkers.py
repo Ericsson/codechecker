@@ -96,7 +96,8 @@ def get_argparser_ctor_args():
 The list of checkers that are enabled or disabled by default can be edited by
 editing the file '{}'.
 
-environment variables:
+Environment variables
+------------------------------------------------
   CC_SEVERITY_MAP_FILE   Path of the checker-severity mapping config file.
                          Default: '{}'
   CC_GUIDELINE_MAP_FILE  Path of the checker-guideline mapping config file.

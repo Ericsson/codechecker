@@ -93,8 +93,10 @@ package: package_plist_to_html package_tu_collector package_analyzer package_mer
 	# Copy CodeChecker entry point sub-commands.
 	mkdir -p $(CC_BUILD_DIR)/cc_bin && \
 	$(ROOT)/scripts/build/create_commands.py -b $(BUILD_DIR) \
-	  $(ROOT)/bin:codechecker_common/cmd \
-	  $(CURRENT_DIR)/bin:codechecker_analyzer/cmd
+	  --cmd-dir codechecker_common/cmd \
+	    $(CC_ANALYZER)/codechecker_analyzer/cmd \
+	  --bin-file $(ROOT)/bin/CodeChecker \
+	  --cc-bin-file $(ROOT)/bin/CodeChecker.py
 
 	# Copy license file.
 	cp $(ROOT)/LICENSE.TXT $(CC_BUILD_DIR)

@@ -113,10 +113,12 @@ package: package_plist_to_html package_report_hash package_web
 	# Copy CodeChecker entry point sub-commands.
 	mkdir -p $(CC_BUILD_DIR)/cc_bin && \
 	$(ROOT)/scripts/build/create_commands.py -b $(BUILD_DIR) \
-	  $(ROOT)/bin:codechecker_common/cmd \
-	  $(CURRENT_DIR)/bin:codechecker_web/cmd \
-	  $(CC_SERVER)/bin:codechecker_server/cmd \
-	  $(CC_CLIENT)/bin:codechecker_client/cmd
+	  --cmd-dir codechecker_common/cmd \
+	    $(CC_WEB)/codechecker_web/cmd \
+	    $(CC_SERVER)/codechecker_server/cmd \
+	    $(CC_CLIENT)/codechecker_client/cmd \
+	  --bin-file $(ROOT)/bin/CodeChecker \
+	  --cc-bin-file $(ROOT)/bin/CodeChecker.py
 
 	# Copy license file.
 	cp $(ROOT)/LICENSE.TXT $(CC_BUILD_DIR)
