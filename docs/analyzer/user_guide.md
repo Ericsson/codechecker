@@ -178,7 +178,7 @@ log arguments:
 analyzer arguments:
   -j JOBS, --jobs JOBS  Number of threads to use in analysis. More threads
                         mean faster analysis at the cost of using more memory.
-                        (default: <CPU count>)
+                        (default: 1)
   -c, --clean           Delete analysis reports stored in the output
                         directory. (By default, CodeChecker would keep reports
                         and overwrites only those files that were update by
@@ -749,7 +749,7 @@ optional arguments:
   -h, --help            show this help message and exit
   -j JOBS, --jobs JOBS  Number of threads to use in analysis. More threads
                         mean faster analysis at the cost of using more memory.
-                        (default: <CPU count>)
+                        (default: 1)
   -i SKIPFILE, --ignore SKIPFILE, --skip SKIPFILE
                         Path to the Skipfile dictating which project files
                         should be omitted from analysis. Please consult the
