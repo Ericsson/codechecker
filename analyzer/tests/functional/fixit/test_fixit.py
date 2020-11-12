@@ -61,7 +61,7 @@ class TestFixit(unittest.TestCase):
 
         # Create a compilation database.
         build_log = [{"directory": self.test_workspace,
-                      "command": "clang++ -c " + source_file_cpp,
+                      "command": "g++ -c -std=c++98 " + source_file_cpp,
                       "file": source_file_cpp
                       }]
 
@@ -153,7 +153,7 @@ int main()
 
         # Create a compilation database.
         build_log = [{"directory": self.test_workspace,
-                      "command": "clang++ -c " + source_file_cpp,
+                      "command": "g++ -c -std=c++98 " + source_file_cpp,
                       "file": source_file_cpp
                       }]
 
