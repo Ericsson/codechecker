@@ -2,6 +2,174 @@
   <!-- eslint-disable max-len -->
   <v-container fluid>
     <v-timeline align-top>
+      <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
+        <new-release-item color="green lighten-1">
+          <template v-slot:title>
+            <a
+              href="https://github.com/Ericsson/codechecker/releases/tag/v6.15.0"
+              target="_blank"
+              class="white--text"
+            >
+              Highlights of CodeChecker 6.15.0 release
+            </a>
+          </template>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Web UI
+            </template>
+
+            <ul>
+              <li>
+                There is a brand new
+                <strong>Product Statistics Overview</strong> page
+                with the information about the recently introduced or resolved
+                reports or about the distribution of the reports in the
+                product.
+              </li>
+              <li>
+                The <strong>Run History</strong> list was moved from a separate
+                tab to an <strong>expandable list</strong> under each run at
+                the run list. This makes easier to find the relevant run
+                history entries for each run.
+              </li>
+              <li>
+                New <strong>Report Info Button</strong> to show more
+                information about a report at the report details page
+                (run name, detection/fix date ...).
+              </li>
+              <li>
+                Source components can be used to create and save file path
+                filters with a name to show results only from those parts
+                of the analyzed project. With the newly introduced
+                <strong>Other component</strong> every report which does not
+                belong to any other component can be filtered.
+              </li>
+            </ul>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Command line interface (CLI)
+            </template>
+
+            <ul>
+              <li>
+                <strong>New exit status</strong> numbers for the CodeChecker
+                analyze and check commands for better <i>CI integration</i>:
+                <ul>
+                  <li>
+                    0 - Successful analysis and no new reports
+                  </li>
+                  <li>
+                    1 - CodeChecker error
+                  </li>
+                  <li>
+                    2 - At least one report emitted by an analyzer and there
+                    is no analyzer failure
+                  </li>
+                  <li>
+                    3 - Analysis of at least one translation unit failed
+                  </li>
+                </ul>
+              </li>
+              <li>
+                <strong>Gerrit output</strong> format is available
+                <strong>for the parse subcommand</strong>.
+                This output format was only available for the CodeChecker
+                cmd diff command in the previous releases. With this change
+                the parse command can be used for the gerrit integration
+                too.<br>
+                <code>CodeChecker parse analyzer_reports -e gerrit</code>
+              </li>
+            </ul>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Report storage support for new source code analyzers
+            </template>
+
+            <ul>
+              <li>
+                Report conversion and storage support is available for multiple
+                new source code analyzer tools (<strong>Coccinelle</strong>,
+                <strong>Smatch</strong>, <strong>Kernel-Doc</strong>). The
+                <a
+                  href="https://github.com/Ericsson/codechecker/tree/master/tools/report-converter"
+                  target="_blank"
+                >
+                  report-converter
+                </a> tool can be used to convert the output of these analyzers
+                to a format which can be stored to the web server or processed
+                by other CodeChecker commands (parse, cmd diff ...).
+              </li>
+            </ul>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Changes
+            </template>
+
+            <ul>
+              <li>
+                Open reports date filter was renamed to
+                <i>"Outstanding reports on a given date"</i> on the web UI.<br>
+                Also a new <code>--outstanding-reports-date</code> CLI filter
+                argument was introduced as a filter option.
+              </li>
+              <li>
+                Less code styling related checker groups are enabled by
+                <code>--enable-all</code> flag.
+                The <code>--enable-all</code> flag enabled a lot of style
+                checkers which could generate a lot of styling reports.
+              </li>
+            </ul>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Further improvements worth mentioning
+            </template>
+
+            <ul>
+              <li>
+                Allow users to overwrite location of the session file.
+              </li>
+              <li>
+                Show how many filter items are visible at the filter tool tip
+                if there are more items.
+              </li>
+              <li>
+                Show selected filter items at Review status filter.
+              </li>
+              <li>
+                Improve component statistics page load performance
+              </li>
+              <li>
+                Enable search and highlight occurrences of the selected text
+                at the source code view
+              </li>
+              <li>
+                Set analyzer name for clang-diagnostic checkers when the
+                reports are stored.
+              </li>
+              <li>
+                Reintroduce skipfile script for gerrit integration to be able
+                to analyze only the changed files.
+              </li>
+              <li>
+                New severity levels for
+                cppcoreguidelines-prefer-member-initializer,
+                altera-struct-pack-align and
+                bugprone-redundant-branch-condition checkers.
+              </li>
+            </ul>
+          </new-feature-item>
+        </new-release-item>
+      </v-timeline-item>
+
       <v-timeline-item fill-dot icon="mdi-star">
         <new-release-item>
           <template v-slot:title>
