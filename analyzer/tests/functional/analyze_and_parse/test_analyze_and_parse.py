@@ -346,3 +346,21 @@ class AnalyzeParseTestCase(
         out, _ = call_command(extract_cmd, cwd=self.test_dir, env=self.env)
 
         self.assertTrue("Invalid plist file" in out)
+
+    def test_html_output_for_macros(self):
+        """ Test parse HTML output for macros. """
+        test_project_macros = os.path.join(self.test_workspaces['NORMAL'],
+                                           "test_files", "macros")
+
+        output_path = os.path.join(test_project_macros, 'html')
+        extract_cmd = ['CodeChecker', 'parse',
+                       '-e', 'html',
+                       '-o', output_path,
+                       test_project_macros]
+
+        out, err = call_command(extract_cmd, cwd=self.test_dir, env=self.env)
+        self.assertFalse(err)
+
+        self.assertTrue('Html file was generated' in out)
+        self.assertTrue('Summary' in out)
+        self.assertTrue('Statistics' in out)
