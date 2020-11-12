@@ -53,7 +53,7 @@ def call_command(cmd, cwd, env):
             encoding="utf-8",
             errors="ignore")
         out, err = proc.communicate()
-        if proc.returncode != 0:
+        if proc.returncode == 1:
             show(out, err)
             print('Unsuccessful run: "' + ' '.join(cmd) + '"')
             raise Exception("Unsuccessful run of command.")
