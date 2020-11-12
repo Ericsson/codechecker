@@ -707,23 +707,29 @@ def main(args):
             LOG.error(f"Unknown export format: {export}")
             return
 
-        try:
-            res = parse_convert_reports(args.input,
-                                        export,
-                                        context.severity_map,
-                                        trim_path_prefixes)
-            if 'output_path' in args:
-                output_path = os.path.abspath(args.output_path)
-                reports_json = os.path.join(output_path, 'reports.json')
-                with open(reports_json,
-                          mode='w',
-                          encoding='utf-8', errors="ignore") as output_f:
-                    output_f.write(json.dumps(res))
+        # The HTML part will be handled separately below.
+        if export != 'html':
+            try:
+                res = parse_convert_reports(args.input,
+                                            export,
+                                            context.severity_map,
+                                            trim_path_prefixes)
+                if 'output_path' in args:
+                    output_path = os.path.abspath(args.output_path)
 
-            return print(json.dumps(res))
-        except Exception as ex:
-            LOG.error(ex)
-            return
+                    if not os.path.exists(output_path):
+                        os.mkdir(output_path)
+
+                    reports_json = os.path.join(output_path, 'reports.json')
+                    with open(reports_json,
+                              mode='w',
+                              encoding='utf-8', errors="ignore") as output_f:
+                        output_f.write(json.dumps(res))
+
+                return print(json.dumps(res))
+            except Exception as ex:
+                LOG.error(ex)
+                sys.exit(1)
 
     def trim_path_prefixes_handler(source_file):
         """
