@@ -63,14 +63,14 @@ def process(input_dir, output_dir,
         SpecialReturnValueCollector(stats_min_sample_count,
                                     stats_relevance_threshold)
 
+    lines = set()
     for clang_output in clang_outs:
         with open(clang_output, 'r',
                   encoding='utf-8', errors='ignore') as out:
-            clang_output = ""
-            for line in out:
-                clang_output += line + "\n"
-                ret_collector.process_line(line)
-                special_ret_collector.process_line(line)
+            lines |= set(out.readlines())
+    for line in lines:
+        ret_collector.process_line(line)
+        special_ret_collector.process_line(line)
     LOG.debug("Collecting statistics finished.")
 
     # Write out statistics.
