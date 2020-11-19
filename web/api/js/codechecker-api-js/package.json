@@ -1,6 +1,6 @@
 {
   "name": "codechecker-api-js",
-  "version": "6.35.0",
+  "version": "6.35.0-dev2",
   "description": "Generated jQuery compatible API stubs for CodeChecker server.",
   "main": "lib",
   "homepage": "https://github.com/Ericsson/codechecker",
@@ -23,6 +23,6 @@
     "api"
   ],
   "dependencies": {
-    "thrift": "0.11.0"
+    "thrift": "0.13.0-hotfix.1"
   }
 }
