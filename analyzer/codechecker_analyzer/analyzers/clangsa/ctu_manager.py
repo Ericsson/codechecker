@@ -16,6 +16,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
+from sys import maxsize
 
 from codechecker_common.logger import get_logger
 
@@ -83,7 +84,10 @@ def generate_invocation_list(triple_arch, action, source, config, env):
     cmd.extend(['-D__clang_analyzer__', '-w'])
 
     # The YAML mapping entry already has a newline at the end.
-    invocation_line = yaml.dump({str(source_path): cmd})
+    # Line width is set to max int size because of compatibility with the YAML
+    # parser of LLVM. We try to ensure that no lines break in the textual
+    # representation of the list items.
+    invocation_line = yaml.dump({str(source_path): cmd}, width=maxsize)
 
     LOG.debug_analyzer("Appending invocation list item '%s'", invocation_line)
 

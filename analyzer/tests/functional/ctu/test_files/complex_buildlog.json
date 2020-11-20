@@ -1,0 +1,13 @@
+[
+  {
+    "directory": ".",
+    "command": "gcc -c lib.c -o lib.o",
+    "file": "lib.c"
+  },
+  {
+    "directory": ".",
+    "command": "gcc -c main.c -o main.o -DUNUSED_DEFINE=\"Long-long text to test the yaml dump does not break the line in the invocation-list.yml file even when it comes to really long lines like this one.\" -DUNUSED_FLAGS=\"-DTEST_DEFINE_INSIDE_ANOTHER_DEFINE=\\\"Emulate embedded content to ensure the generated yaml is correct, and the on-demand ctu analysis behaves well\\\"\" -DUNUSED_FLAGS=\"-Wall -Wmissing-prototypes -Wpoint-arith -Wdeclaration-after-statement -Wendif-labels -Wmissing-format-attribute -Wformat-security -fno-strict-aliasing -fwrapv -fexcess-precision=standard -O2\"",
+    "file": "main.c"
+  }
+]
+
