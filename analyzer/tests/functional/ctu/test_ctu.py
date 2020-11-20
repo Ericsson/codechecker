@@ -10,10 +10,11 @@
 
 
 import glob
-import json
 import os
 import shutil
 import unittest
+
+from typing import IO
 
 from libtest import env
 from libtest.codechecker import call_command
@@ -58,21 +59,18 @@ class TestCtu(unittest.TestCase):
         print("'analyze' reported CTU-on-demand-compatibility? " +
               str(getattr(self, ON_DEMAND_ATTR)))
 
-        # Fix the "template" build JSONs to contain a proper directory
-        # so the tests work.
-        raw_buildlog = os.path.join(self.test_dir, 'buildlog.json')
-        with open(raw_buildlog,
-                  encoding="utf-8", errors="ignore") as log_file:
-            build_json = json.load(log_file)
-            for command in build_json:
-                command['directory'] = self.test_dir
+        self.buildlog = os.path.join(self.test_workspace, 'buildlog.json')
+        self.complex_buildlog = os.path.join(
+            self.test_workspace, 'complex_buildlog.json')
+
+        # Fix the "template" build JSONs to contain a proper directory.
+        env.adjust_buildlog(
+            'buildlog.json', self.test_dir, self.test_workspace)
+        env.adjust_buildlog(
+            'complex_buildlog.json', self.test_dir, self.test_workspace)
 
         self.__old_pwd = os.getcwd()
         os.chdir(self.test_workspace)
-        self.buildlog = os.path.join(self.test_workspace, 'buildlog.json')
-        with open(self.buildlog, 'w',
-                  encoding="utf-8", errors="ignore") as log_file:
-            json.dump(build_json, log_file)
 
     def tearDown(self):
         """ Tear down workspace."""
@@ -228,3 +226,45 @@ class TestCtu(unittest.TestCase):
         self.assertIn("defect(s) in lib.c", output)
         self.assertIn("lib.c:3:", output)
         self.assertIn("[core.NullDereference]", output)
+
+    @skipUnlessCTUCapable
+    @skipUnlessCTUOnDemandCapable
+    def test_ctu_ondemand_yaml_format(self):
+        """ Test the generated YAML used in CTU on-demand mode.
+        The YAML file should not contain newlines in individual entries in the
+        generated textual format. """
+
+        cmd = [self._codechecker_cmd, 'analyze',
+               '-o', self.report_dir,
+               '--analyzers', 'clangsa',
+               '--ctu-collect',  # ctu-directory is needed, and it remains
+                                 # intact only if a single ctu-phase is
+                                 # specified
+               '--ctu-ast-mode', 'parse-on-demand',
+               self.complex_buildlog]
+        call_command(cmd, cwd=self.test_dir, env=self.env)
+
+        ctu_dir = os.path.join(self.report_dir, 'ctu-dir')
+
+        # In order to be architecture-invariant, ctu directory is searched for
+        # invocation list files.
+        invocation_list_paths = list(glob.glob(
+            os.path.join(ctu_dir, '*', 'invocation-list.yml')))
+
+        # At least one invocation list should exist.
+        self.assertGreaterEqual(len(invocation_list_paths), 1)
+
+        # Assert that every line begins with either - or / to approximate that
+        # the line is not a line-broken list entry. If there is no newline in
+        # the textual representation, then every line either starts with a /
+        # (if it is an absolute path posing as a key) or - (if it is a list
+        # entry). This requirement of format is a workaround for the LLVM YAML
+        # parser.
+        def assert_no_linebreak(invocation_list_file: IO):
+            invocation_lines = invocation_list_file.readlines()
+            for line in invocation_lines:
+                self.assertRegex(line, '^ *[-/]')
+
+        for invocation_list_path in invocation_list_paths:
+            with open(invocation_list_path) as invocation_list_file:
+                assert_no_linebreak(invocation_list_file)
