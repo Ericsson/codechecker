@@ -4,5 +4,5 @@ alembic==1.4.2
 portalocker==1.7.0
 psutil==5.7.0
 
-codechecker_api==6.35.0
-codechecker_api_shared==6.35.0
+codechecker_api==6.35.0-dev2
+codechecker_api_shared==6.35.0-dev2
