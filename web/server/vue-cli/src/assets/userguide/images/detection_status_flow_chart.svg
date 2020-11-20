@@ -1,0 +1,825 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg8"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)"
+   sodipodi:docname="detection_status_flow_chart.svg">
+  <defs
+     id="defs2">
+    <marker
+       inkscape:stockid="Arrow1Mend"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="marker7445"
+       style="overflow:visible;"
+       inkscape:isstock="true">
+      <path
+         id="path7443"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         style="fill-rule:evenodd;stroke:#909090;stroke-width:1pt;stroke-opacity:1;fill:#909090;fill-opacity:1"
+         transform="scale(0.4) rotate(180) translate(10,0)" />
+    </marker>
+    <marker
+       inkscape:isstock="true"
+       style="overflow:visible;"
+       id="marker6361"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Mend">
+      <path
+         transform="scale(0.4) rotate(180) translate(10,0)"
+         style="fill-rule:evenodd;stroke:#fd1a20;stroke-width:1pt;stroke-opacity:1;fill:#fd1a20;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path6359" />
+    </marker>
+    <inkscape:path-effect
+       effect="bspline"
+       id="path-effect6357"
+       is_visible="true"
+       weight="33.333333"
+       steps="2"
+       helper_size="0"
+       apply_no_weight="true"
+       apply_with_weight="true"
+       only_selected="false" />
+    <inkscape:path-effect
+       effect="bspline"
+       id="path-effect6181"
+       is_visible="true"
+       weight="33.333333"
+       steps="2"
+       helper_size="0"
+       apply_no_weight="true"
+       apply_with_weight="true"
+       only_selected="false" />
+    <marker
+       inkscape:stockid="Arrow1Mend"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="marker5195"
+       style="overflow:visible;"
+       inkscape:isstock="true">
+      <path
+         id="path5193"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         style="fill-rule:evenodd;stroke:#0c7da5;stroke-width:1pt;stroke-opacity:1;fill:#0c7da5;fill-opacity:1"
+         transform="scale(0.4) rotate(180) translate(10,0)" />
+    </marker>
+    <inkscape:path-effect
+       effect="bspline"
+       id="path-effect5191"
+       is_visible="true"
+       weight="33.333333"
+       steps="2"
+       helper_size="0"
+       apply_no_weight="true"
+       apply_with_weight="true"
+       only_selected="false" />
+    <marker
+       inkscape:stockid="Arrow1Mstart"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="marker4208"
+       style="overflow:visible"
+       inkscape:isstock="true">
+      <path
+         id="path4206"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         style="fill-rule:evenodd;stroke:#0c7da5;stroke-width:1pt;stroke-opacity:1;fill:#0c7da5;fill-opacity:1"
+         transform="scale(0.4) translate(10,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Mend"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="marker3730"
+       style="overflow:visible;"
+       inkscape:isstock="true">
+      <path
+         id="path3728"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         style="fill-rule:evenodd;stroke:#0c7da5;stroke-width:1pt;stroke-opacity:1;fill:#0c7da5;fill-opacity:1"
+         transform="scale(0.4) rotate(180) translate(10,0)" />
+    </marker>
+    <inkscape:path-effect
+       effect="bspline"
+       id="path-effect3714"
+       is_visible="true"
+       weight="33.333333"
+       steps="2"
+       helper_size="0"
+       apply_no_weight="true"
+       apply_with_weight="true"
+       only_selected="false" />
+    <marker
+       inkscape:isstock="true"
+       style="overflow:visible;"
+       id="marker3280"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Mend"
+       inkscape:collect="always">
+      <path
+         transform="scale(0.4) rotate(180) translate(10,0)"
+         style="fill-rule:evenodd;stroke:#909090;stroke-width:1pt;stroke-opacity:1;fill:#909090;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path3278" />
+    </marker>
+    <inkscape:path-effect
+       only_selected="false"
+       apply_with_weight="true"
+       apply_no_weight="true"
+       helper_size="0"
+       steps="2"
+       weight="33.333333"
+       is_visible="true"
+       id="path-effect2874"
+       effect="bspline" />
+    <marker
+       inkscape:stockid="Arrow1Mend"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="marker1680"
+       style="overflow:visible;"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         id="path1678"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         style="fill-rule:evenodd;stroke:#679618;stroke-width:1pt;stroke-opacity:1;fill:#679618;fill-opacity:1"
+         transform="scale(0.4) rotate(180) translate(10,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Mend"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="marker13984"
+       style="overflow:visible;"
+       inkscape:isstock="true">
+      <path
+         id="path13982"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         style="fill-rule:evenodd;stroke:#909090;stroke-width:1pt;stroke-opacity:1;fill:#909090;fill-opacity:1"
+         transform="scale(0.4) rotate(180) translate(10,0)" />
+    </marker>
+    <inkscape:path-effect
+       only_selected="false"
+       apply_with_weight="true"
+       apply_no_weight="true"
+       helper_size="0"
+       steps="2"
+       weight="33.333333"
+       is_visible="true"
+       id="path-effect13980"
+       effect="bspline" />
+    <marker
+       inkscape:stockid="Arrow1Mend"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="marker12778"
+       style="overflow:visible;"
+       inkscape:isstock="true">
+      <path
+         id="path12776"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         style="fill-rule:evenodd;stroke:#909090;stroke-width:1pt;stroke-opacity:1;fill:#909090;fill-opacity:1"
+         transform="scale(0.4) rotate(180) translate(10,0)" />
+    </marker>
+    <marker
+       inkscape:isstock="true"
+       style="overflow:visible"
+       id="marker12690"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Mstart">
+      <path
+         transform="scale(0.4) translate(10,0)"
+         style="fill-rule:evenodd;stroke:#679618;stroke-width:1pt;stroke-opacity:1;fill:#679618;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path12688" />
+    </marker>
+    <inkscape:path-effect
+       only_selected="false"
+       apply_with_weight="true"
+       apply_no_weight="true"
+       helper_size="0"
+       steps="2"
+       weight="33.333333"
+       is_visible="true"
+       id="path-effect12686"
+       effect="bspline" />
+    <marker
+       inkscape:isstock="true"
+       style="overflow:visible"
+       id="marker11069"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Mstart">
+      <path
+         transform="scale(0.4) translate(10,0)"
+         style="fill-rule:evenodd;stroke:#909090;stroke-width:1pt;stroke-opacity:1;fill:#909090;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path11067" />
+    </marker>
+    <inkscape:path-effect
+       only_selected="false"
+       apply_with_weight="true"
+       apply_no_weight="true"
+       helper_size="0"
+       steps="2"
+       weight="33.333333"
+       is_visible="true"
+       id="path-effect11065"
+       effect="bspline" />
+    <marker
+       inkscape:stockid="Arrow1Mend"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="marker7715"
+       style="overflow:visible;"
+       inkscape:isstock="true">
+      <path
+         id="path7713"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         style="fill-rule:evenodd;stroke:#909090;stroke-width:1pt;stroke-opacity:1;fill:#909090;fill-opacity:1"
+         transform="scale(0.4) rotate(180) translate(10,0)" />
+    </marker>
+    <inkscape:path-effect
+       only_selected="false"
+       apply_with_weight="true"
+       apply_no_weight="true"
+       helper_size="0"
+       steps="2"
+       weight="33.333333"
+       is_visible="true"
+       id="path-effect7647"
+       effect="bspline" />
+    <inkscape:path-effect
+       effect="bspline"
+       id="path-effect5339"
+       is_visible="true"
+       weight="33.333333"
+       steps="2"
+       helper_size="0"
+       apply_no_weight="true"
+       apply_with_weight="true"
+       only_selected="false" />
+    <inkscape:path-effect
+       effect="bspline"
+       id="path-effect3873"
+       is_visible="true"
+       weight="33.333333"
+       steps="2"
+       helper_size="0"
+       apply_no_weight="true"
+       apply_with_weight="true"
+       only_selected="false" />
+    <inkscape:path-effect
+       only_selected="false"
+       apply_with_weight="true"
+       apply_no_weight="true"
+       helper_size="0"
+       steps="2"
+       weight="33.333333"
+       is_visible="true"
+       id="path-effect3409"
+       effect="bspline" />
+    <inkscape:path-effect
+       effect="bspline"
+       id="path-effect2955"
+       is_visible="true"
+       weight="33.333333"
+       steps="2"
+       helper_size="0"
+       apply_no_weight="true"
+       apply_with_weight="true"
+       only_selected="false" />
+    <marker
+       inkscape:isstock="true"
+       style="overflow:visible;"
+       id="marker1979"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Mend"
+       inkscape:collect="always">
+      <path
+         transform="scale(0.4) rotate(180) translate(10,0)"
+         style="fill-rule:evenodd;stroke:#0c7da5;stroke-width:1pt;stroke-opacity:1;fill:#0c7da5;fill-opacity:1"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path1977" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow2Lend"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow2Lend"
+       style="overflow:visible;"
+       inkscape:isstock="true">
+      <path
+         id="path864"
+         style="fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round;stroke:#000000;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
+         transform="scale(1.1) rotate(180) translate(1,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Lend"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="marker1129"
+       style="overflow:visible;"
+       inkscape:isstock="true">
+      <path
+         id="path1127"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         transform="scale(0.8) rotate(180) translate(12.5,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Lend"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow1Lend"
+       style="overflow:visible;"
+       inkscape:isstock="true">
+      <path
+         id="path846"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         transform="scale(0.8) rotate(180) translate(12.5,0)" />
+    </marker>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="1"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.4"
+     inkscape:cx="328.97011"
+     inkscape:cy="944.8848"
+     inkscape:document-units="mm"
+     inkscape:current-layer="g8212"
+     showgrid="false"
+     inkscape:window-width="1863"
+     inkscape:window-height="1025"
+     inkscape:window-x="57"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g18224"
+       transform="translate(48.951802,-31.1369)">
+      <g
+         transform="translate(-43.160505,106.5069)"
+         id="g1670" />
+      <g
+         id="g7273"
+         transform="translate(1.6036172,-117.06405)">
+        <g
+           id="g8275"
+           inkscape:export-filename="/home/ecsomar/codechecker/web/server/vue-cli/src/assets/userguide/images/detection_status_flow_chart.png"
+           inkscape:export-xdpi="78"
+           inkscape:export-ydpi="78">
+          <rect
+             y="160.77386"
+             x="-6.6662574"
+             height="68.791664"
+             width="139.6622"
+             id="rect8151"
+             style="opacity:0.456;fill:#ffffff;fill-opacity:0.83116886;stroke:none;stroke-width:0.382;stroke-miterlimit:4;stroke-dasharray:0.382, 0.382;stroke-dashoffset:0;stroke-opacity:1"
+             inkscape:export-xdpi="186.0923"
+             inkscape:export-ydpi="186.0923" />
+          <g
+             transform="translate(-0.71464106,-0.33478165)"
+             id="g8212">
+            <g
+               id="g1077"
+               inkscape:export-xdpi="186.0923"
+               inkscape:export-ydpi="186.0923">
+              <path
+                 inkscape:export-ydpi="78"
+                 inkscape:export-xdpi="78"
+                 inkscape:export-filename="/home/ecsomar/codechecker/web/server/vue-cli/src/assets/userguide/images/detection_status_flow_chart.png"
+                 style="fill:none;stroke:#0c7da5;stroke-width:0.5829674;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:1.1659348, 0.5829674;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker1979)"
+                 d="m 55.645417,77.588689 c 5.219897,1.895784 10.439372,3.791415 15.905678,3.843305 5.466306,0.05189 11.179378,-1.739937 16.892206,-3.531688"
+                 id="path1608"
+                 inkscape:connector-curvature="0"
+                 inkscape:path-effect="#path-effect2955"
+                 inkscape:original-d="m 55.645417,77.588689 c 5.219964,1.895598 10.439439,3.791229 15.658846,5.687045 5.713108,-1.791945 11.42618,-3.583773 17.139038,-5.375428"
+                 sodipodi:nodetypes="ccc"
+                 transform="translate(-43.252443,107.35333)" />
+              <g
+                 inkscape:export-ydpi="78"
+                 inkscape:export-xdpi="78"
+                 inkscape:export-filename="/home/ecsomar/codechecker/web/server/vue-cli/src/assets/userguide/images/detection_status_flow_chart.png"
+                 id="g1626"
+                 transform="translate(-43.252443,107.35333)">
+                <g
+                   transform="matrix(0.5829674,0,0,0.5829674,40.14238,29.406529)"
+                   id="g1622">
+                  <text
+                     xml:space="preserve"
+                     style="font-style:normal;font-weight:normal;font-size:10.58333302px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#eb7875;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+                     x="7.2999506"
+                     y="77.483459"
+                     id="text1618"><tspan
+                       sodipodi:role="line"
+                       id="tspan1616"
+                       x="7.2999506"
+                       y="77.483459"
+                       style="font-size:8.46666622px;fill:#eb7875;fill-opacity:1;stroke-width:0.26458332">     New</tspan></text>
+                  <rect
+                     style="opacity:1;fill:none;fill-opacity:1;stroke:#eb7875;stroke-width:1.02235568;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+                     id="rect1620"
+                     width="35.537399"
+                     height="13.009156"
+                     x="7.6853738"
+                     y="67.952713" />
+                </g>
+                <image
+                   width="4.7121134"
+                   height="4.4349303"
+                   preserveAspectRatio="none"
+                   xlink:href="data:image/png;base64,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 "
+                   id="image1624"
+                   x="46.55241"
+                   y="70.595238" />
+              </g>
+              <g
+                 inkscape:export-ydpi="78"
+                 inkscape:export-xdpi="78"
+                 inkscape:export-filename="/home/ecsomar/codechecker/web/server/vue-cli/src/assets/userguide/images/detection_status_flow_chart.png"
+                 transform="translate(23.856955,109.33784)"
+                 id="g2648">
+                <g
+                   transform="translate(-65.324414,32.837444)"
+                   id="g1638">
+                  <g
+                     transform="matrix(0.5829674,0,0,0.5829674,86.453223,11.254731)"
+                     id="g1634">
+                    <text
+                       xml:space="preserve"
+                       style="font-style:normal;font-weight:normal;font-size:10.58333302px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#679618;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+                       x="58.348431"
+                       y="108.88422"
+                       id="text1630"><tspan
+                         sodipodi:role="line"
+                         id="tspan1628"
+                         x="58.348431"
+                         y="108.88422"
+                         style="font-size:8.46666622px;fill:#679618;fill-opacity:1;stroke-width:0.26458332">     Resolved</tspan></text>
+                    <rect
+                       style="opacity:1;fill:none;fill-opacity:1;stroke:#679618;stroke-width:0.98065001;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+                       id="rect1632"
+                       width="54.282616"
+                       height="12.841121"
+                       x="58.817871"
+                       y="99.307274" />
+                  </g>
+                  <image
+                     y="70.729134"
+                     x="122.52981"
+                     id="image1636"
+                     xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFsAAABKCAYAAADUvCinAAAABHNCSVQICAgIfAhkiAAAAmlJREFU eJzt3CFPHEEUwPH/EWxNHcGii2xSJDgsKDxB9DsQvgPq0gRVBaYCVUgwkJBgSpAn6hBViEsuOXEV zZHrheNmZmfezLx5f7232fxy2ezuvN3eZDKZYIm0kvsAWsqwBTNswQxbMMMWzLAFM2zBDNuj0XjI zdNZ8O9XIx6L6kbjIaeXBwye7/nz8pv9rRPvfdg/26FZaIDrxz7nt8fe+zHsJc1DTwsBN+x3WgQ9 zRfcsBe0DHqaD7hhv5Er9LSPH9adtjPsuXyh97dO2P506LStYc+UEhoM+7XU0GDYgAw0GLYYNDSO LQkNDWNLQ0Oj2DmgoUHsXNDQGHZOaGgIOzc0NIJdAjQ0gF0KNCjHLgkaFGOXBg1KsUuEBoXYpUKD MuySoUERdunQEAn7YfCD0XgYY1dB1QANEbCvH/t8+3nE6eVBFvBaoKEj9uwy/uD5Xhy8JmjogP3W vIQkeG3QEIj93mCKBHiN0BCA7TIBlBK8VmgIwHZ9azIFeM3QEIC9s3nI3he32eSY4LVDQ+A5Wxpc AzR0uBqRAtcCDR2vs1ODa4KGCHeQqcC1QUOkZyOxwTVCQ8SnfrHAtUJD5EesXcE1QwP0Unzc5epX n4s7t/dMNtY+83X3O4BqaEiEDf7ggGpoSIgNfuCu1QoNiZfFfM7hLtUMDQJrkLHAa4cGoQXfruAa oEFwdT0UXAs0CI8y+IJrgoYMcyOu4NqgIdOQzjJwjdCQcSJqEbhWaMg8fjYPrhkaCvhG1M7mP9xe D9XQkPh23fo/NVOsNWTYghm2YIYtmGELZtiCGbZghi2YYQtm2IIZtmB/AZbEVT18WhcTAAAAAElF TkSuQmCC "
+                     preserveAspectRatio="none"
+                     height="4.3229551"
+                     width="5.3160667" />
+                </g>
+              </g>
+              <g
+                 inkscape:export-ydpi="78"
+                 inkscape:export-xdpi="78"
+                 inkscape:export-filename="/home/ecsomar/codechecker/web/server/vue-cli/src/assets/userguide/images/detection_status_flow_chart.png"
+                 id="g1650"
+                 transform="translate(-43.252443,107.35333)">
+                <g
+                   id="g1646"
+                   transform="matrix(0.5829674,0,0,0.5829674,39.519143,11.254731)">
+                  <text
+                     id="text1642"
+                     y="108.88422"
+                     x="58.348431"
+                     style="font-style:normal;font-weight:normal;font-size:10.58333302px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#0c7da5;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+                     xml:space="preserve"><tspan
+                       style="font-size:8.46666622px;fill:#0c7da5;fill-opacity:1;stroke-width:0.26458332"
+                       y="108.88422"
+                       x="58.348431"
+                       id="tspan1640"
+                       sodipodi:role="line">     Unresolved</tspan></text>
+                  <rect
+                     y="99.347229"
+                     x="58.857826"
+                     height="12.761208"
+                     width="64.205978"
+                     id="rect1644"
+                     style="opacity:1;fill:none;fill-opacity:1;stroke:#0c7da5;stroke-width:1.01879466;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+                </g>
+                <image
+                   width="4.6624746"
+                   height="4.4979167"
+                   preserveAspectRatio="none"
+                   xlink:href="data:image/png;base64,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 "
+                   id="image1648"
+                   x="75.650925"
+                   y="70.641655" />
+              </g>
+              <g
+                 inkscape:export-ydpi="78"
+                 inkscape:export-xdpi="78"
+                 inkscape:export-filename="/home/ecsomar/codechecker/web/server/vue-cli/src/assets/userguide/images/detection_status_flow_chart.png"
+                 id="g1662"
+                 transform="translate(-21.991284,123.10819)">
+                <g
+                   transform="matrix(0.5829674,0,0,0.5829674,62.655661,-4.5001364)"
+                   id="g1658">
+                  <text
+                     xml:space="preserve"
+                     style="font-style:normal;font-weight:normal;font-size:10.58333302px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#fd1a20;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+                     x="58.348431"
+                     y="108.88422"
+                     id="text1654"><tspan
+                       sodipodi:role="line"
+                       id="tspan1652"
+                       x="58.348431"
+                       y="108.88422"
+                       style="font-size:8.46666622px;fill:#fd1a20;fill-opacity:1;stroke-width:0.26458332">     Reopened</tspan></text>
+                  <rect
+                     style="opacity:1;fill:none;fill-opacity:1;stroke:#fd1a20;stroke-width:1.01659691;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+                     id="rect1656"
+                     width="58.498901"
+                     height="12.805174"
+                     x="58.835842"
+                     y="99.325249" />
+                </g>
+                <image
+                   width="4.9626055"
+                   height="4.3939738"
+                   preserveAspectRatio="none"
+                   xlink:href="data:image/png;base64,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 "
+                   id="image1660"
+                   x="98.572281"
+                   y="54.938759" />
+              </g>
+              <path
+                 inkscape:export-ydpi="78"
+                 inkscape:export-xdpi="78"
+                 inkscape:export-filename="/home/ecsomar/codechecker/web/server/vue-cli/src/assets/userguide/images/detection_status_flow_chart.png"
+                 transform="translate(-43.160505,106.5069)"
+                 style="fill:none;stroke:#0c7da5;stroke-width:0.583;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:1.166, 0.583;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker5195)"
+                 d="m 132.39747,68.883563 c -5.20613,-1.933238 -10.41186,-3.866326 -15.87765,-3.957492 -5.46579,-0.09117 -11.19159,1.659567 -16.917142,3.410225"
+                 id="path5189"
+                 inkscape:connector-curvature="0"
+                 inkscape:path-effect="#path-effect5191"
+                 inkscape:original-d="m 132.39747,68.883563 c -5.2062,-1.933056 -10.41193,-3.86614 -15.61758,-5.79941 -5.72583,1.750849 -11.45163,3.501581 -17.177212,5.252143"
+                 sodipodi:nodetypes="ccc" />
+              <g
+                 inkscape:export-ydpi="78"
+                 inkscape:export-xdpi="78"
+                 inkscape:export-filename="/home/ecsomar/codechecker/web/server/vue-cli/src/assets/userguide/images/detection_status_flow_chart.png"
+                 id="g7085"
+                 transform="translate(-47.573635,106.5069)">
+                <path
+                   sodipodi:nodetypes="cc"
+                   inkscape:original-d="m 140.39213,88.262496 0.0429,14.536824"
+                   inkscape:path-effect="#path-effect2874"
+                   inkscape:connector-curvature="0"
+                   id="path1612"
+                   d="m 140.39213,88.262496 c 0,0 0.0429,14.536824 0.0429,14.536824"
+                   style="fill:none;stroke:#679618;stroke-width:0.463;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:0.926, 0.463;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker1680)" />
+                <path
+                   style="fill:none;stroke:#fd1a20;stroke-width:0.463;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:0.926, 0.463;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker6361)"
+                   d="m 145.05225,103.7113 c 0,0 -0.10973,-24.826699 -0.10973,-24.826699"
+                   id="path6355"
+                   inkscape:connector-curvature="0"
+                   inkscape:path-effect="#path-effect6357"
+                   inkscape:original-d="M 145.05225,103.7113 144.94252,78.884601"
+                   sodipodi:nodetypes="cc" />
+              </g>
+              <rect
+                 inkscape:export-ydpi="78"
+                 inkscape:export-xdpi="78"
+                 inkscape:export-filename="/home/ecsomar/codechecker/web/server/vue-cli/src/assets/userguide/images/detection_status_flow_chart.png"
+                 style="opacity:0.456;fill:none;fill-opacity:1;stroke:#4e4e4e;stroke-width:0.382;stroke-miterlimit:4;stroke-dasharray:0.382, 0.382;stroke-dashoffset:0;stroke-opacity:1"
+                 id="rect1672"
+                 width="115.81362"
+                 height="27.078835"
+                 x="-2.6604202"
+                 y="166.91225" />
+              <g
+                 inkscape:export-ydpi="78"
+                 inkscape:export-xdpi="78"
+                 inkscape:export-filename="/home/ecsomar/codechecker/web/server/vue-cli/src/assets/userguide/images/detection_status_flow_chart.png"
+                 id="g1580"
+                 transform="matrix(-0.86659984,8.3372947e-5,-9.9068889e-5,-0.72930046,131.15195,275.69323)">
+                <path
+                   style="fill:none;stroke:#909090;stroke-width:0.58239609;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:1.16479216, 0.58239608;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker7445)"
+                   d="m 112.92192,110.62411 c 0,0 0.004,-17.565652 0.004,-17.565652"
+                   id="path1578"
+                   inkscape:connector-curvature="0"
+                   inkscape:path-effect="#path-effect3714"
+                   inkscape:original-d="m 112.92192,110.62411 0.004,-17.565652"
+                   sodipodi:nodetypes="cc" />
+              </g>
+              <g
+                 inkscape:export-ydpi="78"
+                 inkscape:export-xdpi="78"
+                 inkscape:export-filename="/home/ecsomar/codechecker/web/server/vue-cli/src/assets/userguide/images/detection_status_flow_chart.png"
+                 id="g1606"
+                 transform="translate(-65.220822,103.59232)">
+                <g
+                   id="g1602"
+                   transform="matrix(0.5829674,0,0,0.5829674,62.406121,68.135719)">
+                  <g
+                     id="g1590"
+                     transform="translate(76.032362)">
+                    <text
+                       id="text1584"
+                       y="77.483459"
+                       x="7.2999506"
+                       style="font-style:normal;font-weight:normal;font-size:10.58333302px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#4e4e4e;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+                       xml:space="preserve"><tspan
+                         style="font-size:8.46666622px;fill:#4e4e4e;fill-opacity:1;stroke-width:0.26458332"
+                         y="77.483459"
+                         x="7.2999506"
+                         id="tspan1582"
+                         sodipodi:role="line">     Off</tspan></text>
+                    <rect
+                       y="67.914047"
+                       x="7.6467118"
+                       height="13.08648"
+                       width="30.184658"
+                       id="rect1586"
+                       style="opacity:1;fill:none;fill-opacity:1;stroke:#4e4e4e;stroke-width:1.02235568;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+                    <image
+                       width="6.9780374"
+                       height="6.8078418"
+                       preserveAspectRatio="none"
+                       xlink:href="data:image/png;base64,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 QmCC "
+                       id="image1588"
+                       x="11.732087"
+                       y="71.053368" />
+                  </g>
+                  <g
+                     id="g1600">
+                    <text
+                       id="text1594"
+                       y="77.483459"
+                       x="7.2999506"
+                       style="font-style:normal;font-weight:normal;font-size:10.58333302px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#737373;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+                       xml:space="preserve"><tspan
+                         style="font-size:8.46666622px;fill:#737373;fill-opacity:1;stroke-width:0.26458332"
+                         y="77.483459"
+                         x="7.2999506"
+                         id="tspan1592"
+                         sodipodi:role="line">     Unavailable</tspan></text>
+                    <rect
+                       y="68.143753"
+                       x="7.8764176"
+                       height="12.627069"
+                       width="65.714668"
+                       id="rect1596"
+                       style="opacity:1;fill:none;fill-opacity:1;stroke:#4e4e4e;stroke-width:1.02235568;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+                    <image
+                       y="70.72757"
+                       x="11.200795"
+                       id="image1598"
+                       xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABHCAYAAACkuwGSAAAABHNCSVQICAgIfAhkiAAAAuFJREFU eJzt3DHOqkAUhuHPGy1wC9qzDXZBqxUuSSoKQqKr0G1QC1vAREnmVpMYEu6ZgZkz5ybz1sivTwjI Gfw3SimF2Gx/Qr8B6UUgoghEFIGIIhBRBCKKQETWQOM4omka9H3v4/14qe97NE2DcRytX7u12Xgc R1RVhbZt0bYtiqLA4XCw/qOc9X2P6/WK9/uNYRhwPp+x3Zp/bOMj6BcHAIZhQFmWoo+kXxwAaNsW VVVZHUlGQFMcnWSkKY7OFokEmsPRSUSaw9HZIJFAt9ttFkcnCYnC0bVti/v9Tu6PBMqyDEmSkDuS gGSKAwBJkiDLMnI7Euh4PKIoCvFItjiXy8XoCmx0kpaO5AsHsLjMS0XyiQNYfpOWhuQbB1hwqyEF iQMHWHizGhqJCwdYcTcfCokTB1g57uBG4sYBHMyDuJBC4ACOBma+kULhAA4nir6QQuIAjkeurpFC 4wAeZtKukCTgAJ6G9muRpOAAwMbnwwtd16EsS6MPut/vURQFAIjBATwDAfZISikxOAADEGCHZBIX DsC0cGhzTqLixAEYV1ZdIHHjAMxLz2uQQuAAAdbmlyCFwgECPbyw2Wy8bu8ydiCbL4G6kKslrEBL cHShkNiA1uDoQiCxALnA0XEjeQeyvfEMvVoyzSvQkrtyCUtKv3kDWjqyCL2kNM0L0Np5jiQk50Cu hl1SkJwCuZ4ESkByBuRrTBoayQmQ7xlySKTVQFwD9lBIq4C4Vx9CIC0GCrU0w420CCj0uhUnkjVQ aBwdF5IVkBQcHQeSMZA0HJ1vJCMgqTg6n0gkkHQcnS8kEujxeIjH0dkiPZ9PcjsSKM9zpGn6z20k 4OhMkdI0RZ7n5P5IoN1uh9PpNIskCUdHIaVpavzTTKOT9BySRBzdHJINDmBxmZ8iScbRTZFscQAA yrLP56PqulZd19m+NFiv10vVda2+36/1a1keoPqfi/95gSgCEUUgoghEFIGIIhDRX7+Ql+7g2hEb AAAAAElFTkSuQmCC "
+                       preserveAspectRatio="none"
+                       height="7.6959653"
+                       width="7.804359" />
+                  </g>
+                </g>
+                <rect
+                   style="opacity:0.456;fill:none;fill-opacity:1;stroke:#4e4e4e;stroke-width:0.382;stroke-miterlimit:4;stroke-dasharray:0.382, 0.382;stroke-dashoffset:0;stroke-opacity:1"
+                   id="rect1604"
+                   width="67.417526"
+                   height="12.195735"
+                   x="64.64209"
+                   y="105.37571" />
+              </g>
+              <g
+                 inkscape:export-ydpi="78"
+                 inkscape:export-xdpi="78"
+                 inkscape:export-filename="/home/ecsomar/codechecker/web/server/vue-cli/src/assets/userguide/images/detection_status_flow_chart.png"
+                 transform="matrix(0.83501656,-0.23182457,0.20578753,0.74115433,-55.554529,159.82381)"
+                 id="g1676">
+                <path
+                   sodipodi:nodetypes="cc"
+                   inkscape:original-d="m 103.95044,93.640469 6.15419,-24.269192"
+                   inkscape:path-effect="#path-effect11065"
+                   inkscape:connector-curvature="0"
+                   id="path1674"
+                   d="m 103.95044,93.640469 c 0,0 6.15419,-24.269192 6.15419,-24.269192"
+                   style="fill:none;stroke:#0c7da5;stroke-width:0.5829674;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:1.1659348, 0.5829674;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker3730)" />
+              </g>
+              <g
+                 inkscape:export-ydpi="78"
+                 inkscape:export-xdpi="78"
+                 inkscape:export-filename="/home/ecsomar/codechecker/web/server/vue-cli/src/assets/userguide/images/detection_status_flow_chart.png"
+                 transform="matrix(0.01988817,-0.8663716,0.72910905,0.0167083,-4.8293042,311.14439)"
+                 id="g7101">
+                <path
+                   sodipodi:nodetypes="cc"
+                   inkscape:original-d="m 112.92192,110.62411 -0.0738,-12.25179"
+                   inkscape:path-effect="#path-effect3714"
+                   inkscape:connector-curvature="0"
+                   id="path7099"
+                   d="m 112.92192,110.62411 c 0,0 -0.0738,-12.25179 -0.0738,-12.25179"
+                   style="fill:none;stroke:#909090;stroke-width:0.58239609;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:1.16479216, 0.58239608;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker3280)" />
+              </g>
+              <rect
+                 inkscape:export-ydpi="78"
+                 inkscape:export-xdpi="78"
+                 inkscape:export-filename="/home/ecsomar/codechecker/web/server/vue-cli/src/assets/userguide/images/detection_status_flow_chart.png"
+                 y="206.03508"
+                 x="-2.6954"
+                 height="18.06163"
+                 width="115.88358"
+                 id="rect7441"
+                 style="opacity:0.456;fill:none;fill-opacity:1;stroke:#4e4e4e;stroke-width:0.382;stroke-miterlimit:4;stroke-dasharray:0.382, 0.382;stroke-dashoffset:0;stroke-opacity:1" />
+              <flowRoot
+                 inkscape:export-ydpi="78"
+                 inkscape:export-xdpi="78"
+                 inkscape:export-filename="/home/ecsomar/codechecker/web/server/vue-cli/src/assets/userguide/images/detection_status_flow_chart.png"
+                 transform="matrix(0.26458333,0,0,0.26458333,-25.042026,169.74973)"
+                 style="font-style:normal;font-weight:normal;font-size:8px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#4d4d4d;fill-opacity:0.45490196;stroke:none"
+                 id="flowRoot7985"
+                 xml:space="preserve"><flowRegion
+                   style="font-size:8px;text-align:center;text-anchor:middle;fill:#4d4d4d;fill-opacity:0.45490196"
+                   id="flowRegion7987"><rect
+                     style="font-size:8px;text-align:center;text-anchor:middle;fill:#4d4d4d;fill-opacity:0.45490196"
+                     y="19.305407"
+                     x="525"
+                     height="74.64286"
+                     width="66.428513"
+                     id="rect7989" /></flowRegion><flowPara
+                   style="font-size:12px"
+                   id="flowPara7991">Report is present in the code</flowPara></flowRoot>              <flowRoot
+                 inkscape:export-ydpi="78"
+                 inkscape:export-xdpi="78"
+                 inkscape:export-filename="/home/ecsomar/codechecker/web/server/vue-cli/src/assets/userguide/images/detection_status_flow_chart.png"
+                 xml:space="preserve"
+                 id="flowRoot7999"
+                 style="font-style:normal;font-weight:normal;font-size:8px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#141414;fill-opacity:0.45490196;stroke:none"
+                 transform="matrix(0.26458333,0,0,0.26458333,-24.853038,204.0074)"><flowRegion
+                   id="flowRegion7995"
+                   style="font-size:8px;text-align:center;text-anchor:middle;fill:#141414;fill-opacity:0.45490196"><rect
+                     id="rect7993"
+                     width="50.092747"
+                     height="58.510159"
+                     x="525"
+                     y="19.305407"
+                     style="font-size:8px;text-align:center;text-anchor:middle;fill:#141414;fill-opacity:0.45490196" /></flowRegion><flowPara
+                   style="font-size:12px"
+                   id="flowPara7997">Report is not present anymore</flowPara></flowRoot>            </g>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>
