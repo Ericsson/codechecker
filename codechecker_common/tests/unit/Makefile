@@ -1,6 +1,6 @@
 # Environment variables to run tests.
 
-CURRENT_DIR = $(shell pwd)
+CURRENT_DIR = ${CURDIR}
 # Root of the repository.
 REPO_ROOT ?= REPO_ROOT=$(CURRENT_DIR)/../../../
 

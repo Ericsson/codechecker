@@ -11,6 +11,7 @@ DBUNAME ?= TEST_DBUSERNAME=postgres
 # Test project configuration, tests are run on these files.
 CLANG_VERSION ?= TEST_CLANG_VERSION=stable
 TEST_PROJECT ?= TEST_PROJ=$(CURRENT_DIR)/tests/projects
+PYTHON_BIN ?= python3
 
 REPO_ROOT ?= REPO_ROOT=$(ROOT)
 CC_TEST_WORKSPACE_ROOT ?= $(BUILD_DIR)/workspace
@@ -102,18 +103,18 @@ test_functional: test_sqlite test_psql
 test_functional_in_env: test_sqlite_in_env test_psql_in_env
 
 test_sqlite:
-	python3 $(ROOT)/scripts/test/check_clang.py || exit 1;
+	${PYTHON_BIN} $(ROOT)/scripts/test/check_clang.py || exit 1;
 	$(CLEAR_WORKSPACE_CMD) && $(FUNCTIONAL_TEST_CMD)
 
 test_sqlite_in_env: venv_dev
-	python3 $(ROOT)/scripts/test/check_clang.py || exit 1;
+	${PYTHON_BIN} $(ROOT)/scripts/test/check_clang.py || exit 1;
 	$(ACTIVATE_DEV_VENV) && $(CLEAR_WORKSPACE_CMD) && $(FUNCTIONAL_TEST_CMD)
 
 test_psql: test_psql_psycopg2 test_psql_pg8000
 
 test_psql_in_env: test_psql_psycopg2_in_env test_psql_pg8000_in_env
 
-PSYCOPG2_TEST_CMD = python3 $(ROOT)/scripts/test/check_clang.py || exit 1; \
+PSYCOPG2_TEST_CMD = ${PYTHON_BIN} $(ROOT)/scripts/test/check_clang.py || exit 1; \
   $(DBUNAME) $(DBPORT) $(PSYCOPG2) $(DROP_DB_CMD) && \
   $(DBUNAME) $(DBPORT) $(PSYCOPG2) $(MAKE_DB_CMD) && \
   $(CLEAR_WORKSPACE_CMD) && \
@@ -127,7 +128,7 @@ test_psql_psycopg2:
 test_psql_psycopg2_in_env: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(PSYCOPG2_TEST_CMD)
 
-PG8000_TEST_CMD = python3 $(ROOT)/scripts/test/check_clang.py || exit 1; \
+PG8000_TEST_CMD = ${PYTHON_BIN} $(ROOT)/scripts/test/check_clang.py || exit 1; \
   $(DBUNAME) $(DBPORT) $(PG8000) $(DROP_DB_CMD) && \
   $(DBUNAME) $(DBPORT) $(PG8000) $(MAKE_DB_CMD) && \
   $(CLEAR_WORKSPACE_CMD) && \
