@@ -374,7 +374,7 @@ export default {
       return [].concat(...await Promise.all(
         this.selectedItems.map(async item => {
           if (!item.runIds) {
-            item.runIds = await this.getRunIds(item.title);
+            item.runIds = await ccService.getRunIds(item.title);
           }
 
           return Promise.resolve(item.runIds);
