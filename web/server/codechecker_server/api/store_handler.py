@@ -436,7 +436,9 @@ def addReport(session,
     """
     try:
 
-        checker_name = main_section['check_name']
+        checker_names = main_section['check_name'].split(',')
+        # tidy checker name aliases are separated by a comma.
+        checker_name = checker_names[0]
         severity_name = severity_map.get(checker_name)
         severity = ttypes.Severity._NAMES_TO_VALUES[severity_name]
 

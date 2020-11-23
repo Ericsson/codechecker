@@ -158,14 +158,14 @@ def reports_to_html_report_data(reports: List[Report]) -> Dict:
             notes.append({'location': note['location'],
                           'message': note['message']})
 
-        report_hash = report.main['issue_hash_content_of_line_in_context']
+        report_hash = report.report_hash
         report_data.append({
             'events': events,
             'macros': macros,
             'notes': notes,
             'path': report.main['location']['file'],
             'reportHash': report_hash,
-            'checkerName': report.main['check_name']})
+            'checkerName': report.check_name})
 
     return {'files': file_sources,
             'reports': report_data}

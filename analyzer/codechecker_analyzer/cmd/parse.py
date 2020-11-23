@@ -208,7 +208,9 @@ class PlistToPlaintextFormatter(object):
                     report.files[last_report_event['location']['file']]
 
                 file_stats[f_path] += 1
-                severity = self.__severity_map.get(checker_name)
+                # tidy checker name aliases are separated by a comma.
+                checker_names = checker_name.split(',')
+                severity = self.__severity_map.get(checker_names[0])
                 severity_stats[severity] += 1
                 report_count["report_count"] += 1
 

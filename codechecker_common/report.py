@@ -71,8 +71,13 @@ class Report(object):
         return self.__main['issue_hash_content_of_line_in_context']
 
     @property
+    def check_aliases(self) -> List[str]:
+        # tidy checker name aliases are separated by a comma.
+        return self.__main['check_name'].split(',')
+
+    @property
     def check_name(self) -> str:
-        return self.__main['check_name']
+        return self.check_aliases[0]
 
     @property
     def bug_path(self) -> Dict:

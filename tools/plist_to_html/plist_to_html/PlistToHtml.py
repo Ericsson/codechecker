@@ -348,7 +348,10 @@ def get_report_data_from_plist(plist, skip_report_handler=None,
         source_file = files[diag['location']['file']]
         report_line = diag['location']['line']
         report_hash = diag['issue_hash_content_of_line_in_context']
-        checker_name = diag['check_name']
+        # tidy checker name aliases are separated by a comma.
+        checker_names = diag['check_name']
+        checker_name = checker_names[0]
+
         source_code_comments = []
 
         if skip_report_handler:

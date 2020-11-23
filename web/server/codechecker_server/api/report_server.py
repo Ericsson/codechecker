@@ -1775,6 +1775,12 @@ class ThriftRequestHandler(object):
          - checkerId
         """
 
+        LOG.error(checkerId)
+        # tidy checker name aliases are separated by a comma.
+        checker_names = checkerId.split(',')
+        LOG.error(checker_names)
+        checkerId = checker_names[0]
+
         missing_doc = "No documentation found for checker: " + checkerId + \
                       "\n\nPlease refer to the documentation at the "
 
@@ -2706,7 +2712,9 @@ class ThriftRequestHandler(object):
             # Store report.
             for report in reports:
                 checker_name = report.main['check_name']
-                all_report_checkers.add(checker_name)
+                # tidy checker name aliases are separated by a comma.
+                checker_names = checker_name.split(',')
+                all_report_checkers.add(checker_names[0])
 
                 report.trim_path_prefixes(trim_path_prefixes)
                 source_file = report.file_path
