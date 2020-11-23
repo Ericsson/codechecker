@@ -3,8 +3,9 @@
 # Set it to NO if you would not like to build the UI code.
 BUILD_UI_DIST ?= YES
 
-CURRENT_DIR = $(shell pwd)
+CURRENT_DIR = ${CURDIR}
 BUILD_DIR ?= $(CURRENT_DIR)/build
+PYTHON_BIN ?= python3
 
 CC_BUILD_DIR = $(BUILD_DIR)/CodeChecker
 CC_BUILD_WEB_DIR = $(CC_BUILD_DIR)/www
@@ -48,7 +49,7 @@ pip_dev_deps:
 
 venv_dev:
 	# Create a virtual environment for development.
-	virtualenv -p python3 venv_dev && \
+	virtualenv -p ${PYTHON_BIN} venv_dev && \
 		$(ACTIVATE_DEV_VENV) && pip3 install -r $(VENV_DEV_REQ_FILE)
 
 clean_venv_dev:
@@ -107,12 +108,12 @@ package: package_plist_to_html package_report_hash package_web
 	cp -r $(ROOT)/config $(CC_BUILD_DIR) && \
 	cp -r $(CURRENT_DIR)/config/* $(CC_BUILD_DIR)/config && \
 	cp -r $(CC_SERVER)/config/* $(CC_BUILD_DIR)/config && \
-	$(ROOT)/scripts/build/extend_version_file.py -r $(ROOT) \
+	${PYTHON_BIN} $(ROOT)/scripts/build/extend_version_file.py -r $(ROOT) \
 	  $(CC_BUILD_DIR)/config/web_version.json
 
 	# Copy CodeChecker entry point sub-commands.
 	mkdir -p $(CC_BUILD_DIR)/cc_bin && \
-	$(ROOT)/scripts/build/create_commands.py -b $(BUILD_DIR) \
+	${PYTHON_BIN} $(ROOT)/scripts/build/create_commands.py -b $(BUILD_DIR) \
 	  --cmd-dir codechecker_common/cmd \
 	    $(CC_WEB)/codechecker_web/cmd \
 	    $(CC_SERVER)/codechecker_server/cmd \
