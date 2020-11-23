@@ -128,7 +128,7 @@ For details see
 ## Common Tools
 Useful tools that can also be used outside CodeChecker.
 
-* [Build Logger (to generate JSON Compilation Database from your builds)](analyzer/tools/build-logger) 
+* [Build Logger (to generate JSON Compilation Database from your builds)](/analyzer/tools/build-logger/README.md)
 * [Plist to HTML converter (to generate HTML files from the given plist files)](/tools/plist_to_html/README.md)
 * [Report Converter Tool (to convert analysis results from other analyzers to the codechecker report directory format))](/tools/report-converter/README.md)
 * [Translation Unit Collector (to collect source files of a translation unit or to get source files which depend on the given header files)](/tools/tu_collector/README.md)
