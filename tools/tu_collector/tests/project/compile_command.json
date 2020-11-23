@@ -13,5 +13,15 @@
     "directory": "/tmp",
     "command": "ccache gcc -o /dev/null -std=c11 hello.c",
     "file": "hello.c"
+  },
+  {
+    "directory": "/tmp",
+    "command": "g++ -o /dev/null ctu.cpp",
+    "file": "ctu.cpp"
+  },
+  {
+    "directory": "/tmp",
+    "command": "g++ -o /dev/null zero.cpp",
+    "file": "zero.cpp"
   }
 ]
