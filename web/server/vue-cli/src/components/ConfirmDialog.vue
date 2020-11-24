@@ -39,6 +39,8 @@
         </v-btn>
       </v-card-title>
 
+      <v-progress-linear v-if="confirmInProgress" indeterminate />
+
       <v-card-text class="pa-0">
         <v-container fluid>
           <slot name="content" />
@@ -81,6 +83,7 @@ export default {
     cancelBtnColor: { type: String, default: "error" },
     confirmBtnLabel: { type: String, default: "Save" },
     confirmBtnColor: { type: String, default: "primary" },
+    confirmInProgress: { type: Boolean, default: false },
     maxWidth: { type: String, default: "600px" },
     scrollable: { type: Boolean, default: true },
     loading: { type: Boolean, default: false },
