@@ -6,6 +6,7 @@
     cancel-btn-color="primary"
     confirm-btn-label="Remove"
     confirm-btn-color="error"
+    :confirm-in-progress="removingInProgress"
     @confirm="confirmDelete"
   >
     <template v-slot:activator="{ on }">
@@ -58,12 +59,15 @@ export default {
   },
   data() {
     return {
-      dialog: false
+      dialog: false,
+      removingInProgress: false,
     };
   },
 
   methods: {
     confirmDelete() {
+      this.removingInProgress = true;
+
       const runFilter = new RunFilter({
         ids: this.selected.map(run => run.runId)
       });
@@ -74,6 +78,7 @@ export default {
           this.dialog = false;
 
           this.$emit("on-confirm");
+          this.removingInProgres = false;
         }));
     }
   }
