@@ -18,7 +18,7 @@ SESSION_COOKIE_NAME = '__ccPrivilegedAccessToken'
 # The newest supported minor version (value) for each supported major version
 # (key) in this particular build.
 SUPPORTED_VERSIONS = {
-    6: 35
+    6: 36
 }
 
 # Used by the client to automatically identify the latest major and minor

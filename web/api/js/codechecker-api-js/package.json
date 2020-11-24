@@ -1,6 +1,6 @@
 {
   "name": "codechecker-api-js",
-  "version": "6.35.0-dev2",
+  "version": "6.36.0",
   "description": "Generated jQuery compatible API stubs for CodeChecker server.",
   "main": "lib",
   "homepage": "https://github.com/Ericsson/codechecker",
