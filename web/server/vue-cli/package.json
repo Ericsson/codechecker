@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@mdi/font": "^5.3.45",
-    "codechecker-api": "6.35.0-dev2",
+    "codechecker-api": "6.36.0",
     "chart.js": "^2.9.3",
     "chartjs-plugin-datalabels": "^0.7.0",
     "codemirror": "^5.55.0",
