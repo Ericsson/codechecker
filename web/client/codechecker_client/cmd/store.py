@@ -439,12 +439,26 @@ def scan_for_review_comment(job):
     return comments
 
 
+def get_source_file_with_comments(jobs, zip_iter=map):
+    """
+    Get source files where there is any codechecker review comment at the main
+    report positions.
+    """
+    files_with_comment = set()
+
+    for job, comments in zip(jobs,
+                             zip_iter(scan_for_review_comment, jobs)):
+        file_path, _ = job
+        if comments:
+            files_with_comment.add(file_path)
+
+    return files_with_comment
+
+
 def filter_source_files_with_comments(source_file_info, main_report_positions):
     """Collect the source files where there is any codechecker review
     comment at the main report positions.
     """
-
-    files_with_comment = set()
     jobs = []
     for file_path, v in source_file_info.items():
         if not bool(v):
@@ -455,14 +469,16 @@ def filter_source_files_with_comments(source_file_info, main_report_positions):
 
         jobs.append((file_path, lines))
 
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        for job, comments in zip(jobs,
-                                 executor.map(scan_for_review_comment, jobs)):
-            file_path, _ = job
-            if comments:
-                files_with_comment.add(file_path)
-
-    return files_with_comment
+    # Currently ProcessPoolExecutor fails completely in windows.
+    # Reason is most likely combination of venv and fork() not
+    # being present in windows, so stuff like setting up
+    # PYTHONPATH in parent CodeChecker before store is executed
+    # are lost.
+    if sys.platform == "win32":
+        return get_source_file_with_comments(jobs)
+    else:
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            return get_source_file_with_comments(jobs, executor.map)
 
 
 def parse_collect_plist_info(plist_file):
@@ -528,7 +544,7 @@ def parse_collect_plist_info(plist_file):
     return rli, sfir
 
 
-def parse_report_files(report_files):
+def parse_report_files(report_files, zip_iter=map):
     """Parse and collect source code information mentioned in a report file.
 
     Collect any mentioned source files wich are missing or changed
@@ -542,23 +558,22 @@ def parse_report_files(report_files):
     changed_files = set()
     missing_source_files = set()
 
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        for report_f, v in zip(report_files,
-                               executor.map(parse_collect_plist_info,
-                                            report_files)):
+    for report_f, v in zip(report_files,
+                           zip_iter(parse_collect_plist_info,
+                                    report_files)):
 
-            report_file_info, source_in_reports = v
+        report_file_info, source_in_reports = v
 
-            if report_file_info.store_it:
-                files_to_compress.add(report_f)
+        if report_file_info.store_it:
+            files_to_compress.add(report_f)
 
-            source_file_info.update(source_in_reports.source_info)
-            changed_files = \
-                changed_files | source_in_reports.changed_since_report_gen
-            main_report_positions.extend(
-                report_file_info.main_report_positions)
-            missing_source_files = \
-                missing_source_files | source_in_reports.missing
+        source_file_info.update(source_in_reports.source_info)
+        changed_files = \
+            changed_files | source_in_reports.changed_since_report_gen
+        main_report_positions.extend(
+            report_file_info.main_report_positions)
+        missing_source_files = \
+            missing_source_files | source_in_reports.missing
 
     return (source_file_info,
             main_report_positions,
@@ -576,11 +591,20 @@ def assemble_zip(inputs, zip_file, client):
 
     LOG.debug("Processing report files ...")
 
-    (source_file_info,
-     main_report_positions,
-     files_to_compress,
-     changed_files,
-     missing_source_files) = parse_report_files(report_files)
+    if sys.platform == "win32":
+        (source_file_info,
+         main_report_positions,
+         files_to_compress,
+         changed_files,
+         missing_source_files) = parse_report_files(report_files)
+    else:
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            (source_file_info,
+             main_report_positions,
+             files_to_compress,
+             changed_files,
+             missing_source_files) = parse_report_files(report_files,
+                                                        executor.map)
 
     LOG.info("Processing report files done.")
 
@@ -647,7 +671,10 @@ def assemble_zip(inputs, zip_file, client):
             if h in necessary_hashes or h in file_hash_with_review_status:
                 LOG.debug("File contents for '%s' needed by the server", f)
 
-                zipf.write(f, os.path.join('root', f.lstrip('/')))
+                filename_in_zip = util.strip_drive_letter(f)
+                filename_in_zip = os.path.join('root',
+                                               filename_in_zip.lstrip(os.sep))
+                zipf.write(f, filename_in_zip)
 
         zipf.writestr('content_hashes.json', json.dumps(file_to_hash))
 
@@ -755,7 +782,7 @@ def storing_analysis_statistics(client, inputs, run_name):
     """
     Collects and stores analysis statistics information on the server.
     """
-    _, zip_file = tempfile.mkstemp('.zip')
+    zip_file_handle, zip_file = tempfile.mkstemp('.zip')
     LOG.debug("Will write failed store ZIP to '%s'...", zip_file)
     try:
         limits = client.getAnalysisStatisticsLimits()
@@ -792,6 +819,7 @@ def storing_analysis_statistics(client, inputs, run_name):
         LOG.debug("Storage of analysis statistics zip has been failed: %s", ex)
 
     finally:
+        os.close(zip_file_handle)
         os.remove(zip_file)
 
 
@@ -837,7 +865,7 @@ def main(args):
     # Setup connection to the remote server.
     client = libclient.setup_client(args.product_url)
 
-    _, zip_file = tempfile.mkstemp('.zip')
+    zip_file_handle, zip_file = tempfile.mkstemp('.zip')
     LOG.debug("Will write mass store ZIP to '%s'...", zip_file)
 
     try:
@@ -903,4 +931,5 @@ def main(args):
         LOG.info("Storage failed: %s", str(ex))
         sys.exit(1)
     finally:
+        os.close(zip_file_handle)
         os.remove(zip_file)

@@ -12,6 +12,8 @@ Util module.
 
 import json
 import os
+import ntpath
+import sys
 
 import portalocker
 
@@ -135,9 +137,13 @@ def trim_path_prefixes(path, prefixes):
     # Find the longest matching prefix in the path.
     longest_matching_prefix = None
     for prefix in prefixes:
-        if not prefix.endswith('/'):
-            prefix += '/'
-
+        if ntpath.sep in prefix:
+            prefix = prefix.replace("\\\\", "\\")
+            if not prefix.endswith(ntpath.sep):
+                prefix += ntpath.sep
+        else:
+            if not prefix.endswith('/'):
+                prefix += '/'
         if path.startswith(prefix) and (not longest_matching_prefix or
                                         longest_matching_prefix < prefix):
             longest_matching_prefix = prefix
@@ -148,3 +154,16 @@ def trim_path_prefixes(path, prefixes):
         return path
 
     return path[len(longest_matching_prefix):]
+
+
+def strip_drive_letter(full_path):
+    """Removes drive letter from path if it has one """
+    _, tail = ntpath.splitdrive(full_path)
+
+    return tail
+
+
+def convert_windows_sep_to_posix(full_path):
+    """Converts \\  to /"""
+
+    return full_path.replace(ntpath.sep, "/")

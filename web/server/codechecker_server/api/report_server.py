@@ -2568,6 +2568,8 @@ class ThriftRequestHandler(object):
         file_path_to_id = {}
 
         for file_name, file_hash in filename_to_hash.items():
+            file_name = util.strip_drive_letter(file_name)
+            file_name = util.convert_windows_sep_to_posix(file_name)
             source_file_name = os.path.join(source_root,
                                             file_name.strip("/"))
             source_file_name = os.path.realpath(source_file_name)

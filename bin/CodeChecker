@@ -39,7 +39,6 @@ def run_codechecker(checker_env, subcommand=None):
     common_lib = os.path.join(package_root,
                               'lib',
                               'python3')
-
     checker_env['PYTHONPATH'] = common_lib
 
     checker_env['CC_PACKAGE_ROOT'] = \
@@ -113,7 +112,8 @@ def main(subcommand=None):
         if proc_pid:
             os.kill(proc_pid, signal.SIGHUP)
 
-    signal.signal(signal.SIGHUP, signal_reload_handler)
+    if not sys.platform == "win32":
+        signal.signal(signal.SIGHUP, signal_reload_handler)
 
     try:
         run_codechecker(checker_env, subcommand)
