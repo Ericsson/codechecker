@@ -1,5 +1,9 @@
 <template>
-  <v-tooltip max-width="300" right>
+  <v-tooltip
+    max-width="300"
+    color="black"
+    right
+  >
     <template v-slot:activator="{ on }">
       <v-icon
         color="accent"
