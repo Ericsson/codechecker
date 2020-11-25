@@ -23,6 +23,11 @@
       </span>
 
       <report-tree-icon :item="item" />
+
+      <review-status-icon
+        v-if="item.kind === ReportTreeKind.REPORT"
+        :status="parseInt(item.report.reviewData.status)"
+      />
     </template>
 
     <template v-slot:label="{ item }">
@@ -42,6 +47,8 @@ import {
   ReportFilter
 } from "@cc/report-server-types";
 
+import { ReviewStatusIcon } from "@/components/Icons";
+
 import ReportTreeIcon from "./ReportTreeIcon";
 import ReportTreeLabel from "./ReportTreeLabel";
 import ReportTreeKind from "./ReportTreeKind";
@@ -52,7 +59,8 @@ export default {
   name: "ReportTree",
   components: {
     ReportTreeIcon,
-    ReportTreeLabel
+    ReportTreeLabel,
+    ReviewStatusIcon
   },
 
   props: {
