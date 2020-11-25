@@ -86,7 +86,7 @@
               </template>
 
               <template v-slot:append-outer>
-                months.
+                month(s).
               </template>
             </v-text-field>
           </div>
