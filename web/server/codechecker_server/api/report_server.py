@@ -345,11 +345,13 @@ def process_source_component_filter(session, component_names):
 
     for component_name in component_names:
         if component_name == GEN_OTHER_COMPONENT_NAME:
-            OR.append(or_(*get_other_source_component_file_query(session)))
-            continue
+            file_query = get_other_source_component_file_query(session)
+        else:
+            file_query = get_source_component_file_query(session,
+                                                         component_name)
 
-        OR.append(or_(*get_source_component_file_query(session,
-                                                       component_name)))
+        if file_query is not None:
+            OR.append(file_query)
 
     return or_(*OR)
 
@@ -369,31 +371,32 @@ def get_source_component_file_query(session, component_name):
                 File.filepath.like(conv(fp)) for fp in skip])) \
             .distinct()
 
-        return [File.id.in_(include_q.except_(skip_q))]
+        return File.id.in_(include_q.except_(skip_q))
     elif include:
-        return [File.filepath.like(conv(fp)) for fp in include]
+        return or_(*[File.filepath.like(conv(fp)) for fp in include])
     elif skip:
-        return [not_(File.filepath.like(conv(fp))) for fp in skip]
+        return and_(*[not_(File.filepath.like(conv(fp))) for fp in skip])
 
 
 def get_other_source_component_file_query(session):
-    """ Get filter query for the auto-generated Others component. """
-    OR = []
-
+    """ Get filter query for the auto-generated Others component.
+    If there are no user defined source components in the database this
+    function will return with None.
+    """
     component_names = session.query(SourceComponent.name).all()
 
     # If there are no user defined source components we don't have to filter.
     if not component_names:
-        return []
+        return None
 
-    for (component_name, ) in component_names:
-        OR.extend(get_source_component_file_query(session, component_name))
+    file_queries = [get_source_component_file_query(session, component_name)
+                    for (component_name, ) in component_names]
 
     q = select([File.id]) \
-        .where(or_(*OR)) \
+        .where(or_(*file_queries)) \
         .distinct()
 
-    return [File.id.notin_(q)]
+    return File.id.notin_(q)
 
 
 def get_open_reports_date_filter_query(tbl=Report, date=RunHistory.time):

@@ -419,11 +419,18 @@ class TestComponent(unittest.TestCase):
         components = [
             {
                 'name': 'UserDefined1',
-                'value': '+*/divide_zero.cpp'
+                'value':  '\n'.join([
+                    '+*/divide_zero.cpp',
+                    '+*/new_delete.cpp'
+                ])
             },
             {
                 'name': 'UserDefined2',
-                'value': '+*/new_delete.cpp'
+                'value': '\n'.join([
+                    '-*/stack_address_escape.cpp',
+                    '-*/new_delete.cpp',
+                    '-*/call_and_message.cpp'
+                ])
             },
             {
                 'name': 'UserDefined3',
@@ -440,7 +447,8 @@ class TestComponent(unittest.TestCase):
         excluded_from_other = ['divide_zero.cpp', 'new_delete.cpp',
                                'null_dereference.cpp']
 
-        included_in_other = ['call_and_message.cpp']
+        included_in_other = ['call_and_message.cpp',
+                             'stack_address_escape.cpp']
 
         self.__test_other_component(components, excluded_from_other,
                                     included_in_other)
