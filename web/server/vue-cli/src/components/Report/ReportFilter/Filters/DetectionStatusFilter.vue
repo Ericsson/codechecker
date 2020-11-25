@@ -44,13 +44,21 @@
         </ul>
       </tooltip-help-icon>
 
-      <v-icon
+      <tooltip-help-icon
         v-if="reportFilter.isUnique"
-        color="error"
-        :title="uniqueingErrorTitle"
       >
-        mdi-alert
-      </v-icon>
+        <template v-slot:activator="{ on }">
+          <v-icon
+            color="error"
+            v-on="on"
+          >
+            mdi-alert
+          </v-icon>
+        </template>
+
+        Not available in uniqueing mode! Several detection statuses could
+        belong to the same bug!
+      </tooltip-help-icon>
 
       <selected-toolbar-title-items
         v-if="selectedItems"
@@ -83,9 +91,7 @@ export default {
 
   data() {
     return {
-      id: "detection-status",
-      uniqueingErrorTitle: "Not available in uniqueing mode! Several " +
-        "detection statuses could belong to the same bug!"
+      id: "detection-status"
     };
   },
 
