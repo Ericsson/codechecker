@@ -202,7 +202,7 @@ export default {
   position: absolute;
   right: 50px;
   top: 0px;
-  z-index: 1000;
+  z-index: 100;
 
   .last-month {
     width: 180px;
