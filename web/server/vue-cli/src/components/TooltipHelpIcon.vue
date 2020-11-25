@@ -5,14 +5,16 @@
     right
   >
     <template v-slot:activator="{ on }">
-      <v-icon
-        color="accent"
-        class="ml-1"
-        small
-        v-on="on"
-      >
-        mdi-help-circle
-      </v-icon>
+      <slot :on="on" name="activator">
+        <v-icon
+          color="accent"
+          class="ml-1"
+          small
+          v-on="on"
+        >
+          mdi-help-circle
+        </v-icon>
+      </slot>
     </template>
     <slot />
   </v-tooltip>
