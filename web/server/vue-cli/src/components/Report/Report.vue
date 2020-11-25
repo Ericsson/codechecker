@@ -432,7 +432,18 @@ export default {
 
       if (evt.ctrlKey && evt.keyCode === 70) { // Ctrl-f
         evt.preventDefault();
+        evt.stopPropagation();
+
         this.editor.execCommand("findPersistent");
+
+        // Set focus to the search input field.
+        setTimeout(() => {
+          const searchField =
+            document.getElementsByClassName("CodeMirror-search-field");
+
+          if (searchField.length)
+            searchField[0].focus();
+        }, 0);
       }
     },
 
