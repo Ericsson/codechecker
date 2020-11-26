@@ -1,8 +1,9 @@
 -include Makefile.local
 
-CURRENT_DIR = $(shell pwd)
+CURRENT_DIR = ${CURDIR}
 BUILD_DIR = $(CURRENT_DIR)/build
 VENDOR_DIR = $(CURRENT_DIR)/vendor
+PYTHON_BIN ?= python3
 
 CC_BUILD_DIR = $(BUILD_DIR)/CodeChecker
 CC_BUILD_BIN_DIR = $(CC_BUILD_DIR)/bin
@@ -111,12 +112,12 @@ package: package_dir_structure set_git_commit_template package_plist_to_html pac
 	cp -r $(CC_ANALYZER)/config/* $(CC_BUILD_DIR)/config && \
 	cp -r $(CC_WEB)/config/* $(CC_BUILD_DIR)/config && \
 	cp -r $(CC_SERVER)/config/* $(CC_BUILD_DIR)/config && \
-	./scripts/build/extend_version_file.py -r $(ROOT) \
-	  $(CC_BUILD_DIR)/config/analyzer_version.json \
-	  $(CC_BUILD_DIR)/config/web_version.json
+	${PYTHON_BIN} ./scripts/build/extend_version_file.py -r $(ROOT) \
+	$(CC_BUILD_DIR)/config/analyzer_version.json \
+	$(CC_BUILD_DIR)/config/web_version.json
 
 	mkdir -p $(CC_BUILD_DIR)/cc_bin && \
-	./scripts/build/create_commands.py -b $(BUILD_DIR) \
+	${PYTHON_BIN} ./scripts/build/create_commands.py -b $(BUILD_DIR) \
 	  --cmd-dir codechecker_common/cmd \
 	    $(CC_WEB)/codechecker_web/cmd \
 	    $(CC_SERVER)/codechecker_server/cmd \
@@ -137,21 +138,21 @@ standalone_package: venv package
 	# the virtual environment beforehand.
 	cd $(CC_BUILD_BIN_DIR) && \
 	mv CodeChecker _CodeChecker && \
-	$(ROOT)/scripts/build/wrap_binary_in_venv.py \
+	${PYTHON_BIN} $(ROOT)/scripts/build/wrap_binary_in_venv.py \
 		-e $(ROOT)/venv \
 		-b _CodeChecker \
 		-o CodeChecker
 
 venv:
 	# Create a virtual environment which can be used to run the build package.
-	virtualenv -p python3 venv && \
+	virtualenv -p ${PYTHON_BIN} venv && \
 		$(ACTIVATE_RUNTIME_VENV) && \
 		pip3 install -r $(CC_ANALYZER)/requirements.txt && \
 		pip3 install -r $(CC_WEB)/requirements.txt
 
 venv_osx:
 	# Create a virtual environment which can be used to run the build package.
-	virtualenv -p python3 venv && \
+	virtualenv -p ${PYTHON_BIN} venv && \
 		$(ACTIVATE_RUNTIME_VENV) && \
 		pip3 install -r $(CC_ANALYZER)/requirements_py/osx/requirements.txt && \
 		pip3 install -r $(CC_WEB)/requirements_py/osx/requirements.txt
@@ -169,7 +170,7 @@ pip_dev_deps:
 
 venv_dev:
 	# Create a virtual environment for development.
-	virtualenv -p python3 venv_dev && \
+	virtualenv -p ${PYTHON_BIN} venv_dev && \
 		$(ACTIVATE_DEV_VENV) && $(PIP_DEV_DEPS_CMD)
 
 clean_venv_dev:
