@@ -33,6 +33,7 @@ CodeChecker result directory which can be stored to a CodeChecker server.
 |                | [Staticcheck](https://staticcheck.io/)    | ✗ |
 |                | [go-critic](https://github.com/go-critic/go-critic)    | ✗ |
 | **Markdown**   | [Markdownlint](https://github.com/markdownlint/markdownlint)    | ✓ |
+|                | [Sphinx](https://github.com/sphinx-doc/sphinx)    | ✓ |
 
 ## Clang Sanitizers
 | Name         | Support storage of analyzer results |

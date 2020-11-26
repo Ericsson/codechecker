@@ -58,6 +58,8 @@ from codechecker_report_converter.smatch.analyzer_result import \
     SmatchAnalyzerResult  # noqa
 from codechecker_report_converter.kerneldoc.analyzer_result import \
     KernelDocAnalyzerResult  # noqa
+from codechecker_report_converter.sphinx.analyzer_result import \
+    SphinxAnalyzerResult  # noqa
 
 
 LOG = logging.getLogger('ReportConverter')
@@ -95,7 +97,8 @@ supported_converters = {
     MarkdownlintAnalyzerResult.TOOL_NAME: MarkdownlintAnalyzerResult,
     CoccinelleAnalyzerResult.TOOL_NAME: CoccinelleAnalyzerResult,
     SmatchAnalyzerResult.TOOL_NAME: SmatchAnalyzerResult,
-    KernelDocAnalyzerResult.TOOL_NAME: KernelDocAnalyzerResult
+    KernelDocAnalyzerResult.TOOL_NAME: KernelDocAnalyzerResult,
+    SphinxAnalyzerResult.TOOL_NAME: SphinxAnalyzerResult
 }
 
 supported_metadata_keys = ["analyzer_command", "analyzer_version"]

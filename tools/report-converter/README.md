@@ -23,6 +23,7 @@ a CodeChecker server.
 * [Coccinelle](#coccinelle)
 * [Smatch](#smatch)
 * [Kernel-Doc](#kernel-doc)
+* [Sphinx](#sphinx)
 * [License](#license)
 
 ## Install guide
@@ -57,7 +58,7 @@ optional arguments:
                         Currently supported output types are: asan, clang-
                         tidy, coccinelle, cppcheck, eslint, fbinfer, golint,
                         kernel-doc, msan, pyflakes, pylint, smatch, spotbugs, 
-                        tsan, tslint, ubsan.
+                        sphinx, tsan, tslint, ubsan.
   --meta [META [META ...]]
                         Metadata information which will be stored alongside
                         the run when the created report directory will be
@@ -95,6 +96,7 @@ Supported analyzers:
   pylint - Pylint, https://www.pylint.org
   smatch - smatch, https://repo.or.cz/w/smatch.git
   spotbugs - spotbugs, https://spotbugs.github.io
+  sphinx - sphinx, https://github.com/sphinx-doc/sphinx
   tsan - ThreadSanitizer, https://clang.llvm.org/docs/ThreadSanitizer.html
   tslint - TSLint, https://palantir.github.io/tslint
   ubsan - UndefinedBehaviorSanitizer, https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
@@ -465,10 +467,38 @@ make htmldocs 2>&1 | tee kernel-docs.out
 
 # Use 'report-converter' to create a CodeChecker report directory from the
 # analyzer result of Kernel-Doc
-report-converter -t kernel-doc -o ./codechecker_kernel_doc_reports ./sphinx_output.out
+report-converter -t kernel-doc -o ./codechecker_kernel_doc_reports ./kernel-docs.out
 
 # Store the Kernel-Doc reports with CodeChecker.
 CodeChecker store ./codechecker_kernel_doc_reports -n kernel-doc
+```
+
+## [Sphinx](https://github.com/sphinx-doc/sphinx)
+[Sphinx](https://github.com/sphinx-doc/sphinx) Sphinx is a documentation generator 
+or a tool that translates a set of plain text source files into various output formats, 
+automatically producing cross-references, indices, etc.
+
+The recommended way of running Sphinx is to redirect the output to a file and
+give this file to the report converter tool.
+
+The following example shows you how to run Sphinx on kernel sources 
+and store the results found by Sphinx to the CodeChecker database.
+
+```sh
+# Change Directory to your project
+cd path/to/linux/kernel/repository
+
+# Run Sphinx
+# Note: The output of the following command will be both of sphinx and kernel-doc, 
+# but the parser will parse only sphinx output
+make htmldocs 2>&1 | tee sphinx.out
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of Sphinx
+report-converter -t sphinx -o ./codechecker_sphinx_reports ./sphinx.out
+
+# Store the Sphinx reports with CodeChecker.
+CodeChecker store ./codechecker_sphinx_reports -n sphinx
 ```
 
 ## License
