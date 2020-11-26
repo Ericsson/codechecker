@@ -159,10 +159,8 @@ module.exports = {
 
     reportPage.expect.section(tagMenu).to.not.be.present.before(5000);
 
-    // Select the run with tag.
-    runMenu
-      .click("@item")
-      .applyFilter();
+    // Apply the filter.
+    runMenu.applyFilter();
 
     section.closeFilterSettings();
 
@@ -243,10 +241,8 @@ module.exports = {
 
     reportPage.expect.section(tagMenu).to.not.be.present.before(5000);
 
-    // Select the run with tag.
-    runMenu
-      .click("@item")
-      .applyFilter();
+    // Apply the filter.
+    runMenu.applyFilter();
 
     section.closeFilterSettings();
 
