@@ -151,6 +151,7 @@ struct ReportDetails {
   1: BugPathEvents pathEvents,
   2: BugPath       executionPath,
   3: optional ExtendedReportDataList extendedData,
+  4: optional CommentDataList comments,
 }
 
 typedef string AnalyzerType
