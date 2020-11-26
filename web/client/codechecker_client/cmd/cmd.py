@@ -1314,7 +1314,11 @@ by multiple severity values:
                       "- gerrit: a 'gerrit_review.json' file will be " \
                       "generated in the export directory.\n" \
                       "- codeclimate: a 'codeclimate_issues.json' file will " \
-                      "be generated in the export directory."
+                      "be generated in the export directory.\n" \
+                      "For the output formats (json, gerrit, codeclimate) " \
+                      "if an export directory is set the output files will " \
+                      "be generated if not the results are printed to the " \
+                      "stdout but only if one format was selected."
 
     __add_common_arguments(diff,
                            output_formats=diff_output_formats,
