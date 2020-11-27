@@ -1,0 +1,191 @@
+name: codechecker-tests
+
+# Triggers the workflow on push or pull request events.
+on: [push, pull_request]
+
+jobs:
+  # Note: UI related linter tests will run in the gui job.
+  lint:
+    name: Linters (pylint, pycodestyle)
+
+    runs-on: ubuntu-18.04
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.6'
+      - name: Install dependencies
+        run: |
+          pip install $(grep -iE "pylint|pycodestyle" analyzer/requirements_py/dev/requirements.txt)
+      - name: Run tests
+        run: make pylint pycodestyle
+
+  tools:
+    name: Tools (plist-to-html, report-converter, etc.)
+    runs-on: ubuntu-18.04
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.6'
+      - name: Install common dependencies
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install gcc-multilib
+
+      - name: Run build-logger tests
+        working-directory: analyzer/tools/build-logger
+        run: |
+          make -f Makefile.manual
+          make -f Makefile.manual test
+
+      - name: Run merge-clang-extdef-mappings tests
+        working-directory: analyzer/tools/merge_clang_extdef_mappings
+        run: |
+          pip install -r requirements_py/dev/requirements.txt
+          make test
+
+      - name: Run statistics-collector tests
+        working-directory: analyzer/tools/statistics_collector
+        run: |
+          pip install -r requirements_py/dev/requirements.txt
+          make test
+
+      - name: Run codechecker-report-hash tests
+        working-directory: tools/codechecker_report_hash
+        run: |
+          pip install -r requirements_py/dev/requirements.txt
+          make test
+
+      - name: Run plist-to-html tests
+        working-directory: tools/plist_to_html
+        run: |
+          pip install -r requirements_py/dev/requirements.txt
+          make test
+
+      - name: Run report-converter tests
+        working-directory: tools/report-converter
+        run: |
+          pip install -r requirements_py/dev/requirements.txt
+          make package
+          make test
+
+      - name: Run tu-collector tests
+        working-directory: tools/tu_collector
+        run: make test
+
+  analyzer:
+    name: Analyzer
+    runs-on: ubuntu-18.04
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.6'
+
+      - name: Install dependencies
+        run: sh .github/workflows/install-deps.sh
+
+      - name: Build the package
+        run: |
+          make pip_dev_deps
+          BUILD_UI_DIST=NO make package
+
+      - name: Run analyzer tests
+        working-directory: analyzer
+        run: make test_unit test_functional
+
+  web:
+    name: Web
+    runs-on: ubuntu-18.04
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    strategy:
+      matrix:
+        database: [sqlite, psql_pg8000, psql_psycopg2]
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.6'
+
+      - name: Install dependencies
+        run: sh .github/workflows/install-deps.sh
+
+      - name: Init .pgpass
+        run: |
+          echo '*:*:*:*:postgres' > $HOME/.pgpass
+          chmod 0600 $HOME/.pgpass
+
+      - name: Run tests
+        env:
+          PGPASSWORD: postgres
+        run: |
+          export PGPASSFILE=$HOME/.pgpass
+
+          make pip_dev_deps
+          BUILD_UI_DIST=NO make package
+
+          make -C web test_matrix_${{ matrix.database }}
+
+  gui:
+    name: GUI
+    runs-on: ubuntu-18.04
+
+    strategy:
+      matrix:
+        # FIXME: in Chrome the UI test cases run non-deterministically and
+        # sometimes fail. For this reason we will not run GUI test cases
+        # in Chrome.
+        browser: [firefox]
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.6'
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+
+      # - name: Update chrome
+      #   run: |
+      #     sudo apt-get update -q
+      #     sudo apt-get install google-chrome-stable
+
+      - name: Install dependencies
+        run: sh .github/workflows/install-deps.sh
+
+      - name: Build the package
+        run: |
+          make pip_dev_deps
+          make package
+
+      - name: Run tests
+        working-directory: web/server/vue-cli
+        env:
+          # CHROME_HEADLESS: 1
+          MOZ_HEADLESS: 1
+          DISPLAY: ":99.0"
+        run: |
+          export PATH="${{ github.workspace }}/build/CodeChecker/bin:$PATH"
+
+          npm run test:lint
+          npm run test:unit
+          npm run test:e2e.${{ matrix.browser }}

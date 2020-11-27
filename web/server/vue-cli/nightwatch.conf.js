@@ -1,5 +1,6 @@
 const host = process.env.HOST || "localhost";
 const port = process.env.PORT || 8001;
+const chromeHeadless = process.env.CHROME_HEADLESS;
 
 module.exports = {
   src_folders: [ "e2e/specs" ],
@@ -38,6 +39,7 @@ module.exports = {
       desiredCapabilities: {
         browserName: "chrome",
         chromeOptions : {
+          args: [ ...[ chromeHeadless ? "--headless" : undefined ] ],
           w3c: false
         }
       }

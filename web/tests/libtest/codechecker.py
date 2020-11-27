@@ -690,6 +690,10 @@ def add_test_package_product(server_data, test_folder, check_env=None,
 
         add_command.append('--postgresql')
         pg_config['dbname'] = server_data['viewer_product']
+
+        if os.environ.get('PGPASSWORD'):
+            pg_config['dbpassword'] = os.environ['PGPASSWORD']
+
         add_command += _pg_db_config_to_cmdline_params(pg_config)
     else:
         # SQLite databases are put under the workspace of the appropriate test.
