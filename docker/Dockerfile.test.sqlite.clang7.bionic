@@ -17,8 +17,8 @@ RUN apt-get update \
        doxygen \
        gcc-multilib \
        git \
-       python-virtualenv \
-       python-dev \
+       python3-virtualenv \
+       python3-dev \
        libsasl2-dev \
        python-dev \
        libldap2-dev \
