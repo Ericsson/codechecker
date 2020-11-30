@@ -36,7 +36,12 @@ function analyze(output, logfile) {
 
   console.log("Analyze command: ", cmd);
 
-  execSync(cmd, { stdio: "inherit" });
+  try {
+    execSync(cmd, { stdio: "inherit" });
+  } catch (error) {
+    if (error.status !== 0 && error.status !== 2)
+      throw(error);
+  }
 }
 
 if (!fs.existsSync(CMP_DB_DIR)) {
