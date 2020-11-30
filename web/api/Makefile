@@ -59,7 +59,7 @@ publish: build publish_py publish_js
 
 publish_py:
 	cd py/codechecker_api && ${PYTHON_BIN} setup.py sdist bdist_wheel && twine upload dist/* --verbose
-	cd py/codechecker_api_shared && ${PYTHON_BIN} setup.py sdist bdist_wheel && twine upload dist/* --verbose
+	cd py/codechecker_api_shared && ${PYTHON_BIN} setup.py sdist bdist_wheel && twine upload dist/* --verbose
 
 publish_test_py:
 	cd py/codechecker_api && ${PYTHON_BIN} setup.py sdist bdist_wheel && twine upload --repository-url https://test.pypi.org/legacy/ dist/* --verbose
