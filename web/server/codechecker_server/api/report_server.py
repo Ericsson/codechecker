@@ -3000,8 +3000,10 @@ class ThriftRequestHandler(object):
                         with open(skip_file,
                                   encoding="utf-8",
                                   errors="ignore") as sf:
+                            skip_content = sf.read()
                             skip_handler = \
-                                skiplist_handler.SkipListHandler(sf.read())
+                                skiplist_handler.SkipListHandler(skip_content)
+                            LOG.debug(skip_content)
                     except (IOError, OSError) as err:
                         LOG.error("Failed to open skip file")
                         LOG.error(err)
