@@ -50,12 +50,12 @@ dist:
 upload_test: dist
 	# Upload package to the TestPyPI repository.
 	$(eval PKG_NAME := $(shell ${PYTHON_BIN} setup.py --name))
-	$(eval PKG_VERSION := $(shell ${PYTHON_BIN} setup.py --version))
+	$(eval PKG_VERSION := $(shell ${PYTHON_BIN} setup.py --version))
 	twine upload -r testpypi dist/$(PKG_NAME)-$(PKG_VERSION).tar.gz
 
 upload: dist
 	# Upload package to the PyPI repository.
-	$(eval PKG_NAME := $(shell ${PYTHON_BIN} setup.py --name))
+	$(eval PKG_NAME := $(shell ${PYTHON_BIN} setup.py --name))
 	$(eval PKG_VERSION := $(shell ${PYTHON_BIN} setup.py --version))
 	twine upload -r pypi dist/$(PKG_NAME)-$(PKG_VERSION).tar.gz
 

@@ -88,12 +88,12 @@ package: package_plist_to_html package_tu_collector package_analyzer package_mer
 	# Copy config files and extend 'version.json' file with git information.
 	cp -r $(ROOT)/config $(CC_BUILD_DIR) && \
 	cp -r $(CURRENT_DIR)/config/* $(CC_BUILD_DIR)/config && \
-	${PYTHON_BIN} $(ROOT)/scripts/build/extend_version_file.py -r $(ROOT) \
+	${PYTHON_BIN} $(ROOT)/scripts/build/extend_version_file.py -r $(ROOT) \
 	  $(CC_BUILD_DIR)/config/analyzer_version.json \
 
 	# Copy CodeChecker entry point sub-commands.
 	mkdir -p $(CC_BUILD_DIR)/cc_bin && \
-	${PYTHON_BIN} $(ROOT)/scripts/build/create_commands.py -b $(BUILD_DIR) \
+	${PYTHON_BIN} $(ROOT)/scripts/build/create_commands.py -b $(BUILD_DIR) \
 	  --cmd-dir codechecker_common/cmd \
 	    $(CC_ANALYZER)/codechecker_analyzer/cmd \
 	  --bin-file $(ROOT)/bin/CodeChecker \
