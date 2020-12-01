@@ -565,6 +565,9 @@ Each report has a unique (hash) identifier generated from checker name
 and the location of the finding: column number, textual content of the line,
 enclosing scope of the bug location (function signature, class, namespace).
 
+You can find more information how these hashes are calculated
+[here](analyzer/report_identification.md).
+
 ## Listing and Counting Reports <a name="listing-reports"></a>
 
 See a more detailed description in the [analyzer report identification

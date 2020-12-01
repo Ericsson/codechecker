@@ -98,6 +98,9 @@ OUR RECOMMENDATION: we recommend you to use 'context-free-v2' hash because the
 hash will not be changed so easily for example on code indentation or when a
 checker is renamed.
 
+For more information see:
+https://github.com/Ericsson/codechecker/blob/master/docs/analyzer/report_identification.md
+
 Exit status
 ------------------------------------------------
 0 - Successful analysis and no new reports
