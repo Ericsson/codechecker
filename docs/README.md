@@ -141,18 +141,18 @@ Useful tools that can also be used outside CodeChecker.
 
 ## Linux
 
-For a detailed dependency list, and for instructions
-on how to install newer clang and clang-tidy versions
-please see [Requirements](deps.md).
-The following commands are used to bootstrap CodeChecker on Ubuntu 18.04 LTS:
+For a detailed dependency list, and for instructions on how to install newer
+Clang and Clang-Tidy versions, please see [Requirements](deps.md).
+The following commands are used to bootstrap CodeChecker on Ubuntu 20.04 LTS:
 
 ```sh
 # Install mandatory dependencies for a development and analysis environment.
-# NOTE: clang or clang-tidy can be replaced by any later versions of LLVM/Clang.
+# NOTE: clang or clang-tidy can be any sufficiently fresh version, and need not
+#       come from package manager!
 sudo apt-get install clang clang-tidy build-essential curl doxygen gcc-multilib \
-      git python-virtualenv python3-dev
+      git python3-virtualenv python3-dev
 
-# Install nodejs dependency for web. In case of debian/ubuntu you can use the
+# Install nodejs dependency for web. In case of Debian/Ubuntu you can use the
 # following commands. For more information see the official docs:
 # https://nodejs.org/en/download/package-manager/
 curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
