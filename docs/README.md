@@ -65,6 +65,48 @@ macOS (OS X) development environment.
     application, a [command-line tool](usage.md) and an
     [Eclipse plugin](http://github.com/Ericsson/CodeCheckerEclipsePlugin)
 
+## Command line features
+`CodeChecker` command has many subcommands which can be used for example to
+log and analyze your projects, print the results or start a web server. For
+full list see the following table or check the help message of this command
+(`CodeChecker --help`):
+
+| `CodeChecker` subcommand | Description |
+|--------------|-----------------------------------------|
+| `analyze` | Execute the supported code analyzers for the files recorded in a JSON Compilation Database. |
+| `analyzer-version` | Print the version of CodeChecker analyzer package that is being used. |
+| `analyzers` | List supported and available analyzers. |
+| `check` | Perform analysis on a project and print results to standard output. |
+| `checkers` | List the checkers available for code analysis. |
+| `cmd` | View analysis results on a running server from the command line. |
+| `fixit` | Apply automatic fixes based on the suggestions of the analyzers. |
+| `log` | Run a build command, collect the executed compilation commands and store them in a JSON file. |
+| `parse` | Print analysis summary and results in a human-readable format. |
+| `server` | Start and manage the CodeChecker Web server. |
+| `store` | Save analysis results to a database. |
+| `version` | Print the version of CodeChecker package that is being used. |
+| `web-version` | Print the version of CodeChecker server package that is being used. |
+
+
+`CodeChecker cmd` subcommand also has many other subcommands which can be used
+to get data (products, runs, results, statistics) from a running CodeChecker
+server. For full list see the following table or check the help message of this
+subcommand (`CodeChecker cmd --help`):
+
+| `CodeChecker cmd` subcommand | Description |
+|--------------|-----------------------------------------|
+| `runs` | List the available analysis runs. |
+| `history` | Show run history of multiple runs. |
+| `results` | List analysis result (finding) summary for a given run. |
+| `diff` | Compare two analysis runs and show the difference. |
+| `sum` | Show statistics of checkers. |
+| `token` | Access subcommands related to configuring personal access tokens managed by a CodeChecker server. |
+| `del` | Delete analysis runs. |
+| `update` | Update an analysis run. |
+| `suppress` | Manage and import suppressions of reports on a CodeChecker server. |
+| `products` | Access subcommands related to configuring the products managed by a CodeChecker server. |
+| `components` | Access subcommands related to configuring the source components managed by a CodeChecker server. |
+| `login` | Authenticate into CodeChecker servers that require privileges. |
 
 # User documentation
 
