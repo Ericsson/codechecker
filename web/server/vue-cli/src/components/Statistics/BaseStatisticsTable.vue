@@ -128,11 +128,7 @@
         :to="{ name: 'reports', query: {
           ...$router.currentRoute.query,
           ...(item.$queryParams || {}),
-          'checker-name': item.checker,
-          'source-component': item.component,
-          'severity': item.severity
-            ? severityFromCodeToString(item.severity)
-            : undefined,
+          ...getBaseQueryParams(item),
           'review-status': reviewStatusFromCodeToString(
             ReviewStatus.UNREVIEWED)
         }}"
@@ -152,11 +148,7 @@
         :to="{ name: 'reports', query: {
           ...$router.currentRoute.query,
           ...(item.$queryParams || {}),
-          'checker-name': item.checker,
-          'source-component': item.component,
-          'severity': item.severity
-            ? severityFromCodeToString(item.severity)
-            : undefined,
+          ...getBaseQueryParams(item),
           'review-status': reviewStatusFromCodeToString(
             ReviewStatus.CONFIRMED)
         }}"
@@ -176,11 +168,7 @@
         :to="{ name: 'reports', query: {
           ...$router.currentRoute.query,
           ...(item.$queryParams || {}),
-          'checker-name': item.checker,
-          'source-component': item.component,
-          'severity': item.severity
-            ? severityFromCodeToString(item.severity)
-            : undefined,
+          ...getBaseQueryParams(item),
           'review-status': [
             reviewStatusFromCodeToString(ReviewStatus.UNREVIEWED),
             reviewStatusFromCodeToString(ReviewStatus.CONFIRMED)
@@ -202,11 +190,7 @@
         :to="{ name: 'reports', query: {
           ...$router.currentRoute.query,
           ...(item.$queryParams || {}),
-          'checker-name': item.checker,
-          'source-component': item.component,
-          'severity': item.severity
-            ? severityFromCodeToString(item.severity)
-            : undefined,
+          ...getBaseQueryParams(item),
           'review-status': reviewStatusFromCodeToString(
             ReviewStatus.FALSE_POSITIVE)
         }}"
@@ -226,11 +210,7 @@
         :to="{ name: 'reports', query: {
           ...$router.currentRoute.query,
           ...(item.$queryParams || {}),
-          'checker-name': item.checker,
-          'source-component': item.component,
-          'severity': item.severity
-            ? severityFromCodeToString(item.severity)
-            : undefined,
+          ...getBaseQueryParams(item),
           'review-status': reviewStatusFromCodeToString(
             ReviewStatus.INTENTIONAL)
         }}"
@@ -250,11 +230,7 @@
         :to="{ name: 'reports', query: {
           ...$router.currentRoute.query,
           ...(item.$queryParams || {}),
-          'checker-name': item.checker,
-          'source-component': item.component,
-          'severity': item.severity
-            ? severityFromCodeToString(item.severity)
-            : undefined,
+          ...getBaseQueryParams(item),
           'review-status': [
             reviewStatusFromCodeToString(ReviewStatus.FALSE_POSITIVE),
             reviewStatusFromCodeToString(ReviewStatus.INTENTIONAL)
@@ -276,11 +252,7 @@
         :to="{ name: 'reports', query: {
           ...$router.currentRoute.query,
           ...(item.$queryParams || {}),
-          'checker-name': item.checker,
-          'source-component': item.component,
-          'severity': item.severity
-            ? severityFromCodeToString(item.severity)
-            : undefined,
+          ...getBaseQueryParams(item),
         }}"
       >
         {{ item.reports.count }}
@@ -365,6 +337,22 @@ export default {
       }, initVal);
     }
   },
+  methods: {
+    getBaseQueryParams({ checker, component, severity }) {
+      const query = {};
+
+      if (checker)
+        query["checker-name"] = checker;
+
+      if (component)
+        query["source-component"] = component;
+
+      if (severity)
+        query["severity"] = this.severityFromCodeToString(severity);
+
+      return query;
+    }
+  }
 };
 </script>
 
