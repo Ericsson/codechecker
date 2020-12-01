@@ -66,6 +66,25 @@ macOS (OS X) development environment.
     [Eclipse plugin](http://github.com/Ericsson/CodeCheckerEclipsePlugin)
 
 
+# Usage flow
+![Usage diagram](images/usage_flow.png)
+
+- *Step 1*: `CodeChecker log` runs the given build command and records the
+executed compilation steps. These steps are written to an output file
+(Compilation Database) in a JSON format.
+- *Step 2*: `CodeChecker analyze` uses the previously created JSON Compilation
+Database to perform an analysis on the project, outputting analysis results in
+a machine-readable (plist) format.
+- *Step 3*: in this step you can do multiple things:
+    - Parse and pretty-print the summary and results from analysis result files
+    (`CodeChecker parse`).
+    - Store the results to a running CodeChecker server (`CodeChecker store`).
+    - Compare two analysis results/runs to show the results that differ between
+    the two (`CodeChecker cmd diff`).
+    - etc.
+
+For more information how to use CodeChecker see our [user guide](usage.md).
+
 # User documentation
 
 * [Getting started (How-To with examples)](usage.md)
