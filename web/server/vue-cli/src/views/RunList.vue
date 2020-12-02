@@ -482,7 +482,8 @@ export default {
         type = RunSortType.DATE;
       }
 
-      const ord = this.pagination.sortDesc[0] ? Order.DESC : Order.ASC;
+      const ord = this.pagination.sortDesc[0] === false
+        ? Order.ASC : Order.DESC;
 
       return new RunSortMode({ type: type, ord: ord });
     },
