@@ -2756,8 +2756,13 @@ class ThriftRequestHandler(object):
                 already_added.add(report_path_hash)
 
                 last_report_event = report.bug_path[-1]
+
+                # The original file path is needed here not the trimmed
+                # because the source files are extracted as the original
+                # file path.
                 file_name = \
-                    trimmed_files[last_report_event['location']['file']]
+                    files[last_report_event['location']['file']]
+
                 source_file_name = os.path.realpath(
                     os.path.join(source_root, file_name.strip("/")))
 
