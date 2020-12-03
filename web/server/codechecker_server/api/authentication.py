@@ -85,16 +85,18 @@ class ThriftAuthHandler(object):
 
         if auth_method == "Username:Password":
             user_name, _ = auth_string.split(':', 1)
-            LOG.info("'%s' logged in.", user_name)
+            LOG.debug("'%s' logging in...", user_name)
 
             session = self.__manager.create_session(auth_string)
 
             if session:
+                LOG.info("'%s' logged in.", user_name)
                 return session.token
             else:
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                    "Invalid credentials supplied. Refusing authentication!")
+                    f"Invalid credentials supplied for user '{user_name}'."
+                    " Refusing authentication!")
 
         raise codechecker_api_shared.ttypes.RequestFailed(
             codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
@@ -102,11 +104,17 @@ class ThriftAuthHandler(object):
 
     @timeit
     def destroySession(self):
-        LOG.info("'%s' logged out.", self.getLoggedInUser())
+        user_name = self.getLoggedInUser()
+        LOG.debug("'%s' logging out...", user_name)
+
         token = None
         if self.__auth_session:
             token = self.__auth_session.token
-        return self.__manager.invalidate(token)
+
+        is_logged_out = self.__manager.invalidate(token)
+        if is_logged_out:
+            LOG.info("'%s' logged out.", user_name)
+        return is_logged_out
 
     # ============= Authorization, permission management =============
 
