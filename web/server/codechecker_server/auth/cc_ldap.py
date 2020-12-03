@@ -409,9 +409,11 @@ def get_groups(ldap_config, username, credentials):
                               account_scope,
                               user_dn_postfix_preference)
 
-        group_pattern = ldap_config.get('groupPattern', '')
-        if user_dn and group_pattern == '':
-            # User found and there is no group membership pattern to check.
+        group_pattern = ldap_config.get('groupPattern')
+        if user_dn and not group_pattern:
+            LOG.debug("User '%s' found but there is no group_pattern"
+                      " to check LDAP for group membership.",
+                      user_dn)
             return []
         group_pattern = group_pattern.replace('$USERDN$', user_dn)
 
