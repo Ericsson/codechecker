@@ -10,14 +10,16 @@
 """ Test review status functionality."""
 
 
+import datetime
 import logging
 import os
+import time
 import unittest
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import CommentKind, \
-    ReviewStatus
+    ReviewStatus, RunFilter
 
-from libtest import env
+from libtest import env, codechecker, plist_test
 from libtest.thrift_client_to_db import get_all_run_results
 
 
@@ -26,26 +28,29 @@ class TestReviewStatus(unittest.TestCase):
     _ccClient = None
 
     def setUp(self):
-        test_workspace = os.environ['TEST_WORKSPACE']
+        self.test_workspace = os.environ['TEST_WORKSPACE']
 
         test_class = self.__class__.__name__
-        print('Running ' + test_class + ' tests in ' + test_workspace)
+        print('Running ' + test_class + ' tests in ' + self.test_workspace)
 
-        self._testproject_data = env.setup_test_proj_cfg(test_workspace)
+        self._testproject_data = env.setup_test_proj_cfg(self.test_workspace)
         self.assertIsNotNone(self._testproject_data)
 
-        self._cc_client = env.setup_viewer_client(test_workspace)
+        self._cc_client = env.setup_viewer_client(self.test_workspace)
         self.assertIsNotNone(self._cc_client)
 
         # Get the run names which belong to this test.
-        run_names = env.get_run_names(test_workspace)
+        run_names = env.get_run_names(self.test_workspace)
+        # get the current run data
+        run_filter = RunFilter(names=run_names, exactMatch=True)
 
-        runs = self._cc_client.getRunData(None, None, 0, None)
+        runs = self._cc_client.getRunData(run_filter, None, 0, None)
 
         test_runs = [run for run in runs if run.name in run_names]
 
         self.assertEqual(len(test_runs), 1,
-                         'There should be only one run for this test.')
+                         'There should be only one run for this test, '
+                         'with the given name configured at the test init.')
         self._runid = test_runs[0].runId
 
     def __get_system_comments(self, report_hash):
@@ -142,3 +147,79 @@ class TestReviewStatus(unittest.TestCase):
         report = self._cc_client.getReport(bug.reportId)
         self.assertEqual(report.reviewData.comment, review_comment)
         self.assertEqual(report.reviewData.status, status)
+
+    def test_review_status_update_from_source_trim(self):
+        """
+        Test if the review status comments changes in the source code
+        are updated at the server when trim path is used.
+
+        The report is store twice and between the storage the
+        review status as a source code comment is modified.
+        The test checks is after the source code modification
+        and storage the review status is updated correctly at
+        the server too.
+        """
+        test_project_path = os.path.join(self.test_workspace,
+                                         'review_status_files')
+        test_project_name = 'review_status_update_proj'
+
+        plist_file = os.path.join(test_project_path, 'divide_zero.plist')
+        source_file = os.path.join(test_project_path, 'divide_zero.cpp')
+        plist_test.prefix_file_path(plist_file, test_project_path)
+
+        codechecker_cfg = env.import_codechecker_cfg(self.test_workspace)
+        codechecker_cfg['reportdir'] = test_project_path
+
+        codechecker.store(codechecker_cfg, test_project_name)
+
+        codechecker_cfg['trim_path_prefix'] = test_project_path
+
+        # Run data for the run created by this test case.
+        run_filter = RunFilter(names=[test_project_name], exactMatch=True)
+
+        runs = self._cc_client.getRunData(run_filter, None, 0, None)
+        run = runs[0]
+        runid = run.runId
+        logging.debug('Get all run results from the db for runid: ' +
+                      str(runid))
+
+        reports = get_all_run_results(self._cc_client, runid)
+        self.assertIsNotNone(reports)
+        self.assertNotEqual(len(reports), 0)
+        self.assertEqual(len(reports), 2)
+
+        for report in reports:
+            print(report)
+            self.assertEqual(report.reviewData.status,
+                             ReviewStatus.INTENTIONAL)
+
+        # Modify review comments from intentional to confirmed for the
+        # second store.
+        with open(source_file, 'r+', encoding='utf-8', errors='ignore') as sf:
+            content = sf.read()
+            new_content = content.replace("codechecker_intentional",
+                                          "codechecker_confirmed")
+            sf.truncate(0)
+            sf.write(new_content)
+
+        # modify review comments and store the reports again
+        with open(source_file, encoding='utf-8', errors='ignore') as sf:
+            content = sf.read()
+
+        # Update the plist file modification date to be newer than
+        # the source file so it can be stored, because there was no
+        # actual analysis.
+        date = datetime.datetime.now() + datetime.timedelta(minutes=5)
+        mod_time = time.mktime(date.timetuple())
+        os.utime(plist_file, (mod_time, mod_time))
+
+        codechecker.store(codechecker_cfg, test_project_name)
+
+        # Check if all the review statuses were updated to the new at the
+        # server.
+        reports = get_all_run_results(self._cc_client, runid)
+        self.assertIsNotNone(reports)
+        self.assertNotEqual(len(reports), 0)
+        self.assertEqual(len(reports), 2)
+        for report in reports:
+            self.assertEqual(report.reviewData.status, ReviewStatus.CONFIRMED)

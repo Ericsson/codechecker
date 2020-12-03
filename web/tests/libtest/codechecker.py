@@ -467,6 +467,10 @@ def store(codechecker_cfg, test_project_name):
     if force:
         store_cmd.extend(['--force'])
 
+    trim_path = codechecker_cfg.get('trim_path_prefix')
+    if trim_path:
+        store_cmd.extend(['--trim-path-prefix', trim_path])
+
     try:
         print('STORE: ' + ' '.join(store_cmd))
         proc = subprocess.Popen(
