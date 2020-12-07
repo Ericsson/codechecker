@@ -140,7 +140,7 @@ For more information how to use CodeChecker see our [user guide](usage.md).
 
 ## Web based report management
 * [Webserver User Guide](web/user_guide.md)
-* [WEB GUI User Guide](/web/server/www/userguide/userguide.md)
+* [WEB GUI User Guide](/web/server/vue-cli/src/assets/userguide/userguide.md)
 * [Command line and WEB UI Feature overview](feature_comparison.md)
 * Security configuration 
   * [Configuring Authentication](web/authentication.md)
