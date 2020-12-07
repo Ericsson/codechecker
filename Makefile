@@ -145,14 +145,14 @@ standalone_package: venv package
 
 venv:
 	# Create a virtual environment which can be used to run the build package.
-	virtualenv -p ${PYTHON_BIN} venv && \
+	python3 -m venv venv && \
 		$(ACTIVATE_RUNTIME_VENV) && \
 		pip3 install -r $(CC_ANALYZER)/requirements.txt && \
 		pip3 install -r $(CC_WEB)/requirements.txt
 
 venv_osx:
 	# Create a virtual environment which can be used to run the build package.
-	virtualenv -p ${PYTHON_BIN} venv && \
+	python3 -m venv venv && \
 		$(ACTIVATE_RUNTIME_VENV) && \
 		pip3 install -r $(CC_ANALYZER)/requirements_py/osx/requirements.txt && \
 		pip3 install -r $(CC_WEB)/requirements_py/osx/requirements.txt
@@ -170,7 +170,7 @@ pip_dev_deps:
 
 venv_dev:
 	# Create a virtual environment for development.
-	virtualenv -p ${PYTHON_BIN} venv_dev && \
+	python3 -m venv venv_dev && \
 		$(ACTIVATE_DEV_VENV) && $(PIP_DEV_DEPS_CMD)
 
 clean_venv_dev:

@@ -49,7 +49,7 @@ pip_dev_deps:
 
 venv_dev:
 	# Create a virtual environment for development.
-	virtualenv -p ${PYTHON_BIN} venv_dev && \
+	python3 -m venv venv_dev && \
 		$(ACTIVATE_DEV_VENV) && pip3 install -r $(VENV_DEV_REQ_FILE)
 
 clean_venv_dev:

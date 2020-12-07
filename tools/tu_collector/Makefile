@@ -16,7 +16,7 @@ ACTIVATE_VENV ?= . venv/bin/activate
 
 venv:
 	# Create a virtual environment which can be used to run the build package.
-	virtualenv -p ${PYTHON_BIN} venv && $(ACTIVATE_VENV)
+	python3 -m venv venv && $(ACTIVATE_VENV)
 
 default: all
 
