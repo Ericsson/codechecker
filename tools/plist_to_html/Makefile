@@ -31,14 +31,14 @@ all: package
 
 venv:
 	# Create a virtual environment which can be used to run the build package.
-	virtualenv -p ${PYTHON_BIN} venv && $(ACTIVATE_RUNTIME_VENV)
+	python3 -m venv venv && $(ACTIVATE_RUNTIME_VENV)
 
 pip_dev_deps:
 	pip3 install -r $(VENV_DEV_REQ_FILE)
 
 venv_dev:
 	# Create a virtual environment for development.
-	virtualenv -p ${PYTHON_BIN} venv_dev && \
+	python3 -m venv venv_dev && \
 		$(ACTIVATE_DEV_VENV) && pip3 install -r $(VENV_DEV_REQ_FILE)
 
 clean_venv_dev:
