@@ -133,7 +133,8 @@ def ldap_error_handler():
         LOG.error("Filter error: %s", str(ex))
 
     except ldap.LDAPError as err:
-        LOG.error("LDAP Error: %s", str(err))
+        LOG.error("Exception ldap.%s (%s)",
+                  type(err).__name__, str(err))
 
 
 def get_user_dn(con,
