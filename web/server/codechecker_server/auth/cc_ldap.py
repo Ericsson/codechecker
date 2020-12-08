@@ -18,6 +18,7 @@ In the configuration `null` means it is not configured.
   "authorities": [
     {
       "connection_url" : null,
+      "tls_require_cert" : null,
       "username" : null,
       "password" : null,
       "referrals" : false,
@@ -242,8 +243,12 @@ class LDAPConnection(object):
 
         ldap.protocol_version = ldap.VERSION3
 
-        # Check cert if available but do not fail if not.
-        ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_ALLOW)
+        # Verify certificate in LDAPS connections
+        tls_require_cert = ldap_config.get('tls_require_cert', '')
+        if tls_require_cert.lower() == 'never':
+            LOG.debug("Insecure LDAPS connection because of "
+                      "tls_require_cert=='never'")
+            ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
 
         self.connection = ldap.initialize(ldap_server, bytes_mode=False)
 
