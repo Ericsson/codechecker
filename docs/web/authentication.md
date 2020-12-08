@@ -182,6 +182,11 @@ servers as it can elongate the authentication process.
    URL of the LDAP server which will be queried for user information and group
    membership.
 
+ * `tls_require_cert`
+
+   If set to `never`, skip verification of certificate in LDAPS connections
+   (!!! INSECURE !!!).
+
  * `username`
 
    Optional username for LDAP bind, if not set bind with the login credentials
@@ -268,7 +273,8 @@ servers as it can elongate the authentication process.
       "groupNameAttr" : "sAMAccountName"
     },
     {
-      "connection_url" : "ldaps://secure.internal.example.org:636",
+      "connection_url"   : "ldaps://secure.internal.example.org:636",
+      "tls_require_cert" : null,
       "username" : null,
       "password" : null,
       "referrals" : false,
