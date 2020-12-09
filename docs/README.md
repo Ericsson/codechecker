@@ -7,10 +7,6 @@
 </h1>
 
 <p align="center">
-  <a href="https://travis-ci.org/Ericsson/codechecker">
-    <img src="https://travis-ci.org/Ericsson/codechecker.png?branch=master"
-         alt="Travis">
-  </a>
   <a href="https://gitter.im/codecheckerHQ/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link">
     <img src="https://badges.gitter.im/codecheckerHQ/Lobby.svg"
          alt="Gitter">
