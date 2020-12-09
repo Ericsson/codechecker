@@ -31,6 +31,10 @@ def setup_package():
 
     os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
 
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    shutil.copytree(os.path.join(dir_path, 'review_status_files'),
+                    os.path.join(TEST_WORKSPACE, 'review_status_files'))
+
     test_project = 'single_bug'
 
     test_config = {}
