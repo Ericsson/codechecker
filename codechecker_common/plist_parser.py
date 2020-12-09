@@ -36,6 +36,7 @@ import os
 import sys
 import traceback
 import plistlib
+import portalocker
 from typing import List, Dict, Union, Tuple
 from xml.parsers.expat import ExpatError
 
@@ -356,11 +357,17 @@ def skip_report_from_plist(plist_file, skip_handler):
     were removed if they should be skipped.
     """
     new_plist_content = None
-    with open(plist_file, 'rb') as plist:
-        new_plist_content = remove_report_from_plist(plist,
-                                                     skip_handler)
-    if new_plist_content:
-        with open(plist_file, 'wb') as plist:
-            plist.write(new_plist_content)
-    else:
-        LOG.error("Failed to skip report from the plist file: %s", plist_file)
+
+    with portalocker.Lock(plist_file, 'rb+') as plist_f:
+        new_plist_content = remove_report_from_plist(plist_f, skip_handler)
+
+        if new_plist_content:
+            plist_f.seek(0)
+            plist_f.truncate()
+            plist_f.write(new_plist_content)
+
+            plist_f.flush()
+            os.fsync(plist_f.fileno())
+        else:
+            LOG.error("Failed to skip report from the plist file: %s",
+                      plist_file)

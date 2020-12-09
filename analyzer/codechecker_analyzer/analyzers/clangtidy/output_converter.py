@@ -15,6 +15,7 @@ import copy
 import json
 import os
 import plistlib
+import portalocker
 import re
 
 from codechecker_common.logger import get_logger
@@ -380,9 +381,11 @@ class PListConverter(object):
         """
         Writes out the plist XML to the given path.
         """
-
-        with open(path, 'wb') as file:
+        with portalocker.Lock(path, 'wb+') as file:
             self.write(file)
+
+            file.flush()
+            os.fsync(file.fileno())
 
     def write(self, file):
         """

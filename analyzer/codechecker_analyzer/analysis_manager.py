@@ -238,12 +238,6 @@ def handle_success(rh, result_file, result_base, skip_handler,
     save_metadata(result_file, rh.analyzer_result_file,
                   rh.analyzed_source_file)
 
-    if skip_handler:
-        # We need to check the plist content because skipping
-        # reports in headers can be done only this way.
-        plist_parser.skip_report_from_plist(result_file,
-                                            skip_handler)
-
 
 def handle_failure(source_analyzer, rh, zip_file, result_base, actions_map):
     """
