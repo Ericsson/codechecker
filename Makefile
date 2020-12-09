@@ -201,10 +201,6 @@ clean_report_hash:
 clean_statistics_collector:
 	$(MAKE) -C $(CC_ANALYZER_TOOLS)/statistics_collector clean
 
-clean_travis:
-	# Clean CodeChecker config files stored in the users home directory.
-	rm -rf ~/.codechecker*
-
 PYLINT_CMD = $(MAKE) -C $(CC_ANALYZER) pylint && \
   $(MAKE) -C $(CC_WEB) pylint && \
   pylint -j0 ./bin/** ./codechecker_common \
