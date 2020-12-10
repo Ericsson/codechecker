@@ -23,6 +23,7 @@ module.exports = {
         host: "127.0.0.1",
         server_path: require("selenium-server").path,
         log_path: "e2e/output",
+        check_process_delay: 5000,
         cli_args: {
           "webdriver.gecko.driver": require("geckodriver").path,
           "webdriver.chrome.driver": require("chromedriver").path
