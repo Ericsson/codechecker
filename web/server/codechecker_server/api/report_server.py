@@ -627,7 +627,8 @@ def get_report_details(session, report_ids):
     comment_data_list = defaultdict(list)
     comment_query = session.query(Comment, Report.id)\
         .filter(Report.id.in_(report_ids)) \
-        .outerjoin(Report, Report.bug_id == Comment.bug_hash)
+        .outerjoin(Report, Report.bug_id == Comment.bug_hash) \
+        .order_by(Comment.created_at.desc())
 
     for data, report_id in comment_query:
         report_id = report_id
