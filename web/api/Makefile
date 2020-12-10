@@ -33,6 +33,7 @@ target_dirs:
 
 build: clean target_dirs
 	docker run \
+	  --rm \
 	  -u "$(uid):$(guid)" \
 	  -v $(API_DIR):/data \
 	  thrift:$(THRIFT_VERSION) \
