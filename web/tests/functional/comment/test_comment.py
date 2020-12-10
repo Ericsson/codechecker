@@ -160,7 +160,7 @@ class TestComment(unittest.TestCase):
         self.assertEqual(num_comment, 1)
 
         # Edit the message of the first remaining comment
-        new_msg = 'New msg'
+        new_msg = "New msg'\"`"
         success = self._cc_client.updateComment(comments[0].id, new_msg)
         self.assertTrue(success)
         logging.debug('Comment edited successfully')
