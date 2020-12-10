@@ -716,12 +716,23 @@ def get_comment_msg(comment):
     """
     context = webserver_context.get_context()
     message = comment.message.decode('utf-8')
-    sys_comment = comment_kind_from_thrift_type(
-        ttypes.CommentKind.SYSTEM)
+    sys_comment = comment_kind_from_thrift_type(ttypes.CommentKind.SYSTEM)
+
     if comment.kind == sys_comment:
-        elements = shlex.split(message)
-        system_comment = context.system_comment_map.get(
-            elements[0])
+        try:
+            elements = shlex.split(message)
+        except ValueError:
+            # In earlier CodeChecker we saved system comments
+            # without escaping special characters such as
+            # quotes. This is kept only for backward
+            # compatibility reason.
+            message = message \
+                .replace("'", "\\'") \
+                .replace('"', '\\"')
+
+            elements = shlex.split(message)
+
+        system_comment = context.system_comment_map.get(elements[0])
         if system_comment:
             for idx, value in enumerate(elements[1:]):
                 system_comment = system_comment.replace(
@@ -894,17 +905,6 @@ def sort_run_data_query(query, sort_mode):
         query = query.order_by(order_type(RunHistory.cc_version))
 
     return query
-
-
-def escape_whitespaces(s, whitespaces=None):
-    if not whitespaces:
-        whitespaces = [' ', '\n', '\t', '\r']
-
-    escaped = s
-    for w in whitespaces:
-        escaped = escaped.replace(w, '\\{0}'.format(w))
-
-    return escaped
 
 
 def get_failed_files_query(session, run_ids, query_fields,
@@ -1612,14 +1612,13 @@ class ThriftRequestHandler(object):
 
             # Create a system comment if the review status or the message
             # is changed.
-            old_review_status = escape_whitespaces(old_status.capitalize())
-            new_review_status = \
-                escape_whitespaces(review_status.status.capitalize())
+            old_review_status = old_status.capitalize()
+            new_review_status = review_status.status.capitalize()
             if message:
                 system_comment_msg = \
                     'rev_st_changed_msg {0} {1} {2}'.format(
                         old_review_status, new_review_status,
-                        escape_whitespaces(message))
+                        shlex.quote(message))
             else:
                 system_comment_msg = 'rev_st_changed {0} {1}'.format(
                     old_review_status, new_review_status)
@@ -1782,8 +1781,8 @@ class ThriftRequestHandler(object):
                 message = comment.message.decode('utf-8')
                 if message != content:
                     system_comment_msg = 'comment_changed {0} {1}'.format(
-                        escape_whitespaces(message),
-                        escape_whitespaces(content))
+                        shlex.quote(message),
+                        shlex.quote(content))
 
                     system_comment = \
                         self.__add_comment(comment.bug_hash,
