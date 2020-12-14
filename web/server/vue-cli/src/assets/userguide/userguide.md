@@ -296,11 +296,28 @@ you should read the [false positive how to](https://github.com/Ericsson/codechec
 - <span class="customIcon review-status-intentional"></span> **Intentional**:
 This report is a bug but we don't want to fix it.
 
-For more information [see](#userguide-change-review-status).
+Review statuses are connected to
+[report hashes](https://github.com/Ericsson/codechecker/blob/master/docs/analyzer/report_identification.md).
+If the same report can be found in multiple runs it will have the same review
+status.
+
+It can be changed on the [GUI](#userguide-change-review-status) or by using
+[source code comments ](https://github.com/Ericsson/codechecker/blob/master/docs/analyzer/user_guide.md#source-code-comments)
+(*codechecker_false_positive*, *codechecker_confirmed*, etc.)
+
+**Note**: source code comment is stronger and can overwrite the value in the
+database.
 
 ## <a name="userguide-detection-status"></a> Detection status
-The detection status is the state of a bug report in a run. When
-storing the results of a run from scratch then each report has
+The detection status is the state of a bug report in a run.
+
+- The detection status of a report is connected to the **report ID**. It means
+that every report has a separate detection status.
+- It will be *calculated automatically* by the server on run storage events.
+- Changing the review status by using source code comments will not affect
+the detection status change.
+
+When storing the results of a run from scratch then each report has
 detection status <span class="customIcon detection-status-new"></span> **New**.
 When the reports stored again with the same run name then the detection status
 can change to one of the following options:
@@ -316,6 +333,13 @@ stored.
 - <span class="customIcon detection-status-unavailable"></span> **Unavailable**:
 were reported by a checker that does not exists anymore because it was removed
 or renamed.
+
+The diagram below shows the detection status transition which may happen when
+storing results to the server. For example if the detection status of a report
+in the database is **New** the server will change it to **Unresolved**,
+**Resolved**, **Off** or **Unavailable** based on the conditions above.
+
+![Detection status change](images/detection_status_flow_chart.png)
 
 ## <a name="userguide-severity-levels"></a> Severity levels
 We are mapping checker names to different severity levels:
