@@ -92,7 +92,7 @@ def add_arguments_to_parser(parser):
                         choices=working_analyzers,
                         help="Show analyzer configuration options. These can "
                              "be given to 'CodeChecker analyze "
-                             "--analyzer-options'.")
+                             "--analyzer-config'.")
 
     parser.add_argument('-o', '--output',
                         dest='output_format',
