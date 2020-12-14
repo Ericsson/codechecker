@@ -61,67 +61,7 @@
       </template>
 
       <template #item.displayedName="{ item }">
-        <v-list-item
-          class="pa-0"
-          two-line
-        >
-          <v-list-item-avatar class="my-1">
-            <v-avatar
-              :color="strToColor(item.endpoint)"
-              size="48"
-              class="my-1"
-            >
-              <span class="white--text headline">
-                {{ item.endpoint | productIconName }}
-              </span>
-            </v-avatar>
-          </v-list-item-avatar>
-
-          <v-list-item-content>
-            <v-list-item-title>
-              <span
-                v-if="item.databaseStatus !== DBStatus.OK || !item.accessible"
-                :style="{ 'text-decoration': 'line-through' }"
-              >
-                {{ item.displayedName }}
-              </span>
-
-              <router-link
-                v-else
-                :to="{ name: 'runs', params: { endpoint: item.endpoint } }"
-              >
-                {{ item.displayedName }}
-              </router-link>
-
-              <span
-                v-if="!item.accessible"
-                color="grey--text"
-              >
-                <v-icon>mdi-alert-outline</v-icon>
-                You do not have access to this product!
-              </span>
-
-              <span
-                v-else-if="item.databaseStatus !== DBStatus.OK"
-                class="error--text"
-              >
-                <v-icon>mdi-alert-outline</v-icon>
-                {{ dbStatusFromCodeToString(item.databaseStatus) }}
-                <span
-                  v-if="item.databaseStatus === DBStatus.SCHEMA_MISMATCH_OK ||
-                    item.databaseStatus === DBStatus.SCHEMA_MISSING"
-                >
-                  Use <kbd>CodeChecker server</kbd> command for schema
-                  upgrade/initialization.
-                </span>
-              </span>
-            </v-list-item-title>
-
-            <v-list-item-subtitle>
-              {{ item.description }}
-            </v-list-item-subtitle>
-          </v-list-item-content>
-        </v-list-item>
+        <product-name-column :product="item" />
       </template>
 
       <template #item.description="{ item }">
@@ -238,32 +178,25 @@ import _ from "lodash";
 import { authService, handleThriftError, prodService } from "@cc-api";
 import { DBStatus, Permission } from "@cc/shared-types";
 
-import { StrToColorMixin } from "@/mixins";
 import { EditGlobalPermissionBtn } from "@/components/Product/Permission";
 import {
   DeleteProductBtn,
   EditAnnouncementBtn,
   EditProductBtn,
-  NewProductBtn
+  NewProductBtn,
+  ProductNameColumn
 } from "@/components/Product/";
 
 export default {
   name: "Products",
-  filters: {
-    productIconName: function (endpoint) {
-      if (!endpoint) return "";
-
-      return endpoint.charAt(0).toUpperCase();
-    }
-  },
   components: {
     DeleteProductBtn,
     EditAnnouncementBtn,
     EditGlobalPermissionBtn,
     EditProductBtn,
-    NewProductBtn
+    NewProductBtn,
+    ProductNameColumn
   },
-  mixins: [ StrToColorMixin ],
 
   data() {
     const sortBy = this.$router.currentRoute.query["sort-by"];
