@@ -1720,8 +1720,10 @@ respect to the environment CodeChecker is run in).
 
 ```
 usage: CodeChecker analyzers [-h] [--all] [--details]
+                             [--dump-config {clang-tidy,clangsa}]
+                             [--analyzer-config {clang-tidy,clangsa}]
                              [-o {rows,table,csv,json}]
-                             [--verbose {info,debug,debug_analyzer}]
+                             [--verbose {info,debug_analyzer,debug}]
 
 Get the list of available and supported analyzers, querying their version and
 actual binary executed.
@@ -1732,7 +1734,7 @@ optional arguments:
                         ones.
   --details             Show details about the analyzers, not just their
                         names.
-  --dump-config {clangsa,clang-tidy}
+  --dump-config {clang-tidy,clangsa}
                         Dump the available checker options for the given
                         analyzer to the standard output. Currently only clang-
                         tidy supports this option. The output can be
@@ -1740,10 +1742,14 @@ optional arguments:
                         is placed to the project directory then the options
                         are applied to the files under that directory. This
                         config file can also be provided via 'CodeChecker
-                        analyze' and 'CodeChecker check' commands.
+                        analyze' and 'CodeChecker check' commands. (default:
+                        None)
+  --analyzer-config {clang-tidy,clangsa}
+                        Show analyzer configuration options. These can be
+                        given to 'CodeChecker analyze --analyzer-config'.
   -o {rows,table,csv,json}, --output {rows,table,csv,json}
                         Specify the format of the output list. (default: rows)
-  --verbose {info,debug,debug_analyzer}
+  --verbose {info,debug_analyzer,debug}
                         Set verbosity level.
 ```
 
