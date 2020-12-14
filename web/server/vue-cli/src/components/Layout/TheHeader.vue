@@ -142,7 +142,7 @@ export default {
         },
         {
           name: "Reports",
-          icon: "mdi-clipboard-text-multiple-outline",
+          icon: "mdi-bug",
           route: "reports",
           active: [ "reports" ],
           exact: true,
