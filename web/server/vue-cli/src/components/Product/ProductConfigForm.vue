@@ -82,24 +82,30 @@
       >
         <v-text-field
           v-model="dbConnection.host"
-          label="Server address"
+          label="Server address*"
           name="db-host"
           prepend-icon="mdi-protocol"
+          :rules="rules.dbHost"
+          required
         />
 
         <v-text-field
           v-model="dbConnection.port"
-          label="Port"
+          label="Port*"
           name="db-port"
           prepend-icon="mdi-map-marker"
+          :rules="rules.dbPort"
+          required
         />
 
         <v-text-field
           v-model="dbUserName"
-          label="User name"
+          label="User name*"
           name="db-username"
           prepend-icon="mdi-account-outline"
           autocomplete="new-password"
+          :rules="rules.dbUserName"
+          required
         />
 
         <v-text-field
@@ -142,6 +148,15 @@ export default {
         ],
         dbName: [
           v => !!v || "Database name is required"
+        ],
+        dbHost: [
+          v => !!v || "Database host is required"
+        ],
+        dbPort: [
+          v => !!v || "Database port is required"
+        ],
+        dbUser: [
+          v => !!v || "Database user name is required"
         ],
         engine: [
           v => !!v || "Engine is required"
