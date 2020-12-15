@@ -412,8 +412,8 @@ def get_diff_bug_id_query(session, run_ids, tag_ids, open_reports_date):
     if tag_ids:
         q = q.outerjoin(RunHistory,
                         RunHistory.run_id == Report.run_id) \
-             .filter(RunHistory.id.in_(tag_ids)) \
-             .filter(get_open_reports_date_filter_query())
+            .filter(RunHistory.id.in_(tag_ids)) \
+            .filter(get_open_reports_date_filter_query())
 
     if open_reports_date:
         date = datetime.fromtimestamp(open_reports_date)
@@ -433,7 +433,7 @@ def get_diff_run_id_query(session, run_ids, tag_ids):
     if tag_ids:
         q = q.outerjoin(RunHistory,
                         RunHistory.run_id == Run.id) \
-             .filter(RunHistory.id.in_(tag_ids))
+            .filter(RunHistory.id.in_(tag_ids))
 
     return q
 
@@ -623,11 +623,24 @@ def get_report_details(session, report_ids):
         extended_data.filePath = file_path
         extended_data_list[report_id].append(extended_data)
 
+    # Get Comments for report data
+    comment_data_list = defaultdict(list)
+    comment_query = session.query(Comment, Report.id)\
+        .filter(Report.id.in_(report_ids)) \
+        .outerjoin(Report, Report.bug_id == Comment.bug_hash) \
+        .order_by(Comment.created_at.desc())
+
+    for data, report_id in comment_query:
+        report_id = report_id
+        comment_data = comment_data_db_to_api(data)
+        comment_data_list[report_id].append(comment_data)
+
     for report_id in report_ids:
         details[report_id] = \
             ReportDetails(pathEvents=bug_events_list[report_id],
                           executionPath=bug_point_list[report_id],
-                          extendedData=extended_data_list[report_id])
+                          extendedData=extended_data_list[report_id],
+                          comments=comment_data_list[report_id])
 
     return details
 
@@ -660,6 +673,41 @@ def extended_data_db_to_api(erd):
         endCol=erd.col_end,
         message=erd.message,
         fileId=erd.file_id)
+
+
+def comment_data_db_to_api(comm):
+    """
+    Returns a CommentData Object with all the relevant fields
+    """
+    return ttypes.CommentData(
+        id=comm.id,
+        author=comm.author,
+        message=get_comment_msg(comm),
+        createdAt=str(comm.created_at),
+        kind=comm.kind
+    )
+
+
+def get_comment_msg(comment):
+    """
+    Checks for the comment kind. If the comment is
+    identified as a system comment, it is formatted accordindly.
+    """
+    context = webserver_context.get_context()
+    message = comment.message.decode('utf-8')
+    sys_comment = comment_kind_from_thrift_type(
+        ttypes.CommentKind.SYSTEM)
+    if comment.kind == sys_comment:
+        elements = shlex.split(message)
+        system_comment = context.system_comment_map.get(
+            elements[0])
+        if system_comment:
+            for idx, value in enumerate(elements[1:]):
+                system_comment = system_comment.replace(
+                    '{' + str(idx) + '}', value)
+            message = system_comment
+
+    return message
 
 
 def unzip(b64zip, output_dir):
@@ -916,8 +964,8 @@ class ThriftRequestHandler(object):
             args['config_db_session'] = session
 
             if not any([permissions.require_permission(
-                            perm, args, self.__auth_session)
-                        for perm in required]):
+                    perm, args, self.__auth_session)
+                    for perm in required]):
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
                     "You are not authorized to execute this action.")
@@ -1607,21 +1655,8 @@ class ThriftRequestHandler(object):
                     .order_by(Comment.created_at.desc()) \
                     .all()
 
-                context = webserver_context.get_context()
                 for comment in comments:
-                    message = comment.message.decode('utf-8')
-                    sys_comment = comment_kind_from_thrift_type(
-                        ttypes.CommentKind.SYSTEM)
-                    if comment.kind == sys_comment:
-                        elements = shlex.split(message)
-                        system_comment = context.system_comment_map.get(
-                            elements[0])
-                        if system_comment:
-                            for idx, value in enumerate(elements[1:]):
-                                system_comment = system_comment.replace(
-                                    '{' + str(idx) + '}', value)
-                            message = system_comment
-
+                    message = get_comment_msg(comment)
                     result.append(CommentData(
                         comment.id,
                         comment.author,
@@ -1783,7 +1818,7 @@ class ThriftRequestHandler(object):
             missing_doc += "[ClangSA](" + sa_link + ")"
         elif "-" in checkerId:
             tidy_link = "http://clang.llvm.org/extra/clang-tidy/checks/" + \
-                      checkerId + ".html"
+                checkerId + ".html"
             missing_doc += "[ClangTidy](" + tidy_link + ")"
         missing_doc += " homepage."
 
@@ -1881,10 +1916,10 @@ class ThriftRequestHandler(object):
             is_unique = report_filter is not None and report_filter.isUnique
             if is_unique:
                 q = session.query(func.max(Report.checker_id).label(
-                                      'checker_id'),
-                                  func.max(Report.severity).label(
-                                      'severity'),
-                                  Report.bug_id)
+                    'checker_id'),
+                    func.max(Report.severity).label(
+                    'severity'),
+                    Report.bug_id)
             else:
                 q = session.query(Report.checker_id,
                                   Report.severity,
@@ -1935,8 +1970,8 @@ class ThriftRequestHandler(object):
             is_unique = report_filter is not None and report_filter.isUnique
             if is_unique:
                 q = session.query(func.max(Report.analyzer_name).label(
-                                      'analyzer_name'),
-                                  Report.bug_id)
+                    'analyzer_name'),
+                    Report.bug_id)
             else:
                 q = session.query(Report.analyzer_name,
                                   func.count(Report.id))
@@ -2017,8 +2052,8 @@ class ThriftRequestHandler(object):
             is_unique = report_filter is not None and report_filter.isUnique
             if is_unique:
                 q = session.query(func.max(Report.checker_message).label(
-                                      'checker_message'),
-                                  Report.bug_id)
+                    'checker_message'),
+                    Report.bug_id)
             else:
                 q = session.query(Report.checker_message,
                                   func.count(Report.id))
@@ -2419,8 +2454,8 @@ class ThriftRequestHandler(object):
 
         with DBSession(self.__Session) as session:
             check_new_run_name = session.query(Run) \
-                    .filter(Run.name == new_run_name) \
-                    .all()
+                .filter(Run.name == new_run_name) \
+                .all()
             if check_new_run_name:
                 msg = "New run name '" + new_run_name + "' already exists."
                 LOG.error(msg)
