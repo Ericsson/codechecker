@@ -169,7 +169,7 @@ The following commands are used to bootstrap CodeChecker on Ubuntu 20.04 LTS:
 # NOTE: clang or clang-tidy can be any sufficiently fresh version, and need not
 #       come from package manager!
 sudo apt-get install clang clang-tidy build-essential curl doxygen gcc-multilib \
-      git python3-virtualenv python3-dev
+      git python3-dev python3-venv
 
 # Install nodejs dependency for web. In case of Debian/Ubuntu you can use the
 # following commands. For more information see the official docs:
@@ -215,7 +215,7 @@ out-of-the-box. To fix this issue, run the following command to upgrade your
 
 ```sh
 cd ~/codechecker/venv
-virtualenv -p /usr/bin/python3 .
+python3 -m venv .
 ```
 
 ## Mac OS X
