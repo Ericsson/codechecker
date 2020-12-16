@@ -4,5 +4,5 @@ portalocker==1.7.0
 psutil==5.7.0
 sqlalchemy==1.3.16
 
-codechecker_api==6.36.0-dev1
-codechecker_api_shared==6.36.0-dev1
+codechecker_api==6.37.0
+codechecker_api_shared==6.37.0
