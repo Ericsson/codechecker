@@ -12,6 +12,7 @@ Context to store package related information.
 
 from collections.abc import Mapping
 import os
+import re
 import sys
 
 from codechecker_common import logger
@@ -65,6 +66,7 @@ class Context(metaclass=Singleton):
             load_json_or_empty(self.checkers_severity_map_file, {}))
         self.__system_comment_map = \
             load_json_or_empty(self.system_comment_map_file, {})
+        self.__git_commit_urls = self.__get_git_commit_urls()
         self.__package_version = None
         self.__package_build_date = None
         self.__package_git_hash = None
@@ -74,6 +76,15 @@ class Context(metaclass=Singleton):
         self.codechecker_workspace = None
 
         self.__set_version()
+
+    def __get_git_commit_urls(self):
+        """ Get commit urls from the configuration file. """
+        git_commit_urls = load_json_or_empty(self.git_commit_urls_file, [])
+
+        for git_commit_url in git_commit_urls:
+            git_commit_url["regex"] = re.compile(git_commit_url["regex"])
+
+        return git_commit_urls
 
     def __get_package_layout(self):
         """ Get package layout configuration. """
@@ -146,6 +157,15 @@ class Context(metaclass=Singleton):
     def system_comment_map_file(self):
         return os.path.join(self._data_files_dir_path, 'config',
                             'system_comment_kinds.json')
+
+    @property
+    def git_commit_urls_file(self):
+        return os.path.join(
+            self._data_files_dir_path, 'config', 'git_commit_urls.json')
+
+    @property
+    def git_commit_urls(self):
+        return self.__git_commit_urls
 
     @property
     def path_plist_to_html_dist(self):

@@ -7,6 +7,7 @@
 # -------------------------------------------------------------------------
 
 import base64
+import json
 import os
 import sqlalchemy
 import tempfile
@@ -249,7 +250,9 @@ def collect_paths_events(
 def add_file_record(
     session: DBSession,
     file_path: str,
-    content_hash: str
+    content_hash: str,
+    remote_url: Optional[str],
+    tracking_branch: Optional[str]
 ) -> Optional[int]:
     """
     Add the necessary file record pointing to an already existing content.
@@ -272,7 +275,8 @@ def add_file_record(
         return file_record.id
 
     try:
-        file_record = File(file_path, content_hash)
+        file_record = File(
+            file_path, content_hash, remote_url, tracking_branch)
         session.add(file_record)
         session.commit()
     except sqlalchemy.exc.IntegrityError as ex:
@@ -285,6 +289,34 @@ def add_file_record(
                     File.filepath == file_path).one_or_none()
 
     return file_record.id if file_record else None
+
+
+def get_blame_file_data(
+    blame_file: str
+) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+    """
+    Get blame information from the given file.
+
+    It will return a tuple of 'blame information', 'remote url' and
+    'tracking branch'.
+    """
+    blame_info = None
+    remote_url = None
+    tracking_branch = None
+
+    if os.path.isfile(blame_file):
+        data = util.load_json_or_empty(blame_file)
+        if data:
+            remote_url = data.get("remote_url")
+            tracking_branch = data.get("tracking_branch")
+
+            blame_info = data
+
+            # Remove fields which are not needed anymore from the blame info.
+            del blame_info["remote_url"]
+            del blame_info["tracking_branch"]
+
+    return blame_info, remote_url, tracking_branch
 
 
 class MassStoreRun:
@@ -474,6 +506,7 @@ class MassStoreRun:
     def __store_source_files(
         self,
         source_root: str,
+        blame_root: str,
         filename_to_hash: Dict[str, str]
     ) -> Dict[str, int]:
         """ Storing file contents from plist. """
@@ -487,6 +520,12 @@ class MassStoreRun:
             trimmed_file_path = util.trim_path_prefixes(
                 file_name, self.__trim_path_prefixes)
 
+            blame_file = os.path.realpath(os.path.join(
+                blame_root, file_name.strip("/")))
+
+            blame_info, remote_url, tracking_branch = get_blame_file_data(
+                blame_file)
+
             if not os.path.isfile(source_file_name):
                 # The file was not in the ZIP file, because we already
                 # have the content. Let's check if we already have a file
@@ -495,7 +534,8 @@ class MassStoreRun:
                 LOG.debug('%s not found or already stored.', trimmed_file_path)
                 with DBSession(self.__Session) as session:
                     fid = add_file_record(
-                        session, trimmed_file_path, file_hash)
+                        session, trimmed_file_path, file_hash, remote_url,
+                        tracking_branch)
 
                 if not fid:
                     LOG.error("File ID for %s is not found in the DB with "
@@ -506,23 +546,26 @@ class MassStoreRun:
                 continue
 
             with DBSession(self.__Session) as session:
-                file_path_to_id[trimmed_file_path] = self.__add_file_content(
-                    session, trimmed_file_path, source_file_name, file_hash)
+                self.__add_file_content(
+                    session, source_file_name, file_hash, blame_info)
+
+                file_path_to_id[trimmed_file_path] = add_file_record(
+                    session, trimmed_file_path, file_hash, remote_url,
+                    tracking_branch)
 
         return file_path_to_id
 
     def __add_file_content(
         self,
         session: DBSession,
-        file_path: str,
         source_file_name: str,
-        content_hash: str
-    ) -> int:
+        content_hash: Optional[str],
+        blame_info: Optional[dict]
+    ):
         """
-        Add the necessary file contents. If the file is already stored in the
-        database then its ID returns. If content_hash in None then this
-        function calculates the content hash. Or if is available at the caller
-        and is provided then it will not be calculated again.
+        Add the necessary file contents. If content_hash in None then this
+        function calculates the content hash. Or if it's available at the
+        caller and it's provided then it will not be calculated again.
 
         This function must not be called between add_checker_run() and
         finish_checker_run() functions when SQLite database is used!
@@ -531,7 +574,6 @@ class MassStoreRun:
         transactions, this API call will wait until the other transactions
         finish. In the meantime the run adding transaction times out.
         """
-
         source_file_content = None
         if not content_hash:
             source_file_content = get_file_content(source_file_name)
@@ -545,37 +587,24 @@ class MassStoreRun:
             if not source_file_content:
                 source_file_content = get_file_content(source_file_name)
             try:
-                compressed_content = zlib.compress(source_file_content,
-                                                   zlib.Z_BEST_COMPRESSION)
-                fc = FileContent(content_hash, compressed_content)
+                compressed_content = zlib.compress(
+                    source_file_content, zlib.Z_BEST_COMPRESSION)
+
+                compressed_blame_info = None
+                if blame_info:
+                    compressed_blame_info = zlib.compress(
+                        json.dumps(blame_info).encode('utf-8'),
+                        zlib.Z_BEST_COMPRESSION)
+
+                fc = FileContent(
+                    content_hash, compressed_content, compressed_blame_info)
+
                 session.add(fc)
                 session.commit()
             except sqlalchemy.exc.IntegrityError:
                 # Other transaction moght have added the same content in
                 # the meantime.
                 session.rollback()
-
-        file_record = session.query(File) \
-            .filter(File.content_hash == content_hash,
-                    File.filepath == file_path) \
-            .one_or_none()
-
-        if not file_record:
-            try:
-                file_record = File(file_path, content_hash)
-                session.add(file_record)
-                session.commit()
-            except sqlalchemy.exc.IntegrityError as ex:
-                LOG.error(ex)
-                # Other transaction might have added the same file in the
-                # meantime.
-                session.rollback()
-                file_record = session.query(File) \
-                    .filter(File.content_hash == content_hash,
-                            File.filepath == file_path) \
-                    .one_or_none()
-
-        return file_record.id
 
     def __store_analysis_statistics(
         self,
@@ -1131,6 +1160,7 @@ class MassStoreRun:
                 LOG.debug("Using unzipped folder '%s'", zip_dir)
 
                 source_root = os.path.join(zip_dir, 'root')
+                blame_root = os.path.join(zip_dir, 'blame')
                 report_dir = os.path.join(zip_dir, 'reports')
                 content_hash_file = os.path.join(
                     zip_dir, 'content_hashes.json')
@@ -1140,7 +1170,7 @@ class MassStoreRun:
 
                 LOG.info("[%s] Store source files...", self.__name)
                 file_path_to_id = self.__store_source_files(
-                    source_root, filename_to_hash)
+                    source_root, blame_root, filename_to_hash)
                 LOG.info("[%s] Store source files done.", self.__name)
 
                 run_history_time = datetime.now()

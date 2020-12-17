@@ -10,6 +10,7 @@ Handle Thrift requests.
 """
 
 import base64
+import json
 import os
 import re
 import shlex
@@ -26,10 +27,11 @@ from sqlalchemy.sql.expression import or_, and_, not_, func, \
 import codechecker_api_shared
 from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import AnalysisInfoFilter, \
-    BugPathPos, CheckerCount, CommentData, DiffType, Encoding, \
-    RunHistoryData, Order, ReportData, ReportDetails, ReviewData, RunData, \
-    RunFilter, RunReportCount, RunSortType, RunTagCount, SourceComponentData, \
-    SourceFileData, SortMode, SortType, ExportData
+    BlameData, BlameInfo, BugPathPos, CheckerCount, Commit, CommitAuthor, \
+    CommentData, DiffType, Encoding, RunHistoryData, Order, ReportData, \
+    ReportDetails, ReviewData, RunData, RunFilter, RunReportCount, \
+    RunSortType, RunTagCount, SourceComponentData, SourceFileData, SortMode, \
+    SortType, ExportData
 
 from codechecker_common import util
 from codechecker_common.logger import get_logger
@@ -944,6 +946,24 @@ def get_analysis_statistics_query(session, run_ids, run_history_ids=None):
                    RunHistory.id == AnalyzerStatistic.run_history_id) \
         .outerjoin(Run,
                    Run.id == RunHistory.run_id)
+
+
+def get_commit_url(
+    remote_url: Optional[str],
+    git_commit_urls: List
+) -> Optional[str]:
+    """ Get commit url for the given remote url. """
+    if not remote_url:
+        return
+
+    for git_commit_url in git_commit_urls:
+        m = git_commit_url["regex"].match(remote_url)
+        if m:
+            url = git_commit_url["url"]
+            for key, value in m.groupdict().items():
+                url = url.replace(f"${key}", value)
+
+            return url
 
 
 class ThriftRequestHandler:
@@ -1973,20 +1993,80 @@ class ThriftRequestHandler:
             if sourcefile is None:
                 return SourceFileData()
 
+            content_hash = sourcefile.content_hash
+            cont = session \
+                .query(FileContent.content, FileContent.blame_info) \
+                .filter(FileContent.content_hash == content_hash) \
+                .one_or_none()
+
+            source_file_data = SourceFileData(
+                fileId=sourcefile.id,
+                filePath=sourcefile.filepath,
+                hasBlameInfo=bool(cont.blame_info),
+                remoteUrl=get_commit_url(sourcefile.remote_url,
+                                         self._context.git_commit_urls),
+                trackingBranch=sourcefile.tracking_branch)
+
             if fileContent:
-                cont = session.query(FileContent).get(sourcefile.content_hash)
                 source = zlib.decompress(cont.content)
 
                 if encoding == Encoding.BASE64:
                     source = base64.b64encode(source)
 
-                source = source.decode('utf-8', errors='ignore')
-                return SourceFileData(fileId=sourcefile.id,
-                                      filePath=sourcefile.filepath,
-                                      fileContent=source)
-            else:
-                return SourceFileData(fileId=sourcefile.id,
-                                      filePath=sourcefile.filepath)
+                source_file_data.fileContent = source.decode(
+                    'utf-8', errors='ignore')
+
+            return source_file_data
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getBlameInfo(self, fileId):
+        """ Get blame information for the given file. """
+        self.__require_view()
+
+        with DBSession(self._Session) as session:
+            sourcefile = session.query(File).get(fileId)
+
+            if sourcefile is None:
+                return BlameInfo()
+
+            cont = session \
+                .query(FileContent.blame_info) \
+                .filter(FileContent.content_hash == sourcefile.content_hash) \
+                .one_or_none()
+
+            if not cont or not cont.blame_info:
+                return BlameInfo()
+
+            try:
+                blame_info = json.loads(
+                    zlib.decompress(cont.blame_info).decode(
+                        'utf-8', errors='ignore'))
+
+                commits = {
+                    commitHash: Commit(
+                        author=CommitAuthor(
+                            name=commit["author"]["name"],
+                            email=commit["author"]["email"]),
+                        summary=commit["summary"],
+                        message=commit["message"],
+                        committedDateTime=commit["committed_datetime"],
+                    )
+                    for commitHash, commit in blame_info["commits"].items()
+                }
+
+                blame_data = [BlameData(
+                    startLine=b["from"],
+                    endLine=b["to"],
+                    commitHash=b["commit"]) for b in blame_info["blame"]]
+
+                return BlameInfo(
+                    commits=commits,
+                    blame=blame_data)
+            except Exception:
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                    "Failed to get blame information for file id: " + fileId)
 
     @exc_to_thrift_reqfail
     @timeit

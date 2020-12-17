@@ -37,6 +37,16 @@ module.exports = {
     reportDetailPage.expect.section(dialog).to.not.be.present.before(5000);
   },
 
+  "show blame information" (browser) {
+    const reportDetailPage = browser.page.reportDetail();
+
+    reportDetailPage
+      .click("@toggleBlameViewBtn")
+      .waitForElementVisible("@blameCommitInfo")
+      .click("@toggleBlameViewBtn")
+      .waitForElementNotPresent("@blameCommitInfo");
+  },
+
   "change review status with a message" (browser) {
     const reportDetailPage = browser.page.reportDetail();
     const selectReviewStatusMenu =

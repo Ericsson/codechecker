@@ -101,7 +101,10 @@ enum CommentKind {
 struct SourceFileData {
   1: i64             fileId,
   2: string          filePath,
-  3: optional string fileContent
+  3: optional string fileContent,
+  4: optional bool   hasBlameInfo,
+  5: optional string remoteUrl,
+  6: optional string trackingBranch,
 }
 
 struct SortMode {
@@ -377,6 +380,31 @@ struct AnalysisInfo {
   1: string analyzerCommand,
 }
 
+typedef string CommitHash
+
+struct BlameData {
+  1: i64 startLine,
+  2: i64 endLine,
+  3: CommitHash commitHash,
+}
+
+struct CommitAuthor {
+  1: string name,
+  2: string email,
+}
+
+struct Commit {
+  1: CommitAuthor author,
+  2: string summary,
+  3: string message,
+  4: string committedDateTime,
+}
+
+struct BlameInfo {
+  1: map<CommitHash, Commit> commits,
+  2: list<BlameData>         blame,
+}
+
 service codeCheckerDBAccess {
 
   // Gives back all analyzed runs.
@@ -496,6 +524,11 @@ service codeCheckerDBAccess {
                                    2: bool     fileContent,
                                    3: Encoding encoding)
                                    throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // Get blame information for a given file.
+  // PERMISSION: PRODUCT_ACCESS
+  BlameInfo getBlameInfo(1: i64 fileId)
+                         throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Get line content information for multiple files in different positions.
   // The first key of the map is a file id, the second is a line number:

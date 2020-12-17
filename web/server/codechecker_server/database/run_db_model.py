@@ -180,8 +180,13 @@ class FileContent(Base):
     content_hash = Column(String, primary_key=True)
     content = Column(Binary)
 
-    def __init__(self, content_hash, content):
-        self.content_hash, self.content = content_hash, content
+    # Note: two different authors can commit the same file content to
+    # different paths in which case the blame info will be the same.
+    blame_info = Column(Binary, nullable=True)
+
+    def __init__(self, content_hash, content, blame_info):
+        self.content_hash, self.content, self.blame_info = \
+            content_hash, content, blame_info
 
 
 class File(Base):
@@ -195,13 +200,17 @@ class File(Base):
                                      deferrable=True,
                                      initially="DEFERRED", ondelete='CASCADE'),
                           index=True)
+    remote_url = Column(String, nullable=True)
+    tracking_branch = Column(String, nullable=True)
 
     __table_args__ = (UniqueConstraint('filepath', 'content_hash'),)
 
-    def __init__(self, filepath, content_hash):
+    def __init__(self, filepath, content_hash, remote_url, tracking_branch):
         self.filepath = filepath
         self.filename = os.path.basename(filepath)
         self.content_hash = content_hash
+        self.remote_url = remote_url
+        self.tracking_branch = tracking_branch
 
 
 class BugPathEvent(Base):
