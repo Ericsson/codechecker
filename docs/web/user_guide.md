@@ -1028,7 +1028,7 @@ usage: CodeChecker cmd diff [-h] [-b BASE_RUNS [BASE_RUNS ...]]
                             [--url PRODUCT_URL]
                             [-o {plaintext,rows,table,csv,json,html,gerrit,codeclimate} [{plaintext,rows,table,csv,json,html,gerrit,codeclimate} ...]]
                             [-e EXPORT_DIR] [-c]
-                            [--verbose {info,debug,debug_analyzer}]
+                            [--verbose {info,debug_analyzer,debug}]
 
 Compare two analysis runs to show the results that differ between the two.
 
@@ -1054,6 +1054,166 @@ optional arguments:
                         number of characters (zero or more). So if you have
                         run-a-1, run-a-2 and run-b-1 then "run-a*" selects the
                         first two.
+  -o {plaintext,rows,table,csv,json,html,gerrit,codeclimate} [{plaintext,rows,table,csv,json,html,gerrit,codeclimate} ...], --output {plaintext,rows,table,csv,json,html,gerrit,codeclimate} [{plaintext,rows,table,csv,json,html,gerrit,codeclimate} ...]
+                        The output format(s) to use in showing the data.
+                        - html: multiple html files will be generated in the
+                        export directory.
+                        - gerrit: a 'gerrit_review.json' file will be
+                        generated in the export directory.
+                        - codeclimate: a 'codeclimate_issues.json' file will
+                        be generated in the export directory.
+                        For the output formats (json, gerrit, codeclimate) if
+                        an export directory is set the output files will be
+                        generated if not the results are printed to the stdout
+                        but only if one format was selected. (default:
+                        ['plaintext'])
+  -e EXPORT_DIR, --export-dir EXPORT_DIR
+                        Store the output in the given folder.
+  -c, --clean           Delete output results stored in the output directory.
+                        (By default, it would keep output files and overwrites
+                        only those that contain any reports).
+
+filter arguments:
+  --uniqueing {on,off}  The same bug may appear several times if it is found
+                        on different execution paths, i.e. through different
+                        function calls. By turning on uniqueing a report
+                        appears only once even if it is found on several
+                        paths. (default: off)
+  --report-hash [REPORT_HASH [REPORT_HASH ...]]
+                        Filter results by report hashes.
+  --review-status [REVIEW_STATUS [REVIEW_STATUS ...]]
+                        Filter results by review statuses.
+                        Reports can be assigned a review status of the
+                        following values:
+                        - Unreviewed: Nobody has seen this report.
+                        - Confirmed: This is really a bug.
+                        - False positive: This is not a bug.
+                        - Intentional: This report is a bug but we don't want
+                        to fix it. This can be used only if basename or
+                        newname is a run name (on the remote server).
+                        (default: ['unreviewed', 'confirmed'])
+  --detection-status [DETECTION_STATUS [DETECTION_STATUS ...]]
+                        Filter results by detection statuses.
+                        The detection status is the latest state of a bug
+                        report in a run. When a unique report is first
+                        detected it will be marked as New. When the report is
+                        stored again with the same run name then the detection
+                        status changes to one of the following options:
+                        - Resolved: when the bug report can't be found after
+                        the subsequent storage.
+                        - Unresolved: when the bug report is still among the
+                        results after the subsequent storage.
+                        - Reopened: when a Resolved bug appears again.
+                        - Off: The bug was reported by a checker that was
+                        switched off during the last analysis which results
+                        were stored.
+                        - Unavailable: were reported by a checker that does
+                        not exists in the analyzer anymore because it was
+                        removed or renamed. This can be used only if basename
+                        or newname is a run name (on the remote server).
+                        (default: ['new', 'reopened', 'unresolved'])
+  --severity [SEVERITY [SEVERITY ...]]
+                        Filter results by severities.
+  --bug-path-length BUG_PATH_LENGTH
+                        Filter results by bug path length. This has the
+                        following format:
+                        <minimum_bug_path_length>:<maximum_bug_path_length>.
+                        Valid values are: "4:10", "4:", ":10"
+  --tag [TAG [TAG ...]]
+                        Filter results by version tag names. This can be used
+                        only if basename or newname is a run name (on the
+                        remote server).
+  --outstanding-reports-date TIMESTAMP, --open-reports-date TIMESTAMP
+                        Get results which were detected BEFORE the given date
+                        and NOT FIXED BEFORE the given date. The detection
+                        date of a report is the storage date when the report
+                        was stored to the server for the first time. The
+                        format of TIMESTAMP is
+                        'year:month:day:hour:minute:second' (the "time" part
+                        can be omitted, in which case midnight (00:00:00) is
+                        used).
+  --file [FILE_PATH [FILE_PATH ...]]
+                        Filter results by file path. The file path can contain
+                        multiple * quantifiers which matches any number of
+                        characters (zero or more). So if you have /a/x.cpp and
+                        /a/y.cpp then "/a/*.cpp" selects both.
+  --checker-name [CHECKER_NAME [CHECKER_NAME ...]]
+                        Filter results by checker names. The checker name can
+                        contain multiple * quantifiers which matches any
+                        number of characters (zero or more). So for example
+                        "*DeadStores" will matches "deadcode.DeadStores"
+  --checker-msg [CHECKER_MSG [CHECKER_MSG ...]]
+                        Filter results by checker messages.The checker message
+                        can contain multiple * quantifiers which matches any
+                        number of characters (zero or more).
+  --analyzer-name [ANALYZER_NAME [ANALYZER_NAME ...]]
+                        Filter results by analyzer names. The analyzer name
+                        can contain multiple * quantifiers which match any
+                        number of characters (zero or more). So for example
+                        "clang*" will match "clangsa" and "clang-tidy".
+  --component [COMPONENT [COMPONENT ...]]
+                        Filter results by source components. This can be used
+                        only if basename or newname is a run name (on the
+                        remote server).
+  --detected-at TIMESTAMP
+                        DEPRECATED. Use the '--detected-after/--detected-
+                        before' options to filter results by detection date.
+                        Filter results by fix date (fixed after the given
+                        date) if the --detection-status filter option is set
+                        only to Resolved otherwise it filters the results by
+                        detection date (detected after the given date). The
+                        format of TIMESTAMP is
+                        'year:month:day:hour:minute:second' (the "time" part
+                        can be omitted, in which case midnight (00:00:00) is
+                        used).
+  --fixed-at TIMESTAMP  DEPRECATED. Use the '--fixed-after/--fixed-before'
+                        options to filter results by fix date. Filter results
+                        by fix date (fixed before the given date) if the
+                        --detection-status filter option is set only to
+                        Resolved otherwise it filters the results by detection
+                        date (detected before the given date). The format of
+                        TIMESTAMP is 'year:month:day:hour:minute:second' (the
+                        "time" part can be omitted, in which case midnight
+                        (00:00:00) is used).
+  --detected-before TIMESTAMP
+                        Get results which were detected before the given date.
+                        The detection date of a report is the storage date
+                        when the report was stored to the server for the first
+                        time. The format of TIMESTAMP is
+                        'year:month:day:hour:minute:second' (the "time" part
+                        can be omitted, in which case midnight (00:00:00) is
+                        used).
+  --detected-after TIMESTAMP
+                        Get results which were detected after the given date.
+                        The detection date of a report is the storage date
+                        when the report was stored to the server for the first
+                        time. The format of TIMESTAMP is
+                        'year:month:day:hour:minute:second' (the "time" part
+                        can be omitted, in which case midnight (00:00:00) is
+                        used).
+  --fixed-before TIMESTAMP
+                        Get results which were fixed before the given date.
+                        The format of TIMESTAMP is
+                        'year:month:day:hour:minute:second' (the "time" part
+                        can be omitted, in which case midnight (00:00:00) is
+                        used).
+  --fixed-after TIMESTAMP
+                        Get results which were fixed after the given date. The
+                        format of TIMESTAMP is
+                        'year:month:day:hour:minute:second' (the "time" part
+                        can be omitted, in which case midnight (00:00:00) is
+                        used).
+  -s, --suppressed      DEPRECATED. Use the '--filter' option to get false
+                        positive (suppressed) results. Show only suppressed
+                        results instead of only unsuppressed ones.
+  --filter FILTER       DEPRECATED. Filter results. Use separated filter
+                        options to filter the results. The filter string has
+                        the following format: [<SEVERITIES>]:[<CHECKER_NAMES>]
+                        :[<FILE_PATHS>]:[<DETECTION_STATUSES>]:[<REVIEW_STATUS
+                        ES>] where severites, checker_names, file_paths,
+                        detection_statuses, review_statuses should be a comma
+                        separated list, e.g.: "high,medium:unix,core:*.cpp,*.h
+                        :new,unresolved:false_positive,intentional"
 
 comparison modes:
   --new                 Show results that didn't exist in the 'base' but
@@ -1063,6 +1223,14 @@ comparison modes:
   --unresolved          Show results that appear in both the 'base' and the
                         'new' run.
 
+common arguments:
+  --url PRODUCT_URL     The URL of the product which will be accessed by the
+                        client, in the format of
+                        '[http[s]://]host:port/Endpoint'. (default:
+                        localhost:8001/Default)
+  --verbose {info,debug_analyzer,debug}
+                        Set verbosity level.
+
 envionment variables:
   CC_REPO_DIR         Root directory of the sources, i.e. the directory where
                       the repository was cloned. Use it when generating gerrit
@@ -1071,6 +1239,20 @@ envionment variables:
                       gerrit output.
   CC_CHANGED_FILES    Path of changed files json from Gerrit. Use it when
                       generating gerrit output.
+
+Example scenario: Compare multiple analysis runs
+------------------------------------------------
+Compare two runs and show results that didn't exist in the 'run1' but appear in
+the 'run2' run:
+    CodeChecker cmd diff -b run1 -n run2 --new
+
+Compare a remote run with a local report directory and show results that didn't
+exist in the remote run 'run1' but appear in the local report directory:
+    CodeChecker cmd diff -b run1 -n /my_report_dir --new
+
+Compare two runs and show results that exist in both runs and filter results
+by multiple severity values:
+    CodeChecker cmd diff -b run1 -n run2 --unresolved --severity high medium
 ```
 
 The command can be used in *local* or *remote* compare modes.

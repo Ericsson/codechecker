@@ -839,10 +839,9 @@ def handle_diff_results(args):
 
     init_logger(args.verbose if 'verbose' in args else None, stream)
 
-    require_export_dir = any([o in ['html', 'gerrit', 'codeclimate']
-                              for o in args.output_format])
-    if require_export_dir and 'export_dir' not in args:
-        LOG.error("No export directory given!")
+    if len(args.output_format) > 1 and ('export_dir' not in args):
+        LOG.error("Export directory is required if multiple output formats "
+                  "are selected!")
         sys.exit(1)
 
     check_deprecated_arg_usage(args)
@@ -1133,6 +1132,9 @@ def handle_diff_results(args):
     def print_reports(client,
                       reports: List[Report],
                       output_formats: List[str]):
+
+        selected_output_format_num = len(output_formats)
+
         if 'json' in output_formats:
             out = []
             for report in reports:
@@ -1143,10 +1145,22 @@ def handle_diff_results(args):
                     out.append(report)
                 else:
                     out.append(report)
-            print(CmdLineOutputEncoder().encode(out))
+
+            encoded_reports = CmdLineOutputEncoder().encode(out)
+            if output_dir:
+                report_json = os.path.join(output_dir, 'reports.json')
+
+                with open(report_json, mode="w", encoding="utf-8",
+                          errors="ignore") as reports_file:
+                    reports_file.write(encoded_reports)
+                LOG.info('JSON report file was created: %s',
+                         os.path.join(output_dir, 'report.json'))
+
+            else:
+                print(encoded_reports)
 
             # Json was the only format specified.
-            if len(output_formats) == 1:
+            if selected_output_format_num == 1:
                 return
 
             output_formats.remove('json')
@@ -1162,7 +1176,7 @@ def handle_diff_results(args):
                                                           'index.html')))
 
             # HTML was the only format specified.
-            if len(output_formats) == 1:
+            if selected_output_format_num == 1:
                 return
 
             output_formats.remove('html')
@@ -1205,6 +1219,11 @@ def handle_diff_results(args):
         if 'gerrit' in output_formats:
             gerrit_reports = gerrit.convert(reports, context.severity_map)
 
+            # Gerrit was the only format specified.
+            if selected_output_format_num == 1 and not output_dir:
+                print(json.dumps(gerrit_reports))
+                return
+
             gerrit_review_json = os.path.join(output_dir,
                                               'gerrit_review.json')
             with open(gerrit_review_json, 'w') as review_file:
@@ -1212,13 +1231,14 @@ def handle_diff_results(args):
             LOG.info("Gerrit review file was created: %s\n",
                      gerrit_review_json)
 
-            # Gerrit was the only format specified.
-            if len(output_formats) == 1:
-                return
             output_formats.remove('gerrit')
 
         if 'codeclimate' in output_formats:
             cc_reports = codeclimate.convert(reports)
+            # Codelimate was the only format specified.
+            if selected_output_format_num == 1 and not output_dir:
+                print(json.dumps(cc_reports))
+                return
 
             codeclimate_issues_json = os.path.join(output_dir,
                                                    'codeclimate_issues.json')
@@ -1227,10 +1247,6 @@ def handle_diff_results(args):
 
             LOG.info("Code Climate file was created: %s\n",
                      codeclimate_issues_json)
-
-            # codeclimate was the only format specified.
-            if len(output_formats) == 1:
-                return
 
             output_formats.remove('codeclimate')
 

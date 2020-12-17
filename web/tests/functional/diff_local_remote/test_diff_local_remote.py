@@ -413,6 +413,47 @@ class LocalRemote(unittest.TestCase):
 
         shutil.rmtree(export_dir)
 
+    def test_diff_gerrit_stdout(self):
+        """Test gerrit stdout output.
+
+        Only one output format was selected
+        the gerrit review json should be printed to stdout.
+        """
+        base_run_name = self._run_names[0]
+
+        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
+                    "--new",
+                    "--url", self._url,
+                    "-b", base_run_name,
+                    "-n", self._local_reports,
+                    "-o", "gerrit"]
+
+        review_data = self.run_cmd(diff_cmd)
+        print(review_data)
+        review_data = json.loads(review_data)
+        lbls = review_data["labels"]
+        self.assertEqual(lbls["Verified"], -1)
+        self.assertEqual(lbls["Code-Review"], -1)
+        self.assertEqual(review_data["message"],
+                         "CodeChecker found 4 issue(s) in the code.")
+        self.assertEqual(review_data["tag"], "jenkins")
+
+        comments = review_data["comments"]
+        self.assertEqual(len(comments), 1)
+
+        file_path = next(iter(comments))
+        reports = comments[file_path]
+        self.assertEqual(len(reports), 4)
+        for report in reports:
+            self.assertIn("message", report)
+
+            self.assertIn("range", report)
+            range = report["range"]
+            self.assertIn("start_line", range)
+            self.assertIn("start_character", range)
+            self.assertIn("end_line", range)
+            self.assertIn("end_character", range)
+
     def test_set_env_diff_gerrit_output(self):
         """Test gerrit output when using diff and set env vars.
 
