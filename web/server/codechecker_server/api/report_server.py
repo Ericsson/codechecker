@@ -31,7 +31,7 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import BugPathPos, \
     CheckerCount, CommentData, DiffType, Encoding, RunHistoryData, Order, \
     ReportData, ReportDetails, ReviewData, RunData, RunFilter, \
     RunReportCount, RunSortType, RunTagCount, SourceComponentData, \
-    SourceFileData, SortMode, SortType
+    SourceFileData, SortMode, SortType, ExportData
 
 from codechecker_common import plist_parser, skiplist_handler
 from codechecker_common.source_code_comment_handler import \
@@ -3293,3 +3293,48 @@ class ThriftRequestHandler(object):
                                               failedFilePaths=failed_files,
                                               successful=stat.successful)
         return analyzer_statistics
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def exportData(self, run_filter):
+        self.__require_access()
+
+        with DBSession(self.__Session) as session:
+
+            # Logic for getting comments
+            comment_data_list = defaultdict(list)
+            comment_query = session.query(Comment, Report.bug_id) \
+                .outerjoin(Report, Report.bug_id == Comment.bug_hash) \
+                .order_by(Comment.created_at.desc())
+
+            if run_filter:
+                comment_query = process_run_filter(session, comment_query,
+                                                   run_filter) \
+                    .outerjoin(Run, Report.run_id == Run.id)
+
+            for data, report_id in comment_query:
+                comment_data = ttypes.CommentData(
+                    id=data.id,
+                    author=data.author,
+                    message=data.message.decode('utf-8'),
+                    createdAt=str(data.created_at),
+                    kind=data.kind)
+                comment_data_list[report_id].append(comment_data)
+
+            # Logic for getting review status
+            review_data_list = {}
+            review_query = session.query(ReviewStatus, Report.bug_id) \
+                .outerjoin(Report, Report.bug_id == ReviewStatus.bug_hash) \
+                .order_by(ReviewStatus.date.desc())
+
+            if run_filter:
+                review_query = process_run_filter(session, review_query,
+                                                  run_filter) \
+                    .outerjoin(Run, Report.run_id == Run.id)
+
+            for data, report_id in review_query:
+                review_data = create_review_data(data)
+                review_data_list[report_id] = review_data
+
+        return ExportData(comments=comment_data_list,
+                          reviewData=review_data_list)

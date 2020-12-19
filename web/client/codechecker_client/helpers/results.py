@@ -134,6 +134,13 @@ class ThriftResultsHelper(BaseClientHelper):
                          offset):
         pass
 
+    @ThriftClientCall
+    def exportData(self, runId):
+        pass
+
+    @ThriftClientCall
+    def importData(self, exportData):
+        pass
     # SOURCE COMPONENT RELATED API CALLS
 
     @ThriftClientCall

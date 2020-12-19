@@ -1163,6 +1163,19 @@ def __register_run_histories(parser):
                              "runs.")
 
 
+def __register_export(parser):
+    """
+    Add argparser subcommand for the "export run by run name action"
+    """
+    parser.add_argument('-n', '--name',
+                        type=str,
+                        nargs='+',
+                        dest="names",
+                        metavar='RUN_NAME',
+                        default=argparse.SUPPRESS,
+                        help="Name of the analysis run.")
+
+
 def __register_token(parser):
     """
     Add argparse subcommand parser for the "handle token" action.
@@ -1429,6 +1442,18 @@ full runs.""",
     __register_login(login)
     login.set_defaults(func=cmd_line_client.handle_login)
     __add_common_arguments(login, needs_product_url=False)
+
+    export = subcommands.add_parser(
+        'export',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="Export data (comments, review statuses) from a running "
+        "CodeChecker server into a json format",
+        help="Export data from a CodeChecker server to json format."
+    )
+    __register_export(export)
+    export.set_defaults(func=cmd_line_client.handle_export)
+    __add_common_arguments(export)
+
 
 # 'cmd' does not have a main() method in itself, as individual subcommands are
 # handled later on separately.

@@ -1469,7 +1469,7 @@ def handle_list_result_types(args):
             confirmed=checker_count(confirmed_checkers, key),
             false_positive=checker_count(false_checkers, key),
             intentional=checker_count(intentional_checkers, key)
-         ))
+        ))
         total['total_reports'] += checker_data.count
         total['total_unreviewed'] += checker_count(unrev_checkers, key)
         total['total_confirmed'] += checker_count(confirmed_checkers, key)
@@ -1643,3 +1643,20 @@ def handle_list_run_histories(args):
                          h.description if h.description else ''))
 
         print(twodim.to_str(args.output_format, header, rows))
+
+
+def handle_export(args):
+
+    stream = 'stderr'
+    init_logger(args.verbose if 'verbose' in args else None, stream)
+
+    client = setup_client(args.product_url)
+    run_filter = process_run_filter_conditions(args)
+
+    runs = get_run_data(client, run_filter)
+    if not runs:
+        LOG.warning("No runs found")
+        sys.exit(1)
+
+    report = client.exportData(run_filter)
+    print(CmdLineOutputEncoder().encode(report))
