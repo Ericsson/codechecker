@@ -223,7 +223,8 @@ def parse_plist_file(path: str,
             # If the diagnostic section has changed we update the plist file.
             # This way the client will always send a plist file where the
             # report hash field is filled.
-            plistlib.dump(plist, path)
+            with open(path, 'wb') as plist_file:
+                plistlib.dump(plist, plist_file)
     except IndexError as iex:
         LOG.warning('Indexing error during processing plist file %s', path)
         LOG.warning(type(iex))
