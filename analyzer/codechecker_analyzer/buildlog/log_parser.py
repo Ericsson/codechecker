@@ -128,6 +128,7 @@ IGNORED_OPTIONS_GCC = [
     '-mfix-cortex-m3-ldrd$',
     '-mmultiple$',
     '-msahf$',
+    '-mskip-rax-setup$',
     '-mthumb-interwork$',
     '-mupdate$',
 
