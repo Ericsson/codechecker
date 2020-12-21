@@ -116,6 +116,7 @@ IGNORED_OPTIONS_GCC = [
     '-mno-fp-ret-in-387',
     '-mpreferred-stack-boundary',
     '-mpcrel-func-addr',
+    '-mrecord-mcount$',
     '-maccumulate-outgoing-args',
     '-mcall-aixdesc',
     '-mppa3-addr-bug',
