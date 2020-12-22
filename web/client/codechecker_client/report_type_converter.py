@@ -23,7 +23,7 @@ def reportData_to_report(report_data: ReportData) -> Report:
         "location": {
             "line": report_data.line,
             "col": report_data.column,
-            "file": report_data.checkedFile,
+            "file": 0,
         },
     }
     bug_path = None
@@ -49,7 +49,7 @@ def report_to_reportData(report: Report,
     return ReportData(
         checkerId=checker_name,
         bugHash=report_hash,
-        checkedFile=report.main["location"]["file"],
+        checkedFile=report.file_path,
         checkerMsg=report.main["description"],
         line=report.main["location"]["line"],
         column=report.main["location"]["col"],

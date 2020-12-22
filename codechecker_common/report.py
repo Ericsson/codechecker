@@ -93,7 +93,7 @@ class Report(object):
     @property
     def file_path(self) -> str:
         """ Get the filepath for the main report location. """
-        return self.__main['location']['file']
+        return self.files[self.__main['location']['file']]
 
     @property
     def source_line(self) -> str:
@@ -103,8 +103,8 @@ class Report(object):
         if not tries to read it from the disk.
         """
         if not self.__source_line:
-            self.__source_line = \
-                util.get_line(self.__main['location']['file'], self.line)
+            self.__source_line = util.get_line(self.file_path, self.line)
+
         return self.__source_line
 
     @source_line.setter
@@ -124,9 +124,6 @@ class Report(object):
         """ Removes the longest matching leading path from the file paths. """
         self.__files = {i: util.trim_path_prefixes(file_path, path_prefixes)
                         for i, file_path in self.__files.items()}
-        self.__main['location']['file'] = \
-            util.trim_path_prefixes(self.__main['location']['file'],
-                                    path_prefixes)
 
     def to_json(self):
         """Converts to a special json format.
