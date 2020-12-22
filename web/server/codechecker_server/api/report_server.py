@@ -2724,7 +2724,7 @@ class ThriftRequestHandler(object):
 
             try:
                 files, reports = plist_parser.parse_plist_file(
-                    os.path.join(report_dir, f), None)
+                    os.path.join(report_dir, f))
             except Exception as ex:
                 LOG.error('Parsing the plist failed: %s', str(ex))
                 continue

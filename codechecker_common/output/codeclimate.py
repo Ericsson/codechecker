@@ -29,8 +29,7 @@ def convert(reports: List[Report]) -> Dict:
 
 def __to_codeclimate(report: Report) -> Dict:
     """Convert a Report to Code Climate format."""
-    location = report.main['location']
-    _, file_name = os.path.split(location['file'])
+    _, file_name = os.path.split(report.file_path)
 
     return {
         "type": "issue",
@@ -41,7 +40,7 @@ def __to_codeclimate(report: Report) -> Dict:
         "location": {
             "path": file_name,
             "lines": {
-                "begin": location['line']
+                "begin": report.main['location']['line']
             }
         }
     }
