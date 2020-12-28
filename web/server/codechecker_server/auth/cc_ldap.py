@@ -230,8 +230,8 @@ class LDAPConnection(object):
             self.connection = None
             return
 
-        referals = ldap_config.get('referals', False)
-        ldap.set_option(ldap.OPT_REFERRALS, 1 if referals else 0)
+        referrals = ldap_config.get('referrals', False)
+        ldap.set_option(ldap.OPT_REFERRALS, 1 if referrals else 0)
 
         deref = ldap_config.get('deref', ldap.DEREF_ALWAYS)
         if deref == 'never':
