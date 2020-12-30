@@ -252,6 +252,57 @@ class DictAuth(unittest.TestCase):
         result = auth_client.destroySession()
         self.assertTrue(result, "Server did not allow us to destroy session.")
 
+    def test_regex_groups(self):
+        auth_client = env.setup_auth_client(self._test_workspace,
+                                            session_token='_PROHIBIT')
+        # First login as root.
+        self.sessionToken = auth_client.performLogin("Username:Password",
+                                                     "root:root")
+        self.assertIsNotNone(self.sessionToken,
+                             "root was unable to login!")
+
+        # Then give SUPERUSER privs to admins_custom_group.
+        authd_auth_client = \
+            env.setup_auth_client(self._test_workspace,
+                                  session_token=self.sessionToken)
+        ret = authd_auth_client.addPermission(Permission.SUPERUSER,
+                                              "admins_custom_group",
+                                              True, None)
+        self.assertTrue(ret)
+
+        result = auth_client.destroySession()
+        self.assertTrue(result, "Server did not allow us to destroy session.")
+
+        # Login as a user who is in admins_custom_group.
+        sessionToken = auth_client.performLogin("Username:Password",
+                                                "regex_admin:blah")
+        self.assertIsNotNone(sessionToken,
+                             "Valid credentials didn't give us a token!")
+
+        # Do something privileged.
+        client = env.setup_viewer_client(self._test_workspace,
+                                         session_token=sessionToken)
+        self.assertIsNotNone(client.allowsStoringAnalysisStatistics(),
+                             "Privileged call failed.")
+
+        result = auth_client.destroySession()
+        self.assertTrue(result, "Server did not allow us to destroy session.")
+
+        # Finally try to do the same with an unprivileged user.
+        sessionToken = auth_client.performLogin("Username:Password",
+                                                "john:doe")
+        self.assertIsNotNone(sessionToken,
+                             "Valid credentials didn't give us a token!")
+
+        client = env.setup_viewer_client(self._test_workspace,
+                                         session_token=sessionToken)
+        self.assertFalse(client.allowsStoringAnalysisStatistics(),
+                         "Privileged call from unprivileged user"
+                         " did not fail!")
+
+        result = auth_client.destroySession()
+        self.assertTrue(result, "Server did not allow us to destroy session.")
+
     def test_personal_access_tokens(self):
         """ Test personal access token commands. """
         codechecker_cfg = self._test_cfg['codechecker_cfg']

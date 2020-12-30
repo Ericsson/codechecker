@@ -15,6 +15,7 @@ Table of Contents
         * [<i>PAM</i> authentication](#pam-authentication)
         * [<i>LDAP</i> authentication](#ldap-authentication)
             * [Configuration options](#configuration-options)
+    * Membership in custom groups with [<i>regex_groups</i>](#regex_groups-authentication)
 * [Client-side configuration](#client-side-configuration)
     * [Web-browser client](#web-browser-client)
     * [Command-line client](#command-line-client)
@@ -284,6 +285,32 @@ servers as it can elongate the authentication process.
   ]
 }
 ~~~
+
+## Membership in custom groups with <a name="regex_groups-authentication">regex_groups</a>
+
+Many regular expressions can be listed to define a group. Please note that the
+regular expressions are searched in the whole username string, so they should
+be properly anchored if you want to match only in the beginning or in the
+end. Regular expression matching follows the rules of Python's
+[re.search()](https://docs.python.org/3/library/re.html).
+
+The following example will create a group named `everybody` that contains
+every user regardless of the authentication method, and a group named `admins`
+that contains the user `root`, all usernames containing the string "whatever",
+and all usernames starting with `admin_` or ending with `_admin`.
+
+~~~{.json}
+"regex_groups": {
+  "enabled" : true,
+  "groups" : {
+      "everybody" : [ ".*" ],
+      "admins"    : [ "whatever", "^root$", "^admin_", "_admin$" ]
+  }
+}
+~~~
+
+When we manage permissions on the GUI we can give permission to these
+groups. For more information [see](permissions.md#managing-permissions).
 
 ----
 

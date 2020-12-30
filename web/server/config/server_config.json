@@ -48,6 +48,12 @@
       "groups": [
         "adm", "cc-users"
       ]
+    },
+    "regex_groups": {
+      "enabled" : false,
+      "groups" : {
+        "admins_custom_group" : [ "whatever", "^root$", "^admin_", "_admin$" ]
+      }
     }
   }
 }
