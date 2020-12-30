@@ -1660,3 +1660,49 @@ def handle_export(args):
 
     report = client.exportData(run_filter)
     print(CmdLineOutputEncoder().encode(report))
+
+
+def handle_import(args):
+    """
+    Argument handler for the 'CodeChecker cmd import' subcommand
+    """
+
+    init_logger(args.verbose if 'verbose' in args else None)
+
+    client = setup_client(args.product_url)
+
+    data = util.load_json_or_empty(args.input, default=None)
+    if not data:
+        LOG.error("Failed to import data!")
+        sys.exit(1)
+
+    # Convert Json comments into CommentDataList
+    comment_data_list = defaultdict(list)
+    for bug_hash, comments in data['comments'].items():
+        for comment in comments:
+            comment_data = ttypes.CommentData(
+                id=comment['id'],
+                author=comment['author'],
+                message=comment['message'],
+                createdAt=comment['createdAt'],
+                kind=comment['kind'])
+            comment_data_list[bug_hash].append(comment_data)
+
+    # Convert Json reviews into ReviewData
+    review_data_list = {}
+    for bug_hash, review in data['reviewData'].items():
+        review_data_list[bug_hash] = ttypes.ReviewData(
+            status=review['status'],
+            comment=review['comment'],
+            author=review['author'],
+            date=review['date'])
+
+    exportData = ttypes.ExportData(comments=comment_data_list,
+                                   reviewData=review_data_list)
+
+    status = client.importData(exportData)
+    if not status:
+        LOG.error("Failed to import data!")
+        sys.exit(1)
+
+    LOG.info("Import successful!")

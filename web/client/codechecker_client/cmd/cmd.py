@@ -1176,6 +1176,21 @@ def __register_export(parser):
                         help="Name of the analysis run.")
 
 
+def __register_importer(parser):
+    """
+    Add argparser subcommand for the "import run by run name action"
+    """
+
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('-i', '--import',
+                       type=str,
+                       dest="input",
+                       metavar='JSON_FILE',
+                       default=argparse.SUPPRESS,
+                       help="Import findings from the json file into "
+                       "the database.")
+
+
 def __register_token(parser):
     """
     Add argparse subcommand parser for the "handle token" action.
@@ -1447,12 +1462,23 @@ full runs.""",
         'export',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description="Export data (comments, review statuses) from a running "
-        "CodeChecker server into a json format",
+                    "CodeChecker server into a json format",
         help="Export data from a CodeChecker server to json format."
     )
     __register_export(export)
     export.set_defaults(func=cmd_line_client.handle_export)
     __add_common_arguments(export)
+
+    importer = subcommands.add_parser(
+        'import',
+        formatter_class=arg.RawDescriptionDefaultHelpFormatter,
+        description="Import the results into CodeChecker server",
+        help="Import the analysis from a json file exported by the "
+             "'CodeChecker cmd export' command into CodeChecker"
+    )
+    __register_importer(importer)
+    importer.set_defaults(func=cmd_line_client.handle_import)
+    __add_common_arguments(importer)
 
 
 # 'cmd' does not have a main() method in itself, as individual subcommands are
