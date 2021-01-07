@@ -981,14 +981,15 @@ class ThriftRequestHandler(object):
     def __require_store(self):
         self.__require_permission([permissions.PRODUCT_STORE])
 
-    def __add_comment(self, bug_id, message, kind=CommentKindValue.USER):
+    def __add_comment(self, bug_id, message, kind=CommentKindValue.USER,
+                      date=None):
         """ Creates a new comment object. """
         user = self.__get_username()
         return Comment(bug_id,
                        user,
                        message.encode('utf-8'),
                        kind,
-                       datetime.now())
+                       date or datetime.now())
 
     @timeit
     def getRunData(self, run_filter, limit, offset, sort_mode):
@@ -1548,7 +1549,7 @@ class ThriftRequestHandler(object):
         with DBSession(self.__Session) as session:
             return get_report_details(session, [reportId])[reportId]
 
-    def _setReviewStatus(self, report_id, status, message, session):
+    def _setReviewStatus(self, session, report_id, status, message, date=None):
         """
         This function sets the review status of the given report. This is the
         implementation of changeReviewStatus(), but it is also extended with
@@ -1562,38 +1563,50 @@ class ThriftRequestHandler(object):
                 review_status = ReviewStatus()
                 review_status.bug_hash = report.bug_id
 
-            user = self.__get_username()
+            old_status = review_status.status or \
+                review_status_str(ttypes.ReviewStatus.UNREVIEWED)
+            old_msg = review_status.message or None
 
-            old_status = review_status.status if review_status.status \
-                else review_status_str(ttypes.ReviewStatus.UNREVIEWED)
-            old_msg = review_status.message.decode('utf-8') \
-                if review_status.message else None
+            new_status = review_status_str(status)
+            new_user = self.__get_username()
+            new_message = message.encode('utf8') if message else b''
 
-            review_status.status = review_status_str(status)
-            review_status.author = user
-            review_status.message = message.encode('utf8') if message else b''
-            review_status.date = datetime.now()
+            # Review status is a shared table among runs. When multiple runs
+            # are stored in parallel, there may be a race condition in updating
+            # review status fields. The most common reason of deadlocks is
+            # changing only the date to current date. This condition checks if
+            # something else is also changed other than dates.
+            # We assume that report status in source code comments belong to
+            # the first user who stored the reports. If another user stores the
+            # same project with same report status then we don't change it.
+            if (old_status, old_msg) == (new_status, new_message):
+                return True
+
+            review_status.status = new_status
+            review_status.author = new_user
+            review_status.message = new_message
+            review_status.date = date or datetime.now()
             session.add(review_status)
 
-            # Create a system comment if the review status or the message is
-            # changed.
-            if old_status != review_status.status or old_msg != message:
-                old_review_status = escape_whitespaces(old_status.capitalize())
-                new_review_status = \
-                    escape_whitespaces(review_status.status.capitalize())
-                if message:
-                    system_comment_msg = \
-                        'rev_st_changed_msg {0} {1} {2}'.format(
-                            old_review_status, new_review_status,
-                            escape_whitespaces(message))
-                else:
-                    system_comment_msg = 'rev_st_changed {0} {1}'.format(
-                        old_review_status, new_review_status)
+            # Create a system comment if the review status or the message
+            # is changed.
+            old_review_status = escape_whitespaces(old_status.capitalize())
+            new_review_status = \
+                escape_whitespaces(review_status.status.capitalize())
+            if message:
+                system_comment_msg = \
+                    'rev_st_changed_msg {0} {1} {2}'.format(
+                        old_review_status, new_review_status,
+                        escape_whitespaces(message))
+            else:
+                system_comment_msg = 'rev_st_changed {0} {1}'.format(
+                    old_review_status, new_review_status)
 
-                system_comment = self.__add_comment(review_status.bug_hash,
-                                                    system_comment_msg,
-                                                    CommentKindValue.SYSTEM)
-                session.add(system_comment)
+            system_comment = self.__add_comment(review_status.bug_hash,
+                                                system_comment_msg,
+                                                CommentKindValue.SYSTEM,
+                                                review_status.date)
+            session.add(system_comment)
 
             session.flush()
 
@@ -1628,7 +1641,7 @@ class ThriftRequestHandler(object):
                 codechecker_api_shared.ttypes.ErrorCode.GENERAL, msg)
 
         with DBSession(self.__Session) as session:
-            res = self._setReviewStatus(report_id, status, message, session)
+            res = self._setReviewStatus(session, report_id, status, message)
             session.commit()
 
             LOG.info("Review status of report '%s' was changed to '%s' by %s.",
@@ -2816,10 +2829,11 @@ class ThriftRequestHandler(object):
                         elif status == 'intentional':
                             rw_status = ttypes.ReviewStatus.INTENTIONAL
 
-                        self._setReviewStatus(report_id,
+                        self._setReviewStatus(session,
+                                              report_id,
                                               rw_status,
                                               src_comment_data[0]['message'],
-                                              session)
+                                              run_history_time)
                     elif len(src_comment_data) > 1:
                         LOG.warning(
                             "Multiple source code comment can be found "
