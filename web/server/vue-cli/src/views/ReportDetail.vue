@@ -1,5 +1,41 @@
 <template>
-  <splitpanes class="default-theme">
+  <v-container
+    v-if="reportNotFound"
+    class="text-center"
+    fill-height
+  >
+    <v-row align="center" justify="center">
+      <v-col class="error--text" cols="6">
+        <h1 class="display-2">
+          404 - Report not found!
+        </h1>
+
+        <v-alert
+          class="mt-4"
+          type="error"
+          dense
+          outlined
+          text
+        >
+          The report (report ID: {{ $router.currentRoute.query["report-id"] }},
+          report hash: {{ $router.currentRoute.query["report-hash"] }},
+          file path: {{ $router.currentRoute.query["report-filepath"] }})
+          was removed from the database.
+
+          <span v-if="!$router.currentRoute.query['report-hash']">
+            Unfortunatelly your URL parameter was saved from and older version
+            of CodeChecker and it does not contain a <i>report-hash</i>
+            parameter to fallback the search for.
+          </span>
+        </v-alert>
+      </v-col>
+    </v-row>
+  </v-container>
+
+  <splitpanes
+    v-else
+    class="default-theme"
+  >
     <pane size="20">
       <v-container
         fluid
@@ -18,6 +54,7 @@
               :to="{ name: 'reports', query: {
                 ...$router.currentRoute.query,
                 'report-id': undefined,
+                'report-filepath': undefined,
                 ...(
                   reportFilter.reportHash ? {} : { 'report-hash' : undefined }
                 )
@@ -85,7 +122,8 @@ export default {
     return {
       report: null,
       treeItem: null,
-      showComments: true
+      showComments: true,
+      reportNotFound: false
     };
   },
   computed: {
@@ -105,17 +143,30 @@ export default {
   methods: {
     loadReport(reportId, reportHash) {
       if (reportId) {
-        this.loadReportById(reportId);
+        this.loadReportById(reportId).catch(() => {
+          if (reportHash) {
+            this.loadReportByHash(reportHash);
+          } else {
+            this.reportNotFound = true;
+          }
+        });
       } else if (reportHash) {
         this.loadReportByHash(reportHash);
       }
     },
 
     loadReportById(reportId) {
-      ccService.getClient().getReport(reportId,
-        handleThriftError(reportData => {
-          this.report = reportData;
-        }));
+      return new Promise((res, rej) => {
+        ccService.getClient().getReport(reportId,
+          handleThriftError(reportData => {
+            this.report = reportData;
+            res(true);
+          }, err => {
+            console.warn("Failed to get report for ID:", reportId);
+            console.warn(err);
+            rej(err);
+          }));
+      });
     },
 
     loadReportByHash(reportHash) {
@@ -128,16 +179,22 @@ export default {
         ord: Order.ASC
       });
 
+      const filePath = this.$router.currentRoute.query["report-filepath"];
       const reportFilter = new ReportFilter({
         ...this.reportFilter,
         isUnique: false,
-        reportHash: [ reportHash ]
+        reportHash: [ reportHash ],
+        filePath: [ filePath ]
       });
 
       ccService.getClient().getRunResults(this.runIds, limit, offset,
         [ sortType ], reportFilter, this.cmpData, getDetails,
         handleThriftError(reports => {
-          this.report = reports[0];
+          if (reports.length) {
+            this.report = reports[0];
+          } else {
+            this.reportNotFound = true;
+          }
         }));
     },
 
