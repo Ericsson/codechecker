@@ -1,4 +1,4 @@
-lxml==4.5.0
+lxml==4.6.2
 sqlalchemy==1.3.16
 pycodestyle==2.5.0
 alembic==1.4.2
