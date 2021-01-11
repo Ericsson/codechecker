@@ -296,15 +296,15 @@ end. Regular expression matching follows the rules of Python's
 
 The following example will create a group named `everybody` that contains
 every user regardless of the authentication method, and a group named `admins`
-that contains the user `root`, all usernames containing the string "whatever",
-and all usernames starting with `admin_` or ending with `_admin`.
+that contains the user `admin` and all usernames starting with `admin_` or
+ending with `_admin`.
 
 ~~~{.json}
 "regex_groups": {
   "enabled" : true,
   "groups" : {
       "everybody" : [ ".*" ],
-      "admins"    : [ "whatever", "^root$", "^admin_", "_admin$" ]
+      "admins"    : [ "^admin$", "^admin_", "_admin$" ]
   }
 }
 ~~~

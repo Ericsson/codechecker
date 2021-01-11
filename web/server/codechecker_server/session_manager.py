@@ -196,14 +196,13 @@ class SessionManager(object):
         # Save the root SHA into the configuration (but only in memory!)
         self.__auth_config['method_root'] = root_sha
 
-        try:
-            self.__regex_groups_enabled = \
-                self.__auth_config['regex_groups'].get('enabled')
-        except KeyError:
-            self.__regex_groups_enabled = False
+        self.__regex_groups_enabled = False
 
         # Pre-compile the regular expressions of 'regex_groups'
         if 'regex_groups' in self.__auth_config:
+            self.__regex_groups_enabled = self.__auth_config['regex_groups'] \
+                                              .get('enabled', False)
+
             regex_groups = self.__auth_config['regex_groups'] \
                                .get('groups', [])
             d = dict()
@@ -501,13 +500,15 @@ class SessionManager(object):
         the username matches the regular expression of the group.
 
         """
+        if not self.__regex_groups_enabled:
+            return set()
+
         matching_groups = set()
-        if self.__regex_groups_enabled:
-            for group_name, regex_list \
-                    in self.__group_regexes_compiled.items():
-                for r in regex_list:
-                    if re.search(r, username):
-                        matching_groups.add(group_name)
+        for group_name, regex_list in self.__group_regexes_compiled.items():
+            for r in regex_list:
+                if re.search(r, username):
+                    matching_groups.add(group_name)
+
         return matching_groups
 
     @staticmethod

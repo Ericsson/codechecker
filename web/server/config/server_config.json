@@ -52,7 +52,7 @@
     "regex_groups": {
       "enabled" : false,
       "groups" : {
-        "admins_custom_group" : [ "whatever", "^root$", "^admin_", "_admin$" ]
+        "admins_custom_group" : [ "^admin$", "^admin_", "_admin$" ]
       }
     }
   }
