@@ -917,6 +917,9 @@ def handle_diff_results(args):
                                                   diff_type,
                                                   None)
 
+        if not remote_hashes:
+            return filtered_reports, run_names
+
         if diff_type in [ttypes.DiffType.NEW, ttypes.DiffType.UNRESOLVED]:
             # Shows reports from the report dir which are not present in
             # the baseline (NEW reports) or appear in both side (UNRESOLVED
