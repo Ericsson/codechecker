@@ -18,6 +18,7 @@ In the configuration `null` means it is not configured.
   "authorities": [
     {
       "connection_url" : null,
+      "tls_require_cert" : null,
       "username" : null,
       "password" : null,
       "referrals" : false,
@@ -132,8 +133,13 @@ def ldap_error_handler():
     except ldap.FILTER_ERROR as ex:
         LOG.error("Filter error: %s", str(ex))
 
+    except ldap.SERVER_DOWN:
+        LOG.error("Can't connect to LDAP server,"
+                  " or LDAPS certificate verification failed")
+
     except ldap.LDAPError as err:
-        LOG.error("LDAP Error: %s", str(err))
+        LOG.error("Exception ldap.%s (%s)",
+                  type(err).__name__, str(err))
 
 
 def get_user_dn(con,
@@ -224,8 +230,8 @@ class LDAPConnection(object):
             self.connection = None
             return
 
-        referals = ldap_config.get('referals', False)
-        ldap.set_option(ldap.OPT_REFERRALS, 1 if referals else 0)
+        referrals = ldap_config.get('referrals', False)
+        ldap.set_option(ldap.OPT_REFERRALS, 1 if referrals else 0)
 
         deref = ldap_config.get('deref', ldap.DEREF_ALWAYS)
         if deref == 'never':
@@ -237,8 +243,12 @@ class LDAPConnection(object):
 
         ldap.protocol_version = ldap.VERSION3
 
-        # Check cert if available but do not fail if not.
-        ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_ALLOW)
+        # Verify certificate in LDAPS connections
+        tls_require_cert = ldap_config.get('tls_require_cert', '')
+        if tls_require_cert.lower() == 'never':
+            LOG.debug("Insecure LDAPS connection because of "
+                      "tls_require_cert=='never'")
+            ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
 
         self.connection = ldap.initialize(ldap_server, bytes_mode=False)
 
