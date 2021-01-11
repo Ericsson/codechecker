@@ -163,7 +163,7 @@ def reports_to_html_report_data(reports: List[Report]) -> Dict:
             'events': events,
             'macros': macros,
             'notes': notes,
-            'path': report.main['location']['file'],
+            'path': report.file_path,
             'reportHash': report_hash,
             'checkerName': report.main['check_name']})
 
@@ -225,7 +225,7 @@ def get_suppressed_reports(reports: List[Report]) -> List[str]:
 
     for rep in reports:
         bughash = rep.report_hash
-        source_file = rep.main['location']['file']
+        source_file = rep.file_path
         bug_line = rep.main['location']['line']
         checker_name = rep.main['check_name']
         src_comment_data = []
@@ -1094,7 +1094,7 @@ def handle_diff_results(args):
         file_report_map = defaultdict(list)
         for report in reports:
             if isinstance(report, Report):
-                file_path = report.main['location']['file']
+                file_path = report.file_path
 
                 check_name = report.main['check_name']
                 sev = context.severity_map.get(check_name)

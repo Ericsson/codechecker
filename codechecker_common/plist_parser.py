@@ -32,11 +32,10 @@ With the newer clang releases more information is available in the plist files.
 
 """
 import importlib
-import os
 import sys
 import traceback
 import plistlib
-from typing import List, Dict, Union, Tuple
+from typing import List, Dict, Tuple
 from xml.parsers.expat import ExpatError
 
 from codechecker_common.logger import get_logger
@@ -142,13 +141,13 @@ def get_checker_name(diagnostic, path=""):
     """
     checker_name = diagnostic.get('check_name')
     if not checker_name:
-        LOG.warning("Check name wasn't found in the plist file '%s'. ", path)
+        LOG.warning("Check name wasn't found in the plist file '%s'. It is "
+                    "available since 'Clang v3.7'.", path)
         checker_name = "unknown"
     return checker_name
 
 
 def parse_plist_file(path: str,
-                     source_root: Union[str, None] = None,
                      allow_plist_update=True) \
                              -> Tuple[Dict[int, str], List[Report]]:
     """
@@ -191,15 +190,11 @@ def parse_plist_file(path: str,
             # by older clang version (before 3.7).
             main_section['check_name'] = get_checker_name(diag, path)
 
-            # We need to extend information for plist files generated
-            # by older clang version (before 3.8).
-            file_path = mentioned_files[diag['location']['file']]
-            if source_root:
-                file_path = os.path.join(source_root, file_path.lstrip('/'))
-            main_section['location']['file'] = file_path
             report_hash = diag.get('issue_hash_content_of_line_in_context')
 
             if not report_hash:
+                file_path = mentioned_files[diag['location']['file']]
+
                 # Generate hash value if it is missing from the report.
                 report_hash = get_report_hash(diag, file_path,
                                               HashType.PATH_SENSITIVE)
@@ -223,7 +218,8 @@ def parse_plist_file(path: str,
             # If the diagnostic section has changed we update the plist file.
             # This way the client will always send a plist file where the
             # report hash field is filled.
-            plistlib.dump(plist, path)
+            with open(path, 'wb') as plist_file:
+                plistlib.dump(plist, plist_file)
     except IndexError as iex:
         LOG.warning('Indexing error during processing plist file %s', path)
         LOG.warning(type(iex))

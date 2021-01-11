@@ -33,10 +33,14 @@ class ReportTypeConverterTest(unittest.TestCase):
             "description": description,
             "check_name": check_name,
             "issue_hash_content_of_line_in_context": report_hash,
-            "location": {"line": line, "col": column, "file": source_file},
+            "location": {"line": line, "col": column, "file": 0},
         }
 
-        rep = report.Report(main=main, bugpath=[], files={}, metadata=None)
+        rep = report.Report(main=main,
+                            bugpath=[],
+                            files={0: source_file},
+                            metadata=None)
+
         severity_map = {check_name: "LOW"}
         rep_data = report_type_converter.report_to_reportData(rep, severity_map)
 
