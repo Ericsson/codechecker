@@ -14,6 +14,8 @@ import json
 import os
 import tempfile
 
+from pathlib import Path
+
 from functional import PKG_ROOT
 from functional import REPO_ROOT
 
@@ -77,3 +79,28 @@ def export_test_cfg(workspace, test_cfg):
 
 def setup_test_proj_cfg(workspace):
     return import_test_cfg(workspace)['test_project']
+
+
+def adjust_buildlog(buildlog_file: str, source_dir, target_dir):
+    """ Reads the buildlog found at `source_dir` / `buildlog_file`. Overwrites
+    the directory entries with `source_dir`. Finally the modified file is
+    written with the same filename inside `target_dir`.
+
+    Parameters
+    ----------
+    buildlog_file: str
+        the filename name of the buildlog
+    source_dir: str or os.PathLike
+        the directory where the file with name `buildlog_file` is
+    target_dir: str or os.PathLike
+        the directory where the adjusted contents are written
+    """
+    file_contents = Path(source_dir, buildlog_file).read_text(
+        encoding="utf-8", errors="ignore")
+    json_representation = json.loads(file_contents)
+
+    for command in json_representation:
+        command['directory'] = str(source_dir)
+
+    Path(target_dir, buildlog_file).write_text(
+        json.dumps(json_representation), encoding="utf-8", errors="ignore")
