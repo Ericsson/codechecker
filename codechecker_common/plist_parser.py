@@ -73,8 +73,18 @@ class LXMLPlistParser(plistlib._PlistParser):
     The benefit of this library that this is faster than other libraries so it
     will improve the performance of the plist parsing.
     """
-    def __init__(self, use_builtin_types=True, dict_type=dict):
-        plistlib._PlistParser.__init__(self, use_builtin_types, dict_type)
+    def __init__(self, dict_type=dict):
+        # Since Python 3.9 plistlib._PlistParser.__init__ has changed:
+        # https://github.com/python/cpython/commit/ce81a925ef
+        # To be backward compatible with old interpreters we need to call this
+        # function based on conditions:
+        params = plistlib._PlistParser.__init__.__code__.co_varnames
+        if len(params) == 3 and "use_builtin_types" in params:
+            # Before 3.9 interpreter.
+            plistlib._PlistParser.__init__(self, True, dict_type)
+        else:
+            plistlib._PlistParser.__init__(  # pylint: disable=E1120
+                self, dict_type)
 
         self.event_handler = LXMLPlistEventHandler()
         self.event_handler.start = self.handle_begin_element
