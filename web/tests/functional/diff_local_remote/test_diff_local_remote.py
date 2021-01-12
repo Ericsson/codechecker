@@ -52,9 +52,13 @@ class LocalRemote(unittest.TestCase):
 
         self._local_test_project = \
             self._test_cfg['test_project']['project_path_local']
+        self._remote_test_project = \
+            self._test_cfg['test_project']['project_path_remote']
 
         self._local_reports = os.path.join(self._local_test_project,
                                            'reports')
+        self._remote_reports = os.path.join(self._remote_test_project,
+                                            'reports')
 
         self._url = env.parts_to_url(self._test_cfg['codechecker_cfg'])
 
@@ -599,3 +603,15 @@ class LocalRemote(unittest.TestCase):
         self.assertTrue(os.path.exists(index_html))
 
         shutil.rmtree(export_dir)
+
+    def test_diff_remote_local_resolved_same(self):
+        """ Test for resolved reports on same list remotely and locally. """
+        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
+                    "--resolved",
+                    "--url", self._url,
+                    "-b", self._run_names[0],
+                    "-n", self._remote_reports,
+                    "-o", "json"]
+
+        out = self.run_cmd(diff_cmd)
+        self.assertEqual(json.loads(out), [])
