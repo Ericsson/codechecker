@@ -83,7 +83,7 @@ export default {
       this.statistics =
         await getCheckerStatistics(runIds, reportFilter, cmpData);
 
-      await this.fetchDifference("component");
+      await this.fetchDifference("checker");
 
       this.loading = false;
     }
