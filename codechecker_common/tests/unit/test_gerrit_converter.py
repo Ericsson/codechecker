@@ -27,7 +27,7 @@ class TestReportToGerrit(unittest.TestCase):
         """Conversion without directory path just the source filename."""
 
         main = {
-            "location": {"file": "main.cpp", "line": 10, "col": 10},
+            "location": {"file": 0, "line": 10, "col": 10},
             "description": "some description",
             "check_name": "my_checker",
             "issue_hash_content_of_line_in_context": "dummy_hash",
@@ -67,7 +67,7 @@ class TestReportToGerrit(unittest.TestCase):
 
         main = {
             "location": {
-                "file": "/home/src/lib/main.cpp",
+                "file": 0,
                 "line": 10,
                 "col": 10,
             },
@@ -78,7 +78,7 @@ class TestReportToGerrit(unittest.TestCase):
             "macro_expansions": [],
         }
         bugpath = {}
-        files = {0: "main.cpp"}
+        files = {0: "/home/src/lib/main.cpp"}
         metadata = {}
 
         report_to_convert = Report(main, bugpath, files, metadata)
@@ -110,7 +110,7 @@ class TestReportToGerrit(unittest.TestCase):
 
         main = {
             "location": {
-                "file": "/home/src/lib/main.cpp",
+                "file": 0,
                 "line": 10,
                 "col": 10,
             },
@@ -156,7 +156,7 @@ class TestReportToGerrit(unittest.TestCase):
 
         main = {
             "location": {
-                "file": "/home/src/lib/main.cpp",
+                "file": 0,
                 "line": 10,
                 "col": 10,
             },
@@ -167,7 +167,7 @@ class TestReportToGerrit(unittest.TestCase):
             "macro_expansions": [],
         }
         bugpath = {}
-        files = {0: "main.cpp"}
+        files = {0: "/home/src/lib/main.cpp"}
         metadata = {}
 
         report_to_convert = Report(main, bugpath, files, metadata)
@@ -213,7 +213,7 @@ class TestReportToGerrit(unittest.TestCase):
 
         main = {
             "location": {
-                "file": "/home/src/lib/main.cpp",
+                "file": 0,
                 "line": 10,
                 "col": 10,
             },
@@ -231,7 +231,7 @@ class TestReportToGerrit(unittest.TestCase):
 
         main = {
             "location": {
-                "file": "/home/src/lib/lib.cpp",
+                "file": 0,
                 "line": 10,
                 "col": 10,
             },
@@ -248,7 +248,7 @@ class TestReportToGerrit(unittest.TestCase):
 
         main = {
             "location": {
-                "file": "/home/src/lib/other.cpp",
+                "file": 0,
                 "line": 10,
                 "col": 10,
             },
