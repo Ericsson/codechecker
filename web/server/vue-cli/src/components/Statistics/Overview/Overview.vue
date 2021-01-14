@@ -2,48 +2,24 @@
   <v-container fluid>
     <reports
       :bus="bus"
-      :get-statistics-filters="getStatisticsFilters"
+      :run-ids="runIds"
+      :report-filter="reportFilter"
     />
 
     <v-row>
       <v-col>
         <single-line-widget
-          icon="mdi-bell-ring"
-          color="red"
-          label="Outstanding reports"
-          help-message="Number of reports which are not fixed yet."
-          :bus="bus"
-          :get-value="getNumberOfOutstandingReports"
-        >
-          <template #value="{ value }">
-            <router-link
-              :to="{
-                name: 'reports',
-                query: {
-                  ...$router.currentRoute.query,
-                  ...{
-                    'open-reports-date': dateTimeToStr(new Date),
-                  }
-                }
-              }"
-              class="link"
-              color="inherit"
-            >
-              {{ value }}
-            </router-link>
-          </template>
-        </single-line-widget>
-      </v-col>
-
-      <v-col>
-        <single-line-widget
           icon="mdi-close"
           color="red"
           label="Number of failed files"
-          help-message="Number of failed files in the current product."
           :bus="bus"
           :get-value="getNumberOfFailedFiles"
         >
+          <template #help>
+            Number of failed files in the current product.<br><br>
+            Only the Run filter will affect this value.
+          </template>
+
           <template #value="{ value }">
             <failed-files-dialog>
               <template #default="{ on }">
@@ -61,17 +37,42 @@
           icon="mdi-card-account-details"
           color="grey"
           label="Number of checkers reporting faults"
-          help-message="Number of checkers which found some report in the
-            current product."
           :bus="bus"
           :get-value="getNumberOfActiveCheckers"
-        />
+        >
+          <template #help>
+            Number of checkers which found some report in the current
+            product.<br><br>
+
+            Every filter will affect this value.
+          </template>
+        </single-line-widget>
       </v-col>
     </v-row>
 
     <v-row class="my-4">
       <v-col>
         <v-card flat>
+          <v-card-title class="justify-center">
+            Number of outstanding reports
+
+            <tooltip-help-icon>
+              Shows the number of reports which were active in the last
+              <i>x</i> months/days.<br><br>
+
+              Reports marked as <b>False positive</b> or <b>Intentional</b>
+              will be <i>excluded</i> from these numbers.<br><br>
+
+              The following filters don't affect these values:
+              <ul>
+                <li><b>Outstanding reports on a given date</b> filter.</li>
+                <li>All filters in the <b>COMPARE TO</b> section.</li>
+                <li><b>Latest Review Status</b> filter.</li>
+                <li><b>Latest Detection Status</b> filter.</li>
+              </ul>
+            </tooltip-help-icon>
+          </v-card-title>
+
           <div class="last-month-selector">
             <v-text-field
               v-model="lastMonth"
@@ -116,9 +117,10 @@
 
 <script>
 import { ccService, handleThriftError } from "@cc-api";
-import { ReportFilter } from "@cc/report-server-types";
 import { DateMixin } from "@/mixins";
 import { BaseStatistics } from "@/components/Statistics";
+import TooltipHelpIcon from "@/components/TooltipHelpIcon";
+
 import Reports from "./Reports";
 import { ComponentSeverityStatistics } from "./ComponentSeverityStatistics";
 import FailedFilesDialog from "./FailedFilesDialog";
@@ -132,7 +134,8 @@ export default {
     FailedFilesDialog,
     OutstandingReportsChart,
     Reports,
-    SingleLineWidget
+    SingleLineWidget,
+    TooltipHelpIcon
   },
   mixins: [ BaseStatistics, DateMixin ],
   data() {
@@ -148,15 +151,6 @@ export default {
             resolve(res.toNumber());
           }));
       });
-    },
-
-    getNumberOfOutstandingReports() {
-      const { runIds, reportFilter, cmpData } = this.getStatisticsFilters();
-
-      const repFilter = new ReportFilter(reportFilter);
-      repFilter.openReportsDate = this.getUnixTime(new Date);
-
-      return this.getNumberOfReports(runIds, repFilter, cmpData);
     },
 
     getNumberOfFailedFiles() {

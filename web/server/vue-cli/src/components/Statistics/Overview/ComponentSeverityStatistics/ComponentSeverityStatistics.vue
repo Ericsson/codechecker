@@ -2,74 +2,108 @@
   <v-container fluid>
     <v-row>
       <v-col>
-        <component-severity-statistics-table
-          :items="statistics"
-          :loading="loading"
-          :filters="statisticsFilters"
-          :total-columns="totalColumns"
-        >
-          <template
-            v-for="item in [
-              ['critical', Severity.CRITICAL],
-              ['high', Severity.HIGH],
-              ['medium', Severity.MEDIUM],
-              ['low', Severity.LOW],
-              ['style', Severity.STYLE],
-              ['unspecified', Severity.UNSPECIFIED],
-            ]"
-            v-slot:[`header.${item[0]}.count`]="{ header }"
-          >
-            <span :key="item[0]">
-              <severity-icon :status="item[1]" :size="16" />
-              {{ header.text }}
-            </span>
-          </template>
+        <v-card flat>
+          <v-card-title class="justify-center">
+            Component statistics
 
-          <template
-            v-for="i in [
-              ['critical', Severity.CRITICAL],
-              ['high', Severity.HIGH],
-              ['medium', Severity.MEDIUM],
-              ['low', Severity.LOW],
-              ['style', Severity.STYLE],
-              ['unspecified', Severity.UNSPECIFIED],
-            ]"
-            v-slot:[`item.${i[0]}.count`]="{ item }"
-          >
-            <span :key="i[0]">
-              <router-link
-                v-if="item[i[0]].count"
-                :to="{ name: 'reports', query: {
-                  ...$router.currentRoute.query,
-                  ...(item.$queryParams || {}),
-                  'source-component': item.component,
-                  'severity': severityFromCodeToString(i[1])
-                }}"
-              >
-                {{ item[i[0]].count }}
-              </router-link>
+            <tooltip-help-icon>
+              This table shows component statistics per severity
+              levels.<br><br>
 
-              <report-diff-count
-                :num-of-new-reports="item[i[0]].new"
-                :num-of-resolved-reports="item[i[0]].resolved"
+              Each row can be expanded which will show a checker statistics
+              for the actual component.<br><br>
+
+              The following filters don't affect these values:
+              <ul>
+                <li><b>Severity</b> filter.</li>
+                <li><b>Source component</b> filter.</li>
+              </ul>
+            </tooltip-help-icon>
+          </v-card-title>
+          <component-severity-statistics-table
+            :items="statistics"
+            :loading="loading"
+            :filters="statisticsFilters"
+            :total-columns="totalColumns"
+          >
+            <template
+              v-for="item in [
+                ['critical', Severity.CRITICAL],
+                ['high', Severity.HIGH],
+                ['medium', Severity.MEDIUM],
+                ['low', Severity.LOW],
+                ['style', Severity.STYLE],
+                ['unspecified', Severity.UNSPECIFIED],
+              ]"
+              v-slot:[`header.${item[0]}.count`]="{ header }"
+            >
+              <span :key="item[0]">
+                <severity-icon :status="item[1]" :size="16" />
+                {{ header.text }}
+              </span>
+            </template>
+
+            <template
+              v-for="i in [
+                ['critical', Severity.CRITICAL],
+                ['high', Severity.HIGH],
+                ['medium', Severity.MEDIUM],
+                ['low', Severity.LOW],
+                ['style', Severity.STYLE],
+                ['unspecified', Severity.UNSPECIFIED],
+              ]"
+              v-slot:[`item.${i[0]}.count`]="{ item }"
+            >
+              <span :key="i[0]">
+                <router-link
+                  v-if="item[i[0]].count"
+                  :to="{ name: 'reports', query: {
+                    ...$router.currentRoute.query,
+                    ...(item.$queryParams || {}),
+                    'source-component': item.component,
+                    'severity': severityFromCodeToString(i[1])
+                  }}"
+                >
+                  {{ item[i[0]].count }}
+                </router-link>
+
+                <report-diff-count
+                  :num-of-new-reports="item[i[0]].new"
+                  :num-of-resolved-reports="item[i[0]].resolved"
+                />
+              </span>
+            </template>
+
+            <template v-slot:header.reports.count="{ header }">
+              <detection-status-icon
+                :status="DetectionStatus.UNRESOLVED"
+                :size="16"
+                left
               />
-            </span>
-          </template>
-
-          <template v-slot:header.reports.count="{ header }">
-            <detection-status-icon
-              :status="DetectionStatus.UNRESOLVED"
-              :size="16"
-              left
-            />
-            {{ header.text }}
-          </template>
-        </component-severity-statistics-table>
+              {{ header.text }}
+            </template>
+          </component-severity-statistics-table>
+        </v-card>
       </v-col>
     </v-row>
     <v-row>
       <v-col>
         <v-card flat>
+          <v-card-title class="justify-center">
+            Report severities
+
+            <tooltip-help-icon>
+              This pie chart shows the checker severity distribution in the
+              product.<br><br>
+
+              The following filters don't affect these values:
+              <ul>
+                <li><b>Severity</b> filter.</li>
+                <li><b>Source component</b> filter.</li>
+              </ul>
+            </tooltip-help-icon>
+          </v-card-title>
+
           <v-row justify="center">
             <v-overlay
               :value="loading"
@@ -102,6 +136,7 @@ import {
 } from "@cc/report-server-types";
 import { SeverityMixin } from "@/mixins";
 import { DetectionStatusIcon, SeverityIcon } from "@/components/Icons";
+import TooltipHelpIcon from "@/components/TooltipHelpIcon";
 import {
   ComponentStatistics,
   ReportDiffCount,
@@ -120,7 +155,8 @@ export default {
     ComponentSeverityStatisticsTable,
     DetectionStatusIcon,
     ReportDiffCount,
-    SeverityIcon
+    SeverityIcon,
+    TooltipHelpIcon
   },
   mixins: [ ComponentStatistics, SeverityMixin ],
   data() {

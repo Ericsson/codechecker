@@ -13,6 +13,35 @@
               {{ reportType.icon }}
             </v-icon>
             {{ reportType.label }}
+
+            <tooltip-help-icon color="white">
+              <div v-if="reportType.id === 'new'">
+                Shows the number of reports which were active in the last
+                <i>x</i> days.<br><br>
+
+                Reports marked as <b>False positive</b> or <b>Intentional</b>
+                will be <i>excluded</i> from these numbers.<br><br>
+              </div>
+              <div v-else>
+                Shows the number of reports which were solved in the last
+                <i>x</i> days.<br><br>
+
+                For now reports marked as <b>False positive</b> or
+                <b>Intentional</b> are not considered to be resolved by these
+                numbers. A report is marked as resolved only when it disspeared
+                from a storage.<br><br>
+              </div>
+
+              <div>
+                The following filters don't affect these values:
+                <ul>
+                  <li><b>Outstanding reports on a given date</b> filter.</li>
+                  <li>All filters in the <b>COMPARE TO</b> section.</li>
+                  <li><b>Latest Review Status</b> filter.</li>
+                  <li><b>Latest Detection Status</b> filter.</li>
+                </ul>
+              </div>
+            </tooltip-help-icon>
           </v-card-title>
           <v-row>
             <v-col
@@ -78,16 +107,21 @@ import {
   DateInterval,
   DiffType,
   ReportDate,
-  ReportFilter
+  ReportFilter,
+  ReviewStatus
 } from "@cc/report-server-types";
 import { DateMixin } from "@/mixins";
 
+import TooltipHelpIcon from "@/components/TooltipHelpIcon.vue";
+
 export default {
   name: "Reports",
+  components: { TooltipHelpIcon },
   mixins: [ DateMixin ],
   props: {
     bus: { type: Object, required: true },
-    getStatisticsFilters: { type: Function, required: true }
+    runIds: { type: Array, required: true },
+    reportFilter: { type: Object, required: true },
   },
   data() {
     const now = endOfToday();
@@ -105,7 +139,7 @@ export default {
       reportTypes: [
         {
           id: "new",
-          label: "New reports",
+          label: "Number of outstanding reports",
           color: "red",
           icon: "mdi-arrow-up",
           getValue: this.getNewReports,
@@ -119,7 +153,11 @@ export default {
           getValue: this.getResolvedReports,
           cols: cols.map(c => ({ ...c, value: null, loading: null }))
         },
-      ]
+      ],
+      activeReviewStatuses:
+        [ ReviewStatus.UNREVIEWED, ReviewStatus.CONFIRMED ],
+      resolvedReviewStatuses:
+        [ ReviewStatus.FALSE_POSITIVE, ReviewStatus.INTENTIONAL ],
     };
   },
   activated() {
@@ -142,10 +180,9 @@ export default {
     },
 
     getNewReports(column, date) {
-      const { runIds, reportFilter } = this.getStatisticsFilters();
-
-      const rFilter = new ReportFilter(reportFilter);
+      const rFilter = new ReportFilter(this.reportFilter);
       rFilter.detectionStatus = null;
+      rFilter.reviewStatus = this.activeReviewStatuses;
       rFilter.openReportsDate = this.getUnixTime(date[0]);
 
       const cmpData = new CompareData({
@@ -153,15 +190,13 @@ export default {
         diffType: DiffType.NEW
       });
 
-      this.getReportCount(column, runIds, rFilter, cmpData);
+      this.getReportCount(column, this.runIds, rFilter, cmpData);
     },
 
     getResolvedReports(column, date) {
-      const cmpData = null;
-      const { runIds, reportFilter } = this.getStatisticsFilters();
-
-      const rFilter = new ReportFilter(reportFilter);
+      const rFilter = new ReportFilter(this.reportFilter);
       rFilter.detectionStatus = null;
+      rFilter.reviewStatus = this.activeReviewStatuses;
       rFilter.date = new ReportDate({
         fixed: new DateInterval({
           after: this.getUnixTime(date[0]),
@@ -169,7 +204,8 @@ export default {
         })
       });
 
-      this.getReportCount(column, runIds, rFilter, cmpData);
+      const cmpData = null;
+      this.getReportCount(column, this.runIds, rFilter, cmpData);
     },
   }
 };

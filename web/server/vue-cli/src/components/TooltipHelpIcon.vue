@@ -7,7 +7,7 @@
     <template v-slot:activator="{ on }">
       <slot :on="on" name="activator">
         <v-icon
-          color="accent"
+          :color="color"
           class="ml-1"
           small
           v-on="on"
@@ -22,6 +22,9 @@
 
 <script>
 export default {
-  name: "TooltipHelpIcon"
+  name: "TooltipHelpIcon",
+  props: {
+    color: { type: String, default: "accent" }
+  }
 };
 </script>

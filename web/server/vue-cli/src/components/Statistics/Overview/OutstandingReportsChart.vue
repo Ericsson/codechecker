@@ -5,7 +5,7 @@ import { Line, mixins } from "vue-chartjs";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 
 import { ccService, handleThriftError } from "@cc-api";
-import { ReportFilter, Severity } from "@cc/report-server-types";
+import { ReportFilter, ReviewStatus, Severity } from "@cc/report-server-types";
 import { DateMixin, SeverityMixin } from "@/mixins";
 
 const { reactiveData } = mixins;
@@ -28,10 +28,6 @@ export default {
         },
         responsive: true,
         maintainAspectRatio: false,
-        title: {
-          display: true,
-          text: "Number of outstanding reports"
-        },
         tooltips: {
           mode: "index",
           callbacks: {
@@ -191,10 +187,14 @@ export default {
 
     fetchOutstandingReports(date) {
       const { runIds, reportFilter } = this.getStatisticsFilters();
-      const cmpData = null;
 
       const rFilter = new ReportFilter(reportFilter);
       rFilter.openReportsDate = this.getUnixTime(date);
+      rFilter.detectionStatus = null;
+      rFilter.reviewStatus =
+        [ ReviewStatus.UNREVIEWED, ReviewStatus.CONFIRMED ];
+
+      const cmpData = null;
 
       return new Promise(resolve => {
         ccService.getClient().getSeverityCounts(runIds, rFilter, cmpData,
