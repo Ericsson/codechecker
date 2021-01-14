@@ -521,6 +521,46 @@ class DiffRemote(unittest.TestCase):
         count = len(re.findall(r'\[core\.CallAndMessage\]', out))
         self.assertEqual(count, 4)
 
+    def test_diff_to_tag(self):
+        """Count remote diff compared to tag."""
+        report_dir = os.path.join(
+            self._testproject_data['project_path_update'],
+            'reports')
+        run_name = self._test_runs[2].name
+
+        def diff_cmd(base_name, diff_type):
+            return [
+                self._codechecker_cmd, 'cmd', 'diff',
+                '--url', self._url,
+                '-o', 'json',
+                '-b', base_name,
+                '-n', report_dir,
+                diff_type]
+
+        out = subprocess.check_output(
+            diff_cmd(run_name + ':t1', '--new'))
+        self.assertEqual(len(json.loads(out)), 5)
+
+        out = subprocess.check_output(diff_cmd(
+            run_name + ':t2', '--new'))
+        self.assertEqual(len(json.loads(out)), 0)
+
+        out = subprocess.check_output(diff_cmd(
+            run_name + ':t1', '--unresolved'))
+        self.assertEqual(len(json.loads(out)), 26)
+
+        out = subprocess.check_output(diff_cmd(
+            run_name + ':t2', '--unresolved'))
+        self.assertEqual(len(json.loads(out)), 31)
+
+        out = subprocess.check_output(diff_cmd(
+            run_name + ':t1', '--resolved'))
+        self.assertEqual(len(json.loads(out)), 0)
+
+        out = subprocess.check_output(diff_cmd(
+            run_name + ':t2', '--resolved'))
+        self.assertEqual(len(json.loads(out)), 0)
+
     def test_max_compound_select(self):
         """Test the maximum number of compound select query."""
         base_run_id = self._test_runs[0].runId
@@ -529,6 +569,7 @@ class DiffRemote(unittest.TestCase):
         diff_res = self._cc_client.getDiffResultsHash([base_run_id],
                                                       report_hashes,
                                                       DiffType.NEW,
+                                                      None,
                                                       None)
         self.assertEqual(len(diff_res), len(report_hashes))
 

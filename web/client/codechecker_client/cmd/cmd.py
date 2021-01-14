@@ -496,7 +496,10 @@ def __register_diff(parser):
                              "can contain * quantifiers which matches any "
                              "number of characters (zero or more). So if you "
                              "have run-a-1, run-a-2 and run-b-1 then "
-                             "\"run-a*\" selects the first two.")
+                             "\"run-a*\" selects the first two. In case of "
+                             "run names tag labels can also be used separated "
+                             "by a colon (:) character: "
+                             "\"run_name:tag_name\".")
 
     parser.add_argument('-n', '--newname',
                         type=str,
@@ -513,7 +516,10 @@ def __register_diff(parser):
                              "contain * quantifiers which matches any number "
                              "of characters (zero or more). So if you have "
                              "run-a-1, run-a-2 and run-b-1 then "
-                             "\"run-a*\" selects the first two.")
+                             "\"run-a*\" selects the first two. In case of "
+                             "run names tag labels can also be used separated "
+                             "by a colon (:) character: "
+                             "\"run_name:tag_name\".")
 
     __add_filtering_arguments(parser, DEFAULT_FILTER_VALUES, True)
 

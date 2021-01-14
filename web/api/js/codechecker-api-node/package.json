@@ -1,6 +1,6 @@
 {
   "name": "codechecker-api",
-  "version": "6.37.0",
+  "version": "6.38.0-dev1",
   "description": "Generated node.js compatible API stubs for CodeChecker server.",
   "main": "lib",
   "homepage": "https://github.com/Ericsson/codechecker",

@@ -11,8 +11,8 @@ nose==1.3.7
 mockldap==0.3.0
 mkdocs==1.0.4
 
-codechecker_api==6.37.0
-codechecker_api_shared==6.37.0
+codechecker_api==6.38.0-dev1
+codechecker_api_shared==6.38.0-dev1
 
 # publish packages to pypi
 twine
