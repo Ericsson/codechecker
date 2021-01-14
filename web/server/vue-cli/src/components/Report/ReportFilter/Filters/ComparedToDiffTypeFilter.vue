@@ -7,6 +7,7 @@
     :selected-items="selectedItems"
     :loading="loading"
     :multiple="false"
+    :panel="panel"
     @clear="clear(true)"
     @input="setSelectedItems"
   >

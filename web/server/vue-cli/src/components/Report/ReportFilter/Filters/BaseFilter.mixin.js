@@ -12,7 +12,8 @@ export default {
 
   data() {
     return {
-      defaultLimit: 10
+      defaultLimit: 10,
+      panel: false
     };
   },
 
@@ -115,7 +116,10 @@ export default {
 
     afterInit() {
       this.registerWatchers();
+      this.initPanel();
     },
+
+    initPanel() {},
 
     updateReportFilter() {},
 
