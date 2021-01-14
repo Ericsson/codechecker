@@ -13,8 +13,8 @@
           <div class="subtitle grey--text text-uppercase">
             {{ label }}
 
-            <tooltip-help-icon v-if="helpMessage">
-              {{ helpMessage }}
+            <tooltip-help-icon>
+              <slot name="help" />
             </tooltip-help-icon>
           </div>
           <div class="text-h3 font-weight-bold">

@@ -30,10 +30,6 @@ export default {
           display: true,
           position: "bottom"
         },
-        title: {
-          display: true,
-          text: "Report severities"
-        },
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
