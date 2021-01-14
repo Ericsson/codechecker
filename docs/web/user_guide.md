@@ -37,6 +37,8 @@ Table of Contents
             * [Import suppressions between server and suppress file](#import-suppressions)
         * [`products` (Manage product configuration of a server)](#cmd-product)
         * [`login` (Authenticate to the server)](#cmd-login)
+        * [`export` (Export comments and review statuses from CodeChecker)](#cmd-export)
+        * [`import` (Import comments and review statuses into CodeChecker)](#cmd-import)
 * [Debugging CodeChecker](#debug)
 
 # CodeChecker <a name="codechecker"></a>
@@ -524,7 +526,7 @@ viewer server on its port is available in the `cmd` tool.
 
 ```
 usage: CodeChecker cmd [-h]
-                       {runs,history,results,diff,sum,token,del,update,suppress,products,components,login}
+                       {runs,history,results,diff,sum,token,del,update,suppress,products,components,login,export,import}
                        ...
 
 The command-line client is used to connect to a running 'CodeChecker server'
@@ -536,7 +538,7 @@ optional arguments:
   -h, --help            show this help message and exit
 
 available actions:
-  {runs,history,results,diff,sum,token,del,update,suppress,products,components,login}
+  {runs,history,results,diff,sum,token,del,update,suppress,products,components,login,export,import}
     runs                List the available analysis runs.
     history             Show run history of multiple runs.
     results             List analysis result (finding) summary for a given
@@ -555,6 +557,8 @@ available actions:
                         components managed by a CodeChecker server.
     login               Authenticate into CodeChecker servers that require
                         privileges.
+    export              Export comments and review statues for a given run, or
+                        if no run is provided, data from all runs is exported
 ```
 
 The operations available in `cmd` **always** require a running CodeChecker
@@ -1577,6 +1581,41 @@ not found, the user will be asked, in the command-line, to provide credentials.
 
 ```sh
 CodeChecker parse ./my_plists --suppress generated.suppress --export-source-suppress
+```
+
+### Export comments and review statuses (`export`) <a name="cmd-export"></a>
+
+```sh
+usage: CodeChecker cmd export [-h] [-n RUN_NAME [RUN_NAME ...]]
+                              [--url PRODUCT_URL]
+                              [--verbose {info,debug_analyzer,debug}]
+
+Export data (comments, review statuses) from a running CodeChecker server into
+a json format
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -n RUN_NAME [RUN_NAME ...], --name RUN_NAME [RUN_NAME ...]
+                        Name of the analysis run.
+```
+ For redirecting the output to a json file, use the command:
+ ```sh
+ CodeChecker cmd export -n <run_name_1> <run_name_2> ... 2>/dev/null | python -m json.tool > <file_name>.json
+ ```
+ In the above command multiple runs can be pass as, the `...` indicate any additional runs, if needed to be provided
+
+
+### Import comments and review statuses into Codechecker (`import`) <a name="cmd-import"></a>
+```sh
+usage: CodeChecker cmd import [-h] -i JSON_FILE [--url PRODUCT_URL]
+                              [--verbose {info,debug_analyzer,debug}]
+
+Import the results into CodeChecker server
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i JSON_FILE, --import JSON_FILE
+                        Import findings from the json file into the database.
 ```
 
 # Debugging CodeChecker <a name="debug"></a>
