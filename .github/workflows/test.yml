@@ -98,6 +98,25 @@ jobs:
         working-directory: analyzer
         run: make test_unit test_functional
 
+  common:
+    name: Common libraries
+    runs-on: ubuntu-18.04
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.6'
+
+      - name: Install requirements
+        working-directory: codechecker_common
+        run: |
+          pip install -r requirements_py/dev/requirements.txt
+
+      - name: Run unit tests
+        working-directory: codechecker_common/tests
+        run: make -C unit test_unit
+
   web:
     name: Web
     runs-on: ubuntu-18.04
