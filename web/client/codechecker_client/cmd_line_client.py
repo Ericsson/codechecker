@@ -857,7 +857,8 @@ def handle_diff_results(args):
         suppressed_in_code = get_suppressed_reports(report_dir_results)
 
         diff_type = get_diff_type(args)
-        run_ids, run_names, _ = process_run_args(client, remote_run_names)
+        run_ids, run_names, tag_ids = \
+            process_run_args(client, remote_run_names)
         local_report_hashes = set([r.report_hash for r in report_dir_results])
 
         if diff_type == ttypes.DiffType.NEW:
@@ -866,7 +867,8 @@ def handle_diff_results(args):
                 client.getDiffResultsHash(run_ids,
                                           local_report_hashes,
                                           ttypes.DiffType.RESOLVED,
-                                          None)
+                                          None,
+                                          tag_ids)
 
             results = get_diff_base_results(client, args, run_ids,
                                             remote_hashes,
@@ -880,7 +882,8 @@ def handle_diff_results(args):
                 client.getDiffResultsHash(run_ids,
                                           local_report_hashes,
                                           ttypes.DiffType.UNRESOLVED,
-                                          None)
+                                          None,
+                                          tag_ids)
             for result in report_dir_results:
                 rep_h = result.report_hash
                 if rep_h in remote_hashes and rep_h not in suppressed_in_code:
@@ -892,7 +895,8 @@ def handle_diff_results(args):
                 client.getDiffResultsHash(run_ids,
                                           local_report_hashes,
                                           ttypes.DiffType.UNRESOLVED,
-                                          None)
+                                          None,
+                                          tag_ids)
             for result in report_dir_results:
                 if result.report_hash not in remote_hashes:
                     filtered_reports.append(result)
@@ -909,13 +913,15 @@ def handle_diff_results(args):
         suppressed_in_code = get_suppressed_reports(report_dir_results)
 
         diff_type = get_diff_type(args)
-        run_ids, run_names, _ = process_run_args(client, remote_run_names)
+        run_ids, run_names, tag_ids = \
+            process_run_args(client, remote_run_names)
         local_report_hashes = set([r.report_hash for r in report_dir_results])
 
         remote_hashes = client.getDiffResultsHash(run_ids,
                                                   local_report_hashes,
                                                   diff_type,
-                                                  None)
+                                                  None,
+                                                  tag_ids)
 
         if not remote_hashes:
             return filtered_reports, run_names

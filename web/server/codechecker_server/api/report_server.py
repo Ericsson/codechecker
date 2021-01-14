@@ -356,6 +356,24 @@ def process_source_component_filter(session, component_names):
     return or_(*OR)
 
 
+def filter_open_reports_in_tags(results, run_ids, tag_ids):
+    """
+    Adding filters on "results" query which filter on open reports in
+    given runs and tags.
+    """
+
+    if run_ids:
+        results = results.filter(Report.run_id.in_(run_ids))
+
+    if tag_ids:
+        results = results.outerjoin(
+            RunHistory, RunHistory.run_id == Report.run_id) \
+            .filter(RunHistory.id.in_(tag_ids)) \
+            .filter(get_open_reports_date_filter_query())
+
+    return results
+
+
 def get_source_component_file_query(session, component_name):
     """ Get filter query for a single source component. """
     skip, include = get_component_values(session, component_name)
@@ -1239,7 +1257,7 @@ class ThriftRequestHandler(object):
     @exc_to_thrift_reqfail
     @timeit
     def getDiffResultsHash(self, run_ids, report_hashes, diff_type,
-                           skip_detection_statuses):
+                           skip_detection_statuses, tag_ids):
         self.__require_access()
 
         if not skip_detection_statuses:
@@ -1264,9 +1282,8 @@ class ThriftRequestHandler(object):
                     .outerjoin(File, Report.file_id == File.id) \
                     .filter(Report.detection_status.notin_(skip_statuses_str))
 
-                if run_ids:
-                    base_hashes = \
-                        base_hashes.filter(Report.run_id.in_(run_ids))
+                base_hashes = \
+                    filter_open_reports_in_tags(base_hashes, run_ids, tag_ids)
 
                 if self.__product.driver_name == 'postgresql':
                     new_hashes = select([func.unnest(report_hashes)
@@ -1296,8 +1313,8 @@ class ThriftRequestHandler(object):
                 results = session.query(Report.bug_id) \
                     .filter(Report.bug_id.notin_(report_hashes))
 
-                if run_ids:
-                    results = results.filter(Report.run_id.in_(run_ids))
+                results = \
+                    filter_open_reports_in_tags(results, run_ids, tag_ids)
 
                 return [res[0] for res in results]
 
@@ -1306,8 +1323,8 @@ class ThriftRequestHandler(object):
                     .filter(Report.bug_id.in_(report_hashes)) \
                     .filter(Report.detection_status.notin_(skip_statuses_str))
 
-                if run_ids:
-                    results = results.filter(Report.run_id.in_(run_ids))
+                results = \
+                    filter_open_reports_in_tags(results, run_ids, tag_ids)
 
                 return [res[0] for res in results]
 
