@@ -8,6 +8,7 @@
     :search="search"
     :loading="loading"
     :apply="apply"
+    :panel="panel"
     @cancel="cancelRunSelection"
     @select="prevSelectedRuns = $event"
     @clear="clear(true)"

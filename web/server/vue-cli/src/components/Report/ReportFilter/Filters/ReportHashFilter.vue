@@ -1,6 +1,7 @@
 <template>
   <filter-toolbar
     title="Report hash filter"
+    :panel="panel"
     @clear="clear(true)"
   >
     <template v-slot:append-toolbar-title>
@@ -81,6 +82,10 @@ export default {
 
         resolve();
       });
+    },
+
+    initPanel() {
+      this.panel = this.reportHash !== null;
     },
 
     clear(updateUrl) {

@@ -2,6 +2,7 @@
   <filter-toolbar
     :id="id"
     title="Outstanding reports on a given date"
+    :panel="panel"
     @clear="clear(true)"
   >
     <template v-slot:append-toolbar-title>
@@ -101,6 +102,10 @@ export default {
 
         this.setDateTime(dateTime, false);
       }
+    },
+
+    initPanel() {
+      this.panel = this.date !== null;
     },
 
     clear(updateUrl) {

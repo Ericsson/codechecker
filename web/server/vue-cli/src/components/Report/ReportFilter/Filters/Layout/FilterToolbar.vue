@@ -57,6 +57,12 @@ export default {
     };
   },
 
+  watch: {
+    panel() {
+      this.value = this.panel ? 0 : null;
+    }
+  },
+
   methods: {
     clear() {
       this.$emit("clear");

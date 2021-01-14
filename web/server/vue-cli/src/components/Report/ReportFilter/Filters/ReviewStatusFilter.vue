@@ -6,6 +6,7 @@
     :fetch-items="fetchItems"
     :loading="loading"
     :selected-items="selectedItems"
+    :panel="panel"
     @clear="clear(true)"
     @input="setSelectedItems"
   >

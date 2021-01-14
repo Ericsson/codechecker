@@ -7,6 +7,7 @@
     :selected-items="selectedItems"
     :search="search"
     :loading="loading"
+    :panel="panel"
     @clear="clear(true)"
     @input="setSelectedItems"
   >

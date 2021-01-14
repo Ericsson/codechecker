@@ -1,6 +1,7 @@
 <template>
   <filter-toolbar
     title="Bug path length"
+    :panel="panel"
     @clear="clear(true)"
   >
     <template v-slot:append-toolbar-title>
@@ -132,6 +133,11 @@ export default {
 
         resolve();
       });
+    },
+
+    initPanel() {
+      this.panel = this.minBugPathLength !== null ||
+        this.maxBugPathLength !== null;
     },
 
     updateReportFilter() {
