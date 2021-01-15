@@ -14,6 +14,7 @@ import os
 import shutil
 import unittest
 
+from subprocess import run
 from typing import IO
 
 from libtest import env
@@ -77,6 +78,16 @@ class TestCtu(unittest.TestCase):
 
         shutil.rmtree(self.report_dir, ignore_errors=True)
         os.chdir(self.__old_pwd)
+
+    @skipUnlessCTUCapable
+    def test_ctu_loading_mode_requires_ctu_mode(self):
+        """ Test ctu-ast-mode option requires ctu mode enabled. """
+        cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
+               '--analyzers', 'clangsa', '--ctu-ast-mode=load-from-pch',
+               self.buildlog]
+
+        self.assertEqual(1,
+                         run(cmd, cwd=self.test_dir, env=self.env).returncode)
 
     @skipUnlessCTUCapable
     def test_ctu_all_ast_dump_based(self):

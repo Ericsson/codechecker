@@ -302,16 +302,16 @@ cross translation unit analysis arguments:
                         If Cross-TU analysis is enabled and fails for some
                         reason, try to re analyze the same translation unit
                         without Cross-TU enabled.
-                         [--ctu-ast-mode {load-from-pch,parse-on-demand}]
   --ctu-ast-mode {load-from-pch,parse-on-demand}
-                        Choose the way ASTs are loaded during CTU analysis.
-                        Mode 'load-from-pch' generates PCH format serialized
-                        ASTs during the 'collect' phase. Mode 'parse-on-
-                        demand' only generates the invocations needed to parse
-                        the ASTs. Mode 'load-from-pch' can use significant
-                        disk-space for the serialized ASTs, while mode 'parse-
-                        on-demand' can incur some runtime CPU overhead in the
-                        second phase of the analysis. (default: parse-on-demand)
+                        Choose the way ASTs are loaded during CTU analysis. Only
+                        available if CTU mode is enabled. Mode 'load-from-pch'
+                        generates PCH format serialized ASTs during the
+                        'collect' phase. Mode 'parse-on-demand' only generates
+                        the invocations needed to parse the ASTs. Mode
+                        'load-from-pch' can use significant disk-space for the
+                        serialized ASTs, while mode 'parse-on-demand' can incur
+                        some runtime CPU overhead in the second phase of the
+                        analysis. (default: parse-on-demand)
 
 checker configuration:
 
@@ -1441,16 +1441,16 @@ cross translation unit analysis arguments:
                         analysis, using already available extra files in
                         '<OUTPUT_DIR>/ctu-dir'. (These files will not be
                         cleaned up in this mode.)
-
   --ctu-ast-mode {load-from-pch,parse-on-demand}
-                        Choose the way ASTs are loaded during CTU analysis.
-                        Mode 'load-from-pch' generates PCH format serialized
-                        ASTs during the 'collect' phase. Mode 'parse-on-
-                        demand' only generates the invocations needed to parse
-                        the ASTs. Mode 'load-from-pch' can use significant
-                        disk-space for the serialized ASTs, while mode 'parse-
-                        on-demand' can incur some runtime CPU overhead in the
-                        second phase of the analysis. (default: parse-on-demand)
+                        Choose the way ASTs are loaded during CTU analysis. Only
+                        available if CTU mode is enabled. Mode 'load-from-pch'
+                        generates PCH format serialized ASTs during the
+                        'collect' phase. Mode 'parse-on-demand' only generates
+                        the invocations needed to parse the ASTs. Mode
+                        'load-from-pch' can use significant disk-space for the
+                        serialized ASTs, while mode 'parse-on-demand' can incur
+                        some runtime CPU overhead in the second phase of the
+                        analysis. (default: parse-on-demand)
 ```
 
 ### Statistical analysis mode <a name="statistical"></a>

@@ -513,9 +513,10 @@ Cross-TU analysis. By default, no CTU analysis is run when
                                   action='store',
                                   dest='ctu_ast_mode',
                                   choices=['load-from-pch', 'parse-on-demand'],
-                                  default='parse-on-demand',
+                                  default=argparse.SUPPRESS,
                                   help="Choose the way ASTs are loaded during "
-                                       "CTU analysis. Mode 'load-from-pch' "
+                                       "CTU analysis. Only available if CTU "
+                                       "mode is enabled. Mode 'load-from-pch' "
                                        "generates PCH format serialized ASTs "
                                        "during the 'collect' phase. Mode "
                                        "'parse-on-demand' only generates the "
@@ -525,7 +526,8 @@ Cross-TU analysis. By default, no CTU analysis is run when
                                        "serialized ASTs, while mode "
                                        "'parse-on-demand' can incur some "
                                        "runtime CPU overhead in the second "
-                                       "phase of the analysis.")
+                                       "phase of the analysis. (default: "
+                                       "parse-on-demand)")
 
     if analyzer_types.is_statistics_capable(context):
         stat_opts = parser.add_argument_group(
@@ -854,6 +856,11 @@ def main(args):
 
     # Process the skip list if present.
     skip_handler = __get_skip_handler(args)
+
+    # CTU loading mode is only meaningful if CTU itself is enabled.
+    if 'ctu_ast_mode' in args and 'ctu_phases' not in args:
+        LOG.error("Analyzer option 'ctu-ast-mode' requires CTU mode enabled")
+        sys.exit(1)
 
     # Enable alpha uniqueing by default if ctu analysis is used.
     if 'none' in args.compile_uniqueing and 'ctu_phases' in args:
