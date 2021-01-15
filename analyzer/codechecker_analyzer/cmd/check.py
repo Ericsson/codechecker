@@ -515,9 +515,10 @@ is called.""")
                                   action='store',
                                   dest='ctu_ast_mode',
                                   choices=['load-from-pch', 'parse-on-demand'],
-                                  default='parse-on-demand',
+                                  default=argparse.SUPPRESS,
                                   help="Choose the way ASTs are loaded during "
-                                       "CTU analysis. Mode 'load-from-pch' "
+                                       "CTU analysis. Only available if CTU "
+                                       "mode is enabled. Mode 'load-from-pch' "
                                        "generates PCH format serialized ASTs "
                                        "during the 'collect' phase. Mode "
                                        "'parse-on-demand' only generates the "
@@ -527,7 +528,8 @@ is called.""")
                                        "serialized ASTs, while mode "
                                        "'parse-on-demand' can incur some "
                                        "runtime CPU overhead in the second "
-                                       "phase of the analysis.")
+                                       "phase of the analysis. (default: "
+                                       "parse-on-demand)")
 
     if analyzer_types.is_statistics_capable(context):
         stat_opts = parser.add_argument_group(
