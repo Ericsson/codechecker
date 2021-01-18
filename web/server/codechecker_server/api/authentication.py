@@ -93,10 +93,13 @@ class ThriftAuthHandler(object):
                 LOG.info("'%s' logged in.", user_name)
                 return session.token
             else:
+                msg = "Invalid credentials supplied for user '{0}'. " \
+                      "Refusing authentication!".format(user_name)
+
+                LOG.warning(msg)
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                    f"Invalid credentials supplied for user '{user_name}'."
-                    " Refusing authentication!")
+                    msg)
 
         raise codechecker_api_shared.ttypes.RequestFailed(
             codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
