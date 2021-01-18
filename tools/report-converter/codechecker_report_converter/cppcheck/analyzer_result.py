@@ -12,6 +12,8 @@ import logging
 import os
 import plistlib
 
+from xml.parsers.expat import ExpatError
+
 from codechecker_report_converter.analyzer_result import AnalyzerResult
 from codechecker_report_converter.report import generate_report_hash
 
@@ -47,8 +49,12 @@ class CppcheckAnalyzerResult(AnalyzerResult):
             plist_file = os.path.basename(f)
             file_name = '{0}_{1}.plist'.format(os.path.splitext(plist_file)[0],
                                                self.TOOL_NAME)
+
             with open(f, 'rb') as plist_file:
-                file_to_plist_data[file_name] = plistlib.load(plist_file)
+                try:
+                    file_to_plist_data[file_name] = plistlib.load(plist_file)
+                except ExpatError:
+                    LOG.error("Failed to parse '%s'! Skipping...", file_name)
 
         return file_to_plist_data
 
@@ -58,9 +64,14 @@ class CppcheckAnalyzerResult(AnalyzerResult):
         By default it will add report hashes and metada information for the
         diagnostics.
         """
-        for _, plist_data in file_to_plist_data.items():
-            self._add_report_hash(plist_data)
-            self._add_metadata(plist_data)
+        for file_name, plist_data in file_to_plist_data.items():
+            try:
+                self._add_report_hash(plist_data)
+                self._add_metadata(plist_data)
+            except IndexError:
+                LOG.warning("Failed to update '%s' while generating a report "
+                            "hash! Skipping...", file_name)
+                file_to_plist_data[file_name] = None
 
     def _add_report_hash(self, plist_data):
         """ Generate report hash for the given plist data
