@@ -623,9 +623,10 @@ def assemble_zip(inputs, zip_file, client):
 
     file_hashes = list(hash_to_file.keys())
 
-    LOG.debug("Get missing content hashes from the server.")
+    LOG.info("Get missing file content hashes from the server...")
     necessary_hashes = client.getMissingContentHashes(file_hashes) \
         if file_hashes else []
+    LOG.info("Get missing file content hashes done.")
 
     if not hash_to_file:
         LOG.warning("There is no report to store. After uploading these "
@@ -852,12 +853,9 @@ def main(args):
             sys.exit(1)
 
         zip_size = os.stat(zip_file).st_size
-        LOG.debug("Assembling zip done, size is %s",
-                  sizeof_fmt(zip_size))
-
         if zip_size > MAX_UPLOAD_SIZE:
-            LOG.error("The result list to upload is too big (max: %s).",
-                      sizeof_fmt(MAX_UPLOAD_SIZE))
+            LOG.error("The result list to upload is too big (max: %s): %s.",
+                      sizeof_fmt(MAX_UPLOAD_SIZE), sizeof_fmt(zip_size))
             sys.exit(1)
 
         b64zip = ""
@@ -874,7 +872,8 @@ def main(args):
 
         description = args.description if 'description' in args else None
 
-        LOG.info("Storing results to the server...")
+        LOG.info("Storing results (%s) to the server...", sizeof_fmt(zip_size))
+
         client.massStoreRun(args.name,
                             args.tag if 'tag' in args else None,
                             str(context.version),
