@@ -917,7 +917,7 @@
               </v-col>
               <v-col>
                 <img
-                  src="@/assets/userguide/images/bug_path_length_filter.png"
+                  src="@/assets/userguide/images/new_features/6.10.0/bug_path_length_filter.png"
                   alt="Bug path length filter"
                   width="100%"
                 >
@@ -952,7 +952,7 @@
               </v-col>
               <v-col>
                 <img
-                  src="@/assets/userguide/images/macro_expansion.png"
+                  src="@/assets/userguide/images/new_features/6.9.1/macro_expansion.png"
                   alt="Macro expansion"
                   width="100%"
                 >
@@ -1040,7 +1040,7 @@
               </v-col>
               <v-col>
                 <img
-                  src="@/assets/userguide/images/report_hash_filter.png"
+                  src="@/assets/userguide/images/new_features/6.8.0/report_hash_filter.png"
                   alt="Report hash filter"
                   width="100%"
                 >
@@ -1062,7 +1062,7 @@
               </v-col>
               <v-col>
                 <img
-                  src="@/assets/userguide/images/checker_statistics.png"
+                  src="@/assets/userguide/images/statistics/checker_statistics.png"
                   alt="Checker statistics"
                   width="100%"
                 >
@@ -1084,7 +1084,7 @@
               </v-col>
               <v-col>
                 <img
-                  src="@/assets/userguide/images/remove_filtered_reports.png"
+                  src="@/assets/userguide/images/reports/remove_filtered_reports.png"
                   alt="Remove filtered reports"
                   width="100%"
                 >
@@ -1108,7 +1108,7 @@
               </v-col>
               <v-col>
                 <img
-                  src="@/assets/userguide/images/list_of_source_components.png"
+                  src="@/assets/userguide/images/reports/list_of_source_components.png"
                   alt="Manage source components"
                   width="100%"
                 >
@@ -1130,7 +1130,7 @@
               </v-col>
               <v-col>
                 <img
-                  src="@/assets/userguide/images/analysis_statistics.png"
+                  src="@/assets/userguide/images/new_features/6.8.0/analysis_statistics.png"
                   alt="Analysis statistics"
                   width="100%"
                 >
@@ -1142,32 +1142,21 @@
             <template v-slot:title>
               Fine gain control of Clang warnings
             </template>
-            <v-row>
-              <v-col cols="8">
-                <p>
-                  Compiler warnings are diagnostic messages that report
-                  constructions that are not inherently erroneous but that are
-                  risky or suggest there may have been an error. You can
-                  fine-tune which warnings to use in the analysis by setting
-                  the enabled and disabled flags. These flags should start with
-                  a capital <b>W</b> or <b>Wno-</b> prefix followed by the
-                  warning name.
-                </p>
-                <b>Examples:</b>
-                <ul>
-                  <li>
-                    <code>CodeChecker analyze /path/to/build.log -o /path/to/output/dir --enable Wunused --disable Wno-unused-parameter</code>
-                  </li>
-                </ul>
-              </v-col>
-              <v-col>
-                <img
-                  src="@/assets/userguide/images/analysis_statistics.png"
-                  alt="Analysis statistics"
-                  width="100%"
-                >
-              </v-col>
-            </v-row>
+            <p>
+              Compiler warnings are diagnostic messages that report
+              constructions that are not inherently erroneous but that are
+              risky or suggest there may have been an error. You can
+              fine-tune which warnings to use in the analysis by setting
+              the enabled and disabled flags. These flags should start with
+              a capital <b>W</b> or <b>Wno-</b> prefix followed by the
+              warning name.
+            </p>
+            <b>Examples:</b>
+            <ul>
+              <li>
+                <code>CodeChecker analyze /path/to/build.log -o /path/to/output/dir --enable Wunused --disable Wno-unused-parameter</code>
+              </li>
+            </ul>
           </new-feature-item>
 
           <new-feature-item>
@@ -1242,7 +1231,7 @@
               </v-col>
               <v-col>
                 <img
-                  src="@/assets/userguide/images/component_filter.png"
+                  src="@/assets/userguide/images/new_features/6.7.0/component_filter.png"
                   alt="Component filter"
                   width="100%"
                 >
@@ -1263,7 +1252,7 @@
               </v-col>
               <v-col>
                 <img
-                  src="@/assets/userguide/images/run_tag_diff.png"
+                  src="@/assets/userguide/images/reports/compare_tags.png"
                   alt="Diff tagged versions of the same run"
                   width="100%"
                 >
@@ -1294,7 +1283,7 @@
               </v-col>
               <v-col>
                 <img
-                  src="@/assets/userguide/images/plist_to_html_index.png"
+                  src="@/assets/userguide/images/new_features/6.7.0/plist_to_html_index.png"
                   alt="Plist to html"
                   width="100%"
                 >
