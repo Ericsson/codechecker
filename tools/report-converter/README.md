@@ -37,7 +37,10 @@ make package
 ```
 
 ## Usage
-```sh
+<details>
+  <summary><i>$ <b>report-converter --help</b> (click to expand)</i></summary>
+
+```
 usage: report-converter [-h] -o OUTPUT_DIR -t TYPE [--meta [META [META ...]]]
                         [--filename FILENAME] [-c] [-v]
                         file
@@ -101,6 +104,7 @@ Supported analyzers:
   tslint - TSLint, https://palantir.github.io/tslint
   ubsan - UndefinedBehaviorSanitizer, https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
 ```
+</details>
 
 ## Sanitizers
 ### [Undefined Behaviour Sanitizer](https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html)

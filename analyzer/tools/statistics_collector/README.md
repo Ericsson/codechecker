@@ -16,7 +16,12 @@ make package
 ```
 
 ## Usage
-```sh
+<details>
+  <summary>
+    <i>$ <b>post-process-stats --help</b> (click to expand)</i>
+  </summary>
+
+```
 usage: post-process-stats [-h] -i folder
                           [--stats-min-sample-count STATS_MIN_SAMPLE_COUNT]
                           [--stats-relevance-threshold STATS_RELEVANCE_THRESHOLD]
@@ -50,6 +55,7 @@ optional arguments:
 Example:
   post-process-stats -i /path/to/pre_processed_stats /path/to/stats
 ```
+</details>
 
 ## License
 
