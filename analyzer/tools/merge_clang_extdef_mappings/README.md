@@ -22,7 +22,12 @@ make package
 ```
 
 ## Usage
-```sh
+<details>
+  <summary>
+    <i>$ <b>merge-clang-extdef-mappings --help</b> (click to expand)</i>
+  </summary>
+
+```
 usage: merge-clang-extdef-mappings [-h] -i input -o output
 
 Merge individual clang extdef mapping files into one mapping file.
@@ -40,6 +45,7 @@ Example:
   merge-clang-extdef-mappings -i /path/to/fn_map_folder -o
   /path/to/externalDefMap.txt
 ```
+</details>
 
 ## License
 

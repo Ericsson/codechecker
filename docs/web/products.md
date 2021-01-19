@@ -110,6 +110,11 @@ common arguments:
 `add` assigns the unique `PRODUCT_NAME` endpoint with a database connection,
 making a new product available on the server.
 
+<details>
+  <summary>
+    <i>$ <b>CodeChecker cmd products add --help</b> (click to expand)</i>
+  </summary>
+
 ```
 usage: CodeChecker cmd products add [-h] [-n DISPLAY_NAME]
                                     [--description DESCRIPTION]
@@ -166,8 +171,13 @@ PostgreSQL arguments:
   --dbname DBNAME, --db-name DBNAME
                         Name of the database to use. (default: <ENDPOINT>)
 ```
+</details>
 
 ## Delete a product (`del`) <a name="delete-a-product"></a>
+<details>
+  <summary>
+    <i>$ <b>CodeChecker cmd token new --help</b> (click to expand)</i>
+  </summary>
 
 ```
 usage: CodeChecker cmd products del [-h] [--url SERVER_URL]
@@ -186,6 +196,7 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
 ```
+</details>
 
 # Managing products through the web interface <a name="web-interface"></a>
 

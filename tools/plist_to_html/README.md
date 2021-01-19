@@ -13,7 +13,12 @@ make package
 ```
 
 ## Usage
-```sh
+<details>
+  <summary>
+    <i>$ <b>plist-to-html --help</b> (click to expand)</i>
+  </summary>
+
+```
 usage: plist-to-html [-h] -o OUTPUT_DIR [-l LAYOUT_DIR]
                      file/folder [file/folder ...]
 
@@ -32,6 +37,7 @@ optional arguments:
                         Directory which contains dependency HTML, CSS and
                         JavaScript files. (default: plist_to_html/../static)
 ```
+</details>
 
 ## License
 
