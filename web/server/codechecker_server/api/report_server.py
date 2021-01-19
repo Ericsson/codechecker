@@ -717,7 +717,7 @@ def unzip(b64zip, output_dir):
     """
     This function unzips the base64 encoded zip file. This zip is extracted
     to a temporary directory and the ZIP is then deleted. The function returns
-    the size of the extracted zip file.
+    the size of the extracted decompressed zip file.
     """
     if len(b64zip) == 0:
         return 0
@@ -3162,8 +3162,9 @@ class ThriftRequestHandler(object):
 
                             session.commit()
 
-                            LOG.info("'%s' stored results (%s KB) to run '%s' "
-                                     "in %s seconds.", user_name,
+                            LOG.info("'%s' stored results (%s KB "
+                                     "/decompressed/) to run '%s' in %s "
+                                     "seconds.", user_name,
                                      round(zip_size / 1024), name,
                                      round(time.time() - start_time, 2))
 
