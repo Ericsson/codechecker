@@ -22,6 +22,14 @@ from codechecker_common.logger import get_logger
 LOG = get_logger('system')
 
 
+def truncate_arg(arg, max_len=100):
+    """ Truncate the given argument if the length is too large. """
+    if isinstance(arg, str) and len(arg) > max_len:
+        return arg[:max_len] + "..."
+
+    return arg
+
+
 def ThriftClientCall(function):
     """ Wrapper function for thrift client calls.
         - open and close transport,
@@ -83,7 +91,13 @@ def ThriftClientCall(function):
             elif ex.type == TProtocolException.BAD_VERSION:
                 LOG.error('Thrift bad version error.')
             LOG.error(funcName)
-            LOG.error(args)
+
+            # It is possible that one of the argument is too large to log the
+            # full content of it (for example the 'b64zip' parameter of the
+            # 'massStoreRun' API function). For this reason we have to truncate
+            # the arguments.
+            LOG.error([truncate_arg(arg) for arg in args])
+
             LOG.error(kwargs)
             LOG.exception("Request failed.")
             sys.exit(1)
