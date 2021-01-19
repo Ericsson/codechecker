@@ -17,6 +17,7 @@ sources.
 import argparse
 import collections
 import fnmatch
+import hashlib
 import json
 import logging
 import os
@@ -209,11 +210,63 @@ def __gather_dependencies(command, build_dir):
         raise IOError(output)
 
 
-def __filter_compilation_db(compilation_db, filt):
-    return [
-        action for action in compilation_db if fnmatch.fnmatch(
-            action['file'],
-            filt)]
+def __analyzer_action_hash(build_action):
+    """
+    This function returns a hash of a build action. This hash algorithm is
+    duplicated based on the same algorithm in CodeChecker. It is important to
+    keep these algorithms in sync!!! Basically the hash is computed from the
+    build command except for -o flag. The exclusion is due to a special
+    behavior of "make" utility. See the full description in CodeChecker:
+    analyzer_action_str() contains the documentation of the issue.
+    """
+    source_file = os.path.normpath(
+        os.path.join(build_action['directory'], build_action['file']))
+
+    args = shlex.split(build_action['command'])
+    indices = [idx for idx, v in enumerate(args) if v.startswith('-o')]
+
+    for idx in reversed(indices):
+        # Output can be given separate or joint:
+        # -o a.out vs -oa.out
+        # In the first case we delete its argument too.
+        if args[idx] == '-o':
+            del args[idx]
+        del args[idx]
+
+    build_info = source_file + '_' + ' '.join(args)
+
+    return hashlib.md5(build_info.encode(errors='ignore')).hexdigest()
+
+
+def __get_ctu_buildactions(build_action, compilation_db, ctu_deps_dir):
+    """
+    CodeChecker collets which source files were involved in CTU analysis. This
+    function returns the build actions which describe the compilation of these
+    files.
+    build_action -- The build action object which is analyzed in CTU mode. Its
+                    CTU dependencies will be returned.
+    compilation_db -- A complete compilation database. This function returns
+                      some of its elements: the ones which describe the
+                      compilation of the files listed in the file under
+                      ctu_deps_dir belonging to build_action.
+    ctu_deps_dir -- A directory created by CodeChecker under the report
+                    directory. The files under this folder must contain a hash
+                    of a build action. See __analyzer_action_hash().
+    """
+    ctu_deps_file = next(
+        (f for f in os.listdir(ctu_deps_dir)
+        if __analyzer_action_hash(build_action) in f), None)
+
+    if not ctu_deps_file:
+        return
+
+    with open(os.path.join(ctu_deps_dir, ctu_deps_file),
+              encoding='utf-8', errors='ignore') as f:
+        files = list(map(lambda x: x.strip(), f.readlines()))
+
+    return filter(
+        lambda ba: os.path.join(ba['directory'], ba['file']) in files,
+        compilation_db)
 
 
 def get_dependent_headers(command, build_dir, collect_toolchain=True):
@@ -288,7 +341,8 @@ def add_sources_to_zip(zip_file, files):
                           "again!", f)
 
 
-def zip_tu_files(zip_file, compilation_database, write_mode='w'):
+def zip_tu_files(zip_file, compilation_database, file_filter='*',
+                 write_mode='w', ctu_deps_dir=None):
     """
     Collects all files to a zip file which are required for the compilation of
     the translation units described by the given compilation database.
@@ -299,9 +353,22 @@ def zip_tu_files(zip_file, compilation_database, write_mode='w'):
     zip_file -- A file name or a file object.
     compilation_database -- Either a path of the compilation database JSON file
                             or a list of the parsed JSON.
+    file_filter -- A glob used as file name filter. The files of a TU will be
+                   collected only if the "file" attribute of the build action
+                   matches this glob.
     write_mode -- The file opening mode of the zip_file. In case of 'a' the new
                   files are appended to the existing zip file, in case of 'w'
                   the files are added to a clean zip file.
+    ctu_deps_dir -- This directory contains a list of files. Each file belongs
+                    to a translation unit and lists what other files are
+                    involved during CTU analysis. These files and their
+                    included headers will also be compressed in the .zip file.
+                    File names in this directory must contain a hash of a the
+                    build command. See __analyzer_action_hash() documentation.
+                    When using this options, make sure to provide a compilation
+                    database in the first argument which contains the build
+                    commands of these files otherwise the files of this folder
+                    can't be identified.
     """
     if isinstance(compilation_database, str):
         with open(compilation_database, encoding="utf-8", errors="ignore") as f:
@@ -311,7 +378,22 @@ def zip_tu_files(zip_file, compilation_database, write_mode='w'):
     tu_files = set()
     error_messages = ''
 
-    for buildaction in compilation_database:
+    filtered_compilation_database = list(filter(
+        lambda action: fnmatch.fnmatch(action['file'], file_filter),
+        compilation_database))
+
+    if ctu_deps_dir:
+        involved_ctu_actions = []
+
+        for action in filtered_compilation_database:
+            involved_ctu_actions.extend(__get_ctu_buildactions(
+                action, compilation_database, ctu_deps_dir))
+
+        for action in involved_ctu_actions:
+            if action not in filtered_compilation_database:
+                filtered_compilation_database.append(action)
+
+    for buildaction in filtered_compilation_database:
         files, err = get_dependent_headers(
             buildaction['command'],
             buildaction['directory'])
@@ -402,13 +484,23 @@ used to generate a log file on the fly.""")
                                "command database file specified at this path.")
 
     parser.add_argument('-f', '--filter', dest='filter',
-                        type=str, required=False,
+                        type=str, required=False, default='*',
                         help="If '--zip' option is given this flag restricts "
                              "the collection on the build actions of which "
                              "the compiled source file matches this path. "
                              "If '--dependents' option is given this flag "
                              "specify a header file to get source file "
                              "dependencies for. E.g.: /path/to/*/files")
+    parser.add_argument('--ctu-deps-dir', dest='ctu_deps_dir',
+                        type=str, required=False,
+                        help="When using 'CodeChecker analyze --ctu' command, "
+                             "the results go to an output directory. This "
+                             "folder contains a directory named "
+                             "'ctu_connections' which stores the information "
+                             "what TUs are involved during the analysis of "
+                             "each source file. Once this directory is "
+                             "provided, this tool also collects the sourced "
+                             "of TUs involved by CTU analysis.")
 
     output_args = parser.add_argument_group(
         "output arguments",
@@ -454,15 +546,15 @@ used to generate a log file on the fly.""")
             'directory': os.getcwd()}]
 
     if args.zip:
-        if args.logfile and args.filter:
-            compilation_db = [
-                action for action in compilation_db if fnmatch.fnmatch(
-                    action['file'], args.filter)]
-        else:
-            LOG.warning('In case of using build command the filter has no '
+        if args.command and args.filter:
+            LOG.warning('In case of using build command --filter has no '
+                        'effect.')
+        if args.command and args.ctu_deps_dir:
+            LOG.warning('In case of using build command --ctu-deps-dir has no '
                         'effect.')
 
-        zip_tu_files(args.zip, compilation_db)
+        zip_tu_files(args.zip, compilation_db, args.filter,
+                     ctu_deps_dir=args.ctu_deps_dir)
         LOG.info("Done.")
     else:
         deps = get_dependent_sources(compilation_db, args.filter)
