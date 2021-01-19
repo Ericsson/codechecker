@@ -32,7 +32,7 @@ class AnalyzerCommandPathModifier(object):
         if re.search(r'clang(-(\d)+)?$', path):
             return self.opts.clang
 
-        if re.search(r'\.plist$', path):
+        if self.opts.ctu_dir is not None and re.search(r'\.plist$', path):
             # Put a plist (seemingly analyzer output) file into the
             # report_debug directory, that is 2 levels above ctu_dir
             # ("report_debug/ctu-dir/<target>").
