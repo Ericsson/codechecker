@@ -147,9 +147,9 @@ endef
 export LOGGER_BUILD_ERROR_MSG
 build_ld_logger:
 ifeq ($(BUILD_LOGGER_64_BIT_ONLY),YES)
-	$(MAKE) -C tools/build-logger -f Makefile.manual pack64bit_only 2> /dev/null
+	$(MAKE) -C $(CC_ANALYZER)/tools/build-logger pack64bit_only 2> /dev/null
 else
-	$(MAKE) -C tools/build-logger -f Makefile.manual 2> /dev/null || (echo "$$LOGGER_BUILD_ERROR_MSG" && false)
+	$(MAKE) -C $(CC_ANALYZER)/tools/build-logger all 2> /dev/null || (echo "$$LOGGER_BUILD_ERROR_MSG" && false)
 endif
 
 # NOTE: extra spaces are allowed and ignored at the beginning of the
