@@ -6,8 +6,8 @@
 <string>clang version 5.0.0 (https://github.com/llvm-mirror/clang.git 8567c2d9e717e928d6ae8b9145001cd36c23f873) (https://github.com/llvm-mirror/llvm.git 218a5a7e27dcaa53ae6703c40a044faf52e63f12)</string>
  <key>files</key>
  <array>
-  <string>test.cpp</string>
-  <string>./test.h</string>
+  <string>gen_plist/test.cpp</string>
+  <string>./gen_plist/test.h</string>
  </array>
  <key>diagnostics</key>
  <array>

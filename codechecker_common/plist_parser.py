@@ -32,6 +32,7 @@ With the newer clang releases more information is available in the plist files.
 
 """
 import importlib
+import os
 import sys
 import traceback
 import plistlib
@@ -193,7 +194,9 @@ def parse_plist_file(path: str,
             report_hash = diag.get('issue_hash_content_of_line_in_context')
 
             if not report_hash:
-                file_path = mentioned_files[diag['location']['file']]
+                file_path = os.path.join(
+                    os.path.dirname(path),
+                    mentioned_files[diag['location']['file']])
 
                 # Generate hash value if it is missing from the report.
                 report_hash = get_report_hash(diag, file_path,

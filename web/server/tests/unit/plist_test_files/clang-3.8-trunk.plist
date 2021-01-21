@@ -6,8 +6,8 @@
 <string>clang version 3.8.0 (trunk 251510)</string>
  <key>files</key>
  <array>
-  <string>test.cpp</string>
-  <string>./test.h</string>
+  <string>gen_plist/test.cpp</string>
+  <string>./gen_plist/test.h</string>
  </array>
  <key>diagnostics</key>
  <array>
