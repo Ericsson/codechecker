@@ -24,6 +24,7 @@ a CodeChecker server.
 * [Smatch](#smatch)
 * [Kernel-Doc](#kernel-doc)
 * [Sphinx](#sphinx)
+* [Sparse](#sparse)
 * [License](#license)
 
 ## Install guide
@@ -57,8 +58,8 @@ optional arguments:
   -t TYPE, --type TYPE  Specify the format of the code analyzer output.
                         Currently supported output types are: asan, clang-
                         tidy, coccinelle, cppcheck, eslint, fbinfer, golint,
-                        kernel-doc, msan, pyflakes, pylint, smatch, spotbugs, 
-                        sphinx, tsan, tslint, ubsan.
+                        kernel-doc, msan, pyflakes, pylint, smatch, sparse,
+                        spotbugs, sphinx, tsan, tslint, ubsan.
   --meta [META [META ...]]
                         Metadata information which will be stored alongside
                         the run when the created report directory will be
@@ -95,6 +96,7 @@ Supported analyzers:
   pyflakes - Pyflakes, https://github.com/PyCQA/pyflakes
   pylint - Pylint, https://www.pylint.org
   smatch - smatch, https://repo.or.cz/w/smatch.git
+  sparse - sparse, https://git.kernel.org/pub/scm/devel/sparse/sparse.git
   spotbugs - spotbugs, https://spotbugs.github.io
   sphinx - sphinx, https://github.com/sphinx-doc/sphinx
   tsan - ThreadSanitizer, https://clang.llvm.org/docs/ThreadSanitizer.html
@@ -499,6 +501,31 @@ report-converter -t sphinx -o ./codechecker_sphinx_reports ./sphinx.out
 
 # Store the Sphinx reports with CodeChecker.
 CodeChecker store ./codechecker_sphinx_reports -n sphinx
+```
+
+## [Sparse](https://git.kernel.org/pub/scm/devel/sparse/sparse.git)
+[Sparse](https://git.kernel.org/pub/scm/devel/sparse/sparse.git) is a semantic checker 
+for C programs; it can be used to find a number of potential problems with kernel code.
+
+The recommended way of running Sparse is to redirect the output to a file and
+give this file to the report converter tool.
+
+The following example shows you how to run Sparse on kernel sources 
+and store the results found by Sparse to the CodeChecker database.
+
+```sh
+# Change Directory to your project
+cd path/to/linux/kernel/repository
+
+# Run Sparse
+make C=1 2>&1 | tee sparse.out
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of Sparse
+report-converter -t sparse -o ./codechecker_sparse_reports ./sparse.out
+
+# Store the Sparse reports with CodeChecker.
+CodeChecker store ./codechecker_sparse_reports -n sparse
 ```
 
 ## License
