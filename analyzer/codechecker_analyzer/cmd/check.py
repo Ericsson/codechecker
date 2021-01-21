@@ -394,7 +394,10 @@ used to generate a log file on the fly.""")
                                     "default behaviour of this option you can "
                                     "use the "
                                     "'clang-tidy:take-config-from-directory="
-                                    "true' option.")
+                                    "true' option. If the file at --tidyargs "
+                                    "contains a -config flag then those "
+                                    "options extend these and override "
+                                    "\"HeaderFilterRegex\" if any.")
 
     analyzer_opts.add_argument('--checker-config',
                                dest='checker_config',

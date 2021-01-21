@@ -161,7 +161,7 @@ optional arguments:
                         Set verbosity level.
 
 log arguments:
-  
+
   Specify how the build information database should be obtained. You need to
   specify either an already existing log file, or a build command which will be
   used to generate a log file on the fly.
@@ -248,8 +248,10 @@ analyzer arguments:
                         options can be printed with 'CodeChecker analyzers
                         --analyzer-config'. To disable the default behaviour
                         of this option you can use the 'clang-tidy:take-
-                        config-from-directory=true' option. (default: ['clang-
-                        tidy:HeaderFilterRegex=.*'])
+                        config-from-directory=true' option. If the file at
+                        --tidyargs contains a -config flag then those options
+                        extend these and override "HeaderFilterRegex" if any.
+                        (default: ['clang-tidy:HeaderFilterRegex=.*'])
   --checker-config [CHECKER_CONFIG [CHECKER_CONFIG ...]]
                         Checker configuration options in the following format:
                         analyzer:key=value. The collection of the options can
@@ -273,7 +275,7 @@ analyzer arguments:
                         solver only. (default: on)
 
 cross translation unit analysis arguments:
-  
+
   These arguments are only available if the Clang Static Analyzer supports
   Cross-TU analysis. By default, no CTU analysis is run when 'CodeChecker check'
   is called.
@@ -307,7 +309,7 @@ cross translation unit analysis arguments:
                         second phase of the analysis. (default: parse-on-demand)
 
 checker configuration:
-  
+
   Checkers
   ------------------------------------------------
   The analyzer performs checks that are categorized into families or "checkers".
@@ -319,7 +321,7 @@ checker configuration:
   'core.uninitialized' group. Please consult the manual for details. Disabling
   certain checkers - such as the 'core' group - is unsupported by the LLVM/Clang
   community, and thus discouraged.
-  
+
   Compiler warnings and errors
   ------------------------------------------------
   Compiler warnings are diagnostic messages that report constructions that are
@@ -899,13 +901,13 @@ one explicitly specified to **be analyzed** (`/dir/do.check.this.file`).
 ```
 
 In the above example, `important_file.cpp` will be analyzed even if every file
-where the path matches to `/my_project/my_lib_to_skip` will be skiped.  
-Every other file where the path contains `/myproject` except the files in the 
+where the path matches to `/my_project/my_lib_to_skip` will be skiped.
+Every other file where the path contains `/myproject` except the files in the
 `my_project/3pplib` will be analyzed.
 
 The provided *shell-style* pattern is converted to a regex with the [fnmatch.translate](https://docs.python.org/2/library/fnmatch.html#fnmatch.translate).
 
-Please note that when `-i SKIPFILE` is used along with `--stats` or 
+Please note that when `-i SKIPFILE` is used along with `--stats` or
 `--ctu` the skip list will be ignored in the pre-analysis phase. This means
 that statistics and ctu-pre-analysis will be created for *all* files in the
 *compilation database*.
@@ -919,7 +921,7 @@ analyzer arguments:
                         Currently supported analyzers are: clangsa, clang-
                         tidy.
   --add-compiler-defaults
-                        DEPRECATED. Always True. 
+                        DEPRECATED. Always True.
                         Retrieve compiler-specific configuration from the
                         compilers themselves, and use them with Clang. This is
                         used when the compiler on the system is special, e.g.
@@ -961,8 +963,10 @@ analyzer arguments:
                         options can be printed with 'CodeChecker analyzers
                         --analyzer-config'. To disable the default behaviour
                         of this option you can use the 'clang-tidy:take-
-                        config-from-directory=true' option. (default: ['clang-
-                        tidy:HeaderFilterRegex=.*'])
+                        config-from-directory=true' option. If the file at
+                        --tidyargs contains a -config flag then those options
+                        extend these and override "HeaderFilterRegex" if any.
+                        (default: ['clang-tidy:HeaderFilterRegex=.*'])
   --checker-config [CHECKER_CONFIG [CHECKER_CONFIG ...]]
                         Checker configuration options in the following format:
                         analyzer:key=value. The collection of the options can
@@ -1034,7 +1038,7 @@ Lets assume you have a configuration file
 ```
 This configuration file example contains configuration options for multiple
 codechecker subcommands (analyze, parse, server, store) so not just the
-`analyze` subcommand can be configured like this.  
+`analyze` subcommand can be configured like this.
 The focus is on the `analyze` subcommand configuration in the next examples.
 
 If you run the following command:
@@ -1469,7 +1473,7 @@ Statistics analysis feature arguments:
                         function (calculated as calls  with a property/all
                         calls). CodeChecker will warn for calls of f that do
                         not have that property.(default: 0.85)
- 
+
 ```
 
 ## `parse` <a name="parse"></a>

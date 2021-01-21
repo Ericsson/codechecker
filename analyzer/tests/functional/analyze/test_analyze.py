@@ -474,12 +474,12 @@ class TestAnalyze(unittest.TestCase):
         """
         build_json = os.path.join(self.test_workspace, "build_extra_args.json")
         report_dir = os.path.join(self.test_workspace, "reports_extra_args")
-        source_file = os.path.join(self.test_dir, "extra_args.c")
+        source_file = os.path.join(self.test_dir, "extra_args.cpp")
         tidyargs_file = os.path.join(self.test_dir, "tidyargs")
         saargs_file = os.path.join(self.test_dir, "saargs")
 
         build_log = [{"directory": self.test_dir,
-                      "command": "cc -c " + source_file,
+                      "command": "g++ -c " + source_file,
                       "file": source_file
                       }]
 
@@ -488,7 +488,9 @@ class TestAnalyze(unittest.TestCase):
             json.dump(build_log, outfile)
 
         analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
-                       "-o", report_dir, "--tidyargs", tidyargs_file]
+                       "-o", report_dir, "--tidyargs", tidyargs_file,
+                       "--analyzer-config", 'clang-tidy:HeaderFilterRegex=.*',
+                       'clang-tidy:Checks=modernize-use-bool-literals']
 
         process = subprocess.Popen(
             analyze_cmd,
@@ -509,6 +511,8 @@ class TestAnalyze(unittest.TestCase):
         out, _ = process.communicate()
 
         self.assertIn("division by zero", out)
+        self.assertIn("modernize-avoid-bind", out)
+        self.assertNotIn("performance-for-range-copy", out)
 
         analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
                        "-o", report_dir, "--saargs", saargs_file]
@@ -821,13 +825,13 @@ class TestAnalyze(unittest.TestCase):
         analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
                        "-o", self.report_dir, '--makefile']
 
-        source_file = os.path.join(self.test_dir, "extra_args.c")
+        source_file = os.path.join(self.test_dir, "extra_args.cpp")
         build_log = [{"directory": self.test_workspace,
-                      "command": "gcc -DTIDYARGS -c " + source_file,
+                      "command": "g++ -DTIDYARGS -c " + source_file,
                       "file": source_file
                       },
                      {"directory": self.test_workspace,
-                      "command": "gcc -DSAARGS -DTIDYARGS -c " + source_file,
+                      "command": "g++ -DSAARGS -DTIDYARGS -c " + source_file,
                       "file": source_file
                       }]
 

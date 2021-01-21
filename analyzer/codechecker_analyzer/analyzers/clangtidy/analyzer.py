@@ -330,6 +330,27 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                 if m.group('analyzer') == cls.ANALYZER_NAME:
                     analyzer_config[m.group('key')] = m.group('value')
 
+        # If both --analyzer-config and -config (in --tidyargs) is given then
+        # these need to be merged. Since "HeaderFilterRegex" has a default
+        # value in --analyzer-config, we take --tidyargs stronger so user can
+        # overwrite its value.
+        for i, extra_arg in enumerate(handler.analyzer_extra_arguments):
+            if not extra_arg.startswith('-config'):
+                continue
+
+            # -config flag can be together or separate from its argument:
+            # "-config blabla" vs. "-config=blabla"
+            if extra_arg == '-config':
+                arg = handler.analyzer_extra_arguments[i + 1]
+                arg_num = 2
+            else:
+                arg = extra_arg[len('-config='):]
+                arg_num = 1
+
+            analyzer_config.update(json.loads(arg))
+            del handler.analyzer_extra_arguments[i:i + arg_num]
+            break
+
         # TODO: This extra "isinsrance" check is needed for
         # CodeChecker checkers --checker-config. This command also
         # runs this function in order to construct a config handler.
