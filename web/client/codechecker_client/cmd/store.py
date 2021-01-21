@@ -648,7 +648,12 @@ def assemble_zip(inputs, zip_file, client):
             if h in necessary_hashes or h in file_hash_with_review_status:
                 LOG.debug("File contents for '%s' needed by the server", f)
 
-                zipf.write(f, os.path.join('root', f.lstrip('/')))
+                file_path = os.path.join('root', f.lstrip('/'))
+
+                try:
+                    zipf.getinfo(file_path)
+                except KeyError:
+                    zipf.write(f, file_path)
 
         zipf.writestr('content_hashes.json', json.dumps(file_to_hash))
 
