@@ -15,9 +15,8 @@ from codechecker_server.routing import split_client_GET_request
 from codechecker_server.routing import split_client_POST_request
 
 
-def GET(path):
-    return split_client_GET_request("http://localhost:8001/" +
-                                    path.lstrip('/'))
+def GET(path, host="http://localhost:8001/"):
+    return split_client_GET_request(host + path.lstrip('/'))
 
 
 def POST(path):
@@ -36,6 +35,7 @@ class request_routingTest(unittest.TestCase):
         """
 
         self.assertEqual(GET(''), (None, ''))
+        self.assertEqual(GET('/', '//'), (None, ''))
         self.assertEqual(GET('index.html'), (None, 'index.html'))
         self.assertEqual(GET('/images/logo.png'),
                          (None, 'images/logo.png'))

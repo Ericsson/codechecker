@@ -89,8 +89,8 @@ def split_client_GET_request(path):
     parsed_path = urlparse(path).path
     split_path = parsed_path.split('/', 2)
 
-    endpoint_part = split_path[1]
-    if is_valid_product_endpoint(endpoint_part):
+    endpoint_part = split_path[1] if len(split_path) > 1 else None
+    if endpoint_part and is_valid_product_endpoint(endpoint_part):
         remainder = split_path[2] if len(split_path) == 3 else ''
         return endpoint_part, remainder
     else:
