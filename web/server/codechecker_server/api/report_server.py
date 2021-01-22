@@ -1056,13 +1056,9 @@ class ThriftRequestHandler(object):
             # Get report count for each detection statuses.
             status_q = session.query(Report.run_id,
                                      Report.detection_status,
-                                     func.count(Report.bug_id))
-
-            if run_filter and run_filter.ids is not None:
-                status_q = status_q.filter(Report.run_id.in_(run_filter.ids))
-
-            status_q = status_q.group_by(Report.run_id,
-                                         Report.detection_status)
+                                     func.count(Report.bug_id)) \
+                .filter(Report.run_id.in_(run_filter.ids)) \
+                .group_by(Report.run_id, Report.detection_status)
 
             status_sum = defaultdict(defaultdict)
             for run_id, status, count in status_q:
@@ -1070,17 +1066,23 @@ class ThriftRequestHandler(object):
 
             # Get analyzer statistics.
             analyzer_statistics = defaultdict(lambda: defaultdict())
-            stat_q = session.query(AnalyzerStatistic,
-                                   Run.id)
 
-            if run_filter and run_filter.ids is not None:
-                stat_q = stat_q.filter(Run.id.in_(run_filter.ids))
-
-            stat_q = stat_q \
+            # Subquery to get analyzer statistics only for these run history
+            # id's.
+            history_ids_subq = session.query(
+                    func.max(AnalyzerStatistic.run_history_id)) \
+                .filter(RunHistory.run_id.in_(run_filter.ids)) \
                 .outerjoin(RunHistory,
                            RunHistory.id == AnalyzerStatistic.run_history_id) \
-                .outerjoin(Run,
-                           Run.id == RunHistory.run_id)
+                .group_by(RunHistory.run_id) \
+                .subquery()
+
+            stat_q = session.query(AnalyzerStatistic,
+                                   RunHistory.run_id) \
+                .filter(AnalyzerStatistic.run_history_id.in_(
+                    history_ids_subq)) \
+                .outerjoin(RunHistory,
+                           RunHistory.id == AnalyzerStatistic.run_history_id)
 
             for stat, run_id in stat_q:
                 analyzer_statistics[run_id][stat.analyzer_type] = \
