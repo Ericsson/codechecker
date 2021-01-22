@@ -6,8 +6,8 @@
 <string>clang version 4.0.0 (tags/RELEASE_400/final)</string>
  <key>files</key>
  <array>
-  <string>test.cpp</string>
-  <string>./test.h</string>
+  <string>gen_plist/test.cpp</string>
+  <string>./gen_plist/test.h</string>
  </array>
  <key>diagnostics</key>
  <array>

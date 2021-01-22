@@ -42,8 +42,8 @@ class StoreHandler(unittest.TestCase):
 
         # Generate dummy file_ids which should come from the database.
         file_ids = {}
-        for i, file_name in enumerate(files, 1):
-            file_ids[file_name] = i
+        for i, file_name in files.items():
+            file_ids[file_name] = i + 1
 
         msg = "This test is prepared to handle 3 reports."
         self.assertEqual(len(reports), 3, msg)
