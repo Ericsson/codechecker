@@ -31,7 +31,7 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import BugPathPos, \
     CheckerCount, CommentData, DiffType, Encoding, RunHistoryData, Order, \
     ReportData, ReportDetails, ReviewData, RunData, RunFilter, \
     RunReportCount, RunSortType, RunTagCount, SourceComponentData, \
-    SourceFileData, SortMode, SortType
+    SourceFileData, SortMode, SortType, ExportData
 
 from codechecker_common import plist_parser, skiplist_handler
 from codechecker_common.source_code_comment_handler import \
@@ -1554,72 +1554,67 @@ class ThriftRequestHandler(object):
         with DBSession(self.__Session) as session:
             return get_report_details(session, [reportId])[reportId]
 
-    def _setReviewStatus(self, session, report_id, status, message, date=None):
+    def _setReviewStatus(self, session, report_hash, status,
+                         message, date=None):
         """
         This function sets the review status of the given report. This is the
         implementation of changeReviewStatus(), but it is also extended with
         a session parameter which represents a database transaction. This is
         needed because during storage a specific session object has to be used.
         """
-        report = session.query(Report).get(report_id)
-        if report:
-            review_status = session.query(ReviewStatus).get(report.bug_id)
-            if review_status is None:
-                review_status = ReviewStatus()
-                review_status.bug_hash = report.bug_id
+        review_status = session.query(ReviewStatus).get(report_hash)
+        if review_status is None:
+            review_status = ReviewStatus()
+            review_status.bug_hash = report_hash
 
-            old_status = review_status.status or \
-                review_status_str(ttypes.ReviewStatus.UNREVIEWED)
-            old_msg = review_status.message or None
+        old_status = review_status.status or \
+            review_status_str(ttypes.ReviewStatus.UNREVIEWED)
+        old_msg = review_status.message or None
 
-            new_status = review_status_str(status)
-            new_user = self.__get_username()
-            new_message = message.encode('utf8') if message else b''
+        new_status = review_status_str(status)
+        new_user = self.__get_username()
+        new_message = message.encode('utf8') if message else b''
 
-            # Review status is a shared table among runs. When multiple runs
-            # are stored in parallel, there may be a race condition in updating
-            # review status fields. The most common reason of deadlocks is
-            # changing only the date to current date. This condition checks if
-            # something else is also changed other than dates.
-            # We assume that report status in source code comments belong to
-            # the first user who stored the reports. If another user stores the
-            # same project with same report status then we don't change it.
-            if (old_status, old_msg) == (new_status, new_message):
-                return True
-
-            review_status.status = new_status
-            review_status.author = new_user
-            review_status.message = new_message
-            review_status.date = date or datetime.now()
-            session.add(review_status)
-
-            # Create a system comment if the review status or the message
-            # is changed.
-            old_review_status = escape_whitespaces(old_status.capitalize())
-            new_review_status = \
-                escape_whitespaces(review_status.status.capitalize())
-            if message:
-                system_comment_msg = \
-                    'rev_st_changed_msg {0} {1} {2}'.format(
-                        old_review_status, new_review_status,
-                        escape_whitespaces(message))
-            else:
-                system_comment_msg = 'rev_st_changed {0} {1}'.format(
-                    old_review_status, new_review_status)
-
-            system_comment = self.__add_comment(review_status.bug_hash,
-                                                system_comment_msg,
-                                                CommentKindValue.SYSTEM,
-                                                review_status.date)
-            session.add(system_comment)
-
-            session.flush()
-
+        # Review status is a shared table among runs. When multiple runs
+        # are stored in parallel, there may be a race condition in updating
+        # review status fields. The most common reason of deadlocks is
+        # changing only the date to current date. This condition checks if
+        # something else is also changed other than dates.
+        # We assume that report status in source code comments belong to
+        # the first user who stored the reports. If another user stores the
+        # same project with same report status then we don't change it.
+        if (old_status, old_msg) == (new_status, new_message):
             return True
+
+        review_status.status = new_status
+        review_status.author = new_user
+        review_status.message = new_message
+        review_status.date = date or datetime.now()
+        session.add(review_status)
+
+        # Create a system comment if the review status or the message
+        # is changed.
+        old_review_status = escape_whitespaces(old_status.capitalize())
+        new_review_status = \
+            escape_whitespaces(review_status.status.capitalize())
+        if message:
+            system_comment_msg = \
+                'rev_st_changed_msg {0} {1} {2}'.format(
+                    old_review_status, new_review_status,
+                    escape_whitespaces(message))
         else:
-            msg = "No report found in the database."
-            raise codechecker_api_shared.ttypes.RequestFailed(
-                codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
+            system_comment_msg = 'rev_st_changed {0} {1}'.format(
+                old_review_status, new_review_status)
+
+        system_comment = self.__add_comment(review_status.bug_hash,
+                                            system_comment_msg,
+                                            CommentKindValue.SYSTEM,
+                                            review_status.date)
+        session.add(system_comment)
+
+        session.flush()
+
+        return True
 
     @exc_to_thrift_reqfail
     @timeit
@@ -1646,7 +1641,14 @@ class ThriftRequestHandler(object):
                 codechecker_api_shared.ttypes.ErrorCode.GENERAL, msg)
 
         with DBSession(self.__Session) as session:
-            res = self._setReviewStatus(session, report_id, status, message)
+            report = session.query(Report).get(report_id)
+            if report:
+                res = self._setReviewStatus(
+                    session, report.bug_id, status, message)
+            else:
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                    "No report found in the database.")
             session.commit()
 
             LOG.info("Review status of report '%s' was changed to '%s' by %s.",
@@ -2835,7 +2837,7 @@ class ThriftRequestHandler(object):
                             rw_status = ttypes.ReviewStatus.INTENTIONAL
 
                         self._setReviewStatus(session,
-                                              report_id,
+                                              bug_id,
                                               rw_status,
                                               src_comment_data[0]['message'],
                                               run_history_time)
@@ -3299,3 +3301,102 @@ class ThriftRequestHandler(object):
                                               failedFilePaths=failed_files,
                                               successful=stat.successful)
         return analyzer_statistics
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def exportData(self, run_filter):
+        self.__require_access()
+
+        with DBSession(self.__Session) as session:
+
+            # Logic for getting comments
+            comment_data_list = defaultdict(list)
+            comment_query = session.query(Comment, Report.bug_id) \
+                .outerjoin(Report, Report.bug_id == Comment.bug_hash) \
+                .order_by(Comment.created_at.desc())
+
+            if run_filter:
+                comment_query = process_run_filter(session, comment_query,
+                                                   run_filter) \
+                    .outerjoin(Run, Report.run_id == Run.id)
+
+            for data, report_id in comment_query:
+                comment_data = ttypes.CommentData(
+                    id=data.id,
+                    author=data.author,
+                    message=data.message.decode('utf-8'),
+                    createdAt=str(data.created_at),
+                    kind=data.kind)
+                comment_data_list[report_id].append(comment_data)
+
+            # Logic for getting review status
+            review_data_list = {}
+            review_query = session.query(ReviewStatus, Report.bug_id) \
+                .outerjoin(Report, Report.bug_id == ReviewStatus.bug_hash) \
+                .order_by(ReviewStatus.date.desc())
+
+            if run_filter:
+                review_query = process_run_filter(session, review_query,
+                                                  run_filter) \
+                    .outerjoin(Run, Report.run_id == Run.id)
+
+            for data, report_id in review_query:
+                review_data = create_review_data(data)
+                review_data_list[report_id] = review_data
+
+        return ExportData(comments=comment_data_list,
+                          reviewData=review_data_list)
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def importData(self, exportData):
+        self.__require_admin()
+        with DBSession(self.__Session) as session:
+
+            # Logic for importing comments
+            comment_bug_ids = list(exportData.comments.keys())
+            comment_query = session.query(Comment) \
+                .filter(Comment.bug_hash.in_(comment_bug_ids)) \
+                .order_by(Comment.created_at.desc())
+            comments_in_db = defaultdict(list)
+            for comment in comment_query:
+                comments_in_db[comment.bug_hash].append(comment)
+            for bug_hash, comments in exportData.comments.items():
+                db_comments = comments_in_db[bug_hash]
+                for comment in comments:
+                    date = datetime.strptime(comment.createdAt,
+                                             '%Y-%m-%d %H:%M:%S.%f')
+                    message = comment.message.encode('utf-8') \
+                        if comment.message else b''
+                    # See if the comment is already in the database.
+                    if any(c.created_at == date and
+                           c.kind == comment.kind and
+                           c.message == message for c in db_comments):
+                        continue
+                    c = Comment(bug_hash, comment.author, message,
+                                comment.kind, date)
+                    session.add(c)
+
+            # Logic for importing review status
+            review_bug_ids = list(exportData.reviewData.keys())
+            review_query = session.query(ReviewStatus) \
+                .filter(ReviewStatus.bug_hash.in_(review_bug_ids)) \
+                .order_by(ReviewStatus.date.desc())
+            db_review_data = {}
+            for review_status in review_query:
+                db_review_data[review_status.bug_hash] = review_status
+            for bug_hash, imported_review in exportData.reviewData.items():
+                db_status = db_review_data.get(bug_hash)
+                # The status is up-to-date.
+                if db_status and str(db_status.date) == imported_review.date:
+                    continue
+                date = datetime.strptime(imported_review.date,
+                                         '%Y-%m-%d %H:%M:%S.%f')
+                self._setReviewStatus(session,
+                                      bug_hash,
+                                      imported_review.status,
+                                      imported_review.comment,
+                                      date)
+
+            session.commit()
+            return True

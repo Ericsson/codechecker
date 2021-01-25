@@ -107,6 +107,9 @@ subcommand (`CodeChecker cmd --help`):
 | `products` | Access subcommands related to configuring the products managed by a CodeChecker server. |
 | `components` | Access subcommands related to configuring the source components managed by a CodeChecker server. |
 | `login` | Authenticate into CodeChecker servers that require privileges. |
+| `export` | Export comments and review statuses from CodeChecker. |
+| `import` | Import comments and review statuses into CodeChecker. |
+
 
 # Usage flow
 ![Usage diagram](images/usage_flow.png)

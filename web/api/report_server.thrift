@@ -362,6 +362,11 @@ struct AnalysisFailureInfo {
 }
 typedef map<string, list<AnalysisFailureInfo>> FailedFiles
 
+struct ExportData {
+  1: map<string, CommentDataList> comments,   // Map comments to report hashes.
+  2: map<string, ReviewData>      reviewData, // Map review data to report hashes.
+}
+
 service codeCheckerDBAccess {
 
   // Gives back all analyzed runs.
@@ -724,4 +729,14 @@ service codeCheckerDBAccess {
   AnalyzerStatisticsData getAnalysisStatistics(1: i64 runId,
                                                2: i64 runHistoryId)
                                                throws (1: codechecker_api_shared.RequestFailed requestError),
+  
+  // Export data from the server
+  // PERMISSION: PRODUCT_ACCESS
+  ExportData exportData(1: RunFilter runFilter)
+                        throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // Import data from the server.
+  // PERMISSION: PRODUCT_ADMIN
+  bool importData(1: ExportData exportData)
+                  throws (1: codechecker_api_shared.RequestFailed requestError),  
 }
