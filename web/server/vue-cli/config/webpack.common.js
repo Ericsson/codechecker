@@ -11,7 +11,7 @@ const helpers = require('./helpers');
 const METADATA = {
   'CC_SERVER_HOST': null,
   'CC_SERVER_PORT': 80,
-  'CC_API_VERSION': JSON.stringify('6.37')
+  'CC_API_VERSION': JSON.stringify('6.38')
 };
 
 function sassLoaderOptions(indentedSyntax=false) {
