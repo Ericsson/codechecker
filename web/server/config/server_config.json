@@ -8,6 +8,12 @@
       "compilation_database_size": 104857600
     }
   },
+  "keepalive": {
+    "enabled": false,
+    "idle": 600,
+    "interval": 30,
+    "max_probe": 10
+  },
   "authentication": {
     "enabled" : false,
     "realm_name" : "CodeChecker Privileged server",
