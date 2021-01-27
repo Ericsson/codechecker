@@ -65,6 +65,53 @@ size of uploadable compilation database file in *bytes*.
 
 *Default value*: 104857600 bytes = 100 MB
 
+### Keepalive
+Linux has built-in support for keepalive. When using a CodeChecker server
+with `Docker Swarm` it is recommended to use the following settings:
+```json
+{
+  "keepalive": {
+    "enabled": true,
+    "idle": 600,
+    "interval": 30,
+    "max_probe": 10
+  }
+}
+```
+
+Otherwise you may get a `[Errno 104] Connection reset by peer` exception on the
+server side and the client may hang forever.
+
+For more detailed information about these configuration option see:
+https://tldp.org/HOWTO/TCP-Keepalive-HOWTO/usingkeepalive.html
+
+For more information about this problem can be found here:
+https://github.com/moby/moby/issues/31208#issuecomment-303905737
+
+#### Idle time
+The interval between the last data packet sent (simple ACKs are not considered
+data) and the first keepalive probe.
+
+By default the server will use the value from your host configured by the
+`net.ipv4.tcp_keepalive_time` parameter. This value can be overriden by the
+`idle` key in the server configuration file.
+
+#### Interval time
+The interval between subsequential keepalive probes, regardless of what the
+connection has exchanged in the meantime.
+
+By default the server will use the value from your host configured by the
+`net.ipv4.tcp_keepalive_intvl` parameter. This value can be overriden by the
+`interval` key in the server configuration file.
+
+#### Probes
+The number of unacknowledged probes to send before considering the connection
+dead and notifying the application layer.
+
+By default the server will use the value from your host configured by the
+`net.ipv4.tcp_keepalive_probes` parameter. This value can be overriden by the
+`max_probe` key in the server configuration file.
+
 ## Authentication
 For authentication configuration options and which options can be reloaded see
 the [Authentication](authentication.md) documentation.

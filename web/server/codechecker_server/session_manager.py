@@ -180,6 +180,7 @@ class SessionManager(object):
         self.__worker_processes = get_worker_processes(scfg_dict)
         self.__max_run_count = scfg_dict.get('max_run_count', None)
         self.__store_config = scfg_dict.get('store', {})
+        self.__keepalive_config = scfg_dict.get('keepalive', {})
         self.__auth_config = scfg_dict['authentication']
 
         if force_auth:
@@ -656,6 +657,25 @@ class SessionManager(object):
         """
         limit = self.__store_config.get('limit', {})
         return limit.get('compilation_database_size')
+
+    def is_keepalive_enabled(self):
+        """
+        True if the keepalive functionality is explicitly enabled, otherwise it
+        will return False.
+        """
+        return self.__keepalive_config.get('enabled')
+
+    def get_keepalive_idle(self):
+        """ Get keepalive idle time. """
+        return self.__keepalive_config.get('idle')
+
+    def get_keepalive_interval(self):
+        """ Get keepalive interval time. """
+        return self.__keepalive_config.get('interval')
+
+    def get_keepalive_max_probe(self):
+        """ Get keepalive max probe count. """
+        return self.__keepalive_config.get('max_probe')
 
     def __get_local_session_from_db(self, token):
         """
