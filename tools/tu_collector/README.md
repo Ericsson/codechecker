@@ -15,7 +15,12 @@ make package
 ```
 
 ## Usage
-```sh
+<details>
+  <summary>
+    <i>$ <b>tu_collector --help</b> (click to expand)</i>
+  </summary>
+
+```
 usage: tu_collector [-h] (-b COMMAND | -l LOGFILE) [-f FILTER] (-z ZIP | -d)
                     [-v]
 
@@ -57,6 +62,7 @@ output arguments:
                         option. The result will not contain header files, even
                         if those are dependents as well.
 ```
+</details>
 
 ## Get source files which include a specific header file
 Header files can not be analyzed without a C/C++ file. If you change a header

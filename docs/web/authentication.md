@@ -342,6 +342,11 @@ by using the package's `config/session_client.json` as an example.
 > access this file. Executing `chmod 0600 ~/.codechecker.passwords.json` will
 > limit access to your user only.
 
+<details>
+  <summary>
+    <i>$ <b>CodeChecker cmd login --help</b> (click to expand)</i>
+  </summary>
+
 ```
 usage: CodeChecker cmd login [-h] [-d] [--url SERVER_URL]
                              [--verbose {info,debug,debug_analyzer}]
@@ -365,6 +370,7 @@ common arguments:
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level.
 ```
+</details>
 
 The user can log in onto the server by issuing the command `CodeChecker cmd
 login <username>`. After receiving an *Authentication successful!* message,
@@ -457,6 +463,11 @@ Personal tokens can be written instead of the user's password in the
 ```
 
 ## New personal access token <a name="new-personal-access-token"></a>
+<details>
+  <summary>
+    <i>$ <b>CodeChecker cmd token new --help</b> (click to expand)</i>
+  </summary>
+
 ```
 usage: CodeChecker cmd token new [-h] [--description DESCRIPTION]
                                  [--url SERVER_URL]
@@ -470,8 +481,13 @@ optional arguments:
                         A custom textual description to be shown alongside the
                         token.
 ```
+</details>
 
 ## List personal access tokens <a name="list-personal-access-token"></a>
+<details>
+  <summary>
+    <i>$ <b>CodeChecker cmd token list --help</b> (click to expand)</i>
+  </summary>
 
 ```
 usage: CodeChecker cmd token list [-h] [--url SERVER_URL]
@@ -484,8 +500,14 @@ List the available personal access tokens.
 optional arguments:
   -h, --help            show this help message and exit
 ```
+</details>
 
 ## Remove personal access token <a name="remove-personal-access-token"></a>
+<details>
+  <summary>
+    <i>$ <b>CodeChecker cmd token del --help</b> (click to expand)</i>
+  </summary>
+
 ```
 usage: CodeChecker cmd token del [-h] [--url SERVER_URL]
                                  [--verbose {info,debug,debug_analyzer}]
@@ -496,3 +518,4 @@ Removes the specified access token.
 positional arguments:
   TOKEN                 Personal access token which will be deleted.
 ```
+</details>
