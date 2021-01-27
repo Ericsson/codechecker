@@ -401,6 +401,12 @@ Environment variables
                            variable.
   CC_SEVERITY_MAP_FILE     Path of the checker-severity mapping config file.
                            Default: <package>/config/checker_severity_map.json
+  CC_LOGGER_DEBUG_FILE     If -b and -o flags are used with debug logs, the
+                           logging phase emits its debug logs in
+                           'codechecker.logger.debug' under the output
+                           directory by default. This environment variable
+                           can be given a file path which overrides this
+                           default location.
 
 Issue hashes
 ------------------------------------------------

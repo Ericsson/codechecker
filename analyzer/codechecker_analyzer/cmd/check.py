@@ -57,6 +57,12 @@ Environment variables
                            variable.
   CC_SEVERITY_MAP_FILE     Path of the checker-severity mapping config file.
                            Default: {}
+  CC_LOGGER_DEBUG_FILE     If -b and -o flags are used with debug logs, the
+                           logging phase emits its debug logs in
+                           'codechecker.logger.debug' under the output
+                           directory by default. This environment variable
+                           can be given a file path which overrides this
+                           default location.
 
 
 Issue hashes
@@ -766,6 +772,14 @@ def main(args):
             import codechecker_analyzer.cmd.log as log_module
             LOG.debug("Calling LOG with args:")
             LOG.debug(log_args)
+
+            # If not explicitly given the debug log file of ld_logger is placed
+            # in report directory if any. Otherwise parallel "CodeChecker
+            # check" commands would overwrite each other's log files under /tmp
+            # which is the default location for "CodeChecker check".
+            if 'CC_LOGGER_DEBUG_FILE' not in os.environ:
+                os.environ['CC_LOGGER_DEBUG_FILE'] = \
+                    os.path.join(output_dir, 'codechecker.logger.debug')
 
             log_module.main(log_args)
         elif 'logfile' in args:

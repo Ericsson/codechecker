@@ -99,8 +99,11 @@ def perform_build_command(logfile, command, context, keep_link, silent=False,
 
             is_debug = verbose and verbose in ['debug', 'debug_analyzer']
             if is_debug and 'CC_LOGGER_DEBUG_FILE' not in log_env:
-                log_file = os.path.join(os.path.dirname(logfile),
-                                        'codechecker.logger.debug')
+                if 'CC_LOGGER_DEBUG_FILE' in os.environ:
+                    log_file = os.environ['CC_LOGGER_DEBUG_FILE']
+                else:
+                    log_file = os.path.join(os.path.dirname(logfile),
+                                            'codechecker.logger.debug')
 
                 if os.path.exists(log_file):
                     os.remove(log_file)
