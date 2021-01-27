@@ -3035,7 +3035,10 @@ class ThriftRequestHandler(object):
         wrong_src_code_comments = []
         try:
             with TemporaryDirectory() as zip_dir:
+                LOG.info("[%s] Unzip storage file...", name)
                 zip_size = unzip(b64zip, zip_dir)
+                LOG.info("[%s] Unzip storage file done.", name)
+
                 if zip_size == 0:
                     raise codechecker_api_shared.ttypes.RequestFailed(
                         codechecker_api_shared.ttypes.
@@ -3070,9 +3073,11 @@ class ThriftRequestHandler(object):
                 filename_to_hash = util.load_json_or_empty(content_hash_file,
                                                            {})
 
+                LOG.info("[%s] Store source files...", name)
                 file_path_to_id = self.__store_source_files(source_root,
                                                             filename_to_hash,
                                                             trim_path_prefixes)
+                LOG.info("[%s] Store source files done.", name)
 
                 run_history_time = datetime.now()
 
@@ -3144,6 +3149,7 @@ class ThriftRequestHandler(object):
                                                             statistics,
                                                             description)
 
+                            LOG.info("[%s] Store reports...", name)
                             self.__store_reports(session,
                                                  report_dir,
                                                  source_root,
@@ -3155,6 +3161,7 @@ class ThriftRequestHandler(object):
                                                  skip_handler,
                                                  checkers,
                                                  trim_path_prefixes)
+                            LOG.info("[%s] Store reports done.", name)
 
                             store_handler.setRunDuration(session,
                                                          run_id,
