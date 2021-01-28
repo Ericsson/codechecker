@@ -742,6 +742,9 @@ class CCSimpleHttpServer(HTTPServer):
                                 bind_and_activate=True)
             ssl_key_file = os.path.join(config_directory, "key.pem")
             ssl_cert_file = os.path.join(config_directory, "cert.pem")
+
+            self.configure_keepalive()
+
             if os.path.isfile(ssl_key_file) and os.path.isfile(ssl_cert_file):
                 LOG.info("Initiating SSL. Server listening on secure socket.")
                 LOG.debug("Using cert file: %s", ssl_cert_file)
@@ -758,6 +761,47 @@ class CCSimpleHttpServer(HTTPServer):
         except Exception as e:
             LOG.error("Couldn't start the server: %s", e.__str__())
             raise
+
+    def configure_keepalive(self):
+        """
+        Enable keepalive on the socket and some TCP keepalive configuration
+        option based on the server configuration file.
+        """
+        if not self.manager.is_keepalive_enabled():
+            return
+
+        keepalive_is_on = self.socket.getsockopt(socket.SOL_SOCKET,
+                                                 socket.SO_KEEPALIVE)
+        if keepalive_is_on != 0:
+            LOG.debug('Socket keepalive already on.')
+        else:
+            LOG.debug('Socket keepalive off, turning on.')
+
+        ret = self.socket.setsockopt(socket.SOL_SOCKET,
+                                     socket.SO_KEEPALIVE, 1)
+        if ret:
+            LOG.error('Failed to set socket keepalive: %s', ret)
+
+        idle = self.manager.get_keepalive_idle()
+        if idle:
+            ret = self.socket.setsockopt(socket.IPPROTO_TCP,
+                                         socket.TCP_KEEPIDLE, idle)
+            if ret:
+                LOG.error('Failed to set TCP keepalive idle: %s', ret)
+
+        interval = self.manager.get_keepalive_interval()
+        if interval:
+            ret = self.socket.setsockopt(socket.IPPROTO_TCP,
+                                         socket.TCP_KEEPINTVL, interval)
+            if ret:
+                LOG.error('Failed to set TCP keepalive interval: %s', ret)
+
+        max_probe = self.manager.get_keepalive_max_probe()
+        if max_probe:
+            ret = self.socket.setsockopt(socket.IPPROTO_TCP,
+                                         socket.TCP_KEEPCNT, max_probe)
+            if ret:
+                LOG.error('Failed to set TCP max keepalive probe: %s', ret)
 
     def terminate(self):
         """
