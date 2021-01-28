@@ -14,6 +14,7 @@ stdout.
 import argparse
 import os
 import shutil
+import sys
 import tempfile
 
 from codechecker_analyzer import analyzer_context
@@ -730,6 +731,10 @@ def main(args):
     """
 
     logger.setup_logger(args.verbose if 'verbose' in args else None)
+
+    if 'ctu_ast_mode' in args and 'ctu_phases' not in args:
+        LOG.error("Analyzer option 'ctu-ast-mode' requires CTU mode enabled")
+        sys.exit(1)
 
     def __update_if_key_exists(source, target, key):
         """Append the source Namespace's element with 'key' to target with
