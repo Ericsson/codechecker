@@ -49,7 +49,7 @@ class ThriftResultsHelper(BaseClientHelper):
 
     @ThriftClientCall
     def getDiffResultsHash(self, run_ids, report_hashes, diff_type,
-                           skip_detection_statuses):
+                           skip_detection_statuses, tag_ids):
         pass
 
     @ThriftClientCall

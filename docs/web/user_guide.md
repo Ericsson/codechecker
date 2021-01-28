@@ -324,7 +324,7 @@ optional arguments:
   -f CONFIG_DIRECTORY, --config-directory CONFIG_DIRECTORY
                         Directory where CodeChecker server should read server-
                         specific configuration (such as authentication
-                        settings, and SSL certificates) from. 
+                        settings, and SSL certificates) from.
                         (default: /home/<username>/.codechecker)
   --host LISTEN_ADDRESS
                         The IP address or hostname of the server on which it
@@ -454,10 +454,10 @@ access your server using the `https://host:port` URL format.
 
 To enable SSL simply place an SSL certificate to `<CONFIG_DIRECTORY>/cert.pem`
 and the corresponding private key to `<CONFIG_DIRECTORY>/key.pem`.
-You can generate these certificates for example 
+You can generate these certificates for example
 using the [openssl tool](https://www.openssl.org/).
-When the server finds these files upon start-up, 
-SSL will be automatically enabled. 
+When the server finds these files upon start-up,
+SSL will be automatically enabled.
 
 ### Managing running servers <a name="managing-running-servers"></a>
 
@@ -1097,7 +1097,9 @@ optional arguments:
                         of run name the the basename can contain * quantifiers
                         which matches any number of characters (zero or more).
                         So if you have run-a-1, run-a-2 and run-b-1 then
-                        "run-a*" selects the first two.
+                        "run-a*" selects the first two. In case of run names
+                        tag labels can also be used separated by a colon (:)
+                        character: "run_name:tag_name".
   -n NEW_RUNS [NEW_RUNS ...], --newname NEW_RUNS [NEW_RUNS ...]
                         The 'new' (right) side of the difference: these
                         analysis runs are compared to the -b/--basename runs.
@@ -1107,7 +1109,9 @@ optional arguments:
                         newname can contain * quantifiers which matches any
                         number of characters (zero or more). So if you have
                         run-a-1, run-a-2 and run-b-1 then "run-a*" selects the
-                        first two.
+                        first two. In case of run names tag labels can also be
+                        used separated by a colon (:) character:
+                        "run_name:tag_name".
   -o {plaintext,rows,table,csv,json,html,gerrit,codeclimate} [{plaintext,rows,table,csv,json,html,gerrit,codeclimate} ...], --output {plaintext,rows,table,csv,json,html,gerrit,codeclimate} [{plaintext,rows,table,csv,json,html,gerrit,codeclimate} ...]
                         The output format(s) to use in showing the data.
                         - html: multiple html files will be generated in the

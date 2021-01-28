@@ -412,7 +412,8 @@ service codeCheckerDBAccess {
   list<string> getDiffResultsHash(1: list<i64>    runIds,
                                   2: list<string> reportHashes,
                                   3: DiffType     diffType,
-                                  4: optional list<DetectionStatus> skipDetectionStatuses)
+                                  4: optional list<DetectionStatus> skipDetectionStatuses,
+                                  5: optional list<i64> tagIds)
                                   throws (1: codechecker_api_shared.RequestFailed requestError)
 
   // PERMISSION: PRODUCT_ACCESS
