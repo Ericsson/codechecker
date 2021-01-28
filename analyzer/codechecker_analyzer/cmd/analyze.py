@@ -817,6 +817,11 @@ def main(args):
     """
     logger.setup_logger(args.verbose if 'verbose' in args else None)
 
+    # CTU loading mode is only meaningful if CTU itself is enabled.
+    if 'ctu_ast_mode' in args and 'ctu_phases' not in args:
+        LOG.error("Analyzer option 'ctu-ast-mode' requires CTU mode enabled")
+        sys.exit(1)
+
     try:
         cmd_config.check_config_file(args)
     except FileNotFoundError as fnerr:
@@ -856,11 +861,6 @@ def main(args):
 
     # Process the skip list if present.
     skip_handler = __get_skip_handler(args)
-
-    # CTU loading mode is only meaningful if CTU itself is enabled.
-    if 'ctu_ast_mode' in args and 'ctu_phases' not in args:
-        LOG.error("Analyzer option 'ctu-ast-mode' requires CTU mode enabled")
-        sys.exit(1)
 
     # Enable alpha uniqueing by default if ctu analysis is used.
     if 'none' in args.compile_uniqueing and 'ctu_phases' in args:
