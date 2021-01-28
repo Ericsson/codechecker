@@ -6,6 +6,7 @@
     :selected-items="selectedItems"
     :loading="loading"
     :multiple="false"
+    :panel="panel"
     @clear="clear(true)"
     @input="setSelectedItems"
   >
@@ -171,6 +172,10 @@ export default {
 
         resolve();
       });
+    },
+
+    initPanel() {
+      this.panel = this.fromDateTime !== null || this.toDateTime !== null;
     },
 
     updateReportFilter() {

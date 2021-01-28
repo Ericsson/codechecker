@@ -73,6 +73,11 @@ export default {
     async afterInit() {
       this.registerWatchers();
       this.update();
+      this.initPanel();
+    },
+
+    initPanel() {
+      this.panel = this.selectedItems.length > 0;
     },
 
     async update() {

@@ -8,6 +8,7 @@
     :search="search"
     :loading="loading"
     :limit="defaultLimit"
+    :panel="panel"
     @clear="clear(true)"
     @input="setSelectedItems"
   >
