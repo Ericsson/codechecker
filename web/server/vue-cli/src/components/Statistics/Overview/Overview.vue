@@ -87,7 +87,7 @@
               </template>
 
               <template v-slot:append-outer>
-                months.
+                month(s).
               </template>
             </v-text-field>
           </div>
@@ -196,7 +196,7 @@ export default {
   position: absolute;
   right: 50px;
   top: 0px;
-  z-index: 1000;
+  z-index: 100;
 
   .last-month {
     width: 180px;

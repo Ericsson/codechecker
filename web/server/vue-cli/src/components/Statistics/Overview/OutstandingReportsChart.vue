@@ -1,6 +1,6 @@
 <script>
 import _ from "lodash";
-import { endOfMonth, format, subMonths } from "date-fns";
+import { endOfMonth, format, getDate, subDays, subMonths } from "date-fns";
 import { Line, mixins } from "vue-chartjs";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 
@@ -95,8 +95,16 @@ export default {
 
         this.setChartData();
 
-        if (newSize > oldSize) {
-          this.fetchData(this.dates.slice(oldSize));
+        if (newSize > oldSize || newSize === 1) {
+          let dates = this.dates;
+
+          // If the granularity is month, we need to fetch data only for new
+          // dates.
+          if (newSize !== 1 && oldSize !== 1) {
+            dates = this.dates.slice(oldSize);
+          }
+
+          this.fetchData(dates);
         }
       }, 500)
     }
@@ -123,13 +131,22 @@ export default {
       if (isNaN(lastMonth) || lastMonth <=0)
         return;
 
-      const startOfCurrentMonth = endOfMonth(new Date());
+      let dateFormat = "yyyy. MMM";
 
-      this.dates = [ ...new Array(lastMonth).keys() ].map(i =>
-        subMonths(startOfCurrentMonth, i));
+      // If only 1 month is given, the chart can show a daily view.
+      if (lastMonth === 1) {
+        const today = new Date();
+        const day = getDate(today);
+        this.dates = [ ...new Array(day).keys() ].map(i => subDays(today, i));
+        dateFormat = "yyyy. MMM. dd";
+      } else {
+        const startOfCurrentMonth = endOfMonth(new Date());
+        this.dates = [ ...new Array(lastMonth).keys() ].map(i =>
+          subMonths(startOfCurrentMonth, i));
+      }
 
       this.chartData.labels = [ ...this.dates ].reverse().map((d, idx) => {
-        const date = format(d, "yyyy MMM");
+        const date = format(d, dateFormat);
         if (idx === this.dates.length - 1)
           return `${date} (Current)`;
         return date;
