@@ -82,6 +82,7 @@ static void getCurrentTime(char* buff_)
   return buff_;
 }
 
+// FIXME: Deprecated. Use the predictEscapedSizeFixed instead.
 int predictEscapedSize(const char* str_)
 {
   int size = 0;
@@ -105,6 +106,31 @@ int predictEscapedSize(const char* str_)
   return size;
 }
 
+int predictEscapedSizeFixed(const char* str_)
+{
+  int size = 0;
+
+  while (*str_)
+  {
+    if (strchr("\t\b\f\r\v\n ", *str_))
+      size += 2;
+    else if (*str_ == '"' || *str_ == '\\')
+      /* The quote (") and backslash (\) needs an extra escaped escape
+         character because the JSON string literals are surrounded by quote
+         by default. */
+      size += 3;
+
+    ++size;
+    ++str_;
+  }
+
+  /* For closing \0 character. */
+  ++size;
+
+  return size;
+}
+
+// FIXME: Deprecated. Use the shellEscapeStrFixed instead.
 char* shellEscapeStr(const char* str_, char* buff_)
 {
   char* out = buff_;
@@ -124,6 +150,44 @@ char* shellEscapeStr(const char* str_, char* buff_)
         *out++ = *str_++;
         break;
 
+      case '\"':
+        *out++ = '\\';
+        *out++ = '\\';
+        *out++ = '\\';
+        *out++ = *str_++;
+        break;
+
+      default:
+        *out++ = *str_++;
+        break;
+        }
+    }
+
+    *out = '\0';
+    return buff_;
+}
+
+char* shellEscapeStrFixed(const char* str_, char* buff_)
+{
+  char* out = buff_;
+
+  while (*str_)
+  {
+    switch (*str_)
+    {
+      case '\t':
+      case '\b':
+      case '\f':
+      case '\r':
+      case '\v':
+      case '\n':
+      case ' ':
+        *out++ = '\\';
+        *out++ = '\\';
+        *out++ = *str_++;
+        break;
+
+      case '\\':
       case '\"':
         *out++ = '\\';
         *out++ = '\\';
