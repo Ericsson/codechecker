@@ -31,6 +31,9 @@ pip3 install virtualenv
 # Install the latest clang see: https://formulae.brew.sh/formula/llvm
 brew install llvm@10.0.0
 
+# Install npm
+brew install npm
+
 # Fetch source code.
 git clone https://github.com/Ericsson/CodeChecker.git --depth 1 ~/codechecker
 cd ~/codechecker
