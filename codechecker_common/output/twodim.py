@@ -50,6 +50,8 @@ def __to_rows(lines):
 
     str_parts = []
 
+    lines = [['' if e is None else e for e in line] for line in lines]
+
     # Count the column width.
     widths = []
     for line in lines:
@@ -87,6 +89,11 @@ def __to_table(lines, separate_head=True, separate_footer=False):
     """
 
     str_parts = []
+
+    # It is possible that one of the item in the line is None which will
+    # raise an exception when passed to the format function below. So this is
+    # the reason why we need to convert None values to valid strings here.
+    lines = [['' if e is None else e for e in line] for line in lines]
 
     # Count the column width.
     widths = []
@@ -129,6 +136,8 @@ def __to_csv(lines):
     """
 
     str_parts = []
+
+    lines = [['' if e is None else e for e in line] for line in lines]
 
     # Count the columns.
     columns = 0
