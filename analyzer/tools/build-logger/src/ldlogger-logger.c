@@ -20,12 +20,32 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+// FIXME: Delete this global anchor variable if the CC_LOGGER_NEW_ESCAPING
+//        option is not used.
+static const char newEscapingSentinel;
+
 static char* createJsonCommandString(const LoggerVector* args_)
 {
   size_t cmdSize = 1;  /* For closing \0 character. */
   char* cmd;
   char* currEnd;
   size_t i;
+
+  // FIXME: Delete this code block, if the CC_LOGGER_NEW_ESCAPING option
+  //        is not used anymore.
+  static const char *newEscaping = &newEscapingSentinel; // Lazy initialization.
+  if (newEscaping == &newEscapingSentinel)
+    newEscaping = getenv("CC_LOGGER_NEW_ESCAPING");
+
+  char* (*escapeFn)(const char*, char*);
+  int (*lengthPredictorFn)(const char*);
+  if (newEscaping == NULL) {
+    escapeFn = shellEscapeStr;
+    lengthPredictorFn = predictEscapedSize;
+  } else {
+    escapeFn = shellEscapeStrFixed;
+    lengthPredictorFn = predictEscapedSizeFixed;
+  }
 
   /* Calculate the length of the output buffer. */
   for (i = 0; i < args_->size; ++i)
@@ -36,7 +56,7 @@ static char* createJsonCommandString(const LoggerVector* args_)
       the predicted length including the closing \0 characters which will be
       replaced by space.
     */
-    cmdSize += predictEscapedSize((const char*) args_->data[i]);
+    cmdSize += lengthPredictorFn((const char*) args_->data[i]);
   }
 
   cmd = (char*) malloc(sizeof(char) * cmdSize);
@@ -46,12 +66,12 @@ static char* createJsonCommandString(const LoggerVector* args_)
   }
 
   currEnd = cmd;
-  currEnd += strlen(shellEscapeStr((const char*) args_->data[0], currEnd));
+  currEnd += strlen(escapeFn((const char*) args_->data[0], currEnd));
   for (i = 1; i < args_->size; ++i)
   {
     *currEnd = ' ';
     ++currEnd;
-    currEnd += strlen(shellEscapeStr((const char*) args_->data[i], currEnd));
+    currEnd += strlen(escapeFn((const char*) args_->data[i], currEnd));
   }
 
   *currEnd = '\0';
