@@ -15,6 +15,22 @@ source_file=/tmp/$source_file_name
 response_file=/tmp/logger_test_source.cpp.rsp
 reference_file=/tmp/logger_test_reference.json
 
+# Notes about testing:
+# Examine the actual argv of the gcc:
+#   strace -e execve -xx -s 200 bash -c "gcc -Wall -Wextra test.c"
+# Examine the output of the created binary:
+#   ./a.out | od -An -vtx1
+
+# arg1: expected stdout text as hexdump
+# arg2: name of the executable
+function assert_run_stdout_hexdump {
+  # run the binary, then convert the output to hex
+  # remove the very first space character, flatten the text
+  # then remove any trailing whitespaces.
+  actual_hex_output=`"$2" | od -An -vtx1 | sed 's/^ //' | tr '\n' ' ' | sed 's/\s*$//'`
+  diff <(echo -n "$actual_hex_output") <(echo -n "$1")
+}
+
 function assert_json {
   cat > $reference_file << EOF
 [
@@ -142,6 +158,89 @@ function test_space_quote {
     "$source_file"
 }
 
+function test_backslashes_new {
+  CC_LOGGER_NEW_ESCAPING="anything" \
+  bash -c "gcc -Wall -Wextra -DVARIABLE=\\\\\\\\\\\\\\\\built\\\\\\\\ages\\ \\\"ago\\\"\\\\\\\\ $source_file"
+
+  assert_json \
+    "-Wall -Wextra -DVARIABLE=\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\built\\\\\\\\\\\\\\\\ages\\\\ \\\\\\\"ago\\\\\\\"\\\\\\\\\\\\\\\\ $source_file" \
+    gcc \
+    "$source_file"
+
+  #                          -  -  \  \  b  u  i  l  t  \  a  g  e  s     "  a  g  o  "  \  -  -
+  assert_run_stdout_hexdump "2d 2d 5c 5c 62 75 69 6c 74 5c 61 67 65 73 20 22 61 67 6f 22 5c 2d 2d"  ./a.out
+}
+
+function test_backslashes_old {
+  bash -c "gcc -Wall -Wextra -DVARIABLE=\\\\\\\\\\\\\\\\built\\\\\\\\ages\\ \\\"ago\\\"\\\\\\\\ $source_file"
+
+  assert_json \
+    "-Wall -Wextra -DVARIABLE=\\\\\\\\\\\\\\\\\\\\\\\\built\\\\\\\\\\\\ages\\\\ \\\\\\\"ago\\\\\\\"\\\\\\\\\\\\ $source_file" \
+    gcc \
+    "$source_file"
+
+  #                          -  -  \  \  b  u  i  l  t  \  a  g  e  s     "  a  g  o  "  \  -  -
+  assert_run_stdout_hexdump "2d 2d 5c 5c 62 75 69 6c 74 5c 61 67 65 73 20 22 61 67 6f 22 5c 2d 2d"  ./a.out
+}
+
+function test_vectical_tab_new {
+  CC_LOGGER_NEW_ESCAPING="anything" \
+  bash -c "gcc -Wall -Wextra -DVARIABLE=\\\\\\\\ZZ\\\\x0bYYYY\\\\\\\\ $source_file"
+
+  assert_json \
+    "-Wall -Wextra -DVARIABLE=\\\\\\\\\\\\\\\\ZZ\\\\\\\\x0bYYYY\\\\\\\\\\\\\\\\ $source_file" \
+    gcc \
+    "$source_file"
+
+  # --\ZZ\vYYYY\-- as hex
+  #      ^^ ---- vertical tab --------------vv
+  #                          -  -  \  Z  Z  \v Y  Y  Y  Y  \  -  -
+  assert_run_stdout_hexdump "2d 2d 5c 5a 5a 0b 59 59 59 59 5c 2d 2d"  ./a.out
+}
+
+function test_vectical_tab_old {
+  bash -c "gcc -Wall -Wextra -DVARIABLE=\\\\\\\\ZZ\\\\x0bYYYY\\\\\\\\ $source_file"
+
+  assert_json \
+    "-Wall -Wextra -DVARIABLE=\\\\\\\\\\\\ZZ\\\\\\x0bYYYY\\\\\\\\\\\\ $source_file" \
+    gcc \
+    "$source_file"
+
+  # --\ZZ\vYYYY\-- as hex
+  #      ^^ ---- vertical tab --------------vv
+  #                          -  -  \  Z  Z  \v Y  Y  Y  Y  \  -  -
+  assert_run_stdout_hexdump "2d 2d 5c 5a 5a 0b 59 59 59 59 5c 2d 2d" ./a.out
+}
+
+function test_carriage_return_new {
+  CC_LOGGER_NEW_ESCAPING="anything" \
+  bash -c "gcc -Wall -Wextra -DVARIABLE=\\\\\\\\ZZ\\\\x0dYYYY\\\\\\\\ $source_file"
+
+  assert_json \
+    "-Wall -Wextra -DVARIABLE=\\\\\\\\\\\\\\\\ZZ\\\\\\\\x0dYYYY\\\\\\\\\\\\\\\\ $source_file" \
+    gcc \
+    "$source_file"
+
+  # --\ZZ\rYYYY\-- as hex
+  #      ^^ ---- carriage return -----------vv
+  #                          -  -  \  Z  Z  \r Y  Y  Y  Y  \  -  -
+  assert_run_stdout_hexdump "2d 2d 5c 5a 5a 0d 59 59 59 59 5c 2d 2d" ./a.out
+}
+
+function test_carriage_return_old {
+  bash -c "gcc -Wall -Wextra -DVARIABLE=\\\\\\\\ZZ\\\\x0dYYYY\\\\\\\\ $source_file"
+
+  assert_json \
+    "-Wall -Wextra -DVARIABLE=\\\\\\\\\\\\ZZ\\\\\\x0dYYYY\\\\\\\\\\\\ $source_file" \
+    gcc \
+    "$source_file"
+
+  # --\ZZ\rYYYY\-- as hex
+  #      ^^ ---- carriage return -----------vv
+  #                          -  -  \  Z  Z  \r Y  Y  Y  Y  \  -  -
+  assert_run_stdout_hexdump "2d 2d 5c 5a 5a 0d 59 59 59 59 5c 2d 2d" ./a.out
+}
+
 function test_response_file {
   echo "-I p0 -isystem p1" > $response_file
   bash -c "clang @$response_file $source_file"
@@ -195,7 +294,16 @@ function test_valid_json {
 
 #--- Run tests ---#
 
-echo "int main() {}" > $source_file
+cat > $source_file << EOF
+#include <stdio.h>
+
+#define xstr(a) str(a)
+#define str(a) #a
+
+int main() {
+  printf("--%s--", xstr(VARIABLE));
+}
+EOF
 
 for func in $(declare -F); do
   if [[ $func =~ test_ ]]; then
