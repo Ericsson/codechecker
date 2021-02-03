@@ -7,11 +7,12 @@
     :step-id="id"
     :type="type"
     :style="{ 'margin-left': marginLeft }"
+    :title="value"
   >
     <report-step-enum-icon
       :type="type"
       :index="index"
-      class="mr-1"
+      class="report-step-enum mr-1"
     />
 
     <v-btn
@@ -108,10 +109,21 @@ export default {
 };
 </script>
 
-<style type="scss">
+<style lang="scss">
 .report-step-msg {
   padding-top: 2px;
   padding-bottom: 2px;
   margin-bottom: 2px;
+  max-width: 640px;
+  white-space: inherit;
+
+  &.v-size--small {
+    min-height: 24px;
+    height: auto;
+
+    .v-chip.report-step-enum {
+      overflow: inherit;
+    }
+  }
 }
 </style>
