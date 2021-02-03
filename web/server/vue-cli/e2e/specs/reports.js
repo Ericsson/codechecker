@@ -115,7 +115,7 @@ module.exports = {
       .click("@item")
       .applyFilter();
 
-    section.closeFilterSettings(section);
+    reportPage.expect.section("@settingsMenu").to.not.be.present.before(5000);
 
     section.api.elements("@selectedItems", ({result}) => {
       browser.assert.ok(result.value.length === 2);
@@ -162,7 +162,7 @@ module.exports = {
     // Apply the filter.
     runMenu.applyFilter();
 
-    section.closeFilterSettings();
+    reportPage.expect.section("@settingsMenu").to.not.be.present.before(5000);
 
     section.api.elements("@selectedItems", ({ result }) => {
       browser.assert.ok(result.value.length === 1);
@@ -244,7 +244,7 @@ module.exports = {
     // Apply the filter.
     runMenu.applyFilter();
 
-    section.closeFilterSettings();
+    reportPage.expect.section("@settingsMenu").to.not.be.present.before(5000);
 
     section.api.elements("@selectedItems", ({ result }) => {
       browser.assert.ok(result.value.length === 1);
@@ -302,7 +302,7 @@ module.exports = {
       .toggleMenuItem(2)
       .applyFilter();
 
-    section.closeFilterSettings();
+    reportPage.expect.section("@settingsMenu").to.not.be.present.before(5000);
 
     section.api.elements("@selectedItems", ({result}) => {
       browser.assert.ok(result.value.length === 1);
@@ -320,7 +320,7 @@ module.exports = {
       .click("@regexItem")
       .applyFilter();
 
-    section.closeFilterSettings();
+    reportPage.expect.section("@settingsMenu").to.not.be.present.before(5000);
 
     section.api.elements("@selectedItems", ({result}) => {
       browser.assert.ok(result.value.length === 1);
@@ -338,7 +338,7 @@ module.exports = {
       .click("@regexItem")
       .applyFilter();
 
-    section.closeFilterSettings();
+    reportPage.expect.section("@settingsMenu").to.not.be.present.before(5000);
 
     section.api.elements("@selectedItems", ({result}) => {
       browser.assert.ok(result.value.length === 1);
@@ -357,7 +357,7 @@ module.exports = {
       .toggleMenuItem(5)
       .applyFilter();
 
-    section.closeFilterSettings();
+    reportPage.expect.section("@settingsMenu").to.not.be.present.before(5000);
 
     section.api.elements("@selectedItems", ({result}) => {
       browser.assert.ok(result.value.length === 3);
@@ -377,7 +377,7 @@ module.exports = {
       .toggleMenuItem(3)
       .applyFilter();
 
-    section.closeFilterSettings();
+    reportPage.expect.section("@settingsMenu").to.not.be.present.before(5000);
 
     section.api.elements("@selectedItems", ({result}) => {
       browser.assert.ok(result.value.length === 4);
@@ -394,7 +394,7 @@ module.exports = {
       .toggleMenuItem(0)
       .applyFilter();
 
-    section.closeFilterSettings();
+    reportPage.expect.section("@settingsMenu").to.not.be.present.before(5000);
 
     section.api.elements("@selectedItems", ({result}) => {
       browser.assert.ok(result.value.length === 1);
@@ -413,7 +413,7 @@ module.exports = {
       .toggleMenuItem(2)
       .applyFilter();
 
-    section.closeFilterSettings();
+    reportPage.expect.section("@settingsMenu").to.not.be.present.before(5000);
 
     section.api.elements("@selectedItems", ({result}) => {
       browser.assert.ok(result.value.length === 3);
@@ -473,7 +473,7 @@ module.exports = {
       .toggleMenuItem(0)
       .applyFilter();
 
-    section.closeFilterSettings();
+    reportPage.expect.section("@settingsMenu").to.not.be.present.before(5000);
 
     section.api.elements("@selectedItems", ({result}) => {
       browser.assert.ok(result.value.length === 1);
@@ -515,7 +515,7 @@ module.exports = {
       .click("@regexItem")
       .applyFilter();
 
-    section.closeFilterSettings();
+    reportPage.expect.section("@settingsMenu").to.not.be.present.before(5000);
 
     section.api.elements("@selectedItems", ({result}) => {
       browser.assert.ok(result.value.length === 1);

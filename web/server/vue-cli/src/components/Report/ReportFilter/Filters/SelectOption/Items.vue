@@ -148,7 +148,7 @@
         text
         class="apply-btn"
         color="primary"
-        @click="$emit('apply', selectedItems)"
+        @click="apply"
       >
         <v-icon left>
           mdi-check-circle-outline
@@ -232,7 +232,12 @@ export default {
     filter: _.debounce(async function (value) {
       const items = await this.search.filterItems(value);
       this.$emit("update:items", items);
-    }, 500)
+    }, 500),
+
+    apply() {
+      this.$emit("apply", this.selectedItems);
+      this.$emit("apply:finished");
+    }
   }
 };
 </script>
