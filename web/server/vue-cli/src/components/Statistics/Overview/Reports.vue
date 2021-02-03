@@ -120,7 +120,10 @@ export default {
   mixins: [ DateMixin ],
   props: {
     bus: { type: Object, required: true },
-    runIds: { type: Array, required: true },
+    runIds: {
+      required: true,
+      validator: v => typeof v === "object" || v === null
+    },
     reportFilter: { type: Object, required: true },
   },
   data() {
@@ -186,6 +189,7 @@ export default {
       rFilter.openReportsDate = this.getUnixTime(date[0]);
 
       const cmpData = new CompareData({
+        runIds: this.runIds,
         openReportsDate: this.getUnixTime(date[1]),
         diffType: DiffType.NEW
       });
