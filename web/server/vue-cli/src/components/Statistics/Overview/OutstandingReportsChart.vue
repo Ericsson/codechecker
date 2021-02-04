@@ -1,6 +1,9 @@
 <script>
 import _ from "lodash";
-import { endOfMonth, format, getDate, subDays, subMonths } from "date-fns";
+import {
+  endOfMonth, endOfWeek, endOfYear, format, subDays, subMonths, subWeeks,
+  subYears
+} from "date-fns";
 import { Line, mixins } from "vue-chartjs";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 
@@ -17,7 +20,8 @@ export default {
   props: {
     bus: { type: Object, required: true },
     getStatisticsFilters: { type: Function, required: true },
-    lastMonth: { type: String, required: true }
+    interval: { type: String, required: true },
+    resolution: { type: String, required: true },
   },
   data() {
     return {
@@ -88,25 +92,22 @@ export default {
   },
 
   watch: {
-    lastMonth: {
+    interval: {
       handler: _.debounce(function () {
         const oldSize = this.dates.length;
-        const newSize = parseInt(this.lastMonth);
+        const newSize = parseInt(this.interval);
 
         this.setChartData();
 
-        if (newSize > oldSize || newSize === 1) {
-          let dates = this.dates;
-
-          // If the granularity is month, we need to fetch data only for new
-          // dates.
-          if (newSize !== 1 && oldSize !== 1) {
-            dates = this.dates.slice(oldSize);
-          }
-
+        if (newSize > oldSize) {
+          const dates = this.dates.slice(oldSize);
           this.fetchData(dates);
         }
       }, 500)
+    },
+    resolution() {
+      this.setChartData();
+      this.fetchData(this.dates);
     }
   },
 
@@ -127,22 +128,35 @@ export default {
 
   methods: {
     setChartData() {
-      const lastMonth = parseInt(this.lastMonth);
-      if (isNaN(lastMonth) || lastMonth <=0)
+      const interval = parseInt(this.interval);
+      if (isNaN(interval) || interval <=0)
         return;
 
-      let dateFormat = "yyyy. MMM";
+      let dateFormat = "yyyy. MMM. dd";
 
-      // If only 1 month is given, the chart can show a daily view.
-      if (lastMonth === 1) {
+      if (this.resolution === "days") {
         const today = new Date();
-        const day = getDate(today);
-        this.dates = [ ...new Array(day).keys() ].map(i => subDays(today, i));
-        dateFormat = "yyyy. MMM. dd";
-      } else {
-        const startOfCurrentMonth = endOfMonth(new Date());
-        this.dates = [ ...new Array(lastMonth).keys() ].map(i =>
-          subMonths(startOfCurrentMonth, i));
+        this.dates = [ ...new Array(interval).keys() ].map(i =>
+          subDays(today, i));
+      }
+      else if (this.resolution === "weeks") {
+        const endOfCurrentWeek = endOfWeek(new Date(), { weekStartsOn: 1 });
+        this.dates = [ ...new Array(interval).keys() ].map(i =>
+          subWeeks(endOfCurrentWeek, i));
+      }
+      else if (this.resolution === "months") {
+        const endOfCurrentMonth = endOfMonth(new Date());
+        this.dates = [ ...new Array(interval).keys() ].map(i =>
+          subMonths(endOfCurrentMonth, i));
+
+        dateFormat = "yyyy. MMM";
+      }
+      else if (this.resolution === "years") {
+        const endOfCurrentYear = endOfYear(new Date());
+        this.dates = [ ...new Array(interval).keys() ].map(i =>
+          subYears(endOfCurrentYear, i));
+
+        dateFormat = "yyyy";
       }
 
       this.chartData.labels = [ ...this.dates ].reverse().map((d, idx) => {

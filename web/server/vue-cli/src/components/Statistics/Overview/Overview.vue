@@ -73,28 +73,43 @@
             </tooltip-help-icon>
           </v-card-title>
 
-          <div class="last-month-selector">
+          <v-form ref="form" class="interval-selector">
             <v-text-field
-              v-model="lastMonth"
-              class="last-month align-center"
+              :value="interval"
+              class="interval align-center"
               type="number"
               hide-details
               dense
               solo
+              @input="setInterval"
             >
               <template v-slot:prepend>
                 Last
               </template>
 
               <template v-slot:append-outer>
-                month(s).
+                <v-select
+                  :value="resolution"
+                  class="resolution"
+                  :items="resolutions"
+                  label="Resolution"
+                  hide-details
+                  dense
+                  solo
+                  @input="setResolution"
+                />
               </template>
             </v-text-field>
-          </div>
+
+            <div v-if="intervalError" class="red--text">
+              {{ intervalError }}
+            </div>
+          </v-form>
           <outstanding-reports-chart
             :bus="bus"
             :get-statistics-filters="getStatisticsFilters"
-            :last-month="lastMonth"
+            :interval="interval"
+            :resolution="resolution"
             :styles="{
               height: '400px',
               position: 'relative'
@@ -116,6 +131,7 @@
 </template>
 
 <script>
+import _ from "lodash";
 import { ccService, handleThriftError } from "@cc-api";
 import { DateMixin } from "@/mixins";
 import { BaseStatistics } from "@/components/Statistics";
@@ -139,11 +155,66 @@ export default {
   },
   mixins: [ BaseStatistics, DateMixin ],
   data() {
+    const defaultInterval = "7";
+
+    const resolutions = [ "days", "weeks", "months", "years" ];
+    const defaultResolution = resolutions[0];
+
+
+    let interval = this.$route.query["interval"];
+    if (this.validateIntervalValue(interval)) {
+      interval = defaultInterval;
+    }
+
+    let resolution = this.$route.query["resolution"];
+    if (!resolution || !resolutions.includes(resolution)) {
+      resolution = defaultResolution;
+    }
+
     return {
-      lastMonth: "6"
+      intervalError: null,
+      interval,
+      resolutions,
+      resolution
     };
   },
   methods: {
+    validateIntervalValue(val) {
+      if (!val || isNaN(parseInt(val))) {
+        return "Number is required!";
+      }
+
+      if (parseInt(val) > 31) {
+        return "Interval value should between 1-31!";
+      }
+
+      return null;
+    },
+
+    setInterval: _.debounce(function (val) {
+      this.intervalError = this.validateIntervalValue(val);
+      if (this.intervalError) return;
+
+      this.interval = val;
+      this.updateUrl();
+
+      this.intervalError = null;
+    }, 300),
+
+    setResolution(val) {
+      this.resolution = val;
+      this.updateUrl();
+    },
+
+    updateUrl() {
+      const queryParams = Object.assign({}, this.$route.query, {
+        interval: this.interval,
+        resolution: this.resolution
+      });
+
+      this.$router.replace({ query: queryParams }).catch(() => {});
+    },
+
     getNumberOfReports(runIds, reportFilter, cmpData) {
       return new Promise(resolve => {
         ccService.getClient().getRunResultCount(runIds, reportFilter, cmpData,
@@ -192,16 +263,19 @@ export default {
   cursor: pointer;
 }
 
-.last-month-selector {
+.interval-selector {
   position: absolute;
   right: 50px;
   top: 0px;
   z-index: 100;
 
-  .last-month {
-    width: 180px;
+  .interval {
+    width: 250px;
     border: 1px dashed grey;
     padding: 6px;
+  }
+  .resolution {
+    width: 120px;
   }
 }
 </style>
