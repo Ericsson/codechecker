@@ -152,6 +152,8 @@ class TestCtuFailure(unittest.TestCase):
             files = archive.namelist()
             self.assertIn("build-action", files)
             self.assertIn("analyzer-command", files)
+            self.assertIn("externalDefMap.txt", files)
+            self.assertNotIn("invocation-list.yml", files)
 
             def check_source_in_archive(source_in_archive):
                 source_file = os.path.join(self.test_dir, source_in_archive)
@@ -203,6 +205,8 @@ class TestCtuFailure(unittest.TestCase):
             files = archive.namelist()
             self.assertIn("build-action", files)
             self.assertIn("analyzer-command", files)
+            self.assertIn("externalDefMap.txt", files)
+            self.assertIn("invocation-list.yml", files)
 
             def check_source_in_archive(source_in_archive):
                 source_file = os.path.join(self.test_dir, source_in_archive)
@@ -254,6 +258,8 @@ class TestCtuFailure(unittest.TestCase):
 
             self.assertIn("build-action", files)
             self.assertIn("analyzer-command", files)
+            self.assertIn("externalDefMap.txt", files)
+            self.assertNotIn("invocation-list.yml", files)
 
             def check_source_in_archive(source_in_archive):
                 source_file = os.path.join(self.test_dir, source_in_archive)
@@ -307,6 +313,8 @@ class TestCtuFailure(unittest.TestCase):
 
             self.assertIn("build-action", files)
             self.assertIn("analyzer-command", files)
+            self.assertIn("externalDefMap.txt", files)
+            self.assertIn("invocation-list.yml", files)
 
             def check_source_in_archive(source_in_archive):
                 source_file = os.path.join(self.test_dir, source_in_archive)

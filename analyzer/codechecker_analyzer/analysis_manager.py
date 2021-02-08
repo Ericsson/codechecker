@@ -309,6 +309,20 @@ def handle_failure(source_analyzer, rh, zip_file, result_base, actions_map):
         archive.writestr("analyzer-command", ' '.join(rh.analyzer_cmd))
         archive.writestr("return-code", str(rh.analyzer_returncode))
 
+        if isinstance(source_analyzer, ClangSA) and \
+           source_analyzer.is_ctu_enabled:
+            LOG.debug("[ZIP] Writing externalDefMap...")
+            ctu_dir = source_analyzer.get_ctu_dir()
+            abspath_extdefmap = os.path.join(ctu_dir, "externalDefMap.txt")
+            archive.write(abspath_extdefmap, "externalDefMap.txt")
+
+            # Also copy invocation-list.yml if exists.
+            abspath_invocationlist = os.path.join(
+                ctu_dir, "invocation-list.yml")
+            if os.path.isfile(abspath_invocationlist):
+                LOG.debug("[ZIP] Writing invocation-list...")
+                archive.write(abspath_invocationlist, "invocation-list.yml")
+
         toolchain = gcc_toolchain.toolchain_in_args(
             shlex.split(action.original_command))
         if toolchain:
