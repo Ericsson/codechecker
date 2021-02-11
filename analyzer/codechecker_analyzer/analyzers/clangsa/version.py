@@ -7,8 +7,9 @@
 # -------------------------------------------------------------------------
 """Parse the 'clang --version' command output."""
 
-
+import os
 import re
+import shutil
 import subprocess
 
 
@@ -35,7 +36,8 @@ class ClangVersionInfoParser(object):
     instances from the version output of Clang.
     """
 
-    def __init__(self):
+    def __init__(self, analyzer_binary='clang'):
+        self.analyzer_binary = analyzer_binary
         self.clang_version_pattern = (
             r"(?P<vendor>clang|Apple LLVM) version (?P<major_version>[0-9]+)"
             r"\.(?P<minor_version>[0-9]+)\.(?P<patch_version>[0-9]+)")
@@ -46,17 +48,21 @@ class ClangVersionInfoParser(object):
     def parse(self, version_string):
         """Try to parse the version string using the predefined patterns."""
         version_match = re.search(self.clang_version_pattern, version_string)
+        if not version_match:
+            return False
+
         installed_dir_match = re.search(
             self.clang_installed_dir_pattern, version_string)
 
-        if not version_match or not installed_dir_match:
-            return False
+        installed_dir = os.path.dirname(shutil.which(self.analyzer_binary))
+        if installed_dir_match:
+            installed_dir = installed_dir_match.group('installed_dir')
 
         return ClangVersionInfo(
             version_match.group('major_version'),
             version_match.group('minor_version'),
             version_match.group('patch_version'),
-            installed_dir_match.group('installed_dir'),
+            installed_dir,
             version_match.group('vendor'))
 
 
@@ -71,6 +77,6 @@ def get(clang_binary, env=None):
         env=env,
         encoding="utf-8",
         errors="ignore")
-    version_parser = ClangVersionInfoParser()
+    version_parser = ClangVersionInfoParser(clang_binary)
     version_info = version_parser.parse(compiler_version)
     return version_info

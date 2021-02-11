@@ -75,7 +75,7 @@ class CTUAutodetection(object):
             LOG.debug('Failed to invoke command to get Clang version!')
             return None
 
-        version_parser = version.ClangVersionInfoParser()
+        version_parser = version.ClangVersionInfoParser(self.__analyzer_binary)
         version_info = version_parser.parse(analyzer_version)
 
         if not version_info:
