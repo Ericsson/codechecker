@@ -203,6 +203,13 @@ Useful tools that can also be used outside CodeChecker.
 
 # Install guide
 
+## Installing CodeChecker via Snap package manager
+CodeChecker is available on the [Snap Store](https://snapcraft.io/codechecker)
+and can be installed with the following command:
+```sh
+sudo snap install codechecker --classic
+```
+
 ## Linux
 
 For a detailed dependency list, and for instructions on how to install newer
