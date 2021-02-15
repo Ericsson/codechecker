@@ -26,7 +26,8 @@
         items,
         prevSelectedItems,
         cancel: cancelItemSelection,
-        select
+        select,
+        onApplyFinished
       }"
     >
       <v-menu
@@ -45,6 +46,7 @@
             :limit="defaultLimit"
             :format="formatRunTitle"
             @apply="apply"
+            @apply:finished="onApplyFinished"
             @cancel="cancelItemSelection"
             @select="select"
             @update:items="items.splice(0, items.length, ...$event)"

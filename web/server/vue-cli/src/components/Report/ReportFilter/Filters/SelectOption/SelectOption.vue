@@ -52,6 +52,7 @@
           :items="items"
           :prevSelectedItems="prevSelectedItems"
           :apply="applyFilters"
+          :onApplyFinished="onApplyFinished"
           :cancel="cancel"
           :select="select"
         >
@@ -62,6 +63,7 @@
             :multiple="multiple"
             :limit="limit"
             @apply="applyFilters"
+            @apply:finished="onApplyFinished"
             @cancel="cancel"
             @select="select"
           >
@@ -140,7 +142,7 @@ export default {
       reloadItems: true,
       menu: false,
       prevSelectedItems: [],
-      cancelled: false
+      preventApply: false
     };
   },
 
@@ -158,7 +160,7 @@ export default {
       if (show) {
         this.$emit("on-menu-show");
 
-        this.cancelled = false;
+        this.preventApply = false;
 
         if (this.reloadItems) {
           this.items = await this.fetchItems();
@@ -166,7 +168,7 @@ export default {
         }
 
         this.select(JSON.parse(JSON.stringify(this.selectedItems)));
-      } else if (!this.cancelled) {
+      } else if (!this.preventApply) {
         this.applyFilters(this.prevSelectedItems);
       }
     }
@@ -187,6 +189,11 @@ export default {
   },
 
   methods: {
+    onApplyFinished() {
+      this.preventApply = true;
+      this.menu = false;
+    },
+
     /**
      * Returns true if the filter is changed, else false.
      */
@@ -206,7 +213,7 @@ export default {
     },
 
     cancel() {
-      this.cancelled = true;
+      this.preventApply = true;
       this.menu = false;
       this.$emit("cancel");
     },

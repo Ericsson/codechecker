@@ -26,15 +26,6 @@ const filterCommands = {
     return this;
   },
 
-  closeFilterSettings() {
-    this.click("@settings");
-
-    const reportPage = this.api.page.report();
-    reportPage.expect.section("@settingsMenu").to.not.be.present.before(5000);
-
-    return this;
-  },
-
   selectedItemClick(index) {
     return this.click({ selector: "@selectedItems", index: index});
   }
