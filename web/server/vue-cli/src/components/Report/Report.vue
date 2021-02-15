@@ -144,6 +144,8 @@
                 class="file-path py-0"
                 align-self="center"
               >
+                <copy-btn v-if="sourceFile" :value="sourceFile.filePath" />
+
                 <span
                   v-if="sourceFile"
                   class="file-path"
@@ -229,6 +231,7 @@ import {
 import { mapGetters } from "vuex";
 
 import { FillHeight } from "@/directives";
+import CopyBtn from "@/components/CopyBtn";
 import { UserIcon } from "@/components/Icons";
 
 import ReportTreeKind from "@/components/Report/ReportTree/ReportTreeKind";
@@ -246,6 +249,7 @@ const ReportStepMessageClass = Vue.extend(ReportStepMessage);
 export default {
   name: "Report",
   components: {
+    CopyBtn,
     ReportComments,
     ReportInfoButton,
     SelectReviewStatus,
