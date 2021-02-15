@@ -962,7 +962,7 @@ def parse_options(compilation_db_entry,
         'output': '',
         'lang': None,
         'arch': '',  # Target in the compile command set by -arch.
-        'target': defaultdict(dict),
+        'target': defaultdict(str),
         'source': ''}
 
     if 'arguments' in compilation_db_entry:
