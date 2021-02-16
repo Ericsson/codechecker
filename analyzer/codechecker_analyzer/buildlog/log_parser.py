@@ -1099,7 +1099,9 @@ def parse_options(compilation_db_entry,
             details['compiler_includes'][lang] = \
                 list(filter(__is_not_include_fixed, includes))
 
-    if not keep_gcc_intrin:
+    # Standard headers delivered by Clang also have *intrin.h files, but we
+    # shouldn't skip these when the original compiler was also Clang.
+    if not keep_gcc_intrin and not using_same_clang_to_compile_and_analyze:
         for lang, includes in details['compiler_includes'].items():
             details['compiler_includes'][lang] = \
                 list(filter(__contains_no_intrinsic_headers, includes))
