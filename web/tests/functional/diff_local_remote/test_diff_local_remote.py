@@ -22,6 +22,7 @@ import subprocess
 import unittest
 
 from libtest import env
+from libtest.codechecker import get_diff_results
 
 
 class LocalRemote(unittest.TestCase):
@@ -64,25 +65,6 @@ class LocalRemote(unittest.TestCase):
 
         self._env = self._test_cfg['codechecker_cfg']['check_env']
 
-    def run_cmd(self, diff_cmd, r_env=None):
-        """ Runs the given command and returns the output. """
-        if not r_env:
-            r_env = self._env
-
-        print(diff_cmd)
-        try:
-            out = subprocess.check_output(diff_cmd,
-                                          env=r_env,
-                                          cwd=os.environ['TEST_WORKSPACE'],
-                                          encoding="utf-8",
-                                          errors="ignore")
-        except subprocess.CalledProcessError as e:
-            print(e.output)
-            raise e
-
-        print(out)
-        return out
-
     def get_local_remote_diff(self, extra_args=None):
         """Return the unresolved results comparing local to a remote.
 
@@ -93,58 +75,25 @@ class LocalRemote(unittest.TestCase):
                     arguments to the diff command.
                     Like filter arguments or to change output format.
         """
-        remote_run_name = self._run_names[0]
+        if not extra_args:
+            extra_args = []
 
-        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
-                    "--unresolved",
-                    "--url", self._url,
-                    "-b", self._local_reports,
-                    "-n", remote_run_name
-                    ]
-        if extra_args:
-            diff_cmd.extend(extra_args)
-
-        print(diff_cmd)
-        try:
-            out = subprocess.check_output(
-                diff_cmd,
-                env=self._env,
-                cwd=os.environ['TEST_WORKSPACE'],
-                encoding="utf-8",
-                errors="ignore")
-        except subprocess.CalledProcessError as cerr:
-            print(cerr.output)
-
-        out = self.run_cmd(diff_cmd)
-        return out
+        return get_diff_results([self._local_reports], [self._run_names[0]],
+                                '--unresolved', None,
+                                ['--url', self._url, *extra_args])
 
     def test_local_to_remote_compare_count_new(self):
         """Count the new results with no filter in local compare mode."""
-        base_run_name = self._run_names[0]
-        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
-                    "--new",
-                    "--url", self._url,
-                    "-b", self._local_reports,
-                    "-n", base_run_name
-                    ]
-
-        out = self.run_cmd(diff_cmd)
+        out = get_diff_results([self._local_reports], [self._run_names[0]],
+                               '--new', None, ["--url", self._url])
 
         count = len(re.findall(r'\[core\.NullDereference\]', out))
-
         self.assertEqual(count, 4)
 
     def test_remote_to_local_compare_count_new(self):
         """Count the new results with no filter."""
-        base_run_name = self._run_names[0]
-        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
-                    "--new",
-                    "--url", self._url,
-                    "-b", base_run_name,
-                    "-n", self._local_reports
-                    ]
-
-        out = self.run_cmd(diff_cmd)
+        out = get_diff_results([self._run_names[0]], [self._local_reports],
+                               '--new', None, ["--url", self._url])
 
         # 5 new core.CallAndMessage issues.
         # 1 is suppressed in code
@@ -158,16 +107,8 @@ class LocalRemote(unittest.TestCase):
 
     def test_local_compare_count_unres(self):
         """Count the unresolved results with no filter."""
-        base_run_name = self._run_names[0]
-        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
-                    "--unresolved",
-                    "--url", self._url,
-                    "-b", self._local_reports,
-                    "-n", base_run_name
-                    ]
-
-        out = self.run_cmd(diff_cmd)
-
+        out = get_diff_results([self._local_reports], [self._run_names[0]],
+                               '--unresolved', None, ["--url", self._url])
         print(out)
 
         count = len(re.findall(r'\[core\.CallAndMessage\]', out))
@@ -183,20 +124,8 @@ class LocalRemote(unittest.TestCase):
 
     def test_local_compare_count_unres_rgx(self):
         """Count the unresolved results with no filter and run name regex."""
-        base_run_name = self._run_names[0]
-
-        # Change test_files_blablabla to test_*_blablabla
-        base_run_name = base_run_name.replace('files', '*')
-
-        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
-                    "--unresolved",
-                    "--url", self._url,
-                    "-b", self._local_reports,
-                    "-n", base_run_name
-                    ]
-
-        out = self.run_cmd(diff_cmd)
-
+        out = get_diff_results([self._local_reports], [self._run_names[0]],
+                               '--unresolved', None, ["--url", self._url])
         print(out)
 
         count = len(re.findall(r'\[core\.CallAndMessage\]', out))
@@ -285,21 +214,12 @@ class LocalRemote(unittest.TestCase):
 
     def test_local_compare_res_html_output_unresolved(self):
         """Check that html files will be generated by using diff command."""
-        base_run_name = self._run_names[0]
-
         html_reports = os.path.join(self._local_reports, "html_reports")
 
-        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
-                    "--unresolved",
-                    "--url", self._url,
-                    "-b", base_run_name,
-                    "-n", self._local_reports,
-                    "-o", "html",
-                    "-e", html_reports,
-                    "--verbose", "debug"
-                    ]
-
-        self.run_cmd(diff_cmd)
+        get_diff_results([self._run_names[0]], [self._local_reports],
+                         '--unresolved', 'html',
+                         ["--url", self._url, '-e', html_reports,
+                          "--verbose", "debug"])
 
         diff_res = json.loads(self.get_local_remote_diff(['-o', 'json']))
 
@@ -372,19 +292,18 @@ class LocalRemote(unittest.TestCase):
 
         Every report should be in the gerrit review json.
         """
-        base_run_name = self._run_names[0]
-
         export_dir = os.path.join(self._local_reports, "export_dir1")
 
-        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
-                    "--new",
-                    "--url", self._url,
-                    "-b", base_run_name,
-                    "-n", self._local_reports,
-                    "-o", "gerrit",
-                    "-e", export_dir]
+        env = self._env.copy()
+        env["CC_REPO_DIR"] = ''
+        env["CC_CHANGED_FILES"] = ''
 
-        self.run_cmd(diff_cmd)
+        get_diff_results(
+            [self._run_names[0]], [self._local_reports],
+            '--new', 'gerrit',
+            ["--url", self._url, "-e", export_dir],
+            env)
+
         gerrit_review_file = os.path.join(export_dir, 'gerrit_review.json')
         self.assertTrue(os.path.exists(gerrit_review_file))
 
@@ -423,16 +342,16 @@ class LocalRemote(unittest.TestCase):
         Only one output format was selected
         the gerrit review json should be printed to stdout.
         """
-        base_run_name = self._run_names[0]
+        env = self._env.copy()
+        env["CC_REPO_DIR"] = ''
+        env["CC_CHANGED_FILES"] = ''
 
-        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
-                    "--new",
-                    "--url", self._url,
-                    "-b", base_run_name,
-                    "-n", self._local_reports,
-                    "-o", "gerrit"]
+        review_data = get_diff_results(
+            [self._run_names[0]], [self._local_reports],
+            '--new', 'gerrit',
+            ["--url", self._url],
+            env)
 
-        review_data = self.run_cmd(diff_cmd)
         print(review_data)
         review_data = json.loads(review_data)
         lbls = review_data["labels"]
@@ -464,17 +383,7 @@ class LocalRemote(unittest.TestCase):
         Only the reports which belong to the changed files should
         be in the gerrit review json.
         """
-        base_run_name = self._run_names[0]
-
         export_dir = os.path.join(self._local_reports, "export_dir2")
-
-        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
-                    "--unresolved",
-                    "--url", self._url,
-                    "-b", base_run_name,
-                    "-n", self._local_reports,
-                    "-o", "gerrit",
-                    "-e", export_dir]
 
         env = self._env.copy()
         env["CC_REPO_DIR"] = self._local_test_project
@@ -495,7 +404,12 @@ class LocalRemote(unittest.TestCase):
             changed_file.write(json.dumps(changed_files))
 
         env["CC_CHANGED_FILES"] = changed_file_path
-        self.run_cmd(diff_cmd, env)
+
+        get_diff_results([self._run_names[0]], [self._local_reports],
+                         '--unresolved', 'gerrit',
+                         ["--url", self._url, "-e", export_dir],
+                         env)
+
         gerrit_review_file = os.path.join(export_dir, 'gerrit_review.json')
         self.assertTrue(os.path.exists(gerrit_review_file))
 
@@ -523,22 +437,16 @@ class LocalRemote(unittest.TestCase):
 
     def test_diff_codeclimate_output(self):
         """ Test codeclimate output when using diff and set env vars. """
-        base_run_name = self._run_names[0]
-
         export_dir = os.path.join(self._local_reports, "export_dir")
-
-        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
-                    "--unresolved",
-                    "--url", self._url,
-                    "-b", base_run_name,
-                    "-n", self._local_reports,
-                    "-o", "codeclimate",
-                    "-e", export_dir]
 
         env = self._env.copy()
         env["CC_REPO_DIR"] = self._local_test_project
 
-        self.run_cmd(diff_cmd, env)
+        get_diff_results([self._run_names[0]], [self._local_reports],
+                         '--unresolved', 'codeclimate',
+                         ["--url", self._url, "-e", export_dir],
+                         env)
+
         codeclimate_issues_file = os.path.join(export_dir,
                                                'codeclimate_issues.json')
         self.assertTrue(os.path.exists(codeclimate_issues_file))
@@ -576,19 +484,13 @@ class LocalRemote(unittest.TestCase):
 
     def test_diff_no_trim_codeclimate_output(self):
         """ Test codeclimate output when using diff and don't set env vars. """
-        base_run_name = self._run_names[0]
-
         export_dir_path = os.path.join(self._local_reports, "export_dir")
 
-        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
-                    "--unresolved",
-                    "--url", self._url,
-                    "-b", base_run_name,
-                    "-n", self._local_reports,
-                    "-o", "codeclimate",
-                    "-e", export_dir_path]
+        get_diff_results([self._run_names[0]], [self._local_reports],
+                         '--unresolved', "codeclimate",
+                         ["-e", export_dir_path, "--url", self._url],
+                         self._env)
 
-        self.run_cmd(diff_cmd, self._env)
         issues_file_path = os.path.join(export_dir_path,
                                         'codeclimate_issues.json')
         self.assertTrue(os.path.exists(issues_file_path))
@@ -608,19 +510,18 @@ class LocalRemote(unittest.TestCase):
 
     def test_diff_multiple_output(self):
         """ Test multiple output type for diff command. """
-        base_run_name = self._run_names[0]
-
         export_dir = os.path.join(self._local_reports, "export_dir3")
 
-        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
-                    "--resolved",
-                    "--url", self._url,
-                    "-b", base_run_name,
-                    "-n", self._local_reports,
-                    "-o", "html", "gerrit", "plaintext",
-                    "-e", export_dir]
+        env = self._env.copy()
+        env["CC_REPO_DIR"] = ''
+        env["CC_CHANGED_FILES"] = ''
 
-        out = self.run_cmd(diff_cmd)
+        out = get_diff_results([self._run_names[0]], [self._local_reports],
+                               '--resolved', None,
+                               ["-o", "html", "gerrit", "plaintext",
+                                "-e", export_dir,
+                                "--url", self._url],
+                               env)
 
         # Check the plaintext output.
         count = len(re.findall(r'\[core\.NullDereference\]', out))
@@ -638,12 +539,6 @@ class LocalRemote(unittest.TestCase):
 
     def test_diff_remote_local_resolved_same(self):
         """ Test for resolved reports on same list remotely and locally. """
-        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
-                    "--resolved",
-                    "--url", self._url,
-                    "-b", self._run_names[0],
-                    "-n", self._remote_reports,
-                    "-o", "json"]
-
-        out = self.run_cmd(diff_cmd)
-        self.assertEqual(json.loads(out), [])
+        out = get_diff_results([self._run_names[0]], [self._remote_reports],
+                               '--resolved', 'json', ["--url", self._url])
+        self.assertEqual(out, [])

@@ -83,9 +83,9 @@ def wait_for_postgres_shutdown(workspace):
 
 
 def get_diff_results(basenames, newnames, diff_type, format_type=None,
-                     extra_args=None):
+                     extra_args=None, cc_env=None):
     """ Run diff command and get results in given format. """
-    diff_cmd = ['CodeChecker', 'cmd', 'diff', diff_type]
+    diff_cmd = [env.codechecker_cmd(), 'cmd', 'diff', diff_type]
 
     if format_type:
         diff_cmd.extend(['-o', format_type])
@@ -97,7 +97,7 @@ def get_diff_results(basenames, newnames, diff_type, format_type=None,
         diff_cmd.extend(extra_args)
 
     out = subprocess.check_output(
-        diff_cmd, encoding="utf-8", errors="ignore")
+        diff_cmd, encoding="utf-8", errors="ignore", env=cc_env)
 
     if format_type == "json":
         return json.loads(out)
@@ -394,7 +394,7 @@ def log_and_analyze(codechecker_cfg, test_project_path, clean_project=True):
                '-b', "'" + build_cmd + "'",
                ]
 
-    analyzers = codechecker_cfg.get('analyzers', [ 'clangsa' ])
+    analyzers = codechecker_cfg.get('analyzers', ['clangsa'])
     analyze_cmd = ['CodeChecker', 'analyze',
                    build_json,
                    '-o', codechecker_cfg['reportdir'],
