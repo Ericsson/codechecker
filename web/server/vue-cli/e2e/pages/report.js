@@ -201,7 +201,7 @@ module.exports = {
       elements: {
         name: ".component-name input[type='text']",
         value: ".component-value textarea",
-        description: ".component-description input[type='text']",
+        description: ".component-description textarea",
         saveBtn: ".save-btn",
         cancelBtn: ".cancel-btn",
       }
