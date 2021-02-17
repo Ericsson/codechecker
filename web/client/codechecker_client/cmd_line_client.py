@@ -30,8 +30,6 @@ from codechecker_api_shared.ttypes import RequestFailed
 from codechecker_common import logger, plist_parser, util
 from codechecker_common.report import Report
 from codechecker_common.output import twodim, gerrit, codeclimate
-from codechecker_common.source_code_comment_handler import \
-    SourceCodeCommentHandler, SpellException
 from codechecker_report_hash.hash import get_report_path_hash
 
 from codechecker_web.shared import webserver_context
@@ -218,39 +216,11 @@ def process_run_args(client, run_args_with_tag):
     return run_ids, run_names, run_tags
 
 
-def get_suppressed_reports(reports: List[Report]) -> List[str]:
+def get_suppressed_reports(reports: List[Report],
+                           args: List[str]) -> List[str]:
     """Returns a list of suppressed report hashes."""
-    suppressed_in_code = []
-    sc_handler = SourceCodeCommentHandler()
-
-    for rep in reports:
-        bughash = rep.report_hash
-        source_file = rep.file_path
-        bug_line = rep.main['location']['line']
-        checker_name = rep.main['check_name']
-        src_comment_data = []
-        with open(source_file, encoding='utf-8', errors='ignore') as sf:
-            try:
-                src_comment_data = sc_handler.filter_source_line_comments(
-                    sf,
-                    bug_line,
-                    checker_name)
-            except SpellException as ex:
-                LOG.warning("%s contains %s",
-                            os.path.basename(source_file),
-                            str(ex))
-
-        if len(src_comment_data) == 1:
-            suppressed_in_code.append(bughash)
-            LOG.debug("Bug %s is suppressed in code. file: %s Line %s",
-                      bughash, source_file, bug_line)
-        elif len(src_comment_data) > 1:
-            LOG.warning(
-                "Multiple source code comment can be found "
-                "for '%s' checker in '%s' at line %s. "
-                "This bug will not be suppressed!",
-                checker_name, source_file, bug_line)
-    return suppressed_in_code
+    return [rep.report_hash for rep in reports
+            if not rep.check_source_code_comments(args.review_status)]
 
 
 def get_report_dir_results(report_dirs: List[str],
@@ -858,7 +828,7 @@ def handle_diff_results(args):
         report_dir_results = get_report_dir_results(report_dirs,
                                                     args,
                                                     context.severity_map)
-        suppressed_in_code = get_suppressed_reports(report_dir_results)
+        suppressed_in_code = get_suppressed_reports(report_dir_results, args)
 
         diff_type = get_diff_type(args)
         run_ids, run_names, tag_ids = \
@@ -914,7 +884,7 @@ def handle_diff_results(args):
         report_dir_results = get_report_dir_results(report_dirs,
                                                     args,
                                                     context.severity_map)
-        suppressed_in_code = get_suppressed_reports(report_dir_results)
+        suppressed_in_code = get_suppressed_reports(report_dir_results, args)
 
         diff_type = get_diff_type(args)
         run_ids, run_names, tag_ids = \
@@ -1004,6 +974,9 @@ def handle_diff_results(args):
         new_results = get_report_dir_results(new_run_names,
                                              args,
                                              context.severity_map)
+
+        new_results = [res for res in new_results
+                       if res.check_source_code_comments(args.review_status)]
 
         base_hashes = set([res.report_hash for res in base_results])
         new_hashes = set([res.report_hash for res in new_results])

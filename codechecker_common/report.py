@@ -12,8 +12,11 @@ type of Report which will be printed or stored.
 
 from typing import Dict, List
 import json
+import os
 
 from codechecker_common.logger import get_logger
+from codechecker_common.source_code_comment_handler import \
+    SourceCodeCommentHandler, SpellException
 from codechecker_common import util
 
 LOG = get_logger('report')
@@ -44,11 +47,14 @@ class Report(object):
         # Dictionary fileid to filepath that bugpath events refer to
         self.__files = files
 
-        # Can contain the soruce line where the main section was reported.
+        # Can contain the source line where the main section was reported.
         self.__source_line = ""
 
         # Dictionary containing metadata information (analyzer name, version).
         self.__metadata = metadata
+
+        self.__source_code_comments = None
+        self.__sc_handler = SourceCodeCommentHandler()
 
     @property
     def line(self) -> int:
@@ -114,6 +120,52 @@ class Report(object):
     @property
     def metadata(self) -> Dict:
         return self.__metadata
+
+    @property
+    def source_code_comments(self):
+        """
+        Get source code comments for the report.
+        It will read the source file only once.
+        """
+        if self.__source_code_comments is not None:
+            return self.__source_code_comments
+
+        self.__source_code_comments = []
+
+        if not os.path.exists(self.file_path):
+            return self.__source_code_comments
+
+        with open(self.file_path, encoding='utf-8', errors='ignore') as sf:
+            try:
+                self.__source_code_comments = \
+                    self.__sc_handler.filter_source_line_comments(
+                        sf, self.line, self.check_name)
+            except SpellException as ex:
+                LOG.warning("%s contains %s", os.path.basename(self.file_path),
+                            str(ex))
+
+        if len(self.__source_code_comments) == 1:
+            LOG.debug("Report %s is suppressed in code. file: %s Line %s",
+                      self.report_hash, self.file_path, self.line)
+        elif len(self.__source_code_comments) > 1:
+            LOG.warning(
+                "Multiple source code comment can be found "
+                "for '%s' checker in '%s' at line %s. "
+                "This bug will not be suppressed!",
+                self.check_name, self.file_path, self.line)
+
+        return self.__source_code_comments
+
+    def check_source_code_comments(self, comment_types: List[str]):
+        """
+        True if it doesn't have a source code comment or if every comments have
+        specified comment types.
+        """
+        if not self.source_code_comments:
+            return True
+
+        return all(c['status'] in comment_types
+                   for c in self.source_code_comments)
 
     def __str__(self):
         msg = json.dumps(self.__main, sort_keys=True, indent=2)
