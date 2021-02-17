@@ -12,11 +12,8 @@
 Test the compraison of two remote (in the database) runs.
 """
 
-
-import json
 import os
 import re
-import subprocess
 import unittest
 from datetime import datetime, timedelta
 
@@ -25,6 +22,7 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import CompareData, \
     RunSortMode, RunSortType, Severity
 
 from libtest import env
+from libtest.codechecker import get_diff_results
 from libtest.debug_printer import print_run_results
 from libtest.thrift_client_to_db import get_all_run_results
 
@@ -503,19 +501,8 @@ class DiffRemote(unittest.TestCase):
         # Change test_files_blablabla to test_*_blablabla
         new_run_name = new_run_name.replace('files', '*')
 
-        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
-                    "--resolved",
-                    "--url", self._url,
-                    "-b", base_run_name,
-                    "-n", new_run_name
-                    ]
-        print(diff_cmd)
-        out = subprocess.check_output(
-            diff_cmd,
-            env=self._env,
-            cwd=os.environ['TEST_WORKSPACE'],
-            encoding="utf-8",
-            errors="ignore")
+        out = get_diff_results([base_run_name], [new_run_name], '--resolved',
+                               None, ["--url", self._url], self._env)
 
         # 4 disappeared core.CallAndMessage issues
         count = len(re.findall(r'\[core\.CallAndMessage\]', out))
@@ -528,38 +515,29 @@ class DiffRemote(unittest.TestCase):
             'reports')
         run_name = self._test_runs[2].name
 
-        def diff_cmd(base_name, diff_type):
-            return [
-                self._codechecker_cmd, 'cmd', 'diff',
-                '--url', self._url,
-                '-o', 'json',
-                '-b', base_name,
-                '-n', report_dir,
-                diff_type]
+        out = get_diff_results([f'{run_name}:t1'], [report_dir],
+                               '--new', 'json', ["--url", self._url])
+        self.assertEqual(len(out), 5)
 
-        out = subprocess.check_output(
-            diff_cmd(run_name + ':t1', '--new'))
-        self.assertEqual(len(json.loads(out)), 5)
+        out = get_diff_results([f'{run_name}:t2'], [report_dir],
+                               '--new', 'json', ["--url", self._url])
+        self.assertEqual(len(out), 0)
 
-        out = subprocess.check_output(diff_cmd(
-            run_name + ':t2', '--new'))
-        self.assertEqual(len(json.loads(out)), 0)
+        out = get_diff_results([f'{run_name}:t1'], [report_dir],
+                               '--unresolved', 'json', ["--url", self._url])
+        self.assertEqual(len(out), 26)
 
-        out = subprocess.check_output(diff_cmd(
-            run_name + ':t1', '--unresolved'))
-        self.assertEqual(len(json.loads(out)), 26)
+        out = get_diff_results([f'{run_name}:t2'], [report_dir],
+                               '--unresolved', 'json', ["--url", self._url])
+        self.assertEqual(len(out), 31)
 
-        out = subprocess.check_output(diff_cmd(
-            run_name + ':t2', '--unresolved'))
-        self.assertEqual(len(json.loads(out)), 31)
+        out = get_diff_results([f'{run_name}:t1'], [report_dir],
+                               '--resolved', 'json', ["--url", self._url])
+        self.assertEqual(len(out), 0)
 
-        out = subprocess.check_output(diff_cmd(
-            run_name + ':t1', '--resolved'))
-        self.assertEqual(len(json.loads(out)), 0)
-
-        out = subprocess.check_output(diff_cmd(
-            run_name + ':t2', '--resolved'))
-        self.assertEqual(len(json.loads(out)), 0)
+        out = get_diff_results([f'{run_name}:t2'], [report_dir],
+                               '--resolved', 'json', ["--url", self._url])
+        self.assertEqual(len(out), 0)
 
     def test_max_compound_select(self):
         """Test the maximum number of compound select query."""
@@ -703,19 +681,9 @@ class DiffRemote(unittest.TestCase):
         base_run_name = self._test_runs[0].name
         new_run_name = self._test_runs[1].name
 
-        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
-                    "-b", base_run_name, new_run_name,
-                    "-n", new_run_name, base_run_name,
-                    "--unresolved",
-                    "-o", "json",
-                    "--url", self._url]
-        print(diff_cmd)
-        out_json = subprocess.check_output(
-            diff_cmd,
-            env=self._env,
-            cwd=os.environ['TEST_WORKSPACE'],
-            encoding="utf-8",
-            errors="ignore")
+        unresolved_results = \
+            get_diff_results([base_run_name, new_run_name],
+                             [new_run_name, base_run_name],
+                             '--unresolved', 'json', ["--url", self._url])
 
-        unresolved_results = json.loads(out_json)
         self.assertNotEqual(len(unresolved_results), 0)
