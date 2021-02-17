@@ -20,8 +20,8 @@ import re
 import subprocess
 import unittest
 
-from libtest import env
-
+from libtest import env, codechecker
+from libtest.codechecker import get_diff_results
 
 class DiffLocal(unittest.TestCase):
 
@@ -35,16 +35,23 @@ class DiffLocal(unittest.TestCase):
 
         # Get the test configuration from the prepared int the test workspace.
         self._test_cfg = env.import_test_cfg(test_workspace)
-
+        self._codechecker_cfg = self._test_cfg['codechecker_cfg']
         # Get the test project configuration from the prepared test workspace.
         self._testproject_data = env.setup_test_proj_cfg(test_workspace)
         self.assertIsNotNone(self._testproject_data)
 
+        self._test_dir = os.path.join(test_workspace, 'test_files')
+        try:
+            os.makedirs(self._test_dir)
+        except os.error:
+            # Directory already exists.
+            pass
+
         # Get the CodeChecker cmd if needed for the tests.
         self._codechecker_cmd = env.codechecker_cmd()
 
-        self.base_reports = self._test_cfg['codechecker_cfg']['reportdir_base']
-        self.new_reports = self._test_cfg['codechecker_cfg']['reportdir_new']
+        self.base_reports = self._codechecker_cfg['reportdir_base']
+        self.new_reports = self._codechecker_cfg['reportdir_new']
 
     def test_resolved_json(self):
         """Get the resolved reports.
@@ -221,3 +228,83 @@ class DiffLocal(unittest.TestCase):
 
         # Rename the file back.
         os.rename(new_file_path, old_file_path)
+
+    def test_suppress_reports(self):
+        """
+        Check diff command when analysing the same source file which contains
+        source code comments.
+        """
+        cfg = dict(self._codechecker_cfg)
+        cfg['analyzers'] = ['clang-tidy']
+
+        makefile = f"all:\n\t$(CXX) -c main.cpp -Wno-all -Wno-extra " \
+                   f"-o /dev/null\n"
+        with open(os.path.join(self._test_dir, 'Makefile'), 'w',
+                  encoding="utf-8", errors="ignore") as f:
+            f.write(makefile)
+
+        project_info = {
+            "name": "suppress",
+            "clean_cmd": "",
+            "build_cmd": "make"
+        }
+        with open(os.path.join(self._test_dir, 'project_info.json'), 'w',
+                  encoding="utf-8", errors="ignore") as f:
+            json.dump(project_info, f)
+
+        # 1st phase.
+        content = """
+int main()
+{
+  sizeof(41);
+
+  sizeof(42);
+
+  sizeof(43);
+}"""
+
+        with open(os.path.join(self._test_dir, "main.cpp"), 'w',
+                  encoding="utf-8", errors="ignore") as f:
+            f.write(content)
+
+        report_dir_base = os.path.join(self._test_dir, "reports1")
+        cfg['reportdir'] = report_dir_base
+
+        codechecker.log_and_analyze(cfg, self._test_dir)
+
+        # 2nd phase.
+        content = """
+int main()
+{
+  // codechecker_intentional [all] This bug is suppressed in this change.
+  sizeof(41);
+
+  sizeof(42);
+
+  // codechecker_confirmed [all] This bug is a real bug
+  sizeof(44);
+
+  sizeof(45);
+}"""
+        with open(os.path.join(self._test_dir, "main.cpp"), 'w',
+                  encoding="utf-8", errors="ignore") as f:
+            f.write(content)
+
+        report_dir_new = os.path.join(self._test_dir, "reports2")
+        cfg['reportdir'] = report_dir_new
+
+        codechecker.log_and_analyze(cfg, self._test_dir)
+
+        # Run the diff command and check the results.
+        res = get_diff_results(
+            [report_dir_base], [report_dir_new], '--new', 'json')
+        print(res)
+        self.assertEqual(len(res), 2)
+
+        res = get_diff_results(
+            [report_dir_base], [report_dir_new], '--unresolved', 'json')
+        self.assertEqual(len(res), 1)
+
+        res = get_diff_results(
+            [report_dir_base], [report_dir_new], '--resolved', 'json')
+        self.assertEqual(len(res), 2)
