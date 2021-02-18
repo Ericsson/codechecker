@@ -761,10 +761,21 @@ def __cleanup_metadata(metadata_prev, metadata):
                 LOG.info("Remove plist file '%s' because it refers to a "
                          "source file ('%s') which was removed.",
                          plist_file, source_file)
-                del metadata['result_source_files'][plist_file]
+                __del_result_source_file(metadata, plist_file)
                 os.remove(plist_file)
             except OSError:
                 LOG.warning("Failed to remove plist file: %s", plist_file)
+
+
+def __del_result_source_file(metadata, file_path):
+    """ Remove file path from metadata result source files. """
+    if 'result_source_files' in metadata:
+        # Kept for backward-compatibility reason.
+        del metadata['result_source_files'][file_path]
+    else:
+        for tool in metadata.get('tools', {}):
+            result_source_files = tool.get('result_source_files', {})
+            del result_source_files[file_path]
 
 
 def __get_result_source_files(metadata):
