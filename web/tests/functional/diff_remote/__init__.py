@@ -189,6 +189,10 @@ def setup_package():
     # Export the test configuration to the workspace.
     env.export_test_cfg(TEST_WORKSPACE, test_config)
 
+    # Remove report directories which are not used anymore.
+    shutil.rmtree(test_proj_path_base)
+    shutil.rmtree(test_proj_path_new)
+
 
 def teardown_package():
     """Clean up after the test."""

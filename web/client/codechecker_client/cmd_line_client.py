@@ -1208,16 +1208,24 @@ def handle_diff_results(args):
         # Convert all the reports to the common Report
         # type for printing and formatting to various formats.
         converted_reports = []
+        changed_files = set()
         for report in reports:
             if not isinstance(report, Report):
                 r = report_type_converter.reportData_to_report(report)
                 if source_line_contents:
-                    source_line = convert.from_b64(
+                    r.source_line = convert.from_b64(
                         source_line_contents[report.fileId][report.line])
-                    r.source_line = source_line
                 converted_reports.append(r)
             else:
+                if not os.path.exists(report.file_path):
+                    changed_files.add(report.file_path)
+                    continue
+
+                report.source_line = util.get_line(report.file_path,
+                                                   report.line)
+
                 converted_reports.append(report)
+
         reports = converted_reports
 
         repo_dir = os.environ.get('CC_REPO_DIR')
@@ -1265,20 +1273,16 @@ def handle_diff_results(args):
         file_stats = defaultdict(int)
         severity_stats = defaultdict(int)
 
-        changed_files = set()
         for report in reports:
+            if report.source_line is None:
+                continue
+
             severity = context.severity_map.get(report.check_name,
                                                 'UNSPECIFIED')
             file_name = report.file_path
             checked_file = file_name \
                 + ':' + str(report.line) + ":" + str(report.col)
             check_msg = report.description
-            source_line = None
-            if os.path.exists(file_name):
-                source_line = util.get_line(file_name, report.line)
-            if source_line is None:
-                changed_files.add(file_name)
-                continue
 
             rows.append((severity,
                          checked_file,
