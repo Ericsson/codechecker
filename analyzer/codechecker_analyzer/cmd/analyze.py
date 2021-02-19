@@ -943,8 +943,11 @@ def main(args):
     analyzer_clang_binary = \
         context.analyzer_binaries.get(
             clangsa.analyzer.ClangSA.ANALYZER_NAME)
-    analyzer_clang_version = clangsa.version.get(analyzer_clang_binary,
-                                                 analyzer_env)
+
+    analyzer_clang_version = None
+    if analyzer_clang_binary:
+        analyzer_clang_version = clangsa.version.get(analyzer_clang_binary,
+                                                     analyzer_env)
 
     actions, skipped_cmp_cmd_count = log_parser.parse_unique_log(
         compile_commands,
