@@ -16,6 +16,7 @@
             :items="items"
             :hide-details="true"
             :menu-props="{ contentClass: 'select-review-status-menu' }"
+            :disabled="isReviewStatusDisabled"
             label="Set review status"
             item-text="label"
             item-value="id"
@@ -134,8 +135,16 @@ export default {
 
   computed: {
     ...mapGetters([
+      "currentProductConfig",
       "currentUser"
-    ])
+    ]),
+
+    isReviewStatusDisabled() {
+      // Disable by default.
+      if (!this.currentProductConfig) return true;
+
+      return this.currentProductConfig.isReviewStatusChangeDisabled;
+    }
   },
 
   created() {
