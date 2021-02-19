@@ -47,9 +47,9 @@ class TestCmdline(unittest.TestCase):
         test_class = self.__class__.__name__
         print('Running ' + test_class + ' tests in ' + test_workspace)
 
-        codechecker_cfg = env.import_test_cfg(test_workspace)[
+        self.codechecker_cfg = env.import_test_cfg(test_workspace)[
             'codechecker_cfg']
-        self.server_url = env.parts_to_url(codechecker_cfg)
+        self.server_url = env.parts_to_url(self.codechecker_cfg)
 
         # Get the test project configuration from the prepared test workspace.
         self._testproject_data = env.setup_test_proj_cfg(test_workspace)
@@ -122,6 +122,28 @@ class TestCmdline(unittest.TestCase):
 
         self.assertEqual(0, ret)
         self.assertEqual(1, len(json.loads(res)))
+
+    def test_proxy_settings(self):
+        """ Test proxy settings validation. """
+        server_url = f"{self.codechecker_cfg['viewer_host']}:" \
+                     f"{str(self.codechecker_cfg['viewer_port'])}"
+
+        env = self.codechecker_cfg['check_env'].copy()
+        env['HTTP_PROXY'] = server_url
+
+        res_cmd = [self._codechecker_cmd, 'cmd', 'runs',
+                   '--url', str(self.server_url)]
+        ret, _, err = run_cmd(res_cmd, env=env)
+        self.assertEqual(1, ret)
+        self.assertIn("Invalid proxy format", err)
+
+        env['HTTP_PROXY'] = f"http://{server_url}"
+        _, _, err = run_cmd(res_cmd, env=env)
+
+        # We can't check the return code here, because on host machine it will
+        # be zero, but on the GitHub action's job it will be 1 with "Failed to
+        # connect to the server" error message.
+        self.assertNotIn("Invalid proxy format", err)
 
     def test_runs_row(self):
         """ Test cmd row output type. """
