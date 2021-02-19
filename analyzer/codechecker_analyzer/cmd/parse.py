@@ -652,6 +652,9 @@ def main(args):
                   "when exporting to HTML.")
         sys.exit(1)
 
+    if export == 'gerrit' and gerrit.no_mandatory_env_var_is_set():
+        sys.exit(1)
+
     context = analyzer_context.get_context()
 
     # To ensure the help message prints the default folder properly,

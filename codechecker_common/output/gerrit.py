@@ -8,11 +8,14 @@
 """Helper and converter functions for the gerrit review json format."""
 
 from typing import Dict, List, Union
-from codechecker_common.report import Report
-
+import json
 import os
 import re
-import json
+
+from codechecker_common import logger
+from codechecker_common.report import Report
+
+LOG = logger.get_logger('system')
 
 
 def convert(reports: List[Report], severity_map: Dict[str, str]) -> Dict:
@@ -29,6 +32,29 @@ def convert(reports: List[Report], severity_map: Dict[str, str]) -> Dict:
     return __convert_reports(reports, repo_dir, report_url,
                              changed_files, changed_file_path,
                              severity_map)
+
+
+def no_mandatory_env_var_is_set():
+    """
+    True and print error messages if no mandatory environment variables are set
+    when using gerrit output.
+    """
+    has_error = False
+
+    if os.environ.get('CC_REPO_DIR') is None:
+        LOG.error("When using gerrit output the 'CC_REPO_DIR' environment "
+                  "variable needs to be set to the root directory of the "
+                  "sources, i.e. the directory where the repository was "
+                  "cloned!")
+        has_error = True
+
+    if os.environ.get('CC_CHANGED_FILES') is None:
+        LOG.error("When using gerrit output the 'CC_CHANGED_FILES' "
+                  "environment variable needs to be set to the path of "
+                  "changed files json from Gerrit!")
+        has_error = True
+
+    return has_error
 
 
 def __convert_reports(reports: List[Report],
