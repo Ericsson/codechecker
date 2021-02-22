@@ -7,7 +7,6 @@
 # -------------------------------------------------------------------------
 """Codeclimate output helpers."""
 
-import os
 from typing import Dict, List
 
 from codechecker_common.report import Report
@@ -29,8 +28,6 @@ def convert(reports: List[Report]) -> Dict:
 
 def __to_codeclimate(report: Report) -> Dict:
     """Convert a Report to Code Climate format."""
-    _, file_name = os.path.split(report.file_path)
-
     return {
         "type": "issue",
         "check_name": report.check_name,
@@ -38,7 +35,7 @@ def __to_codeclimate(report: Report) -> Dict:
         "categories": ["Bug Risk"],
         "fingerprint": report.report_hash,
         "location": {
-            "path": file_name,
+            "path": report.file_path,
             "lines": {
                 "begin": report.main['location']['line']
             }
