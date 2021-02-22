@@ -345,6 +345,11 @@ class Context(object):
 
                 self.__analyzers[name] = os.path.realpath(compiler_binary)
 
+                # If the compiler binary is a simlink to ccache, use the
+                # original compiler binary.
+                if self.__analyzers[name].endswith("/ccache"):
+                    self.__analyzers[name] = compiler_binary
+
     def __populate_replacer(self):
         """ Set clang-apply-replacements tool. """
         replacer_binary = self.pckg_layout.get('clang-apply-replacements')
