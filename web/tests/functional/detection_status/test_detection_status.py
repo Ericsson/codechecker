@@ -9,7 +9,6 @@
 """ detection_status function test. """
 
 
-import glob
 import json
 import os
 import shutil
@@ -373,12 +372,12 @@ int main()
 
     def test_detection_status_off_with_cfg(self):
         """ Test detection status with .clang-tidy config file. """
-        # Explicitly disable all modernize checkers from the command line but
+        # Explicitly disable all hicpp checkers from the command line but
         # enable all hicpp and modernize checkers from the .clang-tidy file.
         # If we store the results to the server than no reports will be marked
         # as OFF.
         cfg = dict(self._codechecker_cfg)
-        cfg['checkers'] = ['-d', 'modernize']
+        cfg['checkers'] = ['-d', 'hicpp']
         cfg['analyzer_config'] = ['clang-tidy:take-config-from-directory=true']
 
         self._create_source_file(1)
@@ -390,7 +389,11 @@ int main()
 
         hicpp_results = [r for r in reports
                          if r.checkerId.startswith('hicpp')]
-        self.assertEqual(len(hicpp_results), 1)
+        self.assertTrue(hicpp_results)
+
+        modernize_results = [r for r in reports
+                             if r.checkerId.startswith('modernize')]
+        self.assertTrue(modernize_results)
 
         offed_reports = [r for r in reports
                          if r.detectionStatus == DetectionStatus.OFF]
@@ -404,41 +407,6 @@ int main()
                                                 False)
         self.assertTrue([r for r in reports
                          if r.detectionStatus == DetectionStatus.UNRESOLVED])
-
-        # We turn off all the 'hicpp' checkers too. If we store the results to
-        # the server see that 'hicpp' results will be marked as 'OFF' now.
-        cfg['checkers'] = ['-d', 'modernize', '-d', 'hicpp']
-        self._check_source_file(cfg)
-
-        reports = self._cc_client.getRunResults(None, 100, 0, [], None, None,
-                                                False)
-
-        offed_reports = [r for r in reports
-                         if r.detectionStatus == DetectionStatus.OFF]
-        self.assertEqual(len(offed_reports), 1)
-
-        # We do not disable hicpp checkers from the command line, so it will
-        # be enabled by the .clang-tidy file. We analyze our test project and
-        # remove the plist files to see that every reports will be marked as
-        # Resolved.
-        # FIXME: Unfortunately it will not work because hicpp checkers will be
-        # disabled by the metadata.json config file so the server will mark
-        # these reports as OFF.
-        # A solution for this problem can be if we mark reports as OFF only and
-        # only if the user explicitly disabled a checker in the command line.
-        cfg['checkers'] = ['-d', 'modernize']
-        codechecker.analyze(cfg, self._test_dir)
-
-        # Remove all plist files.
-        report_dir = self._codechecker_cfg['reportdir']
-        for pfile in glob.glob(os.path.join(report_dir, '*.plist')):
-            os.remove(pfile)
-
-        codechecker.store(cfg, self._run_name)
-
-        offed_reports = [r for r in reports
-                         if r.detectionStatus == DetectionStatus.OFF]
-        self.assertEqual(len(offed_reports), 1)
 
         # Remove .clang-tidy configuration file.
         os.remove(self.clang_tidy_cfg)

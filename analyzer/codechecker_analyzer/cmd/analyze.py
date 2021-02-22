@@ -412,14 +412,18 @@ def add_arguments_to_parser(parser):
                                     "The collection of the options can be "
                                     "printed with "
                                     "'CodeChecker analyzers "
-                                    "--analyzer-config'. To disable the "
-                                    "default behaviour of this option you can "
-                                    "use the "
-                                    "'clang-tidy:take-config-from-directory="
-                                    "true' option. If the file at --tidyargs "
+                                    "--analyzer-config'.\n"
+                                    "If the file at --tidyargs "
                                     "contains a -config flag then those "
                                     "options extend these and override "
-                                    "\"HeaderFilterRegex\" if any.")
+                                    "\"HeaderFilterRegex\" if any.\n"
+                                    "To use analyzer configuration file "
+                                    "in case of Clang Tidy (.clang-tidy) use "
+                                    "the "
+                                    "'clang-tidy:take-config-from-directory="
+                                    "true' option. It will skip setting the "
+                                    "'-checks' parameter of the clang-tidy "
+                                    "binary.")
 
     analyzer_opts.add_argument('--checker-config',
                                dest='checker_config',
