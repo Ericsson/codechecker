@@ -163,3 +163,53 @@ class TestCmdline(unittest.TestCase):
         self.assertIn('clang-diagnostic-vla', out)
         # Make sure the header from `diagtool --tree` is ignored.
         self.assertNotIn('EEN', out)
+
+    def test_clangsa_checkers_description(self):
+        """
+        Test that descriptions for clangsa checkers are parsed properly.
+        """
+        checkers_cmd = [env.codechecker_cmd(), 'checkers',
+                        '--analyzers', 'clangsa',
+                        '-o', 'json', '--details']
+
+        _, out, _ = run_cmd(checkers_cmd)
+        checkers = json.loads(out)
+
+        for checker in checkers:
+            desc = checker['description']
+            self.assertTrue(desc)
+            self.assertFalse(desc[0].islower())
+
+    def test_checker_config(self):
+        """
+        Test that descriptions for clangsa checkers configs are parsed
+        properly.
+        """
+        checker_cfg_cmd = [env.codechecker_cmd(), 'checkers',
+                           '--analyzers', 'clangsa', '--checker-config',
+                           '-o', 'json', '--details']
+
+        _, out, _ = run_cmd(checker_cfg_cmd)
+        checker_cfg = json.loads(out)
+
+        for cfg in checker_cfg:
+            desc = cfg['description']
+            self.assertTrue(desc)
+            self.assertFalse(desc[0].islower())
+
+    def test_analyzer_config(self):
+        """
+        Test that descriptions for clangsa analyzer configs are parsed
+        properly.
+        """
+        analyzer_cfg_cmd = [env.codechecker_cmd(), 'analyzers',
+                            '--analyzer-config', 'clangsa',
+                            '-o', 'json', '--details']
+
+        _, out, _ = run_cmd(analyzer_cfg_cmd)
+        analyzer_cfg = json.loads(out)
+
+        for cfg in analyzer_cfg:
+            desc = cfg['description']
+            self.assertTrue(desc)
+            self.assertFalse(desc[0].islower())
