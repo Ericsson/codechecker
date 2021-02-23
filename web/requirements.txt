@@ -1,8 +1,8 @@
 lxml==4.6.2
-sqlalchemy==1.3.16
-alembic==1.4.2
-portalocker==1.7.0
-psutil==5.7.0
+sqlalchemy==1.3.23
+alembic==1.5.5
+portalocker==2.2.1
+psutil==5.8.0
 mypy_extensions==0.4.3
 
 codechecker_api==6.39.0
