@@ -330,7 +330,8 @@ def add_sources_to_zip(zip_file, files):
 
     with zipfile.ZipFile(zip_file, 'a') as archive:
         for f in files:
-            archive_path = os.path.join('sources-root', f.lstrip(os.sep))
+            archive_path = os.path.normpath(
+                os.path.join('sources-root', f.lstrip(os.sep)))
 
             try:
                 archive.getinfo(archive_path)
