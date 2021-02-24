@@ -323,6 +323,8 @@ class TestAnalyze(unittest.TestCase):
         errcode = process.returncode
         self.assertEqual(errcode, 3)
 
+        self.assertNotIn("UserWarning: Duplicate name", err)
+
         # We expect a failure archive to be in the failed directory.
         failed_files = os.listdir(failed_dir)
         self.assertEqual(len(failed_files), 1)
