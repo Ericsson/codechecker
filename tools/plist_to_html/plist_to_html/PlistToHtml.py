@@ -17,30 +17,40 @@ import shutil
 
 from collections import defaultdict
 from string import Template
+from typing import Callable, Dict, List, Optional, Set, Tuple
 from xml.parsers.expat import ExpatError
 
+SkipReportHandler = Callable[
+    [str, str, int, str, dict, Dict[int, str]],
+    Tuple[bool, list]
+]
 
-def get_last_mod_time(file_path):
-    """
-    Return the last modification time of a file.
-    """
+TrimPathPrefixHandler = Callable[[str], str]
+SeverityMap = Dict[str, str]
+
+
+def get_last_mod_time(file_path: str) -> int:
+    """ Return the last modification time of a file. """
     return os.stat(file_path)[9]
 
 
-def get_file_content(filename):
-    with open(filename, 'r', encoding='utf-8', errors='replace') as f:
+def get_file_content(file_path: str) -> str:
+    """ Return file content of the given file. """
+    with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
         return f.read()
 
 
-def twodim_to_table(lines, separate_head=True, separate_footer=False):
-    """
-    Pretty-prints the given two-dimensional array's lines.
-    """
+def twodim_to_table(
+    lines: List[List[str]],
+    separate_head=True,
+    separate_footer=False
+) -> Optional[str]:
+    """ Pretty-prints the given two-dimensional array's lines. """
 
     str_parts = []
 
     # Count the column width.
-    widths = []
+    widths: List[int] = []
     for line in lines:
         for i, size in enumerate([len(str(x)) for x in line]):
             while i >= len(widths):
@@ -52,8 +62,10 @@ def twodim_to_table(lines, separate_head=True, separate_footer=False):
     print_string = ""
     for i, width in enumerate(widths):
         print_string += "{" + str(i) + ":" + str(width) + "} | "
+
     if not print_string:
-        return
+        return ""
+
     print_string = print_string[:-3]
 
     # Print the actual data.
@@ -78,10 +90,14 @@ class HtmlBuilder(object):
     """
     Helper class to create html file from a report data.
     """
-    def __init__(self, layout_dir, severity_map=None):
+    def __init__(
+        self,
+        layout_dir: str,
+        severity_map: Optional[SeverityMap] = None
+    ):
         self._severity_map = severity_map if severity_map else {}
         self.layout_dir = layout_dir
-        self.generated_html_reports = {}
+        self.generated_html_reports: Dict[str, dict] = {}
 
         css_dir = os.path.join(self.layout_dir, 'css')
         js_dir = os.path.join(self.layout_dir, 'js')
@@ -123,7 +139,7 @@ class HtmlBuilder(object):
             self._tag_contents[tag] = get_file_content(
                 self._layout_tag_files[tag])
 
-    def create(self, output_path, report_data):
+    def create(self, output_path: str, report_data):
         """
         Create html file with the given report data to the output path.
         """
@@ -143,7 +159,7 @@ class HtmlBuilder(object):
                   errors='replace') as html_output:
             html_output.write(content)
 
-    def create_index_html(self, output_dir):
+    def create_index_html(self, output_dir: str):
         """
         Creates an index.html file which lists all available bugs which was
         found in the processed plist files. This also creates a link for each
@@ -216,12 +232,12 @@ class HtmlBuilder(object):
                   errors='replace') as html_output:
             html_output.write(content)
 
-    def create_statistics_html(self, output_dir):
+    def create_statistics_html(self, output_dir: str):
         """
         Creates an statistics.html file which contains statistics information
         from the HTML generation process.
         """
-        def severity_order(severity):
+        def severity_order(severity: str) -> int:
             """
             This function determines in which order severities should be
             printed to the output. This function can be given via "key"
@@ -237,19 +253,19 @@ class HtmlBuilder(object):
         for html_file in self.generated_html_reports:
             num_of_reports += len(self.generated_html_reports[html_file])
 
-        checker_statistics = defaultdict(int)
+        checker_statistics: Dict[str, int] = defaultdict(int)
         for html_file in self.generated_html_reports:
             for report in self.generated_html_reports[html_file]:
                 checker = report['checkerName']
                 checker_statistics[checker] += 1
 
-        checker_rows = []
-        severity_statistics = defaultdict(int)
+        checker_rows: List[List[str]] = []
+        severity_statistics: Dict[str, int] = defaultdict(int)
 
-        with io.StringIO() as content:
+        with io.StringIO() as string:
             for checker_name in sorted(checker_statistics):
                 severity = self._severity_map.get(checker_name, 'UNSPECIFIED')
-                content.write('''
+                string.write('''
                   <tr>
                     <td>{0}</td>
                     <td class="severity" severity="{1}">
@@ -260,17 +276,17 @@ class HtmlBuilder(object):
                 '''.format(checker_name, severity.lower(),
                            checker_statistics[checker_name]))
                 checker_rows.append([checker_name, severity,
-                                    checker_statistics[checker_name]])
+                                    str(checker_statistics[checker_name])])
                 severity_statistics[severity] += \
                     checker_statistics[checker_name]
-            checker_statistics_content = content.getvalue()
+            checker_statistics_content = string.getvalue()
 
-        severity_rows = []
+        severity_rows: List[List[str]] = []
 
-        with io.StringIO() as content:
+        with io.StringIO() as string:
             for severity in sorted(severity_statistics, key=severity_order):
                 num = severity_statistics[severity]
-                content.write('''
+                string.write('''
                   <tr>
                     <td class="severity" severity="{0}">
                       <i class="severity-{0}" title="{0}"></i>
@@ -278,13 +294,13 @@ class HtmlBuilder(object):
                     <td>{1}</td>
                   </tr>
                 '''.format(severity.lower(), num))
-                severity_rows.append([severity, num])
-            severity_statistics_content = content.getvalue()
+                severity_rows.append([severity, str(num)])
+            severity_statistics_content = string.getvalue()
 
         substitute_data = self._tag_contents
         substitute_data.update({
-            'number_of_plist_files': num_of_plist_files,
-            'number_of_reports': num_of_reports,
+            'number_of_plist_files': str(num_of_plist_files),
+            'number_of_reports': str(num_of_reports),
             'checker_statistics': checker_statistics_content,
             'severity_statistics': severity_statistics_content})
 
@@ -303,8 +319,8 @@ class HtmlBuilder(object):
 
         print("\n----======== Statistics ========----")
         statistics_rows = [
-            ["Number of processed plist files", num_of_plist_files],
-            ["Number of analyzer reports", num_of_reports]]
+            ["Number of processed plist files", str(num_of_plist_files)],
+            ["Number of analyzer reports", str(num_of_reports)]]
         print(twodim_to_table(statistics_rows, False))
 
         print("\n----==== Checker Statistics ====----")
@@ -316,8 +332,11 @@ class HtmlBuilder(object):
         print(twodim_to_table([header] + severity_rows))
 
 
-def get_report_data_from_plist(plist, skip_report_handler=None,
-                               trim_path_prefixes_handler=None):
+def get_report_data_from_plist(
+    plist: dict,
+    skip_report_handler: Optional[SkipReportHandler] = None,
+    trim_path_prefixes_handler: Optional[TrimPathPrefixHandler] = None
+):
     """
     Returns a dictionary with the source file contents and the reports parsed
     from the plist.
@@ -349,7 +368,7 @@ def get_report_data_from_plist(plist, skip_report_handler=None,
         report_line = diag['location']['line']
         report_hash = diag['issue_hash_content_of_line_in_context']
         checker_name = diag['check_name']
-        source_code_comments = []
+        source_code_comments: list = []
 
         if skip_report_handler:
             skip, source_code_comments = skip_report_handler(report_hash,
@@ -411,15 +430,20 @@ def get_report_data_from_plist(plist, skip_report_handler=None,
             'reports': reports}
 
 
-def plist_to_html(file_path, output_path, html_builder,
-                  skip_report_handler=None, trim_path_prefixes_handler=None):
+def plist_to_html(
+    file_path: str,
+    output_path: str,
+    html_builder: HtmlBuilder,
+    skip_report_handler: Optional[SkipReportHandler] = None,
+    trim_path_prefixes_handler: Optional[TrimPathPrefixHandler] = None
+) -> Tuple[Optional[str], Set[str]]:
     """
     Prints the results in the given file to HTML file.
 
     Returns the skipped plist files because of source
     file content change.
     """
-    changed_source = set()
+    changed_source: Set[str] = set()
     if not file_path.endswith(".plist"):
         print("\nSkipping input file {0} as it is not a plist.".format(
             file_path))
@@ -475,8 +499,18 @@ def plist_to_html(file_path, output_path, html_builder,
         return file_path, changed_source
 
 
-def parse(input_path, output_path, layout_dir, skip_report_handler=None,
-          html_builder=None, trim_path_prefixes_handler=None):
+def parse(
+    input_path: str,
+    output_path: str,
+    layout_dir: str,
+    skip_report_handler: Optional[SkipReportHandler] = None,
+    html_builder: Optional[HtmlBuilder] = None,
+    trim_path_prefixes_handler: Optional[TrimPathPrefixHandler] = None
+) -> Set[str]:
+    """
+    Parses plist files from the given input directory to the output directory.
+    Return a set of changed files.
+    """
     files = []
     input_path = os.path.abspath(input_path)
     output_dir = os.path.abspath(output_path)
@@ -501,7 +535,7 @@ def parse(input_path, output_path, layout_dir, skip_report_handler=None,
     skipped_report = set()
 
     # Source files which modification time changed since the last analysis.
-    changed_source_files = set()
+    changed_source_files: Set[str] = set()
 
     if not html_builder:
         html_builder = HtmlBuilder(layout_dir)
@@ -520,7 +554,7 @@ def parse(input_path, output_path, layout_dir, skip_report_handler=None,
     return changed_source_files
 
 
-def __add_arguments_to_parser(parser):
+def __add_arguments_to_parser(parser: argparse.ArgumentParser):
     parser.add_argument('input',
                         type=str,
                         nargs='+',
@@ -544,9 +578,7 @@ def __add_arguments_to_parser(parser):
 
 
 def main():
-    """
-    Plist parser main command line.
-    """
+    """ Plist parser main command line. """
     parser = argparse.ArgumentParser(
         prog="plist-to-html",
         description="Parse and create HTML files from one or more '.plist' "
