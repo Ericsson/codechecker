@@ -8,9 +8,17 @@ REPO_ROOT ?= REPO_ROOT=$(ROOT)
 # Nose test runner configuration options.
 NOSECFG = --config .noserc
 
-test: pycodestyle pylint test_unit
+test: mypy pycodestyle pylint test_unit
 
 test_in_env: pycodestyle_in_env pylint_in_env test_unit_in_env
+
+MYPY_TEST_CMD = mypy --ignore-missing-imports codechecker_report_hash tests
+
+mypy:
+	$(MYPY_TEST_CMD)
+
+mypy_in_env: venv_dev
+	$(ACTIVATE_DEV_VENV) && $(MYPY_TEST_CMD)
 
 PYCODESTYLE_TEST_CMD = pycodestyle codechecker_report_hash tests
 
