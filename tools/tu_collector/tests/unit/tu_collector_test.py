@@ -16,7 +16,6 @@ These files are compressed in a .zip file. This test intends to check if the
 import inspect
 import json
 import os
-import shutil
 import tempfile
 import unittest
 import zipfile
@@ -26,9 +25,7 @@ from tu_collector import tu_collector
 
 class TUCollectorTest(unittest.TestCase):
     def setUp(self):
-
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        self._test_proj_dir = os.path.join(dir_path, 'project')
+        self._test_proj_dir = os.path.abspath(os.environ['TEST_PROJ'])
 
         compile_json = os.path.join(self._test_proj_dir,
                                     'compile_command.json')
@@ -51,14 +48,18 @@ class TUCollectorTest(unittest.TestCase):
 
         os.remove(zip_file_name)
 
-        self.assertTrue(
-            any([path.endswith(os.path.join('/', 'main.c')) for path in files]))
-        self.assertTrue(
-            any([path.endswith(os.path.join('/', 'main.cpp')) for path in files]))
-        self.assertTrue(
-            any([path.endswith(os.path.join('/', 'vector')) for path in files]))
-        self.assertTrue(
-            any([path.endswith(os.path.join('/', 'hello.c')) for path in files]))
+        self.assertTrue(any(
+            [path.endswith(os.path.join('/', 'main.c')) for path in files]))
+
+        self.assertTrue(any(
+            [path.endswith(os.path.join('/', 'main.cpp')) for path in files]))
+
+        self.assertTrue(any(
+            [path.endswith(os.path.join('/', 'vector')) for path in files]))
+
+        self.assertTrue(any(
+            [path.endswith(os.path.join('/', 'hello.c')) for path in files]))
+
         self.assertIn('compilation_database.json', files)
 
     def test_ctu_collection(self):
@@ -81,11 +82,14 @@ class TUCollectorTest(unittest.TestCase):
                 with zipfile.ZipFile(zip_file.name) as archive:
                     files = archive.namelist()
 
-        self.assertTrue(
-            any([path.endswith(os.path.join('/', 'vector')) for path in files]))
-        self.assertTrue(
-            any([path.endswith(os.path.join('/', 'ctu.cpp')) for path in files]))
-        self.assertTrue(
-            any([path.endswith(os.path.join('/', 'zero.cpp')) for path in files]))
-        self.assertTrue(
-            any([path.endswith(os.path.join('/', 'zero.h')) for path in files]))
+        self.assertTrue(any(
+            [path.endswith(os.path.join('/', 'vector')) for path in files]))
+
+        self.assertTrue(any(
+            [path.endswith(os.path.join('/', 'ctu.cpp')) for path in files]))
+
+        self.assertTrue(any(
+            [path.endswith(os.path.join('/', 'zero.cpp')) for path in files]))
+
+        self.assertTrue(any(
+            [path.endswith(os.path.join('/', 'zero.h')) for path in files]))

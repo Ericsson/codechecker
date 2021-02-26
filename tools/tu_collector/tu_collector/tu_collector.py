@@ -186,7 +186,6 @@ def __gather_dependencies(command, build_dir):
     try:
         output = subprocess.check_output(
             command,
-            bufsize=-1,
             cwd=build_dir,
             encoding="utf-8",
             errors="replace")
@@ -255,7 +254,7 @@ def __get_ctu_buildactions(build_action, compilation_db, ctu_deps_dir):
     """
     ctu_deps_file = next(
         (f for f in os.listdir(ctu_deps_dir)
-        if __analyzer_action_hash(build_action) in f), None)
+         if __analyzer_action_hash(build_action) in f), None)
 
     if not ctu_deps_file:
         return
@@ -371,7 +370,8 @@ def zip_tu_files(zip_file, compilation_database, file_filter='*',
                     can't be identified.
     """
     if isinstance(compilation_database, str):
-        with open(compilation_database, encoding="utf-8", errors="ignore") as f:
+        with open(compilation_database,
+                  encoding="utf-8", errors="ignore") as f:
             compilation_database = json.load(f)
 
     no_sources = 'no-sources'
