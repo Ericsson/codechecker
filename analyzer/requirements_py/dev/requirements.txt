@@ -6,3 +6,4 @@ portalocker==1.7.0
 pylint==2.4.4
 mkdocs==1.0.4
 PyYAML==5.3.1
+mypy_extensions==0.4.3

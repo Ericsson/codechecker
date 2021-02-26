@@ -74,7 +74,9 @@ jobs:
 
       - name: Run tu-collector tests
         working-directory: tools/tu_collector
-        run: make test
+        run: |
+          pip install -r requirements_py/dev/requirements.txt
+          make test
 
   analyzer:
     name: Analyzer
