@@ -34,27 +34,27 @@ def convert(reports: List[Report], severity_map: Dict[str, str]) -> Dict:
                              severity_map)
 
 
-def no_mandatory_env_var_is_set():
+def mandatory_env_var_is_set():
     """
-    True and print error messages if no mandatory environment variables are set
-    when using gerrit output.
+    True if mandatory environment variables are set otherwise False and print
+    error messages.
     """
-    has_error = False
+    no_missing_env_var = True
 
     if os.environ.get('CC_REPO_DIR') is None:
         LOG.error("When using gerrit output the 'CC_REPO_DIR' environment "
                   "variable needs to be set to the root directory of the "
                   "sources, i.e. the directory where the repository was "
                   "cloned!")
-        has_error = True
+        no_missing_env_var = False
 
     if os.environ.get('CC_CHANGED_FILES') is None:
         LOG.error("When using gerrit output the 'CC_CHANGED_FILES' "
                   "environment variable needs to be set to the path of "
                   "changed files json from Gerrit!")
-        has_error = True
+        no_missing_env_var = False
 
-    return has_error
+    return no_missing_env_var
 
 
 def __convert_reports(reports: List[Report],

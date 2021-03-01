@@ -628,7 +628,7 @@ def parse_convert_reports(input_dirs: List[str],
     if out_format == "json":
         return [out_json.convert_to_parse(r) for r in all_reports]
 
-    LOG.error(f"Unknown export format: {out_format}")
+    LOG.error("Unknown export format: %s", out_format)
     return {}
 
 
@@ -652,7 +652,7 @@ def main(args):
                   "when exporting to HTML.")
         sys.exit(1)
 
-    if export == 'gerrit' and gerrit.no_mandatory_env_var_is_set():
+    if export == 'gerrit' and not gerrit.mandatory_env_var_is_set():
         sys.exit(1)
 
     context = analyzer_context.get_context()
