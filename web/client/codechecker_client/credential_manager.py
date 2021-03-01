@@ -98,22 +98,28 @@ class UserCredentials(object):
         self.token_file = get_session_file()
         LOG.info("Checking for local valid sessions.")
 
-        if os.path.exists(self.token_file):
-            token_dict = load_json_or_empty(self.token_file, {},
-                                            "user authentication")
-            check_file_owner_rw(self.token_file)
+        with open(self.token_file, 'a+',
+                  encoding="utf-8", errors="ignore") as f:
+            f.seek(0)
 
-            self.__tokens = token_dict.get('tokens')
-            LOG.debug("Found session information for these hosts:")
-            for k, _ in self.__tokens.items():
-                LOG.debug("  %s", k)
-        else:
-            with open(self.token_file, 'w',
-                      encoding="utf-8", errors="ignore") as f:
+            try:
+                portalocker.lock(f, portalocker.LOCK_EX)
+
+                token_dict = json.loads(f.read())
+
+                check_file_owner_rw(self.token_file)
+
+                self.__tokens = token_dict.get('tokens', {})
+                LOG.debug("Found session information for these hosts:")
+                for k, _ in self.__tokens.items():
+                    LOG.debug("  %s", k)
+            except json.JSONDecodeError:
                 json.dump({'tokens': {}}, f)
-            os.chmod(self.token_file, stat.S_IRUSR | stat.S_IWUSR)
+                os.chmod(self.token_file, stat.S_IRUSR | stat.S_IWUSR)
 
-            self.__tokens = {}
+                self.__tokens = {}
+            finally:
+                portalocker.unlock(f)
 
     def is_autologin_enabled(self):
         return self.__autologin
