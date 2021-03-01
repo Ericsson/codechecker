@@ -574,6 +574,38 @@ class LocalRemote(unittest.TestCase):
 
         shutil.rmtree(export_dir)
 
+    def test_diff_no_trim_codeclimate_output(self):
+        """ Test codeclimate output when using diff and don't set env vars. """
+        base_run_name = self._run_names[0]
+
+        export_dir_path = os.path.join(self._local_reports, "export_dir")
+
+        diff_cmd = [self._codechecker_cmd, "cmd", "diff",
+                    "--unresolved",
+                    "--url", self._url,
+                    "-b", base_run_name,
+                    "-n", self._local_reports,
+                    "-o", "codeclimate",
+                    "-e", export_dir_path]
+
+        self.run_cmd(diff_cmd, self._env)
+        issues_file_path = os.path.join(export_dir_path,
+                                        'codeclimate_issues.json')
+        self.assertTrue(os.path.exists(issues_file_path))
+
+        with open(issues_file_path, 'r',
+                  encoding="utf-8", errors="ignore") as f:
+            issues = json.load(f)
+
+        malloc_issues = [i for i in issues if i["check_name"] == "unix.Malloc"]
+        self.assertNotEqual(len(malloc_issues), 0)
+
+        file_path = malloc_issues[0]["location"]["path"]
+        self.assertTrue(os.path.isabs(file_path))
+        self.assertTrue(file_path.endswith(f"/new_delete.cpp"))
+
+        shutil.rmtree(export_dir_path)
+
     def test_diff_multiple_output(self):
         """ Test multiple output type for diff command. """
         base_run_name = self._run_names[0]
