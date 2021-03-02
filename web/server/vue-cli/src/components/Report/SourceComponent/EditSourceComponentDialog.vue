@@ -56,7 +56,7 @@
               :rules="rules.value"
             />
 
-            <v-text-field
+            <v-textarea
               v-model.trim="component.description"
               class="component-description "
               label="Description"
