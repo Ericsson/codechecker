@@ -13,6 +13,7 @@ Supported analyzer types.
 
 import os
 import re
+import sys
 
 from codechecker_analyzer import env
 from codechecker_common.logger import get_logger
@@ -114,6 +115,27 @@ def is_z3_refutation_capable(context):
                                                  analyzer_env)
 
 
+def print_unsupported_analyzers(errored):
+    """ Print error messages which occured during analyzer detection. """
+    for analyzer_binary, reason in errored:
+        LOG.warning("Analyzer '%s' is enabled but CodeChecker is failed to "
+                    "execute analysis with it: '%s'. Please check your "
+                    "'PATH' environment variable and the "
+                    "'config/package_layout.json' file!",
+                    analyzer_binary, reason)
+
+
+def check_available_analyzers(analyzers, errored):
+    """ Handle use case when no analyzer can be found on the user machine. """
+    if analyzers:
+        return
+
+    print_unsupported_analyzers(errored)
+    LOG.error("Failed to run command because no analyzers can be found on "
+              "your machine!")
+    sys.exit(1)
+
+
 def check_supported_analyzers(analyzers, context):
     """
     Checks the given analyzers in the current context for their executability
@@ -137,7 +159,7 @@ def check_supported_analyzers(analyzers, context):
     for analyzer_name in analyzers:
         if analyzer_name not in supported_analyzers:
             failed_analyzers.add((analyzer_name,
-                                  "Analyzer unsupported by CodeChecker."))
+                                  "Analyzer unsupported by CodeChecker!"))
             continue
 
         # Get the compiler binary to check if it can run.
@@ -145,8 +167,8 @@ def check_supported_analyzers(analyzers, context):
         analyzer_bin = analyzer_binaries.get(analyzer_name)
         if not analyzer_bin:
             failed_analyzers.add((analyzer_name,
-                                  "Failed to detect analyzer binary."))
-            available_analyzer = False
+                                  "Failed to detect analyzer binary!"))
+            continue
         elif not os.path.isabs(analyzer_bin):
             # If the analyzer is not in an absolute path, try to find it...
             found_bin = supported_analyzers[analyzer_name].\
@@ -171,7 +193,7 @@ def check_supported_analyzers(analyzers, context):
             # Analyzers unavailable under absolute paths are deliberately a
             # configuration problem.
             failed_analyzers.add((analyzer_name,
-                                  "Cannot execute analyzer binary."))
+                                  "Cannot execute analyzer binary!"))
             available_analyzer = False
 
         if available_analyzer:

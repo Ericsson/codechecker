@@ -176,8 +176,9 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
 
     analyzers = args.analyzers if 'analyzers' in args \
         else analyzer_types.supported_analyzers
-    analyzers, _ = analyzer_types.check_supported_analyzers(
+    analyzers, errored = analyzer_types.check_supported_analyzers(
         analyzers, context)
+    analyzer_types.check_available_analyzers(analyzers, errored)
 
     ctu_collect = False
     ctu_analyze = False
@@ -365,6 +366,8 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
 
     end_time = time.time()
     LOG.info("Analysis length: %s sec.", end_time - start_time)
+
+    analyzer_types.print_unsupported_analyzers(errored)
 
     metadata_tool['timestamps'] = {'begin': start_time,
                                    'end': end_time}

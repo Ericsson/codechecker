@@ -217,6 +217,7 @@ def main(args):
     working_analyzers, errored = analyzer_types.check_supported_analyzers(
         args.analyzers,
         context)
+    analyzer_types.check_available_analyzers(working_analyzers, errored)
 
     analyzer_environment = env.extend(context.path_env_extra,
                                       context.ld_lib_path_extra)
@@ -400,8 +401,4 @@ def main(args):
     if rows:
         print(twodim.to_str(args.output_format, header, rows))
 
-    for analyzer_binary, reason in errored:
-        LOG.error("Failed to get checkers for '%s'!"
-                  "The error reason was: '%s'", analyzer_binary, reason)
-        LOG.error("Please check your installation and the "
-                  "'config/package_layout.json' file!")
+    analyzer_types.print_unsupported_analyzers(errored)
