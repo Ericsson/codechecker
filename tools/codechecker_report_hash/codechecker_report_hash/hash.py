@@ -14,6 +14,15 @@ import plistlib
 import sys
 import traceback
 
+from enum import Enum
+
+from typing import List, Optional, Tuple
+
+if sys.version_info >= (3, 8):
+    from typing import TypedDict  # pylint: disable=no-name-in-module
+else:
+    from mypy_extensions import TypedDict
+
 LOG = logging.getLogger('codechecker_report_hash')
 
 handler = logging.StreamHandler()
@@ -24,13 +33,37 @@ LOG.setLevel(logging.INFO)
 LOG.addHandler(handler)
 
 
-class HashType(object):
+class DiagLoc(TypedDict):
+    line: int
+    col: int
+
+
+class DiagEdge(TypedDict):
+    start: Tuple[DiagLoc, DiagLoc]
+    end: Tuple[DiagLoc, DiagLoc]
+
+
+class DiagPath(TypedDict):
+    kind: str
+    message: str
+    location: DiagLoc
+    edges: List[DiagEdge]
+
+
+class Diag(TypedDict):
+    description: str
+    check_name: str
+    location: DiagLoc
+    path: List[DiagPath]
+
+
+class HashType(Enum):
     """ Report hash types. """
     CONTEXT_FREE = 1
     PATH_SENSITIVE = 2
 
 
-def __get_line(file_name, line_no, errors='ignore'):
+def __get_line(file_path: str, line_no: int, errors: str = 'ignore') -> str:
     """ Return the given line from the file.
 
     If line_no is larger than the number of lines in the file then empty
@@ -44,25 +77,25 @@ def __get_line(file_name, line_no, errors='ignore'):
     Changing the encoding error handling can influence the hash content!
     """
     try:
-        with open(file_name, mode='r',
-                  encoding='utf-8', errors=errors) as source_file:
-            for line in source_file:
+        with open(file_path, mode='r',
+                  encoding='utf-8', errors=errors) as f:
+            for line in f:
                 line_no -= 1
                 if line_no == 0:
                     return line
             return ''
     except IOError:
-        LOG.error("Failed to open file %s", file_name)
+        LOG.error("Failed to open file %s", file_path)
         return ''
 
 
-def __str_to_hash(string_to_hash, errors='ignore'):
+def __str_to_hash(string_to_hash: str, errors: str = 'ignore') -> str:
     """ Encodes the given string and generates a hash from it. """
     string_hash = string_to_hash.encode(encoding="utf-8", errors=errors)
     return hashlib.md5(string_hash).hexdigest()
 
 
-def _remove_whitespace(line_content, old_col):
+def _remove_whitespace(line_content: str, old_col: int) -> Tuple[str, int]:
     """
     This function removes white spaces from the line content parameter and
     calculates the new line location.
@@ -88,7 +121,7 @@ def _remove_whitespace(line_content, old_col):
            old_col - line_strip_len
 
 
-def __get_report_hash_path_sensitive(diag, source_file):
+def __get_report_hash_path_sensitive(diag: Diag, file_path: str) -> str:
     """ Report hash generation from the given diagnostic.
 
     Hash generation algorithm for older plist versions where no
@@ -109,7 +142,10 @@ def __get_report_hash_path_sensitive(diag, source_file):
        control diag section number in the bug path. If there are no control
        sections event section column numbers are used.
     """
-    def compare_ctrl_sections(curr, prev):
+    def compare_ctrl_sections(
+        curr: DiagPath,
+        prev: DiagPath
+    ) -> Optional[Tuple[int, int]]:
         """
         Compare two sections and return column numbers which
         should be included in the path hash or None if the
@@ -139,22 +175,22 @@ def __get_report_hash_path_sensitive(diag, source_file):
 
         main_section = path[-1]
 
-        m_loc = main_section.get('location')
-        source_line = m_loc.get('line')
+        m_loc = main_section.get('location', {})
+        source_line = m_loc.get('line', -1)
 
-        from_col = m_loc.get('col')
-        until_col = m_loc.get('col')
+        from_col = m_loc.get('col', -1)
+        until_col = m_loc.get('col', -1)
 
         # WARNING!!! Changing the error handling type for encoding errors
         # can influence the hash content!
-        line_content = __get_line(source_file, source_line, errors='ignore')
+        line_content = __get_line(file_path, source_line, errors='ignore')
 
-        if line_content == '' and not os.path.isfile(source_file):
+        if line_content == '' and not os.path.isfile(file_path):
             LOG.error("Failed to generate report hash.")
-            LOG.error('%s does not exists!', source_file)
+            LOG.error('%s does not exists!', file_path)
 
-        file_name = os.path.basename(source_file)
-        msg = main_section.get('message')
+        file_name = os.path.basename(file_path)
+        msg = main_section.get('message', '')
 
         hash_content = [file_name,
                         diag.get('check_name', 'unknown'),
@@ -209,7 +245,7 @@ def __get_report_hash_path_sensitive(diag, source_file):
         return ''
 
 
-def __get_report_hash_context_free(diag, source_file):
+def __get_report_hash_context_free(diag: Diag, file_path: str) -> str:
     """ Generate report hash without bug path.
 
     !!! NOT Compatible with the old hash generation method
@@ -222,15 +258,15 @@ def __get_report_hash_context_free(diag, source_file):
      * 'column numbers' from the main diag sections location.
     """
     try:
-        m_loc = diag.get('location')
-        source_line = m_loc.get('line')
+        m_loc = diag.get('location', {})
+        source_line = m_loc.get('line', -1)
 
-        from_col = m_loc.get('col')
-        until_col = m_loc.get('col')
+        from_col = m_loc.get('col', -1)
+        until_col = m_loc.get('col', -1)
 
         # WARNING!!! Changing the error handling type for encoding errors
         # can influence the hash content!
-        line_content = __get_line(source_file, source_line, errors='ignore')
+        line_content = __get_line(file_path, source_line, errors='ignore')
 
         # Remove whitespaces so the hash will be independet of the
         # source code indentation.
@@ -238,15 +274,15 @@ def __get_report_hash_context_free(diag, source_file):
 
         # Update the column number in sync with the
         # removed whitespaces.
-        until_col = until_col - (from_col-new_col)
+        until_col = until_col - (from_col - new_col)
         from_col = new_col
 
-        if line_content == '' and not os.path.isfile(source_file):
+        if line_content == '' and not os.path.isfile(file_path):
             LOG.error("Failed to include soruce line in the report hash.")
-            LOG.error('%s does not exists!', source_file)
+            LOG.error('%s does not exists!', file_path)
 
-        file_name = os.path.basename(source_file)
-        msg = diag.get('description')
+        file_name = os.path.basename(file_path)
+        msg = diag.get('description', '')
 
         hash_content = [file_name,
                         msg,
@@ -262,7 +298,7 @@ def __get_report_hash_context_free(diag, source_file):
         return ''
 
 
-def get_report_hash(diag, file_path, hash_type):
+def get_report_hash(diag: Diag, file_path: str, hash_type: HashType) -> str:
     """ Get report hash for the given diagnostic. """
     if hash_type == HashType.CONTEXT_FREE:
         return __get_report_hash_context_free(diag, file_path)
@@ -272,7 +308,7 @@ def get_report_hash(diag, file_path, hash_type):
         raise Exception("Invalid report hash type: " + str(hash_type))
 
 
-def get_report_path_hash(report):
+def get_report_path_hash(report) -> str:
     """ Returns path hash for the given bug path.
 
     This can be used to filter deduplications of multiple reports.
@@ -284,8 +320,8 @@ def get_report_path_hash(report):
     for event in events:
         file_name = \
             os.path.basename(report.files.get(event['location']['file']))
-        line = str(event['location']['line']) if 'location' in event else 0
-        col = str(event['location']['col']) if 'location' in event else 0
+        line = str(event['location']['line'] if 'location' in event else 0)
+        col = str(event['location']['col'] if 'location' in event else 0)
 
         report_path_hash += line + '|' + col + '|' + event['message'] + \
             file_name
@@ -300,13 +336,13 @@ def get_report_path_hash(report):
     return __str_to_hash(report_path_hash)
 
 
-def replace_report_hash(plist_file, hash_type=HashType.CONTEXT_FREE):
+def replace_report_hash(plist_file: str, hash_type=HashType.CONTEXT_FREE):
     """ Override hash in the given file by using the given version hash. """
     try:
-        with open(plist_file, 'rb+') as pfile:
-            plist = plistlib.load(pfile)
-            pfile.seek(0)
-            pfile.truncate()
+        with open(plist_file, 'rb+') as f:
+            plist = plistlib.load(f)
+            f.seek(0)
+            f.truncate()
             files = plist['files']
 
             for diag in plist['diagnostics']:
@@ -314,7 +350,7 @@ def replace_report_hash(plist_file, hash_type=HashType.CONTEXT_FREE):
                 report_hash = get_report_hash(diag, file_path, hash_type)
                 diag['issue_hash_content_of_line_in_context'] = report_hash
 
-            plistlib.dump(plist, pfile)
+            plistlib.dump(plist, f)
 
     except (TypeError, AttributeError, plistlib.InvalidFileException) as err:
         LOG.warning('Failed to process plist file: %s wrong file format?',
