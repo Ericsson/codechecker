@@ -376,6 +376,10 @@ class LocalRemote(unittest.TestCase):
 
         export_dir = os.path.join(self._local_reports, "export_dir1")
 
+        env = self._env.copy()
+        env["CC_REPO_DIR"] = ''
+        env["CC_CHANGED_FILES"] = ''
+
         diff_cmd = [self._codechecker_cmd, "cmd", "diff",
                     "--new",
                     "--url", self._url,
@@ -384,7 +388,7 @@ class LocalRemote(unittest.TestCase):
                     "-o", "gerrit",
                     "-e", export_dir]
 
-        self.run_cmd(diff_cmd)
+        self.run_cmd(diff_cmd, env)
         gerrit_review_file = os.path.join(export_dir, 'gerrit_review.json')
         self.assertTrue(os.path.exists(gerrit_review_file))
 
@@ -425,6 +429,10 @@ class LocalRemote(unittest.TestCase):
         """
         base_run_name = self._run_names[0]
 
+        env = self._env.copy()
+        env["CC_REPO_DIR"] = ''
+        env["CC_CHANGED_FILES"] = ''
+
         diff_cmd = [self._codechecker_cmd, "cmd", "diff",
                     "--new",
                     "--url", self._url,
@@ -432,7 +440,7 @@ class LocalRemote(unittest.TestCase):
                     "-n", self._local_reports,
                     "-o", "gerrit"]
 
-        review_data = self.run_cmd(diff_cmd)
+        review_data = self.run_cmd(diff_cmd, env)
         print(review_data)
         review_data = json.loads(review_data)
         lbls = review_data["labels"]
@@ -495,6 +503,13 @@ class LocalRemote(unittest.TestCase):
             changed_file.write(json.dumps(changed_files))
 
         env["CC_CHANGED_FILES"] = changed_file_path
+
+        with self.assertRaises(subprocess.CalledProcessError):
+            out = self.run_cmd(diff_cmd)
+            self.assertIn("'CC_REPO_DIR'", out)
+            self.assertIn("'CC_CHANGED_FILES'", out)
+            self.assertIn("needs to be set", out)
+
         self.run_cmd(diff_cmd, env)
         gerrit_review_file = os.path.join(export_dir, 'gerrit_review.json')
         self.assertTrue(os.path.exists(gerrit_review_file))
@@ -612,6 +627,10 @@ class LocalRemote(unittest.TestCase):
 
         export_dir = os.path.join(self._local_reports, "export_dir3")
 
+        env = self._env.copy()
+        env["CC_REPO_DIR"] = ''
+        env["CC_CHANGED_FILES"] = ''
+
         diff_cmd = [self._codechecker_cmd, "cmd", "diff",
                     "--resolved",
                     "--url", self._url,
@@ -620,7 +639,7 @@ class LocalRemote(unittest.TestCase):
                     "-o", "html", "gerrit", "plaintext",
                     "-e", export_dir]
 
-        out = self.run_cmd(diff_cmd)
+        out = self.run_cmd(diff_cmd, env)
 
         # Check the plaintext output.
         count = len(re.findall(r'\[core\.NullDereference\]', out))

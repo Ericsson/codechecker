@@ -844,6 +844,10 @@ def handle_diff_results(args):
                   "are selected!")
         sys.exit(1)
 
+    if 'gerrit' in args.output_format and \
+            not gerrit.mandatory_env_var_is_set():
+        sys.exit(1)
+
     check_deprecated_arg_usage(args)
     context = webserver_context.get_context()
     source_line_contents = {}
