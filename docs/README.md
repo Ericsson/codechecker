@@ -174,6 +174,7 @@ The following tools are supported:
 |                | [Coccinelle](/tools/report-converter/README.md#coccinelle)    |
 |                | [Smatch](/tools/report-converter/README.md#smatch)    |
 |                | [Kernel-Doc](/tools/report-converter/README.md#kernel-doc)    |
+|                | [Sparse](/tools/report-converter/README.md#sparse)    |
 | **Java**       | [SpotBugs](/tools/report-converter/README.md#spotbugs)    |
 |                | [Facebook Infer](/tools/report-converter/README.md#fbinfer)    |
 | **Python**     | [Pylint](/tools/report-converter/README.md#pylint)    |
