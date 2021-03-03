@@ -39,6 +39,22 @@ LOG = logger.get_logger('system')
 
 EXPORT_TYPES = ['html', 'json', 'codeclimate', 'gerrit']
 
+_package_root = analyzer_context.get_context().package_root
+_severity_map_file = os.path.join(_package_root, 'config',
+                                  'checker_severity_map.json')
+
+epilog_env_var = f"""
+  CC_CHANGED_FILES       Path of changed files json from Gerrit. Use it when
+                         generating gerrit output.
+  CC_REPO_DIR            Root directory of the sources, i.e. the directory
+                         where the repository was cloned. Use it when
+                         generating gerrit output.
+  CC_REPORT_URL          URL where the report can be found. Use it when
+                         generating gerrit output.
+  CC_SEVERITY_MAP_FILE   Path of the checker-severity mapping config file.
+                         Default: {_severity_map_file}
+"""
+
 
 class PlistToPlaintextFormatter(object):
     """
@@ -361,9 +377,6 @@ def get_argparser_ctor_args():
     This method returns a dict containing the kwargs for constructing an
     argparse.ArgumentParser (either directly or as a subparser).
     """
-
-    package_root = analyzer_context.get_context().package_root
-
     return {
         'prog': 'CodeChecker parse',
         'formatter_class': arg.RawDescriptionDefaultHelpFormatter,
@@ -375,20 +388,11 @@ Parse and pretty-print the summary and results from one or more
 "false_positive", "suppress" and "intentional" source code comments will not be
 printed by the `parse` command.""",
 
-        'epilog': """
+        'epilog': f"""
 Environment variables
 ------------------------------------------------
-  CC_SEVERITY_MAP_FILE   Path of the checker-severity mapping config file.
-  CC_REPO_DIR         Root directory of the sources, i.e. the directory where
-                      the repository was cloned. Use it when generating gerrit
-                      output.
-  CC_REPORT_URL       URL where the report can be found. Use it when generating
-                      gerrit output.
-  CC_CHANGED_FILES    Path of changed files json from Gerrit. Use it when
-                      generating gerrit output.
-                         Default: {}
-
-""".format(os.path.join(package_root, 'config', 'checker_severity_map.json')),
+{epilog_env_var}
+""",
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.

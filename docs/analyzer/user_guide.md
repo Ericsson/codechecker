@@ -398,6 +398,41 @@ output arguments:
 
 Environment variables
 ------------------------------------------------
+Environment variables for 'CodeChecker log' command:
+
+  CC_LOGGER_ABS_PATH       If the environment variable is defined, all relative
+                           paths in the compilation commands after '-I,
+                           -idirafter, -imultilib, -iquote, -isysroot -isystem,
+                           -iwithprefix, -iwithprefixbefore, -sysroot,
+                           --sysroot' will be converted to absolute PATH when
+                           written into the compilation database.
+  CC_LOGGER_DEBUG_FILE     Output file to print log messages. By default if we
+                           run the log command in debug mode it will generate
+                           a 'codechecker.logger.debug' file beside the log
+                           file.
+  CC_LOGGER_DEF_DIRS       If the environment variable is defined, the logger
+                           will extend the compiler argument list in the
+                           compilation database with the pre-configured include
+                           paths of the logged compiler.
+  CC_LOGGER_GCC_LIKE       Set to to a colon separated list to change which
+                           compilers should be logged. For example (default):
+                           export CC_LOGGER_GCC_LIKE="gcc:g++:clang:clang++:
+                           cc:c++". The logger will match any compilers with
+                           'gcc', 'g++', 'clang', 'clang++', 'cc' and 'c++' in
+                           their filenames.
+  CC_LOGGER_KEEP_LINK      If its value is not 'true' then object files will be
+                           removed from the build action. For example in case
+                           of this build command: 'gcc main.c object1.o
+                           object2.so' the 'object1.o' and 'object2.so' will be
+                           removed and only 'gcc main.c' will be captured. If
+                           only object files are provided to the compiler then
+                           the complete build action will be thrown away. This
+                           means that build actions which only perform linking
+                           will not be captured. We consider a file as object
+                           file if its extension is '.o', '.so' or '.a'.
+
+Environment variables for 'CodeChecker analyze' command:
+
   CC_ANALYZERS_FROM_PATH   Set to `yes` or `1` to enforce taking the analyzers
                            from the `PATH` instead of the given binaries.
   CC_CLANGSA_PLUGIN_DIR    If the CC_ANALYZERS_FROM_PATH environment variable
@@ -406,12 +441,18 @@ Environment variables
                            variable.
   CC_SEVERITY_MAP_FILE     Path of the checker-severity mapping config file.
                            Default: <package>/config/checker_severity_map.json
-  CC_LOGGER_DEBUG_FILE     If -b and -o flags are used with debug logs, the
-                           logging phase emits its debug logs in
-                           'codechecker.logger.debug' under the output
-                           directory by default. This environment variable
-                           can be given a file path which overrides this
-                           default location.
+
+Environment variables for 'CodeChecker parse' command:
+
+  CC_CHANGED_FILES       Path of changed files json from Gerrit. Use it when
+                         generating gerrit output.
+  CC_REPO_DIR            Root directory of the sources, i.e. the directory
+                         where the repository was cloned. Use it when
+                         generating gerrit output.
+  CC_REPORT_URL          URL where the report can be found. Use it when
+                         generating gerrit output.
+  CC_SEVERITY_MAP_FILE   Path of the checker-severity mapping config file.
+                         Default: <package>/config/checker_severity_map.json
 
 Issue hashes
 ------------------------------------------------
@@ -517,22 +558,27 @@ optional arguments:
 
 Environment variables
 ------------------------------------------------
-  CC_LOGGER_GCC_LIKE       Set to to a colon separated list to change which
-                           compilers should be logged. For example (default):
-                           export CC_LOGGER_GCC_LIKE="gcc:g++:clang:clang++:
-                           cc:c++". The logger will match any compilers with
-                           'gcc', 'g++', 'clang', 'clang++', 'cc' and 'c++' in
-                           their filenames.
-  CC_LOGGER_DEF_DIRS       If the environment variable is defined, the logger
-                           will extend the compiler argument list in the
-                           compilation database with the pre-configured include
-                           paths of the logged compiler.
+
   CC_LOGGER_ABS_PATH       If the environment variable is defined, all relative
                            paths in the compilation commands after '-I,
                            -idirafter, -imultilib, -iquote, -isysroot -isystem,
                            -iwithprefix, -iwithprefixbefore, -sysroot,
                            --sysroot' will be converted to absolute PATH when
                            written into the compilation database.
+  CC_LOGGER_DEBUG_FILE     Output file to print log messages. By default if we
+                           run the log command in debug mode it will generate
+                           a 'codechecker.logger.debug' file beside the log
+                           file.
+  CC_LOGGER_DEF_DIRS       If the environment variable is defined, the logger
+                           will extend the compiler argument list in the
+                           compilation database with the pre-configured include
+                           paths of the logged compiler.
+  CC_LOGGER_GCC_LIKE       Set to to a colon separated list to change which
+                           compilers should be logged. For example (default):
+                           export CC_LOGGER_GCC_LIKE="gcc:g++:clang:clang++:
+                           cc:c++". The logger will match any compilers with
+                           'gcc', 'g++', 'clang', 'clang++', 'cc' and 'c++' in
+                           their filenames.
   CC_LOGGER_KEEP_LINK      If its value is not 'true' then object files will be
                            removed from the build action. For example in case
                            of this build command: 'gcc main.c object1.o
@@ -543,10 +589,6 @@ Environment variables
                            means that build actions which only perform linking
                            will not be captured. We consider a file as object
                            file if its extension is '.o', '.so' or '.a'.
-  CC_LOGGER_DEBUG_FILE     Output file to print log messages. By default if we
-                           run the log command in debug mode it will generate
-                           a 'codechecker.logger.debug' file beside the log
-                           file.
 ```
 </details>
 
@@ -870,6 +912,7 @@ optional arguments:
 
 Environment variables
 ------------------------------------------------
+
   CC_ANALYZERS_FROM_PATH   Set to `yes` or `1` to enforce taking the analyzers
                            from the `PATH` instead of the given binaries.
   CC_CLANGSA_PLUGIN_DIR    If the CC_ANALYZERS_FROM_PATH environment variable
@@ -1589,14 +1632,15 @@ export arguments:
 
 Environment variables
 ------------------------------------------------
+
+  CC_CHANGED_FILES       Path of changed files json from Gerrit. Use it when
+                         generating gerrit output.
+  CC_REPO_DIR            Root directory of the sources, i.e. the directory
+                         where the repository was cloned. Use it when
+                         generating gerrit output.
+  CC_REPORT_URL          URL where the report can be found. Use it when
+                         generating gerrit output.
   CC_SEVERITY_MAP_FILE   Path of the checker-severity mapping config file.
-  CC_REPO_DIR         Root directory of the sources, i.e. the directory where
-                      the repository was cloned. Use it when generating gerrit
-                      output.
-  CC_REPORT_URL       URL where the report can be found. Use it when generating
-                      gerrit output.
-  CC_CHANGED_FILES    Path of changed files json from Gerrit. Use it when
-                      generating gerrit output.
                          Default: <package>/config/checker_severity_map.json
 ```
 </details>

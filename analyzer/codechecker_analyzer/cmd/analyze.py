@@ -29,29 +29,11 @@ from codechecker_common.util import load_json_or_empty
 
 LOG = logger.get_logger('system')
 
+_package_root = analyzer_context.get_context().package_root
+_severity_map_file = os.path.join(_package_root, 'config',
+                                  'checker_severity_map.json')
 
-def get_argparser_ctor_args():
-    """
-    This method returns a dict containing the kwargs for constructing an
-    argparse.ArgumentParser (either directly or as a subparser).
-    """
-
-    package_root = analyzer_context.get_context().package_root
-
-    return {
-        'prog': 'CodeChecker analyze',
-        'formatter_class': arg.RawDescriptionDefaultHelpFormatter,
-
-        # Description is shown when the command's help is queried directly
-        'description': """
-Use the previously created JSON Compilation Database to perform an analysis on
-the project, outputting analysis results in a machine-readable format.""",
-
-        # Epilogue is shown after the arguments when the help is queried
-        # directly.
-        'epilog': """
-Environment variables
-------------------------------------------------
+epilog_env_var = f"""
   CC_ANALYZERS_FROM_PATH   Set to `yes` or `1` to enforce taking the analyzers
                            from the `PATH` instead of the given binaries.
   CC_CLANGSA_PLUGIN_DIR    If the CC_ANALYZERS_FROM_PATH environment variable
@@ -59,9 +41,10 @@ Environment variables
                            Clang Static Analyzer by using this environment
                            variable.
   CC_SEVERITY_MAP_FILE     Path of the checker-severity mapping config file.
-                           Default: {}
+                           Default: {_severity_map_file}
+"""
 
-
+epilog_issue_hashes = """
 Issue hashes
 ------------------------------------------------
 - By default the issue hash calculation method for 'Clang Static Analyzer' is
@@ -103,7 +86,9 @@ checker is renamed.
 
 For more information see:
 https://github.com/Ericsson/codechecker/blob/master/docs/analyzer/report_identification.md
+"""
 
+epilog_exit_status = """
 Exit status
 ------------------------------------------------
 0 - Successful analysis and no new reports
@@ -111,12 +96,38 @@ Exit status
 2 - At least one report emitted by an analyzer and there is no analyzer failure
 3 - Analysis of at least one translation unit failed
 128+signum - Terminating on a fatal signal whose number is signum
+"""
 
+
+def get_argparser_ctor_args():
+    """
+    This method returns a dict containing the kwargs for constructing an
+    argparse.ArgumentParser (either directly or as a subparser).
+    """
+    return {
+        'prog': 'CodeChecker analyze',
+        'formatter_class': arg.RawDescriptionDefaultHelpFormatter,
+
+        # Description is shown when the command's help is queried directly
+        'description': """
+Use the previously created JSON Compilation Database to perform an analysis on
+the project, outputting analysis results in a machine-readable format.""",
+
+        # Epilogue is shown after the arguments when the help is queried
+        # directly.
+        'epilog': f"""
+Environment variables
+------------------------------------------------
+{epilog_env_var}
+
+{epilog_issue_hashes}
+
+{epilog_exit_status}
 
 Compilation databases can be created by instrumenting your project's build via
 'CodeChecker log'. To transform the results of the analysis to a human-friendly
 format, please see the commands 'CodeChecker parse' or 'CodeChecker store'.
-""".format(os.path.join(package_root, 'config', 'checker_severity_map.json')),
+""",
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.
