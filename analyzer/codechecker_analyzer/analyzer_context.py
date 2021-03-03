@@ -18,6 +18,7 @@ import os
 import sys
 
 from codechecker_common import logger
+from codechecker_common.singleton import Singleton
 from codechecker_common.util import load_json_or_empty
 
 from . import env
@@ -247,7 +248,7 @@ class GuidelineMap(Mapping):
 
 
 # -----------------------------------------------------------------------------
-class Context(object):
+class Context(object, metaclass=Singleton):
     """ Generic package specific context. """
 
     def __init__(self, package_root, pckg_layout, cfg_dict):
