@@ -9,12 +9,16 @@
 Base Helper class for Thrift api calls.
 """
 
-
+import sys
 from thrift.transport import THttpClient
 from thrift.protocol import TJSONProtocol
 
 from codechecker_client.credential_manager import SESSION_COOKIE_NAME
 from codechecker_client.product import create_product_url
+
+from codechecker_common.logger import get_logger
+
+LOG = get_logger('system')
 
 
 class BaseClientHelper(object):
@@ -28,12 +32,42 @@ class BaseClientHelper(object):
         self.__port = port
         url = create_product_url(protocol, host, port, uri)
 
-        self.transport = THttpClient.THttpClient(url)
+        self.transport = None
+
+        try:
+            self.transport = THttpClient.THttpClient(url)
+        except ValueError:
+            # Initalizing THttpClient may raise an exception if proxy settings
+            # are used but the port number is not a valid integer.
+            pass
+        finally:
+            # Thrift do not handle the use case when invalid proxy format is
+            # used (e.g.: no schema is specified). For this reason we need to
+            # verify the proxy format in our side.
+            self._validate_proxy_format()
+
         self.protocol = TJSONProtocol.TJSONProtocol(self.transport)
         self.client = None
 
         self.get_new_token = get_new_token
         self._set_token(session_token)
+
+    def _validate_proxy_format(self):
+        """
+        Validate the proxy settings.
+        If the proxy settings are invalid, it will print an error message and
+        stop the program.
+        """
+        if self.transport and not self.transport.using_proxy():
+            return
+
+        if not self.transport or not self.transport.host or \
+                not isinstance(self.transport.port, int):
+            LOG.error("Invalid proxy format! Check your "
+                      "HTTP_PROXY/HTTPS_PROXY environment variables if "
+                      "these are in the right format: "
+                      "'http[s]://host:port'.")
+            sys.exit(1)
 
     def _set_token(self, session_token):
         """ Set the given token in the transport layer. """

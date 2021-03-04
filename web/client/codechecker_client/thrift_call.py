@@ -21,37 +21,6 @@ from codechecker_common.logger import get_logger
 
 LOG = get_logger('system')
 
-PROXY_VALIDATION_NEEDED = True
-
-
-def proxy_settings_are_valid(transport):
-    """
-    Return True if no proxy settings are used or the proxy format it valid.
-    """
-    if not transport.using_proxy():
-        return True
-
-    return transport.host and isinstance(transport.port, int)
-
-
-def validate_proxy_format(transport):
-    """
-    It will check the proxy settings once and validate the proxy settings.
-    If the proxy settings are invalid, it will print an error message and
-    stop the program.
-    """
-    global PROXY_VALIDATION_NEEDED
-
-    if PROXY_VALIDATION_NEEDED:
-        if not proxy_settings_are_valid(transport):
-            LOG.error("Invalid proxy format! Check your "
-                      "HTTP_PROXY/HTTPS_PROXY environment variables if "
-                      "these are in the right format:"
-                      "'http[s]://host:port'.")
-            sys.exit(1)
-
-        PROXY_VALIDATION_NEEDED = False
-
 
 def truncate_arg(arg, max_len=100):
     """ Truncate the given argument if the length is too large. """
@@ -69,11 +38,6 @@ def ThriftClientCall(function):
     funcName = function.__name__
 
     def wrapper(self, *args, **kwargs):
-        # Thrift do not handle the use case when invalid proxy format is used
-        # (e.g.: no schema is specified). For this reason we need to verify
-        # the proxy format in our side.
-        validate_proxy_format(self.transport)
-
         self.transport.open()
         func = getattr(self.client, funcName)
         try:
