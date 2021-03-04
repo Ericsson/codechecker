@@ -30,6 +30,14 @@ import sys
 import zipfile
 from distutils.spawn import find_executable
 
+from pathlib import Path
+from typing import Iterable, Iterator, List, Optional, Set, Tuple, Union
+
+if sys.version_info >= (3, 8):
+    from typing import TypedDict  # pylint: disable=no-name-in-module
+else:
+    from mypy_extensions import TypedDict
+
 
 LOG = logging.getLogger('tu_collector')
 
@@ -41,15 +49,25 @@ LOG.setLevel(logging.INFO)
 LOG.addHandler(handler)
 
 
-def __random_string(l):
+class CompileAction(TypedDict):
+    file: str
+    command: str
+    directory: str
+
+
+CompilationDB = List[CompileAction]
+
+
+def __random_string(length: int) -> str:
     """
     This function returns a random string of ASCII lowercase characters with
     the given length.
     """
-    return ''.join(random.choice(string.ascii_lowercase) for i in range(l))
+    return ''.join(random.choice(string.ascii_lowercase)
+                   for i in range(length))
 
 
-def __get_toolchain_compiler(command):
+def __get_toolchain_compiler(command: List[str]) -> Optional[str]:
     """
     Clang can be given a GCC toolchain so that the standard libs of that GCC
     are used. This function returns the path of the GCC toolchain compiler.
@@ -61,9 +79,10 @@ def __get_toolchain_compiler(command):
             return os.path.join(tcpath.group('tcpath'),
                                 'bin',
                                 'g++' if is_cpp else 'gcc')
+    return None
 
 
-def __determine_compiler(gcc_command):
+def __determine_compiler(gcc_command: List[str]) -> str:
     """
     This function determines the compiler from the given compilation command.
     If the first part of the gcc_command is ccache invocation then the rest
@@ -101,19 +120,26 @@ def __determine_compiler(gcc_command):
     return gcc_command[0]
 
 
-def __gather_dependencies(command, build_dir):
+def __gather_dependencies(
+    cmd: Union[str, List[str]],
+    build_dir: str
+) -> List[str]:
     """
     Returns a list of files which are contained in the translation unit built
     by the given build command.
 
-    command -- The build command as a string or as a list that can be given to
-               subprocess.Popen(). The first element is the executable
-               compiler.
+    cmd -- The build command as a string or as a list that can be given to
+           subprocess.Popen(). The first element is the executable
+           compiler.
     build_dir -- The path of the working directory where the build command was
                  emitted.
     """
 
-    def __eliminate_argument(arg_vect, opt_string, has_arg=False):
+    def __eliminate_argument(
+        arg_vect: List[str],
+        opt_string: str,
+        has_arg=False
+    ) -> List[str]:
         """
         This call eliminates the parameters matching the given option string,
         along with its argument coming directly after the opt-string if any,
@@ -134,8 +160,7 @@ def __gather_dependencies(command, build_dir):
 
         return arg_vect
 
-    if isinstance(command, str):
-        command = shlex.split(command)
+    command = shlex.split(cmd) if isinstance(cmd, str) else cmd
 
     # gcc and clang can generate makefile-style dependency list.
 
@@ -186,7 +211,6 @@ def __gather_dependencies(command, build_dir):
     try:
         output = subprocess.check_output(
             command,
-            bufsize=-1,
             cwd=build_dir,
             encoding="utf-8",
             errors="replace")
@@ -196,21 +220,21 @@ def __gather_dependencies(command, build_dir):
     except OSError as oerr:
         output, rc = oerr.strerror, oerr.errno
 
-    if rc == 0:
-        # Parse 'Makefile' syntax dependency output.
-        dependencies = output.replace('__dummy: ', '') \
-            .replace('\\', '') \
-            .replace('  ', '') \
-            .replace(' ', '\n')
-
-        # The dependency list already contains the source file's path.
-        return [os.path.join(build_dir, dep) for dep in
-                dependencies.splitlines() if dep != ""]
-    else:
+    if rc != 0:
         raise IOError(output)
 
+    # Parse 'Makefile' syntax dependency output.
+    dependencies = output.replace('__dummy: ', '') \
+        .replace('\\', '') \
+        .replace('  ', '') \
+        .replace(' ', '\n')
 
-def __analyzer_action_hash(build_action):
+    # The dependency list already contains the source file's path.
+    return [os.path.join(build_dir, dep) for dep in
+            dependencies.splitlines() if dep != ""]
+
+
+def __analyzer_action_hash(build_action: CompileAction) -> str:
     """
     This function returns a hash of a build action. This hash algorithm is
     duplicated based on the same algorithm in CodeChecker. It is important to
@@ -238,7 +262,11 @@ def __analyzer_action_hash(build_action):
     return hashlib.md5(build_info.encode(errors='ignore')).hexdigest()
 
 
-def __get_ctu_buildactions(build_action, compilation_db, ctu_deps_dir):
+def __get_ctu_buildactions(
+    build_action: CompileAction,
+    compilation_db: CompilationDB,
+    ctu_deps_dir: str
+) -> Iterator[CompileAction]:
     """
     CodeChecker collets which source files were involved in CTU analysis. This
     function returns the build actions which describe the compilation of these
@@ -255,10 +283,10 @@ def __get_ctu_buildactions(build_action, compilation_db, ctu_deps_dir):
     """
     ctu_deps_file = next(
         (f for f in os.listdir(ctu_deps_dir)
-        if __analyzer_action_hash(build_action) in f), None)
+         if __analyzer_action_hash(build_action) in f), None)
 
     if not ctu_deps_file:
-        return
+        return iter(())
 
     with open(os.path.join(ctu_deps_dir, ctu_deps_file),
               encoding='utf-8', errors='ignore') as f:
@@ -269,7 +297,11 @@ def __get_ctu_buildactions(build_action, compilation_db, ctu_deps_dir):
         compilation_db)
 
 
-def get_dependent_headers(command, build_dir, collect_toolchain=True):
+def get_dependent_headers(
+    command: Union[str, List[str]],
+    build_dir_path: str,
+    collect_toolchain=True
+) -> Tuple[Set[str], str]:
     """
     Returns a pair of which the first component is a set of files building up
     the translation unit and the second component is an error message which is
@@ -278,8 +310,8 @@ def get_dependent_headers(command, build_dir, collect_toolchain=True):
     command -- The build command as a string or as a list that can be given to
                subprocess.Popen(). The first element is the executable
                compiler.
-    build_dir -- The path of the working directory where the build command was
-                 emitted.
+    build_dir_path -- The path of the working directory where the build command
+                      was emitted.
     collect_toolchain -- If the given command uses Clang and it is given a GCC
                          toolchain then the toolchain compiler's dependencies
                          are also collected in case this parameter is True.
@@ -294,7 +326,7 @@ def get_dependent_headers(command, build_dir, collect_toolchain=True):
     error = ''
 
     try:
-        dependencies |= set(__gather_dependencies(command, build_dir))
+        dependencies |= set(__gather_dependencies(command, build_dir_path))
     except Exception as ex:
         LOG.error("Couldn't create dependencies: %s", str(ex))
         error += str(ex)
@@ -307,7 +339,7 @@ def get_dependent_headers(command, build_dir, collect_toolchain=True):
         try:
             # Change the original compiler to the compiler from the toolchain.
             command[0] = toolchain_compiler
-            dependencies |= set(__gather_dependencies(command, build_dir))
+            dependencies |= set(__gather_dependencies(command, build_dir_path))
         except Exception as ex:
             LOG.error("Couldn't create dependencies: %s", str(ex))
             error += str(ex)
@@ -316,7 +348,10 @@ def get_dependent_headers(command, build_dir, collect_toolchain=True):
     return dependencies, error
 
 
-def add_sources_to_zip(zip_file, files):
+def add_sources_to_zip(
+    zip_file: Union[str, Path],
+    files: Union[str, Iterable[str]]
+):
     """
     This function adds source files to the ZIP file if those are not present
     yet. The files will be placed to the "sources-root" directory under the ZIP
@@ -342,8 +377,13 @@ def add_sources_to_zip(zip_file, files):
                           "again!", f)
 
 
-def zip_tu_files(zip_file, compilation_database, file_filter='*',
-                 write_mode='w', ctu_deps_dir=None):
+def zip_tu_files(
+    zip_file: Union[str, Path],
+    compilation_db: Union[str, CompilationDB],
+    file_filter='*',
+    write_mode='w',
+    ctu_deps_dir: Optional[str] = None
+):
     """
     Collects all files to a zip file which are required for the compilation of
     the translation units described by the given compilation database.
@@ -371,12 +411,14 @@ def zip_tu_files(zip_file, compilation_database, file_filter='*',
                     commands of these files otherwise the files of this folder
                     can't be identified.
     """
-    if isinstance(compilation_database, str):
-        with open(compilation_database, encoding="utf-8", errors="ignore") as f:
+    if isinstance(compilation_db, str):
+        with open(compilation_db, encoding="utf-8", errors="ignore") as f:
             compilation_database = json.load(f)
+    else:
+        compilation_database = compilation_db
 
     no_sources = 'no-sources'
-    tu_files = set()
+    tu_files: Set[str] = set()
     error_messages = ''
 
     filtered_compilation_database = list(filter(
@@ -384,7 +426,7 @@ def zip_tu_files(zip_file, compilation_database, file_filter='*',
         compilation_database))
 
     if ctu_deps_dir:
-        involved_ctu_actions = []
+        involved_ctu_actions: List[CompileAction] = []
 
         for action in filtered_compilation_database:
             involved_ctu_actions.extend(__get_ctu_buildactions(
@@ -430,7 +472,10 @@ def zip_tu_files(zip_file, compilation_database, file_filter='*',
                          json.dumps(compilation_database, indent=2))
 
 
-def get_dependent_sources(compilation_db, header_path=None):
+def get_dependent_sources(
+    compilation_db: CompilationDB,
+    header_path: Optional[str] = None
+) -> Set[str]:
     """ Get dependencies for each files in each translation unit. """
     dependencies = collections.defaultdict(set)
     for build_action in compilation_db:

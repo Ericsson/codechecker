@@ -6,21 +6,35 @@
 #
 # -------------------------------------------------------------------------
 
+CURRENT_DIR = ${CURDIR}
 BUILD_DIR = build
 BIN_DIR = $(BUILD_DIR)/bin
 
 PYTHON_BIN ?= python3
 TU_COLLECTOR_DIR = $(BUILD_DIR)/tu_collector
 
-ACTIVATE_VENV ?= . venv/bin/activate
+ACTIVATE_DEV_VENV ?= . venv_dev/bin/activate
+ACTIVATE_RUNTIME_VENV ?= . venv/bin/activate
 
-venv:
-	# Create a virtual environment which can be used to run the build package.
-	python3 -m venv venv && $(ACTIVATE_VENV)
+VENV_DEV_REQ_FILE ?= requirements_py/dev/requirements.txt
 
 default: all
 
 all: package
+
+venv:
+	# Create a virtual environment which can be used to run the build package.
+	python3 -m venv venv && $(ACTIVATE_RUNTIME_VENV)
+
+venv_dev:
+	# Create a virtual environment for development.
+	python3 -m venv venv_dev && \
+		$(ACTIVATE_DEV_VENV) && pip3 install -r $(VENV_DEV_REQ_FILE)
+
+clean_venv_dev:
+	rm -rf venv_dev
+
+include tests/Makefile
 
 package:
 	# Install package in 'development mode'.
@@ -47,6 +61,5 @@ upload: dist
 
 clean:
 	rm -rf $(BUILD_DIR)
-
-test:
-	REPO_ROOT=$(REPO_ROOT) nosetests tests
+	rm -rf dist
+	rm -rf tu_collector.egg-info
