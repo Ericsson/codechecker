@@ -1,6 +1,6 @@
 lxml==4.6.2
-portalocker==1.7.0
-psutil==5.7.0
+portalocker==2.2.1
+psutil==5.8.0
 scan-build==2.0.19
-PyYAML==5.3.1
+PyYAML==5.4.1
 mypy_extensions==0.4.3
