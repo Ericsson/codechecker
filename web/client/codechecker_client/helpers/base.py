@@ -40,11 +40,11 @@ class BaseClientHelper(object):
             # Initalizing THttpClient may raise an exception if proxy settings
             # are used but the port number is not a valid integer.
             pass
-        finally:
-            # Thrift do not handle the use case when invalid proxy format is
-            # used (e.g.: no schema is specified). For this reason we need to
-            # verify the proxy format in our side.
-            self._validate_proxy_format()
+
+        # Thrift do not handle the use case when invalid proxy format is
+        # used (e.g.: no schema is specified). For this reason we need to
+        # verify the proxy format in our side.
+        self._validate_proxy_format()
 
         self.protocol = TJSONProtocol.TJSONProtocol(self.transport)
         self.client = None
