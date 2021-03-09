@@ -82,6 +82,29 @@ def wait_for_postgres_shutdown(workspace):
             break
 
 
+def get_diff_results(basenames, newnames, diff_type, format_type=None,
+                     extra_args=None, cc_env=None):
+    """ Run diff command and get results in given format. """
+    diff_cmd = [env.codechecker_cmd(), 'cmd', 'diff', diff_type]
+
+    if format_type:
+        diff_cmd.extend(['-o', format_type])
+
+    diff_cmd.extend(['--basename'] + basenames)
+    diff_cmd.extend(['--newname'] + newnames)
+
+    if extra_args:
+        diff_cmd.extend(extra_args)
+
+    out = subprocess.check_output(
+        diff_cmd, encoding="utf-8", errors="ignore", env=cc_env)
+
+    if format_type == "json":
+        return json.loads(out)
+
+    return out
+
+
 def login(codechecker_cfg, test_project_path, username, password,
           protocol='http'):
     """
@@ -371,10 +394,11 @@ def log_and_analyze(codechecker_cfg, test_project_path, clean_project=True):
                '-b', "'" + build_cmd + "'",
                ]
 
+    analyzers = codechecker_cfg.get('analyzers', ['clangsa'])
     analyze_cmd = ['CodeChecker', 'analyze',
                    build_json,
                    '-o', codechecker_cfg['reportdir'],
-                   '--analyzers', 'clangsa'
+                   '--analyzers', *analyzers
                    ]
 
     suppress_file = codechecker_cfg.get('suppress_file')
