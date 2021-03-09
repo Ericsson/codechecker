@@ -1,0 +1,2093 @@
+{
+  "constraints": {
+    "profile": {
+      "choice": {
+        "default": "High-quality standard checks with a low false positive rate.",
+        "sensitive": "Default checks + more comprehensive checks with a low false positive rate.",
+        "security": "Checkers that warn for potentially vulnerable code. Contains all SEI Cert C/C++ rules.",
+        "portability": "Checks that aim to detect code issues emerging from platform differences (eg. between 32-bit and 64-bit architectures).",
+        "extreme": "Sensitive checks + more comprehensive checks with a manageable false positive rate."
+      }
+    }
+  },
+
+  "labels": {
+    "abseil-duration-addition": [
+
+    ],
+    "abseil-duration-comparison": [
+
+    ],
+    "abseil-duration-conversion-cast": [
+
+    ],
+    "abseil-duration-division": [
+
+    ],
+    "abseil-duration-factory-float": [
+
+    ],
+    "abseil-duration-factory-scale": [
+
+    ],
+    "abseil-duration-subtraction": [
+
+    ],
+    "abseil-duration-unnecessary-conversion": [
+
+    ],
+    "abseil-faster-strsplit-delimiter": [
+
+    ],
+    "abseil-no-internal-dependencies": [
+
+    ],
+    "abseil-no-namespace": [
+
+    ],
+    "abseil-redundant-strcat-calls": [
+
+    ],
+    "abseil-str-cat-append": [
+
+    ],
+    "abseil-string-find-startswith": [
+
+    ],
+    "abseil-string-find-str-contains": [
+
+    ],
+    "abseil-time-comparison": [
+
+    ],
+    "abseil-time-subtraction": [
+
+    ],
+    "abseil-upgrade-duration-conversions": [
+
+    ],
+    "android-cloexec-accept": [
+
+    ],
+    "android-cloexec-accept4": [
+
+    ],
+    "android-cloexec-creat": [
+
+    ],
+    "android-cloexec-dup": [
+
+    ],
+    "android-cloexec-epoll-create": [
+
+    ],
+    "android-cloexec-epoll-create1": [
+
+    ],
+    "android-cloexec-fopen": [
+
+    ],
+    "android-cloexec-inotify-init": [
+
+    ],
+    "android-cloexec-inotify-init1": [
+
+    ],
+    "android-cloexec-memfd-create": [
+
+    ],
+    "android-cloexec-open": [
+
+    ],
+    "android-cloexec-pipe": [
+
+    ],
+    "android-cloexec-pipe2": [
+
+    ],
+    "android-cloexec-socket": [
+
+    ],
+    "android-comparison-in-temp-failure-retry": [
+
+    ],
+    "boost-use-to-string": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-argument-comment": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-assert-side-effect": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-bad-signal-to-kill-thread": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-bool-pointer-implicit-conversion": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-branch-clone": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-copy-constructor-init": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-dangling-handle": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-dynamic-static-initializers": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-exception-escape": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "bugprone-fold-init-type": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-forward-declaration-namespace": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-forwarding-reference-overload": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-inaccurate-erase": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-incorrect-roundings": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-infinite-loop": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-integer-division": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-lambda-function-name": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-macro-parentheses": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-macro-repeated-side-effects": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "bugprone-misplaced-operator-in-strlen-in-alloc": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-misplaced-pointer-arithmetic-in-alloc": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-misplaced-widening-cast": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:portability",
+      "profile:extreme"
+    ],
+    "bugprone-move-forwarding-reference": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-multiple-statement-macro": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-narrowing-conversions": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "bugprone-no-escape": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-not-null-terminated-result": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-parent-virtual-call": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-posix-return": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-reserved-identifier": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-signed-char-misuse": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-sizeof-container": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-sizeof-expression": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "bugprone-spuriously-wake-up-functions": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-string-constructor": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-string-integer-assignment": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-string-literal-with-embedded-nul": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-suspicious-enum-usage": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-suspicious-include": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-suspicious-memset-usage": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "bugprone-suspicious-missing-comma": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-suspicious-semicolon": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-suspicious-string-compare": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-swapped-arguments": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-terminating-continue": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-throw-keyword-missing": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-too-small-loop-variable": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-undefined-memory-manipulation": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "bugprone-undelegated-constructor": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-unhandled-self-assignment": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "bugprone-unused-raii": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-unused-return-value": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "bugprone-use-after-move": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "bugprone-virtual-near-miss": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "cert-con36-c": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-con54-cpp": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-dcl03-c": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-dcl16-c": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-dcl21-cpp": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-dcl37-c": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-dcl50-cpp": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-dcl51-cpp": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-dcl54-cpp": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-dcl58-cpp": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-dcl59-cpp": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-env33-c": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-err09-cpp": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-err34-c": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-err52-cpp": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-err58-cpp": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-err60-cpp": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-err61-cpp": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-fio38-c": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-flp30-c": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-mem57-cpp": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-msc30-c": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-msc32-c": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-msc50-cpp": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-msc51-cpp": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-oop11-cpp": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-oop54-cpp": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-oop57-cpp": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-oop58-cpp": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-pos44-c": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cert-str34-c": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cppcoreguidelines-avoid-c-arrays": [
+      "profile:extreme"
+    ],
+    "cppcoreguidelines-avoid-goto": [
+      "profile:extreme"
+    ],
+    "cppcoreguidelines-avoid-magic-numbers": [
+      "profile:extreme"
+    ],
+    "cppcoreguidelines-avoid-non-const-global-variables": [
+      "profile:extreme"
+    ],
+    "cppcoreguidelines-c-copy-assignment-signature": [
+      "profile:extreme"
+    ],
+    "cppcoreguidelines-explicit-virtual-functions": [
+      "profile:extreme"
+    ],
+    "cppcoreguidelines-init-variables": [
+      "profile:extreme"
+    ],
+    "cppcoreguidelines-interfaces-global-init": [
+      "profile:extreme"
+    ],
+    "cppcoreguidelines-macro-usage": [
+      "profile:extreme"
+    ],
+    "cppcoreguidelines-narrowing-conversions": [
+      "profile:extreme"
+    ],
+    "cppcoreguidelines-no-malloc": [
+      "profile:extreme"
+    ],
+    "cppcoreguidelines-non-private-member-variables-in-classes": [
+      "profile:extreme"
+    ],
+    "cppcoreguidelines-owning-memory": [
+      "profile:extreme"
+    ],
+    "cppcoreguidelines-pro-bounds-array-to-pointer-decay": [
+      "profile:extreme"
+    ],
+    "cppcoreguidelines-pro-bounds-constant-array-index": [
+      "profile:extreme"
+    ],
+    "cppcoreguidelines-pro-bounds-pointer-arithmetic": [
+      "profile:extreme"
+    ],
+    "cppcoreguidelines-pro-type-const-cast": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "cppcoreguidelines-pro-type-cstyle-cast": [
+      "profile:extreme"
+    ],
+    "cppcoreguidelines-pro-type-member-init": [
+      "profile:extreme"
+    ],
+    "cppcoreguidelines-pro-type-reinterpret-cast": [
+      "profile:extreme"
+    ],
+    "cppcoreguidelines-pro-type-static-cast-downcast": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "cppcoreguidelines-pro-type-union-access": [
+      "profile:extreme"
+    ],
+    "cppcoreguidelines-pro-type-vararg": [
+      "profile:extreme"
+    ],
+    "cppcoreguidelines-slicing": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cppcoreguidelines-special-member-functions": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "darwin-avoid-spinlock": [
+
+    ],
+    "darwin-dispatch-once-nonstatic": [
+
+    ],
+    "fuchsia-default-arguments-calls": [
+
+    ],
+    "fuchsia-default-arguments-declarations": [
+
+    ],
+    "fuchsia-header-anon-namespaces": [
+
+    ],
+    "fuchsia-multiple-inheritance": [
+
+    ],
+    "fuchsia-overloaded-operator": [
+
+    ],
+    "fuchsia-statically-constructed-objects": [
+
+    ],
+    "fuchsia-trailing-return": [
+
+    ],
+    "fuchsia-virtual-inheritance": [
+
+    ],
+    "google-build-explicit-make-pair": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "google-build-namespaces": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "google-build-using-namespace": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "google-default-arguments": [
+      "profile:extreme"
+    ],
+    "google-explicit-constructor": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "google-global-names-in-headers": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "google-objc-avoid-nsobject-new": [
+      "profile:extreme"
+    ],
+    "google-objc-avoid-throwing-exception": [
+      "profile:extreme"
+    ],
+    "google-objc-function-naming": [
+      "profile:extreme"
+    ],
+    "google-objc-global-variable-declaration": [
+      "profile:extreme"
+    ],
+    "google-readability-avoid-underscore-in-googletest-name": [
+      "profile:extreme"
+    ],
+    "google-readability-braces-around-statements": [
+      "profile:extreme"
+    ],
+    "google-readability-casting": [
+      "profile:extreme"
+    ],
+    "google-readability-function-size": [
+      "profile:extreme"
+    ],
+    "google-readability-namespace-comments": [
+      "profile:extreme"
+    ],
+    "google-readability-todo": [
+      "profile:extreme"
+    ],
+    "google-runtime-int": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "google-runtime-operator": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "google-runtime-references": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "google-upgrade-googletest-case": [
+      "profile:extreme"
+    ],
+    "hicpp-avoid-c-arrays": [
+
+    ],
+    "hicpp-avoid-goto": [
+
+    ],
+    "hicpp-braces-around-statements": [
+
+    ],
+    "hicpp-deprecated-headers": [
+
+    ],
+    "hicpp-exception-baseclass": [
+
+    ],
+    "hicpp-explicit-conversions": [
+
+    ],
+    "hicpp-function-size": [
+
+    ],
+    "hicpp-invalid-access-moved": [
+
+    ],
+    "hicpp-member-init": [
+
+    ],
+    "hicpp-move-const-arg": [
+
+    ],
+    "hicpp-multiway-paths-covered": [
+
+    ],
+    "hicpp-named-parameter": [
+
+    ],
+    "hicpp-new-delete-operators": [
+
+    ],
+    "hicpp-no-array-decay": [
+
+    ],
+    "hicpp-no-assembler": [
+
+    ],
+    "hicpp-no-malloc": [
+
+    ],
+    "hicpp-noexcept-move": [
+
+    ],
+    "hicpp-signed-bitwise": [
+
+    ],
+    "hicpp-special-member-functions": [
+
+    ],
+    "hicpp-static-assert": [
+
+    ],
+    "hicpp-undelegated-constructor": [
+
+    ],
+    "hicpp-uppercase-literal-suffix": [
+
+    ],
+    "hicpp-use-auto": [
+
+    ],
+    "hicpp-use-emplace": [
+
+    ],
+    "hicpp-use-equals-default": [
+
+    ],
+    "hicpp-use-equals-delete": [
+
+    ],
+    "hicpp-use-noexcept": [
+
+    ],
+    "hicpp-use-nullptr": [
+
+    ],
+    "hicpp-use-override": [
+
+    ],
+    "hicpp-vararg": [
+
+    ],
+    "linuxkernel-must-check-errs": [
+
+    ],
+    "llvm-else-after-return": [
+
+    ],
+    "llvm-header-guard": [
+
+    ],
+    "llvm-include-order": [
+
+    ],
+    "llvm-namespace-comment": [
+
+    ],
+    "llvm-prefer-isa-or-dyn-cast-in-conditionals": [
+
+    ],
+    "llvm-prefer-register-over-unsigned": [
+
+    ],
+    "llvm-qualified-auto": [
+
+    ],
+    "llvm-twine-local": [
+
+    ],
+    "llvmlibc-callee-namespace": [
+
+    ],
+    "llvmlibc-implementation-in-namespace": [
+
+    ],
+    "llvmlibc-restrict-system-libc-headers": [
+
+    ],
+    "misc-argument-comment": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-assert-side-effect": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-bool-pointer-implicit-conversion": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-dangling-handle": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-definitions-in-headers": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-fold-init-type": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-forward-declaration-namespace": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-forwarding-reference-overload": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-inaccurate-erase": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-incorrect-roundings": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-inefficient-algorithm": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-lambda-function-name": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-macro-parentheses": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-macro-repeated-side-effects": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-misplaced-const": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-misplaced-widening-cast": [
+      "profile:portability",
+      "profile:extreme"
+    ],
+    "misc-move-const-arg": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-move-constructor-init": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-move-forwarding-reference": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-multiple-statement-macro": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-new-delete-overloads": [
+      "profile:extreme"
+    ],
+    "misc-no-recursion": [
+      "profile:extreme"
+    ],
+    "misc-non-copyable-objects": [
+      "profile:extreme"
+    ],
+    "misc-non-private-member-variables-in-classes": [
+      "profile:extreme"
+    ],
+    "misc-redundant-expression": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-sizeof-container": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-sizeof-expression": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-static-assert": [
+      "profile:default",
+      "profile:extreme"
+    ],
+    "misc-string-compare": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-string-constructor": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-string-literal-with-embedded-nul": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-suspicious-enum-usage": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-suspicious-missing-comma": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-suspicious-semicolon": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-swapped-arguments": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-throw-by-value-catch-by-reference": [
+      "profile:extreme"
+    ],
+    "misc-unconventional-assign-operator": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-uniqueptr-reset-release": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-unused-alias-decls": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-unused-parameters": [
+      "profile:extreme"
+    ],
+    "misc-unused-raii": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-unused-using-decls": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-use-after-move": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-virtual-near-miss": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "modernize-avoid-bind": [
+      "profile:extreme"
+    ],
+    "modernize-avoid-c-arrays": [
+      "profile:extreme"
+    ],
+    "modernize-concat-nested-namespaces": [
+      "profile:extreme"
+    ],
+    "modernize-deprecated-headers": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "modernize-deprecated-ios-base-aliases": [
+      "profile:extreme"
+    ],
+    "modernize-loop-convert": [
+      "profile:extreme"
+    ],
+    "modernize-make-shared": [
+      "profile:extreme"
+    ],
+    "modernize-make-unique": [
+      "profile:extreme"
+    ],
+    "modernize-pass-by-value": [
+      "profile:extreme"
+    ],
+    "modernize-raw-string-literal": [
+      "profile:extreme"
+    ],
+    "modernize-redundant-void-arg": [
+      "profile:extreme"
+    ],
+    "modernize-replace-auto-ptr": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "modernize-replace-disallow-copy-and-assign-macro": [
+      "profile:extreme"
+    ],
+    "modernize-replace-random-shuffle": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "modernize-return-braced-init-list": [
+      "profile:extreme"
+    ],
+    "modernize-shrink-to-fit": [
+      "profile:extreme"
+    ],
+    "modernize-unary-static-assert": [
+      "profile:extreme"
+    ],
+    "modernize-use-auto": [
+      "profile:extreme"
+    ],
+    "modernize-use-bool-literals": [
+      "profile:extreme"
+    ],
+    "modernize-use-default-member-init": [
+      "profile:extreme"
+    ],
+    "modernize-use-emplace": [
+      "profile:extreme"
+    ],
+    "modernize-use-equals-default": [
+      "profile:extreme"
+    ],
+    "modernize-use-equals-delete": [
+      "profile:extreme"
+    ],
+    "modernize-use-nodiscard": [
+      "profile:extreme"
+    ],
+    "modernize-use-noexcept": [
+      "profile:extreme"
+    ],
+    "modernize-use-nullptr": [
+      "profile:extreme"
+    ],
+    "modernize-use-override": [
+      "profile:extreme"
+    ],
+    "modernize-use-trailing-return-type": [
+      "profile:extreme"
+    ],
+    "modernize-use-transparent-functors": [
+      "profile:extreme"
+    ],
+    "modernize-use-uncaught-exceptions": [
+      "profile:extreme"
+    ],
+    "modernize-use-using": [
+      "profile:extreme"
+    ],
+    "mpi-buffer-deref": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "mpi-type-mismatch": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "objc-avoid-nserror-init": [
+
+    ],
+    "objc-dealloc-in-category": [
+
+    ],
+    "objc-forbidden-subclassing": [
+
+    ],
+    "objc-missing-hash": [
+
+    ],
+    "objc-nsinvocation-argument-lifetime": [
+
+    ],
+    "objc-property-declaration": [
+
+    ],
+    "objc-super-self": [
+
+    ],
+    "openmp-exception-escape": [
+
+    ],
+    "openmp-use-default-none": [
+
+    ],
+    "performance-faster-string-find": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "performance-for-range-copy": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "performance-implicit-conversion-in-loop": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "performance-inefficient-algorithm": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "performance-inefficient-string-concatenation": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "performance-inefficient-vector-operation": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "performance-move-const-arg": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "performance-move-constructor-init": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "performance-no-automatic-move": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "performance-noexcept-move-constructor": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "performance-trivially-destructible": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "performance-type-promotion-in-math-fn": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "performance-unnecessary-copy-initialization": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "performance-unnecessary-value-param": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "portability-restrict-system-includes": [
+
+    ],
+    "portability-simd-intrinsics": [
+
+    ],
+    "readability-avoid-const-params-in-decls": [
+
+    ],
+    "readability-braces-around-statements": [
+
+    ],
+    "readability-const-return-type": [
+
+    ],
+    "readability-container-size-empty": [
+
+    ],
+    "readability-convert-member-functions-to-static": [
+
+    ],
+    "readability-delete-null-pointer": [
+
+    ],
+    "readability-deleted-default": [
+
+    ],
+    "readability-else-after-return": [
+
+    ],
+    "readability-function-size": [
+
+    ],
+    "readability-identifier-naming": [
+
+    ],
+    "readability-implicit-bool-conversion": [
+
+    ],
+    "readability-inconsistent-declaration-parameter-name": [
+
+    ],
+    "readability-isolate-declaration": [
+
+    ],
+    "readability-magic-numbers": [
+
+    ],
+    "readability-make-member-function-const": [
+
+    ],
+    "readability-misleading-indentation": [
+
+    ],
+    "readability-misplaced-array-index": [
+
+    ],
+    "readability-named-parameter": [
+
+    ],
+    "readability-non-const-parameter": [
+
+    ],
+    "readability-qualified-auto": [
+
+    ],
+    "readability-redundant-access-specifiers": [
+
+    ],
+    "readability-redundant-control-flow": [
+
+    ],
+    "readability-redundant-declaration": [
+
+    ],
+    "readability-redundant-function-ptr-dereference": [
+
+    ],
+    "readability-redundant-member-init": [
+
+    ],
+    "readability-redundant-preprocessor": [
+
+    ],
+    "readability-redundant-smartptr-get": [
+
+    ],
+    "readability-redundant-string-cstr": [
+
+    ],
+    "readability-redundant-string-init": [
+
+    ],
+    "readability-simplify-boolean-expr": [
+
+    ],
+    "readability-simplify-subscript-expr": [
+
+    ],
+    "readability-static-accessed-through-instance": [
+
+    ],
+    "readability-static-definition-in-anonymous-namespace": [
+
+    ],
+    "readability-string-compare": [
+      "profile:default"
+    ],
+    "readability-suspicious-call-argument": [
+      "profile:default"
+    ],
+    "readability-uniqueptr-delete-release": [
+
+    ],
+    "readability-uppercase-literal-suffix": [
+
+    ],
+    "readability-use-anyofallof": [
+
+    ],
+    "zircon-temporary-objects": [
+
+    ],
+    "alpha.clone.CloneChecker": [
+      "profile:extreme"
+    ],
+    "alpha.core.BoolAssignment": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "alpha.core.C11Lock": [
+      "profile:extreme"
+    ],
+    "alpha.core.CastSize": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "alpha.core.CastToStruct": [
+      "profile:security",
+      "profile:extreme"
+    ],
+    "alpha.core.Conversion": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "alpha.core.DynamicTypeChecker": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "alpha.core.FixedAddr": [
+      "profile:extreme"
+    ],
+    "alpha.core.IdenticalExpr": [
+      "profile:extreme"
+    ],
+    "alpha.core.PointerArithm": [
+      "profile:security",
+      "profile:extreme"
+    ],
+    "alpha.core.PointerSub": [
+      "profile:security",
+      "profile:extreme"
+    ],
+    "alpha.core.PthreadLockBase": [
+      "profile:extreme"
+    ],
+    "alpha.core.SizeofPtr": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "alpha.core.StackAddressAsyncEscape": [
+      "profile:extreme"
+    ],
+    "alpha.core.TestAfterDivZero": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "alpha.cplusplus.ContainerModeling": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "alpha.cplusplus.DeleteWithNonVirtualDtor": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "alpha.cplusplus.EnumCastOutOfRange": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "alpha.cplusplus.InvalidatedIterator": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "alpha.cplusplus.IteratorModeling": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "alpha.cplusplus.IteratorRange": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "alpha.cplusplus.MismatchedIterator": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "alpha.cplusplus.STLAlgorithmModeling": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "alpha.cplusplus.SmartPtr": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "alpha.deadcode.UnreachableCode": [
+      "profile:extreme"
+    ],
+    "alpha.fuchsia.Lock": [
+      "profile:extreme"
+    ],
+    "alpha.llvm.Conventions": [
+      "profile:extreme"
+    ],
+    "alpha.nondeterminism.PointerIteration": [
+      "profile:extreme"
+    ],
+    "alpha.nondeterminism.PointerSorting": [
+      "profile:extreme"
+    ],
+    "alpha.osx.cocoa.DirectIvarAssignment": [
+      "profile:extreme"
+    ],
+    "alpha.osx.cocoa.InstanceVariableInvalidation": [
+      "profile:extreme"
+    ],
+    "alpha.osx.cocoa.IvarInvalidationModeling": [
+      "profile:extreme"
+    ],
+    "alpha.osx.cocoa.MissingInvalidationMethod": [
+      "profile:extreme"
+    ],
+    "alpha.osx.cocoa.localizability.PluralMisuseChecker": [
+      "profile:extreme"
+    ],
+    "alpha.security.ArrayBound": [
+      "profile:security",
+      "profile:extreme"
+    ],
+    "alpha.security.ArrayBoundV2": [
+      "profile:security",
+      "profile:extreme"
+    ],
+    "alpha.security.MallocOverflow": [
+      "profile:security",
+      "profile:extreme"
+    ],
+    "alpha.security.MmapWriteExec": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "alpha.security.ReturnPtrRange": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "alpha.security.cert.pos.34c": [
+      "profile:security",
+      "profile:extreme"
+    ],
+    "alpha.security.taint.TaintPropagation": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "alpha.unix.BlockInCriticalSection": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "alpha.unix.Chroot": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "alpha.unix.PthreadLock": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "alpha.unix.SimpleStream": [
+      "profile:extreme"
+    ],
+    "alpha.unix.StdCLibraryFunctionArgs": [
+      "profile:extreme"
+    ],
+    "alpha.unix.Stream": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "alpha.unix.cstring.BufferOverlap": [
+      "profile:security",
+      "profile:extreme"
+    ],
+    "alpha.unix.cstring.NotNullTerminated": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "alpha.unix.cstring.OutOfBounds": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "alpha.webkit.UncountedCallArgsChecker": [
+      "profile:extreme"
+    ],
+    "apiModeling.StdCLibraryFunctions": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:portability",
+      "profile:extreme"
+    ],
+    "apiModeling.TrustNonnull": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:portability",
+      "profile:extreme"
+    ],
+    "apiModeling.google.GTest": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:portability",
+      "profile:extreme"
+    ],
+    "apiModeling.llvm.CastValue": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:portability",
+      "profile:extreme"
+    ],
+    "apiModeling.llvm.ReturnValue": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:portability",
+      "profile:extreme"
+    ],
+    "core.CallAndMessage": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "core.CallAndMessageModeling": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "core.DivideZero": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "core.DynamicTypePropagation": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "core.NonNullParamChecker": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "core.NonnilStringConstants": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "core.NullDereference": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "core.StackAddrEscapeBase": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "core.StackAddressEscape": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "core.UndefinedBinaryOperatorResult": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "core.VLASize": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "core.builtin.BuiltinFunctions": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "core.builtin.NoReturnFunctions": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "core.uninitialized.ArraySubscript": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "core.uninitialized.Assign": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "core.uninitialized.Branch": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "core.uninitialized.CapturedBlockVariable": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "core.uninitialized.UndefReturn": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "cplusplus.InnerPointer": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "cplusplus.Move": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "cplusplus.NewDelete": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "cplusplus.NewDeleteLeaks": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "cplusplus.PlacementNew": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "cplusplus.PureVirtualCall": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "cplusplus.SelfAssignment": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "cplusplus.SmartPtrModeling": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "cplusplus.VirtualCallModeling": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "deadcode.DeadStores": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "debug.AnalysisOrder": [
+
+    ],
+    "debug.ConfigDumper": [
+
+    ],
+    "debug.DebugContainerModeling": [
+
+    ],
+    "debug.DebugIteratorModeling": [
+
+    ],
+    "debug.DumpCFG": [
+
+    ],
+    "debug.DumpCallGraph": [
+
+    ],
+    "debug.DumpCalls": [
+
+    ],
+    "debug.DumpControlDependencies": [
+
+    ],
+    "debug.DumpDominators": [
+
+    ],
+    "debug.DumpLiveStmts": [
+
+    ],
+    "debug.DumpLiveVars": [
+
+    ],
+    "debug.DumpPostDominators": [
+
+    ],
+    "debug.DumpTraversal": [
+
+    ],
+    "debug.ExprInspection": [
+
+    ],
+    "debug.ReportStmts": [
+
+    ],
+    "debug.Stats": [
+
+    ],
+    "debug.StdCLibraryFunctionsTester": [
+
+    ],
+    "debug.StreamTester": [
+
+    ],
+    "debug.TaintTest": [
+
+    ],
+    "debug.ViewCFG": [
+
+    ],
+    "debug.ViewCallGraph": [
+
+    ],
+    "debug.ViewExplodedGraph": [
+
+    ],
+    "fuchsia.HandleChecker": [
+
+    ],
+    "nullability.NullPassedToNonnull": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "nullability.NullReturnedFromNonnull": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "nullability.NullabilityBase": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "nullability.NullableDereferenced": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "nullability.NullablePassedToNonnull": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "nullability.NullableReturnedFromNonnull": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "optin.cplusplus.UninitializedObject": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "optin.cplusplus.VirtualCall": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
+    "optin.mpi.MPI-Checker": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "optin.osx.OSObjectCStyleCast": [
+      "profile:extreme"
+    ],
+    "optin.osx.cocoa.localizability.EmptyLocalizationContextChecker": [
+      "profile:extreme"
+    ],
+    "optin.osx.cocoa.localizability.NonLocalizedStringChecker": [
+      "profile:extreme"
+    ],
+    "optin.performance.GCDAntipattern": [
+      "profile:extreme"
+    ],
+    "optin.performance.Padding": [
+      "profile:extreme"
+    ],
+    "optin.portability.UnixAPI": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "osx.API": [
+
+    ],
+    "osx.MIG": [
+
+    ],
+    "osx.NSOrCFErrorDerefChecker": [
+
+    ],
+    "osx.NumberObjectConversion": [
+
+    ],
+    "osx.OSObjectRetainCount": [
+
+    ],
+    "osx.ObjCProperty": [
+
+    ],
+    "osx.SecKeychainAPI": [
+
+    ],
+    "osx.cocoa.AtSync": [
+
+    ],
+    "osx.cocoa.AutoreleaseWrite": [
+
+    ],
+    "osx.cocoa.ClassRelease": [
+
+    ],
+    "osx.cocoa.Dealloc": [
+
+    ],
+    "osx.cocoa.IncompatibleMethodTypes": [
+
+    ],
+    "osx.cocoa.Loops": [
+
+    ],
+    "osx.cocoa.MissingSuperCall": [
+
+    ],
+    "osx.cocoa.NSAutoreleasePool": [
+
+    ],
+    "osx.cocoa.NSError": [
+
+    ],
+    "osx.cocoa.NilArg": [
+
+    ],
+    "osx.cocoa.NonNilReturnValue": [
+
+    ],
+    "osx.cocoa.ObjCGenerics": [
+
+    ],
+    "osx.cocoa.RetainCount": [
+
+    ],
+    "osx.cocoa.RetainCountBase": [
+
+    ],
+    "osx.cocoa.RunLoopAutoreleaseLeak": [
+
+    ],
+    "osx.cocoa.SelfInit": [
+
+    ],
+    "osx.cocoa.SuperDealloc": [
+
+    ],
+    "osx.cocoa.UnusedIvars": [
+
+    ],
+    "osx.cocoa.VariadicMethodTypes": [
+
+    ],
+    "osx.coreFoundation.CFError": [
+
+    ],
+    "osx.coreFoundation.CFNumber": [
+
+    ],
+    "osx.coreFoundation.CFRetainRelease": [
+
+    ],
+    "osx.coreFoundation.containers.OutOfBounds": [
+
+    ],
+    "osx.coreFoundation.containers.PointerSizedValues": [
+
+    ],
+    "security.FloatLoopCounter": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "security.insecureAPI.DeprecatedOrUnsafeBufferHandling": [
+      "profile:extreme"
+    ],
+    "security.insecureAPI.SecuritySyntaxChecker": [
+
+    ],
+    "security.insecureAPI.UncheckedReturn": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "security.insecureAPI.bcmp": [
+      "profile:extreme"
+    ],
+    "security.insecureAPI.bcopy": [
+      "profile:extreme"
+    ],
+    "security.insecureAPI.bzero": [
+      "profile:extreme"
+    ],
+    "security.insecureAPI.decodeValueOfObjCType": [
+      "profile:extreme"
+    ],
+    "security.insecureAPI.getpw": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "security.insecureAPI.gets": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "security.insecureAPI.mkstemp": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "security.insecureAPI.mktemp": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "security.insecureAPI.rand": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "security.insecureAPI.strcpy": [
+      "profile:extreme"
+    ],
+    "security.insecureAPI.vfork": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "unix.API": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "unix.DynamicMemoryModeling": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "unix.Malloc": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "unix.MallocSizeof": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "unix.MismatchedDeallocator": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "unix.Vfork": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "unix.cstring.BadSizeArg": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "unix.cstring.CStringModeling": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "unix.cstring.NullArg": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "valist.CopyToSelf": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "valist.Uninitialized": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "valist.Unterminated": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "valist.ValistBase": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "webkit.NoUncountedMemberChecker": [
+
+    ],
+    "webkit.RefCntblBaseVirtualDtor": [
+
+    ]
+  }
+}

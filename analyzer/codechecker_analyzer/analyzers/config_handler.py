@@ -155,13 +155,13 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         enable_all -- Boolean value whether "--enable-all" is given.
         """
 
-        profile_map = analyzer_context.profile_map
+        checker_labels = analyzer_context.checker_labels
         guideline_map = analyzer_context.guideline_map
 
         if 'profile:list' in map(itemgetter(0), cmdline_enable):
             LOG.error("'list' is a reserved profile keyword. ")
             LOG.error("Please choose another profile name in "
-                      "%s/config/checker_profile_map.json and rebuild.",
+                      "%s/config/checker_labels.json and rebuild.",
                       analyzer_context.data_files_dir_path)
             sys.exit(1)
 
@@ -178,7 +178,8 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
             self.add_checker(checker_name, description)
 
         # Set default enabled or disabled checkers, based on the config file.
-        default_profile_checkers = profile_map.by_profile('default')
+        default_profile_checkers = \
+            checker_labels.checkers_by_labels(['profile:default'])
         if not default_profile_checkers:
             # Check whether a default profile exists.
             LOG.warning("No default profile found!")
@@ -211,27 +212,27 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         # Construct a list of reserved checker names.
         # (It is used to check if a profile name is valid.)
         reserved_names = self.__gen_name_variations()
+        profiles = checker_labels.get_constraint('profile', 'choice')
 
         for identifier, enabled in cmdline_enable:
-            if identifier.startswith('profile:'):
-                profile_name = identifier[len('profile:'):]
-                if profile_name not in profile_map.available_profiles():
-                    LOG.error('No such profile: %s', profile_name)
-                    sys.exit(1)
-                for checker in profile_map.by_profile(profile_name):
+            # TODO After guidelines are covered by labels, this branch should
+            # be ':' in identifier.
+            if 'profile:' in identifier:
+                for checker in checker_labels.checkers_by_labels([identifier]):
                     self.set_checker_enabled(checker, enabled)
-            if identifier.startswith('guideline:'):
+            elif identifier.startswith('guideline:'):
                 guideline_name = identifier[len('guideline:'):]
                 if guideline_name not in guideline_map.available_guidelines():
                     LOG.error('No such guideline: %s', guideline_name)
                     sys.exit(1)
                 for checker in guideline_map.by_guideline(guideline_name):
                     self.set_checker_enabled(checker, enabled)
-            elif identifier in profile_map.available_profiles():
+            elif identifier in profiles:
                 if identifier in reserved_names:
                     LOG.warning("Profile name '%s' conflicts with a "
                                 "checker(-group) name.", identifier)
-                for checker in profile_map.by_profile(identifier):
+                for checker in checker_labels.checkers_by_labels(
+                        [f'profile:{identifier}']):
                     self.set_checker_enabled(checker, enabled)
             elif identifier in guideline_map.available_guidelines():
                 if identifier in reserved_names:

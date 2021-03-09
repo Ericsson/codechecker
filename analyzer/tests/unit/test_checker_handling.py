@@ -21,18 +21,17 @@ from codechecker_analyzer.buildlog import log_parser
 
 
 class MockContextSA:
-    class ProfileMap:
-        def __getitem__(self, key):
-            return 'profile1'
-
-        def by_profile(self, profile):
-            if profile == 'default':
+    class CheckerLabels:
+        def checkers_by_labels(self, labels):
+            if labels[0] == 'profile:default':
                 return ['core', 'deadcode', 'security.FloatLoopCounter']
-            elif profile == 'security':
+            elif labels[0] == 'profile:security':
                 return ['alpha.security']
 
-        def available_profiles(self):
-            return {'default': 'description', 'security': 'description'}
+        def get_constraint(self, label, constraint):
+            if label == 'profile' and constraint == 'choice':
+                return ['default', 'sensitive', 'security', 'portability',
+                        'extreme']
 
     class GuidelineMap:
         def __getitem__(self, key):
@@ -48,7 +47,7 @@ class MockContextSA:
     ld_lib_path_extra = None
     checker_plugin = None
     analyzer_binaries = {'clangsa': 'clang'}
-    profile_map = ProfileMap()
+    checker_labels = CheckerLabels()
     guideline_map = GuidelineMap()
     available_profiles = ['profile1']
     package_root = './'
@@ -229,18 +228,18 @@ class CheckerHandlingClangSATest(unittest.TestCase):
 
 
 class MockContextTidy:
-    class ProfileMap:
-        def __getitem__(self, key):
-            return 'profile1'
+    class CheckerLabels:
+        def checkers_by_labels(self, labels):
+            return []
 
-        def by_profile(self, profile):
-            return 'd-e'
+        def get_constraint(self, checker, constraint):
+            return []
 
     path_env_extra = None
     ld_lib_path_extra = None
     checker_plugin = None
     analyzer_binaries = {'clang-tidy': 'clang-tidy'}
-    profile_map = ProfileMap()
+    checker_labels = CheckerLabels()
     guideline_map = {'d-e': {'guideline1': ['rule1', 'rule2']}}
     available_profiles = ['profile1']
     package_root = './'

@@ -114,7 +114,7 @@ CodeChecker.
 
 #### `config`
 This folder contains common configuration files such as
-`checker_severity_map.json`, `logger.conf` etc. which are used by the
+[`labels`](config/label), `logger.conf` etc. which are used by the
 `analyzer` and the `web` part of CodeChecker.
 
 #### `docker`

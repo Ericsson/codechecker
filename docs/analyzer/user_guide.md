@@ -1,40 +1,47 @@
 Table of Contents
 =================
-* [Easy analysis wrappers](#easy-analysis-wrappers)
-    * [`check`](#check)
-* [Available CodeChecker analyzer subcommands](#available-analyzer-commands)
-    * [`log`](#log)
-        * [BitBake](#bitbake)
-        * [CCache](#ccache)
-        * [intercept-build](#intercept-build)
-        * [Bazel](#bazel)
-    * [`analyze`](#analyze)
-        * [_Skip_ file](#skip)
-            * [Absolute path examples](#skip-abs-example)
-            * [Relative or partial path examples](#skip-rel-example)
-        * [CodeChecker analyzer configuration](#analyzer-configuration)
-            * [Configuration file](#analyzer-configuration-file)
-            * [Analyzer and checker config options](#analyzer-checker-config-option)
-              * [Configuration of analyzer tools](#analyzer-config-option)
-              * [Configuration of checkers](#checker-config-option)
-            * [Forwarding compiler options](#forwarding-compiler-options)
-              * [_Clang Static Analyzer_](#clang-static-analyzer)
-              * [_Clang-Tidy_](#clang-tidy)
-            * [Compiler-specific include path and define detection (cross compilation)](#include-path)
-        * [Toggling checkers](#toggling-checkers)
-            * [Checker profiles](#checker-profiles)
-            * [`--enable-all`](#enable-all)
-        * [Toggling compiler warnings](#toggling-warnings)
-        * [Cross Translation Unit (CTU) analysis mode](#ctu)
-        * [Statistical analysis mode](#statistical)
-    * [`parse`](#parse)
-        * [Exporting source code suppression to suppress file](#suppress-file)
-    * [`fixit`](#fixit)
-    * [`checkers`](#checkers)
-    * [`analyzers`](#analyzers)
- * [`Configuring Clang version`](#clang_version)
- * [Source code comments (review status)](#source-code-comments)
-    * [Supported formats](#supported-formats)
+- [Table of Contents](#table-of-contents)
+- [Easy analysis wrappers <a name="easy-analysis-wrappers"></a>](#easy-analysis-wrappers-)
+  - [`check` <a name="check"></a>](#check-)
+- [Available CodeChecker analyzer subcommands <a name="available-analyzer-commands"></a>](#available-codechecker-analyzer-subcommands-)
+  - [`log` <a name="log"></a>](#log-)
+    - [Change user inside the build command](#change-user-inside-the-build-command)
+    - [BitBake](#bitbake)
+    - [CCache](#ccache)
+    - [intercept-build <a name="intercept-build"></a>](#intercept-build-)
+    - [Bazel <a name="bazel"></a>](#bazel-)
+  - [`analyze` <a name="analyze"></a>](#analyze-)
+    - [_Skip_ file <a name="skip"></a>](#skip-file-)
+      - [Absolute path examples <a name="skip-abs-example"></a>](#absolute-path-examples-)
+      - [Relative or partial path examples <a name="skip-rel-example"></a>](#relative-or-partial-path-examples-)
+    - [CodeChecker analyzer configuration <a name="analyzer-configuration"></a>](#codechecker-analyzer-configuration-)
+      - [Configuration file <a name="analyzer-configuration-file"></a>](#configuration-file-)
+      - [Analyzer and checker config options <a name="analyzer-checker-config-option"></a>](#analyzer-and-checker-config-options-)
+        - [Configuration of analyzer tools <a name="analyzer-config-option"></a>](#configuration-of-analyzer-tools-)
+        - [Configuration of checkers <a href="checker-config-option"></a>](#configuration-of-checkers-)
+      - [Forwarding compiler options <a name="forwarding-compiler-options"></a>](#forwarding-compiler-options-)
+        - [<a name="clang-static-analyzer"></a> _Clang Static Analyzer_](#-clang-static-analyzer)
+        - [_Clang-Tidy_ <a name="clang-tidy"></a>](#clang-tidy-)
+      - [Compiler-specific include path and define detection (cross compilation) <a name="include-path"></a>](#compiler-specific-include-path-and-define-detection-cross-compilation-)
+    - [Toggling checkers <a name="toggling-checkers"></a>](#toggling-checkers-)
+    - [Toggling compiler warnings <a name="toggling-warnings"></a>](#toggling-compiler-warnings-)
+      - [Checker profiles <a name="checker-profiles"></a>](#checker-profiles-)
+      - [`--enable-all` <a name="enable-all"></a>](#--enable-all-)
+    - [Cross Translation Unit (CTU) analysis mode <a name="ctu"></a>](#cross-translation-unit-ctu-analysis-mode-)
+    - [Statistical analysis mode <a name="statistical"></a>](#statistical-analysis-mode-)
+  - [`parse` <a name="parse"></a>](#parse-)
+  - [`fixit` <a name="fixit"></a>](#fixit-)
+  - [`checkers`<a name="checkers"></a>](#checkers)
+  - [<a name="analyzers"></a> 6. `analyzers` mode](#-6-analyzers-mode)
+- [Configuring Clang version <a name="clang_version"></a>](#configuring-clang-version-)
+- [Suppressing False positives (source code comments for review status) <a name="source-code-comments"></a>](#suppressing-false-positives-source-code-comments-for-review-status-)
+  - [Supported formats <a name="supported-formats"></a>](#supported-formats-)
+  - [Change review status of a specific checker result](#change-review-status-of-a-specific-checker-result)
+  - [Change review status of a specific checker result by using a substring of the checker name](#change-review-status-of-a-specific-checker-result-by-using-a-substring-of-the-checker-name)
+  - [Change review status of all checker result](#change-review-status-of-all-checker-result)
+  - [Change review status of all checker result with C style comment](#change-review-status-of-all-checker-result-with-c-style-comment)
+  - [Multi line comments](#multi-line-comments)
+  - [Multi line C style comments](#multi-line-c-style-comments)
 
 # Easy analysis wrappers <a name="easy-analysis-wrappers"></a>
 
@@ -357,13 +364,13 @@ checker configuration:
   Note that compiler errors and warnings are captured by CodeChecker only if it
   was emitted by clang-tidy.
 
-  Profiles
+  Checker labels
   ------------------------------------------------
-  In CodeCheckers there is a manual grouping of checkers. These groups are
-  called profiles. The collection of profiles is found in
-  config/checker_profile_map.json file. The goal of these profile is that you
-  can enable or disable checkers by these profiles. See the output of
-  "CodeChecker checkers --profile list" command.
+  In CodeChecker there is a manual grouping of checkers. These groups are
+  determined by labels. The collection of labels is found in
+  config/checker_labels.json file. The goal of these labels is that you can
+  enable or disable checkers by these labels. See the --label flag of
+  "CodeChecker checkers" command.
 
   Guidelines
   ------------------------------------------------
@@ -1452,7 +1459,7 @@ critical severity bug.
 #### Checker profiles <a name="checker-profiles"></a>
 
 Checker profiles describe custom sets of enabled checks which can be specified
-in the `{INSTALL_DIR}/config/checker_profile_map.json` file. Three built-in
+in the `{INSTALL_DIR}/config/checker_labels.json` file. Three built-in
 options are available grouping checkers by their quality (measured by their
 false positive rate): `default`, `sensitive` and `extreme`. In addition,
 profile `portability` contains checkers for detecting platform-dependent code
@@ -1802,17 +1809,17 @@ optional arguments:
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level.
 
-The list of checkers that are enabled of disabled by default can be edited by
-editing the file '.../config/checker_profile_map.json'.
+The list of checkers that are enabled or disabled by default can be edited by
+editing "profile:default" labels in the file '{}'.
 
 Environment variables
 ------------------------------------------------
+  CC_CHECKER_LABELS_FILE Path of the checker-label mapping config file.
+                         Default: '<package>/config/checker_labels.json'
   CC_SEVERITY_MAP_FILE   Path of the checker-severity mapping config file.
                          Default: '<package>/config/checker_severity_map.json'
   CC_GUIDELINE_MAP_FILE  Path of the checker-guideline mapping config file.
                          Default: '<package>/config/checker_guideline_map.json'
-  CC_PROFILE_MAP_FILE    Path of the checker-profile mapping config file.
-                         Default: '<package>/config/checker_profile_map.json'
 ```
 </details>
 
@@ -1828,7 +1835,7 @@ A machine-readable `csv` or `json` output can be generated by supplying the
 `--output csv` or `--output json` argument.
 
 The _default_ list of enabled and disabled checkers can be altered by editing
-`{INSTALL_DIR}/config/checker_profile_map.json`. Note, that this file is
+`{INSTALL_DIR}/config/checker_labels.json`. Note, that this file is
 overwritten when the package is reinstalled!
 
 There are some coding guidelines which contain best practices on avoiding

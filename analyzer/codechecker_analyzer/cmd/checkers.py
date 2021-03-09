@@ -94,20 +94,20 @@ def get_argparser_ctor_args():
         # directly.
         'epilog': """
 The list of checkers that are enabled or disabled by default can be edited by
-editing the file '{}'.
+editing "profile:default" labels in the file '{}'.
 
 Environment variables
 ------------------------------------------------
+  CC_CHECKER_LABELS_FILE Path of the checker-label mapping config file.
+                         Default: '{}'
   CC_SEVERITY_MAP_FILE   Path of the checker-severity mapping config file.
                          Default: '{}'
   CC_GUIDELINE_MAP_FILE  Path of the checker-guideline mapping config file.
                          Default: '{}'
-  CC_PROFILE_MAP_FILE    Path of the checker-profile mapping config file.
-                         Default: '{}'
-""".format(os.path.join(config_dir_path, 'checker_profile_map.json'),
+""".format(os.path.join(config_dir_path, 'checker_labels.json'),
+           os.path.join(config_dir_path, 'checker_labels.json'),
            os.path.join(config_dir_path, 'checker_severity_map.json'),
-           os.path.join(config_dir_path, 'checker_guideline_map.json'),
-           os.path.join(config_dir_path, 'checker_profile_map.json')),
+           os.path.join(config_dir_path, 'checker_guideline_map.json')),
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.
@@ -146,6 +146,12 @@ def add_arguments_to_parser(parser):
                         required=False,
                         help="Show details about the checker, such as "
                              "description, if available.")
+
+    parser.add_argument('--label',
+                        nargs='+',
+                        required=False,
+                        default=argparse.SUPPRESS,
+                        help="")
 
     parser.add_argument('--profile',
                         dest='profile',
@@ -255,15 +261,21 @@ def main(args):
         return ' '.join('Related {} rules: {}'.format(g, ', '.join(r))
                         for g, r in guideline.items())
 
+    # TODO: --profile is a deprecated flag. This section should be removed in
+    # the next release.
     # List available checker profiles.
     if 'profile' in args and args.profile == 'list':
+        LOG.warning('--profile flag is deprecated and will be removed in the '
+                    'next release.')
+
         if 'details' in args:
             header = ['Profile name', 'Description']
-            rows = context.profile_map.available_profiles().items()
+            rows = context.checker_labels.get_constraint(
+                'profile', 'choice').items()
         else:
             header = ['Profile name']
-            rows = [(key, "") for key in
-                    context.profile_map.available_profiles()]
+            rows = [(key,) for key in
+                    context.checker_labels.get_constraint('profile', 'choice')]
 
         if args.output_format in ['csv', 'json']:
             header = list(map(uglify, header))
@@ -352,7 +364,10 @@ def main(args):
 
         profile_checkers = []
         if 'profile' in args:
-            if args.profile not in context.profile_map.available_profiles():
+            available_profiles = \
+                context.checker_labels.get_constraint('profile', 'choice')
+
+            if args.profile not in available_profiles:
                 LOG.error("Checker profile '%s' does not exist!",
                           args.profile)
                 LOG.error("To list available profiles, use '--profile list'.")

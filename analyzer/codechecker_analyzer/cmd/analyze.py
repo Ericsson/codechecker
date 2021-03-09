@@ -657,13 +657,13 @@ compiler errors are also collected as CodeChecker reports as
 Note that compiler errors and warnings are captured by CodeChecker only if it
 was emitted by clang-tidy.
 
-Profiles
+Checker labels
 ------------------------------------------------
-In CodeCheckers there is a manual grouping of checkers. These groups are called
-profiles. The collection of profiles is found in
-config/checker_profile_map.json file. The goal of these profile is that you can
-enable or disable checkers by these profiles. See the output of "CodeChecker
-checkers --profile list" command.
+In CodeChecker there is a manual grouping of checkers. These groups are
+determined by labels. The collection of labels is found in
+config/checker_labels.json file. The goal of these labels is that you can
+enable or disable checkers by these labels. See the --label flag of
+"CodeChecker checkers" command.
 
 Guidelines
 ------------------------------------------------

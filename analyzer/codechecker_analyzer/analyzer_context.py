@@ -55,110 +55,6 @@ class SeverityMap(Mapping):
         return len(self.store)
 
 
-class ProfileMap(Mapping):
-    """
-    A dictionary which maps checker names and checker groups to profile names.
-    A checker or checker group may be the member of multiple profiles.
-    """
-    def __init__(self, profile_map_file):
-        self.store = load_json_or_empty(profile_map_file, {})
-        self.__check_json_format(profile_map_file)
-
-    def __check_json_format(self, profile_map_file):
-        """
-        This function checks the format of the given profile map config file.
-        If this file doesn't meet the requirements, then CodeChecker exits with
-        status 1.
-
-        {
-          "available_profiles": {
-            "profile1": "description1",
-            "profile2": "description2"
-          },
-          "analyzers": {
-            "analyzer1": {
-              "profile1": ['checker1', 'checker2']
-            },
-            "analyzer2": {
-              "profile1": ['checker3'],
-              "profile2": ['checker3', 'checker4']
-            }
-          }
-        }
-        """
-        if 'available_profiles' not in self.store:
-            raise ValueError(f'Format error in {profile_map_file}: '
-                             '"available_profiles" key not found')
-        if 'analyzers' not in self.store:
-            raise ValueError(f'Format error in {profile_map_file}: '
-                             '"analyzers" key not found')
-
-        for analyzer, profiles in self.store['analyzers'].items():
-            if not isinstance(profiles, dict):
-                raise ValueError(f'Format error in {profile_map_file}: '
-                                 f'value of {analyzer} must be a dictionary')
-
-            diff = set(profiles) - set(self.store['available_profiles'])
-            if diff:
-                raise ValueError(f'Format error in {profile_map_file}: '
-                                 f'{", ".join(diff)} at {analyzer} not '
-                                 'documented under "available_profiles"')
-
-            for profile, checkers in profiles.items():
-                if not isinstance(checkers, list):
-                    raise ValueError(f'Format error in {profile_map_file}: '
-                                     f'value of {profile} at analyzer '
-                                     f'{analyzer} must be a list')
-
-    def __getitem__(self, key):
-        """
-        Returns the list of profiles to which the given checker name or group
-        belongs.
-        """
-        result = []
-        for profiles in self.store['analyzers'].values():
-            for profile, checkers in profiles.items():
-                if any(key.startswith(checker) for checker in checkers):
-                    result.append(profile)
-        return result
-
-    def __iter__(self):
-        """
-        This mapping class maps checker groups/names to profiles. However,
-        since not every checkers are listed necessarily in the profile config
-        file, we can't iterate over them. Still, we map checkers to profiles
-        and not in reverse, because we want to be consistent with the other
-        mapping classes.
-        """
-        raise NotImplementedError("Can't iterate profiles by checkers.")
-
-    def __len__(self):
-        """
-        Not implemented for the same reason as __iter__() is not implemented.
-        """
-        raise NotImplementedError("Can't determine the number of checkers")
-
-    def by_profile(self, profile, analyzer_tool=None):
-        """
-        Return checkers of a given profile. Optionally an analyzer tool name
-        can be given.
-        """
-        result = []
-        for analyzer, profiles in self.store['analyzers'].items():
-            if analyzer_tool is None or analyzer == analyzer_tool:
-                result.extend(profiles.get(profile, []))
-        return result
-
-    def available_profiles(self):
-        """
-        Returns the dict of available profiles and their descriptions. The
-        config file may contain profile groups of several analyzers. It is
-        possible that some analyzer doesn't contain checkers of a specific
-        profile.
-        """
-        return self.store['available_profiles']
-
-
 class GuidelineMap(Mapping):
     def __init__(self, guideline_map_file):
         self.store = load_json_or_empty(guideline_map_file, {})
@@ -267,7 +163,7 @@ class Context(metaclass=Singleton):
         self._severity_map = SeverityMap(
             load_json_or_empty(self.checker_severity_map_file, {}))
         self._guideline_map = GuidelineMap(self.checker_guideline_map_file)
-        self._profile_map = ProfileMap(self.checker_profile_map_file)
+        self._checker_labels = CheckerLabels(self.checker_labels_map_file)
         self.__package_version = None
         self.__package_build_date = None
         self.__package_git_hash = None
@@ -532,23 +428,22 @@ class Context(metaclass=Singleton):
                             'checker_guideline_map.json')
 
     @property
-    def checker_profile_map_file(self):
+    def checker_labels_map_file(self):
         """
-        Returns the path of checker-profile mapping config file. This file
-        may come from a custom location provided by CC_PROFILE_MAP_FILE
+        Returns the path of checker-labels mapping config file. This file may
+        come from a custom location provided by CC_CHECKER_LABELS_FILE
         environment variable.
         """
-        # Get profile map file from the environment.
-        profile_map_file = os.environ.get('CC_PROFILE_MAP_FILE')
-        if profile_map_file:
-            LOG.warning("Profile map file set through the "
-                        "'CC_PROFILE_MAP_FILE' environment variable: %s",
-                        profile_map_file)
+        labels_map_file = os.environ.get('CC_CHECKER_LABELS_FILE')
+        if labels_map_file:
+            LOG.warning("Labels map file set through the "
+                        "'CC_CHECKER_LABELS_FILE' environment variable: %s",
+                        labels_map_file)
 
-            return profile_map_file
+            return labels_map_file
 
         return os.path.join(self._data_files_dir_path, 'config',
-                            'checker_profile_map.json')
+                            'checker_labels.json')
 
     @property
     def severity_map(self):
@@ -559,8 +454,8 @@ class Context(metaclass=Singleton):
         return self._guideline_map
 
     @property
-    def profile_map(self):
-        return self._profile_map
+    def checker_labels(self):
+        return self._checker_labels
 
 
 def get_context():
