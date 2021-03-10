@@ -1,0 +1,34 @@
+project_root_dir := $(strip $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))
+
+runnable := $(project_root_dir)/ccexample
+
+include_dir := $(project_root_dir)/incl 
+object_dir := $(project_root_dir)/objs
+source_dir := $(project_root_dir)/src
+sources := $(wildcard $(source_dir)/*.cpp)
+objects := $(patsubst $(source_dir)/%.cpp,$(object_dir)/%.cpp.o,$(sources))
+depends := $(patsubst $(source_dir)/%.cpp,$(object_dir)/%.cpp.d,$(sources))
+
+CXX = clang++-11
+CC = clang-11
+CXXFLAGS = -MMD -MP -g -std=c++20 -Weverything -Wno-c++98-compat
+CXXFLAGS += -I $(include_dir)
+LINKFLAGS := -L /usr/lib/x86_64-linux-gnu -l boost_program_options
+
+all: $(runnable)
+
+$(runnable): $(objects)
+	$(CXX) $(LINKFLAGS) $^ -o $@
+
+$(objects): $(object_dir)/%.cpp.o: $(source_dir)/%.cpp
+	@mkdir --parents $(object_dir)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
+
+.PHONY: clean
+clean:
+	rm --recursive --force $(object_dir)
+	rm --force $(runnable)
+
+ifneq ($(filter clean,$(MAKECMDGOALS)),clean)
+-include $(depends)
+endif

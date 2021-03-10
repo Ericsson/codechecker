@@ -4,61 +4,104 @@ This is lazy dog HOWTO to using CodeChecker analysis.
 It invokes Clang Static Analyzer and Clang-Tidy tools to analyze your code.
 
 ## Table of Contents
-* [Step 1: Integrate CodeChecker into your build system](#step-1)
-* [Step 2: Analyze your code](#step-2)
-    * [Cross-Compilation](#cross-compilation)
-    * [Incremental Analysis](#incremental-analysis)
-    * [Analysis Failures](#analysis-failures)
-    * [Avoiding or Suppressing False Positives](#false-positives)
-* [Step 3: View analysis results in command line or generate static HTML files](#step-3)
-* [Step 4: Store analysis results in a CodeChecker DB and visualize results](#step-4)
-* [Step 5: Fine tune Analysis configuration](#step-5)
-    * [Ignore modules from your analysis](#ignore-modules)
-    * [Enable/Disable Checkers](#enable-disable-checkers)
-    * [Configure Checkers](#configure-checkers)
-    * [Identify files that failed analysis](#identify-files)
-* [Step 6: Integrate CodeChecker into your CI loop](#step-6)
-    * [Storing & Updating runs](#storing-runs)
-    * [ Alternative 1 (RECOMMENDED): Store the results of each commit in the same run](#storing-results)
-        * [Jenkins Script](#storing-results-example)
-    * [Alternative 2: Store each analysis in a new run](#storing-new-runs)
-        * [Jenkins Script](#storing-new-runs-example)
-    * [Gerrit Integration](#gerrit)
-    * [Programmer checking new bugs in the code after local edit (and compare it to a central database)](#compare)
-    * [Setting up user authentication](#authentication)
-* [Updating CodeChecker to new version](#upgrade)
-* [Unique Report Identifier](#unique-report-identifier)
-* [Listing and Counting Reports](#listing-reports)
-    * [How reports are counted?](#how-report-are-counted)
-    * [Report Uniqueing](#report-uniqueing)
-    * [How diffs between runs are calculated?](#diffs-between-runs)
+- [CodeChecker HOWTO](#codechecker-howto)
+  - [Table of Contents](#table-of-contents)
+  - [Preface](#preface)
+  - [Step 1: Integrate CodeChecker into your build system <a name="step-1"></a>](#step-1-integrate-codechecker-into-your-build-system-)
+    - [Step in the docs/examples directory](#step-in-the-docsexamples-directory)
+    - [Clean the workspace](#clean-the-workspace)
+    - [Log your build](#log-your-build)
+    - [Check the contents of compilation.json file.](#check-the-contents-of-compilationjson-file)
+  - [Step 2: Analyze your code <a name="step-2"></a>](#step-2-analyze-your-code-)
+    - [Run the analysis](#run-the-analysis)
+    - [View the analysis results in the command line](#view-the-analysis-results-in-the-command-line)
+    - [Cross-Compilation <a name="cross-compilation"></a>](#cross-compilation-)
+  - [Step 3: View analysis results in command line or generate static HTML files <a name="step-3"></a>](#step-3-view-analysis-results-in-command-line-or-generate-static-html-files-)
+  - [Step 4. Incremental Analysis <a name="incremental-analysis"></a>](#step-4-incremental-analysis-)
+    - [Automatic fixing](#automatic-fixing)
+      - [Using incremental build on modified files](#using-incremental-build-on-modified-files)
+      - [Using skip file to narrow analyzed files](#using-skip-file-to-narrow-analyzed-files)
+      - [Analyze sources what explicitly seleced from the compilation database](#analyze-sources-what-explicitly-seleced-from-the-compilation-database)
+    - [Analysis Failures <a name="analysis-failures"></a>](#analysis-failures-)
+    - [Avoiding or Suppressing False positives <a name="false-positives"></a>](#avoiding-or-suppressing-false-positives-)
+  - [Step 4: Store analysis results in a CodeChecker DB and visualize results <a name="step-4"></a>](#step-4-store-analysis-results-in-a-codechecker-db-and-visualize-results-)
+  - [Step 5: Fine tune Analysis configuration <a name="step-5"></a>](#step-5-fine-tune-analysis-configuration-)
+    - [Ignore modules from your analysis <a name="ignore-modules"></a>](#ignore-modules-from-your-analysis-)
+    - [Enable/Disable Checkers <a name="enable-disable-checkers"></a>](#enabledisable-checkers-)
+    - [Configure Checkers <a name="configure-checkers"></a>](#configure-checkers-)
+    - [Identify files that failed analysis <a name="identify-files"></a>](#identify-files-that-failed-analysis-)
+  - [Step 6: Integrate CodeChecker into your CI loop <a name="step-6"></a>](#step-6-integrate-codechecker-into-your-ci-loop-)
+    - [Storing & Updating runs <a name="storing-runs"></a>](#storing--updating-runs-)
+      - [Alternative 1 (RECOMMENDED): Store the results of each commit in the same run <a name="storing-results"></a>](#alternative-1-recommended-store-the-results-of-each-commit-in-the-same-run-)
+      - [Alternative 2: Store each analysis in a new run <a name="storing-new-runs"></a>](#alternative-2-store-each-analysis-in-a-new-run-)
+    - [Gerrit Integration <a name="gerrit"></a>](#gerrit-integration-)
+    - [Programmer checking new bugs in the code after local edit (and compare it to a central database) <a name="compare"></a>](#programmer-checking-new-bugs-in-the-code-after-local-edit-and-compare-it-to-a-central-database-)
+    - [Setting up user authentication <a name="authentication"></a>](#setting-up-user-authentication-)
+  - [Updating CodeChecker to new version <a name="upgrade"></a>](#updating-codechecker-to-new-version-)
+- [Unique Report Identifier (RI) <a name="unique-report-identifier"></a>](#unique-report-identifier-ri-)
+  - [Listing and Counting Reports <a name="listing-reports"></a>](#listing-and-counting-reports-)
+    - [How reports are counted? <a name="how-report-are-counted"></a>](#how-reports-are-counted-)
+  - [Report Uniqueing <a name="report-uniqueing"></a>](#report-uniqueing-)
+  - [How diffs between runs are calculated? <a name="diffs-between-runs"></a>](#how-diffs-between-runs-are-calculated-)
+
+## Preface
+The purpose of this document that makes the developer's first steps easier in
+usage of CodeChecker. The document is a mini course with simple examles that
+guide the developer how he/she can apply CodeChecker in his/her daily routine
+to make his/her code more roubust.
+
+There is a simple example program in the repository of CodeChecker what do
+almost nothing, but it can be used to demonstarate the abilities of
+CodeChecker. In this chapter that example program will be used to show
+CodeChecker usage.
+
+Examle program placed in the docs/examlples directory. After repository of
+CodeChecker cloned step in it and follow statements in this document.
+
+There are some prerequisite to successfully take this exam. First, CodeChecker
+should be
+[install](README.md/#install-guide)ed.
+Python 3 (> 3.6) should be installed on the host. Components of clang and llvm
+should be reached by PATH (clang, clang++, clang-tidy, etc.). (On debian based
+systems update-alternatives is your friend.) To compile example program g++
+and make is necessary to installed on host.
 
 ## Step 1: Integrate CodeChecker into your build system <a name="step-1"></a>
-CodeChecker only analyzes what is also built by your build system.
+CodeChecker only analyzes that sources and dependencies what are built by your build system.
 
-1. Select a module to build (open source tmux in this example).
+### Step in the docs/examples directory
 ```sh
-cd tmux
-./configure
+cd <repo root dir>
+cd docs/examples
 ```
-2. Clean that module. e.g. `make clean`
+
+### Clean the workspace
 ```sh
 make clean
 ```
-3. Log your build:
+
+### Log your build
+Logging means that during the whole compilation process CodeChecker catches
+compiler calls and save commands in a *compilation database* file.
+([Specification is here](https://clang.llvm.org/docs/JSONCompilationDatabase.html).)
+This compilation database is input of the next analysis step.
+
 ```sh
-CodeChecker log -b "make" -o compilation.json
-```
-4. Check the contents of compilation.json. If everything goes well it should
-contain the `gcc` calls.
-```sh
-cat ./compilation.json
+CodeChecker log --build "make" --build compile_commands.json
 ```
 
-**What to do if the `compilation.json` is empty?**
+### Check the contents of compilation.json file.
+If everything goes well it should contain the `g++` calls. (If you use clang
+then `clang` calls.)
+
+```sh
+cat compile_commands.json
+```
+
+**What to do if the `compile_commands.json` is empty?**
 
 * Make sure that your build system actually invoked the compiler (e.g. `gcc`,
-`g++`).
+`g++`, `clang`).
   In case your software was built once (and the binaries are already
   generated), the compiler will not be invoked. In this case do a build
   cleanup (e.g. `make clean`) and retry to log your build.
@@ -70,104 +113,174 @@ cat ./compilation.json
   See the [README](/README.md#mac-os-x) for details.
 
 ## Step 2: Analyze your code <a name="step-2"></a>
-Once the build is logged successfully (and the `compilation.json`) was created,
-you can analyze your project.
+Once the build is logged successfully (and the `compile_commands.json`) was
+created, you can analyze your project.
 
-1. Run the analysis:
+### Run the analysis
 ```sh
-CodeChecker analyze compilation.json -o ./reports
+CodeChecker analyze --output ./reports compile_commands.json
 ```
-2. View the analysis results in the command line
+
+However the compilation of the project (here the example program) is performed
+by `g++`, tha CodeChecker uses `clang` to analyze sources of the project.
+During analysis, CodeChecker compiles/analyses sources again. The analysis
+process generally uses more time.
+
+### View the analysis results in the command line
 ```sh
 CodeChecker parse ./reports
 ```
 
 Hint:
- You can do the 1st and the 2nd step in one round by executing `check`
+You can do the 1st and the 2nd step in one round by executing `check`
 ```sh
-cd tmux
+cd <repo root dir>
+cd docs/examples
 make clean
-CodeChecker check -b "make" -o ./reports
+rm --recursive --force ./reports
+CodeChecker check --build "make" --output ./reports
 ```
-or to run on 22 threads
+or to run on 22 threads both the compilation and the analysis:
+
 ```sh
-CodeChecker check -j22 -b "make clean;make -j22" -o ./reports
+CodeChecker check --jobs 22 --build "make clean ; make --jobs 22" \
+    --output ./reports
 ```
 
 ### Cross-Compilation <a name="cross-compilation"></a>
 Cross-compilers are auto-detected by CodeChecker, so the `--target` and the
-compiler pre-configured
-include paths of `gcc/g++` are automatically passed to `clang` when analyzing.
+compiler pre-configured include paths of `gcc/g++` are automatically passed to
+`clang` when analyzing.
 
 **Make sure that the compilers used for building the project (e.g.
 `/usr/bin/gcc`) are accessible when `CodeChecker analyze` or `check` is
 invoked.**
 
-### Incremental Analysis <a name="incremental-analysis"></a>
+## Step 3: View analysis results in command line or generate static HTML files <a name="step-3"></a>
+You can print detailed results (including the control flow) in command line by
+running:
+
+```sh
+CodeChecker parse --print-steps ./reports
+...
+TODO: Cut the output of example prog. analysis here.
+...
+```
+
+It is possible to generate reports as plain `HTML` files using the
+`CodeChecker parse` command. (For other output formats please consult with help
+of `parse` subcommand.)
+
+```sh
+CodeChecker parse --export html --output ./reports_html ./reports
+...
+To view the results in a browser run:
+> firefox ./reports_html/index.html &
+```
+
+`./reports_html` directory will contain an `index.html` with a link to all
+findings that are stored in separate `HTML` files (one per analyzed build
+action).
+
+TODO: Change image following new example program.
+![Analysis results in static HTML files](images/static_html.png)
+
+TODO: Edit the next paragraph.
+See `--help` on details of filtering automatic fixes. You can also use the JSON
+format output of `CodeChecker cmd diff` command if you want to fix only new
+findings:
+```sh
+CodeChecker cmd diff -b reports1 -n reports2 --new -o json | CodeChecker fixit
+```
+## Step 4. Incremental Analysis <a name="incremental-analysis"></a>
 The analysis can be run for only the changed files and the `report-directory`
 will be correctly updated with the new results.
 
 There are two supported ways for incremental analysis.
 
-a) In case you can build your
-project incrementally, you can build, log and analyze only the changed files and all the files
-that are depending on the source code changes (in case of the update of a header file).
+a) In case you can build your project incrementally, you can build, log and
+analyze only the changed files and all the files that are depending on the
+source code changes (in case of the update of a header file).
 
-b) If you only want to re-analyze changed source files, without re-building your
-project, you can use skip list to tell CodeChecker which files to analyze.
+b) If you only want to re-analyze changed source files, without re-building
+your project, you can use skip list to tell CodeChecker which files to analyze.
 
-
-a) **Using incremental build**
+### Automatic fixing
+Some CodeChecker reports are so easy to fix that even static analyzer tools may
+provide automatic fixes on them. In CodeChecker you can list these with the
+following command after having analysis reports in `reports` directory:
 
 ```sh
-cd tmux
-make clean
-CodeChecker check -b "make" -o reports
-
-#Change only 1 file in tmux
-vi ./cmd-find.c
-
-#Only cmd-find.c will be re-analyzed
-CodeChecker check -b "make" -o reports
+CodeChecker fixit ./reports
 ```
-Since the `make` command only re-compiles the changed `cmd-find.c`
+
+TODO: Synchronize with source code.
+In this example we will fix an issue automatically. It changes the source and
+you can try the incremental build feature on modified source. The next command fixes ... line of `main.cpp`.
+
+```sh
+CodeChecker fixit --checker-name readability-implicit-bool-conversion \
+   --apply  ./reports
+```
+
+Without `--apply` option CodeChecker will not modify the source.
+
+#### Using incremental build on modified files
+At this point you have only one modified file. The next command re-analyzes the `main.cpp`:
+
+```sh
+CodeChecker check --build "make" --ouput ./reports
+```
+Since the `make` command only re-compiles the changed `main.cpp`
 only that file will be re-analyzed.
 
-Now the `reports` directory contains also the results of the updated `cmd-find.c`.
+Now the `reports` directory contains also the results of the updated
+`main.cpp`. Check the number of issues by re-generate html report as you did in
+`Step 3.`
 
-b) **Using skip file**
-
+#### Using skip file to narrow analyzed files
 If you want to re-analyze only the changed source files without build, you
 can give a skip-list to CodeChecker.
 
-Let's assume that only `cmd-find.c` that needs to be re-analyzed.
+Let's assume that only `main.cpp` that needs to be re-analyzed.
 
-You need to create the following skip list file that tells CodeChecker
-to analyze `cmd-find.c` and ignore the rest.
+You need to create the following skip list file that tells CodeChecker to
+analyze `main.cpp` and ignore the rest.
 ```sh
 #skip.list:
 
-+*cmd-find.c
++*main.cpp
 -*
 ```
-Let's assume you have the compilation database in
-`compile_commands.json`.
+If you run the commands in the previous section then content of ./report are
+changed and `main.cpp` also changed. Step back to the original state.
 
 ```sh
-CodeChecker check ./compile_commands.json -i skip.list -o reports
+git checkout main.cpp
+rm --recursive --force ./reports
+make clean
+```
+
+Then re-do the "development cycle".
+
+```sh
+CodeChecker check --build "make" --output ./reports
+CodeChecker fixit --checker-name readability-implicit-bool-conversion \
+   --apply  ./reports
+CodeChecker check --ignore skip.list --output ./reports compile_commands.json
 ```
 For more details regarding the skip file format see
 the [user guide](analyzer/user_guide.md#skip).
 
-c) **Select source files from the compilation database**
+#### Analyze sources what explicitly seleced from the compilation database
 You can select which files you would like to analyze from the compilation
 database. This is similar to the skip list feature but can be easier to quickly
 analyze only a few files not the whole compilation database.
 
-Let's assume you have the compilation database in `compile_commands.json`.
+Undo filesystem modifications as described in the previous section. Then:
 
 ```sh
-CodeChecker check ./compile_commands.json -o reports --file "*cmd-find.c"
+CodeChecker check -output ./reports --file "main.cpp" ./compile_commands.json
 ```
 
 Absolute directory paths should start with `/`, relative directory paths should
@@ -218,56 +331,6 @@ kept close to the suspicious line of code. Although it is possible, it is not
 recommended to suppress false positives on the Web UI only, because this way
 the suppression will be stored in a database that is unrelated to the source
 code.
-
-## Step 3: View analysis results in command line or generate static HTML files <a name="step-3"></a>
-You can print detailed results (including the control flow) in command line by
-running:
-
-```sh
-CodeChecker parse --print-steps ./reports
-...
-Found no defects in grid-view.c
-[MEDIUM] /home/ednikru/work/codechecker/play/tmux/log.c:89:1: Opened File never closed. Potential Resource leak [alpha.unix.Stream]
-}
-^
-  Report hash: 88d734fc6eeb71dd292863f2674c370a
-  Steps:
-    1, log.c:80:6: Assuming 'log_level' is equal to 0
-    2, log.c:89:1: Opened File never closed. Potential Resource leak
-
-Found 1 defect(s) in log.c
-...
-```
-
-It is possible to generate reports as plain `HTML` files using the
-`CodeChecker parse` command.
-```sh
-CodeChecker parse ./reports -e html -o ./reports_html
-...
-To view the results in a browser run:
-> firefox ./reports_html/index.html
-```
-
-`./reports_html` directory will contain an `index.html` with a link to all
-findings that are stored in separate `HTML` files (one per analyzed build
-action).
-
-![Analysis results in static HTML files](images/static_html.png)
-
-Some CodeChecker reports are so easy to fix that even static analyzer tools may
-provide automatic fixes on them. In CodeChecker you can list these with the
-following command after having analysis reports in `reports` directory:
-```sh
-CodeChecker fixit --list reports
-```
-
-The listed automatic fixes can be applied by omitting `--list` flag. See
-`--help` on details of filtering automatic fixes. You can also use the JSON
-format output of `CodeChecker cmd diff` command if you want to fix only new
-findings:
-```sh
-CodeChecker cmd diff -b reports1 -n reports2 --new -o json | CodeChecker fixit
-```
 
 ## Step 4: Store analysis results in a CodeChecker DB and visualize results <a name="step-4"></a>
 
