@@ -670,7 +670,7 @@ class Product:
         db_cleanup.remove_expired_run_locks(self.session_factory)
         db_cleanup.remove_unused_data(self.session_factory)
         db_cleanup.upgrade_severity_levels(self.session_factory,
-                                           self.__context.severity_map)
+                                           self.__context.checker_labels)
 
         LOG.info("Garbage collection finished.")
         return True

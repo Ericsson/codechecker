@@ -30,10 +30,6 @@ from codechecker_common.util import load_json_or_empty
 
 LOG = logger.get_logger('system')
 
-_data_files_dir_path = analyzer_context.get_context().data_files_dir_path
-_severity_map_file = os.path.join(_data_files_dir_path, 'config',
-                                  'checker_severity_map.json')
-
 epilog_env_var = f"""
   CC_ANALYZERS_FROM_PATH   Set to `yes` or `1` to enforce taking the analyzers
                            from the `PATH` instead of the given binaries.
@@ -41,8 +37,6 @@ epilog_env_var = f"""
                            is set you can configure the plugin directory of the
                            Clang Static Analyzer by using this environment
                            variable.
-  CC_SEVERITY_MAP_FILE     Path of the checker-severity mapping config file.
-                           Default: {_severity_map_file}
 """
 
 epilog_issue_hashes = """

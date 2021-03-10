@@ -3,20 +3,18 @@
 
 ### Checker labels
 `checker_labels.json` file contains a labels to the checkers which describe
-some properties, such as severity.
+some properties, such as profile, guideline, severity, etc.
 
 Current labels are:
 
 | Label | Description |
 |-------|-------------|
 | profile | A grouping of checker that can be used after `--enable`/`--disable` flags during analysis. |
+| guideline | A coding guideline which contains a coding rule covered by the given checker. |
+| sei-cert | Rules of SEI-CERT coding guideline that the given checker covers. |
+| severity | Indicates how severe a bug described by the given checker is when it occurs. |
 
-### Checker severity map
-checker_severity_map.json file contains a mapping between a
-checker name and a severity level. Severity levels can be found in the
-codechecker_api_shared.thrift file.
-
-The following severity levels are defined:
+As for severities, the following levels are defined:
 
 - **STYLE**: A true positive indicates that the source code is against a specific coding guideline or could improve readability.
 Example: LLVM Coding Guideline: Do not use else or else if after something that interrupts control flow (break, return, throw, continue).
@@ -30,7 +28,9 @@ Example: Redundant expression in a condition.
 - **HIGH**: A true positive indicates that the source code will cause a run-time error.
   Example of this category: out of bounds array access, division by zero, memory leak.
 
-- **CRITICAL**: Currently unused. This severity level is reserved for later use.
+- **CRITICAL**: Currently used for indicating compilation errors.
+
+- **UNSPECIFIED**: Checker severity is not specified for a checker.
 
 ### Package configuration
   *  environment variables section

@@ -234,7 +234,7 @@ class MakeFileCreator:
         """ Creates normal analysis targets. """
         source_analyzer, rh = analysis_manager.prepare_check(
             action, self.__config_map.get(action.analyzer_type),
-            self.__output_path, self.__context.severity_map,
+            self.__output_path, self.__context.checker_labels,
             self.__skip_handler, self.__statistics_data)
 
         if self.__statistics_data and post_pre_all_target:

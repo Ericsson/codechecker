@@ -9,7 +9,7 @@
 """Convert between the codechecker_common.Report type and
 the thrift ReportData type."""
 
-from typing import Dict
+from codechecker_common.checker_labels import CheckerLabels
 from codechecker_common.report import Report
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import ReportData, Severity
 
@@ -34,7 +34,7 @@ def reportData_to_report(report_data: ReportData) -> Report:
 
 
 def report_to_reportData(report: Report,
-                         severity_map: Dict[str, str]) -> ReportData:
+                         checker_labels: CheckerLabels) -> ReportData:
     """Convert a Report object to a Thrift ReportData type."""
     events = [i for i in report.bug_path if i.get("kind") == "event"]
 
@@ -42,8 +42,8 @@ def report_to_reportData(report: Report,
     checker_name = report.main["check_name"]
 
     severity = None
-    if severity_map:
-        severity_name = severity_map.get(checker_name)
+    if checker_labels:
+        severity_name = checker_labels.severity(checker_name)
         severity = Severity._NAMES_TO_VALUES[severity_name]
 
     return ReportData(

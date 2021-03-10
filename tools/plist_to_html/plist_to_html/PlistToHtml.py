@@ -160,9 +160,9 @@ class HtmlBuilder:
     def __init__(
         self,
         layout_dir: str,
-        severity_map: Optional[SeverityMap] = None
+        checker_labels  # : Optional[CheckerLabels] = None
     ):
-        self._severity_map = severity_map if severity_map else {}
+        self._checker_labels = checker_labels
         self.layout_dir = layout_dir
         self.generated_html_reports: Dict[str, Reports] = {}
 
@@ -213,7 +213,9 @@ class HtmlBuilder:
         # Add severity levels for reports.
         for report in report_data['reports']:
             checker = report['checkerName']
-            report['severity'] = self._severity_map.get(checker, 'UNSPECIFIED')
+            report['severity'] = 'UNSPECIFIED'
+            if self._checker_labels:
+                report['severity'] = self._checker_labels.severity(checker)
 
         self.generated_html_reports[output_path] = report_data['reports']
 
@@ -335,7 +337,9 @@ class HtmlBuilder:
 
         with io.StringIO() as string:
             for checker_name in sorted(checker_statistics):
-                severity = self._severity_map.get(checker_name, 'UNSPECIFIED')
+                severity = 'UNSPECIFIED'
+                if self._checker_labels:
+                    severity = self._checker_labels.severity(checker_name)
                 string.write('''
                   <tr>
                     <td>{0}</td>

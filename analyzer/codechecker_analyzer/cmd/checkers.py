@@ -94,20 +94,13 @@ def get_argparser_ctor_args():
         # directly.
         'epilog': """
 The list of checkers that are enabled or disabled by default can be edited by
-editing "profile:default" labels in the file '{}'.
+editing "profile:default" labels in the file '{0}'.
 
 Environment variables
 ------------------------------------------------
   CC_CHECKER_LABELS_FILE Path of the checker-label mapping config file.
-                         Default: '{}'
-  CC_SEVERITY_MAP_FILE   Path of the checker-severity mapping config file.
-                         Default: '{}'
-  CC_GUIDELINE_MAP_FILE  Path of the checker-guideline mapping config file.
-                         Default: '{}'
-""".format(os.path.join(config_dir_path, 'checker_labels.json'),
-           os.path.join(config_dir_path, 'checker_labels.json'),
-           os.path.join(config_dir_path, 'checker_severity_map.json'),
-           os.path.join(config_dir_path, 'checker_guideline_map.json')),
+                         Default: '{0}'
+""".format(os.path.join(config_dir_path, 'checker_labels.json')),
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.
@@ -245,12 +238,15 @@ def main(args):
         checker_name -- A full checker name.
         selected_guidelines -- A list of guideline names or guideline rule IDs.
         """
-        guideline = context.guideline_map.get(checker_name, {})
-        guideline_set = set(guideline)
-        for value in guideline.values():
-            guideline_set |= set(value)
+        labels = context.checker_labels.labels_of_checker(checker_name)
+        choices = context.checker_labels.get_constraint('guideline', 'choice')
 
-        return any(g in guideline_set for g in selected_guidelines)
+        for label, value in labels:
+            if (label == 'guideline' or label in choices) and \
+                    value in selected_guidelines:
+                return True
+
+        return False
 
     def format_guideline(guideline):
         """
@@ -261,6 +257,25 @@ def main(args):
         return ' '.join('Related {} rules: {}'.format(g, ', '.join(r))
                         for g, r in guideline.items())
 
+    def guideline_rules_for_checker(checker):
+        """
+        Returns the guideline and rules covered by the given checker. This
+        function returns a dict which maps guideline names to the covered
+        rules: { "sei-cert": ["arr30-c", ...], ... }.
+        """
+        result = defaultdict(list)
+        labels = context.checker_labels.labels_of_checker(checker)
+        guidelines = \
+            context.checker_labels.get_constraint('guideline', 'choice')
+
+        for label in labels:
+            if label[0] in guidelines:
+                result[label[0]].append(label[1])
+
+        return result
+
+    cl = context.checker_labels
+
     # TODO: --profile is a deprecated flag. This section should be removed in
     # the next release.
     # List available checker profiles.
@@ -270,12 +285,10 @@ def main(args):
 
         if 'details' in args:
             header = ['Profile name', 'Description']
-            rows = context.checker_labels.get_constraint(
-                'profile', 'choice').items()
+            rows = cl.get_constraint('profile', 'choice').items()
         else:
             header = ['Profile name']
-            rows = [(key,) for key in
-                    context.checker_labels.get_constraint('profile', 'choice')]
+            rows = [(key,) for key in cl.get_constraint('profile', 'choice')]
 
         if args.output_format in ['csv', 'json']:
             header = list(map(uglify, header))
@@ -321,11 +334,10 @@ def main(args):
         return
 
     if args.guideline is not None and len(args.guideline) == 0:
-        result = defaultdict(set)
+        result = {}
 
-        for _, guidelines in context.guideline_map.items():
-            for guideline, rules in guidelines.items():
-                result[guideline] |= set(rules)
+        for guideline in cl.get_constraint('guideline', 'choice'):
+            result[guideline] = set(cl.occurring_values(guideline))
 
         header = ['Guideline', 'Rules']
         if args.output_format in ['csv', 'json']:
@@ -364,8 +376,7 @@ def main(args):
 
         profile_checkers = []
         if 'profile' in args:
-            available_profiles = \
-                context.checker_labels.get_constraint('profile', 'choice')
+            available_profiles = cl.get_constraint('profile', 'choice')
 
             if args.profile not in available_profiles:
                 LOG.error("Checker profile '%s' does not exist!",
@@ -379,7 +390,7 @@ def main(args):
                                            checkers,
                                            profile_checkers)
 
-        for checker_name, value in config_handler.checks().items():
+        for checker, value in config_handler.checks().items():
             state, description = value
 
             if state != CheckerState.enabled and 'profile' in args:
@@ -396,21 +407,20 @@ def main(args):
                 state = '+' if state == CheckerState.enabled else '-'
 
             if args.guideline is not None:
-                if not match_guideline(checker_name, args.guideline):
+                if not match_guideline(checker, args.guideline):
                     continue
 
             if 'details' in args:
-                severity = context.severity_map.get(checker_name)
-                guideline = context.guideline_map.get(checker_name, {})
+                severity = cl.severity(checker)
+                guideline = guideline_rules_for_checker(checker)
                 if args.output_format != 'json':
                     guideline = format_guideline(guideline)
-                rows.append([state, checker_name, analyzer,
+                rows.append([state, checker, analyzer,
                              severity, guideline, description])
             else:
-                rows.append([checker_name])
+                rows.append([checker])
 
     if 'show_warnings' in args:
-        severity = context.severity_map.get('clang-diagnostic-')
         for warning in get_warnings(analyzer_environment):
             warning = 'clang-diagnostic-' + warning
 
@@ -418,12 +428,12 @@ def main(args):
                 if not match_guideline(warning, args.guideline):
                     continue
 
-            guideline = context.guideline_map.get(warning, {})
+            guideline = guideline_rules_for_checker(warning)
             if args.output_format != 'json':
                 guideline = format_guideline(guideline)
 
             if 'details' in args:
-                rows.append(['', warning, '-', severity, guideline, '-'])
+                rows.append(['', warning, '-', 'MEDIUM', guideline, '-'])
             else:
                 rows.append([warning])
 

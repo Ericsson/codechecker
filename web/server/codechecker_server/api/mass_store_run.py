@@ -806,7 +806,8 @@ class MassStoreRun:
 
         try:
             checker_name = main_section['check_name']
-            severity_name = self.__context.severity_map.get(checker_name)
+            severity_name = \
+                self.__context.checker_labels.severity(checker_name)
             severity = ttypes.Severity._NAMES_TO_VALUES[severity_name]
             report = Report(
                 run_id, main_section['issue_hash_content_of_line_in_context'],

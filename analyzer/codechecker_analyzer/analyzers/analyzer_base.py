@@ -68,7 +68,7 @@ class SourceAnalyzer(metaclass=ABCMeta):
 
     @abstractmethod
     def construct_result_handler(self, buildaction, report_output,
-                                 severity_map, skiplist_handler):
+                                 checker_labels, skiplist_handler):
         """
         This method constructs the class that is responsible to handle the
         results of the analysis. The result should be a subclass of

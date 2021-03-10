@@ -13,12 +13,13 @@ import os
 import re
 
 from codechecker_common import logger
+from codechecker_common.checker_labels import CheckerLabels
 from codechecker_common.report import Report
 
 LOG = logger.get_logger('system')
 
 
-def convert(reports: List[Report], severity_map: Dict[str, str]) -> Dict:
+def convert(reports: List[Report], checker_labels: CheckerLabels) -> Dict:
     """Convert reports to gerrit review format.
 
     Process the required environment variables and convert the reports
@@ -31,7 +32,7 @@ def convert(reports: List[Report], severity_map: Dict[str, str]) -> Dict:
 
     return __convert_reports(reports, repo_dir, report_url,
                              changed_files, changed_file_path,
-                             severity_map)
+                             checker_labels)
 
 
 def mandatory_env_var_is_set():
@@ -62,7 +63,7 @@ def __convert_reports(reports: List[Report],
                       report_url: Union[str, None],
                       changed_files: List[str],
                       changed_file_path: Union[str, None],
-                      severity_map: Dict[str, str]) -> Dict:
+                      checker_labels: CheckerLabels) -> Dict:
     """Convert the given reports to gerrit json format.
 
     This function will convert the given report to Gerrit json format.
@@ -73,7 +74,7 @@ def __convert_reports(reports: List[Report],
     report_url - URL where the report can be found something like this:
       "http://jenkins_address/userContent/$JOB_NAME/$BUILD_NUM/index.html"
     changed_files - list of the changed files
-    severity_map
+    checker_labels
     """
     review_comments = {}
 
@@ -84,7 +85,7 @@ def __convert_reports(reports: List[Report],
         bug_col = report.col
 
         check_name = report.check_name
-        severity = severity_map.get(check_name, "UNSPECIFIED")
+        severity = checker_labels.severity(check_name)
         file_name = report.file_path
         check_msg = report.description
         source_line = report.source_line

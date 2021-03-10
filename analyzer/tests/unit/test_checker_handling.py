@@ -27,28 +27,25 @@ class MockContextSA:
                 return ['core', 'deadcode', 'security.FloatLoopCounter']
             elif labels[0] == 'profile:security':
                 return ['alpha.security']
+            elif labels[0] == 'guideline:sei-cert':
+                return ['alpha.core.CastSize', 'alpha.core.CastToStruct']
 
         def get_constraint(self, label, constraint):
             if label == 'profile' and constraint == 'choice':
                 return ['default', 'sensitive', 'security', 'portability',
                         'extreme']
 
-    class GuidelineMap:
-        def __getitem__(self, key):
-            return {'sei-cert': ['rule1', 'rule2']}
-
-        def by_guideline(self, guideline):
-            return ['alpha.core.CastSize', 'alpha.core.CastToStruct']
-
-        def available_guidelines(self):
-            return {'sei-cert': 'description'}
+        def occurring_values(self, label):
+            if label == 'guideline':
+                return ['sei-cert']
+            elif label == 'sei-cert':
+                return ['rule1', 'rule2']
 
     path_env_extra = None
     ld_lib_path_extra = None
     checker_plugin = None
     analyzer_binaries = {'clangsa': 'clang'}
     checker_labels = CheckerLabels()
-    guideline_map = GuidelineMap()
     available_profiles = ['profile1']
     package_root = './'
 
@@ -235,12 +232,14 @@ class MockContextTidy:
         def get_constraint(self, checker, constraint):
             return []
 
+        def occurring_values(self, checker):
+            return []
+
     path_env_extra = None
     ld_lib_path_extra = None
     checker_plugin = None
     analyzer_binaries = {'clang-tidy': 'clang-tidy'}
     checker_labels = CheckerLabels()
-    guideline_map = {'d-e': {'guideline1': ['rule1', 'rule2']}}
     available_profiles = ['profile1']
     package_root = './'
 

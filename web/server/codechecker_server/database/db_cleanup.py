@@ -135,11 +135,15 @@ def remove_unused_review_statuses(session_maker):
             LOG.error("Failed to remove dangling review statuses: %s", str(ex))
 
 
-def upgrade_severity_levels(session_maker, severity_map):
+def upgrade_severity_levels(session_maker, checker_labels):
     """
     Updates the potentially changed severities at the reports.
     """
     LOG.debug("Upgrading severity levels started...")
+
+    severity_map = {}
+    for checker in checker_labels.checkers():
+        severity_map[checker] = checker_labels.severity(checker)
 
     for severity_map_small in util.chunks(
             iter(severity_map.items()), SQLITE_LIMIT_COMPOUND_SELECT):
@@ -177,8 +181,7 @@ def upgrade_severity_levels(session_maker, severity_map):
                 if changed_checkers:
                     updated_checker_ids = set()
                     for checker_id, severity_old in changed_checkers:
-                        severity_new = severity_map_small.get(checker_id,
-                                                              'UNSPECIFIED')
+                        severity_new = severity_map_small[checker_id]
                         severity_id = Severity._NAMES_TO_VALUES[severity_new]
 
                         LOG.info("Upgrading severity level of '%s' checker "

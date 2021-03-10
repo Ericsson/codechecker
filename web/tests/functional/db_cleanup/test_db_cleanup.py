@@ -19,6 +19,7 @@ from shutil import copyfile, rmtree
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import CommentData, \
     ReportFilter, ReviewStatus, RunFilter, Severity
+from codechecker_common.checker_labels import CheckerLabels
 
 from libtest import codechecker
 from libtest import env
@@ -42,16 +43,16 @@ class TestDbCleanup(unittest.TestCase):
             pass
 
         cc_package = env.codechecker_package()
-        original_severity_cfg = os.path.join(cc_package,
-                                             'config',
-                                             'checker_severity_map.json')
+        original_labels_cfg = os.path.join(cc_package,
+                                           'config',
+                                           'checker_labels.json')
 
-        self.workspace_severity_cfg = os.path.join(self.test_workspace,
-                                                   'checker_severity_map.json')
-        copyfile(original_severity_cfg, self.workspace_severity_cfg)
+        self.workspace_labels_cfg = os.path.join(self.test_workspace,
+                                                 'checker_labels.json')
+        copyfile(original_labels_cfg, self.workspace_labels_cfg)
 
-        self.codechecker_cfg['check_env']['CC_SEVERITY_MAP_FILE'] = \
-            self.workspace_severity_cfg
+        self.codechecker_cfg['check_env']['CC_CHECKER_LABELS_FILE'] = \
+            self.workspace_labels_cfg
 
     def __create_test_dir(self):
         makefile = "all:\n\t$(CXX) -c a/main.cpp -o /dev/null\n"
@@ -132,7 +133,7 @@ int f(int x) { return 1 / x; }
     def __check_serverity_of_reports(self, run_name):
         """
         This will check whether reports in the database has the same severity
-        levels as in the severity map config file.
+        levels as in the labels config file.
         """
         run_filter = RunFilter()
         run_filter.names = [run_name]
@@ -145,13 +146,11 @@ int f(int x) { return 1 / x; }
             = self._cc_client.getRunResults([run_id], 10, 0, [], None, None,
                                             False)
 
-        with open(self.workspace_severity_cfg, 'r',
-                  encoding="utf-8", errors="ignore") as severity_cgf_file:
-            severity_map = json.load(severity_cgf_file)
-            for report in reports:
-                severity_id = severity_map.get(report.checkerId, 'UNSPECIFIED')
-                self.assertEqual(Severity._VALUES_TO_NAMES[report.severity],
-                                 severity_id)
+        checker_labels = CheckerLabels(self.workspace_labels_cfg)
+        for report in reports:
+            severity_id = checker_labels.severity(report.checkerId)
+            self.assertEqual(Severity._VALUES_TO_NAMES[report.severity],
+                             severity_id)
 
     def test_garbage_file_collection(self):
         event = multiprocessing.Event()
@@ -257,14 +256,14 @@ int f(int x) { return 1 / x; }
         event.clear()
 
         # Change severity level of core.DivideZero to LOW.
-        with open(self.workspace_severity_cfg, 'r+',
-                  encoding='utf-8', errors='ignore') as severity_cgf_file:
-            severity_map = json.load(severity_cgf_file)
-            severity_map['core.DivideZero'] = 'LOW'
+        with open(self.workspace_labels_cfg, 'r+',
+                  encoding='utf-8', errors='ignore') as labels_cgf_file:
+            checker_labels = json.load(labels_cgf_file)
+            checker_labels['labels']['core.DivideZero'][-1] = 'severity:LOW'
 
-            severity_cgf_file.seek(0)
-            severity_cgf_file.truncate()
-            severity_cgf_file.write(str(json.dumps(severity_map)))
+            labels_cgf_file.seek(0)
+            labels_cgf_file.truncate()
+            labels_cgf_file.write(str(json.dumps(checker_labels)))
 
         self.codechecker_cfg['viewer_port'] = env.get_free_port()
         env.export_test_cfg(self.test_workspace,

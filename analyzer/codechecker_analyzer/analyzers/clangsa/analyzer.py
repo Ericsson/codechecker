@@ -406,14 +406,14 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         return clang
 
     def construct_result_handler(self, buildaction, report_output,
-                                 severity_map, skiplist_handler):
+                                 checker_labels, skiplist_handler):
         """
         See base class for docs.
         """
         res_handler = ResultHandlerClangSA(buildaction, report_output,
                                            self.config_handler.report_hash)
 
-        res_handler.severity_map = severity_map
+        res_handler.checker_labels = checker_labels
         res_handler.skiplist_handler = skiplist_handler
 
         return res_handler

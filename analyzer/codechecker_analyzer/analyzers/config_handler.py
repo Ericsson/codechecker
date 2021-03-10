@@ -156,7 +156,6 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         """
 
         checker_labels = analyzer_context.checker_labels
-        guideline_map = analyzer_context.guideline_map
 
         if 'profile:list' in map(itemgetter(0), cmdline_enable):
             LOG.error("'list' is a reserved profile keyword. ")
@@ -168,7 +167,7 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         if 'guideline:list' in map(itemgetter(0), cmdline_enable):
             LOG.error("'list' is a reserved guideline keyword. ")
             LOG.error("Please choose another guideline name in "
-                      "%s/config/checker_guideline_map.json and rebuild.",
+                      "%s/config/checker_labels.json and rebuild.",
                       analyzer_context.data_files_dir_path)
             sys.exit(1)
 
@@ -213,19 +212,11 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         # (It is used to check if a profile name is valid.)
         reserved_names = self.__gen_name_variations()
         profiles = checker_labels.get_constraint('profile', 'choice')
+        guidelines = checker_labels.occurring_values('guideline')
 
         for identifier, enabled in cmdline_enable:
-            # TODO After guidelines are covered by labels, this branch should
-            # be ':' in identifier.
-            if 'profile:' in identifier:
+            if ':' in identifier:
                 for checker in checker_labels.checkers_by_labels([identifier]):
-                    self.set_checker_enabled(checker, enabled)
-            elif identifier.startswith('guideline:'):
-                guideline_name = identifier[len('guideline:'):]
-                if guideline_name not in guideline_map.available_guidelines():
-                    LOG.error('No such guideline: %s', guideline_name)
-                    sys.exit(1)
-                for checker in guideline_map.by_guideline(guideline_name):
                     self.set_checker_enabled(checker, enabled)
             elif identifier in profiles:
                 if identifier in reserved_names:
@@ -234,11 +225,12 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
                 for checker in checker_labels.checkers_by_labels(
                         [f'profile:{identifier}']):
                     self.set_checker_enabled(checker, enabled)
-            elif identifier in guideline_map.available_guidelines():
+            elif identifier in guidelines:
                 if identifier in reserved_names:
                     LOG.warning("Guideline name '%s' conflicts with a "
                                 "checker(-group) name.", identifier)
-                for checker in guideline_map.by_guideline(identifier):
+                for checker in checker_labels.checkers_by_labels(
+                        [f'guideline:{identifier}']):
                     self.set_checker_enabled(checker, enabled)
             else:
                 self.set_checker_enabled(identifier, enabled)

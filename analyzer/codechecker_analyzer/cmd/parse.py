@@ -26,6 +26,7 @@ from plist_to_html import PlistToHtml
 from codechecker_analyzer import analyzer_context, suppress_handler
 
 from codechecker_common import arg, logger, plist_parser, util, cmd_config
+from codechecker_common.checker_labels import CheckerLabels
 from codechecker_common.output import baseline, json as out_json, twodim, \
     codeclimate, gerrit
 from codechecker_common.skiplist_handler import SkipListHandler
@@ -39,10 +40,6 @@ LOG = logger.get_logger('system')
 
 EXPORT_TYPES = ['html', 'json', 'codeclimate', 'gerrit', 'baseline']
 
-_data_files_dir_path = analyzer_context.get_context().data_files_dir_path
-_severity_map_file = os.path.join(_data_files_dir_path, 'config',
-                                  'checker_severity_map.json')
-
 epilog_env_var = f"""
   CC_CHANGED_FILES       Path of changed files json from Gerrit. Use it when
                          generating gerrit output.
@@ -51,8 +48,6 @@ epilog_env_var = f"""
                          generating gerrit output.
   CC_REPORT_URL          URL where the report can be found. Use it when
                          generating gerrit output.
-  CC_SEVERITY_MAP_FILE   Path of the checker-severity mapping config file.
-                         Default: {_severity_map_file}
 """
 
 epilog_exit_status = """
@@ -70,12 +65,12 @@ class PlistToPlaintextFormatter:
     def __init__(self,
                  src_comment_handler,
                  skip_handler: Callable[[str], bool],
-                 severity_map,
+                 checker_labels,
                  processed_path_hashes,
                  trim_path_prefixes,
                  src_comment_status_filter=None):
 
-        self.__severity_map = severity_map
+        self.__checker_labels = checker_labels
         self.print_steps = False
         self.src_comment_handler = src_comment_handler
         self._skip_handler = skip_handler
@@ -233,7 +228,7 @@ class PlistToPlaintextFormatter:
                     report.files[last_report_event['location']['file']]
 
                 file_stats[f_path] += 1
-                severity = self.__severity_map.get(checker_name)
+                severity = self.__checker_labels.severity(checker_name)
                 severity_stats[severity] += 1
                 report_count["report_count"] += 1
 
@@ -608,7 +603,7 @@ def parse_with_plt_formatter(plist_file: str,
 def _parse_convert_reports(
     input_dirs: List[str],
     out_format: str,
-    severity_map: Dict,
+    checker_labels: CheckerLabels,
     trim_path_prefixes: Optional[List[str]],
     skip_handler: Callable[[str], bool]) \
         -> Tuple[Union[Dict, List], int]:
@@ -649,11 +644,11 @@ def _parse_convert_reports(
         return (baseline.convert(all_reports), number_of_reports)
 
     if out_format == "codeclimate":
-        return (codeclimate.convert(all_reports, severity_map),
+        return (codeclimate.convert(all_reports, checker_labels),
                 number_of_reports)
 
     if out_format == "gerrit":
-        return gerrit.convert(all_reports, severity_map), number_of_reports
+        return gerrit.convert(all_reports, checker_labels), number_of_reports
 
     if out_format == "json":
         return [out_json.convert_to_parse(r) for r in all_reports], \
@@ -661,7 +656,7 @@ def _parse_convert_reports(
 
 
 def _generate_json_output(
-    severity_map: Dict,
+    checker_labels: CheckerLabels,
     input_dirs: List[str],
     output_type: str,
     output_file_path: Optional[str],
@@ -677,7 +672,7 @@ def _generate_json_output(
 
     Parameters
     ----------
-    severity_map : Dict
+    checker_labels : CheckerLabels
         Binary format of a piece of configuration.
     input_dirs : List[str]
         Directories where the underlying analyzer processes have placed the
@@ -697,7 +692,7 @@ def _generate_json_output(
 
     try:
         reports, number_of_reports = _parse_convert_reports(
-            input_dirs, output_type, severity_map, trim_path_prefixes,
+            input_dirs, output_type, checker_labels, trim_path_prefixes,
             skip_handler)
         output_text = json.dumps(reports)
 
@@ -828,7 +823,7 @@ def main(args):
     if export:
         if export == 'baseline':
             report_hashes, number_of_reports = _parse_convert_reports(
-                args.input, export, context.severity_map, trim_path_prefixes,
+                args.input, export, context.checker_labels, trim_path_prefixes,
                 skip_handler)
 
             output_path = get_output_file_path("reports.baseline")
@@ -841,7 +836,7 @@ def main(args):
         if export != 'html':
             output_path = get_output_file_path("reports.json")
             sys.exit(_generate_json_output(
-                context.severity_map, args.input, export, output_path,
+                context.checker_labels, args.input, export, output_path,
                 trim_path_prefixes, skip_handler))
 
     html_builder = None
@@ -904,7 +899,7 @@ def main(args):
             if not html_builder:
                 html_builder = \
                     PlistToHtml.HtmlBuilder(context.path_plist_to_html_dist,
-                                            context.severity_map)
+                                            context.checker_labels)
 
             LOG.info("Generating html output files:")
             PlistToHtml.parse(input_path,
@@ -944,7 +939,7 @@ def main(args):
 
         plist_pltf = PlistToPlaintextFormatter(suppr_handler,
                                                skip_handler,
-                                               context.severity_map,
+                                               context.checker_labels,
                                                processed_path_hashes,
                                                trim_path_prefixes,
                                                src_comment_status_filter)

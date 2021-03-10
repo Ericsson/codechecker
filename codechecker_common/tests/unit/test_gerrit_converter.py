@@ -21,7 +21,21 @@ from codechecker_common.report import Report
 class TestReportToGerrit(unittest.TestCase):
     @classmethod
     def setup_class(cls):
-        cls.severity_map = {"my_checker": "LOW"}
+        class CheckerLabels:
+            def severity(self, checker):
+                if checker == 'my_checker':
+                    return 'LOW'
+                else:
+                    # This assertion warns when a new test-case in the future
+                    # intends to query the severity of another checker. The
+                    # original behavior of this function is to return the
+                    # defult 'UNSPECIFIED' value by defult when the severity is
+                    # not provided in the config file.
+                    assert False, \
+                        'Currently no test-case quieries other labels for ' \
+                        'other checkers.'
+
+        cls.checker_labels = CheckerLabels()
 
     def test_report_to_gerrit_conversion(self):
         """Conversion without directory path just the source filename."""
@@ -40,7 +54,7 @@ class TestReportToGerrit(unittest.TestCase):
 
         report_to_convert = Report(main, bugpath, files, metadata)
 
-        got = gerrit.convert([report_to_convert], self.severity_map)
+        got = gerrit.convert([report_to_convert], self.checker_labels)
         expected = {
             "tag": "jenkins",
             "message": "CodeChecker found 1 issue(s) in the code.",
@@ -86,7 +100,7 @@ class TestReportToGerrit(unittest.TestCase):
 
         report_to_convert = Report(main, bugpath, files, metadata)
 
-        got = gerrit.convert([report_to_convert], self.severity_map)
+        got = gerrit.convert([report_to_convert], self.checker_labels)
         expected = {
             "tag": "jenkins",
             "message": "CodeChecker found 1 issue(s) in the code.",
@@ -133,7 +147,7 @@ class TestReportToGerrit(unittest.TestCase):
         report_to_convert = Report(main, bugpath, files, metadata)
         os.environ["CC_REPO_DIR"] = os.path.dirname(os.path.realpath(__file__))
 
-        got = gerrit.convert([report_to_convert], self.severity_map)
+        got = gerrit.convert([report_to_convert], self.checker_labels)
         os.environ.pop("CC_REPO_DIR")
 
         expected = {
@@ -180,7 +194,7 @@ class TestReportToGerrit(unittest.TestCase):
 
         report_to_convert = Report(main, bugpath, files, metadata)
         os.environ["CC_REPORT_URL"] = "localhost:8080/index.html"
-        got = gerrit.convert([report_to_convert], self.severity_map)
+        got = gerrit.convert([report_to_convert], self.checker_labels)
 
         # Remove environment variable not to influence the other tests.
         os.environ.pop("CC_REPORT_URL")
@@ -278,7 +292,7 @@ class TestReportToGerrit(unittest.TestCase):
 
         os.environ["CC_CHANGED_FILES"] = changed_files_file
 
-        got = gerrit.convert(reports_to_convert, self.severity_map)
+        got = gerrit.convert(reports_to_convert, self.checker_labels)
         os.remove(os.environ["CC_CHANGED_FILES"])
 
         # Remove environment variable not to influence the other tests.

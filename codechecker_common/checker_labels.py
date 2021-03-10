@@ -167,10 +167,17 @@ class CheckerLabels:
         if self.__data['constraints'].get(label, {}).get('unique'):
             try:
                 return next(labels)[1]
-            except Exception as ex:
+            except Exception:
                 return self.__data['constraints'].get(label, {}).get('default')
 
         return map(lambda _, value: value, labels)
+
+    def severity(self, checker):
+        """
+        Shorthand for the following call:
+        checker_labels.label_of_checker(checker, 'severity')
+        """
+        return self.label_of_checker(checker, 'severity')
 
     def labels_of_checker(self, checker):
         """
