@@ -18,6 +18,7 @@ import os
 import sys
 
 from codechecker_common import logger
+from codechecker_common.checker_labels import CheckerLabels
 from codechecker_common.singleton import Singleton
 from codechecker_common.util import load_json_or_empty
 
