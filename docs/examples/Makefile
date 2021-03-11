@@ -9,11 +9,8 @@ sources := $(wildcard $(source_dir)/*.cpp)
 objects := $(patsubst $(source_dir)/%.cpp,$(object_dir)/%.cpp.o,$(sources))
 depends := $(patsubst $(source_dir)/%.cpp,$(object_dir)/%.cpp.d,$(sources))
 
-CXX = clang++-11
-CC = clang-11
-CXXFLAGS = -MMD -MP -g -std=c++20 -Weverything -Wno-c++98-compat
+CXXFLAGS = -MMD -MP -g -std=c++17 -Wall -Wno-c++98-compat -Werror
 CXXFLAGS += -I $(include_dir)
-LINKFLAGS := -L /usr/lib/x86_64-linux-gnu -l boost_program_options
 
 all: $(runnable)
 

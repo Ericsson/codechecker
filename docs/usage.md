@@ -26,7 +26,7 @@ It invokes Clang Static Analyzer and Clang-Tidy tools to analyze your code.
     - [Definition of "run"<a name="run-definition"></a>](#definition-of-run)
   - [Step 6: Fine tune Analysis configuration <a name="step-6"></a>](#step-6-fine-tune-analysis-configuration-)
     - [Analysis Failures <a name="step-6"></a>](#analysis-failures-)
-    - [Avoiding or Suppressing False positives <a name="false-positives"></a>](#avoiding-or-suppressing-false-positives-)
+    - [Avoiding or Suppressing False positives<a name="false-positives"></a>](#avoiding-or-suppressing-false-positives)
     - [Ignore modules from your analysis <a name="ignore-modules"></a>](#ignore-modules-from-your-analysis-)
     - [Enable/Disable Checkers <a name="enable-disable-checkers"></a>](#enabledisable-checkers-)
     - [Configure Checkers<a name="configure-checkers"></a>](#configure-checkers)
@@ -89,7 +89,7 @@ compiler calls and save commands in a *compilation database* file.
 This compilation database is an input of the next analysis step.
 
 ```sh
-CodeChecker log --build "make" --build compile_commands.json
+CodeChecker log --build "make" --build ./compile_commands.json
 ```
 
 ### Check the contents of compile_commands.json file<a name="check-compile-commands"></a>
@@ -97,7 +97,7 @@ If everything goes well it should contain the `g++` calls. (If you use clang
 then `clang` calls.)
 
 ```sh
-cat compile_commands.json
+cat ./compile_commands.json
 ```
 
 **What to do if the `compile_commands.json` is empty?**
@@ -120,13 +120,22 @@ created, you can analyze your project.
 
 ### Run the analysis<a name="run-the-analysis"></a>
 ```sh
-CodeChecker analyze --output ./reports compile_commands.json
+CodeChecker analyze --output ./reports compile_commands.json --enable sensitive
 ```
 
 However the compilation of the project (here the example program) is performed
 by `g++`, the CodeChecker uses `clang` to analyze sources of the project.
 During analysis, CodeChecker compiles/analyses sources again. The analysis
 process generally uses more time.
+
+In the above command the `--enable sensitive` means that a subset of checker
+are run. `sensitive` is a predefined "group" of checkers. The further info on
+available checkers use
+
+```sh
+CodeChecker checkers --help
+```
+command.
 
 The `./reports` directory is the "database" of CodeChecker that allows to
 manage further working steps.
@@ -168,7 +177,13 @@ running:
 ```sh
 CodeChecker parse --print-steps ./reports
 ...
-TODO: Cut the output of example prog. analysis here.
+[LOW] /home/zomen/ws/Checker/CodeChecker.my/docs/examples/src/main.cpp:4:10: inclusion of deprecated C++ header 'stdlib.h'; consider using 'cstdlib' instead [modernize-deprecated-headers]
+#include <stdlib.h>
+         ^
+  Report hash: 67e36f780b2af8460365de8eb2c037c2
+  Steps:
+    1, main.cpp:4:10: <cstdlib> (fixit)
+    2, main.cpp:4:10: inclusion of deprecated C++ header 'stdlib.h'; consider using 'cstdlib' instead
 ...
 ```
 
@@ -187,7 +202,6 @@ To view the results in a browser run:
 findings that are stored in separate `HTML` files (one per analyzed build
 action).
 
-TODO: Change image following new example program.
 ![Analysis results in static HTML files](images/static_html.png)
 
 TODO: Edit the next paragraph.
@@ -219,14 +233,13 @@ following command after having analysis reports in `reports` directory:
 CodeChecker fixit ./reports
 ```
 
-TODO: Synchronize with source code.
-In this example we will fix an issue automatically. It changes the source and
-you can try the incremental build feature on modified source. The next command
-fixes ... line of `main.cpp`.
+In this example we will fix only one issue automatically. It changes the source
+and you can try the incremental build feature on modified source. The next
+command fixes 4th line of `main.cpp`.
 
 ```sh
-CodeChecker fixit --checker-name readability-implicit-bool-conversion \
-   --apply  ./reports
+CodeChecker fixit --checker-name modernize-deprecated-headers --apply \
+    ./reports
 ```
 
 Without `--apply` option CodeChecker will not modify the source.
@@ -235,7 +248,7 @@ Without `--apply` option CodeChecker will not modify the source.
 At this point you have only one modified file. The next command re-analyzes the `main.cpp`:
 
 ```sh
-CodeChecker check --build "make" --ouput ./reports
+CodeChecker check --build "make" --output ./reports
 ```
 Since the `make` command only re-compiles the changed `main.cpp`
 that file will be re-analyzed only.
@@ -362,7 +375,7 @@ Possible reasons for failed analysis:
  One can use this macro to selectively exclude code the analyzer examines.
 * Clang crashed during the analysis.
 
-### Avoiding or Suppressing False positives <a name="false-positives"></a>
+### Avoiding or Suppressing False positives<a name="false-positives"></a>
 Sometimes the analyzer reports correct code as incorrect. These findings are
 called false positives. Having a false positive indicates that the analyzer
 does not understand some properties of the code.

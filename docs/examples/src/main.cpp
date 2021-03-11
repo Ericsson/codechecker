@@ -1,57 +1,27 @@
-#include "ArgParser.hpp"
+#include "divide.hpp"
 
-#include <boost/program_options/variables_map.hpp>
-
-#include <ctype.h>
 #include <iostream>
-#include <memory>
-
-namespace {
-
-int convertCompressionLevel(char level)
-{
-    if (isdigit(level)) {
-        return (int(level) - int('0'));
-    } else {
-        switch (level) {
-            case 'n':
-            case 'N':
-                return 0;
-            case 'l':
-            case 'L':
-                return 2;
-            case 'm':
-            case 'M':
-                return 5;
-            case 'h':
-            case 'H':
-                return 9;
-            default:
-                return -1;
-        }
-    }
-}
-
-}
+#include <stdlib.h>
+#include <vector>
 
 int main(int argc, char* argv[])
 {
     std::cout << "CodeChecker example program." << '\n';
-    std::unique_ptr<boost::program_options::variables_map> programOptionMap =
-        parseArguments(argc, argv);
-    if (programOptionMap == nullptr) {
-        return 0;
+
+    std::vector<int> params;
+    for (int i = 1; i < argc; ++i) {
+        long value = strtol(argv[i], nullptr, 10);
+        if (errno) {
+            std::cerr << "Invalid parameter at position " << i << ".\n";
+            return 1;
+        } else {
+            params.push_back(int(value));
+        }
     }
 
-    int compressionLevel;
-    compressionLevel = convertCompressionLevel(
-        (*programOptionMap)["compression"].as<char>());
-    if (compressionLevel < 0) {
-        std::cerr << "Invalid compression level was set." << '\n';
-        return 1;
-    }
+    auto result = divide(params[0], params[1]);
 
-    std::cout << "Compression level was set to " << compressionLevel << ".\n";
+    std::cout << "Division result is: " << result << ".\n";
 
     return 0;
 }
