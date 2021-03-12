@@ -24,6 +24,7 @@ It invokes Clang Static Analyzer and Clang-Tidy tools to analyze your code.
       - [Analyze sources what explicitly seleced from the compilation database<a name="analize-explicit-files"></a>](#analyze-sources-what-explicitly-seleced-from-the-compilation-database)
   - [Step 5: Store analysis results in a CodeChecker DB and visualize results<a name="step-5"></a>](#step-5-store-analysis-results-in-a-codechecker-db-and-visualize-results)
     - [Definition of "run"<a name="run-definition"></a>](#definition-of-run)
+    - [Using diff command<a name="using-diff"></a>](#using-diff-command)
   - [Step 6: Fine tune Analysis configuration <a name="step-6"></a>](#step-6-fine-tune-analysis-configuration-)
     - [Analysis Failures <a name="step-6"></a>](#analysis-failures-)
     - [Avoiding or Suppressing False positives<a name="false-positives"></a>](#avoiding-or-suppressing-false-positives)
@@ -152,13 +153,13 @@ cd <repo root dir>
 cd docs/examples
 make clean
 rm --recursive --force ./reports
-CodeChecker check --build "make" --output ./reports
+CodeChecker check --build "make" --output ./reports --enable sensitive
 ```
 or to run on 22 threads both the compilation and the analysis:
 
 ```sh
 CodeChecker check --jobs 22 --build "make clean ; make --jobs 22" \
-    --output ./reports
+    --output ./reports --enable sensitive
 ```
 
 ### Cross-Compilation<a name="cross-compilation"></a>
@@ -204,13 +205,6 @@ action).
 
 ![Analysis results in static HTML files](images/static_html.png)
 
-TODO: Edit the next paragraph.
-See `--help` on details of filtering automatic fixes. You can also use the JSON
-format output of `CodeChecker cmd diff` command if you want to fix only new
-findings:
-```sh
-CodeChecker cmd diff -b reports1 -n reports2 --new -o json | CodeChecker fixit
-```
 ## Step 4. Incremental Analysis<a name="step-4"></a>
 The analysis can be run for only the changed files and the `report-directory`
 will be correctly updated with the new results.
@@ -233,9 +227,9 @@ following command after having analysis reports in `reports` directory:
 CodeChecker fixit ./reports
 ```
 
-In this example we will fix only one issue automatically. It changes the source
-and you can try the incremental build feature on modified source. The next
-command fixes 4th line of `main.cpp`.
+In this section we will fix only one issue automatically. It changes the source
+and you can try the incremental build feature on the modified source at that
+described in the next section. The next command fixes 4th line of `main.cpp`.
 
 ```sh
 CodeChecker fixit --checker-name modernize-deprecated-headers --apply \
@@ -244,11 +238,14 @@ CodeChecker fixit --checker-name modernize-deprecated-headers --apply \
 
 Without `--apply` option CodeChecker will not modify the source.
 
+See `--help` on details of filtering automatic fixes.
+
 #### Using incremental build on modified files<a name="using-incremental-build"></a>
-At this point you have only one modified file. The next command re-analyzes the `main.cpp`:
+At this point you have only one modified file. The next command re-analyzes the
+just modified `main.cpp`:
 
 ```sh
-CodeChecker check --build "make" --output ./reports
+CodeChecker check --build "make" --output ./reports --enable sensitive
 ```
 Since the `make` command only re-compiles the changed `main.cpp`
 that file will be re-analyzed only.
@@ -280,13 +277,14 @@ rm --recursive --force ./reports
 make clean
 ```
 
-Then re-do the "development cycle".
+The `compile_commands.json`are the same. Then re-do the "development cycle".
 
 ```sh
-CodeChecker check --build "make" --output ./reports
+CodeChecker check --build "make" --output ./reports  --enable sensitive
 CodeChecker fixit --checker-name readability-implicit-bool-conversion \
    --apply  ./reports
-CodeChecker check --ignore skip.list --output ./reports compile_commands.json
+CodeChecker check --ignore skip.list --output ./reports --enable sensitive \
+    --logfile compile_commands.json
 ```
 For more details regarding the skip file format see
 the [user guide](analyzer/user_guide.md#skip).
@@ -296,10 +294,13 @@ You can select which files you would like to analyze from the compilation
 database. This is similar to the skip list feature but can be easier to quickly
 analyze only a few files not the whole compilation database.
 
-Undo filesystem modifications as described in the previous section. Then:
+Undo filesystem modifications as described in the
+[previous section](#narrow-files). Re-do analyze and perform automatic fix. The
+following command re-analyzes only the `main.cpp` file.
 
 ```sh
-CodeChecker check -output ./reports --file "main.cpp" ./compile_commands.json
+CodeChecker check -output ./reports --file "*/src/main.cpp" \
+    --enable sensitive --logfile ./compile_commands.json
 ```
 
 Absolute directory paths should start with `/`, relative directory paths should
@@ -340,17 +341,36 @@ description of the `PRODUCT_URL` format.
 
 ### Definition of "run"<a name="run-definition"></a>
 When you develop your project in discrete steps in time, you can analyze and
-store the current snapshot of your project. The time ordered list of
-[analyze;store] actions what have a name is a "run" in our terminology.
-(Steps in time on a developmnet path of your project.) The name of the step in
-the point 1. above is "example". You can create a run with more steps.
+store the current snapshot of your project. During store, the locally generated
+"database"/"analysis report" are uploaded to the CodeChecker server. The store
+command has a `--name` opton that "gives name"/"identifies" the run. Subsequent
+store actions with the same name make a run. The ordered list in time of store
+actions constitute the "run history".
 
-For example the run can follow commits on a specified branch of your project
-with same name.
+For example: the run can follow commits on a specified branch of your project
+with same run name. In this case the branch name is a good choice as run name.
+The individual history elements (store actions) can be named by the `--tag`
+option of `CodeChecker store` command.
 
-Or you can define a "path" with one-step with different names. In this case the
-run can be determined by pattern of the run-name. For example:
-[example-2021-03-01-01, example-2021-03-02-01, example-2021-03-01-02].
+Or you can define a "development path" of your project with different run
+names. In this case the stages of your project are represented a list of runs
+with different run name. But all run history contains one element (one store
+action). The "development path" can be determined by a pattern of the run-name.
+For example: [example-2021-03-01-01, example-2021-03-02-01,
+example-2021-03-01-02]. This storage strategy is less efficient in consequence
+of backend database storage method.
+
+### Using diff command<a name="using-diff"></a>
+
+TODO: Diff on filesystem, diff between filesystem and database.
+
+ You can also use the JSON format output of `CodeChecker cmd diff` command if
+ you want to fix only new findings. See also
+ [automatic fixing](#automatic-fixing).
+
+```sh
+CodeChecker cmd diff -b reports1 -n reports2 --new -o json | CodeChecker fixit
+```
 
 ## Step 6: Fine tune Analysis configuration <a name="step-6"></a>
 ### Analysis Failures <a name="step-6"></a>
