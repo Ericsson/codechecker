@@ -216,6 +216,8 @@ import "codemirror/addon/dialog/dialog.css";
 import "codemirror/addon/search/search.js";
 import "codemirror/addon/search/searchcursor.js";
 
+import _ from "lodash";
+
 import { jsPlumb } from "jsplumb";
 
 import { format } from "date-fns";
@@ -275,7 +277,8 @@ export default {
       showComments: false,
       commentCols: 3,
       loading: true,
-      bus: new Vue()
+      bus: new Vue(),
+      annotation: null
     };
   },
 
@@ -318,10 +321,12 @@ export default {
 
   created() {
     document.addEventListener("keydown", this.findText);
+    window.addEventListener("resize", this.onResize);
   },
 
   destoryed() {
     document.removeEventListener("keydown", this.findText);
+    window.removeEventListener("resize", this.onResize);
   },
 
   mounted() {
@@ -338,6 +343,10 @@ export default {
 
     this.editor.on("viewportChange", (cm, from, to) => {
       this.drawLines(from, to);
+    });
+
+    this.annotation = this.editor.annotateScrollbar({
+      className: "scrollbar-bug-annotation"
     });
 
     if (this.treeItem) {
@@ -392,8 +401,11 @@ export default {
         await this.drawBugPath();
       }
 
-      this.jumpTo(startLine.toNumber(), 0);
+      const line = startLine.toNumber();
+      this.jumpTo(line, 0);
+      this.updateAnnotation(line);
       this.highlightReportStep(stepId);
+
       this.loading = false;
     },
 
@@ -411,10 +423,21 @@ export default {
       await this.setSourceFileData(report.fileId);
       await this.drawBugPath();
 
-      this.jumpTo(report.line.toNumber(), 0);
+      const line = report.line.toNumber();
+      this.jumpTo(line, 0);
+      this.updateAnnotation(line);
       this.highlightReport(report);
+
       this.loading = false;
     },
+
+    updateAnnotation(line) {
+      this.annotation.update([ { from: { line }, to: { line } } ]);
+    },
+
+    onResize: _.debounce(function () {
+      this.annotation.redraw();
+    }, 500),
 
     findText(evt) {
       if (evt.ctrlKey && evt.keyCode === 13) // Enter
@@ -727,6 +750,12 @@ export default {
   }
 };
 </script>
+
+<style lang="scss">
+.scrollbar-bug-annotation {
+  background-color: red;
+}
+</style>
 
 <style lang="scss" scoped>
 #editor-wrapper {
