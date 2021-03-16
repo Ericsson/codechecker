@@ -24,7 +24,8 @@ It invokes Clang Static Analyzer and Clang-Tidy tools to analyze your code.
       - [Analyze sources what explicitly seleced from the compilation database<a name="analize-explicit-files"></a>](#analyze-sources-what-explicitly-seleced-from-the-compilation-database)
   - [Step 5: Store analysis results in a CodeChecker DB and visualize results<a name="step-5"></a>](#step-5-store-analysis-results-in-a-codechecker-db-and-visualize-results)
     - [Definition of "run"<a name="run-definition"></a>](#definition-of-run)
-    - [Using diff command<a name="using-diff"></a>](#using-diff-command)
+    - [Programmer checking new bugs in the code after local edit (and compare it to a central database)<a name="compare"></a>](#programmer-checking-new-bugs-in-the-code-after-local-edit-and-compare-it-to-a-central-database)
+    - [Using diff command on the local filesystem<a name="using-diff"></a>](#using-diff-command-on-the-local-filesystem)
   - [Step 6: Fine tune Analysis configuration <a name="step-6"></a>](#step-6-fine-tune-analysis-configuration-)
     - [Analysis Failures <a name="step-6"></a>](#analysis-failures-)
     - [Avoiding or Suppressing False positives<a name="false-positives"></a>](#avoiding-or-suppressing-false-positives)
@@ -37,7 +38,6 @@ It invokes Clang Static Analyzer and Clang-Tidy tools to analyze your code.
       - [Alternative 1 (RECOMMENDED): Store the results of each commit in the same run <a name="storing-results"></a>](#alternative-1-recommended-store-the-results-of-each-commit-in-the-same-run-)
       - [Alternative 2: Store each analysis in a new run <a name="storing-new-runs"></a>](#alternative-2-store-each-analysis-in-a-new-run-)
     - [Gerrit Integration <a name="gerrit-integration"></a>](#gerrit-integration-)
-    - [Programmer checking new bugs in the code after local edit (and compare it to a central database) <a name="compare"></a>](#programmer-checking-new-bugs-in-the-code-after-local-edit-and-compare-it-to-a-central-database-)
     - [Setting up user authentication <a name="authentication"></a>](#setting-up-user-authentication-)
   - [Updating CodeChecker to new version <a name="upgrade"></a>](#updating-codechecker-to-new-version-)
 - [Unique Report Identifier (RI) <a name="unique-report-identifier"></a>](#unique-report-identifier-ri-)
@@ -316,19 +316,21 @@ in a web viewer:
 not recommended for multi-user central deployment) create a workspace
 directory, where the database will be stored.
 
-```
+```sh
+cd <repo root dir>
 mkdir ./ws
-CodeChecker server -w ./ws -v 8555
+CodeChecker server --workspace ./ws -v 8555
 ```
 A default product called `Default` will be automatically created where you can
 store your results.
 
-1. Store the results in the server under name "example" (in the `Default`
+2. Store the results in the server under name "example" (in the `Default`
 product):
 
 ```
 CodeChecker store ./reports --name example --url http://localhost:8555/Default
 ```
+
 The URL is in `PRODUCT_URL` format:
 `[http[s]://]host:port/ProductEndpoint`
 Please note that if you start the server in secure mode (with SSL) you will
@@ -337,7 +339,7 @@ See [user guide](web/user_guide.md#product_url-format) for detailed
 description of the `PRODUCT_URL` format.
 
 3. View the results in your web browser
-`http://localhost:8555/Default`
+firefox `http://localhost:8555/Default` &
 
 ### Definition of "run"<a name="run-definition"></a>
 When you develop your project in discrete steps in time, you can analyze and
@@ -360,17 +362,57 @@ For example: [example-2021-03-01-01, example-2021-03-02-01,
 example-2021-03-01-02]. This storage strategy is less efficient in consequence
 of backend database storage method.
 
-### Using diff command<a name="using-diff"></a>
+### Programmer checking new bugs in the code after local edit (and compare it
+to a central database)<a name="compare"></a>
+Say that you made some local changes in your code (automatically fixing
+example program) and you wonder whether you fixed any bugs. Each bug has a
+unique hash identifier that is independent of the line number, therefore
+resistant to shifts in the source code. This way, newly introduced bugs can be
+detected, compared to a central CodeChecker report database.
 
-TODO: Diff on filesystem, diff between filesystem and database.
+If you stored [first analization of unmodified](#run-the-analysis), example
+project and made [automatic fixing](#automatic-fixing) then you can compare the
+result between stored and locally analyzed example project.
 
- You can also use the JSON format output of `CodeChecker cmd diff` command if
- you want to fix only new findings. See also
- [automatic fixing](#automatic-fixing).
-
+1. [Analyze unmodified example project](#step-2-analyze-your-code)
 ```sh
-CodeChecker cmd diff -b reports1 -n reports2 --new -o json | CodeChecker fixit
+CodeChecker analyze --output ./reports compile_commands.json --enable sensitive
 ```
+
+2. [Store the result on your local database](#step-5-store-analysis-results-in-a-codechecker-db-and-visualize-results)
+```sh
+CodeChecker store ./reports --name example --url http://localhost:8555/Default
+```
+
+3. Do [automatic fix](#automatic-fixing)
+```sh
+CodeChecker fixit --checker-name modernize-deprecated-headers --apply \
+    ./reports
+```
+
+4. [Re-analyze your code](#using-incremental-build-on-modified-files). You are
+well advised to use the same `analyze` options as you did in the first
+analization session: the same checkers enabled, the same analyzer options, etc.
+```sh
+CodeChecker analyze --output ./reports compile_commands.json --enable sensitive
+```
+
+5. Compare your local analysis to the central one
+```sh
+CodeChecker cmd diff --basename example --basename ./reports --resolved \
+    --url http://localhost:8555/Default
+```
+
+### Using diff command on the local filesystem<a name="using-diff"></a>
+Developer can compare two results of analyses without upload them to a
+central server. In this case the analysis result should be stored in different
+result directory.
+```sh
+CodeChecker cmd diff --basename ./reports1 --newname ./reports2 --resolved
+```
+
+ You can also use JSON format output of `CodeChecker cmd diff` command if
+ you want to use it for further processing by an other program.
 
 ## Step 6: Fine tune Analysis configuration <a name="step-6"></a>
 ### Analysis Failures <a name="step-6"></a>
@@ -527,15 +569,16 @@ out.
 
 1. Generate a new log file for the new code
 ```sh
-CodeChecker log -b "make" -o compilation.json
+CodeChecker log --build "make" --output compile_commands.json
 ```
 2. Re-analyze the changed code of John Doe. If your "master" CI job
 ```sh
-CodeChecker analyze compilation.json -o ./reports-PR
+CodeChecker analyze compile_commands.json --output ./reports-PR
 ```
 3. Check for new bugs in the run
 ```sh
-CodeChecker cmd diff -b tmux_master -n ./reports-PR --new --url http://localhost:8555/Default
+CodeChecker cmd diff --basename tmux_master --newname ./reports-PR --new \
+    --url http://localhost:8555/Default
 ```
 
 If new bugs were found, reject the commit and send an email with the new bugs
@@ -575,9 +618,7 @@ information on the exact syntax.
 Please find a [Shell Script](script_update.md) that can be used
 in a Jenkins or any other CI engine to report new bugs.
 
-
 #### Alternative 2: Store each analysis in a new run <a name="storing-new-runs"></a>
-
 Each daily analysis should be stored as a new run name, for example using the
 following naming convention: `<module_name>_<branch_name>_<date>`.
 
@@ -585,17 +626,18 @@ Using `tmux` with daily analysis as example:
 
 1. Generate a new log file
 ```sh
-CodeChecker log -b "make" -o compilation.json
+CodeChecker log --build "make" --output compile_commands.json
 ```
 2. Re-analyze the project. Make sure you use the same analyzer options all the
    time, as changing enabled checkers or fine-tuning the analyzers *may*
    result in new bugs being found.
 ```sh
-CodeChecker analyze compilation.json -o ./reports-daily
+CodeChecker analyze compilation.json --output ./reports-daily
 ```
 3. Store the analysis results into the central CodeChecher server
 ```sh
-CodeChecker store ./reports --url http://localhost:8555/Default --name tmux_master_$(date +"%Y_%m_%d")
+CodeChecker store ./reports --url http://localhost:8555/Default \
+    --name tmux_master_$(date +"%Y_%m_%d")
 ```
 
 This job can run daily and will store the results in different runs
@@ -603,12 +645,16 @@ identified with the date.
 
 Then you can query newly introduced bugs in the following way.
 ```sh
-CodeChecker cmd diff -b tmux_master_2017_08_28 -n tmux_master_2017_08_29 --new --url http://localhost:8555/Default
+CodeChecker cmd diff --basename tmux_master_2017_08_28 --newname \
+    tmux_master_2017_08_29 --new --url http://localhost:8555/Default
 ```
 
-If you would like to generate a report page out of this using a script, you can get the results in `json` format too:
+If you would like to generate a report page out of this using a script, you can
+get the results in `json` format too:
 ```sh
-CodeChecker cmd diff -b tmux_master_2017_08_28 -n tmux_master_2017_08_29 --new --url http://localhost:8555/Default -o json
+CodeChecker cmd diff --basename tmux_master_2017_08_28 --newname \
+    tmux_master_2017_08_29 --new --url http://localhost:8555/Default \
+    --output json
 ```
 
 > **Note:** Don't forget to delete old runs you don't need to save database
@@ -618,50 +664,24 @@ Please find a [Shell Script](script_daily.md) that can be used
 in a Jenkins or any other CI engine to report new bugs.
 
 ### Gerrit Integration <a name="gerrit-integration"></a>
-
 The workflow based on *Alternative 1)* can be used to implement the gerrit integration with CodeChecker.
 Let us assume you would like to run the CodeChecker analysis to *gerrit merge request* and mark the
 new findings in the gerrit review.
 
 You can implement that by creating a jenkins job that monitors the
-gerrit merge requests, runs the anaysis on the changed files and then uploads the
-new findings to gerrit through its [web-api](https://gerrit-review.googlesource.com/Documentation/rest-api.html).
+gerrit merge requests, runs the anaysis on the changed files and then uploads
+the new findings to gerrit through its
+[web-api](https://gerrit-review.googlesource.com/Documentation/rest-api.html).
 
-You can find the details and the example scripts in the [Integrate CodeChecker with Gerrit review](jenkins_gerrit_integration.md)
+You can find the details and the example scripts in the
+[Integrate CodeChecker with Gerrit review](jenkins_gerrit_integration.md)
 guide.
-
-### Programmer checking new bugs in the code after local edit (and compare it to a central database) <a name="compare"></a>
-Say that you made some local changes in your code (tmux in our example) and
-you wonder whether you introduced any new bugs. Each bug has a unique hash
-identifier that is independent of the line number, therefore resistant to
-shifts in the source code. This way, newly introduced bugs can be detected
-compared to a central CodeChecker report database.
-
-Let's assume that you are working on the master branch and the analysis of the
-master branch is already stored under run name `tmux_master`.
-
-1. You make **local** changes to tmux
-2. Generate a new log file
-```sh
-CodeChecker log -b "make" -o compilation.json
-```
-3. Re-analyze your code. You are well advised to use the same `analyze`
-   options as you did in the "master" CI job: the same checkers enabled, the
-   same analyzer options, etc.
-```sh
-CodeChecker analyze compilation.json -o ./reports
-```
-4. Compare your local analysis to the central one
-```sh
-CodeChecker cmd diff -b tmux_master -n ./reports --new --url http://localhost:8555/Default
-```
 
 ### Setting up user authentication <a name="authentication"></a>
 You can set up authentication for your server and (web,command line) clients
 as described in the [Authentication Guide](web/authentication.md).
 
 ## Updating CodeChecker to new version <a name="upgrade"></a>
-
 If a new CodeChecker release is available it might be possible that there are
 some database changes compared to the previous release.
 If you run into database migration warnings during the server start please
@@ -669,7 +689,6 @@ check our [database schema upgrade guide's](web/db_schema_guide.md)
 `Database upgrade for running servers` section.
 
 # Unique Report Identifier (RI) <a name="unique-report-identifier"></a>
-
 Each report has a unique (hash) identifier generated from checker name
 and the location of the finding: column number, textual content of the line,
 enclosing scope of the bug location (function signature, class, namespace).
@@ -678,12 +697,10 @@ You can find more information how these hashes are calculated
 [here](analyzer/report_identification.md).
 
 ## Listing and Counting Reports <a name="listing-reports"></a>
-
 See a more detailed description in the [analyzer report identification
 documentation](analyzer/report_identification.md).
 
 ### How reports are counted? <a name="how-report-are-counted"></a>
-
 You can list analysis reports in two ways:
 
 1. Using the **`CodeChecker parse`** command.
@@ -797,7 +814,6 @@ In uniqueing mode in the Web UI, only 2 distinct reports would be shown:
 `Division by zero` for the `lib.c`.
 
 ## Report Uniqueing <a name="report-uniqueing"></a>
-
 There is an additional uniqueing functionality in the
 Web UI that helps the grouping findings that have the same
 *Report Identifier* within or accross muliple runs.
@@ -817,7 +833,6 @@ multiple runs. The report counts shown on that page are calculated using the
 unique report identifiers.
 
 ## How diffs between runs are calculated? <a name="diffs-between-runs"></a>
-
 Diffs between runs are calculated based on the Unique Report Identifier.
 
 Lets take run *A* and run *B* and take the diff between run *A* and *B*,
