@@ -33,69 +33,16 @@ default: package
 
 package_dir_structure:
 	mkdir -p $(BUILD_DIR) && \
-	mkdir -p $(CC_BUILD_DIR)/bin && \
+	mkdir -p $(CC_BUILD_BIN_DIR) && \
 	mkdir -p $(CC_BUILD_LIB_DIR)
 
 mkdocs_build:
 	mkdocs build
 
-build_plist_to_html:
-	$(MAKE) -C $(ROOT)/tools/plist_to_html build
-
-package_plist_to_html: build_plist_to_html package_dir_structure
-	# Copy plist-to-html files.
-	cp -r $(CC_TOOLS)/plist_to_html/build/plist_to_html/plist_to_html $(CC_BUILD_LIB_DIR)
-
-build_tu_collector:
-	$(MAKE) -C $(ROOT)/tools/tu_collector build
-
-package_tu_collector: build_tu_collector package_dir_structure
-	# Copy tu_collector files.
-	cp -rp $(CC_TOOLS)/tu_collector/build/tu_collector/tu_collector $(CC_BUILD_LIB_DIR) && \
-	chmod u+x $(CC_BUILD_LIB_DIR)/tu_collector/tu_collector.py && \
-	cd $(CC_BUILD_DIR) && \
-	ln -sf ../lib/python3/tu_collector/tu_collector.py bin/tu_collector
-
-build_report_converter:
-	$(MAKE) -C $(ROOT)/tools/report-converter build
-
-package_report_converter: build_report_converter package_dir_structure
-	# Copy tu_collector files.
-	cp -rp $(CC_TOOLS)/report-converter/build/report_converter/codechecker_report_converter $(CC_BUILD_LIB_DIR) && \
-	chmod u+x $(CC_BUILD_LIB_DIR)/codechecker_report_converter/cli.py && \
-	cd $(CC_BUILD_DIR) && \
-	ln -sf ../lib/python3/codechecker_report_converter/cli.py bin/report-converter
-
-build_report_hash:
-	$(MAKE) -C $(ROOT)/tools/codechecker_report_hash build
-
-package_report_hash: build_report_hash package_dir_structure
-	cp -r $(CC_TOOLS)/codechecker_report_hash/build/codechecker_report_hash/codechecker_report_hash $(CC_BUILD_LIB_DIR)
-
-build_merge_clang_extdef_mappings:
-	$(MAKE) -C $(CC_ANALYZER)/tools/merge_clang_extdef_mappings build
-
-package_merge_clang_extdef_mappings: build_merge_clang_extdef_mappings package_dir_structure
-	# Copy merge-clang-extdef-mappings files.
-	cp -r $(CC_ANALYZER)/tools/merge_clang_extdef_mappings/build/merge_clang_extdef_mappings/codechecker_merge_clang_extdef_mappings $(CC_BUILD_LIB_DIR) && \
-	chmod u+x $(CC_BUILD_LIB_DIR)/codechecker_merge_clang_extdef_mappings/cli.py && \
-	cd $(CC_BUILD_DIR) && \
-	ln -sf ../lib/python3/codechecker_merge_clang_extdef_mappings/cli.py bin/merge-clang-extdef-mappings
-
-build_statistics_collector:
-	$(MAKE) -C $(CC_ANALYZER_TOOLS)/statistics_collector build
-
-package_statistics_collector: build_statistics_collector package_dir_structure
-	# Copy statistics-collector files.
-	cp -r $(CC_ANALYZER_TOOLS)/statistics_collector/build/statistics_collector/codechecker_statistics_collector $(CC_BUILD_LIB_DIR) && \
-	chmod u+x $(CC_BUILD_LIB_DIR)/codechecker_statistics_collector/cli.py && \
-	cd $(CC_BUILD_DIR) && \
-	ln -sf ../lib/python3/codechecker_statistics_collector/cli.py bin/post-process-stats
-
 package_gerrit_skiplist:
-	cp -p scripts/gerrit_changed_files_to_skipfile.py $(CC_BUILD_DIR)/bin
+	cp -p scripts/gerrit_changed_files_to_skipfile.py $(CC_BUILD_BIN_DIR)
 
-package: package_dir_structure set_git_commit_template package_plist_to_html package_tu_collector package_report_converter package_report_hash package_merge_clang_extdef_mappings package_statistics_collector package_gerrit_skiplist
+package: package_dir_structure set_git_commit_template package_gerrit_skiplist
 	BUILD_DIR=$(BUILD_DIR) BUILD_LOGGER_64_BIT_ONLY=$(BUILD_LOGGER_64_BIT_ONLY) $(MAKE) -C $(CC_ANALYZER) package_analyzer
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) package_web
 
@@ -118,7 +65,7 @@ package: package_dir_structure set_git_commit_template package_plist_to_html pac
 
 	mkdir -p $(CC_BUILD_DIR)/cc_bin && \
 	${PYTHON_BIN} ./scripts/build/create_commands.py -b $(BUILD_DIR) \
-	  --cmd-dir codechecker_common/cmd \
+	  --cmd-dir $(ROOT)/codechecker_common/cmd \
 	    $(CC_WEB)/codechecker_web/cmd \
 	    $(CC_SERVER)/codechecker_server/cmd \
 	    $(CC_CLIENT)/codechecker_client/cmd \
