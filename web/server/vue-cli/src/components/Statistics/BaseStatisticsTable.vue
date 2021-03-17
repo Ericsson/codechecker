@@ -139,6 +139,7 @@
       <report-diff-count
         :num-of-new-reports="item.unreviewed.new"
         :num-of-resolved-reports="item.unreviewed.resolved"
+        :extra-query-params="getBaseQueryParams(item)"
       />
     </template>
 
@@ -159,6 +160,7 @@
       <report-diff-count
         :num-of-new-reports="item.confirmed.new"
         :num-of-resolved-reports="item.confirmed.resolved"
+        :extra-query-params="getBaseQueryParams(item)"
       />
     </template>
 
@@ -181,6 +183,7 @@
       <report-diff-count
         :num-of-new-reports="item.outstanding.new"
         :num-of-resolved-reports="item.outstanding.resolved"
+        :extra-query-params="getBaseQueryParams(item)"
       />
     </template>
 
@@ -201,6 +204,7 @@
       <report-diff-count
         :num-of-new-reports="item.falsePositive.new"
         :num-of-resolved-reports="item.falsePositive.resolved"
+        :extra-query-params="getBaseQueryParams(item)"
       />
     </template>
 
@@ -221,6 +225,7 @@
       <report-diff-count
         :num-of-new-reports="item.intentional.new"
         :num-of-resolved-reports="item.intentional.resolved"
+        :extra-query-params="getBaseQueryParams(item)"
       />
     </template>
 
@@ -243,6 +248,7 @@
       <report-diff-count
         :num-of-new-reports="item.suppressed.new"
         :num-of-resolved-reports="item.suppressed.resolved"
+        :extra-query-params="getBaseQueryParams(item)"
       />
     </template>
 
@@ -261,6 +267,7 @@
       <report-diff-count
         :num-of-new-reports="item.reports.new"
         :num-of-resolved-reports="item.reports.resolved"
+        :extra-query-params="getBaseQueryParams(item)"
       />
     </template>
 
