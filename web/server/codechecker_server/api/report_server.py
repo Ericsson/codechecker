@@ -935,6 +935,33 @@ def get_failed_files_query(session, run_ids, query_fields,
     return query, sub_q
 
 
+def get_analysis_statistics_query(session, run_ids, run_history_ids=None):
+    """ Get analyzer statistics query. """
+    query = session.query(AnalyzerStatistic, Run.id)
+
+    if run_ids:
+        # Subquery to get analyzer statistics only for these run history id's.
+        history_ids_subq = session.query(
+                func.max(AnalyzerStatistic.run_history_id)) \
+            .filter(RunHistory.run_id.in_(run_ids)) \
+            .outerjoin(
+                RunHistory,
+                RunHistory.id == AnalyzerStatistic.run_history_id) \
+            .group_by(RunHistory.run_id) \
+            .subquery()
+
+        query = query.filter(
+            AnalyzerStatistic.run_history_id.in_(history_ids_subq))
+    elif run_history_ids:
+        query = query.filter(RunHistory.id.in_(run_history_ids))
+
+    return query \
+        .outerjoin(RunHistory,
+                   RunHistory.id == AnalyzerStatistic.run_history_id) \
+        .outerjoin(Run,
+                   Run.id == RunHistory.run_id)
+
+
 class ThriftRequestHandler(object):
     """
     Connect to database and handle thrift client requests.
@@ -1085,23 +1112,7 @@ class ThriftRequestHandler(object):
             # Get analyzer statistics.
             analyzer_statistics = defaultdict(lambda: defaultdict())
 
-            # Subquery to get analyzer statistics only for these run history
-            # id's.
-            history_ids_subq = session.query(
-                    func.max(AnalyzerStatistic.run_history_id)) \
-                .filter(RunHistory.run_id.in_(run_filter.ids)) \
-                .outerjoin(RunHistory,
-                           RunHistory.id == AnalyzerStatistic.run_history_id) \
-                .group_by(RunHistory.run_id) \
-                .subquery()
-
-            stat_q = session.query(AnalyzerStatistic,
-                                   RunHistory.run_id) \
-                .filter(AnalyzerStatistic.run_history_id.in_(
-                    history_ids_subq)) \
-                .outerjoin(RunHistory,
-                           RunHistory.id == AnalyzerStatistic.run_history_id)
-
+            stat_q = get_analysis_statistics_query(session, run_filter.ids)
             for stat, run_id in stat_q:
                 analyzer_statistics[run_id][stat.analyzer_type] = \
                     ttypes.AnalyzerStatistics(failed=stat.failed,
@@ -3296,19 +3307,12 @@ class ThriftRequestHandler(object):
         analyzer_statistics = {}
 
         with DBSession(self.__Session) as session:
-            query = session.query(AnalyzerStatistic,
-                                  Run.id)
+            run_ids = None if run_id is None else [run_id]
+            run_history_ids = None if run_history_id is None \
+                else [run_history_id]
 
-            if run_id:
-                query = query.filter(Run.id == run_id)
-            elif run_history_id:
-                query = query.filter(RunHistory.id == run_history_id)
-
-            query = query \
-                .outerjoin(RunHistory,
-                           RunHistory.id == AnalyzerStatistic.run_history_id) \
-                .outerjoin(Run,
-                           Run.id == RunHistory.run_id)
+            query = get_analysis_statistics_query(
+                session, run_ids, run_history_ids)
 
             for stat, run_id in query:
                 failed_files = zlib.decompress(stat.failed_files).decode(
