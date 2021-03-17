@@ -17,23 +17,24 @@ It invokes Clang Static Analyzer and Clang-Tidy tools to analyze your code.
     - [View the analysis results in the command line<a name="view-analysis-results"></a>](#view-the-analysis-results-in-the-command-line)
     - [Cross-Compilation<a name="cross-compilation"></a>](#cross-compilation)
   - [Step 3: View analysis results in command line or generate static HTML files<a name="step-3"></a>](#step-3-view-analysis-results-in-command-line-or-generate-static-html-files)
-  - [Step 4. Incremental Analysis<a name="step-4"></a>](#step-4-incremental-analysis)
+  - [Step 4: Incremental Analysis<a name="step-4"></a>](#step-4-incremental-analysis)
     - [Automatic fixing<a name="automatic-fixing"></a>](#automatic-fixing)
       - [Using incremental build on modified files<a name="using-incremental-build"></a>](#using-incremental-build-on-modified-files)
       - [Using skip file to narrow analyzed files<a name="narrow-files"></a>](#using-skip-file-to-narrow-analyzed-files)
-      - [Analyze sources what explicitly seleced from the compilation database<a name="analize-explicit-files"></a>](#analyze-sources-what-explicitly-seleced-from-the-compilation-database)
-  - [Step 5: Store analysis results in a CodeChecker DB and visualize results<a name="step-5"></a>](#step-5-store-analysis-results-in-a-codechecker-db-and-visualize-results)
+      - [Analyze explicitly selected source files from the compilation database<a name="analize-explicit-files"></a>](#analyze-explicitly-selected-source-files-from-the-compilation-database)
+  - [Step 5: Cross Translation Unit analization<a name="step-5"></a>](#step-5-cross-translation-unit-analization)
+  - [Step 6: Store analysis results in a CodeChecker DB and visualize results<a name="step-6"></a>](#step-6-store-analysis-results-in-a-codechecker-db-and-visualize-results)
     - [Definition of "run"<a name="run-definition"></a>](#definition-of-run)
     - [Programmer checking new bugs in the code after local edit (and compare it to a central database)<a name="compare"></a>](#programmer-checking-new-bugs-in-the-code-after-local-edit-and-compare-it-to-a-central-database)
     - [Using diff command on the local filesystem<a name="using-diff"></a>](#using-diff-command-on-the-local-filesystem)
-  - [Step 6: Fine tune Analysis configuration <a name="step-6"></a>](#step-6-fine-tune-analysis-configuration-)
-    - [Analysis Failures <a name="step-6"></a>](#analysis-failures-)
+  - [Step 7: Fine tune Analysis configuration <a name="step-6"></a>](#step-7-fine-tune-analysis-configuration-)
+    - [Analysis Failures <a name="step-7"></a>](#analysis-failures-)
     - [Avoiding or Suppressing False positives<a name="false-positives"></a>](#avoiding-or-suppressing-false-positives)
     - [Ignore modules from your analysis <a name="ignore-modules"></a>](#ignore-modules-from-your-analysis-)
     - [Enable/Disable Checkers <a name="enable-disable-checkers"></a>](#enabledisable-checkers-)
     - [Configure Checkers<a name="configure-checkers"></a>](#configure-checkers)
     - [Identify files that failed analysis<a name="identify-files"></a>](#identify-files-that-failed-analysis)
-  - [Step 7: Integrate CodeChecker into your CI loop<a name="step-7"></a>](#step-7-integrate-codechecker-into-your-ci-loop)
+  - [Step 8: Integrate CodeChecker into your CI loop<a name="step-8"></a>](#step-8-integrate-codechecker-into-your-ci-loop)
     - [Storing & Updating runs<a name="storing-runs"></a>](#storing--updating-runs)
       - [Alternative 1 (RECOMMENDED): Store the results of each commit in the same run <a name="storing-results"></a>](#alternative-1-recommended-store-the-results-of-each-commit-in-the-same-run-)
       - [Alternative 2: Store each analysis in a new run <a name="storing-new-runs"></a>](#alternative-2-store-each-analysis-in-a-new-run-)
@@ -47,35 +48,34 @@ It invokes Clang Static Analyzer and Clang-Tidy tools to analyze your code.
   - [How diffs between runs are calculated? <a name="diffs-between-runs"></a>](#how-diffs-between-runs-are-calculated-)
 
 ## Preface<a name="preface"></a>
-The purpose of this document that makes the developer's first steps easier in
-usage of CodeChecker. The document is a mini course with simple examles that
-guide the developer how he/she can apply CodeChecker in his/her daily routine
+The purpose of this document is to make the developer's first steps easier in
+usage of CodeChecker. The document is a mini course with simple examlpes that
+guides the developer how he/she can apply CodeChecker in his/her daily routine
 to make his/her code more roubust.
 
 There is a simple example program in the repository of CodeChecker what do
-almost nothing, but it can be used to demonstarate the abilities of
+almost nothing, but it can be used to demonstrate the abilities of
 CodeChecker. In this chapter that example program will be used to show
 CodeChecker usage.
 
-Examle program placed in the docs/examlples directory. After repository of
-CodeChecker cloned step in it and follow statements in this document.
+Example program placed in the `[docs/examples](examples)` directory. After
+repository of CodeChecker cloned step in it and follow statements in this
+document.
 
-There are some prerequisite to successfully take this exam. First, CodeChecker
-should be
-[install](README.md/#install-guide)ed.
+There are some prerequisite to successfully take this example. First,
+CodeChecker should be [installed](README.md/#install-guide).
 Python 3 (> 3.6) should be installed on the host. Components of clang and llvm
 should be reached by PATH (clang, clang++, clang-tidy, etc.). (On debian based
-systems update-alternatives is your friend.) To compile example program g++
-and make is necessary to installed on host.
+systems update-alternatives is your friend.) To compile example program `g++`
+and `make` is necessary to installed on host.
 
 ## Step 1: Integrate CodeChecker into your build system<a name="step-1"></a>
-CodeChecker only analyzes that sources and dependencies what are built by your
+CodeChecker analyzes sources and dependencies that are built by your
 build system.
 
 ### Step in the docs/examples directory<a name="step-in"></a>
 ```sh
-cd <repo root dir>
-cd docs/examples
+cd <repo root dir>/docs/examples
 ```
 
 ### Clean the workspace<a name="clean-workspace"></a>
@@ -85,17 +85,17 @@ make clean
 
 ### Log your build<a name="log-your-build"></a>
 Logging means that during the whole compilation process CodeChecker catches
-compiler calls and save commands in a *compilation database* file.
+compiler calls and saves commands in a *compilation database* file.
 ([Specification is here](https://clang.llvm.org/docs/JSONCompilationDatabase.html).)
 This compilation database is an input of the next analysis step.
 
 ```sh
-CodeChecker log --build "make" --build ./compile_commands.json
+CodeChecker log --build "make" --output ./compile_commands.json
 ```
 
 ### Check the contents of compile_commands.json file<a name="check-compile-commands"></a>
-If everything goes well it should contain the `g++` calls. (If you use clang
-then `clang` calls.)
+If everything goes well it should contain the C compiler calls (`gcc`, `clang`,
+etc.).
 
 ```sh
 cat ./compile_commands.json
@@ -116,27 +116,35 @@ cat ./compile_commands.json
   See the [README](/README.md#mac-os-x) for details.
 
 ## Step 2: Analyze your code<a name="step-2"></a>
-Once the build is logged successfully (and the `compile_commands.json`) was
+Once the build is logged successfully and the `compile_commands.json` was
 created, you can analyze your project.
 
 ### Run the analysis<a name="run-the-analysis"></a>
 ```sh
-CodeChecker analyze --output ./reports compile_commands.json --enable sensitive
+CodeChecker analyze compile_commands.json --enable-all --output ./reports
 ```
 
 However the compilation of the project (here the example program) is performed
-by `g++`, the CodeChecker uses `clang` to analyze sources of the project.
+by `gcc`, the CodeChecker uses `clang` to analyze sources of the project.
 During analysis, CodeChecker compiles/analyses sources again. The analysis
-process generally uses more time.
+process generally uses more time. It would be good to mention here that if you
+want to speed up analysis specify a higher value for the `--jobs` option.
 
-In the above command the `--enable sensitive` means that a subset of checker
-are run. `sensitive` is a predefined "group" of checkers. The further info on
-available checkers use
+In the above command the `--enable-all` means that a subset of checker
+are run. `enable-all` chooses a predefined "group" of checkers. The further
+info on available checkers use
 
 ```sh
+# List available checkers.
 CodeChecker checkers --help
+# Show more information about the checkers.
+CodeChecker checkers --details --help
+# List profiles.
+CodeChecker checkers --profile list --details
+# List checkers which are in the sensitive profile.
+CodeChecker checkers --profile sensitive --details
 ```
-command.
+commands.
 
 The `./reports` directory is the "database" of CodeChecker that allows to
 manage further working steps.
@@ -149,17 +157,16 @@ CodeChecker parse ./reports
 Hint:
 You can do the 1st and the 2nd step in one round by executing `check`
 ```sh
-cd <repo root dir>
-cd docs/examples
+cd <repo root dir>/docs/examples
 make clean
-rm --recursive --force ./reports
-CodeChecker check --build "make" --output ./reports --enable sensitive
+rm -rf ./reports
+CodeChecker check --build "make" --output ./reports --enable-all
 ```
 or to run on 22 threads both the compilation and the analysis:
 
 ```sh
 CodeChecker check --jobs 22 --build "make clean ; make --jobs 22" \
-    --output ./reports --enable sensitive
+    --output ./reports --enable-all
 ```
 
 ### Cross-Compilation<a name="cross-compilation"></a>
@@ -178,13 +185,22 @@ running:
 ```sh
 CodeChecker parse --print-steps ./reports
 ...
-[LOW] /home/zomen/ws/Checker/CodeChecker.my/docs/examples/src/main.cpp:4:10: inclusion of deprecated C++ header 'stdlib.h'; consider using 'cstdlib' instead [modernize-deprecated-headers]
-#include <stdlib.h>
-         ^
-  Report hash: 67e36f780b2af8460365de8eb2c037c2
+Found no defects in divide.c
+[STYLE] .../docs/examples/src/main.c:15:7: do not use 'else' after 'return' [readability-else-after-return]
+    } else {
+      ^
+  Report hash: c120e732461d8e478c35d1940ef53488
   Steps:
-    1, main.cpp:4:10: <cstdlib> (fixit)
-    2, main.cpp:4:10: inclusion of deprecated C++ header 'stdlib.h'; consider using 'cstdlib' instead
+    1, main.c:15:7: do not use 'else' after 'return'
+
+[STYLE] .../docs/examples/src/main.c:16:43: 10 is a magic number; consider replacing it with a named constant [readability-magic-numbers]
+        test_case = strtol(argv[1], NULL, 10);
+                                          ^
+  Report hash: 17e5ce988ab2cfd6284d3ec7c66904a0
+  Steps:
+    1, main.c:16:43: 10 is a magic number; consider replacing it with a named constant
+
+Found 2 defect(s) in main.c
 ...
 ```
 
@@ -205,7 +221,7 @@ action).
 
 ![Analysis results in static HTML files](images/static_html.png)
 
-## Step 4. Incremental Analysis<a name="step-4"></a>
+## Step 4: Incremental Analysis<a name="step-4"></a>
 The analysis can be run for only the changed files and the `report-directory`
 will be correctly updated with the new results.
 
@@ -229,10 +245,11 @@ CodeChecker fixit ./reports
 
 In this section we will fix only one issue automatically. It changes the source
 and you can try the incremental build feature on the modified source at that
-described in the next section. The next command fixes 4th line of `main.cpp`.
+described in the next section. The next command fixes issues found by the
+`readability-else-after-return` checker in our example files.
 
 ```sh
-CodeChecker fixit --checker-name modernize-deprecated-headers --apply \
+CodeChecker fixit --checker-name readability-else-after-return --apply \
     ./reports
 ```
 
@@ -245,7 +262,7 @@ At this point you have only one modified file. The next command re-analyzes the
 just modified `main.cpp`:
 
 ```sh
-CodeChecker check --build "make" --output ./reports --enable sensitive
+CodeChecker check --build "make" --output ./reports --enable-all
 ```
 Since the `make` command only re-compiles the changed `main.cpp`
 that file will be re-analyzed only.
@@ -267,29 +284,29 @@ analyze `main.cpp` and ignore the rest.
 +*main.cpp
 -*
 ```
-If you run the commands in the previous section then content of ./report are
+If you run the commands in the previous section then content of `./reports` are
 changed and `main.cpp` also changed. Revert back the filesystem to the original
 state:
 
 ```sh
 git checkout main.cpp
-rm --recursive --force ./reports
+rm -rf ./reports
 make clean
 ```
 
 The `compile_commands.json`are the same. Then re-do the "development cycle".
 
 ```sh
-CodeChecker check --build "make" --output ./reports  --enable sensitive
-CodeChecker fixit --checker-name readability-implicit-bool-conversion \
+CodeChecker check --build "make" --output ./reports  --enable-all
+CodeChecker fixit --checker-name readability-else-after-return \
    --apply  ./reports
-CodeChecker check --ignore skip.list --output ./reports --enable sensitive \
+CodeChecker check --ignore skip.list --output ./reports --enable-all \
     --logfile compile_commands.json
 ```
 For more details regarding the skip file format see
 the [user guide](analyzer/user_guide.md#skip).
 
-#### Analyze sources what explicitly seleced from the compilation database<a name="analize-explicit-files"></a>
+#### Analyze explicitly selected source files from the compilation database<a name="analize-explicit-files"></a>
 You can select which files you would like to analyze from the compilation
 database. This is similar to the skip list feature but can be easier to quickly
 analyze only a few files not the whole compilation database.
@@ -299,22 +316,57 @@ Undo filesystem modifications as described in the
 following command re-analyzes only the `main.cpp` file.
 
 ```sh
-CodeChecker check -output ./reports --file "*/src/main.cpp" \
-    --enable sensitive --logfile ./compile_commands.json
+CodeChecker check --output ./reports --file "*/src/main.c" \
+    --enable-all --logfile ./compile_commands.json
 ```
 
 Absolute directory paths should start with `/`, relative directory paths should
 start with `*` and it can contain path glob pattern. Example:
 `/path/to/main.cpp`, `lib/*.cpp`, `*/test*`.
 
+## Step 5: Cross Translation Unit analization<a name="step-5"></a>
+The previous analization sessions did not follow dependencies between translation units. Make a try with CTU analysis. The `--ctu` option should be
+added to analyze command. Choose an other "report-directory", for example
+`./reports-ctu` to be able to compare output of different analysis configs.
 
-## Step 5: Store analysis results in a CodeChecker DB and visualize results<a name="step-5"></a>
+```sh
+CodeChecker analyze --output ./reports-ctu compile_commands.json \
+    --enable-all --ctu
+```
+
+In this case the analyzer configuration enabled and we expect that the cross
+translation unit checking found more issues.
+
+```sh
+CodeChecker parse --print-steps ./reports-ctu
+```
+
+The example code have an other bug!
+
+```sh
+[HIGH] .../docs/examples/src/divide.c:5:22: Division by zero [core.DivideZero]
+    return numerator / denominator;
+                     ^
+  Report hash: 0865bada8cc2c49d99f981d8c6484bd7
+  Steps:
+    1, main.c:17:44: Passing the value 0 via 2nd parameter 'denominator'
+    2, main.c:17:26: Calling 'divide'
+    3, divide.c:3:1: Entered call from 'main'
+    4, divide.c:5:22: Division by zero
+
+Found 1 defect(s) in divide.c
+
+```
+
+## Step 6: Store analysis results in a CodeChecker DB and visualize results<a name="step-6"></a>
 You can store the analysis results in a central database and view the results
 in a web viewer:
 
 1. Start the CodeChecker server locally on port 8555 (using SQLite DB, which is
 not recommended for multi-user central deployment) create a workspace
 directory, where the database will be stored.
+
+Note: Use a new shell.
 
 ```sh
 cd <repo root dir>
@@ -327,8 +379,9 @@ store your results.
 2. Store the results in the server under name "example" (in the `Default`
 product):
 
-```
-CodeChecker store ./reports --name example --url http://localhost:8555/Default
+```sh
+CodeChecker store ./reports-ctu --name example \
+    --url http://localhost:8555/Default
 ```
 
 The URL is in `PRODUCT_URL` format:
@@ -339,31 +392,26 @@ See [user guide](web/user_guide.md#product_url-format) for detailed
 description of the `PRODUCT_URL` format.
 
 3. View the results in your web browser
-firefox `http://localhost:8555/Default` &
+```sh
+firefox http://localhost:8555/Default &
+```
 
 ### Definition of "run"<a name="run-definition"></a>
-When you develop your project in discrete steps in time, you can analyze and
-store the current snapshot of your project. During store, the locally generated
-"database"/"analysis report" are uploaded to the CodeChecker server. The store
-command has a `--name` opton that "gives name"/"identifies" the run. Subsequent
-store actions with the same name make a run. The ordered list in time of store
-actions constitute the "run history".
+A run, in the simplest case is a single analysis snapshot of your software.
 
-For example: the run can follow commits on a specified branch of your project
-with same run name. In this case the branch name is a good choice as run name.
-The individual history elements (store actions) can be named by the `--tag`
-option of `CodeChecker store` command.
+You can follow up the quality status of your product by storing the analysis
+results of consecutive git commits of a git branch into the same run. In this
+case, you will be able to follow-up the outstanding results and fixed reports
+in the statistics views. (
+[See your first example run](http://localhost:8555/Default/runs))
 
-Or you can define a "development path" of your project with different run
-names. In this case the stages of your project are represented a list of runs
-with different run name. But all run history contains one element (one store
-action). The "development path" can be determined by a pattern of the run-name.
-For example: [example-2021-03-01-01, example-2021-03-02-01,
-example-2021-03-01-02]. This storage strategy is less efficient in consequence
-of backend database storage method.
+So a run represents the analysis status of a single branch of your code, with a given analysis configuration. You can also record the source code version associated with the analysis with the `--tag` parameter.
 
-### Programmer checking new bugs in the code after local edit (and compare it
-to a central database)<a name="compare"></a>
+Make sure, that you use the same analysis configuration when updating a run,
+because a changed analysis configuration can make new reports to appear or
+reports to disappear.
+
+### Programmer checking new bugs in the code after local edit (and compare it to a central database)<a name="compare"></a>
 Say that you made some local changes in your code (automatically fixing
 example program) and you wonder whether you fixed any bugs. Each bug has a
 unique hash identifier that is independent of the line number, therefore
@@ -376,7 +424,7 @@ result between stored and locally analyzed example project.
 
 1. [Analyze unmodified example project](#step-2-analyze-your-code)
 ```sh
-CodeChecker analyze --output ./reports compile_commands.json --enable sensitive
+CodeChecker analyze --output ./reports compile_commands.json --enable-all
 ```
 
 2. [Store the result on your local database](#step-5-store-analysis-results-in-a-codechecker-db-and-visualize-results)
@@ -394,12 +442,12 @@ CodeChecker fixit --checker-name modernize-deprecated-headers --apply \
 well advised to use the same `analyze` options as you did in the first
 analization session: the same checkers enabled, the same analyzer options, etc.
 ```sh
-CodeChecker analyze --output ./reports compile_commands.json --enable sensitive
+CodeChecker analyze compile_commands.json --output ./reports --enable-all
 ```
 
 5. Compare your local analysis to the central one
 ```sh
-CodeChecker cmd diff --basename example --basename ./reports --resolved \
+CodeChecker cmd diff --basename example --newname ./reports --resolved \
     --url http://localhost:8555/Default
 ```
 
@@ -408,16 +456,16 @@ Developer can compare two results of analyses without upload them to a
 central server. In this case the analysis result should be stored in different
 result directory.
 ```sh
-CodeChecker cmd diff --basename ./reports1 --newname ./reports2 --resolved
+CodeChecker cmd diff --basename ./reports --newname ./reports-ctu --new
 ```
 
  You can also use JSON format output of `CodeChecker cmd diff` command if
  you want to use it for further processing by an other program.
 
-## Step 6: Fine tune Analysis configuration <a name="step-6"></a>
-### Analysis Failures <a name="step-6"></a>
-The `reports/failed` folder contains all build-actions that
-were failed to analyze. For these there will be no results.
+## Step 7: Fine tune Analysis configuration <a name="step-6"></a>
+### Analysis Failures <a name="step-7"></a>
+The `reports/failed` folder contains all build-actions that were failed to
+analyze. For these there will be no results.
 
 Generally speaking, if a project can be compiled with Clang then the analysis
 should be successful always. We support analysis for those projects which are
@@ -485,11 +533,10 @@ subcommands.
 You may want to enable more checkers or disable some of them using the
 --enable, --disable switches of the analyze command.
 
-For example to enable alpha checkers additionally to the defaults
-TODO: Check that if command run well.
+For example to enable alpha checkers additionally to the previously used:
 ```sh
-CodeChecker analyze --enable alpha  --build "make" --ignore ./skip.file" \
-    --output ./reports
+CodeChecker analyze compile_commands.json --output ./reports-alpha \
+    --enable-all --enable alpha
 ```
 
 ### Configure Checkers<a name="configure-checkers"></a>
@@ -507,7 +554,7 @@ the failed analysis output is collected into `./reports/failed` directory.
 This means that analysis of these files failed and there is no Clang Static
 Analyzer output for these compilation commands.
 
-## Step 7: Integrate CodeChecker into your CI loop<a name="step-7"></a>
+## Step 8: Integrate CodeChecker into your CI loop<a name="step-8"></a>
 This section describes a recommended way on how CodeChecker is designed to be
 used in a CI environment to:
 
@@ -546,7 +593,6 @@ You have two alternatives:
 2. Store each analysis in a new run
 
 #### Alternative 1 (RECOMMENDED): Store the results of each commit in the same run <a name="storing-results"></a>
-
 Let us assume that at each commit you would like to keep your analysis
 results up-to-date and send an alert email to the programmer if a new bug is
 introduced in a "pull request", and if there is a new bug in the

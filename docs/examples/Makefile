@@ -5,21 +5,21 @@ runnable := $(project_root_dir)/ccexample
 include_dir := $(project_root_dir)/incl 
 object_dir := $(project_root_dir)/objs
 source_dir := $(project_root_dir)/src
-sources := $(wildcard $(source_dir)/*.cpp)
-objects := $(patsubst $(source_dir)/%.cpp,$(object_dir)/%.cpp.o,$(sources))
-depends := $(patsubst $(source_dir)/%.cpp,$(object_dir)/%.cpp.d,$(sources))
+sources := $(wildcard $(source_dir)/*.c)
+objects := $(patsubst $(source_dir)/%.c,$(object_dir)/%.c.o,$(sources))
+depends := $(patsubst $(source_dir)/%.c,$(object_dir)/%.c.d,$(sources))
 
-CXXFLAGS = -MMD -MP -g -std=c++17 -Wall -Wno-c++98-compat -Werror
-CXXFLAGS += -I $(include_dir)
+CFLAGS = -MMD -MP -g -std=c99 -Wall
+CFLAGS += -I $(include_dir)
 
 all: $(runnable)
 
 $(runnable): $(objects)
-	$(CXX) $(LINKFLAGS) $^ -o $@
+	$(CC) $(LINKFLAGS) $^ -o $@
 
-$(objects): $(object_dir)/%.cpp.o: $(source_dir)/%.cpp
+$(objects): $(object_dir)/%.c.o: $(source_dir)/%.c
 	@mkdir --parents $(object_dir)
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 .PHONY: clean
 clean:
