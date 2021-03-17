@@ -58,7 +58,7 @@ almost nothing, but it can be used to demonstrate the abilities of
 CodeChecker. In this chapter that example program will be used to show
 CodeChecker usage.
 
-Example program placed in the `[docs/examples](examples)` directory. After
+Example program placed in the [docs/examples](examples) directory. After
 repository of CodeChecker cloned step in it and follow statements in this
 document.
 
@@ -121,7 +121,7 @@ created, you can analyze your project.
 
 ### Run the analysis<a name="run-the-analysis"></a>
 ```sh
-CodeChecker analyze compile_commands.json --enable-all --output ./reports
+CodeChecker analyze ./compile_commands.json --enable-all --output ./reports
 ```
 
 However the compilation of the project (here the example program) is performed
@@ -301,7 +301,7 @@ CodeChecker check --build "make" --output ./reports  --enable-all
 CodeChecker fixit --checker-name readability-else-after-return \
    --apply  ./reports
 CodeChecker check --ignore skip.list --output ./reports --enable-all \
-    --logfile compile_commands.json
+    --logfile ./compile_commands.json
 ```
 For more details regarding the skip file format see
 the [user guide](analyzer/user_guide.md#skip).
@@ -330,7 +330,7 @@ added to analyze command. Choose an other "report-directory", for example
 `./reports-ctu` to be able to compare output of different analysis configs.
 
 ```sh
-CodeChecker analyze --output ./reports-ctu compile_commands.json \
+CodeChecker analyze ./compile_commands.json --output ./reports-ctu \
     --enable-all --ctu
 ```
 
@@ -424,7 +424,7 @@ result between stored and locally analyzed example project.
 
 1. [Analyze unmodified example project](#step-2-analyze-your-code)
 ```sh
-CodeChecker analyze --output ./reports compile_commands.json --enable-all
+CodeChecker analyze ./compile_commands.json --output ./reports --enable-all
 ```
 
 2. [Store the result on your local database](#step-5-store-analysis-results-in-a-codechecker-db-and-visualize-results)
@@ -442,7 +442,7 @@ CodeChecker fixit --checker-name modernize-deprecated-headers --apply \
 well advised to use the same `analyze` options as you did in the first
 analization session: the same checkers enabled, the same analyzer options, etc.
 ```sh
-CodeChecker analyze compile_commands.json --output ./reports --enable-all
+CodeChecker analyze ./compile_commands.json --output ./reports --enable-all
 ```
 
 5. Compare your local analysis to the central one
@@ -535,7 +535,7 @@ You may want to enable more checkers or disable some of them using the
 
 For example to enable alpha checkers additionally to the previously used:
 ```sh
-CodeChecker analyze compile_commands.json --output ./reports-alpha \
+CodeChecker analyze ./compile_commands.json --output ./reports-alpha \
     --enable-all --enable alpha
 ```
 
@@ -619,7 +619,7 @@ CodeChecker log --build "make" --output compile_commands.json
 ```
 2. Re-analyze the changed code of John Doe. If your "master" CI job
 ```sh
-CodeChecker analyze compile_commands.json --output ./reports-PR
+CodeChecker analyze ./compile_commands.json --output ./reports-PR
 ```
 3. Check for new bugs in the run
 ```sh
@@ -678,7 +678,7 @@ CodeChecker log --build "make" --output compile_commands.json
    time, as changing enabled checkers or fine-tuning the analyzers *may*
    result in new bugs being found.
 ```sh
-CodeChecker analyze compilation.json --output ./reports-daily
+CodeChecker analyze ./compile_commands.json --output ./reports-daily
 ```
 3. Store the analysis results into the central CodeChecher server
 ```sh
