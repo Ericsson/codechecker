@@ -70,6 +70,10 @@
                 <report-diff-count
                   :num-of-new-reports="item[i[0]].new"
                   :num-of-resolved-reports="item[i[0]].resolved"
+                  :extra-query-params="{
+                    'source-component': item.component,
+                    'severity': severityFromCodeToString(i[1])
+                  }"
                 />
               </span>
             </template>
