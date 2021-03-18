@@ -1324,6 +1324,12 @@ envionment variables:
   CC_CHANGED_FILES    Path of changed files json from Gerrit. Use it when
                       generating gerrit output.
 
+Exit status
+------------------------------------------------
+0 - No difference between baseline and newrun
+1 - CodeChecker error
+2 - There is at least one report difference between baseline and newrun
+
 Example scenario: Compare multiple analysis runs
 ------------------------------------------------
 Compare two runs and show results that didn't exist in the 'run1' but appear in

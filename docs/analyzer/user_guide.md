@@ -506,9 +506,8 @@ https://github.com/Ericsson/codechecker/blob/master/docs/analyzer/report_identif
 
 Exit status
 ------------------------------------------------
-0 - Successful analysis and no new reports
+0 - Successful analysis
 1 - CodeChecker error
-2 - At least one report emitted by an analyzer and there is no analyzer failure
 3 - Analysis of at least one translation unit failed
 128+signum - Terminating on a fatal signal whose number is signum
 
@@ -1650,6 +1649,12 @@ Environment variables
                          generating gerrit output.
   CC_SEVERITY_MAP_FILE   Path of the checker-severity mapping config file.
                          Default: <package>/config/checker_severity_map.json
+
+Exit status
+------------------------------------------------
+0 - No report
+1 - CodeChecker error
+2 - At least one report emitted by an analyzer
 ```
 </details>
 

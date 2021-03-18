@@ -88,7 +88,7 @@ class TestSuppress(unittest.TestCase):
         ret = call_cmd(extract_cmd,
                        self._test_project_path,
                        env.test_env(self._test_workspace))
-        self.assertEqual(ret, 0, "Failed to generate suppress file.")
+        self.assertEqual(ret, 2, "Failed to generate suppress file.")
 
         codechecker_cfg = env.import_test_cfg(
             self._test_workspace)['codechecker_cfg']
