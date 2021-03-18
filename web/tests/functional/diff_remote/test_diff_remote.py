@@ -505,7 +505,7 @@ class DiffRemote(unittest.TestCase):
                                None, ["--url", self._url], self._env)
 
         # 4 disappeared core.CallAndMessage issues
-        count = len(re.findall(r'\[core\.CallAndMessage\]', out))
+        count = len(re.findall(r'\[core\.CallAndMessage\]', out[0]))
         self.assertEqual(count, 4)
 
     def test_diff_to_tag(self):
@@ -517,27 +517,27 @@ class DiffRemote(unittest.TestCase):
 
         out = get_diff_results([f'{run_name}:t1'], [report_dir],
                                '--new', 'json', ["--url", self._url])
-        self.assertEqual(len(out), 5)
+        self.assertEqual(len(out[0]), 5)
 
         out = get_diff_results([f'{run_name}:t2'], [report_dir],
                                '--new', 'json', ["--url", self._url])
-        self.assertEqual(len(out), 0)
+        self.assertEqual(len(out[0]), 0)
 
         out = get_diff_results([f'{run_name}:t1'], [report_dir],
                                '--unresolved', 'json', ["--url", self._url])
-        self.assertEqual(len(out), 26)
+        self.assertEqual(len(out[0]), 26)
 
         out = get_diff_results([f'{run_name}:t2'], [report_dir],
                                '--unresolved', 'json', ["--url", self._url])
-        self.assertEqual(len(out), 31)
+        self.assertEqual(len(out[0]), 31)
 
         out = get_diff_results([f'{run_name}:t1'], [report_dir],
                                '--resolved', 'json', ["--url", self._url])
-        self.assertEqual(len(out), 0)
+        self.assertEqual(len(out[0]), 0)
 
         out = get_diff_results([f'{run_name}:t2'], [report_dir],
                                '--resolved', 'json', ["--url", self._url])
-        self.assertEqual(len(out), 0)
+        self.assertEqual(len(out[0]), 0)
 
     def test_max_compound_select(self):
         """Test the maximum number of compound select query."""
@@ -686,4 +686,4 @@ class DiffRemote(unittest.TestCase):
                              [new_run_name, base_run_name],
                              '--unresolved', 'json', ["--url", self._url])
 
-        self.assertNotEqual(len(unresolved_results), 0)
+        self.assertNotEqual(len(unresolved_results[0]), 0)

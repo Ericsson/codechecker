@@ -80,20 +80,22 @@ class LocalRemote(unittest.TestCase):
 
         return get_diff_results([self._local_reports], [self._run_names[0]],
                                 '--unresolved', None,
-                                ['--url', self._url, *extra_args])
+                                ['--url', self._url, *extra_args])[0]
 
     def test_local_to_remote_compare_count_new(self):
         """Count the new results with no filter in local compare mode."""
-        out = get_diff_results([self._local_reports], [self._run_names[0]],
-                               '--new', None, ["--url", self._url])
+        out, _, _ = get_diff_results([self._local_reports],
+                                     [self._run_names[0]],
+                                     '--new', None, ["--url", self._url])
 
         count = len(re.findall(r'\[core\.NullDereference\]', out))
         self.assertEqual(count, 4)
 
     def test_remote_to_local_compare_count_new(self):
         """Count the new results with no filter."""
-        out = get_diff_results([self._run_names[0]], [self._local_reports],
-                               '--new', None, ["--url", self._url])
+        out, _, _ = get_diff_results([self._run_names[0]],
+                                     [self._local_reports],
+                                     '--new', None, ["--url", self._url])
 
         # 5 new core.CallAndMessage issues.
         # 1 is suppressed in code
@@ -107,8 +109,9 @@ class LocalRemote(unittest.TestCase):
 
     def test_local_compare_count_unres(self):
         """Count the unresolved results with no filter."""
-        out = get_diff_results([self._local_reports], [self._run_names[0]],
-                               '--unresolved', None, ["--url", self._url])
+        out, _, _ = get_diff_results(
+            [self._local_reports], [self._run_names[0]],
+            '--unresolved', None, ["--url", self._url])
         print(out)
 
         count = len(re.findall(r'\[core\.CallAndMessage\]', out))
@@ -124,8 +127,9 @@ class LocalRemote(unittest.TestCase):
 
     def test_local_compare_count_unres_rgx(self):
         """Count the unresolved results with no filter and run name regex."""
-        out = get_diff_results([self._local_reports], [self._run_names[0]],
-                               '--unresolved', None, ["--url", self._url])
+        out, _, _ = get_diff_results(
+            [self._local_reports], [self._run_names[0]],
+            '--unresolved', None, ["--url", self._url])
         print(out)
 
         count = len(re.findall(r'\[core\.CallAndMessage\]', out))
@@ -346,7 +350,7 @@ class LocalRemote(unittest.TestCase):
         env["CC_REPO_DIR"] = ''
         env["CC_CHANGED_FILES"] = ''
 
-        review_data = get_diff_results(
+        review_data, _, _ = get_diff_results(
             [self._run_names[0]], [self._local_reports],
             '--new', 'gerrit',
             ["--url", self._url],
@@ -405,10 +409,11 @@ class LocalRemote(unittest.TestCase):
 
         env["CC_CHANGED_FILES"] = changed_file_path
 
-        get_diff_results([self._run_names[0]], [self._local_reports],
-                         '--unresolved', 'gerrit',
-                         ["--url", self._url, "-e", export_dir],
-                         env)
+        get_diff_results(
+            [self._run_names[0]], [self._local_reports],
+            '--unresolved', 'gerrit',
+            ["--url", self._url, "-e", export_dir],
+            env)
 
         gerrit_review_file = os.path.join(export_dir, 'gerrit_review.json')
         self.assertTrue(os.path.exists(gerrit_review_file))
@@ -516,12 +521,13 @@ class LocalRemote(unittest.TestCase):
         env["CC_REPO_DIR"] = ''
         env["CC_CHANGED_FILES"] = ''
 
-        out = get_diff_results([self._run_names[0]], [self._local_reports],
-                               '--resolved', None,
-                               ["-o", "html", "gerrit", "plaintext",
-                                "-e", export_dir,
-                                "--url", self._url],
-                               env)
+        out, _, _ = get_diff_results(
+            [self._run_names[0]], [self._local_reports],
+            '--resolved', None,
+            ["-o", "html", "gerrit", "plaintext",
+             "-e", export_dir,
+             "--url", self._url],
+            env)
 
         # Check the plaintext output.
         count = len(re.findall(r'\[core\.NullDereference\]', out))
@@ -539,6 +545,7 @@ class LocalRemote(unittest.TestCase):
 
     def test_diff_remote_local_resolved_same(self):
         """ Test for resolved reports on same list remotely and locally. """
-        out = get_diff_results([self._run_names[0]], [self._remote_reports],
-                               '--resolved', 'json', ["--url", self._url])
+        out, _, _ = get_diff_results(
+            [self._run_names[0]], [self._remote_reports],
+            '--resolved', 'json', ["--url", self._url])
         self.assertEqual(out, [])

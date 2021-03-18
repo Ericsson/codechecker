@@ -388,8 +388,12 @@ Environment variables
                       generating gerrit output.
                          Default: {}
 
+Exit status
+------------------------------------------------
+0 - No report
+1 - CodeChecker error
+2 - At least one report emitted by an analyzer
 """.format(os.path.join(package_root, 'config', 'checker_severity_map.json')),
-
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.
         'help': "Print analysis summary and results in a human-readable "
@@ -898,3 +902,6 @@ def main(args):
                     "reports!", changed_files)
 
     os.chdir(original_cwd)
+
+    if report_count != 0:
+        sys.exit(2)

@@ -60,7 +60,7 @@ class DiffLocal(unittest.TestCase):
         core.CallAndMessage checker was disabled in the new run, those
         reports should be listed as resolved.
         """
-        resolved_results = get_diff_results(
+        resolved_results, _, _ = get_diff_results(
             [self.base_reports], [self.new_reports], '--resolved', 'json')
         print(resolved_results)
 
@@ -73,7 +73,7 @@ class DiffLocal(unittest.TestCase):
         core.StackAddressEscape checker was enabled in the new run, those
         reports should be listed as new.
         """
-        new_results = get_diff_results(
+        new_results, _, _ = get_diff_results(
             [self.base_reports], [self.new_reports], '--new', 'json')
         print(new_results)
 
@@ -86,14 +86,9 @@ class DiffLocal(unittest.TestCase):
         Displays detailed information about base and new directories when
         any of them are not exist.
         """
-        error_output = ''
-        return_code = 0
-        try:
-            get_diff_results([self.base_reports], ['unexistent-dir-name'],
-                             '--new')
-        except subprocess.CalledProcessError as process_error:
-            return_code = process_error.returncode
-            error_output = process_error.stderr
+        _, error_output, return_code = get_diff_results(
+            [self.base_reports], ['unexistent-dir-name'], '--new',
+            extra_args=['--url', f"localhost:{env.get_free_port()}/Default"])
 
         self.assertEqual(return_code, 1,
                          "Exit code should be 1 if directory does not exist.")
@@ -106,7 +101,7 @@ class DiffLocal(unittest.TestCase):
         core.StackAddressEscape checker was enabled in the new run, those
         reports should be listed as new.
         """
-        low_severity_res = get_diff_results(
+        low_severity_res, _, _ = get_diff_results(
             [self.base_reports], [self.new_reports], '--new', 'json',
             ['--severity', 'low'])
         print(low_severity_res)
@@ -119,10 +114,10 @@ class DiffLocal(unittest.TestCase):
         core.StackAddressEscape checker (high severity) was enabled
         in the new run, those reports should be listed.
         """
-        high_severity_res = get_diff_results(
+        high_severity_res, _, _ = get_diff_results(
             [self.base_reports], [self.new_reports], '--new', 'json',
             ['--severity', 'high'])
-        self.assertEqual((len(high_severity_res)), 4)
+        self.assertEqual(len(high_severity_res), 4)
 
     def test_filter_severity_high_text(self):
         """Get the high severity new reports.
@@ -130,7 +125,7 @@ class DiffLocal(unittest.TestCase):
         core.StackAddressEscape checker (high severity) was enabled
         in the new run, those reports should be listed.
         """
-        out = get_diff_results(
+        out, _, _ = get_diff_results(
             [self.base_reports], [self.new_reports], '--new', None,
             ['--severity', 'high'])
         print(out)
@@ -139,7 +134,7 @@ class DiffLocal(unittest.TestCase):
 
     def test_filter_severity_high_low_text(self):
         """Get the high and low severity unresolved reports."""
-        out = get_diff_results(
+        out, _, _ = get_diff_results(
             [self.base_reports], [self.new_reports], '--unresolved', None,
             ['--severity', 'high', 'low'])
         self.assertEqual(len(re.findall(r'\[HIGH\]', out)), 18)
@@ -149,7 +144,7 @@ class DiffLocal(unittest.TestCase):
                    "available in the json output.")
     def test_filter_severity_high_low_json(self):
         """Get the high and low severity unresolved reports in json."""
-        high_low_unresolved_results = get_diff_results(
+        high_low_unresolved_results, _, _ = get_diff_results(
             [self.base_reports], [self.new_reports], '--unresolved', 'json',
             ['--severity', 'high', 'low'])
         print(high_low_unresolved_results)
@@ -158,7 +153,7 @@ class DiffLocal(unittest.TestCase):
 
     def test_multiple_dir(self):
         """ Get unresolved reports from muliple local directories. """
-        unresolved_results = get_diff_results(
+        unresolved_results, _, _ = get_diff_results(
             [self.base_reports, self.new_reports],
             [self.new_reports, self.base_reports],
             '--unresolved', 'json',
@@ -260,15 +255,15 @@ int main()
         codechecker.log_and_analyze(cfg, self._test_dir)
 
         # Run the diff command and check the results.
-        res = get_diff_results(
+        res, _, _ = get_diff_results(
             [report_dir_base], [report_dir_new], '--new', 'json')
         print(res)
         self.assertEqual(len(res), 2)
 
-        res = get_diff_results(
+        res, _, _ = get_diff_results(
             [report_dir_base], [report_dir_new], '--unresolved', 'json')
         self.assertEqual(len(res), 1)
 
-        res = get_diff_results(
+        res, _, _ = get_diff_results(
             [report_dir_base], [report_dir_new], '--resolved', 'json')
         self.assertEqual(len(res), 2)

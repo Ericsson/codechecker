@@ -1384,6 +1384,9 @@ def handle_diff_results(args):
                  ', '.join(newname_run_names),
                  ', '.join(matching_new_run_names))
 
+    if len(reports) != 0:
+        sys.exit(2)
+
 
 def handle_list_result_types(args):
     # If the given output format is not 'table', redirect logger's output to
