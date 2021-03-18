@@ -80,9 +80,9 @@ make clean
 
 ### Log your build<a name="log-your-build"></a>
 Logging means that during the whole compilation process CodeChecker catches
-compiler calls and saves commands in a *compilation database* file.
-([Specification is here](https://clang.llvm.org/docs/JSONCompilationDatabase.html).)
-This compilation database is an input of the next analysis step.
+compiler calls and saves commands in a
+[compilation database](https://clang.llvm.org/docs/JSONCompilationDatabase.html)
+file. This compilation database is an input of the next analysis step.
 
 ```sh
 CodeChecker log --build "make" --output ./compile_commands.json
@@ -97,6 +97,9 @@ cat ./compile_commands.json
 ```
 
 **What to do if the `compile_commands.json` is empty?**
+In this case a debug log file is generated beside the `compile_commands.json`
+(named codechecker.logger.debug) and if the compilation database is empty maybe
+it will contain much information about this.
 
 * Make sure that your build system actually invoked the compiler (e.g. `gcc`,
 `g++`, `clang`).
@@ -122,8 +125,8 @@ CodeChecker analyze ./compile_commands.json --enable sensitive --output ./report
 However the compilation of the project (here the example program) is performed
 by `gcc`, the CodeChecker uses `clang` to analyze sources of the project.
 During analysis, CodeChecker compiles/analyses sources again. The analysis
-process generally uses more time. It would be good to mention here that if you
-want to speed up analysis specify a higher value for the `--jobs` option.
+process generally uses more time. If you want to speed up analysis specify a
+higher value for the `--jobs` option.
 
 In the above command the `--enable sensitive` means that a subset of checker
 are run. `sensitive` chooses a predefined "group" of checkers. The further
@@ -155,13 +158,13 @@ You can do the 1st and the 2nd step in one round by executing `check`
 cd <repo root dir>/docs/examples
 make clean
 rm -rf ./reports
-CodeChecker check --build "make" --output ./reports --enable sensitive
+CodeChecker check --build "make" --output ./reports --clean
 ```
 or to run on 22 threads both the compilation and the analysis:
 
 ```sh
 CodeChecker check --jobs 22 --build "make clean ; make --jobs 22" \
-    --output ./reports --enable sensitive
+    --output ./reports --clean
 ```
 
 ### Cross-Compilation<a name="cross-compilation"></a>
@@ -226,8 +229,7 @@ firefox ./reports_html/index.html &
 ```
 
 `./reports_html` directory will contain an `index.html` with a link to all
-findings that are stored in separate `HTML` files (one per analyzed build
-action).
+findings that are stored in separate `HTML` files.
 
 ![Analysis results in static HTML files](images/static_html.png)
 
@@ -242,7 +244,8 @@ analyze only the changed files and all the files that are depending on the
 source code changes (in case of the update of a header file).
 
 b) If you only want to re-analyze changed source files, without re-building
-your project, you can use skip list to tell CodeChecker which files to analyze.
+your project, you can use [skip](analyzer/user_guide.md#skip) list to tell
+CodeChecker which files to analyze.
 
 ### Automatic fixing<a name="automatic-fixing"></a>
 Some CodeChecker reports are so easy to fix that even static analyzer tools may
@@ -380,8 +383,7 @@ Note: Use a new shell.
 
 ```sh
 cd <repo root dir>
-mkdir ./ws
-CodeChecker server --workspace ./ws -v 8555
+CodeChecker server --workspace ./ws --port 8555
 ```
 A default product called `Default` will be automatically created where you can
 store your results.
