@@ -19,7 +19,7 @@ import signal
 import sys
 
 
-def add_subcommand(subparsers, sub_cmd, cmd_module_path):
+def add_subcommand(subparsers, sub_cmd, cmd_module_path, lib_dir_path):
     """
     Load the subcommand module and then add the subcommand to the available
     subcommands in the given subparsers collection.
@@ -28,14 +28,13 @@ def add_subcommand(subparsers, sub_cmd, cmd_module_path):
     argparse.ArgumentParser.
     """
     m_path, m_name = os.path.split(cmd_module_path)
-    module_name = os.path.splitext(m_name)[0]
 
-    cc_bin = os.path.dirname(os.path.realpath(__file__))
-    full_module_path = os.path.join(cc_bin, '..', 'lib', 'python3', m_path)
+    module_name = os.path.splitext(m_name)[0]
+    target = [os.path.join(lib_dir_path, m_path)]
 
     # Load the module named as the argument.
     cmd_spec = machinery.PathFinder().find_spec(module_name,
-                                                [full_module_path])
+                                                target)
     command_module = cmd_spec.loader.load_module(module_name)
 
     # Now that the module is loaded, construct an ArgumentParser for it.
@@ -46,10 +45,44 @@ def add_subcommand(subparsers, sub_cmd, cmd_module_path):
     command_module.add_arguments_to_parser(sc_parser)
 
 
-def main(subcommands=None):
+def get_data_files_dir_path():
+    """ Get data files directory path """
+    bin_dir = os.environ.get('CC_BIN_DIR')
+
+    # In case of internal package we return the parent directory of the 'bin'
+    # folder.
+    if bin_dir:
+        return os.path.dirname(bin_dir)
+
+    # If it's not an internal package (pypi package), try to find the data
+    # directory.
+    import sysconfig
+    data_dir_paths = set(sysconfig.get_path("data", s)
+                         for s in sysconfig.get_scheme_names())
+
+    for dir_path in data_dir_paths:
+        data_dir_path = os.path.join(dir_path, 'share', 'codechecker')
+        if os.path.exists(data_dir_path):
+            return data_dir_path
+
+
+def main():
     """
     CodeChecker main command line.
     """
+    os.environ['CC_LIB_DIR'] = os.path.dirname(os.path.dirname(
+        os.path.realpath(__file__)))
+
+    data_files_dir_path = get_data_files_dir_path()
+    os.environ['CC_DATA_FILES_DIR'] = data_files_dir_path
+
+    # Load the available CodeChecker subcommands.
+    # This list is generated dynamically by scripts/build_package.py, and is
+    # always meant to be available alongside the CodeChecker.py.
+    commands_cfg = os.path.join(data_files_dir_path, "config", "commands.json")
+
+    with open(commands_cfg, encoding="utf-8", errors="ignore") as cfg_file:
+        subcommands = json.load(cfg_file)
 
     def signal_handler(signum, frame):
         """
@@ -104,10 +137,11 @@ output.
                     # Consider only the given command as an available one.
                     subcommands = {first_command: subcommands[first_command]}
 
+            lib_dir_path = os.environ.get('CC_LIB_DIR')
             for subcommand in subcommands:
                 try:
                     add_subcommand(subparsers, subcommand,
-                                   subcommands[subcommand])
+                                   subcommands[subcommand], lib_dir_path)
                 except (IOError, ImportError):
                     print("Couldn't import module for subcommand '" +
                           subcommand + "'... ignoring.")
@@ -162,13 +196,4 @@ output.
 
 # -----------------------------------------------------------------------------
 if __name__ == "__main__":
-
-    # Load the available CodeChecker subcommands.
-    # This list is generated dynamically by scripts/build_package.py, and is
-    # always meant to be available alongside the CodeChecker.py.
-    commands_cfg = os.path.join(os.path.dirname(__file__), "commands.json")
-
-    with open(commands_cfg, encoding="utf-8", errors="ignore") as cfg_file:
-        commands = json.load(cfg_file)
-
-    main(commands)
+    main()

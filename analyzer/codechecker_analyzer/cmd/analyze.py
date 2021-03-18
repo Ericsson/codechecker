@@ -30,8 +30,8 @@ from codechecker_common.util import load_json_or_empty
 
 LOG = logger.get_logger('system')
 
-_package_root = analyzer_context.get_context().package_root
-_severity_map_file = os.path.join(_package_root, 'config',
+_data_files_dir_path = analyzer_context.get_context().data_files_dir_path
+_severity_map_file = os.path.join(_data_files_dir_path, 'config',
                                   'checker_severity_map.json')
 
 epilog_env_var = f"""

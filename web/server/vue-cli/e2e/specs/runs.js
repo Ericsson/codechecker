@@ -80,7 +80,7 @@ module.exports = {
   },
 
   "show check command of a run" (browser) {
-    const checkCommand = "CodeChecker.py analyze";
+    const checkCommand = "cli.py analyze";
     const runsPage = browser.page.runs();
     const dialogSection = runsPage.section.checkCommandDialog;
 
@@ -272,7 +272,7 @@ module.exports = {
   },
 
   "show check command of a run history event" (browser) {
-      const checkCommand = "CodeChecker.py analyze";
+      const checkCommand = "cli.py analyze";
       const runsPage = browser.page.runs();
       const expandedSection = runsPage.section.expanded;
       const timelineSection = expandedSection.section.timeline;

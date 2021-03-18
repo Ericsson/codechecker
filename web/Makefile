@@ -124,17 +124,20 @@ package: package_dir_structure package_plist_to_html package_report_hash package
 	  $(CC_BUILD_DIR)/config/web_version.json
 
 	# Copy CodeChecker entry point sub-commands.
-	mkdir -p $(CC_BUILD_DIR)/cc_bin && \
 	${PYTHON_BIN} $(ROOT)/scripts/build/create_commands.py -b $(BUILD_DIR) \
 	  --cmd-dir $(ROOT)/codechecker_common/cmd \
 	    $(CC_WEB)/codechecker_web/cmd \
 	    $(CC_SERVER)/codechecker_server/cmd \
 	    $(CC_CLIENT)/codechecker_client/cmd \
-	  --bin-file $(ROOT)/bin/CodeChecker \
-	  --cc-bin-file $(ROOT)/bin/CodeChecker.py
+	  --bin-file $(ROOT)/bin/CodeChecker
 
 	# Copy license file.
 	cp $(ROOT)/LICENSE.TXT $(CC_BUILD_DIR)
+
+package_api:
+	${PYTHON_BIN} -m pip install --no-deps -t ${CC_BUILD_LIB_DIR} \
+		api/py/codechecker_api/dist/codechecker_api.tar.gz \
+		api/py/codechecker_api_shared/dist/codechecker_api_shared.tar.gz
 
 standalone_package: venv package
 	cd $(CC_BUILD_BIN_DIR) && \

@@ -3,6 +3,8 @@
 *.py[cod]
 
 build
+build_dist
+dist
 venv
 venv_dev
 Makefile.local

@@ -739,7 +739,8 @@ def __reload_config(args):
             continue
 
         try:
-            os.kill(i['pid'], signal.SIGHUP)
+            if sys.platform != "win32":
+                os.kill(i['pid'], signal.SIGHUP)
         except Exception:
             LOG.error("Couldn't reload configuration file for process PID #%s",
                       str(i['pid']))

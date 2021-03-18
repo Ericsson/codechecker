@@ -44,7 +44,7 @@ def collect_subcmd(cmd_dirs, build_dir):
                 # codechecker_<module>/cmd/<cmd_name>.py
 
     commands_json = os.path.join(
-        build_dir, 'CodeChecker', 'cc_bin', 'commands.json')
+        build_dir, 'CodeChecker', 'config', 'commands.json')
 
     with open(commands_json, 'w',
               encoding="utf-8", errors="ignore") as commands:
@@ -69,12 +69,6 @@ if __name__ == "__main__":
                         help="List of files to be copied to 'bin' directory. "
                              "These are exported to users, so these are "
                              "directly executable.")
-
-    parser.add_argument('--cc-bin-file',
-                        nargs='*',
-                        help="List of files to be copied to 'cc_bin' "
-                             "directory. These are not exported to users, so "
-                             "these are not directly executable.")
 
     parser.add_argument('--cmd-dir',
                         nargs='*',
@@ -104,8 +98,3 @@ if __name__ == "__main__":
         copy_files(
             args['bin_file'],
             os.path.join(args['build_dir'], 'CodeChecker', 'bin'))
-
-    if args['cc_bin_file']:
-        copy_files(
-            args['cc_bin_file'],
-            os.path.join(args['build_dir'], 'CodeChecker', 'cc_bin'))

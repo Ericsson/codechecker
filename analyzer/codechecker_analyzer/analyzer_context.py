@@ -251,14 +251,18 @@ class GuidelineMap(Mapping):
 class Context(object, metaclass=Singleton):
     """ Generic package specific context. """
 
-    def __init__(self, package_root, pckg_layout, cfg_dict):
-        env_vars = cfg_dict['environment_variables']
+    def __init__(self):
+        """ Initialize analyzer context. """
+        self._bin_dir_path = os.environ.get('CC_BIN_DIR', '')
+        self._lib_dir_path = os.environ.get('CC_LIB_DIR', '')
+        self._data_files_dir_path = os.environ.get('CC_DATA_FILES_DIR', '')
 
-        # Get the common environment variables.
-        self.pckg_layout = pckg_layout
-        self.env_vars = env_vars
+        cfg_dict = self.__get_package_config()
+        self.env_vars = cfg_dict['environment_variables']
 
-        self._package_root = package_root
+        lcfg_dict = self.__get_package_layout()
+        self.pckg_layout = lcfg_dict['runtime']
+
         self._severity_map = SeverityMap(
             load_json_or_empty(self.checker_severity_map_file, {}))
         self._guideline_map = GuidelineMap(self.checker_guideline_map_file)
@@ -268,27 +272,62 @@ class Context(object, metaclass=Singleton):
         self.__package_git_hash = None
         self.__analyzers = {}
 
+        self.logger_lib_dir_path = os.path.join(
+            self._data_files_dir_path, 'ld_logger', 'lib')
+
+        if not os.path.exists(self.logger_lib_dir_path):
+            self.logger_lib_dir_path = os.path.join(
+                self._lib_dir_path, 'codechecker_analyzer', 'ld_logger', 'lib')
+
         self.logger_bin = None
         self.logger_file = None
         self.logger_compilers = None
 
-        # Get package specific environment variables.
-        self.set_env(env_vars)
+        # Init package specific environment variables.
+        self.__init_env()
 
         self.__set_version()
         self.__populate_analyzers()
         self.__populate_replacer()
 
-    def set_env(self, env_vars):
-        """
-        Get the environment variables.
-        """
+    def __get_package_config(self):
+        """ Get package configuration. """
+        pckg_config_file = os.path.join(
+            self._data_files_dir_path, "config", "config.json")
+
+        LOG.debug('Reading config: %s', pckg_config_file)
+        cfg_dict = load_json_or_empty(pckg_config_file)
+
+        if not cfg_dict:
+            raise ValueError(f"No configuration file '{pckg_config_file}' can "
+                             f"be found or it is empty!")
+
+        LOG.debug(cfg_dict)
+        return cfg_dict
+
+    def __get_package_layout(self):
+        """ Get package layout configuration. """
+        layout_cfg_file = os.path.join(
+            self._data_files_dir_path, "config", "package_layout.json")
+
+        LOG.debug('Reading config: %s', layout_cfg_file)
+        lcfg_dict = load_json_or_empty(layout_cfg_file)
+
+        if not lcfg_dict:
+            raise ValueError(f"No configuration file '{layout_cfg_file}' can "
+                             f"be found or it is empty!")
+
+        return lcfg_dict
+
+    def __init_env(self):
+        """ Set environment variables. """
         # Get generic package specific environment variables.
-        self.logger_bin = os.environ.get(env_vars['cc_logger_bin'])
-        self.logger_file = os.environ.get(env_vars['cc_logger_file'])
-        self.logger_compilers = os.environ.get(env_vars['cc_logger_compiles'])
-        self.ld_preload = os.environ.get(env_vars['ld_preload'])
-        self.ld_lib_path = env_vars['env_ld_lib_path']
+        self.logger_bin = os.environ.get(self.env_vars['cc_logger_bin'])
+        self.logger_file = os.environ.get(self.env_vars['cc_logger_file'])
+        self.logger_compilers = os.environ.get(
+            self.env_vars['cc_logger_compiles'])
+        self.ld_preload = os.environ.get(self.env_vars['ld_preload'])
+        self.ld_lib_path = self.env_vars['env_ld_lib_path']
 
     def __set_version(self):
         """
@@ -334,8 +373,8 @@ class Context(object, metaclass=Singleton):
 
             if os.path.dirname(value):
                 # Check if it is a package relative path.
-                self.__analyzers[name] = os.path.join(self._package_root,
-                                                      value)
+                self.__analyzers[name] = os.path.join(
+                    self._data_files_dir_path, value)
             else:
                 env_path = analyzer_env['PATH'] if analyzer_env else None
                 compiler_binary = find_executable(value, env_path)
@@ -357,7 +396,8 @@ class Context(object, metaclass=Singleton):
 
         if os.path.dirname(replacer_binary):
             # Check if it is a package relative path.
-            self.__replacer = os.path.join(self._package_root, replacer_binary)
+            self.__replacer = os.path.join(self._data_files_dir_path,
+                                           replacer_binary)
         else:
             self.__replacer = find_executable(replacer_binary)
 
@@ -379,7 +419,7 @@ class Context(object, metaclass=Singleton):
 
     @property
     def version_file(self):
-        return os.path.join(self._package_root, 'config',
+        return os.path.join(self._data_files_dir_path, 'config',
                             'analyzer_version.json')
 
     @property
@@ -396,11 +436,11 @@ class Context(object, metaclass=Singleton):
 
     @property
     def path_logger_bin(self):
-        return os.path.join(self.package_root, 'bin', 'ld_logger')
+        return os.path.join(self._bin_dir_path, 'ld_logger')
 
     @property
     def path_logger_lib(self):
-        return os.path.join(self.package_root, 'ld_logger', 'lib')
+        return self.logger_lib_dir_path
 
     @property
     def logger_lib_name(self):
@@ -408,8 +448,7 @@ class Context(object, metaclass=Singleton):
 
     @property
     def path_plist_to_html_dist(self):
-        return os.path.join(self.package_root, 'lib', 'python3',
-                            'plist_to_html', 'static')
+        return os.path.join(self._lib_dir_path, 'plist_to_html', 'static')
 
     @property
     def path_env_extra(self):
@@ -419,7 +458,7 @@ class Context(object, metaclass=Singleton):
         extra_paths = self.pckg_layout.get('path_env_extra', [])
         paths = []
         for path in extra_paths:
-            paths.append(os.path.join(self._package_root, path))
+            paths.append(os.path.join(self._data_files_dir_path, path))
         return paths
 
     @property
@@ -430,7 +469,7 @@ class Context(object, metaclass=Singleton):
         extra_lib = self.pckg_layout.get('ld_lib_path_extra', [])
         ld_paths = []
         for path in extra_lib:
-            ld_paths.append(os.path.join(self._package_root, path))
+            ld_paths.append(os.path.join(self._data_files_dir_path, path))
         return ld_paths
 
     @property
@@ -442,8 +481,8 @@ class Context(object, metaclass=Singleton):
         return self.__replacer
 
     @property
-    def package_root(self):
-        return self._package_root
+    def data_files_dir_path(self):
+        return self._data_files_dir_path
 
     @property
     def checker_plugin(self):
@@ -451,7 +490,7 @@ class Context(object, metaclass=Singleton):
         if env.is_analyzer_from_path():
             return None
 
-        return os.path.join(self._package_root, 'plugin')
+        return os.path.join(self._data_files_dir_path, 'plugin')
 
     @property
     def checker_severity_map_file(self):
@@ -469,7 +508,7 @@ class Context(object, metaclass=Singleton):
 
             return severity_map_file
 
-        return os.path.join(self._package_root, 'config',
+        return os.path.join(self._data_files_dir_path, 'config',
                             'checker_severity_map.json')
 
     @property
@@ -488,7 +527,7 @@ class Context(object, metaclass=Singleton):
 
             return guideline_map_file
 
-        return os.path.join(self._package_root, 'config',
+        return os.path.join(self._data_files_dir_path, 'config',
                             'checker_guideline_map.json')
 
     @property
@@ -507,7 +546,7 @@ class Context(object, metaclass=Singleton):
 
             return profile_map_file
 
-        return os.path.join(self._package_root, 'config',
+        return os.path.join(self._data_files_dir_path, 'config',
                             'checker_profile_map.json')
 
     @property
@@ -524,31 +563,8 @@ class Context(object, metaclass=Singleton):
 
 
 def get_context():
-    LOG.debug('Loading package config.')
-
-    package_root = os.environ['CC_PACKAGE_ROOT']
-
-    pckg_config_file = os.path.join(package_root, "config", "config.json")
-    LOG.debug('Reading config: %s', pckg_config_file)
-    cfg_dict = load_json_or_empty(pckg_config_file)
-
-    if not cfg_dict:
-        sys.exit(1)
-
-    LOG.debug(cfg_dict)
-
-    LOG.debug('Loading layout config.')
-
-    layout_cfg_file = os.path.join(package_root, "config",
-                                   "package_layout.json")
-    LOG.debug(layout_cfg_file)
-    lcfg_dict = load_json_or_empty(layout_cfg_file)
-
-    if not lcfg_dict:
-        sys.exit(1)
-
     try:
-        return Context(package_root, lcfg_dict['runtime'], cfg_dict)
+        return Context()
     except KeyError:
         import traceback
         traceback.print_exc()

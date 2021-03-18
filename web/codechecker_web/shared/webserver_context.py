@@ -53,11 +53,14 @@ class SeverityMap(Mapping):
 class Context(object, metaclass=Singleton):
     """ Generic package specific context. """
 
-    def __init__(self, package_root, pckg_layout, cfg_dict):
-        # Get the common environment variables.
-        self.pckg_layout = pckg_layout
+    def __init__(self):
+        """ Initialize web context. """
+        self._lib_dir_path = os.environ.get('CC_LIB_DIR', '')
+        self._data_files_dir_path = os.environ.get('CC_DATA_FILES_DIR', '')
 
-        self._package_root = package_root
+        lcfg_dict = self.__get_package_layout()
+        self.pckg_layout = lcfg_dict['runtime']
+
         self._severity_map = SeverityMap(
             load_json_or_empty(self.checkers_severity_map_file, {}))
         self.__system_comment_map = \
@@ -67,6 +70,20 @@ class Context(object, metaclass=Singleton):
         self.__package_git_hash = None
 
         self.__set_version()
+
+    def __get_package_layout(self):
+        """ Get package layout configuration. """
+        layout_cfg_file = os.path.join(
+            self._data_files_dir_path, "config", "package_layout.json")
+
+        LOG.debug('Reading config: %s', layout_cfg_file)
+        lcfg_dict = load_json_or_empty(layout_cfg_file)
+
+        if not lcfg_dict:
+            raise ValueError(f"No configuration file '{layout_cfg_file}' can "
+                             f"be found or it is empty!")
+
+        return lcfg_dict
 
     def __set_version(self):
         """
@@ -114,7 +131,8 @@ class Context(object, metaclass=Singleton):
 
     @property
     def version_file(self):
-        return os.path.join(self._package_root, 'config', 'web_version.json')
+        return os.path.join(self._data_files_dir_path, 'config',
+                            'web_version.json')
 
     @property
     def system_comment_map(self):
@@ -122,20 +140,19 @@ class Context(object, metaclass=Singleton):
 
     @property
     def system_comment_map_file(self):
-        return os.path.join(self._package_root, 'config',
+        return os.path.join(self._data_files_dir_path, 'config',
                             'system_comment_kinds.json')
 
     @property
     def path_plist_to_html_dist(self):
-        return os.path.join(self.package_root, 'lib', 'python3',
-                            'plist_to_html', 'static')
+        return os.path.join(self._lib_dir_path, 'plist_to_html', 'static')
 
     @property
     def path_env_extra(self):
         extra_paths = self.pckg_layout.get('path_env_extra', [])
         paths = []
         for path in extra_paths:
-            paths.append(os.path.join(self._package_root, path))
+            paths.append(os.path.join(self._data_files_dir_path, path))
         return paths
 
     @property
@@ -143,12 +160,12 @@ class Context(object, metaclass=Singleton):
         extra_lib = self.pckg_layout.get('ld_lib_path_extra', [])
         ld_paths = []
         for path in extra_lib:
-            ld_paths.append(os.path.join(self._package_root, path))
+            ld_paths.append(os.path.join(self._data_files_dir_path, path))
         return ld_paths
 
     @property
-    def package_root(self):
-        return self._package_root
+    def data_files_dir_path(self):
+        return self._data_files_dir_path
 
     @property
     def checkers_severity_map_file(self):
@@ -162,26 +179,26 @@ class Context(object, metaclass=Singleton):
 
             return severity_map_file
 
-        return os.path.join(self._package_root, 'config',
+        return os.path.join(self._data_files_dir_path, 'config',
                             'checker_severity_map.json')
 
     @property
     def doc_root(self):
-        return os.path.join(self._package_root, 'www', 'docs')
+        return os.path.join(self._data_files_dir_path, 'www', 'docs')
 
     @property
     def www_root(self):
-        return os.path.join(self._package_root, 'www')
+        return os.path.join(self._data_files_dir_path, 'www')
 
     @property
     def run_migration_root(self):
-        return os.path.join(self._package_root, 'lib', 'python3',
-                            'codechecker_server', 'migrations', 'report')
+        return os.path.join(self._lib_dir_path, 'codechecker_server',
+                            'migrations', 'report')
 
     @property
     def config_migration_root(self):
-        return os.path.join(self._package_root, 'lib', 'python3',
-                            'codechecker_server', 'migrations', 'config')
+        return os.path.join(self._lib_dir_path, 'codechecker_server',
+                            'migrations', 'config')
 
     @property
     def severity_map(self):
@@ -189,31 +206,8 @@ class Context(object, metaclass=Singleton):
 
 
 def get_context():
-    LOG.debug('Loading package config.')
-
-    package_root = os.environ['CC_PACKAGE_ROOT']
-
-    pckg_config_file = os.path.join(package_root, "config", "config.json")
-    LOG.debug('Reading config: %s', pckg_config_file)
-    cfg_dict = load_json_or_empty(pckg_config_file)
-
-    if not cfg_dict:
-        sys.exit(1)
-
-    LOG.debug(cfg_dict)
-
-    LOG.debug('Loading layout config.')
-
-    layout_cfg_file = os.path.join(package_root, "config",
-                                   "package_layout.json")
-    LOG.debug(layout_cfg_file)
-    lcfg_dict = load_json_or_empty(layout_cfg_file)
-
-    if not lcfg_dict:
-        sys.exit(1)
-
     try:
-        return Context(package_root, lcfg_dict['runtime'], cfg_dict)
+        return Context()
     except KeyError:
         import traceback
         traceback.print_exc()

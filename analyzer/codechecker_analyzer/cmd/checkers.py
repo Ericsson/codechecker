@@ -80,8 +80,8 @@ def get_argparser_ctor_args():
     argparse.ArgumentParser (either directly or as a subparser).
     """
 
-    package_root = analyzer_context.get_context().package_root
-
+    data_files_dir_path = analyzer_context.get_context().data_files_dir_path
+    config_dir_path = os.path.join(data_files_dir_path, 'config')
     return {
         'prog': 'CodeChecker checkers',
         'formatter_class': arg.RawDescriptionDefaultHelpFormatter,
@@ -104,10 +104,10 @@ Environment variables
                          Default: '{}'
   CC_PROFILE_MAP_FILE    Path of the checker-profile mapping config file.
                          Default: '{}'
-""".format(os.path.join(package_root, 'config', 'checker_profile_map.json'),
-           os.path.join(package_root, 'config', 'checker_severity_map.json'),
-           os.path.join(package_root, 'config', 'checker_guideline_map.json'),
-           os.path.join(package_root, 'config', 'checker_profile_map.json')),
+""".format(os.path.join(config_dir_path, 'checker_profile_map.json'),
+           os.path.join(config_dir_path, 'checker_severity_map.json'),
+           os.path.join(config_dir_path, 'checker_guideline_map.json'),
+           os.path.join(config_dir_path, 'checker_profile_map.json')),
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.

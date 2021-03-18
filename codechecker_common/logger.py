@@ -42,8 +42,9 @@ class CCLogger(logging.Logger):
 
 logging.setLoggerClass(CCLogger)
 
-package_root = os.environ.get('CC_PACKAGE_ROOT', '')
-DEFAULT_LOG_CFG_FILE = os.path.join(package_root, 'config', 'logger.conf')
+data_files_dir_path = os.environ.get('CC_DATA_FILES_DIR', '')
+DEFAULT_LOG_CFG_FILE = os.path.join(data_files_dir_path, 'config',
+                                    'logger.conf')
 
 
 # Default config which can be used if reading log config from a

@@ -780,13 +780,14 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
             #        proxy objects before passing them to other processes via
             #        map_async.
             #        Note that even deep-copying is known to be insufficient.
+            timeout = 3155760 if sys.platform == 'win32' else 31557600
             pool.map_async(check,
                            analyzed_actions,
                            1,
                            callback=lambda results: worker_result_handler(
                                results, metadata_tool, output_path,
                                context.analyzer_binaries)
-                           ).get(31557600)
+                           ).get(timeout)
 
             pool.close()
         except Exception:

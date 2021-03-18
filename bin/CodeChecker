@@ -12,7 +12,6 @@ Save original environment without modifications.
 Used to run the logging in the same env.
 """
 
-import errno
 import os
 import pickle
 import shutil
@@ -33,21 +32,15 @@ def run_codechecker(checker_env, subcommand=None):
                        all the commands.
     """
     package_bin = os.path.dirname(os.path.realpath(__file__))
-    package_root, bin_dir = os.path.split(package_bin)
+    package_root = os.path.dirname(package_bin)
+    lib_dir_path = os.path.join(package_root, 'lib', 'python3')
+
+    checker_env['PYTHONPATH'] = lib_dir_path
+    checker_env['CC_BIN_DIR'] = package_bin
 
     python3 = os.path.join('python3')
-    common_lib = os.path.join(package_root,
-                              'lib',
-                              'python3')
-
-    checker_env['PYTHONPATH'] = common_lib
-
-    checker_env['CC_PACKAGE_ROOT'] = \
-        os.path.realpath(os.path.join(package_bin, os.pardir))
-
-    codechecker_main = os.path.join(package_root,
-                                    'cc_bin',
-                                    'CodeChecker.py')
+    codechecker_main = \
+        os.path.join(lib_dir_path, 'codechecker_common', 'cli.py')
 
     checker_cmd = [python3, codechecker_main]
 
@@ -83,7 +76,7 @@ def main(subcommand=None):
         try:
             shutil.rmtree(tmp_dir)
         except Exception as ex:
-            if not isinstance(ex, OSError) or ex.errno != errno.ENOENT:
+            if not isinstance(ex, OSError):
                 print('Failed to remove temporary directory: ' + tmp_dir)
                 print('Manual cleanup is required.')
                 print(ex)
@@ -99,7 +92,7 @@ def main(subcommand=None):
 
     def signal_term_handler(signum, frame):
         global proc_pid
-        if proc_pid:
+        if proc_pid and not sys.platform == "win32":
             os.kill(proc_pid, signal.SIGINT)
 
         _remove_tmp()
@@ -113,7 +106,8 @@ def main(subcommand=None):
         if proc_pid:
             os.kill(proc_pid, signal.SIGHUP)
 
-    signal.signal(signal.SIGHUP, signal_reload_handler)
+    if not sys.platform == "win32":
+        signal.signal(signal.SIGHUP, signal_reload_handler)
 
     try:
         run_codechecker(checker_env, subcommand)

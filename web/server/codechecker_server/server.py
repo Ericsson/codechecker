@@ -1012,7 +1012,7 @@ def start_server(config_directory, package_data, port, config_sql_server,
         # exists we rename it to server_config.json.
         session_cfg_file = os.path.join(config_directory,
                                         'session_config.json')
-        example_cfg_file = os.path.join(os.environ['CC_PACKAGE_ROOT'],
+        example_cfg_file = os.path.join(os.environ['CC_DATA_FILES_DIR'],
                                         'config', 'server_config.json')
         if os.path.exists(session_cfg_file):
             LOG.info("Renaming '%s' to '%s'. Please check the example "
@@ -1077,7 +1077,8 @@ def start_server(config_directory, package_data, port, config_sql_server,
         """
         manager.reload_config()
 
-    signal.signal(signal.SIGHUP, reload_signal_handler)
+    if sys.platform != "win32":
+        signal.signal(signal.SIGHUP, reload_signal_handler)
 
     try:
         instance_manager.register(os.getpid(),

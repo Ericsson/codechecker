@@ -59,13 +59,15 @@ def perform_build_command(logfile, command, context, keep_link, silent=False,
     """
     LOG.info("Starting build ...")
 
+    original_env = os.environ
     try:
-        original_env_file = os.environ['CODECHECKER_ORIGINAL_BUILD_ENV']
-        LOG.debug_analyzer('Loading original build env from: %s',
-                           original_env_file)
+        original_env_file = os.environ.get('CODECHECKER_ORIGINAL_BUILD_ENV')
+        if original_env_file:
+            LOG.debug_analyzer('Loading original build env from: %s',
+                               original_env_file)
 
-        with open(original_env_file, 'rb') as env_file:
-            original_env = pickle.load(env_file, encoding='utf-8')
+            with open(original_env_file, 'rb') as env_file:
+                original_env = pickle.load(env_file, encoding='utf-8')
 
     except Exception as ex:
         LOG.warning(str(ex))
@@ -109,9 +111,16 @@ def perform_build_command(logfile, command, context, keep_link, silent=False,
                     os.remove(log_file)
 
                 log_env['CC_LOGGER_DEBUG_FILE'] = log_file
+        elif platform.system() == 'Windows':
+            LOG.error("This command is not supported on Windows. You can use "
+                      "the following tools to generate a compilation "
+                      "database: \n"
+                      " - CMake (CMAKE_EXPORT_COMPILE_COMMANDS)\n"
+                      " - compiledb (https://pypi.org/project/compiledb/)")
+            sys.exit(1)
         else:
-            LOG.error("Intercept-build is required"
-                      " to run CodeChecker in OS X.")
+            LOG.error("Intercept-build is required to run CodeChecker in "
+                      "OS X.")
             sys.exit(1)
 
     LOG.debug_analyzer(log_env)
