@@ -4,9 +4,10 @@ This is lazy dog HOWTO to using CodeChecker analysis.
 It invokes Clang Static Analyzer and Clang-Tidy tools to analyze your code.
 
 ## Table of Contents
-- [CodeChecker HOWTO](#codechecker-howto)
-  - [Table of Contents](#table-of-contents)
-  - [Preface<a name="preface"></a>](#preface)
+- CodeChecker HOWTO
+  - Table of Contents
+  - Preface
+  - [Step 0:<a name="step-0"></a>](#step-0)
   - [Step 1: Integrate CodeChecker into your build system<a name="step-1"></a>](#step-1-integrate-codechecker-into-your-build-system)
     - [Step in the docs/examples directory<a name="step-in"></a>](#step-in-the-docsexamples-directory)
     - [Clean the workspace<a name="clean-workspace"></a>](#clean-the-workspace)
@@ -27,7 +28,7 @@ It invokes Clang Static Analyzer and Clang-Tidy tools to analyze your code.
     - [Definition of "run"<a name="run-definition"></a>](#definition-of-run)
     - [Programmer checking new bugs in the code after local edit (and compare it to a central database)<a name="compare"></a>](#programmer-checking-new-bugs-in-the-code-after-local-edit-and-compare-it-to-a-central-database)
     - [Using diff command on the local filesystem<a name="using-diff"></a>](#using-diff-command-on-the-local-filesystem)
-  - [Step 7: Fine tune Analysis configuration <a name="step-6"></a>](#step-7-fine-tune-analysis-configuration-)
+  - [Step 7: Fine tune Analysis configuration <a name="step-7"></a>](#step-7-fine-tune-analysis-configuration-)
     - [Analysis Failures <a name="step-7"></a>](#analysis-failures-)
     - [Avoiding or Suppressing False positives<a name="false-positives"></a>](#avoiding-or-suppressing-false-positives)
     - [Ignore modules from your analysis <a name="ignore-modules"></a>](#ignore-modules-from-your-analysis-)
@@ -38,36 +39,30 @@ It invokes Clang Static Analyzer and Clang-Tidy tools to analyze your code.
     - [Storing & Updating runs<a name="storing-runs"></a>](#storing--updating-runs)
       - [Alternative 1 (RECOMMENDED): Store the results of each commit in the same run <a name="storing-results"></a>](#alternative-1-recommended-store-the-results-of-each-commit-in-the-same-run-)
       - [Alternative 2: Store each analysis in a new run <a name="storing-new-runs"></a>](#alternative-2-store-each-analysis-in-a-new-run-)
-    - [Gerrit Integration <a name="gerrit-integration"></a>](#gerrit-integration-)
+    - [Gerrit Integration<a name="gerrit-integration"></a>](#gerrit-integration)
     - [Setting up user authentication <a name="authentication"></a>](#setting-up-user-authentication-)
   - [Updating CodeChecker to new version <a name="upgrade"></a>](#updating-codechecker-to-new-version-)
-- [Unique Report Identifier (RI) <a name="unique-report-identifier"></a>](#unique-report-identifier-ri-)
+- [Unique Report Identifier (RI)<a name="unique-report-identifier"></a>](#unique-report-identifier-ri)
   - [Listing and Counting Reports <a name="listing-reports"></a>](#listing-and-counting-reports-)
     - [How reports are counted? <a name="how-report-are-counted"></a>](#how-reports-are-counted-)
   - [Report Uniqueing <a name="report-uniqueing"></a>](#report-uniqueing-)
   - [How diffs between runs are calculated? <a name="diffs-between-runs"></a>](#how-diffs-between-runs-are-calculated-)
 
-## Preface<a name="preface"></a>
+## Preface
 The purpose of this document is to make the developer's first steps easier in
-usage of CodeChecker. The document is a mini course with simple examlpes that
+usage of CodeChecker. The document is a mini course with simple examples that
 guides the developer how he/she can apply CodeChecker in his/her daily routine
 to make his/her code more roubust.
 
-There is a simple example program in the repository of CodeChecker what do
-almost nothing, but it can be used to demonstrate the abilities of
-CodeChecker. In this chapter that example program will be used to show
-CodeChecker usage.
+There is a simple [example](examples) program in this repository what will be
+used in the later sections to show CodeChecker usage.
 
-Example program placed in the [docs/examples](examples) directory. After
-repository of CodeChecker cloned step in it and follow statements in this
-document.
-
-There are some prerequisite to successfully take this example. First,
-CodeChecker should be [installed](README.md/#install-guide).
-Python 3 (> 3.6) should be installed on the host. Components of clang and llvm
-should be reached by PATH (clang, clang++, clang-tidy, etc.). (On debian based
-systems update-alternatives is your friend.) To compile example program `g++`
-and `make` is necessary to installed on host.
+## Step 0:<a name="step-0"></a>
+There are some prerequisite to successfully take this example:
+- [Install](README.md/#install-guide) CodeChecker. 
+- Install analyzer binaries: `clang` / `clang-tidy` (on debian based systems update-alternatives is your friend).
+- Install `gcc` and `make` to compile our example project.
+- Install Python 3 (> 3.6)
 
 ## Step 1: Integrate CodeChecker into your build system<a name="step-1"></a>
 CodeChecker analyzes sources and dependencies that are built by your
@@ -405,7 +400,9 @@ case, you will be able to follow-up the outstanding results and fixed reports
 in the statistics views. (
 [See your first example run](http://localhost:8555/Default/runs))
 
-So a run represents the analysis status of a single branch of your code, with a given analysis configuration. You can also record the source code version associated with the analysis with the `--tag` parameter.
+So a run represents the analysis status of a single branch of your code, with a
+given analysis configuration. You can also record the source code version
+associated with the analysis with the `--tag` parameter.
 
 Make sure, that you use the same analysis configuration when updating a run,
 because a changed analysis configuration can make new reports to appear or
@@ -462,10 +459,11 @@ CodeChecker cmd diff --basename ./reports --newname ./reports-ctu --new
  You can also use JSON format output of `CodeChecker cmd diff` command if
  you want to use it for further processing by an other program.
 
-## Step 7: Fine tune Analysis configuration <a name="step-6"></a>
+## Step 7: Fine tune Analysis configuration <a name="step-7"></a>
 ### Analysis Failures <a name="step-7"></a>
 The `reports/failed` folder contains all build-actions that were failed to
-analyze. For these there will be no results.
+analyze. For these the clang tidy generates reports, clang static analizer
+will not.
 
 Generally speaking, if a project can be compiled with Clang then the analysis
 should be successful always. We support analysis for those projects which are
@@ -561,8 +559,9 @@ used in a CI environment to:
 * Generate daily report summaries
 * Implement CI guard to prevent the introduction of new bugs into the codebase
 
-In CodeChecker each bug has a unique hash identifier that is independent of
-the exact line number therefore resistant to shifts in the source code. With
+In CodeChecker each bug has a
+[unique hash identifier](analyzer/report_identification.md) that is independent
+of the exact line number therefore resistant to shifts in the source code. With
 this feature CodeChecker can recognize the same and new bugs in two different
 version of the same source file.
 
@@ -709,14 +708,16 @@ CodeChecker cmd diff --basename tmux_master_2017_08_28 --newname \
 Please find a [Shell Script](script_daily.md) that can be used
 in a Jenkins or any other CI engine to report new bugs.
 
-### Gerrit Integration <a name="gerrit-integration"></a>
-The workflow based on *Alternative 1)* can be used to implement the gerrit integration with CodeChecker.
-Let us assume you would like to run the CodeChecker analysis to *gerrit merge request* and mark the
-new findings in the gerrit review.
+### Gerrit Integration<a name="gerrit-integration"></a>
+The workflow based on *Alternative 1)* can be used to implement the gerrit
+integration with CodeChecker. Let us assume you would like to run the
+CodeChecker analysis to *gerrit merge request* and mark the new findings in the
+gerrit review.
 
-You can implement that by creating a jenkins job that monitors the
-gerrit merge requests, runs the anaysis on the changed files and then uploads
-the new findings to gerrit through its
+You can implement that by creating a jenkins job that monitors the gerrit merge
+requests, runs the anaysis on the changed files and then uploads the new
+findings to gerrit through its
+
 [web-api](https://gerrit-review.googlesource.com/Documentation/rest-api.html).
 
 You can find the details and the example scripts in the
@@ -729,12 +730,12 @@ as described in the [Authentication Guide](web/authentication.md).
 
 ## Updating CodeChecker to new version <a name="upgrade"></a>
 If a new CodeChecker release is available it might be possible that there are
-some database changes compared to the previous release.
-If you run into database migration warnings during the server start please
-check our [database schema upgrade guide's](web/db_schema_guide.md)
+some database changes compared to the previous release. If you run into
+database migration warnings during the server start please check our
+[database schema upgrade guide's](web/db_schema_guide.md)
 `Database upgrade for running servers` section.
 
-# Unique Report Identifier (RI) <a name="unique-report-identifier"></a>
+# Unique Report Identifier (RI)<a name="unique-report-identifier"></a>
 Each report has a unique (hash) identifier generated from checker name
 and the location of the finding: column number, textual content of the line,
 enclosing scope of the bug location (function signature, class, namespace).
@@ -759,7 +760,7 @@ You may find the same bug report multiple times for two reasons:
 
 1. The same source file is analyzed multiple times
 (because the `compile_commmands.json` contains the build command multiple
-times)then the same findings will be listed multiple times.
+times) then the same findings will be listed multiple times.
 2. All findings that are found in headers
 will be shown as many times as many source file include that header.
 
