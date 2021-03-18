@@ -116,7 +116,7 @@ created, you can analyze your project.
 
 ### Run the analysis<a name="run-the-analysis"></a>
 ```sh
-CodeChecker analyze ./compile_commands.json --enable-all --output ./reports
+CodeChecker analyze ./compile_commands.json --enable sensitive --output ./reports
 ```
 
 However the compilation of the project (here the example program) is performed
@@ -125,8 +125,8 @@ During analysis, CodeChecker compiles/analyses sources again. The analysis
 process generally uses more time. It would be good to mention here that if you
 want to speed up analysis specify a higher value for the `--jobs` option.
 
-In the above command the `--enable-all` means that a subset of checker
-are run. `enable-all` chooses a predefined "group" of checkers. The further
+In the above command the `--enable sensitive` means that a subset of checker
+are run. `sensitive` chooses a predefined "group" of checkers. The further
 info on available checkers use
 
 ```sh
@@ -155,13 +155,13 @@ You can do the 1st and the 2nd step in one round by executing `check`
 cd <repo root dir>/docs/examples
 make clean
 rm -rf ./reports
-CodeChecker check --build "make" --output ./reports --enable-all
+CodeChecker check --build "make" --output ./reports --enable sensitive
 ```
 or to run on 22 threads both the compilation and the analysis:
 
 ```sh
 CodeChecker check --jobs 22 --build "make clean ; make --jobs 22" \
-    --output ./reports --enable-all
+    --output ./reports --enable sensitive
 ```
 
 ### Cross-Compilation<a name="cross-compilation"></a>
@@ -181,21 +181,34 @@ running:
 CodeChecker parse --print-steps ./reports
 ...
 Found no defects in divide.c
-[STYLE] .../docs/examples/src/main.c:15:7: do not use 'else' after 'return' [readability-else-after-return]
-    } else {
-      ^
-  Report hash: c120e732461d8e478c35d1940ef53488
+[MEDIUM] src/main.c:17:9: function 'strcmp' is called without explicitly comparing result [bugprone-suspicious-string-compare]
+    if (strcmp(argv[1], "all")) {
+        ^
+  Report hash: c60704d2b3d5069c975c269a0cbd03c7
   Steps:
-    1, main.c:15:7: do not use 'else' after 'return'
+    1, main.c:17:32: != 0 (fixit)
+    2, main.c:17:9: function 'strcmp' is called without explicitly comparing result
 
-[STYLE] .../docs/examples/src/main.c:16:43: 10 is a magic number; consider replacing it with a named constant [readability-magic-numbers]
-        test_case = strtol(argv[1], NULL, 10);
-                                          ^
-  Report hash: 17e5ce988ab2cfd6284d3ec7c66904a0
+[MEDIUM] src/main.c:17:9: variable 'result' is used uninitialized whenever 'if' condition is false [clang-diagnostic-sometimes-uninitialized]
+    if (strcmp(argv[1], "all")) {
+        ^
+  Report hash: 21f2edcb80d0c1eb26bc1afc0eaf5e61
   Steps:
-    1, main.c:16:43: 10 is a magic number; consider replacing it with a named constant
+    1, main.c:23:17: uninitialized use occurs here
+    2, main.c:17:5: remove the 'if' if its condition is always true
+    3, main.c:10:16: initialize the variable 'result' to silence this warning
+    4, main.c:17:9: variable 'result' is used uninitialized whenever 'if' condition is false
 
-Found 2 defect(s) in main.c
+[HIGH] src/main.c:23:5: Undefined or garbage value returned to caller [core.uninitialized.UndefReturn]
+    return (int)result;
+    ^
+  Report hash: 5285af5a69bbc12ba9ab306bbcda643c
+  Steps:
+    1, main.c:10:5: 'result' declared without an initial value
+    2, main.c:17:9: Assuming the condition is false
+    3, main.c:23:5: Undefined or garbage value returned to caller
+
+Found 3 defect(s) in main.c
 ...
 ```
 
@@ -205,9 +218,11 @@ of `parse` subcommand.)
 
 ```sh
 CodeChecker parse --export html --output ./reports_html ./reports
-...
+```
+
 To view the results in a browser run:
-> firefox ./reports_html/index.html &
+```sh
+firefox ./reports_html/index.html &
 ```
 
 `./reports_html` directory will contain an `index.html` with a link to all
@@ -241,10 +256,10 @@ CodeChecker fixit ./reports
 In this section we will fix only one issue automatically. It changes the source
 and you can try the incremental build feature on the modified source at that
 described in the next section. The next command fixes issues found by the
-`readability-else-after-return` checker in our example files.
+`bugprone-suspicious-string-compare` checker in our example files.
 
 ```sh
-CodeChecker fixit --checker-name readability-else-after-return --apply \
+CodeChecker fixit --checker-name bugprone-suspicious-string-compare --apply \
     ./reports
 ```
 
@@ -257,7 +272,7 @@ At this point you have only one modified file. The next command re-analyzes the
 just modified `main.cpp`:
 
 ```sh
-CodeChecker check --build "make" --output ./reports --enable-all
+CodeChecker check --build "make" --output ./reports --enable sensitive
 ```
 Since the `make` command only re-compiles the changed `main.cpp`
 that file will be re-analyzed only.
@@ -292,10 +307,10 @@ make clean
 The `compile_commands.json`are the same. Then re-do the "development cycle".
 
 ```sh
-CodeChecker check --build "make" --output ./reports  --enable-all
-CodeChecker fixit --checker-name readability-else-after-return \
-   --apply  ./reports
-CodeChecker check --ignore skip.list --output ./reports --enable-all \
+CodeChecker check --build "make" --output ./reports  --enable sensitive
+CodeChecker fixit --checker-name bugprone-suspicious-string-compare \
+    --apply  ./reports
+CodeChecker check --ignore skip.list --output ./reports --enable sensitive \
     --logfile ./compile_commands.json
 ```
 For more details regarding the skip file format see
@@ -312,7 +327,7 @@ following command re-analyzes only the `main.cpp` file.
 
 ```sh
 CodeChecker check --output ./reports --file "*/src/main.c" \
-    --enable-all --logfile ./compile_commands.json
+    --enable sensitive --logfile ./compile_commands.json
 ```
 
 Absolute directory paths should start with `/`, relative directory paths should
@@ -326,7 +341,7 @@ added to analyze command. Choose an other "report-directory", for example
 
 ```sh
 CodeChecker analyze ./compile_commands.json --output ./reports-ctu \
-    --enable-all --ctu
+    --enable sensitive --ctu
 ```
 
 In this case the analyzer configuration enabled and we expect that the cross
@@ -421,7 +436,8 @@ result between stored and locally analyzed example project.
 
 1. [Analyze unmodified example project](#step-2-analyze-your-code)
 ```sh
-CodeChecker analyze ./compile_commands.json --output ./reports --enable-all
+CodeChecker analyze ./compile_commands.json --output ./reports \
+    --enable sensitive
 ```
 
 2. [Store the result on your local database](#step-5-store-analysis-results-in-a-codechecker-db-and-visualize-results)
@@ -431,7 +447,7 @@ CodeChecker store ./reports --name example --url http://localhost:8555/Default
 
 3. Do [automatic fix](#automatic-fixing)
 ```sh
-CodeChecker fixit --checker-name modernize-deprecated-headers --apply \
+CodeChecker fixit --checker-name bugprone-suspicious-string-compare --apply \
     ./reports
 ```
 
@@ -439,7 +455,8 @@ CodeChecker fixit --checker-name modernize-deprecated-headers --apply \
 well advised to use the same `analyze` options as you did in the first
 analization session: the same checkers enabled, the same analyzer options, etc.
 ```sh
-CodeChecker analyze ./compile_commands.json --output ./reports --enable-all
+CodeChecker analyze ./compile_commands.json --output ./reports \
+    --enable sensitive
 ```
 
 5. Compare your local analysis to the central one
@@ -534,8 +551,15 @@ You may want to enable more checkers or disable some of them using the
 For example to enable alpha checkers additionally to the previously used:
 ```sh
 CodeChecker analyze ./compile_commands.json --output ./reports-alpha \
-    --enable-all --enable alpha
+    --enable sensitive --enable alpha
 ```
+
+Then:
+```sh
+CodeChecker cmd diff --basename ./reports --newname ./reports-alpha --new
+```
+
+shows a new issue in the example project.
 
 ### Configure Checkers<a name="configure-checkers"></a>
 See [Configure Clang Static Analyzer and checkers](analyzer/checker_and_analyzer_configuration.md)
