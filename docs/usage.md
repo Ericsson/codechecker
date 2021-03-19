@@ -5,50 +5,50 @@ It invokes Clang Static Analyzer and Clang-Tidy tools to analyze your code.
 
 ## Table of Contents
 - CodeChecker HOWTO
-  - Table of Contents
-  - Preface
-  - [Step 0:<a name="step-0"></a>](#step-0)
-  - [Step 1: Integrate CodeChecker into your build system<a name="step-1"></a>](#step-1-integrate-codechecker-into-your-build-system)
-    - [Step in the docs/examples directory<a name="step-in"></a>](#step-in-the-docsexamples-directory)
-    - [Clean the workspace<a name="clean-workspace"></a>](#clean-the-workspace)
-    - [Log your build<a name="log-your-build"></a>](#log-your-build)
-    - [Check the contents of compile_commands.json file<a name="check-compile-commands"></a>](#check-the-contents-of-compile_commandsjson-file)
-  - [Step 2: Analyze your code<a name="step-2"></a>](#step-2-analyze-your-code)
-    - [Run the analysis<a name="run-the-analysis"></a>](#run-the-analysis)
-    - [View the analysis results in the command line<a name="view-analysis-results"></a>](#view-the-analysis-results-in-the-command-line)
-    - [Cross-Compilation<a name="cross-compilation"></a>](#cross-compilation)
-  - [Step 3: View analysis results in command line or generate static HTML files<a name="step-3"></a>](#step-3-view-analysis-results-in-command-line-or-generate-static-html-files)
-  - [Step 4: Incremental Analysis<a name="step-4"></a>](#step-4-incremental-analysis)
-    - [Automatic fixing<a name="automatic-fixing"></a>](#automatic-fixing)
-      - [Using incremental build on modified files<a name="using-incremental-build"></a>](#using-incremental-build-on-modified-files)
-      - [Using skip file to narrow analyzed files<a name="narrow-files"></a>](#using-skip-file-to-narrow-analyzed-files)
-      - [Analyze explicitly selected source files from the compilation database<a name="analize-explicit-files"></a>](#analyze-explicitly-selected-source-files-from-the-compilation-database)
-  - [Step 5: Cross Translation Unit analization<a name="step-5"></a>](#step-5-cross-translation-unit-analization)
-  - [Step 6: Store analysis results in a CodeChecker DB and visualize results<a name="step-6"></a>](#step-6-store-analysis-results-in-a-codechecker-db-and-visualize-results)
-    - [Definition of "run"<a name="run-definition"></a>](#definition-of-run)
-    - [Programmer checking new bugs in the code after local edit (and compare it to a central database)<a name="compare"></a>](#programmer-checking-new-bugs-in-the-code-after-local-edit-and-compare-it-to-a-central-database)
-    - [Using diff command on the local filesystem<a name="using-diff"></a>](#using-diff-command-on-the-local-filesystem)
-  - [Step 7: Fine tune Analysis configuration <a name="step-7"></a>](#step-7-fine-tune-analysis-configuration-)
-    - [Analysis Failures <a name="step-7"></a>](#analysis-failures-)
-    - [Avoiding or Suppressing False positives<a name="false-positives"></a>](#avoiding-or-suppressing-false-positives)
-    - [Ignore modules from your analysis <a name="ignore-modules"></a>](#ignore-modules-from-your-analysis-)
-    - [Enable/Disable Checkers <a name="enable-disable-checkers"></a>](#enabledisable-checkers-)
-    - [Configure Checkers<a name="configure-checkers"></a>](#configure-checkers)
-    - [Identify files that failed analysis<a name="identify-files"></a>](#identify-files-that-failed-analysis)
-  - [Step 8: Integrate CodeChecker into your CI loop<a name="step-8"></a>](#step-8-integrate-codechecker-into-your-ci-loop)
-    - [Storing & Updating runs<a name="storing-runs"></a>](#storing--updating-runs)
-      - [Alternative 1 (RECOMMENDED): Store the results of each commit in the same run <a name="storing-results"></a>](#alternative-1-recommended-store-the-results-of-each-commit-in-the-same-run-)
-      - [Alternative 2: Store each analysis in a new run <a name="storing-new-runs"></a>](#alternative-2-store-each-analysis-in-a-new-run-)
-    - [Gerrit Integration<a name="gerrit-integration"></a>](#gerrit-integration)
-    - [Setting up user authentication <a name="authentication"></a>](#setting-up-user-authentication-)
-  - [Updating CodeChecker to new version <a name="upgrade"></a>](#updating-codechecker-to-new-version-)
-- [Unique Report Identifier (RI)<a name="unique-report-identifier"></a>](#unique-report-identifier-ri)
-  - [Listing and Counting Reports <a name="listing-reports"></a>](#listing-and-counting-reports-)
-    - [How reports are counted? <a name="how-report-are-counted"></a>](#how-reports-are-counted-)
-  - [Report Uniqueing <a name="report-uniqueing"></a>](#report-uniqueing-)
-  - [How diffs between runs are calculated? <a name="diffs-between-runs"></a>](#how-diffs-between-runs-are-calculated-)
+  - [Table of Contents](#table-of-contents)
+  - [Preface](#preface)
+  - [Step 0:](#step-0)
+  - [Step 1: Integrate CodeChecker into your build system](#step-1)
+    - [Step in the docs/examples directory](#step-in)
+    - [Clean the workspace](#clean-workspace)
+    - [Log your build](#log-your-build)
+    - [Check the contents of compile_commands.json file](#check-compile-commands)
+  - [Step 2: Analyze your code](#step-2)
+    - [Run the analysis](#run-the-analysis)
+    - [View the analysis results in the command line](#view-analysis-results)
+    - [Cross-Compilation](#cross-compilation)
+  - [Step 3: View analysis results in command line or generate static HTML files](#step-3)
+  - [Step 4: Incremental Analysis](#step-4)
+    - [Automatic fixing](#automatic-fixing)
+      - [Using incremental build on modified files](#using-incremental-build)
+      - [Using skip file to narrow analyzed files](#narrow-files)
+      - [Analyze explicitly selected source files from the compilation database](#analize-explicit-files)
+  - [Step 5: Cross Translation Unit analization](#step-5)
+  - [Step 6: Store analysis results in a CodeChecker DB and visualize results](#step-6)
+    - [Definition of "run"](#run-definition)
+    - [Programmer checking new bugs in the code after local edit (and compare it to a central database)](#compare)
+    - [Using diff command on the local filesystem](#using-diff)
+  - [Step 7: Fine tune Analysis configuration](#step-7)
+    - [Analysis Failures](#analysis-failures)
+    - [Avoiding or Suppressing False positives](#false-positives)
+    - [Ignore modules from your analysis](#ignore-modules)
+    - [Enable/Disable Checkers](#enable-disable-checkers)
+    - [Configure Checkers](#configure-checkers)
+    - [Identify files that failed analysis](#identify-files)
+  - [Step 8: Integrate CodeChecker into your CI loop](#step-8)
+    - [Storing & Updating runs](#storing-runs)
+      - [Alternative 1 (RECOMMENDED): Store the results of each commit in the same run](#storeing-results)
+      - [Alternative 2: Store each analysis in a new run](#storing-new-runs)
+    - [Gerrit Integration](#gerrit-integration)
+    - [Setting up user authentication](authentication)
+  - [Updating CodeChecker to new version](#upgrade)
+- [Unique Report Identifier (RI)](#unique-report-identifier)
+  - [Listing and Counting Reports](#listing-reports)
+    - [How reports are counted?](#how-report-are-counted)
+  - [Report Uniqueing](#report-uniqueing)
+  - [How diffs between runs are calculated?](#diffs-between-runs)
 
-## Preface
+## Preface <a name="preface"></a>
 The purpose of this document is to make the developer's first steps easier in
 usage of CodeChecker. The document is a mini course with simple examples that
 guides the developer how he/she can apply CodeChecker in his/her daily routine
@@ -57,28 +57,28 @@ to make his/her code more roubust.
 There is a simple [example](examples) program in this repository what will be
 used in the later sections to show CodeChecker usage.
 
-## Step 0:<a name="step-0"></a>
+## Step 0: <a name="step-0"></a>
 There are some prerequisite to successfully take this example:
 - [Install](README.md/#install-guide) CodeChecker. 
 - Install analyzer binaries: `clang` / `clang-tidy` (on debian based systems update-alternatives is your friend).
 - Install `gcc` and `make` to compile our example project.
 - Install Python 3 (> 3.6)
 
-## Step 1: Integrate CodeChecker into your build system<a name="step-1"></a>
+## Step 1: Integrate CodeChecker into your build system <a name="step-1"></a>
 CodeChecker analyzes sources and dependencies that are built by your
 build system.
 
-### Step in the docs/examples directory<a name="step-in"></a>
+### Step in the docs/examples directory <a name="step-in"></a>
 ```sh
 cd <repo root dir>/docs/examples
 ```
 
-### Clean the workspace<a name="clean-workspace"></a>
+### Clean the workspace <a name="clean-workspace"></a>
 ```sh
 make clean
 ```
 
-### Log your build<a name="log-your-build"></a>
+### Log your build <a name="log-your-build"></a>
 Logging means that during the whole compilation process CodeChecker catches
 compiler calls and saves commands in a
 [compilation database](https://clang.llvm.org/docs/JSONCompilationDatabase.html)
@@ -88,7 +88,7 @@ file. This compilation database is an input of the next analysis step.
 CodeChecker log --build "make" --output ./compile_commands.json
 ```
 
-### Check the contents of compile_commands.json file<a name="check-compile-commands"></a>
+### Check the contents of compile_commands.json file <a name="check-compile-commands"></a>
 If everything goes well it should contain the C compiler calls (`gcc`, `clang`,
 etc.).
 
@@ -113,11 +113,11 @@ it will contain much information about this.
   and in most cases, _System Integrity Protection_ needs to be turned off.
   See the [README](/README.md#mac-os-x) for details.
 
-## Step 2: Analyze your code<a name="step-2"></a>
+## Step 2: Analyze your code <a name="step-2"></a>
 Once the build is logged successfully and the `compile_commands.json` was
 created, you can analyze your project.
 
-### Run the analysis<a name="run-the-analysis"></a>
+### Run the analysis <a name="run-the-analysis"></a>
 ```sh
 CodeChecker analyze ./compile_commands.json --enable sensitive --output ./reports
 ```
@@ -147,7 +147,7 @@ commands.
 The `./reports` directory is the "database" of CodeChecker that allows to
 manage further working steps.
 
-### View the analysis results in the command line<a name="view-analysis-results"></a>
+### View the analysis results in the command line <a name="view-analysis-results"></a>
 ```sh
 CodeChecker parse ./reports
 ```
@@ -157,17 +157,17 @@ You can do the 1st and the 2nd step in one round by executing `check`
 ```sh
 cd <repo root dir>/docs/examples
 make clean
-rm -rf ./reports
-CodeChecker check --build "make" --output ./reports --clean
+CodeChecker check --build "make" --output ./reports --clean \
+    --enable sensitive
 ```
 or to run on 22 threads both the compilation and the analysis:
 
 ```sh
 CodeChecker check --jobs 22 --build "make clean ; make --jobs 22" \
-    --output ./reports --clean
+    --output ./reports --clean --enable sensitive
 ```
 
-### Cross-Compilation<a name="cross-compilation"></a>
+### Cross-Compilation <a name="cross-compilation"></a>
 Cross-compilers are auto-detected by CodeChecker, so the `--target` and the
 compiler pre-configured include paths of `gcc/g++` are automatically passed to
 `clang` when analyzing.
@@ -176,7 +176,7 @@ compiler pre-configured include paths of `gcc/g++` are automatically passed to
 `/usr/bin/gcc`) are accessible when `CodeChecker analyze` or `check` is
 invoked.**
 
-## Step 3: View analysis results in command line or generate static HTML files<a name="step-3"></a>
+## Step 3: View analysis results in command line or generate static HTML files <a name="step-3"></a>
 You can print detailed results (including the control flow) in command line by
 running:
 
@@ -233,7 +233,7 @@ findings that are stored in separate `HTML` files.
 
 ![Analysis results in static HTML files](images/static_html.png)
 
-## Step 4: Incremental Analysis<a name="step-4"></a>
+## Step 4: Incremental Analysis <a name="step-4"></a>
 The analysis can be run for only the changed files and the `report-directory`
 will be correctly updated with the new results.
 
@@ -247,7 +247,7 @@ b) If you only want to re-analyze changed source files, without re-building
 your project, you can use [skip](analyzer/user_guide.md#skip) list to tell
 CodeChecker which files to analyze.
 
-### Automatic fixing<a name="automatic-fixing"></a>
+### Automatic fixing <a name="automatic-fixing"></a>
 Some CodeChecker reports are so easy to fix that even static analyzer tools may
 provide automatic fixes on them. In CodeChecker you can list these with the
 following command after having analysis reports in `reports` directory:
@@ -270,7 +270,7 @@ Without `--apply` option CodeChecker will not modify the source.
 
 See `--help` on details of filtering automatic fixes.
 
-#### Using incremental build on modified files<a name="using-incremental-build"></a>
+#### Using incremental build on modified files <a name="using-incremental-build"></a>
 At this point you have only one modified file. The next command re-analyzes the
 just modified `main.cpp`:
 
@@ -283,7 +283,7 @@ that file will be re-analyzed only.
 Now `reports` directory contains also the results of the updated `main.cpp`.
 Check the number of issues by re-generate html report as you did in `Step 3`.
 
-#### Using skip file to narrow analyzed files<a name="narrow-files"></a>
+#### Using skip file to narrow analyzed files <a name="narrow-files"></a>
 If you want to re-analyze only the changed source files without build, you
 can give a skip-list to CodeChecker.
 
@@ -319,7 +319,7 @@ CodeChecker check --ignore skip.list --output ./reports --enable sensitive \
 For more details regarding the skip file format see
 the [user guide](analyzer/user_guide.md#skip).
 
-#### Analyze explicitly selected source files from the compilation database<a name="analize-explicit-files"></a>
+#### Analyze explicitly selected source files from the compilation database <a name="analize-explicit-files"></a>
 You can select which files you would like to analyze from the compilation
 database. This is similar to the skip list feature but can be easier to quickly
 analyze only a few files not the whole compilation database.
@@ -337,7 +337,7 @@ Absolute directory paths should start with `/`, relative directory paths should
 start with `*` and it can contain path glob pattern. Example:
 `/path/to/main.cpp`, `lib/*.cpp`, `*/test*`.
 
-## Step 5: Cross Translation Unit analization<a name="step-5"></a>
+## Step 5: Cross Translation Unit analization <a name="step-5"></a>
 The previous analization sessions did not follow dependencies between translation units. Make a try with CTU analysis. The `--ctu` option should be
 added to analyze command. Choose an other "report-directory", for example
 `./reports-ctu` to be able to compare output of different analysis configs.
@@ -371,7 +371,7 @@ Found 1 defect(s) in divide.c
 
 ```
 
-## Step 6: Store analysis results in a CodeChecker DB and visualize results<a name="step-6"></a>
+## Step 6: Store analysis results in a CodeChecker DB and visualize results <a name="step-6"></a>
 You can store the analysis results in a central database and view the results
 in a web viewer:
 
@@ -408,7 +408,7 @@ description of the `PRODUCT_URL` format.
 firefox http://localhost:8555/Default &
 ```
 
-### Definition of "run"<a name="run-definition"></a>
+### Definition of "run" <a name="run-definition"></a>
 A run, in the simplest case is a single analysis snapshot of your software.
 
 You can follow up the quality status of your product by storing the analysis
@@ -425,7 +425,7 @@ Make sure, that you use the same analysis configuration when updating a run,
 because a changed analysis configuration can make new reports to appear or
 reports to disappear.
 
-### Programmer checking new bugs in the code after local edit (and compare it to a central database)<a name="compare"></a>
+### Programmer checking new bugs in the code after local edit (and compare it to a central database) <a name="compare"></a>
 Say that you made some local changes in your code (automatically fixing
 example program) and you wonder whether you fixed any bugs. Each bug has a
 unique hash identifier that is independent of the line number, therefore
@@ -467,7 +467,7 @@ CodeChecker cmd diff --basename example --newname ./reports --resolved \
     --url http://localhost:8555/Default
 ```
 
-### Using diff command on the local filesystem<a name="using-diff"></a>
+### Using diff command on the local filesystem <a name="using-diff"></a>
 Developer can compare two results of analyses without upload them to a
 central server. In this case the analysis result should be stored in different
 result directory.
@@ -479,7 +479,7 @@ CodeChecker cmd diff --basename ./reports --newname ./reports-ctu --new
  you want to use it for further processing by an other program.
 
 ## Step 7: Fine tune Analysis configuration <a name="step-7"></a>
-### Analysis Failures <a name="step-7"></a>
+### Analysis Failures <a name="analysis-failures"></a>
 The `reports/failed` folder contains all build-actions that were failed to
 analyze. For these the clang tidy generates reports, clang static analizer
 will not.
@@ -502,7 +502,7 @@ Possible reasons for failed analysis:
  One can use this macro to selectively exclude code the analyzer examines.
 * Clang crashed during the analysis.
 
-### Avoiding or Suppressing False positives<a name="false-positives"></a>
+### Avoiding or Suppressing False positives <a name="false-positives"></a>
 Sometimes the analyzer reports correct code as incorrect. These findings are
 called false positives. Having a false positive indicates that the analyzer
 does not understand some properties of the code.
@@ -563,11 +563,11 @@ CodeChecker cmd diff --basename ./reports --newname ./reports-alpha --new
 
 shows a new issue in the example project.
 
-### Configure Checkers<a name="configure-checkers"></a>
+### Configure Checkers <a name="configure-checkers"></a>
 See [Configure Clang Static Analyzer and checkers](analyzer/checker_and_analyzer_configuration.md)
 documentation for a detailed description.
 
-### Identify files that failed analysis<a name="identify-files"></a>
+### Identify files that failed analysis <a name="identify-files"></a>
 After execution of
 
 ```sh
@@ -578,7 +578,7 @@ the failed analysis output is collected into `./reports/failed` directory.
 This means that analysis of these files failed and there is no Clang Static
 Analyzer output for these compilation commands.
 
-## Step 8: Integrate CodeChecker into your CI loop<a name="step-8"></a>
+## Step 8: Integrate CodeChecker into your CI loop <a name="step-8"></a>
 This section describes a recommended way on how CodeChecker is designed to be
 used in a CI environment to:
 
@@ -608,7 +608,7 @@ version of the same source file.
   This way your suppressions remain also resistant to eventual changes of the
   bug hash (generated by clang).
 
-### Storing & Updating runs<a name="storing-runs"></a>
+### Storing & Updating runs <a name="storing-runs"></a>
 Let us assume that you want to analyze your code-base daily and would like to
 send out an email summary about any newly introduced and resolved issues.
 
@@ -734,7 +734,7 @@ CodeChecker cmd diff --basename tmux_master_2017_08_28 --newname \
 Please find a [Shell Script](script_daily.md) that can be used
 in a Jenkins or any other CI engine to report new bugs.
 
-### Gerrit Integration<a name="gerrit-integration"></a>
+### Gerrit Integration <a name="gerrit-integration"></a>
 The workflow based on *Alternative 1)* can be used to implement the gerrit
 integration with CodeChecker. Let us assume you would like to run the
 CodeChecker analysis to *gerrit merge request* and mark the new findings in the
@@ -761,7 +761,7 @@ database migration warnings during the server start please check our
 [database schema upgrade guide's](web/db_schema_guide.md)
 `Database upgrade for running servers` section.
 
-# Unique Report Identifier (RI)<a name="unique-report-identifier"></a>
+# Unique Report Identifier (RI) <a name="unique-report-identifier"></a>
 Each report has a unique (hash) identifier generated from checker name
 and the location of the finding: column number, textual content of the line,
 enclosing scope of the bug location (function signature, class, namespace).
