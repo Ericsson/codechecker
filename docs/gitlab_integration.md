@@ -71,7 +71,7 @@ CodeChecker analyze --ctu \
 # Create the report file by using the CodeChecker parse command.
 CodeChecker parse \
   --trim-path-prefix $(pwd) \
-  -e codeclimate
+  -e codeclimate \
   ./reports > gl-code-quality-report.json
 
 # Exit with status code 1 if there is any report in the output file.
