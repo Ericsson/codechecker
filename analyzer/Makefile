@@ -11,6 +11,7 @@ CC_BUILD_LIB_DIR = $(CC_BUILD_DIR)/lib/python3
 ROOT = $(CURRENT_DIR)/..
 
 CC_TOOLS = $(ROOT)/tools
+CC_ANALYZER_TOOLS = ./tools
 
 ACTIVATE_DEV_VENV ?= . venv_dev/bin/activate
 
@@ -39,14 +40,14 @@ package_dir_structure:
 	mkdir -p $(CC_BUILD_LIB_DIR)
 
 build_plist_to_html:
-	$(MAKE) -C $(ROOT)/tools/plist_to_html build
+	$(MAKE) -C $(CC_TOOLS)/plist_to_html build
 
 package_plist_to_html: build_plist_to_html package_dir_structure
 	# Copy plist-to-html files.
 	cp -r $(CC_TOOLS)/plist_to_html/build/plist_to_html/plist_to_html $(CC_BUILD_LIB_DIR)
 
 build_tu_collector:
-	$(MAKE) -C $(ROOT)/tools/tu_collector build
+	$(MAKE) -C $(CC_TOOLS)/tu_collector build
 
 package_tu_collector: build_tu_collector package_dir_structure
 	# Copy tu_collector files.
@@ -55,12 +56,18 @@ package_tu_collector: build_tu_collector package_dir_structure
 	cd $(CC_BUILD_DIR) && \
 	ln -sf ../lib/python3/tu_collector/tu_collector.py bin/tu_collector
 
+build_report_hash:
+	$(MAKE) -C $(CC_TOOLS)/codechecker_report_hash build
+
+package_report_hash: build_report_hash package_dir_structure
+	cp -r $(CC_TOOLS)/codechecker_report_hash/build/codechecker_report_hash/codechecker_report_hash $(CC_BUILD_LIB_DIR)
+
 build_merge_clang_extdef_mappings:
-	$(MAKE) -C tools/merge_clang_extdef_mappings build
+	$(MAKE) -C $(CC_ANALYZER_TOOLS)/merge_clang_extdef_mappings build
 
 package_merge_clang_extdef_mappings: build_merge_clang_extdef_mappings package_dir_structure
 	# Copy plist-to-html files.
-	cp -r tools/merge_clang_extdef_mappings/build/merge_clang_extdef_mappings/codechecker_merge_clang_extdef_mappings $(CC_BUILD_LIB_DIR) && \
+	cp -r $(CC_ANALYZER_TOOLS)/merge_clang_extdef_mappings/build/merge_clang_extdef_mappings/codechecker_merge_clang_extdef_mappings $(CC_BUILD_LIB_DIR) && \
 	chmod u+x $(CC_BUILD_LIB_DIR)/codechecker_merge_clang_extdef_mappings/cli.py && \
 	cd $(CC_BUILD_DIR) && \
 	ln -sf ../lib/python3/codechecker_merge_clang_extdef_mappings/cli.py bin/merge-clang-extdef-mappings
@@ -70,7 +77,7 @@ build_statistics_collector:
 
 package_statistics_collector: build_statistics_collector package_dir_structure
 	# Copy statistics-collector files.
-	cp -r tools/statistics_collector/build/statistics_collector/codechecker_statistics_collector $(CC_BUILD_LIB_DIR) && \
+	cp -r $(CC_ANALYZER_TOOLS)/statistics_collector/build/statistics_collector/codechecker_statistics_collector $(CC_BUILD_LIB_DIR) && \
 	chmod u+x $(CC_BUILD_LIB_DIR)/codechecker_statistics_collector/cli.py && \
 	cd $(CC_BUILD_DIR) && \
 	ln -sf ../lib/python3/codechecker_statistics_collector/cli.py bin/post-process-stats
@@ -80,7 +87,7 @@ package_statistics_collector: build_statistics_collector package_dir_structure
 # multiple times.
 package_analyzer: package_dir_structure
 
-package: package_plist_to_html package_tu_collector package_analyzer package_merge_clang_extdef_mappings package_statistics_collector
+package: package_plist_to_html package_tu_collector package_analyzer package_report_hash package_merge_clang_extdef_mappings package_statistics_collector
 	# Copy libraries.
 	cp -r $(ROOT)/codechecker_common $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CURRENT_DIR)/codechecker_analyzer $(CC_BUILD_LIB_DIR)
@@ -118,9 +125,9 @@ endef
 export LOGGER_BUILD_ERROR_MSG
 build_ld_logger:
 ifeq ($(BUILD_LOGGER_64_BIT_ONLY),YES)
-	$(MAKE) -C tools/build-logger -f Makefile.manual pack64bit_only 2> /dev/null
+	$(MAKE) -C $(CC_ANALYZER_TOOLS)/build-logger -f Makefile.manual pack64bit_only 2> /dev/null
 else
-	$(MAKE) -C tools/build-logger -f Makefile.manual 2> /dev/null || (echo "$$LOGGER_BUILD_ERROR_MSG" && false)
+	$(MAKE) -C $(CC_ANALYZER_TOOLS)/build-logger -f Makefile.manual 2> /dev/null || (echo "$$LOGGER_BUILD_ERROR_MSG" && false)
 endif
 
 # NOTE: extra spaces are allowed and ignored at the beginning of the
@@ -139,12 +146,24 @@ else
   endif
 endif
 
-clean_package: clean_plist_to_html clean_tu_collector
+clean_package: clean_logger clean_plist_to_html clean_tu_collector clean_report_hash clean_merge_clang_extdef_mappings clean_statistics_collector
 	rm -rf $(BUILD_DIR)
 	find . -name "*.pyc" -delete
 
+clean_logger:
+	rm -rf $(CC_ANALYZER_TOOLS)/build-logger/build
+
 clean_plist_to_html:
-	rm -rf $(ROOT)/tools/plist_to_html/build
+	rm -rf $(CC_TOOLS)/plist_to_html/build
 
 clean_tu_collector:
-	rm -rf $(ROOT)/tools/tu_collector/build
+	rm -rf $(CC_TOOLS)/tu_collector/build
+
+clean_report_hash:
+	rm -rf $(CC_TOOLS)/codechecker_report_hash clean
+
+clean_merge_clang_extdef_mappings:
+	rm -rf $(CC_ANALYZER_TOOLS)/merge_clang_extdef_mappings/build
+
+clean_statistics_collector:
+	rm -rf $(CC_ANALYZER_TOOLS)/statistics_collector/build

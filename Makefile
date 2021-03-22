@@ -67,7 +67,7 @@ package_report_converter: build_report_converter package_dir_structure
 	ln -sf ../lib/python3/codechecker_report_converter/cli.py bin/report-converter
 
 build_report_hash:
-	$(MAKE) -C $(ROOT)/tools/codechecker_report_hash build
+	$(MAKE) -C $(CC_TOOLS)/codechecker_report_hash build
 
 package_report_hash: build_report_hash package_dir_structure
 	cp -r $(CC_TOOLS)/codechecker_report_hash/build/codechecker_report_hash/codechecker_report_hash $(CC_BUILD_LIB_DIR)
