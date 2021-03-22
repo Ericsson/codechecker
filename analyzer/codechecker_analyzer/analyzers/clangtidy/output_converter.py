@@ -263,8 +263,8 @@ class PListConverter(object):
 
         fmap = self._add_files_from_messages(messages)
         for message in messages:
-            diag = PListConverter._create_diag(message, fmap, files)
-            self.plist['diagnostics'].append(diag)
+            diagnostics = PListConverter._create_diags(message, fmap, files)
+            self.plist['diagnostics'].extend(diagnostics)
 
     @staticmethod
     def _get_checker_category(checker):
@@ -280,33 +280,38 @@ class PListConverter(object):
             return parts[0]
 
     @staticmethod
-    def _create_diag(message, fmap, files):
+    def _create_diags(message, fmap, files):
         """
-        Creates a new plist diagnostic from a single clang-tidy message.
+        Creates new plist diagnostics from a single clang-tidy message.
         """
+        diagnostics = []
 
-        diag = {'location': PListConverter._create_location(message, fmap),
-                'check_name': message.checker,
-                'description': message.message,
-                'category': PListConverter._get_checker_category(
-                    message.checker),
-                'type': 'clang-tidy',
-                'path': []}
+        checker_names = sorted(message.checker.split(','))
+        for checker_name in checker_names:
+            diag = {'location': PListConverter._create_location(message, fmap),
+                    'check_name': checker_name,
+                    'description': message.message,
+                    'category': PListConverter._get_checker_category(
+                        checker_name),
+                    'type': 'clang-tidy',
+                    'path': []}
 
-        PListConverter._add_fixits(diag, message, fmap)
-        PListConverter._add_notes(diag, message, fmap)
+            PListConverter._add_fixits(diag, message, fmap)
+            PListConverter._add_notes(diag, message, fmap)
 
-        # The original message should be the last part of the path. This is
-        # displayed by quick check, and this is the main event displayed by
-        # the web interface. FIXME: notes and fixits should not be events.
-        diag['path'].append(PListConverter._create_event_from_note(message,
-                                                                   fmap))
+            # The original message should be the last part of the path. This is
+            # displayed by quick check, and this is the main event displayed by
+            # the web interface. FIXME: notes and fixits should not be events.
+            diag['path'].append(PListConverter._create_event_from_note(message,
+                                                                       fmap))
 
-        source_file = files[diag['location']['file']]
-        diag['issue_hash_content_of_line_in_context'] \
-            = get_report_hash(diag, source_file, HashType.PATH_SENSITIVE)
+            source_file = files[diag['location']['file']]
+            diag['issue_hash_content_of_line_in_context'] \
+                = get_report_hash(diag, source_file, HashType.PATH_SENSITIVE)
 
-        return diag
+            diagnostics.append(diag)
+
+        return diagnostics
 
     @staticmethod
     def _create_location(note, fmap):

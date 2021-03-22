@@ -1,0 +1,44 @@
+NORMAL#CodeChecker log --output $LOGFILE$ --build "make tidy_alias" --quiet 
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy -e cppcoreguidelines-avoid-magic-numbers -e readability-magic-numbers
+NORMAL#CodeChecker parse $OUTPUT$
+CHECK#CodeChecker check --build "make tidy_alias" --output $OUTPUT$ --quiet --analyzers clang-tidy -e cppcoreguidelines-avoid-magic-numbers -e readability-magic-numbers
+--------------------------------------------------------------------------------
+[] - Starting build ...
+[] - Build finished successfully.
+[] - Starting static analysis ...
+[] - [1/1] clang-tidy analyzed tidy_alias.cpp successfully.
+[] - ----==== Summary ====----
+[] - Successfully analyzed
+[] -   clang-tidy: 1
+[] - Total analyzed compilation commands: 1
+[] - ----=================----
+[] - Analysis finished.
+[] - To view results in the terminal use the "CodeChecker parse" command.
+[] - To store results use the "CodeChecker store" command.
+[] - See --help and the user guide for further options about parsing and storing the reports.
+[] - ----=================----
+[STYLE] tidy_alias.cpp:3:10: 3.1415926535 is a magic number; consider replacing it with a named constant [cppcoreguidelines-avoid-magic-numbers]
+  return 3.1415926535 * radius * radius;
+         ^
+
+[STYLE] tidy_alias.cpp:3:10: 3.1415926535 is a magic number; consider replacing it with a named constant [readability-magic-numbers]
+  return 3.1415926535 * radius * radius;
+         ^
+
+Found 2 defect(s) in tidy_alias.cpp
+
+
+----==== Summary ====----
+-----------------------------
+Filename       | Report count
+-----------------------------
+tidy_alias.cpp |            2
+-----------------------------
+-----------------------
+Severity | Report count
+-----------------------
+STYLE    |            2
+-----------------------
+----=================----
+Total number of reports: 2
+----=================----
