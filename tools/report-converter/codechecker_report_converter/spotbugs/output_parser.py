@@ -112,16 +112,26 @@ class SpotBugsParser(BaseParser):
 
         long_message = bug.find('LongMessage').text
 
-        source_line = bug.find('SourceLine')
+        # Find a <SourceLine> tag among the immediate children
+        source_line = None
+        for bug_line in bug:
+            if bug_line.tag == 'SourceLine':
+                source_line = bug_line
+        if not source_line:
+            return
+
         source_path = source_line.attrib.get('sourcepath')
         source_path = self.__get_abs_path(source_path)
         if not source_path:
             return
 
+        # Try to extract the line number from the source line.
         line = source_line.attrib.get('start')
         col = 0
 
         events = []
+        backup_line = 0   # To be used if we could not find 'start' attribute
+                          # in the <SourceLine> tag.
         for element in list(bug):
             event = None
             if element.tag == 'Class':
@@ -131,6 +141,13 @@ class SpotBugsParser(BaseParser):
 
             if event:
                 events.append(event)
+                # Take the line of the innermost block
+                if event.line > backup_line:
+                    backup_line = event.line
+
+        # If <SourceLine> did not contain 'start' attribute, take the backup.
+        if line is None:
+            line = backup_line
 
         return SpotBugsMessage(source_path, int(line), col, long_message,
                                checker_name, report_hash, events)
@@ -149,6 +166,8 @@ class SpotBugsParser(BaseParser):
             return
 
         line = source_line.attrib.get('start')
+        if line is None:
+            line = 0
         col = 0
 
         return Event(source_path, int(line), col, message)
@@ -167,6 +186,8 @@ class SpotBugsParser(BaseParser):
             return
 
         line = source_line.attrib.get('start')
+        if line is None:
+            line = 0
         col = 0
 
         return Event(source_path, int(line), col, message)
