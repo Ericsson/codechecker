@@ -45,15 +45,15 @@ class ReportTypeConverterTest(unittest.TestCase):
             def severity(self, checker):
                 if checker == check_name:
                     return 'LOW'
-                else:
-                    # This assertion warns when a new test-case in the future
-                    # intends to query the severity of another checker. The
-                    # original behavior of this function is to return the
-                    # defult 'UNSPECIFIED' value by defult when the severity is
-                    # not provided in the config file.
-                    assert False, \
-                        'Currently no test-case quieries other labels for ' \
-                        'other checkers.'
+
+                # This assertion warns when a new test-case in the future
+                # intends to query the severity of another checker. The
+                # original behavior of this function is to return the
+                # defult 'UNSPECIFIED' value by defult when the severity is
+                # not provided in the config file.
+                assert False, \
+                    'Currently no test-case quieries other labels for ' \
+                    'other checkers.'
 
         checker_labels = CheckerLabels()
         rep_data = report_type_converter.report_to_reportData(

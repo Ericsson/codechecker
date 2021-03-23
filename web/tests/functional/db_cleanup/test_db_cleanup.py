@@ -15,7 +15,7 @@ import json
 import multiprocessing
 import os
 import unittest
-from shutil import copyfile, rmtree
+from shutil import copytree, rmtree
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import CommentData, \
     ReportFilter, ReviewStatus, RunFilter, Severity
@@ -43,16 +43,16 @@ class TestDbCleanup(unittest.TestCase):
             pass
 
         cc_package = env.codechecker_package()
-        original_labels_cfg = os.path.join(cc_package,
-                                           'config',
-                                           'checker_labels.json')
 
-        self.workspace_labels_cfg = os.path.join(self.test_workspace,
-                                                 'checker_labels.json')
-        copyfile(original_labels_cfg, self.workspace_labels_cfg)
+        self.orig_checker_labels_dir = os.path.join(
+            cc_package, 'config', 'labels')
+        self.workspace_labels_dir = os.path.join(
+            self.test_workspace, 'config', 'labels')
 
-        self.codechecker_cfg['check_env']['CC_CHECKER_LABELS_FILE'] = \
-            self.workspace_labels_cfg
+        copytree(self.orig_checker_labels_dir, self.workspace_labels_dir)
+
+        self.codechecker_cfg['check_env']['CC_TEST_LABELS_DIR'] = \
+            self.workspace_labels_dir
 
     def __create_test_dir(self):
         makefile = "all:\n\t$(CXX) -c a/main.cpp -o /dev/null\n"
@@ -146,7 +146,7 @@ int f(int x) { return 1 / x; }
             = self._cc_client.getRunResults([run_id], 10, 0, [], None, None,
                                             False)
 
-        checker_labels = CheckerLabels(self.workspace_labels_cfg)
+        checker_labels = CheckerLabels(self.workspace_labels_dir)
         for report in reports:
             severity_id = checker_labels.severity(report.checkerId)
             self.assertEqual(Severity._VALUES_TO_NAMES[report.severity],
@@ -256,7 +256,8 @@ int f(int x) { return 1 / x; }
         event.clear()
 
         # Change severity level of core.DivideZero to LOW.
-        with open(self.workspace_labels_cfg, 'r+',
+        with open(os.path.join(self.workspace_labels_dir, 'analyzers',
+                               'clangsa.json'), 'r+',
                   encoding='utf-8', errors='ignore') as labels_cgf_file:
             checker_labels = json.load(labels_cgf_file)
             checker_labels['labels']['core.DivideZero'][-1] = 'severity:LOW'

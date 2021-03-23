@@ -1,0 +1,952 @@
+{
+  "analyzer": "clangsa",
+  "labels": {
+    "alpha.clone.CloneChecker": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "alpha.core.BoolAssignment": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "alpha.core.C11Lock": [
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "alpha.core.CallAndMessageUnInitRefArg": [
+      "severity:HIGH"
+    ],
+    "alpha.core.CastSize": [
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:mem35-c",
+      "sei-cert:str38-c",
+      "severity:LOW"
+    ],
+    "alpha.core.CastToStruct": [
+      "profile:security",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "alpha.core.Conversion": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:flp36-c",
+      "sei-cert:int30-c",
+      "severity:LOW"
+    ],
+    "alpha.core.DynamicTypeChecker": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "alpha.core.FixedAddr": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "alpha.core.IdenticalExpr": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "alpha.core.PointerArithm": [
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:arr37-c",
+      "sei-cert:ctr56-cpp",
+      "severity:LOW"
+    ],
+    "alpha.core.PointerSub": [
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:arr36-c",
+      "sei-cert:ctr54-cpp",
+      "severity:LOW"
+    ],
+    "alpha.core.PthreadLockBase": [
+      "profile:extreme"
+    ],
+    "alpha.core.SizeofPtr": [
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:mem35-c",
+      "severity:LOW"
+    ],
+    "alpha.core.StackAddressAsyncEscape": [
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "alpha.core.TestAfterDivZero": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "alpha.cplusplus.ContainerModeling": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "alpha.cplusplus.DeleteWithNonVirtualDtor": [
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:oop52-cpp",
+      "severity:HIGH"
+    ],
+    "alpha.cplusplus.EnumCastOutOfRange": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "alpha.cplusplus.InvalidatedIterator": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "alpha.cplusplus.IteratorModeling": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "alpha.cplusplus.IteratorRange": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "alpha.cplusplus.MismatchedIterator": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "alpha.cplusplus.PlacementNew": [
+      "severity:HIGH"
+    ],
+    "alpha.cplusplus.STLAlgorithmModeling": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "alpha.cplusplus.SmartPtr": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "alpha.cplusplus.UninitializedObject": [
+      "severity:MEDIUM"
+    ],
+    "alpha.deadcode.UnreachableCode": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "alpha.fuchsia.Lock": [
+      "profile:extreme"
+    ],
+    "alpha.llvm.Conventions": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "alpha.nondeterminism.PointerIteration": [
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "alpha.nondeterminism.PointerSorting": [
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "alpha.osx.cocoa.DirectIvarAssignment": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "alpha.osx.cocoa.DirectIvarAssignmentForAnnotatedFunctions": [
+      "severity:LOW"
+    ],
+    "alpha.osx.cocoa.InstanceVariableInvalidation": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "alpha.osx.cocoa.IvarInvalidationModeling": [
+      "profile:extreme"
+    ],
+    "alpha.osx.cocoa.MissingInvalidationMethod": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "alpha.osx.cocoa.localizability.PluralMisuseChecker": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "alpha.security.ArrayBound": [
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:arr37-c",
+      "sei-cert:dcl38-c",
+      "sei-cert:msc37-c",
+      "sei-cert:pos30-c",
+      "severity:HIGH"
+    ],
+    "alpha.security.ArrayBoundV2": [
+      "profile:security",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "alpha.security.MallocOverflow": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:dcl38-c",
+      "severity:HIGH"
+    ],
+    "alpha.security.MmapWriteExec": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "alpha.security.ReturnPtrRange": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:arr30-c",
+      "severity:HIGH"
+    ],
+    "alpha.security.cert.pos.34c": [
+      "profile:security",
+      "profile:extreme"
+    ],
+    "alpha.security.taint.TaintPropagation": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:env33-c",
+      "severity:HIGH"
+    ],
+    "alpha.unix.BlockInCriticalSection": [
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:pos52-c",
+      "severity:LOW"
+    ],
+    "alpha.unix.Chroot": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "alpha.unix.PthreadLock": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:pos51-c",
+      "severity:HIGH"
+    ],
+    "alpha.unix.SimpleStream": [
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "alpha.unix.StdCLibraryFunctionArgs": [
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "alpha.unix.Stream": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:fio42-c",
+      "severity:MEDIUM"
+    ],
+    "alpha.unix.cstring.BufferOverlap": [
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:exp43-c",
+      "severity:HIGH"
+    ],
+    "alpha.unix.cstring.NotNullTerminated": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "alpha.unix.cstring.OutOfBounds": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:arr38-c",
+      "sei-cert:arr39-c",
+      "sei-cert:exp36-c",
+      "severity:HIGH"
+    ],
+    "alpha.webkit.UncountedCallArgsChecker": [
+      "profile:extreme"
+    ],
+    "altera-struct-pack-align": [
+      "severity:LOW"
+    ],
+    "apiModeling.StdCLibraryFunctions": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:portability",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "apiModeling.StdCLibraryFunctionArgs": [
+      "severity:LOW"
+    ],
+    "apiModeling.TrustNonnull": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:portability",
+      "profile:extreme"
+    ],
+    "apiModeling.google.GTest": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:portability",
+      "profile:extreme"
+    ],
+    "apiModeling.llvm.CastValue": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:portability",
+      "profile:extreme"
+    ],
+    "apiModeling.llvm.ReturnValue": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:portability",
+      "profile:extreme"
+    ],
+    "core.CallAndMessage": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:dcl41-c",
+      "sei-cert:exp30-c",
+      "sei-cert:exp33-c",
+      "sei-cert:exp34-c",
+      "sei-cert:exp39-c",
+      "sei-cert:exp50-cpp",
+      "sei-cert:exp53-cpp",
+      "sei-cert:exp54-cpp",
+      "sei-cert:exp57-cpp",
+      "severity:HIGH"
+    ],
+    "core.CallAndMessageModeling": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "core.DivideZero": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:int33-c",
+      "severity:HIGH"
+    ],
+    "core.DynamicTypePropagation": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "core.NonNullParamChecker": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:exp34-c",
+      "sei-cert:mem34-c",
+      "severity:HIGH"
+    ],
+    "core.NonnilStringConstants": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "core.NullDereference": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:arr30-c",
+      "sei-cert:dcl38-c",
+      "severity:HIGH"
+    ],
+    "core.StackAddrEscapeBase": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert"
+    ],
+    "core.StackAddressEscape": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "sei-cert:dcl30-c",
+      "sei-cert:exp54-cpp",
+      "severity:HIGH"
+    ],
+    "core.UndefinedBinaryOperatorResult": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:exp33-c",
+      "sei-cert:exp36-c",
+      "sei-cert:exp53-cpp",
+      "sei-cert:int32-c",
+      "sei-cert:int34-c",
+      "severity:HIGH"
+    ],
+    "core.VLASize": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:arr32-c",
+      "severity:HIGH"
+    ],
+    "core.builtin.BuiltinFunctions": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "core.builtin.NoReturnFunctions": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "core.uninitialized.ArraySubscript": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "core.uninitialized.Assign": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "core.uninitialized.Branch": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "core.uninitialized.CapturedBlockVariable": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "core.uninitialized.UndefReturn": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:oop53-cpp",
+      "severity:HIGH"
+    ],
+    "cplusplus.InnerPointer": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:mem50-cpp",
+      "sei-cert:str52-cpp",
+      "severity:HIGH"
+    ],
+    "cplusplus.Move": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:exp63-cpp",
+      "severity:HIGH"
+    ],
+    "cplusplus.NewDelete": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:exp54-cpp",
+      "sei-cert:mem50-cpp",
+      "sei-cert:mem51-cpp",
+      "sei-cert:oop54-cpp",
+      "severity:HIGH"
+    ],
+    "cplusplus.NewDeleteLeaks": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:exp62-cpp",
+      "sei-cert:mem51-cpp",
+      "severity:HIGH"
+    ],
+    "cplusplus.PlacementNew": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "cplusplus.PureVirtualCall": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "cplusplus.SelfAssignment": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "cplusplus.SmartPtrModeling": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "cplusplus.VirtualCallModeling": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "deadcode.DeadStores": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "debug.AnalysisOrder": [
+
+    ],
+    "debug.ConfigDumper": [
+
+    ],
+    "debug.DebugContainerModeling": [
+
+    ],
+    "debug.DebugIteratorModeling": [
+
+    ],
+    "debug.DumpCFG": [
+
+    ],
+    "debug.DumpCallGraph": [
+
+    ],
+    "debug.DumpCalls": [
+
+    ],
+    "debug.DumpControlDependencies": [
+
+    ],
+    "debug.DumpDominators": [
+
+    ],
+    "debug.DumpLiveStmts": [
+
+    ],
+    "debug.DumpLiveVars": [
+
+    ],
+    "debug.DumpPostDominators": [
+
+    ],
+    "debug.DumpTraversal": [
+
+    ],
+    "debug.ExprInspection": [
+
+    ],
+    "debug.ReportStmts": [
+
+    ],
+    "debug.Stats": [
+
+    ],
+    "debug.StdCLibraryFunctionsTester": [
+
+    ],
+    "debug.StreamTester": [
+
+    ],
+    "debug.TaintTest": [
+
+    ],
+    "debug.ViewCFG": [
+
+    ],
+    "debug.ViewCallGraph": [
+
+    ],
+    "debug.ViewExplodedGraph": [
+
+    ],
+    "fuchsia.HandleChecker": [
+
+    ],
+    "nullability.NullPassedToNonnull": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "nullability.NullReturnedFromNonnull": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "nullability.NullabilityBase": [
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "nullability.NullableDereferenced": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "nullability.NullablePassedToNonnull": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "nullability.NullableReturnedFromNonnull": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "optin.cplusplus.UninitializedObject": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "optin.cplusplus.VirtualCall": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:oop50-cpp",
+      "severity:MEDIUM"
+    ],
+    "optin.mpi.MPI-Checker": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "optin.osx.OSObjectCStyleCast": [
+      "profile:extreme"
+    ],
+    "optin.osx.cocoa.localizability.EmptyLocalizationContextChecker": [
+      "profile:extreme"
+    ],
+    "optin.osx.cocoa.localizability.NonLocalizedStringChecker": [
+      "profile:extreme"
+    ],
+    "optin.performance.GCDAntipattern": [
+      "profile:extreme"
+    ],
+    "optin.performance.Padding": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "optin.portability.UnixAPI": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:mem30-c",
+      "severity:MEDIUM"
+    ],
+    "osx.API": [
+
+    ],
+    "osx.MIG": [
+
+    ],
+    "osx.NSOrCFErrorDerefChecker": [
+
+    ],
+    "osx.NumberObjectConversion": [
+
+    ],
+    "osx.OSObjectRetainCount": [
+
+    ],
+    "osx.ObjCProperty": [
+
+    ],
+    "osx.SecKeychainAPI": [
+
+    ],
+    "osx.cocoa.AtSync": [
+
+    ],
+    "osx.cocoa.AutoreleaseWrite": [
+
+    ],
+    "osx.cocoa.ClassRelease": [
+
+    ],
+    "osx.cocoa.Dealloc": [
+
+    ],
+    "osx.cocoa.IncompatibleMethodTypes": [
+
+    ],
+    "osx.cocoa.Loops": [
+
+    ],
+    "osx.cocoa.MissingSuperCall": [
+
+    ],
+    "osx.cocoa.NSAutoreleasePool": [
+
+    ],
+    "osx.cocoa.NSError": [
+
+    ],
+    "osx.cocoa.NilArg": [
+
+    ],
+    "osx.cocoa.NonNilReturnValue": [
+
+    ],
+    "osx.cocoa.ObjCGenerics": [
+
+    ],
+    "osx.cocoa.RetainCount": [
+
+    ],
+    "osx.cocoa.RetainCountBase": [
+
+    ],
+    "osx.cocoa.RunLoopAutoreleaseLeak": [
+
+    ],
+    "osx.cocoa.SelfInit": [
+
+    ],
+    "osx.cocoa.SuperDealloc": [
+
+    ],
+    "osx.cocoa.UnusedIvars": [
+
+    ],
+    "osx.cocoa.VariadicMethodTypes": [
+
+    ],
+    "osx.coreFoundation.CFError": [
+
+    ],
+    "osx.coreFoundation.CFNumber": [
+
+    ],
+    "osx.coreFoundation.CFRetainRelease": [
+
+    ],
+    "osx.coreFoundation.containers.OutOfBounds": [
+
+    ],
+    "osx.coreFoundation.containers.PointerSizedValues": [
+
+    ],
+    "security.FloatLoopCounter": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:flp30-c",
+      "severity:MEDIUM"
+    ],
+    "security.insecureAPI.DeprecatedOrUnsafeBufferHandling": [
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "security.insecureAPI.SecuritySyntaxChecker": [
+
+    ],
+    "security.insecureAPI.UncheckedReturn": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "security.insecureAPI.bcmp": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "security.insecureAPI.bcopy": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "security.insecureAPI.bzero": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "security.insecureAPI.decodeValueOfObjCType": [
+      "profile:extreme"
+    ],
+    "security.insecureAPI.getpw": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "security.insecureAPI.gets": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:str31-c",
+      "severity:MEDIUM"
+    ],
+    "security.insecureAPI.mkstemp": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "security.insecureAPI.mktemp": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "security.insecureAPI.rand": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "security.insecureAPI.strcpy": [
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "security.insecureAPI.vfork": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:pos33-c",
+      "severity:MEDIUM"
+    ],
+    "ThreadSanitizer": [
+      "severity:HIGH"
+    ],
+    "UndefinedBehaviorSanitizer": [
+      "severity:HIGH"
+    ],
+    "unix.API": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "unix.DynamicMemoryModeling": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "unix.Malloc": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:mem30-c",
+      "sei-cert:mem31-c",
+      "sei-cert:mem34-c",
+      "severity:MEDIUM"
+    ],
+    "unix.MallocSizeof": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:mem35-c",
+      "severity:MEDIUM"
+    ],
+    "unix.MismatchedDeallocator": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:mem51-cpp",
+      "severity:MEDIUM"
+    ],
+    "unix.Vfork": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:pos33-c",
+      "severity:MEDIUM"
+    ],
+    "unix.cstring.BadSizeArg": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "unix.cstring.CStringModeling": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "unix.cstring.NullArg": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "valist.CopyToSelf": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "valist.Uninitialized": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "valist.Unterminated": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "valist.ValistBase": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "webkit.NoUncountedMemberChecker": [
+      "severity:MEDIUM"
+    ],
+    "webkit.RefCntblBaseVirtualDtor": [
+      "severity:MEDIUM"
+    ]
+  }
+}

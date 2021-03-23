@@ -29,9 +29,11 @@ class MockContextSA:
                 return ['alpha.security']
             elif labels[0] == 'guideline:sei-cert':
                 return ['alpha.core.CastSize', 'alpha.core.CastToStruct']
+            elif labels[0] == 'severity:LOW':
+                return ['security.insecureAPI.bcmp', 'alpha.llvm.Conventions']
 
-        def get_constraint(self, label, constraint):
-            if label == 'profile' and constraint == 'choice':
+        def get_description(self, label):
+            if label == 'profile':
                 return ['default', 'sensitive', 'security', 'portability',
                         'extreme']
 
@@ -146,6 +148,11 @@ class CheckerHandlingClangSATest(unittest.TestCase):
                 'alpha.core.CastSize',
                 'alpha.core.CastToStruct']
 
+        # Checkers covering some LOW severity rules.
+        low_severity = [
+                'security.insecureAPI.bcmp',
+                'alpha.llvm.Conventions']
+
         checkers = []
         checkers.extend(map(add_description, security_profile_alpha))
         checkers.extend(map(add_description, default_profile))
@@ -223,13 +230,20 @@ class CheckerHandlingClangSATest(unittest.TestCase):
         self.assertTrue(all_with_status(CheckerState.disabled)
                         (cfg_handler.checks(), cert_guideline))
 
+        # Enable "LOW" severity checkers.
+        cfg_handler = ClangSA.construct_config_handler(args, context)
+        cfg_handler.initialize_checkers(context, checkers,
+                                        [('severity:LOW', True)])
+        self.assertTrue(all_with_status(CheckerState.enabled)
+                        (cfg_handler.checks(), low_severity))
+
 
 class MockContextTidy:
     class CheckerLabels:
         def checkers_by_labels(self, labels):
             return []
 
-        def get_constraint(self, checker, constraint):
+        def get_description(self, checker):
             return []
 
         def occurring_values(self, checker):

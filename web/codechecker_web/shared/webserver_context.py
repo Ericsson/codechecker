@@ -62,7 +62,14 @@ class Context(metaclass=Singleton):
         lcfg_dict = self.__get_package_layout()
         self.pckg_layout = lcfg_dict['runtime']
 
-        self._checker_labels = CheckerLabels(self.checker_labels_file)
+        # Use this environment variable for testing purposes only. This
+        # variable helps to configure which labels to use in this context.
+        labels_dir = os.path.join(self._data_files_dir_path,
+                                  'config', 'labels')
+        if 'CC_TEST_LABELS_DIR' in os.environ:
+            labels_dir = os.environ['CC_TEST_LABELS_DIR']
+
+        self._checker_labels = CheckerLabels(labels_dir)
         self.__system_comment_map = \
             load_json_or_empty(self.system_comment_map_file, {})
         self.__package_version = None
@@ -170,21 +177,6 @@ class Context(metaclass=Singleton):
     @property
     def data_files_dir_path(self):
         return self._data_files_dir_path
-
-    @property
-    def checker_labels_file(self):
-        # Get checker label map file from the environment.
-        if 'CC_CHECKER_LABELS_FILE' in os.environ:
-            checker_labels_file = os.environ.get('CC_CHECKER_LABELS_FILE')
-
-            LOG.warning("Severity map file set through the "
-                        "'CC_CHECKER_LABELS_FILE' environment variable: %s",
-                        checker_labels_file)
-
-            return checker_labels_file
-
-        return os.path.join(self._data_files_dir_path, 'config',
-                            'checker_labels.json')
 
     @property
     def doc_root(self):

@@ -81,7 +81,7 @@ def get_argparser_ctor_args():
     """
 
     data_files_dir_path = analyzer_context.get_context().data_files_dir_path
-    config_dir_path = os.path.join(data_files_dir_path, 'config')
+    labels_dir_path = os.path.join(data_files_dir_path, 'config', 'labels')
     return {
         'prog': 'CodeChecker checkers',
         'formatter_class': arg.RawDescriptionDefaultHelpFormatter,
@@ -94,13 +94,8 @@ def get_argparser_ctor_args():
         # directly.
         'epilog': """
 The list of checkers that are enabled or disabled by default can be edited by
-editing "profile:default" labels in the file '{0}'.
-
-Environment variables
-------------------------------------------------
-  CC_CHECKER_LABELS_FILE Path of the checker-label mapping config file.
-                         Default: '{0}'
-""".format(os.path.join(config_dir_path, 'checker_labels.json')),
+editing "profile:default" labels in the directory '{}'.
+""".format(os.path.join(labels_dir_path)),
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.
@@ -239,7 +234,7 @@ def main(args):
         selected_guidelines -- A list of guideline names or guideline rule IDs.
         """
         labels = context.checker_labels.labels_of_checker(checker_name)
-        choices = context.checker_labels.get_constraint('guideline', 'choice')
+        choices = context.checker_labels.get_description('guideline')
 
         for label, value in labels:
             if (label == 'guideline' or label in choices) and \
@@ -265,8 +260,7 @@ def main(args):
         """
         result = defaultdict(list)
         labels = context.checker_labels.labels_of_checker(checker)
-        guidelines = \
-            context.checker_labels.get_constraint('guideline', 'choice')
+        guidelines = context.checker_labels.get_description('guideline')
 
         for label in labels:
             if label[0] in guidelines:
@@ -285,10 +279,10 @@ def main(args):
 
         if 'details' in args:
             header = ['Profile name', 'Description']
-            rows = cl.get_constraint('profile', 'choice').items()
+            rows = cl.get_description('profile').items()
         else:
             header = ['Profile name']
-            rows = [(key,) for key in cl.get_constraint('profile', 'choice')]
+            rows = [(key,) for key in cl.get_description('profile')]
 
         if args.output_format in ['csv', 'json']:
             header = list(map(uglify, header))
@@ -336,7 +330,7 @@ def main(args):
     if args.guideline is not None and len(args.guideline) == 0:
         result = {}
 
-        for guideline in cl.get_constraint('guideline', 'choice'):
+        for guideline in cl.get_description('guideline'):
             result[guideline] = set(cl.occurring_values(guideline))
 
         header = ['Guideline', 'Rules']
@@ -376,7 +370,7 @@ def main(args):
 
         profile_checkers = []
         if 'profile' in args:
-            available_profiles = cl.get_constraint('profile', 'choice')
+            available_profiles = cl.get_description('profile')
 
             if args.profile not in available_profiles:
                 LOG.error("Checker profile '%s' does not exist!",

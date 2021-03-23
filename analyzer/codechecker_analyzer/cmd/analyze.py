@@ -655,7 +655,7 @@ Checker labels
 ------------------------------------------------
 In CodeChecker there is a manual grouping of checkers. These groups are
 determined by labels. The collection of labels is found in
-config/checker_labels.json file. The goal of these labels is that you can
+config/labels directory. The goal of these labels is that you can
 enable or disable checkers by these labels. See the --label flag of
 "CodeChecker checkers" command.
 

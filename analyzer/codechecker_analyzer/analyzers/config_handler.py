@@ -160,14 +160,14 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         if 'profile:list' in map(itemgetter(0), cmdline_enable):
             LOG.error("'list' is a reserved profile keyword. ")
             LOG.error("Please choose another profile name in "
-                      "%s/config/checker_labels.json and rebuild.",
+                      "%s/config/descriptions.json and rebuild.",
                       analyzer_context.data_files_dir_path)
             sys.exit(1)
 
         if 'guideline:list' in map(itemgetter(0), cmdline_enable):
             LOG.error("'list' is a reserved guideline keyword. ")
             LOG.error("Please choose another guideline name in "
-                      "%s/config/checker_labels.json and rebuild.",
+                      "%s/config/descriptions.json and rebuild.",
                       analyzer_context.data_files_dir_path)
             sys.exit(1)
 
@@ -211,7 +211,7 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         # Construct a list of reserved checker names.
         # (It is used to check if a profile name is valid.)
         reserved_names = self.__gen_name_variations()
-        profiles = checker_labels.get_constraint('profile', 'choice')
+        profiles = checker_labels.get_description('profile')
         guidelines = checker_labels.occurring_values('guideline')
 
         for identifier, enabled in cmdline_enable:

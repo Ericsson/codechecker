@@ -206,7 +206,7 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
     # if a profile is enabled but there is no checker with that name.
 
     available_checkers.update(
-        context.checker_labels.get_constraint('profile', 'choice'))
+        context.checker_labels.get_description('profile'))
 
     # Collect all the available checkers from the enabled analyzers.
     for analyzer in config_map.items():

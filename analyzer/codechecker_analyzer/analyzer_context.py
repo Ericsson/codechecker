@@ -36,13 +36,20 @@ class Context(metaclass=Singleton):
         self._lib_dir_path = os.environ.get('CC_LIB_DIR', '')
         self._data_files_dir_path = os.environ.get('CC_DATA_FILES_DIR', '')
 
+        # Use this environment variable for testing purposes only. This
+        # variable helps to configure which labels to use in this context.
+        labels_dir = os.path.join(self._data_files_dir_path,
+                                  'config', 'labels')
+        if 'CC_TEST_LABELS_DIR' in os.environ:
+            labels_dir = os.environ['CC_TEST_LABELS_DIR']
+
         cfg_dict = self.__get_package_config()
         self.env_vars = cfg_dict['environment_variables']
 
         lcfg_dict = self.__get_package_layout()
         self.pckg_layout = lcfg_dict['runtime']
 
-        self._checker_labels = CheckerLabels(self.checker_labels_map_file)
+        self._checker_labels = CheckerLabels(labels_dir)
         self.__package_version = None
         self.__package_build_date = None
         self.__package_git_hash = None
@@ -267,24 +274,6 @@ class Context(metaclass=Singleton):
             return None
 
         return os.path.join(self._data_files_dir_path, 'plugin')
-
-    @property
-    def checker_labels_map_file(self):
-        """
-        Returns the path of checker-labels mapping config file. This file may
-        come from a custom location provided by CC_CHECKER_LABELS_FILE
-        environment variable.
-        """
-        labels_map_file = os.environ.get('CC_CHECKER_LABELS_FILE')
-        if labels_map_file:
-            LOG.warning("Labels map file set through the "
-                        "'CC_CHECKER_LABELS_FILE' environment variable: %s",
-                        labels_map_file)
-
-            return labels_map_file
-
-        return os.path.join(self._data_files_dir_path, 'config',
-                            'checker_labels.json')
 
     @property
     def checker_labels(self):

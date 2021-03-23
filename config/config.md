@@ -2,7 +2,7 @@
 # Package configuration
 
 ### Checker labels
-`checker_labels.json` file contains a labels to the checkers which describe
+`checker/labels` directory contains the labels to the checkers which describe
 some properties, such as profile, guideline, severity, etc.
 
 Current labels are:
