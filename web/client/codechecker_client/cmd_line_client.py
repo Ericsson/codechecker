@@ -1324,7 +1324,14 @@ def handle_diff_results(args):
     client = None
     # We set up the client if we are not comparing two local report directory.
     if basename_run_names or newname_run_names:
-        client = setup_client(args.product_url)
+        try:
+            client = setup_client(args.product_url)
+        except SystemExit as sexit:
+            LOG.info("Could not connect to remote server uri=%s. "
+                     "Check if basenames and newnames are valid directory "
+                     "names or remote if accessible by URI.",
+                     args.product_url)
+            raise sexit
 
     if basename_local_dirs and newname_local_dirs:
         reports = get_diff_local_dirs(basename_local_dirs,
