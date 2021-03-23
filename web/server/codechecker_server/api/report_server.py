@@ -2453,9 +2453,8 @@ class ThriftRequestHandler(object):
                 LOG.error(ex)
                 return False
 
-        # Delete files and contents that are not present
-        # in any bug paths.
-        db_cleanup.remove_unused_files(self.__Session)
+        # Remove unused data (files, comments, etc.) from the database.
+        db_cleanup.remove_unused_data(self.__Session)
 
         return True
 
@@ -2482,9 +2481,8 @@ class ThriftRequestHandler(object):
             LOG.info("Runs '%s' were removed by '%s'.", runs,
                      self.__get_username())
 
-        # Delete files and contents that are not present
-        # in any bug paths.
-        db_cleanup.remove_unused_files(self.__Session)
+        # Remove unused data (files, comments, etc.) from the database.
+        db_cleanup.remove_unused_data(self.__Session)
 
         return True
 

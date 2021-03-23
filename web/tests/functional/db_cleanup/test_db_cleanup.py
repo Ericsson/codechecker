@@ -17,7 +17,8 @@ import os
 import unittest
 from shutil import copyfile, rmtree
 
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import RunFilter, Severity
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import CommentData, \
+    ReportFilter, ReviewStatus, RunFilter, Severity
 
 from libtest import codechecker
 from libtest import env
@@ -94,17 +95,21 @@ int f(int x) { return 1 / x; }
                   encoding="utf-8", errors="ignore") as f:
             f.write(makefile)
 
-    def __get_files_in_report(self):
+    def __get_run_id(self, run_name):
+        """ Get run id based on the given run name. """
         run_filter = RunFilter()
-        run_filter.names = ['db_cleanup_test']
+        run_filter.names = [run_name]
         run_filter.exactMatch = True
 
+        runs = self._cc_client.getRunData(run_filter, None, 0, None)
+        return runs[0].runId
+
+    def __get_files_in_report(self, run_name):
         codechecker.check_and_store(self.codechecker_cfg,
-                                    'db_cleanup_test',
+                                    run_name,
                                     self.test_dir)
 
-        runs = self._cc_client.getRunData(run_filter, None, 0, None)
-        run_id = runs[0].runId
+        run_id = self.__get_run_id([run_name])
 
         reports \
             = self._cc_client.getRunResults([run_id], 10, 0, [], None, None,
@@ -124,13 +129,13 @@ int f(int x) { return 1 / x; }
 
         return file_ids
 
-    def __check_serverity_of_reports(self):
+    def __check_serverity_of_reports(self, run_name):
         """
         This will check whether reports in the database has the same severity
         levels as in the severity map config file.
         """
         run_filter = RunFilter()
-        run_filter.names = ['db_cleanup_test']
+        run_filter.names = [run_name]
         run_filter.exactMatch = True
 
         runs = self._cc_client.getRunData(run_filter, None, 0, None)
@@ -170,18 +175,82 @@ int f(int x) { return 1 / x; }
         self._cc_client = env.setup_viewer_client(self.test_workspace)
         self.assertIsNotNone(self._cc_client)
 
+        run_name1 = 'db_cleanup_test'
+        run_name2 = f'{run_name1}2'
+
         self.__create_test_dir()
-        files_in_report_before = self.__get_files_in_report()
+
+        # Store the results.
+        codechecker.check_and_store(self.codechecker_cfg, run_name1,
+                                    self.test_dir)
+
+        # Store the results to a different run too to see if we remove only one
+        # run, comments and review statuses not cleared.
+        codechecker.check_and_store(self.codechecker_cfg, run_name2,
+                                    self.test_dir)
+
+        run_id1 = self.__get_run_id([run_name1])
+        report = self._cc_client.getRunResults(None, 1, 0, [], None,
+                                               None, False)[0]
+
+        report_hash = report.bugHash
+        report_id = report.reportId
+
+        # Add a new comment.
+        comment = CommentData(author='anybody', message='Msg')
+        success = self._cc_client.addComment(report_id, comment)
+        self.assertTrue(success)
+
+        # Change review status.
+        success = self._cc_client.changeReviewStatus(
+            report_id, ReviewStatus.CONFIRMED, 'Real bug')
+        self.assertTrue(success)
+
+        # Remove the first storage.
+        self._cc_client.removeRun(run_id1, None)
+
+        # Comments and review statuses are not cleared, because the second
+        # run results still reference them.
+        run_id2 = self.__get_run_id([run_name2])
+        r_filter = ReportFilter(reviewStatus=[ReviewStatus.CONFIRMED])
+        run_results = self._cc_client.getRunResults([run_id2], 1, 0,
+                                                    None, r_filter, None,
+                                                    False)
+        self.assertTrue(run_results)
+
+        comments = self._cc_client.getComments(run_results[0].reportId)
+        self.assertTrue(comments)
+
+        # Remove the second run too, so it will cleanup the unused commments
+        # and review statuses.
+        self._cc_client.removeRun(run_id2, None)
+
+        # Store results again and check that previous comments and review
+        # statuses are gone.
+        files_in_report_before = self.__get_files_in_report(run_name1)
+
+        r_filter = ReportFilter(reportHash=[report_hash])
+        report = self._cc_client.getRunResults(None, 1, 0, None, r_filter,
+                                               None, False)[0]
+        report_id = report.reportId
+
+        comments = self._cc_client.getComments(report_id)
+        self.assertFalse(comments)
+
+        r_filter = ReportFilter(reviewStatus=[ReviewStatus.CONFIRMED])
+        run_results = self._cc_client.getRunResults(None, 1, 0, None, r_filter,
+                                                    None, False)
+        self.assertFalse(run_results)
 
         # Checker severity levels.
-        self.__check_serverity_of_reports()
+        self.__check_serverity_of_reports(run_name1)
 
         self.__rename_project_dir()
 
         # Delete previous analysis report directory.
         rmtree(self.codechecker_cfg['reportdir'])
 
-        files_in_report_after = self.__get_files_in_report()
+        files_in_report_after = self.__get_files_in_report(run_name1)
 
         event.set()
 
@@ -219,6 +288,6 @@ int f(int x) { return 1 / x; }
             self.assertIsNone(f.fileId)
 
         # Checker severity levels.
-        self.__check_serverity_of_reports()
+        self.__check_serverity_of_reports(run_name1)
 
         event.set()
