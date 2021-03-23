@@ -5,15 +5,19 @@ BUILD_DIR ?= $(CURRENT_DIR)/build
 PYTHON_BIN ?= python3
 
 CC_BUILD_DIR = $(BUILD_DIR)/CodeChecker
+CC_BUILD_BIN_DIR = $(CC_BUILD_DIR)/bin
 CC_BUILD_LIB_DIR = $(CC_BUILD_DIR)/lib/python3
 
 # Root of the repository.
 ROOT = $(CURRENT_DIR)/..
 
 CC_TOOLS = $(ROOT)/tools
+CC_ANALYZER = $(ROOT)/analyzer
 
+ACTIVATE_RUNTIME_VENV ?= . venv/bin/activate
 ACTIVATE_DEV_VENV ?= . venv_dev/bin/activate
 
+VENV_REQ_FILE ?= requirements.txt
 VENV_DEV_REQ_FILE ?= requirements_py/dev/requirements.txt
 
 # Set it to YES if you would like to build and package 64 bit only shared
@@ -25,17 +29,25 @@ include tests/Makefile
 pip_dev_deps:
 	pip3 install -r $(VENV_DEV_REQ_FILE)
 
+venv:
+	# Create a virtual environment which can be used to run the build package.
+	python3 -m venv venv --prompt="CodeChecker analyze venv" && \
+		$(ACTIVATE_RUNTIME_VENV) && pip3 install -r $(VENV_REQ_FILE)
+
 venv_dev:
 	# Create a virtual environment for development.
-	python3 -m venv venv_dev && \
+	python3 -m venv venv_dev --prompt="CodeChecker analyze venv-dev" && \
 		$(ACTIVATE_DEV_VENV) && pip3 install -r $(VENV_DEV_REQ_FILE)
+
+clean_venv:
+	rm -rf venv
 
 clean_venv_dev:
 	rm -rf venv_dev
 
 package_dir_structure:
 	mkdir -p $(BUILD_DIR) && \
-	mkdir -p $(CC_BUILD_DIR)/bin && \
+	mkdir -p $(CC_BUILD_BIN_DIR) && \
 	mkdir -p $(CC_BUILD_LIB_DIR)
 
 build_plist_to_html:
@@ -52,35 +64,50 @@ package_tu_collector: build_tu_collector package_dir_structure
 	# Copy tu_collector files.
 	cp -rp $(CC_TOOLS)/tu_collector/build/tu_collector/tu_collector $(CC_BUILD_LIB_DIR) && \
 	chmod u+x $(CC_BUILD_LIB_DIR)/tu_collector/tu_collector.py && \
-	cd $(CC_BUILD_DIR) && \
-	ln -sf ../lib/python3/tu_collector/tu_collector.py bin/tu_collector
+	cd $(CC_BUILD_BIN_DIR) && \
+	ln -sf ../lib/python3/tu_collector/tu_collector.py tu_collector
+
+build_report_hash:
+	$(MAKE) -C $(CC_TOOLS)/codechecker_report_hash build
+
+package_report_hash: build_report_hash package_dir_structure
+	cp -rp $(CC_TOOLS)/codechecker_report_hash/build/codechecker_report_hash/codechecker_report_hash $(CC_BUILD_LIB_DIR)
+
+build_report_converter:
+	$(MAKE) -C $(CC_TOOLS)/report-converter build
+
+package_report_converter: build_report_converter package_dir_structure
+	cp -rp $(CC_TOOLS)/report-converter/build/report_converter/codechecker_report_converter $(CC_BUILD_LIB_DIR) && \
+	chmod u+x $(CC_BUILD_LIB_DIR)/codechecker_report_converter/cli.py && \
+	cd $(CC_BUILD_BIN_DIR) && \
+	ln -sf ../lib/python3/codechecker_report_converter/cli.py report-converter
 
 build_merge_clang_extdef_mappings:
-	$(MAKE) -C tools/merge_clang_extdef_mappings build
+	$(MAKE) -C $(CC_ANALYZER)/tools/merge_clang_extdef_mappings build
 
 package_merge_clang_extdef_mappings: build_merge_clang_extdef_mappings package_dir_structure
 	# Copy plist-to-html files.
 	cp -r tools/merge_clang_extdef_mappings/build/merge_clang_extdef_mappings/codechecker_merge_clang_extdef_mappings $(CC_BUILD_LIB_DIR) && \
 	chmod u+x $(CC_BUILD_LIB_DIR)/codechecker_merge_clang_extdef_mappings/cli.py && \
-	cd $(CC_BUILD_DIR) && \
-	ln -sf ../lib/python3/codechecker_merge_clang_extdef_mappings/cli.py bin/merge-clang-extdef-mappings
+	cd $(CC_BUILD_BIN_DIR) && \
+	ln -sf ../lib/python3/codechecker_merge_clang_extdef_mappings/cli.py merge-clang-extdef-mappings
 
 build_statistics_collector:
-	$(MAKE) -C $(CC_ANALYZER_TOOLS)/statistics_collector build
+	$(MAKE) -C $(CC_ANALYZER)/tools/statistics_collector build
 
 package_statistics_collector: build_statistics_collector package_dir_structure
 	# Copy statistics-collector files.
 	cp -r tools/statistics_collector/build/statistics_collector/codechecker_statistics_collector $(CC_BUILD_LIB_DIR) && \
 	chmod u+x $(CC_BUILD_LIB_DIR)/codechecker_statistics_collector/cli.py && \
-	cd $(CC_BUILD_DIR) && \
-	ln -sf ../lib/python3/codechecker_statistics_collector/cli.py bin/post-process-stats
+	cd $(CC_BUILD_BIN_DIR) && \
+	ln -sf ../lib/python3/codechecker_statistics_collector/cli.py post-process-stats
 
 # This target should be used from the top level Makefile to build the package
 # together with the web part. This way we will not build plist-to-html
 # multiple times.
-package_analyzer: package_dir_structure
+package_analyzer: package_dir_structure package_plist_to_html package_tu_collector package_report_hash package_merge_clang_extdef_mappings package_report_converter package_statistics_collector
 
-package: package_plist_to_html package_tu_collector package_analyzer package_merge_clang_extdef_mappings package_statistics_collector
+package: package_analyzer
 	# Copy libraries.
 	cp -r $(ROOT)/codechecker_common $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CURRENT_DIR)/codechecker_analyzer $(CC_BUILD_LIB_DIR)
@@ -94,7 +121,7 @@ package: package_plist_to_html package_tu_collector package_analyzer package_mer
 	# Copy CodeChecker entry point sub-commands.
 	mkdir -p $(CC_BUILD_DIR)/cc_bin && \
 	${PYTHON_BIN} $(ROOT)/scripts/build/create_commands.py -b $(BUILD_DIR) \
-	  --cmd-dir codechecker_common/cmd \
+	  --cmd-dir $(ROOT)/codechecker_common/cmd \
 	    $(CC_ANALYZER)/codechecker_analyzer/cmd \
 	  --bin-file $(ROOT)/bin/CodeChecker \
 	  --cc-bin-file $(ROOT)/bin/CodeChecker.py
@@ -102,12 +129,20 @@ package: package_plist_to_html package_tu_collector package_analyzer package_mer
 	# Copy license file.
 	cp $(ROOT)/LICENSE.TXT $(CC_BUILD_DIR)
 
+standalone_package: venv package
+	cd $(CC_BUILD_BIN_DIR) && \
+	mv CodeChecker _CodeChecker && \
+	${PYTHON_BIN} $(ROOT)/scripts/build/wrap_binary_in_venv.py \
+		-e $(CURRENT_DIR)/venv \
+		-b _CodeChecker \
+		-o CodeChecker
+
 package_ld_logger:
 	mkdir -p $(CC_BUILD_DIR)/ld_logger && \
-	mkdir -p $(CC_BUILD_DIR)/bin && \
+	mkdir -p $(CC_BUILD_BIN_DIR) && \
 	cp -r $(CURRENT_DIR)/tools/build-logger/build/* $(CC_BUILD_DIR)/ld_logger && \
-	cd $(CC_BUILD_DIR) && \
-	ln -sf ../ld_logger/bin/ldlogger bin/ldlogger
+	cd $(CC_BUILD_BIN_DIR) && \
+	ln -sf ../ld_logger/bin/ldlogger ldlogger
 
 define LOGGER_BUILD_ERROR_MSG
 Failed to compile logger for 32bit and 64bit targets please check if

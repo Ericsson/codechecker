@@ -10,6 +10,7 @@ PYTHON_BIN ?= python3
 CC_BUILD_DIR = $(BUILD_DIR)/CodeChecker
 CC_BUILD_WEB_DIR = $(CC_BUILD_DIR)/www
 CC_BUILD_PLUGIN_DIR = $(CC_BUILD_DIR)/plugin
+CC_BUILD_BIN_DIR = $(CC_BUILD_DIR)/bin
 CC_BUILD_LIB_DIR = $(CC_BUILD_DIR)/lib/python3
 CC_BUILD_DOCS_DIR = $(CC_BUILD_WEB_DIR)/docs
 CC_BUILD_SCRIPTS_DIR = $(CC_BUILD_WEB_DIR)/scripts
@@ -24,9 +25,12 @@ CC_CLIENT = $(CURRENT_DIR)/client/
 ROOT = $(CURRENT_DIR)/..
 
 CC_TOOLS = $(ROOT)/tools
+CC_WEB = $(ROOT)/web
 
+ACTIVATE_RUNTIME_VENV ?= . venv/bin/activate
 ACTIVATE_DEV_VENV ?= . venv_dev/bin/activate
 
+VENV_REQ_FILE ?= requirements.txt
 VENV_DEV_REQ_FILE ?= requirements_py/dev/requirements.txt
 
 DIST_DIR = $(CC_SERVER)/vue-cli/dist
@@ -47,10 +51,18 @@ include client/tests/Makefile
 pip_dev_deps:
 	pip3 install -r $(VENV_DEV_REQ_FILE)
 
+venv:
+	# Create a virtual environment which can be used to run the build package.
+	python3 -m venv venv --prompt="CodeChecker web venv" && \
+		$(ACTIVATE_RUNTIME_VENV) && pip3 install -r $(VENV_REQ_FILE)
+
 venv_dev:
 	# Create a virtual environment for development.
-	python3 -m venv venv_dev && \
+	python3 -m venv venv_dev --prompt="CodeChecker web venv-dev" && \
 		$(ACTIVATE_DEV_VENV) && pip3 install -r $(VENV_DEV_REQ_FILE)
+
+clean_venv:
+	rm -rf venv
 
 clean_venv_dev:
 	rm -rf venv_dev
@@ -60,7 +72,7 @@ build_dir:
 
 package_dir_structure:
 	mkdir -p $(BUILD_DIR) && \
-	mkdir -p $(CC_BUILD_DIR)/bin && \
+	mkdir -p $(CC_BUILD_BIN_DIR) && \
 	mkdir -p $(CC_BUILD_LIB_DIR)
 
 package_docs:
@@ -97,7 +109,7 @@ build_report_hash:
 package_report_hash: build_report_hash package_dir_structure
 	cp -r $(CC_TOOLS)/codechecker_report_hash/build/codechecker_report_hash/codechecker_report_hash $(CC_BUILD_LIB_DIR)
 
-package: package_plist_to_html package_report_hash package_web
+package: package_dir_structure package_plist_to_html package_report_hash package_web
 	# Copy libraries.
 	cp -r $(ROOT)/codechecker_common $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CURRENT_DIR)/codechecker_web $(CC_BUILD_LIB_DIR) && \
@@ -114,7 +126,7 @@ package: package_plist_to_html package_report_hash package_web
 	# Copy CodeChecker entry point sub-commands.
 	mkdir -p $(CC_BUILD_DIR)/cc_bin && \
 	${PYTHON_BIN} $(ROOT)/scripts/build/create_commands.py -b $(BUILD_DIR) \
-	  --cmd-dir codechecker_common/cmd \
+	  --cmd-dir $(ROOT)/codechecker_common/cmd \
 	    $(CC_WEB)/codechecker_web/cmd \
 	    $(CC_SERVER)/codechecker_server/cmd \
 	    $(CC_CLIENT)/codechecker_client/cmd \
@@ -123,6 +135,14 @@ package: package_plist_to_html package_report_hash package_web
 
 	# Copy license file.
 	cp $(ROOT)/LICENSE.TXT $(CC_BUILD_DIR)
+
+standalone_package: venv package
+	cd $(CC_BUILD_BIN_DIR) && \
+	mv CodeChecker _CodeChecker && \
+	${PYTHON_BIN} $(ROOT)/scripts/build/wrap_binary_in_venv.py \
+		-e $(CURRENT_DIR)/venv \
+		-b _CodeChecker \
+		-o CodeChecker
 
 # This target will check that 'codecheck_api' and 'codechecker_api_shared'
 # python packages are up to date. If not, it will update these packages and
