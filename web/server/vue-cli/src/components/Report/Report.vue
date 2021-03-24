@@ -758,6 +758,10 @@ export default {
     font-size: initial;
     line-height: initial;
 
+    ::v-deep .CodeMirror-code > div:hover {
+      background-color: lighten(grey, 42%);
+    }
+
     ::v-deep .cm-matchhighlight:not(.cm-searching) {
       background-color: lightgreen;
     }
