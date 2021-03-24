@@ -1321,6 +1321,13 @@ def handle_diff_results(args):
     if output_dir and not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
+    if basename_local_dirs:
+        LOG.info("Matching local report directories (--baseline): %s",
+                 basename_local_dirs)
+    if newname_local_dirs:
+        LOG.info("Matching local report directories (--newname): %s",
+                 newname_local_dirs)
+
     client = None
     # We set up the client if we are not comparing two local report directory.
     if basename_run_names or newname_run_names:
@@ -1332,6 +1339,11 @@ def handle_diff_results(args):
                      "names or remote if accessible by URI.",
                      args.product_url)
             raise sexit
+
+    if basename_run_names:
+        LOG.info("Matching remote runs (--baseline): %s", basename_run_names)
+    if newname_run_names:
+        LOG.info("Matching remote runs (--newname): %s", newname_run_names)
 
     if basename_local_dirs and newname_local_dirs:
         reports = get_diff_local_dirs(basename_local_dirs,

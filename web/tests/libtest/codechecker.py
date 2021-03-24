@@ -16,7 +16,7 @@ import os
 import shlex
 import stat
 import subprocess
-from subprocess import CalledProcessError
+from subprocess import CalledProcessError, PIPE
 import time
 
 from codechecker_api_shared.ttypes import Permission
@@ -97,7 +97,7 @@ def get_diff_results(basenames, newnames, diff_type, format_type=None,
         diff_cmd.extend(extra_args)
 
     out = subprocess.check_output(
-        diff_cmd, encoding="utf-8", errors="ignore", env=cc_env)
+        diff_cmd, encoding="utf-8", errors="ignore", env=cc_env, stderr=PIPE)
 
     if format_type == "json":
         return json.loads(out)

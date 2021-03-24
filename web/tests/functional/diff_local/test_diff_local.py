@@ -80,6 +80,25 @@ class DiffLocal(unittest.TestCase):
         for new_result in new_results:
             self.assertEqual(new_result['checkerId'], "core.NullDereference")
 
+    def test_non_existent_reports_directory(self):
+        """Hadles non existent directory well
+
+        Displays detailed information about base and new directories when
+        any of them are not exist.
+        """
+        error_output = ''
+        return_code = 0
+        try:
+            get_diff_results([self.base_reports], ['unexistent-dir-name'],
+                             '--new', 'json')
+        except subprocess.CalledProcessError as process_error:
+            return_code = process_error.returncode
+            error_output = process_error.stderr
+
+        self.assertEqual(return_code, 1,
+                         "Exit code should be 1 if directory does not exist.")
+        self.assertIn("Could not connect to remote server", error_output)
+
     @unittest.skip("should return a valid empty json")
     def test_filter_severity_low_json(self):
         """Get the low severity new reports.
