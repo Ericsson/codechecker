@@ -90,14 +90,14 @@ class DiffLocal(unittest.TestCase):
         return_code = 0
         try:
             get_diff_results([self.base_reports], ['unexistent-dir-name'],
-                             '--new', 'json')
+                             '--new')
         except subprocess.CalledProcessError as process_error:
             return_code = process_error.returncode
             error_output = process_error.stderr
 
         self.assertEqual(return_code, 1,
                          "Exit code should be 1 if directory does not exist.")
-        self.assertIn("Could not connect to remote server", error_output)
+        self.assertIn("Failed to get remote runs from server", error_output)
 
     @unittest.skip("should return a valid empty json")
     def test_filter_severity_low_json(self):
