@@ -132,6 +132,11 @@ class SpotBugsParser(BaseParser):
             if event:
                 events.append(event)
 
+        # If <SourceLine> did not contain a 'start' attribute, take the last
+        # of the events.
+        if line is None:
+            line = next(e.line for e in reversed(events) if e.line > 0)
+
         return SpotBugsMessage(source_path, int(line), col, long_message,
                                checker_name, report_hash, events)
 
@@ -148,7 +153,7 @@ class SpotBugsParser(BaseParser):
         if not source_path:
             return
 
-        line = source_line.attrib.get('start')
+        line = source_line.attrib.get('start', 0)
         col = 0
 
         return Event(source_path, int(line), col, message)
@@ -166,7 +171,7 @@ class SpotBugsParser(BaseParser):
         if not source_path:
             return
 
-        line = source_line.attrib.get('start')
+        line = source_line.attrib.get('start', 0)
         col = 0
 
         return Event(source_path, int(line), col, message)
