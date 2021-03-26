@@ -1317,10 +1317,31 @@ def handle_diff_results(args):
     if output_dir and not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
+    if basename_local_dirs:
+        LOG.info("Matching local report directories (--baseline): %s",
+                 ', '.join(basename_local_dirs))
+    if newname_local_dirs:
+        LOG.info("Matching local report directories (--newname): %s",
+                 ', '.join(newname_local_dirs))
+
     client = None
     # We set up the client if we are not comparing two local report directory.
     if basename_run_names or newname_run_names:
-        client = setup_client(args.product_url)
+        if basename_run_names:
+            LOG.info("Given remote runs (--baseline): %s",
+                     ', '.join(basename_run_names))
+        if newname_run_names:
+            LOG.info("Given remote runs (--newname): %s",
+                     ', '.join(newname_run_names))
+
+        try:
+            client = setup_client(args.product_url)
+        except SystemExit as sexit:
+            LOG.error("Failed to get remote runs from server! Please "
+                      "make sure that CodeChecker server is running on host "
+                      "'%s' or these are valid directory paths!",
+                      args.product_url)
+            raise sexit
 
     if basename_local_dirs and newname_local_dirs:
         reports = get_diff_local_dirs(basename_local_dirs,

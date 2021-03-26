@@ -13,7 +13,6 @@
 import os
 import shutil
 import sys
-import uuid
 
 from libtest import codechecker
 from libtest import env
