@@ -135,7 +135,7 @@ class SpotBugsParser(BaseParser):
         # If <SourceLine> did not contain a 'start' attribute, take the last
         # of the events.
         if line is None:
-            line = next(e.line for e in reversed(events) if e.line > 0)
+            line = next((e.line for e in reversed(events) if e.line > 0), 0)
 
         return SpotBugsMessage(source_path, int(line), col, long_message,
                                checker_name, report_hash, events)
