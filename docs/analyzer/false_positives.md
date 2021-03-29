@@ -506,7 +506,7 @@ from one specific check that found the issue. Always comment why a
 finding is considered false positive! With a future version of the analyzer
 these suppression comments might be no longer required. Comments might help in
 the reevaluation. For details, see the
-[user guide](../web/user_guide.md#source-code-comments).
+[user guide](user_guide.md#source-code-comments).
 
 ## Unauthored code <a name="unauthored-code"></a>
 
