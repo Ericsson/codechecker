@@ -257,6 +257,8 @@ environment variable to `YES` before the package build:
 or the UI code is changed. If you wouldn't like to build the UI code you can
 set the `BUILD_UI_DIST` environment variable to `NO` before the package build:
 `BUILD_UI_DIST=NO make package`.
+- If you want to create a development environment, user `make venv_dev` instead of `make venv`
+  and install the `rustc` pacakge dependency e.g. `sudo apt-get install rustc`
 
 ### Upgrading environment after system or Python upgrade
 
