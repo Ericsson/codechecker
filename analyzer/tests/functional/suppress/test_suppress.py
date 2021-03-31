@@ -11,6 +11,7 @@ Test source-code level suppression data writing to suppress file.
 
 
 import os
+import inspect
 import shlex
 import subprocess
 import unittest
@@ -48,6 +49,8 @@ class TestSuppress(unittest.TestCase):
         self.assertIsNotNone(self._testproject_data)
 
         self._test_project_path = self._testproject_data['project_path']
+        self._test_directory = os.path.dirname(os.path.abspath(inspect.getfile(
+            inspect.currentframe())))
 
     def test_source_suppress_export(self):
         """
@@ -56,21 +59,22 @@ class TestSuppress(unittest.TestCase):
 
         generated_file = os.path.join(self._test_workspace,
                                       "generated.suppress")
+        skip_file = os.path.join(self._test_directory, "suppress_export.skip")
 
         extract_cmd = ['CodeChecker', 'parse',
                        os.path.join(self._test_workspace, "reports"),
                        "--suppress", generated_file,
-                       "--export-source-suppress",
+                       "--export-source-suppress", "--ignore", skip_file,
                        "--verbose", "debug"]
 
         ret = call_cmd(extract_cmd,
                        self._test_project_path,
-                       env.test_env(self._test_workspace))
+                       env.test_env(self._test_directory))
         self.assertEqual(ret, 2, "Failed to generate suppress file.")
 
         with open(generated_file, 'r',
                   encoding='utf-8', errors='ignore') as generated:
-            expected_file = os.path.join(self._test_project_path,
+            expected_file = os.path.join(self._test_directory,
                                          "suppress.expected")
             with open(expected_file, 'r', encoding='utf-8',
                       errors='ignore') as expected:
@@ -86,3 +90,37 @@ class TestSuppress(unittest.TestCase):
                                  0,
                                  "The generated suppress file does not "
                                  "look like what was expected")
+
+    def test_doubled_suppress(self):
+        """
+        Test to catch repeated suppress comments with same bug.
+        """
+
+        skip_file = os.path.join(self._test_directory, "doubled_suppress.skip")
+
+        extract_cmd = ['CodeChecker', 'parse',
+                       os.path.join(self._test_workspace, "reports"),
+                       "--ignore", skip_file, "--verbose", "debug"]
+
+        ret = call_cmd(extract_cmd,
+                       self._test_project_path,
+                       env.test_env(self._test_workspace))
+        self.assertEqual(ret, 1, "Repeated suppress comment not recognized.")
+
+    def test_doubled_suppress_by_all(self):
+        """
+        Test to catch unnecessary suppress comment that was covered by a
+        suppress all comment.
+        """
+
+        skip_file = os.path.join(self._test_directory, "suppress_by_all.skip")
+
+        extract_cmd = ['CodeChecker', 'parse',
+                       os.path.join(self._test_workspace, "reports"),
+                       "--ignore", skip_file, "--verbose", "debug"]
+
+        ret = call_cmd(extract_cmd,
+                       self._test_project_path,
+                       env.test_env(self._test_workspace))
+        self.assertEqual(ret, 1, "Already covered suppress comment not "
+                         "recognized.")

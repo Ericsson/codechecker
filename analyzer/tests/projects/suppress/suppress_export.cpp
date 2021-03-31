@@ -31,13 +31,6 @@ void foo5()
   sizeof(44);
 }
 
-void foo6()
-{
-  // codechecker_suppress [all, bugprone-sizeof-expression] foo6 multiple
-  // codechecker_confirmed [bugprone-sizeof-expression] foo6 simple
-  sizeof(45);
-}
-
 void foo7()
 {
   // codechecker_confirmed [sizeof-expression] substring of the checker name
