@@ -24,6 +24,8 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
     Configuration handler for the clang static analyzer.
     """
 
+    __capability_detectors = dict()
+
     def __init__(self, environ):
         super(ClangSAConfigHandler, self).__init__()
         self.ctu_dir = ''
@@ -33,8 +35,9 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
         self.ld_lib_path_extra = ''
         self.enable_z3 = False
         self.enable_z3_refutation = False
-        self.environ = environ
         self.version_info = None
+
+        self.__environ = environ
 
     @property
     def analyzer_plugins(self):
@@ -62,4 +65,14 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
 
     @property
     def ctu_capability(self):
-        return CTUAutodetection(self.analyzer_binary, self.environ)
+        assert (self.analyzer_binary is not None), \
+            "Wrong class initialization order"
+
+        detector = ClangSAConfigHandler.__capability_detectors.get(
+            self.analyzer_binary)
+        if not detector:
+            detector = CTUAutodetection(self.analyzer_binary, self.__environ)
+            ClangSAConfigHandler.__capability_detectors[
+                self.analyzer_binary] = detector
+
+        return detector

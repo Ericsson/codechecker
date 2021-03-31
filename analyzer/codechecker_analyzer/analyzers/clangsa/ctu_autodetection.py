@@ -12,42 +12,14 @@ Clang Static Analyzer related functions.
 import subprocess
 
 from codechecker_common.logger import get_logger
-from codechecker_analyzer import host_check
 from codechecker_analyzer.analyzers.clangsa import clang_options, version
+
+from typing import Dict, Optional, List
 
 LOG = get_logger('analyzer.clangsa')
 
 CTU_ON_DEMAND_OPTION_NAME = 'ctu-invocation-list'
-
-
-def invoke_binary_checked(binary_path, args=None, environ=None):
-    """
-    Invoke the binary with the specified args, and return the output if the
-    command finished running with zero exit code. Return False otherwise.
-    Possible usage can be used to check the existence binaries.
-
-    :param binary_path: The path to the executable to invoke
-    :param args: The arguments of the invocation
-    :type binary_path: str
-    :type args: list
-    :rtype str
-    """
-
-    args = args or []
-    invocation = [binary_path]
-    invocation.extend(args)
-    try:
-        output = subprocess.check_output(
-            invocation,
-            env=environ,
-            encoding="utf-8",
-            errors="ignore")
-    except (subprocess.CalledProcessError, OSError) as e:
-        LOG.debug(
-            'Command invocation failed because of non-zero exit code!'
-            'Details: %s', str(e))
-        return False
-    return output
+CTU_DISPLAY_PROGRESS_OPTION_NAME = 'display-ctu-progress'
 
 
 class CTUAutodetection:
@@ -57,133 +29,230 @@ class CTUAutodetection:
     name.
     """
 
-    def __init__(self, analyzer_binary, environ):
-        self.__analyzer_binary = analyzer_binary
-        self.environ = environ
-        self.__analyzer_version_info = None
+    @staticmethod
+    def _invoke_binary_checked(
+            binary_path: str, args: Optional[List[str]] = None,
+            environ: Optional[Dict[str, str]] = None) -> str:
+        """
+        Invokes a binary with the specified args, and environment.
 
-        if self.__analyzer_binary is None:
+        Parameters
+        ----------
+        binary_path : str
+            The path to the executable to invoke
+        args : list[str]
+            The arguments of the invocation
+
+        Returns
+        -------
+        str
+            The content of the standard output of the called process.
+
+        Raises
+        ------
+        CalledProcessError
+            Fom underlying subprocess module.
+        OSError
+            Fom underlying subprocess module.
+        """
+
+        args = args or []
+        invocation = [binary_path]
+        invocation.extend(args)
+        try:
+            output = subprocess.check_output(
+                invocation,
+                env=environ,
+                encoding="utf-8",
+                errors="ignore")
+        except (subprocess.CalledProcessError, OSError) as ex:
             LOG.debug(
-                'Trying to detect CTU capability, but analyzer binary is not '
-                'set!')
-            return None
+                'Command invocation "{}" failed because of non-zero exit code!'
+                'Details: {}'.format(invocation, str(ex)))
+            raise ex
+        return output
 
-        analyzer_version = invoke_binary_checked(
-            self.__analyzer_binary, ['--version'], self.environ)
+    def __init__(self, analyzer_binary: str,
+                 environment: Optional[Dict[str, str]]):
+        """
+        Parameters
+        ----------
+        analyzer_binary : str
+            Full path name of the executable.
+        environment : dict
+            Environment variable definitions.
+
+        Raises
+        ------
+        CalledProcessError
+            Fom underlying subprocess module.
+        OSError
+            Fom underlying subprocess module.
+        """
+
+        assert (analyzer_binary is not None), \
+            'Trying to detect CTU capability, but analyzer binary is not set!'
+
+        self.__analyzer_binary = analyzer_binary
+        self.__environment = environment
+        analyzer_version = CTUAutodetection._invoke_binary_checked(
+            self.__analyzer_binary, ['--version'], self.__environment)
 
         if analyzer_version is False:
             LOG.debug('Failed to invoke command to get Clang version!')
             return None
 
         version_parser = version.ClangVersionInfoParser()
-        version_info = version_parser.parse(analyzer_version)
+        self.__analyzer_version_info = version_parser.parse(analyzer_version)
 
-        if not version_info:
-            LOG.debug('Failed to parse Clang version information!')
-            return None
-
-        self.__analyzer_version_info = version_info
-
-    @property
-    def analyzer_version_info(self):
-        """
-        Returns the relevant parameters of the analyzer by parsing the
-        output of the analyzer binary when called with version flag.
-        """
         if not self.__analyzer_version_info:
-            return False
+            LOG.debug('Failed to parse Clang version information!')
+            self.__tool_path = None
+            self.__mapping_file_name = None
+        else:
+            self.__tool_path, self.__mapping_file_name = \
+                clang_options.ctu_mapping(self.__analyzer_version_info)
 
-        return self.__analyzer_version_info
+        self.__analyzer_options = CTUAutodetection._invoke_binary_checked(
+            self.__analyzer_binary, ['-cc1', '-analyzer-config-help'],
+            self.__environment)
+
+        self.__display_ctu_progress_options = \
+            self.__get_display_ctu_progress_options()
+        self.__on_demand_ctu_available = self.__get_on_demand_ctu_available()
+        self.__ctu_capable = self.__get_ctu_capable()
 
     @property
-    def major_version(self):
+    def installed_dir(self) -> str:
         """
-        Returns the major version of the analyzer, which is used for
+        Queries the installed directory of the analyzer, which is used for
         CTU analysis.
+
+        Returns
+        -------
+        str
+            Directory name or None if it could not be detected.
         """
-        return self.analyzer_version_info.major_version
+
+        return self.__analyzer_version_info.installed_dir
 
     @property
-    def installed_dir(self):
+    def mapping_tool_path(self) -> Optional[str]:
         """
-        Returns the installed directory of the analyzer, which is used for
-        CTU analysis.
+        Queries the path to the mapping tool.
+
+        Returns
+        -------
+        bool
+            Full path of the name of executable or None if it could not be
+            detected.
         """
-        return self.analyzer_version_info.installed_dir
+
+        return self.__tool_path
 
     @property
-    def mapping_tool_path(self):
-        """Return the path to the mapping tool."""
-        tool_path, _ = clang_options.ctu_mapping(self.analyzer_version_info)
-
-        if tool_path:
-            return tool_path
-        return False
-
-    @property
-    def display_progress(self):
+    def display_progress_options(self) -> Optional[List[str]]:
         """
-        Return analyzer args if it is capable to display ctu progress.
+        Queries analyzer args to display ctu progress.
 
-        Returns None if the analyzer can not display ctu progress.
-        The ctu display progress arguments depend on
-        the clang analyzer version.
+        Returns
+        -------
+        list[str]
+            Returns a list of ctu display progress arguments depend on the
+            current clang analyzer version.
+            Otherwise None if the analyzer can not display ctu progress.
         """
 
-        if not self.analyzer_version_info:
+        return self.__display_ctu_progress_options
+
+    def __get_display_ctu_progress_options(self) -> Optional[List[str]]:
+        """
+        Detects availability of 'display ctu progress' feature of clang.
+
+        Returns
+        -------
+        list[str]
+            Returns a list of ctu display progress arguments depend on the
+            current clang analyzer version.
+            None if the analyzer can not display ctu progress.
+        """
+
+        if CTU_DISPLAY_PROGRESS_OPTION_NAME in self.__analyzer_options:
+            return ['-Xclang', '-analyzer-config', '-Xclang',
+                    'display-ctu-progress=true']
+        else:
             return None
-        ctu_display_progress_args = ['-Xclang',
-                                     '-analyzer-config',
-                                     '-Xclang',
-                                     'display-ctu-progress=true']
-
-        ok = host_check.has_analyzer_config_option(
-            self.__analyzer_binary, "display-ctu-progress", self.environ)
-        if not ok:
-            return None
-        return ctu_display_progress_args
 
     @property
-    def mapping_file_name(self):
+    def mapping_file_name(self) -> Optional[str]:
         """
-        Returns the installed directory of the analyzer, which is used for
+        Queries the 'clang external def mapping file', which is used for
         CTU analysis.
+
+        Returns
+        -------
+        str
+            Full path of the name of mapping file or None if it could not be
+            detected.
         """
 
-        _, mapping_file_name = \
-            clang_options.ctu_mapping(self.analyzer_version_info)
-
-        if mapping_file_name:
-            return mapping_file_name
-        return False
+        return self.__mapping_file_name
 
     @property
-    def is_ctu_capable(self):
+    def is_ctu_capable(self) -> bool:
+        """
+        Queries if the current clang is CTU compatible.
+
+        Returns
+        -------
+        bool
+            True if analyzer capable of CTU analysis, otherwise False.
+        """
+
+        return self.__ctu_capable
+
+    def __get_ctu_capable(self) -> bool:
         """
         Detects if the current clang is CTU compatible. Tries to autodetect
         the correct one based on clang version.
+
+        Returns
+        -------
+        bool
+            True if analyzer capable of CTU analysis, otherwise False.
         """
 
-        tool_path = self.mapping_tool_path
-
-        if not tool_path:
+        if not self.__tool_path:
             return False
 
-        return invoke_binary_checked(tool_path, ['-version'], self.environ) \
-            is not False
+        return CTUAutodetection._invoke_binary_checked(
+            self.__tool_path, ['-version'], self.__environment) is not False
 
     @property
-    def is_on_demand_ctu_available(self):
+    def is_on_demand_ctu_available(self) -> bool:
+        """
+        Query CTU analysis capability of underlying analyzer.
+
+        Returns
+        -------
+        bool
+            True if analyzer capable of CTU analysis, otherwise False.
+        """
+
+        return self.__on_demand_ctu_available
+
+    def __get_on_demand_ctu_available(self) -> bool:
         """
         Detects if the current Clang supports on-demand parsing of ASTs for
         CTU analysis.
+
+        Returns
+        -------
+        bool
+            True if analyzer capable of CTU analysis, otherwise False.
         """
 
-        analyzer_options = invoke_binary_checked(
-            self.__analyzer_binary, ['-cc1', '-analyzer-config-help'],
-            self.environ)
-
-        if analyzer_options is False:
+        if not self.__analyzer_options:
             return False
 
-        return CTU_ON_DEMAND_OPTION_NAME in analyzer_options
+        return CTU_ON_DEMAND_OPTION_NAME in self.__analyzer_options
