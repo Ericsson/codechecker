@@ -81,7 +81,7 @@ class DiffLocal(unittest.TestCase):
             self.assertEqual(new_result['checkerId'], "core.NullDereference")
 
     def test_non_existent_reports_directory(self):
-        """Hadles non existent directory well
+        """Handles non existent directory well
 
         Displays detailed information about base and new directories when
         any of them are not exist.
@@ -90,7 +90,9 @@ class DiffLocal(unittest.TestCase):
         return_code = 0
         try:
             get_diff_results([self.base_reports], ['unexistent-dir-name'],
-                             '--new')
+                             '--new', extra_args=[
+                                 '--url',
+                                 f"localhost:{env.get_free_port()}/Default"])
         except subprocess.CalledProcessError as process_error:
             return_code = process_error.returncode
             error_output = process_error.stderr
