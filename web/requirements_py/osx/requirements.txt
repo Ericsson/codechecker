@@ -1,4 +1,4 @@
-lxml==4.6.2
+lxml==4.6.3
 alembic==1.5.5
 portalocker==2.2.1
 psutil==5.8.0
