@@ -6,9 +6,6 @@
     "alpha.core.CastSize": {
       "sei-cert": ["mem35-c", "str38-c"]
     },
-    "alpha.core.CastToStruct": {
-      "sei-cert": ["exp36-c"]
-    },
     "alpha.core.Conversion": {
       "sei-cert": ["flp36-c", "int30-c"]
     },
@@ -23,12 +20,6 @@
     },
     "alpha.cplusplus.DeleteWithNonVirtualDtor": {
       "sei-cert": ["oop52-cpp"]
-    },
-    "alpha.cplusplus.InvalidatedIterator": {
-      "sei-cert": ["ctr51-cpp"]
-    },
-    "alpha.cplusplus.PlacementNew": {
-      "sei-cert": ["mem54-cpp"]
     },
     "alpha.security.ArrayBound": {
       "sei-cert": ["arr37-c", "dcl38-c", "msc37-c", "pos30-c"]
@@ -213,6 +204,9 @@
     },
     "cplusplus.NewDeleteLeaks": {
       "sei-cert": ["exp62-cpp", "mem51-cpp"]
+    },
+    "cplusplus.PlacementNew": {
+      "sei-cert": ["mem54-cpp"]
     },
     "cppcoreguidelines-pro-type-const-cast": {
       "sei-cert": ["exp55-cpp"]
