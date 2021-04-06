@@ -47,7 +47,7 @@ class CTUAutodetectionVersionParsingTest(unittest.TestCase):
         parser = version.ClangVersionInfoParser()
         version_info = parser.parse('')
 
-        self.assertFalse(version_info, False)
+        self.assertFalse(version_info)
 
     def test_built_from_source_clang_7(self):
         """
@@ -62,7 +62,7 @@ class CTUAutodetectionVersionParsingTest(unittest.TestCase):
         parser = version.ClangVersionInfoParser()
         version_info = parser.parse(version_string)
 
-        self.assertIsNot(version_info, False)
+        self.assertIsNot(version_info, None)
         self.assertEqual(version_info.major_version, 7)
         self.assertEqual(version_info.minor_version, 1)
         self.assertEqual(version_info.patch_version, 0)
@@ -81,7 +81,7 @@ class CTUAutodetectionVersionParsingTest(unittest.TestCase):
         parser = version.ClangVersionInfoParser()
         version_info = parser.parse(version_string)
 
-        self.assertIsNot(version_info, False)
+        self.assertIsNot(version_info, None)
         self.assertEqual(version_info.major_version, 8)
         self.assertEqual(version_info.minor_version, 0)
         self.assertEqual(version_info.patch_version, 1)
@@ -100,7 +100,7 @@ class CTUAutodetectionVersionParsingTest(unittest.TestCase):
         parser = version.ClangVersionInfoParser()
         version_info = parser.parse(version_string)
 
-        self.assertIsNot(version_info, False)
+        self.assertIsNot(version_info, None)
         self.assertEqual(version_info.major_version, 7)
         self.assertEqual(version_info.minor_version, 0)
         self.assertEqual(version_info.patch_version, 0)
@@ -119,7 +119,7 @@ class CTUAutodetectionVersionParsingTest(unittest.TestCase):
         parser = version.ClangVersionInfoParser()
         version_info = parser.parse(version_string)
 
-        self.assertIsNot(version_info, False)
+        self.assertIsNot(version_info, None)
         self.assertEqual(version_info.major_version, 9)
         self.assertEqual(version_info.minor_version, 0)
         self.assertEqual(version_info.patch_version, 0)
@@ -134,4 +134,4 @@ class CTUAutodetectionVersionParsingTest(unittest.TestCase):
 
         parser = version.ClangVersionInfoParser()
         version_info = parser.parse(version_string)
-        self.assertIs(version_info, False)
+        self.assertIs(version_info, None)

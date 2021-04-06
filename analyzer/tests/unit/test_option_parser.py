@@ -25,10 +25,11 @@ class OptionParserTest(unittest.TestCase):
     parsing of the g++/gcc compiler options.
     """
 
-    @unittest.skipIf(clangsa.version.get("gcc") is not None,
-                     "If gcc or g++ is a symlink to clang this test should be "
-                     "skipped. Option filtering is different for the two "
-                     "compilers. This test is gcc/g++ specific.")
+    @unittest.skipUnless(
+        clangsa.version.get("gcc"),
+        "If gcc or g++ is a symlink to clang this test should be "
+        "skipped. Option filtering is different for the two "
+        "compilers. This test is gcc/g++ specific.")
     def test_build_onefile(self):
         """
         Test the build command of a simple file.
@@ -45,10 +46,11 @@ class OptionParserTest(unittest.TestCase):
         self.assertTrue(BuildAction.COMPILE, res.action_type)
         self.assertEqual(0, len(res.analyzer_options))
 
-    @unittest.skipIf(clangsa.version.get("g++") is not None,
-                     "If gcc or g++ is a symlink to clang this test should be "
-                     "skipped. Option filtering is different for the two "
-                     "compilers. This test is gcc/g++ specific.")
+    @unittest.skipUnless(
+        clangsa.version.get("g++"),
+        "If gcc or g++ is a symlink to clang this test should be "
+        "skipped. Option filtering is different for the two "
+        "compilers. This test is gcc/g++ specific.")
     def test_build_multiplefiles(self):
         """
         Test the build command of multiple files.
@@ -155,10 +157,11 @@ class OptionParserTest(unittest.TestCase):
         self.assertTrue(set(compiler_options) == set(res.analyzer_options))
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
-    @unittest.skipIf(clangsa.version.get("g++") is not None,
-                     "If gcc or g++ is a symlink to clang this test should be "
-                     "skipped. Option filtering is different for the two "
-                     "compilers. This test is gcc/g++ specific.")
+    @unittest.skipUnless(
+        clangsa.version.get("g++"),
+        "If gcc or g++ is a symlink to clang this test should be "
+        "skipped. Option filtering is different for the two "
+        "compilers. This test is gcc/g++ specific.")
     def test_compile_with_include_paths(self):
         """
         sysroot should be detected as compiler option because it is needed
@@ -206,10 +209,11 @@ class OptionParserTest(unittest.TestCase):
         print(res)
         self.assertEqual(BuildAction.LINK, res.action_type)
 
-    @unittest.skipIf(clangsa.version.get("g++") is not None,
-                     "If gcc or g++ is a symlink to clang this test should be "
-                     "skipped. Option filtering is different for the two "
-                     "compilers. This test is gcc/g++ specific.")
+    @unittest.skipUnless(
+        clangsa.version.get("g++"),
+        "If gcc or g++ is a symlink to clang this test should be "
+        "skipped. Option filtering is different for the two "
+        "compilers. This test is gcc/g++ specific.")
     def test_link_with_include_paths(self):
         """
         Should be link if only object files are in the command.
@@ -267,17 +271,18 @@ class OptionParserTest(unittest.TestCase):
         self.assertEqual(res.source, 'main.cpp')
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
-    @unittest.skipIf(clangsa.version.get("g++") is not None,
-                     "If gcc or g++ is a symlink to clang this test should be "
-                     "skipped. Option filtering is different for the two "
-                     "compilers. This test is gcc/g++ specific.")
+    @unittest.skipUnless(
+        clangsa.version.get("g++"),
+        "If gcc or g++ is a symlink to clang this test should be "
+        "skipped. Option filtering is different for the two "
+        "compilers. This test is gcc/g++ specific.")
     def test_ignore_flags_gcc(self):
         """
         Test if special compiler options are ignored properly.
         """
         ignore = ["-Werror", "-fsyntax-only",
                   "-mfloat-gprs=double", "-mfloat-gprs=yes",
-                  "-mabi=spe", "-mabi=eabi", "-fext-numeric-literal"]
+                  "-mabi=spe", "-mabi=eabi", "-fext-numeric-literals"]
         action = {
             'file': 'main.cpp',
             'command': "g++ {} main.cpp".format(' '.join(ignore)),
@@ -478,10 +483,11 @@ class OptionParserTest(unittest.TestCase):
         self.assertEqual(res,
                          '/usr/lib/ccache/g++')
 
-    @unittest.skipIf(clangsa.version.get("g++") is not None,
-                     "If gcc or g++ is a symlink to clang this test should be "
-                     "skipped. Option filtering is different for the two "
-                     "compilers. This test is gcc/g++ specific.")
+    @unittest.skipUnless(
+        clangsa.version.get("g++"),
+        "If gcc or g++ is a symlink to clang this test should be "
+        "skipped. Option filtering is different for the two "
+        "compilers. This test is gcc/g++ specific.")
     def test_compiler_gcc_implicit_includes(self):
         action = {
             'file': 'main.cpp',
@@ -524,10 +530,11 @@ class OptionParserTest(unittest.TestCase):
             res = log_parser.parse_options(action, keep_gcc_intrin=True)
             self.assertEqual(include_dirs, res.analyzer_options)
 
-    @unittest.skipIf(clangsa.version.get("g++") is not None,
-                     "If gcc or g++ is a symlink to clang this test should be "
-                     "skipped. Option filtering is different for the two "
-                     "compilers. This test is gcc/g++ specific.")
+    @unittest.skipUnless(
+        clangsa.version.get("g++"),
+        "If gcc or g++ is a symlink to clang this test should be "
+        "skipped. Option filtering is different for the two "
+        "compilers. This test is gcc/g++ specific.")
     def test_compiler_gcc_intrin_headers(self):
         def contains_intrinsic_headers(dirname):
             for f in os.listdir(dirname):

@@ -108,10 +108,11 @@ class TestAnalyze(unittest.TestCase):
                 os.remove(f)
         self.assertEqual(failed_file_count, failed_count)
 
-    @unittest.skipIf(version.get("gcc") is not None,
-                     "If gcc or g++ is a symlink to clang this test should be "
-                     "skipped. Option filtering is different for the two "
-                     "compilers. This test is gcc/g++ specific.")
+    @unittest.skipUnless(
+        version.get("gcc"),
+        "If gcc or g++ is a symlink to clang this test should be "
+        "skipped. Option filtering is different for the two "
+        "compilers. This test is gcc/g++ specific.")
     def test_compiler_info_files(self):
         '''
         Test that the compiler info files are generated

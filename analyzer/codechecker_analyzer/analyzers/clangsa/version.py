@@ -49,14 +49,15 @@ class ClangVersionInfoParser(object):
         """Try to parse the version string using the predefined patterns."""
         version_match = re.search(self.clang_version_pattern, version_string)
         if not version_match:
-            return False
+            return
 
         installed_dir_match = re.search(
             self.clang_installed_dir_pattern, version_string)
 
-        installed_dir = os.path.dirname(shutil.which(self.analyzer_binary))
         if installed_dir_match:
             installed_dir = installed_dir_match.group('installed_dir')
+        else:
+            installed_dir = os.path.dirname(shutil.which(self.analyzer_binary))
 
         return ClangVersionInfo(
             version_match.group('major_version'),

@@ -48,7 +48,10 @@ def parse_clang_help_page(command, start_label, environ):
     except (subprocess.CalledProcessError, OSError):
         return []
 
-    help_page = help_page[help_page.index(start_label) + len(start_label):]
+    try:
+        help_page = help_page[help_page.index(start_label) + len(start_label):]
+    except ValueError:
+        return []
 
     # This regex will match lines which contain only a flag or a flag and a
     # description: '  <flag>', '  <flag> <description>'.
