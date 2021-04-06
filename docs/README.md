@@ -175,6 +175,7 @@ The following tools are supported:
 |                | [Smatch](/tools/report-converter/README.md#smatch)    |
 |                | [Kernel-Doc](/tools/report-converter/README.md#kernel-doc)    |
 |                | [Sparse](/tools/report-converter/README.md#sparse)    |
+|                | [cpplint](/tools/report-converter/README.md#cpplint)    |
 | **Java**       | [SpotBugs](/tools/report-converter/README.md#spotbugs)    |
 |                | [Facebook Infer](/tools/report-converter/README.md#fbinfer)    |
 | **Python**     | [Pylint](/tools/report-converter/README.md#pylint)    |

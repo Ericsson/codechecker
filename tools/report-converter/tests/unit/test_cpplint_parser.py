@@ -37,7 +37,7 @@ class CpplintAnalyzerResultTestCase(unittest.TestCase):
         shutil.rmtree(self.cc_result_dir)
 
     def test_no_cpplint_output_file(self):
-        """ Test transforming single cpplint output file. """
+        """ Test transforming single cpp file. """
         analyzer_result = os.path.join(self.test_files, 'files',
                                        'sample.cpp')
 

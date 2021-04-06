@@ -25,6 +25,7 @@ a CodeChecker server.
 * [Kernel-Doc](#kernel-doc)
 * [Sphinx](#sphinx)
 * [Sparse](#sparse)
+* [cpplint](#cpplint)
 * [License](#license)
 
 ## Install guide
@@ -60,9 +61,10 @@ optional arguments:
                         report directory files.
   -t TYPE, --type TYPE  Specify the format of the code analyzer output.
                         Currently supported output types are: asan, clang-
-                        tidy, coccinelle, cppcheck, eslint, fbinfer, golint,
-                        kernel-doc, msan, pyflakes, pylint, smatch, sparse,
-                        spotbugs, sphinx, tsan, tslint, ubsan.
+                        tidy, coccinelle, cppcheck, cpplint, eslint,
+                        fbinfer, golint, kernel-doc, mdl, msan, pyflakes,
+                        pylint, smatch, sparse, sphinx, spotbugs, tsan,
+                        tslint, ubsan.
   --meta [META [META ...]]
                         Metadata information which will be stored alongside
                         the run when the created report directory will be
@@ -90,6 +92,7 @@ Supported analyzers:
   clang-tidy - Clang Tidy, https://clang.llvm.org/extra/clang-tidy
   coccinelle - Coccinelle, https://github.com/coccinelle/coccinelle
   cppcheck - Cppcheck, http://cppcheck.sourceforge.net
+  cpplint - cpplint, https://github.com/cpplint/cpplint
   eslint - ESLint, https://eslint.org/
   fbinfer - Facebook Infer, https://fbinfer.com
   golint - Golint, https://github.com/golang/lint
@@ -98,10 +101,10 @@ Supported analyzers:
   msan - MemorySanitizer, https://clang.llvm.org/docs/MemorySanitizer.html
   pyflakes - Pyflakes, https://github.com/PyCQA/pyflakes
   pylint - Pylint, https://www.pylint.org
-  smatch - smatch, https://repo.or.cz/w/smatch.git
-  sparse - sparse, https://git.kernel.org/pub/scm/devel/sparse/sparse.git
+  smatch - Smatch, https://repo.or.cz/w/smatch.git
+  sparse - Sparse, https://git.kernel.org/pub/scm/devel/sparse/sparse.git
+  sphinx - Sphinx, https://github.com/sphinx-doc/sphinx
   spotbugs - spotbugs, https://spotbugs.github.io
-  sphinx - sphinx, https://github.com/sphinx-doc/sphinx
   tsan - ThreadSanitizer, https://clang.llvm.org/docs/ThreadSanitizer.html
   tslint - TSLint, https://palantir.github.io/tslint
   ubsan - UndefinedBehaviorSanitizer, https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
@@ -530,6 +533,31 @@ report-converter -t sparse -o ./codechecker_sparse_reports ./sparse.out
 
 # Store the Sparse reports with CodeChecker.
 CodeChecker store ./codechecker_sparse_reports -n sparse
+```
+
+## [cpplint](https://github.com/cpplint/cpplint)
+[cpplint](https://github.com/cpplint/cpplint) is a lint-like tool which checks
+C++ code against [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html).
+
+The recommended way of running cpplint is to redirect the output to a file and
+give this file to the report converter tool.
+
+The following example shows you how to run cpplint and store the results
+found by cpplint to the CodeChecker database.
+
+```sh
+# Change Directory to your project
+cd path/to/linux/kernel/repository
+
+# Run cpplint
+cpplint sample.cpp > ./sample.out 2>&1
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of cpplint
+report-converter -t cpplint -o ./codechecker_cpplint_reports ./sample.out
+
+# Store the cpplint reports with CodeChecker.
+CodeChecker store ./codechecker_cpplint_reports -n cpplint
 ```
 
 ## License
