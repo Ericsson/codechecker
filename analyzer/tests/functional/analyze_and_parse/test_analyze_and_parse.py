@@ -102,6 +102,30 @@ class AnalyzeParseTestCase(
         """Restore environment after tests have ran."""
         os.chdir(cls.__old_pwd)
 
+    def __force_j1(self, cmd):
+        """
+        In case of CodeChecker analyze and check commands the analysis is
+        forced to one core.
+        """
+        if cmd[1] != 'analyze' and cmd[1] != 'check':
+            return cmd
+
+        new_cmd = []
+
+        i = 0
+        while i < len(cmd):
+            if cmd[i] == '-j' or cmd[i] == '--jobs':
+                i += 2
+            elif cmd[i].startswith('-j'):
+                i += 1
+            else:
+                new_cmd.append(cmd[i])
+                i += 1
+
+        new_cmd.append('-j1')
+
+        return new_cmd
+
     def check_one_file(self, path, mode):
         """
         Test 'analyze' and 'parse' output on a ".output" file.
@@ -154,7 +178,7 @@ class AnalyzeParseTestCase(
 
             try:
                 result = subprocess.check_output(
-                    shlex.split(command),
+                    self.__force_j1(shlex.split(command)),
                     env=self.env,
                     cwd=self.test_dir,
                     encoding="utf-8",
