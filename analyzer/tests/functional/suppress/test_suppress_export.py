@@ -66,7 +66,7 @@ class TestSuppress(unittest.TestCase):
         ret = call_cmd(extract_cmd,
                        self._test_project_path,
                        env.test_env(self._test_workspace))
-        self.assertEqual(ret, 0, "Failed to generate suppress file.")
+        self.assertEqual(ret, 2, "Failed to generate suppress file.")
 
         with open(generated_file, 'r',
                   encoding='utf-8', errors='ignore') as generated:

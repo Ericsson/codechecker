@@ -55,6 +55,12 @@ epilog_env_var = f"""
                          Default: {_severity_map_file}
 """
 
+epilog_exit_status = """
+0 - No report
+1 - CodeChecker error
+2 - At least one report emitted by an analyzer
+"""
+
 
 class PlistToPlaintextFormatter(object):
     """
@@ -392,6 +398,10 @@ printed by the `parse` command.""",
 Environment variables
 ------------------------------------------------
 {epilog_env_var}
+
+Exit status
+------------------------------------------------
+{epilog_exit_status}
 """,
 
         # Help is shown when the "parent" CodeChecker command lists the
@@ -905,3 +915,6 @@ def main(args):
                     "reports!", changed_files)
 
     os.chdir(original_cwd)
+
+    if report_count != 0:
+        sys.exit(2)

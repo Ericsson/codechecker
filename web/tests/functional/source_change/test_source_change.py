@@ -71,7 +71,7 @@ class TestSkeleton(unittest.TestCase):
                                     test_proj_path)
 
         ret, out, _ = codechecker.parse(self._codechecker_cfg)
-        self.assertEqual(ret, 0)
+        self.assertEqual(ret, 2)
 
         # Need to wait a little before updating the last modification time.
         # If we do not wait, not enough time will be past
@@ -80,7 +80,7 @@ class TestSkeleton(unittest.TestCase):
         touch(null_deref_file)
 
         ret, out, _ = codechecker.parse(self._codechecker_cfg)
-        self.assertEqual(ret, 0)
+        self.assertEqual(ret, 2)
 
         msg = 'did change since the last analysis.'
         self.assertTrue(msg in out,
