@@ -465,8 +465,9 @@ https://github.com/Ericsson/codechecker/blob/master/docs/analyzer/report_identif
 
 Exit status
 ------------------------------------------------
-0 - Successful analysis
+0 - No report
 1 - CodeChecker error
+2 - At least one report emitted by an analyzer
 3 - Analysis of at least one translation unit failed
 128+signum - Terminating on a fatal signal whose number is signum
 
