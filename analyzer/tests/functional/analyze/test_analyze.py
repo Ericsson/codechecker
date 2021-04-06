@@ -45,7 +45,7 @@ class TestAnalyze(unittest.TestCase):
         os.chdir(self.test_dir)
 
         self.missing_checker_regex = re.compile(
-            r"No checker\(s\) with these names was found")
+            r"No checker with this name was found")
 
     def tearDown(self):
         """Restore environment after tests have ran."""
@@ -712,7 +712,7 @@ class TestAnalyze(unittest.TestCase):
         self.assertTrue("non-existing-checker-name" in out)
 
         errcode = process.returncode
-        self.assertEqual(errcode, 0)
+        self.assertEqual(errcode, 1)
 
     def test_disable_all_warnings(self):
         """Test disabling warnings as checker groups."""
@@ -778,17 +778,14 @@ class TestAnalyze(unittest.TestCase):
         self.assertTrue("non-existing-checker-name" in out)
 
         errcode = process.returncode
-        self.assertEqual(errcode, 0)
+        self.assertEqual(errcode, 1)
 
-    def test_multiple_invalid_checker_names(self):
-        """Warn in case of multiple invalid checker names."""
+    def test_checker_name_prefixes(self):
+        """Warn if there is no checker with a given prefix."""
         build_json = os.path.join(self.test_workspace, "build_success.json")
         analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
                        "--analyzers", "clangsa", "-o", self.report_dir,
-                       "-e", "non-existing-checker-name",
-                       "-e", "non-existing-checker",
-                       "-d", "missing.checker",
-                       "-d", "other.missing.checker"]
+                       "-e", "unix.M"]
 
         source_file = os.path.join(self.test_dir, "success.c")
         build_log = [{"directory": self.test_workspace,
@@ -812,10 +809,27 @@ class TestAnalyze(unittest.TestCase):
 
         match = self.missing_checker_regex.search(out)
         self.assertIsNotNone(match)
-        self.assertTrue("non-existing-checker-name" in out)
-        self.assertTrue("non-existing-checker" in out)
-        self.assertTrue("missing.checker" in out)
-        self.assertTrue("other.missing.checker" in out)
+        self.assertTrue("No checker with this name was found: unix.M" in out)
+
+        errcode = process.returncode
+
+        self.assertEqual(errcode, 1)
+
+        analyze_cmd[-1] = 'unix.cstring'
+        print(analyze_cmd)
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
+        out, _ = process.communicate()
+
+        match = self.missing_checker_regex.search(out)
+        self.assertIsNone(match)
+        self.assertFalse(
+            "No checker with this name was found: unix.cstring" in out)
 
         errcode = process.returncode
 

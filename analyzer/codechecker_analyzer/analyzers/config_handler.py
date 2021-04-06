@@ -51,6 +51,7 @@ class AnalyzerConfigHandler(object, metaclass=ABCMeta):
         self.analyzer_extra_arguments = []
         self.checker_config = ''
         self.report_hash = None
+        self.checker_groups = set()
 
         # The key is the checker name, the value is a tuple.
         # False if disabled (should be by default).
@@ -110,21 +111,23 @@ class AnalyzerConfigHandler(object, metaclass=ABCMeta):
         """
         Generate all applicable name variations from the given checker list.
         """
-        checker_names = (name for name in self.__available_checkers)
-        reserved_names = []
+        reserved_names = set()
 
-        for name in checker_names:
+        for name in self.__available_checkers:
             delim = '.' if '.' in name else '-'
             parts = name.split(delim)
-            # Creates a list of variations from a checker name, e.g.
-            # ['security', 'security.insecureAPI', 'security.insecureAPI.gets']
+            # Creates a set of variations from a checker name, e.g.
+            # {'security', 'security.insecureAPI', 'security.insecureAPI.gets'}
             # from 'security.insecureAPI.gets' or
-            # ['misc', 'misc-dangling', 'misc-dangling-handle']
+            # {'misc', 'misc-dangling', 'misc-dangling-handle'}
             # from 'misc-dangling-handle'.
-            v = [delim.join(parts[:(i + 1)]) for i in range(len(parts))]
-            reserved_names += v
+            v = set(delim.join(parts[:(i + 1)]) for i in range(len(parts)))
+            reserved_names |= v
 
         return reserved_names
+
+    def is_supported_checker_or_group(self, identifier):
+        return identifier in self.checker_groups
 
     def initialize_checkers(self,
                             analyzer_context,
@@ -207,9 +210,7 @@ class AnalyzerConfigHandler(object, metaclass=ABCMeta):
 
         # Set user defined enabled or disabled checkers from the command line.
 
-        # Construct a list of reserved checker names.
-        # (It is used to check if a profile name is valid.)
-        reserved_names = self.__gen_name_variations()
+        self.checker_groups = self.__gen_name_variations()
 
         for identifier, enabled in cmdline_enable:
             if identifier.startswith('profile:'):
@@ -219,7 +220,7 @@ class AnalyzerConfigHandler(object, metaclass=ABCMeta):
                     sys.exit(1)
                 for checker in profile_map.by_profile(profile_name):
                     self.set_checker_enabled(checker, enabled)
-            if identifier.startswith('guideline:'):
+            elif identifier.startswith('guideline:'):
                 guideline_name = identifier[len('guideline:'):]
                 if guideline_name not in guideline_map.available_guidelines():
                     LOG.error('No such guideline: %s', guideline_name)
@@ -227,16 +228,16 @@ class AnalyzerConfigHandler(object, metaclass=ABCMeta):
                 for checker in guideline_map.by_guideline(guideline_name):
                     self.set_checker_enabled(checker, enabled)
             elif identifier in profile_map.available_profiles():
-                if identifier in reserved_names:
+                if self.is_supported_checker_or_group(identifier):
                     LOG.warning("Profile name '%s' conflicts with a "
                                 "checker(-group) name.", identifier)
                 for checker in profile_map.by_profile(identifier):
                     self.set_checker_enabled(checker, enabled)
             elif identifier in guideline_map.available_guidelines():
-                if identifier in reserved_names:
+                if self.is_supported_checker_or_group(identifier):
                     LOG.warning("Guideline name '%s' conflicts with a "
                                 "checker(-group) name.", identifier)
                 for checker in guideline_map.by_guideline(identifier):
                     self.set_checker_enabled(checker, enabled)
-            else:
+            elif self.is_supported_checker_or_group(identifier):
                 self.set_checker_enabled(identifier, enabled)

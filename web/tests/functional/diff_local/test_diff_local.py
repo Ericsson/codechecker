@@ -195,6 +195,7 @@ class DiffLocal(unittest.TestCase):
         """
         cfg = dict(self._codechecker_cfg)
         cfg['analyzers'] = ['clang-tidy']
+        cfg['checkers'] = []
 
         makefile = f"all:\n\t$(CXX) -c main.cpp -Wno-all -Wno-extra " \
                    f"-o /dev/null\n"

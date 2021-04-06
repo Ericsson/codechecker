@@ -35,3 +35,17 @@ class ClangTidyConfigHandler(config_handler.AnalyzerConfigHandler):
 
         super(ClangTidyConfigHandler, self).set_checker_enabled(checker_name,
                                                                 enabled)
+
+    def is_supported_checker_or_group(self, identifier):
+        """
+        clang-tidy handles compiler warnings as checkers. These are not found
+        among the checkers of clang-tidy but implicitly captures as these were
+        one. This way "clang" and "clang-diagnostic" are valid checker groups.
+        Identifiers starting with "W" are also considered as compiler warnings
+        (e.g. Wunused-argument).
+        """
+        return identifier.startswith('clang') or \
+            identifier.startswith('clang-tidy') or \
+            identifier.startswith('W') or \
+            super(ClangTidyConfigHandler, self).is_supported_checker_or_group(
+                identifier)

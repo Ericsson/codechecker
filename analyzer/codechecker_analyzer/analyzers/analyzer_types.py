@@ -136,6 +136,28 @@ def check_available_analyzers(analyzers, errored):
     sys.exit(1)
 
 
+def check_available_checkers(analyzer_config_map, ordered_checkers):
+    """
+    This function checks if any of the explicitly enabled/disabled checkers in
+    ordered_checkers is not supported by any analyzer. In this case program
+    execution stops.
+    """
+    available_checkers = set()
+    for config_handler in analyzer_config_map.values():
+        available_checkers.update(config_handler.checker_groups)
+
+    for checker, _ in ordered_checkers:
+        if checker.startswith('profile:') or \
+                checker.startswith('guideline:') or \
+                checker.startswith('clang-diagnostic') or \
+                checker.startswith('W'):
+            continue
+
+        if checker not in available_checkers:
+            LOG.error("No checker with this name was found: %s", checker)
+            sys.exit(1)
+
+
 def check_supported_analyzers(analyzers, context):
     """
     Checks the given analyzers in the current context for their executability
