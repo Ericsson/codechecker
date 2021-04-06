@@ -102,10 +102,20 @@ package_statistics_collector: build_statistics_collector package_dir_structure
 	cd $(CC_BUILD_BIN_DIR) && \
 	ln -sf ../lib/python3/codechecker_statistics_collector/cli.py post-process-stats
 
+build_bazel_compile_commands:
+	$(MAKE) -C $(ROOT)/tools/bazel build
+
+package_bazel_compile_commands: build_bazel_compile_commands package_dir_structure
+	# Copy bazel_compile_commands files.
+	cp -rp $(CC_TOOLS)/bazel/build/bazel/bazel_compile_commands $(CC_BUILD_LIB_DIR) && \
+	chmod u+x $(CC_BUILD_LIB_DIR)/bazel_compile_commands/bazel_compile_commands.py && \
+	cd $(CC_BUILD_BIN_DIR) && \
+	ln -sf ../lib/python3/bazel_compile_commands/bazel_compile_commands.py bazel-compile-commands
+
 # This target should be used from the top level Makefile to build the package
 # together with the web part. This way we will not build plist-to-html
 # multiple times.
-package_analyzer: package_dir_structure package_plist_to_html package_tu_collector package_report_hash package_merge_clang_extdef_mappings package_report_converter package_statistics_collector
+package_analyzer: package_dir_structure package_plist_to_html package_tu_collector package_report_hash package_merge_clang_extdef_mappings package_report_converter package_statistics_collector package_bazel_compile_commands
 
 package: package_analyzer
 	# Copy libraries.
@@ -174,7 +184,7 @@ else
   endif
 endif
 
-clean_package: clean_plist_to_html clean_tu_collector
+clean_package: clean_plist_to_html clean_tu_collector clean_bazel_compile_commands
 	rm -rf $(BUILD_DIR)
 	find . -name "*.pyc" -delete
 
@@ -183,3 +193,6 @@ clean_plist_to_html:
 
 clean_tu_collector:
 	rm -rf $(ROOT)/tools/tu_collector/build
+
+clean_bazel_compile_commands:
+	rm -rf $(ROOT)/tools/bazel/build

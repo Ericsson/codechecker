@@ -33,7 +33,7 @@ jobs:
       - name: Install common dependencies
         run: |
           sudo apt-get update -q
-          sudo apt-get install gcc-multilib
+          sudo apt-get install gcc-multilib bazel
 
       - name: Run build-logger tests
         working-directory: analyzer/tools/build-logger
@@ -74,6 +74,12 @@ jobs:
 
       - name: Run tu-collector tests
         working-directory: tools/tu_collector
+        run: |
+          pip install -r requirements_py/dev/requirements.txt
+          make test
+
+      - name: Run bazel-compile-commands tests
+        working-directory: tools/bazel
         run: |
           pip install -r requirements_py/dev/requirements.txt
           make test
