@@ -27,8 +27,7 @@ from codechecker_common.source_code_comment_handler import REVIEW_STATUS_VALUES
 
 from codechecker_analyzer.cmd.analyze import \
     epilog_env_var as analyzer_epilog_env_var, \
-    epilog_issue_hashes as analyzer_epilog_issue_hashes, \
-    epilog_exit_status as analyzer_epilog_exit_status
+    epilog_issue_hashes as analyzer_epilog_issue_hashes
 
 from codechecker_analyzer.cmd.log import \
     epilog_env_var as log_epilog_env_var
@@ -70,7 +69,13 @@ Environment variables for 'CodeChecker parse' command:
 
 {analyzer_epilog_issue_hashes}
 
-{analyzer_epilog_exit_status}
+Exit status
+------------------------------------------------
+0 - No report
+1 - CodeChecker error
+2 - At least one report emitted by an analyzer
+3 - Analysis of at least one translation unit failed
+128+signum - Terminating on a fatal signal whose number is signum
 
 If you wish to reuse the logfile resulting from executing the build, see
 'CodeChecker log'. To keep analysis results for later, see and use
