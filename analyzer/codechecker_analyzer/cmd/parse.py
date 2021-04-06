@@ -372,7 +372,7 @@ def skip_report(report_hash, source_file, report_line, checker_name,
 
     elif len(src_comment_data) > 1:
         LOG.error("Multiple source code comment can be found "
-                  "for '%s' checker in '%s' at line %d. ",
+                  "for '%s' checker in '%s' at line %d.",
                   checker_name, source_file, report_line)
         sys.exit(1)
 

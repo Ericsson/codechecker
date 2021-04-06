@@ -85,7 +85,10 @@ class TestSuppress(unittest.TestCase):
                 print("expected")
                 print(expected_content)
 
-                diff = set(expected_content).difference(generated_content)
+                diff = set(expected_content).symmetric_difference(
+                           generated_content)
+                print("difference")
+                {print(elem) for elem in diff}
                 self.assertEqual(len(diff),
                                  0,
                                  "The generated suppress file does not "

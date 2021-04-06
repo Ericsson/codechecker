@@ -1,6 +1,10 @@
-0c07579523063acece2d7aebd4357cac||suppress.cpp||foo1 simple
-1a7ddce6d69b031310dd7ad2ff330b53||suppress.cpp||foo2 simple||false_positive
-45a2fef6845f54eaf070ad03d19c7981||suppress.cpp||foo3 simple||intentional
-9fb26da7f3224ec0c63cfe3617c8a14e||suppress.cpp||foo4 simple||confirmed
-75290eaa234caeb95e45fedc1ab6a43d||suppress.cpp||foo5 simple||confirmed
-f81ed46c9a231ece5949d53366acb83e||suppress.cpp||substring of the checker name||confirmed
+0c07579523063acece2d7aebd4357cac||suppress_export.cpp||foo1 simple||false_positive
+58b0efedaf67e081290e27c6caabce3f||suppress_export.cpp||foo2 simple||false_positive
+0b4a424e23295c1f133bf643006a8c1e||suppress_export.cpp||foo2 simple||false_positive
+4c3ca4953cad12c05eebfe6a71833880||suppress_export.cpp||foo3 simple||intentional
+d1551d7a120c30fadec6ac2e416705f5||suppress_export.cpp||foo3 simple||intentional
+26806cbc2fd851b977e4915eba75289e||suppress_export.cpp||foo4 simple||confirmed
+b14c948e6ae8e27e3a33b0ca898e98f1||suppress_export.cpp||foo4 simple||confirmed
+9742a60db843748810d4ae87edd946cc||suppress_export.cpp||foo5 simple||confirmed
+e7c1e9d5cfeae409363c9affb002892b||suppress_export.cpp||foo5 all||false_positive
+e5f1b57c0f5d41e95b1eb5bf2032aada||suppress_export.cpp||substring of the checker name||confirmed
