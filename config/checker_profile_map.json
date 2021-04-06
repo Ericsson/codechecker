@@ -70,7 +70,7 @@
         "alpha.core.PointerArithm",
         "alpha.core.Conversion",
         "alpha.core.CastToStruct",
-        "alpha.cplusplus.PlacementNew",
+        "cplusplus.PlacementNew",
         "option.cplusplus.VirtualCall",
         "alpha.unix.Chroot",
         "alpha.security",
