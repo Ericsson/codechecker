@@ -62,6 +62,8 @@ from codechecker_report_converter.sphinx.analyzer_result import \
     SphinxAnalyzerResult  # noqa
 from codechecker_report_converter.sparse.analyzer_result import \
     SparseAnalyzerResult  # noqa
+from codechecker_report_converter.cpplint.analyzer_result import \
+    CpplintAnalyzerResult  # noqa
 
 
 LOG = logging.getLogger('ReportConverter')
@@ -101,7 +103,8 @@ supported_converters = {
     SmatchAnalyzerResult.TOOL_NAME: SmatchAnalyzerResult,
     KernelDocAnalyzerResult.TOOL_NAME: KernelDocAnalyzerResult,
     SphinxAnalyzerResult.TOOL_NAME: SphinxAnalyzerResult,
-    SparseAnalyzerResult.TOOL_NAME: SparseAnalyzerResult
+    SparseAnalyzerResult.TOOL_NAME: SparseAnalyzerResult,
+    CpplintAnalyzerResult.TOOL_NAME: CpplintAnalyzerResult,
 }
 
 supported_metadata_keys = ["analyzer_command", "analyzer_version"]
