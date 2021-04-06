@@ -547,7 +547,7 @@ found by cpplint to the CodeChecker database.
 
 ```sh
 # Change Directory to your project
-cd path/to/linux/kernel/repository
+cd path/to/your/project
 
 # Run cpplint
 cpplint sample.cpp > ./sample.out 2>&1
