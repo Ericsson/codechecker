@@ -14,11 +14,18 @@ import json
 import os
 import plistlib
 import shutil
+import sys
 
 from collections import defaultdict
 from string import Template
 from typing import Callable, Dict, List, Optional, Set, Tuple
 from xml.parsers.expat import ExpatError
+
+if sys.version_info >= (3, 8):
+    from typing import TypedDict  # pylint: disable=no-name-in-module
+else:
+    from mypy_extensions import TypedDict
+
 
 SkipReportHandler = Callable[
     [str, str, int, str, dict, Dict[int, str]],
@@ -27,6 +34,66 @@ SkipReportHandler = Callable[
 
 TrimPathPrefixHandler = Callable[[str], str]
 SeverityMap = Dict[str, str]
+
+
+class Location(TypedDict):
+    col: int
+    file: int
+    line: int
+
+
+class Event(TypedDict):
+    location: Location
+    message: str
+
+
+class Macro(TypedDict):
+    location: Location
+    expansion: str
+    name: str
+
+
+class Note(TypedDict):
+    location: Location
+    message: str
+
+
+Events = List[Event]
+Macros = List[Macro]
+Notes = List[Note]
+
+
+class Report(TypedDict):
+    events: Events
+    macros: Macros
+    notes: Notes
+    path: str
+    reportHash: str
+    checkerName: str
+    reviewStatus: Optional[str]
+    severity: Optional[str]
+
+
+Reports = List[Report]
+
+
+class FileSource(TypedDict):
+    id: int
+    path: str
+    content: str
+
+
+FileSources = Dict[int, FileSource]
+
+
+class ReportData(TypedDict):
+    files: FileSources
+    reports: Reports
+
+
+class HtmlReport(TypedDict):
+    html_file: str
+    report: Report
 
 
 def get_last_mod_time(file_path: str) -> int:
@@ -42,8 +109,8 @@ def get_file_content(file_path: str) -> str:
 
 def twodim_to_table(
     lines: List[List[str]],
-    separate_head=True,
-    separate_footer=False
+    separate_head: bool = True,
+    separate_footer: bool = False
 ) -> Optional[str]:
     """ Pretty-prints the given two-dimensional array's lines. """
 
@@ -97,7 +164,7 @@ class HtmlBuilder(object):
     ):
         self._severity_map = severity_map if severity_map else {}
         self.layout_dir = layout_dir
-        self.generated_html_reports: Dict[str, dict] = {}
+        self.generated_html_reports: Dict[str, Reports] = {}
 
         css_dir = os.path.join(self.layout_dir, 'css')
         js_dir = os.path.join(self.layout_dir, 'js')
@@ -139,7 +206,7 @@ class HtmlBuilder(object):
             self._tag_contents[tag] = get_file_content(
                 self._layout_tag_files[tag])
 
-    def create(self, output_path: str, report_data):
+    def create(self, output_path: str, report_data: ReportData):
         """
         Create html file with the given report data to the output path.
         """
@@ -167,7 +234,7 @@ class HtmlBuilder(object):
         """
 
         # Sort reports based on file path levels.
-        report_data = []
+        report_data: List[HtmlReport] = []
         for html_file in self.generated_html_reports:
             for report in self.generated_html_reports[html_file]:
                 report_data.append({'html_file': html_file, 'report': report})
@@ -194,10 +261,14 @@ class HtmlBuilder(object):
 
                 events = report['events']
                 checker = report['checkerName']
-                severity = report['severity']
+                severity = report['severity'].lower() \
+                    if 'severity' in report \
+                    and report['severity'] is not None \
+                    else ''
 
                 review_status = report['reviewStatus'] \
-                    if 'reviewStatus' in report and report['reviewStatus'] \
+                    if 'reviewStatus' in report and \
+                    report['reviewStatus'] is not None \
                     else ''
 
                 line = events[-1]['location']['line']
@@ -211,9 +282,9 @@ class HtmlBuilder(object):
                         {report['path']} @ Line&nbsp;{line}
                       </a>
                     </td>
-                    <td class="severity" severity="{severity.lower()}">
-                      <i class="severity-{severity.lower()}"
-                         title="{severity.lower()}"></i>
+                    <td class="severity" severity="{severity}">
+                      <i class="severity-{severity}"
+                         title="{severity}"></i>
                     </td>
                     <td>{checker}</td>
                     <td>{events[-1]['message']}</td>
@@ -342,10 +413,10 @@ def get_report_data_from_plist(
     from the plist.
     """
     files = plist['files']
-    reports = []
-    file_sources = {}
+    reports: Reports = []
+    file_sources: FileSources = {}
 
-    def update_source_file(file_id):
+    def update_source_file(file_id: int):
         """
         Updates file source data by file id if the given file hasn't been
         processed.
@@ -381,7 +452,7 @@ def get_report_data_from_plist(
                 continue
 
         # Processing bug path events.
-        events = []
+        events: Events = []
         for path in bug_path_items:
             kind = path.get('kind')
             if kind == 'event':
@@ -393,7 +464,7 @@ def get_report_data_from_plist(
             update_source_file(path['location']['file'])
 
         # Processing macro expansions.
-        macros = []
+        macros: Macros = []
         for macro in diag.get('macro_expansions', []):
             macros.append({'location': macro['location'],
                            'expansion': macro['expansion'],
@@ -402,7 +473,7 @@ def get_report_data_from_plist(
             update_source_file(macro['location']['file'])
 
         # Processing notes.
-        notes = []
+        notes: Notes = []
         for note in diag.get('notes', []):
             notes.append({'location': note['location'],
                           'message': note['message']})
@@ -424,7 +495,8 @@ def get_report_data_from_plist(
                         'path': source_file,
                         'reportHash': report_hash,
                         'checkerName': checker_name,
-                        'reviewStatus': reviewStatus})
+                        'reviewStatus': reviewStatus,
+                        'severity': None})
 
     return {'files': file_sources,
             'reports': reports}
