@@ -722,48 +722,43 @@ def __collect_transform_include_opts(flag_iterator, details):
 
     m = COMPILE_OPTIONS_MERGED.match(flag_iterator.item)
 
-    if m:
-        flag = m.group(0)
-        together = len(flag) != len(flag_iterator.item)
+    if not m:
+        return False
 
-        if together:
-            param = flag_iterator.item[len(flag):]
-        else:
-            next(flag_iterator)
-            param = flag_iterator.item
+    flag = m.group(0)
+    together = len(flag) != len(flag_iterator.item)
 
-        # The .plist file contains a section with a list of files. For some
-        # further actions these need to be given with an absolute path. Clang
-        # prints them with absolute path if the original compiler invocation
-        # was given absolute paths.
-        # TODO: If Clang will be extended with an extra analyzer option in
-        # order to print these absolute paths natively, this conversion will
-        # not be necessary.
-        flags_with_path = ['-I', '-idirafter', '-imultilib',
-                           '-iquote', '-isysroot', '-isystem',
-                           '-iwithprefix', '-iwithprefixbefore', '-sysroot',
-                           '--sysroot']
-        if flag in flags_with_path:
-            # --sysroot format can be --sysroot=/path/to/include
-            # in this case before the normalization the '='
-            # sign must be removed.
-            # We put back the original
-            # --sysroot=/path/to/include as
-            # --sysroot /path/to/include
-            # which is a valid format too.
-            if param.startswith("="):
-                param = param[1:]
-                together = False
-            param = os.path.normpath(
-                    os.path.join(details['directory'], param))
+    if together:
+        param = flag_iterator.item[len(flag):]
+    else:
+        next(flag_iterator)
+        param = flag_iterator.item
 
-        if together:
-            details['analyzer_options'].append(flag + param)
-        else:
-            details['analyzer_options'].extend([flag, param])
+    # The .plist file contains a section with a list of files. For some
+    # further actions these need to be given with an absolute path. Clang
+    # prints them with absolute path if the original compiler invocation
+    # was given absolute paths.
+    # TODO: If Clang will be extended with an extra analyzer option in
+    # order to print these absolute paths natively, this conversion will
+    # not be necessary.
+    flags_with_path = ['-I', '-idirafter', '-iquote', '-isysroot', '-isystem',
+                       '-sysroot', '--sysroot']
+    if flag in flags_with_path and ('sysroot' in flag or param[0] != '='):
+        # --sysroot format can be --sysroot=/path/to/include in this case
+        # before the normalization the '=' sign must be removed.
+        # We put back the original
+        # --sysroot=/path/to/include as
+        # --sysroot /path/to/include
+        # which is a valid format too.
+        if param[0] == '=':
+            param = param[1:]
+            together = False
+        param = os.path.normpath(os.path.join(details['directory'], param))
 
-        return True
-    return False
+    details['analyzer_options'].extend(
+        [flag + param] if together else [flag, param])
+
+    return True
 
 
 def __collect_compile_opts(flag_iterator, details):
@@ -1001,8 +996,8 @@ def parse_options(compilation_db_entry,
     gcc_flag_transformers = [
         __skip_gcc,
         __replace,
-        __collect_compile_opts,
         __collect_transform_include_opts,
+        __collect_compile_opts,
         __determine_action_type,
         __skip_sources,
         __get_arch,

@@ -170,12 +170,13 @@ class OptionParserTest(unittest.TestCase):
                             "-include", "/include/myheader2.h",
                             "--include", "/include/myheader3.h",
                             "--sysroot", "/home/sysroot",
-                            "--sysroot=/home/sysroot3",
                             "-isysroot", "/home/isysroot",
                             "-isysroot/home/isysroot2",
                             "-I/home/test", "-I", "/home/test2",
                             "-idirafter", "/dirafter1",
-                            "-idirafter/dirafter2"]
+                            "-idirafter/dirafter2",
+                            "-I=relative_path1",
+                            "-I", "=relative_path2"]
         linker_options = ["-L/home/test_lib", "-lm"]
         build_cmd = "g++ -o myapp " + \
                     ' '.join(compiler_options) + ' ' + \
@@ -184,14 +185,14 @@ class OptionParserTest(unittest.TestCase):
         action = {
             'file': 'main.cpp',
             'command': build_cmd,
-            'directory': ''}
+            'directory': '/path/to/proj'}
 
         res = log_parser.parse_options(action)
         print(res)
         print(compiler_options)
         print(res.analyzer_options)
-        self.assertTrue('main.cpp' == res.source)
-        self.assertTrue(set(compiler_options) == set(res.analyzer_options))
+        self.assertEqual('main.cpp', res.source)
+        self.assertEqual(set(compiler_options), set(res.analyzer_options))
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
     def test_link_only_multiple_files(self):
