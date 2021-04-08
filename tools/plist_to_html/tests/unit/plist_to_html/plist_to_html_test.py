@@ -12,32 +12,38 @@ import plistlib
 import shutil
 import unittest
 
+from typing import ClassVar
+
 from libtest import env
 
 from plist_to_html import PlistToHtml
 
 
-def get_project_path(test_project):
+def get_project_path(test_project) -> str:
     """ Return project path for the given project. """
     return os.path.join(env.test_proj_root(), test_project)
 
 
-def load_plist_data(plist_filepath):
+def load_plist_data(plist_filepath) -> dict:
     with open(plist_filepath, 'rb') as plist_file:
         return plistlib.load(plist_file)
 
 
 class PlistToHtmlTest(unittest.TestCase):
+    test_workspace: ClassVar[str]
+    layout_dir: ClassVar[str]
+
     @classmethod
     def setUpClass(self):
         """ Initialize test files. """
         self.test_workspace = os.environ['TEST_WORKSPACE']
-        self.test_file_dir = os.path.join(self.test_workspace, "test_files")
         self.layout_dir = os.environ['LAYOUT_DIR']
+
+        test_file_dir_path = os.path.join(self.test_workspace, "test_files")
 
         test_projects = ['notes', 'macros', 'simple']
         for test_project in test_projects:
-            test_project_path = os.path.join(self.test_file_dir, test_project)
+            test_project_path = os.path.join(test_file_dir_path, test_project)
             shutil.copytree(get_project_path(test_project), test_project_path)
 
             for test_file in os.listdir(test_project_path):
@@ -52,7 +58,7 @@ class PlistToHtmlTest(unittest.TestCase):
                         plist_file.truncate()
                         plist_file.write(new_content)
 
-    def __test_html_builder(self, proj):
+    def __test_html_builder(self, proj: str):
         """
         Test building html file from the given proj's plist file.
         """

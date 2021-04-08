@@ -10,9 +10,17 @@ LAYOUT_DIR ?= LAYOUT_DIR=$(STATIC_DIR)
 # Nose test runner configuration options.
 NOSECFG = --config .noserc
 
-test: pycodestyle pylint test_unit
+test: mypy pycodestyle pylint test_unit
 
 test_in_env: pycodestyle_in_env pylint_in_env test_unit_in_env
+
+MYPY_TEST_CMD = mypy plist_to_html tests
+
+mypy:
+	$(MYPY_TEST_CMD)
+
+mypy_in_env: venv_dev
+	$(ACTIVATE_DEV_VENV) && $(MYPY_TEST_CMD)
 
 PYCODESTYLE_TEST_CMD = pycodestyle plist_to_html tests
 
