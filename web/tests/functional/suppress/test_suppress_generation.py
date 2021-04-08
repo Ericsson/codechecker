@@ -12,7 +12,6 @@ Test source-code level suppression data writing to suppress file.
 
 import logging
 import os
-import inspect
 import shlex
 import subprocess
 from subprocess import CalledProcessError
@@ -20,8 +19,7 @@ import unittest
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import ReviewStatus
 
-from libtest import env
-from libtest import codechecker
+from libtest import env, codechecker
 from libtest.thrift_client_to_db import get_all_run_results
 
 
@@ -70,8 +68,7 @@ class TestSuppress(unittest.TestCase):
                          'There should be only one run for this test.')
         self._runid = test_runs[0].runId
         self._run_name = test_runs[0].name
-        self._test_directory = os.path.dirname(os.path.abspath(inspect.getfile(
-                                               inspect.currentframe())))
+        self._test_directory = os.path.dirname(os.path.realpath(__file__))
 
     def test_suppress_import(self):
         """
