@@ -37,11 +37,11 @@ CodeChecker.
 during the image build and which will be used to start CodeChecker server.
 - `CC_GID` (default: *950*): id of the *codechecker* group which will be
 created during the image build.
-- `INSTALL_AUTH` (default: *no*): set it to `yes` to install authentication
+- `INSTALL_AUTH` (default: *yes*): set it to `no` to not install authentication
 dependencies like *ldap*.
 - `INSTALL_PG8000` (default: *no*): set it to `yes` to install *pg8000*
 requirements.
-- `INSTALL_PSYCOPG2` (default: *no*): set it to `yes` to install *psycopg2*
+- `INSTALL_PSYCOPG2` (default: *yes*): set it to `no` to not install *psycopg2*
 requirements.
 
 Example:
