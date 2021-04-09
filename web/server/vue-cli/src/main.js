@@ -39,8 +39,6 @@ import App from "./App.vue";
 
 import { eventHub } from "@cc-api";
 
-import "@/variables.scss";
-
 Vue.config.productionTip = false;
 
 let isFirstRouterResolve = true;
