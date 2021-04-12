@@ -97,11 +97,12 @@ class SpotBugsParser(BaseParser):
 
         project = root.find('Project')
         for element in project:
-            file_path = element.text
-            if os.path.isdir(file_path):
-                paths.append(file_path)
-            elif os.path.isfile(file_path):
-                paths.append(os.path.dirname(file_path))
+            if element.tag in ['Jar', 'AuxClasspathEntry', 'SrcDir']:
+                file_path = element.text
+                if os.path.isdir(file_path):
+                    paths.append(file_path)
+                elif os.path.isfile(file_path):
+                    paths.append(os.path.dirname(file_path))
 
         return paths
 
