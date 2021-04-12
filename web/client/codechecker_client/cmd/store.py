@@ -638,6 +638,17 @@ def assemble_zip(inputs, zip_file, client):
         # Add the files to the zip which will be sent to the server.
         for ftc in files_to_compress:
             _, filename = os.path.split(ftc)
+
+            # It is possible that multiple reports directories are given during
+            # the store command which contain the same plist file name but with
+            # different content. For this reason for plist files we need to
+            # generate a more unique file name when putting it to the storage
+            # zip file.
+            if filename.endswith(".plist"):
+                filename = \
+                    (f"{os.path.splitext(filename)[0]}_"
+                     f"{hashlib.md5(ftc.encode('utf-8')).hexdigest()}.plist")
+
             zip_target = os.path.join('reports', filename)
             zipf.write(ftc, zip_target)
 

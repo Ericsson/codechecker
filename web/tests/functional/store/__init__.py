@@ -15,6 +15,7 @@ import shutil
 
 from libtest import codechecker
 from libtest import env
+from libtest import plist_test
 
 # Test workspace initialized at setup for report storage tests.
 TEST_WORKSPACE = None
@@ -30,8 +31,6 @@ def setup_package():
 
     # Configuration options.
     codechecker_cfg = {
-        'suppress_file': None,
-        'skip_list_file': None,
         'check_env': env.test_env(TEST_WORKSPACE),
         'workspace': TEST_WORKSPACE,
         'checkers': [],
@@ -51,6 +50,16 @@ def setup_package():
 
     # Export the test configuration to the workspace.
     env.export_test_cfg(TEST_WORKSPACE, {'codechecker_cfg': codechecker_cfg})
+
+    # Copy test files to a temporary directory not to modify the
+    # files in the repository.
+    # Report files will be overwritten during the tests.
+    test_dir = os.path.dirname(os.path.realpath(__file__))
+    dst_dir = os.path.join(TEST_WORKSPACE, "test_proj")
+    shutil.copytree(os.path.join(test_dir, "test_proj"), dst_dir)
+
+    report_file = os.path.join(dst_dir, "divide_zero.plist")
+    plist_test.prefix_file_path(report_file, dst_dir)
 
 
 def teardown_package():
