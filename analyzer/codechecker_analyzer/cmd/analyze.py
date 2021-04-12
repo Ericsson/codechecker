@@ -19,7 +19,7 @@ import re
 import shutil
 import sys
 
-from codechecker_analyzer import analyzer, analyzer_context, arg, env
+from codechecker_analyzer import analyzer, analyzer_context, env
 from codechecker_analyzer.analyzers import analyzer_types, clangsa
 from codechecker_analyzer.arg import OrderedCheckersAction
 from codechecker_analyzer.buildlog import log_parser
