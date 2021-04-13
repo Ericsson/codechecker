@@ -60,8 +60,6 @@ already existing functions, only extend the API:
  `codechecker_web/shared/version.py`. This dict stores for each major
  version, which is the highest supported minor version. In this case, simply
  increase the number by `1`.
- 2. Change the `web/server/www/scripts/version.js` file to represent the newest
- version, e.g. `6.1`.
 
 ### Major API changes <a name="major-api-changes"></a>
 
