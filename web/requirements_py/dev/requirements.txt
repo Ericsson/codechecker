@@ -12,8 +12,9 @@ mockldap==0.3.0
 mkdocs==1.1.2
 mypy_extensions==0.4.3
 
-codechecker_api==6.39.0
-codechecker_api_shared==6.39.0
+./api/py/codechecker_api/dist/codechecker_api.tar.gz
+./api/py/codechecker_api_shared/dist/codechecker_api_shared.tar.gz
 
 # publish packages to pypi
 twine
+cryptography==3.3.2

@@ -1,7 +1,7 @@
 THRIFT_OPTS = -r -o /data
 THRIFT_VERSION = "0.11.0"
 TARGET_PY = --gen py
-TARGET_JS = --gen js:jquery --gen js:node
+TARGET_JS = --gen js:node
 PYTHON_BIN ?= python3
 
 current_dir = ${CURDIR}
@@ -12,7 +12,6 @@ API_DIR := $(current_dir)
 
 PY_API_DIR = "$(API_DIR)/py/codechecker_api/codechecker_api"
 PY_API_SHARED_DIR = "$(API_DIR)/py/codechecker_api_shared/codechecker_api_shared"
-JS_API_DIR = "$(API_DIR)/js/codechecker-api-js/lib"
 NODE_JS_API_DIR = "$(API_DIR)/js/codechecker-api-node/lib"
 
 default: build
@@ -28,7 +27,6 @@ install_py: install_shared_py install_api_py
 target_dirs:
 	mkdir -p $(PY_API_DIR)
 	mkdir -p $(PY_API_SHARED_DIR)
-	mkdir -p $(JS_API_DIR)
 	mkdir -p $(NODE_JS_API_DIR)
 
 build: clean target_dirs
@@ -44,15 +42,31 @@ build: clean target_dirs
 		thrift $(THRIFT_OPTS) $(TARGET_PY) $(TARGET_JS) /data/configuration.thrift && \
 		thrift $(THRIFT_OPTS) $(TARGET_PY) $(TARGET_JS) /data/server_info.thrift"
 
-	cp -r $(API_DIR)/gen-js/* $(JS_API_DIR)
-	cp -r $(API_DIR)/gen-nodejs/* $(NODE_JS_API_DIR)
+	# Create tarball from the API JavaScript part which will be commited in the
+	# repository and installed as a dependency.
+	cp -r $(API_DIR)/gen-nodejs/* $(NODE_JS_API_DIR) && \
+	cd $(NODE_JS_API_DIR)/.. && \
+	rm -rf dist && \
+	npm pack && \
+	mkdir -p dist && \
+	mv -f codechecker-api-*.tgz dist && \
+	rm -rf $(NODE_JS_API_DIR)
 
-	cp -r $(API_DIR)/gen-py/codechecker_api_shared/* $(PY_API_SHARED_DIR)
-	rm -rf $(API_DIR)/gen-py/codechecker_api_shared
+	# Create a dist packages from the API Python part which will be commited in
+	# the repository and installed as requirements.
+	cp -r $(API_DIR)/gen-py/codechecker_api_shared/* $(PY_API_SHARED_DIR) && \
+	rm -rf $(API_DIR)/gen-py/codechecker_api_shared && \
+	cd $(PY_API_SHARED_DIR)/.. && \
+	${PYTHON_BIN} setup.py sdist && \
+	mv dist/codechecker_api_shared-*.tar.gz dist/codechecker_api_shared.tar.gz
+	rm -rf $(PY_API_SHARED_DIR)
 
-	cp -r $(API_DIR)/gen-py/* $(PY_API_DIR)
+	cp -r $(API_DIR)/gen-py/* $(PY_API_DIR) && \
+	cd $(PY_API_DIR)/.. && \
+	${PYTHON_BIN} setup.py sdist && \
+	mv dist/codechecker_api-*.tar.gz dist/codechecker_api.tar.gz
+	rm -rf $(PY_API_DIR)
 
-	rm -rf $(API_DIR)/gen-js/
 	rm -rf $(API_DIR)/gen-nodejs/
 	rm -rf $(API_DIR)/gen-py/
 
@@ -67,11 +81,9 @@ publish_test_py:
 	cd py/codechecker_api_shared && ${PYTHON_BIN} setup.py sdist bdist_wheel && twine upload --repository-url https://test.pypi.org/legacy/ dist/* --verbose
 
 publish_js:
-	cd js/codechecker-api-js && npm publish
 	cd js/codechecker-api-node && npm publish
 
 publish_js_dev:
-	cd js/codechecker-api-js && npm publish --tag dev
 	cd js/codechecker-api-node && npm publish --tag dev
 
 clean:

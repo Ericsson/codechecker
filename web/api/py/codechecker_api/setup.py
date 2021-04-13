@@ -38,8 +38,7 @@ setup(
     packages=find_packages(where='.'),  # Required
 
     python_requires='>=2.7,',
-    install_requires=['thrift==0.13.0',
-                      'codechecker_api_shared==' + api_version],
+    install_requires=['thrift==0.13.0'],
 
     project_urls={
         'Bug Reports': 'https://github.com/Ericsson/codechecker/issues',
