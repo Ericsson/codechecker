@@ -43,6 +43,7 @@
   "alpha.unix.SimpleStream":                                    "MEDIUM",
   "alpha.unix.Stream":                                          "MEDIUM",
   "altera-struct-pack-align":                                   "LOW",
+  "altera-unroll-loops":                                        "LOW",
   "android-cloexec-creat":                                      "MEDIUM",
   "android-cloexec-fopen":                                      "MEDIUM",
   "android-cloexec-open":                                       "MEDIUM",
