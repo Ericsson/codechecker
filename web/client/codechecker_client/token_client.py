@@ -28,9 +28,14 @@ def init_logger(level, stream=None, logger_name='system'):
     LOG = logger.get_logger(logger_name)
 
 
-def init_auth_client(protocol, host, port):
+def init_auth_client(
+    protocol, host, port,
+    cafile=None, key_file=None, cert_file=None
+):
     """ Setup a new auth client. """
-    auth_client = setup_auth_client(protocol, host, port)
+    auth_client = setup_auth_client(
+        protocol, host, port,
+        cafile=cafile, key_file=key_file, cert_file=cert_file)
 
     # Check if local token is available.
     cred_manager = UserCredentials()
@@ -41,7 +46,9 @@ def init_auth_client(protocol, host, port):
         session_token = perform_auth_for_handler(auth_client, host, port,
                                                  cred_manager)
 
-    return setup_auth_client(protocol, host, port, session_token)
+    return setup_auth_client(
+        protocol, host, port, session_token,
+        cafile=cafile, key_file=key_file, cert_file=cert_file)
 
 
 def handle_add_token(args):
@@ -52,7 +59,8 @@ def handle_add_token(args):
     init_logger(args.verbose if 'verbose' in args else None)
 
     protocol, host, port = split_server_url(args.server_url)
-    client = init_auth_client(protocol, host, port)
+    client = init_auth_client(
+        protocol, host, port, args.tls_cacert, args.tls_cert, args.tls_key)
 
     description = args.description if 'description' in args else None
     session = client.newToken(description)
@@ -74,7 +82,9 @@ def handle_list_tokens(args):
     init_logger(args.verbose if 'verbose' in args else None, stream)
 
     protocol, host, port = split_server_url(args.server_url)
-    client = init_auth_client(protocol, host, port)
+    client = init_auth_client(
+        protocol, host, port, args.tls_cacert, args.tls_cert, args.tls_key)
+
     tokens = client.getTokens()
 
     if args.output_format == 'json':
@@ -97,7 +107,8 @@ def handle_del_token(args):
     init_logger(args.verbose if 'verbose' in args else None)
 
     protocol, host, port = split_server_url(args.server_url)
-    client = init_auth_client(protocol, host, port)
+    client = init_auth_client(
+        protocol, host, port, args.tls_cacert, args.tls_cert, args.tls_key)
 
     token = args.token
     try:

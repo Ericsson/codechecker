@@ -45,7 +45,10 @@ def handle_list_products(args):
     init_logger(args.verbose if 'verbose' in args else None, stream)
 
     protocol, host, port = split_server_url(args.server_url)
-    client = setup_product_client(protocol, host, port)
+    client = setup_product_client(
+        protocol, host, port,
+        cafile=args.tls_cacert, cert_file=args.tls_cert, key_file=args.tls_key)
+
     products = client.getProducts(None, None)
 
     if args.output_format == 'json':
@@ -80,7 +83,9 @@ def handle_add_product(args):
     init_logger(args.verbose if 'verbose' in args else None)
 
     protocol, host, port = split_server_url(args.server_url)
-    client = setup_product_client(protocol, host, port)
+    client = setup_product_client(
+        protocol, host, port,
+        cafile=args.tls_cacert, cert_file=args.tls_cert, key_file=args.tls_key)
 
     # Put together the database connection's descriptor.
     if 'postgresql' in args:
@@ -132,7 +137,9 @@ def handle_del_product(args):
     init_logger(args.verbose if 'verbose' in args else None)
 
     protocol, host, port = split_server_url(args.server_url)
-    client = setup_product_client(protocol, host, port)
+    client = setup_product_client(
+        protocol, host, port,
+        cafile=args.tls_cacert, cert_file=args.tls_cert, key_file=args.tls_key)
 
     # Endpoints substring-match.
     products = client.getProducts(args.endpoint, None)

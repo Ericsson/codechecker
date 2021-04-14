@@ -675,7 +675,8 @@ def handle_list_runs(args):
 
     init_logger(args.verbose if 'verbose' in args else None, stream)
 
-    client = setup_client(args.product_url)
+    client = setup_client(
+        args.product_url, args.tls_cacert, args.tls_cert, args.tls_key)
 
     run_filter = process_run_filter_conditions(args)
 
@@ -738,7 +739,8 @@ def handle_list_results(args):
 
     check_deprecated_arg_usage(args)
 
-    client = setup_client(args.product_url)
+    client = setup_client(
+        args.product_url, args.tls_cacert, args.tls_cert, args.tls_key)
 
     run_filter = ttypes.RunFilter(names=args.names)
 
@@ -1339,7 +1341,8 @@ def handle_diff_results(args):
                      ', '.join(newname_run_names))
 
         try:
-            client = setup_client(args.product_url)
+            client = setup_client(
+                args.product_url, args.tls_cacert, args.tls_cert, args.tls_key)
         except SystemExit as sexit:
             LOG.error("Failed to get remote runs from server! Please "
                       "make sure that CodeChecker server is running on host "
@@ -1423,7 +1426,8 @@ def handle_list_result_types(args):
     def checker_count(checker_dict, key):
         return checker_dict.get(key, 0)
 
-    client = setup_client(args.product_url)
+    client = setup_client(
+        args.product_url, args.tls_cacert, args.tls_cert, args.tls_key)
 
     run_ids = None
     if 'all_results' not in args:
@@ -1534,7 +1538,8 @@ def handle_remove_run_results(args):
 
     init_logger(args.verbose if 'verbose' in args else None)
 
-    client = setup_client(args.product_url)
+    client = setup_client(
+        args.product_url, args.tls_cacert, args.tls_cert, args.tls_key)
 
     run_filter = process_run_filter_conditions(args)
     if client.removeRun(None, run_filter):
@@ -1553,7 +1558,8 @@ def handle_update_run(args):
         LOG.error("The new run name can not be empty!")
         sys.exit(1)
 
-    client = setup_client(args.product_url)
+    client = setup_client(
+        args.product_url, args.tls_cacert, args.tls_cert, args.tls_key)
 
     run_info = check_run_names(client, [args.run_name])
     run = run_info.get(args.run_name)
@@ -1576,7 +1582,8 @@ def handle_suppress(args):
 
     limit = constants.MAX_QUERY_SIZE
 
-    client = setup_client(args.product_url)
+    client = setup_client(
+        args.product_url, args.tls_cacert, args.tls_cert, args.tls_key)
 
     run_info = check_run_names(client, [args.name])
     run = run_info.get(args.name)
@@ -1611,8 +1618,9 @@ def handle_login(args):
     init_logger(args.verbose if 'verbose' in args else None)
 
     protocol, host, port = split_server_url(args.server_url)
-    login_user(protocol, host, port, args.username,
-               login='logout' not in args)
+    login_user(
+        protocol, host, port, args.username, login='logout' not in args,
+        cafile=args.tls_cacert, cert_file=args.tls_cert, key_file=args.tls_key)
 
 
 def handle_list_run_histories(args):
@@ -1624,7 +1632,9 @@ def handle_list_run_histories(args):
 
     init_logger(args.verbose if 'verbose' in args else None, stream)
 
-    client = setup_client(args.product_url)
+    client = setup_client(
+        args.product_url, args.tls_cacert, args.tls_cert, args.tls_key)
+
     run_ids = None
     if 'names' in args:
         run_filter = ttypes.RunFilter(names=args.names)
@@ -1664,7 +1674,9 @@ def handle_export(args):
     stream = 'stderr'
     init_logger(args.verbose if 'verbose' in args else None, stream)
 
-    client = setup_client(args.product_url)
+    client = setup_client(
+        args.product_url, args.tls_cacert, args.tls_cert, args.tls_key)
+
     run_filter = process_run_filter_conditions(args)
 
     runs = get_run_data(client, run_filter)
@@ -1683,7 +1695,8 @@ def handle_import(args):
 
     init_logger(args.verbose if 'verbose' in args else None)
 
-    client = setup_client(args.product_url)
+    client = setup_client(
+        args.product_url, args.tls_cacert, args.tls_cert, args.tls_key)
 
     data = util.load_json_or_empty(args.input, default=None)
     if not data:

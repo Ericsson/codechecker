@@ -24,7 +24,8 @@ LOG = get_logger('system')
 class BaseClientHelper:
 
     def __init__(self, protocol, host, port, uri, session_token=None,
-                 get_new_token=None):
+                 get_new_token=None, cafile=None, key_file=None,
+                 cert_file=None):
         """
         @param get_new_token: a function which can generate a new token.
         """
@@ -35,7 +36,8 @@ class BaseClientHelper:
         self.transport = None
 
         try:
-            self.transport = THttpClient.THttpClient(url)
+            self.transport = THttpClient.THttpClient(
+                url, cafile=cafile, key_file=key_file, cert_file=cert_file)
         except ValueError:
             # Initalizing THttpClient may raise an exception if proxy settings
             # are used but the port number is not a valid integer.

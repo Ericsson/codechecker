@@ -30,6 +30,7 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import StoreLimitKind
 from codechecker_api_shared.ttypes import RequestFailed, ErrorCode
 
 from codechecker_client import client as libclient
+from codechecker_client.arg import add_tls_arguments
 
 from codechecker_common import arg, logger, plist_parser, util, cmd_config
 from codechecker_common.report import Report
@@ -256,6 +257,8 @@ exist prior to the 'store' command being ran.""")
                              help="The URL of the product to store the "
                                   "results for, in the format of "
                                   "'[http[s]://]host:port/Endpoint'.")
+
+    add_tls_arguments(server_args)
 
     logger.add_verbose_arguments(parser)
     parser.set_defaults(
@@ -875,7 +878,8 @@ def main(args):
                  args.name + "' will be deleted.")
 
     # Setup connection to the remote server.
-    client = libclient.setup_client(args.product_url)
+    client = libclient.setup_client(
+        args.product_url, args.tls_cacert, args.tls_cert, args.tls_key)
 
     zip_file_handle, zip_file = tempfile.mkstemp('.zip')
     LOG.debug("Will write mass store ZIP to '%s'...", zip_file)

@@ -16,8 +16,10 @@ from .base import BaseClientHelper
 
 
 class ThriftConfigHelper(BaseClientHelper):
-    def __init__(self, protocol, host, port, uri, session_token=None):
-        super().__init__(protocol, host, port, uri, session_token)
+    def __init__(self, protocol, host, port, uri, session_token=None,
+                 cafile=None, key_file=None, cert_file=None):
+        super().__init__(protocol, host, port, uri, session_token
+                         cafile=cafile, key_file=key_file, cert_file=cert_file)
 
         self.client = configurationService.Client(self.protocol)
 

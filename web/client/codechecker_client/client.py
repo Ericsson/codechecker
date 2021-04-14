@@ -43,26 +43,30 @@ def check_preconfigured_username(username, host, port):
         sys.exit(1)
 
 
-def setup_auth_client(protocol, host, port, session_token=None):
+def setup_auth_client(protocol, host, port, session_token=None,
+                      cafile=None, key_file=None, cert_file=None):
     """
     Setup the Thrift authentication client. Returns the client object and the
     session token for the session.
     """
-    client = ThriftAuthHelper(protocol, host, port,
-                              '/v' + CLIENT_API + '/Authentication',
-                              session_token)
+    client = ThriftAuthHelper(
+        protocol, host, port,
+        '/v' + CLIENT_API + '/Authentication',
+        session_token, cafile=cafile, key_file=key_file, cert_file=cert_file)
 
     return client
 
 
-def login_user(protocol, host, port, username, login=False):
+def login_user(protocol, host, port, username, login=False,
+               cafile=None, key_file=None, cert_file=None):
     """ Login with the given user name.
 
     If login is False the user will be logged out.
     """
     session = UserCredentials()
-    auth_client = ThriftAuthHelper(protocol, host, port,
-                                   '/v' + CLIENT_API + '/Authentication')
+    auth_client = ThriftAuthHelper(
+        protocol, host, port, '/v' + CLIENT_API + '/Authentication',
+        cafile=cafile, key_file=key_file, cert_file=cert_file)
 
     if not login:
         logout_done = auth_client.destroySession()
@@ -171,15 +175,19 @@ def perform_auth_for_handler(auth_client, host, port, manager):
         sys.exit(1)
 
 
-def setup_product_client(protocol, host, port, auth_client=None,
-                         product_name=None,
-                         session_token=None):
+def setup_product_client(
+    protocol, host, port, auth_client=None, product_name=None,
+    session_token=None, cafile=None, key_file=None, cert_file=None
+):
     """Setup the Thrift client for the product management endpoint."""
     cred_manager = UserCredentials()
     session_token = cred_manager.get_token(host, port)
 
     if not session_token:
-        auth_client = setup_auth_client(protocol, host, port)
+        auth_client = setup_auth_client(
+            protocol, host, port,
+            cafile=cafile, key_file=key_file, cert_file=cert_file)
+
         session_token = perform_auth_for_handler(auth_client, host, port,
                                                  cred_manager)
 
@@ -189,7 +197,9 @@ def setup_product_client(protocol, host, port, auth_client=None,
             protocol, host, port,
             '/v' + CLIENT_API + '/Products',
             session_token,
-            lambda: get_new_token(protocol, host, port, cred_manager))
+            lambda: get_new_token(protocol, host, port, cred_manager,
+                                  cafile, key_file, cert_file),
+            cafile, key_file, cert_file)
     else:
         # Attach to the product service and provide a product name
         # as "viewpoint" from which the product service is called.
@@ -197,7 +207,9 @@ def setup_product_client(protocol, host, port, auth_client=None,
             protocol, host, port,
             '/' + product_name + '/v' + CLIENT_API + '/Products',
             session_token,
-            lambda: get_new_token(protocol, host, port, cred_manager))
+            lambda: get_new_token(protocol, host, port, cred_manager,
+                                  cafile, key_file, cert_file),
+            cafile, key_file, cert_file)
 
         # However, in this case, the specified product might not exist,
         # which means we can't communicate with the server orderly.
@@ -211,13 +223,19 @@ def setup_product_client(protocol, host, port, auth_client=None,
     return product_client
 
 
-def get_new_token(protocol, host, port, cred_manager):
+def get_new_token(protocol, host, port, cred_manager,
+                  cafile=None, key_file=None, cert_file=None):
     """ Get a new session token from the remote server. """
-    auth_client = setup_auth_client(protocol, host, port)
+    auth_client = setup_auth_client(
+        protocol, host, port,
+        cafile=cafile, key_file=key_file, cert_file=cert_file)
+
     return perform_auth_for_handler(auth_client, host, port, cred_manager)
 
 
-def setup_client(product_url) -> ThriftResultsHelper:
+def setup_client(
+    product_url, cafile=None, key_file=None, cert_file=None
+) -> ThriftResultsHelper:
     """Setup the Thrift Product or Service client and
     check API version and authentication needs.
     """
@@ -235,7 +253,8 @@ def setup_client(product_url) -> ThriftResultsHelper:
 
     # Local token is missing ask remote server.
     if not session_token:
-        session_token = get_new_token(protocol, host, port, cred_manager)
+        session_token = get_new_token(
+            protocol, host, port, cred_manager, cafile, key_file, cert_file)
 
     LOG.debug("Initializing client connecting to %s:%d/%s done.",
               host, port, product_name)
@@ -244,4 +263,6 @@ def setup_client(product_url) -> ThriftResultsHelper:
         protocol, host, port,
         '/' + product_name + '/v' + CLIENT_API + '/CodeCheckerService',
         session_token,
-        lambda: get_new_token(protocol, host, port, cred_manager))
+        lambda: get_new_token(protocol, host, port, cred_manager,
+                              cafile, key_file, cert_file),
+        cafile, key_file, cert_file)

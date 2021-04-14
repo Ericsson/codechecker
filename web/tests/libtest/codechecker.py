@@ -107,6 +107,13 @@ def get_diff_results(basenames, newnames, diff_type, format_type=None,
     return out, err, proc.returncode
 
 
+def add_tls_args(cmd, codechecker_cfg):
+    """ """
+    cacert_file = codechecker_cfg.get('viewer_cacert')
+    if cacert_file:
+        cmd.extend(['--tlscacert', cacert_file])
+
+
 def login(codechecker_cfg, test_project_path, username, password,
           protocol='http'):
     """
@@ -117,6 +124,7 @@ def login(codechecker_cfg, test_project_path, username, password,
     login_cmd = ['CodeChecker', 'cmd', 'login', username,
                  '--url', protocol + '://' + 'localhost:' + port,
                  '--verbose', 'debug']
+    add_tls_args(login_cmd, codechecker_cfg)
 
     auth_creds = {'client_autologin': True,
                   'credentials': {}}
@@ -168,6 +176,7 @@ def logout(codechecker_cfg, test_project_path, protocol='http'):
     logout_cmd = ['CodeChecker', 'cmd', 'login',
                   '--logout',
                   '--url', protocol + '://'+'localhost:' + port]
+    add_tls_args(logout_cmd, codechecker_cfg)
 
     auth_file = os.path.join(test_project_path, ".codechecker.passwords.json")
     if os.path.exists(auth_file):
@@ -716,6 +725,8 @@ def add_test_package_product(server_data, test_folder, check_env=None,
                    '--description', "Automatically created product for test.",
                    '--verbose', 'debug']
 
+    add_tls_args(add_command, server_data)
+
     # If tests are running on postgres, we need to create a database.
     pg_config = env.get_postgresql_cfg()
     if pg_config:
@@ -744,16 +755,22 @@ def add_test_package_product(server_data, test_folder, check_env=None,
         encoding="utf-8",
         errors="ignore")
 
+    cacert_file = server_data.get('viewer_cacert')
+
     pr_client = env.setup_product_client(test_folder,
                                          product=server_data['viewer_product'],
                                          host=server_data['viewer_host'],
-                                         port=server_data['viewer_port'])
+                                         port=server_data['viewer_port'],
+                                         proto=protocol,
+                                         cafile=cacert_file)
     product_id = pr_client.getCurrentProduct().id
 
     # Setup an authentication client for creating sessions.
     auth_client = env.setup_auth_client(test_folder,
                                         host=server_data['viewer_host'],
-                                        port=server_data['viewer_port'])
+                                        port=server_data['viewer_port'],
+                                        proto=protocol,
+                                        cafile=cacert_file)
 
     extra_params = '{"productID":' + str(product_id) + '}'
 
@@ -799,6 +816,7 @@ def remove_test_package_product(test_folder, check_env=None, protocol='http'):
     del_command = ['CodeChecker', 'cmd', 'products', 'del',
                    server_data['viewer_product'],
                    '--url', url]
+    add_tls_args(del_command, server_data)
 
     print(' '.join(del_command))
 
