@@ -22,7 +22,7 @@ import sys
 # dependencies.
 if __name__ == '__main__':
     current_dir = os.path.dirname(os.path.realpath(__file__))
-    os.sys.path.append(os.path.dirname(current_dir))
+    os.sys.path.insert(0, os.path.dirname(current_dir))
 
 from codechecker_report_converter.clang_tidy.analyzer_result import \
     ClangTidyAnalyzerResult  # noqa

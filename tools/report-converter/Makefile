@@ -40,7 +40,7 @@ include tests/Makefile
 
 package:
 	# Install package in 'development mode'.
-	${PYTHON_BIN} setup.py develop
+	${PYTHON_BIN} -m pip install -e . ../codechecker_report_hash/
 
 build:
 	${PYTHON_BIN} setup.py build --build-purelib $(REPORT_CONVERTER_DIR)
