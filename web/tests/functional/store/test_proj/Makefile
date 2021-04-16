@@ -2,7 +2,7 @@
 # for the store update tests.
 
 build:
-	$(CXX) divide_zero.cpp -o divide_zero
+	$(CXX) -c divide_zero.cpp -o /dev/null
 
 clean:
 	rm -rf divide_zero

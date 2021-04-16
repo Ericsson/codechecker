@@ -14,12 +14,11 @@ store tests.
 import json
 import os
 import plistlib
-import shutil
 import subprocess
 import unittest
 
+from libtest import codechecker
 from libtest import env
-from libtest import plist_test
 
 from codechecker_common import util
 
@@ -36,40 +35,25 @@ class TestStore(unittest.TestCase):
         print("Running " + test_class + " tests in " + self._test_workspace)
 
         self._test_cfg = env.import_test_cfg(self._test_workspace)
+        self.codechecker_cfg = self._test_cfg["codechecker_cfg"]
+        self.test_proj_dir = os.path.join(
+            self.codechecker_cfg["workspace"], "test_proj")
 
-    def test_tim_path_prefix_store(self):
+    def test_trim_path_prefix_store(self):
         """Trim the path prefix from the sored reports.
 
         The source file paths are converted to absolute with the
         temporary test directory, the test trims that temporary
         test directory from the source file path during the storage.
         """
-
-        test_dir = os.path.dirname(os.path.realpath(__file__))
-
-        report_dir = os.path.join(test_dir, "test_proj")
-
-        codechecker_cfg = self._test_cfg["codechecker_cfg"]
-
-        # Copy report files to a temporary directory not to modify the
-        # files in the repository.
-        # Report files will be overwritten during the tests.
-        temp_workspace = os.path.join(
-            codechecker_cfg["workspace"], "test_proj"
-        )
-        shutil.copytree(report_dir, temp_workspace)
-
-        report_file = os.path.join(temp_workspace, "divide_zero.plist")
-
-        # Convert file paths to absolute in the report.
-        plist_test.prefix_file_path(report_file, temp_workspace)
+        report_file = os.path.join(self.test_proj_dir, "divide_zero.plist")
 
         report_content = {}
         with open(report_file, mode="rb") as rf:
             report_content = plistlib.load(rf)
 
         trimmed_paths = [
-            util.trim_path_prefixes(path, [temp_workspace])
+            util.trim_path_prefixes(path, [self.test_proj_dir])
             for path in report_content["files"]
         ]
 
@@ -77,13 +61,13 @@ class TestStore(unittest.TestCase):
         store_cmd = [
             env.codechecker_cmd(),
             "store",
-            temp_workspace,
+            self.test_proj_dir,
             "--name",
             run_name,
             "--url",
-            env.parts_to_url(codechecker_cfg),
+            env.parts_to_url(self.codechecker_cfg),
             "--trim-path-prefix",
-            temp_workspace,
+            self.test_proj_dir,
             "--verbose",
             "debug",
         ]
@@ -105,7 +89,7 @@ class TestStore(unittest.TestCase):
             run_name,
             # Use the 'Default' product.
             "--url",
-            env.parts_to_url(codechecker_cfg),
+            env.parts_to_url(self.codechecker_cfg),
             "-o",
             "json",
         ]
@@ -120,3 +104,57 @@ class TestStore(unittest.TestCase):
         self.assertEqual(len(reports), 4)
         for report in reports:
             self.assertIn(report["checkedFile"], trimmed_paths)
+
+    def test_store_multiple_report_dirs(self):
+        """ Test storing multiple report directories.
+
+        Analyze the same project to different report directories with different
+        checker configurations and store these report directories with one
+        store command to a run.
+        """
+        cfg = dict(self.codechecker_cfg)
+        codechecker.log(cfg, self.test_proj_dir)
+
+        report_dir1 = os.path.join(self.test_proj_dir, 'report_dir1')
+        report_dir2 = os.path.join(self.test_proj_dir, 'report_dir2')
+
+        cfg['reportdir'] = report_dir1
+        cfg['checkers'] = [
+            '-d', 'core.DivideZero', '-e', 'deadcode.DeadStores']
+        codechecker.analyze(cfg, self.test_proj_dir)
+
+        cfg['reportdir'] = report_dir2
+        cfg['checkers'] = [
+            '-e', 'core.DivideZero', '-d', 'deadcode.DeadStores']
+        codechecker.analyze(cfg, self.test_proj_dir)
+
+        run_name = "multiple_report_dirs"
+        store_cmd = [
+            env.codechecker_cmd(), "store",
+            report_dir1, report_dir2,
+            "--name", run_name,
+            "--url", env.parts_to_url(self.codechecker_cfg)]
+
+        proc = subprocess.Popen(
+            store_cmd, encoding="utf-8", errors="ignore",
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        _, err = proc.communicate()
+
+        self.assertNotIn("UserWarning: Duplicate name", err)
+
+        # Check the reports.
+        query_cmd = [
+            env.codechecker_cmd(), "cmd", "results",
+            run_name,
+            "--url", env.parts_to_url(self.codechecker_cfg),
+            "-o", "json"]
+
+        out = subprocess.check_output(
+            query_cmd, encoding="utf-8", errors="ignore")
+        reports = json.loads(out)
+
+        self.assertTrue(
+            any(r['checkerId'] == 'core.DivideZero' for r in reports))
+
+        self.assertTrue(
+            any(r['checkerId'] == 'deadcode.DeadStores' for r in reports))
