@@ -6,12 +6,15 @@ const { DefinePlugin } = require('webpack');
 
 const { join } = require('path');
 
+const codeCheckerApi = require('codechecker-api/package.json');
+
 const helpers = require('./helpers');
 
+const apiVersion = codeCheckerApi.version.split('.').slice(0, 2).join('.');
 const METADATA = {
   'CC_SERVER_HOST': null,
   'CC_SERVER_PORT': 80,
-  'CC_API_VERSION': JSON.stringify('6.39')
+  'CC_API_VERSION': JSON.stringify(apiVersion)
 };
 
 function sassLoaderOptions(indentedSyntax=false) {
