@@ -479,11 +479,14 @@ def store(codechecker_cfg, test_project_name):
     """
     Store results from a report dir.
     """
+    report_dirs = codechecker_cfg['reportdir']
+    if not isinstance(report_dirs, list):
+        report_dirs = [report_dirs]
 
     store_cmd = ['CodeChecker', 'store',
                  '--url', env.parts_to_url(codechecker_cfg),
                  '--name', test_project_name,
-                 codechecker_cfg['reportdir']]
+                 *report_dirs]
 
     tag = codechecker_cfg.get('tag')
     if tag:

@@ -59,8 +59,15 @@ class MetadataInfoParser(object):
         if analyzer_name in dest:
             dest[analyzer_name]['failed'] += source['failed']
             dest[analyzer_name]['failed_sources'].extend(
-                source['failed_sources'])
+                source.get('failed_sources', []))
             dest[analyzer_name]['successful'] += source['successful']
+
+            # Before CodeChecker 6.16.0 the 'successful_sources' are not
+            # in the metadata.
+            if 'successful_sources' in dest[analyzer_name]:
+                dest[analyzer_name]['successful_sources'].extend(
+                    source.get('successful_sources', []))
+
             dest[analyzer_name]['version'].update([source['version']])
         else:
             dest[analyzer_name] = source
@@ -118,6 +125,19 @@ class MetadataInfoParser(object):
                 self.__insert_checkers(tool.get('checkers', {}),
                                        checkers,
                                        tool['name'])
+
+        # If multiple report directories are stored it is possible that the
+        # same file is failed multiple times. For this reason we need to
+        # uniqueing the list of failed / succesfully analyzed files and the
+        # file number in the statistics.
+        for analyzer_name, stats in analyzer_statistics.items():
+            if 'failed_sources' in stats:
+                stats['failed_sources'] = set(stats['failed_sources'])
+                stats['failed'] = len(stats['failed_sources'])
+
+            if 'successful_sources' in stats:
+                stats['successful_sources'] = set(stats['successful_sources'])
+                stats['successful'] = len(stats['successful_sources'])
 
         # FIXME: if multiple report directories are stored created by different
         # codechecker versions there can be multiple results with OFF detection

@@ -76,6 +76,7 @@ def worker_result_handler(results, metadata_tool, output_path,
 
             if res == 0:
                 statistics['successful'] += 1
+                statistics['successful_sources'].append(sources)
             else:
                 statistics['failed'] += 1
                 statistics['failed_sources'].append(sources)

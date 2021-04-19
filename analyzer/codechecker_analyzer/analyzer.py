@@ -252,6 +252,7 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
                 "failed": 0,
                 "failed_sources": [],
                 "successful": 0,
+                "successful_sources": [],
                 "version": None}}
 
         for check, data in config_map[analyzer].checks().items():
