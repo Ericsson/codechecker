@@ -27,6 +27,7 @@ from collections import defaultdict
 VERBOSE = False
 FINISH = False
 PROCESSES = []
+MYPID = os.getpid()
 
 
 def return_duration(func):
@@ -195,7 +196,9 @@ class UserSimulator(object):
             ret, duration = func(*args)
             self._stat.add_duration(self._id, name, duration)
 
-            if ret != 0:
+            # The exit code of some commands (e.g. CodeChecker cmd diff) can be
+            # 2 if some reports were found. We consider this exit code normal.
+            if ret != 0 and ret != 2:
                 sys.exit("{} job has failed".format(name))
 
     def _user_random_sleep(self):
@@ -214,7 +217,9 @@ def store_report_dir(report_dir, run_name, server_url):
         '--name', run_name,
         report_dir],
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE, encoding="utf-8", errors="ignore")
+        stderr=subprocess.PIPE,
+        encoding="utf-8",
+        errors="ignore")
 
     global PROCESSES
     PROCESSES.append(store_process)
@@ -240,7 +245,9 @@ def local_compare(report_dir, run_name, server_url):
         '-n', report_dir,
         '--unresolved'],
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE, encoding="utf-8", errors="ignore")
+        stderr=subprocess.PIPE,
+        encoding="utf-8",
+        errors="ignore")
 
     global PROCESSES
     PROCESSES.append(compare_process)
@@ -264,7 +271,9 @@ def get_reports(run_name, server_url):
         '--url', server_url,
         run_name],
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE, encoding="utf-8", errors="ignore")
+        stderr=subprocess.PIPE,
+        encoding="utf-8",
+        errors="ignore")
 
     global PROCESSES
     PROCESSES.append(report_process)
@@ -288,7 +297,9 @@ def delete_run(run_name, server_url):
         '--url', server_url,
         '-n', run_name],
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE, encoding="utf-8", errors="ignore")
+        stderr=subprocess.PIPE,
+        encoding="utf-8",
+        errors="ignore")
 
     global PROCESSES
     PROCESSES.append(delete_process)
@@ -301,6 +312,30 @@ def delete_run(run_name, server_url):
         "is done" if delete_process.returncode == 0 else "failed"))
 
     return delete_process.returncode
+
+
+@return_duration
+def get_statistics(run_name, server_url):
+    print("Get checker statistics {} is started".format(run_name))
+
+    sum_process = subprocess.Popen([
+        'CodeChecker', 'cmd', 'sum',
+        '--url', server_url,
+        '-n', run_name],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+
+    global PROCESSES
+    PROCESSES.append(sum_process)
+
+    print_process_output("Output of checker statistics",
+                         *sum_process.communicate())
+
+    print("Get checker statistics {} {}".format(
+        run_name,
+        "is done" if sum_process.returncode == 0 else "failed"))
+
+    return sum_process.returncode
 
 
 def simulate_user(report_dirs, server_url, stat, beta, rounds):
@@ -324,6 +359,11 @@ def simulate_user(report_dirs, server_url, stat, beta, rounds):
             (run_name, server_url))
 
     user.add_action(
+        'Statistics',
+        get_statistics,
+        (run_name, server_url))
+
+    user.add_action(
         'Delete',
         delete_run,
         (run_name, server_url))
@@ -332,7 +372,8 @@ def simulate_user(report_dirs, server_url, stat, beta, rounds):
         rounds -= 1
         user.play()
 
-    os.kill(os.getpid(), signal.SIGUSR1)
+    global MYPID
+    os.kill(MYPID, signal.SIGUSR1)
 
 
 def main():
@@ -374,8 +415,9 @@ def main():
         t.start()
 
     if args.timeout > 0:
+        global MYPID
         threading.Timer(args.timeout,
-                        lambda: os.kill(os.getpid(), signal.SIGINT)).start()
+                        lambda: os.kill(MYPID, signal.SIGINT)).start()
 
     # This command hangs the process until a signal is emitted. This signal may
     # come either from the user by hitting Ctrl-C or by the simulate_user()
