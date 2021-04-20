@@ -13,7 +13,6 @@
 import multiprocessing
 import os
 import shutil
-import time
 
 from libtest import codechecker
 from libtest import env
