@@ -61,7 +61,6 @@ The result of the analysis are multiple plist xml files containing the analyzer 
 - Manage multiple Products (each product can be in a separate database).
 - Handle user authentication (LDAP ...)
 - Multiple clients can connect simultaneously to store or query the results.
-- Uses SQLAlchemy to connect to a database backend.
 - Provides a simple https webserver to view documentation.
 
 ## Database <a name="database"></a>
