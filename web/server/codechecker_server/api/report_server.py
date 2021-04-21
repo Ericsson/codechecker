@@ -3103,21 +3103,19 @@ class ThriftRequestHandler(object):
 
                 run_history_time = datetime.now()
 
-                metadata_parser = MetadataInfoParser()
-                check_commands, check_durations, cc_version, statistics, \
-                    checkers = metadata_parser.get_metadata_info(metadata_file)
+                mip = MetadataInfoParser(metadata_file)
 
                 command = ''
-                if len(check_commands) == 1:
-                    command = list(check_commands)[0]
-                elif len(check_commands) > 1:
+                if len(mip.check_commands) == 1:
+                    command = list(mip.check_commands)[0]
+                elif len(mip.check_commands) > 1:
                     command = "multiple analyze calls: " + \
-                              '; '.join(check_commands)
+                              '; '.join(mip.check_commands)
 
                 durations = 0
-                if check_durations:
+                if mip.check_durations:
                     # Round the duration to seconds.
-                    durations = int(sum(check_durations))
+                    durations = int(sum(mip.check_durations))
 
                 # When we use multiple server instances and we try to run
                 # multiple storage to each server which contain at least two
@@ -3158,31 +3156,19 @@ class ThriftRequestHandler(object):
 
                             # Actual store operation begins here.
                             user_name = self.__get_username()
-                            run_id = \
-                                store_handler.addCheckerRun(session,
-                                                            command,
-                                                            name,
-                                                            tag,
-                                                            user_name,
-                                                            run_history_time,
-                                                            version,
-                                                            force,
-                                                            cc_version,
-                                                            statistics,
-                                                            description)
+                            run_id = store_handler.addCheckerRun(
+                                session, command, name, tag, user_name,
+                                run_history_time, version, force,
+                                mip.cc_version, mip.analyzer_statistics,
+                                description)
 
                             LOG.info("[%s] Store reports...", name)
-                            self.__store_reports(session,
-                                                 report_dir,
-                                                 source_root,
-                                                 run_id,
-                                                 file_path_to_id,
-                                                 run_history_time,
-                                                 self.__context.severity_map,
-                                                 wrong_src_code_comments,
-                                                 skip_handler,
-                                                 checkers,
-                                                 trim_path_prefixes)
+                            self.__store_reports(
+                                session, report_dir, source_root, run_id,
+                                file_path_to_id, run_history_time,
+                                self.__context.severity_map,
+                                wrong_src_code_comments, skip_handler,
+                                mip.checkers, trim_path_prefixes)
                             LOG.info("[%s] Store reports done.", name)
 
                             store_handler.setRunDuration(session,
