@@ -14,6 +14,7 @@ store tests.
 import json
 import os
 import plistlib
+import shutil
 import subprocess
 import unittest
 
@@ -115,8 +116,11 @@ class TestStore(unittest.TestCase):
         cfg = dict(self.codechecker_cfg)
         codechecker.log(cfg, self.test_proj_dir)
 
-        report_dir1 = os.path.join(self.test_proj_dir, 'report_dir1')
-        report_dir2 = os.path.join(self.test_proj_dir, 'report_dir2')
+        common_report_dir = os.path.join(self.test_proj_dir, 'reports')
+        report_dir1 = \
+            os.path.join(self.test_proj_dir, common_report_dir, 'report_dir1')
+        report_dir2 = \
+            os.path.join(self.test_proj_dir, common_report_dir, 'report_dir2')
 
         cfg['reportdir'] = report_dir1
         cfg['checkers'] = [
@@ -128,33 +132,52 @@ class TestStore(unittest.TestCase):
             '-e', 'core.DivideZero', '-d', 'deadcode.DeadStores']
         codechecker.analyze(cfg, self.test_proj_dir)
 
-        run_name = "multiple_report_dirs"
-        store_cmd = [
-            env.codechecker_cmd(), "store",
-            report_dir1, report_dir2,
-            "--name", run_name,
-            "--url", env.parts_to_url(self.codechecker_cfg)]
+        def store_multiple_report_dirs(report_dirs):
+            """ """
+            run_name = "multiple_report_dirs"
+            store_cmd = [
+                env.codechecker_cmd(), "store",
+                *report_dirs,
+                "--name", run_name,
+                "--url", env.parts_to_url(self.codechecker_cfg)]
 
-        proc = subprocess.Popen(
-            store_cmd, encoding="utf-8", errors="ignore",
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        _, err = proc.communicate()
+            proc = subprocess.Popen(
+                store_cmd, encoding="utf-8", errors="ignore",
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            _, err = proc.communicate()
 
-        self.assertNotIn("UserWarning: Duplicate name", err)
+            self.assertNotIn("UserWarning: Duplicate name", err)
 
-        # Check the reports.
-        query_cmd = [
-            env.codechecker_cmd(), "cmd", "results",
-            run_name,
-            "--url", env.parts_to_url(self.codechecker_cfg),
-            "-o", "json"]
+            # Check the reports.
+            query_cmd = [
+                env.codechecker_cmd(), "cmd", "results",
+                run_name,
+                "--url", env.parts_to_url(self.codechecker_cfg),
+                "-o", "json"]
 
-        out = subprocess.check_output(
-            query_cmd, encoding="utf-8", errors="ignore")
-        reports = json.loads(out)
+            out = subprocess.check_output(
+                query_cmd, encoding="utf-8", errors="ignore")
+            reports = json.loads(out)
 
-        self.assertTrue(
-            any(r['checkerId'] == 'core.DivideZero' for r in reports))
+            self.assertTrue(
+                any(r['checkerId'] == 'core.DivideZero' for r in reports))
 
-        self.assertTrue(
-            any(r['checkerId'] == 'deadcode.DeadStores' for r in reports))
+            self.assertTrue(
+                any(r['checkerId'] == 'deadcode.DeadStores' for r in reports))
+
+            # Check the reports.
+            rm_cmd = [
+                env.codechecker_cmd(), "cmd", "del",
+                "-n", run_name,
+                "--url", env.parts_to_url(self.codechecker_cfg)]
+
+            out = subprocess.check_output(
+                rm_cmd, encoding="utf-8", errors="ignore")
+
+        # Store report directories separately.
+        store_multiple_report_dirs([report_dir1, report_dir2])
+
+        # Store report directories recursively.
+        store_multiple_report_dirs([common_report_dir])
+
+        shutil.rmtree(common_report_dir)

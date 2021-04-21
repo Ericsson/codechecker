@@ -11,8 +11,6 @@ Handle Thrift requests.
 
 
 import base64
-from collections import defaultdict
-from datetime import datetime, timedelta
 import os
 import re
 import shlex
@@ -20,6 +18,10 @@ import tempfile
 import time
 import zipfile
 import zlib
+
+from collections import defaultdict
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Set
 
 import sqlalchemy
 from sqlalchemy.sql.expression import or_, and_, not_, func, \
@@ -53,7 +55,8 @@ from ..database.run_db_model import \
     AnalyzerStatistic, Report, ReviewStatus, File, Run, RunHistory, \
     RunLock, Comment, BugPathEvent, BugReportPoint, \
     FileContent, SourceComponent, ExtendedReportData
-from ..metadata import MetadataInfoParser
+from ..metadata import checker_is_unavailable, get_analyzer_name, \
+    MetadataInfoParser
 from ..tmp import TemporaryDirectory
 
 from .thrift_enum_helper import detection_status_enum, \
@@ -2678,13 +2681,175 @@ class ThriftRequestHandler(object):
 
         return file_path_to_id
 
+    def __process_report_file(
+        self,
+        report_file_path: str,
+        session: DBSession,
+        source_root: str,
+        run_id: int,
+        file_path_to_id: Dict[str, int],
+        run_history_time: datetime,
+        severity_map: webserver_context.SeverityMap,
+        wrong_src_code_comments: List[str],
+        skip_handler: Optional[skiplist_handler.SkipListHandler],
+        trim_path_prefixes: List[str],
+        mip: MetadataInfoParser,
+        already_added_report_hashes: Set[str],
+        new_report_hashes: Set[str],
+        hash_map_reports: Dict[str, List[Any]],
+        all_report_checkers: Set[str]
+    ) -> bool:
+        """
+        Process and save reports from the given report file to the database.
+        """
+        try:
+            files, reports = plist_parser.parse_plist_file(report_file_path)
+        except Exception as ex:
+            LOG.warning('Parsing the plist failed: %s', str(ex))
+            return False
+
+        if not reports:
+            return True
+
+        trimmed_files = {}
+        file_ids = {}
+        missing_ids_for_files = []
+
+        for k, v in files.items():
+            trimmed_files[k] = \
+                util.trim_path_prefixes(v, trim_path_prefixes)
+
+        for file_name in trimmed_files.values():
+            file_id = file_path_to_id.get(file_name, -1)
+            if file_id == -1:
+                missing_ids_for_files.append(file_name)
+                continue
+
+            file_ids[file_name] = file_id
+
+        if missing_ids_for_files:
+            LOG.warning("Failed to get file path id for '%s'!",
+                        ' '.join(missing_ids_for_files))
+            return False
+
+        def set_review_status(report: Any):
+            """
+            Set review status for the given report if there is any source code
+            comment.
+            """
+            checker_name = report.main['check_name']
+            last_report_event = report.bug_path[-1]
+
+            # The original file path is needed here not the trimmed
+            # because the source files are extracted as the original
+            # file path.
+            file_name = files[last_report_event['location']['file']]
+
+            source_file_name = os.path.realpath(
+                os.path.join(source_root, file_name.strip("/")))
+
+            # Check and store source code comments.
+            if not os.path.isfile(source_file_name):
+                return
+
+            report_line = last_report_event['location']['line']
+            source_file = os.path.basename(file_name)
+
+            src_comment_data = parse_codechecker_review_comment(
+                source_file_name, report_line, checker_name)
+
+            if len(src_comment_data) == 1:
+                status = src_comment_data[0]['status']
+                rw_status = ttypes.ReviewStatus.FALSE_POSITIVE
+                if status == 'confirmed':
+                    rw_status = ttypes.ReviewStatus.CONFIRMED
+                elif status == 'intentional':
+                    rw_status = ttypes.ReviewStatus.INTENTIONAL
+
+                self._setReviewStatus(
+                    session, report.report_hash, rw_status,
+                    src_comment_data[0]['message'], run_history_time)
+            elif len(src_comment_data) > 1:
+                LOG.warning(
+                    "Multiple source code comment can be found "
+                    "for '%s' checker in '%s' at line %s. "
+                    "This bug will not be suppressed!",
+                    checker_name, source_file, report_line)
+
+                wrong_src_code_comments.append(
+                    f"{source_file}|{report_line}|{checker_name}")
+
+        for report in reports:
+            all_report_checkers.add(report.check_name)
+
+            if skip_handler and skip_handler.should_skip(report.file_path):
+                continue
+
+            report.trim_path_prefixes(trim_path_prefixes)
+
+            bug_paths, bug_events, bug_extended_data = \
+                store_handler.collect_paths_events(report, file_ids,
+                                                   trimmed_files)
+            report_path_hash = get_report_path_hash(report)
+            if report_path_hash in already_added_report_hashes:
+                LOG.debug('Not storing report. Already added: %s', report)
+                continue
+
+            LOG.debug("Storing report to the database...")
+
+            bug_id = report.report_hash
+
+            detection_status = 'new'
+            detected_at = run_history_time
+
+            if bug_id in hash_map_reports:
+                old_report = hash_map_reports[bug_id][0]
+                old_status = old_report.detection_status
+                detection_status = 'reopened' \
+                    if old_status == 'resolved' else 'unresolved'
+                detected_at = old_report.detected_at
+
+            analyzer_name = get_analyzer_name(
+                report.check_name, mip.checker_to_analyzer, report.metadata)
+
+            report_id = store_handler.addReport(
+                session, run_id, file_ids[report.file_path], report.main,
+                bug_paths, bug_events, bug_extended_data, detection_status,
+                detected_at, severity_map, analyzer_name)
+
+            new_report_hashes.add(bug_id)
+            already_added_report_hashes.add(report_path_hash)
+
+            set_review_status(report)
+
+            LOG.debug("Storing report done. ID=%d", report_id)
+
+        return True
+
     def __store_reports(self, session, report_dir, source_root, run_id,
                         file_path_to_id, run_history_time, severity_map,
-                        wrong_src_code_comments, skip_handler,
-                        checkers, trim_path_prefixes):
+                        wrong_src_code_comments, trim_path_prefixes):
         """
         Parse up and store the plist report files.
         """
+        def get_skip_handler(
+            report_dir: str
+        ) -> Optional[skiplist_handler.SkipListHandler]:
+            """ Get a skip list handler based on the given report directory."""
+            skip_file_path = os.path.join(report_dir, 'skip_file')
+            if not os.path.exists(skip_file_path):
+                return
+
+            LOG.debug("Pocessing skip file %s", skip_file_path)
+            try:
+                with open(skip_file_path,
+                          encoding="utf-8", errors="ignore") as f:
+                    skip_content = f.read()
+                    LOG.debug(skip_content)
+
+                    return skiplist_handler.SkipListHandler(skip_content)
+            except (IOError, OSError) as err:
+                LOG.warning("Failed to open skip file: %s", err)
 
         all_reports = session.query(Report) \
             .filter(Report.run_id == run_id) \
@@ -2694,196 +2859,50 @@ class ThriftRequestHandler(object):
         for report in all_reports:
             hash_map_reports[report.bug_id].append(report)
 
-        already_added = set()
-        new_bug_hashes = set()
-
-        # Get checker names which was enabled during the analysis.
+        already_added_report_hashes = set()
+        new_report_hashes = set()
         enabled_checkers = set()
         disabled_checkers = set()
-        checker_to_analyzer = dict()
-        for analyzer_name, analyzer_checkers in checkers.items():
-            if isinstance(analyzer_checkers, dict):
-                for checker_name, enabled in analyzer_checkers.items():
-                    checker_to_analyzer[checker_name] = analyzer_name
-                    if enabled:
-                        enabled_checkers.add(checker_name)
-                    else:
-                        disabled_checkers.add(checker_name)
-            else:
-                enabled_checkers.update(analyzer_checkers)
-
-                for checker_name in analyzer_checkers:
-                    checker_to_analyzer[checker_name] = analyzer_name
-
-        def checker_is_unavailable(checker_name):
-            """
-            Returns True if the given checker is unavailable.
-
-            We filter out checkers which start with 'clang-diagnostic-' because
-            these are warnings and the warning list is not available right now.
-
-            FIXME: using the 'diagtool' could be a solution later so the
-            client can send the warning list to the server.
-            """
-            return not checker_name.startswith('clang-diagnostic-') and \
-                enabled_checkers and checker_name not in enabled_checkers
-
-        def get_analyzer_name(report):
-            """ Get analyzer name for the given report. """
-            analyzer_name = checker_to_analyzer.get(report.check_name)
-            if analyzer_name:
-                return analyzer_name
-
-            if report.metadata:
-                return report.metadata.get("analyzer", {}).get("name")
-
-            if report.check_name.startswith('clang-diagnostic-'):
-                return 'clang-tidy'
+        all_report_checkers = set()
 
         # Processing PList files.
-        _, _, report_files = next(os.walk(report_dir), ([], [], []))
-        all_report_checkers = set()
-        for f in report_files:
-            if not f.endswith('.plist'):
-                continue
+        for root_dir_path, _, report_file_paths in os.walk(report_dir):
+            LOG.debug("Get reports from '%s' directory", root_dir_path)
 
-            LOG.debug("Parsing input file '%s'", f)
+            skip_handler = get_skip_handler(root_dir_path)
 
-            try:
-                files, reports = plist_parser.parse_plist_file(
-                    os.path.join(report_dir, f))
-            except Exception as ex:
-                LOG.error('Parsing the plist failed: %s', str(ex))
-                continue
-            trimmed_files = {}
-            file_ids = {}
-            if reports:
-                missing_ids_for_files = []
+            metadata_file_path = os.path.join(root_dir_path, 'metadata.json')
+            mip = MetadataInfoParser(metadata_file_path)
 
-                for k, v in files.items():
-                    trimmed_files[k] = \
-                        util.trim_path_prefixes(v, trim_path_prefixes)
+            enabled_checkers.update(mip.enabled_checkers)
+            disabled_checkers.update(mip.disabled_checkers)
 
-                for file_name in trimmed_files.values():
-
-                    file_id = file_path_to_id.get(file_name, -1)
-                    if file_id == -1:
-                        missing_ids_for_files.append(file_name)
-                        continue
-
-                    file_ids[file_name] = file_id
-
-                if missing_ids_for_files:
-                    LOG.error("Failed to get file path id for '%s'!",
-                              ' '.join(missing_ids_for_files))
+            for f in report_file_paths:
+                if not f.endswith('.plist'):
                     continue
 
-            # Store report.
-            for report in reports:
-                checker_name = report.main['check_name']
-                all_report_checkers.add(checker_name)
+                LOG.debug("Parsing input file '%s'", f)
 
-                report.trim_path_prefixes(trim_path_prefixes)
-                source_file = report.file_path
-
-                if skip_handler.should_skip(source_file):
-                    continue
-                bug_paths, bug_events, bug_extended_data = \
-                    store_handler.collect_paths_events(report, file_ids,
-                                                       trimmed_files)
-                report_path_hash = get_report_path_hash(report)
-                if report_path_hash in already_added:
-                    LOG.debug('Not storing report. Already added')
-                    LOG.debug(report)
-                    continue
-
-                LOG.debug("Storing check results to the database.")
-
-                LOG.debug("Storing report")
-                bug_id = report.main[
-                    'issue_hash_content_of_line_in_context']
-
-                detection_status = 'new'
-                detected_at = run_history_time
-
-                if bug_id in hash_map_reports:
-                    old_report = hash_map_reports[bug_id][0]
-                    old_status = old_report.detection_status
-                    detection_status = 'reopened' \
-                        if old_status == 'resolved' else 'unresolved'
-                    detected_at = old_report.detected_at
-
-                analyzer_name = get_analyzer_name(report)
-                report_id = store_handler.addReport(
-                    session,
-                    run_id,
-                    file_ids[source_file],
-                    report.main,
-                    bug_paths,
-                    bug_events,
-                    bug_extended_data,
-                    detection_status,
-                    detected_at,
-                    severity_map,
-                    analyzer_name)
-
-                new_bug_hashes.add(bug_id)
-                already_added.add(report_path_hash)
-
-                last_report_event = report.bug_path[-1]
-
-                # The original file path is needed here not the trimmed
-                # because the source files are extracted as the original
-                # file path.
-                file_name = \
-                    files[last_report_event['location']['file']]
-
-                source_file_name = os.path.realpath(
-                    os.path.join(source_root, file_name.strip("/")))
-
-                if os.path.isfile(source_file_name):
-                    report_line = last_report_event['location']['line']
-                    source_file = os.path.basename(file_name)
-                    src_comment_data = \
-                        parse_codechecker_review_comment(source_file_name,
-                                                         report_line,
-                                                         checker_name)
-                    if len(src_comment_data) == 1:
-                        status = src_comment_data[0]['status']
-                        rw_status = ttypes.ReviewStatus.FALSE_POSITIVE
-                        if status == 'confirmed':
-                            rw_status = ttypes.ReviewStatus.CONFIRMED
-                        elif status == 'intentional':
-                            rw_status = ttypes.ReviewStatus.INTENTIONAL
-
-                        self._setReviewStatus(session,
-                                              bug_id,
-                                              rw_status,
-                                              src_comment_data[0]['message'],
-                                              run_history_time)
-                    elif len(src_comment_data) > 1:
-                        LOG.warning(
-                            "Multiple source code comment can be found "
-                            "for '%s' checker in '%s' at line %s. "
-                            "This bug will not be suppressed!",
-                            checker_name, source_file, report_line)
-
-                        wrong_src_code = "{0}|{1}|{2}".format(source_file,
-                                                              report_line,
-                                                              checker_name)
-                        wrong_src_code_comments.append(wrong_src_code)
-
-                LOG.debug("Storing done for report %d", report_id)
+                report_file_path = os.path.join(root_dir_path, f)
+                self.__process_report_file(
+                    report_file_path, session, source_root, run_id,
+                    file_path_to_id, run_history_time, severity_map,
+                    wrong_src_code_comments, skip_handler, trim_path_prefixes,
+                    mip, already_added_report_hashes, new_report_hashes,
+                    hash_map_reports, all_report_checkers)
 
         # If a checker was found in a plist file it can not be disabled so we
-        # will remove these checkers from the disabled checkers list and add
-        # these to the enabled checkers list.
-        disabled_checkers -= all_report_checkers
+        # will add this to the enabled checkers list and remove this checker
+        # from the disabled checkers list.
+        # Also if multiple report directories are stored and a checker was
+        # enabled in one report directory but it was disabled in another
+        # directory we will mark this checker as enabled.
         enabled_checkers |= all_report_checkers
+        disabled_checkers -= all_report_checkers
 
         reports_to_delete = set()
         for bug_hash, reports in hash_map_reports.items():
-            if bug_hash in new_bug_hashes:
+            if bug_hash in new_report_hashes:
                 reports_to_delete.update([x.id for x in reports])
             else:
                 for report in reports:
@@ -2895,7 +2914,7 @@ class ThriftRequestHandler(object):
                     checker = report.checker_id
                     if checker in disabled_checkers:
                         report.detection_status = 'off'
-                    elif checker_is_unavailable(checker):
+                    elif checker_is_unavailable(checker, enabled_checkers):
                         report.detection_status = 'unavailable'
                     else:
                         report.detection_status = 'resolved'
@@ -3073,27 +3092,11 @@ class ThriftRequestHandler(object):
                 source_root = os.path.join(zip_dir, 'root')
                 report_dir = os.path.join(zip_dir, 'reports')
                 metadata_file = os.path.join(report_dir, 'metadata.json')
-                skip_file = os.path.join(report_dir, 'skip_file')
                 content_hash_file = os.path.join(zip_dir,
                                                  'content_hashes.json')
 
-                skip_handler = skiplist_handler.SkipListHandler()
-                if os.path.exists(skip_file):
-                    LOG.debug("Pocessing skip file %s", skip_file)
-                    try:
-                        with open(skip_file,
-                                  encoding="utf-8",
-                                  errors="ignore") as sf:
-                            skip_content = sf.read()
-                            skip_handler = \
-                                skiplist_handler.SkipListHandler(skip_content)
-                            LOG.debug(skip_content)
-                    except (IOError, OSError) as err:
-                        LOG.error("Failed to open skip file")
-                        LOG.error(err)
-
-                filename_to_hash = util.load_json_or_empty(content_hash_file,
-                                                           {})
+                filename_to_hash = \
+                    util.load_json_or_empty(content_hash_file, {})
 
                 LOG.info("[%s] Store source files...", name)
                 file_path_to_id = self.__store_source_files(source_root,
@@ -3167,8 +3170,7 @@ class ThriftRequestHandler(object):
                                 session, report_dir, source_root, run_id,
                                 file_path_to_id, run_history_time,
                                 self.__context.severity_map,
-                                wrong_src_code_comments, skip_handler,
-                                mip.checkers, trim_path_prefixes)
+                                wrong_src_code_comments, trim_path_prefixes)
                             LOG.info("[%s] Store reports done.", name)
 
                             store_handler.setRunDuration(session,

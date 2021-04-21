@@ -29,6 +29,40 @@ EnabledCheckers = Set[str]
 MetadataCheckers = Dict[str, Union[Dict[str, bool], List[str]]]
 
 
+def get_analyzer_name(
+    checker_name: str,
+    checker_to_analyzer: Optional[CheckerToAnalyzer],
+    metadata: Dict[str, Any]
+) -> Optional[str]:
+    """ Get analyzer name for the given checker name. """
+    analyzer_name = checker_to_analyzer.get(checker_name)
+    if analyzer_name:
+        return analyzer_name
+
+    if metadata:
+        return metadata.get("analyzer", {}).get("name")
+
+    if checker_name.startswith('clang-diagnostic-'):
+        return 'clang-tidy'
+
+
+def checker_is_unavailable(
+    checker_name: str,
+    enabled_checkers: EnabledCheckers
+) -> bool:
+    """
+    Returns True if the given checker is unavailable.
+
+    We filter out checkers which start with 'clang-diagnostic-' because
+    these are warnings and the warning list is not available right now.
+
+    FIXME: using the 'diagtool' could be a solution later so the
+    client can send the warning list to the server.
+    """
+    return not checker_name.startswith('clang-diagnostic-') and \
+        enabled_checkers and checker_name not in enabled_checkers
+
+
 class MetadataInfoParser:
     """ Metadata info parser. """
 
@@ -132,7 +166,7 @@ class MetadataInfoParser:
             d_chks = dest[analyzer_name]
             for checker in source:
                 if checker in d_chks and source[checker] != d_chks[checker]:
-                    LOG.warning('Different checker statuses for %s', checker)
+                    LOG.debug('Different checker statuses for %s', checker)
                 dest[analyzer_name][checker] = source[checker]
         else:
             dest[analyzer_name] = source
