@@ -14,6 +14,6 @@
 
 <script>
 export default {
-  name: "ShowCheckCommandBtn",
+  name: "CheckCommandBtn",
 };
 </script>
