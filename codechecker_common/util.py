@@ -10,6 +10,7 @@ Util module.
 """
 
 
+import itertools
 import json
 import os
 
@@ -148,3 +149,13 @@ def trim_path_prefixes(path, prefixes):
         return path
 
     return path[len(longest_matching_prefix):]
+
+
+def chunks(iterator, n):
+    """
+    Yield the next chunk if an iterable object. A chunk consists of maximum n
+    elements.
+    """
+    for first in iterator:
+        rest_of_chunk = itertools.islice(iterator, 0, n - 1)
+        yield itertools.chain([first], rest_of_chunk)

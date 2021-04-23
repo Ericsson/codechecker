@@ -1309,9 +1309,7 @@ class ThriftRequestHandler(object):
                     # For this reason we create queries with chunks.
                     new_hashes = []
                     chunk_size = 500
-                    for chunk in [report_hashes[i:i + chunk_size] for
-                                  i in range(0, len(report_hashes),
-                                             chunk_size)]:
+                    for chunk in util.chunks(iter(report_hashes), chunk_size):
                         new_hashes_query = union_all(*[
                             select([bindparam('bug_id' + str(i), h)
                                     .label('bug_id')])
@@ -2406,9 +2404,7 @@ class ThriftRequestHandler(object):
         """
         Removing reports in chunks.
         """
-        for r_ids in [report_ids[i:i + chunk_size] for
-                      i in range(0, len(report_ids),
-                                 chunk_size)]:
+        for r_ids in util.chunks(iter(report_ids), chunk_size):
             session.query(Report) \
                 .filter(Report.id.in_(r_ids)) \
                 .delete(synchronize_session=False)
