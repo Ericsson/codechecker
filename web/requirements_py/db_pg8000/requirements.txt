@@ -5,5 +5,5 @@ pg8000==1.15.2
 psutil==5.8.0
 portalocker==2.2.1
 
-codechecker_api==6.39.0
-codechecker_api_shared==6.39.0
+./api/py/codechecker_api/dist/codechecker_api.tar.gz
+./api/py/codechecker_api_shared/dist/codechecker_api_shared.tar.gz

@@ -10,20 +10,12 @@ Makefile.local
 # tools
 tools/tu_collector/build
 
-# external sources
-web/server/vendor/*
-!web/server/vendor/Makefile
-
 # build-logger
 analyzer/tools/build-logger/build/
 
 # doxygen generated files
 gen-docs/
 web/server/www/userguide/gen-docs/
-
-# thrift generated files
-thrift_api/gen-js/
-thrift_api/gen-py/
 
 # object and binary files for tests
 **/*.o

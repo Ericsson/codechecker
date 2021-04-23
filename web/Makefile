@@ -158,8 +158,8 @@ check_codechecker_api_version:
 # is changed. In this case it will remove the dist directory so the UI will
 # be built again.
 check_dist:
-	if [ -d $(DIST_DIR) ] && [ "$(LATEST_COMMIT)" != "$(LATEST_BUILD_COMMIT)" ]; then \
-	  rm -rf $(DIST_DIR); \
+	if [ "$(BUILD_UI_DIST)" = "YES" ] && [ -d $(DIST_DIR) ] && [ "$(LATEST_COMMIT)" != "$(LATEST_BUILD_COMMIT)" ]; then \
+	  cd server/vue-cli && npm install && rm -rf $(DIST_DIR); \
 	fi
 
 clean_package: clean_plist_to_html
