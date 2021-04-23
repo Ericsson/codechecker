@@ -195,6 +195,8 @@ class DictAuth(unittest.TestCase):
             subprocess.check_output(
                 store_cmd, encoding="utf-8", errors="ignore")
 
+    # TODO: This test should not test case-insensivity, only the successful
+    # group authorization. The permission tests should do that.
     def test_group_auth(self):
         """
         Test for case insensitive group comparison at authorization.
