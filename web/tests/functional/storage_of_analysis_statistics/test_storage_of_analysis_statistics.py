@@ -143,9 +143,7 @@ int main()
             errors="ignore")
         process.communicate()
 
-        codechecker.store(self._codechecker_cfg, 'example')
-
-    def _check_analyzer_statistics_zip(self):
+    def _check_analyzer_statistics_zip(self, run_name):
         """
         Checks if compilation database file and failed zips which exists in the
         report directory can be found in the uploaded analyzer statistics zip.
@@ -159,7 +157,7 @@ int main()
         # Test that the product stat directory is not empty.
         self.assertTrue(os.listdir(product_stat_dir))
 
-        zip_file = os.path.join(product_stat_dir, 'example.zip')
+        zip_file = os.path.join(product_stat_dir, f"{run_name}.zip")
         with TemporaryDirectory() as zip_dir:
             extract(zip_file, zip_dir)
 
@@ -204,8 +202,12 @@ int main()
         """
         Checks if compilation database can be found in the uploaded zip.
         """
+        run_name = 'example'
+
         self._create_source_file(0)
-        self._check_analyzer_statistics_zip()
+        codechecker.store(self._codechecker_cfg, run_name)
+
+        self._check_analyzer_statistics_zip(run_name)
 
     def test_storage_failed_zips(self):
         """
@@ -223,16 +225,24 @@ int main()
 
         # Store the failure.
         self._create_source_file(1)
-        self._check_analyzer_statistics_zip()
+
+        codechecker.store(self._codechecker_cfg, 'statistics1')
+        self._check_analyzer_statistics_zip('statistics1')
+
+        codechecker.store(self._codechecker_cfg, 'statistics2')
+        self._check_analyzer_statistics_zip('statistics2')
 
         # Check the failed files again in the database.
         num_of_failed_files = self._cc_client.getFailedFilesCount(run_ids)
-        self.assertEqual(num_of_failed_files, 2)
+        self.assertEqual(num_of_failed_files, 1)
 
         failed_files = self._cc_client.getFailedFiles(run_ids)
         self.assertEqual(len(failed_files), 1)
         self.assertTrue(self._source_file in failed_files)
 
         failed_file_info = failed_files[self._source_file]
-        self.assertEqual(len(failed_file_info), 1)
-        self.assertEqual(failed_file_info[0].runName, 'example')
+        self.assertEqual(len(failed_file_info), 2)
+
+        self.assertTrue(
+            all(i.runName in ['statistics1', 'statistics2']
+                for i in failed_file_info))

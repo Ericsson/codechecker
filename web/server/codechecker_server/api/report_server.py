@@ -2337,16 +2337,15 @@ class ThriftRequestHandler(object):
     @timeit
     def getFailedFilesCount(self, run_ids):
         """
-          Count the number of failed files in the latest storage of each given
-          run. If the run id list is empty the number of failed files will be
-          counted for all of the runs.
+        Count the number of uniqued failed files in the latest storage of each
+        given run. If the run id list is empty the number of failed files will
+        be counted for all of the runs.
         """
-        self.__require_access()
-        with DBSession(self.__Session) as session:
-            query, _ = get_failed_files_query(
-                session, run_ids, [func.sum(AnalyzerStatistic.failed)])
-
-            return query.scalar() or 0
+        # Unfortunately we can't distinct the failed file paths by using SQL
+        # queries because the list of failed files for a run / analyzer are
+        # stored in one column in a compressed way. For this reason we need to
+        # decompress the value in the Python code before uniqueing.
+        return len(self.getFailedFiles(run_ids).keys())
 
     @exc_to_thrift_reqfail
     @timeit
