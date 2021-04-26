@@ -30,10 +30,14 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: '3.6'
+      - name: Setup Bazel
+        uses: abhinavsingh/setup-bazel@v3
+        with:
+          version: 4.0.0
       - name: Install common dependencies
         run: |
           sudo apt-get update -q
-          sudo apt-get install gcc-multilib bazel
+          sudo apt-get install gcc-multilib
 
       - name: Run build-logger tests
         working-directory: analyzer/tools/build-logger
