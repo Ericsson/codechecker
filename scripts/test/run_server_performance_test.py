@@ -257,7 +257,7 @@ def local_compare(report_dir, run_name, server_url):
 
     print("Local compare of {} {}".format(
         run_name,
-        "is done" if compare_process.returncode == 0 else "failed"))
+        "is done" if compare_process.returncode in [0, 2] else "failed"))
 
     return compare_process.returncode
 
