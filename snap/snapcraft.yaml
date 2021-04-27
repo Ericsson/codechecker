@@ -34,9 +34,6 @@ parts:
     plugin: python
     python-version: python3
     source: https://github.com/Ericsson/codechecker/archive/v6.16.0.tar.gz
-    requirements:
-      - analyzer/requirements.txt
-      - web/requirements.txt
     build-packages:
       - curl
       - gcc-multilib
@@ -47,6 +44,15 @@ parts:
       - node/11/stable
     override-build: |
       snapcraftctl build
+
+      # We install the CodeChecker API dependency from a local package tar file
+      # in the web requirement file relatively to the web directory but
+      # unfortunatelly the python plugin doesn't support to specify a base
+      # directory.
+      cd analyzer && python3 -m pip install -r requirements.txt
+      cd ../web && python3 -m pip install -r requirements.txt
+      cd ..
+
       npm config set scripts-prepend-node-path true
       npm config set unsafe-perm true
       make package
