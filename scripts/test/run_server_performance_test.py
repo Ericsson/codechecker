@@ -199,7 +199,13 @@ class UserSimulator(object):
             # The exit code of some commands (e.g. CodeChecker cmd diff) can be
             # 2 if some reports were found. We consider this exit code normal.
             if ret != 0 and ret != 2:
-                sys.exit("{} job has failed".format(name))
+                print("'{}' job has failed with '{}' error "
+                      "code!".format(name, ret))
+
+                # In case of error we send a signal to the main thread which
+                # will be able to abort this program with an error code.
+                global MYPID
+                os.kill(MYPID, signal.SIGINT)
 
     def _user_random_sleep(self):
         sec = -self._beta * math.log(1.0 - random.random())
@@ -323,7 +329,9 @@ def get_statistics(run_name, server_url):
         '--url', server_url,
         '-n', run_name],
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+        stderr=subprocess.PIPE,
+        encoding="utf-8",
+        errors="ignore")
 
     global PROCESSES
     PROCESSES.append(sum_process)
@@ -372,9 +380,6 @@ def simulate_user(report_dirs, server_url, stat, beta, rounds):
         rounds -= 1
         user.play()
 
-    global MYPID
-    os.kill(MYPID, signal.SIGUSR1)
-
 
 def main():
     global VERBOSE
@@ -384,6 +389,7 @@ def main():
     VERBOSE = args.verbose
 
     stat = StatManager()
+    timer = None
 
     def finish_test(signum, frame):
         print('-----> Performance test stops. '
@@ -400,14 +406,18 @@ def main():
                 pass
 
         stat.print_stats(args.output)
-        print("Performance test has timed out or killed.")
+        print("Performance test has timed out or killed!")
+
+        if timer:
+            timer.cancel()
+
         sys.exit(128 + signum)
 
     signal.signal(signal.SIGINT, finish_test)
 
-    print(os.environ['PATH'])
     threads = [threading.Thread(
         target=simulate_user,
+        daemon=True,
         args=(args.input, args.product_url, stat, args.beta, args.rounds))
         for _ in range(args.users)]
 
@@ -416,16 +426,16 @@ def main():
 
     if args.timeout > 0:
         global MYPID
-        threading.Timer(args.timeout,
-                        lambda: os.kill(MYPID, signal.SIGINT)).start()
-
-    # This command hangs the process until a signal is emitted. This signal may
-    # come either from the user by hitting Ctrl-C or by the simulate_user()
-    # function when it is completed.
-    signal.pause()
+        timer = threading.Timer(args.timeout,
+                                lambda: os.kill(MYPID, signal.SIGINT))
+        timer.start()
 
     for t in threads:
         t.join()
+
+    # If all the threads are successfully finished we can cancel the timer.
+    if timer:
+        timer.cancel()
 
     stat.print_stats(args.output)
 
