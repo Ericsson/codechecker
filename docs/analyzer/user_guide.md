@@ -107,7 +107,6 @@ usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-t {plist}] [-q]
                          [--checker-config [CHECKER_CONFIG [CHECKER_CONFIG ...]]]
                          [--timeout TIMEOUT]
                          [--ctu | --ctu-collect | --ctu-analyze]
-                         [--ctu-reanalyze-on-failure]
                          [--ctu-ast-mode {load-from-pch,parse-on-demand}]
                          [-e checker/group/profile] [-d checker/group/profile]
                          [--enable-all] [--print-steps] [--suppress SUPPRESS]
@@ -298,10 +297,6 @@ cross translation unit analysis arguments:
                         analysis, using already available extra files in
                         '<OUTPUT_DIR>/ctu-dir'. (These files will not be
                         cleaned up in this mode.)
-  --ctu-reanalyze-on-failure
-                        If Cross-TU analysis is enabled and fails for some
-                        reason, try to re analyze the same translation unit
-                        without Cross-TU enabled.
   --ctu-ast-mode {load-from-pch,parse-on-demand}
                         Choose the way ASTs are loaded during CTU analysis. Only
                         available if CTU mode is enabled. Mode 'load-from-pch'
@@ -819,7 +814,6 @@ usage: CodeChecker analyze [-h] [-j JOBS]
                            [--tidy-config TIDY_CONFIG] [--timeout TIMEOUT]
                            [--ctu | --ctu-collect | --ctu-analyze]
                            [--ctu-ast-mode {load-from-pch, parse-on-demand}]
-                           [--ctu-reanalyze-on-failure]
                            [-e checker/group/profile]
                            [-d checker/group/profile] [--enable-all]
                            [--verbose {info,debug,debug_analyzer}]

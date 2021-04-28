@@ -49,7 +49,7 @@ def prepare_actions(actions, enabled_analyzers):
     return res
 
 
-def create_actions_map(actions, manager):
+def create_actions_map(actions, sync_manager):
     """
     Create a dict for the build actions which is shareable
     safely between processes.
@@ -57,7 +57,7 @@ def create_actions_map(actions, manager):
     Value: BuildAction
     """
 
-    result = manager.dict()
+    result = sync_manager.dict()
 
     for act in actions:
         key = act.source, act.target[act.lang]
@@ -108,7 +108,7 @@ def __mgr_init():
     """
     This function is set for the SyncManager object which handles shared data
     structures among the processes of the pool. Ignoring the SIGINT signal is
-    necessary in the manager object so it doesn't terminate before the
+    necessary in the sync_manager object so it doesn't terminate before the
     termination of the process pool.
     """
     signal.signal(signal.SIGINT, signal.SIG_IGN)
@@ -166,13 +166,6 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
     in the given analysis context for the supplied build actions.
     Additionally, insert statistical information into the metadata dict.
     """
-
-    ctu_reanalyze_on_failure = 'ctu_reanalyze_on_failure' in args and \
-        args.ctu_reanalyze_on_failure
-    if ctu_reanalyze_on_failure:
-        LOG.warning("Usage of a DEPRECATED FLAG!\n"
-                    "The --ctu-reanalyze-on-failure flag will be removed "
-                    "in the upcoming releases!")
 
     analyzers = args.analyzers if 'analyzers' in args \
         else analyzer_types.supported_analyzers
@@ -293,21 +286,21 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
 
     # Use Manager to create data objects which can be
     # safely shared between processes.
-    manager = SyncManager()
-    manager.start(__mgr_init)
+    sync_manager = SyncManager()
+    sync_manager.start(__mgr_init)
 
-    config_map = manager.dict(config_map)
-    actions_map = create_actions_map(actions, manager)
+    config_map = sync_manager.dict(config_map)
+    actions_map = create_actions_map(actions, sync_manager)
 
     # Setting to not None value will enable statistical analysis features.
     statistics_data = __get_statistics_data(args)
     if statistics_data:
-        statistics_data = manager.dict(statistics_data)
+        statistics_data = sync_manager.dict(statistics_data)
 
     if ctu_collect or statistics_data:
         ctu_data = None
         if ctu_collect or ctu_analyze:
-            ctu_data = manager.dict(__get_ctu_data(config_map, ctu_dir))
+            ctu_data = sync_manager.dict(__get_ctu_data(config_map, ctu_dir))
 
         pre_analyze = [a for a in actions
                        if a.analyzer_type == ClangSA.ANALYZER_NAME]
@@ -329,7 +322,7 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
                                                   pre_anal_skip_handler,
                                                   ctu_data,
                                                   statistics_data,
-                                                  manager)
+                                                  sync_manager)
         else:
             LOG.error("Can not run pre analysis without clang "
                       "static analyzer configuration.")
@@ -338,7 +331,7 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
         return
 
     if 'stats_dir' in args and args.stats_dir:
-        statistics_data = manager.dict({'stats_out_dir': args.stats_dir})
+        statistics_data = sync_manager.dict({'stats_out_dir': args.stats_dir})
 
     if ctu_analyze or statistics_data or (not ctu_analyze and not ctu_collect):
 
@@ -352,9 +345,8 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
                                        'capture_analysis_output' in args,
                                        args.timeout if 'timeout' in args
                                        else None,
-                                       ctu_reanalyze_on_failure,
                                        statistics_data,
-                                       manager,
+                                       sync_manager,
                                        compile_cmd_count)
         LOG.info("Analysis finished.")
         LOG.info("To view results in the terminal use the "
@@ -375,4 +367,4 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
     if ctu_collect and ctu_analyze:
         shutil.rmtree(ctu_dir, ignore_errors=True)
 
-    manager.shutdown()
+    sync_manager.shutdown()

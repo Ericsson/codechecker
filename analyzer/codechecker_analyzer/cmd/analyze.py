@@ -508,16 +508,6 @@ Cross-TU analysis. By default, no CTU analysis is run when
                                     "'<OUTPUT_DIR>/ctu-dir'. (These files "
                                     "will not be cleaned up in this mode.)")
 
-        ctu_opts.add_argument('--ctu-reanalyze-on-failure',
-                              action='store_true',
-                              dest='ctu_reanalyze_on_failure',
-                              default=argparse.SUPPRESS,
-                              help="DEPRECATED. The flag will be removed. "
-                                   "If Cross-TU analysis is enabled and fails "
-                                   "for some reason, try to re analyze the "
-                                   "same translation unit without "
-                                   "Cross-TU enabled.")
-
         # Only check for AST loading modes if CTU is available.
         if analyzer_types.is_ctu_on_demand_available(context):
             ctu_opts.add_argument('--ctu-ast-mode',
@@ -1012,8 +1002,7 @@ def main(args):
                        compile_cmd_count.analyze)
 
     analyzer.perform_analysis(args, skip_handler, context, actions,
-                              metadata_tool,
-                              compile_cmd_count)
+                              metadata_tool, compile_cmd_count)
 
     __update_skip_file(args)
     __cleanup_metadata(metadata_prev, metadata)

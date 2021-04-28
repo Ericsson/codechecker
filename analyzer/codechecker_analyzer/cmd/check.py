@@ -466,16 +466,6 @@ is called.""")
                                     "'<OUTPUT_DIR>/ctu-dir'. (These files "
                                     "will not be cleaned up in this mode.)")
 
-        ctu_opts.add_argument('--ctu-reanalyze-on-failure',
-                              action='store_true',
-                              dest='ctu_reanalyze_on_failure',
-                              default=argparse.SUPPRESS,
-                              help="DEPRECATED. The flag will be removed. "
-                                   "If Cross-TU analysis is enabled and "
-                                   "fails for some reason, try to re analyze "
-                                   "the same translation unit without "
-                                   "Cross-TU enabled.")
-
         # Only check for AST loading modes if CTU is available.
         if analyzer_types.is_ctu_on_demand_available(context):
             ctu_opts.add_argument('--ctu-ast-mode',
@@ -794,7 +784,6 @@ def main(args):
                           'capture_analysis_output',
                           'config_file',
                           'ctu_phases',
-                          'ctu_reanalyze_on_failure',
                           'stats_output',
                           'stats_dir',
                           'stats_enabled',

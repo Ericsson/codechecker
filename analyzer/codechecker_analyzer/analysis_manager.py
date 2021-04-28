@@ -478,7 +478,7 @@ def check(check_data):
     actions_map, action, context, analyzer_config, \
         output_dir, skip_handler, quiet_output_on_stdout, \
         capture_analysis_output, analysis_timeout, \
-        analyzer_environment, ctu_reanalyze_on_failure, \
+        analyzer_environment, \
         output_dirs, statistics_data = check_data
 
     failed_dir = output_dirs["failed"]
@@ -605,7 +605,7 @@ def check(check_data):
             handle_failure(source_analyzer, rh, zip_file, result_base,
                            actions_map)
 
-            if ctu_active and ctu_reanalyze_on_failure:
+            if ctu_active:
                 LOG.error("Try to reanalyze without CTU")
                 # Try to reanalyze with CTU disabled.
                 source_analyzer, rh = \
@@ -704,7 +704,7 @@ def skip_cpp(compile_actions, skip_handler):
 def start_workers(actions_map, actions, context, analyzer_config_map,
                   jobs, output_path, skip_handler, metadata_tool,
                   quiet_analyze, capture_analysis_output, timeout,
-                  ctu_reanalyze_on_failure, statistics_data, manager,
+                  statistics_data, sync_manager,
                   compile_cmd_count):
     """
     Start the workers in the process pool.
@@ -715,7 +715,7 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
     def signal_handler(signum, frame):
         try:
             pool.terminate()
-            manager.shutdown()
+            sync_manager.shutdown()
         finally:
             sys.exit(128 + signum)
 
@@ -762,7 +762,6 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
                          capture_analysis_output,
                          timeout,
                          analyzer_environment,
-                         ctu_reanalyze_on_failure,
                          output_dirs,
                          statistics_data)
                         for build_action in actions]
@@ -776,9 +775,9 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
             # It is a python bug, this does not happen if a timeout is
             # specified, then receive the interrupt immediately.
 
-            # FIXME: Ensure all shared data structures are wrapped in manager
-            #        proxy objects before passing them to other processes via
-            #        map_async.
+            # FIXME: Ensure all shared data structures are wrapped in
+            #        sync_manager proxy objects before passing them to other
+            #        processes via map_async.
             #        Note that even deep-copying is known to be insufficient.
             pool.map_async(check,
                            analyzed_actions,
