@@ -18,7 +18,7 @@ from codechecker_common.logger import get_logger
 LOG = get_logger('system')
 
 
-class SkipListHandler(object):
+class SkipListHandler:
     """
     Skiplist file format:
 

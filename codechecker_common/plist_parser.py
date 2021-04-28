@@ -46,7 +46,7 @@ from codechecker_report_hash.hash import get_report_hash, HashType
 LOG = get_logger('report')
 
 
-class LXMLPlistEventHandler(object):
+class LXMLPlistEventHandler:
     """
     Basic lxml event handler.
     """

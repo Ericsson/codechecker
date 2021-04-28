@@ -20,7 +20,7 @@ from . import __title__, __version__
 LOG = logging.getLogger('ReportConverter')
 
 
-class AnalyzerResult(object, metaclass=ABCMeta):
+class AnalyzerResult(metaclass=ABCMeta):
     """ Base class to transform analyzer result. """
 
     # Short name of the analyzer.

@@ -14,7 +14,7 @@ import os
 import re
 
 
-class ReturnValueCollector(object):
+class ReturnValueCollector:
     """ Collect return value statistics.
 
     This script lists functions of which the return value is mostly checked.

@@ -21,7 +21,7 @@ from codechecker_common.logger import get_logger
 LOG = get_logger('system')
 
 
-class BaseClientHelper(object):
+class BaseClientHelper:
 
     def __init__(self, protocol, host, port, uri, session_token=None,
                  get_new_token=None):

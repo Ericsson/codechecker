@@ -70,7 +70,7 @@ LOG = get_logger('server')
 GEN_OTHER_COMPONENT_NAME = "Other (auto-generated)"
 
 
-class CommentKindValue(object):
+class CommentKindValue:
     USER = 0
     SYSTEM = 1
 
@@ -965,7 +965,7 @@ def get_analysis_statistics_query(session, run_ids, run_history_ids=None):
                    Run.id == RunHistory.run_id)
 
 
-class ThriftRequestHandler(object):
+class ThriftRequestHandler:
     """
     Connect to database and handle thrift client requests.
     """

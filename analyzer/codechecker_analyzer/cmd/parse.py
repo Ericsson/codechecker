@@ -62,7 +62,7 @@ epilog_exit_status = """
 """
 
 
-class PlistToPlaintextFormatter(object):
+class PlistToPlaintextFormatter:
     """
     Parse and format plist reports to a more human readable format.
     """

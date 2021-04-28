@@ -30,7 +30,7 @@ from ..session_manager import generate_session_token
 LOG = get_logger('server')
 
 
-class ThriftAuthHandler(object):
+class ThriftAuthHandler:
     """
     Handle Thrift authentication requests.
     """

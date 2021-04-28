@@ -24,7 +24,7 @@ from codechecker_common.logger import get_logger
 LOG = get_logger('profiler')
 
 
-class Timer(object):
+class Timer:
     """
     Simple timer context manager
     to measure code block execution time.

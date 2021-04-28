@@ -39,7 +39,7 @@ class CheckerState(Enum):
     enabled = 2
 
 
-class AnalyzerConfigHandler(object, metaclass=ABCMeta):
+class AnalyzerConfigHandler(metaclass=ABCMeta):
     """
     Handle the checker configurations and enabled disabled checkers lists.
     """

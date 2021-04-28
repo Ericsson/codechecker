@@ -363,7 +363,7 @@ class OptionParserTest(unittest.TestCase):
             'command': 'clang++ -c -MF deps.txt main.cpp',
             'directory': ''}
 
-        class FakeClangVersion(object):
+        class FakeClangVersion:
             installed_dir = "/tmp/clang/install"
             major_version = "9"
 
@@ -400,7 +400,7 @@ class OptionParserTest(unittest.TestCase):
             'command': "clang++ {} main.cpp".format(' '.join(keep)),
             'directory': ''}
 
-        class FakeClangVersion(object):
+        class FakeClangVersion:
             installed_dir = "/tmp/clang/install"
             major_version = "9"
 

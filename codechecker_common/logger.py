@@ -118,7 +118,7 @@ def validate_loglvl(log_level):
     return log_level
 
 
-class LOG_CFG_SERVER(object):
+class LOG_CFG_SERVER:
     """
     Initialize a log configuration server for dynamic log configuration.
     The log config server will only be started if the

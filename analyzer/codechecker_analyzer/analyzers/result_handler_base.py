@@ -20,7 +20,7 @@ from codechecker_common.logger import get_logger
 LOG = get_logger('analyzer')
 
 
-class ResultHandler(object, metaclass=ABCMeta):
+class ResultHandler(metaclass=ABCMeta):
     """
     Handle and store the results at runtime for the analyzer:
     stdout, stderr, temporarily generated files.

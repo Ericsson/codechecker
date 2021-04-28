@@ -281,7 +281,7 @@ def filter_compiler_includes_extra_args(compiler_flags):
     return extra_opts
 
 
-class ImplicitCompilerInfo(object):
+class ImplicitCompilerInfo:
     """
     This class helps to fetch and set some additional compiler flags which are
     implicitly added when using GCC.
@@ -602,7 +602,7 @@ class ImplicitCompilerInfo(object):
         return ImplicitCompilerInfo.compiler_info
 
 
-class OptionIterator(object):
+class OptionIterator:
 
     def __init__(self, args):
         self._item = None

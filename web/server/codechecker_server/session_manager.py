@@ -67,7 +67,7 @@ def get_worker_processes(scfg_dict, default=10):
     return worker_processes
 
 
-class _Session(object):
+class _Session:
     """A session for an authenticated, privileged client connection."""
 
     def __init__(self, token, username, groups,
@@ -150,7 +150,7 @@ class _Session(object):
                     transaction.close()
 
 
-class SessionManager(object):
+class SessionManager:
     """
     Provides the functionality required to handle user authentication on a
     CodeChecker server.

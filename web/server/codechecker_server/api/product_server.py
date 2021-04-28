@@ -31,7 +31,7 @@ from ..routing import is_valid_product_endpoint
 LOG = get_logger('server')
 
 
-class ThriftProductHandler(object):
+class ThriftProductHandler:
     """
     Connect to database and handle thrift client requests.
     """

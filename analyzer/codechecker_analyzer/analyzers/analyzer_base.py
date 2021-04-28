@@ -21,7 +21,7 @@ from codechecker_common.logger import get_logger
 LOG = get_logger('analyzer')
 
 
-class SourceAnalyzer(object, metaclass=ABCMeta):
+class SourceAnalyzer(metaclass=ABCMeta):
     """
     Base class for different source analyzers.
     """

@@ -25,7 +25,7 @@ LOG = get_logger('server')
 config_db_model = None  # Module will be loaded later...
 
 
-class Permission(object, metaclass=ABCMeta):
+class Permission(metaclass=ABCMeta):
     """
     The base class for a permission declaration.
     """
@@ -104,7 +104,7 @@ class Permission(object, metaclass=ABCMeta):
         pass
 
 
-class PermissionHandler(object, metaclass=ABCMeta):
+class PermissionHandler(metaclass=ABCMeta):
     """
     The abstract base class for an object that interfaces with the permission
     database to query and manage permissions.

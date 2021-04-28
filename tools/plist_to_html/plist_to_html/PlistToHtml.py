@@ -153,7 +153,7 @@ def twodim_to_table(
     return '\n'.join(str_parts)
 
 
-class HtmlBuilder(object):
+class HtmlBuilder:
     """
     Helper class to create html file from a report data.
     """
