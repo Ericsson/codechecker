@@ -137,4 +137,84 @@ class PermissionManagement(unittest.TestCase):
         for user in authorized_names.users:
             self.assertNotEqual(normal_test_user_name.lower(), user.lower())
 
-    # TODO: Create tests for group permissions too.
+    def __getRealGroupName(self, group_name_guess):
+        group_name_lower = group_name_guess.lower()
+        product_permissions = self._root_auth_client.getPermissions('PRODUCT')
+        for permission in product_permissions:
+            authorized_names = self._root_auth_client.getAuthorisedNames(
+                permission, self._extra_params_as_json)
+            for group in authorized_names.groups:
+                if group.lower() == group_name_lower:
+                    return group
+
+    def test_group_product_permissions(self):
+        admin_test_group_name = "admin_GROUP"
+        as_group = True
+        expected_permission = Permission.PRODUCT_STORE
+        # Check test group if it is in the authorization database with
+        # PRODUCT_STORE right.
+        authorized_names = self._root_auth_client.getAuthorisedNames(
+            expected_permission, self._extra_params_as_json)
+        for group in authorized_names.groups:
+            self.assertNotEqual(admin_test_group_name.lower(), group.lower(),
+                                "Test database mismatch.")
+
+        # Check test user has not got PRODUCT_ACCESS permission for test
+        # product.
+        expected_permission = Permission.PRODUCT_ACCESS
+        authorized_names = self._root_auth_client.getAuthorisedNames(
+            expected_permission, self._extra_params_as_json)
+        for group in authorized_names.groups:
+            self.assertNotEqual(admin_test_group_name.lower(), group.lower(),
+                                "Test database mismatch.")
+
+        # Try to find test group name in the permissions table.
+        stored_group_name = self.__getRealGroupName(admin_test_group_name)
+        if not stored_group_name:
+            stored_group_name = admin_test_group_name
+
+        # Add admin_GROUP to the test product with PRODUCT_STORE permission.
+        result = self._root_auth_client.addPermission(
+            expected_permission, stored_group_name, as_group,
+            self._extra_params_as_json)
+        self.assertTrue(result)
+
+        # Add admin_GROUP to the test product with PRODUCT_ACCESS permission.
+        # But its name is in uppercase form.
+        result = self._root_auth_client.addPermission(
+            expected_permission, stored_group_name.upper(), as_group,
+            self._extra_params_as_json)
+        self.assertTrue(result)
+
+        # Read back permission of admin_GROUP with its "original" name.
+        authorized_names = self._root_auth_client.getAuthorisedNames(
+            expected_permission, self._extra_params_as_json)
+        self.assertIn(stored_group_name, authorized_names.groups,
+                      "Could not give permission for group.")
+
+        # Remove PRODUCT_ACCESS permission from admin_GROUP.
+        # But with lowercase name.
+        result = self._root_auth_client.removePermission(
+            expected_permission, stored_group_name.lower(), as_group,
+            self._extra_params_as_json)
+        self.assertTrue(result)
+
+        # Check that admin_GROUP really loose its PRODUCT_ACCESS permission.
+        authorized_names = self._root_auth_client.getAuthorisedNames(
+            expected_permission, self._extra_params_as_json)
+        for group in authorized_names.groups:
+            self.assertNotEqual(stored_group_name.lower(), group.lower())
+
+        # Remove PRODUCT_STORE permission from admin_GROUP.
+        # But with uppercase name.
+        expected_permission = Permission.PRODUCT_STORE
+        result = self._root_auth_client.removePermission(
+            expected_permission, stored_group_name.upper(), as_group,
+            self._extra_params_as_json)
+        self.assertTrue(result)
+
+        # Check that admin_GROUP really loose its PRODUCT_STORE permission too.
+        authorized_names = self._root_auth_client.getAuthorisedNames(
+            expected_permission, self._extra_params_as_json)
+        for group in authorized_names.groups:
+            self.assertNotEqual(stored_group_name.lower(), group.lower())
