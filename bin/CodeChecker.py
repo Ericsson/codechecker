@@ -11,12 +11,28 @@ Main CodeChecker script.
 """
 
 
-import argparse
 from importlib import machinery
+import argparse
+import atexit
+import errno
 import json
 import os
+import shutil
 import signal
 import sys
+
+
+def cleanup_env_file():
+    original_env_file = os.environ['CODECHECKER_ORIGINAL_BUILD_ENV']
+
+    # If the env file is saved by the main wrapper remove it.
+    try:
+        tmp_dir, _ = os.path.split(original_env_file)
+        shutil.rmtree(tmp_dir)
+    except OSError as ex:
+        if ex.errno != errno.ENOENT:
+            print('Failed to remove temporary directory: %s.'
+                  'Manual cleanup is required.', tmp_dir)
 
 
 def add_subcommand(subparsers, sub_cmd, cmd_module_path):
@@ -50,6 +66,7 @@ def main(subcommands=None):
     """
     CodeChecker main command line.
     """
+    atexit.register(cleanup_env_file)
 
     def signal_handler(signum, frame):
         """
