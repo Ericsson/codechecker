@@ -212,6 +212,11 @@ and can be installed with the following command:
 sudo snap install codechecker --classic
 ```
 
+**Note:** unfortunately snap package supports only lower case command names.
+For this reason you need to use `codechecker` command instead of `CodeChecker`
+everywhere. For full list of available commands in the codechecker snap package
+run `snap info codechecker`.
+
 ## Linux
 
 For a detailed dependency list, and for instructions on how to install newer
