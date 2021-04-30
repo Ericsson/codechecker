@@ -11,7 +11,7 @@ Build and log related functionality.
 
 
 import os
-import pickle
+import json
 import platform
 import subprocess
 import sys
@@ -64,8 +64,11 @@ def perform_build_command(logfile, command, context, keep_link, silent=False,
         LOG.debug_analyzer('Loading original build env from: %s',
                            original_env_file)
 
-        with open(original_env_file, 'rb') as env_file:
-            original_env = pickle.load(env_file, encoding='utf-8')
+        with open(original_env_file,
+                  mode='r',
+                  encoding="utf-8",
+                  errors="ignore") as env_file:
+            original_env = json.load(env_file)
 
     except Exception as ex:
         LOG.warning(str(ex))

@@ -14,7 +14,7 @@ Used to run the logging in the same env.
 
 import errno
 import os
-import pickle
+import json
 import shutil
 import signal
 import subprocess
@@ -76,7 +76,7 @@ def main(subcommand=None):
 
     tmp_dir = tempfile.mkdtemp()
 
-    original_env_file = os.path.join(tmp_dir, 'original_env.pickle')
+    original_env_file = os.path.join(tmp_dir, 'original_env.json')
 
     def _remove_tmp():
         # Remove temporary directory.
@@ -89,8 +89,11 @@ def main(subcommand=None):
                 print(ex)
 
     try:
-        with open(original_env_file, 'wb') as env_save:
-            pickle.dump(original_env, env_save)
+        with open(original_env_file,
+                  mode='w',
+                  encoding="utf-8",
+                  errors="ignore") as env_save:
+            json.dump(original_env, env_save)
 
         checker_env['CODECHECKER_ORIGINAL_BUILD_ENV'] = original_env_file
     except Exception as ex:
