@@ -151,7 +151,7 @@ check_codechecker_api_version:
 	if ! pip3 install -r ./requirements.txt 2>&1 | grep -q "Requirement already satisfied: codechecker_api"; then \
 		if [ "$(BUILD_UI_DIST)" = "YES" ]; then \
 		  cd server/vue-cli && npm install && rm -rf $(DIST_DIR); \
-		fi \
+		fi; \
 	fi
 
 # This target will check if the 'dist' directory exists and the vue-cli folder
