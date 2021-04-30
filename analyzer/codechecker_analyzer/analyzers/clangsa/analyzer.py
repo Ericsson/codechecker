@@ -15,6 +15,8 @@ import re
 import shlex
 import subprocess
 
+from typing import Dict, List
+
 from codechecker_common.logger import get_logger
 
 from codechecker_analyzer import env
@@ -33,7 +35,11 @@ from .result_handler import ResultHandlerClangSA
 LOG = get_logger('analyzer')
 
 
-def parse_clang_help_page(command, start_label, environ):
+def parse_clang_help_page(
+    command: List[str],
+    start_label: str,
+    environ: Dict[str, str]
+) -> List[str]:
     """
     Parse the clang help page starting from a specific label.
     Returns a list of (flag, description) tuples.
@@ -41,11 +47,13 @@ def parse_clang_help_page(command, start_label, environ):
     try:
         help_page = subprocess.check_output(
             command,
+            stderr=subprocess.STDOUT,
             env=environ,
             universal_newlines=True,
             encoding="utf-8",
             errors="ignore")
     except (subprocess.CalledProcessError, OSError):
+        LOG.debug("Failed to run '%s' command!", command)
         return []
 
     help_page = help_page[help_page.index(start_label) + len(start_label):]
@@ -131,7 +139,11 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         self.__checker_configs.append(checker_cfg)
 
     @classmethod
-    def get_analyzer_checkers(cls, cfg_handler, environ):
+    def get_analyzer_checkers(
+        cls,
+        cfg_handler: config_handler.ClangSAConfigHandler,
+        environ: Dict[str, str]
+    ) -> List[str]:
         """Return the list of the supported checkers."""
         checker_list_args = clang_options.get_analyzer_checkers_cmd(
             cfg_handler,
@@ -139,7 +151,11 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         return parse_clang_help_page(checker_list_args, 'CHECKERS:', environ)
 
     @classmethod
-    def get_checker_config(cls, cfg_handler, environ):
+    def get_checker_config(
+        cls,
+        cfg_handler: config_handler.ClangSAConfigHandler,
+        environ: Dict[str, str]
+    ) -> List[str]:
         """Return the list of checker config options."""
         checker_config_args = clang_options.get_checker_config_cmd(
             cfg_handler,
@@ -147,7 +163,11 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         return parse_clang_help_page(checker_config_args, 'OPTIONS:', environ)
 
     @classmethod
-    def get_analyzer_config(cls, cfg_handler, environ):
+    def get_analyzer_config(
+        cls,
+        cfg_handler: config_handler.ClangSAConfigHandler,
+        environ: Dict[str, str]
+    ) -> List[str]:
         """Return the list of analyzer config options."""
         analyzer_config_args = clang_options.get_analyzer_config_cmd(
             cfg_handler)

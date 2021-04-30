@@ -13,6 +13,7 @@ analyzers available in CodeChecker.
 
 import argparse
 import subprocess
+import sys
 
 from codechecker_analyzer import analyzer_context
 from codechecker_analyzer import env
@@ -173,6 +174,12 @@ def main(args):
 
         configs = analyzer_class.get_analyzer_config(config_handler,
                                                      analyzer_environment)
+        if not configs:
+            LOG.error("Failed to get analyzer configuration options for '%s' "
+                      "analyzer! Please try to upgrade your analyzer version "
+                      "to use this feature.", analyzer)
+            sys.exit(1)
+
         rows = [(':'.join((analyzer, c[0])), c[1]) if 'details' in args
                 else (':'.join((analyzer, c[0])),) for c in configs]
 
