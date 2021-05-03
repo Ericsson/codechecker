@@ -10,6 +10,7 @@
 from collections import defaultdict
 # pylint: disable=no-name-in-module
 from distutils.spawn import find_executable
+from enum import Enum
 
 import glob
 import json
@@ -1200,7 +1201,7 @@ class CompileCommandEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
-class CompileActionUniqueingType(object):
+class CompileActionUniqueingType(Enum):
     NONE = 0  # Full Action text
     SOURCE_ALPHA = 1  # Based on source file, uniqueing by
     # on alphanumerically first target

@@ -11,6 +11,7 @@ Static analyzer configuration handler.
 
 
 from abc import ABCMeta
+from enum import Enum
 from operator import itemgetter
 import collections
 import platform
@@ -32,13 +33,10 @@ LOG = get_logger('system')
 # disabled on the command-line, or belongs to a profile explicitly disabled
 # on the command-line, then it is considered to have a CheckerState of
 # disabled.
-# TODO: Use enum when upgrading to Python3.
-class CheckerState(object):
+class CheckerState(Enum):
     default = 0
     disabled = 1
     enabled = 2
-    STATES = {'default', 'disabled', 'enabled'}
-    NAMES = {0: 'default', 1: 'disabled', 2: 'enabled'}
 
 
 class AnalyzerConfigHandler(object, metaclass=ABCMeta):
