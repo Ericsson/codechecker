@@ -183,7 +183,11 @@ export default {
     addNewAuthRight() {
       if (!this.name.length) return;
 
-      if (!(this.name in this.authRights)) {
+      const searchKey = this.name.toLowerCase();
+      const foundKey = Object.keys(this.authRights).find(
+        objectKey => objectKey.toLowerCase() === searchKey);
+
+      if (!foundKey) {
         this.$set(this.authRights, this.name, []);
       }
 
