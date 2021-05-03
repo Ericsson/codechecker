@@ -1,0 +1,80 @@
+name: pypi-package-tests
+
+# Triggers the workflow on push or pull request events.
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build pypi package
+    runs-on: ubuntu-18.04
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.6'
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install g++ gcc-multilib
+
+      - name: Create the pypi package
+        run: |
+          BUILD_UI_DIST=NO make dist
+          mv dist/codechecker-*.tar.gz dist/codechecker.tar.gz
+
+      - uses: actions/upload-artifact@master
+        with:
+          name: pypi-package-and-tests
+          path: |
+            dist
+            tests/functional/binary_package/
+
+  test:
+    name: Install and test pypi package
+    runs-on: ${{ matrix.os }}
+    needs: build
+
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, macos-10.15, windows-2019]
+
+    steps:
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.6'
+
+      - uses: actions/download-artifact@master
+        with:
+          name: pypi-package-and-tests
+          path: ./
+
+      - name: "Install run-time dependencies (Linux)"
+        if: ${{ matrix.os == 'ubuntu-18.04' }}
+        run:
+          sudo apt-get update && sudo apt-get install g++ clang clang-tidy
+
+      - name: "Install run-time dependencies (OSX)"
+        if: ${{ matrix.os == 'macos-10.15' }}
+        run:
+          brew install llvm
+
+      - name: "Install run-time dependencies (Windows)"
+        if: ${{ matrix.os == 'windows-2019' }}
+        shell: powershell
+        run: |
+          choco install llvm;
+          echo "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: "Install pypi package"
+        run: |
+          pip install wheel nose
+          pip install dist/codechecker.tar.gz
+
+      - name: "Test CodeChecker commands"
+        run: |
+          nosetests tests/functional/binary_package/

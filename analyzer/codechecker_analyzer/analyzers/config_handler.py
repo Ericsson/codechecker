@@ -161,14 +161,14 @@ class AnalyzerConfigHandler(object, metaclass=ABCMeta):
             LOG.error("'list' is a reserved profile keyword. ")
             LOG.error("Please choose another profile name in "
                       "%s/config/checker_profile_map.json and rebuild.",
-                      analyzer_context.package_root)
+                      analyzer_context.data_files_dir_path)
             sys.exit(1)
 
         if 'guideline:list' in map(itemgetter(0), cmdline_enable):
             LOG.error("'list' is a reserved guideline keyword. ")
             LOG.error("Please choose another guideline name in "
                       "%s/config/checker_guideline_map.json and rebuild.",
-                      analyzer_context.package_root)
+                      analyzer_context.data_files_dir_path)
             sys.exit(1)
 
         # Add all checkers marked as default. This means the analyzer should

@@ -167,7 +167,7 @@ def parse_codechecker_review_comment(source_file_name,
                     report_line,
                     checker_name)
             except SpellException as ex:
-                LOG.warning(f"File {source_file_name} contains {ex}")
+                LOG.warning("File %s contains %s", source_file_name, ex)
     return src_comment_data
 
 

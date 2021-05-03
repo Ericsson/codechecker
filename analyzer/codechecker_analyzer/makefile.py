@@ -93,10 +93,10 @@ class MakeFileCreator(object):
 
     def __write_env_exports(self, mfile):
         """ Exports environment variables. """
-        package_root = os.getenv("CC_PACKAGE_ROOT")
-        if package_root:
-            bin_dir = os.path.join(package_root, 'bin')
-            python3_bin = os.path.join(package_root, 'python3', 'bin')
+        data_files_dir_path = os.getenv("CC_DATA_FILES_DIR")
+        if data_files_dir_path:
+            bin_dir = os.getenv('CC_BIN_DIR', '')
+            python3_bin = os.path.join(data_files_dir_path, 'python3', 'bin')
 
             mfile.write('export PATH := {0}:{1}:${{PATH}}\n'.format(
                 bin_dir, python3_bin))

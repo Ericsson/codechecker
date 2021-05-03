@@ -41,7 +41,9 @@ pycodestyle_in_env: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(PYCODESTYLE_TEST_CMD)
 
 PYLINT_TEST_CMD = PYLINTRC=$(ROOT)/.pylintrc \
-  pylint -j0 ./bin/** \
+  pylint -j0 \
+    --ignore=server/codechecker_server/migrations/report,server/codechecker_server/migrations/report/versions,server/codechecker_server/migrations/config,server/codechecker_server/migrations/config/versions \
+    ./bin/** \
     ./codechecker_web \
     ./client/bin/** ./client/codechecker_client \
     ./server/bin/** ./server/codechecker_server ./server/tests/unit \

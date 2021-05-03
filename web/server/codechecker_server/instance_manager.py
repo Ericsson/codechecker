@@ -55,8 +55,9 @@ def __check_instance(hostname, pid):
     try:
         proc = psutil.Process(pid)
 
-        return "CodeChecker.py" in proc.cmdline()[1] and \
-               proc.username() == getpass.getuser()
+        cli = os.path.join("codechecker_common", "cli.py")
+        return cli in proc.cmdline()[1] and \
+            proc.username() == getpass.getuser()
     except psutil.NoSuchProcess:
         # If the process does not exist, it cannot be valid.
         return False

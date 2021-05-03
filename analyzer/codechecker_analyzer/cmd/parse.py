@@ -39,8 +39,8 @@ LOG = logger.get_logger('system')
 
 EXPORT_TYPES = ['html', 'json', 'codeclimate', 'gerrit']
 
-_package_root = analyzer_context.get_context().package_root
-_severity_map_file = os.path.join(_package_root, 'config',
+_data_files_dir_path = analyzer_context.get_context().data_files_dir_path
+_severity_map_file = os.path.join(_data_files_dir_path, 'config',
                                   'checker_severity_map.json')
 
 epilog_env_var = f"""
@@ -721,7 +721,7 @@ def main(args):
 
     if export:
         if export not in EXPORT_TYPES:
-            LOG.error(f"Unknown export format: {export}")
+            LOG.error("Unknown export format: %s", export)
             return
 
         # The HTML part will be handled separately below.

@@ -129,12 +129,10 @@ package: package_analyzer
 	  $(CC_BUILD_DIR)/config/analyzer_version.json \
 
 	# Copy CodeChecker entry point sub-commands.
-	mkdir -p $(CC_BUILD_DIR)/cc_bin && \
 	${PYTHON_BIN} $(ROOT)/scripts/build/create_commands.py -b $(BUILD_DIR) \
 	  --cmd-dir $(ROOT)/codechecker_common/cmd \
 	    $(CC_ANALYZER)/codechecker_analyzer/cmd \
-	  --bin-file $(ROOT)/bin/CodeChecker \
-	  --cc-bin-file $(ROOT)/bin/CodeChecker.py
+	  --bin-file $(ROOT)/bin/CodeChecker
 
 	# Copy license file.
 	cp $(ROOT)/LICENSE.TXT $(CC_BUILD_DIR)

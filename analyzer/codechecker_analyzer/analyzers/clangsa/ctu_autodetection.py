@@ -45,7 +45,7 @@ def invoke_binary_checked(binary_path, args=None, environ=None):
     except (subprocess.CalledProcessError, OSError) as e:
         LOG.debug(
             'Command invocation failed because of non-zero exit code!'
-            'Details: {}'.format(str(e)))
+            'Details: %s', str(e))
         return False
     return output
 
