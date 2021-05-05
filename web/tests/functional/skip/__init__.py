@@ -123,7 +123,7 @@ def teardown_package():
     codechecker.remove_test_package_product(TEST_WORKSPACE, check_env)
 
     print("Removing: " + TEST_WORKSPACE)
-    shutil.rmtree(TEST_WORKSPACE)
+    shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
 
 def _generate_skip_list_file(skip_list_file):
