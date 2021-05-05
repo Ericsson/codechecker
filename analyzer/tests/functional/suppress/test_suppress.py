@@ -19,7 +19,7 @@ import unittest
 from libtest import env
 
 
-def call_cmd(command, cwd, env):
+def _call_cmd(command, cwd, env):
     try:
         print(' '.join(command))
         proc = subprocess.Popen(
@@ -61,15 +61,15 @@ class TestSuppress(unittest.TestCase):
                                       "generated.suppress")
         skip_file = os.path.join(self._test_directory, "suppress_export.skip")
 
-        extract_cmd = ['CodeChecker', 'parse',
+        extract_cmd = [env.codechecker_cmd(), 'parse',
                        os.path.join(self._test_workspace, "reports"),
                        "--suppress", generated_file,
                        "--export-source-suppress", "--ignore", skip_file,
                        "--verbose", "debug"]
 
-        ret = call_cmd(extract_cmd,
-                       self._test_project_path,
-                       env.test_env(self._test_directory))
+        ret = _call_cmd(extract_cmd,
+                        self._test_project_path,
+                        env.test_env(self._test_directory))
         self.assertEqual(ret, 2, "Failed to generate suppress file.")
 
         with open(generated_file, 'r',
@@ -101,13 +101,13 @@ class TestSuppress(unittest.TestCase):
 
         skip_file = os.path.join(self._test_directory, "doubled_suppress.skip")
 
-        extract_cmd = ['CodeChecker', 'parse',
+        extract_cmd = [env.codechecker_cmd(), 'parse',
                        os.path.join(self._test_workspace, "reports"),
                        "--ignore", skip_file, "--verbose", "debug"]
 
-        ret = call_cmd(extract_cmd,
-                       self._test_project_path,
-                       env.test_env(self._test_workspace))
+        ret = _call_cmd(extract_cmd,
+                        self._test_project_path,
+                        env.test_env(self._test_workspace))
         self.assertEqual(ret, 1, "Repeated suppress comment not recognized.")
 
     def test_doubled_suppress_by_all(self):
@@ -118,12 +118,11 @@ class TestSuppress(unittest.TestCase):
 
         skip_file = os.path.join(self._test_directory, "suppress_by_all.skip")
 
-        extract_cmd = ['CodeChecker', 'parse',
+        extract_cmd = [env.codechecker_cmd(), 'parse',
                        os.path.join(self._test_workspace, "reports"),
                        "--ignore", skip_file, "--verbose", "debug"]
 
-        ret = call_cmd(extract_cmd,
-                       self._test_project_path,
-                       env.test_env(self._test_workspace))
+        ret = _call_cmd(extract_cmd, self._test_project_path,
+                        env.test_env(self._test_workspace))
         self.assertEqual(ret, 1, "Already covered suppress comment not "
                          "recognized.")
