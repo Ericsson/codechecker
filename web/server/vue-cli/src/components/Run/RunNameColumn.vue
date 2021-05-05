@@ -34,7 +34,7 @@
           vertical
         />
 
-        <show-check-command-btn
+        <check-command-btn
           @click="openCheckCommandDialog(id)"
         />
 
@@ -72,7 +72,7 @@ import { defaultStatisticsFilterValues } from "@/components/Statistics";
 
 import { DetectionStatusMixin } from "@/mixins";
 import { DetectionStatusIcon } from "@/components/Icons";
-import ShowCheckCommandBtn from "./ShowCheckCommandBtn";
+import CheckCommandBtn from "./CheckCommandBtn";
 import ShowStatisticsBtn from "./ShowStatisticsBtn";
 import VersionTag from "./VersionTag";
 
@@ -81,13 +81,13 @@ export default {
   components: {
     DetectionStatusIcon,
     RunDescription,
-    ShowCheckCommandBtn,
+    CheckCommandBtn,
     ShowStatisticsBtn,
     VersionTag
   },
   mixins: [ DetectionStatusMixin ],
   props: {
-    id: { type: Number, required: true },
+    id: { type: Object, required: true },
     name: { type: String, required: true },
     description: { type: String, default: null },
     versionTag: { type: String, default: null },

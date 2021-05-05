@@ -1,30 +1,10 @@
 <template>
   <v-card flat tile>
-    <v-dialog
-      v-model="showCheckCommandDialog"
-      content-class="check-command"
-      width="500"
-    >
-      <v-card>
-        <v-card-title
-          class="headline primary white--text"
-          primary-title
-        >
-          Check command
-
-          <v-spacer />
-
-          <v-btn icon dark @click="showCheckCommandDialog = false">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-        </v-card-title>
-        <v-card-text>
-          <v-container>
-            {{ checkCommand }}
-          </v-container>
-        </v-card-text>
-      </v-card>
-    </v-dialog>
+    <check-command-dialog
+      :value.sync="checkCommandDialog"
+      :run-id="selectedRunId"
+      :run-history-id="selectedRunHistoryId"
+    />
 
     <analyzer-statistics-dialog
       :value.sync="analyzerStatisticsDialog"
@@ -90,7 +70,7 @@
 
       <template #item.name="{ item }">
         <run-name-column
-          :id="item.runId.toNumber()"
+          :id="item.runId"
           :name="item.name"
           :description="item.description"
           :version-tag="item.versionTag"
@@ -180,6 +160,7 @@ import {
 import {
   AnalyzerStatisticsBtn,
   AnalyzerStatisticsDialog,
+  CheckCommandDialog,
   ExpandedRun,
   RunFilterToolbar,
   RunNameColumn
@@ -190,6 +171,7 @@ export default {
   components: {
     AnalyzerStatisticsBtn,
     AnalyzerStatisticsDialog,
+    CheckCommandDialog,
     ExpandedRun,
     RunNameColumn,
     RunFilterToolbar
@@ -207,7 +189,7 @@ export default {
 
     return {
       initialized: false,
-      showCheckCommandDialog: false,
+      checkCommandDialog: false,
       checkCommand: null,
       pagination: {
         page: page,
@@ -316,10 +298,6 @@ export default {
         this.fetchRuns();
       },
       deep: true
-    },
-
-    showCheckCommandDialog (val) {
-      val || this.closeCheckCommandDialog();
     }
   },
 
@@ -528,25 +506,15 @@ export default {
     },
 
     openCheckCommandDialog(runId, runHistoryId=null) {
-      ccService.getClient().getCheckCommand(runHistoryId, runId,
-        handleThriftError(checkCommand => {
-          if (!checkCommand) {
-            checkCommand = "Unavailable!";
-          }
-          this.checkCommand = checkCommand;
-          this.showCheckCommandDialog = true;
-        }));
+      this.selectedRunId = runId;
+      this.selectedRunHistoryId = runHistoryId;
+      this.checkCommandDialog = true;
     },
 
     openAnalyzerStatisticsDialog(report, history=null) {
       this.selectedRunId = report ? report.runId : null;
       this.selectedRunHistoryId = history ? history.id : null;
       this.analyzerStatisticsDialog = true;
-    },
-
-    closeCheckCommandDialog() {
-      this.showCheckCommandDialog = false;
-      this.checkCommand = null;
     },
 
     prettifyDuration(seconds) {

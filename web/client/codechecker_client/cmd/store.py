@@ -13,13 +13,12 @@ database.
 
 import argparse
 import base64
-import errno
 import hashlib
 import json
 import os
 import sys
 import tempfile
-from typing import Dict, List, Tuple
+from typing import Dict, List, Set, Tuple
 import zipfile
 import zlib
 
@@ -304,29 +303,28 @@ def res_handler(results):
     LOG.info("Successful %d/%d", results.count(0), len(results))
 
 
-def collect_report_files(inputs):
-    """Collect all the plist report files in the inputs directories.
-       returns the list of files with .plist extension.
+def collect_report_files(inputs: List[str]) -> Set[str]:
     """
-    plist_report_files = []
+    Collect all the plist report files in the inputs directories recursively.
+    """
+    report_files: Set[str] = set()
+
+    def is_report_file(file_path):
+        """ True if the given file is a report file. """
+        return file_path.endswith(".plist")
+
     for input_path in inputs:
-        input_path = os.path.abspath(input_path)
-
-        if not os.path.exists(input_path):
-            raise OSError(errno.ENOENT,
-                          "Input path does not exist", input_path)
-
         if os.path.isfile(input_path):
-            files = [input_path]
+            if is_report_file(input_path):
+                report_files.add(input_path)
         else:
-            _, _, files = next(os.walk(input_path), ([], [], []))
+            for root_dir_path, _, files in os.walk(input_path):
+                for f in files:
+                    file_path = os.path.join(root_dir_path, f)
+                    if is_report_file(file_path):
+                        report_files.add(file_path)
 
-        for f in files:
-            plist_file = os.path.join(input_path, f)
-            if f.endswith(".plist"):
-                plist_report_files.append(plist_file)
-
-    return plist_report_files
+    return report_files
 
 
 def parse_report_file(plist_file: str) \
@@ -544,7 +542,7 @@ def parse_collect_plist_info(plist_file):
     return rli, sfir
 
 
-def parse_report_files(report_files, zip_iter=map):
+def parse_report_files(report_files: Set[str], zip_iter=map):
     """Parse and collect source code information mentioned in a report file.
 
     Collect any mentioned source files wich are missing or changed
@@ -642,13 +640,17 @@ def assemble_zip(inputs, zip_file, client):
         if file_hash:
             file_hash_with_review_status.add(file_hash)
 
-    metadata_files_to_merge = find_files(inputs, "metadata.json")
-    merged_metadata = merge_metadata_json(metadata_files_to_merge,
-                                          len(inputs))
+    metadata_files_to_merge = []
+    for input_dir_path in inputs:
+        for root_dir_path, _, _ in os.walk(input_dir_path):
+            metadata_file_path = os.path.join(root_dir_path, 'metadata.json')
+            if os.path.exists(metadata_file_path):
+                metadata_files_to_merge.append(metadata_file_path)
+                files_to_compress.add(metadata_file_path)
 
-    skip_files = find_files(inputs, "skip_file")
-    for skf in skip_files:
-        files_to_compress.add(skf)
+            skip_file_path = os.path.join(root_dir_path, 'skip_file')
+            if os.path.exists(skip_file_path):
+                files_to_compress.add(skip_file_path)
 
     file_hashes = list(hash_to_file.keys())
 
@@ -668,18 +670,17 @@ def assemble_zip(inputs, zip_file, client):
         for ftc in files_to_compress:
             _, filename = os.path.split(ftc)
 
-            # It is possible that multiple reports directories are given during
-            # the store command which contain the same plist file name but with
-            # different content. For this reason for plist files we need to
-            # generate a more unique file name when putting it to the storage
-            # zip file.
-            if filename.endswith(".plist"):
-                filename = \
-                    (f"{os.path.splitext(filename)[0]}_"
-                     f"{hashlib.md5(ftc.encode('utf-8')).hexdigest()}.plist")
+            # Create a unique report directory name.
+            report_dir_name = \
+                hashlib.md5(os.path.dirname(ftc).encode('utf-8')).hexdigest()
 
-            zip_target = os.path.join('reports', filename)
+            zip_target = \
+                os.path.join('reports', report_dir_name, filename)
+
             zipf.write(ftc, zip_target)
+
+        merged_metadata = merge_metadata_json(
+            metadata_files_to_merge, len(inputs))
 
         zipf.writestr(os.path.join('reports', 'metadata.json'),
                       json.dumps(merged_metadata))
@@ -743,12 +744,6 @@ def get_analysis_statistics(inputs, limits):
     statistics_files = []
     has_failed_zip = False
     for input_path in inputs:
-        input_path = os.path.abspath(input_path)
-
-        if not os.path.exists(input_path):
-            raise OSError(errno.ENOENT,
-                          "Input path does not exist", input_path)
-
         dirs = []
         if os.path.isfile(input_path):
             files = [input_path]
@@ -863,6 +858,13 @@ def main(args):
     # But we need lists for the foreach here to work.
     if isinstance(args.input, str):
         args.input = [args.input]
+
+    args.input = [os.path.abspath(i) for i in args.input]
+
+    for input_path in args.input:
+        if not os.path.exists(input_path):
+            LOG.error("Input path '%s' does not exist!", input_path)
+            sys.exit(1)
 
     if 'name' not in args:
         LOG.debug("Generating name for analysis...")

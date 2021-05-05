@@ -13,9 +13,12 @@ Test storage of analysis statistics.
 
 import json
 import os
+import shutil
 import subprocess
 import unittest
 import zipfile
+
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import RunFilter
 
 from codechecker_server.tmp import TemporaryDirectory
 
@@ -62,6 +65,14 @@ class TestStorageOfAnalysisStatistics(unittest.TestCase):
             # Directory already exists.
             pass
 
+        # Remove analyzer statistics directory if it exists before store.
+        if os.path.exists(self._analyzer_stats_dir):
+            shutil.rmtree(self._analyzer_stats_dir)
+
+        # Remove reports directory if it exists and create an empty one.
+        if os.path.exists(self._reports_dir):
+            shutil.rmtree(self._reports_dir)
+
         # Setup a viewer client to test viewer API calls.
         self._cc_client = env.setup_viewer_client(self.test_workspace)
         self.assertIsNotNone(self._cc_client)
@@ -104,7 +115,14 @@ int main()
         """Restore environment after tests have ran."""
         os.chdir(self.__old_pwd)
 
-    def _create_source_file(self, version):
+    def _remove_run(self, run_names):
+        """ Remove runs by run names. """
+        run_filter = RunFilter()
+        run_filter.names = run_names
+        ret = self._cc_client.removeRun(None, run_filter)
+        self.assertTrue(ret)
+
+    def _create_source_file(self, version, report_dir):
         with open(self._source_file, 'w',
                   encoding='utf-8', errors='ignore') as source_f:
             source_f.write(self.sources[version])
@@ -131,7 +149,7 @@ int main()
 
         # Create analyze command.
         analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
-                       "--analyzers", "clangsa", "-o", self._reports_dir]
+                       "--analyzers", "clangsa", "-o", report_dir]
 
         # Run analyze.
         process = subprocess.Popen(
@@ -143,7 +161,7 @@ int main()
             errors="ignore")
         process.communicate()
 
-    def _check_analyzer_statistics_zip(self, run_name):
+    def _check_analyzer_statistics_zip(self, run_name, report_dir):
         """
         Checks if compilation database file and failed zips which exists in the
         report directory can be found in the uploaded analyzer statistics zip.
@@ -166,13 +184,12 @@ int main()
                               'compiler_info.json',
                               'metadata.json']
             for analyzer_file in analyzer_files:
-                orig_file = os.path.join(self._reports_dir, analyzer_file)
+                orig_file = os.path.join(report_dir, analyzer_file)
                 uploaded_file = os.path.join(zip_dir, orig_file.lstrip(os.sep))
                 self.assertTrue(os.path.exists(uploaded_file))
 
             # Check that failed zips exist in the uploaded zip.
-            orig_failed_dir = os.path.join(self._reports_dir,
-                                           'failed')
+            orig_failed_dir = os.path.join(report_dir, 'failed')
             if os.path.exists(orig_failed_dir):
                 failed_dir = os.path.join(zip_dir, orig_failed_dir)
                 self.assertTrue(os.path.exists(failed_dir))
@@ -182,14 +199,6 @@ int main()
         Check that storing an empty report directory will not store analyzer
         statistics information on the server.
         """
-        # Remove analyzer statistics directory if it exists before store.
-        if os.path.exists(self._analyzer_stats_dir):
-            os.removedirs(self._analyzer_stats_dir)
-
-        # Remove reports directory if it exists and create an empty one.
-        if os.path.exists(self._reports_dir):
-            os.removedirs(self._reports_dir)
-
         os.mkdir(self._reports_dir)
 
         # Trying to store the empty directory.
@@ -200,14 +209,22 @@ int main()
 
     def test_storage_simple_report_dir(self):
         """
-        Checks if compilation database can be found in the uploaded zip.
+        Checks storing report directory without a failure zip will not
+        store any statistics.
         """
         run_name = 'example'
 
-        self._create_source_file(0)
+        self._create_source_file(0, self._reports_dir)
         codechecker.store(self._codechecker_cfg, run_name)
 
-        self._check_analyzer_statistics_zip(run_name)
+        product_stat_dir = os.path.join(self._analyzer_stats_dir,
+                                        self._product_name)
+
+        # Check that directory for product under analyzer statistics dir
+        # does not exists
+        self.assertFalse(os.path.exists(product_stat_dir))
+
+        self._remove_run(['example'])
 
     def test_storage_failed_zips(self):
         """
@@ -224,16 +241,17 @@ int main()
         self.assertEqual(len(failed_files), 0)
 
         # Store the failure.
-        self._create_source_file(1)
+        self._create_source_file(1, self._reports_dir)
 
         codechecker.store(self._codechecker_cfg, 'statistics1')
-        self._check_analyzer_statistics_zip('statistics1')
+        self._check_analyzer_statistics_zip('statistics1', self._reports_dir)
 
         codechecker.store(self._codechecker_cfg, 'statistics2')
-        self._check_analyzer_statistics_zip('statistics2')
+        self._check_analyzer_statistics_zip('statistics2', self._reports_dir)
 
         # Check the failed files again in the database.
         num_of_failed_files = self._cc_client.getFailedFilesCount(run_ids)
+
         self.assertEqual(num_of_failed_files, 1)
 
         failed_files = self._cc_client.getFailedFiles(run_ids)
@@ -246,3 +264,29 @@ int main()
         self.assertTrue(
             all(i.runName in ['statistics1', 'statistics2']
                 for i in failed_file_info))
+
+        self._remove_run(['statistics1', 'statistics2'])
+
+    def test_storage_multiple_reports_dir(self):
+        """
+        Test storing multiple report directories.
+        """
+        run_ids = None
+        run_name = 'multiple_report_dir'
+        report_dir1 = os.path.join(self._reports_dir, 'report_dir1')
+        report_dir2 = os.path.join(self._reports_dir, 'report_dir2')
+
+        # Analyze the same project multiple times in different report
+        # directories.
+        self._create_source_file(1, report_dir1)
+        self._create_source_file(1, report_dir2)
+
+        cfg = self._codechecker_cfg.copy()
+        cfg['reportdir'] = [report_dir1, report_dir2]
+        codechecker.store(cfg, run_name)
+
+        # Check the failed files again in the database.
+        num_of_failed_files = self._cc_client.getFailedFilesCount(run_ids)
+        self.assertEqual(num_of_failed_files, 1)
+
+        self._remove_run([run_name])

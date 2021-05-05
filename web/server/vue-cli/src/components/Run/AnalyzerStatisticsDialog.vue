@@ -118,7 +118,7 @@ import { ccService, handleThriftError } from "@cc-api";
 import { AnalyzerStatisticsIcon } from "@/components/Icons";
 
 export default {
-  name: "DeleteProductBtn",
+  name: "AnalyzerStatisticsDialog",
   components: {
     AnalyzerStatisticsIcon
   },
@@ -161,7 +161,7 @@ export default {
 
   methods: {
     getAnalysisStatistics() {
-      if (!this.runId && !this.runHistoryId) return;
+      if (!this.dialog && !this.runId && !this.runHistoryId) return;
 
       ccService.getClient().getAnalysisStatistics(this.runId,
         this.runHistoryId, handleThriftError(stats => {

@@ -74,8 +74,8 @@
 
                   <v-divider class="mx-2 d-inline" inset vertical />
 
-                  <show-check-command-btn
-                    @click="openCheckCommandDialog(null, history.id)"
+                  <check-command-btn
+                    @click.native="openCheckCommandDialog(null, history.id)"
                   />
 
                   <v-divider class="mx-2 d-inline" inset vertical />
@@ -140,7 +140,7 @@
 import { format, parse } from "date-fns";
 import { defaultReportFilterValues } from "@/components/Report/ReportFilter";
 import AnalyzerStatisticsBtn from "./AnalyzerStatisticsBtn";
-import ShowCheckCommandBtn from "./ShowCheckCommandBtn";
+import CheckCommandBtn from "./CheckCommandBtn";
 import ShowStatisticsBtn from "./ShowStatisticsBtn";
 import VersionTag from "./VersionTag";
 
@@ -148,7 +148,7 @@ export default {
   name: "ExpandedRun",
   components: {
     AnalyzerStatisticsBtn,
-    ShowCheckCommandBtn,
+    CheckCommandBtn,
     ShowStatisticsBtn,
     VersionTag
   },
