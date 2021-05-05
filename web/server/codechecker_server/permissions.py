@@ -300,32 +300,42 @@ class SystemPermission(Permission):
             return record
 
         def __get_stored_auth_name_and_permissions(self, auth_name, is_group):
+            """
+            Query user or group system permission set.
+
+            :param auth_name:   User's name or name of group name case
+                                insensitive pattern.
+            :param is_group:    Determines that the previous name either a
+                                user's name or a group name.
+            :returns:           A touple in (name, permission_set) structure.
+            """
+
             SysPerm = config_db_model.SystemPermission
 
             stored_auth_name = auth_name
-            permission_set = set()
+            permissions = set()
             for name, permission in self.__session.query(
                     SysPerm.name, SysPerm.permission).filter(and_(
                     func.lower(SysPerm.name) == auth_name.lower(),
                     SysPerm.is_group == is_group)):
                 stored_auth_name = name
-                permission_set.add(permission)
+                permissions.add(permission)
 
-            return (stored_auth_name, permission_set)
+            return (stored_auth_name, permissions)
 
         def _add_perm_impl(self, auth_name, is_group=False):
             if not auth_name:
                 return False
 
-            stored_auth_name, permission_set = \
+            stored_auth_name, permissions = \
                 self.__get_stored_auth_name_and_permissions(
                     auth_name, is_group)
 
-            if not permission_set:  # This account have not got permission yet.
+            if not permissions:  # This account have not got permission yet.
                 new_permission_record = config_db_model.SystemPermission(
                     self._permission.name, auth_name, is_group)
             else:  # There are at least one permission of the user.
-                if self._permission.name in permission_set:
+                if self._permission.name in permissions:
                     return False  # Required permission already granted
 
                 new_permission_record = config_db_model.SystemPermission(
@@ -423,19 +433,28 @@ class ProductPermission(Permission):
             return record
 
         def __get_stored_auth_name_and_permissions(self, auth_name, is_group):
+            """
+            Query user or group product permission set.
+
+            :param auth_name:   User's name or name of group name case
+                                insensitive pattern.
+            :param is_group:    Determines that the previous name either a
+                                user's name or a group name.
+            :returns:           A touple in (name, permission_set) structure.
+            """
             ProdPerm = config_db_model.ProductPermission
 
             stored_auth_name = auth_name
-            permission_set = set()
+            permissions = set()
             for name, permission in self.__session.query(
                     ProdPerm.name, ProdPerm.permission).filter(and_(
                     ProdPerm.product_id == self.__product_id,
                     func.lower(ProdPerm.name) == auth_name.lower(),
                     ProdPerm.is_group == is_group)):
                 stored_auth_name = name
-                permission_set.add(permission)
+                permissions.add(permission)
 
-            return (stored_auth_name, permission_set)
+            return (stored_auth_name, permissions)
 
         def _add_perm_impl(self, auth_name, is_group=False):
             if not auth_name:
