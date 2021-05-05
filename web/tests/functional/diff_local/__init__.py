@@ -111,4 +111,4 @@ def teardown_package():
     global TEST_WORKSPACE
 
     print("Removing: " + TEST_WORKSPACE)
-    shutil.rmtree(TEST_WORKSPACE)
+    shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
