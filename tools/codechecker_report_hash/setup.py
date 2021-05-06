@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
 import setuptools
 
-with open("README.md", "r") as fh:
+readme_file_path = os.path.join(
+    "..", "..", "docs", "tools", "codechecker_report_hash.md")
+
+with open(readme_file_path, "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
