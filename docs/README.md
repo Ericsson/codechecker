@@ -169,36 +169,36 @@ The following tools are supported:
 | **C/C++**      | [Clang Static Analyzer](https://clang-analyzer.llvm.org/)    |
 |                | [Clang Tidy](https://clang.llvm.org/extra/clang-tidy/)  |
 |                | [Clang Sanitizers](supported_code_analyzers.md#clang-sanitizers)    |
-|                | [Cppcheck](/tools/report-converter/README.md#cppcheck)    |
-|                | [Facebook Infer](/tools/report-converter/README.md#facebook-infer)    |
-|                | [Coccinelle](/tools/report-converter/README.md#coccinelle)    |
-|                | [Smatch](/tools/report-converter/README.md#smatch)    |
-|                | [Kernel-Doc](/tools/report-converter/README.md#kernel-doc)    |
-|                | [Sparse](/tools/report-converter/README.md#sparse)    |
-|                | [cpplint](/tools/report-converter/README.md#cpplint)    |
-| **Java**       | [SpotBugs](/tools/report-converter/README.md#spotbugs)    |
-|                | [Facebook Infer](/tools/report-converter/README.md#fbinfer)    |
-| **Python**     | [Pylint](/tools/report-converter/README.md#pylint)    |
-|                | [Pyflakes](/tools/report-converter/README.md#pyflakes)    |
-| **JavaScript** | [ESLint](/tools/report-converter/README.md#eslint)    |
-| **TypeScript** | [TSLint](/tools/report-converter/README.md#tslint)    |
-| **Go**         | [Golint](/tools/report-converter/README.md#golint)    |
-| **Markdown**   | [Markdownlint](/tools/report-converter/README.md#markdownlint)    |
-|                | [Sphinx](/tools/report-converter/Readme.md#sphinx)    |
+|                | [Cppcheck](/docs/tools/report-converter/README.md#cppcheck)    |
+|                | [Facebook Infer](/docs/tools/report-converter/README.md#facebook-infer)    |
+|                | [Coccinelle](/docs/tools/report-converter/README.md#coccinelle)    |
+|                | [Smatch](/docs/tools/report-converter/README.md#smatch)    |
+|                | [Kernel-Doc](/docs/tools/report-converter/README.md#kernel-doc)    |
+|                | [Sparse](/docs/tools/report-converter/README.md#sparse)    |
+|                | [cpplint](/docs/tools/report-converter/README.md#cpplint)    |
+| **Java**       | [SpotBugs](/docs/tools/report-converter/README.md#spotbugs)    |
+|                | [Facebook Infer](/docs/tools/report-converter/README.md#fbinfer)    |
+| **Python**     | [Pylint](/docs/tools/report-converter/README.md#pylint)    |
+|                | [Pyflakes](/docs/tools/report-converter/README.md#pyflakes)    |
+| **JavaScript** | [ESLint](/docs/tools/report-converter/README.md#eslint)    |
+| **TypeScript** | [TSLint](/docs/tools/report-converter/README.md#tslint)    |
+| **Go**         | [Golint](/docs/tools/report-converter/README.md#golint)    |
+| **Markdown**   | [Markdownlint](/docs/tools/report-converter/README.md#markdownlint)    |
+|                | [Sphinx](/docs/tools/report-converter/Readme.md#sphinx)    |
 
 
 For details see 
 [supported code analyzers](supported_code_analyzers.md) documentation and the 
-[Report Converter Tool](/tools/report-converter/README.md).
+[Report Converter Tool](/docs/tools/report-converter/README.md).
 
 ## Common Tools
 Useful tools that can also be used outside CodeChecker.
 
 * [Build Logger (to generate JSON Compilation Database from your builds)](/analyzer/tools/build-logger/README.md)
-* [Plist to HTML converter (to generate HTML files from the given plist files)](/tools/plist_to_html/README.md)
-* [Report Converter Tool (to convert analysis results from other analyzers to the codechecker report directory format))](/tools/report-converter/README.md)
-* [Translation Unit Collector (to collect source files of a translation unit or to get source files which depend on the given header files)](/tools/tu_collector/README.md)
-* [Report Hash generator (to generate unique hash identifiers for reports)](/tools/codechecker_report_hash/README.md)
+* [Plist to HTML converter (to generate HTML files from the given plist files)](/docs/tools/plist_to_html/README.md)
+* [Report Converter Tool (to convert analysis results from other analyzers to the codechecker report directory format))](/docs/tools/report-converter/README.md)
+* [Translation Unit Collector (to collect source files of a translation unit or to get source files which depend on the given header files)](/docs/tools/tu_collector/README.md)
+* [Report Hash generator (to generate unique hash identifiers for reports)](/docs/tools/codechecker_report_hash/README.md)
 
 ## Helper Scripts
 * [Helper Scripts for daily analysis](script_daily.md)
