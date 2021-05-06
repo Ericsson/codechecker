@@ -13,25 +13,25 @@ CodeChecker result directory which can be stored to a CodeChecker server.
 | **C/C++**      | [Clang Tidy](https://clang.llvm.org/extra/clang-tidy/)  | ✓ |
 |                | [Clang Static Analyzer](https://clang-analyzer.llvm.org/)    | ✓ |
 |                | [Clang Sanitizers](#clang-sanitizers)    | ✓ |
-|                | [Cppcheck](/docs/tools/report-converter/README.md#cppcheck)    | ✓ |
-|                | [Facebook Infer](/docs/tools/report-converter/README.md#fbinfer)    | ✓ |
-|                | [Coccinelle](/docs/tools/report-converter/README.md#coccinelle)   | ✓ |
-|                | [Smatch](/docs/tools/report-converter/README.md#smatch)   | ✓ |
-|                | [Kernel-Doc](/docs/tools/report-converter/README.md#kernel-doc)   | ✓ |
-|                | [Sparse](/docs/tools/report-converter/README.md#sparse)   | ✓ |
-|                | [cpplint](/docs/tools/report-converter/README.md#cpplint)   | ✓ |
+|                | [Cppcheck](/docs/tools/report-converter.md#cppcheck)    | ✓ |
+|                | [Facebook Infer](/docs/tools/report-converter.md#fbinfer)    | ✓ |
+|                | [Coccinelle](/docs/tools/report-converter.md#coccinelle)   | ✓ |
+|                | [Smatch](/docs/tools/report-converter.md#smatch)   | ✓ |
+|                | [Kernel-Doc](/docs/tools/report-converter.md#kernel-doc)   | ✓ |
+|                | [Sparse](/docs/tools/report-converter.md#sparse)   | ✓ |
+|                | [cpplint](/docs/tools/report-converter.md#cpplint)   | ✓ |
 | **Java**       | [FindBugs](http://findbugs.sourceforge.net/)    | ✗ |
-|                | [SpotBugs](/docs/tools/report-converter/README.md#spotbugs)    | ✓ |
-|                | [Facebook Infer](/docs/tools/report-converter/README.md#fbinfer)    | ✓ |
-| **Python**     | [Pylint](/docs/tools/report-converter/README.md#pylint)    | ✓ |
-|                | [Pyflakes](/docs/tools/report-converter/README.md#pyflakes)    | ✓ |
+|                | [SpotBugs](/docs/tools/report-converter.md#spotbugs)    | ✓ |
+|                | [Facebook Infer](/docs/tools/report-converter.md#fbinfer)    | ✓ |
+| **Python**     | [Pylint](/docs/tools/report-converter.md#pylint)    | ✓ |
+|                | [Pyflakes](/docs/tools/report-converter.md#pyflakes)    | ✓ |
 |                | [mypy](http://mypy-lang.org/)    | ✗ |
 |                | [Bandit](https://github.com/PyCQA/bandit)    | ✗ |
 | **JavaScript** | [ESLint](https://eslint.org/)    | ✓ |
 |                | [JSHint](https://jshint.com/)    | ✗ |
 |                | [JSLint](https://jslint.com/)    | ✗ |
-| **TypeScript** | [TSLint](/docs/tools/report-converter/README.md#tslint)    | ✓ |
-| **Go**         | [Golint](/docs/tools/report-converter/README.md#golint)    | ✓ |
+| **TypeScript** | [TSLint](/docs/tools/report-converter.md#tslint)    | ✓ |
+| **Go**         | [Golint](/docs/tools/report-converter.md#golint)    | ✓ |
 |                | [Staticcheck](https://staticcheck.io/)    | ✗ |
 |                | [go-critic](https://github.com/go-critic/go-critic)    | ✗ |
 | **Markdown**   | [Markdownlint](https://github.com/markdownlint/markdownlint)    | ✓ |
@@ -50,4 +50,4 @@ CodeChecker result directory which can be stored to a CodeChecker server.
 We support to convert multiple sanitizer output to a CodeChecker report
 directory which can be stored to a CodeChecker server by using our
 [report-converter](/tools/report-converter) tool. For more information how to
-use this tool see the [user guide](/docs/tools/report-converter/README.md).
+use this tool see the [user guide](/docs/tools/report-converter.md).
