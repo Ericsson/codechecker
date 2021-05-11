@@ -51,7 +51,8 @@ class TestCtu(unittest.TestCase):
 
         # Get if clang is CTU-capable or not.
         cmd = [self._codechecker_cmd, 'analyze', '-h']
-        output, _ = call_command(cmd, cwd=self.test_dir, env=self.env)
+        output, _, result = call_command(cmd, cwd=self.test_dir, env=self.env)
+        self.assertEqual(result, 0, "Analyzing failed.")
         setattr(self, CTU_ATTR, '--ctu-' in output)
         print("'analyze' reported CTU-compatibility? " +
               str(getattr(self, CTU_ATTR)))
@@ -162,7 +163,8 @@ class TestCtu(unittest.TestCase):
                         'parse-on-demand' if on_demand else 'load-from-pch'])
 
         cmd.append(self.buildlog)
-        out, _ = call_command(cmd, cwd=self.test_dir, env=self.env)
+        out, _, result = call_command(cmd, cwd=self.test_dir, env=self.env)
+        self.assertEqual(result, 0, "Analyzing failed.")
         return out
 
     def __do_ctu_collect(self, on_demand):
@@ -176,7 +178,8 @@ class TestCtu(unittest.TestCase):
                         'parse-on-demand' if on_demand else 'load-from-pch'])
 
         cmd.append(self.buildlog)
-        call_command(cmd, cwd=self.test_dir, env=self.env)
+        _, _, result = call_command(cmd, cwd=self.test_dir, env=self.env)
+        self.assertEqual(result, 0, "Analyzing failed.")
 
     def __check_ctu_collect(self, on_demand):
         """ Check artifacts of CTU collect phase. """
@@ -203,7 +206,8 @@ class TestCtu(unittest.TestCase):
                         'parse-on-demand' if on_demand else 'load-from-pch'])
 
         cmd.append(self.buildlog)
-        out, _ = call_command(cmd, cwd=self.test_dir, env=self.env)
+        out, _, result = call_command(cmd, cwd=self.test_dir, env=self.env)
+        self.assertEqual(result, 0, "Analyzing failed.")
         return out
 
     def __check_ctu_analyze(self, output):
@@ -214,7 +218,9 @@ class TestCtu(unittest.TestCase):
         self.assertIn("analyzed main.c successfully", output)
 
         cmd = [self._codechecker_cmd, 'parse', self.report_dir]
-        output, _ = call_command(cmd, cwd=self.test_dir, env=self.env)
+        output, _, result = call_command(cmd, cwd=self.test_dir, env=self.env)
+        self.assertEqual(result, 2,
+                         "Parsing could not found the expected bug.")
         self.assertIn("defect(s) in lib.c", output)
         self.assertIn("no defects in main.c", output)
         self.assertIn("lib.c:3:", output)
@@ -239,13 +245,18 @@ class TestCtu(unittest.TestCase):
         cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
                '--analyzers', 'clangsa', '--ctu', '--makefile']
         cmd.append(self.buildlog)
-        call_command(cmd, cwd=self.test_dir, env=self.env)
+        _, _, result = call_command(cmd, cwd=self.test_dir, env=self.env)
+        self.assertEqual(result, 0, "Analyzing failed.")
 
-        call_command(["make"], cwd=self.report_dir, env=self.env)
+        _, _, result = call_command(["make"], cwd=self.report_dir,
+                                    env=self.env)
+        self.assertEqual(result, 0, "Performing generated Makefile failed.")
 
         # Check the output.
         cmd = [self._codechecker_cmd, 'parse', self.report_dir]
-        output, _ = call_command(cmd, cwd=self.test_dir, env=self.env)
+        output, _, result = call_command(cmd, cwd=self.test_dir, env=self.env)
+        self.assertEqual(result, 2,
+                         "Parsing could not found the expected bug.")
         self.assertIn("defect(s) in lib.c", output)
         self.assertIn("lib.c:3:", output)
         self.assertIn("[core.NullDereference]", output)
@@ -265,7 +276,8 @@ class TestCtu(unittest.TestCase):
                                  # specified
                '--ctu-ast-mode', 'parse-on-demand',
                self.complex_buildlog]
-        call_command(cmd, cwd=self.test_dir, env=self.env)
+        _, _, result = call_command(cmd, cwd=self.test_dir, env=self.env)
+        self.assertEqual(result, 0, "Analyzing failed.")
 
         ctu_dir = os.path.join(self.report_dir, 'ctu-dir')
 

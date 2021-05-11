@@ -28,6 +28,7 @@ def call_command(cmd, cwd, env):
         print(out)
         print("\nTEST execute stderr:\n")
         print(err)
+
     try:
         proc = subprocess.Popen(
             cmd,
@@ -38,12 +39,11 @@ def call_command(cmd, cwd, env):
             encoding="utf-8",
             errors="ignore")
         out, err = proc.communicate()
-        if proc.returncode == 1:
+        if proc.returncode != 0:
             show(out, err)
             print('Unsuccessful run: "' + ' '.join(cmd) + '"')
             print(proc.returncode)
-            raise Exception("Unsuccessful run of command.")
-        return out, err
+        return out, err, proc.returncode
     except OSError as oerr:
         print(oerr)
         show(out, err)
