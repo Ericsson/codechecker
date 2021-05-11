@@ -15,12 +15,12 @@ from codechecker_api.codeCheckerDBAccess_v6 import ttypes
 
 from codechecker_common import plist_parser
 
-from codechecker_server.api import store_handler
+from codechecker_server.api.mass_store_run import collect_paths_events
 
 
-class StoreHandler(unittest.TestCase):
+class CollectPathEventsTest(unittest.TestCase):
     """
-    Test Store handler features.
+    Test collecting path events.
     """
 
     @classmethod
@@ -97,9 +97,7 @@ class StoreHandler(unittest.TestCase):
                                 endLine=7, fileId=2)
         ]
 
-        path1, events1, _ = store_handler.collect_paths_events(reports[0],
-                                                               file_ids,
-                                                               files)
+        path1, events1, _ = collect_paths_events(reports[0], file_ids, files)
 
         self.assertEqual(path1, report1_path)
         self.assertEqual(events1, report1_events)
@@ -112,9 +110,8 @@ class StoreHandler(unittest.TestCase):
                                 endLine=8, fileId=1)
         ]
 
-        path2, events2, _ = store_handler.collect_paths_events(reports[1],
-                                                               file_ids,
-                                                               files)
+        path2, events2, _ = collect_paths_events(reports[1], file_ids, files)
+
         self.assertEqual(path2, report2_path)
         self.assertEqual(events2, report2_events)
 
@@ -138,8 +135,7 @@ class StoreHandler(unittest.TestCase):
                                 endLine=14, fileId=1)
         ]
 
-        path, events, _ = store_handler.collect_paths_events(reports[2],
-                                                             file_ids,
-                                                             files)
+        path, events, _ = collect_paths_events(reports[2], file_ids, files)
+
         self.assertEqual(path, report3_path)
         self.assertEqual(events, report3_events)
