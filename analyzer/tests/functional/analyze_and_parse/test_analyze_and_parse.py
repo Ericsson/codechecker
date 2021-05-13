@@ -264,7 +264,7 @@ class AnalyzeParseTestCase(
 
         out, _, result = call_command(extract_cmd, cwd=self.test_dir,
                                       env=self.env)
-        self.assertEqual(result, 0, "Parsing failed.")
+        self.assertEqual(result, 0, "Parsing failed.")  # TODO
         res = json.loads(out)
 
         self.assertEqual(len(res), 1)
@@ -292,7 +292,7 @@ class AnalyzeParseTestCase(
 
         out, _, result = call_command(extract_cmd, cwd=self.test_dir,
                                       env=self.env)
-        self.assertEqual(result, 0, "Parsing failed.")
+        self.assertEqual(result, 0, "Parsing failed.")  # TODO
         res = json.loads(out)
 
         self.assertEqual(res, [{
@@ -339,7 +339,7 @@ class AnalyzeParseTestCase(
 
         print(" ".join(extract_cmd))
         out, _, result = call_command(extract_cmd, cwd=self.test_dir, env=env)
-        self.assertEqual(result, 0, "Parsing failed.")
+        self.assertEqual(result, 0, "Parsing failed.")  # TODO
         print(out)
 
         review_data = json.loads(out)
@@ -392,9 +392,12 @@ class AnalyzeParseTestCase(
 
         out, err, result = call_command(extract_cmd, cwd=self.test_dir,
                                         env=self.env)
-        self.assertEqual(result, 0, "Parsing failed.")
+        self.assertEqual(result, 2, "Parsing failed.")
         self.assertFalse(err)
 
         self.assertTrue('Html file was generated' in out)
         self.assertTrue('Summary' in out)
         self.assertTrue('Statistics' in out)
+
+# TODO: Write tests for exports without existing reports.
+# TODO: Write tests for parameter mutual exclusions.

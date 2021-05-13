@@ -19,6 +19,7 @@ import os
 from operator import itemgetter
 import sys
 import traceback
+from functools import wraps
 from typing import List, Dict, Tuple, Set
 
 from plist_to_html import PlistToHtml
@@ -646,6 +647,40 @@ def parse_convert_reports(input_dirs: List[str],
     return {}
 
 
+class ReportCounter:
+    def __init__(self, initial=0):
+        self.__sum = initial
+
+    def __call__(self, result):
+        if not result[0]:  # Bug report was not skipped
+            self.__sum += 1
+
+    def reset(self, initial):
+        self.__sum = initial
+
+    @property
+    def sum(self):
+        return self.__sum
+
+
+class ResultVisitor:
+    def __init__(self, functor):
+        self.__functor = functor
+
+    def __call__(self, func_to_call):
+        @wraps(func_to_call)
+        def wrapper(*args, **kwargs):
+            result = func_to_call(*args, **kwargs)
+            self.__functor(result)
+            return result
+
+        return wrapper
+
+    @classmethod
+    def counter(clazz, func):
+        return clazz(func)
+
+
 def main(args):
     """
     Entry point for parsing some analysis results and printing them to the
@@ -667,6 +702,10 @@ def main(args):
         sys.exit(1)
 
     if export == 'gerrit' and not gerrit.mandatory_env_var_is_set():
+        sys.exit(1)
+
+    if export and export not in EXPORT_TYPES:
+        LOG.error("Unknown export format: %s", export)
         sys.exit(1)
 
     context = analyzer_context.get_context()
@@ -720,10 +759,6 @@ def main(args):
         'trim_path_prefix' in args else None
 
     if export:
-        if export not in EXPORT_TYPES:
-            LOG.error("Unknown export format: %s", export)
-            return
-
         # The HTML part will be handled separately below.
         if export != 'html':
             try:
@@ -743,6 +778,7 @@ def main(args):
                               encoding='utf-8', errors="ignore") as output_f:
                         output_f.write(json.dumps(res))
 
+                # TODO: return with 2 if any report exists.
                 return print(json.dumps(res))
             except Exception as ex:
                 LOG.error(ex)
@@ -756,7 +792,9 @@ def main(args):
         return util.trim_path_prefixes(source_file, trim_path_prefixes)
 
     html_builder = None
+    report_counter = ReportCounter()
 
+    @ResultVisitor(report_counter)
     def skip_html_report_data_handler(report_hash, source_file, report_line,
                                       checker_name, diag, files):
         """
@@ -885,6 +923,7 @@ def main(args):
 
         print('\nTo view the results in a browser run:\n> firefox {0}'.format(
             os.path.join(args.output_path, 'index.html')))
+        report_count += report_counter.sum
     else:
         print("\n----==== Summary ====----")
         if file_stats:
