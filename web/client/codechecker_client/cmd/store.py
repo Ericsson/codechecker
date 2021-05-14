@@ -30,7 +30,6 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import StoreLimitKind
 from codechecker_api_shared.ttypes import RequestFailed, ErrorCode
 
 from codechecker_client import client as libclient
-from codechecker_client.metadata import merge_metadata_json
 
 from codechecker_common import arg, logger, plist_parser, util, cmd_config
 from codechecker_common.report import Report
@@ -640,12 +639,10 @@ def assemble_zip(inputs, zip_file, client):
         if file_hash:
             file_hash_with_review_status.add(file_hash)
 
-    metadata_files_to_merge = []
     for input_dir_path in inputs:
         for root_dir_path, _, _ in os.walk(input_dir_path):
             metadata_file_path = os.path.join(root_dir_path, 'metadata.json')
             if os.path.exists(metadata_file_path):
-                metadata_files_to_merge.append(metadata_file_path)
                 files_to_compress.add(metadata_file_path)
 
             skip_file_path = os.path.join(root_dir_path, 'skip_file')
@@ -678,12 +675,6 @@ def assemble_zip(inputs, zip_file, client):
                 os.path.join('reports', report_dir_name, filename)
 
             zipf.write(ftc, zip_target)
-
-        merged_metadata = merge_metadata_json(
-            metadata_files_to_merge, len(inputs))
-
-        zipf.writestr(os.path.join('reports', 'metadata.json'),
-                      json.dumps(merged_metadata))
 
         for f, h in file_to_hash.items():
             if h in necessary_hashes or h in file_hash_with_review_status:

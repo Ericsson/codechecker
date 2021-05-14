@@ -17,7 +17,7 @@ import zlib
 from collections import defaultdict
 from datetime import datetime
 from hashlib import sha256
-from typing import Any, Dict, List, NamedTuple, Optional, Set, Tuple
+from typing import Any, Dict, List, NamedTuple, Optional, Set
 
 import codechecker_api_shared
 from codechecker_api.codeCheckerDBAccess_v6 import ttypes
@@ -32,9 +32,9 @@ from codechecker_report_hash.hash import get_report_path_hash
 from ..database import db_cleanup
 from ..database.config_db_model import Product
 from ..database.database import DBSession
-from ..database.run_db_model import AnalyzerStatistic, BugPathEvent, \
-    BugReportPoint, ExtendedReportData, File, FileContent, Report, Run, \
-    RunHistory, RunLock
+from ..database.run_db_model import AnalysisInfo, AnalyzerStatistic, \
+    BugPathEvent, BugReportPoint, ExtendedReportData, File, FileContent, \
+    Report, Run, RunHistory, RunLock
 from ..metadata import checker_is_unavailable, get_analyzer_name, \
     MetadataInfoParser
 from ..tmp import TemporaryDirectory
@@ -287,28 +287,6 @@ def add_file_record(
     return file_record.id if file_record else None
 
 
-def finish_checker_run(
-    session: DBSession,
-    run_id: int,
-    duration: int
-) -> bool:
-    """ Finish the storage of the given run. """
-    try:
-        LOG.debug("Finishing checker run")
-        run = session.query(Run).get(run_id)
-        if not run:
-            return False
-
-        run.mark_finished()
-        run.duration = duration
-
-        return True
-    except Exception as ex:
-        LOG.error(ex)
-
-    return False
-
-
 class MassStoreRun:
     def __init__(
         self,
@@ -332,7 +310,9 @@ class MassStoreRun:
         self.__trim_path_prefixes = trim_path_prefixes
         self.__description = description
 
-        self.__run_session: Optional[DBSession] = None
+        self.__mips: Dict[str, MetadataInfoParser] = {}
+        self.__analysis_info: Dict[str, AnalysisInfo] = {}
+        self.__duration: int = 0
         self.__wrong_src_code_comments: List[str] = []
         self.__already_added_report_hashes: Set[str] = set()
         self.__new_report_hashes: Set[str] = set()
@@ -599,20 +579,107 @@ class MassStoreRun:
 
         return file_record.id
 
+    def __store_analysis_statistics(
+        self,
+        session: DBSession,
+        run_history_id: int
+    ):
+        """
+        Store analysis statistics for the given run history.
+
+        It will unique the statistics for each analyzer type based on the
+        metadata information.
+        """
+        stats = defaultdict(lambda: {
+            "versions": set(),
+            "failed_sources": set(),
+            "successful_sources": set(),
+            "successful": 0
+        })
+
+        for mip in self.__mips.values():
+            self.__duration += int(sum(mip.check_durations))
+
+            for analyzer_type, res in mip.analyzer_statistics.items():
+                if "version" in res:
+                    stats[analyzer_type]["versions"].add(res["version"])
+
+                if "failed_sources" in res:
+                    if self.__version == '6.9.0':
+                        stats[analyzer_type]["failed_sources"].add(
+                            'Unavailable in CodeChecker 6.9.0!')
+                    else:
+                        stats[analyzer_type]["failed_sources"].update(
+                            res["failed_sources"])
+
+                if "successful_sources" in res:
+                    stats[analyzer_type]["successful_sources"].update(
+                        res["successful_sources"])
+
+                if "successful" in res:
+                    stats[analyzer_type]["successful"] += res["successful"]
+
+        for analyzer_type, stat in stats.items():
+            analyzer_version = None
+            if stat["versions"]:
+                analyzer_version = zlib.compress(
+                    "; ".join(stat["versions"]).encode('utf-8'),
+                    zlib.Z_BEST_COMPRESSION)
+
+            failed = 0
+            compressed_files = None
+            if stat["failed_sources"]:
+                compressed_files = zlib.compress(
+                    '\n'.join(stat["failed_sources"]).encode('utf-8'),
+                    zlib.Z_BEST_COMPRESSION)
+
+                failed = len(stat["failed_sources"])
+
+            successful = len(stat["successful_sources"]) \
+                if stat["successful_sources"] else stat["successful"]
+
+            analyzer_statistics = AnalyzerStatistic(
+                run_history_id, analyzer_type, analyzer_version,
+                successful, failed, compressed_files)
+
+            session.add(analyzer_statistics)
+
+    def __store_analysis_info(
+        self,
+        session: DBSession,
+        run_history: RunHistory
+    ):
+        """ Store analysis info for the given run history. """
+        for src_dir_path, mip in self.__mips.items():
+            for analyzer_command in mip.check_commands:
+                cmd = zlib.compress(
+                    analyzer_command.encode("utf-8"),
+                    zlib.Z_BEST_COMPRESSION)
+
+                analysis_info = session \
+                    .query(AnalysisInfo) \
+                    .filter(AnalysisInfo.analyzer_command == cmd) \
+                    .one_or_none()
+
+                if not analysis_info:
+                    analysis_info = AnalysisInfo(analyzer_command=cmd)
+                    session.add(analysis_info)
+
+                run_history.analysis_info.append(analysis_info)
+                self.__analysis_info[src_dir_path] = analysis_info
+
     def __add_checker_run(
         self,
         session: DBSession,
-        command: str,
-        run_history_time: datetime,
-        mip: MetadataInfoParser
+        run_history_time: datetime
     ) -> int:
         """
-        Store checker run related data to the database.
+        Store run related data to the database.
         By default updates the results if name already exists.
         Using the force flag removes existing analysis results for a run.
         """
         try:
-            LOG.debug("Adding checker run...")
+            LOG.debug("Adding run '%s'...", self.__name)
 
             run = session.query(Run) \
                 .filter(Run.name == self.__name) \
@@ -630,11 +697,12 @@ class MassStoreRun:
 
                 LOG.info('Removing previous analysis results...')
                 session.delete(run)
-                # Not flushing after delete leads to a constraint violation error
-                # later, when adding run entity with the same name as the old one.
+                # Not flushing after delete leads to a constraint violation
+                # error later, when adding run entity with the same name as
+                # the old one.
                 session.flush()
 
-                checker_run = Run(self.__name, self.__version, command)
+                checker_run = Run(self.__name, self.__version)
                 session.add(checker_run)
                 session.flush()
                 run_id = checker_run.id
@@ -642,19 +710,18 @@ class MassStoreRun:
             elif run:
                 # There is already a run, update the results.
                 run.date = datetime.now()
-                run.command = command
                 run.duration = -1
                 session.flush()
                 run_id = run.id
             else:
                 # There is no run create new.
-                checker_run = Run(self.__name, self.__version, command)
+                checker_run = Run(self.__name, self.__version)
                 session.add(checker_run)
                 session.flush()
                 run_id = checker_run.id
 
             # Add run to the history.
-            LOG.debug("adding run to the history")
+            LOG.debug("Adding run history.")
 
             if self.__tag is not None:
                 run_history = session.query(RunHistory) \
@@ -666,50 +733,27 @@ class MassStoreRun:
                     run_history.version_tag = None
                     session.add(run_history)
 
-            compressed_command = zlib.compress(
-                command.encode("utf-8"), zlib.Z_BEST_COMPRESSION)
+            cc_versions = set()
+            for mip in self.__mips.values():
+                if mip.cc_version:
+                    cc_versions.add(mip.cc_version)
 
+            cc_version = '; '.join(cc_versions) if cc_versions else None
             run_history = RunHistory(
                 run_id, self.__tag, self.user_name, run_history_time,
-                compressed_command, mip.cc_version, self.__description)
+                cc_version, self.__description)
 
             session.add(run_history)
             session.flush()
 
-            LOG.debug("Command store done.")
+            LOG.debug("Adding run done.")
 
-            # Create entry for analyzer statistics.
-            for analyzer_type, res in mip.analyzer_statistics.items():
-                analyzer_version = res.get('version', None)
-                successful = res.get('successful')
-                failed = res.get('failed')
-                failed_sources = res.get('failed_sources')
-
-                if analyzer_version:
-                    LOG.debug(analyzer_version)
-                    analyzer_version \
-                        = zlib.compress(analyzer_version.encode('utf-8'),
-                                        zlib.Z_BEST_COMPRESSION)
-
-                LOG.debug("analyzer version compressed")
-                compressed_files = None
-                if failed_sources:
-                    if self.__version == '6.9.0':
-                        failed_sources = ['Unavailable in CodeChecker 6.9.0!']
-
-                    compressed_files = zlib.compress(
-                        '\n'.join(failed_sources).encode('utf-8'),
-                        zlib.Z_BEST_COMPRESSION)
-
-                LOG.debug("failed source compressed")
-                analyzer_statistics = AnalyzerStatistic(
-                    run_history.id, analyzer_type, analyzer_version,
-                    successful, failed, compressed_files)
-                LOG.debug("stats added to session")
-                session.add(analyzer_statistics)
+            self.__store_analysis_statistics(session, run_history.id)
+            self.__store_analysis_info(session, run_history)
 
             session.flush()
-            LOG.debug("stats store done")
+            LOG.debug("Storing analysis statistics done.")
+
             return run_id
         except Exception as ex:
             raise codechecker_api_shared.ttypes.RequestFailed(
@@ -725,6 +769,7 @@ class MassStoreRun:
         path_events: PathEvents,
         detection_status: str,
         detection_time: datetime,
+        analysis_info: AnalysisInfo,
         analyzer_name: Optional[str] = None
     ) -> int:
         """ Add report to the database. """
@@ -757,7 +802,6 @@ class MassStoreRun:
             checker_name = main_section['check_name']
             severity_name = self.__context.severity_map.get(checker_name)
             severity = ttypes.Severity._NAMES_TO_VALUES[severity_name]
-
             report = Report(
                 run_id, main_section['issue_hash_content_of_line_in_context'],
                 file_id, main_section['description'],
@@ -780,6 +824,9 @@ class MassStoreRun:
             LOG.debug("storing extended report data")
             store_extended_bug_data(report.id)
 
+            if analysis_info:
+                report.analysis_info.append(analysis_info)
+
             return report.id
 
         except Exception as ex:
@@ -796,7 +843,6 @@ class MassStoreRun:
         file_path_to_id: Dict[str, int],
         run_history_time: datetime,
         skip_handler: Optional[skiplist_handler.SkipListHandler],
-        mip: MetadataInfoParser,
         hash_map_reports: Dict[str, List[Any]]
     ) -> bool:
         """
@@ -879,6 +925,10 @@ class MassStoreRun:
                 self.__wrong_src_code_comments.append(
                     f"{source_file}|{report_line}|{checker_name}")
 
+        root_dir_path = os.path.dirname(report_file_path)
+        mip = self.__mips[root_dir_path]
+        analysis_info = self.__analysis_info.get(root_dir_path)
+
         for report in reports:
             self.__all_report_checkers.add(report.check_name)
 
@@ -913,7 +963,8 @@ class MassStoreRun:
 
             report_id = self.__add_report(
                 session, run_id, file_ids[report.file_path], report.main,
-                path_events, detection_status, detected_at, analyzer_name)
+                path_events, detection_status, detected_at, analysis_info,
+                analyzer_name)
 
             self.__new_report_hashes.add(bug_id)
             self.__already_added_report_hashes.add(report_path_hash)
@@ -933,9 +984,7 @@ class MassStoreRun:
         file_path_to_id: Dict[str, int],
         run_history_time: datetime
     ):
-        """
-        Parse up and store the plist report files.
-        """
+        """ Parse up and store the plist report files. """
         def get_skip_handler(
             report_dir: str
         ) -> Optional[skiplist_handler.SkipListHandler]:
@@ -977,9 +1026,7 @@ class MassStoreRun:
 
             skip_handler = get_skip_handler(root_dir_path)
 
-            metadata_file_path = os.path.join(root_dir_path, 'metadata.json')
-            mip = MetadataInfoParser(metadata_file_path)
-
+            mip = self.__mips[root_dir_path]
             enabled_checkers.update(mip.enabled_checkers)
             disabled_checkers.update(mip.disabled_checkers)
 
@@ -993,7 +1040,7 @@ class MassStoreRun:
                 self.__process_report_file(
                     report_file_path, session, source_root, run_id,
                     file_path_to_id, run_history_time,
-                    skip_handler, mip, hash_map_reports)
+                    skip_handler, hash_map_reports)
 
         # If a checker was found in a plist file it can not be disabled so we
         # will add this to the enabled checkers list and remove this checker
@@ -1029,7 +1076,29 @@ class MassStoreRun:
             self.__report_server._removeReports(
                 session, list(reports_to_delete))
 
+    def finish_checker_run(
+        self,
+        session: DBSession,
+        run_id: int
+    ) -> bool:
+        """ Finish the storage of the given run. """
+        try:
+            LOG.debug("Finishing checker run")
+            run = session.query(Run).get(run_id)
+            if not run:
+                return False
+
+            run.mark_finished()
+            run.duration = self.__duration
+
+            return True
+        except Exception as ex:
+            LOG.error(ex)
+
+        return False
+
     def store(self) -> int:
+        """ Store run results to the server. """
         start_time = time.time()
 
         # Check constraints of the run.
@@ -1054,7 +1123,6 @@ class MassStoreRun:
 
                 source_root = os.path.join(zip_dir, 'root')
                 report_dir = os.path.join(zip_dir, 'reports')
-                metadata_file = os.path.join(report_dir, 'metadata.json')
                 content_hash_file = os.path.join(
                     zip_dir, 'content_hashes.json')
 
@@ -1068,19 +1136,13 @@ class MassStoreRun:
 
                 run_history_time = datetime.now()
 
-                mip = MetadataInfoParser(metadata_file)
+                # Parse all metadata information from the report directory.
+                for root_dir_path, _, _ in os.walk(report_dir):
+                    metadata_file_path = os.path.join(
+                        root_dir_path, 'metadata.json')
 
-                command = ''
-                if len(mip.check_commands) == 1:
-                    command = list(mip.check_commands)[0]
-                elif len(mip.check_commands) > 1:
-                    command = "multiple analyze calls: " + \
-                              '; '.join(mip.check_commands)
-
-                durations = 0
-                if mip.check_durations:
-                    # Round the duration to seconds.
-                    durations = int(sum(mip.check_durations))
+                    self.__mips[root_dir_path] = \
+                        MetadataInfoParser(metadata_file_path)
 
                 # When we use multiple server instances and we try to run
                 # multiple storage to each server which contain at least two
@@ -1121,7 +1183,7 @@ class MassStoreRun:
 
                             # Actual store operation begins here.
                             run_id = self.__add_checker_run(
-                                session, command, run_history_time, mip)
+                                session, run_history_time)
 
                             LOG.info("[%s] Store reports...", self.__name)
                             self.__store_reports(
@@ -1129,7 +1191,7 @@ class MassStoreRun:
                                 file_path_to_id, run_history_time)
                             LOG.info("[%s] Store reports done.", self.__name)
 
-                            finish_checker_run(session, run_id, durations)
+                            self.finish_checker_run(session, run_id)
 
                             session.commit()
 

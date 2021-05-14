@@ -18,6 +18,8 @@ import shutil
 import subprocess
 import unittest
 
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import AnalysisInfoFilter
+
 from libtest import codechecker
 from libtest import env
 
@@ -39,6 +41,10 @@ class TestStore(unittest.TestCase):
         self.codechecker_cfg = self._test_cfg["codechecker_cfg"]
         self.test_proj_dir = os.path.join(
             self.codechecker_cfg["workspace"], "test_proj")
+
+        # Setup a viewer client to test viewer API calls.
+        self._cc_client = env.setup_viewer_client(self._test_workspace)
+        self.assertIsNotNone(self._cc_client)
 
     def test_trim_path_prefix_store(self):
         """Trim the path prefix from the sored reports.
@@ -164,6 +170,55 @@ class TestStore(unittest.TestCase):
 
             self.assertTrue(
                 any(r['checkerId'] == 'deadcode.DeadStores' for r in reports))
+
+            # Get analysis info.
+            limit = None
+            offset = 0
+            report = [r for r in reports
+                      if r['checkerId'] == 'core.DivideZero'][0]
+
+            # Get analysis info for a run.
+            analysis_info_filter = AnalysisInfoFilter(runId=report['runId'])
+            analysis_info = self._cc_client.getAnalysisInfo(
+                analysis_info_filter, limit, offset)
+            self.assertEqual(len(analysis_info), 2)
+            self.assertTrue(
+                any(report_dir1 in i.analyzerCommand for i in analysis_info))
+            self.assertTrue(
+                any(report_dir2 in i.analyzerCommand for i in analysis_info))
+
+            # Get analysis info for a report.
+            analysis_info_filter = AnalysisInfoFilter(
+                reportId=report['reportId'])
+
+            analysis_info = self._cc_client.getAnalysisInfo(
+                analysis_info_filter, limit, offset)
+            self.assertEqual(len(analysis_info), 1)
+            self.assertTrue(
+                any(report_dir2 in i.analyzerCommand for i in analysis_info))
+
+            # Get analysis infor for run history.
+            query_cmd = [
+                env.codechecker_cmd(), "cmd", "history",
+                "-n", run_name,
+                "--url", env.parts_to_url(self.codechecker_cfg),
+                "-o", "json"]
+
+            out = subprocess.check_output(
+                query_cmd, encoding="utf-8", errors="ignore")
+            history = json.loads(out)
+            self.assertTrue(history)
+
+            h = max(history, key=lambda h: h["id"])
+
+            analysis_info_filter = AnalysisInfoFilter(runHistoryId=h['id'])
+            analysis_info = self._cc_client.getAnalysisInfo(
+                analysis_info_filter, limit, offset)
+            self.assertEqual(len(analysis_info), 2)
+            self.assertTrue(
+                any(report_dir1 in i.analyzerCommand for i in analysis_info))
+            self.assertTrue(
+                any(report_dir2 in i.analyzerCommand for i in analysis_info))
 
             # Check the reports.
             rm_cmd = [

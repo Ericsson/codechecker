@@ -13,7 +13,7 @@ from math import ceil
 import os
 
 from sqlalchemy import MetaData, Column, Integer, UniqueConstraint, String, \
-    DateTime, Boolean, ForeignKey, Binary, Enum, Text
+    DateTime, Boolean, ForeignKey, Binary, Enum, Table, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import true
@@ -30,6 +30,16 @@ CC_META = MetaData(naming_convention={
 Base = declarative_base(metadata=CC_META)
 
 
+class AnalysisInfo(Base):
+    __tablename__ = 'analysis_info'
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    analyzer_command = Column(Binary)
+
+    def __init__(self, analyzer_command):
+        self.analyzer_command = analyzer_command
+
+
 class Run(Base):
     __tablename__ = 'runs'
 
@@ -42,13 +52,11 @@ class Run(Base):
     duration = Column(Integer)  # Seconds, -1 if unfinished.
     name = Column(String)
     version = Column(String)
-    command = Column(String)
     can_delete = Column(Boolean, nullable=False, server_default=true(),
                         default=True)
 
-    def __init__(self, name, version, command):
-        self.date, self.name, self.version, self.command = \
-            datetime.now(), name, version, command
+    def __init__(self, name, version):
+        self.date, self.name, self.version = datetime.now(), name, version
         self.duration = -1
 
     def mark_finished(self):
@@ -117,6 +125,20 @@ class AnalyzerStatistic(Base):
         self.failed_files = failed_files
 
 
+RunHistoryAnalysisInfo = Table(
+    'run_history_analysis_info',
+    Base.metadata,
+    Column(
+        'run_history_id',
+        Integer,
+        ForeignKey('run_histories.id',
+                   deferrable=True,
+                   initially="DEFERRED",
+                   ondelete="CASCADE")),
+    Column('analysis_info_id', Integer, ForeignKey('analysis_info.id'))
+)
+
+
 class RunHistory(Base):
     __tablename__ = 'run_histories'
 
@@ -128,7 +150,6 @@ class RunHistory(Base):
     version_tag = Column(String)
     user = Column(String, nullable=False)
     time = Column(DateTime, nullable=False)
-    check_command = Column(Binary)
     cc_version = Column(String, nullable=True)
     description = Column(String, nullable=True)
 
@@ -136,15 +157,18 @@ class RunHistory(Base):
     analyzer_statistics = relationship(AnalyzerStatistic,
                                        lazy="joined")
 
+    analysis_info = relationship(
+        "AnalysisInfo",
+        secondary=RunHistoryAnalysisInfo)
+
     __table_args__ = (UniqueConstraint('run_id', 'version_tag'),)
 
-    def __init__(self, run_id, version_tag, user, time, check_command,
-                 cc_version, description):
+    def __init__(self, run_id, version_tag, user, time, cc_version,
+                 description):
         self.run_id = run_id
         self.version_tag = version_tag
         self.user = user
         self.time = time
-        self.check_command = check_command
         self.cc_version = cc_version
         self.description = description
 
@@ -281,6 +305,20 @@ class ExtendedReportData(Base):
         self.type = data_type
 
 
+ReportAnalysisInfo = Table(
+    'report_analysis_info',
+    Base.metadata,
+    Column(
+        'report_id',
+        Integer,
+        ForeignKey('reports.id',
+                   deferrable=True,
+                   initially="DEFERRED",
+                   ondelete="CASCADE")),
+    Column('analysis_info_id', Integer, ForeignKey('analysis_info.id'))
+)
+
+
 class Report(Base):
     __tablename__ = 'reports'
 
@@ -318,6 +356,10 @@ class Report(Base):
 
     detected_at = Column(DateTime, nullable=False)
     fixed_at = Column(DateTime)
+
+    analysis_info = relationship(
+        "AnalysisInfo",
+        secondary=ReportAnalysisInfo)
 
     # Cascade delete might remove rows, SQLAlchemy warns about this.
     # To remove warnings about already deleted items set this to False.

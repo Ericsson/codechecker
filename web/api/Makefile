@@ -70,6 +70,11 @@ build: clean target_dirs
 	rm -rf $(API_DIR)/gen-nodejs/
 	rm -rf $(API_DIR)/gen-py/
 
+	# When someone is developing CodeChecker and changes the API multiple times
+	# we need to remove the changes from package-lock.json file to install
+	# the api correctly by npm.
+	git checkout -- $(API_DIR)/../server/vue-cli/package-lock.json
+
 publish: build publish_py publish_js
 
 publish_py:

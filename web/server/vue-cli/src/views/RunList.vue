@@ -1,7 +1,7 @@
 <template>
   <v-card flat tile>
-    <check-command-dialog
-      :value.sync="checkCommandDialog"
+    <analysis-info-dialog
+      :value.sync="analysisInfoDialog"
       :run-id="selectedRunId"
       :run-history-id="selectedRunHistoryId"
     />
@@ -50,7 +50,7 @@
           <expanded-run
             :histories="item.$history.values"
             :run="item"
-            :open-check-command-dialog="openCheckCommandDialog"
+            :open-analysis-info-dialog="openAnalysisInfoDialog"
             :open-analyzer-statistics-dialog="openAnalyzerStatisticsDialog"
             :selected-baseline-tags.sync="selectedBaselineTags"
             :selected-compared-to-tags.sync="selectedComparedToTags"
@@ -77,7 +77,7 @@
           :detection-status-count="item.detectionStatusCount"
           :report-filter-query="getReportFilterQuery(item)"
           :statistics-filter-query="getStatisticsFilterQuery(item)"
-          :open-check-command-dialog="openCheckCommandDialog"
+          :open-analysis-info-dialog="openAnalysisInfoDialog"
         />
       </template>
 
@@ -157,10 +157,10 @@ import {
   RunSortType
 } from "@cc/report-server-types";
 
+import { AnalysisInfoDialog } from "@/components";
 import {
   AnalyzerStatisticsBtn,
   AnalyzerStatisticsDialog,
-  CheckCommandDialog,
   ExpandedRun,
   RunFilterToolbar,
   RunNameColumn
@@ -171,7 +171,7 @@ export default {
   components: {
     AnalyzerStatisticsBtn,
     AnalyzerStatisticsDialog,
-    CheckCommandDialog,
+    AnalysisInfoDialog,
     ExpandedRun,
     RunNameColumn,
     RunFilterToolbar
@@ -189,8 +189,7 @@ export default {
 
     return {
       initialized: false,
-      checkCommandDialog: false,
-      checkCommand: null,
+      analysisInfoDialog: false,
       pagination: {
         page: page,
         itemsPerPage: itemsPerPage,
@@ -505,10 +504,10 @@ export default {
       });
     },
 
-    openCheckCommandDialog(runId, runHistoryId=null) {
+    openAnalysisInfoDialog(runId, runHistoryId=null) {
       this.selectedRunId = runId;
       this.selectedRunHistoryId = runHistoryId;
-      this.checkCommandDialog = true;
+      this.analysisInfoDialog = true;
     },
 
     openAnalyzerStatisticsDialog(report, history=null) {

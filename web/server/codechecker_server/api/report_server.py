@@ -17,6 +17,7 @@ import zlib
 
 from collections import defaultdict
 from datetime import datetime, timedelta
+from typing import List
 
 import sqlalchemy
 from sqlalchemy.sql.expression import or_, and_, not_, func, \
@@ -24,10 +25,10 @@ from sqlalchemy.sql.expression import or_, and_, not_, func, \
 
 import codechecker_api_shared
 from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import BugPathPos, \
-    CheckerCount, CommentData, DiffType, Encoding, RunHistoryData, Order, \
-    ReportData, ReportDetails, ReviewData, RunData, RunFilter, \
-    RunReportCount, RunSortType, RunTagCount, SourceComponentData, \
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import AnalysisInfoFilter, \
+    BugPathPos, CheckerCount, CommentData, DiffType, Encoding, \
+    RunHistoryData, Order, ReportData, ReportDetails, ReviewData, RunData, \
+    RunFilter, RunReportCount, RunSortType, RunTagCount, SourceComponentData, \
     SourceFileData, SortMode, SortType, ExportData
 
 from codechecker_common import util
@@ -43,9 +44,10 @@ from ..database import db_cleanup
 from ..database.config_db_model import Product
 from ..database.database import conv, DBSession, escape_like
 from ..database.run_db_model import \
-    AnalyzerStatistic, Report, ReviewStatus, File, Run, RunHistory, \
-    RunLock, Comment, BugPathEvent, BugReportPoint, \
-    FileContent, SourceComponent, ExtendedReportData
+    AnalysisInfo, AnalyzerStatistic, BugPathEvent, BugReportPoint, Comment, \
+    ExtendedReportData, File, FileContent, Report, ReportAnalysisInfo, \
+    ReviewStatus, Run, RunHistory, RunHistoryAnalysisInfo, RunLock, \
+    SourceComponent
 
 from .thrift_enum_helper import detection_status_enum, \
     detection_status_str, review_status_enum, review_status_str, \
@@ -1133,28 +1135,74 @@ class ThriftRequestHandler:
 
         return query.count()
 
+    # DEPRECATED: use getAnalysisInfo API function instead of this function.
     def getCheckCommand(self, run_history_id, run_id):
+        """ Get analyzer command based on the given filter. """
+        limit = None
+        offset = 0
+        analysis_info_filter = AnalysisInfoFilter(
+            runId=run_id,
+            runHistoryId=run_history_id)
+
+        analysis_info = self.getAnalysisInfo(
+            analysis_info_filter, limit, offset)
+
+        return "; ".join([i.analyzerCommand for i in analysis_info])
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getAnalysisInfo(self, analysis_info_filter, limit, offset):
+        """ Get analysis information based on the given filter. """
         self.__require_access()
 
-        if not run_history_id and not run_id:
-            return ""
+        res: List[ttypes.AnalysisInfo] = []
+        if not analysis_info_filter:
+            return res
 
+        analysis_info_query = None
         with DBSession(self._Session) as session:
-            query = session.query(RunHistory.check_command)
-
-            if run_history_id:
-                query = query.filter(RunHistory.id == run_history_id)
-            elif run_id:
-                query = query.filter(RunHistory.run_id == run_id) \
+            run_id = analysis_info_filter.runId
+            run_history_ids = None
+            if run_id is not None:
+                run_history_ids = session \
+                    .query(RunHistory.id) \
+                    .filter(RunHistory.run_id == run_id) \
                     .order_by(RunHistory.time.desc()) \
                     .limit(1)
 
-            history = query.first()
+            if run_history_ids is None:
+                run_history_ids = [analysis_info_filter.runHistoryId]
 
-            if not history or not history[0]:
-                return ""
+            if run_history_ids is not None:
+                rh_a_tbl = RunHistoryAnalysisInfo
+                analysis_info_query = session.query(AnalysisInfo) \
+                    .outerjoin(
+                        rh_a_tbl,
+                        rh_a_tbl.c.analysis_info_id == AnalysisInfo.id) \
+                    .filter(rh_a_tbl.c.run_history_id.in_(run_history_ids))
 
-        return zlib.decompress(history[0]).decode('utf-8')
+            report_id = analysis_info_filter.reportId
+            if report_id is not None:
+                r_a_tbl = ReportAnalysisInfo
+                analysis_info_query = session.query(AnalysisInfo) \
+                    .outerjoin(
+                        r_a_tbl,
+                        r_a_tbl.c.analysis_info_id == AnalysisInfo.id) \
+                    .filter(r_a_tbl.c.report_id == report_id)
+
+            if analysis_info_query:
+                if limit:
+                    analysis_info_query = analysis_info_query \
+                        .limit(limit).offset(offset)
+
+                for cmd in analysis_info_query:
+                    command = \
+                        zlib.decompress(cmd.analyzer_command).decode('utf-8')
+
+                    res.append(ttypes.AnalysisInfo(
+                        analyzerCommand=command))
+
+        return res
 
     @exc_to_thrift_reqfail
     @timeit

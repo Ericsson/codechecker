@@ -5,6 +5,11 @@
       :checker-name="checkerName"
     />
 
+    <analysis-info-dialog
+      :value.sync="analysisInfoDialog"
+      :report-id="reportId"
+    />
+
     <v-row>
       <v-col
         class="py-0"
@@ -21,6 +26,16 @@
                 <report-info-button :on="on" />
               </template>
             </show-report-info-dialog>
+          </v-col>
+
+          <v-col
+            cols="auto"
+            class="pa-0 mr-2"
+            align-self="center"
+          >
+            <analysis-info-btn
+              @click.native="openAnalysisInfoDialog"
+            />
           </v-col>
 
           <v-col
@@ -225,14 +240,14 @@ import {
 } from "@cc/report-server-types";
 
 import { FillHeight } from "@/directives";
-import CopyBtn from "@/components/CopyBtn";
+import { AnalysisInfoDialog, CopyBtn } from "@/components";
 import { UserIcon } from "@/components/Icons";
 
 import ReportTreeKind from "@/components/Report/ReportTree/ReportTreeKind";
 
+import AnalysisInfoBtn from "./AnalysisInfoBtn";
 import CheckerDocumentationDialog from
   "@/components/CheckerDocumentationDialog";
-
 import { ReportComments } from "./Comment";
 import SelectReviewStatus from "./SelectReviewStatus";
 import SelectSameReport from "./SelectSameReport";
@@ -245,6 +260,8 @@ const ReportStepMessageClass = Vue.extend(ReportStepMessage);
 export default {
   name: "Report",
   components: {
+    AnalysisInfoBtn,
+    AnalysisInfoDialog,
     CheckerDocumentationDialog,
     CopyBtn,
     ReportComments,
@@ -276,7 +293,9 @@ export default {
       loading: true,
       bus: new Vue(),
       annotation: null,
-      checkerDocumentationDialog: false
+      checkerDocumentationDialog: false,
+      analysisInfoDialog: false,
+      reportId: null
     };
   },
 
@@ -749,6 +768,11 @@ export default {
           this.reviewData.author = author;
           this.reviewData.date = format(new Date(), "yyyy-MM-dd HH:mm:ss");
         }));
+    },
+
+    openAnalysisInfoDialog() {
+      this.reportId = this.report.reportId;
+      this.analysisInfoDialog = true;
     }
   }
 };
