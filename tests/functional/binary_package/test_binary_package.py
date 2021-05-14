@@ -77,8 +77,8 @@ int main()
                 }
             ]
 
-            with open(build_file_path, 'w',
-                    encoding="utf-8", errors="ignore") as f:
+            with open(build_file_path, 'w', encoding="utf-8",
+                      errors="ignore") as f:
                 json.dump(build_log, f)
 
         return build_file_path
@@ -109,14 +109,16 @@ int main()
         self.assertEqual(process.returncode, 0)
 
         # Parse the results.
-        out = subprocess.check_output(
+        process = subprocess.Popen(
             [
                 self.codechecker_bin, "parse",
                 report_dir,
                 "-e", "json"
             ],
+            stdout=subprocess.PIPE,
             encoding="utf-8",
             errors="ignore")
-
+        out, _ = process.communicate()
+        self.assertEqual(process.returncode, 2)
         reports = json.loads(out)
         self.assertTrue(len(reports) > 0)

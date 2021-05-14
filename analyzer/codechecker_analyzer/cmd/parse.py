@@ -20,7 +20,7 @@ from operator import itemgetter
 import sys
 import traceback
 from functools import wraps
-from typing import List, Dict, Tuple, Set
+from typing import List, Dict, Tuple, Set, Union
 
 from plist_to_html import PlistToHtml
 
@@ -605,12 +605,15 @@ def parse_with_plt_formatter(plist_file: str,
 def parse_convert_reports(input_dirs: List[str],
                           out_format: str,
                           severity_map: Dict,
-                          trim_path_prefixes: List[str]) -> Dict:
+                          trim_path_prefixes: List[str]) \
+        -> Tuple[Union[Dict, List], int]:
     """Parse and convert the reports from the input dirs to the out_format.
 
     Retuns a dictionary which can be converted to the out_format type of
     json to be printed out or saved on the disk.
     """
+
+    assert(out_format in [fmt for fmt in EXPORT_TYPES if fmt != 'html'])
 
     input_files = set()
     for input_path in input_dirs:
@@ -634,39 +637,34 @@ def parse_convert_reports(input_dirs: List[str],
         for report in all_reports:
             report.trim_path_prefixes(trim_path_prefixes)
 
+    number_of_reports = len(all_reports)
     if out_format == "codeclimate":
-        return codeclimate.convert(all_reports)
+        return codeclimate.convert(all_reports), number_of_reports
 
     if out_format == "gerrit":
-        return gerrit.convert(all_reports, severity_map)
+        return gerrit.convert(all_reports, severity_map), number_of_reports
 
     if out_format == "json":
-        return [out_json.convert_to_parse(r) for r in all_reports]
-
-    LOG.error("Unknown export format: %s", out_format)
-    return {}
-
-
-class ReportCounter:
-    def __init__(self, initial=0):
-        self.__sum = initial
-
-    def __call__(self, result):
-        if not result[0]:  # Bug report was not skipped
-            self.__sum += 1
-
-    def reset(self, initial):
-        self.__sum = initial
-
-    @property
-    def sum(self):
-        return self.__sum
+        return [out_json.convert_to_parse(r) for r in all_reports], \
+            number_of_reports
 
 
 class ResultVisitor:
-    def __init__(self, functor):
+    """ Decorator class to see the underlying function return code."""
+
+    """ Constructor.
+    Parameters
+    ----------
+        functor : Python callable
+    """
+    def __init__(self, functor) -> None:
         self.__functor = functor
 
+    """ Wrapper function factory.
+    Parameters
+    ----------
+        func_to_call : Wrapped function
+    """
     def __call__(self, func_to_call):
         @wraps(func_to_call)
         def wrapper(*args, **kwargs):
@@ -675,10 +673,6 @@ class ResultVisitor:
             return result
 
         return wrapper
-
-    @classmethod
-    def counter(clazz, func):
-        return clazz(func)
 
 
 def main(args):
@@ -762,24 +756,29 @@ def main(args):
         # The HTML part will be handled separately below.
         if export != 'html':
             try:
-                res = parse_convert_reports(args.input,
-                                            export,
-                                            context.severity_map,
-                                            trim_path_prefixes)
+                reports, number_of_reports = parse_convert_reports(
+                    args.input, export, context.severity_map,
+                    trim_path_prefixes)
+                output_text = json.dumps(reports)
+
                 if 'output_path' in args:
                     output_path = os.path.abspath(args.output_path)
 
                     if not os.path.exists(output_path):
                         os.mkdir(output_path)
 
-                    reports_json = os.path.join(output_path, 'reports.json')
-                    with open(reports_json,
+                    output_file_path = os.path.join(output_path,
+                                                    'reports.json')
+                    with open(output_file_path,
                               mode='w',
                               encoding='utf-8', errors="ignore") as output_f:
-                        output_f.write(json.dumps(res))
+                        output_f.write(output_text)
 
-                # TODO: return with 2 if any report exists.
-                return print(json.dumps(res))
+                print(output_text)
+                if number_of_reports > 0:
+                    sys.exit(2)
+                else:
+                    sys.exit(0)
             except Exception as ex:
                 LOG.error(ex)
                 sys.exit(1)
@@ -790,6 +789,43 @@ def main(args):
         of plist_to_html
         """
         return util.trim_path_prefixes(source_file, trim_path_prefixes)
+
+    class ReportCounter:
+        """ Functor class to count number of reports of subsequent calls of
+        skip_html_report_data_handler() function."""
+
+        def __init__(self, initial=0) -> None:
+            """ Constructor.
+            Parameters
+            ----------
+                initial : Initial value of counter.
+            """
+
+            self.__sum = initial
+
+        def __call__(self, result):
+            """ Decorator function for bug counting.
+            Parameters
+            ----------
+                result : The result of call of the decorated function.
+            """
+            if not result[0]:  # Bug report was not skipped
+                self.__sum += 1
+
+        @property
+        def sum(self) -> None:
+            """ Counter getter. """
+            return self.__sum
+
+        @sum.setter
+        def sum(self, initial) -> None:
+            """ Counter setter.
+            Parameters
+            ----------
+                initial : Initial value of counter.
+            """
+
+            self.__sum = initial
 
     html_builder = None
     report_counter = ReportCounter()
