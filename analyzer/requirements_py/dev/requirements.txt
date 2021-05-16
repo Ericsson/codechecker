@@ -7,3 +7,4 @@ pylint==2.4.4
 mkdocs==1.1.2
 PyYAML==5.4.1
 mypy_extensions==0.4.3
+coverage==5.5.0

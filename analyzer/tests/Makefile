@@ -40,12 +40,19 @@ run_test_in_env: venv_dev
 		nosetests $(NOSECFG) ${TEST} || exit 1
 
 UNIT_TEST_CMD = $(REPO_ROOT) nosetests $(NOSECFG) tests/unit
+UNIT_TEST_COV_CMD = $(REPO_ROOT) coverage run -m nose $(NOSECFG) tests/unit && coverage report && coverage html
 
 test_unit:
 	$(UNIT_TEST_CMD)
 
+test_unit_cov:
+	$(UNIT_TEST_COV_CMD)
+
 test_unit_in_env: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(UNIT_TEST_CMD)
+
+test_unit_cov_in_env: venv_dev
+	$(ACTIVATE_DEV_VENV) && $(UNIT_TEST_COV_CMD)
 
 FUNCTIONAL_TEST_CMD = $(REPO_ROOT) $(TEST_PROJECT) \
 		nosetests $(NOSECFG) tests/functional || exit 1
