@@ -282,16 +282,30 @@ def main(args):
             header = list(map(uglify, header))
 
         rows = []
+        analyzer_failures = []
         for analyzer in working_analyzers:
             config_handler = analyzer_config_map.get(analyzer)
             analyzer_class = analyzer_types.supported_analyzers[analyzer]
 
             configs = analyzer_class.get_checker_config(config_handler,
                                                         analyzer_environment)
+            if not configs:
+                analyzer_failures.append(analyzer)
+                continue
+
             rows.extend((':'.join((analyzer, c[0])), c[1]) if 'details' in args
                         else (':'.join((analyzer, c[0])),) for c in configs)
 
-        print(twodim.to_str(args.output_format, header, rows))
+        if rows:
+            print(twodim.to_str(args.output_format, header, rows))
+
+        if analyzer_failures:
+            LOG.error("Failed to get checker configuration options for '%s' "
+                      "analyzer(s)! Please try to upgrade your analyzer "
+                      "version to use this feature.",
+                      ', '.join(analyzer_failures))
+            sys.exit(1)
+
         return
 
     if args.guideline is not None and len(args.guideline) == 0:
