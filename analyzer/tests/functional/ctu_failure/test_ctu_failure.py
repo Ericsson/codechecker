@@ -54,7 +54,9 @@ class TestCtuFailure(unittest.TestCase):
 
         # Get if clang is CTU-capable or not.
         cmd = [self._codechecker_cmd, 'analyze', '-h']
-        output, _ = call_command(cmd, cwd=self.test_workspace, env=self.env)
+        output, _, result = call_command(cmd, cwd=self.test_workspace,
+                                         env=self.env)
+        self.assertEqual(result, 0, "Analyzing failed.")
         setattr(self, CTU_ATTR, '--ctu-' in output)
         print("'analyze' reported CTU compatibility? " +
               str(getattr(self, CTU_ATTR)))
@@ -103,8 +105,9 @@ class TestCtuFailure(unittest.TestCase):
         """
         self.__set_up_test_dir('ctu_failure')
 
-        output = self.__do_ctu_all(on_demand=False,
-                                   extra_args=["--verbose", "debug"])
+        output, result = self.__do_ctu_all(
+            on_demand=False, extra_args=["--verbose", "debug"])
+        self.assertEqual(result, 0, "Could not query capability of analyzer.")
         self.assertIn("CTU loaded AST file", output)
 
     @skipUnlessCTUCapable
@@ -116,8 +119,9 @@ class TestCtuFailure(unittest.TestCase):
         """
         self.__set_up_test_dir('ctu_failure')
 
-        output = self.__do_ctu_all(on_demand=True,
-                                   extra_args=["--verbose", "debug"])
+        output, result = self.__do_ctu_all(
+            on_demand=True, extra_args=["--verbose", "debug"])
+        self.assertEqual(result, 0, "Could not query capability of analyzer.")
         self.assertIn("CTU loaded AST file", output)
 
     @skipUnlessCTUCapable
@@ -129,11 +133,10 @@ class TestCtuFailure(unittest.TestCase):
 
         # The below special checker `ExprInspection` crashes when a function
         # with a specified name is analyzed.
-        output = self.__do_ctu_all(on_demand=False,
-                                   extra_args=[
-                                       "--verbose", "debug",
-                                       "-e", "debug.ExprInspection"
-                                   ])
+        output, result = self.__do_ctu_all(
+            on_demand=False, extra_args=["--verbose", "debug",
+                                         "-e", "debug.ExprInspection"])
+        self.assertEqual(result, 3, "Analyzer survived the failure.")
 
         # lib.c should be logged as its AST is loaded by Clang
         self.assertRegex(output, r"CTU loaded AST file: .*lib\.c.ast")
@@ -180,11 +183,10 @@ class TestCtuFailure(unittest.TestCase):
 
         # The below special checker `ExprInspection` crashes when a function
         # with a specified name is analyzed.
-        output = self.__do_ctu_all(on_demand=True,
-                                   extra_args=[
-                                       "--verbose", "debug",
-                                       "-e", "debug.ExprInspection"
-                                   ])
+        output, result = self.__do_ctu_all(
+            on_demand=True, extra_args=["--verbose", "debug",
+                                        "-e", "debug.ExprInspection"])
+        self.assertEqual(result, 3, "Analyzer survived the failure.")
 
         # lib.c should be logged as its AST is loaded by Clang
         self.assertRegex(output, r"CTU loaded AST file: .*lib\.c")
@@ -231,11 +233,10 @@ class TestCtuFailure(unittest.TestCase):
 
         # The below special checker `ExprInspection` crashes when a function
         # with a specified name is analyzed.
-        output = self.__do_ctu_all(on_demand=False,
-                                   extra_args=[
-                                       "--verbose", "debug",
-                                       "-e", "debug.ExprInspection"
-                                   ])
+        output, result = self.__do_ctu_all(
+            on_demand=False, extra_args=["--verbose", "debug",
+                                         "-e", "debug.ExprInspection"])
+        self.assertEqual(result, 3, "Analyzer survived the failure.")
 
         # lib.c should be logged as its AST is loaded by Clang
         self.assertRegex(output, r"CTU loaded AST file: .*lib\.c.ast")
@@ -284,11 +285,10 @@ class TestCtuFailure(unittest.TestCase):
 
         # The below special checker `ExprInspection` crashes when a function
         # with a specified name is analyzed.
-        output = self.__do_ctu_all(on_demand=True,
-                                   extra_args=[
-                                       "--verbose", "debug",
-                                       "-e", "debug.ExprInspection"
-                                   ])
+        output, result = self.__do_ctu_all(
+            on_demand=True, extra_args=["--verbose", "debug",
+                                        "-e", "debug.ExprInspection"])
+        self.assertEqual(result, 3, "CTU analyzing should fail.")
 
         # lib.c should be logged as its AST is loaded by Clang
         self.assertRegex(output, r"CTU loaded AST file: .*lib\.c")
@@ -332,12 +332,11 @@ class TestCtuFailure(unittest.TestCase):
         """
         self.__set_up_test_dir('ctu_failure')
 
-        output = self.__do_ctu_all(on_demand=False,
-                                   extra_args=[
-                                       "--verbose", "debug",
-                                       "-e", "debug.ExprInspection",
-                                       "--ctu-reanalyze-on-failure"
-                                   ])
+        output, result = self.__do_ctu_all(
+            on_demand=False, extra_args=["--verbose", "debug",
+                                         "-e", "debug.ExprInspection",
+                                         "--ctu-reanalyze-on-failure"])
+        self.assertEqual(result, 3, "CTU analyzing should fail.")
 
         # lib.c should be logged as its AST is loaded by Clang
         self.assertRegex(output, r"CTU loaded AST file: .*lib\.c.ast")
@@ -361,12 +360,11 @@ class TestCtuFailure(unittest.TestCase):
         """
         self.__set_up_test_dir('ctu_failure')
 
-        output = self.__do_ctu_all(on_demand=True,
-                                   extra_args=[
-                                       "--verbose", "debug",
-                                       "-e", "debug.ExprInspection",
-                                       "--ctu-reanalyze-on-failure"
-                                   ])
+        output, result = self.__do_ctu_all(
+            on_demand=True, extra_args=["--verbose", "debug",
+                                        "-e", "debug.ExprInspection",
+                                        "--ctu-reanalyze-on-failure"])
+        self.assertEqual(result, 3, "CTU analyzing should fail.")
 
         # lib.c should be logged as its AST is loaded by Clang
         self.assertRegex(output, r"CTU loaded AST file: .*lib\.c")
@@ -398,12 +396,14 @@ class TestCtuFailure(unittest.TestCase):
             cmd.extend(extra_args)
         cmd.append(self.buildlog)
 
-        out, _ = call_command(cmd, cwd=self.test_dir, env=self.env)
-        return out
+        out, _, result = call_command(cmd, cwd=self.test_dir, env=self.env)
+        return out, result
 
     def __getClangSaPath(self):
         cmd = [self._codechecker_cmd, 'analyzers', '--details', '-o', 'json']
-        output, _ = call_command(cmd, cwd=self.test_workspace, env=self.env)
+        output, _, result = call_command(cmd, cwd=self.test_workspace,
+                                         env=self.env)
+        self.assertEqual(result, 0, "Failed to run analyzer.")
         json_data = json.loads(output)
         if json_data[0]["name"] == "clangsa":
             return json_data[0]["path"]

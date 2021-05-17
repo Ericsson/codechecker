@@ -234,7 +234,9 @@ class AnalyzeParseTestCase(
         extract_cmd = ['CodeChecker', 'parse', "-e", "json",
                        test_project_macros]
 
-        out, _ = call_command(extract_cmd, cwd=self.test_dir, env=self.env)
+        out, _, result = call_command(extract_cmd, cwd=self.test_dir,
+                                      env=self.env)
+        self.assertEqual(result, 0, "Parsing failed.")
         res = json.loads(out)
 
         self.assertEqual(len(res), 1)
@@ -260,7 +262,9 @@ class AnalyzeParseTestCase(
         extract_cmd = ['CodeChecker', 'parse', "-e", "json",
                        test_project_notes]
 
-        out, _ = call_command(extract_cmd, cwd=self.test_dir, env=self.env)
+        out, _, result = call_command(extract_cmd, cwd=self.test_dir,
+                                      env=self.env)
+        self.assertEqual(result, 0, "Parsing failed.")
         res = json.loads(out)
 
         self.assertEqual(len(res), 1)
@@ -286,7 +290,9 @@ class AnalyzeParseTestCase(
                        test_project_notes,
                        '--trim-path-prefix', test_project_notes]
 
-        out, _ = call_command(extract_cmd, cwd=self.test_dir, env=self.env)
+        out, _, result = call_command(extract_cmd, cwd=self.test_dir,
+                                      env=self.env)
+        self.assertEqual(result, 0, "Parsing failed.")
         res = json.loads(out)
 
         self.assertEqual(res, [{
@@ -332,7 +338,8 @@ class AnalyzeParseTestCase(
                        '-e', 'gerrit']
 
         print(" ".join(extract_cmd))
-        out, _ = call_command(extract_cmd, cwd=self.test_dir, env=env)
+        out, _, result = call_command(extract_cmd, cwd=self.test_dir, env=env)
+        self.assertEqual(result, 0, "Parsing failed.")
         print(out)
 
         review_data = json.loads(out)
@@ -367,8 +374,9 @@ class AnalyzeParseTestCase(
         extract_cmd = ['CodeChecker', 'parse',
                        invalid_plist_file]
 
-        out, _ = call_command(extract_cmd, cwd=self.test_dir, env=self.env)
-
+        out, _, result = call_command(extract_cmd, cwd=self.test_dir,
+                                      env=self.env)
+        self.assertEqual(result, 0, "Parsing failed.")
         self.assertTrue("Invalid plist file" in out)
 
     def test_html_output_for_macros(self):
@@ -382,7 +390,9 @@ class AnalyzeParseTestCase(
                        '-o', output_path,
                        test_project_macros]
 
-        out, err = call_command(extract_cmd, cwd=self.test_dir, env=self.env)
+        out, err, result = call_command(extract_cmd, cwd=self.test_dir,
+                                        env=self.env)
+        self.assertEqual(result, 0, "Parsing failed.")
         self.assertFalse(err)
 
         self.assertTrue('Html file was generated' in out)
