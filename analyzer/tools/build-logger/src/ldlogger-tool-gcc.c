@@ -252,7 +252,7 @@ int isObjectFile(const char* filename_)
  */
 char* getResponseFile(const LoggerVector* arguments_)
 {
-  int i;
+  size_t i;
 
   for (i = 0; i < arguments_->size; ++i)
   {
@@ -546,7 +546,7 @@ int loggerGccParserCollectActions(
   {
     loggerVectorAdd(actions_, action);
   }
-  else if (responseFile = getResponseFile(&action->arguments))
+  else if ((responseFile = getResponseFile(&action->arguments)))
   {
     LOG_INFO("Processing response file: %s", responseFile);
     loggerVectorAdd(&action->sources, responseFile);

@@ -78,8 +78,6 @@ static void getCurrentTime(char* buff_)
   timeinfo = localtime(&rawtime);
 
   strftime(buff_, 26, "%Y-%m-%d %H:%M:%S", timeinfo);
-
-  return buff_;
 }
 
 int predictEscapedSize(const char* str_)
@@ -539,7 +537,7 @@ void freeLock(int lockFile_)
   }
 }
 
-void logPrint(char* logLevel_, char* fileName_, int line_, char *fmt_,...)
+int logPrint(char* logLevel_, char* fileName_, int line_, char *fmt_,...)
 {
   const char* debugFile = getenv("CC_LOGGER_DEBUG_FILE");
   if (!debugFile)
@@ -579,7 +577,7 @@ void logPrint(char* logLevel_, char* fileName_, int line_, char *fmt_,...)
     line_);
 
   char* p, *str, **items;
-  int num;
+  size_t num;
   size_t i;
 
   va_list args;
@@ -596,7 +594,7 @@ void logPrint(char* logLevel_, char* fileName_, int line_, char *fmt_,...)
       {
         case 'a':
         {
-          num = va_arg(args, int);
+          num = va_arg(args, size_t);
           items = va_arg(args, char**);
           for (i = 0; i < num; ++i)
           {
@@ -612,8 +610,8 @@ void logPrint(char* logLevel_, char* fileName_, int line_, char *fmt_,...)
         }
         case 'd':
         {
-          num = va_arg(args, int);
-          fprintf(stream, "%d", num);
+          num = va_arg(args, size_t);
+          fprintf(stream, "%zu", num);
           continue;
         }
         default:
@@ -629,4 +627,6 @@ void logPrint(char* logLevel_, char* fileName_, int line_, char *fmt_,...)
 
   fclose(stream);
   freeLock(lockFd);
+
+  return 0;
 }

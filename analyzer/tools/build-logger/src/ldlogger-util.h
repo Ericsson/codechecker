@@ -295,6 +295,6 @@ void freeLock(int lockFile_);
  *  These formatted tags will be replaced by the values specified in
  *  subsequent additional arguments and formatted as requested.
  */
-void logPrint(char* logLevel_, char* fileName_, int line_, char* fmt_, ...);
+int logPrint(char* logLevel_, char* fileName_, int line_, char* fmt_, ...);
 
 #endif /* __LOGGER_UTIL_H__ */
