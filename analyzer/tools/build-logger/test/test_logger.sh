@@ -158,8 +158,7 @@ function test_space_quote {
     "$source_file"
 }
 
-function test_backslashes_new {
-  CC_LOGGER_NEW_ESCAPING="anything" \
+function test_backslashes {
   bash -c "gcc -Wall -Wextra -DVARIABLE=\\\\\\\\\\\\\\\\built\\\\\\\\ages\\ \\\"ago\\\"\\\\\\\\ $source_file"
 
   assert_json \
@@ -171,20 +170,7 @@ function test_backslashes_new {
   assert_run_stdout_hexdump "2d 2d 5c 5c 62 75 69 6c 74 5c 61 67 65 73 20 22 61 67 6f 22 5c 2d 2d"  ./a.out
 }
 
-function test_backslashes_old {
-  bash -c "gcc -Wall -Wextra -DVARIABLE=\\\\\\\\\\\\\\\\built\\\\\\\\ages\\ \\\"ago\\\"\\\\\\\\ $source_file"
-
-  assert_json \
-    "-Wall -Wextra -DVARIABLE=\\\\\\\\\\\\\\\\\\\\\\\\built\\\\\\\\\\\\ages\\\\ \\\\\\\"ago\\\\\\\"\\\\\\\\\\\\ $source_file" \
-    gcc \
-    "$source_file"
-
-  #                          -  -  \  \  b  u  i  l  t  \  a  g  e  s     "  a  g  o  "  \  -  -
-  assert_run_stdout_hexdump "2d 2d 5c 5c 62 75 69 6c 74 5c 61 67 65 73 20 22 61 67 6f 22 5c 2d 2d"  ./a.out
-}
-
-function test_vectical_tab_new {
-  CC_LOGGER_NEW_ESCAPING="anything" \
+function test_vectical_tab {
   bash -c "gcc -Wall -Wextra -DVARIABLE=\\\\\\\\ZZ\\\\x0bYYYY\\\\\\\\ $source_file"
 
   assert_json \
@@ -198,40 +184,11 @@ function test_vectical_tab_new {
   assert_run_stdout_hexdump "2d 2d 5c 5a 5a 0b 59 59 59 59 5c 2d 2d"  ./a.out
 }
 
-function test_vectical_tab_old {
-  bash -c "gcc -Wall -Wextra -DVARIABLE=\\\\\\\\ZZ\\\\x0bYYYY\\\\\\\\ $source_file"
-
-  assert_json \
-    "-Wall -Wextra -DVARIABLE=\\\\\\\\\\\\ZZ\\\\\\x0bYYYY\\\\\\\\\\\\ $source_file" \
-    gcc \
-    "$source_file"
-
-  # --\ZZ\vYYYY\-- as hex
-  #      ^^ ---- vertical tab --------------vv
-  #                          -  -  \  Z  Z  \v Y  Y  Y  Y  \  -  -
-  assert_run_stdout_hexdump "2d 2d 5c 5a 5a 0b 59 59 59 59 5c 2d 2d" ./a.out
-}
-
-function test_carriage_return_new {
-  CC_LOGGER_NEW_ESCAPING="anything" \
+function test_carriage_return {
   bash -c "gcc -Wall -Wextra -DVARIABLE=\\\\\\\\ZZ\\\\x0dYYYY\\\\\\\\ $source_file"
 
   assert_json \
     "-Wall -Wextra -DVARIABLE=\\\\\\\\\\\\\\\\ZZ\\\\\\\\x0dYYYY\\\\\\\\\\\\\\\\ $source_file" \
-    gcc \
-    "$source_file"
-
-  # --\ZZ\rYYYY\-- as hex
-  #      ^^ ---- carriage return -----------vv
-  #                          -  -  \  Z  Z  \r Y  Y  Y  Y  \  -  -
-  assert_run_stdout_hexdump "2d 2d 5c 5a 5a 0d 59 59 59 59 5c 2d 2d" ./a.out
-}
-
-function test_carriage_return_old {
-  bash -c "gcc -Wall -Wextra -DVARIABLE=\\\\\\\\ZZ\\\\x0dYYYY\\\\\\\\ $source_file"
-
-  assert_json \
-    "-Wall -Wextra -DVARIABLE=\\\\\\\\\\\\ZZ\\\\\\x0dYYYY\\\\\\\\\\\\ $source_file" \
     gcc \
     "$source_file"
 

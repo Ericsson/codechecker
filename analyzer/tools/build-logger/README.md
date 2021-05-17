@@ -88,12 +88,3 @@ are provided to the compiler then the complete build action will be thrown
 away. This means that build actions which only perform linking will not be
 captured. We consider a file as object file if its extension is `.o`, `.so` or
 `.a`.
-
-### `CC_LOGGER_NEW_ESCAPING`
-If the environment variable is defined, we will use the *new* shell-escape mechanism
-when we generate the `compile_commands.json`.
-Use this option **if** without it the `CodeChecker log` command fails to produce
-a valid json output.
-The *old* mechanism had a bug when the invocation contained backslashes.
-If everything goes well, the new escaping will be enabled by default.
-

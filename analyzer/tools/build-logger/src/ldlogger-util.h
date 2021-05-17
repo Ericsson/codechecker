@@ -26,20 +26,9 @@
  * "hello" -> \\\"hello\\\" (length = 14)
  * "hello world" -> \\\"hello\\ world\\\" (length = 22)
  *
- * BUGS:
- * The '\\', '\r' and '\v' characters are not escaped correctly.
- *
- * When we generate the json, we will automatically select this or the fixed
- * version whether the CC_LOGGER_NEW_ESCAPING environment variable is defined
- * or not. By default the buggy version will be selected.
+ * The '\\', '\r' and '\v' characters are also escaped correctly.
  */
 int predictEscapedSize(const char* str_);
-
-/**
- * Does the same as predictEscapedSize, but fixes the escape bug.
- * The '\\', '\r' and '\v' characters are escaped correctly.
- */
-int predictEscapedSizeFixed(const char* str_);
 
 /**
  * Generates a shell-escaped version of the given string. The output buffer
@@ -48,24 +37,13 @@ int predictEscapedSizeFixed(const char* str_);
  * serialized form from the JSON, the original string will be returned. See
  * the documentation of predictEscapedSize() for some examples.
  *
- * BUGS:
- * The '\\', '\r' and '\v' characters are not escaped correctly.
- *
- * When we generate the json, we will automatically select this or the fixed
- * version whether the CC_LOGGER_NEW_ESCAPING environment variable is defined
- * or not. By default the buggy version will be selected.
+ * The '\\', '\r' and '\v' characters are also escaped correctly.
  * 
  * @param str_ a string to escape (non null).
  * @param buff_ an output buffer (non null).
  * @return anways returns buff_.
  */
 char* shellEscapeStr(const char* str_, char* buff_);
-
-/**
- * Does the same as shellEscapeStr, but fixes the escape bug.
- * The '\\', '\r' and '\v' characters are escaped correctly.
- */
-char* shellEscapeStrFixed(const char* str_, char* buff_);
 
 /**
  * Resolves a given path to an absolute path. The given buffer (resolved) may
