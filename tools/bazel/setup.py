@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 
+import os
 import setuptools
 
-with open("README.md", "r", encoding="utf-8", errors="ignore") as fh:
+readme_file_path = os.path.join(
+    "..", "..", "docs", "tools", "bazel.md")
+
+with open(readme_file_path, "r", encoding="utf-8", errors="ignore") as fh:
     long_description = fh.read()
 
 setuptools.setup(
