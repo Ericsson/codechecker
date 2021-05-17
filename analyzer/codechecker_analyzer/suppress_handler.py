@@ -20,7 +20,7 @@ from codechecker_common.logger import get_logger
 LOG = get_logger('system')
 
 
-class GenericSuppressHandler(object):
+class GenericSuppressHandler:
 
     def __init__(self, suppress_file, allow_write, src_comment_status_filter):
         """

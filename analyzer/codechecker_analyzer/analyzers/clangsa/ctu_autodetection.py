@@ -50,7 +50,7 @@ def invoke_binary_checked(binary_path, args=None, environ=None):
     return output
 
 
-class CTUAutodetection(object):
+class CTUAutodetection:
     """
     CTUAutodetection is responsible for providing the availability information
     of CTU feature, the the relevant mapping tool path and the mapping file

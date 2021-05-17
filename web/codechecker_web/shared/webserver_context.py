@@ -50,7 +50,7 @@ class SeverityMap(Mapping):
 
 
 # -----------------------------------------------------------------------------
-class Context(object, metaclass=Singleton):
+class Context(metaclass=Singleton):
     """ Generic package specific context. """
 
     def __init__(self):

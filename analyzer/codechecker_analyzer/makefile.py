@@ -29,7 +29,7 @@ from .analyzers.clangtidy.analyzer import ClangTidy
 LOG = get_logger('analyzer')
 
 
-class MakeFileCreator(object):
+class MakeFileCreator:
     """ Creates a Makefile from analyzer actions. """
 
     def __init__(self, analyzers, output_path, config_map, context,

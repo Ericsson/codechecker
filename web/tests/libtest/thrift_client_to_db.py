@@ -24,7 +24,7 @@ from codechecker_client.product import create_product_url
 from codechecker_web.shared.version import CLIENT_API as VERSION
 
 
-class ThriftAPIHelper(object):
+class ThriftAPIHelper:
 
     def __init__(self, transport, client, auto_handle_connection=True):
         self._transport = transport

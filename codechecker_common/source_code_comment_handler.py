@@ -43,7 +43,7 @@ class SpellException(Exception):
     pass
 
 
-class SourceCodeCommentHandler(object):
+class SourceCodeCommentHandler:
     """
     Handle source code comments.
     """

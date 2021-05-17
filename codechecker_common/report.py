@@ -22,7 +22,7 @@ from codechecker_common import util
 LOG = get_logger('report')
 
 
-class Report(object):
+class Report:
     """Represents an analyzer report.
 
     The main section is where the analyzer reported the issue.

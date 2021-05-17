@@ -24,7 +24,7 @@ from ..database.database import DBSession
 LOG = get_logger('server')
 
 
-class ThriftConfigHandler(object):
+class ThriftConfigHandler:
     """
     Manages Thrift requests regarding configuration.
     """

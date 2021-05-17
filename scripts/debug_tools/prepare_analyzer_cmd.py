@@ -20,7 +20,7 @@ def get_first_line_of_file(fname):
         return f.readline()
 
 
-class AnalyzerCommandPathModifier(object):
+class AnalyzerCommandPathModifier:
     def __init__(self, opts):
         self.opts = opts
 
@@ -63,7 +63,7 @@ class AnalyzerCommandPathModifier(object):
                     os.path.sep)))
 
 
-class PathOptions(object):
+class PathOptions:
     def __init__(
             self,
             sources_root,

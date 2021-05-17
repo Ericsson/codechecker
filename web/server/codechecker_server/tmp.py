@@ -22,7 +22,7 @@ from codechecker_common.logger import get_logger
 LOG = get_logger('system')
 
 
-class TemporaryDirectory(object):
+class TemporaryDirectory:
     def __init__(self, suffix='', prefix='tmp', tmp_dir=None):
         self._closed = False
         self.name = tempfile.mkdtemp(suffix, prefix, tmp_dir)

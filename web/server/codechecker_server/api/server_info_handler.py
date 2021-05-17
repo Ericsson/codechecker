@@ -15,7 +15,7 @@ from codechecker_server.profiler import timeit
 LOG = get_logger('server')
 
 
-class ThriftServerInfoHandler(object):
+class ThriftServerInfoHandler:
     """
     Manages Thrift requests regarding server info.
     """

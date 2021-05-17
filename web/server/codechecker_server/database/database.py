@@ -56,7 +56,7 @@ def call_command(cmd, env=None, cwd=None):
         return oerr.strerror, oerr.errno
 
 
-class DBSession(object):
+class DBSession:
     """
     Requires a session maker object and creates one session which can be used
     in the context.
@@ -78,7 +78,7 @@ class DBSession(object):
             self.__session.close()
 
 
-class DBContext(object):
+class DBContext:
     """
     Simple helper class to setup and sql engine, a database session
     and a connection.
@@ -138,7 +138,7 @@ class DBContext(object):
             self.db_engine.dispose()
 
 
-class SQLServer(object, metaclass=ABCMeta):
+class SQLServer(metaclass=ABCMeta):
     """
     Abstract base class for database server handling. An SQLServer instance is
     responsible for the connection management towards the database.

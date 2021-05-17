@@ -15,7 +15,7 @@ import os
 import re
 
 
-class SpecialReturnValueCollector(object):
+class SpecialReturnValueCollector:
     """ Collect special return value statistics.
 
     This script lists functions of which the return value is checked for

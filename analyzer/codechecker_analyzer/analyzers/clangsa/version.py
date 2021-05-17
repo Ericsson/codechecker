@@ -12,7 +12,7 @@ import re
 import subprocess
 
 
-class ClangVersionInfo(object):
+class ClangVersionInfo:
     """ClangVersionInfo holds the version information of the used Clang."""
 
     def __init__(self,
@@ -29,7 +29,7 @@ class ClangVersionInfo(object):
         self.vendor = str(vendor)
 
 
-class ClangVersionInfoParser(object):
+class ClangVersionInfoParser:
     """
     ClangVersionInfoParser is responsible for creating ClangVersionInfo
     instances from the version output of Clang.

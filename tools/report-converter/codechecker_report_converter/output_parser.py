@@ -18,7 +18,7 @@ def get_next(it):
         return ''
 
 
-class Event(object):
+class Event:
     """ Represents an event message. """
 
     def __init__(self, path, line, column, message):
@@ -67,7 +67,7 @@ class Message(Event):
                 [str(fixit) for fixit in self.fixits])
 
 
-class BaseParser(object, metaclass=ABCMeta):
+class BaseParser(metaclass=ABCMeta):
     """ Warning message parser. """
 
     def __init__(self):

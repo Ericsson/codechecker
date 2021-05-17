@@ -20,8 +20,8 @@ from codechecker_analyzer.analyzers.config_handler import CheckerState
 from codechecker_analyzer.buildlog import log_parser
 
 
-class MockContextSA(object):
-    class ProfileMap(object):
+class MockContextSA:
+    class ProfileMap:
         def __getitem__(self, key):
             return 'profile1'
 
@@ -34,7 +34,7 @@ class MockContextSA(object):
         def available_profiles(self):
             return {'default': 'description', 'security': 'description'}
 
-    class GuidelineMap(object):
+    class GuidelineMap:
         def __getitem__(self, key):
             return {'sei-cert': ['rule1', 'rule2']}
 
@@ -228,8 +228,8 @@ class CheckerHandlingClangSATest(unittest.TestCase):
                         (cfg_handler.checks(), cert_guideline))
 
 
-class MockContextTidy(object):
-    class ProfileMap(object):
+class MockContextTidy:
+    class ProfileMap:
         def __getitem__(self, key):
             return 'profile1'
 

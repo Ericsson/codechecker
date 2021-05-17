@@ -55,7 +55,7 @@ def simplify_credentials(credentials):
     return ret
 
 
-class UserCredentials(object):
+class UserCredentials:
 
     def __init__(self):
         LOG.debug("Loading clientside session config.")

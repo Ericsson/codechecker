@@ -23,7 +23,7 @@ from codechecker_report_hash.hash import get_report_hash, HashType
 LOG = get_logger('analyzer.tidy')
 
 
-class Note(object):
+class Note:
     """
     Represents a note and also this is the base class of Message.
     """
@@ -70,7 +70,7 @@ class Message(Note):
                 [str(note) for note in self.notes])
 
 
-class OutputParser(object):
+class OutputParser:
     """
     Parser for clang-tidy console output.
     """
@@ -215,7 +215,7 @@ class OutputParser(object):
         return line
 
 
-class PListConverter(object):
+class PListConverter:
     """
     Clang-tidy messages to plist converter.
     """

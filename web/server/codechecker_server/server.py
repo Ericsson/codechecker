@@ -498,7 +498,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         return path
 
 
-class Product(object):
+class Product:
     """
     Represents a product, which is a distinct storage of analysis reports in
     a separate database (and database connection) with its own access control.

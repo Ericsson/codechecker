@@ -12,7 +12,7 @@ import copy
 import json
 
 
-class PlistConverter(object, metaclass=ABCMeta):
+class PlistConverter(metaclass=ABCMeta):
     """ Warning messages to plist converter. """
 
     def __init__(self, tool_name):

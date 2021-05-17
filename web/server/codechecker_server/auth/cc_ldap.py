@@ -211,7 +211,7 @@ def check_group_membership(connection,
     return False
 
 
-class LDAPConnection(object):
+class LDAPConnection:
     """
     A context manager class to initialize an LDAP connection
     and bind to the LDAP server.
