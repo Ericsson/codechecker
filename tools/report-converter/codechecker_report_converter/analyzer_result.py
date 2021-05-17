@@ -13,8 +13,9 @@ import logging
 import os
 import plistlib
 
+from codechecker_report_hash.hash import get_report_hash, HashType
+
 from . import __title__, __version__
-from .report import generate_report_hash
 
 LOG = logging.getLogger('ReportConverter')
 
@@ -104,9 +105,9 @@ class AnalyzerResult(object, metaclass=ABCMeta):
         """ Generate report hash for the given plist data. """
         files = plist_obj['files']
         for diag in plist_obj['diagnostics']:
-            report_hash = \
-                generate_report_hash(diag,
-                                     files[diag['location']['file']])
+            report_hash = get_report_hash(
+                diag, files[diag['location']['file']], HashType.CONTEXT_FREE)
+
             diag['issue_hash_content_of_line_in_context'] = report_hash
 
     def _add_metadata(self, plist_obj):

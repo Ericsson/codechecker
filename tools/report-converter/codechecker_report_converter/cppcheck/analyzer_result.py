@@ -14,8 +14,9 @@ import plistlib
 
 from xml.parsers.expat import ExpatError
 
+from codechecker_report_hash.hash import get_report_hash, HashType
+
 from codechecker_report_converter.analyzer_result import AnalyzerResult
-from codechecker_report_converter.report import generate_report_hash
 
 
 LOG = logging.getLogger('ReportConverter')
@@ -82,9 +83,10 @@ class CppcheckAnalyzerResult(AnalyzerResult):
         for diag in plist_data['diagnostics']:
             report_hash = diag.get('issue_hash_content_of_line_in_context')
             if not report_hash or report_hash == '0':
-                report_hash = \
-                    generate_report_hash(diag,
-                                         files[diag['location']['file']])
+                report_hash = get_report_hash(
+                    diag, files[diag['location']['file']],
+                    HashType.CONTEXT_FREE)
+
                 diag['issue_hash_content_of_line_in_context'] = report_hash
 
     def _write(self, file_to_plist_data, output_dir, file_name):

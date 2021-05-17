@@ -19,6 +19,9 @@ setuptools.setup(
     license='LICENSE.txt',
     packages=setuptools.find_packages(),
     include_package_data=True,
+    install_requires=[
+        "codechecker_report_hash"
+    ],
     classifiers=[
         "Environment :: Console",
         "Intended Audience :: Developers",
