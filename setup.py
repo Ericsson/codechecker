@@ -147,6 +147,7 @@ setuptools.setup(
     description="CodeChecker is an analyzer tooling, defect database and "
                 "viewer extension",
     long_description=long_description,
+    long_description_content_type = "text/markdown",
     url="https://github.com/Ericsson/CodeChecker",
     keywords=['codechecker', 'plist'],
     license='LICENSE.TXT',
