@@ -69,6 +69,9 @@ LOG = get_logger('server')
 
 GEN_OTHER_COMPONENT_NAME = "Other (auto-generated)"
 
+SQLITE_MAX_VARIABLE_NUMBER = 999
+SQLITE_MAX_COMPOUND_SELECT = 500
+
 
 class CommentKindValue(object):
     USER = 0
@@ -215,19 +218,21 @@ def process_report_filter(session, run_ids, report_filter, cmp_data=None):
     """
     AND = []
 
-    cmp_filter_expr = process_cmp_data_filter(session, run_ids, report_filter,
-                                              cmp_data)
+    cmp_filter_expr, join_tables = process_cmp_data_filter(
+        session, run_ids, report_filter, cmp_data)
+
     if cmp_filter_expr is not None:
         AND.append(cmp_filter_expr)
 
     if report_filter is None:
-        return and_(*AND)
+        return and_(*AND), join_tables
 
     if report_filter.filepath:
         OR = [File.filepath.ilike(conv(fp))
               for fp in report_filter.filepath]
 
         AND.append(or_(*OR))
+        join_tables.append(File)
 
     if report_filter.checkerMsg:
         OR = [Report.checker_message.ilike(conv(cm))
@@ -248,6 +253,7 @@ def process_report_filter(session, run_ids, report_filter, cmp_data=None):
         OR = [Run.name.ilike(conv(rn))
               for rn in report_filter.runName]
         AND.append(or_(*OR))
+        join_tables.append(Run)
 
     if report_filter.reportHash:
         OR = []
@@ -282,6 +288,7 @@ def process_report_filter(session, run_ids, report_filter, cmp_data=None):
             OR.append(ReviewStatus.status.is_(None))
 
         AND.append(or_(*OR))
+        join_tables.append(ReviewStatus)
 
     if report_filter.firstDetectionDate is not None:
         date = datetime.fromtimestamp(report_filter.firstDetectionDate)
@@ -324,6 +331,7 @@ def process_report_filter(session, run_ids, report_filter, cmp_data=None):
     if report_filter.componentNames:
         AND.append(process_source_component_filter(
             session, report_filter.componentNames))
+        join_tables.append(File)
 
     if report_filter.bugPathLength is not None:
         min_path_length = report_filter.bugPathLength.min
@@ -335,7 +343,7 @@ def process_report_filter(session, run_ids, report_filter, cmp_data=None):
             AND.append(Report.path_length <= max_path_length)
 
     filter_expr = and_(*AND)
-    return filter_expr
+    return filter_expr, join_tables
 
 
 def process_source_component_filter(session, component_names):
@@ -447,6 +455,24 @@ def get_diff_bug_id_query(session, run_ids, tag_ids, open_reports_date):
     return q
 
 
+def get_diff_bug_id_filter(run_ids, tag_ids, open_reports_date):
+    """ Get bug id filter for diff. """
+    AND = []
+
+    if run_ids:
+        AND.append(Report.run_id.in_(run_ids))
+
+    if tag_ids:
+        AND.append(RunHistory.id.in_(tag_ids))
+        AND.append(get_open_reports_date_filter_query())
+
+    if open_reports_date:
+        date = datetime.fromtimestamp(open_reports_date)
+        AND.append(get_open_reports_date_filter_query(Report, date))
+
+    return and_(*AND)
+
+
 def get_diff_run_id_query(session, run_ids, tag_ids):
     """ Get run id query for diff. """
     q = session.query(Run.id.distinct())
@@ -486,16 +512,25 @@ def process_cmp_data_filter(session, run_ids, report_filter, cmp_data):
     base_tag_ids = report_filter.runTag if report_filter else None
     base_open_reports_date = report_filter.openReportsDate \
         if report_filter else None
-    query_base = get_diff_bug_id_query(session, run_ids, base_tag_ids,
-                                       base_open_reports_date)
-    query_base_runs = get_diff_run_id_query(session, run_ids, base_tag_ids)
 
     if is_cmp_data_empty(cmp_data):
         if not run_ids and is_baseline_empty(report_filter):
-            return None
+            return None, []
 
-        return and_(Report.bug_id.in_(query_base),
-                    Report.run_id.in_(query_base_runs))
+        diff_filter = get_diff_bug_id_filter(
+            run_ids, base_tag_ids, base_open_reports_date)
+        join_tables = []
+
+        if run_ids:
+            join_tables.append(Run)
+        if base_tag_ids:
+            join_tables.append(RunHistory)
+
+        return and_(diff_filter), join_tables
+
+    query_base = get_diff_bug_id_query(session, run_ids, base_tag_ids,
+                                       base_open_reports_date)
+    query_base_runs = get_diff_run_id_query(session, run_ids, base_tag_ids)
 
     query_new = get_diff_bug_id_query(session, cmp_data.runIds,
                                       cmp_data.runTag,
@@ -506,22 +541,22 @@ def process_cmp_data_filter(session, run_ids, report_filter, cmp_data):
     AND = []
     if cmp_data.diffType == DiffType.NEW:
         return and_(Report.bug_id.in_(query_new.except_(query_base)),
-                    Report.run_id.in_(query_new_runs))
+                    Report.run_id.in_(query_new_runs)), [Run]
 
     elif cmp_data.diffType == DiffType.RESOLVED:
         return and_(Report.bug_id.in_(query_base.except_(query_new)),
-                    Report.run_id.in_(query_base_runs))
+                    Report.run_id.in_(query_base_runs)), [Run]
 
     elif cmp_data.diffType == DiffType.UNRESOLVED:
         return and_(Report.bug_id.in_(query_base.intersect(query_new)),
-                    Report.run_id.in_(query_new_runs))
+                    Report.run_id.in_(query_new_runs)), [Run]
 
     else:
         raise codechecker_api_shared.ttypes.RequestFailed(
             codechecker_api_shared.ttypes.ErrorCode.DATABASE,
             'Unsupported diff type: ' + str(cmp_data.diffType))
 
-    return and_(*AND)
+    return and_(*AND), []
 
 
 def process_run_history_filter(query, run_ids, run_history_filter):
@@ -788,18 +823,21 @@ def create_count_expression(report_filter):
         return func.count(literal_column('*'))
 
 
-def apply_report_filter(q, filter_expression):
+def apply_report_filter(q, filter_expression, join_tables):
     """
     Applies the given filter expression and joins the File and ReviewStatus
     tables.
     """
-    q = q.outerjoin(File,
-                    Report.file_id == File.id) \
-        .outerjoin(ReviewStatus,
-                   ReviewStatus.bug_hash == Report.bug_id) \
-        .filter(filter_expression)
+    if File in join_tables:
+        q = q.outerjoin(File, Report.file_id == File.id)
+    if ReviewStatus in join_tables:
+        q = q.outerjoin(ReviewStatus, ReviewStatus.bug_hash == Report.bug_id)
+    if Run in join_tables:
+        q = q.outerjoin(Run, Run.id == Report.run_id)
+    if RunHistory in join_tables:
+        q = q.outerjoin(RunHistory, RunHistory.run_id == Report.run_id)
 
-    return q
+    return q.filter(filter_expression)
 
 
 def get_sort_map(sort_types, is_unique=False):
@@ -1311,8 +1349,8 @@ class ThriftRequestHandler(object):
                     # than 8435 sqlite threw a `Segmentation fault` error.
                     # For this reason we create queries with chunks.
                     new_hashes = []
-                    chunk_size = 500
-                    for chunk in util.chunks(iter(report_hashes), chunk_size):
+                    for chunk in util.chunks(iter(report_hashes),
+                                             SQLITE_MAX_COMPOUND_SELECT):
                         new_hashes_query = union_all(*[
                             select([bindparam('bug_id' + str(i), h)
                                     .label('bug_id')])
@@ -1354,8 +1392,8 @@ class ThriftRequestHandler(object):
         with DBSession(self.__Session) as session:
             results = []
 
-            filter_expression = process_report_filter(session, run_ids,
-                                                      report_filter, cmp_data)
+            filter_expression, join_tables = process_report_filter(
+                session, run_ids, report_filter, cmp_data)
 
             is_unique = report_filter is not None and report_filter.isUnique
             if is_unique:
@@ -1372,7 +1410,8 @@ class ThriftRequestHandler(object):
 
                 unique_reports = session.query(*selects)
                 unique_reports = apply_report_filter(unique_reports,
-                                                     filter_expression)
+                                                     filter_expression,
+                                                     join_tables)
                 unique_reports = unique_reports \
                     .group_by(Report.bug_id) \
                     .subquery()
@@ -1419,7 +1458,7 @@ class ThriftRequestHandler(object):
                     report_details = get_report_details(session, report_ids)
 
                 for report_id, bug_id, checker_msg, checker, severity, \
-                    detected_at, fixed_at, status, filename, path, \
+                    detected_at, fixed_at, status, filename, _, \
                         bug_path_len, analyzer_name in query_result:
                     review_data = create_review_data(status)
 
@@ -1436,21 +1475,21 @@ class ThriftRequestHandler(object):
                                    details=report_details.get(report_id),
                                    analyzerName=analyzer_name))
             else:
+                sort_types, sort_type_map, order_type_map = \
+                    get_sort_map(sort_types)
+
+                if SortType.FILENAME in map(lambda x: x.type, sort_types):
+                    join_tables.append(File)
+
                 q = session.query(Report.run_id, Report.id, Report.file_id,
                                   Report.line, Report.column,
                                   Report.detection_status, Report.bug_id,
                                   Report.checker_message, Report.checker_id,
                                   Report.severity, Report.detected_at,
                                   Report.fixed_at, ReviewStatus,
-                                  File.filepath,
-                                  Report.path_length, Report.analyzer_name) \
-                    .outerjoin(File, Report.file_id == File.id) \
-                    .outerjoin(ReviewStatus,
-                               ReviewStatus.bug_hash == Report.bug_id) \
-                    .filter(filter_expression)
-
-                sort_types, sort_type_map, order_type_map = \
-                    get_sort_map(sort_types)
+                                  Report.path_length, Report.analyzer_name)
+                q = apply_report_filter(
+                    q, filter_expression, join_tables + [ReviewStatus])
 
                 q = sort_results_query(q, sort_types, sort_type_map,
                                        order_type_map)
@@ -1465,16 +1504,31 @@ class ThriftRequestHandler(object):
                     report_ids = [r[1] for r in query_result]
                     report_details = get_report_details(session, report_ids)
 
+                # Earlier file table was joined to the query of reports.
+                # However, that created an SQL strategy in PostgreSQL which
+                # resulted in timeout. Based on heuristics the query strategy
+                # (which not only depends on the query statement but the table
+                # size and many other things) may contain an inner loop on
+                # "reports" table which is one of the largest tables. This
+                # separate query of file table results a query strategy for the
+                # previous query which doesn't contain such an inner loop. See
+                # EXPLAIN SELECT columns FROM ...
+                file_ids = set(map(lambda r: r[2], query_result))
+                all_files = dict()
+                for chunk in util.chunks(file_ids, SQLITE_MAX_VARIABLE_NUMBER):
+                    all_files.update(dict(session.query(File.id, File.filepath)
+                                     .filter(File.id.in_(chunk)).all()))
+
                 for run_id, report_id, file_id, line, column, d_status, \
                     bug_id, checker_msg, checker, severity, detected_at,\
-                    fixed_at, r_status, path, bug_path_len, analyzer_name \
+                    fixed_at, r_status, bug_path_len, analyzer_name \
                         in query_result:
 
                     review_data = create_review_data(r_status)
                     results.append(
                         ReportData(runId=run_id,
                                    bugHash=bug_id,
-                                   checkedFile=path,
+                                   checkedFile=all_files[file_id],
                                    checkerMsg=checker_msg,
                                    reportId=report_id,
                                    fileId=file_id,
@@ -1506,8 +1560,8 @@ class ThriftRequestHandler(object):
 
         results = []
         with DBSession(self.__Session) as session:
-            filter_expression = process_report_filter(session, run_ids,
-                                                      report_filter)
+            filter_expression, join_tables = process_report_filter(
+                session, run_ids, report_filter)
 
             count_expr = create_count_expression(report_filter)
             q = session.query(Run.id,
@@ -1515,14 +1569,9 @@ class ThriftRequestHandler(object):
                               count_expr) \
                 .select_from(Report)
 
-            q = q.outerjoin(File, Report.file_id == File.id) \
-                .outerjoin(ReviewStatus,
-                           ReviewStatus.bug_hash == Report.bug_id) \
-                .outerjoin(Run,
-                           Report.run_id == Run.id) \
-                .filter(filter_expression) \
-                .order_by(Run.name) \
-                .group_by(Run.id)
+            q = apply_report_filter(
+                q, filter_expression, join_tables + [Run])
+            q = q.order_by(Run.name).group_by(Run.id)
 
             if limit:
                 q = q.limit(limit).offset(offset)
@@ -1541,11 +1590,11 @@ class ThriftRequestHandler(object):
         self.__require_access()
 
         with DBSession(self.__Session) as session:
-            filter_expression = process_report_filter(session, run_ids,
-                                                      report_filter, cmp_data)
+            filter_expression, join_tables = process_report_filter(
+                session, run_ids, report_filter, cmp_data)
 
             q = session.query(Report.bug_id)
-            q = apply_report_filter(q, filter_expression)
+            q = apply_report_filter(q, filter_expression, join_tables)
 
             if report_filter is not None and report_filter.isUnique:
                 q = q.group_by(Report.bug_id)
@@ -1958,8 +2007,8 @@ class ThriftRequestHandler(object):
 
         results = []
         with DBSession(self.__Session) as session:
-            filter_expression = process_report_filter(session, run_ids,
-                                                      report_filter, cmp_data)
+            filter_expression, join_tables = process_report_filter(
+                session, run_ids, report_filter, cmp_data)
 
             is_unique = report_filter is not None and report_filter.isUnique
             if is_unique:
@@ -1973,7 +2022,7 @@ class ThriftRequestHandler(object):
                                   Report.severity,
                                   func.count(Report.id))
 
-            q = apply_report_filter(q, filter_expression)
+            q = apply_report_filter(q, filter_expression, join_tables)
 
             if is_unique:
                 q = q.group_by(Report.bug_id).subquery()
@@ -2012,8 +2061,8 @@ class ThriftRequestHandler(object):
 
         results = {}
         with DBSession(self.__Session) as session:
-            filter_expression = process_report_filter(session, run_ids,
-                                                      report_filter, cmp_data)
+            filter_expression, join_tables = process_report_filter(
+                session, run_ids, report_filter, cmp_data)
 
             is_unique = report_filter is not None and report_filter.isUnique
             if is_unique:
@@ -2024,7 +2073,7 @@ class ThriftRequestHandler(object):
                 q = session.query(Report.analyzer_name,
                                   func.count(Report.id))
 
-            q = apply_report_filter(q, filter_expression)
+            q = apply_report_filter(q, filter_expression, join_tables)
 
             if is_unique:
                 q = q.group_by(Report.bug_id).subquery()
@@ -2055,8 +2104,8 @@ class ThriftRequestHandler(object):
         self.__require_access()
         results = {}
         with DBSession(self.__Session) as session:
-            filter_expression = process_report_filter(session, run_ids,
-                                                      report_filter, cmp_data)
+            filter_expression, join_tables = process_report_filter(
+                session, run_ids, report_filter, cmp_data)
 
             is_unique = report_filter is not None and report_filter.isUnique
             if is_unique:
@@ -2066,7 +2115,7 @@ class ThriftRequestHandler(object):
                 q = session.query(Report.severity,
                                   func.count(Report.id))
 
-            q = apply_report_filter(q, filter_expression)
+            q = apply_report_filter(q, filter_expression, join_tables)
 
             if is_unique:
                 q = q.group_by(Report.bug_id).subquery()
@@ -2094,8 +2143,8 @@ class ThriftRequestHandler(object):
 
         results = {}
         with DBSession(self.__Session) as session:
-            filter_expression = process_report_filter(session, run_ids,
-                                                      report_filter, cmp_data)
+            filter_expression, join_tables = process_report_filter(
+                session, run_ids, report_filter, cmp_data)
 
             is_unique = report_filter is not None and report_filter.isUnique
             if is_unique:
@@ -2106,7 +2155,7 @@ class ThriftRequestHandler(object):
                 q = session.query(Report.checker_message,
                                   func.count(Report.id))
 
-            q = apply_report_filter(q, filter_expression)
+            q = apply_report_filter(q, filter_expression, join_tables)
 
             if is_unique:
                 q = q.group_by(Report.bug_id).subquery()
@@ -2135,8 +2184,8 @@ class ThriftRequestHandler(object):
         self.__require_access()
         results = defaultdict(int)
         with DBSession(self.__Session) as session:
-            filter_expression = process_report_filter(session, run_ids,
-                                                      report_filter, cmp_data)
+            filter_expression, join_tables = process_report_filter(
+                session, run_ids, report_filter, cmp_data)
 
             is_unique = report_filter is not None and report_filter.isUnique
             if is_unique:
@@ -2148,7 +2197,8 @@ class ThriftRequestHandler(object):
                                   ReviewStatus.status,
                                   func.count(Report.id))
 
-            q = apply_report_filter(q, filter_expression)
+            join_tables.append(ReviewStatus)
+            q = apply_report_filter(q, filter_expression, join_tables)
 
             if is_unique:
                 q = q.group_by(Report.bug_id).subquery()
@@ -2183,12 +2233,13 @@ class ThriftRequestHandler(object):
 
         results = {}
         with DBSession(self.__Session) as session:
-            filter_expression = process_report_filter(session, run_ids,
-                                                      report_filter, cmp_data)
+            filter_expression, join_tables = process_report_filter(
+                session, run_ids, report_filter, cmp_data)
 
             stmt = session.query(Report.bug_id,
                                  Report.file_id)
-            stmt = apply_report_filter(stmt, filter_expression)
+            stmt = apply_report_filter(stmt, filter_expression,
+                                       join_tables)
 
             if report_filter is not None and report_filter.isUnique:
                 stmt = stmt.group_by(Report.bug_id, Report.file_id)
@@ -2232,8 +2283,8 @@ class ThriftRequestHandler(object):
 
         results = []
         with DBSession(self.__Session) as session:
-            filter_expression = process_report_filter(session, run_ids,
-                                                      report_filter, cmp_data)
+            filter_expression, join_tables = process_report_filter(
+                session, run_ids, report_filter, cmp_data)
 
             tag_run_ids = session.query(RunHistory.run_id.distinct())
 
@@ -2246,13 +2297,11 @@ class ThriftRequestHandler(object):
             report_cnt_q = session.query(Report.run_id,
                                          Report.bug_id,
                                          Report.detected_at,
-                                         Report.fixed_at) \
-                .outerjoin(File, Report.file_id == File.id) \
-                .outerjoin(ReviewStatus,
-                           ReviewStatus.bug_hash == Report.bug_id) \
-                .filter(filter_expression) \
-                .filter(Report.run_id.in_(tag_run_ids)) \
-                .subquery()
+                                         Report.fixed_at)
+            report_cnt_q = apply_report_filter(
+                report_cnt_q, filter_expression, join_tables)
+            report_cnt_q = report_cnt_q.filter(
+                Report.run_id.in_(tag_run_ids)).subquery()
 
             is_unique = report_filter is not None and report_filter.isUnique
             count_expr = func.count(report_cnt_q.c.bug_id if not is_unique
@@ -2315,15 +2364,15 @@ class ThriftRequestHandler(object):
         self.__require_access()
         results = {}
         with DBSession(self.__Session) as session:
-            filter_expression = process_report_filter(session, run_ids,
-                                                      report_filter, cmp_data)
+            filter_expression, join_tables = process_report_filter(
+                session, run_ids, report_filter, cmp_data)
 
             count_expr = func.count(literal_column('*'))
 
             q = session.query(Report.detection_status,
                               count_expr)
 
-            q = apply_report_filter(q, filter_expression)
+            q = apply_report_filter(q, filter_expression, join_tables)
 
             detection_stats = q.group_by(Report.detection_status).all()
 
@@ -2402,7 +2451,8 @@ class ThriftRequestHandler(object):
                 failed = True
         return not failed
 
-    def __removeReports(self, session, report_ids, chunk_size=500):
+    def __removeReports(self, session, report_ids,
+                        chunk_size=SQLITE_MAX_VARIABLE_NUMBER):
         """
         Removing reports in chunks.
         """
@@ -2426,15 +2476,11 @@ class ThriftRequestHandler(object):
             check_remove_runs_lock(session, run_ids)
 
             try:
-                filter_expression = process_report_filter(session, run_ids,
-                                                          report_filter,
-                                                          cmp_data)
+                filter_expression, join_tables = process_report_filter(
+                    session, run_ids, report_filter, cmp_data)
 
-                q = session.query(Report.id) \
-                    .outerjoin(File, Report.file_id == File.id) \
-                    .outerjoin(ReviewStatus,
-                               ReviewStatus.bug_hash == Report.bug_id) \
-                    .filter(filter_expression)
+                q = session.query(Report.id)
+                q = apply_report_filter(q, filter_expression, join_tables)
 
                 reports_to_delete = [r[0] for r in q]
                 if reports_to_delete:
