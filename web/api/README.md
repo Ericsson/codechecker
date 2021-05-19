@@ -8,11 +8,6 @@ The Thrift compiler is executed inside a [Docker](https://www.docker.com/)
 container so `docker` needs to be installed to generate the stubs.
 
 ## API change workflow:
-
-Assuming the current api version is **6.24.0** and no breaking change was
-introduced.
-
-### How to modify the API
 - Modify the `.thrift` API files.
 - Check the current API version in one of the following files:
   - [`py/codechecker_api/setup.py`](py/codechecker_api/setup.py)
@@ -23,7 +18,6 @@ introduced.
 version: `change-api-version.sh 6.40.0`.
 - Update the supported api versions to `6.40` in the server files:
   - `web/codechecker_web/shared/version.py`
-  - `web/server/vue-cli/config/webpack.common.js`
 - Run the command `make build` to generate the Thrift API stubs and to create
 new pypi and npm packages. It will modify the following files:
   - [`py/codechecker_api/dist/codechecker_api.tar.gz`](py/codechecker_api/dist/codechecker_api.tar.gz)
@@ -32,3 +26,14 @@ new pypi and npm packages. It will modify the following files:
 - Run `make clean_package && make package` in the root directory of this
 repository to create a new CodeChecker package and see whether the new API
 works properly.
+- Before commit make sure to add new pypi/npm package files to git.
+
+WARNING: when you want to modify the thrift file again with the same version
+number and regenerate the local packages you may have to reset the changes
+made in the `package-lock.json` file so `npm` will be able to detect the
+package change. For this you can use the following commands from the repository
+root folder:
+```sh
+git checkout master -- web/server/vue-cli/package-lock.json
+git reset HEAD web/server/vue-cli/package-lock.json
+```
