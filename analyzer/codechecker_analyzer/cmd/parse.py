@@ -19,7 +19,7 @@ import os
 from operator import itemgetter
 import sys
 import traceback
-from typing import Callable, Dict, List, Set, Tuple, Union
+from typing import Callable, Dict, List, Optional, Set, Tuple, Union
 
 from plist_to_html import PlistToHtml
 
@@ -73,10 +73,8 @@ class PlistToPlaintextFormatter:
                  severity_map,
                  processed_path_hashes,
                  trim_path_prefixes,
-                 src_comment_status_filter=None,
-                 analyzer_type="clangsa"):
+                 src_comment_status_filter=None):
 
-        self.__analyzer_type = analyzer_type
         self.__severity_map = severity_map
         self.print_steps = False
         self.src_comment_handler = src_comment_handler
@@ -601,10 +599,23 @@ def parse_with_plt_formatter(plist_file: str,
     return changed_files
 
 
-def parse_convert_reports(input_dirs: List[str],
-                          out_format: str,
-                          severity_map: Dict,
-                          trim_path_prefixes: List[str]) \
+class TrimPathPrefixHandler:
+    def __init__(self, prefixes: Optional[List[str]]):
+        self.__prefixes = prefixes
+
+    def __call__(self, source_file_path):
+        """
+        Callback to util.trim_path_prefixes to prevent module dependency
+        of plist_to_html
+        """
+        return util.trim_path_prefixes(source_file_path, self.__prefixes)
+
+
+def _parse_convert_reports(input_dirs: List[str],
+                           out_format: str,
+                           severity_map: Dict,
+                           trim_path_prefixes: List[str],
+                           skip_handler: Callable[[str], bool]) \
         -> Tuple[Union[Dict, List], int]:
     """Parse and convert the reports from the input dirs to the out_format.
 
@@ -630,6 +641,8 @@ def parse_convert_reports(input_dirs: List[str],
         if not input_file.endswith('.plist'):
             continue
         _, reports = plist_parser.parse_plist_file(input_file)
+        reports = [report for report in reports
+                   if not skip_handler(report.file_path)]
         all_reports.extend(reports)
 
     if trim_path_prefixes:
@@ -647,6 +660,34 @@ def parse_convert_reports(input_dirs: List[str],
     if out_format == "json":
         return [out_json.convert_to_parse(r) for r in all_reports], \
             number_of_reports
+
+
+def _generate_json_output(
+        severity_map: Dict, input_dirs: List[str], output_type: str,
+        output_path: str, trim_path_prefixes: Optional[List[str]],
+        skip_handler: Callable[[str], bool]) -> int:
+    try:
+        reports, number_of_reports = _parse_convert_reports(
+            input_dirs, output_type, severity_map, trim_path_prefixes,
+            skip_handler)
+        output_text = json.dumps(reports)
+
+        if output_path:
+            output_path = os.path.abspath(output_path)
+
+            if not os.path.exists(output_path):
+                os.mkdir(output_path)
+
+            output_file_path = os.path.join(output_path, 'reports.json')
+            with open(output_file_path, mode='w', encoding='utf-8',
+                      errors="ignore") as output_f:
+                output_f.write(output_text)
+
+        print(output_text)
+        sys.exit(2 if number_of_reports else 0)
+    except Exception as ex:
+        LOG.error(ex)
+        return 1
 
 
 def main(args):
@@ -728,40 +769,17 @@ def main(args):
     trim_path_prefixes = args.trim_path_prefix if \
         'trim_path_prefix' in args else None
 
+    if 'output_path' in args:
+        output_path = os.path.abspath(args.output_path)
+    else:
+        output_path = None
+
     if export:
         # The HTML part will be handled separately below.
         if export != 'html':
-            try:
-                reports, number_of_reports = parse_convert_reports(
-                    args.input, export, context.severity_map,
-                    trim_path_prefixes)
-                output_text = json.dumps(reports)
-
-                if 'output_path' in args:
-                    output_path = os.path.abspath(args.output_path)
-
-                    if not os.path.exists(output_path):
-                        os.mkdir(output_path)
-
-                    output_file_path = os.path.join(output_path,
-                                                    'reports.json')
-                    with open(output_file_path,
-                              mode='w',
-                              encoding='utf-8', errors="ignore") as output_f:
-                        output_f.write(output_text)
-
-                print(output_text)
-                sys.exit(2 if number_of_reports else 0)
-            except Exception as ex:
-                LOG.error(ex)
-                sys.exit(1)
-
-    def trim_path_prefixes_handler(source_file):
-        """
-        Callback to util.trim_path_prefixes to prevent module dependency
-        of plist_to_html
-        """
-        return util.trim_path_prefixes(source_file, trim_path_prefixes)
+            sys.exit(_generate_json_output(
+                context.severity_map, args.input, export, output_path,
+                trim_path_prefixes, skip_handler))
 
     html_builder = None
     report_count = 0
@@ -820,8 +838,6 @@ def main(args):
         LOG.debug("Parsing input argument: '%s'", input_path)
 
         if export == 'html':
-            output_path = os.path.abspath(args.output_path)
-
             if not html_builder:
                 html_builder = \
                     PlistToHtml.HtmlBuilder(context.path_plist_to_html_dist,
@@ -833,7 +849,7 @@ def main(args):
                               context.path_plist_to_html_dist,
                               skip_html_report_data_handler,
                               html_builder,
-                              trim_path_prefixes_handler)
+                              TrimPathPrefixHandler(trim_path_prefixes))
             continue
 
         files = []
@@ -892,11 +908,11 @@ def main(args):
 
     # Create index.html and statistics.html for the generated html files.
     if html_builder:
-        html_builder.create_index_html(args.output_path)
-        html_builder.create_statistics_html(args.output_path)
+        html_builder.create_index_html(output_path)
+        html_builder.create_statistics_html(output_path)
 
         print('\nTo view statistics in a browser run:\n> firefox {0}'.format(
-            os.path.join(args.output_path, 'statistics.html')))
+            os.path.join(output_path, 'statistics.html')))
 
         print('\nTo view the results in a browser run:\n> firefox {0}'.format(
             os.path.join(args.output_path, 'index.html')))

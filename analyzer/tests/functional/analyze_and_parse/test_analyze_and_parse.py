@@ -428,8 +428,6 @@ class AnalyzeParseTestCase(
 
         self.assertEqual(result_from_stdout, result_from_file)
 
-    # TODO: Fix issue what this test catches.
-    @unittest.skip
     def test_codeclimate_export_exit_code(self):
         """ Test exporting codeclimate output into the filesystem. """
         test_project_notes = os.path.join(self.test_workspaces['NORMAL'],
@@ -485,4 +483,3 @@ class AnalyzeParseTestCase(
         out, _, result = call_command(extract_cmd, cwd=self.test_dir,
                                       env=self.env)
         self.assertEqual(result, 0, "Parsing should not found any issue.")
-
