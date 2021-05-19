@@ -98,7 +98,11 @@ run_test_in_env: venv_dev
 
 test_unit: test_unit_server test_unit_client
 
+test_unit_cov: test_unit_cov_server test_unit_cov_client
+
 test_unit_in_env: test_unit_server_in_env test_unit_client_in_env
+
+test_unit_cov_in_env: test_unit_cov_server_in_env test_unit_cov_client_in_env
 
 test_functional: test_sqlite test_psql
 
