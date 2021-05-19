@@ -47,6 +47,9 @@ class TestAnalyze(unittest.TestCase):
         self.missing_checker_regex = re.compile(
             r"No checker\(s\) with these names was found")
 
+        self.disabling_modeling_checker_regex = re.compile(
+            r"analyzer-disable-checker=.*unix.cstring.CStringModeling.*")
+
     def tearDown(self):
         """Restore environment after tests have ran."""
         os.chdir(self.__old_pwd)
@@ -846,6 +849,39 @@ class TestAnalyze(unittest.TestCase):
         match = self.missing_checker_regex.search(out)
         self.assertIsNotNone(match)
         self.assertTrue("non-existing-checker-name" in out)
+
+        errcode = process.returncode
+        self.assertEqual(errcode, 0)
+
+    def test_disabling_clangsa_modeling_checkers(self):
+        """Warn in case a modeling checker is disabled from clangsa"""
+        build_json = os.path.join(self.test_workspace, "build_success.json")
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "--analyzers", "clangsa", "-o", self.report_dir,
+                       "-d", "unix", "--verbose", "debug_analyzer"]
+
+        source_file = os.path.join(self.test_dir, "success.c")
+        build_log = [{"directory": self.test_workspace,
+                      "command": "gcc -c " + source_file,
+                      "file": source_file
+                      }]
+
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
+            json.dump(build_log, outfile)
+
+        print(analyze_cmd)
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
+        out, _ = process.communicate()
+
+        match = self.disabling_modeling_checker_regex.search(out)
+        self.assertIsNone(match)
 
         errcode = process.returncode
         self.assertEqual(errcode, 0)
