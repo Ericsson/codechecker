@@ -99,7 +99,8 @@ usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-t {plist}] [-q]
                          [--report-hash {context-free,context-free-v2}]
                          [-i SKIPFILE | --file FILE [FILE ...]]
                          [--analyzers ANALYZER [ANALYZER ...]]
-                         [--capture-analysis-output] [--config CONFIG_FILE]
+                         [--capture-analysis-output] [--generate-reproducer]
+                         [--config CONFIG_FILE]
                          [--saargs CLANGSA_ARGS_CFG_FILE]
                          [--tidyargs TIDY_ARGS_CFG_FILE]
                          [--tidy-config TIDY_CONFIG]
@@ -220,6 +221,12 @@ analyzer arguments:
                         Store standard output and standard error of successful
                         analyzer invocations into the '<OUTPUT_DIR>/success'
                         directory.
+  --generate-reproducer
+                        Collect all necessary information for reproducing an
+                        analysis action. The gathered files will be stored in a
+                        folder named 'reproducer' under the report directory.
+                        When this flag is used, 'failed' directory remains
+                        empty.
   --config CONFIG_FILE  Allow the configuration from an explicit JSON based
                         configuration file. The value of the 'analyzer' key in
                         the config file will be emplaced as command line
@@ -813,7 +820,8 @@ usage: CodeChecker analyze [-h] [-j JOBS]
                            [--report-hash {context-free,context-free-v2}]
                            [-n NAME] [--analyzers ANALYZER [ANALYZER ...]]
                            [--add-compiler-defaults]
-                           [--capture-analysis-output] [--config CONFIG_FILE]
+                           [--capture-analysis-output] [--generate-reproducer]
+                           [--config CONFIG_FILE]
                            [--saargs CLANGSA_ARGS_CFG_FILE]
                            [--tidyargs TIDY_ARGS_CFG_FILE]
                            [--tidy-config TIDY_CONFIG] [--timeout TIMEOUT]
@@ -1005,6 +1013,12 @@ analyzer arguments:
                         Store standard output and standard error of successful
                         analyzer invocations into the '<OUTPUT_DIR>/success'
                         directory.
+  --generate-reproducer
+                        Collect all necessary information for reproducing an
+                        analysis action. The gathered files will be stored in a
+                        folder named 'reproducer' under the report directory.
+                        When this flag is used, 'failed' directory remains
+                        empty.
   --config CONFIG_FILE  Allow the configuration from an explicit JSON based
                         configuration file. The value of the 'analyzer' key in
                         the config file will be emplaced as command line

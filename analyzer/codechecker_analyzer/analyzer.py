@@ -351,6 +351,7 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
                                        metadata_tool,
                                        'quiet' in args,
                                        'capture_analysis_output' in args,
+                                       'generate_reproducer' in args,
                                        args.timeout if 'timeout' in args
                                        else None,
                                        ctu_reanalyze_on_failure,
