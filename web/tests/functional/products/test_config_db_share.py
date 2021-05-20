@@ -232,4 +232,4 @@ class TestProductConfigShare(unittest.TestCase):
         EVENT.set()
 
         print("Removing: " + self.test_workspace_secondary)
-        shutil.rmtree(self.test_workspace_secondary)
+        shutil.rmtree(self.test_workspace_secondary, ignore_errors=True)

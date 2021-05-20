@@ -67,11 +67,11 @@ class TestStorageOfAnalysisStatistics(unittest.TestCase):
 
         # Remove analyzer statistics directory if it exists before store.
         if os.path.exists(self._analyzer_stats_dir):
-            shutil.rmtree(self._analyzer_stats_dir)
+            shutil.rmtree(self._analyzer_stats_dir, ignore_errors=True)
 
         # Remove reports directory if it exists and create an empty one.
         if os.path.exists(self._reports_dir):
-            shutil.rmtree(self._reports_dir)
+            shutil.rmtree(self._reports_dir, ignore_errors=True)
 
         # Setup a viewer client to test viewer API calls.
         self._cc_client = env.setup_viewer_client(self.test_workspace)

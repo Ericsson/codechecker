@@ -180,4 +180,4 @@ class TestStore(unittest.TestCase):
         # Store report directories recursively.
         store_multiple_report_dirs([common_report_dir])
 
-        shutil.rmtree(common_report_dir)
+        shutil.rmtree(common_report_dir, ignore_errors=True)
