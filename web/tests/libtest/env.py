@@ -284,7 +284,7 @@ def get_workspace(test_id='test'):
 def clean_wp(workspace):
     if os.path.exists(workspace):
         print("Removing workspace:" + workspace)
-        shutil.rmtree(workspace)
+        shutil.rmtree(workspace, ignore_errors=True)
     os.makedirs(workspace)
 
 

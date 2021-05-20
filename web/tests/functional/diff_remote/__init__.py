@@ -190,8 +190,8 @@ def setup_package():
     env.export_test_cfg(TEST_WORKSPACE, test_config)
 
     # Remove report directories which are not used anymore.
-    shutil.rmtree(test_proj_path_base)
-    shutil.rmtree(test_proj_path_new)
+    shutil.rmtree(test_proj_path_base, ignore_errors=True)
+    shutil.rmtree(test_proj_path_new, ignore_errors=True)
 
 
 def teardown_package():

@@ -338,7 +338,7 @@ class LocalRemote(unittest.TestCase):
             self.assertIn("end_line", range)
             self.assertIn("end_character", range)
 
-        shutil.rmtree(export_dir)
+        shutil.rmtree(export_dir, ignore_errors=True)
 
     def test_diff_gerrit_stdout(self):
         """Test gerrit stdout output.
@@ -446,7 +446,7 @@ class LocalRemote(unittest.TestCase):
         reports = comments["divide_zero.cpp"]
         self.assertEqual(len(reports), 4)
 
-        shutil.rmtree(export_dir)
+        shutil.rmtree(export_dir, ignore_errors=True)
 
     def test_diff_codeclimate_output(self):
         """ Test codeclimate output when using diff and set env vars. """
@@ -493,7 +493,7 @@ class LocalRemote(unittest.TestCase):
                 }
             }}])
 
-        shutil.rmtree(export_dir)
+        shutil.rmtree(export_dir, ignore_errors=True)
 
     def test_diff_no_trim_codeclimate_output(self):
         """ Test codeclimate output when using diff and don't set env vars. """
@@ -519,7 +519,7 @@ class LocalRemote(unittest.TestCase):
         self.assertTrue(os.path.isabs(file_path))
         self.assertTrue(file_path.endswith(f"/new_delete.cpp"))
 
-        shutil.rmtree(export_dir_path)
+        shutil.rmtree(export_dir_path, ignore_errors=True)
 
     def test_diff_multiple_output(self):
         """ Test multiple output type for diff command. """
@@ -549,7 +549,7 @@ class LocalRemote(unittest.TestCase):
         index_html = os.path.join(export_dir, 'index.html')
         self.assertTrue(os.path.exists(index_html))
 
-        shutil.rmtree(export_dir)
+        shutil.rmtree(export_dir, ignore_errors=True)
 
     def test_diff_remote_local_resolved_same(self):
         """ Test for resolved reports on same list remotely and locally. """
