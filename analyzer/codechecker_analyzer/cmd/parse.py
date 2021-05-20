@@ -775,10 +775,7 @@ def main(args):
                         output_f.write(output_text)
 
                 print(output_text)
-                if number_of_reports > 0:
-                    sys.exit(2)
-                else:
-                    sys.exit(0)
+                sys.exit(2 if number_of_reports else 0)
             except Exception as ex:
                 LOG.error(ex)
                 sys.exit(1)
