@@ -13,6 +13,7 @@ Performance tester for the server.
 import argparse
 import csv
 import datetime
+import logging
 import math
 import os
 import random
@@ -22,6 +23,16 @@ import sys
 import threading
 import time
 from collections import defaultdict
+
+
+LOG = logging.getLogger(__name__)
+
+handler = logging.StreamHandler()
+formatter = logging.Formatter('[%(levelname)s %(asctime)s] - %(message)s')
+handler.setFormatter(formatter)
+
+LOG.setLevel(logging.INFO)
+LOG.addHandler(handler)
 
 
 VERBOSE = False
@@ -50,12 +61,12 @@ def print_process_output(message, stdout, stderr):
     if not VERBOSE:
         return
 
-    print(message)
-    print('-' * 20 + 'stdout' + '-' * 20)
+    LOG.info(message)
+    LOG.info('-' * 20 + 'stdout' + '-' * 20)
     print(stdout)
-    print('-' * 20 + 'stderr' + '-' * 20)
+    LOG.info('-' * 20 + 'stderr' + '-' * 20)
     print(stderr)
-    print('-' * (40 + len('stdout')))
+    LOG.info('-' * (40 + len('stdout')))
 
 
 def parse_arguments():
@@ -199,8 +210,8 @@ class UserSimulator:
             # The exit code of some commands (e.g. CodeChecker cmd diff) can be
             # 2 if some reports were found. We consider this exit code normal.
             if ret != 0 and ret != 2:
-                print("'{}' job has failed with '{}' error "
-                      "code!".format(name, ret))
+                LOG.error("'%s' job has failed with '%d' error code!",
+                          name, ret)
 
                 # In case of error we send a signal to the main thread which
                 # will be able to abort this program with an error code.
@@ -209,13 +220,13 @@ class UserSimulator:
 
     def _user_random_sleep(self):
         sec = -self._beta * math.log(1.0 - random.random())
-        print("User {} is sleeping {} seconds".format(self._id, sec))
+        LOG.info("User %d is sleeping %d seconds", self._id, sec)
         time.sleep(sec)
 
 
 @return_duration
 def store_report_dir(report_dir, run_name, server_url):
-    print("Storage of {} is started ({})".format(run_name, report_dir))
+    LOG.info("Storage of %s is started (%s)", run_name, report_dir)
 
     store_process = subprocess.Popen([
         'CodeChecker', 'store',
@@ -233,16 +244,17 @@ def store_report_dir(report_dir, run_name, server_url):
     print_process_output("Output of storage",
                          *store_process.communicate())
 
-    print("Storage of {} {}".format(
-        run_name,
-        "is done" if store_process.returncode == 0 else "failed"))
+    if store_process.returncode == 0:
+        LOG.info("Storage of %s is done.", run_name)
+    else:
+        LOG.error("Storage of %s failed!", run_name)
 
     return store_process.returncode
 
 
 @return_duration
 def local_compare(report_dir, run_name, server_url):
-    print("Local compare of {} is started ({})".format(run_name, report_dir))
+    LOG.info("Local compare of %s is started (%s)", run_name, report_dir)
 
     compare_process = subprocess.Popen([
         'CodeChecker', 'cmd', 'diff',
@@ -261,16 +273,17 @@ def local_compare(report_dir, run_name, server_url):
     print_process_output("Output of local compare",
                          *compare_process.communicate())
 
-    print("Local compare of {} {}".format(
-        run_name,
-        "is done" if compare_process.returncode in [0, 2] else "failed"))
+    if compare_process.returncode in [0, 2]:
+        LOG.info("Local compare of %s is done.", run_name)
+    else:
+        LOG.error("Local compare of %s failed.", run_name)
 
     return compare_process.returncode
 
 
 @return_duration
 def get_reports(run_name, server_url):
-    print("Getting report list for {} is started".format(run_name))
+    LOG.info("Getting report list for %s is started", run_name)
 
     report_process = subprocess.Popen([
         'CodeChecker', 'cmd', 'results',
@@ -287,16 +300,17 @@ def get_reports(run_name, server_url):
     print_process_output("Output of result list",
                          *report_process.communicate())
 
-    print("Getting report list for {} {}".format(
-        run_name,
-        "is done" if report_process.returncode == 0 else "failed"))
+    if report_process.returncode == 0:
+        LOG.info("Getting report list for %s is done.", run_name)
+    else:
+        LOG.error("Getting report list for %s failed.", run_name)
 
     return report_process.returncode
 
 
 @return_duration
 def delete_run(run_name, server_url):
-    print("Deleting run {} is started".format(run_name))
+    LOG.info("Deleting run %s is started", run_name)
 
     delete_process = subprocess.Popen([
         'CodeChecker', 'cmd', 'del',
@@ -313,16 +327,17 @@ def delete_run(run_name, server_url):
     print_process_output("Output of run deletion",
                          *delete_process.communicate())
 
-    print("Deleting run {} {}".format(
-        run_name,
-        "is done" if delete_process.returncode == 0 else "failed"))
+    if delete_process.returncode == 0:
+        LOG.info("Deleting run %s is done.", run_name)
+    else:
+        LOG.error("Deleting run %s failed!", run_name)
 
     return delete_process.returncode
 
 
 @return_duration
 def get_statistics(run_name, server_url):
-    print("Get checker statistics {} is started".format(run_name))
+    LOG.info("Get checker statistics %s is started", run_name)
 
     sum_process = subprocess.Popen([
         'CodeChecker', 'cmd', 'sum',
@@ -339,9 +354,10 @@ def get_statistics(run_name, server_url):
     print_process_output("Output of checker statistics",
                          *sum_process.communicate())
 
-    print("Get checker statistics {} {}".format(
-        run_name,
-        "is done" if sum_process.returncode == 0 else "failed"))
+    if sum_process.returncode == 0:
+        LOG.info("Get checker statistics %s is done.", run_name)
+    else:
+        LOG.error("Get checker statistics %s failed!", run_name)
 
     return sum_process.returncode
 
@@ -392,8 +408,8 @@ def main():
     timer = None
 
     def finish_test(signum, frame):
-        print('-----> Performance test stops. '
-              'Please wait for stopping all subprocesses. <-----')
+        LOG.error('-----> Performance test stops. '
+                  'Please wait for stopping all subprocesses. <-----')
 
         global FINISH
         FINISH = True
@@ -406,7 +422,7 @@ def main():
                 pass
 
         stat.print_stats(args.output)
-        print("Performance test has timed out or killed!")
+        LOG.error("Performance test has timed out or killed!")
 
         if timer:
             timer.cancel()
