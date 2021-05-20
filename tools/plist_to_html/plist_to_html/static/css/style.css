@@ -17,11 +17,17 @@ div.container {
 
 #content > div {
   margin: 10px;
-  overflow: hidden;
   border: 1px solid #ddd;
   border-radius: 3px;
-  overflow: hidden;
   height: 97%;
+}
+
+#side-bar {
+  overflow: auto;
+}
+
+#editor-wrapper {
+  overflow: hidden;
 }
 
 .button {
