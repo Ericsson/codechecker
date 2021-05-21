@@ -351,7 +351,76 @@ class TestAnalyze(unittest.TestCase):
                     self.assertEqual(archived_code.read().decode("utf-8"),
                                      source_code.read())
 
-        os.remove(os.path.join(failed_dir, failed_files[0]))
+        shutil.rmtree(failed_dir)
+
+    def test_reproducer(self):
+        """
+        Test if reports/reproducer/<reproducer_file>.zip file is created
+        """
+        build_json = os.path.join(self.test_workspace, "build.json")
+        reproducer_dir = os.path.join(self.report_dir, "reproducer")
+        source_file = os.path.join(self.test_dir, "failure.c")
+
+        # Create a compilation database.
+        build_log = [{"directory": self.test_workspace,
+                      "command": "gcc -c " + source_file,
+                      "file": source_file
+                      }]
+
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
+            json.dump(build_log, outfile)
+
+        # Create and run analyze command.
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "--analyzers", "clangsa", "--verbose", "debug",
+                       "-o", self.report_dir, "--generate-reproducer", "-c"]
+
+        print(analyze_cmd)
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_dir,
+            encoding="utf-8",
+            errors="ignore")
+        out, err = process.communicate()
+
+        print(out)
+        print(err)
+        errcode = process.returncode
+        self.assertEqual(errcode, 3)
+        self.assertNotIn('failed', os.listdir(self.report_dir))
+
+        self.assertNotIn("UserWarning: Duplicate name", err)
+
+        # We expect a failure archive to be in the failed directory.
+        reproducer_files = os.listdir(reproducer_dir)
+        self.assertEqual(len(reproducer_files), 1)
+
+        fail_zip = os.path.join(reproducer_dir, reproducer_files[0])
+
+        with zipfile.ZipFile(fail_zip, 'r') as archive:
+            files = archive.namelist()
+
+            self.assertIn("build-action", files)
+            self.assertIn("analyzer-command", files)
+
+            with archive.open("build-action", 'r') as archived_buildcmd:
+                self.assertEqual(archived_buildcmd.read().decode("utf-8"),
+                                 "gcc -c " + source_file)
+
+            source_in_archive = os.path.join("sources-root",
+                                             source_file.lstrip('/'))
+            self.assertIn(source_in_archive, files)
+
+            with archive.open(source_in_archive, 'r') as archived_code:
+                with open(source_file, 'r',
+                          encoding="utf-8", errors="ignore") as source_code:
+                    self.assertEqual(archived_code.read().decode("utf-8"),
+                                     source_code.read())
+
+        shutil.rmtree(reproducer_dir)
 
     def test_robustness_for_dependencygen_failure(self):
         """

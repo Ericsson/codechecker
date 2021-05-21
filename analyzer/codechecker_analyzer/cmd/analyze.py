@@ -343,6 +343,18 @@ def add_arguments_to_parser(parser):
                                     "into the '<OUTPUT_DIR>/success' "
                                     "directory.")
 
+    analyzer_opts.add_argument('--generate-reproducer',
+                               dest='generate_reproducer',
+                               action='store_true',
+                               default=argparse.SUPPRESS,
+                               required=False,
+                               help="Collect all necessary information for "
+                                    "reproducing an analysis action. The "
+                                    "gathered files will be stored in a "
+                                    "folder named 'reproducer' under the "
+                                    "report directory. When this flag is "
+                                    "used, 'failed' directory remains empty.")
+
     analyzer_opts.add_argument('--config',
                                dest='config_file',
                                required=False,
