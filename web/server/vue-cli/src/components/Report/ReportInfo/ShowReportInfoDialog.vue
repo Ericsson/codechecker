@@ -42,7 +42,7 @@
 import ReportInfo from "./ReportInfo";
 
 export default {
-  name: "ShowReportInfoButton",
+  name: "ShowReportInfoDialog",
   components: { ReportInfo },
   props: {
     value: { type: Object, default: null }

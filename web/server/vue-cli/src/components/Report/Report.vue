@@ -1,5 +1,10 @@
 <template>
   <v-container fluid>
+    <checker-documentation-dialog
+      :value.sync="checkerDocumentationDialog"
+      :checker-name="checkerName"
+    />
+
     <v-row>
       <v-col
         class="py-0"
@@ -16,16 +21,6 @@
                 <report-info-button :on="on" />
               </template>
             </show-report-info-dialog>
-          </v-col>
-
-          <v-col
-            cols="auto"
-            class="pa-0 mr-2"
-            align-self="center"
-          >
-            <show-documentation-button
-              :value="checkerId"
-            />
           </v-col>
 
           <v-col
@@ -235,10 +230,12 @@ import { UserIcon } from "@/components/Icons";
 
 import ReportTreeKind from "@/components/Report/ReportTree/ReportTreeKind";
 
+import CheckerDocumentationDialog from
+  "@/components/CheckerDocumentationDialog";
+
 import { ReportComments } from "./Comment";
 import SelectReviewStatus from "./SelectReviewStatus";
 import SelectSameReport from "./SelectSameReport";
-import ShowDocumentationButton from "./ShowDocumentationButton";
 import { ReportInfoButton, ShowReportInfoDialog } from "./ReportInfo";
 
 import ReportStepMessage from "./ReportStepMessage";
@@ -248,12 +245,12 @@ const ReportStepMessageClass = Vue.extend(ReportStepMessage);
 export default {
   name: "Report",
   components: {
+    CheckerDocumentationDialog,
     CopyBtn,
     ReportComments,
     ReportInfoButton,
     SelectReviewStatus,
     SelectSameReport,
-    ShowDocumentationButton,
     ShowReportInfoDialog,
     UserIcon
   },
@@ -278,12 +275,13 @@ export default {
       commentCols: 3,
       loading: true,
       bus: new Vue(),
-      annotation: null
+      annotation: null,
+      checkerDocumentationDialog: false
     };
   },
 
   computed: {
-    checkerId() {
+    checkerName() {
       return this.report ? this.report.checkerId : null;
     },
 
@@ -367,6 +365,10 @@ export default {
         fileId: attrs.fileId,
         startLine: attrs.startLine
       });
+    });
+
+    this.bus.$on("showDocumentation", () => {
+      this.checkerDocumentationDialog = true;
     });
   },
 
@@ -610,6 +612,7 @@ export default {
           id: element.$id,
           value: element.$message,
           marginLeft: marginLeft,
+          report: this.report
         }
       });
       widget.$mount();
