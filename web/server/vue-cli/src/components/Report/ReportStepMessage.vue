@@ -28,8 +28,19 @@
       </v-icon>
     </v-btn>
     
+    <div>
+      {{ value }}
 
-    {{ value }}
+      <p v-if="type === 'error'" class="mb-0 mt-2">
+        For more information see the
+        <a
+          class="show-documentation-btn"
+          @click="showDocumentation"
+        >
+          checker documentation
+        </a>.
+      </p>
+    </div>
 
     <v-btn
       v-if="nextStep"
@@ -104,6 +115,12 @@ export default {
     showNextReport() {
       if (this.nextStep && this.bus)
         this.bus.$emit("jpmToNextReport", this.nextStep);
+    },
+
+    showDocumentation() {
+      if (!this.bus) return;
+
+      this.bus.$emit("showDocumentation");
     }
   }
 };
@@ -123,6 +140,11 @@ export default {
 
     .v-chip.report-step-enum {
       overflow: inherit;
+    }
+
+    .show-documentation-btn {
+      border-bottom: 1px dashed #438ec7;
+      display: inline-block;
     }
   }
 }

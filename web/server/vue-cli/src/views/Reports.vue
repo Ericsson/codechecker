@@ -9,29 +9,10 @@
       />
     </pane>
     <pane>
-      <v-dialog
-        v-model="showCheckerDocDialog"
-        width="600"
-      >
-        <v-card>
-          <v-card-title
-            class="headline primary white--text"
-            primary-title
-          >
-            Checker documentation
-
-            <v-spacer />
-
-            <v-btn icon dark @click="showCheckerDocDialog = false">
-              <v-icon>mdi-close</v-icon>
-            </v-btn>
-          </v-card-title>
-          <v-card-text>
-            <!-- eslint-disable vue/no-v-html -->
-            <v-container v-html="prettyCheckerDoc" />
-          </v-card-text>
-        </v-card>
-      </v-dialog>
+      <checker-documentation-dialog
+        :value.sync="checkerDocDialog"
+        :checker-name="selectedCheckerName"
+      />
 
       <v-data-table
         v-fill-height
@@ -163,10 +144,6 @@
 </template>
 
 <script>
-import hljs from "highlight.js";
-import "highlight.js/styles/default.css";
-import marked from "marked";
-
 import { Pane, Splitpanes } from "splitpanes";
 
 import { mapGetters } from "vuex";
@@ -182,6 +159,8 @@ import {
   SeverityIcon
 } from "@/components/Icons";
 
+import CheckerDocumentationDialog from
+  "@/components/CheckerDocumentationDialog";
 import { ReportFilter } from "@/components/Report/ReportFilter";
 
 const namespace = "report";
@@ -189,6 +168,7 @@ const namespace = "report";
 export default {
   name: "Reports",
   components: {
+    CheckerDocumentationDialog,
     Splitpanes,
     Pane,
     DetectionStatusIcon,
@@ -283,12 +263,8 @@ export default {
       cmpDataUnwatch: null,
       initalized: false,
       checkerDoc: null,
-      showCheckerDocDialog: false,
-      markedOptions: {
-        highlight: function(code) {
-          return hljs.highlightAuto(code).value;
-        }
-      },
+      checkerDocDialog: false,
+      selectedCheckerName: null,
       expanded: []
     };
   },
@@ -341,12 +317,6 @@ export default {
           "sameReports": null
         };
       });
-    },
-
-    prettyCheckerDoc() {
-      if (!this.checkerDoc) return;
-
-      return marked(this.checkerDoc, this.markedOptions);
     }
   },
 
@@ -359,10 +329,7 @@ export default {
         }
       },
       deep: true
-    },
-    showCheckerDocDialog (val) {
-      val || this.closeCheckerDocDialog();
-    },
+    }
   },
 
   methods: {
@@ -403,16 +370,8 @@ export default {
     },
 
     openCheckerDocDialog(checkerId) {
-      ccService.getClient().getCheckerDoc(checkerId,
-        handleThriftError(checkerDoc => {
-          this.checkerDoc = checkerDoc;
-          this.showCheckerDocDialog = true;
-        }));
-    },
-
-    closeCheckerDocDialog() {
-      this.showCheckerDocDialog = false;
-      this.checkerDoc = null;
+      this.selectedCheckerName = checkerId;
+      this.checkerDocDialog = true;
     },
 
     updateUrl() {
