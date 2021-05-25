@@ -1013,6 +1013,9 @@ class ThriftRequestHandler:
     def __require_store(self):
         self.__require_permission([permissions.PRODUCT_STORE])
 
+    def __require_view(self):
+        self.__require_permission([permissions.PRODUCT_VIEW])
+
     def __add_comment(self, bug_id, message, kind=CommentKindValue.USER,
                       date=None):
         """ Creates a new comment object. """
@@ -1025,7 +1028,7 @@ class ThriftRequestHandler:
 
     @timeit
     def getRunData(self, run_filter, limit, offset, sort_mode):
-        self.__require_access()
+        self.__require_view()
 
         limit = verify_limit_range(limit)
 
@@ -1127,7 +1130,7 @@ class ThriftRequestHandler:
     @exc_to_thrift_reqfail
     @timeit
     def getRunCount(self, run_filter):
-        self.__require_access()
+        self.__require_view()
 
         with DBSession(self._Session) as session:
             query = session.query(Run.id)
@@ -1146,6 +1149,7 @@ class ThriftRequestHandler:
 
         analysis_info = self.getAnalysisInfo(
             analysis_info_filter, limit, offset)
+        self.__require_view()
 
         return "; ".join([i.analyzerCommand for i in analysis_info])
 
@@ -1260,7 +1264,7 @@ class ThriftRequestHandler:
     @exc_to_thrift_reqfail
     @timeit
     def getReport(self, reportId):
-        self.__require_access()
+        self.__require_view()
 
         with DBSession(self._Session) as session:
 
@@ -1374,7 +1378,7 @@ class ThriftRequestHandler:
     @timeit
     def getRunResults(self, run_ids, limit, offset, sort_types,
                       report_filter, cmp_data, get_details):
-        self.__require_access()
+        self.__require_view()
 
         limit = verify_limit_range(limit)
 
@@ -1543,7 +1547,7 @@ class ThriftRequestHandler:
           If an empty run id list is provided the report
           counts will be calculated for all of the available runs.
         """
-        self.__require_access()
+        self.__require_view()
 
         limit = verify_limit_range(limit)
 
@@ -1577,7 +1581,7 @@ class ThriftRequestHandler:
     @exc_to_thrift_reqfail
     @timeit
     def getRunResultCount(self, run_ids, report_filter, cmp_data):
-        self.__require_access()
+        self.__require_view()
 
         with DBSession(self._Session) as session:
             filter_expression, join_tables = process_report_filter(
@@ -1618,7 +1622,7 @@ class ThriftRequestHandler:
         Parameters:
          - reportId
         """
-        self.__require_access()
+        self.__require_view()
         with DBSession(self._Session) as session:
             return get_report_details(session, [reportId])[reportId]
 
@@ -1730,7 +1734,7 @@ class ThriftRequestHandler:
         """
             Return the list of comments for the given bug.
         """
-        self.__require_access()
+        self.__require_view()
 
         with DBSession(self._Session) as session:
             report = session.query(Report).get(report_id)
@@ -1764,7 +1768,7 @@ class ThriftRequestHandler:
         """
             Return the number of comments for the given bug.
         """
-        self.__require_access()
+        self.__require_view()
         with DBSession(self._Session) as session:
             report = session.query(Report).get(report_id)
             if report:
@@ -1938,7 +1942,7 @@ class ThriftRequestHandler:
          - fileContent
          - enum Encoding
         """
-        self.__require_access()
+        self.__require_view()
         with DBSession(self._Session) as session:
             sourcefile = session.query(File).get(fileId)
 
@@ -1963,7 +1967,7 @@ class ThriftRequestHandler:
     @exc_to_thrift_reqfail
     @timeit
     def getLinesInSourceFileContents(self, lines_in_files_requested, encoding):
-        self.__require_access()
+        self.__require_view()
         with DBSession(self._Session) as session:
             res = defaultdict(lambda: defaultdict(str))
             for lines_in_file in lines_in_files_requested:
@@ -1991,7 +1995,7 @@ class ThriftRequestHandler:
           for all of the runs and in compare mode all of the runs
           will be used as a baseline excluding the runs in compare data.
         """
-        self.__require_access()
+        self.__require_view()
 
         limit = verify_limit_range(limit)
 
@@ -2045,7 +2049,7 @@ class ThriftRequestHandler:
           for all of the runs and in compare mode all of the runs
           will be used as a baseline excluding the runs in compare data.
         """
-        self.__require_access()
+        self.__require_view()
 
         limit = verify_limit_range(limit)
 
@@ -2091,7 +2095,7 @@ class ThriftRequestHandler:
           for all of the runs and in compare mode all of the runs
           will be used as a baseline excluding the runs in compare data.
         """
-        self.__require_access()
+        self.__require_view()
         results = {}
         with DBSession(self._Session) as session:
             filter_expression, join_tables = process_report_filter(
@@ -2127,7 +2131,7 @@ class ThriftRequestHandler:
           for all of the runs and in compare mode all of the runs
           will be used as a baseline excluding the runs in compare data.
         """
-        self.__require_access()
+        self.__require_view()
 
         limit = verify_limit_range(limit)
 
@@ -2171,7 +2175,7 @@ class ThriftRequestHandler:
           for all of the runs and in compare mode all of the runs
           will be used as a baseline excluding the runs in compare data.
         """
-        self.__require_access()
+        self.__require_view()
         results = defaultdict(int)
         with DBSession(self._Session) as session:
             filter_expression, join_tables = process_report_filter(
@@ -2217,7 +2221,7 @@ class ThriftRequestHandler:
           for all of the runs and in compare mode all of the runs
           will be used as a baseline excluding the runs in compare data.
         """
-        self.__require_access()
+        self.__require_view()
 
         limit = verify_limit_range(limit)
 
@@ -2267,7 +2271,7 @@ class ThriftRequestHandler:
           for all of the runs and in compare mode all of the runs
           will be used as a baseline excluding the runs in compare data.
         """
-        self.__require_access()
+        self.__require_view()
 
         limit = verify_limit_range(limit)
 
@@ -2351,7 +2355,7 @@ class ThriftRequestHandler:
           for all of the runs and in compare mode all of the runs
           will be used as a baseline excluding the runs in compare data.
         """
-        self.__require_access()
+        self.__require_view()
         results = {}
         with DBSession(self._Session) as session:
             filter_expression, join_tables = process_report_filter(
@@ -2395,7 +2399,7 @@ class ThriftRequestHandler:
         runs. For each files it will return a list where each element contains
         information in which run the failure happened.
         """
-        self.__require_access()
+        self.__require_view()
 
         res = defaultdict(list)
         with DBSession(self._Session) as session:
@@ -2604,7 +2608,7 @@ class ThriftRequestHandler:
         """
         Returns the available source components.
         """
-        self.__require_access()
+        self.__require_view()
         with DBSession(self._Session) as session:
             q = session.query(SourceComponent)
 
@@ -2742,7 +2746,7 @@ class ThriftRequestHandler:
     @exc_to_thrift_reqfail
     @timeit
     def getAnalysisStatistics(self, run_id, run_history_id):
-        self.__require_access()
+        self.__require_view()
 
         analyzer_statistics = {}
 
@@ -2770,7 +2774,7 @@ class ThriftRequestHandler:
     @exc_to_thrift_reqfail
     @timeit
     def exportData(self, run_filter):
-        self.__require_access()
+        self.__require_view()
 
         with DBSession(self._Session) as session:
 
