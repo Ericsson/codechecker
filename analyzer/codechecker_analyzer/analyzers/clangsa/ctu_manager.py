@@ -17,6 +17,7 @@ import shutil
 import tempfile
 from pathlib import Path
 from sys import maxsize
+from yaml import Dumper
 
 from codechecker_common.logger import get_logger
 
@@ -27,6 +28,18 @@ from .. import analyzer_base
 from . import ctu_triple_arch
 
 LOG = get_logger('analyzer')
+
+
+class LLVMComatibleYamlDumper(Dumper):
+    def check_simple_key(self):
+        """ Mark every keys as simple keys.
+
+        PyYAML limits simple keys to '128' characters and this value can't be
+        changed (https://github.com/yaml/pyyaml/issues/157). To be compatible
+        with the YAML parser of LLVM we override this function and mark every
+        keys as simple keys.
+        """
+        return True
 
 
 def merge_clang_extdef_mappings(ctu_dir, ctu_func_map_file,
@@ -87,7 +100,9 @@ def generate_invocation_list(triple_arch, action, source, config, env):
     # Line width is set to max int size because of compatibility with the YAML
     # parser of LLVM. We try to ensure that no lines break in the textual
     # representation of the list items.
-    invocation_line = yaml.dump({str(source_path): cmd}, width=maxsize)
+    invocation_line = yaml.dump(
+        {str(source_path): cmd},
+        width=maxsize, Dumper=LLVMComatibleYamlDumper)
 
     LOG.debug_analyzer("Appending invocation list item '%s'", invocation_line)
 

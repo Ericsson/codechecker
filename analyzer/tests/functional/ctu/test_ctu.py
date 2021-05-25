@@ -267,6 +267,17 @@ class TestCtu(unittest.TestCase):
         """ Test the generated YAML used in CTU on-demand mode.
         The YAML file should not contain newlines in individual entries in the
         generated textual format. """
+        # Copy test files to a directory which file path will be longer than
+        # 128 chars to test the yaml parser.
+        test_dir = os.path.join(
+            self.test_workspace, os.path.join(*[
+                ''.join('0' for _ in range(43)) for _ in range(0, 3)]))
+
+        shutil.copytree(self.test_dir, test_dir)
+
+        complex_buildlog = os.path.join(test_dir, 'complex_buildlog.json')
+        shutil.copy(self.complex_buildlog, complex_buildlog)
+        env.adjust_buildlog('complex_buildlog.json', test_dir, test_dir)
 
         cmd = [self._codechecker_cmd, 'analyze',
                '-o', self.report_dir,
@@ -275,8 +286,8 @@ class TestCtu(unittest.TestCase):
                                  # intact only if a single ctu-phase is
                                  # specified
                '--ctu-ast-mode', 'parse-on-demand',
-               self.complex_buildlog]
-        _, _, result = call_command(cmd, cwd=self.test_dir, env=self.env)
+               complex_buildlog]
+        _, _, result = call_command(cmd, cwd=test_dir, env=self.env)
         self.assertEqual(result, 0, "Analyzing failed.")
 
         ctu_dir = os.path.join(self.report_dir, 'ctu-dir')
