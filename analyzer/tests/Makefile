@@ -69,11 +69,11 @@ test_build_logger:
 	make -C tools/build-logger -f Makefile.manual test
 
 test_tu_collector:
-	$(REPO_ROOT) make -C $(ROOT)/tools/tu_collector test
+	REPO_ROOT=$(REPO_ROOT) make -C $(ROOT)/tools/tu_collector test
 
 test_tu_collector_in_env:
 	$(ACTIVATE_DEV_VENV) && \
-	$(REPO_ROOT) make -C $(ROOT)/tools/tu_collector test
+	REPO_ROOT=$(REPO_ROOT) make -C $(ROOT)/tools/tu_collector test
 
 test_merge_clang_extdef_mappings:
 	make -C tools/merge_clang_extdef_mappings test
