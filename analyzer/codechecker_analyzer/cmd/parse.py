@@ -19,7 +19,6 @@ import os
 from operator import itemgetter
 import sys
 import traceback
-from functools import wraps
 from typing import List, Dict, Tuple, Set, Union
 
 from plist_to_html import PlistToHtml
@@ -649,32 +648,6 @@ def parse_convert_reports(input_dirs: List[str],
             number_of_reports
 
 
-class ResultVisitor:
-    """ Decorator class to see the underlying function return code."""
-
-    """ Constructor.
-    Parameters
-    ----------
-        functor : Python callable
-    """
-    def __init__(self, functor) -> None:
-        self.__functor = functor
-
-    """ Wrapper function factory.
-    Parameters
-    ----------
-        func_to_call : Wrapped function
-    """
-    def __call__(self, func_to_call):
-        @wraps(func_to_call)
-        def wrapper(*args, **kwargs):
-            result = func_to_call(*args, **kwargs)
-            self.__functor(result)
-            return result
-
-        return wrapper
-
-
 def main(args):
     """
     Entry point for parsing some analysis results and printing them to the
@@ -787,47 +760,9 @@ def main(args):
         """
         return util.trim_path_prefixes(source_file, trim_path_prefixes)
 
-    class ReportCounter:
-        """ Functor class to count number of reports of subsequent calls of
-        skip_html_report_data_handler() function."""
-
-        def __init__(self, initial=0) -> None:
-            """ Constructor.
-            Parameters
-            ----------
-                initial : Initial value of counter.
-            """
-
-            self.__sum = initial
-
-        def __call__(self, result):
-            """ Decorator function for bug counting.
-            Parameters
-            ----------
-                result : The result of call of the decorated function.
-            """
-            if not result[0]:  # Bug report was not skipped
-                self.__sum += 1
-
-        @property
-        def sum(self) -> None:
-            """ Counter getter. """
-            return self.__sum
-
-        @sum.setter
-        def sum(self, initial) -> None:
-            """ Counter setter.
-            Parameters
-            ----------
-                initial : Initial value of counter.
-            """
-
-            self.__sum = initial
-
     html_builder = None
-    report_counter = ReportCounter()
+    report_count = 0
 
-    @ResultVisitor(report_counter)
     def skip_html_report_data_handler(report_hash, source_file, report_line,
                                       checker_name, diag, files):
         """
@@ -862,13 +797,14 @@ def main(args):
 
         if not skip:
             processed_path_hashes.add(path_hash)
+            nonlocal report_count
+            report_count += 1
 
         return skip, source_code_comments
 
     file_change = set()
     severity_stats = defaultdict(int)
     file_stats = defaultdict(int)
-    report_count = 0
 
     for input_path in args.input:
         input_path = os.path.abspath(input_path)
@@ -956,7 +892,6 @@ def main(args):
 
         print('\nTo view the results in a browser run:\n> firefox {0}'.format(
             os.path.join(args.output_path, 'index.html')))
-        report_count += report_counter.sum
     else:
         print("\n----==== Summary ====----")
         if file_stats:

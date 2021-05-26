@@ -484,5 +484,3 @@ class AnalyzeParseTestCase(
         out, _, result = call_command(extract_cmd, cwd=self.test_dir,
                                       env=self.env)
         self.assertEqual(result, 0, "Parsing should not found any issue.")
-
-# TODO: Write tests for parameter mutual exclusions.
