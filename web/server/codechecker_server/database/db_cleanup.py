@@ -20,8 +20,9 @@ from codechecker_common import util
 from codechecker_common.logger import get_logger
 
 from .database import DBSession
-from .run_db_model import BugPathEvent, BugReportPoint, Comment, File, \
-    FileContent, Report, ReviewStatus, RunLock
+from .run_db_model import AnalysisInfo, BugPathEvent, BugReportPoint, \
+    Comment, File, FileContent, Report, ReportAnalysisInfo, ReviewStatus, \
+    RunHistoryAnalysisInfo, RunLock
 
 LOG = get_logger('server')
 RUN_LOCK_TIMEOUT_IN_DATABASE = 30 * 60  # 30 minutes.
@@ -86,6 +87,7 @@ def remove_unused_data(session_maker):
     remove_unused_files(session_maker)
     remove_unused_comments(session_maker)
     remove_unused_review_statuses(session_maker)
+    remove_unused_analysis_info(session_maker)
 
 
 def remove_unused_comments(session_maker):
@@ -200,3 +202,30 @@ def upgrade_severity_levels(session_maker, severity_map):
             except (sqlalchemy.exc.OperationalError,
                     sqlalchemy.exc.ProgrammingError) as ex:
                 LOG.error("Failed to upgrade severity levels: %s", str(ex))
+
+
+def remove_unused_analysis_info(session_maker):
+    """ Remove unused analysis information from the database. """
+    LOG.debug("Garbage collection of dangling analysis info started...")
+
+    with DBSession(session_maker) as session:
+        try:
+            run_history_analysis_info = session \
+                .query(RunHistoryAnalysisInfo.c.analysis_info_id.distinct()) \
+                .subquery()
+
+            report_analysis_info = session \
+                .query(ReportAnalysisInfo.c.analysis_info_id.distinct()) \
+                .subquery()
+
+            session.query(AnalysisInfo) \
+                .filter(AnalysisInfo.id.notin_(run_history_analysis_info),
+                        AnalysisInfo.id.notin_(report_analysis_info)) \
+                .delete(synchronize_session=False)
+
+            session.commit()
+
+            LOG.debug("Garbage collection of dangling analysis info finished.")
+        except (sqlalchemy.exc.OperationalError,
+                sqlalchemy.exc.ProgrammingError) as ex:
+            LOG.error("Failed to remove dangling analysis info: %s", str(ex))

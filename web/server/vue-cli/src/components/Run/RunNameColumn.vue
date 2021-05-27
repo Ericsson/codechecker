@@ -34,8 +34,8 @@
           vertical
         />
 
-        <check-command-btn
-          @click="openCheckCommandDialog(id)"
+        <analysis-info-btn
+          @click="openAnalysisInfoDialog(id)"
         />
 
         <v-divider
@@ -72,7 +72,7 @@ import { defaultStatisticsFilterValues } from "@/components/Statistics";
 
 import { DetectionStatusMixin } from "@/mixins";
 import { DetectionStatusIcon } from "@/components/Icons";
-import CheckCommandBtn from "./CheckCommandBtn";
+import AnalysisInfoBtn from "./AnalysisInfoBtn";
 import ShowStatisticsBtn from "./ShowStatisticsBtn";
 import VersionTag from "./VersionTag";
 
@@ -81,7 +81,7 @@ export default {
   components: {
     DetectionStatusIcon,
     RunDescription,
-    CheckCommandBtn,
+    AnalysisInfoBtn,
     ShowStatisticsBtn,
     VersionTag
   },
@@ -93,7 +93,7 @@ export default {
     versionTag: { type: String, default: null },
     detectionStatusCount: { type: Object, default: () => {} },
     showRunHistory: { type: Boolean, default: true },
-    openCheckCommandDialog: { type: Function, default: () => {} },
+    openAnalysisInfoDialog: { type: Function, default: () => {} },
     reportFilterQuery: { type: Object, default: () => {} },
     statisticsFilterQuery: { type: Object, default: () => {} },
   },

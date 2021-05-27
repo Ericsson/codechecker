@@ -1,7 +1,7 @@
 <template>
   <v-btn
-    class="show-check-command"
-    title="Show check command"
+    class="show-analysis-info"
+    title="Show analysis information"
     color="grey darken-1"
     small
     text
@@ -14,6 +14,6 @@
 
 <script>
 export default {
-  name: "CheckCommandBtn",
+  name: "AnalysisInfoBtn",
 };
 </script>

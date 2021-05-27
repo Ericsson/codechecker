@@ -74,8 +74,8 @@
 
                   <v-divider class="mx-2 d-inline" inset vertical />
 
-                  <check-command-btn
-                    @click.native="openCheckCommandDialog(null, history.id)"
+                  <analysis-info-btn
+                    @click.native="openAnalysisInfoDialog(null, history.id)"
                   />
 
                   <v-divider class="mx-2 d-inline" inset vertical />
@@ -139,23 +139,23 @@
 <script>
 import { format, parse } from "date-fns";
 import { defaultReportFilterValues } from "@/components/Report/ReportFilter";
+import AnalysisInfoBtn from "./AnalysisInfoBtn";
 import AnalyzerStatisticsBtn from "./AnalyzerStatisticsBtn";
-import CheckCommandBtn from "./CheckCommandBtn";
 import ShowStatisticsBtn from "./ShowStatisticsBtn";
 import VersionTag from "./VersionTag";
 
 export default {
   name: "ExpandedRun",
   components: {
+    AnalysisInfoBtn,
     AnalyzerStatisticsBtn,
-    CheckCommandBtn,
     ShowStatisticsBtn,
     VersionTag
   },
   props: {
     histories: { type: Array, required: true },
     run: { type: Object, required: true },
-    openCheckCommandDialog: { type: Function, default: () => {} },
+    openAnalysisInfoDialog: { type: Function, default: () => {} },
     openAnalyzerStatisticsDialog: { type: Function, default: () => {} },
     selectedBaselineTags: { type: Array, required: true },
     selectedComparedToTags: { type: Array, required: true }

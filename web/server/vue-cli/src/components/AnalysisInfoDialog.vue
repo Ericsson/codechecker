@@ -1,7 +1,7 @@
 <template>
   <v-dialog
     v-model="dialog"
-    content-class="check-command"
+    content-class="analysis-info"
     max-width="80%"
     scrollable
   >
@@ -10,7 +10,7 @@
         class="headline primary white--text"
         primary-title
       >
-        Check commands
+        Analysis information
 
         <v-spacer />
 
@@ -22,9 +22,9 @@
         <v-container class="pa-0 pt-2">
           <!-- eslint-disable vue/no-v-html -->
           <div
-            v-for="cmd in checkCommands"
+            v-for="cmd in analysisInfo"
             :key="cmd"
-            class="check-command mb-2"
+            class="analysis-info mb-2"
             v-html="cmd"
           />
         </v-container>
@@ -35,18 +35,20 @@
 
 <script>
 import { ccService, handleThriftError } from "@cc-api";
+import { AnalysisInfoFilter } from "@cc/report-server-types";
 
 export default {
-  name: "CheckCommandDialog",
+  name: "AnalysisInfoDialog",
   props: {
     value: { type: Boolean, default: false },
     runId: { type: Object, default: () => null },
-    runHistoryId: { type: Object, default: () => null }
+    runHistoryId: { type: Object, default: () => null },
+    reportId: { type: Object, default: () => null },
   },
 
   data() {
     return {
-      checkCommands: [],
+      analysisInfo: [],
       enabledCheckerRgx: new RegExp("^(--enable|-e[= ]*)", "i"),
       disabledCheckerRgx: new RegExp("^(--disable|-d[= ]*)", "i"),
     };
@@ -65,19 +67,23 @@ export default {
 
   watch: {
     runId() {
-      this.getCheckCommands();
+      this.getAnalysisInfo();
     },
     runHistoryId() {
-      this.getCheckCommands();
+      this.getAnalysisInfo();
+    },
+    reportId() {
+      this.getAnalysisInfo();
     }
   },
 
   mounted() {
-    this.getCheckCommands();
+    this.getAnalysisInfo();
   },
 
   methods: {
-    highlightOptions(cmd) {
+    highlightOptions(analysisInfo) {
+      const cmd = analysisInfo.analyzerCommand;
       return cmd.split(" ").map(param => {
         if (!param.startsWith("-")) {
           return param;
@@ -98,18 +104,28 @@ export default {
       }).join(" ");
     },
 
-    getCheckCommands() {
-      if (!this.dialog || (!this.runId && !this.runHistoryId)) return;
+    getAnalysisInfo() {
+      if (
+        !this.dialog ||
+        (!this.runId && !this.runHistoryId && !this.reportId)
+      ) {
+        return;
+      }
 
-      this.checkCommands = [];
-      ccService.getClient().getCheckCommand(this.runHistoryId, this.runId,
-        handleThriftError(cmd => {
-          const checkCmd =
-            cmd?.replace("multiple analyze calls:", "") || "Unavailable!";
+      this.analysisInfo = [];
 
-          this.checkCommands = checkCmd.split(";").map(cmd =>
-            this.highlightOptions(cmd)
-          );
+      const analysisInfoFilter = new AnalysisInfoFilter({
+        runId: this.runId,
+        runHistoryId: this.runHistoryId,
+        reportId: this.reportId,
+      });
+
+      const limit = null;
+      const offset = 0;
+      ccService.getClient().getAnalysisInfo(analysisInfoFilter, limit,
+        offset, handleThriftError(analysisInfo => {
+          this.analysisInfo = analysisInfo.map(cmd =>
+            this.highlightOptions(cmd));
         }));
     }
   }
@@ -117,7 +133,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-::v-deep .check-command {
+::v-deep .analysis-info {
   border: 1px solid grey;
   padding: 4px;
 

@@ -367,6 +367,16 @@ struct ExportData {
   2: map<string, ReviewData>      reviewData, // Map review data to report hashes.
 }
 
+union AnalysisInfoFilter {
+  1: i64 runId,
+  2: i64 runHistoryId,
+  3: i64 reportId,
+}
+
+struct AnalysisInfo {
+  1: string analyzerCommand,
+}
+
 service codeCheckerDBAccess {
 
   // Gives back all analyzed runs.
@@ -384,9 +394,17 @@ service codeCheckerDBAccess {
 
   // Get check command for a run.
   // PERMISSION: PRODUCT_ACCESS
+  // !DEPRECATED Use getAnalysisInfo API to get the check commands.
   string getCheckCommand(1: i64 runHistoryId,
                          2: i64 runId)
                          throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // Get analyzer commands based on the given filters.
+  // PERMISSION: PRODUCT_ACCESS
+  list<AnalysisInfo> getAnalysisInfo(1: AnalysisInfoFilter analysisInfoFilter,
+                                     2: i64 limit,
+                                     3: i64 offset)
+                                     throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Get run history for runs.
   // If an empty run id list is provided the history
