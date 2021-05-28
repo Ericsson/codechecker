@@ -87,24 +87,6 @@ def upgrade():
 
         op.bulk_insert(
             run_history_analysis_info_tbl, run_history_analysis_info)
-
-        reports = conn.execute("""
-            SELECT id, run_id
-            FROM reports
-        """).fetchall()
-
-        report_analysis_info = []
-        for report_id, run_id in reports:
-            if run_id not in run_analysis_info:
-                continue
-
-            report_analysis_info.append({
-                'report_id': report_id,
-                'analysis_info_id': run_analysis_info[run_id]
-            })
-
-        op.bulk_insert(
-            report_analysis_info_tbl, report_analysis_info)
     except:
         print("Analyzer command data migration failed!")
     else:
