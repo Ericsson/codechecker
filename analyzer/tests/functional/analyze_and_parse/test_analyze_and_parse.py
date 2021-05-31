@@ -65,7 +65,9 @@ class AnalyzeParseTestCase(
         cls.test_workspaces = {'NORMAL': os.path.join(test_workspace,
                                                       'NORMAL'),
                                'CHECK': os.path.join(test_workspace,
-                                                     'CHECK')}
+                                                     'CHECK'),
+                               'OUTPUT': os.path.join(test_workspace,
+                                                      'OUTPUT')}
 
         # Get an environment with CodeChecker command in it.
         cls.env = env.codechecker_env()
@@ -101,6 +103,12 @@ class AnalyzeParseTestCase(
     def teardown_class(cls):
         """Restore environment after tests have ran."""
         os.chdir(cls.__old_pwd)
+
+    def tearDown(self):
+        """Restore environment after a particular test has run."""
+        output_dir = AnalyzeParseTestCase.test_workspaces['OUTPUT']
+        if os.path.isdir(output_dir):
+            shutil.rmtree(output_dir)
 
     def __force_j1(self, cmd):
         """
@@ -236,7 +244,7 @@ class AnalyzeParseTestCase(
 
         out, _, result = call_command(extract_cmd, cwd=self.test_dir,
                                       env=self.env)
-        self.assertEqual(result, 0, "Parsing failed.")
+        self.assertEqual(result, 2, "Parsing not found any issue.")
         res = json.loads(out)
 
         self.assertEqual(len(res), 1)
@@ -264,7 +272,7 @@ class AnalyzeParseTestCase(
 
         out, _, result = call_command(extract_cmd, cwd=self.test_dir,
                                       env=self.env)
-        self.assertEqual(result, 0, "Parsing failed.")
+        self.assertEqual(result, 2, "Parsing not found any issue.")
         res = json.loads(out)
 
         self.assertEqual(len(res), 1)
@@ -292,7 +300,7 @@ class AnalyzeParseTestCase(
 
         out, _, result = call_command(extract_cmd, cwd=self.test_dir,
                                       env=self.env)
-        self.assertEqual(result, 0, "Parsing failed.")
+        self.assertEqual(result, 2, "Parsing not found any issue.")
         res = json.loads(out)
 
         self.assertEqual(res, [{
@@ -339,7 +347,7 @@ class AnalyzeParseTestCase(
 
         print(" ".join(extract_cmd))
         out, _, result = call_command(extract_cmd, cwd=self.test_dir, env=env)
-        self.assertEqual(result, 0, "Parsing failed.")
+        self.assertEqual(result, 2, "Parsing not found any issue.")
         print(out)
 
         review_data = json.loads(out)
@@ -384,7 +392,7 @@ class AnalyzeParseTestCase(
         test_project_macros = os.path.join(self.test_workspaces['NORMAL'],
                                            "test_files", "macros")
 
-        output_path = os.path.join(test_project_macros, 'html')
+        output_path = os.path.join(self.test_workspaces['OUTPUT'], 'html')
         extract_cmd = ['CodeChecker', 'parse',
                        '-e', 'html',
                        '-o', output_path,
@@ -392,9 +400,87 @@ class AnalyzeParseTestCase(
 
         out, err, result = call_command(extract_cmd, cwd=self.test_dir,
                                         env=self.env)
-        self.assertEqual(result, 0, "Parsing failed.")
+        self.assertEqual(result, 2, "Parsing not found any issue.")
         self.assertFalse(err)
 
         self.assertTrue('Html file was generated' in out)
         self.assertTrue('Summary' in out)
         self.assertTrue('Statistics' in out)
+
+    def test_codeclimate_export(self):
+        """ Test exporting codeclimate output. """
+        test_project_notes = os.path.join(self.test_workspaces['NORMAL'],
+                                          "test_files", "notes")
+        output_path = self.test_workspaces['OUTPUT']
+        extract_cmd = ['CodeChecker', 'parse', "--export", "codeclimate",
+                       test_project_notes, "--output", output_path,
+                       '--trim-path-prefix', test_project_notes]
+
+        out, _, result = call_command(extract_cmd, cwd=self.test_dir,
+                                      env=self.env)
+        self.assertEqual(result, 2, "Parsing not found any issue.")
+        result_from_stdout = json.loads(out)
+        output_file_path = os.path.join(output_path, "reports.json")
+        with open(output_file_path, 'r', encoding='utf-8', errors='ignore') \
+                as handle:
+            result_from_file = json.load(handle)
+
+        self.assertEqual(result_from_stdout, result_from_file)
+
+    # TODO: Fix issue what this test catches.
+    @unittest.skip
+    def test_codeclimate_export_exit_code(self):
+        """ Test exporting codeclimate output into the filesystem. """
+        test_project_notes = os.path.join(self.test_workspaces['NORMAL'],
+                                          "test_files", "notes")
+        skip_file_path = os.path.join(self.test_dir, 'skipall.txt')
+        extract_cmd = ['CodeChecker', 'parse', "--export", "codeclimate",
+                       test_project_notes, "--skip", skip_file_path,
+                       '--trim-path-prefix', test_project_notes]
+
+        _, _, result = call_command(extract_cmd, cwd=self.test_dir,
+                                    env=self.env)
+        self.assertEqual(result, 0, "Parsing should not found any issue.")
+
+    def test_parse_exit_code(self):
+        """ Test exit code of parsing. """
+        test_project_notes = os.path.join(self.test_workspaces['NORMAL'],
+                                          "test_files", "notes")
+        extract_cmd = ['CodeChecker', 'parse',
+                       test_project_notes, '--trim-path-prefix',
+                       test_project_notes]
+        _, _, result = call_command(extract_cmd, cwd=self.test_dir,
+                                    env=self.env)
+        self.assertEqual(result, 2, "Parsing not found any issue.")
+        skip_file_path = os.path.join(self.test_dir, 'skipall.txt')
+        extract_cmd.extend(["--skip", skip_file_path])
+        _, _, result = call_command(extract_cmd, cwd=self.test_dir,
+                                    env=self.env)
+        self.assertEqual(result, 0, "Parsing should not found any issue.")
+
+    def test_html_export_exit_code(self):
+        """ Test exit code while HTML output generation. """
+        test_project_macros = os.path.join(self.test_workspaces['NORMAL'],
+                                           "test_files", "macros")
+
+        extract_cmd = ['CodeChecker', 'parse', '--export', 'html',
+                       test_project_macros]
+        out, _, result = call_command(extract_cmd, cwd=self.test_dir,
+                                      env=self.env)
+        self.assertEqual(result, 1, "HTML parsing requires output directory.")
+        self.assertTrue("export not allowed without argument" in out)
+
+        output_path = os.path.join(self.test_workspaces['OUTPUT'], 'html')
+        extract_cmd.extend(['--output', output_path])
+        out, _, result = call_command(extract_cmd, cwd=self.test_dir,
+                                      env=self.env)
+        self.assertEqual(result, 2, "Parsing not found any issue.")
+        self.assertTrue('Html file was generated' in out)
+        self.assertTrue('Summary' in out)
+        self.assertTrue('Statistics' in out)
+
+        skip_file_path = os.path.join(self.test_dir, 'skipall.txt')
+        extract_cmd.extend(["--skip", skip_file_path])
+        out, _, result = call_command(extract_cmd, cwd=self.test_dir,
+                                      env=self.env)
+        self.assertEqual(result, 0, "Parsing should not found any issue.")

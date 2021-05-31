@@ -19,7 +19,7 @@ import os
 from operator import itemgetter
 import sys
 import traceback
-from typing import List, Dict, Tuple, Set
+from typing import List, Dict, Tuple, Set, Union
 
 from plist_to_html import PlistToHtml
 
@@ -604,12 +604,15 @@ def parse_with_plt_formatter(plist_file: str,
 def parse_convert_reports(input_dirs: List[str],
                           out_format: str,
                           severity_map: Dict,
-                          trim_path_prefixes: List[str]) -> Dict:
+                          trim_path_prefixes: List[str]) \
+        -> Tuple[Union[Dict, List], int]:
     """Parse and convert the reports from the input dirs to the out_format.
 
     Retuns a dictionary which can be converted to the out_format type of
     json to be printed out or saved on the disk.
     """
+
+    assert(out_format in [fmt for fmt in EXPORT_TYPES if fmt != 'html'])
 
     input_files = set()
     for input_path in input_dirs:
@@ -633,17 +636,16 @@ def parse_convert_reports(input_dirs: List[str],
         for report in all_reports:
             report.trim_path_prefixes(trim_path_prefixes)
 
+    number_of_reports = len(all_reports)
     if out_format == "codeclimate":
-        return codeclimate.convert(all_reports)
+        return codeclimate.convert(all_reports), number_of_reports
 
     if out_format == "gerrit":
-        return gerrit.convert(all_reports, severity_map)
+        return gerrit.convert(all_reports, severity_map), number_of_reports
 
     if out_format == "json":
-        return [out_json.convert_to_parse(r) for r in all_reports]
-
-    LOG.error("Unknown export format: %s", out_format)
-    return {}
+        return [out_json.convert_to_parse(r) for r in all_reports], \
+            number_of_reports
 
 
 def main(args):
@@ -667,6 +669,10 @@ def main(args):
         sys.exit(1)
 
     if export == 'gerrit' and not gerrit.mandatory_env_var_is_set():
+        sys.exit(1)
+
+    if export and export not in EXPORT_TYPES:
+        LOG.error("Unknown export format: %s", export)
         sys.exit(1)
 
     context = analyzer_context.get_context()
@@ -720,30 +726,29 @@ def main(args):
         'trim_path_prefix' in args else None
 
     if export:
-        if export not in EXPORT_TYPES:
-            LOG.error("Unknown export format: %s", export)
-            return
-
         # The HTML part will be handled separately below.
         if export != 'html':
             try:
-                res = parse_convert_reports(args.input,
-                                            export,
-                                            context.severity_map,
-                                            trim_path_prefixes)
+                reports, number_of_reports = parse_convert_reports(
+                    args.input, export, context.severity_map,
+                    trim_path_prefixes)
+                output_text = json.dumps(reports)
+
                 if 'output_path' in args:
                     output_path = os.path.abspath(args.output_path)
 
                     if not os.path.exists(output_path):
                         os.mkdir(output_path)
 
-                    reports_json = os.path.join(output_path, 'reports.json')
-                    with open(reports_json,
+                    output_file_path = os.path.join(output_path,
+                                                    'reports.json')
+                    with open(output_file_path,
                               mode='w',
                               encoding='utf-8', errors="ignore") as output_f:
-                        output_f.write(json.dumps(res))
+                        output_f.write(output_text)
 
-                return print(json.dumps(res))
+                print(output_text)
+                sys.exit(2 if number_of_reports else 0)
             except Exception as ex:
                 LOG.error(ex)
                 sys.exit(1)
@@ -756,6 +761,7 @@ def main(args):
         return util.trim_path_prefixes(source_file, trim_path_prefixes)
 
     html_builder = None
+    report_count = 0
 
     def skip_html_report_data_handler(report_hash, source_file, report_line,
                                       checker_name, diag, files):
@@ -791,13 +797,14 @@ def main(args):
 
         if not skip:
             processed_path_hashes.add(path_hash)
+            nonlocal report_count
+            report_count += 1
 
         return skip, source_code_comments
 
     file_change = set()
     severity_stats = defaultdict(int)
     file_stats = defaultdict(int)
-    report_count = 0
 
     for input_path in args.input:
         input_path = os.path.abspath(input_path)
