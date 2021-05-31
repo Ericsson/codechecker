@@ -128,13 +128,13 @@ class TestCmdline(unittest.TestCase):
         _, out, _ = run_cmd(checkers_cmd)
 
         self.assertNotIn('readability', out)
-        self.assertIn('SizeofPtr', out)
+        self.assertIn('cert-str34-c', out)
 
         checkers_cmd = [env.codechecker_cmd(), 'checkers',
                         '--guideline', 'mem35-c']
         _, out, _ = run_cmd(checkers_cmd)
 
-        self.assertIn('SizeofPtr', out)
+        self.assertIn('MallocSizeof', out)
         self.assertNotIn('CastToStruct', out)
 
         checkers_cmd = [env.codechecker_cmd(), 'checkers',
