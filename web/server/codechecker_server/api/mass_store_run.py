@@ -656,12 +656,18 @@ class MassStoreRun:
                     analyzer_command.encode("utf-8"),
                     zlib.Z_BEST_COMPRESSION)
 
-                analysis_info = session \
+                analysis_info_rows = session \
                     .query(AnalysisInfo) \
                     .filter(AnalysisInfo.analyzer_command == cmd) \
-                    .one_or_none()
+                    .all()
 
-                if not analysis_info:
+                if analysis_info_rows:
+                    # It is possible when multiple runs are stored
+                    # simultaneously to the server with the same analysis
+                    # command that multiple entries are stored into the
+                    # database. In this case we will select the first one.
+                    analysis_info = analysis_info_rows[0]
+                else:
                     analysis_info = AnalysisInfo(analyzer_command=cmd)
                     session.add(analysis_info)
 
