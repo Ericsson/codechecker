@@ -5,6 +5,4 @@
 d1551d7a120c30fadec6ac2e416705f5||suppress_export.cpp||foo3 simple||intentional
 26806cbc2fd851b977e4915eba75289e||suppress_export.cpp||foo4 simple||confirmed
 b14c948e6ae8e27e3a33b0ca898e98f1||suppress_export.cpp||foo4 simple||confirmed
-9742a60db843748810d4ae87edd946cc||suppress_export.cpp||foo5 simple||confirmed
-e7c1e9d5cfeae409363c9affb002892b||suppress_export.cpp||foo5 all||false_positive
-e5f1b57c0f5d41e95b1eb5bf2032aada||suppress_export.cpp||substring of the checker name||confirmed
+

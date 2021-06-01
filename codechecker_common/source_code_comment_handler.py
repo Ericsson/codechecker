@@ -293,20 +293,11 @@ class SourceCodeCommentHandler:
         if not source_line_comments:
             return []
 
-        all_checker_comment = None
         checker_name_comments = []
         for line_comment in source_line_comments:
-            comment_len = len(checker_name_comments)
-            if 'all' in line_comment['checkers'] and not comment_len:
-                all_checker_comment = line_comment
-
-            for c in line_comment['checkers']:
-                if c in checker_name and c != 'all':
+            for bug_name in line_comment['checkers']:
+                if (bug_name == checker_name) or (bug_name == 'all'):
                     checker_name_comments.append(line_comment)
-                    break
-
-        if not comment_len and all_checker_comment:
-            checker_name_comments.append(all_checker_comment)
 
         # More than one source code comment found for this line.
         if not checker_name_comments:

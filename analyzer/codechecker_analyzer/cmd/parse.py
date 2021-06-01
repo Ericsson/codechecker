@@ -353,7 +353,9 @@ def skip_report(report_hash, source_file, report_line, checker_name,
         skip = True if src_comment_status_filter and \
             'unreviewed' not in src_comment_status_filter else False
         return skip, src_comment_data
-    elif len(src_comment_data) == 1:
+
+    num_of_suppress_comments = len(src_comment_data)
+    if num_of_suppress_comments == 1:
         status = src_comment_data[0]['status']
 
         LOG.debug("Suppressed by source code comment.")
@@ -370,7 +372,7 @@ def skip_report(report_hash, source_file, report_line, checker_name,
                 status not in src_comment_status_filter:
             return True, src_comment_data
 
-    elif len(src_comment_data) > 1:
+    if num_of_suppress_comments > 1:
         LOG.error("Multiple source code comment can be found "
                   "for '%s' checker in '%s' at line %d.",
                   checker_name, source_file, report_line)
