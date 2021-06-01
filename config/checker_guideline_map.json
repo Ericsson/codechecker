@@ -2,52 +2,7 @@
   "guidelines": {
     "sei-cert": "https://wiki.sei.cmu.edu/confluence/display/seccode"
   },
-  "mapping": {
-    "alpha.core.CastSize": {
-      "sei-cert": ["mem35-c", "str38-c"]
-    },
-    "alpha.core.Conversion": {
-      "sei-cert": ["flp36-c", "int30-c"]
-    },
-    "alpha.core.PointerArithm": {
-      "sei-cert": ["arr37-c", "ctr56-cpp"]
-    },
-    "alpha.core.PointerSub": {
-      "sei-cert": ["arr36-c", "ctr54-cpp"]
-    },
-    "alpha.core.SizeofPtr": {
-      "sei-cert": ["mem35-c"]
-    },
-    "alpha.cplusplus.DeleteWithNonVirtualDtor": {
-      "sei-cert": ["oop52-cpp"]
-    },
-    "alpha.security.ArrayBound": {
-      "sei-cert": ["arr37-c", "dcl38-c", "msc37-c", "pos30-c"]
-    },
-    "alpha.security.MallocOverflow": {
-      "sei-cert": ["dcl38-c"]
-    },
-    "alpha.security.ReturnPtrRange": {
-      "sei-cert": ["arr30-c"]
-    },
-    "alpha.security.taint.TaintPropagation": {
-      "sei-cert": ["env33-c"]
-    },
-    "alpha.unix.BlockInCriticalSection": {
-      "sei-cert": ["pos52-c"]
-    },
-    "alpha.unix.cstring.BufferOverlap": {
-      "sei-cert": ["exp43-c"]
-    },
-    "alpha.unix.cstring.OutOfBounds": {
-      "sei-cert": ["arr38-c", "arr39-c", "exp36-c"]
-    },
-    "alpha.unix.PthreadLock": {
-      "sei-cert": ["pos51-c"]
-    },
-    "alpha.unix.Stream": {
-      "sei-cert": ["fio42-c"]
-    },
+  "mapping": {    
     "bugprone-assert-side-effect": {
       "sei-cert": ["pre31-c"]
     },
