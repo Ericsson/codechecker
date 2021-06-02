@@ -366,7 +366,7 @@ def enable_auth(workspace):
     root_file = os.path.join(workspace, 'root.user')
     with open(root_file, 'w',
               encoding='utf-8', errors='ignore') as rootf:
-        rootf.write(sha256(b"root:root").hexdigest())
+        rootf.write(f"root:{sha256(b'root:root').hexdigest()}")
     os.chmod(root_file, stat.S_IRUSR | stat.S_IWUSR)
 
 

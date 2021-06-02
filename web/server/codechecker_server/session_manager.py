@@ -50,13 +50,14 @@ def generate_session_token():
     return uuid.UUID(bytes=os.urandom(16)).hex
 
 
-def get_worker_processes(scfg_dict, default=10):
+def get_worker_processes(scfg_dict):
     """
     Return number of worker processes from the config dictionary.
 
     Return 'worker_processes' field from the config dictionary or returns the
     default value if this field is not set or the value is negative.
     """
+    default = os.cpu_count()
     worker_processes = scfg_dict.get('worker_processes', default)
 
     if worker_processes < 0:
@@ -375,9 +376,10 @@ class SessionManager:
         """
         Try to authenticate the user against the root username:password's hash.
         """
-        if 'method_root' in self.__auth_config and \
-                hashlib.sha256(auth_string.encode('utf8')).hexdigest() == \
-                self.__auth_config['method_root']:
+        user_name = SessionManager.get_user_name(auth_string)
+        sha = hashlib.sha256(auth_string.encode('utf8')).hexdigest()
+
+        if f"{user_name}:{sha}" == self.__auth_config['method_root']:
             return {
                 'username': SessionManager.get_user_name(auth_string),
                 'groups': [],
@@ -543,6 +545,9 @@ class SessionManager:
 
     def __is_root_user(self, user_name):
         """ Return True if the given user has system permissions. """
+        if self.__auth_config['method_root'].split(":")[0] == user_name:
+            return True
+
         transaction = None
         try:
             # Try the database, if it is connected.

@@ -21,7 +21,7 @@ Table of Contents
 The `worker_processes` section of the config file controls how many processes
 will be started on the server to process API requests.
 
-*Default value*: 10
+*Default value*: <CPU count>
 
 The server needs to be restarted if the value is changed in the config file.
 

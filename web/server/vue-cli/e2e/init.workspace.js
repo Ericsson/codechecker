@@ -19,7 +19,7 @@ const SERVER_CONFIG = {
 };
 
 const ROOT_USER =
-  "2691b13e4c5eadd0adad38983e611b2caa19caaa3476ccf31cbcadddf65c321c";
+  "root:2691b13e4c5eadd0adad38983e611b2caa19caaa3476ccf31cbcadddf65c321c";
 
 // Create workspace directory if it does not exists.
 if (!fs.existsSync(WORKSPACE_DIR)) {
