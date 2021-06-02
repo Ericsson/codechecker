@@ -155,6 +155,14 @@ output.
         # extend the system argument list with these options and try to parse
         # the argument list again to validate it.
         if 'func_process_config_file' in args:
+            # Import logger module here after 'CC_DATA_FILES_DIR' environment
+            # variable is set, so 'setup_logger' will be able to initialize
+            # the logger properly.
+            from codechecker_common import logger
+            logger.setup_logger(
+                args.verbose if 'verbose' in args else None,
+                'stderr')
+
             if len(sys.argv) > 1:
                 called_sub_command = sys.argv[1]
 

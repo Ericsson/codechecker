@@ -14,16 +14,16 @@ LOG = logger.get_logger('system')
 
 
 def process_config_file(args, subcommand_name):
-    """
-    Handler to get config file options.
-    """
+    """ Handler to get config file options. """
     if 'config_file' not in args:
         return {}
+
     if args.config_file and os.path.exists(args.config_file):
         cfg = load_json_or_empty(args.config_file, default={})
 
         # The subcommand name is analyze but the
         # configuration section name is analyzer.
+        options = None
         if subcommand_name == 'analyze':
             # The config value can be 'analyze' or 'analyzer'
             # for backward compatibility.
@@ -36,11 +36,18 @@ def process_config_file(args, subcommand_name):
                                 "file. Please use the 'analyze' value to be "
                                 "in sync with the subcommands.\n"
                                 "Using the 'analyze' configuration.")
-                return analyze_cfg
-            if analyzer_cfg:
-                return analyzer_cfg
+                options = analyze_cfg
+            elif analyzer_cfg:
+                options = analyzer_cfg
+        else:
+            options = cfg.get(subcommand_name, [])
 
-        return cfg.get(subcommand_name, [])
+        if options:
+            LOG.info("Extending command line options with %s options from "
+                     "'%s' file: %s", subcommand_name, args.config_file,
+                     ' '.join(options))
+
+        return options
 
 
 def check_config_file(args):
