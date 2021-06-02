@@ -220,6 +220,12 @@ class PlistToPlaintextFormatter:
                                 self.src_comment_handler,
                                 self.src_comment_status_filter)
 
+                if self.src_comment_handler and source_code_comments:
+                    self.src_comment_handler.store_suppress_bug_id(
+                        report_hash, os.path.basename(source_file),
+                        source_code_comments[0]['message'],
+                        source_code_comments[0]['status'])
+
                 if skip:
                     continue
 
@@ -359,14 +365,6 @@ def skip_report(report_hash, source_file, report_line, checker_name,
         status = src_comment_data[0]['status']
 
         LOG.debug("Suppressed by source code comment.")
-        if src_comment_handler:
-            file_name = os.path.basename(source_file)
-            message = src_comment_data[0]['message']
-            src_comment_handler.store_suppress_bug_id(
-                report_hash,
-                file_name,
-                message,
-                status)
 
         if src_comment_status_filter and \
                 status not in src_comment_status_filter:
@@ -715,7 +713,7 @@ def main(args):
     elif 'create_suppress' in args:
         LOG.error("Can't use '--export-source-suppress' unless '--suppress "
                   "SUPPRESS_FILE' is also given.")
-        sys.exit(2)
+        sys.exit(1)
 
     processed_path_hashes = set()
 
@@ -794,6 +792,12 @@ def main(args):
                                                  checker_name,
                                                  suppr_handler,
                                                  src_comment_status_filter)
+
+        if suppr_handler and source_code_comments:
+            suppr_handler.store_suppress_bug_id(
+                report_hash, os.path.basename(source_file),
+                source_code_comments[0]['message'],
+                source_code_comments[0]['status'])
 
         if skip_handler:
             skip |= skip_handler.should_skip(source_file)

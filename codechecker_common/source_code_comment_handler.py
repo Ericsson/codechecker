@@ -296,7 +296,7 @@ class SourceCodeCommentHandler:
         checker_name_comments = []
         for line_comment in source_line_comments:
             for bug_name in line_comment['checkers']:
-                if (bug_name == checker_name) or (bug_name == 'all'):
+                if (bug_name in checker_name) or (bug_name == 'all'):
                     checker_name_comments.append(line_comment)
 
         # More than one source code comment found for this line.
