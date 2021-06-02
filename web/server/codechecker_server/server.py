@@ -13,9 +13,8 @@ and browser requests.
 
 import atexit
 import datetime
-import errno
 from hashlib import sha256
-from multiprocessing.pool import ThreadPool
+from multiprocessing import Process
 import os
 import posixpath
 from random import sample
@@ -459,6 +458,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
             self.wfile.write(result)
             return
 
+        except BrokenPipeError as ex:
+            LOG.debug(ex)
         except Exception as exn:
             LOG.warning(str(exn))
             import traceback
@@ -733,9 +734,6 @@ class CCSimpleHttpServer(HTTPServer):
                 if not product.cleanup_run_db():
                     LOG.warning("Cleaning database for %s Failed.", endpoint)
 
-        worker_processes = self.manager.worker_processes
-        self.__request_handlers = ThreadPool(processes=worker_processes)
-
         try:
             HTTPServer.__init__(self, server_address,
                                 RequestHandlerClass,
@@ -810,33 +808,10 @@ class CCSimpleHttpServer(HTTPServer):
         try:
             self.server_close()
             self.__engine.dispose()
-
-            self.__request_handlers.terminate()
-            self.__request_handlers.join()
         except Exception as ex:
             LOG.error("Failed to shut down the WEB server!")
             LOG.error(str(ex))
             sys.exit(1)
-
-    def process_request_thread(self, request, client_address):
-        try:
-            # Finish_request instantiates request handler class.
-            self.finish_request(request, client_address)
-            self.shutdown_request(request)
-        except socket.error as serr:
-            if serr.errno == errno.EPIPE:
-                LOG.debug("Broken pipe")
-                LOG.debug(serr)
-                self.shutdown_request(request)
-
-        except Exception as ex:
-            LOG.debug(ex)
-            self.handle_error(request, client_address)
-            self.shutdown_request(request)
-
-    def process_request(self, request, client_address):
-        self.__request_handlers.apply_async(self.process_request_thread,
-                                            (request, client_address))
 
     def add_product(self, orm_product, init_db=False):
         """
@@ -969,14 +944,15 @@ def __make_root_file(root_file):
     LOG.info("-" * len(credential_msg))
 
     sha = sha256((username + ':' + password).encode('utf-8')).hexdigest()
+    secret = f"{username}:{sha}"
     with open(root_file, 'w', encoding="utf-8", errors="ignore") as f:
-        LOG.debug("Save root SHA256 '%s'", sha)
-        f.write(sha)
+        LOG.debug("Save root SHA256 '%s'", secret)
+        f.write(secret)
 
     # This file should be only readable by the process owner, and noone else.
     os.chmod(root_file, stat.S_IRUSR)
 
-    return sha
+    return secret
 
 
 def start_server(config_directory, package_data, port, config_sql_server,
@@ -1057,6 +1033,13 @@ def start_server(config_directory, package_data, port, config_sql_server,
                                check_env,
                                manager)
 
+    # If the server was started with the port 0, the OS will pick an available
+    # port. For this reason we will update the port variable after server
+    # initialization.
+    port = http_server.socket.getsockname()[1]
+
+    processes = []
+
     def signal_handler(signum, frame):
         """
         Handle SIGTERM to stop the server running.
@@ -1066,19 +1049,18 @@ def start_server(config_directory, package_data, port, config_sql_server,
                  if server_clazz is CCSimpleHttpServerIPv6 else listen_address,
                  port)
         http_server.terminate()
-        sys.exit(128 + signum)
 
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
+        # Terminate child processes.
+        for pp in processes:
+            pp.terminate()
+
+        sys.exit(128 + signum)
 
     def reload_signal_handler(*args, **kwargs):
         """
         Reloads server configuration file.
         """
         manager.reload_config()
-
-    if sys.platform != "win32":
-        signal.signal(signal.SIGHUP, reload_signal_handler)
 
     try:
         instance_manager.register(os.getpid(),
@@ -1105,7 +1087,21 @@ def start_server(config_directory, package_data, port, config_sql_server,
             LOG.debug(ex.strerror)
 
     atexit.register(unregister_handler, os.getpid())
+
+    for _ in range(manager.worker_processes - 1):
+        p = Process(target=http_server.serve_forever)
+        processes.append(p)
+        p.start()
+
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
+    if sys.platform != "win32":
+        signal.signal(signal.SIGHUP, reload_signal_handler)
+
+    # Main process also acts as a worker.
     http_server.serve_forever()
+
     LOG.info("Webserver quit.")
 
 

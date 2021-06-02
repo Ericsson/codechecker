@@ -1,5 +1,4 @@
 {
-  "worker_processes": 10,
   "max_run_count": null,
   "store": {
     "analysis_statistics_dir": null,
