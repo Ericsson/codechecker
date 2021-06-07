@@ -25,7 +25,7 @@ OS X El Capitan 10.11, macOS Sierra 10.12 and macOS High Sierra 10.13.
 ```sh
 # Download and install dependencies.
 brew update
-brew install doxygen gcc git
+brew install gcc git
 pip3 install virtualenv
 
 # Install the latest clang see: https://formulae.brew.sh/formula/llvm
