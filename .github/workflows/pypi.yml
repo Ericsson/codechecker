@@ -107,7 +107,7 @@ jobs:
       - uses: actions/download-artifact@master
         with:
           name: pypi-package
-          path: ./dist/
+          path: ./
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
