@@ -69,6 +69,10 @@ class Context(metaclass=Singleton):
         self.__package_build_date = None
         self.__package_git_hash = None
 
+        # This should be initialized in command line scripts based on the
+        # given CLI options.
+        self.codechecker_workspace = None
+
         self.__set_version()
 
     def __get_package_layout(self):
