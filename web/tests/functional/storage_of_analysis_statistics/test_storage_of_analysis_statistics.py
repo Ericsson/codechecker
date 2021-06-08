@@ -18,9 +18,9 @@ import subprocess
 import unittest
 import zipfile
 
+from tempfile import TemporaryDirectory
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import RunFilter
 
-from codechecker_server.tmp import TemporaryDirectory
 
 from libtest import codechecker
 from libtest import env

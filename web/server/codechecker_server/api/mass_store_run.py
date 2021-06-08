@@ -17,6 +17,7 @@ import zlib
 from collections import defaultdict
 from datetime import datetime
 from hashlib import sha256
+from tempfile import TemporaryDirectory
 from typing import Any, Dict, List, NamedTuple, Optional, Set
 
 import codechecker_api_shared
@@ -37,7 +38,6 @@ from ..database.run_db_model import AnalysisInfo, AnalyzerStatistic, \
     Report, Run, RunHistory, RunLock
 from ..metadata import checker_is_unavailable, get_analyzer_name, \
     MetadataInfoParser
-from ..tmp import TemporaryDirectory
 
 from .report_server import ThriftRequestHandler
 from .thrift_enum_helper import report_extended_data_type_str
@@ -316,8 +316,6 @@ class MassStoreRun:
         self.__wrong_src_code_comments: List[str] = []
         self.__already_added_report_hashes: Set[str] = set()
         self.__new_report_hashes: Set[str] = set()
-        self.__enabled_checkers: Set[str] = set()
-        self.__disabled_checkers: Set[str] = set()
         self.__all_report_checkers: Set[str] = set()
 
     @property
@@ -1114,7 +1112,9 @@ class MassStoreRun:
             self.__store_run_lock(session)
 
         try:
-            with TemporaryDirectory() as zip_dir:
+            with TemporaryDirectory(
+                dir=self.__context.codechecker_workspace
+            ) as zip_dir:
                 LOG.info("[%s] Unzip storage file...", self.__name)
                 zip_size = unzip(self.__b64zip, zip_dir)
                 LOG.info("[%s] Unzip storage file done.", self.__name)
