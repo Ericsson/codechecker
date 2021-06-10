@@ -88,7 +88,7 @@ the analysis.
 The bug refutation in the static analyzer is disabled by default and it’s
 hidden behind the flag `--crosscheck-with-z3`. Once the user has a version of
 clang built with Z3, the bug refutation can be enabled by passing
-`--analyzer-config crosscheck-with-z3=true` when calling the clang static
+`--analyzer-config clangsa:crosscheck-with-z3=true` when calling the clang static
 analyzer. CodeChecker will automatically detect that the Clang was built with
 this option and you don't have to pass these arguments to the analyzer command
 itself when using CodeChecker, you just have to run the CodeChecker analyze
