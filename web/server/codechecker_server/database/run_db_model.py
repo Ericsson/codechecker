@@ -134,7 +134,8 @@ RunHistoryAnalysisInfo = Table(
         ForeignKey('run_histories.id',
                    deferrable=True,
                    initially="DEFERRED",
-                   ondelete="CASCADE")),
+                   ondelete="CASCADE"),
+        index=True),
     Column('analysis_info_id', Integer, ForeignKey('analysis_info.id'))
 )
 
@@ -314,7 +315,8 @@ ReportAnalysisInfo = Table(
         ForeignKey('reports.id',
                    deferrable=True,
                    initially="DEFERRED",
-                   ondelete="CASCADE")),
+                   ondelete="CASCADE"),
+        index=True),
     Column('analysis_info_id', Integer, ForeignKey('analysis_info.id'))
 )
 
