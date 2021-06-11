@@ -12,7 +12,7 @@
 .PHONY: test
 
 # C compiler
-CC = gcc
+CC ?= gcc
 # Preprocessor flags
 CPPFLAGS = -D_GNU_SOURCE
 # C flags
