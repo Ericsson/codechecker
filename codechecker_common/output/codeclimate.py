@@ -12,7 +12,7 @@ from typing import Dict, List
 from codechecker_common.report import Report
 
 
-def convert(reports: List[Report]) -> Dict:
+def convert(reports: List[Report], severity_map: Dict[str, str]) -> Dict:
     """Convert the given reports to codeclimate format.
 
     This function will convert the given report to Code Climate format.
@@ -22,11 +22,21 @@ def convert(reports: List[Report]) -> Dict:
     """
     codeclimate_reports = []
     for report in reports:
-        codeclimate_reports.append(__to_codeclimate(report))
+        codeclimate_reports.append(__to_codeclimate(report, severity_map))
     return codeclimate_reports
 
 
-def __to_codeclimate(report: Report) -> Dict:
+__codeclimate_severity_map = {
+    'CRITICAL': 'critical',
+    'HIGH': 'major',
+    'MEDIUM': 'minor',
+    'LOW': 'minor',
+    'STYLE': 'info',
+    'UNSPECIFIED': 'info',
+}
+
+
+def __to_codeclimate(report: Report, severity_map: Dict[str, str]) -> Dict:
     """Convert a Report to Code Climate format."""
     return {
         "type": "issue",
@@ -34,6 +44,8 @@ def __to_codeclimate(report: Report) -> Dict:
         "description": report.description,
         "categories": ["Bug Risk"],
         "fingerprint": report.report_hash,
+        "severity": __codeclimate_severity_map.get(
+            severity_map.get(report.check_name, 'UNSPECIFIED'), 'info'),
         "location": {
             "path": report.file_path,
             "lines": {
