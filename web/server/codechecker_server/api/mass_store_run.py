@@ -1202,9 +1202,10 @@ class MassStoreRun:
                             session.commit()
 
                             LOG.info("'%s' stored results (%s KB "
-                                     "/decompressed/) to run '%s' in %s "
-                                     "seconds.", self.user_name,
-                                     round(zip_size / 1024), self.__name,
+                                     "/decompressed/) to run '%s' (id: %d) in "
+                                     "%s seconds.", self.user_name,
+                                     round(zip_size / 1024),
+                                     self.__name, run_id,
                                      round(time.time() - start_time, 2))
 
                             return run_id
