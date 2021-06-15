@@ -7,12 +7,13 @@ FROM python:3.6-slim-stretch as builder
 ARG CC_VERSION=master
 ENV CC_VERSION ${CC_VERSION}
 
+COPY hooks/ /hooks
+
 ARG DEBIAN_FRONTEND=noninteractive
 RUN set -x && apt-get update -qq \
   && apt-get install -qqy --no-install-recommends \
     ca-certificates \
     curl \
-    doxygen \
     git \
     make \
     && curl -sL https://deb.nodesource.com/setup_12.x | bash - \
@@ -23,8 +24,14 @@ RUN git clone https://github.com/Ericsson/CodeChecker.git /codechecker
 WORKDIR /codechecker
 RUN git checkout ${CC_VERSION}
 
+# Run script before the package generation.
+RUN chmod a+x /hooks/before_build.sh && sync && /hooks/before_build.sh
+
 # Build CodeChecker web.
 RUN make -C /codechecker/web package
+
+# Run script after the package generation is finished.
+RUN chmod a+x /hooks/after_build.sh && sync && /hooks/after_build.sh
 
 ###############################################################################
 #--------------------------    PRODUCTION STAGE   ----------------------------#
