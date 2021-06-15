@@ -206,6 +206,7 @@ class TestProducts(unittest.TestCase):
         self.assertEqual(config.displayedName_b64, old_name,
                          "The product edit didn't change the name back.")
 
+    @unittest.skip("Enable this when local product caches is removed!")
     def test_editing_reconnect(self):
         """
         Test if the product can successfully be set to connect to another db.
@@ -271,6 +272,7 @@ class TestProducts(unittest.TestCase):
         if config.connection.engine == 'postgresql':
             env.del_database(new_db_name, tenv)
 
+    @unittest.skip("Enable this when local product caches is removed!")
     def test_editing_endpoint(self):
         """
         Test if the product can successfully change its endpoint and keep
