@@ -35,7 +35,8 @@ enum Permission {
 
   PRODUCT_ADMIN    = 16,        // scope: PRODUCT
   PRODUCT_ACCESS   = 17,        // scope: PRODUCT
-  PRODUCT_STORE    = 18         // scope: PRODUCT
+  PRODUCT_STORE    = 18,         // scope: PRODUCT
+  PRODUCT_VIEW     = 19         // scope: PRODUCT
 }
 
 /**
