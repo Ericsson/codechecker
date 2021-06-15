@@ -2778,7 +2778,7 @@ class ThriftRequestHandler:
             comment_data_list = defaultdict(list)
             comment_query = session.query(Comment, Report.bug_id) \
                 .outerjoin(Report, Report.bug_id == Comment.bug_hash) \
-                .order_by(Comment.created_at.desc())
+                .order_by(Comment.created_at.desc(), Comment.id.desc())
 
             if run_filter:
                 comment_query = process_run_filter(session, comment_query,

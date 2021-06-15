@@ -153,5 +153,5 @@ class TestExport(unittest.TestCase):
             print(new_comments)
 
             # Check if the last and second last comments
-            self.assertEqual(new_comments[-1].message, comment1.message)
-            self.assertEqual(new_comments[-2].message, updated_message)
+            self.assertEqual(new_comments[-2].message, comment1.message)
+            self.assertEqual(new_comments[-1].message, updated_message)
