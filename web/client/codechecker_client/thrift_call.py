@@ -92,11 +92,14 @@ def ThriftClientCall(function):
                 LOG.error('Thrift bad version error.')
             LOG.error(funcName)
 
-            # It is possible that one of the argument is too large to log the
-            # full content of it (for example the 'b64zip' parameter of the
+            # Do not print the argument list if it contains sensitive
+            # information such as passwords.
+            # Also it is possible that one of the argument is too large to log
+            # the full content of it (for example the 'b64zip' parameter of the
             # 'massStoreRun' API function). For this reason we have to truncate
             # the arguments.
-            LOG.error([truncate_arg(arg) for arg in args])
+            if funcName != "performLogin":
+                LOG.error([truncate_arg(arg) for arg in args])
 
             LOG.error(kwargs)
             LOG.exception("Request failed.")
