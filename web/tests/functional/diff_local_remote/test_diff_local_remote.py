@@ -486,6 +486,7 @@ class LocalRemote(unittest.TestCase):
                 "Bug Risk"
             ],
             "fingerprint": "c2132f78ef0e01bdb5eacf616048625f",
+            "severity": "minor",
             "location": {
                 "path": "new_delete.cpp",
                 "lines": {

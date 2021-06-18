@@ -1228,7 +1228,7 @@ def handle_diff_results(args):
             output_formats.remove('gerrit')
 
         if 'codeclimate' in output_formats:
-            cc_reports = codeclimate.convert(reports)
+            cc_reports = codeclimate.convert(reports, context.severity_map)
             # Codelimate was the only format specified.
             if selected_output_format_num == 1 and not output_dir:
                 print(json.dumps(cc_reports))

@@ -309,6 +309,7 @@ class AnalyzeParseTestCase(
             'description': 'Duplicate code detected',
             'categories': ['Bug Risk'],
             'fingerprint': '3d15184f38c5fa57e479b744fe3f5035',
+            'severity': 'minor',
             'location': {
                 'path': 'notes.cpp',
                 'lines': {

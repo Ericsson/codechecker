@@ -638,7 +638,8 @@ def parse_convert_reports(input_dirs: List[str],
 
     number_of_reports = len(all_reports)
     if out_format == "codeclimate":
-        return codeclimate.convert(all_reports), number_of_reports
+        return (codeclimate.convert(all_reports, severity_map),
+                number_of_reports)
 
     if out_format == "gerrit":
         return gerrit.convert(all_reports, severity_map), number_of_reports
