@@ -1028,7 +1028,10 @@ def main(args):
                               compile_cmd_count)
 
     __update_skip_file(args)
+
+    LOG.debug("Cleanup metadata file started.")
     __cleanup_metadata(metadata_prev, metadata)
+    LOG.debug("Cleanup metadata file finished.")
 
     LOG.debug("Analysis metadata write to '%s'", metadata_file)
     with open(metadata_file, 'w',
@@ -1051,8 +1054,11 @@ def main(args):
     try:
         # pylint: disable=no-name-in-module
         from codechecker_analyzer import analyzer_statistics
+        LOG.debug("Sending analyzer statistics started.")
         analyzer_statistics.collect(metadata, "analyze")
+        LOG.debug("Sending analyzer statistics finished.")
     except Exception:
+        LOG.debug("Failed to send analyzer statistics!")
         pass
 
     # Generally exit status is set by sys.exit() call in CodeChecker. However,
