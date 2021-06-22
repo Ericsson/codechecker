@@ -98,6 +98,7 @@ venv:
 	# Create a virtual environment which can be used to run the build package.
 	python3 -m venv venv --prompt="CodeChecker venv" && \
 		$(ACTIVATE_RUNTIME_VENV) && \
+		pip3 install wheel && \
 		cd $(CC_ANALYZER) && pip3 install -r requirements.txt && \
 		cd $(CC_WEB) && pip3 install -r $(CC_WEB)/requirements.txt
 
@@ -105,6 +106,7 @@ venv_osx:
 	# Create a virtual environment which can be used to run the build package.
 	python3 -m venv venv --prompt="CodeChecker venv" && \
 		$(ACTIVATE_RUNTIME_VENV) && \
+		pip3 install wheel && \
 		cd $(CC_ANALYZER) && pip3 install -r requirements_py/osx/requirements.txt && \
 		cd $(CC_WEB) && pip3 install -r requirements_py/osx/requirements.txt
 
@@ -122,7 +124,9 @@ pip_dev_deps:
 venv_dev:
 	# Create a virtual environment for development.
 	python3 -m venv venv_dev --prompt="CodeChecker venv-dev" && \
-		$(ACTIVATE_DEV_VENV) && $(PIP_DEV_DEPS_CMD)
+		$(ACTIVATE_DEV_VENV) && \
+		pip3 install wheel && \
+		$(PIP_DEV_DEPS_CMD)
 
 clean_venv_dev:
 	rm -rf venv_dev
