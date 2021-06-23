@@ -50,6 +50,7 @@ ARG INSTALL_PG8000=no
 ARG INSTALL_PSYCOPG2=yes
 
 ENV TINI_VERSION v0.18.0
+ENV WAIT_FOR_VERSION v2.1.2
 
 RUN set -x && apt-get update -qq \
   # Prevent fail when install postgresql-client.
@@ -126,6 +127,9 @@ RUN chmod a+x /usr/local/bin/entrypoint.sh \
 
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
+
+ADD https://github.com/eficode/wait-for/blob/${WAIT_FOR_VERSION}/wait-for /usr/local/bin/wait-for
+RUN chmod +x /usr/local/bin/wait-for
 
 EXPOSE 8001
 
