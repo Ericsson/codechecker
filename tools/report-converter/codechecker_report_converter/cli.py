@@ -64,6 +64,8 @@ from codechecker_report_converter.sparse.analyzer_result import \
     SparseAnalyzerResult  # noqa
 from codechecker_report_converter.cpplint.analyzer_result import \
     CpplintAnalyzerResult  # noqa
+from codechecker_report_converter.sanitizers.leak.analyzer_result import \
+    LSANAnalyzerResult  # noqa
 
 
 LOG = logging.getLogger('ReportConverter')
@@ -105,6 +107,7 @@ supported_converters = {
     SphinxAnalyzerResult.TOOL_NAME: SphinxAnalyzerResult,
     SparseAnalyzerResult.TOOL_NAME: SparseAnalyzerResult,
     CpplintAnalyzerResult.TOOL_NAME: CpplintAnalyzerResult,
+    LSANAnalyzerResult.TOOL_NAME: LSANAnalyzerResult
 }
 
 supported_metadata_keys = ["analyzer_command", "analyzer_version"]
