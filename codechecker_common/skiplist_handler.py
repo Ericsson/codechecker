@@ -99,3 +99,9 @@ class SkipListHandler:
                 sign = line[0]
                 return sign == '-'
         return False
+
+    def __call__(self, source_file_path):
+        """
+        Check if the given source should be skipped.
+        """
+        return self.should_skip(source_file_path)

@@ -19,7 +19,7 @@ import os
 from operator import itemgetter
 import sys
 import traceback
-from typing import List, Dict, Tuple, Set, Union
+from typing import List, Dict, Tuple, Set, Union, Callable
 
 from plist_to_html import PlistToHtml
 
@@ -69,7 +69,7 @@ class PlistToPlaintextFormatter:
 
     def __init__(self,
                  src_comment_handler,
-                 skip_handler,
+                 skip_handler: Callable[[str], bool],
                  severity_map,
                  processed_path_hashes,
                  trim_path_prefixes,
@@ -80,7 +80,7 @@ class PlistToPlaintextFormatter:
         self.__severity_map = severity_map
         self.print_steps = False
         self.src_comment_handler = src_comment_handler
-        self.skiplist_handler = skip_handler
+        self._skip_handler = skip_handler
         self.src_comment_status_filter = src_comment_status_filter
         self._processed_path_hashes = processed_path_hashes
         self._trim_path_prefixes = trim_path_prefixes
@@ -197,8 +197,7 @@ class PlistToPlaintextFormatter:
                 events = [i for i in report.bug_path
                           if i.get('kind') == 'event']
                 f_path = report.files[events[-1]['location']['file']]
-                if self.skiplist_handler and \
-                        self.skiplist_handler.should_skip(f_path):
+                if self._skip_handler(f_path):
                     LOG.debug("Skipped report in '%s'", f_path)
                     LOG.debug(report)
                     continue
@@ -723,6 +722,8 @@ def main(args):
         with open(args.skipfile, 'r',
                   encoding='utf-8', errors='ignore') as skip_file:
             skip_handler = SkipListHandler(skip_file.read())
+    else:
+        skip_handler = SkipListHandler()
 
     trim_path_prefixes = args.trim_path_prefix if \
         'trim_path_prefix' in args else None
@@ -793,15 +794,7 @@ def main(args):
                                                  checker_name,
                                                  suppr_handler,
                                                  src_comment_status_filter)
-
-        if suppr_handler and source_code_comments:
-            suppr_handler.store_suppress_bug_id(
-                report_hash, os.path.basename(source_file),
-                source_code_comments[0]['message'],
-                source_code_comments[0]['status'])
-
-        if skip_handler:
-            skip |= skip_handler.should_skip(source_file)
+        skip |= skip_handler(source_file)
 
         if not skip:
             processed_path_hashes.add(path_hash)

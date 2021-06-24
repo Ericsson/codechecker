@@ -846,7 +846,7 @@ class MassStoreRun:
         run_id: int,
         file_path_to_id: Dict[str, int],
         run_history_time: datetime,
-        skip_handler: Optional[skiplist_handler.SkipListHandler],
+        skip_handler: skiplist_handler.SkipListHandler,
         hash_map_reports: Dict[str, List[Any]]
     ) -> bool:
         """
@@ -936,7 +936,7 @@ class MassStoreRun:
         for report in reports:
             self.__all_report_checkers.add(report.check_name)
 
-            if skip_handler and skip_handler.should_skip(report.file_path):
+            if skip_handler.should_skip(report.file_path):
                 continue
 
             report.trim_path_prefixes(self.__trim_path_prefixes)
@@ -991,11 +991,11 @@ class MassStoreRun:
         """ Parse up and store the plist report files. """
         def get_skip_handler(
             report_dir: str
-        ) -> Optional[skiplist_handler.SkipListHandler]:
+        ) -> skiplist_handler.SkipListHandler:
             """ Get a skip list handler based on the given report directory."""
             skip_file_path = os.path.join(report_dir, 'skip_file')
             if not os.path.exists(skip_file_path):
-                return
+                return skiplist_handler.SkipListHandler()
 
             LOG.debug("Pocessing skip file %s", skip_file_path)
             try:
