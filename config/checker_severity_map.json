@@ -154,6 +154,7 @@
   "core.DynamicTypePropagation":                                "MEDIUM",
   "core.NonNullParamChecker":                                   "HIGH",
   "core.NullDereference":                                       "HIGH",
+  "core.StackAddrEscapeBase":                                   "HIGH",
   "core.StackAddressEscape":                                    "HIGH",
   "core.UndefinedBinaryOperatorResult":                         "HIGH",
   "core.uninitialized.ArraySubscript":                          "HIGH",
