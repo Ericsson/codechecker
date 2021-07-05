@@ -11,6 +11,7 @@ a CodeChecker server.
   * [Address Sanitizer](#address-sanitizer)
   * [Memory Sanitizer](#memory-sanitizer)
   * [Thread Sanitizer](#thread-sanitizer)
+  * [Leak Sanitizer](#leak-sanitizer)
 * [Cppcheck](#cppcheck)
 * [Spotbugs](#spotbugs)
 * [Facebook Infer](#facebook-infer)
@@ -62,9 +63,9 @@ optional arguments:
   -t TYPE, --type TYPE  Specify the format of the code analyzer output.
                         Currently supported output types are: asan, clang-
                         tidy, coccinelle, cppcheck, cpplint, eslint,
-                        fbinfer, golint, kernel-doc, mdl, msan, pyflakes,
-                        pylint, smatch, sparse, sphinx, spotbugs, tsan,
-                        tslint, ubsan.
+                        fbinfer, golint, kernel-doc, lsan, mdl, msan, 
+                        pyflakes, pylint, smatch, sparse, sphinx, spotbugs, 
+                        tsan, tslint, ubsan.
   --meta [META [META ...]]
                         Metadata information which will be stored alongside
                         the run when the created report directory will be
@@ -97,6 +98,7 @@ Supported analyzers:
   fbinfer - Facebook Infer, https://fbinfer.com
   golint - Golint, https://github.com/golang/lint
   kernel-doc - Kernel-Doc, https://github.com/torvalds/linux/blob/master/scripts/kernel-doc
+  lsan - LeakSanitizer, https://clang.llvm.org/docs/LeakSanitizer.html
   mdl - Markdownlint, https://github.com/markdownlint/markdownlint
   msan - MemorySanitizer, https://clang.llvm.org/docs/MemorySanitizer.html
   pyflakes - Pyflakes, https://github.com/PyCQA/pyflakes
@@ -184,6 +186,19 @@ clang++ -fsanitize=thread -g tsan.cpp
 
 # Generate plist files from the output.
 report-converter -t tsan -o ./tsan_results tsan.output
+```
+
+### [Leak Sanitizer](https://clang.llvm.org/docs/LeakSanitizer.html)
+- Compile with `-g` and `-fsanitize=address`  to get proper debug information in your binary.
+```sh
+# Compile your program.
+clang -fsanitize=address -g lsan.c
+
+# Run your program and redirect the output to a file.
+ASAN_OPTIONS=detect_leaks=1 ./a.out > lsan.output 2>&1
+
+# Generate plist files from the output.
+report-converter -t lsan ./lsan_results lsan.output
 ```
 
 ## [Cppcheck](http://cppcheck.sourceforge.net/)

@@ -45,7 +45,7 @@ CodeChecker result directory which can be stored to a CodeChecker server.
 | [MemorySanitizer](https://clang.llvm.org/docs/MemorySanitizer.html)    | ✓ |
 | [UndefinedBehaviorSanitizer](https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html)    | ✓ |
 | [DataFlowSanitizer](https://clang.llvm.org/docs/DataFlowSanitizer.html)    | ✗ |
-| [LeakSanitizer](https://clang.llvm.org/docs/LeakSanitizer.html)    | ✗ |
+| [LeakSanitizer](https://clang.llvm.org/docs/LeakSanitizer.html)    | ✓ |
 
 We support to convert multiple sanitizer output to a CodeChecker report
 directory which can be stored to a CodeChecker server by using our
