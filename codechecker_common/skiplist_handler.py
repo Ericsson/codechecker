@@ -33,6 +33,8 @@ class SkipListHandler:
         Process the lines of the skip file.
         """
         self.__skip = []
+        if not skip_file_content:
+            skip_file_content = ""
 
         self.__skip_file_lines = [line.strip() for line
                                   in skip_file_content.splitlines()
@@ -100,7 +102,7 @@ class SkipListHandler:
                 return sign == '-'
         return False
 
-    def __call__(self, source_file_path):
+    def __call__(self, source_file_path: str) -> bool:
         """
         Check if the given source should be skipped.
         """

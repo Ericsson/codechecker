@@ -19,7 +19,7 @@ import os
 from operator import itemgetter
 import sys
 import traceback
-from typing import List, Dict, Tuple, Set, Union, Callable
+from typing import Callable, Dict, List, Set, Tuple, Union
 
 from plist_to_html import PlistToHtml
 
@@ -717,13 +717,13 @@ def main(args):
 
     processed_path_hashes = set()
 
-    skip_handler = None
+    skip_file_content = ""
     if 'skipfile' in args:
         with open(args.skipfile, 'r',
                   encoding='utf-8', errors='ignore') as skip_file:
-            skip_handler = SkipListHandler(skip_file.read())
-    else:
-        skip_handler = SkipListHandler()
+            skip_file_content = skip_file.read()
+
+    skip_handler = SkipListHandler(skip_file_content)
 
     trim_path_prefixes = args.trim_path_prefix if \
         'trim_path_prefix' in args else None

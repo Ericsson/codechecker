@@ -1007,6 +1007,7 @@ class MassStoreRun:
                     return skiplist_handler.SkipListHandler(skip_content)
             except (IOError, OSError) as err:
                 LOG.warning("Failed to open skip file: %s", err)
+                raise
 
         # Reset internal data.
         self.__already_added_report_hashes = set()
