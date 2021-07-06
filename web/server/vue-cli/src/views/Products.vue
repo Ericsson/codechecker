@@ -107,24 +107,6 @@
         </v-chip>
       </template>
 
-      <template #item.runStoreInProgress="{ item }">
-        <span
-          v-for="runName in item.runStoreInProgress"
-          :key="runName"
-          class="v-chip-max-width-wrapper"
-        >
-          <v-chip
-            class="mr-2 my-1"
-            color="accent"
-          >
-            <v-avatar>
-              <v-icon>mdi-play-circle</v-icon>
-            </v-avatar>
-            {{ runName }}
-          </v-chip>
-        </span>
-      </template>
-
       <template v-slot:item.action="{ item }">
         <div class="text-no-wrap">
           <edit-product-btn
@@ -204,11 +186,6 @@ export default {
           text: "Latest store to product",
           value: "latestStoreToProduct",
           sortable: true
-        },
-        {
-          text: "Run store in progress",
-          value: "runStoreInProgress",
-          sortable: false
         },
         {
           text: "Actions",

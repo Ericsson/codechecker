@@ -60,9 +60,47 @@ class TestStore(unittest.TestCase):
         self._temp_workspace = os.path.join(self._codechecker_cfg["workspace"],
                                             "test_proj")
 
+        self.product_name = self._codechecker_cfg['viewer_product']
+
         # Setup a viewer client to test viewer API calls.
         self._cc_client = env.setup_viewer_client(self._test_workspace)
         self.assertIsNotNone(self._cc_client)
+
+        self._pr_client = env.setup_product_client(
+            self._test_workspace, product=self.product_name)
+        self.assertIsNotNone(self._pr_client)
+
+    def test_product_details(self):
+        """
+        Test that product details columns are set properly on run
+        storage / removal events.
+        """
+        product = self._pr_client.getCurrentProduct()
+        self.assertFalse(product.runCount)
+        self.assertFalse(product.latestStoreToProduct)
+
+        run_name = "product_details_test"
+        store_cmd = [
+            env.codechecker_cmd(), "store", self._temp_workspace,
+            "--name", run_name,
+            "--url", env.parts_to_url(self._codechecker_cfg)]
+
+        _call_cmd(store_cmd)
+
+        product = self._pr_client.getCurrentProduct()
+        self.assertTrue(product.runCount)
+        self.assertTrue(product.latestStoreToProduct)
+
+        rm_cmd = [
+            env.codechecker_cmd(), "cmd", "del",
+            "-n", run_name,
+            "--url", env.parts_to_url(self._codechecker_cfg)]
+
+        _call_cmd(rm_cmd)
+
+        product = self._pr_client.getCurrentProduct()
+        self.assertFalse(product.runCount)
+        self.assertTrue(product.latestStoreToProduct)
 
     def test_trim_path_prefix_store(self):
         """Trim the path prefix from the sored reports.
@@ -249,7 +287,7 @@ class TestStore(unittest.TestCase):
 
         shutil.rmtree(common_report_dir, ignore_errors=True)
 
-    def test_duplicated_suppress(self):
+    def test_suppress_duplicated(self):
         """
         Test server if recognise duplicated suppress comments in the stored
         source code.

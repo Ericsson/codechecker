@@ -18,7 +18,7 @@ from collections import defaultdict
 from datetime import datetime
 from hashlib import sha256
 from tempfile import TemporaryDirectory
-from typing import Any, Dict, List, NamedTuple, Optional, Set
+from typing import Any, Dict, List, NamedTuple, Optional, Set, Tuple
 
 import codechecker_api_shared
 from codechecker_api.codeCheckerDBAccess_v6 import ttypes
@@ -672,11 +672,11 @@ class MassStoreRun:
                 run_history.analysis_info.append(analysis_info)
                 self.__analysis_info[src_dir_path] = analysis_info
 
-    def __add_checker_run(
+    def __add_or_update_run(
         self,
         session: DBSession,
         run_history_time: datetime
-    ) -> int:
+    ) -> Tuple[int, bool]:
         """
         Store run related data to the database.
         By default updates the results if name already exists.
@@ -689,6 +689,7 @@ class MassStoreRun:
                 .filter(Run.name == self.__name) \
                 .one_or_none()
 
+            update_run = True
             if run and self.__force:
                 # Clean already collected results.
                 if not run.can_delete:
@@ -723,6 +724,7 @@ class MassStoreRun:
                 session.add(checker_run)
                 session.flush()
                 run_id = checker_run.id
+                update_run = False
 
             # Add run to the history.
             LOG.debug("Adding run history.")
@@ -758,7 +760,7 @@ class MassStoreRun:
             session.flush()
             LOG.debug("Storing analysis statistics done.")
 
-            return run_id
+            return run_id, update_run
         except Exception as ex:
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.GENERAL,
@@ -1189,7 +1191,7 @@ class MassStoreRun:
                                       self.__name, run_lock.locked_at)
 
                             # Actual store operation begins here.
-                            run_id = self.__add_checker_run(
+                            run_id, update_run = self.__add_or_update_run(
                                 session, run_history_time)
 
                             LOG.info("[%s] Store reports...", self.__name)
@@ -1202,14 +1204,24 @@ class MassStoreRun:
 
                             session.commit()
 
-                            LOG.info("'%s' stored results (%s KB "
-                                     "/decompressed/) to run '%s' (id: %d) in "
-                                     "%s seconds.", self.user_name,
-                                     round(zip_size / 1024),
-                                     self.__name, run_id,
-                                     round(time.time() - start_time, 2))
+                        inc_num_of_runs = 1
 
-                            return run_id
+                        # If it's a run update, do not increment the number
+                        # of runs of the current product.
+                        if update_run:
+                            inc_num_of_runs = None
+
+                        self.__report_server._set_run_data_for_curr_product(
+                            inc_num_of_runs, run_history_time)
+
+                        LOG.info("'%s' stored results (%s KB "
+                                 "/decompressed/) to run '%s' (id: %d) in "
+                                 "%s seconds.", self.user_name,
+                                 round(zip_size / 1024),
+                                 self.__name, run_id,
+                                 round(time.time() - start_time, 2))
+
+                        return run_id
                     except (sqlalchemy.exc.OperationalError,
                             sqlalchemy.exc.ProgrammingError) as ex:
                         num_of_tries += 1
