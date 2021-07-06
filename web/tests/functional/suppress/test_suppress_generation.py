@@ -13,15 +13,13 @@ Test source-code level suppression data writing to suppress file.
 import logging
 import os
 import shlex
-import sys
 import subprocess
 from subprocess import CalledProcessError
 import unittest
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import ReviewStatus
 
-from libtest import env
-from libtest import codechecker
+from libtest import env, codechecker
 from libtest.thrift_client_to_db import get_all_run_results
 
 
@@ -70,6 +68,7 @@ class TestSuppress(unittest.TestCase):
                          'There should be only one run for this test.')
         self._runid = test_runs[0].runId
         self._run_name = test_runs[0].name
+        self._test_directory = os.path.dirname(os.path.realpath(__file__))
 
     def test_suppress_import(self):
         """
@@ -111,10 +110,13 @@ class TestSuppress(unittest.TestCase):
         logging.debug("Get all run results from the db for runid: " +
                       str(runid))
 
+        expected_file_path = os.path.join(self._test_directory,
+                                          "suppress.expected")
+
         hash_to_suppress_msgs = {}
-        with open(os.path.join(self._test_project_path, "suppress.expected"),
-                  'r', encoding="utf-8", errors="ignore") as expected:
-            for line in expected:
+        with open(expected_file_path, 'r', encoding="utf-8",
+                  errors="ignore") as expected_file:
+            for line in expected_file:
                 src_code_info = line.strip().split('||')
 
                 status = None
@@ -139,22 +141,30 @@ class TestSuppress(unittest.TestCase):
                                                    'status': rw_status}
 
         run_results = get_all_run_results(self._cc_client, runid)
+        logging.debug("Run results:")
+        [logging.debug(x) for x in run_results]
         self.assertIsNotNone(run_results)
         self.assertNotEqual(len(run_results), 0)
 
         for bug_hash in hash_to_suppress_msgs:
-            expected = hash_to_suppress_msgs[bug_hash]
-            report = [x for x in run_results if x.bugHash == bug_hash][0]
+            expected_data = hash_to_suppress_msgs[bug_hash]
+            report_data_of_bug = [
+                report_data for report_data in run_results
+                if report_data.bugHash == bug_hash]
+            self.assertEqual(len(report_data_of_bug), 1)
+            report_data = report_data_of_bug[0]
 
             # Check the stored suppress comment
-            self.assertEqual(report.reviewData.comment, expected['message'])
-            self.assertEqual(report.reviewData.status, expected['status'])
+            self.assertEqual(report_data.reviewData.comment,
+                             expected_data['message'])
+            self.assertEqual(report_data.reviewData.status,
+                             expected_data['status'])
 
             # Change review status to confirmed bug.
             review_comment = "This is really a bug"
             status = ReviewStatus.CONFIRMED
             success = self._cc_client.changeReviewStatus(
-                report.reportId, status, review_comment)
+                report_data.reportId, status, review_comment)
 
             self.assertTrue(success)
             logging.debug("Bug review status changed successfully")
@@ -165,11 +175,14 @@ class TestSuppress(unittest.TestCase):
         self.assertNotEqual(len(updated_results), 0)
 
         for bug_hash in hash_to_suppress_msgs:
-            report = [x for x in updated_results if x.bugHash == bug_hash][0]
+            report_data = [report_data for report_data in updated_results
+                           if report_data.bugHash == bug_hash][0]
 
             # Check the stored suppress comment
-            self.assertEqual(report.reviewData.comment, "This is really a bug")
-            self.assertEqual(report.reviewData.status, ReviewStatus.CONFIRMED)
+            self.assertEqual(report_data.reviewData.comment,
+                             "This is really a bug")
+            self.assertEqual(report_data.reviewData.status,
+                             ReviewStatus.CONFIRMED)
 
         # Check the same project again.
         codechecker_cfg = env.import_test_cfg(
@@ -180,8 +193,7 @@ class TestSuppress(unittest.TestCase):
         ret = codechecker.check_and_store(codechecker_cfg,
                                           initial_test_project_name,
                                           self._test_project_path)
-        if ret:
-            sys.exit(1)
+        self.assertEqual(0, ret, "Could not store test data to the server.")
 
         # Get the results to compare.
         updated_results = get_all_run_results(self._cc_client, self._runid)
@@ -189,10 +201,13 @@ class TestSuppress(unittest.TestCase):
         self.assertNotEqual(len(updated_results), 0)
 
         for bug_hash in hash_to_suppress_msgs:
-            expected = hash_to_suppress_msgs[bug_hash]
-            report = [x for x in updated_results if x.bugHash == bug_hash][0]
+            expected_data = hash_to_suppress_msgs[bug_hash]
+            report_data = [report_data for report_data in updated_results
+                           if report_data.bugHash == bug_hash][0]
 
             # Check that source code comments in the database are changed back
             # after storage.
-            self.assertEqual(report.reviewData.comment, expected['message'])
-            self.assertEqual(report.reviewData.status, expected['status'])
+            self.assertEqual(report_data.reviewData.comment,
+                             expected_data['message'])
+            self.assertEqual(report_data.reviewData.status,
+                             expected_data['status'])

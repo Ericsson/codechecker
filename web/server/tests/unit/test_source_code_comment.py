@@ -434,7 +434,7 @@ class SourceCodeCommentTestCase(unittest.TestCase):
             sc_handler.filter_source_line_comments(self.__tmp_srcfile_3,
                                                    bug_line,
                                                    'my.checker_1')
-        self.assertEqual(len(current_line_comments), 1)
+        self.assertEqual(len(current_line_comments), 2)
 
         self.assertEqual(current_line_comments[0]['message'],
                          expected[0]['message'])

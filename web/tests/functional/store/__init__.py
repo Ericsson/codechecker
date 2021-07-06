@@ -9,7 +9,6 @@
 """Setup for the package tests."""
 
 
-import multiprocessing
 import os
 import shutil
 
