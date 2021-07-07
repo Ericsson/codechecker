@@ -4,10 +4,11 @@
 
 build
 build_dist
-dist
 venv
 venv_dev
 Makefile.local
+
+/web/server/vue-cli/dist
 
 # tools
 tools/tu_collector/build

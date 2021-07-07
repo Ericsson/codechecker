@@ -58,13 +58,13 @@ build: clean target_dirs
 	rm -rf $(API_DIR)/gen-py/codechecker_api_shared && \
 	cd $(PY_API_SHARED_DIR)/.. && \
 	${PYTHON_BIN} setup.py sdist && \
-	mv dist/codechecker_api_shared-*.tar.gz dist/codechecker_api_shared.tar.gz
+	mv dist/codechecker_api_shared-*.tar.gz dist/codechecker_api_shared.tar.gz && \
 	rm -rf $(PY_API_SHARED_DIR)
 
 	cp -r $(API_DIR)/gen-py/* $(PY_API_DIR) && \
 	cd $(PY_API_DIR)/.. && \
 	${PYTHON_BIN} setup.py sdist && \
-	mv dist/codechecker_api-*.tar.gz dist/codechecker_api.tar.gz
+	mv dist/codechecker_api-*.tar.gz dist/codechecker_api.tar.gz && \
 	rm -rf $(PY_API_DIR)
 
 	rm -rf $(API_DIR)/gen-nodejs/
