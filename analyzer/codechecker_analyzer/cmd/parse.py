@@ -794,6 +794,13 @@ def main(args):
                                                  checker_name,
                                                  suppr_handler,
                                                  src_comment_status_filter)
+
+        if suppr_handler and source_code_comments:
+            suppr_handler.store_suppress_bug_id(
+                report_hash, os.path.basename(source_file),
+                source_code_comments[0]['message'],
+                source_code_comments[0]['status'])
+
         skip |= skip_handler(source_file)
 
         if not skip:
