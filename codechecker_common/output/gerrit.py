@@ -91,6 +91,8 @@ def __convert_reports(reports: List[Report],
         # Skip the report if it is not in the changed files.
         if changed_file_path and not \
                 any([file_name.endswith(c) for c in changed_files]):
+            LOG.debug("Skip report from '%s' file because this file has not "
+                      "changed.", file_name)
             continue
 
         report_count += 1
@@ -142,17 +144,19 @@ def __get_changed_files(changed_file_path: Union[None, str]) -> List[str]:
     changed_files = []
 
     if not changed_file_path or not os.path.exists(changed_file_path):
+        LOG.warning("CC_CHANGED_FILES is specified but the file (%s) doesn't "
+                    "exist.", changed_file_path)
         return changed_files
 
-    with open(changed_file_path,
-              encoding='utf-8',
-              errors='ignore') as changed_file:
-        content = changed_file.read()
+    with open(changed_file_path, encoding='utf-8', errors='ignore') as f:
+        content = f.read()
 
         # The file can contain some garbage values at start, so we use
         # regex search to find a json object.
         match = re.search(r'\{[\s\S]*\}', content)
         if not match:
+            LOG.debug("The content of the given changed file (%s) is invalid!",
+                      changed_file_path)
             return changed_files
 
         for filename in json.loads(match.group(0)):
@@ -160,5 +164,7 @@ def __get_changed_files(changed_file_path: Union[None, str]) -> List[str]:
                 continue
 
             changed_files.append(filename)
+
+    LOG.debug("Changed file paths: %s", changed_files)
 
     return changed_files
