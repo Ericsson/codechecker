@@ -198,7 +198,7 @@ clang -fsanitize=address -g lsan.c
 ASAN_OPTIONS=detect_leaks=1 ./a.out > lsan.output 2>&1
 
 # Generate plist files from the output.
-report-converter -t lsan ./lsan_results lsan.output
+report-converter -t lsan -o ./lsan_results lsan.output
 ```
 
 ## [Cppcheck](http://cppcheck.sourceforge.net/)
