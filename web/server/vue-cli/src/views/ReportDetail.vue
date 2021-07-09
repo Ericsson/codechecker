@@ -17,15 +17,17 @@
           outlined
           text
         >
-          The report (report ID: {{ $router.currentRoute.query["report-id"] }},
-          report hash: {{ $router.currentRoute.query["report-hash"] }},
-          file path: {{ $router.currentRoute.query["report-filepath"] }})
-          was removed from the database.
+          The report (
+          report ID: <i>{{ $router.currentRoute.query["report-id"] }}</i>,
+          report hash: <i>{{ $router.currentRoute.query["report-hash"] }}</i>,
+          file path:
+          <i>"{{ $router.currentRoute.query["report-filepath"] }}"</i>
+          ) was removed from the database.
 
           <span v-if="!$router.currentRoute.query['report-hash']">
-            Unfortunatelly your URL parameter was saved from and older version
-            of CodeChecker and it does not contain a <i>report-hash</i>
-            parameter to fallback the search for.
+            Unfortunately, your hyperlink was copied from an older version of
+            CodeChecker and the request does not contain the <i>report-hash</i>
+            parameter which could be used as a fallback mechanism.
           </span>
         </v-alert>
       </v-col>
