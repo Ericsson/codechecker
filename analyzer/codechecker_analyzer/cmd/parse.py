@@ -611,11 +611,12 @@ class TrimPathPrefixHandler:
         return util.trim_path_prefixes(source_file_path, self.__prefixes)
 
 
-def _parse_convert_reports(input_dirs: List[str],
-                           out_format: str,
-                           severity_map: Dict,
-                           trim_path_prefixes: List[str],
-                           skip_handler: Callable[[str], bool]) \
+def _parse_convert_reports(
+    input_dirs: List[str],
+    out_format: str,
+    severity_map: Dict,
+    trim_path_prefixes: List[str],
+    skip_handler: Callable[[str], bool]) \
         -> Tuple[Union[Dict, List], int]:
     """Parse and convert the reports from the input dirs to the out_format.
 
@@ -769,10 +770,9 @@ def main(args):
     trim_path_prefixes = args.trim_path_prefix if \
         'trim_path_prefix' in args else None
 
+    output_path = None
     if 'output_path' in args:
         output_path = os.path.abspath(args.output_path)
-    else:
-        output_path = None
 
     if export:
         # The HTML part will be handled separately below.

@@ -428,8 +428,10 @@ class AnalyzeParseTestCase(
 
         self.assertEqual(result_from_stdout, result_from_file)
 
-    def test_codeclimate_export_exit_code(self):
-        """ Test exporting codeclimate output into the filesystem. """
+    def test_codeclimate_export_exit_code_when_all_skipped(self):
+        """ Test exporting codeclimate output into the filesystem when all
+            bug are skipped.
+        """
         test_project_notes = os.path.join(self.test_workspaces['NORMAL'],
                                           "test_files", "notes")
         skip_file_path = os.path.join(self.test_dir, 'skipall.txt')
@@ -437,9 +439,68 @@ class AnalyzeParseTestCase(
                        test_project_notes, "--skip", skip_file_path,
                        '--trim-path-prefix', test_project_notes]
 
-        _, _, result = call_command(extract_cmd, cwd=self.test_dir,
-                                    env=self.env)
+        standard_output, _, result = call_command(
+            extract_cmd, cwd=self.test_dir, env=self.env)
         self.assertEqual(result, 0, "Parsing should not found any issue.")
+        self.assertEqual("[]\n", standard_output,
+                         "Result should be an empty json array.")
+
+    def test_gerrit_export_exit_code_when_all_skipped(self):
+        """ Test exporting gerrit output into the filesystem when all bug
+            are skipped.
+        """
+
+        env = self.env.copy()
+        report_url = "localhost:8080/index.html"
+        env["CC_REPORT_URL"] = report_url
+
+        changed_file_path = os.path.join(self.test_dir, 'files_changed')
+
+        with open(changed_file_path, 'w',
+                  encoding="utf-8", errors="ignore") as changed_file:
+            # Print some garbage value to the file.
+            changed_file.write(")]}'\n")
+
+            changed_files = {
+                "/COMMIT_MSG": {},
+                "macros.cpp": {}}
+            changed_file.write(json.dumps(changed_files))
+
+        env["CC_CHANGED_FILES"] = changed_file_path
+
+        test_project_macros = os.path.join(self.test_workspaces['NORMAL'],
+                                           "test_files", "macros")
+        env["CC_REPO_DIR"] = test_project_macros
+        skip_file_path = os.path.join(self.test_dir, 'skipall.txt')
+
+        extract_cmd = ['CodeChecker', 'parse', test_project_macros,
+                       '--export', 'gerrit', '--skip', skip_file_path]
+
+        print(" ".join(extract_cmd))
+        standard_output, _, result = call_command(
+            extract_cmd, cwd=self.test_dir, env=env)
+        os.remove(changed_file_path)
+        self.assertEqual(result, 0, "Parsing should not found any issue.")
+        self.assertIn(
+            "CodeChecker found 0 issue(s) in the code.", standard_output,
+            "Result should not found any issue.")
+
+    def test_json_export_exit_code_when_all_skipped(self):
+        """ Test exporting gerrit output into the filesystem when all bug
+            are skipped.
+        """
+        test_project_notes = os.path.join(self.test_workspaces['NORMAL'],
+                                          "test_files", "notes")
+        skip_file_path = os.path.join(self.test_dir, 'skipall.txt')
+        extract_cmd = ['CodeChecker', 'parse', "--export", "json",
+                       test_project_notes, "--skip", skip_file_path,
+                       '--trim-path-prefix', test_project_notes]
+
+        standard_output, _, result = call_command(
+            extract_cmd, cwd=self.test_dir, env=self.env)
+        self.assertEqual(result, 0, "Parsing should not found any issue.")
+        self.assertEqual("[]\n", standard_output,
+                         "Result should be an empty json array.")
 
     def test_parse_exit_code(self):
         """ Test exit code of parsing. """
