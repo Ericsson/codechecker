@@ -27,7 +27,7 @@ class TestReportToGerrit(unittest.TestCase):
         """Conversion without directory path just the source filename."""
 
         main = {
-            "location": {"file": 0, "line": 10, "col": 10},
+            "location": {"file": 0, "line": 3, "col": 3},
             "description": "some description",
             "check_name": "my_checker",
             "issue_hash_content_of_line_in_context": "dummy_hash",
@@ -35,7 +35,7 @@ class TestReportToGerrit(unittest.TestCase):
             "macro_expansions": [],
         }
         bugpath = {}
-        files = {0: "main.cpp"}
+        files = {0: "test_files/main.cpp"}
         metadata = {}
 
         report_to_convert = Report(main, bugpath, files, metadata)
@@ -46,16 +46,16 @@ class TestReportToGerrit(unittest.TestCase):
             "message": "CodeChecker found 1 issue(s) in the code.",
             "labels": {"Code-Review": -1, "Verified": -1},
             "comments": {
-                "main.cpp": [
+                "test_files/main.cpp": [
                     {
                         "range": {
-                            "start_line": 10,
-                            "start_character": 10,
-                            "end_line": 10,
-                            "end_character": 10,
+                            "start_line": 3,
+                            "start_character": 3,
+                            "end_line": 3,
+                            "end_character": 3,
                         },
-                        "message": "[LOW] main.cpp:10:10: "
-                        "some description [my_checker]\n10",
+                        "message": "[LOW] test_files/main.cpp:3:3: "
+                        "some description [my_checker]\n  sizeof(42);\n",
                     }
                 ]
             },
@@ -68,8 +68,8 @@ class TestReportToGerrit(unittest.TestCase):
         main = {
             "location": {
                 "file": 0,
-                "line": 10,
-                "col": 10,
+                "line": 3,
+                "col": 3,
             },
             "description": "some description",
             "check_name": "my_checker",
@@ -77,9 +77,12 @@ class TestReportToGerrit(unittest.TestCase):
             "notes": [],
             "macro_expansions": [],
         }
+
         bugpath = {}
-        files = {0: "/home/src/lib/main.cpp"}
         metadata = {}
+
+        file_path = os.path.abspath("test_files/main.cpp")
+        files = {0: file_path}
 
         report_to_convert = Report(main, bugpath, files, metadata)
 
@@ -89,16 +92,17 @@ class TestReportToGerrit(unittest.TestCase):
             "message": "CodeChecker found 1 issue(s) in the code.",
             "labels": {"Code-Review": -1, "Verified": -1},
             "comments": {
-                "/home/src/lib/main.cpp": [
+                file_path: [
                     {
                         "range": {
-                            "start_line": 10,
-                            "start_character": 10,
-                            "end_line": 10,
-                            "end_character": 10,
+                            "start_line": 3,
+                            "start_character": 3,
+                            "end_line": 3,
+                            "end_character": 3,
                         },
-                        "message": "[LOW] /home/src/lib/main.cpp:10:10: "
-                        "some description [my_checker]\n10",
+                        "message": "[LOW] {0}:3:3: some description "
+                                   "[my_checker]\n  sizeof(42);\n".format(
+                                       file_path),
                     }
                 ]
             },
@@ -111,8 +115,8 @@ class TestReportToGerrit(unittest.TestCase):
         main = {
             "location": {
                 "file": 0,
-                "line": 10,
-                "col": 10,
+                "line": 3,
+                "col": 3,
             },
             "description": "some description",
             "check_name": "my_checker",
@@ -121,11 +125,13 @@ class TestReportToGerrit(unittest.TestCase):
             "macro_expansions": [],
         }
         bugpath = {}
-        files = {0: "/home/src/lib/main.cpp"}
         metadata = {}
 
+        file_path = os.path.abspath("test_files/main.cpp")
+        files = {0: file_path}
+
         report_to_convert = Report(main, bugpath, files, metadata)
-        os.environ["CC_REPO_DIR"] = "/home/src/lib"
+        os.environ["CC_REPO_DIR"] = os.path.dirname(os.path.realpath(__file__))
 
         got = gerrit.convert([report_to_convert], self.severity_map)
         os.environ.pop("CC_REPO_DIR")
@@ -135,16 +141,18 @@ class TestReportToGerrit(unittest.TestCase):
             "message": "CodeChecker found 1 issue(s) in the code.",
             "labels": {"Code-Review": -1, "Verified": -1},
             "comments": {
-                "main.cpp": [
+                "test_files/main.cpp": [
                     {
                         "range": {
-                            "start_line": 10,
-                            "start_character": 10,
-                            "end_line": 10,
-                            "end_character": 10,
+                            "start_line": 3,
+                            "start_character": 3,
+                            "end_line": 3,
+                            "end_character": 3,
                         },
-                        "message": "[LOW] main.cpp:10:10: "
-                        "some description [my_checker]\n10",
+                        "message": "[LOW] test_files/main.cpp:3:3: "
+                                   "some description [my_checker]\n"
+                                   "  sizeof(42);\n".format(
+                                       file_path),
                     }
                 ]
             },
@@ -157,8 +165,8 @@ class TestReportToGerrit(unittest.TestCase):
         main = {
             "location": {
                 "file": 0,
-                "line": 10,
-                "col": 10,
+                "line": 3,
+                "col": 3,
             },
             "description": "some description",
             "check_name": "my_checker",
@@ -167,7 +175,7 @@ class TestReportToGerrit(unittest.TestCase):
             "macro_expansions": [],
         }
         bugpath = {}
-        files = {0: "/home/src/lib/main.cpp"}
+        files = {0: "test_files/main.cpp"}
         metadata = {}
 
         report_to_convert = Report(main, bugpath, files, metadata)
@@ -183,16 +191,16 @@ class TestReportToGerrit(unittest.TestCase):
             "See: 'localhost:8080/index.html'",
             "labels": {"Code-Review": -1, "Verified": -1},
             "comments": {
-                "/home/src/lib/main.cpp": [
+                "test_files/main.cpp": [
                     {
                         "range": {
-                            "start_line": 10,
-                            "start_character": 10,
-                            "end_line": 10,
-                            "end_character": 10,
+                            "start_line": 3,
+                            "start_character": 3,
+                            "end_line": 3,
+                            "end_character": 3,
                         },
-                        "message": "[LOW] /home/src/lib/main.cpp:10:10: "
-                        "some description [my_checker]\n10",
+                        "message": "[LOW] test_files/main.cpp:3:3: "
+                        "some description [my_checker]\n  sizeof(42);\n",
                     }
                 ]
             },
@@ -202,7 +210,7 @@ class TestReportToGerrit(unittest.TestCase):
     def test_report_to_gerrit_conversion_filter_changed_files(self):
         """Conversion report with changed files filter.
 
-        Reports from the other.cpp file should be not in the converted list.
+        Reports from the lib.cpp file should be not in the converted list.
         """
 
         reports_to_convert = []
@@ -214,8 +222,8 @@ class TestReportToGerrit(unittest.TestCase):
         main = {
             "location": {
                 "file": 0,
-                "line": 10,
-                "col": 10,
+                "line": 3,
+                "col": 3,
             },
             "description": "some description",
             "check_name": "my_checker",
@@ -223,7 +231,9 @@ class TestReportToGerrit(unittest.TestCase):
             "notes": [],
             "macro_expansions": [],
         }
-        files = {0: "/home/src/lib/main.cpp"}
+
+        main_file_path = os.path.abspath("test_files/main.cpp")
+        files = {0: main_file_path}
 
         main_report = Report(main, bugpath, files, metadata)
         reports_to_convert.append(main_report)
@@ -232,8 +242,8 @@ class TestReportToGerrit(unittest.TestCase):
         main = {
             "location": {
                 "file": 0,
-                "line": 10,
-                "col": 10,
+                "line": 3,
+                "col": 3,
             },
             "description": "some description",
             "check_name": "my_checker",
@@ -241,27 +251,12 @@ class TestReportToGerrit(unittest.TestCase):
             "notes": [],
             "macro_expansions": [],
         }
-        files = {0: "/home/src/lib/lib.cpp"}
+
+        lib_file_path = os.path.abspath("test_files/lib.cpp")
+        files = {0: lib_file_path}
 
         lib_report = Report(main, bugpath, files, metadata)
         reports_to_convert.append(lib_report)
-
-        main = {
-            "location": {
-                "file": 0,
-                "line": 10,
-                "col": 10,
-            },
-            "description": "some description",
-            "check_name": "my_checker",
-            "issue_hash_content_of_line_in_context": "dummy_hash",
-            "notes": [],
-            "macro_expansions": [],
-        }
-        files = {0: "/home/src/lib/other.cpp"}
-
-        other_report = Report(main, bugpath, files, metadata)
-        reports_to_convert.append(other_report)
 
         dummy_changed_files_content = {
             "/COMMIT_MSG": {
@@ -275,8 +270,7 @@ class TestReportToGerrit(unittest.TestCase):
                 "lines_deleted": 1,
                 "size_delta": 1,
                 "size": 100,
-            },
-            "lib.cpp": {"lines_inserted": 1, "size_delta": 1, "size": 100},
+            }
         }
         fd, changed_files_file = tempfile.mkstemp()
         os.write(fd, json.dumps(dummy_changed_files_content).encode("utf-8"))
@@ -293,12 +287,14 @@ class TestReportToGerrit(unittest.TestCase):
         review_comments = got["comments"]
 
         # Reports were found in two source files.
-        self.assertEquals(len(review_comments), 2)
+        self.assertEquals(len(review_comments), 1)
 
         # Two reports in the main.cpp file.
-        self.assertEquals(len(review_comments["/home/src/lib/main.cpp"]), 2)
+        self.assertEquals(len(review_comments[main_file_path]), 2)
 
-        self.assertEquals(
-            "CodeChecker found 3 issue(s) in the code.", got["message"]
-        )
-        self.assertNotIn("/home/src/lib/other.cpp", review_comments.keys())
+        self.assertIn(
+            "CodeChecker found 3 issue(s) in the code.", got["message"])
+        self.assertIn(
+            "following reports are introduced in files which are not changed",
+            got["message"])
+        self.assertIn(lib_file_path, got["message"])
