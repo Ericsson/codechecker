@@ -599,23 +599,11 @@ def parse_with_plt_formatter(plist_file: str,
     return changed_files
 
 
-class TrimPathPrefixHandler:
-    def __init__(self, prefixes: Optional[List[str]]):
-        self.__prefixes = prefixes
-
-    def __call__(self, source_file_path):
-        """
-        Callback to util.trim_path_prefixes to prevent module dependency
-        of plist_to_html
-        """
-        return util.trim_path_prefixes(source_file_path, self.__prefixes)
-
-
 def _parse_convert_reports(
     input_dirs: List[str],
     out_format: str,
     severity_map: Dict,
-    trim_path_prefixes: List[str],
+    trim_path_prefixes: Optional[List[str]],
     skip_handler: Callable[[str], bool]) \
         -> Tuple[Union[Dict, List], int]:
     """Parse and convert the reports from the input dirs to the out_format.
@@ -664,9 +652,40 @@ def _parse_convert_reports(
 
 
 def _generate_json_output(
-        severity_map: Dict, input_dirs: List[str], output_type: str,
-        output_path: str, trim_path_prefixes: Optional[List[str]],
-        skip_handler: Callable[[str], bool]) -> int:
+    severity_map: Dict,
+    input_dirs: List[str],
+    output_type: str,
+    output_path: Optional[str],
+    trim_path_prefixes: Optional[List[str]],
+    skip_handler: Callable[[str], bool]
+) -> int:
+    """
+    Generates JSON based appearance of analyzing and optionally saves it to
+    file.
+
+    This function only responsible for saving and returning data. The data
+    conversion performed by underlying utility function.
+
+    Parameters
+    ----------
+    severity_map : Dict
+        Binary format of a piece of configuration.
+    input_dirs : List[str]
+        Directories where the underlying analyzer processes have placed the
+        result of analyzing.
+    output_type : str
+        Specifies the type of output. It can be gerrit, json, codeclimate.
+    output_path : Optional[str]
+        Path of the output file. If it contains file name then generated output
+        will be written into.
+    trim_path_prefixes : Optional[List[str]]
+        A list of path fragments that will be trimmed from beginning of source
+        file names before file names will be written to the output.
+    skip_handler : Callable[[str], bool]
+        A callable that call with a file name and returns a bool that indicates
+        that the file should skip or not from the output.
+    """
+
     try:
         reports, number_of_reports = _parse_convert_reports(
             input_dirs, output_type, severity_map, trim_path_prefixes,
@@ -685,7 +704,7 @@ def _generate_json_output(
                 output_f.write(output_text)
 
         print(output_text)
-        sys.exit(2 if number_of_reports else 0)
+        return 2 if number_of_reports else 0
     except Exception as ex:
         LOG.error(ex)
         return 1
@@ -849,7 +868,7 @@ def main(args):
                               context.path_plist_to_html_dist,
                               skip_html_report_data_handler,
                               html_builder,
-                              TrimPathPrefixHandler(trim_path_prefixes))
+                              util.TrimPathPrefixHandler(trim_path_prefixes))
             continue
 
         files = []
