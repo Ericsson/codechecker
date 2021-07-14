@@ -13,8 +13,8 @@ Util module.
 import itertools
 import json
 import os
-
 import portalocker
+from typing import List
 
 from codechecker_common.logger import get_logger
 
@@ -124,7 +124,7 @@ def get_last_mod_time(file_path):
         return None
 
 
-def trim_path_prefixes(path, prefixes):
+def trim_path_prefixes(path: str, prefixes: List[str]) -> bool:
     """
     Removes the longest matching leading path from the file path.
     """
@@ -149,6 +149,21 @@ def trim_path_prefixes(path, prefixes):
         return path
 
     return path[len(longest_matching_prefix):]
+
+
+class TrimPathPrefixHandler:
+    """
+    Functor to remove the longest matching leading path from the file path.
+    """
+    def __init__(self, prefixes: List[str]):
+        self.__prefixes = prefixes
+
+    def __call__(self, source_file_path: str) -> str:
+        """
+        Callback to trim_path_prefixes to prevent module dependency
+        of plist_to_html.
+        """
+        return trim_path_prefixes(source_file_path, self.__prefixes)
 
 
 def chunks(iterator, n):
