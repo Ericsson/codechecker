@@ -78,6 +78,7 @@ def __convert_reports(reports: List[Report],
     review_comments = {}
 
     report_count = 0
+    report_messages_in_unchanged_files = []
     for report in reports:
         bug_line = report.line
         bug_col = report.col
@@ -86,16 +87,10 @@ def __convert_reports(reports: List[Report],
         severity = severity_map.get(check_name, "UNSPECIFIED")
         file_name = report.file_path
         check_msg = report.description
-        source_line = report.line
-
-        # Skip the report if it is not in the changed files.
-        if changed_file_path and not \
-                any([file_name.endswith(c) for c in changed_files]):
-            LOG.debug("Skip report from '%s' file because this file has not "
-                      "changed.", file_name)
-            continue
+        source_line = report.source_line
 
         report_count += 1
+
         # file_name can be without a path in the report.
         rel_file_path = os.path.relpath(file_name, repo_dir) \
             if repo_dir and os.path.dirname(file_name) != "" else file_name
@@ -103,11 +98,18 @@ def __convert_reports(reports: List[Report],
         checked_file = rel_file_path \
             + ':' + str(bug_line) + ":" + str(bug_col)
 
+        review_comment_msg = \
+            f"[{severity}] {checked_file}: {check_msg} [{check_name}]\n" \
+            f"{source_line}"
+
+        # Skip the report if it is not in the changed files.
+        if changed_file_path and not \
+                any([file_name.endswith(c) for c in changed_files]):
+            report_messages_in_unchanged_files.append(review_comment_msg)
+            continue
+
         if rel_file_path not in review_comments:
             review_comments[rel_file_path] = []
-
-        review_comment_msg = "[{0}] {1}: {2} [{3}]\n{4}".format(
-            severity, checked_file, check_msg, check_name, source_line)
 
         review_comments[rel_file_path].append({
             "range": {
@@ -117,8 +119,13 @@ def __convert_reports(reports: List[Report],
                 "end_character": bug_col},
             "message": review_comment_msg})
 
-    message = "CodeChecker found {0} issue(s) in the code.".format(
-        report_count)
+    message = f"CodeChecker found {report_count} issue(s) in the code."
+
+    if report_messages_in_unchanged_files:
+        message += ("\n\nThere following reports are introduced in files "
+                    "which are not changed and can't be shown as individual "
+                    "reports:\n{0}\n".format('\n'.join(
+                        report_messages_in_unchanged_files)))
 
     if report_url:
         message += " See: '{0}'".format(report_url)
@@ -144,19 +151,17 @@ def __get_changed_files(changed_file_path: Union[None, str]) -> List[str]:
     changed_files = []
 
     if not changed_file_path or not os.path.exists(changed_file_path):
-        LOG.warning("CC_CHANGED_FILES is specified but the file (%s) doesn't "
-                    "exist.", changed_file_path)
         return changed_files
 
-    with open(changed_file_path, encoding='utf-8', errors='ignore') as f:
-        content = f.read()
+    with open(changed_file_path,
+              encoding='utf-8',
+              errors='ignore') as changed_file:
+        content = changed_file.read()
 
         # The file can contain some garbage values at start, so we use
         # regex search to find a json object.
         match = re.search(r'\{[\s\S]*\}', content)
         if not match:
-            LOG.debug("The content of the given changed file (%s) is invalid!",
-                      changed_file_path)
             return changed_files
 
         for filename in json.loads(match.group(0)):
@@ -164,7 +169,5 @@ def __get_changed_files(changed_file_path: Union[None, str]) -> List[str]:
                 continue
 
             changed_files.append(filename)
-
-    LOG.debug("Changed file paths: %s", changed_files)
 
     return changed_files

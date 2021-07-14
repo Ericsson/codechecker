@@ -433,13 +433,14 @@ class LocalRemote(unittest.TestCase):
         lbls = review_data["labels"]
         self.assertEqual(lbls["Verified"], -1)
         self.assertEqual(lbls["Code-Review"], -1)
-        self.assertEqual(review_data["message"],
-                         "CodeChecker found 4 issue(s) in the code. "
-                         "See: '{0}'".format(report_url))
+        self.assertIn(
+            "CodeChecker found 25 issue(s) in the code.",
+            review_data["message"])
+        self.assertIn(f"See: '{report_url}'", review_data["message"])
         self.assertEqual(review_data["tag"], "jenkins")
 
         # Because the CC_CHANGED_FILES is set we will see reports only for
-        # the divide_zero.cpp function.
+        # the divide_zero.cpp function in the comments section.
         comments = review_data["comments"]
         self.assertEqual(len(comments), 1)
 
