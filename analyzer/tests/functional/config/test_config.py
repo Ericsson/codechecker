@@ -52,7 +52,7 @@ class TestConfig(unittest.TestCase):
             json.dump(build_log, outfile)
 
         # Test file contents
-        simple_file_content = "int main() { return 0; }"
+        simple_file_content = "int main() { return 1/0; }"
 
         # Write content to the test file
         with open(self.source_file, 'w',
@@ -203,4 +203,42 @@ class TestConfig(unittest.TestCase):
 
         out, returncode = self.__run_parse()
         print(out)
-        self.assertEqual(returncode, 0)
+        self.assertEqual(returncode, 2)
+
+    def test_check_config(self):
+        """
+        Run check command with a config file which enables the clangsa
+        analyzer only and parse the results with a parse command
+        config.
+        """
+        with open(self.config_file, 'w+',
+                  encoding="utf-8", errors="ignore") as config_f:
+            json.dump({
+                'analyzer': ['--analyzers', 'clangsa'],
+                'parse': ['--trim-path-prefix', '${HOME}']},
+                config_f)
+
+        check_cmd = [self._codechecker_cmd, "check",
+                     "-l", self.build_json,
+                     "-o", self.reports_dir,
+                     "--config", self.config_file]
+
+        # Run analyze.
+        process = subprocess.Popen(
+            check_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding="utf-8",
+            errors="ignore")
+        out, _ = process.communicate()
+
+        print(out)
+        self.assertEqual(process.returncode, 2)
+        self.assertIn("clangsa analyzed simple.cpp", out)
+        self.assertNotIn("clang-tidy analyzed simple.cpp", out)
+
+        self.assertNotIn(self.source_file, out)
+
+        trimmed_file_path = self.source_file.replace(
+            os.path.expanduser("~") + os.path.sep, "")
+        self.assertIn(trimmed_file_path, out)

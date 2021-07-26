@@ -22,7 +22,7 @@ from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.analyzers import analyzer_types
 from codechecker_analyzer.arg import OrderedCheckersAction
 
-from codechecker_common import arg, logger
+from codechecker_common import arg, cmd_config, logger
 from codechecker_common.source_code_comment_handler import REVIEW_STATUS_VALUES
 
 from codechecker_analyzer.cmd.analyze import \
@@ -706,6 +706,18 @@ output of "CodeChecker checkers --guideline" command.""")
                                   "analyzers which is experimental, take "
                                   "care when relying on it.")
 
+    output_opts.add_argument(
+        '--trim-path-prefix',
+        type=str,
+        nargs='*',
+        dest="trim_path_prefix",
+        required=False,
+        default=argparse.SUPPRESS,
+        help="Removes leading path from files which will be printed. So if "
+             "you have /a/b/c/x.cpp and /a/b/c/y.cpp then by removing "
+             "\"/a/b/\" prefix will print files like c/x.cpp and c/y.cpp. "
+             "If multiple prefix is given, the longest match will be removed.")
+
     parser.add_argument('--review-status',
                         nargs='*',
                         dest="review_status",
@@ -717,7 +729,8 @@ output of "CodeChecker checkers --guideline" command.""")
                             ', '.join(REVIEW_STATUS_VALUES)))
 
     logger.add_verbose_arguments(parser)
-    parser.set_defaults(func=main)
+    parser.set_defaults(
+        func=main, func_process_config_file=cmd_config.process_config_file)
 
 
 def main(args):
@@ -838,6 +851,7 @@ def main(args):
             input_format='plist'
         )
         __update_if_key_exists(args, parse_args, 'print_steps')
+        __update_if_key_exists(args, parse_args, 'trim_path_prefix')
         __update_if_key_exists(args, parse_args, 'review_status')
         __update_if_key_exists(args, parse_args, 'verbose')
         __update_if_key_exists(args, parse_args, 'skipfile')
