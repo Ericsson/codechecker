@@ -15,14 +15,12 @@
       "severity:HIGH"
     ],
     "alpha.core.CallAndMessageUnInitRefArg": [
+      "profile:extreme",
       "severity:HIGH"
     ],
     "alpha.core.CastSize": [
       "profile:sensitive",
       "profile:extreme",
-      "guideline:sei-cert",
-      "sei-cert:mem35-c",
-      "sei-cert:str38-c",
       "severity:LOW"
     ],
     "alpha.core.CastToStruct": [
@@ -34,9 +32,6 @@
       "profile:sensitive",
       "profile:security",
       "profile:extreme",
-      "guideline:sei-cert",
-      "sei-cert:flp36-c",
-      "sei-cert:int30-c",
       "severity:LOW"
     ],
     "alpha.core.DynamicTypeChecker": [
@@ -54,17 +49,11 @@
     "alpha.core.PointerArithm": [
       "profile:security",
       "profile:extreme",
-      "guideline:sei-cert",
-      "sei-cert:arr37-c",
-      "sei-cert:ctr56-cpp",
       "severity:LOW"
     ],
     "alpha.core.PointerSub": [
       "profile:security",
       "profile:extreme",
-      "guideline:sei-cert",
-      "sei-cert:arr36-c",
-      "sei-cert:ctr54-cpp",
       "severity:LOW"
     ],
     "alpha.core.PthreadLockBase": [
@@ -73,8 +62,6 @@
     "alpha.core.SizeofPtr": [
       "profile:sensitive",
       "profile:extreme",
-      "guideline:sei-cert",
-      "sei-cert:mem35-c",
       "severity:LOW"
     ],
     "alpha.core.StackAddressAsyncEscape": [
@@ -93,8 +80,6 @@
     "alpha.cplusplus.DeleteWithNonVirtualDtor": [
       "profile:sensitive",
       "profile:extreme",
-      "guideline:sei-cert",
-      "sei-cert:oop52-cpp",
       "severity:HIGH"
     ],
     "alpha.cplusplus.EnumCastOutOfRange": [
@@ -123,6 +108,8 @@
       "severity:MEDIUM"
     ],
     "alpha.cplusplus.PlacementNew": [
+      "profile:sensitive",
+      "profile:extreme",
       "severity:HIGH"
     ],
     "alpha.cplusplus.STLAlgorithmModeling": [
@@ -135,6 +122,8 @@
       "severity:HIGH"
     ],
     "alpha.cplusplus.UninitializedObject": [
+      "profile:sensitive",
+      "profile:extreme",
       "severity:MEDIUM"
     ],
     "alpha.deadcode.UnreachableCode": [
@@ -161,6 +150,7 @@
       "severity:LOW"
     ],
     "alpha.osx.cocoa.DirectIvarAssignmentForAnnotatedFunctions": [
+      "profile:extreme",
       "severity:LOW"
     ],
     "alpha.osx.cocoa.InstanceVariableInvalidation": [
@@ -181,11 +171,6 @@
     "alpha.security.ArrayBound": [
       "profile:security",
       "profile:extreme",
-      "guideline:sei-cert",
-      "sei-cert:arr37-c",
-      "sei-cert:dcl38-c",
-      "sei-cert:msc37-c",
-      "sei-cert:pos30-c",
       "severity:HIGH"
     ],
     "alpha.security.ArrayBoundV2": [
@@ -194,11 +179,8 @@
       "severity:HIGH"
     ],
     "alpha.security.MallocOverflow": [
-      "profile:sensitive",
       "profile:security",
       "profile:extreme",
-      "guideline:sei-cert",
-      "sei-cert:dcl38-c",
       "severity:HIGH"
     ],
     "alpha.security.MmapWriteExec": [
@@ -211,8 +193,6 @@
       "profile:sensitive",
       "profile:security",
       "profile:extreme",
-      "guideline:sei-cert",
-      "sei-cert:arr30-c",
       "severity:HIGH"
     ],
     "alpha.security.cert.pos.34c": [
@@ -223,15 +203,11 @@
       "profile:sensitive",
       "profile:security",
       "profile:extreme",
-      "guideline:sei-cert",
-      "sei-cert:env33-c",
       "severity:HIGH"
     ],
     "alpha.unix.BlockInCriticalSection": [
       "profile:sensitive",
       "profile:extreme",
-      "guideline:sei-cert",
-      "sei-cert:pos52-c",
       "severity:LOW"
     ],
     "alpha.unix.Chroot": [
@@ -244,8 +220,6 @@
       "profile:sensitive",
       "profile:security",
       "profile:extreme",
-      "guideline:sei-cert",
-      "sei-cert:pos51-c",
       "severity:HIGH"
     ],
     "alpha.unix.SimpleStream": [
@@ -260,15 +234,11 @@
       "profile:sensitive",
       "profile:security",
       "profile:extreme",
-      "guideline:sei-cert",
-      "sei-cert:fio42-c",
       "severity:MEDIUM"
     ],
     "alpha.unix.cstring.BufferOverlap": [
       "profile:security",
       "profile:extreme",
-      "guideline:sei-cert",
-      "sei-cert:exp43-c",
       "severity:HIGH"
     ],
     "alpha.unix.cstring.NotNullTerminated": [
@@ -280,10 +250,6 @@
       "profile:sensitive",
       "profile:security",
       "profile:extreme",
-      "guideline:sei-cert",
-      "sei-cert:arr38-c",
-      "sei-cert:arr39-c",
-      "sei-cert:exp36-c",
       "severity:HIGH"
     ],
     "alpha.webkit.UncountedCallArgsChecker": [
@@ -300,6 +266,10 @@
       "severity:LOW"
     ],
     "apiModeling.StdCLibraryFunctionArgs": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:portability",
+      "profile:extreme",
       "severity:LOW"
     ],
     "apiModeling.TrustNonnull": [
@@ -504,6 +474,8 @@
       "profile:sensitive",
       "profile:security",
       "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:mem54-cpp",
       "severity:HIGH"
     ],
     "cplusplus.PureVirtualCall": [
@@ -643,7 +615,6 @@
     "optin.cplusplus.VirtualCall": [
       "profile:default",
       "profile:sensitive",
-      "profile:security",
       "profile:extreme",
       "guideline:sei-cert",
       "sei-cert:oop50-cpp",
@@ -674,6 +645,7 @@
       "profile:default",
       "profile:sensitive",
       "profile:extreme",
+      "profile:portability",
       "guideline:sei-cert",
       "sei-cert:mem30-c",
       "severity:MEDIUM"
@@ -784,7 +756,7 @@
       "severity:MEDIUM"
     ],
     "security.insecureAPI.SecuritySyntaxChecker": [
-
+      "profile:extreme"
     ],
     "security.insecureAPI.UncheckedReturn": [
       "profile:default",
