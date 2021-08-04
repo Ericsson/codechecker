@@ -41,6 +41,7 @@ It invokes Clang Static Analyzer and Clang-Tidy tools to analyze your code.
       - [Alternative 2: Store each analysis in a new run](#storing-new-runs)
     - [Gerrit Integration](#gerrit-integration)
     - [Setting up user authentication](authentication)
+  - [Step 9: Integrate CodeChecker into your local workflow](#step-9)
   - [Updating CodeChecker to new version](#upgrade)
 - [Unique Report Identifier (RI)](#unique-report-identifier)
   - [Listing and Counting Reports](#listing-reports)
@@ -753,6 +754,24 @@ guide.
 ### Setting up user authentication <a name="authentication"></a>
 You can set up authentication for your server and (web,command line) clients
 as described in the [Authentication Guide](web/authentication.md).
+
+
+## Step 9: Integrate CodeChecker into your local workflow <a name="step-9"></a>
+If you want to use CodeChecker in your project but you don't want to run a
+CodeChecker server and to fix every reports found by CodeChecker on the first
+time (legacy findings) you can do the following steps:
+1. Analyze your project to a report directory (e.g.: `./reports`). For more
+information see [Step 2](#step-2).
+2. Create a baseline file from the reports which contains the legacy findings:
+`CodeChecker parse ./reports -e baseline -o .`. It is recommended to store
+this baseline file (`reports.baseline`) in your repository.
+3. On source code changes after your project is re-analyzed use the
+CodeChecker diff command to get the new reports:
+`CodeChecker cmd diff -b ./reports.baseline -n ./reports --new`
+4. On configuration changes (new checkers / options are enabled / disabled,
+new CodeChecker / clang version is used, etc.) re-generate the baseline file
+(step 1-2).
+
 
 ## Updating CodeChecker to new version <a name="upgrade"></a>
 If a new CodeChecker release is available it might be possible that there are

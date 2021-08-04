@@ -24,6 +24,8 @@ from libtest import env
 from libtest import project
 from libtest.codechecker import call_command
 
+from codechecker_common.output import baseline
+
 
 class AnalyzeParseTestCaseMeta(type):
     def __new__(mcs, name, bases, test_dict):
@@ -544,3 +546,47 @@ class AnalyzeParseTestCase(
         out, _, result = call_command(extract_cmd, cwd=self.test_dir,
                                       env=self.env)
         self.assertEqual(result, 0, "Parsing should not found any issue.")
+
+    def test_baseline_output(self):
+        """ Test parse baseline output. """
+        output_path = self.test_workspaces['OUTPUT']
+        out_file_path = os.path.join(output_path, "reports.baseline")
+
+        # Analyze the first project.
+        test_project_notes = os.path.join(
+            self.test_workspaces['NORMAL'], "test_files", "notes")
+
+        extract_cmd = ['CodeChecker', 'parse',
+                       "-e", "baseline",
+                       "-o", output_path,
+                       test_project_notes,
+                       '--trim-path-prefix', test_project_notes]
+
+        _, _, result = call_command(
+            extract_cmd, cwd=self.test_dir, env=self.env)
+        self.assertEqual(result, 2, "Parsing not found any issue.")
+
+        report_hashes = baseline.get_report_hashes([out_file_path])
+        self.assertEqual(
+            report_hashes, {'3d15184f38c5fa57e479b744fe3f5035'})
+
+        # Analyze the second project and see whether the baseline file is
+        # merged.
+        test_project_macros = os.path.join(
+            self.test_workspaces['NORMAL'], "test_files", "macros")
+
+        extract_cmd = ['CodeChecker', 'parse',
+                       "-e", "baseline",
+                       "-o", output_path,
+                       test_project_macros,
+                       '--trim-path-prefix', test_project_macros]
+
+        _, _, result = call_command(
+            extract_cmd, cwd=self.test_dir, env=self.env)
+        self.assertEqual(result, 2, "Parsing not found any issue.")
+
+        report_hashes = baseline.get_report_hashes([out_file_path])
+        self.assertEqual(
+            report_hashes, {
+                '3d15184f38c5fa57e479b744fe3f5035',
+                'f8fbc46cc5afbb056d92bd3d3d702781'})

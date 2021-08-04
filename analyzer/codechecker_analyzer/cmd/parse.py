@@ -26,7 +26,7 @@ from plist_to_html import PlistToHtml
 from codechecker_analyzer import analyzer_context, suppress_handler
 
 from codechecker_common import arg, logger, plist_parser, util, cmd_config
-from codechecker_common.output import json as out_json, twodim, \
+from codechecker_common.output import baseline, json as out_json, twodim, \
     codeclimate, gerrit
 from codechecker_common.skiplist_handler import SkipListHandler
 from codechecker_common.source_code_comment_handler import \
@@ -37,7 +37,7 @@ from codechecker_report_hash.hash import get_report_path_hash
 
 LOG = logger.get_logger('system')
 
-EXPORT_TYPES = ['html', 'json', 'codeclimate', 'gerrit']
+EXPORT_TYPES = ['html', 'json', 'codeclimate', 'gerrit', 'baseline']
 
 _data_files_dir_path = analyzer_context.get_context().data_files_dir_path
 _severity_map_file = os.path.join(_data_files_dir_path, 'config',
@@ -457,7 +457,11 @@ def add_arguments_to_parser(parser):
                                   "For more information see:\n"
                                   "https://github.com/codeclimate/platform/"
                                   "blob/master/spec/analyzers/SPEC.md"
-                                  "#data-types")
+                                  "#data-types\n"
+                                  "'baseline' output can be used to integrate "
+                                  "CodeChecker into your local workflow "
+                                  "without using a CodeChecker server. For "
+                                  "more information see our usage guide.")
 
     output_opts.add_argument('-o', '--output',
                              dest="output_path",
@@ -639,6 +643,9 @@ def _parse_convert_reports(
             report.trim_path_prefixes(trim_path_prefixes)
 
     number_of_reports = len(all_reports)
+    if out_format == "baseline":
+        return (baseline.convert(all_reports), number_of_reports)
+
     if out_format == "codeclimate":
         return (codeclimate.convert(all_reports, severity_map),
                 number_of_reports)
@@ -693,11 +700,6 @@ def _generate_json_output(
         output_text = json.dumps(reports)
 
         if output_path:
-            output_path = os.path.abspath(output_path)
-
-            if not os.path.exists(output_path):
-                os.mkdir(output_path)
-
             output_file_path = os.path.join(output_path, 'reports.json')
             with open(output_file_path, mode='w', encoding='utf-8',
                       errors="ignore") as output_f:
@@ -793,7 +795,20 @@ def main(args):
     if 'output_path' in args:
         output_path = os.path.abspath(args.output_path)
 
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
+
     if export:
+        if export == 'baseline':
+            report_hashes, number_of_reports = _parse_convert_reports(
+                args.input, export, context.severity_map, trim_path_prefixes,
+                skip_handler)
+
+            if output_path:
+                baseline.write(output_path, report_hashes)
+
+            sys.exit(2 if number_of_reports else 0)
+
         # The HTML part will be handled separately below.
         if export != 'html':
             sys.exit(_generate_json_output(

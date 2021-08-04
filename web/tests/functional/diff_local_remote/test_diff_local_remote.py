@@ -22,7 +22,7 @@ import subprocess
 import unittest
 
 from libtest import env
-from libtest.codechecker import get_diff_results
+from libtest.codechecker import create_baseline_file, get_diff_results
 
 
 class LocalRemote(unittest.TestCase):
@@ -559,3 +559,110 @@ class LocalRemote(unittest.TestCase):
             [self._run_names[0]], [self._remote_reports],
             '--resolved', 'json', ["--url", self._url])
         self.assertEqual(out, [])
+
+    def test_local_to_remote_with_baseline_file(self):
+        """
+        Get reports based on a baseline file given to the basename option.
+        """
+        baseline_file_path = create_baseline_file(self._local_reports)
+
+        # Get new reports.
+        new_results, _, returncode = get_diff_results(
+            [baseline_file_path], [self._run_names[0]], '--new', 'json',
+            ["--url", self._url])
+        print(new_results)
+
+        for report in new_results:
+            self.assertEqual(report['checkerId'], "core.NullDereference")
+
+        self.assertEqual(returncode, 2)
+
+        # Get unresolved reports.
+        unresolved_results, err, returncode = get_diff_results(
+            [baseline_file_path], [self._run_names[0]], '--unresolved', 'json',
+            ["--url", self._url])
+        print(unresolved_results)
+
+        self.assertTrue(unresolved_results)
+        self.assertFalse(any(
+            r for r in unresolved_results
+            if r['checkerId'] == 'core.CallAndMessage'))
+        self.assertEqual(returncode, 2)
+
+        # Get resolved reports.
+        resolved_results, err, returncode = get_diff_results(
+            [baseline_file_path], [self._run_names[0]], '--resolved', 'json',
+            ["--url", self._url])
+        print(resolved_results)
+
+        self.assertFalse(resolved_results)
+        self.assertEqual(returncode, 2)
+        self.assertIn(
+            "Couldn't get local reports for the following baseline report "
+            "hashes: ",
+            err)
+
+    def test_remote_to_local_with_baseline_file(self):
+        """
+        Get reports based on a baseline file given to the newname option.
+        """
+        baseline_file_path = create_baseline_file(self._local_reports)
+
+        # Get new reports.
+        res, _, _ = get_diff_results(
+            [self._run_names[0]], [self._local_reports],
+            '--new', 'json',
+            ["--url", self._url,
+             "--review-status", "unreviewed", "confirmed", "false_positive"])
+        new_hashes = sorted(set([n['bugHash'] for n in res]))
+
+        new_results, err, returncode = get_diff_results(
+            [self._run_names[0]], [baseline_file_path], '--new', 'json',
+            ["--url", self._url])
+        print(new_results)
+
+        self.assertFalse(new_results)
+        self.assertEqual(returncode, 2)
+        self.assertIn(
+            "Couldn't get local reports for the following baseline report "
+            "hashes: " + ', '.join(new_hashes),
+            err)
+
+        # Get unresolved reports.
+        res, _, _ = get_diff_results(
+            [self._run_names[0]], [self._local_reports],
+            '--unresolved', 'json',
+            ["--url", self._url,
+             "--review-status", "unreviewed", "confirmed", "false_positive"])
+        unresolved_hashes = sorted(set([n['bugHash'] for n in res]))
+
+        unresolved_results, err, returncode = get_diff_results(
+            [self._run_names[0]], [baseline_file_path],
+            '--unresolved', 'json',
+            ["--url", self._url])
+        print(unresolved_results)
+
+        self.assertFalse(unresolved_results)
+        self.assertEqual(returncode, 2)
+        self.assertIn(
+            "Couldn't get local reports for the following baseline report "
+            "hashes: " + ', '.join(unresolved_hashes),
+            err)
+
+        # Get resolved reports.
+        res, _, _ = get_diff_results(
+            [self._run_names[0]], [self._local_reports],
+            '--resolved', 'json',
+            ["--url", self._url,
+             "--review-status", "unreviewed", "confirmed", "false_positive"])
+        resolved_hashes = set([n['bugHash'] for n in res])
+
+        resolved_results, _, returncode = get_diff_results(
+            [self._run_names[0]], [baseline_file_path], '--resolved', 'json',
+            ["--url", self._url])
+        print(resolved_results)
+
+        self.assertTrue(resolved_results)
+        self.assertSetEqual(
+            {r['bugHash'] for r in resolved_results}, resolved_hashes)
+        self.assertEqual(returncode, 2)
