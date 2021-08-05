@@ -31,6 +31,7 @@ Table of Contents
         * [`PRODUCT_ADMIN`](#product-admin)
         * [`PRODUCT_ACCESS`](#product-access)
         * [`PRODUCT_STORE`](#product-store)
+        * [`PRODUCT_VIEW`](#product-view)
 
 # The master superuser (root) <a name="the-master-superuser"></a>
 
@@ -165,3 +166,11 @@ status, etc.
 
 Users need the `PRODUCT_STORE` permission to `store` analysis runs and to
 delete existing analysis runs from the server.
+
+### `PRODUCT_VIEW` <a name="product-view"></a>
+
+| Default |    Managed by   | Inherited from  |
+|---------|-----------------|-----------------|
+| Granted | `PRODUCT_ADMIN` | `PRODUCT_ADMIN`, `PRODUCT_STORE`, `PRODUCT_ACCESS` |
+
+Users need the `PRODUCT_VIEW` permission to `view` analysis runs without modifying any properties of the runs. 

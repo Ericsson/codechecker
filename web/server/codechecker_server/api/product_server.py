@@ -114,7 +114,7 @@ class ThriftProductHandler:
         args = {'config_db_session': session,
                 'productID': product.id}
         product_access = permissions.require_permission(
-            permissions.PRODUCT_ACCESS, args, self.__auth_session)
+            permissions.PRODUCT_VIEW, args, self.__auth_session)
         product_admin = permissions.require_permission(
             permissions.PRODUCT_ADMIN, args, self.__auth_session)
 

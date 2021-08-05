@@ -715,3 +715,10 @@ PRODUCT_ACCESS = _create_permission(ProductPermission, 'PRODUCT_ACCESS',
                                     inherited_from=[PRODUCT_ADMIN,
                                                     PRODUCT_STORE],
                                     managed_by=[PRODUCT_ADMIN])
+
+PRODUCT_VIEW = _create_permission(ProductPermission, 'PRODUCT_VIEW',
+                                  default_enable=False,
+                                  inherited_from=[PRODUCT_ACCESS,
+                                                  PRODUCT_ADMIN,
+                                                  PRODUCT_STORE],
+                                  managed_by=[PRODUCT_ADMIN])
