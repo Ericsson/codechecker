@@ -2,7 +2,7 @@
 
 CodeChecker is developed in rolling release model so it is important to update
 the database schema in a backward compatible way. This is achieved using the
-[Alembic](http://alembic.readthedocs.org/en/latest/index.html) database
+[Alembic](https://alembic.sqlalchemy.org/en/latest/index.html) database
 migration tool.
 
 CodeChecker uses [SQLAlchemy](http://www.sqlalchemy.org/) for database
@@ -12,7 +12,7 @@ for syntax and semantics.
 Alembic can compare the table metadata against the status of a database and
 based on this comparison it generates the migration script. Even though this
 method has it's [limitations](
-http://alembic.readthedocs.org/en/latest/autogenerate.html#what-does-autogenerate-detect-and-what-does-it-not-detect)
+https://alembic.sqlalchemy.org/en/latest/autogenerate.html#what-does-autogenerate-detect-and-what-does-it-not-detect)
 , in most cases it works well.
 
 # Updating configuration database schema
@@ -34,7 +34,7 @@ The configuration database schema file can be found here:
 
 Database connection should point to the correct database.
 Edit the sqlalchemy.url option in [alembic.ini](
-   http://alembic.readthedocs.org/en/latest/tutorial.html#editing-the-ini-file)
+   https://alembic.sqlalchemy.org/en/latest/tutorial.html#editing-the-ini-file)
    according to your database configuration.
 
 ### **Step 3**: Use alembic to autogenerate migration scripts
@@ -72,7 +72,7 @@ The run database schema file can be found here:
 
 Database connection should point to the correct database.
 Edit the sqlalchemy.url option in [alembic.ini](
-   http://alembic.readthedocs.org/en/latest/tutorial.html#editing-the-ini-file)
+   https://alembic.sqlalchemy.org/en/latest/tutorial.html#editing-the-ini-file)
    according to your database configuration.
 
 #### **Step 2**: Generating migration scripts using autogenerate
@@ -209,10 +209,10 @@ If you want to do the migration without user interaction you can use the
 
 # Further reading
 
-You should also read the [Alembic tutorial](http://alembic.readthedocs.org/en/latest/tutorial.html#create-a-migration-script)
-and the [Operation Reference](http://alembic.readthedocs.org/en/latest/ops.html)
+You should also read the [Alembic tutorial](https://alembic.sqlalchemy.org/en/latest/tutorial.html#create-a-migration-script)
+and the [Operation Reference](https://alembic.sqlalchemy.org/en/latest/ops.html)
 for details.
 
-- [Auto Generating Migrations](http://alembic.readthedocs.org/en/latest/autogenerate.html)
-- [Alembic tutorial](http://alembic.readthedocs.org/en/latest/tutorial.html)
-- [Alembic Operation Reference](http://alembic.readthedocs.org/en/latest/ops.html)
+- [Auto Generating Migrations](https://alembic.sqlalchemy.org/en/latest/autogenerate.html)
+- [Alembic tutorial](https://alembic.sqlalchemy.org/en/latest/tutorial.html)
+- [Alembic Operation Reference](https://alembic.sqlalchemy.org/en/latest/ops.html)
