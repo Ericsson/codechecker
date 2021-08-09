@@ -69,7 +69,7 @@ def filter_local_file_remote_run(
     for r in run_args:
         if os.path.isdir(r):
             local_dirs.append(os.path.abspath(r))
-        elif os.path.isfile(r) and r.endswith(".baseline"):
+        elif os.path.isfile(r) and baseline.check(r):
             baseline_files.append(os.path.abspath(r))
         else:
             run_names.append(r)

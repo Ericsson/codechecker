@@ -8,7 +8,6 @@
 """ CodeChecker baseline output helpers. """
 
 from io import TextIOWrapper
-import os
 from typing import Iterable, List, Set
 
 from codechecker_common import logger
@@ -20,7 +19,12 @@ LOG = logger.get_logger('system')
 
 def __get_report_hashes(f: TextIOWrapper) -> List[str]:
     """ Get report hashes from the given file. """
-    return [h for h in f.readlines() if h]
+    return [h.strip() for h in f.readlines() if h]
+
+
+def check(file_path: str) -> bool:
+    """ True if the given file path is a baseline file. """
+    return file_path.endswith('.baseline')
 
 
 def get_report_hashes(
@@ -43,12 +47,11 @@ def convert(reports: Iterable[Report]) -> List[str]:
     return sorted(set(r.report_hash for r in reports))
 
 
-def write(output_dir_path: str, report_hashes: Iterable[str]):
+def write(file_path: str, report_hashes: Iterable[str]):
     """ Create a new baseline file or extend an existing one with the given
     report hashes in the given output directory. It will remove the duplicates
     and also sort the report hashes before writing it to a file.
     """
-    file_path = os.path.join(output_dir_path, 'reports.baseline')
     with open(file_path, mode='a+', encoding='utf-8', errors="ignore") as f:
         f.seek(0)
         old_report_hashes = __get_report_hashes(f)

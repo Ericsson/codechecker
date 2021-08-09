@@ -1655,7 +1655,8 @@ export arguments:
                         server. For more information see our usage guide.
                         (default: None)
   -o OUTPUT_PATH, --output OUTPUT_PATH
-                        Store the output in the given folder.
+                        Store the output in the given file/folder. Note:
+                        baseline files must have extension '.baseline'.
 
 Environment variables
 ------------------------------------------------

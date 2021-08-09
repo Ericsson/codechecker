@@ -758,15 +758,16 @@ as described in the [Authentication Guide](web/authentication.md).
 
 ## Step 9: Integrate CodeChecker into your local workflow <a name="step-9"></a>
 If you want to use CodeChecker in your project but you don't want to run a
-CodeChecker server and to fix every reports found by CodeChecker on the first
-time (legacy findings) you can do the following steps:
+CodeChecker server and to fix every reports found by CodeChecker for the first
+time (legacy findings) you can follow these steps:
 1. Analyze your project to a report directory (e.g.: `./reports`). For more
 information see [Step 2](#step-2).
 2. Create a baseline file from the reports which contains the legacy findings:
-`CodeChecker parse ./reports -e baseline -o .`. It is recommended to store
-this baseline file (`reports.baseline`) in your repository.
+`CodeChecker parse ./reports -e baseline -o reports.baseline`. It is
+recommended to store this baseline file (`reports.baseline`) in your
+repository.
 3. On source code changes after your project is re-analyzed use the
-CodeChecker diff command to get the new reports:
+`CodeChecker diff` command to get the new reports:
 `CodeChecker cmd diff -b ./reports.baseline -n ./reports --new`
 4. On configuration changes (new checkers / options are enabled / disabled,
 new CodeChecker / clang version is used, etc.) re-generate the baseline file
