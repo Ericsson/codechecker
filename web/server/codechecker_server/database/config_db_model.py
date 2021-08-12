@@ -46,8 +46,11 @@ class Product(Base):
     is_review_status_change_disabled = Column(Boolean,
                                               server_default=false())
 
+    confidentiality = Column(String, nullable=True)
+
     def __init__(self, endpoint, conn_str, name=None, description=None,
-                 run_limit=None, is_review_status_change_disabled=False):
+                 run_limit=None, is_review_status_change_disabled=False,
+                 confidentiality=None):
         self.endpoint = endpoint
         self.connection = conn_str
         self.display_name = name if name else endpoint
@@ -55,6 +58,7 @@ class Product(Base):
         self.run_limit = run_limit
         self.is_review_status_change_disabled = \
             True if is_review_status_change_disabled else False
+        self.confidentiality = confidentiality
 
 
 def __get_permission_names(scope=None):

@@ -110,6 +110,25 @@ const commands = {
     if (props.runLimit !== undefined)
       section.clearAndSetValue("@runLimit", props.runLimit, section);
 
+    if (props.confidentiality !== undefined) {
+      section.click("@confidentiality");
+      var idx;
+      switch(props.confidentiality) {
+        case "Confidential classified":
+          idx = 0;
+          break;
+        case "Internal classified":
+          idx = 1;
+          break;
+        case "Open classified":
+          idx = 2;
+          break;
+        default:
+          idx = 0;
+      }
+        this.section.selectConfidentialityMenu.click({ selector: "@item", index: idx });
+    }
+
     if (props.disableReviewStatusChange !== undefined) {
       section.click("@disableReviewStatusChange");
 
@@ -244,6 +263,7 @@ module.exports = {
         description: "textarea[name='description']",
         runLimit: "input[name='run-limit']",
         disableReviewStatusChange: ".v-input--checkbox",
+        confidentiality: ".v-select__selection",
         sqlite: ".v-radio:nth-child(1)",
         postgresql: ".v-radio:nth-child(2)",
         dbFile: "input[name='db-file']",
@@ -262,6 +282,12 @@ module.exports = {
       elements: {
         cancelBtn: ".cancel-btn",
         confirmBtn: ".confirm-btn"
+      }
+    },
+    selectConfidentialityMenu: {
+      selector: ".menuable__content__active",
+      elements: {
+        item: ".v-list-item"
       }
     }
   }

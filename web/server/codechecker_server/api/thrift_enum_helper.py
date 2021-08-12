@@ -11,7 +11,8 @@ Thrift enum helper.
 
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import DetectionStatus, \
-    ReviewStatus, ExtendedReportDataType
+        ExtendedReportDataType, ReviewStatus
+from codechecker_api.ProductManagement_v6.ttypes import Confidentiality
 
 
 def detection_status_enum(status):
@@ -42,6 +43,30 @@ def detection_status_str(status):
         return 'off'
     elif status == DetectionStatus.UNAVAILABLE:
         return 'unavailable'
+
+
+def confidentiality_enum(confidentiality: str) -> Confidentiality:
+    """
+    Converts the given string to confidentiality Thrift enum value.
+    """
+    if confidentiality == 'CONFIDENTIAL':
+        return Confidentiality.CONFIDENTIAL
+    elif confidentiality == 'INTERNAL':
+        return Confidentiality.INTERNAL
+    elif confidentiality == 'OPEN':
+        return Confidentiality.OPEN
+
+
+def confidentiality_str(confidentiality: Confidentiality) -> str:
+    """
+    Converts the given confidentiality to string.
+    """
+    if confidentiality == Confidentiality.CONFIDENTIAL:
+        return 'CONFIDENTIAL'
+    elif confidentiality == Confidentiality.INTERNAL:
+        return 'INTERNAL'
+    elif confidentiality == Confidentiality.OPEN:
+        return 'OPEN'
 
 
 def review_status_str(status):

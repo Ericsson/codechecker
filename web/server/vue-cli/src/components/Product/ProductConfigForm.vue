@@ -39,6 +39,30 @@
       @input="productConfig.runLimit = $event || null"
     />
 
+    <v-row
+      class="ma-0"
+    >
+      <v-select
+        v-model="confidentialityString"
+        label="Information Classification"
+        class="select-confidentiality"
+        prepend-icon="mdi-file-eye-outline"
+        name="confidentiality"
+        :items="confidentialityItems"
+      >
+        <template v-slot:selection="{ item }">
+          <select-confidentiality-item :value="item" />
+        </template>
+        <template v-slot:item="{ item }">
+          <select-confidentiality-item :value="item" />
+        </template>
+      </v-select>
+
+      <tooltip-help-icon>
+        Classification and handling of source code confidentiality.
+      </tooltip-help-icon>
+    </v-row>
+
     <v-checkbox
       v-model="productConfig.isReviewStatusChangeDisabled"
       label="Disable review status change"
@@ -130,8 +154,17 @@
 </template>
 
 <script>
+import TooltipHelpIcon from "@/components/TooltipHelpIcon";
+import SelectConfidentialityItem from "./SelectConfidentialityItem.vue";
+import { ConfidentialityMixin } from "@/mixins";
+import { Confidentiality } from "@cc/prod-types";
+
 export default {
   name: "EditProduct",
+  components: {
+    TooltipHelpIcon, SelectConfidentialityItem
+  },
+  mixins: [ ConfidentialityMixin ],
   props: {
     productConfig: { type: Object, required: true },
     isValid: { type: Boolean, default: false },
@@ -169,6 +202,22 @@ export default {
   },
 
   computed: {
+    confidentialityItems() {
+      return this.confidentialities();
+    },
+
+    confidentialityString: {
+      get() {
+        return this.confidentialityFromCodeToString(
+          this.productConfig.confidentiality
+        );
+      },
+      set(value) {
+        this.productConfig.confidentiality =
+          this.confidentialityFromStringToCode(value);
+      }
+    },
+
     valid: {
       get() {
         return this.isValid;
@@ -228,9 +277,14 @@ export default {
         this.productConfig.displayedName_b64 =
           value.length ? window.btoa(value) : null;
       }
-    }
+    },
   },
 
+  created () {
+    if (!this.productConfig.confidentiality) {
+      this.productConfig.confidentiality = Confidentiality.CONFIDENTIAL;
+    }
+  },
   methods: {
     validate() {
       return this.$refs.form.validate();

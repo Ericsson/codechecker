@@ -28,6 +28,9 @@ from ..database.config_db_model import IDENTIFIER, Product, ProductPermission
 from ..database.database import DBSession, SQLServer, conv, escape_like
 from ..routing import is_valid_product_endpoint
 
+from .thrift_enum_helper import confidentiality_enum, \
+        confidentiality_str
+
 LOG = get_logger('server')
 
 
@@ -110,6 +113,12 @@ class ThriftProductHandler:
         latest_storage_date = str(product.latest_storage_date) \
             if product.latest_storage_date else None
 
+        if product.confidentiality is None:
+            confidentiality = ttypes.Confidentiality.CONFIDENTIAL
+        else:
+            confidentiality = \
+                    confidentiality_enum(product.confidentiality)
+
         return server_product, ttypes.Product(
             id=product.id,
             endpoint=product.endpoint,
@@ -121,7 +130,8 @@ class ThriftProductHandler:
             accessible=product_access,
             administrating=product_admin,
             databaseStatus=server_product.db_status,
-            admins=[admin.name for admin in admins])
+            admins=[admin.name for admin in admins],
+            confidentiality=confidentiality)
 
     @timeit
     def getPackageVersion(self):
@@ -262,6 +272,12 @@ class ThriftProductHandler:
             is_review_status_change_disabled = \
                 product.is_review_status_change_disabled
 
+            if product.confidentiality is None:
+                confidentiality = ttypes.Confidentiality.CONFIDENTIAL
+            else:
+                confidentiality = \
+                        confidentiality_enum(product.confidentiality)
+
             prod = ttypes.ProductConfiguration(
                 id=product.id,
                 endpoint=product.endpoint,
@@ -269,7 +285,8 @@ class ThriftProductHandler:
                 description_b64=descr,
                 connection=dbc,
                 runLimit=product.run_limit,
-                isReviewStatusChangeDisabled=is_review_status_change_disabled)
+                isReviewStatusChangeDisabled=is_review_status_change_disabled,
+                confidentiality=confidentiality)
 
             return prod
 
@@ -350,6 +367,8 @@ class ThriftProductHandler:
 
         is_rws_change_disabled = product.isReviewStatusChangeDisabled
 
+        confidentiality = confidentiality_str(product.confidentiality)
+
         # Create the product's entity in the database.
         with DBSession(self.__session) as session:
             orm_prod = Product(
@@ -358,7 +377,8 @@ class ThriftProductHandler:
                 name=displayed_name,
                 description=description,
                 run_limit=product.runLimit,
-                is_review_status_change_disabled=is_rws_change_disabled)
+                is_review_status_change_disabled=is_rws_change_disabled,
+                confidentiality=confidentiality)
 
             LOG.debug("Attempting database connection to new product...")
 
@@ -454,6 +474,8 @@ class ThriftProductHandler:
                 else new_config.endpoint
             description = convert.from_b64(new_config.description_b64) \
                 if new_config.description_b64 else None
+
+            confidentiality = confidentiality_str(new_config.confidentiality)
 
             if dbc.engine == 'sqlite' and not os.path.isabs(dbc.database):
                 # Transform the database relative path to be under the
@@ -555,6 +577,7 @@ class ThriftProductHandler:
             product.connection = conn_str
             product.display_name = displayed_name
             product.description = description
+            product.confidentiality = confidentiality
 
             session.commit()
             LOG.info("Product configuration edited and saved successfully.")

@@ -20,6 +20,7 @@ from codechecker_api_shared.ttypes import RequestFailed
 from codechecker_api_shared.ttypes import DBStatus
 from codechecker_api.ProductManagement_v6.ttypes import ProductConfiguration
 from codechecker_api.ProductManagement_v6.ttypes import DatabaseConnection
+from codechecker_api.ProductManagement_v6.ttypes import Confidentiality
 
 from codechecker_web.shared import convert
 
@@ -168,6 +169,11 @@ class TestProducts(unittest.TestCase):
                          os.path.basename(self.test_workspace),
                          "The displayed name must == the default value, as "
                          "we didn't specify a custom displayed name.")
+        confidentiality = pr_conf.confidentiality
+
+        self.assertEqual(confidentiality,
+                         Confidentiality.CONFIDENTIAL,
+                         "Default Confidentiality was not Confidential")
 
     def test_editing(self):
         """
@@ -205,6 +211,48 @@ class TestProducts(unittest.TestCase):
         config = self._pr_client.getProductConfiguration(product_id)
         self.assertEqual(config.displayedName_b64, old_name,
                          "The product edit didn't change the name back.")
+
+        # Change confidentiality.
+        old_confidentiality = config.confidentiality
+        new_confidentiality = Confidentiality.OPEN
+        config.confidentiality = new_confidentiality
+        self.assertTrue(self._root_client.editProduct(product_id, config),
+                        "Product edit didn't conclude.")
+
+        config = self._pr_client.getProductConfiguration(product_id)
+        self.assertEqual(config.confidentiality,
+                         new_confidentiality,
+                         "Couldn't change the confidentiality to OPEN")
+
+        new_confidentiality = Confidentiality.INTERNAL
+        config.confidentiality = new_confidentiality
+        self.assertTrue(self._root_client.editProduct(product_id, config),
+                        "Product edit didn't conclude.")
+
+        config = self._pr_client.getProductConfiguration(product_id)
+        self.assertEqual(config.confidentiality,
+                         new_confidentiality,
+                         "Couldn't change the confidentiality to INTERNAL")
+
+        new_confidentiality = Confidentiality.CONFIDENTIAL
+        config.confidentiality = new_confidentiality
+        self.assertTrue(self._root_client.editProduct(product_id, config),
+                        "Product edit didn't conclude.")
+
+        config = self._pr_client.getProductConfiguration(product_id)
+        self.assertEqual(config.confidentiality,
+                         new_confidentiality,
+                         "Couldn't change the confidentiality to CONFIDENTIAL")
+
+        config.confidentiality = old_confidentiality
+
+        self.assertTrue(self._root_client.editProduct(product_id, config),
+                        "Product config restore didn't conclude.")
+
+        config = self._pr_client.getProductConfiguration(product_id)
+        self.assertEqual(config.confidentiality,
+                         old_confidentiality,
+                         "The edit didn't change back the confidentiality.")
 
     @unittest.skip("Enable this when local product caches is removed!")
     def test_editing_reconnect(self):
