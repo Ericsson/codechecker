@@ -205,7 +205,19 @@ Useful tools that can also be used outside CodeChecker.
 
 # Install guide
 
-## Installing CodeChecker via Snap package manager
+## Install CodeChecker via `pip`
+CodeChecker is available on the [pypi](https://pypi.org/project/codechecker/)
+and can be installed with the following command:
+```sh
+pip3 install codechecker
+```
+
+**Note:** this package can be installed on `Linux`, `OSX` and `Windows`
+systems where `pip3` command is available. On `OSX`, `intercept-build` must be
+installed for logging (`CodeChecker log`). On `Windows`, logging is not
+available.
+
+## Installing CodeChecker via `Snap package manager`
 CodeChecker is available on the [Snap Store](https://snapcraft.io/codechecker)
 and can be installed with the following command:
 ```sh

@@ -54,16 +54,27 @@ def get_data_files_dir_path():
     if bin_dir:
         return os.path.dirname(bin_dir)
 
-    # If it's not an internal package (pypi package), try to find the data
-    # directory.
+    # If this is a pip-installed package, try to find the data directory.
     import sysconfig
-    data_dir_paths = set(sysconfig.get_path("data", s)
-                         for s in sysconfig.get_scheme_names())
+    data_dir_paths = [
+        # Try to find the data directory beside the lib directory.
+        # /usr/local/lib/python3.8/dist-packages/codechecker_common/cli.py
+        # (this file) -> /usr/local
+        os.path.abspath(os.path.join(__file__, *[os.path.pardir] * 5)),
+
+        # Automatically try to find data directory if it can be found in
+        # standard locations.
+        *set(sysconfig.get_path("data", s)
+             for s in sysconfig.get_scheme_names())]
 
     for dir_path in data_dir_paths:
         data_dir_path = os.path.join(dir_path, 'share', 'codechecker')
         if os.path.exists(data_dir_path):
             return data_dir_path
+
+    print("Failed to get CodeChecker data files directory path in: ",
+          data_dir_paths)
+    sys.exit(1)
 
 
 def main():
