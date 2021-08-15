@@ -17,6 +17,7 @@ import collections
 import platform
 import subprocess
 import sys
+import shutil
 
 from codechecker_common.logger import get_logger
 
@@ -46,7 +47,7 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
 
     def __init__(self):
 
-        self.analyzer_binary = None
+        self._analyzer_binary = None
         self.analyzer_plugins_dir = None
         self.analyzer_extra_arguments = []
         self.checker_config = ''
@@ -62,6 +63,14 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
     def analyzer_plugins(self):
         """ Full path of the analyzer plugins. """
         return []
+
+    @property
+    def analyzer_binary(self):
+        return self._analyzer_binary
+
+    @analyzer_binary.setter
+    def analyzer_binary(self, executable_path):
+        self._analyzer_binary = shutil.which(executable_path)
 
     def get_version(self, env=None):
         """ Get analyzer version information. """

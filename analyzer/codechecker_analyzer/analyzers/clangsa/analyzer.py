@@ -254,9 +254,10 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                      'experimental-enable-naive-ctu-analysis=true',
                      '-Xclang', '-analyzer-config', '-Xclang',
                      'ctu-dir=' + self.get_ctu_dir()])
-                ctu_display_progress = config.ctu_capability.display_progress
-                if ctu_display_progress:
-                    analyzer_cmd.extend(ctu_display_progress)
+                ctu_display_progress_options = \
+                    config.ctu_capability.display_progress_options
+                if ctu_display_progress_options:
+                    analyzer_cmd.extend(ctu_display_progress_options)
 
                 if config.ctu_on_demand:
                     invocation_list_path = \
