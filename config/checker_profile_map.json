@@ -176,7 +176,8 @@
         "performance-move",
         "performance-no-automatic-move",
         "performance-noexcept",
-        "performance-trivially-destructible"
+        "performance-trivially-destructible",
+        "readability-suspicious-call-argument"
      ],
       "sensitive": [
         "boost",

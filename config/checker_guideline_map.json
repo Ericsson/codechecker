@@ -2,7 +2,7 @@
   "guidelines": {
     "sei-cert": "https://wiki.sei.cmu.edu/confluence/display/seccode"
   },
-  "mapping": {    
+  "mapping": {
     "bugprone-assert-side-effect": {
       "sei-cert": ["pre31-c"]
     },
