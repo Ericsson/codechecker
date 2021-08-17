@@ -24,6 +24,8 @@ from libtest import env
 from libtest import project
 from libtest.codechecker import call_command
 
+from codechecker_common.output import baseline
+
 
 class AnalyzeParseTestCaseMeta(type):
     def __new__(mcs, name, bases, test_dict):
@@ -412,16 +414,16 @@ class AnalyzeParseTestCase(
         """ Test exporting codeclimate output. """
         test_project_notes = os.path.join(self.test_workspaces['NORMAL'],
                                           "test_files", "notes")
-        output_path = self.test_workspaces['OUTPUT']
+        output_file_path = os.path.join(
+            self.test_workspaces['OUTPUT'], 'reports.json')
         extract_cmd = ['CodeChecker', 'parse', "--export", "codeclimate",
-                       test_project_notes, "--output", output_path,
+                       test_project_notes, "--output", output_file_path,
                        '--trim-path-prefix', test_project_notes]
 
         out, _, result = call_command(extract_cmd, cwd=self.test_dir,
                                       env=self.env)
         self.assertEqual(result, 2, "Parsing not found any issue.")
         result_from_stdout = json.loads(out)
-        output_file_path = os.path.join(output_path, "reports.json")
         with open(output_file_path, 'r', encoding='utf-8', errors='ignore') \
                 as handle:
             result_from_file = json.load(handle)
@@ -544,3 +546,98 @@ class AnalyzeParseTestCase(
         out, _, result = call_command(extract_cmd, cwd=self.test_dir,
                                       env=self.env)
         self.assertEqual(result, 0, "Parsing should not found any issue.")
+
+    def test_baseline_output(self):
+        """ Test parse baseline output. """
+        output_path = self.test_workspaces['OUTPUT']
+        out_file_path = os.path.join(output_path, "reports.baseline")
+
+        # Analyze the first project.
+        test_project_notes = os.path.join(
+            self.test_workspaces['NORMAL'], "test_files", "notes")
+
+        extract_cmd = ['CodeChecker', 'parse',
+                       "-e", "baseline",
+                       "-o", out_file_path,
+                       test_project_notes,
+                       '--trim-path-prefix', test_project_notes]
+
+        _, _, result = call_command(
+            extract_cmd, cwd=self.test_dir, env=self.env)
+        self.assertEqual(result, 2, "Parsing not found any issue.")
+
+        report_hashes = baseline.get_report_hashes([out_file_path])
+        self.assertEqual(
+            report_hashes, {'3d15184f38c5fa57e479b744fe3f5035'})
+
+        # Analyze the second project and see whether the baseline file is
+        # merged.
+        test_project_macros = os.path.join(
+            self.test_workspaces['NORMAL'], "test_files", "macros")
+
+        extract_cmd = ['CodeChecker', 'parse',
+                       "-e", "baseline",
+                       "-o", out_file_path,
+                       test_project_macros,
+                       '--trim-path-prefix', test_project_macros]
+
+        _, _, result = call_command(
+            extract_cmd, cwd=self.test_dir, env=self.env)
+        self.assertEqual(result, 2, "Parsing not found any issue.")
+
+        report_hashes = baseline.get_report_hashes([out_file_path])
+        self.assertSetEqual(report_hashes, {
+            '3d15184f38c5fa57e479b744fe3f5035',
+            'f8fbc46cc5afbb056d92bd3d3d702781'})
+
+    def test_invalid_baseline_file_extension(self):
+        """ Test invalid baseline file extension for parse. """
+        output_path = self.test_workspaces['OUTPUT']
+        out_file_path = os.path.join(output_path, "cc_reports.invalid")
+
+        # Analyze the first project.
+        test_project_notes = os.path.join(
+            self.test_workspaces['NORMAL'], "test_files", "notes")
+
+        # Try to create baseline file with invalid extension.
+        parse_cmd = [
+            "CodeChecker", "parse", "-e", "baseline", "-o", out_file_path,
+            test_project_notes]
+
+        out, _, result = call_command(
+            parse_cmd, cwd=self.test_dir, env=self.env)
+        self.assertEqual(result, 1)
+        self.assertIn("Baseline files must have '.baseline' extensions", out)
+
+        # Try to create baseline file in a directory which exists.
+        os.makedirs(output_path)
+        parse_cmd = [
+            "CodeChecker", "parse", "-e", "baseline", "-o", output_path,
+            test_project_notes]
+
+        out, _, result = call_command(
+            parse_cmd, cwd=self.test_dir, env=self.env)
+        self.assertEqual(result, 1)
+        self.assertIn("Please provide a file path instead of a directory", out)
+
+    def test_custom_baseline_file(self):
+        """ Test parse baseline custom output file. """
+        output_path = self.test_workspaces['OUTPUT']
+        out_file_path = os.path.join(output_path, "cc_reports.baseline")
+
+        # Analyze the first project.
+        test_project_notes = os.path.join(
+            self.test_workspaces['NORMAL'], "test_files", "notes")
+
+        extract_cmd = ['CodeChecker', 'parse',
+                       "-e", "baseline",
+                       "-o", out_file_path,
+                       test_project_notes]
+
+        _, _, result = call_command(
+            extract_cmd, cwd=self.test_dir, env=self.env)
+        self.assertEqual(result, 2, "Parsing not found any issue.")
+
+        report_hashes = baseline.get_report_hashes([out_file_path])
+        self.assertEqual(
+            report_hashes, {'3d15184f38c5fa57e479b744fe3f5035'})

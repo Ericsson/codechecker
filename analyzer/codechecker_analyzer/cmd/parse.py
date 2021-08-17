@@ -26,7 +26,7 @@ from plist_to_html import PlistToHtml
 from codechecker_analyzer import analyzer_context, suppress_handler
 
 from codechecker_common import arg, logger, plist_parser, util, cmd_config
-from codechecker_common.output import json as out_json, twodim, \
+from codechecker_common.output import baseline, json as out_json, twodim, \
     codeclimate, gerrit
 from codechecker_common.skiplist_handler import SkipListHandler
 from codechecker_common.source_code_comment_handler import \
@@ -37,7 +37,7 @@ from codechecker_report_hash.hash import get_report_path_hash
 
 LOG = logger.get_logger('system')
 
-EXPORT_TYPES = ['html', 'json', 'codeclimate', 'gerrit']
+EXPORT_TYPES = ['html', 'json', 'codeclimate', 'gerrit', 'baseline']
 
 _data_files_dir_path = analyzer_context.get_context().data_files_dir_path
 _severity_map_file = os.path.join(_data_files_dir_path, 'config',
@@ -457,12 +457,18 @@ def add_arguments_to_parser(parser):
                                   "For more information see:\n"
                                   "https://github.com/codeclimate/platform/"
                                   "blob/master/spec/analyzers/SPEC.md"
-                                  "#data-types")
+                                  "#data-types\n"
+                                  "'baseline' output can be used to integrate "
+                                  "CodeChecker into your local workflow "
+                                  "without using a CodeChecker server. For "
+                                  "more information see our usage guide.")
 
     output_opts.add_argument('-o', '--output',
                              dest="output_path",
                              default=argparse.SUPPRESS,
-                             help="Store the output in the given folder.")
+                             help="Store the output in the given file/folder. "
+                                  "Note: baseline files must have extension "
+                                  "'.baseline'.")
 
     parser.add_argument('--suppress',
                         type=str,
@@ -639,6 +645,9 @@ def _parse_convert_reports(
             report.trim_path_prefixes(trim_path_prefixes)
 
     number_of_reports = len(all_reports)
+    if out_format == "baseline":
+        return (baseline.convert(all_reports), number_of_reports)
+
     if out_format == "codeclimate":
         return (codeclimate.convert(all_reports, severity_map),
                 number_of_reports)
@@ -655,7 +664,7 @@ def _generate_json_output(
     severity_map: Dict,
     input_dirs: List[str],
     output_type: str,
-    output_path: Optional[str],
+    output_file_path: Optional[str],
     trim_path_prefixes: Optional[List[str]],
     skip_handler: Callable[[str], bool]
 ) -> int:
@@ -675,7 +684,7 @@ def _generate_json_output(
         result of analyzing.
     output_type : str
         Specifies the type of output. It can be gerrit, json, codeclimate.
-    output_path : Optional[str]
+    output_file_path : Optional[str]
         Path of the output file. If it contains file name then generated output
         will be written into.
     trim_path_prefixes : Optional[List[str]]
@@ -692,13 +701,7 @@ def _generate_json_output(
             skip_handler)
         output_text = json.dumps(reports)
 
-        if output_path:
-            output_path = os.path.abspath(output_path)
-
-            if not os.path.exists(output_path):
-                os.mkdir(output_path)
-
-            output_file_path = os.path.join(output_path, 'reports.json')
+        if output_file_path:
             with open(output_file_path, mode='w', encoding='utf-8',
                       errors="ignore") as output_f:
                 output_f.write(output_text)
@@ -789,13 +792,54 @@ def main(args):
     trim_path_prefixes = args.trim_path_prefix if \
         'trim_path_prefix' in args else None
 
-    output_path = None
+    output_dir_path = None
+    output_file_path = None
     if 'output_path' in args:
         output_path = os.path.abspath(args.output_path)
 
+        if export == 'html':
+            output_dir_path = output_path
+        else:
+            if os.path.exists(output_path) and os.path.isdir(output_path):
+                # For backward compatibility reason we handle the use case
+                # when directory is provided to this command.
+                LOG.error("Please provide a file path instead of a directory "
+                          "for '%s' export type!", export)
+                sys.exit(1)
+
+            if export == 'baseline' and not baseline.check(output_path):
+                LOG.error("Baseline files must have '.baseline' extensions.")
+                sys.exit(1)
+
+            output_file_path = output_path
+            output_dir_path = os.path.dirname(output_file_path)
+
+        if not os.path.exists(output_dir_path):
+            os.makedirs(output_dir_path)
+
+    def get_output_file_path(default_file_name) -> Optional[str]:
+        """ Return an output file path. """
+        if output_file_path:
+            return output_file_path
+
+        if output_dir_path:
+            return os.path.join(output_dir_path, default_file_name)
+
     if export:
+        if export == 'baseline':
+            report_hashes, number_of_reports = _parse_convert_reports(
+                args.input, export, context.severity_map, trim_path_prefixes,
+                skip_handler)
+
+            output_path = get_output_file_path("reports.baseline")
+            if output_path:
+                baseline.write(output_path, report_hashes)
+
+            sys.exit(2 if number_of_reports else 0)
+
         # The HTML part will be handled separately below.
         if export != 'html':
+            output_path = get_output_file_path("reports.json")
             sys.exit(_generate_json_output(
                 context.severity_map, args.input, export, output_path,
                 trim_path_prefixes, skip_handler))
@@ -864,7 +908,7 @@ def main(args):
 
             LOG.info("Generating html output files:")
             PlistToHtml.parse(input_path,
-                              output_path,
+                              output_dir_path,
                               context.path_plist_to_html_dist,
                               skip_html_report_data_handler,
                               html_builder,
@@ -927,14 +971,14 @@ def main(args):
 
     # Create index.html and statistics.html for the generated html files.
     if html_builder:
-        html_builder.create_index_html(output_path)
-        html_builder.create_statistics_html(output_path)
+        html_builder.create_index_html(output_dir_path)
+        html_builder.create_statistics_html(output_dir_path)
 
         print('\nTo view statistics in a browser run:\n> firefox {0}'.format(
-            os.path.join(output_path, 'statistics.html')))
+            os.path.join(output_dir_path, 'statistics.html')))
 
         print('\nTo view the results in a browser run:\n> firefox {0}'.format(
-            os.path.join(args.output_path, 'index.html')))
+            os.path.join(output_dir_path, 'index.html')))
     else:
         print("\n----==== Summary ====----")
         if file_stats:

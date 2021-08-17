@@ -21,7 +21,7 @@ import subprocess
 import unittest
 
 from libtest import env, codechecker
-from libtest.codechecker import get_diff_results
+from libtest.codechecker import create_baseline_file, get_diff_results
 
 
 class DiffLocal(unittest.TestCase):
@@ -267,3 +267,116 @@ int main()
         res, _, _ = get_diff_results(
             [report_dir_base], [report_dir_new], '--resolved', 'json')
         self.assertEqual(len(res), 2)
+
+    def test_basename_baseline_file_json(self):
+        """
+        Get reports based on a baseline file given to the basename option.
+        """
+        baseline_file_path = create_baseline_file(self.base_reports)
+
+        # Get new results.
+        new_results, _, _ = get_diff_results(
+            [baseline_file_path], [self.new_reports], '--new', 'json')
+
+        print(new_results)
+
+        for new_result in new_results:
+            self.assertEqual(new_result['checkerId'], "core.NullDereference")
+
+        # Get unresolved results.
+        unresolved_results, _, _ = get_diff_results(
+            [baseline_file_path], [self.new_reports], '--unresolved', 'json')
+
+        print(unresolved_results)
+
+        self.assertTrue(any(
+            r for r in unresolved_results
+            if r['checkerId'] == 'core.DivideZero'))
+
+        self.assertFalse(any(
+            r for r in unresolved_results
+            if r['checkerId'] == 'core.NullDereference' or
+            r['checkerId'] == 'core.CallAndMessage'))
+
+        # Get resolved results.
+        resolved_results, err, returncode = get_diff_results(
+            [baseline_file_path], [self.new_reports], '--resolved', 'json')
+
+        self.assertFalse(resolved_results)
+        self.assertEqual(returncode, 2)
+        self.assertIn(
+            "Couldn't get local reports for the following baseline report "
+            "hashes: ",
+            err)
+
+    def test_newname_baseline_file_json(self):
+        """
+        Get reports based on a baseline file given to the newname option.
+        """
+        baseline_file_path = create_baseline_file(self.new_reports)
+
+        # Get new results.
+        new_results, err, returncode = get_diff_results(
+            [self.base_reports], [baseline_file_path], '--new', 'json')
+
+        self.assertFalse(new_results)
+        self.assertEqual(returncode, 2)
+        self.assertIn(
+            "Couldn't get local reports for the following baseline report "
+            "hashes: ",
+            err)
+
+        # Get unresolved results.
+        unresolved_results, err, returncode = get_diff_results(
+            [self.base_reports], [baseline_file_path], '--unresolved', 'json')
+
+        self.assertFalse(unresolved_results)
+        self.assertEqual(returncode, 2)
+        self.assertIn(
+            "Couldn't get local reports for the following baseline report "
+            "hashes: ",
+            err)
+
+        # Get resolved results.
+        resolved_results, _, _ = get_diff_results(
+            [self.base_reports], [baseline_file_path], '--resolved', 'json')
+
+        for report in resolved_results:
+            self.assertEqual(report['checkerId'], "core.CallAndMessage")
+
+    def test_multiple_baseline_file_json(self):
+        """ Test multiple baseline file for basename option. """
+        baseline_file_paths = [
+            create_baseline_file(self.base_reports),
+            create_baseline_file(self.new_reports)]
+
+        # Get new results.
+        new_results, _, returncode = get_diff_results(
+            baseline_file_paths, [self.new_reports], '--new', 'json')
+
+        print(new_results)
+
+        self.assertFalse(new_results)
+        self.assertFalse(returncode)
+
+        # Get unresolved results.
+        unresolved_results, _, returncode = get_diff_results(
+            baseline_file_paths, [self.new_reports], '--unresolved', 'json')
+        print(unresolved_results)
+
+        self.assertTrue(any(
+            r for r in unresolved_results
+            if r['checkerId'] == 'core.DivideZero'))
+
+        # Get resolved results.
+        resolved_results, err, returncode = get_diff_results(
+            baseline_file_paths, [self.new_reports], '--resolved', 'json')
+
+        print(resolved_results)
+
+        self.assertFalse(resolved_results)
+        self.assertEqual(returncode, 2)
+        self.assertIn(
+            "Couldn't get local reports for the following baseline report "
+            "hashes: ",
+            err)

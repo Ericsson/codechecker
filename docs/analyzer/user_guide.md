@@ -1577,10 +1577,11 @@ Statistics analysis feature arguments:
   </summary>
 
 ```
-Usage: CodeChecker parse [-h] [--config CONFIG_FILE] [-t {plist}]
-                         [-e {html,json,codeclimate,gerrit}] [-o OUTPUT_PATH]
-                         [--suppress SUPPRESS] [--export-source-suppress]
-                         [--print-steps] [-i SKIPFILE]
+usage: CodeChecker parse [-h] [--config CONFIG_FILE] [-t {plist}]
+                         [-e {html,json,codeclimate,gerrit,baseline}]
+                         [-o OUTPUT_PATH] [--suppress SUPPRESS]
+                         [--export-source-suppress] [--print-steps]
+                         [-i SKIPFILE]
                          [--trim-path-prefix [TRIM_PATH_PREFIX [TRIM_PATH_PREFIX ...]]]
                          [--review-status [REVIEW_STATUS [REVIEW_STATUS ...]]]
                          [--verbose {info,debug_analyzer,debug}]
@@ -1643,14 +1644,19 @@ optional arguments:
                         Set verbosity level.
 
 export arguments:
-  -e {html,json,codeclimate,gerrit}, --export {html,json,codeclimate,gerrit}
+  -e {html,json,codeclimate,gerrit,baseline}, --export {html,json,codeclimate,gerrit,baseline}
                         Specify extra output format type.
                         'codeclimate' format can be used for Code Climate and
                         for GitLab integration. For more information see:
                         https://github.com/codeclimate/platform/blob/master/sp
-                        ec/analyzers/SPEC.md#data-types (default: None)
+                        ec/analyzers/SPEC.md#data-types
+                        'baseline' output can be used to integrate CodeChecker
+                        into your local workflow without using a CodeChecker
+                        server. For more information see our usage guide.
+                        (default: None)
   -o OUTPUT_PATH, --output OUTPUT_PATH
-                        Store the output in the given folder.
+                        Store the output in the given file/folder. Note:
+                        baseline files must have extension '.baseline'.
 
 Environment variables
 ------------------------------------------------

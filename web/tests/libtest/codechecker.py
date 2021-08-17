@@ -107,6 +107,21 @@ def get_diff_results(basenames, newnames, diff_type, format_type=None,
     return out, err, proc.returncode
 
 
+def create_baseline_file(report_dir: str, cc_env=None) -> str:
+    """ Create baseline file from the given report directory. """
+    baseline_file_path = os.path.join(report_dir, 'reports.baseline')
+    parse_cmd = [
+        env.codechecker_cmd(), 'parse', report_dir,
+        '-e', 'baseline', '-o', baseline_file_path]
+
+    proc = subprocess.Popen(
+        parse_cmd, encoding="utf-8", errors="ignore", env=cc_env,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc.communicate()
+
+    return baseline_file_path
+
+
 def login(codechecker_cfg, test_project_path, username, password,
           protocol='http'):
     """
