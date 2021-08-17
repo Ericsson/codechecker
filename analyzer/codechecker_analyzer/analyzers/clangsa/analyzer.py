@@ -56,7 +56,10 @@ def parse_clang_help_page(
         LOG.debug("Failed to run '%s' command!", command)
         return []
 
-    help_page = help_page[help_page.index(start_label) + len(start_label):]
+    try:
+        help_page = help_page[help_page.index(start_label) + len(start_label):]
+    except ValueError:
+        return []
 
     # This regex will match lines which contain only a flag or a flag and a
     # description: '  <flag>', '  <flag> <description>'.

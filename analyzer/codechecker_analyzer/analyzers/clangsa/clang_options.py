@@ -36,13 +36,14 @@ def get_analyzer_checkers_cmd(cfg_handler, alpha=True, debug=True):
     # The new checker help printig flags are not available there yet.
     # If the OSX clang will be updated to based on clang v8
     # this early return can be removed.
-    if cfg_handler.version_info.vendor != "clang":
+    version_info = cfg_handler.version_info
+    if not version_info or version_info.vendor != "clang":
         return command
 
-    if alpha and cfg_handler.version_info.major_version > 8:
+    if alpha and version_info.major_version > 8:
         command.append("-analyzer-checker-help-alpha")
 
-    if debug and cfg_handler.version_info.major_version > 8:
+    if debug and version_info.major_version > 8:
         command.append("-analyzer-checker-help-developer")
 
     return command
