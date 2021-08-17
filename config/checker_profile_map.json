@@ -243,6 +243,7 @@
         "misc-misplaced-widening"
       ],
       "extreme": [
+        "alpha.security.MallocOverflow",
         "boost",
         "bugprone",
         "cert",
