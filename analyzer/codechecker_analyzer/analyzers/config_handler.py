@@ -50,6 +50,7 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         self.analyzer_plugins_dir = None
         self.analyzer_extra_arguments = []
         self.checker_config = ''
+        self.analyzer_config = None
         self.report_hash = None
 
         # The key is the checker name, the value is a tuple.
