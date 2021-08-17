@@ -37,10 +37,21 @@ def setup_package():
 
     test_config = {}
 
+    tls_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'tls')
+    cert_file = os.path.join(tls_dir, 'cert.pem')
+    key_file = os.path.join(tls_dir, 'key.pem')
+
+    # Enable SSL
+    shutil.copy(cert_file, TEST_WORKSPACE)
+    shutil.copy(key_file, TEST_WORKSPACE)
+
+    cacert_file = os.path.join(TEST_WORKSPACE, 'cert.pem')
+
     # Setup environment variables for the test cases.
     host_port_cfg = {'viewer_host': 'localhost',
                      'viewer_port': env.get_free_port(),
-                     'viewer_product': 'ssl'}
+                     'viewer_product': 'ssl',
+                     'viewer_cacert': cacert_file}
 
     test_env = env.test_env(TEST_WORKSPACE)
 
@@ -55,14 +66,6 @@ def setup_package():
 
     # Export configuration for the tests.
     env.export_test_cfg(TEST_WORKSPACE, test_config)
-
-    # Enable SSL
-    # ON travis auto-test fails because due to the environment
-    # self signed certs are not accepted
-    # [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed (_ssl.c:661)
-    # Operation not permitted
-    # Will need to solve this to re-enable SSL in this test.
-    # env.enable_ssl(TEST_WORKSPACE)
 
     # Enable authentication and start the CodeChecker server.
     env.enable_auth(TEST_WORKSPACE)

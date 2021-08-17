@@ -34,7 +34,8 @@ def init_logger(level, stream=None, logger_name='system'):
 def handle_add_component(args):
     init_logger(args.verbose if 'verbose' in args else None)
 
-    client = setup_client(args.product_url)
+    client = setup_client(
+        args.product_url, args.tls_cacert, args.tls_cert, args.tls_key)
 
     if args.name == GEN_OTHER_COMPONENT_NAME:
         LOG.error("'%s' is a special virtual component which can not be "
@@ -75,7 +76,9 @@ def handle_list_components(args):
 
     init_logger(args.verbose if 'verbose' in args else None, stream)
 
-    client = setup_client(args.product_url)
+    client = setup_client(
+        args.product_url, args.tls_cacert, args.tls_cert, args.tls_key)
+
     components = client.getSourceComponents(None)
 
     if args.output_format == 'json':
@@ -100,7 +103,8 @@ def handle_del_component(args):
 
     init_logger(args.verbose if 'verbose' in args else None)
 
-    client = setup_client(args.product_url)
+    client = setup_client(
+        args.product_url, args.tls_cacert, args.tls_cert, args.tls_key)
 
     if args.name == GEN_OTHER_COMPONENT_NAME:
         LOG.error("'%s' is a special virtual component which can not be "

@@ -35,21 +35,19 @@ class TestSSL(unittest.TestCase):
         print('Running ' + test_class + ' tests in ' + self._test_workspace)
 
         self._test_cfg = env.import_test_cfg(self._test_workspace)
+        self.tls_cafile = os.path.join(self._test_workspace, 'cert.pem')
 
     def test_privileged_access(self):
         """
         Tests that initially, a non-authenticating server is accessible,
         but an authenticating one is not.
         """
-
-        # Switch off certificate validation on the clients.
-        os.environ["OSPYTHONHTTPSVERIFY"] = '0'
-        # FIXME: change this to https
-        access_protocol = 'http'
-
+        access_protocol = 'https'
         auth_client = env.setup_auth_client(self._test_workspace,
                                             session_token='_PROHIBIT',
-                                            proto=access_protocol)
+                                            proto=access_protocol,
+                                            cafile=self.tls_cafile)
+
         handshake = auth_client.getAuthParameters()
         self.assertTrue(handshake.requiresAuthentication,
                         "Privileged server " +
@@ -89,7 +87,8 @@ class TestSSL(unittest.TestCase):
 
         client = env.setup_viewer_client(self._test_workspace,
                                          session_token=self.sessionToken,
-                                         proto=access_protocol)
+                                         proto=access_protocol,
+                                         cafile=self.tls_cafile)
 
         self.assertIsNotNone(client.getPackageVersion(),
                              "Privileged server didn't respond properly.")
@@ -97,13 +96,15 @@ class TestSSL(unittest.TestCase):
         authd_auth_client = \
             env.setup_auth_client(self._test_workspace,
                                   session_token=self.sessionToken,
-                                  proto=access_protocol)
+                                  proto=access_protocol,
+                                  cafile=self.tls_cafile)
         user = authd_auth_client.getLoggedInUser()
         self.assertEqual(user, "cc")
 
         auth_client = env.setup_auth_client(self._test_workspace,
                                             session_token=self.sessionToken,
-                                            proto=access_protocol)
+                                            proto=access_protocol,
+                                            cafile=self.tls_cafile)
         result = auth_client.destroySession()
 
         self.assertTrue(result, "Server did not allow us to destroy session.")

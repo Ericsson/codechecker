@@ -608,6 +608,10 @@ common arguments:
                         client, in the format of
                         '[http[s]://]host:port/Endpoint'.
                         (default: localhost:8001/Default)
+  --tlscacert TLS_CACERT
+                        Trust certs signed only by this CA. (default: None)
+  --tlscert TLS_CERT    Path to TLS certificate file. (default: None)
+  --tlskey TLS_KEY      Path to TLS key file. (default: None)
   -o {plaintext,rows,table,csv,json}, --output {plaintext,rows,table,csv,json}
                         The output format to use in showing the data.
                         (default: plaintext)

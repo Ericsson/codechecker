@@ -17,12 +17,13 @@ from .base import BaseClientHelper
 
 class ThriftProductHelper(BaseClientHelper):
     def __init__(self, protocol, host, port, uri, session_token=None,
-                 get_new_token=None):
+                 get_new_token=None, cafile=None, key_file=None,
+                 cert_file=None):
         """
         @param get_new_token: a function which can generate a new token.
         """
         super().__init__(protocol, host, port, uri, session_token,
-                         get_new_token)
+                         get_new_token, cafile, key_file, cert_file)
 
         self.client = codeCheckerProductService.Client(self.protocol)
 

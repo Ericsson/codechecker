@@ -140,7 +140,8 @@ def clang_to_test():
 def setup_viewer_client(workspace,
                         endpoint='/CodeCheckerService',
                         auto_handle_connection=True,
-                        session_token=None, proto='http'):
+                        session_token=None, proto='http',
+                        cafile=None):
     # Read port and host from the test config file.
     codechecker_cfg = import_test_cfg(workspace)['codechecker_cfg']
     port = codechecker_cfg['viewer_port']
@@ -159,14 +160,16 @@ def setup_viewer_client(workspace,
                              endpoint=endpoint,
                              auto_handle_connection=auto_handle_connection,
                              session_token=session_token,
-                             protocol=proto)
+                             protocol=proto,
+                             cafile=cafile)
 
 
 def setup_auth_client(workspace,
                       host=None, port=None,
                       uri='/Authentication',
                       auto_handle_connection=True,
-                      session_token=None, proto='http'):
+                      session_token=None, proto='http',
+                      cafile=None):
 
     # If the host is not set try to get it from the workspace config file.
     if not host and not port:
@@ -184,7 +187,8 @@ def setup_auth_client(workspace,
                            host=host,
                            uri=uri,
                            auto_handle_connection=auto_handle_connection,
-                           session_token=session_token, protocol=proto)
+                           session_token=session_token, protocol=proto,
+                           cafile=cafile)
 
 
 def setup_product_client(workspace,
@@ -192,7 +196,8 @@ def setup_product_client(workspace,
                          product=None,
                          uri='/Products',
                          auto_handle_connection=True,
-                         session_token=None, proto='http'):
+                         session_token=None, proto='http',
+                         cafile=None):
 
     # If the host is not set try to get it from the workspace config file.
     if not host and not port:
@@ -211,7 +216,8 @@ def setup_product_client(workspace,
                               product=product,
                               uri=uri,
                               auto_handle_connection=auto_handle_connection,
-                              session_token=session_token, protocol=proto)
+                              session_token=session_token, protocol=proto,
+                              cafile=cafile)
 
 
 def setup_config_client(workspace,
@@ -394,26 +400,6 @@ def enable_storage_of_analysis_statistics(workspace):
     with open(server_cfg_file, 'w',
               encoding="utf-8", errors="ignore") as scfg:
         json.dump(scfg_dict, scfg, indent=2, sort_keys=True)
-
-
-def enable_ssl(workspace):
-    """
-    Create a dummy ssl-enabled server config.
-    """
-
-    repo_root = repository_root()
-    ssl_cert = os.path.join(repo_root,
-                            'tests',
-                            'ssl_example_cert',
-                            'cert.pem')
-    ssl_key = os.path.join(repo_root,
-                           'tests',
-                           'ssl_example_cert',
-                           'key.pem')
-
-    shutil.copy(ssl_cert, workspace)
-    shutil.copy(ssl_key, workspace)
-    print("copied "+ssl_cert+" to "+workspace)
 
 
 def get_session_token(workspace, viewer_host, viewer_port):

@@ -18,9 +18,9 @@ import sys
 
 from codechecker_api.codeCheckerDBAccess_v6 import ttypes
 
-from codechecker_client import cmd_line_client
-from codechecker_client import product_client
-from codechecker_client import source_component_client, token_client
+from codechecker_client import cmd_line_client, product_client, \
+    source_component_client, token_client
+from codechecker_client.arg import add_tls_arguments
 
 from codechecker_common import arg, logger, util
 from codechecker_common.output import USER_FORMATS
@@ -124,7 +124,7 @@ def __add_url_arguments(parser, needs_product_url=True):
     if needs_product_url is None:
         # Explicitly not add anything, the command does not connect to a
         # server.
-        pass
+        return
     elif needs_product_url:
         # Command connects to a product on a server.
         parser.add_argument('--url',
@@ -146,6 +146,8 @@ def __add_url_arguments(parser, needs_product_url=True):
                             required=False,
                             help="The URL of the server to access, in the "
                                  "format of '[http[s]://]host:port'.")
+
+    add_tls_arguments(parser)
 
 
 def __add_common_arguments(parser,
