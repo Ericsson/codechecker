@@ -36,7 +36,6 @@
         "alpha.core.SizeofPtr",
         "alpha.core.TestAfterDivZero",
         "alpha.cplusplus",
-        "alpha.security.MallocOverflow",
         "alpha.security.MmapWriteExec",
         "alpha.security.ReturnPtrRange",
         "alpha.security.taint",
