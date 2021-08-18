@@ -7,10 +7,30 @@
 # -------------------------------------------------------------------------
 import os
 
+from typing import List
+
 from codechecker_common.util import load_json_or_empty
 from codechecker_common import logger
 
 LOG = logger.get_logger('system')
+
+
+def get_analyze_options(cfg) -> List[str]:
+    """ Get analyze related options. """
+    # The config value can be 'analyze' or 'analyzer'
+    # for backward compatibility.
+    analyze_cfg = cfg.get("analyze", [])
+    analyzer_cfg = cfg.get("analyzer", [])
+    if analyze_cfg:
+        if analyzer_cfg:
+            LOG.warning("There is an 'analyze' and an 'analyzer' "
+                        "config configuration option in the config "
+                        "file. Please use the 'analyze' value to be "
+                        "in sync with the subcommands.\n"
+                        "Using the 'analyze' configuration.")
+        return analyze_cfg
+
+    return analyzer_cfg
 
 
 def process_config_file(args, subcommand_name):
@@ -25,20 +45,12 @@ def process_config_file(args, subcommand_name):
         # configuration section name is analyzer.
         options = None
         if subcommand_name == 'analyze':
-            # The config value can be 'analyze' or 'analyzer'
-            # for backward compatibility.
-            analyze_cfg = cfg.get("analyze", [])
-            analyzer_cfg = cfg.get("analyzer", [])
-            if analyze_cfg:
-                if analyzer_cfg:
-                    LOG.warning("There is an 'analyze' and an 'analyzer' "
-                                "config configuration option in the config "
-                                "file. Please use the 'analyze' value to be "
-                                "in sync with the subcommands.\n"
-                                "Using the 'analyze' configuration.")
-                options = analyze_cfg
-            elif analyzer_cfg:
-                options = analyzer_cfg
+            options = get_analyze_options(cfg)
+        elif subcommand_name == 'check':
+            options = [
+                *get_analyze_options(cfg),
+                *cfg.get("parse", [])
+            ]
         else:
             options = cfg.get(subcommand_name, [])
 
