@@ -4,8 +4,8 @@
       :headers="headers"
       :items="products"
       :options.sync="pagination"
-      :server-items-length.sync="products.length"
-      :hide-default-footer="true"
+      :footer-props="footerProps"
+      :page.sync="page"
       :must-sort="true"
       :loading="loading"
       :mobile-breakpoint="1000"
@@ -107,24 +107,6 @@
         </v-chip>
       </template>
 
-      <template #item.runStoreInProgress="{ item }">
-        <span
-          v-for="runName in item.runStoreInProgress"
-          :key="runName"
-          class="v-chip-max-width-wrapper"
-        >
-          <v-chip
-            class="mr-2 my-1"
-            color="accent"
-          >
-            <v-avatar>
-              <v-icon>mdi-play-circle</v-icon>
-            </v-avatar>
-            {{ runName }}
-          </v-chip>
-        </span>
-      </template>
-
       <template v-slot:item.action="{ item }">
         <div class="text-no-wrap">
           <edit-product-btn
@@ -172,8 +154,10 @@ export default {
   },
 
   data() {
+    const itemsPerPageOptions = [ 25 ];
     const sortBy = this.$router.currentRoute.query["sort-by"];
     const sortDesc = this.$router.currentRoute.query["sort-desc"];
+    const page = parseInt(this.$router.currentRoute.query["page"]) || 1;
 
     return {
       DBStatus,
@@ -183,6 +167,10 @@ export default {
         sortBy: sortBy ? [ sortBy ] : [],
         sortDesc: sortDesc !== undefined ? [ !!sortDesc ] : []
       },
+      footerProps: {
+        itemsPerPageOptions: itemsPerPageOptions
+      },
+      page,
       headers: [
         {
           text: "Name",
@@ -204,11 +192,6 @@ export default {
           text: "Latest store to product",
           value: "latestStoreToProduct",
           sortable: true
-        },
-        {
-          text: "Run store in progress",
-          value: "runStoreInProgress",
-          sortable: false
         },
         {
           text: "Actions",
@@ -241,6 +224,16 @@ export default {
         this.products.sort(this.sortProducts);
       },
       deep: true
+    },
+
+    page() {
+      const page = this.page === 1 ? undefined : this.page;
+      this.$router.replace({
+        query: {
+          ...this.$route.query,
+          "page": page
+        }
+      }).catch(() => {});
     },
 
     productNameSearch: _.debounce(function () {
@@ -304,6 +297,8 @@ export default {
               ...product
             };
           }).sort(this.sortProducts);
+
+          this.pagination.page = this.page;
 
           this.loading = false;
         }));

@@ -39,6 +39,8 @@ class Product(Base):
     display_name = Column(String, nullable=False)
     description = Column(Text)
     run_limit = Column(Integer)
+    num_of_runs = Column(Integer, server_default="0")
+    latest_storage_date = Column(DateTime, nullable=True)
 
     # Disable review status change on UI.
     is_review_status_change_disabled = Column(Boolean,

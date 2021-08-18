@@ -17,7 +17,7 @@ import zlib
 
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Optional
 
 import sqlalchemy
 from sqlalchemy.sql.expression import or_, and_, not_, func, \
@@ -984,6 +984,30 @@ class ThriftRequestHandler:
         Returns the actually logged in user name.
         """
         return self._auth_session.user if self._auth_session else "Anonymous"
+
+    def _set_run_data_for_curr_product(
+        self,
+        inc_num_of_runs: Optional[int],
+        latest_storage_date: Optional[datetime] = None
+    ):
+        """
+        Increment the number of runs related to the current product with the
+        given value and set the latest storage date.
+        """
+        values = {}
+
+        if inc_num_of_runs is not None:
+            values["num_of_runs"] = Product.num_of_runs + inc_num_of_runs
+
+        if latest_storage_date is not None:
+            values["latest_storage_date"] = latest_storage_date
+
+        with DBSession(self._config_database) as session:
+            session.query(Product) \
+                .filter(Product.id == self._product.id) \
+                .update(values)
+
+            session.commit()
 
     def __require_permission(self, required):
         """
@@ -2518,6 +2542,10 @@ class ThriftRequestHandler:
             runs = run_filter.names if run_filter.names else run_filter.ids
             LOG.info("Runs '%s' were removed by '%s'.", runs,
                      self._get_username())
+
+        # Decrement the number of runs but do not update the latest storage
+        # date.
+        self._set_run_data_for_curr_product(-1)
 
         # Remove unused data (files, comments, etc.) from the database.
         db_cleanup.remove_unused_data(self._Session)

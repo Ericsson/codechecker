@@ -88,26 +88,6 @@ class ThriftProductHandler:
             self.__server.add_product(product)
             server_product = self.__server.get_product(product.endpoint)
 
-        num_of_runs = 0
-        runs_in_progress = set()
-        latest_store_to_product = ""
-
-        # Try to get product details. It may throw different error messages
-        # depending on the used SQL driver adapter in case of connection error,
-        # so we should try to connect to the database and get the results
-        # again on failure.
-        try:
-            num_of_runs, runs_in_progress, latest_store_to_product = \
-                server_product.get_details()
-        except Exception:
-            # Try to connect to the product and try to get details again.
-            server_product.connect()
-
-            if server_product.db_status ==\
-                    codechecker_api_shared.ttypes.DBStatus.OK:
-                num_of_runs, runs_in_progress, latest_store_to_product = \
-                    server_product.get_details()
-
         descr = convert.to_b64(product.description) \
             if product.description else None
 
@@ -127,19 +107,21 @@ class ThriftProductHandler:
         connected = server_product.db_status ==\
             codechecker_api_shared.ttypes.DBStatus.OK
 
+        latest_storage_date = str(product.latest_storage_date) \
+            if product.latest_storage_date else None
+
         return server_product, ttypes.Product(
             id=product.id,
             endpoint=product.endpoint,
             displayedName_b64=convert.to_b64(product.display_name),
             description_b64=descr,
-            runCount=num_of_runs,
-            latestStoreToProduct=str(latest_store_to_product),
+            runCount=product.num_of_runs,
+            latestStoreToProduct=latest_storage_date,
             connected=connected,
             accessible=product_access,
             administrating=product_admin,
             databaseStatus=server_product.db_status,
-            admins=[admin.name for admin in admins],
-            runStoreInProgress=runs_in_progress)
+            admins=[admin.name for admin in admins])
 
     @timeit
     def getPackageVersion(self):
