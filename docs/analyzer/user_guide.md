@@ -96,7 +96,7 @@ usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-t {plist}] [-q]
                          [--keep-gcc-include-fixed] [--keep-gcc-intrin]
                          (-b COMMAND | -l LOGFILE) [-j JOBS] [-c]
                          [--compile-uniqueing COMPILE_UNIQUEING]
-                         [--report-hash {context-free,context-free-v2}]
+                         [--report-hash {context-free,context-free-v2,diagnostic-message}]
                          [-i SKIPFILE | --file FILE [FILE ...]]
                          [--analyzers ANALYZER [ANALYZER ...]]
                          [--capture-analysis-output] [--generate-reproducer]
@@ -189,7 +189,7 @@ analyzer arguments:
                         directory. (By default, CodeChecker would keep reports
                         and overwrites only those files that were update by
                         the current build command).
-  --report-hash {context-free,context-free-v2}
+  --report-hash {context-free,context-free-v2,diagnostic-message}
                         Specify the hash calculation method for reports. By
                         default the calculation method for Clang Static
                         Analyzer is context sensitive and for Clang Tidy it is
@@ -200,6 +200,8 @@ analyzer arguments:
                         compatibility).
                         - context-free-v2: context free hash is used for
                         ClangSA and Clang Tidy.
+                        - diagnostic-message: context free hash with bug step
+                        messages is used for ClangSA and Clang Tidy.
                         See the 'issue hashes' section of the help message of
                         this command below for more information.
                         USE WISELY AND AT YOUR OWN RISK!
@@ -505,6 +507,13 @@ generated and not the context free hash (kept for backward compatibility). Use
   * 'line content' from the source file if can be read up. All the whitespaces
     from the source content are removed.
   * 'column numbers' from the main diag sections location.
+
+- diagnostic-message:
+  * Same as 'context-free-v2' (file name, checker message etc.)
+  * 'bug step messages' from all events.
+
+  Be careful with this hash because it can change easily for example on
+  variable / function renames.
 
 OUR RECOMMENDATION: we recommend you to use 'context-free-v2' hash because the
 hash will not be changed so easily for example on code indentation or when a
@@ -819,7 +828,7 @@ usage: CodeChecker analyze [-h] [-j JOBS]
                            [--keep-gcc-include-fixed] [--keep-gcc-intrin]
                            [-t {plist}] [-q] [-c]
                            [--compile-uniqueing COMPILE_UNIQUEING]
-                           [--report-hash {context-free,context-free-v2}]
+                           [--report-hash {context-free,context-free-v2,diagnostic-message}]
                            [-n NAME] [--analyzers ANALYZER [ANALYZER ...]]
                            [--add-compiler-defaults]
                            [--capture-analysis-output] [--generate-reproducer]
@@ -909,7 +918,7 @@ optional arguments:
                         python regex. If more than one matches an error is
                         given. The whole compilation action text is searched
                         for match. (default: none)
---report-hash {context-free,context-free-v2}
+  --report-hash {context-free,context-free-v2,diagnostic-message}
                         Specify the hash calculation method for reports. By
                         default the calculation method for Clang Static
                         Analyzer is context sensitive and for Clang Tidy it is
@@ -920,6 +929,8 @@ optional arguments:
                         compatibility).
                         - context-free-v2: context free hash is used for
                         ClangSA and Clang Tidy.
+                        - diagnostic-message: context free hash with bug step
+                        messages is used for ClangSA and Clang Tidy.
                         See the 'issue hashes' section of the help message of
                         this command below for more information.
                         USE WISELY AND AT YOUR OWN RISK!

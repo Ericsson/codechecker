@@ -57,3 +57,5 @@ class ClangTidyPlistToFile(ResultHandler):
         # context free hash for 'context-free' choice.
         if self.report_hash_type == 'context-free-v2':
             replace_report_hash(output_file, HashType.CONTEXT_FREE)
+        elif self.report_hash_type == 'diagnostic-message':
+            replace_report_hash(output_file, HashType.DIAGNOSTIC_MESSAGE)

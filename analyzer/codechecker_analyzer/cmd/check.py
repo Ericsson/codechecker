@@ -233,7 +233,10 @@ used to generate a log file on the fly.""")
                                dest="report_hash",
                                default=argparse.SUPPRESS,
                                required=False,
-                               choices=['context-free', 'context-free-v2'],
+                               choices=[
+                                   'context-free',
+                                   'context-free-v2',
+                                   'diagnostic-message'],
                                help="R|Specify the hash calculation method "
                                     "for reports. By default the calculation "
                                     "method for Clang Static Analyzer is "
@@ -246,6 +249,9 @@ used to generate a log file on the fly.""")
                                     "compatibility).\n"
                                     "- context-free-v2: context free hash is "
                                     "used for ClangSA and Clang Tidy.\n"
+                                    "- diagnostic-message: context free hash "
+                                    "with bug step messages is used for "
+                                    "ClangSA and Clang Tidy.\n"
                                     "See the 'issue hashes' section of the "
                                     "help message of this command below for "
                                     "more information.\n"

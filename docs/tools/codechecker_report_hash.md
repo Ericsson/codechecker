@@ -3,6 +3,7 @@
 Multiple hash types are available:
 - [`CONTEXT_FREE`](#generate-path-sensitive-report-hash)
 - [`PATH_SENSITIVE`](#generate-context-sensitive-report-hash)
+- [`DIAGNOSTIC_MESSAGE`](#generate-diagnostic-message-hash)
 
 You can use this library to generate report hash for these types by using the
 `get_report_hash` function.
@@ -35,6 +36,18 @@ High level overview of the hash content:
 * `line content` from the source file if can be read up. All the whitespaces
   from the source content are removed.
 * `column numbers` from the main diag sections location.
+
+### Generate diagnostic message hash
+`get_report_hash` function can be used to generate report hash with bug event
+messages if the hash type parameter is `DIAGNOSTIC_MESSAGE`.
+
+High level overview of the hash content:
+* Same as `context-free-v2` (*file name*, *checker message* etc.)
+* `bug step messages` from all events.
+
+**Note**: this is an experimental hash and it is not recommended to use it on
+your project because this hash can change very easily for example on variable /
+function renames.
 
 ### Generate path hash
 `get_report_path_hash` can be used to get path hash for the given bug path

@@ -81,6 +81,13 @@ generated and not the context free hash (kept for backward compatibility). Use
     from the source content are removed.
   * 'column numbers' from the main diag sections location.
 
+- diagnostic-message:
+  * Same as 'context-free-v2' (file name, checker message etc.)
+  * 'bug step messages' from all events.
+
+  Be careful with this hash because it can change easily for example on
+  variable / function renames.
+
 OUR RECOMMENDATION: we recommend you to use 'context-free-v2' hash because the
 hash will not be changed so easily for example on code indentation or when a
 checker is renamed.
@@ -295,7 +302,10 @@ def add_arguments_to_parser(parser):
                         dest="report_hash",
                         default=argparse.SUPPRESS,
                         required=False,
-                        choices=['context-free', 'context-free-v2'],
+                        choices=[
+                            'context-free',
+                            'context-free-v2',
+                            'diagnostic-message'],
                         help="R|Specify the hash calculation method for "
                              "reports. By default the calculation method for "
                              "Clang Static Analyzer is context sensitive and "
@@ -306,6 +316,9 @@ def add_arguments_to_parser(parser):
                              "(kept for backward compatibility).\n"
                              "- context-free-v2: context free hash is used "
                              "for ClangSA and Clang Tidy.\n"
+                             "- diagnostic-message: context free hash with "
+                             "bug step messages is used for ClangSA and "
+                             "Clang Tidy.\n"
                              "See the 'issue hashes' section of the help "
                              "message of this command below for more "
                              "information.\n"
