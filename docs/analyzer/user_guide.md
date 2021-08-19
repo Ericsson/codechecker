@@ -1756,7 +1756,8 @@ providing a quick overview on which checkers are available in the analyzers.
 
 ```
 usage: CodeChecker checkers [-h] [--analyzers ANALYZER [ANALYZER ...]]
-                            [--details] [--profile {PROFILE/list}]
+                            [--details] [--label LABEL [LABEL ...]]
+                            [--profile {PROFILE/list}]
                             [--only-enabled | --only-disabled]
                             [-o {rows,table,csv,json}]
                             [--verbose {info,debug,debug_analyzer}]
@@ -1770,24 +1771,33 @@ optional arguments:
                         Show checkers only from the analyzers specified.
                         Currently supported analyzers are: clangsa, clang-
                         tidy.
-  --details             Show details about the checker, such as description,
-                        if available.
-  --profile {PROFILE/list}
-                        List checkers enabled by the selected profile.
-                        'list' is a special option showing details about
-                        profiles collectively.
-  --guideline GUIDELINE [GUIDELINE ...]
-                        List checkers that report on a specific guideline
-                        rule. Here you can add the guideline name or the ID of
-                        a rule. Without additional parameter, the available
-                        guidelines and their corresponding rules will be
-                        listed.
+  --details             Show details about the checker, such as status,
+                        checker name, analyzer name, severity, guidelines and
+                        description. Status shows if the checker is enabled
+                        besides the given labels. If the labels don't trigger
+                        a checker then the status is determined by the
+                        analyzer tool.
+  --label [LABEL]       Filter checkers that are attached the given label. The
+                        format of a label is <label>:<value>. If no argument
+                        is given then available labels are listed. If only
+                        <label> is given then available values are listed.
+  --profile [PROFILE]   List checkers enabled by the selected profile. If no
+                        argument is given then available profiles are listed.
+  --guideline [GUIDELINE]
+                        List checkers that report on a specific guideline.
+                        Without additional parameter, the available guidelines
+                        and their corresponding rules will be listed.
+  --severity [SEVERITY]
+                        List checkers with the given severity. Make sure to
+                        indicate severity in capitals (e.g. HIGH, MEDIUM,
+                        etc.) If no argument is given then available
+                        severities are listed.
   --checker-config      Show checker configuration options for all
                         existing checkers supported by the analyzer.
                         These can be given to 'CodeChecker analyze
                         --checker-config'.
-  --only-enabled        Show only the enabled checkers.
-  --only-disabled       Show only the disabled checkers.
+  --only-enabled        DEPRECATED. Show only the enabled checkers.
+  --only-disabled       DEPRECATED. Show only the disabled checkers.
   -o {rows,table,csv,json}, --output {rows,table,csv,json}
                         The format to list the applicable checkers as.
                         (default: rows)
@@ -1796,6 +1806,33 @@ optional arguments:
 
 The list of checkers that are enabled or disabled by default can be edited by
 editing "profile:default" labels in the file '{}'.
+
+Example scenario: List checkers by labels
+-----------------------------------------
+List checkers in "sensitive" profile:
+    CodeChecker checkers --label profile:sensitive
+    CodeChecker checkers --profile sensitive
+
+List checkers in "HIGH" severity:
+    CodeChecker checkers --label severity:HIGH
+    CodeChecker checkers --severity HIGH
+
+List checkers covering str34-c SEI-CERT rule:
+    CodeChecker checkers --label sei-cert:str-34-c
+    CodeChecker checkers --guideline sei-cert:str34-c
+
+List checkers covering all SEI-CERT rules:
+    CodeChecker checkers --label guideline:sei-cert
+    CodeChecker checkers --guideline sei-cert
+
+List available profiles, guidelines and severities:
+    CodeChecker checkers --profile
+    CodeChecker checkers --guideline
+    CodeChecker checkers --severity
+
+List labels and their available values:
+    CodeChecker checkers --label
+    CodeChecker checkers --label severity
 ```
 </details>
 

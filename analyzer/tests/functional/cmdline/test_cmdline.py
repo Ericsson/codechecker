@@ -99,7 +99,7 @@ class TestCmdline(unittest.TestCase):
     def test_checkers_profile(self):
         """ Listing available checker profiles. """
 
-        checkers_cmd = [env.codechecker_cmd(), 'checkers', '--profile', 'list']
+        checkers_cmd = [env.codechecker_cmd(), 'checkers', '--profile']
         out = run_cmd(checkers_cmd)
         self.assertEqual(0, out[0])
         self.assertEqual(True, "default" in out[1])
@@ -137,14 +137,15 @@ class TestCmdline(unittest.TestCase):
         self.assertIn('cert-str34-c', out)
 
         checkers_cmd = [env.codechecker_cmd(), 'checkers',
-                        '--guideline', 'mem35-c']
+                        '--guideline', 'sei-cert:mem35-c']
         _, out, _ = run_cmd(checkers_cmd)
 
         self.assertIn('MallocSizeof', out)
         self.assertNotIn('CastToStruct', out)
 
         checkers_cmd = [env.codechecker_cmd(), 'checkers',
-                        '--guideline', 'mem35-c', '-o', 'json', '--details']
+                        '--guideline', 'sei-cert:mem35-c', '-o', 'json',
+                        '--details']
         _, out, _ = run_cmd(checkers_cmd)
         out = json.loads(out)
 

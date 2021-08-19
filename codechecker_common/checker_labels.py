@@ -70,9 +70,14 @@ class CheckerLabels:
         A label has a value separated by colon (:) character, e.g:
         "severity:high". This function returns this key and value as a tuple.
         Optional whitespaces around (:) and at the two ends of this string are
-        not taken into account.
+        not taken into account. If key_value contains no colon, then the value
+        is empty string.
         """
-        pos = key_value.index(':')
+        try:
+            pos = key_value.index(':')
+        except ValueError:
+            return (key_value.strip(), '')
+
         return key_value[:pos].strip(), key_value[pos + 1:].strip()
 
     def __check_json_format(self, data: dict) -> bool:
