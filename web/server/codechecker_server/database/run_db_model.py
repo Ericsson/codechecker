@@ -456,6 +456,40 @@ class SourceComponent(Base):
         self.username = user_name
 
 
+class CleanupPlan(Base):
+    __tablename__ = 'cleanup_plans'
+
+    __table_args__ = (
+        UniqueConstraint('name'),
+    )
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    name = Column(String, nullable=False)
+    due_date = Column(DateTime, nullable=True)
+    description = Column(String, nullable=True)
+    closed_at = Column(DateTime, nullable=True)
+
+    def __init__(self, name, due_date=None, description=None, closed_at=None):
+        self.name = name
+        self.due_date = due_date
+        self.description = description
+        self.closed_at = closed_at
+
+
+class CleanupPlanReportHash(Base):
+    __tablename__ = 'cleanup_plan_report_hashes'
+
+    cleanup_plan_id = Column(
+        Integer,
+        ForeignKey('cleanup_plans.id',
+                   deferrable=True,
+                   initially="DEFERRED",
+                   ondelete="CASCADE"),
+        index=True)
+
+    bug_hash = Column(String, primary_key=True)
+
+
 IDENTIFIER = {
     'identifier': "RunDatabase",
     'orm_meta': CC_META

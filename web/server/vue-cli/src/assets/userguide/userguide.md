@@ -622,6 +622,45 @@ Each line should begin with a `+` or a `-`, followed by a path glob pattern:
 
 For more information [see](https://github.com/Ericsson/codechecker/blob/master/docs/web/user_guide.md#format-of-component-file).
 
+## Manage cleanup plans
+You can use **cleanup plans** to track progress of reports in your product.
+Clenup plans can be managed only by *administrators* after clicking on the
+*pencil icon* at the *Cleanup plans* filter.
+
+![Manage cleanup plans](images/reports/cleanup_plan_filter.png)
+
+A pop-up window will be opened where you can add, edit, close or remove
+existing cleanup plans.
+
+![List of cleanup plans](images/reports/list_of_cleanup_plans.png)
+
+## Assign reports to cleanup plans
+You can assign multiple reports to a cleanup plan on the **Reports view**. For
+this you have to select at least one report by using check boxes on the first
+column of the report list table.
+
+After reports are selected the **Set cleanup plan** above the reports table
+will be active and you can select a cleanup plan here by clicking on the
+cleanup plan name.
+
+You can remove reports from a cleanup plan the same way by clicking on the
+cleanup plan name.
+
+Notes:
+- You can select all reports on the current page by using the checkbox in
+the first column of the header bar.
+- If multiple reports are selected and at least one report can be found in a
+cleanup plan but not all of them, after clicking on the **Set cleanup plan**
+button beside the cleanup plan a minus sign (**-**) will be shown. Clicking
+on the cleanup plan name in this case will assign every selected report to
+the cleanup.
+
+![Assign reports to cleanup plan](images/reports/assign_reports_to_cleanup_plan.png)
+
+You can also assign current report to a cleanup plan on the **Report detail**
+view:
+![Assign reports to cleanup plan](images/reports/assign_report_to_cleanup_plan.png)
+
 # Report details
 ## Report Navigation Tree
 Report Navigation Tree shows the found reports at the currently opened file.

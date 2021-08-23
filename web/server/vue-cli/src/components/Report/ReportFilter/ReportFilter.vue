@@ -206,6 +206,18 @@
 
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
+          <cleanup-plan-filter
+            ref="filters"
+            :namespace="namespace"
+            @update:url="updateUrl"
+          />
+        </v-list-item-content>
+      </v-list-item>
+
+      <v-divider />
+
+      <v-list-item class="pl-1">
+        <v-list-item-content class="pa-0">
           <checker-message-filter
             ref="filters"
             :namespace="namespace"
@@ -299,6 +311,7 @@ import {
   BugPathLengthFilter,
   CheckerMessageFilter,
   CheckerNameFilter,
+  CleanupPlanFilter,
   ComparedToDiffTypeFilter,
   ComparedToOpenReportsDateFilter,
   ComparedToRunFilter,
@@ -327,6 +340,7 @@ export default {
     ReportHashFilter,
     BaselineRunFilter,
     BaselineOpenReportsDateFilter,
+    CleanupPlanFilter,
     ComparedToDiffTypeFilter,
     ComparedToOpenReportsDateFilter,
     ComparedToRunFilter,

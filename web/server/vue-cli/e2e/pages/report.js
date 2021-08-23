@@ -122,7 +122,10 @@ module.exports = {
     progressBar: ".v-data-table__progress",
     clearAllFilterBtn: "#clear-all-filter-btn",
     uniqueReports: ".unique-filter .v-input--checkbox",
+    setCleanupPlanBtn: ".set-cleanup-plan-btn",
     expandBtn: "button.v-data-table__expand-icon",
+    selectReportCheckbox: "tbody .v-simple-checkbox",
+    selectAllReportCheckbox: "thead .v-simple-checkbox"
   },
   sections: {
     baselineRunFilter: createRunFilterSection("#run"),
@@ -202,6 +205,56 @@ module.exports = {
       elements: {
         confirmBtn: ".remove-btn",
         cancelBtn: ".cancel-btn",
+      }
+    },
+    cleanupPlanFilter: {
+      selector: "#cleanup-plan",
+      elements: {
+        expansionBtn: ".expansion-btn",
+        manageBtn: ".manage-cleanup-plan-btn",
+        settings: ".settings-btn",
+        clearBtn: ".clear-btn",
+        selectedItems: ".selected-item"
+      },
+      commands: [ filterCommands ]
+    },
+    cleanupPlanDialog: {
+      selector: ".manage-cleanup-plan-dialog.v-dialog--active",
+      elements: {
+        newCleanupPlanBtn: ".new-cleanup-plan-btn",
+        tableRows: ".v-data-table tbody tr",
+        emptyTable: ".v-data-table tbody .v-data-table__empty-wrapper",
+        closeBtn: ".v-card__title .close-btn",
+        editCleanupPlanBtn: ".v-data-table .edit-btn",
+        removeCleanupPlanBtn: ".v-data-table .remove-btn",
+        closeCleanupPlanBtn: ".v-data-table .close-btn",
+        reopenCleanupPlanBtn: ".v-data-table .reopen-btn",
+        openCleanupPlansTab: ".v-tabs-bar__content .v-tab:nth-child(2)",
+        closedCleanupPlansTab: ".v-tabs-bar__content .v-tab:nth-child(3)",
+      }
+    },
+    newCleanupPlanDialog: {
+      selector: ".edit-cleanup-plan-dialog.v-dialog--active",
+      elements: {
+        name: ".cleanup-plan-name input[type='text']",
+        description: ".cleanup-plan-description textarea",
+        saveBtn: ".save-btn",
+        cancelBtn: ".cancel-btn",
+      }
+    },
+    removeCleanupPlanDialog: {
+      selector: ".remove-cleanup-plan-dialog.v-dialog--active",
+      elements: {
+        confirmBtn: ".confirm-btn",
+        cancelBtn: ".cancel-btn",
+      }
+    },
+    setCleanupPlanDialog: {
+      selector: ".set-cleanup-plan-dialog.menuable__content__active",
+      elements: {
+        item: ".v-list-item",
+        activeItem: ".mdi-check",
+        notAllSelectedItem: ".mdi-minus"
       }
     },
     dateFilters: {
