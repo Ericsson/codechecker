@@ -381,6 +381,7 @@
   "readability-identifier-naming":                              "STYLE",
   "readability-implicit-bool-cast":                             "STYLE",
   "readability-implicit-bool-conversion":                       "STYLE",
+  "readability-identifier-length":                              "STYLE",
   "readability-inconsistent-declaration-parameter-name":        "STYLE",
   "readability-isolate-declaration":                            "STYLE",
   "readability-magic-numbers":                                  "STYLE",
