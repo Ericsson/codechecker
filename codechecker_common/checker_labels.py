@@ -162,7 +162,7 @@ class CheckerLabels:
         checker: str,
         label: str,
         analyzers: Iterable[str] = None
-    ) -> Union[str, Iterable[str]]:
+    ) -> Union[str, List[str]]:
         """
         If a label has unique constraint then this function retuns the value
         that belongs to the given label or the default value that is set among
@@ -186,7 +186,10 @@ class CheckerLabels:
             except Exception:
                 return CheckerLabels.UNIQUE_LABELS[label]
 
-        return map(lambda _, value: value, labels)
+        # TODO set() is used for uniqueing results in case a checker name is
+        # provided by multiple analyzers. This will be unnecessary when we
+        # cover this case properly.
+        return list(set(map(lambda value: value[1], labels)))
 
     def severity(self, checker: str, analyzers: Iterable[str] = None) -> str:
         """
@@ -219,7 +222,10 @@ class CheckerLabels:
             labels.extend(
                 map(self.__get_label_key_value, checkers.get(c, [])))
 
-        return labels
+        # TODO set() is used for uniqueing results in case a checker name is
+        # provided by multiple analyzers. This will be unnecessary when we
+        # cover this case properly.
+        return list(set(labels))
 
     def get_description(self, label: str) -> Dict[str, str]:
         """
