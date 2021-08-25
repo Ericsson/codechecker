@@ -84,6 +84,12 @@ class TestCmdline(unittest.TestCase):
         parse_help = [env.codechecker_cmd(), 'parse', '--help']
         self.assertEqual(0, run_cmd(parse_help)[0])
 
+    def test_invalid_subcommand(self):
+        """ Call CodeChecker with and invalid subcommand. """
+
+        dummy_cmd = [env.codechecker_cmd(), "dummy"]
+        self.assertEqual(1, run_cmd(dummy_cmd)[0])
+
     def test_checkers(self):
         """ Listing available checkers. """
 
