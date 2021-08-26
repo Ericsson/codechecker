@@ -120,6 +120,7 @@
         "bugprone-string-constructor",
         "bugprone-string-literal",
         "bugprone-suspicious-enum",
+        "bugprone-suspicious-memory-comparison",
         "bugprone-suspicious-memset",
         "bugprone-suspicious-missing",
         "bugprone-suspicious-semicolon",

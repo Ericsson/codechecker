@@ -24,6 +24,9 @@
     "bugprone-sizeof-expression": {
       "sei-cert": ["mem35-c"]
     },
+    "bugprone-suspicious-memory-comparison": {
+      "sei-cert": ["exp42-c", "flp37-c"]
+    },
     "bugprone-suspicious-memset-usage": {
       "sei-cert": ["int31-c"]
     },
@@ -84,11 +87,17 @@
     "cert-err61-cpp": {
       "sei-cert": ["err61-cpp"]
     },
+    "cert-exp42-c": {
+      "sei-cert": ["exp42-c"]
+    },
     "cert-fio38-c": {
       "sei-cert": ["fio38-c"]
     },
     "cert-flp30-c": {
       "sei-cert": ["flp30-c"]
+    },
+    "cert-flp37-c": {
+      "sei-cert": ["flp37-c"]
     },
     "cert-msc30-c": {
       "sei-cert": ["msc30-c", "msc50-cpp"]
