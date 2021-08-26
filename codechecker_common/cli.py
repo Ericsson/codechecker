@@ -19,6 +19,18 @@ import signal
 import sys
 
 
+class ArgumentParser(argparse.ArgumentParser):
+    def error(self, message):
+        """
+        By default argparse will exit with error code 2 in case of error, but
+        we are using this error code for different purposes. For this reason
+        we will override this function, so we will exit with error code 1 in
+        such cases too.
+        """
+        self.print_usage(sys.stderr)
+        self.exit(1, f"{self.prog}: error: {message}\n")
+
+
 def add_subcommand(subparsers, sub_cmd, cmd_module_path, lib_dir_path):
     """
     Load the subcommand module and then add the subcommand to the available
@@ -106,7 +118,7 @@ def main():
     signal.signal(signal.SIGTERM, signal_handler)
 
     try:
-        parser = argparse.ArgumentParser(
+        parser = ArgumentParser(
             prog="CodeChecker",
             formatter_class=argparse.RawDescriptionHelpFormatter,
             description="""Run the CodeChecker sourcecode analyzer framework.
