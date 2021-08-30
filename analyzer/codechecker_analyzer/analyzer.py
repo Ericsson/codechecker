@@ -26,7 +26,7 @@ from codechecker_statistics_collector.collectors.special_return_value import \
 from codechecker_statistics_collector.collectors.return_value import \
     ReturnValueCollector
 
-from . import analysis_manager, pre_analysis_manager, env, checkers
+from . import analysis_manager, pre_analysis_manager, env
 from .analyzers import analyzer_types
 from .analyzers.config_handler import CheckerState
 from .analyzers.clangsa.analyzer import ClangSA
@@ -201,27 +201,9 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
     actions = prepare_actions(actions, analyzers)
     config_map = analyzer_types.build_config_handlers(args, context, analyzers)
 
-    available_checkers = set()
-    # Add profile names to the checkers list so we will not warn
-    # if a profile is enabled but there is no checker with that name.
-    available_checkers.update(context.profile_map.available_profiles())
-
-    # Collect all the available checkers from the enabled analyzers.
-    for analyzer in config_map.items():
-        _, analyzer_cfg = analyzer
-        for analyzer_checker in analyzer_cfg.checks().items():
-            checker_name, _ = analyzer_checker
-            available_checkers.add(checker_name)
-
-    if 'ordered_checkers' in args:
-        missing_checkers = checkers.available(args.ordered_checkers,
-                                              available_checkers)
-        if missing_checkers:
-            LOG.warning("No checker(s) with these names was found:\n%s",
-                        '\n'.join(missing_checkers))
-            LOG.warning("Please review the checker names.\n"
-                        "In the next release the analysis will not start "
-                        "with invalid checker names.")
+    ordered_checkers = args.ordered_checkers if 'ordered_checkers' in args \
+        else []
+    analyzer_types.check_available_checkers(config_map, ordered_checkers)
 
     if 'stats_enabled' in args:
         config_map[ClangSA.ANALYZER_NAME].set_checker_enabled(
