@@ -679,9 +679,11 @@ output of "CodeChecker checkers --guideline" command.""")
                                     "ambiguity the priority order is profile, "
                                     "guideline, checker name (e.g. security "
                                     "means the profile, not the checker "
-                                    "group). Profiles and guidelines can be "
-                                    "labeled: 'profile:security' or "
-                                    "'guideline:sei-cert'.")
+                                    "group). Moreover, labels can also be "
+                                    "used for selecting checkers, for example "
+                                    "profile:extreme or severity:STYLE. See "
+                                    "'CodeChecker checkers --label' for "
+                                    "further details.")
 
     checkers_opts.add_argument('-d', '--disable',
                                dest="disable",
@@ -695,9 +697,11 @@ output of "CodeChecker checkers --guideline" command.""")
                                     "ambiguity the priority order is profile, "
                                     "guideline, checker name (e.g. security "
                                     "means the profile, not the checker "
-                                    "group). Profiles and guidelines can be "
-                                    "labeled: 'profile:security' or "
-                                    "'guideline:sei-cert'.")
+                                    "group). Moreover, labels can also be "
+                                    "used for selecting checkers, for example "
+                                    "profile:extreme or severity:STYLE. See "
+                                    "'CodeChecker checkers --label' for "
+                                    "further details.")
 
     checkers_opts.add_argument('--enable-all',
                                dest="enable_all",

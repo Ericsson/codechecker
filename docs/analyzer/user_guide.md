@@ -380,15 +380,19 @@ checker configuration:
                         to BE USED in the analysis. In case of ambiguity the
                         priority order is profile, guideline, checker name
                         (e.g. security means the profile, not the checker
-                        group). Profiles and guidelines can be labeled:
-                        'profile:security' or 'guideline:sei-cert'.
+                        group). Moreover, labels can also be used for
+                        selecting checkers, for example profile:extreme or
+                        severity:STYLE. See 'CodeChecker checkers --label' for
+                        further details.
   -d checker/group/profile, --disable checker/group/profile
                         Set a checker (or checker group), profile or guideline
                         to BE PROHIBITED from use in the analysis. In case of
                         ambiguity the priority order is profile, guideline,
                         checker name (e.g. security means the profile, not the
-                        checker group). Profiles and guidelines can be
-                        labeled: 'profile:security' or 'guideline:sei-cert'.
+                        checker group). Moreover, labels can also be used for
+                        selecting checkers, for example profile:extreme or
+                        severity:STYLE. See 'CodeChecker checkers --label' for
+                        further details.
   --enable-all          Force the running analyzers to use almost every
                         checker available. The checker groups 'alpha.',
                         'debug.','osx.', 'abseil-', 'android-', 'darwin-',
@@ -1356,15 +1360,19 @@ checker configuration:
                         to BE USED in the analysis. In case of ambiguity the
                         priority order is profile, guideline, checker name
                         (e.g. security means the profile, not the checker
-                        group). Profiles and guidelines can be labeled:
-                        'profile:security' or 'guideline:sei-cert'.
+                        group). Moreover, labels can also be used for
+                        selecting checkers, for example profile:extreme or
+                        severity:STYLE. See 'CodeChecker checkers --label' for
+                        further details.
   -d checker/group/profile, --disable checker/group/profile
                         Set a checker (or checker group or checker profile)
                         to BE PROHIBITED from use in the analysis. In case of
                         ambiguity the priority order is profile, guideline,
                         checker name (e.g. security means the profile, not the
-                        checker group). Profiles and guidelines can be
-                        labeled: 'profile:security' or 'guideline:sei-cert'.
+                        checker group). Moreover, labels can also be used for
+                        selecting checkers, for example profile:extreme or
+                        severity:STYLE. See 'CodeChecker checkers --label' for
+                        further details.
   --enable-all          Force the running analyzers to use almost every
                         checker available. The checker groups 'alpha.',
                         'debug.','osx.', 'abseil-', 'android-', 'darwin-',
