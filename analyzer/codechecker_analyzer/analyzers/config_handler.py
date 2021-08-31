@@ -12,11 +12,9 @@ Static analyzer configuration handler.
 
 from abc import ABCMeta
 from enum import Enum
-from operator import itemgetter
 import collections
 import platform
 import subprocess
-import sys
 
 from codechecker_common.logger import get_logger
 
@@ -155,22 +153,7 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         enable_all -- Boolean value whether "--enable-all" is given.
         """
 
-        profile_map = analyzer_context.profile_map
-        guideline_map = analyzer_context.guideline_map
-
-        if 'profile:list' in map(itemgetter(0), cmdline_enable):
-            LOG.error("'list' is a reserved profile keyword. ")
-            LOG.error("Please choose another profile name in "
-                      "%s/config/checker_profile_map.json and rebuild.",
-                      analyzer_context.data_files_dir_path)
-            sys.exit(1)
-
-        if 'guideline:list' in map(itemgetter(0), cmdline_enable):
-            LOG.error("'list' is a reserved guideline keyword. ")
-            LOG.error("Please choose another guideline name in "
-                      "%s/config/checker_guideline_map.json and rebuild.",
-                      analyzer_context.data_files_dir_path)
-            sys.exit(1)
+        checker_labels = analyzer_context.checker_labels
 
         # Add all checkers marked as default. This means the analyzer should
         # manage whether it is enabled or disabled.
@@ -178,7 +161,8 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
             self.add_checker(checker_name, description)
 
         # Set default enabled or disabled checkers, based on the config file.
-        default_profile_checkers = profile_map.by_profile('default')
+        default_profile_checkers = \
+            checker_labels.checkers_by_labels(['profile:default'])
         if not default_profile_checkers:
             # Check whether a default profile exists.
             LOG.warning("No default profile found!")
@@ -211,33 +195,26 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         # Construct a list of reserved checker names.
         # (It is used to check if a profile name is valid.)
         reserved_names = self.__gen_name_variations()
+        profiles = checker_labels.get_description('profile')
+        guidelines = checker_labels.occurring_values('guideline')
 
         for identifier, enabled in cmdline_enable:
-            if identifier.startswith('profile:'):
-                profile_name = identifier[len('profile:'):]
-                if profile_name not in profile_map.available_profiles():
-                    LOG.error('No such profile: %s', profile_name)
-                    sys.exit(1)
-                for checker in profile_map.by_profile(profile_name):
+            if ':' in identifier:
+                for checker in checker_labels.checkers_by_labels([identifier]):
                     self.set_checker_enabled(checker, enabled)
-            if identifier.startswith('guideline:'):
-                guideline_name = identifier[len('guideline:'):]
-                if guideline_name not in guideline_map.available_guidelines():
-                    LOG.error('No such guideline: %s', guideline_name)
-                    sys.exit(1)
-                for checker in guideline_map.by_guideline(guideline_name):
-                    self.set_checker_enabled(checker, enabled)
-            elif identifier in profile_map.available_profiles():
+            elif identifier in profiles:
                 if identifier in reserved_names:
                     LOG.warning("Profile name '%s' conflicts with a "
                                 "checker(-group) name.", identifier)
-                for checker in profile_map.by_profile(identifier):
+                for checker in checker_labels.checkers_by_labels(
+                        [f'profile:{identifier}']):
                     self.set_checker_enabled(checker, enabled)
-            elif identifier in guideline_map.available_guidelines():
+            elif identifier in guidelines:
                 if identifier in reserved_names:
                     LOG.warning("Guideline name '%s' conflicts with a "
                                 "checker(-group) name.", identifier)
-                for checker in guideline_map.by_guideline(identifier):
+                for checker in checker_labels.checkers_by_labels(
+                        [f'guideline:{identifier}']):
                     self.set_checker_enabled(checker, enabled)
             else:
                 self.set_checker_enabled(identifier, enabled)

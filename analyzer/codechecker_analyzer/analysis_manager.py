@@ -169,7 +169,7 @@ def is_ctu_active(source_analyzer):
         source_analyzer.is_ctu_enabled()
 
 
-def prepare_check(action, analyzer_config, output_dir, severity_map,
+def prepare_check(action, analyzer_config, output_dir, checker_labels,
                   skip_handler, statistics_data, disable_ctu=False):
     """ Construct the source analyzer and result handler. """
     # Create a source analyzer.
@@ -209,7 +209,7 @@ def prepare_check(action, analyzer_config, output_dir, severity_map,
     # which only returns metadata, but can't process the results.
     rh = source_analyzer.construct_result_handler(action,
                                                   output_dir,
-                                                  severity_map,
+                                                  checker_labels,
                                                   skip_handler)
 
     # NOTICE!
@@ -509,7 +509,7 @@ def check(check_data):
             raise Exception("Analyzer configuration is missing.")
 
         source_analyzer, rh = prepare_check(action, analyzer_config,
-                                            output_dir, context.severity_map,
+                                            output_dir, context.checker_labels,
                                             skip_handler, statistics_data)
 
         reanalyzed = os.path.exists(rh.analyzer_result_file)
@@ -639,7 +639,7 @@ def check(check_data):
                 # Try to reanalyze with CTU disabled.
                 source_analyzer, rh = \
                     prepare_check(action, analyzer_config,
-                                  output_dir, context.severity_map,
+                                  output_dir, context.checker_labels,
                                   skip_handler, statistics_data,
                                   True)
                 reanalyzed = os.path.exists(rh.analyzer_result_file)

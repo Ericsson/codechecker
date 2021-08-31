@@ -313,7 +313,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         return clangtidy
 
     def construct_result_handler(self, buildaction, report_output,
-                                 severity_map, skiplist_handler):
+                                 checker_labels, skiplist_handler):
         """
         See base class for docs.
         """
@@ -322,7 +322,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                                                           report_output,
                                                           report_hash)
 
-        res_handler.severity_map = severity_map
+        res_handler.checker_labels = checker_labels
         res_handler.skiplist_handler = skiplist_handler
         return res_handler
 

@@ -28,6 +28,7 @@ from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
 from codechecker_api_shared.ttypes import RequestFailed
 
 from codechecker_common import logger, plist_parser, util
+from codechecker_common.checker_labels import CheckerLabels
 from codechecker_common.report import Report
 from codechecker_common.output import twodim, gerrit, codeclimate, baseline
 from codechecker_report_hash.hash import get_report_path_hash
@@ -232,7 +233,7 @@ def get_suppressed_reports(reports: List[Report],
 
 def get_report_dir_results(report_dirs: List[str],
                            args: List[str],
-                           severity_map: Dict[str, str]) -> List[Report]:
+                           checker_labels: CheckerLabels) -> List[Report]:
     """Get reports from the given report directories.
 
     Absolute paths are expected to the given report directories.
@@ -259,7 +260,7 @@ def get_report_dir_results(report_dirs: List[str],
                     LOG.debug(report)
                     continue
 
-                if skip_report_dir_result(report, args, severity_map):
+                if skip_report_dir_result(report, args, checker_labels):
                     continue
 
                 processed_path_hashes.add(path_hash)
@@ -291,7 +292,7 @@ def print_stats(report_count, file_stats, severity_stats):
     print("----=================----\n")
 
 
-def skip_report_dir_result(report, args, severity_map):
+def skip_report_dir_result(report, args, checker_labels):
     """Returns True if the report should be skipped from the results.
 
     Skipping is done based on the given filter set.
@@ -299,7 +300,7 @@ def skip_report_dir_result(report, args, severity_map):
     f_severities, f_checkers, f_file_path, _, _, _ = check_filter_values(args)
 
     if f_severities:
-        severity_name = severity_map.get(report.main['check_name'])
+        severity_name = checker_labels.severity(report.main['check_name'])
         if severity_name.lower() not in list(map(str.lower, f_severities)):
             return True
 
@@ -837,10 +838,11 @@ def handle_diff_results(args):
     ):
         """ Compare a local report directory with a remote run. """
         filtered_reports = []
+
         filtered_report_hashes = set()
 
         report_dir_results = get_report_dir_results(
-            report_dirs, args, context.severity_map)
+            report_dirs, args, context.checker_labels)
         suppressed_in_code = get_suppressed_reports(report_dir_results, args)
 
         diff_type = get_diff_type(args)
@@ -912,8 +914,7 @@ def handle_diff_results(args):
         filtered_report_hashes = []
 
         report_dir_results = get_report_dir_results(
-            report_dirs, args, context.severity_map)
-
+            report_dirs, args, context.checker_labels)
         suppressed_in_code = get_suppressed_reports(report_dir_results, args)
 
         diff_type = get_diff_type(args)
@@ -1007,10 +1008,9 @@ def handle_diff_results(args):
         filtered_report_hashes = []
 
         base_results = get_report_dir_results(
-            report_dirs, args, context.severity_map)
-
+            report_dirs, args, context.checker_labels)
         new_results = get_report_dir_results(
-            new_report_dirs, args, context.severity_map)
+            new_report_dirs, args, context.checker_labels)
 
         new_results = [res for res in new_results
                        if res.check_source_code_comments(args.review_status)]
@@ -1124,7 +1124,7 @@ def handle_diff_results(args):
         """
         html_builder = PlistToHtml.HtmlBuilder(
             context.path_plist_to_html_dist,
-            context.severity_map)
+            context.checker_labels)
         file_stats = defaultdict(int)
         severity_stats = defaultdict(int)
         file_report_map = defaultdict(list)
@@ -1133,7 +1133,7 @@ def handle_diff_results(args):
                 file_path = report.file_path
 
                 check_name = report.main['check_name']
-                sev = context.severity_map.get(check_name)
+                sev = context.checker_labels.severity(check_name)
             else:
                 file_path = report.checkedFile
                 sev = ttypes.Severity._VALUES_TO_NAMES[report.severity]
@@ -1183,7 +1183,7 @@ def handle_diff_results(args):
                 if isinstance(report, Report):
                     report = \
                         report_type_converter.report_to_reportData(
-                            report, context.severity_map)
+                            report, context.checker_labels)
                     out.append(report)
                 else:
                     out.append(report)
@@ -1267,7 +1267,7 @@ def handle_diff_results(args):
                 report.trim_path_prefixes([repo_dir])
 
         if 'gerrit' in output_formats:
-            gerrit_reports = gerrit.convert(reports, context.severity_map)
+            gerrit_reports = gerrit.convert(reports, context.checker_labels)
 
             # Gerrit was the only format specified.
             if selected_output_format_num == 1 and not output_dir:
@@ -1284,7 +1284,7 @@ def handle_diff_results(args):
             output_formats.remove('gerrit')
 
         if 'codeclimate' in output_formats:
-            cc_reports = codeclimate.convert(reports, context.severity_map)
+            cc_reports = codeclimate.convert(reports, context.checker_labels)
             # Codelimate was the only format specified.
             if selected_output_format_num == 1 and not output_dir:
                 print(json.dumps(cc_reports))
@@ -1310,8 +1310,7 @@ def handle_diff_results(args):
             if report.source_line is None:
                 continue
 
-            severity = context.severity_map.get(report.check_name,
-                                                'UNSPECIFIED')
+            severity = context.checker_labels.severity(report.check_name)
             file_name = report.file_path
             checked_file = file_name \
                 + ':' + str(report.line) + ":" + str(report.col)

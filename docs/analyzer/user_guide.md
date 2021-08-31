@@ -357,13 +357,13 @@ checker configuration:
   Note that compiler errors and warnings are captured by CodeChecker only if it
   was emitted by clang-tidy.
 
-  Profiles
+  Checker labels
   ------------------------------------------------
-  In CodeCheckers there is a manual grouping of checkers. These groups are
-  called profiles. The collection of profiles is found in
-  config/checker_profile_map.json file. The goal of these profile is that you
-  can enable or disable checkers by these profiles. See the output of
-  "CodeChecker checkers --profile list" command.
+  In CodeChecker there is a manual grouping of checkers. These groups are
+  determined by labels. The collection of labels is found in
+  config/labels directory. The goal of these labels is that you can
+  enable or disable checkers by these labels. See the --label flag of
+  "CodeChecker checkers" command.
 
   Guidelines
   ------------------------------------------------
@@ -380,15 +380,19 @@ checker configuration:
                         to BE USED in the analysis. In case of ambiguity the
                         priority order is profile, guideline, checker name
                         (e.g. security means the profile, not the checker
-                        group). Profiles and guidelines can be labeled:
-                        'profile:security' or 'guideline:sei-cert'.
+                        group). Moreover, labels can also be used for
+                        selecting checkers, for example profile:extreme or
+                        severity:STYLE. See 'CodeChecker checkers --label' for
+                        further details.
   -d checker/group/profile, --disable checker/group/profile
                         Set a checker (or checker group), profile or guideline
                         to BE PROHIBITED from use in the analysis. In case of
                         ambiguity the priority order is profile, guideline,
                         checker name (e.g. security means the profile, not the
-                        checker group). Profiles and guidelines can be
-                        labeled: 'profile:security' or 'guideline:sei-cert'.
+                        checker group). Moreover, labels can also be used for
+                        selecting checkers, for example profile:extreme or
+                        severity:STYLE. See 'CodeChecker checkers --label' for
+                        further details.
   --enable-all          Force the running analyzers to use almost every
                         checker available. The checker groups 'alpha.',
                         'debug.','osx.', 'abseil-', 'android-', 'darwin-',
@@ -456,8 +460,6 @@ Environment variables for 'CodeChecker analyze' command:
                            is set you can configure the plugin directory of the
                            Clang Static Analyzer by using this environment
                            variable.
-  CC_SEVERITY_MAP_FILE     Path of the checker-severity mapping config file.
-                           Default: <package>/config/checker_severity_map.json
 
 Environment variables for 'CodeChecker parse' command:
 
@@ -468,8 +470,6 @@ Environment variables for 'CodeChecker parse' command:
                          generating gerrit output.
   CC_REPORT_URL          URL where the report can be found. Use it when
                          generating gerrit output.
-  CC_SEVERITY_MAP_FILE   Path of the checker-severity mapping config file.
-                         Default: <package>/config/checker_severity_map.json
 
 Issue hashes
 ------------------------------------------------
@@ -937,8 +937,6 @@ Environment variables
                            is set you can configure the plugin directory of the
                            Clang Static Analyzer by using this environment
                            variable.
-  CC_SEVERITY_MAP_FILE     Path of the checker-severity mapping config file.
-                           Default: <package>/config/checker_severity_map.json
 ```
 </details>
 
@@ -1362,15 +1360,19 @@ checker configuration:
                         to BE USED in the analysis. In case of ambiguity the
                         priority order is profile, guideline, checker name
                         (e.g. security means the profile, not the checker
-                        group). Profiles and guidelines can be labeled:
-                        'profile:security' or 'guideline:sei-cert'.
+                        group). Moreover, labels can also be used for
+                        selecting checkers, for example profile:extreme or
+                        severity:STYLE. See 'CodeChecker checkers --label' for
+                        further details.
   -d checker/group/profile, --disable checker/group/profile
                         Set a checker (or checker group or checker profile)
                         to BE PROHIBITED from use in the analysis. In case of
                         ambiguity the priority order is profile, guideline,
                         checker name (e.g. security means the profile, not the
-                        checker group). Profiles and guidelines can be
-                        labeled: 'profile:security' or 'guideline:sei-cert'.
+                        checker group). Moreover, labels can also be used for
+                        selecting checkers, for example profile:extreme or
+                        severity:STYLE. See 'CodeChecker checkers --label' for
+                        further details.
   --enable-all          Force the running analyzers to use almost every
                         checker available. The checker groups 'alpha.',
                         'debug.','osx.', 'abseil-', 'android-', 'darwin-',
@@ -1452,7 +1454,7 @@ critical severity bug.
 #### Checker profiles <a name="checker-profiles"></a>
 
 Checker profiles describe custom sets of enabled checks which can be specified
-in the `{INSTALL_DIR}/config/checker_profile_map.json` file. Three built-in
+in the `{INSTALL_DIR}/config/labels` directory. Three built-in
 options are available grouping checkers by their quality (measured by their
 false positive rate): `default`, `sensitive` and `extreme`. In addition,
 profile `portability` contains checkers for detecting platform-dependent code
@@ -1672,8 +1674,6 @@ Environment variables
                          generating gerrit output.
   CC_REPORT_URL          URL where the report can be found. Use it when
                          generating gerrit output.
-  CC_SEVERITY_MAP_FILE   Path of the checker-severity mapping config file.
-                         Default: <package>/config/checker_severity_map.json
 
 Exit status
 ------------------------------------------------
@@ -1764,7 +1764,8 @@ providing a quick overview on which checkers are available in the analyzers.
 
 ```
 usage: CodeChecker checkers [-h] [--analyzers ANALYZER [ANALYZER ...]]
-                            [--details] [--profile {PROFILE/list}]
+                            [--details] [--label LABEL [LABEL ...]]
+                            [--profile {PROFILE/list}]
                             [--only-enabled | --only-disabled]
                             [-o {rows,table,csv,json}]
                             [--verbose {info,debug,debug_analyzer}]
@@ -1778,41 +1779,68 @@ optional arguments:
                         Show checkers only from the analyzers specified.
                         Currently supported analyzers are: clangsa, clang-
                         tidy.
-  --details             Show details about the checker, such as description,
-                        if available.
-  --profile {PROFILE/list}
-                        List checkers enabled by the selected profile.
-                        'list' is a special option showing details about
-                        profiles collectively.
-  --guideline GUIDELINE [GUIDELINE ...]
-                        List checkers that report on a specific guideline
-                        rule. Here you can add the guideline name or the ID of
-                        a rule. Without additional parameter, the available
-                        guidelines and their corresponding rules will be
-                        listed.
+  --details             Show details about the checker, such as status,
+                        checker name, analyzer name, severity, guidelines and
+                        description. Status shows if the checker is enabled
+                        besides the given labels. If the labels don't trigger
+                        a checker then the status is determined by the
+                        analyzer tool.
+  --label [LABEL]       Filter checkers that are attached the given label. The
+                        format of a label is <label>:<value>. If no argument
+                        is given then available labels are listed. If only
+                        <label> is given then available values are listed.
+  --profile [PROFILE]   List checkers enabled by the selected profile. If no
+                        argument is given then available profiles are listed.
+  --guideline [GUIDELINE]
+                        List checkers that report on a specific guideline.
+                        Without additional parameter, the available guidelines
+                        and their corresponding rules will be listed.
+  --severity [SEVERITY]
+                        List checkers with the given severity. Make sure to
+                        indicate severity in capitals (e.g. HIGH, MEDIUM,
+                        etc.) If no argument is given then available
+                        severities are listed.
   --checker-config      Show checker configuration options for all
                         existing checkers supported by the analyzer.
                         These can be given to 'CodeChecker analyze
                         --checker-config'.
-  --only-enabled        Show only the enabled checkers.
-  --only-disabled       Show only the disabled checkers.
+  --only-enabled        DEPRECATED. Show only the enabled checkers.
+  --only-disabled       DEPRECATED. Show only the disabled checkers.
   -o {rows,table,csv,json}, --output {rows,table,csv,json}
                         The format to list the applicable checkers as.
                         (default: rows)
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level.
 
-The list of checkers that are enabled of disabled by default can be edited by
-editing the file '.../config/checker_profile_map.json'.
+The list of checkers that are enabled or disabled by default can be edited by
+editing "profile:default" labels in the file '{}'.
 
-Environment variables
-------------------------------------------------
-  CC_SEVERITY_MAP_FILE   Path of the checker-severity mapping config file.
-                         Default: '<package>/config/checker_severity_map.json'
-  CC_GUIDELINE_MAP_FILE  Path of the checker-guideline mapping config file.
-                         Default: '<package>/config/checker_guideline_map.json'
-  CC_PROFILE_MAP_FILE    Path of the checker-profile mapping config file.
-                         Default: '<package>/config/checker_profile_map.json'
+Example scenario: List checkers by labels
+-----------------------------------------
+List checkers in "sensitive" profile:
+    CodeChecker checkers --label profile:sensitive
+    CodeChecker checkers --profile sensitive
+
+List checkers in "HIGH" severity:
+    CodeChecker checkers --label severity:HIGH
+    CodeChecker checkers --severity HIGH
+
+List checkers covering str34-c SEI-CERT rule:
+    CodeChecker checkers --label sei-cert:str-34-c
+    CodeChecker checkers --guideline sei-cert:str34-c
+
+List checkers covering all SEI-CERT rules:
+    CodeChecker checkers --label guideline:sei-cert
+    CodeChecker checkers --guideline sei-cert
+
+List available profiles, guidelines and severities:
+    CodeChecker checkers --profile
+    CodeChecker checkers --guideline
+    CodeChecker checkers --severity
+
+List labels and their available values:
+    CodeChecker checkers --label
+    CodeChecker checkers --label severity
 ```
 </details>
 
@@ -1828,7 +1856,7 @@ A machine-readable `csv` or `json` output can be generated by supplying the
 `--output csv` or `--output json` argument.
 
 The _default_ list of enabled and disabled checkers can be altered by editing
-`{INSTALL_DIR}/config/checker_profile_map.json`. Note, that this file is
+config files in `{INSTALL_DIR}/config/labels`. Note, that this directory is
 overwritten when the package is reinstalled!
 
 There are some coding guidelines which contain best practices on avoiding
@@ -1837,8 +1865,8 @@ common programming mistakes
 [https://wiki.sei.cmu.edu/confluence/display/seccode/SEI+CERT+Coding+Standards](SEI-CERT), etc.)
 Many of these guideline rules can be checked by static analyzer tools. The
 detailed output of `CodeChecker checkers` command contains information about
-which checkers cover certain guideline rules. This mapping is given in
-`<package>/config/checker_guideline_map.json` config file.
+which checkers cover certain guideline rules. This mapping is given in the
+config files of `<package>/config/labels` directory.
 
 ## <a name="analyzers"></a> 6. `analyzers` mode
 

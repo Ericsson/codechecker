@@ -41,8 +41,23 @@ class ReportTypeConverterTest(unittest.TestCase):
                             files={0: source_file},
                             metadata=None)
 
-        severity_map = {check_name: "LOW"}
-        rep_data = report_type_converter.report_to_reportData(rep, severity_map)
+        class CheckerLabels:
+            def severity(self, checker):
+                if checker == check_name:
+                    return 'LOW'
+
+                # This assertion warns when a new test-case in the future
+                # intends to query the severity of another checker. The
+                # original behavior of this function is to return the
+                # defult 'UNSPECIFIED' value by defult when the severity is
+                # not provided in the config file.
+                assert False, \
+                    'Currently no test-case quieries other labels for ' \
+                    'other checkers.'
+
+        checker_labels = CheckerLabels()
+        rep_data = report_type_converter.report_to_reportData(
+            rep, checker_labels)
 
         self.assertEqual(rep_data.checkerId, rep.check_name)
         self.assertEqual(rep_data.bugHash, rep.report_hash)

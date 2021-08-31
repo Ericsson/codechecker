@@ -30,10 +30,6 @@ from codechecker_common.util import load_json_or_empty
 
 LOG = logger.get_logger('system')
 
-_data_files_dir_path = analyzer_context.get_context().data_files_dir_path
-_severity_map_file = os.path.join(_data_files_dir_path, 'config',
-                                  'checker_severity_map.json')
-
 epilog_env_var = f"""
   CC_ANALYZERS_FROM_PATH   Set to `yes` or `1` to enforce taking the analyzers
                            from the `PATH` instead of the given binaries.
@@ -41,8 +37,6 @@ epilog_env_var = f"""
                            is set you can configure the plugin directory of the
                            Clang Static Analyzer by using this environment
                            variable.
-  CC_SEVERITY_MAP_FILE     Path of the checker-severity mapping config file.
-                           Default: {_severity_map_file}
 """
 
 epilog_issue_hashes = """
@@ -657,13 +651,13 @@ compiler errors are also collected as CodeChecker reports as
 Note that compiler errors and warnings are captured by CodeChecker only if it
 was emitted by clang-tidy.
 
-Profiles
+Checker labels
 ------------------------------------------------
-In CodeCheckers there is a manual grouping of checkers. These groups are called
-profiles. The collection of profiles is found in
-config/checker_profile_map.json file. The goal of these profile is that you can
-enable or disable checkers by these profiles. See the output of "CodeChecker
-checkers --profile list" command.
+In CodeChecker there is a manual grouping of checkers. These groups are
+determined by labels. The collection of labels is found in
+config/labels directory. The goal of these labels is that you can
+enable or disable checkers by these labels. See the --label flag of
+"CodeChecker checkers" command.
 
 Guidelines
 ------------------------------------------------
@@ -685,9 +679,11 @@ output of "CodeChecker checkers --guideline" command.""")
                                     "ambiguity the priority order is profile, "
                                     "guideline, checker name (e.g. security "
                                     "means the profile, not the checker "
-                                    "group). Profiles and guidelines can be "
-                                    "labeled: 'profile:security' or "
-                                    "'guideline:sei-cert'.")
+                                    "group). Moreover, labels can also be "
+                                    "used for selecting checkers, for example "
+                                    "profile:extreme or severity:STYLE. See "
+                                    "'CodeChecker checkers --label' for "
+                                    "further details.")
 
     checkers_opts.add_argument('-d', '--disable',
                                dest="disable",
@@ -701,9 +697,11 @@ output of "CodeChecker checkers --guideline" command.""")
                                     "ambiguity the priority order is profile, "
                                     "guideline, checker name (e.g. security "
                                     "means the profile, not the checker "
-                                    "group). Profiles and guidelines can be "
-                                    "labeled: 'profile:security' or "
-                                    "'guideline:sei-cert'.")
+                                    "group). Moreover, labels can also be "
+                                    "used for selecting checkers, for example "
+                                    "profile:extreme or severity:STYLE. See "
+                                    "'CodeChecker checkers --label' for "
+                                    "further details.")
 
     checkers_opts.add_argument('--enable-all',
                                dest="enable_all",

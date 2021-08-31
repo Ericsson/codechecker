@@ -1,0 +1,1784 @@
+{
+  "analyzer": "clang-tidy",
+  "labels": {
+    "abseil-duration-addition": [
+
+    ],
+    "abseil-duration-comparison": [
+
+    ],
+    "abseil-duration-conversion-cast": [
+
+    ],
+    "abseil-duration-division": [
+
+    ],
+    "abseil-duration-factory-float": [
+
+    ],
+    "abseil-duration-factory-scale": [
+
+    ],
+    "abseil-duration-subtraction": [
+
+    ],
+    "abseil-duration-unnecessary-conversion": [
+
+    ],
+    "abseil-faster-strsplit-delimiter": [
+
+    ],
+    "abseil-no-internal-dependencies": [
+
+    ],
+    "abseil-no-namespace": [
+
+    ],
+    "abseil-redundant-strcat-calls": [
+
+    ],
+    "abseil-str-cat-append": [
+
+    ],
+    "abseil-string-find-startswith": [
+      "severity:STYLE"
+    ],
+    "abseil-string-find-str-contains": [
+
+    ],
+    "abseil-time-comparison": [
+
+    ],
+    "abseil-time-subtraction": [
+
+    ],
+    "abseil-upgrade-duration-conversions": [
+
+    ],
+    "altera-id-dependent-backward-branch": [
+      "severity:LOW"
+    ],
+    "altera-struct-pack-align": [
+      "severity:LOW"
+    ],
+    "altera-unroll-loops": [
+      "severity:LOW"
+    ],
+    "android-cloexec-accept": [
+
+    ],
+    "android-cloexec-accept4": [
+
+    ],
+    "android-cloexec-creat": [
+      "severity:MEDIUM"
+    ],
+    "android-cloexec-dup": [
+
+    ],
+    "android-cloexec-epoll-create": [
+
+    ],
+    "android-cloexec-epoll-create1": [
+
+    ],
+    "android-cloexec-fopen": [
+      "severity:MEDIUM"
+    ],
+    "android-cloexec-inotify-init": [
+
+    ],
+    "android-cloexec-inotify-init1": [
+
+    ],
+    "android-cloexec-memfd-create": [
+
+    ],
+    "android-cloexec-open": [
+      "severity:MEDIUM"
+    ],
+    "android-cloexec-pipe": [
+
+    ],
+    "android-cloexec-pipe2": [
+
+    ],
+    "android-cloexec-socket": [
+      "severity:MEDIUM"
+    ],
+    "android-comparison-in-temp-failure-retry": [
+
+    ],
+    "AddressSanitizer": [
+      "severity:HIGH"
+    ],
+    "boost-use-to-string": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "bugprone-argument-comment": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "bugprone-assert-side-effect": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:pre31-c",
+      "severity:MEDIUM"
+    ],
+    "bugprone-bad-signal-to-kill-thread": [
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:pos44-c",
+      "severity:MEDIUM"
+    ],
+    "bugprone-bool-pointer-implicit-conversion": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "bugprone-branch-clone": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "bugprone-copy-constructor-init": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "bugprone-dangling-handle": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "bugprone-dynamic-static-initializers": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "bugprone-easily-swappable-parameters": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "bugprone-exception-escape": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:dcl57-cpp",
+      "sei-cert:err55-cpp",
+      "sei-cert:msc53-cpp",
+      "severity:MEDIUM"
+    ],
+    "bugprone-fold-init-type": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "bugprone-forward-declaration-namespace": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "bugprone-forwarding-reference-overload": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "bugprone-implicit-widening-of-multiplication-result": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "bugprone-inaccurate-erase": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "bugprone-incorrect-roundings": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "bugprone-infinite-loop": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "bugprone-integer-division": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "bugprone-lambda-function-name": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "bugprone-macro-parentheses": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "bugprone-macro-repeated-side-effects": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:pre31-c",
+      "severity:MEDIUM"
+    ],
+    "bugprone-misplaced-operator-in-strlen-in-alloc": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "bugprone-misplaced-pointer-arithmetic-in-alloc": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "bugprone-misplaced-widening-cast": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:portability",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "bugprone-move-forwarding-reference": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "bugprone-multiple-statement-macro": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "bugprone-narrowing-conversions": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:exp45-c",
+      "sei-cert:fio34-c",
+      "sei-cert:flp34-c",
+      "sei-cert:flp36-c",
+      "severity:MEDIUM"
+    ],
+    "bugprone-no-escape": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "bugprone-not-null-terminated-result": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "bugprone-parent-virtual-call": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "bugprone-posix-return": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "bugprone-redundant-branch-condition": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "bugprone-reserved-identifier": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "bugprone-signal-handler": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "bugprone-signed-char-misuse": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:str34-c",
+      "severity:MEDIUM"
+    ],
+    "bugprone-sizeof-container": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "bugprone-sizeof-expression": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:mem35-c",
+      "severity:HIGH"
+    ],
+    "bugprone-spuriously-wake-up-functions": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "bugprone-string-constructor": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "bugprone-string-integer-assignment": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "bugprone-string-literal-with-embedded-nul": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "bugprone-suspicious-enum-usage": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "bugprone-suspicious-include": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "bugprone-suspicious-memset-usage": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:int31-c",
+      "severity:HIGH"
+    ],
+    "bugprone-suspicious-missing-comma": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "bugprone-suspicious-semicolon": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "bugprone-suspicious-string-compare": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "bugprone-swapped-arguments": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "bugprone-terminating-continue": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "bugprone-throw-keyword-missing": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "bugprone-too-small-loop-variable": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "bugprone-undefined-memory-manipulation": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:oop57-cpp",
+      "severity:MEDIUM"
+    ],
+    "bugprone-undelegated-constructor": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "bugprone-unhandled-self-assignment": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:oop54-cpp",
+      "severity:MEDIUM"
+    ],
+    "bugprone-unused-raii": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "bugprone-unused-return-value": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:exp63-cpp",
+      "severity:MEDIUM"
+    ],
+    "bugprone-use-after-move": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:exp63-cpp",
+      "severity:HIGH"
+    ],
+    "bugprone-virtual-near-miss": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "cert-con36-c": [
+      "profile:sensitive",
+      "profile:extreme",
+      "profile:security",
+      "severity:MEDIUM"
+    ],
+    "cert-con54-cpp": [
+      "profile:sensitive",
+      "profile:extreme",
+      "profile:security",
+      "severity:MEDIUM"
+    ],
+    "cert-dcl03-c": [
+      "profile:sensitive",
+      "profile:extreme",
+      "profile:security",
+      "guideline:sei-cert",
+      "sei-cert:dcl03-c",
+      "severity:MEDIUM"
+    ],
+    "cert-dcl16-c": [
+      "profile:sensitive",
+      "profile:extreme",
+      "profile:security",
+      "guideline:sei-cert",
+      "sei-cert:dcl16-c",
+      "severity:STYLE"
+    ],
+    "cert-dcl21-cpp": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:dcl21-cpp",
+      "severity:LOW"
+    ],
+    "cert-dcl37-c": [
+      "profile:sensitive",
+      "profile:extreme",
+      "profile:security",
+      "guideline:sei-cert",
+      "sei-cert:dcl37-c",
+      "severity:LOW"
+    ],
+    "cert-dcl50-cpp": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:dcl50-cpp",
+      "severity:LOW"
+    ],
+    "cert-dcl51-cpp": [
+      "profile:sensitive",
+      "profile:extreme",
+      "profile:security",
+      "guideline:sei-cert",
+      "sei-cert:dcl51-cpp",
+      "severity:LOW"
+    ],
+    "cert-dcl54-cpp": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "profile:security",
+      "guideline:sei-cert",
+      "sei-cert:dcl54-cpp",
+      "severity:MEDIUM"
+    ],
+    "cert-dcl58-cpp": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:dcl58-cpp",
+      "severity:HIGH"
+    ],
+    "cert-dcl59-cpp": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "profile:security",
+      "guideline:sei-cert",
+      "sei-cert:dcl59-cpp",
+      "severity:MEDIUM"
+    ],
+    "cert-env33-c": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:env33-c",
+      "severity:MEDIUM"
+    ],
+    "cert-err09-cpp": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "profile:security",
+      "guideline:sei-cert",
+      "sei-cert:err09-cpp",
+      "sei-cert:err61-cpp",
+      "severity:HIGH"
+    ],
+    "cert-err34-c": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:err34-c",
+      "severity:LOW"
+    ],
+    "cert-err52-cpp": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:err52-cpp",
+      "severity:LOW"
+    ],
+    "cert-err58-cpp": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:err58-cpp",
+      "severity:LOW"
+    ],
+    "cert-err60-cpp": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:err60-cpp",
+      "severity:MEDIUM"
+    ],
+    "cert-err61-cpp": [
+      "profile:sensitive",
+      "profile:extreme",
+      "profile:security",
+      "guideline:sei-cert",
+      "sei-cert:err61-cpp",
+      "severity:HIGH"
+    ],
+    "cert-fio38-c": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "profile:security",
+      "guideline:sei-cert",
+      "sei-cert:fio38-c",
+      "severity:HIGH"
+    ],
+    "cert-flp30-c": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:flp30-c",
+      "severity:HIGH"
+    ],
+    "cert-mem57-cpp": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:mem57-cpp",
+      "severity:MEDIUM"
+    ],
+    "cert-msc30-c": [
+      "profile:sensitive",
+      "profile:extreme",
+      "profile:security",
+      "guideline:sei-cert",
+      "sei-cert:msc30-c",
+      "sei-cert:msc50-cpp",
+      "severity:LOW"
+    ],
+    "cert-msc32-c": [
+      "profile:sensitive",
+      "profile:extreme",
+      "profile:security",
+      "guideline:sei-cert",
+      "sei-cert:msc32-c",
+      "sei-cert:msc51-cpp",
+      "severity:MEDIUM"
+    ],
+    "cert-msc50-cpp": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:msc50-cpp",
+      "sei-cert:msc30-c",
+      "severity:LOW"
+    ],
+    "cert-msc51-cpp": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:msc51-cpp",
+      "severity:MEDIUM"
+    ],
+    "cert-oop11-cpp": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "profile:security",
+      "guideline:sei-cert",
+      "sei-cert:oop11-cpp",
+      "severity:MEDIUM"
+    ],
+    "cert-oop54-cpp": [
+      "profile:sensitive",
+      "profile:extreme",
+      "profile:security",
+      "guideline:sei-cert",
+      "sei-cert:oop54-cpp",
+      "severity:MEDIUM"
+    ],
+    "cert-oop57-cpp": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:oop57-cpp",
+      "severity:HIGH"
+    ],
+    "cert-oop58-cpp": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:oop58-cpp",
+      "severity:MEDIUM"
+    ],
+    "cert-pos44-c": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "profile:security",
+      "guideline:sei-cert",
+      "sei-cert:pos44-c",
+      "severity:MEDIUM"
+    ],
+    "cert-sig30-c": [
+      "profile:sensitive",
+      "profile:extreme",
+      "profile:security",
+      "severity:MEDIUM"
+    ],
+    "cert-str34-c": [
+      "profile:sensitive",
+      "profile:extreme",
+      "profile:security",
+      "guideline:sei-cert",
+      "sei-cert:str34-c",
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic": [
+      "severity:MEDIUM"
+    ],
+    "clang-diagnostic-error": [
+      "severity:CRITICAL"
+    ],
+    "concurrency-mt-unsafe": [
+      "severity:MEDIUM"
+    ],
+    "cppcoreguidelines-avoid-c-arrays": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "cppcoreguidelines-avoid-goto": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "cppcoreguidelines-avoid-magic-numbers": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "cppcoreguidelines-avoid-non-const-global-variables": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "cppcoreguidelines-c-copy-assignment-signature": [
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "cppcoreguidelines-explicit-virtual-functions": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "cppcoreguidelines-init-variables": [
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "cppcoreguidelines-interfaces-global-init": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "cppcoreguidelines-macro-usage": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "cppcoreguidelines-narrowing-conversions": [
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "cppcoreguidelines-no-malloc": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "cppcoreguidelines-non-private-member-variables-in-classes": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "cppcoreguidelines-owning-memory": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "cppcoreguidelines-prefer-member-initializer": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "cppcoreguidelines-pro-bounds-array-to-pointer-decay": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "cppcoreguidelines-pro-bounds-constant-array-index": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "cppcoreguidelines-pro-bounds-pointer-arithmetic": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "cppcoreguidelines-pro-type-const-cast": [
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:exp55-cpp",
+      "severity:LOW"
+    ],
+    "cppcoreguidelines-pro-type-cstyle-cast": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "cppcoreguidelines-pro-type-member-init": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "cppcoreguidelines-pro-type-reinterpret-cast": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "cppcoreguidelines-pro-type-static-cast-downcast": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "cppcoreguidelines-pro-type-union-access": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "cppcoreguidelines-pro-type-vararg": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "cppcoreguidelines-slicing": [
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:oop51-cpp",
+      "severity:LOW"
+    ],
+    "cppcoreguidelines-special-member-functions": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "darwin-avoid-spinlock": [
+
+    ],
+    "darwin-dispatch-once-nonstatic": [
+
+    ],
+    "fuchsia-default-arguments-calls": [
+
+    ],
+    "fuchsia-default-arguments-declarations": [
+
+    ],
+    "fuchsia-header-anon-namespaces": [
+
+    ],
+    "fuchsia-multiple-inheritance": [
+
+    ],
+    "fuchsia-overloaded-operator": [
+
+    ],
+    "fuchsia-statically-constructed-objects": [
+
+    ],
+    "fuchsia-trailing-return": [
+
+    ],
+    "fuchsia-virtual-inheritance": [
+
+    ],
+    "google-build-explicit-make-pair": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "google-build-namespaces": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "google-build-using-namespace": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "google-default-arguments": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "google-explicit-constructor": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "google-global-names-in-headers": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "google-objc-avoid-nsobject-new": [
+      "profile:extreme"
+    ],
+    "google-objc-avoid-throwing-exception": [
+      "profile:extreme"
+    ],
+    "google-objc-function-naming": [
+      "profile:extreme"
+    ],
+    "google-objc-global-variable-declaration": [
+      "profile:extreme"
+    ],
+    "google-readability-avoid-underscore-in-googletest-name": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "google-readability-braces-around-statements": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "google-readability-casting": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "google-readability-function-size": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "google-readability-namespace-comments": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "google-readability-todo": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "google-readability-redundant-smartptr-get": [
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "google-runtime-int": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "google-runtime-member-string-references": [
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "google-runtime-memset": [
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "google-runtime-operator": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "google-runtime-references": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "google-upgrade-googletest-case": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "hicpp-avoid-c-arrays": [
+      "severity:LOW"
+    ],
+    "hicpp-avoid-goto": [
+      "severity:STYLE"
+    ],
+    "hicpp-braces-around-statements": [
+      "severity:STYLE"
+    ],
+    "hicpp-deprecated-headers": [
+      "severity:LOW"
+    ],
+    "hicpp-exception-baseclass": [
+      "severity:LOW"
+    ],
+    "hicpp-explicit-conversions": [
+      "severity:LOW"
+    ],
+    "hicpp-function-size": [
+      "severity:LOW"
+    ],
+    "hicpp-invalid-access-moved": [
+      "severity:HIGH"
+    ],
+    "hicpp-member-init": [
+      "severity:LOW"
+    ],
+    "hicpp-move-const-arg": [
+      "severity:MEDIUM"
+    ],
+    "hicpp-multiway-paths-covered": [
+      "severity:STYLE"
+    ],
+    "hicpp-named-parameter": [
+      "severity:LOW"
+    ],
+    "hicpp-new-delete-operators": [
+      "severity:LOW"
+    ],
+    "hicpp-no-array-decay": [
+      "severity:LOW"
+    ],
+    "hicpp-no-assembler": [
+      "severity:LOW"
+    ],
+    "hicpp-no-malloc": [
+      "severity:LOW"
+    ],
+    "hicpp-noexcept-move": [
+      "severity:MEDIUM"
+    ],
+    "hicpp-signed-bitwise": [
+      "severity:LOW"
+    ],
+    "hicpp-special-member-functions": [
+      "severity:LOW"
+    ],
+    "hicpp-static-assert": [
+      "severity:LOW"
+    ],
+    "hicpp-undelegated-constructor": [
+      "severity:MEDIUM"
+    ],
+    "hicpp-uppercase-literal-suffix": [
+      "severity:STYLE"
+    ],
+    "hicpp-use-auto": [
+      "severity:STYLE"
+    ],
+    "hicpp-use-emplace": [
+      "severity:STYLE"
+    ],
+    "hicpp-use-equals-default": [
+      "severity:LOW"
+    ],
+    "hicpp-use-equals-delete": [
+      "severity:LOW"
+    ],
+    "hicpp-use-noexcept": [
+      "severity:STYLE"
+    ],
+    "hicpp-use-nullptr": [
+      "severity:LOW"
+    ],
+    "hicpp-use-override": [
+      "severity:LOW"
+    ],
+    "hicpp-vararg": [
+      "severity:LOW"
+    ],
+    "linuxkernel-must-check-errs": [
+      "severity:STYLE"
+    ],
+    "llvm-else-after-return": [
+      "severity:STYLE"
+    ],
+    "llvm-header-guard": [
+      "severity:LOW"
+    ],
+    "llvm-include-order": [
+      "severity:LOW"
+    ],
+    "llvm-namespace-comment": [
+      "severity:LOW"
+    ],
+    "llvm-prefer-isa-or-dyn-cast-in-conditionals": [
+      "severity:STYLE"
+    ],
+    "llvm-prefer-register-over-unsigned": [
+      "severity:STYLE"
+    ],
+    "llvm-qualified-auto": [
+      "severity:STYLE"
+    ],
+    "llvm-twine-local": [
+      "severity:LOW"
+    ],
+    "llvmlibc-callee-namespace": [
+      "severity:STYLE"
+    ],
+    "llvmlibc-implementation-in-namespace": [
+      "severity:LOW"
+    ],
+    "llvmlibc-restrict-system-libc-headers": [
+      "severity:LOW"
+    ],
+    "MemorySanitizer": [
+      "severity:HIGH"
+    ],
+    "misc-argument-comment": [
+      "severity:LOW",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-assert-side-effect": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:pre31-c",
+      "severity:MEDIUM"
+    ],
+    "misc-bool-pointer-implicit-conversion": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "misc-dangling-handle": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "misc-definitions-in-headers": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "misc-fold-init-type": [
+      "severity:HIGH",
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
+    ],
+    "misc-forward-declaration-namespace": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "misc-forwarding-reference-overload": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "misc-inaccurate-erase": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "misc-incorrect-roundings": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "misc-inefficient-algorithm": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "misc-lambda-function-name": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "misc-macro-parentheses": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "misc-macro-repeated-side-effects": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "misc-misplaced-const": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "misc-misplaced-widening-cast": [
+      "profile:default",
+      "profile:portability",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "misc-move-const-arg": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "misc-move-constructor-init": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "misc-move-forwarding-reference": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "misc-multiple-statement-macro": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "misc-new-delete-overloads": [
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "misc-no-recursion": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "misc-noexcept-move-constructor": [
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "misc-non-copyable-objects": [
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:fio38-c",
+      "severity:HIGH"
+    ],
+    "misc-non-private-member-variables-in-classes": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "misc-redundant-expression": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "misc-sizeof-container": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "misc-sizeof-expression": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "misc-static-assert": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "misc-string-compare": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "misc-string-constructor": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "misc-string-integer-assignment": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "misc-string-literal-with-embedded-nul": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "misc-suspicious-enum-usage": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "misc-suspicious-missing-comma": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "misc-suspicious-semicolon": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "misc-suspicious-string-compare": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "misc-swapped-arguments": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "misc-throw-by-value-catch-by-reference": [
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:err61-cpp",
+      "severity:HIGH"
+    ],
+    "misc-unconventional-assign-operator": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "misc-undelegated-constructor": [
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "misc-uniqueptr-reset-release": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "misc-unused-alias-decls": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "misc-unused-parameters": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "misc-unused-raii": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "misc-unused-using-decls": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "misc-use-after-move": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "guideline:sei-cert",
+      "sei-cert:exp63-cpp",
+      "severity:HIGH"
+    ],
+    "misc-virtual-near-miss": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+    "modernize-avoid-bind": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "modernize-avoid-c-arrays": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "modernize-concat-nested-namespaces": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "modernize-deprecated-headers": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "modernize-deprecated-ios-base-aliases": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "modernize-loop-convert": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "modernize-make-shared": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "modernize-make-unique": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "modernize-pass-by-value": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "modernize-raw-string-literal": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "modernize-redundant-void-arg": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "modernize-replace-auto-ptr": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "modernize-replace-disallow-copy-and-assign-macro": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "modernize-replace-random-shuffle": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "modernize-return-braced-init-list": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "modernize-shrink-to-fit": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "modernize-unary-static-assert": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "modernize-use-auto": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "modernize-use-bool-literals": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "modernize-use-default-member-init": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "modernize-use-emplace": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "modernize-use-equals-default": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "modernize-use-equals-delete": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "modernize-use-nodiscard": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "modernize-use-noexcept": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "modernize-use-nullptr": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "modernize-use-override": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "modernize-use-trailing-return-type": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "modernize-use-transparent-functors": [
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "modernize-use-uncaught-exceptions": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "modernize-use-using": [
+      "profile:extreme",
+      "severity:STYLE"
+    ],
+    "mpi-buffer-deref": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "mpi-type-mismatch": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "objc-avoid-nserror-init": [
+
+    ],
+    "objc-dealloc-in-category": [
+
+    ],
+    "objc-forbidden-subclassing": [
+
+    ],
+    "objc-missing-hash": [
+
+    ],
+    "objc-nsinvocation-argument-lifetime": [
+
+    ],
+    "objc-property-declaration": [
+
+    ],
+    "objc-super-self": [
+
+    ],
+    "openmp-exception-escape": [
+
+    ],
+    "openmp-use-default-none": [
+
+    ],
+    "performance-faster-string-find": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "performance-for-range-copy": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "performance-implicit-cast-in-loop": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "performance-implicit-conversion-in-loop": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "performance-inefficient-algorithm": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "performance-inefficient-string-concatenation": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "performance-inefficient-vector-operation": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "performance-move-const-arg": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "performance-move-constructor-init": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "performance-no-automatic-move": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "performance-no-int-to-ptr": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "performance-noexcept-move-constructor": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:MEDIUM"
+    ],
+    "performance-trivially-destructible": [
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "performance-type-promotion-in-math-fn": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "performance-unnecessary-copy-initialization": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "performance-unnecessary-value-param": [
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "portability-restrict-system-includes": [
+      "severity:STYLE"
+    ],
+    "portability-simd-intrinsics": [
+      "severity:STYLE"
+    ],
+    "readability-avoid-const-params-in-decls": [
+      "severity:STYLE"
+    ],
+    "readability-braces-around-statements": [
+      "severity:STYLE"
+    ],
+    "readability-const-return-type": [
+      "severity:LOW"
+    ],
+    "readability-container-size-empty": [
+      "severity:STYLE"
+    ],
+    "readability-convert-member-functions-to-static": [
+      "severity:STYLE"
+    ],
+    "readability-delete-null-pointer": [
+      "severity:STYLE"
+    ],
+    "readability-deleted-default": [
+      "severity:STYLE"
+    ],
+    "readability-else-after-return": [
+      "severity:STYLE"
+    ],
+    "readability-function-cognitive-complexity": [
+      "severity:STYLE"
+    ],
+    "readability-function-size": [
+      "severity:STYLE"
+    ],
+    "readability-identifier-naming": [
+      "severity:STYLE"
+    ],
+    "readability-implicit-bool-cast": [
+      "severity:STYLE"
+    ],
+    "readability-implicit-bool-conversion": [
+      "severity:STYLE"
+    ],
+    "readability-inconsistent-declaration-parameter-name": [
+      "severity:STYLE"
+    ],
+    "readability-isolate-declaration": [
+      "severity:STYLE"
+    ],
+    "readability-magic-numbers": [
+      "severity:STYLE"
+    ],
+    "readability-make-member-function-const": [
+      "severity:STYLE"
+    ],
+    "readability-misleading-indentation": [
+      "severity:LOW"
+    ],
+    "readability-misplaced-array-index": [
+      "severity:STYLE"
+    ],
+    "readability-named-parameter": [
+      "severity:STYLE"
+    ],
+    "readability-non-const-parameter": [
+      "severity:STYLE"
+    ],
+    "readability-qualified-auto": [
+      "severity:LOW"
+    ],
+    "readability-redundant-access-specifiers": [
+      "severity:STYLE"
+    ],
+    "readability-redundant-control-flow": [
+      "severity:STYLE"
+    ],
+    "readability-redundant-declaration": [
+      "severity:STYLE"
+    ],
+    "readability-redundant-function-ptr-dereference": [
+      "severity:STYLE"
+    ],
+    "readability-redundant-member-init": [
+      "severity:STYLE"
+    ],
+    "readability-redundant-preprocessor": [
+      "severity:STYLE"
+    ],
+    "readability-redundant-smartptr-get": [
+      "severity:STYLE"
+    ],
+    "readability-redundant-string-cstr": [
+      "severity:STYLE"
+    ],
+    "readability-redundant-string-init": [
+      "severity:STYLE"
+    ],
+    "readability-simplify-boolean-expr": [
+      "severity:MEDIUM"
+    ],
+    "readability-simplify-subscript-expr": [
+      "severity:STYLE"
+    ],
+    "readability-static-accessed-through-instance": [
+      "severity:STYLE"
+    ],
+    "readability-static-definition-in-anonymous-namespace": [
+      "severity:STYLE"
+    ],
+    "readability-string-compare": [
+      "severity:LOW"
+    ],
+    "readability-suspicious-call-argument": [
+      "profile:default",
+      "severity:LOW"
+    ],
+    "readability-uniqueptr-delete-release": [
+      "severity:STYLE"
+    ],
+    "readability-uppercase-literal-suffix": [
+      "severity:STYLE"
+    ],
+    "readability-use-anyofallof": [
+      "severity:STYLE"
+    ],
+    "zircon-temporary-objects": [
+
+    ]
+  }
+}

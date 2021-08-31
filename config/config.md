@@ -1,12 +1,20 @@
 
 # Package configuration
 
-### Checker severity map
-checker_severity_map.json file contains a mapping between a
-checker name and a severity level. Severity levels can be found in the
-codechecker_api_shared.thrift file.
+### Checker labels
+`checker/labels` directory contains the labels to the checkers which describe
+some properties, such as profile, guideline, severity, etc.
 
-The following severity levels are defined:
+Current labels are:
+
+| Label | Description |
+|-------|-------------|
+| profile | A grouping of checker that can be used after `--enable`/`--disable` flags during analysis. |
+| guideline | A coding guideline which contains a coding rule covered by the given checker. |
+| sei-cert | Rules of SEI-CERT coding guideline that the given checker covers. |
+| severity | Indicates how severe a bug described by the given checker is when it occurs. |
+
+As for severities, the following levels are defined:
 
 - **STYLE**: A true positive indicates that the source code is against a specific coding guideline or could improve readability.
 Example: LLVM Coding Guideline: Do not use else or else if after something that interrupts control flow (break, return, throw, continue).
@@ -15,30 +23,32 @@ Example: LLVM Coding Guideline: Do not use else or else if after something that 
 Example: Unused variables, Dead code.
 
 - **MEDIUM**: A true positive indicates that the source code that may not cause a run-time error (yet), but against intuition and hence prone to error.
-Example: Redundant expression in a condition. 
+Example: Redundant expression in a condition.
 
 - **HIGH**: A true positive indicates that the source code will cause a run-time error.
   Example of this category: out of bounds array access, division by zero, memory leak.
 
-- **CRITICAL**: Currently unused. This severity level is reserved for later use.
+- **CRITICAL**: Currently used for indicating compilation errors.
+
+- **UNSPECIFIED**: Checker severity is not specified for a checker.
 
 ### Package configuration
-  *  environment variables section  
+  *  environment variables section
      Contains enviroment variable names set and used during the static analysis
-  *  package variables section  
-     Default database username which will be used to initialize postgres database.  
+  *  package variables section
+     Default database username which will be used to initialize postgres database.
 
   *  checker config section
-     + checkers  
+     + checkers
        This section contains the default checkers set used for analysis.
        The order of the checkers will be kept. (To enable set to true, to disable set to false)
 
 ### Session configuration
-  * authentication section  
+  * authentication section
     Contains configuration for a **server** on how to handle authentication
-  * credentials section  
+  * credentials section
     Contains the **client** user's preconfigured authentication tokens.
-  * tokens section  
+  * tokens section
     Contains session tokens the **client** user has received through authentication. This section is **not** meant to be configured by hand.
 
 ### gdb script

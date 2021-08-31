@@ -21,35 +21,33 @@ from codechecker_analyzer.buildlog import log_parser
 
 
 class MockContextSA:
-    class ProfileMap:
-        def __getitem__(self, key):
-            return 'profile1'
-
-        def by_profile(self, profile):
-            if profile == 'default':
+    class CheckerLabels:
+        def checkers_by_labels(self, labels):
+            if labels[0] == 'profile:default':
                 return ['core', 'deadcode', 'security.FloatLoopCounter']
-            elif profile == 'security':
+            elif labels[0] == 'profile:security':
                 return ['alpha.security']
+            elif labels[0] == 'guideline:sei-cert':
+                return ['alpha.core.CastSize', 'alpha.core.CastToStruct']
+            elif labels[0] == 'severity:LOW':
+                return ['security.insecureAPI.bcmp', 'alpha.llvm.Conventions']
 
-        def available_profiles(self):
-            return {'default': 'description', 'security': 'description'}
+        def get_description(self, label):
+            if label == 'profile':
+                return ['default', 'sensitive', 'security', 'portability',
+                        'extreme']
 
-    class GuidelineMap:
-        def __getitem__(self, key):
-            return {'sei-cert': ['rule1', 'rule2']}
-
-        def by_guideline(self, guideline):
-            return ['alpha.core.CastSize', 'alpha.core.CastToStruct']
-
-        def available_guidelines(self):
-            return {'sei-cert': 'description'}
+        def occurring_values(self, label):
+            if label == 'guideline':
+                return ['sei-cert']
+            elif label == 'sei-cert':
+                return ['rule1', 'rule2']
 
     path_env_extra = None
     ld_lib_path_extra = None
     checker_plugin = None
     analyzer_binaries = {'clangsa': 'clang'}
-    profile_map = ProfileMap()
-    guideline_map = GuidelineMap()
+    checker_labels = CheckerLabels()
     available_profiles = ['profile1']
     package_root = './'
 
@@ -150,6 +148,11 @@ class CheckerHandlingClangSATest(unittest.TestCase):
                 'alpha.core.CastSize',
                 'alpha.core.CastToStruct']
 
+        # Checkers covering some LOW severity rules.
+        low_severity = [
+                'security.insecureAPI.bcmp',
+                'alpha.llvm.Conventions']
+
         checkers = []
         checkers.extend(map(add_description, security_profile_alpha))
         checkers.extend(map(add_description, default_profile))
@@ -227,21 +230,30 @@ class CheckerHandlingClangSATest(unittest.TestCase):
         self.assertTrue(all_with_status(CheckerState.disabled)
                         (cfg_handler.checks(), cert_guideline))
 
+        # Enable "LOW" severity checkers.
+        cfg_handler = ClangSA.construct_config_handler(args, context)
+        cfg_handler.initialize_checkers(context, checkers,
+                                        [('severity:LOW', True)])
+        self.assertTrue(all_with_status(CheckerState.enabled)
+                        (cfg_handler.checks(), low_severity))
+
 
 class MockContextTidy:
-    class ProfileMap:
-        def __getitem__(self, key):
-            return 'profile1'
+    class CheckerLabels:
+        def checkers_by_labels(self, labels):
+            return []
 
-        def by_profile(self, profile):
-            return 'd-e'
+        def get_description(self, checker):
+            return []
+
+        def occurring_values(self, checker):
+            return []
 
     path_env_extra = None
     ld_lib_path_extra = None
     checker_plugin = None
     analyzer_binaries = {'clang-tidy': 'clang-tidy'}
-    profile_map = ProfileMap()
-    guideline_map = {'d-e': {'guideline1': ['rule1', 'rule2']}}
+    checker_labels = CheckerLabels()
     available_profiles = ['profile1']
     package_root = './'
 

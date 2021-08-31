@@ -15,6 +15,7 @@ import os
 import sys
 
 from codechecker_common import logger
+from codechecker_common.checker_labels import CheckerLabels
 from codechecker_common.singleton import Singleton
 from codechecker_common.util import load_json_or_empty
 
@@ -61,8 +62,14 @@ class Context(metaclass=Singleton):
         lcfg_dict = self.__get_package_layout()
         self.pckg_layout = lcfg_dict['runtime']
 
-        self._severity_map = SeverityMap(
-            load_json_or_empty(self.checkers_severity_map_file, {}))
+        # Use this environment variable for testing purposes only. This
+        # variable helps to configure which labels to use in this context.
+        labels_dir = os.path.join(self._data_files_dir_path,
+                                  'config', 'labels')
+        if 'CC_TEST_LABELS_DIR' in os.environ:
+            labels_dir = os.environ['CC_TEST_LABELS_DIR']
+
+        self._checker_labels = CheckerLabels(labels_dir)
         self.__system_comment_map = \
             load_json_or_empty(self.system_comment_map_file, {})
         self.__package_version = None
@@ -172,21 +179,6 @@ class Context(metaclass=Singleton):
         return self._data_files_dir_path
 
     @property
-    def checkers_severity_map_file(self):
-        # Get severity map file from the environment.
-        if 'CC_SEVERITY_MAP_FILE' in os.environ:
-            severity_map_file = os.environ.get('CC_SEVERITY_MAP_FILE')
-
-            LOG.warning("Severity map file set through the "
-                        "'CC_SEVERITY_MAP_FILE' environment variable: %s",
-                        severity_map_file)
-
-            return severity_map_file
-
-        return os.path.join(self._data_files_dir_path, 'config',
-                            'checker_severity_map.json')
-
-    @property
     def doc_root(self):
         return os.path.join(self._data_files_dir_path, 'www', 'docs')
 
@@ -205,8 +197,8 @@ class Context(metaclass=Singleton):
                             'migrations', 'config')
 
     @property
-    def severity_map(self):
-        return self._severity_map
+    def checker_labels(self):
+        return self._checker_labels
 
 
 def get_context():
