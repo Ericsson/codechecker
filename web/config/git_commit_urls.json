@@ -1,0 +1,14 @@
+[
+  {
+    "regex": "(?P<protocol>(http[s]?)):\/\/(?P<user>\\w+@)?(?P<url>([^\/]*gerrit[^\/]*))/a/(?P<team>\\w+)/(?P<project>\\w+)",
+    "url": "$protocol://$url/gitweb?p=$team/$project.git;a=commit;h=$commit"
+  },
+  {
+    "regex": "(?P<url>.*bitbucket.*((?=\\.git)|$(?<!\\.git)))",
+    "url": "$url/commits/$commit"
+  },
+  {
+    "regex": "(?P<url>.*((?=\\.git)|$(?<!\\.git)))",
+    "url": "$url/commit/$commit"
+  }
+]

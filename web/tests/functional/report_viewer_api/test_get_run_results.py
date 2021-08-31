@@ -198,7 +198,6 @@ class RunResults(unittest.TestCase):
                                           [],
                                           report_filter)
         self.assertIsNotNone(run_results)
-        self.assertIsNotNone(run_results)
 
         for run_res in run_results:
 

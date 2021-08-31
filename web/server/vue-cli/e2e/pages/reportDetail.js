@@ -65,7 +65,9 @@ module.exports = {
     reviewStatusMessage: ".review-status-message",
     commentsBtn: ".comments-btn",
     selectSameReport: ".select-same-report",
-    reportStepMsg: ".report-step-msg"
+    reportStepMsg: ".report-step-msg",
+    toggleBlameViewBtn: ".toggle-blame-view-btn",
+    blameCommitInfo: ".blame-commit-info"
   },
   commands: [ commands ],
   sections: {

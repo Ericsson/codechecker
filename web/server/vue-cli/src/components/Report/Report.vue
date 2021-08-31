@@ -115,6 +115,17 @@
             class="py-0 pr-0"
             align-self="center"
           >
+            <toggle-blame-view-btn
+              v-model="enableBlameView"
+              :disabled="!hasBlameInfo"
+            />
+          </v-col>
+
+          <v-col
+            cols="auto"
+            class="py-0 pr-0"
+            align-self="center"
+          >
             <v-btn
               class="comments-btn mx-2 mr-0"
               color="primary"
@@ -150,11 +161,38 @@
               justify="space-between"
             >
               <v-col
+                v-if="trackingBranch"
                 class="file-path py-0"
+                align-self="center"
+                cols="auto"
+              >
+                <span
+                  v-if="sourceFile"
+                  :title="`Tracking branch: ${trackingBranch}`"
+                  class="grey--text text--darken-3"
+                >
+                  <v-icon class="mr-0" small>mdi-source-branch</v-icon>
+                  ({{ trackingBranch | truncate(20) }})
+                </span>
+              </v-col>
+
+              <v-col
+                v-if="trackingBranch"
+                class="py-1 px-0"
+                cols="auto"
+              >
+                <v-divider
+                  inset
+                  vertical
+                  :style="{ display: 'inline' }"
+                />
+              </v-col>
+
+              <v-col
+                class="file-path py-0 pl-1"
                 align-self="center"
               >
                 <copy-btn v-if="sourceFile" :value="sourceFile.filePath" />
-
                 <span
                   v-if="sourceFile"
                   class="file-path"
@@ -186,7 +224,11 @@
 
             <v-row
               v-fill-height
-              class="editor mx-0"
+              :class="[
+                'editor',
+                'mx-0',
+                enableBlameView ? 'blame' : undefined
+              ]"
             >
               <textarea ref="editor" />
             </v-row>
@@ -249,13 +291,14 @@ import AnalysisInfoBtn from "./AnalysisInfoBtn";
 import CheckerDocumentationDialog from
   "@/components/CheckerDocumentationDialog";
 import { ReportComments } from "./Comment";
+import GitBlameMixin from "./Git/GitBlame";
+import ToggleBlameViewBtn from "./Git/ToggleBlameViewBtn";
 import SelectReviewStatus from "./SelectReviewStatus";
 import SelectSameReport from "./SelectSameReport";
 import { ReportInfoButton, ShowReportInfoDialog } from "./ReportInfo";
 
 import ReportStepMessage from "./ReportStepMessage";
 const ReportStepMessageClass = Vue.extend(ReportStepMessage);
-
 
 export default {
   name: "Report",
@@ -269,13 +312,18 @@ export default {
     SelectReviewStatus,
     SelectSameReport,
     ShowReportInfoDialog,
+    ToggleBlameViewBtn,
     UserIcon
   },
   directives: { FillHeight },
+  mixins: [ GitBlameMixin ],
   props: {
     treeItem: { type: Object, default: null }
   },
   data() {
+    const enableBlameView =
+      this.$router.currentRoute.query["view"] === "blame";
+
     return {
       report: null,
       step: null,
@@ -295,11 +343,19 @@ export default {
       annotation: null,
       checkerDocumentationDialog: false,
       analysisInfoDialog: false,
-      reportId: null
+      reportId: null,
+      enableBlameView
     };
   },
 
   computed: {
+    trackingBranch() {
+      return this.sourceFile?.trackingBranch;
+    },
+    hasBlameInfo() {
+      return this.sourceFile?.hasBlameInfo;
+    },
+
     checkerName() {
       return this.report ? this.report.checkerId : null;
     },
@@ -314,6 +370,19 @@ export default {
   },
 
   watch: {
+    async enableBlameView() {
+      if (this.enableBlameView) {
+        await this.loadBlameView();
+      } else {
+        await this.hideBlameView();
+      }
+
+      // Scroll to the current bug step item.
+      this.jumpTo(
+        this.treeItem.step?.startLine.toNumber() ||
+        this.treeItem.report.line.toNumber());
+    },
+
     treeItem() {
       this.init(this.treeItem);
     },
@@ -353,7 +422,7 @@ export default {
       mode: "text/x-c++src",
       gutters: [ "CodeMirror-linenumbers", "bugInfo" ],
       extraKeys: {},
-      viewportMargin: 500,
+      viewportMargin: 200,
       highlightSelectionMatches : { showToken: /\w/, annotateScrollbar: true }
     });
     this.editor.setSize("100%", "100%");
@@ -509,6 +578,10 @@ export default {
 
       this.sourceFile = sourceFile;
       this.editor.setValue(sourceFile.fileContent);
+
+      if (this.enableBlameView) {
+        this.loadBlameView();
+      }
     },
 
     resetJsPlumb() {
@@ -818,6 +891,16 @@ export default {
       background-color: lighten(grey, 42%);
     }
 
+    &.blame ::v-deep .CodeMirror {
+      line-height: 21px;
+
+      .CodeMirror-gutter-wrapper {
+        &, div, span {
+          height: 100%;
+        }
+      }
+    }
+
     ::v-deep .cm-matchhighlight:not(.cm-searching) {
       background-color: lightgreen;
     }
@@ -830,6 +913,11 @@ export default {
 
 ::v-deep .checker-step {
   background-color: #eeb;
+}
+
+::v-deep .blame-gutter {
+  width: 400px;
+  background-color: #f7f7f7;
 }
 
 ::v-deep .report-step-msg.current {

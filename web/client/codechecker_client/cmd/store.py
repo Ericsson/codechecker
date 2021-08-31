@@ -13,6 +13,8 @@ database.
 
 import argparse
 import base64
+from git import Repo
+from git.exc import InvalidGitRepositoryError
 import hashlib
 import json
 import os
@@ -579,6 +581,49 @@ def parse_report_files(report_files: Set[str], zip_iter=map):
             missing_source_files)
 
 
+def get_blame_info(repo: Repo, file_path: str):
+    """ Get blame info for the given file in the given git repo. """
+    tracking_branch = None
+    try:
+        # If a commit is checked out, accessing the active_branch member will
+        # throw a type error. In this case we will use the current commit hash.
+        tracking_branch = str(repo.active_branch.tracking_branch())
+    except TypeError:
+        tracking_branch = repo.head.commit.hexsha
+
+    try:
+        blame = repo.blame_incremental(repo.head.commit.hexsha, file_path)
+
+        res = {
+            'version': 'v1',
+            'tracking_branch': tracking_branch,
+            'remote_url': next(repo.remote().urls, None),
+            'commits': {},
+            'blame': []}
+
+        for b in blame:
+            commit = b.commit
+
+            if commit.hexsha not in res['commits']:
+                res['commits'][commit.hexsha] = {
+                    'author': {
+                        'name': commit.author.name,
+                        'email': commit.author.email,
+                    },
+                    'summary': commit.summary,
+                    'message': commit.message,
+                    'committed_datetime': str(commit.committed_datetime)}
+
+            res['blame'].append({
+                'from': b.linenos[0],
+                'to': b.linenos[-1],
+                'commit': commit.hexsha})
+        return res
+    except Exception as ex:
+        LOG.warning("Failed to get blame information for %s: %s",
+                    file_path, ex)
+
+
 def assemble_zip(inputs, zip_file, client):
     """Collect and compress report and source files, together with files
     contanining analysis related information into a zip file which
@@ -686,6 +731,16 @@ def assemble_zip(inputs, zip_file, client):
                     zipf.getinfo(file_path)
                 except KeyError:
                     zipf.write(f, file_path)
+
+                try:
+                    repo = Repo(f, search_parent_directories=True)
+                    blame_info = get_blame_info(repo, f) if repo else None
+                    if blame_info:
+                        zipf.writestr(
+                            os.path.join('blame', f.lstrip('/')),
+                            json.dumps(blame_info))
+                except InvalidGitRepositoryError:
+                    pass
 
         zipf.writestr('content_hashes.json', json.dumps(file_to_hash))
 
@@ -887,7 +942,7 @@ def main(args):
         except Exception as ex:
             print(ex)
             import traceback
-            traceback.print_stack()
+            traceback.print_exc()
             LOG.error("Failed to assemble zip file.")
             sys.exit(1)
 
