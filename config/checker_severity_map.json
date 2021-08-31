@@ -100,6 +100,7 @@
   "bugprone-string-literal-with-embedded-nul":                  "MEDIUM",
   "bugprone-suspicious-enum-usage":                             "HIGH",
   "bugprone-suspicious-include":                                "LOW",
+  "bugprone-suspicious-memory-comparison":                      "MEDIUM",
   "bugprone-suspicious-memset-usage":                           "HIGH",
   "bugprone-suspicious-missing-comma":                          "HIGH",
   "bugprone-suspicious-semicolon":                              "HIGH",
