@@ -380,6 +380,13 @@
       "profile:extreme",
       "severity:LOW"
     ],
+    "bugprone-suspicious-memory-comparison": [
+      "profile:default",
+      "guideline:sei-cert",
+      "sei-cert:exp42-c",
+      "sei-cert:flp37-c",
+      "severity:MEDIUM"
+    ],
     "bugprone-suspicious-memset-usage": [
       "profile:default",
       "profile:sensitive",
@@ -627,6 +634,11 @@
       "sei-cert:err61-cpp",
       "severity:HIGH"
     ],
+    "cert-exp42-c": [
+      "guideline:sei-cert",
+      "sei-cert:exp42-c",
+      "severity:MEDIUM"
+    ],
     "cert-fio38-c": [
       "profile:default",
       "profile:sensitive",
@@ -643,6 +655,11 @@
       "guideline:sei-cert",
       "sei-cert:flp30-c",
       "severity:HIGH"
+    ],
+    "cert-flp37-c": [
+      "guideline:sei-cert",
+      "sei-cert:flp37-c",
+      "severity:MEDIUM"
     ],
     "cert-mem57-cpp": [
       "profile:default",
@@ -1684,6 +1701,9 @@
       "severity:STYLE"
     ],
     "readability-function-size": [
+      "severity:STYLE"
+    ],
+    "readability-identifier-length": [
       "severity:STYLE"
     ],
     "readability-identifier-naming": [
