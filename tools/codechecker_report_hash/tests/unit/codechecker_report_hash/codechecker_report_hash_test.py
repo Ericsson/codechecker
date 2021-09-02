@@ -124,3 +124,24 @@ class CodeCheckerReportHashTest(unittest.TestCase):
 
             # Check that plist file is not empty.
             self.assertNotEqual(empty_plist_file.read(), b'')
+
+    def test_gen_report_hash_diag_messages(self):
+        """ Test diagnostic message hash generation for multi errors. """
+        test_plist = os.path.join(
+            self.test_file_dir, 'cpp', 'multi_error.plist')
+        plist = plistlib.readPlist(test_plist)
+
+        expected_report_hash = {
+            'f48840093ef89e291fb68a95a5181612':
+                'c137804816bf2d5a67b6c067cd2ab5e8',
+            'e4907182b363faf2ec905fc32cc5a4ab':
+                'd08c2f8c5c4d8533e1de3fa88241f813'}
+
+        files = plist['files']
+        for diag in plist['diagnostics']:
+            file_path = files[diag['location']['file']]
+            report_hash = get_report_hash(
+                diag, file_path, HashType.DIAGNOSTIC_MESSAGE)
+            actual_report_hash = diag['issue_hash_content_of_line_in_context']
+            self.assertEqual(report_hash,
+                             expected_report_hash[actual_report_hash])

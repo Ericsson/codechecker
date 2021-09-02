@@ -61,6 +61,7 @@ class HashType(Enum):
     """ Report hash types. """
     CONTEXT_FREE = 1
     PATH_SENSITIVE = 2
+    DIAGNOSTIC_MESSAGE = 3
 
 
 def __get_line(file_path: str, line_no: int, errors: str = 'ignore') -> str:
@@ -121,7 +122,7 @@ def _remove_whitespace(line_content: str, old_col: int) -> Tuple[str, int]:
            old_col - line_strip_len
 
 
-def __get_report_hash_path_sensitive(diag: Diag, file_path: str) -> str:
+def __get_report_hash_path_sensitive(diag: Diag, file_path: str) -> List[str]:
     """ Report hash generation from the given diagnostic.
 
     Hash generation algorithm for older plist versions where no
@@ -237,15 +238,14 @@ def __get_report_hash_path_sensitive(diag: Diag, file_path: str) -> str:
                 col_num = loc['col']
                 hash_content.append(str(col_num))
 
-        return __str_to_hash('|||'.join(hash_content))
-
+        return hash_content
     except Exception as ex:
         LOG.error("Hash generation failed")
         LOG.error(ex)
-        return ''
+        return []
 
 
-def __get_report_hash_context_free(diag: Diag, file_path: str) -> str:
+def __get_report_hash_context_free(diag: Diag, file_path: str) -> List[str]:
     """ Generate report hash without bug path.
 
     !!! NOT Compatible with the old hash generation method
@@ -290,22 +290,50 @@ def __get_report_hash_context_free(diag: Diag, file_path: str) -> str:
                         str(from_col),
                         str(until_col)]
 
-        return __str_to_hash('|||'.join(hash_content))
-
+        return hash_content
     except Exception as ex:
         LOG.error("Hash generation failed")
         LOG.error(ex)
-        return ''
+        return []
+
+
+def __get_report_hash_diagnostic_message(
+    diag: Diag,
+    file_path: str
+) -> List[str]:
+    """ Generate report hash with bug path messages.
+
+    The hash will contain the same information as the CONTEXT_FREE hash +
+    'bug step messages' from events.
+    """
+    try:
+        hash_content = __get_report_hash_context_free(diag, file_path)
+
+        # Add bug step messages to the hash.
+        for event in [x for x in diag['path'] if x.get('kind') == 'event']:
+            hash_content.append(event['message'])
+
+        return hash_content
+    except Exception as ex:
+        LOG.error("Hash generation failed")
+        LOG.error(ex)
+        return []
 
 
 def get_report_hash(diag: Diag, file_path: str, hash_type: HashType) -> str:
     """ Get report hash for the given diagnostic. """
+    hash_content = None
+
     if hash_type == HashType.CONTEXT_FREE:
-        return __get_report_hash_context_free(diag, file_path)
+        hash_content = __get_report_hash_context_free(diag, file_path)
     elif hash_type == HashType.PATH_SENSITIVE:
-        return __get_report_hash_path_sensitive(diag, file_path)
+        hash_content = __get_report_hash_path_sensitive(diag, file_path)
+    elif hash_type == HashType.DIAGNOSTIC_MESSAGE:
+        hash_content = __get_report_hash_diagnostic_message(diag, file_path)
     else:
         raise Exception("Invalid report hash type: " + str(hash_type))
+
+    return __str_to_hash('|||'.join(hash_content))
 
 
 def get_report_path_hash(report) -> str:

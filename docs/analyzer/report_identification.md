@@ -66,3 +66,13 @@ The hashes are calculated based on the following information:
 - **content of the line** where the bug is if it can be read up. All the
 whitespaces from the source content are removed.
 - **range column numbers** where the bug is.
+
+#### diagnostic-message
+The hashes are calculated based on the following information:
+- Same as `context-free-v2` (**file name**, **checker message** etc.)
+- **bug step messages** (e.g.: *Calling 'foo'*, *Entered call from 'main'*
+etc.).
+
+**Note**: this is an experimental hash and it is not recommended to use it on
+your project because this hash can change very easily for example on variable /
+function renames.
