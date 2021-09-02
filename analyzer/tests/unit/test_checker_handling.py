@@ -290,6 +290,31 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
         cls.checks_list = checks.split(',')
         print('Checks list: %s' % cls.checks_list)
 
+    def test_disable_clangsa_checkers(self):
+        """
+        Test that checker config still disables clang-analyzer-*.
+        """
+        analyzer = create_analyzer_tidy()
+        result_handler = create_result_handler(analyzer)
+
+        for arg in analyzer.construct_analyzer_cmd(result_handler):
+            if arg.startswith('-checks='):
+                self.assertIn('-clang-analyzer-*', arg)
+
+        analyzer.config_handler.checker_config = \
+            '{"Checks": "hicpp-use-nullptr"}'
+
+        for arg in analyzer.construct_analyzer_cmd(result_handler):
+            if arg.startswith('-checks='):
+                self.assertIn('-clang-analyzer-*', arg)
+
+        analyzer.config_handler.checker_config = '{}'
+        analyzer.config_handler.analyzer_config = \
+            {'take-config-from-directory': 'true'}
+
+        for arg in analyzer.construct_analyzer_cmd(result_handler):
+            self.assertFalse(arg.startswith('-checks'))
+
     def test_default_checkers_are_not_disabled(self):
         """
         Test that the default checks are not disabled in Clang Tidy.
