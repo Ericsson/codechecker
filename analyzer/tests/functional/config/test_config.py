@@ -211,11 +211,18 @@ class TestConfig(unittest.TestCase):
         analyzer only and parse the results with a parse command
         config.
         """
+        # We assume that the source file path is at least 2 levels deep. This
+        # is true, since the test workspace directory is under the repo root
+        # and it also contains some sub-directories.
+        split_path = self.source_file.split(os.sep)
+        path_prefix = os.path.join(os.sep, *split_path[:3])
+        trimmed_file_path = os.path.join(*split_path[3:])
+
         with open(self.config_file, 'w+',
                   encoding="utf-8", errors="ignore") as config_f:
             json.dump({
                 'analyzer': ['--analyzers', 'clangsa'],
-                'parse': ['--trim-path-prefix', '${HOME}']},
+                'parse': ['--trim-path-prefix', path_prefix]},
                 config_f)
 
         check_cmd = [self._codechecker_cmd, "check",
@@ -239,6 +246,4 @@ class TestConfig(unittest.TestCase):
 
         self.assertNotIn(self.source_file, out)
 
-        trimmed_file_path = self.source_file.replace(
-            os.path.expanduser("~") + os.path.sep, "")
         self.assertIn(trimmed_file_path, out)
