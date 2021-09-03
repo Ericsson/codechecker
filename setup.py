@@ -150,7 +150,7 @@ setuptools.setup(
     long_description_content_type = "text/markdown",
     url="https://github.com/Ericsson/CodeChecker",
     keywords=['codechecker', 'plist'],
-    license='LICENSE.TXT',
+    license='Apache-2.0 WITH LLVM-exception',
     packages=packages,
     package_dir={
         "": lib_dir
