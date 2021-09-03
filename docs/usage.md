@@ -25,6 +25,7 @@ It invokes Clang Static Analyzer and Clang-Tidy tools to analyze your code.
       - [Analyze explicitly selected source files from the compilation database](#analize-explicit-files)
   - [Step 5: Cross Translation Unit analization](#step-5)
   - [Step 6: Store analysis results in a CodeChecker DB and visualize results](#step-6)
+    - [Storage of multiple analysis report directories](#storage-of-multiple-analysis-report-directories)
     - [Definition of "run"](#run-definition)
     - [Programmer checking new bugs in the code after local edit (and compare it to a central database)](#compare)
     - [Using diff command on the local filesystem](#using-diff)
@@ -407,6 +408,24 @@ description of the `PRODUCT_URL` format.
 3. View the results in your web browser
 ```sh
 firefox http://localhost:8555/Default &
+```
+
+### Storage of multiple analysis report directories
+It is possible that the same project is analyzed with different configurations
+(e.g.: `ctu`, `non-ctu`) to different report directories and you would like to
+store these results to the same run. Using multiple store commands is not an
+option because reports which are already on the server but can't be found
+during the second storage will be marked as `Resolved`.
+
+To solve this problem you can store multiple report directories to the same
+run with one command:
+
+```sh
+CodeChecker store \
+  ./reports-ctu \
+  ./reports-nonctu \
+  --name example \
+  --url http://localhost:8555/Default
 ```
 
 ### Definition of "run" <a name="run-definition"></a>
