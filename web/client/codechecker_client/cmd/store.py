@@ -24,7 +24,7 @@ from typing import Dict, List, Set, Tuple
 import zipfile
 import zlib
 
-import concurrent.futures
+from concurrent.futures import ProcessPoolExecutor
 
 from collections import namedtuple
 
@@ -476,7 +476,7 @@ def filter_source_files_with_comments(source_file_info, main_report_positions):
     if sys.platform == "win32":
         return get_source_file_with_comments(jobs)
     else:
-        with concurrent.futures.ProcessPoolExecutor() as executor:
+        with ProcessPoolExecutor() as executor:
             return get_source_file_with_comments(jobs, executor.map)
 
 
@@ -581,8 +581,13 @@ def parse_report_files(report_files: Set[str], zip_iter=map):
             missing_source_files)
 
 
-def get_blame_info(repo: Repo, file_path: str):
-    """ Get blame info for the given file in the given git repo. """
+def get_blame_info(file_path: str):
+    """ Get blame info for the given file. """
+    try:
+        repo = Repo(file_path, search_parent_directories=True)
+    except InvalidGitRepositoryError:
+        return
+
     tracking_branch = None
     try:
         # If a commit is checked out, accessing the active_branch member will
@@ -618,10 +623,22 @@ def get_blame_info(repo: Repo, file_path: str):
                 'from': b.linenos[0],
                 'to': b.linenos[-1],
                 'commit': commit.hexsha})
+
+        LOG.debug("Collected blame info for %s", file_path)
+
         return res
     except Exception as ex:
-        LOG.warning("Failed to get blame information for %s: %s",
-                    file_path, ex)
+        LOG.debug("Failed to get blame information for %s: %s", file_path, ex)
+
+
+def collect_blame_info_for_files(file_paths: List[str], zip_iter=map):
+    """ Collect blame information for the given file paths. """
+    file_blame_info = {}
+    for file_path, blame_info in zip(file_paths,
+                                     zip_iter(get_blame_info, file_paths)):
+        file_blame_info[file_path] = blame_info
+
+    return file_blame_info
 
 
 def assemble_zip(inputs, zip_file, client):
@@ -645,7 +662,7 @@ def assemble_zip(inputs, zip_file, client):
          changed_files,
          missing_source_files) = parse_report_files(report_files)
     else:
-        with concurrent.futures.ProcessPoolExecutor() as executor:
+        with ProcessPoolExecutor() as executor:
             (source_file_info,
              main_report_positions,
              files_to_compress,
@@ -721,26 +738,39 @@ def assemble_zip(inputs, zip_file, client):
 
             zipf.write(ftc, zip_target)
 
+        collected_file_paths = []
         for f, h in file_to_hash.items():
             if h in necessary_hashes or h in file_hash_with_review_status:
                 LOG.debug("File contents for '%s' needed by the server", f)
 
                 file_path = os.path.join('root', f.lstrip('/'))
+                collected_file_paths.append(f)
 
                 try:
                     zipf.getinfo(file_path)
                 except KeyError:
                     zipf.write(f, file_path)
 
-                try:
-                    repo = Repo(f, search_parent_directories=True)
-                    blame_info = get_blame_info(repo, f) if repo else None
-                    if blame_info:
-                        zipf.writestr(
-                            os.path.join('blame', f.lstrip('/')),
-                            json.dumps(blame_info))
-                except InvalidGitRepositoryError:
-                    pass
+        # Currently ProcessPoolExecutor fails completely in windows.
+        # Reason is most likely combination of venv and fork() not
+        # being present in windows, so stuff like setting up
+        # PYTHONPATH in parent CodeChecker before store is executed
+        # are lost.
+        if sys.platform == "win32":
+            file_blame_info = collect_blame_info_for_files(
+                collected_file_paths)
+        else:
+            with ProcessPoolExecutor() as executor:
+                file_blame_info = collect_blame_info_for_files(
+                    collected_file_paths, executor.map)
+
+        # Add blame information to the zip for the files which will be sent to
+        # the server if exist.
+        for f, blame_info in file_blame_info.items():
+            if blame_info:
+                zipf.writestr(
+                    os.path.join('blame', f.lstrip('/')),
+                    json.dumps(blame_info))
 
         zipf.writestr('content_hashes.json', json.dumps(file_to_hash))
 
