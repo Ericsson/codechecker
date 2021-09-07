@@ -15,6 +15,7 @@
       />
 
       <v-data-table
+        v-model="selected"
         v-fill-height
         :headers="tableHeaders"
         :items="formattedReports"
@@ -26,10 +27,21 @@
         :must-sort="true"
         :expanded.sync="expanded"
         show-expand
+        show-select
         :mobile-breakpoint="1100"
         item-key="$id"
         @item-expanded="itemExpanded"
       >
+        <template v-slot:top>
+          <v-toolbar flat class="report-filter-toolbar" dense>
+            <v-row>
+              <v-col class="pa-0" align="right">
+                <set-cleanup-plan-btn :value="selected" />
+              </v-col>
+            </v-row>
+          </v-toolbar>
+        </template>
+
         <template v-slot:expanded-item="{ item }">
           <td
             class="pa-0"
@@ -162,6 +174,7 @@ import {
 import CheckerDocumentationDialog from
   "@/components/CheckerDocumentationDialog";
 import { ReportFilter } from "@/components/Report/ReportFilter";
+import { SetCleanupPlanBtn } from "@/components/Report/CleanupPlan";
 
 const namespace = "report";
 
@@ -174,7 +187,8 @@ export default {
     DetectionStatusIcon,
     ReviewStatusIcon,
     SeverityIcon,
-    ReportFilter
+    ReportFilter,
+    SetCleanupPlanBtn
   },
   directives: { FillHeight },
   mixins: [ BugPathLengthColorMixin, DetectionStatusMixin ],
@@ -246,6 +260,7 @@ export default {
         }
       ],
       reports: [],
+      selected: [],
       namespace: namespace,
       pagination: {
         page: page,

@@ -14,11 +14,12 @@ import json
 import os
 import re
 import shlex
+import time
 import zlib
 
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import sqlalchemy
 from sqlalchemy.sql.expression import or_, and_, not_, func, \
@@ -46,10 +47,10 @@ from ..database import db_cleanup
 from ..database.config_db_model import Product
 from ..database.database import conv, DBSession, escape_like
 from ..database.run_db_model import \
-    AnalysisInfo, AnalyzerStatistic, BugPathEvent, BugReportPoint, Comment, \
-    ExtendedReportData, File, FileContent, Report, ReportAnalysisInfo, \
-    ReviewStatus, Run, RunHistory, RunHistoryAnalysisInfo, RunLock, \
-    SourceComponent
+    AnalysisInfo, AnalyzerStatistic, BugPathEvent, BugReportPoint, \
+    CleanupPlan, CleanupPlanReportHash, Comment, ExtendedReportData, File, \
+    FileContent, Report, ReportAnalysisInfo, ReviewStatus, Run, RunHistory, \
+    RunHistoryAnalysisInfo, RunLock, SourceComponent
 
 from .thrift_enum_helper import detection_status_enum, \
     detection_status_str, review_status_enum, review_status_str, \
@@ -238,6 +239,22 @@ def process_report_filter(session, run_ids, report_filter, cmp_data=None):
 
         if no_joker:
             OR.append(Report.bug_id.in_(no_joker))
+
+        AND.append(or_(*OR))
+
+    if report_filter.cleanupPlanNames:
+        OR = []
+        for cleanup_plan_name in report_filter.cleanupPlanNames:
+            q = select([CleanupPlanReportHash.bug_hash]) \
+                .where(
+                    CleanupPlanReportHash.cleanup_plan_id.in_(
+                        select([CleanupPlan.id])
+                        .where(CleanupPlan.name == cleanup_plan_name)
+                        .distinct()
+                    )) \
+                .distinct()
+
+            OR.append(Report.bug_id.in_(q))
 
         AND.append(or_(*OR))
 
@@ -964,6 +981,41 @@ def get_commit_url(
                 url = url.replace(f"${key}", value)
 
             return url
+
+
+def get_cleanup_plan(session, cleanup_plan_id: int) -> CleanupPlan:
+    """
+    Check if the given cleanup id exists in the database and returns
+    the cleanup. Otherwise it will raise an exception.
+    """
+    cleanup_plan = session.query(CleanupPlan).get(cleanup_plan_id)
+
+    if not cleanup_plan:
+        raise codechecker_api_shared.ttypes.RequestFailed(
+            codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+            f"Cleanup plan '{cleanup_plan_id}' was not found in the database.")
+
+    return cleanup_plan
+
+
+def get_cleanup_plan_report_hashes(
+    session,
+    cleanup_plan_ids: List[int]
+) -> Dict[int, List[str]]:
+    """ Get report hashes for the given cleanup plan ids. """
+    cleanup_plan_hashes = defaultdict(list)
+
+    q = session \
+        .query(
+            CleanupPlanReportHash.cleanup_plan_id,
+            CleanupPlanReportHash.bug_hash) \
+        .filter(CleanupPlanReportHash.cleanup_plan_id.in_(
+            cleanup_plan_ids))
+
+    for cleanup_plan_id, report_hash in q:
+        cleanup_plan_hashes[cleanup_plan_id].append(report_hash)
+
+    return cleanup_plan_hashes
 
 
 class ThriftRequestHandler:
@@ -2976,4 +3028,182 @@ class ThriftRequestHandler:
                                       date)
 
             session.commit()
+            return True
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def addCleanupPlan(self, name, description, dueDate):
+        self.__require_admin()
+
+        with DBSession(self._Session) as session:
+            cleanup_plan = session.query(CleanupPlan) \
+                .filter(CleanupPlan.name == name) \
+                .one_or_none()
+
+            if cleanup_plan:
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                    f"Cleanup plan '{name}' already exists.")
+
+            cleanup_plan = CleanupPlan(name)
+            cleanup_plan.description = description
+            cleanup_plan.due_date = \
+                datetime.fromtimestamp(dueDate) if dueDate else None
+
+            session.add(cleanup_plan)
+            session.commit()
+
+            LOG.info("New cleanup plan '%s' has been created by '%s'",
+                     name, self._get_username())
+
+            return cleanup_plan.id
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def updateCleanupPlan(self, cleanup_plan_id, name, description, dueDate):
+        self.__require_admin()
+
+        with DBSession(self._Session) as session:
+            cleanup_plan = get_cleanup_plan(session, cleanup_plan_id)
+            cleanup_plan.name = name
+            cleanup_plan.description = description
+            cleanup_plan.due_date = \
+                datetime.fromtimestamp(dueDate) if dueDate else None
+
+            session.add(cleanup_plan)
+            session.commit()
+
+            LOG.info("Cleanup plan '%d' has been updated by '%s'",
+                     cleanup_plan_id, self._get_username())
+
+            return True
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getCleanupPlans(self, cleanup_plan_filter):
+        self.__require_view()
+        with DBSession(self._Session) as session:
+            q = session \
+                .query(CleanupPlan) \
+                .order_by(CleanupPlan.name)
+
+            if cleanup_plan_filter:
+                if cleanup_plan_filter.ids:
+                    q = q.filter(CleanupPlan.id.in_(
+                        cleanup_plan_filter.ids))
+
+                if cleanup_plan_filter.names:
+                    q = q.filter(CleanupPlan.name.in_(
+                        cleanup_plan_filter.names))
+
+                if cleanup_plan_filter.isOpen is not None:
+                    if cleanup_plan_filter.isOpen:
+                        q = q.filter(CleanupPlan.closed_at.is_(None))
+                    else:
+                        q = q.filter(CleanupPlan.closed_at.isnot(None))
+
+            cleanup_plans = q.all()
+
+            cleanup_plan_hashes = get_cleanup_plan_report_hashes(
+                session, [c.id for c in cleanup_plans])
+
+            return [ttypes.CleanupPlan(
+                id=cp.id,
+                name=cp.name,
+                description=cp.description,
+                dueDate=int(time.mktime(
+                    cp.due_date.timetuple())) if cp.due_date else None,
+                closedAt=int(time.mktime(
+                    cp.closed_at.timetuple())) if cp.closed_at else None,
+                reportHashes=cleanup_plan_hashes[cp.id]) for cp in q]
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def removeCleanupPlan(self, cleanup_plan_id):
+        self.__require_admin()
+        with DBSession(self._Session) as session:
+            cleanup_plan = get_cleanup_plan(session, cleanup_plan_id)
+            name = cleanup_plan.name
+
+            session.delete(cleanup_plan)
+            session.commit()
+
+            LOG.info("Cleanup plan '%s' has been removed by '%s'",
+                     name, self._get_username())
+
+            return True
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def closeCleanupPlan(self, cleanup_plan_id):
+        self.__require_admin()
+
+        with DBSession(self._Session) as session:
+            cleanup_plan = get_cleanup_plan(session, cleanup_plan_id)
+
+            cleanup_plan.closed_at = datetime.now()
+            session.add(cleanup_plan)
+            session.commit()
+
+            LOG.info("Cleanup plan '%s' has been closed by '%s'",
+                     cleanup_plan.name, self._get_username())
+
+            return True
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def reopenCleanupPlan(self, cleanup_plan_id):
+        self.__require_admin()
+
+        with DBSession(self._Session) as session:
+            cleanup_plan = get_cleanup_plan(session, cleanup_plan_id)
+
+            cleanup_plan.closed_at = None
+            session.add(cleanup_plan)
+            session.commit()
+            LOG.info("Cleanup plan '%s' has been reopened by '%s'",
+                     cleanup_plan.name, self._get_username())
+            return True
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def setCleanupPlan(self, cleanup_plan_id, reportHashes):
+        self.__require_admin()
+
+        with DBSession(self._Session) as session:
+            cleanup_plan = get_cleanup_plan(session, cleanup_plan_id)
+
+            q = session \
+                .query(CleanupPlanReportHash.bug_hash) \
+                .filter(
+                    CleanupPlanReportHash.cleanup_plan_id == cleanup_plan.id) \
+                .filter(CleanupPlanReportHash.bug_hash.in_(reportHashes))
+            new_report_hashes = set(reportHashes) - set(b[0] for b in q)
+
+            for report_hash in new_report_hashes:
+                session.add(CleanupPlanReportHash(
+                    cleanup_plan_id=cleanup_plan.id, bug_hash=report_hash))
+
+            session.commit()
+
+            return True
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def unsetCleanupPlan(self, cleanup_plan_id, reportHashes):
+        self.__require_admin()
+
+        with DBSession(self._Session) as session:
+            cleanup_plan = get_cleanup_plan(session, cleanup_plan_id)
+
+            session \
+                .query(CleanupPlanReportHash) \
+                .filter(
+                    CleanupPlanReportHash.cleanup_plan_id == cleanup_plan.id) \
+                .filter(CleanupPlanReportHash.bug_hash.in_(reportHashes)) \
+                .delete(synchronize_session=False)
+
+            session.commit()
+            session.close()
+
             return True

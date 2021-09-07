@@ -288,6 +288,7 @@ struct ReportFilter {
   16: optional ReportDate         date,          // Dates of the report.
   17: optional list<string>       analyzerNames, // Names of the code analyzers.
   18: optional i64                openReportsDate, // Open reports date in unix time format.
+  19: optional list<string>       cleanupPlanNames, // Cleanup plan names.
 }
 
 struct RunReportCount {
@@ -403,6 +404,22 @@ struct Commit {
 struct BlameInfo {
   1: map<CommitHash, Commit> commits,
   2: list<BlameData>         blame,
+}
+
+struct CleanupPlan {
+  1: i64          id,
+  2: string       name,
+  3: i64          dueDate, // Unix (epoch) time.
+  4: string       description,
+  5: i64          closedAt, // Unix (epoch) time.
+  6: list<string> reportHashes,
+}
+typedef list<CleanupPlan> CleanupPlans
+
+struct CleanupPlanFilter {
+  1: list<i64>    ids,
+  2: list<string> names,
+  3: bool         isOpen,
 }
 
 service codeCheckerDBAccess {
@@ -790,5 +807,60 @@ service codeCheckerDBAccess {
   // Import data from the server.
   // PERMISSION: PRODUCT_ADMIN
   bool importData(1: ExportData exportData)
-                  throws (1: codechecker_api_shared.RequestFailed requestError),  
+                  throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // Add a new cleanup plan.
+  // Returns the cleanup plan id if the cleanup plan was successfully created.
+  // PERMISSION: PRODUCT_ADMIN
+  i64 addCleanupPlan(1: string name,
+                     2: string description,
+                     3: i64 dueDate)
+                     throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // Update a cleanup plan.
+  // Returns 'true' if cleanup plan was successfully updated.
+  // PERMISSION: PRODUCT_ADMIN
+  bool updateCleanupPlan(1: i64    id,
+                         2: string name,
+                         3: string description,
+                         4: i64    dueDate)
+                         throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // Get cleanup plans.
+  // Returns a list of cleanup plans.
+  // PERMISSION: PRODUCT_VIEW
+  CleanupPlans getCleanupPlans(1: CleanupPlanFilter filter)
+                               throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // Remove a cleanup plan.
+  // Returns 'true' if cleanup plan was successfully removed.
+  // PERMISSION: PRODUCT_ADMIN
+  bool removeCleanupPlan(1: i64 cleanupPlanId)
+                         throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // Close a cleanup plan.
+  // Returns 'true' if cleanup plan was successfully closed.
+  // PERMISSION: PRODUCT_ADMIN
+  bool closeCleanupPlan(1: i64 cleanupPlanId)
+                        throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // Reopen a cleanup plan.
+  // Returns 'true' if cleanup plan was successfully reopened.
+  // PERMISSION: PRODUCT_ADMIN
+  bool reopenCleanupPlan(1: i64 cleanupPlanId)
+                         throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // Add report hashes to the given cleanup plan.
+  // Returns 'true' if report hashes are set for the given cleanup plan.
+  // PERMISSION: PRODUCT_ADMIN
+  bool setCleanupPlan(1: i64          cleanupPlanId,
+                      2: list<string> reportHashes)
+                      throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // Remove report hashes from the given cleanup plan.
+  // Returns 'true' if report hashes are removed from the given cleanup plan.
+  // PERMISSION: PRODUCT_ADMIN
+  bool unsetCleanupPlan(1: i64          cleanupPlanId,
+                        2: list<string> reportHashes)
+                        throws (1: codechecker_api_shared.RequestFailed requestError),
 }

@@ -3,6 +3,7 @@ import UniqueFilter from "./UniqueFilter";
 import ReportHashFilter from "./ReportHashFilter";
 import BaselineOpenReportsDateFilter from  "./BaselineOpenReportsDateFilter";
 import BaselineRunFilter from "./BaselineRunFilter";
+import CleanupPlanFilter from "./CleanupPlanFilter";
 import ComparedToDiffTypeFilter from "./ComparedToDiffTypeFilter";
 import ComparedToOpenReportsDateFilter from
   "./ComparedToOpenReportsDateFilter";
@@ -25,6 +26,7 @@ export {
   ReportHashFilter,
   BaselineOpenReportsDateFilter,
   BaselineRunFilter,
+  CleanupPlanFilter,
   ComparedToDiffTypeFilter,
   ComparedToOpenReportsDateFilter,
   ComparedToRunFilter,

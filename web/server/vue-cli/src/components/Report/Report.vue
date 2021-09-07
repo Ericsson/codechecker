@@ -40,6 +40,16 @@
 
           <v-col
             cols="auto"
+            class="pa-0 mr-2"
+            align-self="center"
+          >
+            <set-cleanup-plan-btn
+              :value="report ? [report] : []"
+            />
+          </v-col>
+
+          <v-col
+            cols="auto"
             class="review-status-wrapper pa-0"
             align-self="center"
           >
@@ -286,6 +296,7 @@ import { AnalysisInfoDialog, CopyBtn } from "@/components";
 import { UserIcon } from "@/components/Icons";
 
 import ReportTreeKind from "@/components/Report/ReportTree/ReportTreeKind";
+import { SetCleanupPlanBtn } from "@/components/Report/CleanupPlan";
 
 import AnalysisInfoBtn from "./AnalysisInfoBtn";
 import CheckerDocumentationDialog from
@@ -311,6 +322,7 @@ export default {
     ReportInfoButton,
     SelectReviewStatus,
     SelectSameReport,
+    SetCleanupPlanBtn,
     ShowReportInfoDialog,
     ToggleBlameViewBtn,
     UserIcon

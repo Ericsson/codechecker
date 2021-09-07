@@ -239,7 +239,7 @@ class CCConfigHelper(ThriftAPIHelper):
         return partial(self._thrift_client_call, attr)
 
 
-def get_all_run_results(client, run_id, sort_mode=None, filters=None):
+def get_all_run_results(client, run_id=None, sort_mode=None, filters=None):
     """
     Get all the results for a run.
     Query limit limits the number of results can be got from the
@@ -253,14 +253,10 @@ def get_all_run_results(client, run_id, sort_mode=None, filters=None):
     if not sort_mode:
         sort_mode = []
 
+    run_ids = [run_id] if run_id else None
     while True:
-        partial_res = client.getRunResults([run_id],
-                                           query_limit,
-                                           offset,
-                                           sort_mode,
-                                           filters,
-                                           None,
-                                           False)
+        partial_res = client.getRunResults(
+            run_ids, query_limit, offset, sort_mode, filters, None, False)
 
         offset += len(partial_res)
         if not partial_res:

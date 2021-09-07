@@ -32,6 +32,7 @@ module.exports = {
       reportPage.section.reviewStatusFilter,
       reportPage.section.detectionStatusFilter,
       reportPage.section.sourceComponentFilter,
+      reportPage.section.cleanupPlanFilter,
       reportPage.section.checkerMessageFilter,
       reportPage.section.checkerMessageFilter,
       reportPage.section.reportHashFilter,
@@ -76,7 +77,7 @@ module.exports = {
   "sort reports by bug path length" (browser) {
     const reportPage = browser.page.report();
 
-    const colIdx = 8;
+    const colIdx = 9;
 
     // Sort reports in ascending order by bug path length.
     reportPage.sortReports(colIdx, (data) => {
@@ -498,6 +499,149 @@ module.exports = {
       .to.be.visible.before(5000);
 
     removeComponentDialog.click("@confirmBtn");
+
+    dialogSection
+      .waitForElementVisible("@emptyTable")
+      .click("@closeBtn");
+  },
+
+  "manage cleanup plans" (browser) {
+    const reportPage = browser.page.report();
+    const section = reportPage.section.cleanupPlanFilter;
+    const dialogSection = reportPage.section.cleanupPlanDialog;
+    const newCleanupPlanDialog = reportPage.section.newCleanupPlanDialog;
+    const removeCleanupPlanDialog = reportPage.section.removeCleanupPlanDialog;
+    const setCleanupPlanDialog = reportPage.section.setCleanupPlanDialog;
+
+    // Clear all filters so we will be able to select multiple reports.
+    reportPage.click("@clearAllFilterBtn");
+    reportPage
+      .pause(500)
+      .waitForElementNotPresent("@progressBar");
+
+    section.click("@manageBtn");
+
+    reportPage.expect.section(dialogSection).to.be.visible.before(5000);
+
+    dialogSection.pause(500);
+
+    // Add a new cleanup plan.
+    dialogSection.waitForElementVisible("@newCleanupPlanBtn")
+    dialogSection.click("@newCleanupPlanBtn");
+    reportPage.expect.section(newCleanupPlanDialog).to.be.visible.before(5000);
+
+    let [ name, description ] = [ "e2e", "Test" ];
+    newCleanupPlanDialog
+      .clearAndSetValue("@name", name, newCleanupPlanDialog)
+      .clearAndSetValue("@description", description, newCleanupPlanDialog)
+      .click("@saveBtn");
+
+    dialogSection.api.elements("@tableRows", (elements) => {
+      browser.assert.ok(elements.result.value.length === 1);
+    });
+
+    // Edit cleanup plan.
+    dialogSection.click({ selector: "@editCleanupPlanBtn", index: 0 });
+    reportPage.expect.section(newCleanupPlanDialog).to.be.visible.before(5000);
+
+    [ description ] = [ "Renamed" ];
+    newCleanupPlanDialog
+      .clearAndSetValue("@description", description, newCleanupPlanDialog)
+      .click("@saveBtn");
+
+    dialogSection.api.elements("@tableRows", (elements) => {
+      browser.assert.ok(elements.result.value.length === 1);
+    });
+
+    dialogSection.click("@closeBtn");
+
+    reportPage.assert.cssClassPresent(
+      "@setCleanupPlanBtn", "v-btn--disabled");
+
+    // Assign report to cleanup plan.
+    reportPage.click("@selectReportCheckbox");
+
+    reportPage.assert.not.cssClassPresent(
+      "@setCleanupPlanBtn", "v-btn--disabled");
+
+    reportPage.click("@setCleanupPlanBtn");
+
+    reportPage.expect.section(setCleanupPlanDialog)
+      .to.be.visible.before(5000);
+
+    setCleanupPlanDialog
+      .click({ selector: "@item", index: 0 })
+      .waitForElementVisible("@activeItem");
+
+    // Select filter item.
+    section.openFilterSettings();
+
+    reportPage.section.settingsMenu
+      .toggleMenuItem(0)
+      .applyFilter();
+
+    reportPage.expect.section("@settingsMenu").to.not.be.present.before(5000);
+
+    section.api.elements("@selectedItems", ({result}) => {
+      browser.assert.ok(result.value.length === 1);
+    });
+
+    reportPage.getTableRows("@tableRows", (data) => {
+      browser.assert.ok(
+        [...new Set(data.map(r => r[2]))].filter(d => d).length === 1);
+    });
+
+    // Clear the filter.
+    section.click("@clearBtn");
+
+    section.api.elements("@selectedItems", ({result}) => {
+      browser.assert.ok(result.value.length === 0);
+    });
+
+    // Unset cleanup.
+    reportPage
+      .click("@selectAllReportCheckbox")
+      .click("@setCleanupPlanBtn");
+
+    reportPage.expect.section(setCleanupPlanDialog)
+      .to.be.visible.before(5000);
+
+    setCleanupPlanDialog.waitForElementVisible("@notAllSelectedItem");
+
+    setCleanupPlanDialog
+      .click({ selector: "@item", index: 0 })
+      .waitForElementVisible("@activeItem")
+      .click({ selector: "@item", index: 0 })
+      .waitForElementNotPresent("@activeItem");
+
+    reportPage.click("@setCleanupPlanBtn");
+
+    // Close cleanup plan.
+    section.click("@manageBtn");
+    reportPage.expect.section(dialogSection).to.be.visible.before(5000);
+    dialogSection.pause(500);
+
+    dialogSection.api.elements("@tableRows", (elements) => {
+      browser.assert.ok(elements.result.value.length === 1);
+    });
+
+    dialogSection
+      .click("@closeCleanupPlanBtn")
+      .waitForElementNotPresent("@closeCleanupPlanBtn")
+      .click("@closedCleanupPlansTab")
+      .waitForElementVisible("@reopenCleanupPlanBtn")
+      .click("@reopenCleanupPlanBtn")
+      .waitForElementNotPresent("@reopenCleanupPlanBtn")
+      .click("@openCleanupPlansTab")
+      .waitForElementVisible("@closeCleanupPlanBtn")
+
+    // Remove the cleanup plan.
+    dialogSection.waitForElementVisible("@removeCleanupPlanBtn");
+    dialogSection.click({ selector: "@removeCleanupPlanBtn", index: 0 });
+    reportPage.expect.section(removeCleanupPlanDialog)
+      .to.be.visible.before(5000);
+
+    removeCleanupPlanDialog.click("@confirmBtn");
 
     dialogSection
       .waitForElementVisible("@emptyTable")
