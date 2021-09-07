@@ -1,0 +1,899 @@
+{
+  "analyzer": "cppcheck",
+  "labels": {
+    "AssignmentAddressToInteger": [
+      "severity:LOW"
+    ],
+    "AssignmentIntegerToAddress": [
+      "severity:LOW"
+    ],
+    "CastAddressToIntegerAtReturn": [
+      "severity:LOW"
+    ],
+    "CastIntegerToAddressAtReturn": [
+      "severity:LOW"
+    ],
+    "ConfigurationNotChecked": [
+      "severity:LOW"
+    ],
+    "IOWithoutPositioning": [
+      "severity:HIGH"
+    ],
+    "StlMissingComparison": [
+      "severity:MEDIUM"
+    ],
+    "accessForwarded": [
+      "severity:MEDIUM"
+    ],
+    "accessMoved": [
+      "severity:MEDIUM"
+    ],
+    "arithOperationsOnVoidPointer": [
+      "severity:LOW"
+    ],
+    "arrayIndexOutOfBounds": [
+      "severity:HIGH"
+    ],
+    "arrayIndexOutOfBoundsCond": [
+      "severity:MEDIUM"
+    ],
+    "arrayIndexThenCheck": [
+      "severity:STYLE"
+    ],
+    "assertWithSideEffect": [
+      "severity:MEDIUM"
+    ],
+    "assignBoolToFloat": [
+      "severity:STYLE"
+    ],
+    "assignBoolToPointer": [
+      "severity:HIGH"
+    ],
+    "assignIfError": [
+      "severity:STYLE"
+    ],
+    "assignmentInAssert": [
+      "severity:MEDIUM"
+    ],
+    "autoVariables": [
+      "severity:HIGH"
+    ],
+    "autovarInvalidDeallocation": [
+      "severity:HIGH"
+    ],
+    "badBitmaskCheck": [
+      "severity:MEDIUM"
+    ],
+    "bitwiseOnBoolean": [
+      "severity:STYLE"
+    ],
+    "boostForeachError": [
+      "severity:HIGH"
+    ],
+    "bufferAccessOutOfBounds": [
+      "severity:HIGH"
+    ],
+    "catchExceptionByValue": [
+      "severity:STYLE"
+    ],
+    "charBitOp": [
+      "severity:MEDIUM"
+    ],
+    "charLiteralWithCharPtrCompare": [
+      "severity:MEDIUM"
+    ],
+    "checkCastIntToCharAndBack": [
+      "severity:MEDIUM"
+    ],
+    "clarifyCalculation": [
+      "severity:STYLE"
+    ],
+    "clarifyCondition": [
+      "severity:STYLE"
+    ],
+    "clarifyStatement": [
+      "severity:MEDIUM"
+    ],
+    "commaSeparatedReturn": [
+      "severity:STYLE"
+    ],
+    "compareBoolExpressionWithInt": [
+      "severity:MEDIUM"
+    ],
+    "comparePointers": [
+      "severity:HIGH"
+    ],
+    "comparisonError": [
+      "severity:STYLE"
+    ],
+    "comparisonFunctionIsAlwaysTrueOrFalse": [
+      "severity:MEDIUM"
+    ],
+    "comparisonOfBoolWithBoolError": [
+      "severity:STYLE"
+    ],
+    "comparisonOfBoolWithInvalidComparator": [
+      "severity:MEDIUM"
+    ],
+    "comparisonOfFuncReturningBoolError": [
+      "severity:STYLE"
+    ],
+    "comparisonOfTwoFuncsReturningBoolError": [
+      "severity:STYLE"
+    ],
+    "constStatement": [
+      "severity:MEDIUM"
+    ],
+    "constVariable": [
+      "severity:STYLE"
+    ],
+    "containerOutOfBounds": [
+      "severity:HIGH"
+    ],
+    "copyCtorAndEqOperator": [
+      "severity:MEDIUM"
+    ],
+    "copyCtorPointerCopying": [
+      "severity:MEDIUM"
+    ],
+    "coutCerrMisusage": [
+      "severity:HIGH"
+    ],
+    "cstyleCast": [
+      "severity:STYLE"
+    ],
+    "danglingLifetime": [
+      "severity:HIGH"
+    ],
+    "danglingReference": [
+      "severity:HIGH"
+    ],
+    "danglingTempReference": [
+      "severity:HIGH"
+    ],
+    "danglingTemporaryLifetime": [
+      "severity:HIGH"
+    ],
+    "deallocDealloc": [
+      "severity:HIGH"
+    ],
+    "deallocret": [
+      "severity:HIGH"
+    ],
+    "deallocuse": [
+      "severity:HIGH"
+    ],
+    "derefInvalidIterator": [
+      "severity:MEDIUM"
+    ],
+    "divideSizeof": [
+      "severity:MEDIUM"
+    ],
+    "doubleFree": [
+      "severity:HIGH"
+    ],
+    "duplInheritedMember": [
+      "severity:MEDIUM"
+    ],
+    "duplicateAssignExpression": [
+      "severity:STYLE"
+    ],
+    "duplicateBranch": [
+      "severity:STYLE"
+    ],
+    "duplicateBreak": [
+      "severity:STYLE"
+    ],
+    "duplicateCondition": [
+      "severity:STYLE"
+    ],
+    "duplicateConditionalAssign": [
+      "severity:STYLE"
+    ],
+    "duplicateExpression": [
+      "severity:STYLE"
+    ],
+    "duplicateExpressionTernary": [
+      "severity:STYLE"
+    ],
+    "duplicateValueTernary": [
+      "severity:STYLE"
+    ],
+    "eraseDereference": [
+      "severity:HIGH"
+    ],
+    "exceptDeallocThrow": [
+      "severity:MEDIUM"
+    ],
+    "exceptRethrowCopy": [
+      "severity:STYLE"
+    ],
+    "exceptThrowInDestructor": [
+      "severity:MEDIUM"
+    ],
+    "fflushOnInputStream": [
+      "severity:LOW"
+    ],
+    "floatConversionOverflow": [
+      "severity:HIGH"
+    ],
+    "funcArgNamesDifferent": [
+      "severity:STYLE"
+    ],
+    "funcArgOrderDifferent": [
+      "severity:MEDIUM"
+    ],
+    "functionConst": [
+      "severity:STYLE"
+    ],
+    "functionStatic": [
+      "severity:LOW"
+    ],
+    "globalLockGuard": [
+      "severity:MEDIUM"
+    ],
+    "identicalConditionAfterEarlyExit": [
+      "severity:MEDIUM"
+    ],
+    "identicalInnerCondition": [
+      "severity:MEDIUM"
+    ],
+    "ignoredReturnValue": [
+      "severity:MEDIUM"
+    ],
+    "incompleteArrayFill": [
+      "severity:MEDIUM"
+    ],
+    "incorrectCharBooleanError": [
+      "severity:MEDIUM"
+    ],
+    "incorrectLogicOperator": [
+      "severity:MEDIUM"
+    ],
+    "incorrectStringBooleanError": [
+      "severity:MEDIUM"
+    ],
+    "incorrectStringCompare": [
+      "severity:MEDIUM"
+    ],
+    "incrementboolean": [
+      "severity:STYLE"
+    ],
+    "initializerList": [
+      "severity:STYLE"
+    ],
+    "integerOverflow": [
+      "severity:HIGH"
+    ],
+    "invalidContainer": [
+      "severity:HIGH"
+    ],
+    "invalidContainerLoop": [
+      "severity:HIGH"
+    ],
+    "invalidFree": [
+      "severity:HIGH"
+    ],
+    "invalidFunctionArg": [
+      "severity:HIGH"
+    ],
+    "invalidFunctionArgBool": [
+      "severity:HIGH"
+    ],
+    "invalidFunctionArgStr": [
+      "severity:HIGH"
+    ],
+    "invalidIterator1": [
+      "severity:HIGH"
+    ],
+    "invalidLengthModifierError": [
+      "severity:MEDIUM"
+    ],
+    "invalidLifetime": [
+      "severity:HIGH"
+    ],
+    "invalidPointerCast": [
+      "severity:LOW"
+    ],
+    "invalidPrintfArgType_float": [
+      "severity:MEDIUM"
+    ],
+    "invalidPrintfArgType_n": [
+      "severity:MEDIUM"
+    ],
+    "invalidPrintfArgType_p": [
+      "severity:MEDIUM"
+    ],
+    "invalidPrintfArgType_s": [
+      "severity:MEDIUM"
+    ],
+    "invalidPrintfArgType_sint": [
+      "severity:MEDIUM"
+    ],
+    "invalidPrintfArgType_uint": [
+      "severity:MEDIUM"
+    ],
+    "invalidScanfArgType_float": [
+      "severity:MEDIUM"
+    ],
+    "invalidScanfArgType_int": [
+      "severity:MEDIUM"
+    ],
+    "invalidScanfArgType_s": [
+      "severity:MEDIUM"
+    ],
+    "invalidScanfFormatWidth": [
+      "severity:HIGH"
+    ],
+    "invalidScanfFormatWidth_smaller": [
+      "severity:MEDIUM"
+    ],
+    "invalidTestForOverflow": [
+      "severity:MEDIUM"
+    ],
+    "invalidscanf": [
+      "severity:MEDIUM"
+    ],
+    "iterators1": [
+      "severity:HIGH"
+    ],
+    "iterators2": [
+      "severity:HIGH"
+    ],
+    "iterators3": [
+      "severity:HIGH"
+    ],
+    "knownArgument": [
+      "severity:STYLE"
+    ],
+    "knownArgumentHiddenVariableExpression": [
+      "severity:STYLE"
+    ],
+    "knownConditionTrueFalse": [
+      "severity:STYLE"
+    ],
+    "knownEmptyContainer": [
+      "severity:STYLE"
+    ],
+    "leakNoVarFunctionCall": [
+      "severity:HIGH"
+    ],
+    "leakReturnValNotUsed": [
+      "severity:HIGH"
+    ],
+    "leakUnsafeArgAlloc": [
+      "severity:MEDIUM"
+    ],
+    "literalWithCharPtrCompare": [
+      "severity:MEDIUM"
+    ],
+    "localMutex": [
+      "severity:MEDIUM"
+    ],
+    "mallocOnClassError": [
+      "severity:HIGH"
+    ],
+    "mallocOnClassWarning": [
+      "severity:MEDIUM"
+    ],
+    "memleak": [
+      "severity:HIGH"
+    ],
+    "memleakOnRealloc": [
+      "severity:HIGH"
+    ],
+    "memsetClass": [
+      "severity:HIGH"
+    ],
+    "memsetClassFloat": [
+      "severity:LOW"
+    ],
+    "memsetClassReference": [
+      "severity:HIGH"
+    ],
+    "memsetFloat": [
+      "severity:LOW"
+    ],
+    "memsetValueOutOfRange": [
+      "severity:MEDIUM"
+    ],
+    "memsetZeroBytes": [
+      "severity:MEDIUM"
+    ],
+    "mismatchAllocDealloc": [
+      "severity:HIGH"
+    ],
+    "mismatchSize": [
+      "severity:HIGH"
+    ],
+    "mismatchingBitAnd": [
+      "severity:STYLE"
+    ],
+    "mismatchingContainerExpression": [
+      "severity:MEDIUM"
+    ],
+    "mismatchingContainerIterator": [
+      "severity:HIGH"
+    ],
+    "mismatchingContainers": [
+      "severity:HIGH"
+    ],
+    "missingInclude": [
+      "severity:LOW"
+    ],
+    "missingIncludeSystem": [
+      "severity:LOW"
+    ],
+    "missingOverride": [
+      "severity:STYLE"
+    ],
+    "moduloAlwaysTrueFalse": [
+      "severity:MEDIUM"
+    ],
+    "moduloofone": [
+      "severity:STYLE"
+    ],
+    "multiCondition": [
+      "severity:STYLE"
+    ],
+    "multiplySizeof": [
+      "severity:MEDIUM"
+    ],
+    "nanInArithmeticExpression": [
+      "severity:STYLE"
+    ],
+    "negativeContainerIndex": [
+      "severity:HIGH"
+    ],
+    "negativeIndex": [
+      "severity:HIGH"
+    ],
+    "noConstructor": [
+      "severity:STYLE"
+    ],
+    "noCopyConstructor": [
+      "severity:MEDIUM"
+    ],
+    "noDestructor": [
+      "severity:MEDIUM"
+    ],
+    "noExplicitConstructor": [
+      "severity:STYLE"
+    ],
+    "noOperatorEq": [
+      "severity:MEDIUM"
+    ],
+    "nullPointer": [
+      "severity:HIGH"
+    ],
+    "nullPointerArithmetic": [
+      "severity:HIGH"
+    ],
+    "nullPointerArithmeticRedundantCheck": [
+      "severity:MEDIUM"
+    ],
+    "nullPointerDefaultArg": [
+      "severity:MEDIUM"
+    ],
+    "nullPointerRedundantCheck": [
+      "severity:MEDIUM"
+    ],
+    "objectIndex": [
+      "severity:HIGH"
+    ],
+    "operatorEqMissingReturnStatement": [
+      "severity:HIGH"
+    ],
+    "operatorEqRetRefThis": [
+      "severity:STYLE"
+    ],
+    "operatorEqShouldBeLeftUnimplemented": [
+      "severity:STYLE"
+    ],
+    "operatorEqToSelf": [
+      "severity:MEDIUM"
+    ],
+    "operatorEqVarError": [
+      "severity:MEDIUM"
+    ],
+    "oppositeExpression": [
+      "severity:STYLE"
+    ],
+    "oppositeInnerCondition": [
+      "severity:MEDIUM"
+    ],
+    "overlappingStrcmp": [
+      "severity:MEDIUM"
+    ],
+    "passedByValue": [
+      "severity:LOW"
+    ],
+    "pointerAdditionResultNotNull": [
+      "severity:MEDIUM"
+    ],
+    "pointerArithBool": [
+      "severity:HIGH"
+    ],
+    "pointerLessThanZero": [
+      "severity:STYLE"
+    ],
+    "pointerOutOfBounds": [
+      "severity:LOW"
+    ],
+    "pointerPositive": [
+      "severity:STYLE"
+    ],
+    "pointerSize": [
+      "severity:MEDIUM"
+    ],
+    "postfixOperator": [
+      "severity:LOW"
+    ],
+    "preprocessorErrorDirective": [
+      "severity:HIGH"
+    ],
+    "publicAllocationError": [
+      "severity:MEDIUM"
+    ],
+    "pureVirtualCall": [
+      "severity:MEDIUM"
+    ],
+    "purgedConfiguration": [
+      "severity:LOW"
+    ],
+    "raceAfterInterlockedDecrement": [
+      "severity:HIGH"
+    ],
+    "readWriteOnlyFile": [
+      "severity:HIGH"
+    ],
+    "reademptycontainer": [
+      "severity:STYLE"
+    ],
+    "redundantAssignInSwitch": [
+      "severity:STYLE"
+    ],
+    "redundantAssignment": [
+      "severity:STYLE"
+    ],
+    "redundantBitwiseOperationInSwitch": [
+      "severity:STYLE"
+    ],
+    "redundantCondition": [
+      "severity:STYLE"
+    ],
+    "redundantCopy": [
+      "severity:LOW"
+    ],
+    "redundantCopyInSwitch": [
+      "severity:STYLE"
+    ],
+    "redundantCopyLocalConst": [
+      "severity:LOW"
+    ],
+    "redundantIfRemove": [
+      "severity:STYLE"
+    ],
+    "redundantInitialization": [
+      "severity:STYLE"
+    ],
+    "redundantPointerOp": [
+      "severity:STYLE"
+    ],
+    "resourceLeak": [
+      "severity:HIGH"
+    ],
+    "returnAddressOfAutoVariable": [
+      "severity:HIGH"
+    ],
+    "returnAddressOfFunctionParameter": [
+      "severity:HIGH"
+    ],
+    "returnDanglingLifetime": [
+      "severity:HIGH"
+    ],
+    "returnLocalVariable": [
+      "severity:HIGH"
+    ],
+    "returnNonBoolInBooleanFunction": [
+      "severity:STYLE"
+    ],
+    "returnReference": [
+      "severity:HIGH"
+    ],
+    "returnTempReference": [
+      "severity:HIGH"
+    ],
+    "sameIteratorExpression": [
+      "severity:STYLE"
+    ],
+    "seekOnAppendedFile": [
+      "severity:MEDIUM"
+    ],
+    "selfAssignment": [
+      "severity:MEDIUM"
+    ],
+    "selfInitialization": [
+      "severity:HIGH"
+    ],
+    "shadowArgument": [
+      "severity:STYLE"
+    ],
+    "shadowFunction": [
+      "severity:STYLE"
+    ],
+    "shadowVariable": [
+      "severity:STYLE"
+    ],
+    "shiftNegative": [
+      "severity:HIGH"
+    ],
+    "shiftNegativeLHS": [
+      "severity:LOW"
+    ],
+    "shiftTooManyBits": [
+      "severity:HIGH"
+    ],
+    "shiftTooManyBitsSigned": [
+      "severity:HIGH"
+    ],
+    "signConversion": [
+      "severity:MEDIUM"
+    ],
+    "signedCharArrayIndex": [
+      "severity:MEDIUM"
+    ],
+    "sizeofCalculation": [
+      "severity:MEDIUM"
+    ],
+    "sizeofDereferencedVoidPointer": [
+      "severity:LOW"
+    ],
+    "sizeofDivisionMemfunc": [
+      "severity:MEDIUM"
+    ],
+    "sizeofFunctionCall": [
+      "severity:MEDIUM"
+    ],
+    "sizeofVoid": [
+      "severity:LOW"
+    ],
+    "sizeofsizeof": [
+      "severity:MEDIUM"
+    ],
+    "sizeofwithnumericparameter": [
+      "severity:MEDIUM"
+    ],
+    "sizeofwithsilentarraypointer": [
+      "severity:MEDIUM"
+    ],
+    "sprintfOverlappingData": [
+      "severity:HIGH"
+    ],
+    "staticStringCompare": [
+      "severity:MEDIUM"
+    ],
+    "stlBoundaries": [
+      "severity:HIGH"
+    ],
+    "stlFindInsert": [
+      "severity:LOW"
+    ],
+    "stlIfFind": [
+      "severity:MEDIUM"
+    ],
+    "stlIfStrFind": [
+      "severity:LOW"
+    ],
+    "stlOutOfBounds": [
+      "severity:HIGH"
+    ],
+    "stlSize": [
+      "severity:LOW"
+    ],
+    "stlcstr": [
+      "severity:HIGH"
+    ],
+    "stlcstrParam": [
+      "severity:LOW"
+    ],
+    "stlcstrReturn": [
+      "severity:LOW"
+    ],
+    "stlcstrthrow": [
+      "severity:HIGH"
+    ],
+    "strPlusChar": [
+      "severity:HIGH"
+    ],
+    "stringCompare": [
+      "severity:MEDIUM"
+    ],
+    "stringLiteralWrite": [
+      "severity:HIGH"
+    ],
+    "suspiciousCase": [
+      "severity:MEDIUM"
+    ],
+    "suspiciousSemicolon": [
+      "severity:MEDIUM"
+    ],
+    "thisSubtraction": [
+      "severity:MEDIUM"
+    ],
+    "thisUseAfterFree": [
+      "severity:MEDIUM"
+    ],
+    "throwInNoexceptFunction": [
+      "severity:HIGH"
+    ],
+    "toomanyconfigs": [
+      "severity:LOW"
+    ],
+    "truncLongCastAssignment": [
+      "severity:STYLE"
+    ],
+    "truncLongCastReturn": [
+      "severity:STYLE"
+    ],
+    "unassignedVariable": [
+      "severity:STYLE"
+    ],
+    "unhandledExceptionSpecification": [
+      "severity:STYLE"
+    ],
+    "uninitMemberVar": [
+      "severity:MEDIUM"
+    ],
+    "uninitMemberVarPrivate": [
+      "severity:MEDIUM"
+    ],
+    "uninitStructMember": [
+      "severity:HIGH"
+    ],
+    "uninitdata": [
+      "severity:HIGH"
+    ],
+    "uninitstring": [
+      "severity:HIGH"
+    ],
+    "uninitvar": [
+      "severity:HIGH"
+    ],
+    "unknownEvaluationOrder": [
+      "severity:HIGH"
+    ],
+    "unknownSignCharArrayIndex": [
+      "severity:LOW"
+    ],
+    "unpreciseMathCall": [
+      "severity:STYLE"
+    ],
+    "unreachableCode": [
+      "severity:STYLE"
+    ],
+    "unreadVariable": [
+      "severity:STYLE"
+    ],
+    "unsafeClassCanLeak": [
+      "severity:STYLE"
+    ],
+    "unsafeClassRefMember": [
+      "severity:MEDIUM"
+    ],
+    "unsignedLessThanZero": [
+      "severity:STYLE"
+    ],
+    "unsignedPositive": [
+      "severity:STYLE"
+    ],
+    "unusedAllocatedMemory": [
+      "severity:STYLE"
+    ],
+    "unusedFunction": [
+      "severity:STYLE"
+    ],
+    "unusedLabel": [
+      "severity:STYLE"
+    ],
+    "unusedLabelConfiguration": [
+      "severity:STYLE"
+    ],
+    "unusedLabelSwitch": [
+      "severity:MEDIUM"
+    ],
+    "unusedLabelSwitchConfiguration": [
+      "severity:MEDIUM"
+    ],
+    "unusedPrivateFunction": [
+      "severity:STYLE"
+    ],
+    "unusedScopedObject": [
+      "severity:STYLE"
+    ],
+    "unusedStructMember": [
+      "severity:STYLE"
+    ],
+    "unusedVariable": [
+      "severity:STYLE"
+    ],
+    "useClosedFile": [
+      "severity:HIGH"
+    ],
+    "useInitializationList": [
+      "severity:LOW"
+    ],
+    "useStlAlgorithm": [
+      "severity:STYLE"
+    ],
+    "uselessAssignmentArg": [
+      "severity:STYLE"
+    ],
+    "uselessAssignmentPtrArg": [
+      "severity:MEDIUM"
+    ],
+    "uselessCallsCompare": [
+      "severity:MEDIUM"
+    ],
+    "uselessCallsEmpty": [
+      "severity:MEDIUM"
+    ],
+    "uselessCallsRemove": [
+      "severity:MEDIUM"
+    ],
+    "uselessCallsSubstr": [
+      "severity:LOW"
+    ],
+    "uselessCallsSwap": [
+      "severity:LOW"
+    ],
+    "va_end_missing": [
+      "severity:HIGH"
+    ],
+    "va_list_usedBeforeStarted": [
+      "severity:HIGH"
+    ],
+    "va_start_referencePassed": [
+      "severity:HIGH"
+    ],
+    "va_start_subsequentCalls": [
+      "severity:HIGH"
+    ],
+    "va_start_wrongParameter": [
+      "severity:MEDIUM"
+    ],
+    "varFuncNullUB": [
+      "severity:LOW"
+    ],
+    "variableScope": [
+      "severity:STYLE"
+    ],
+    "virtualCallInConstructor": [
+      "severity:STYLE"
+    ],
+    "virtualDestructor": [
+      "severity:HIGH"
+    ],
+    "writeReadOnlyFile": [
+      "severity:HIGH"
+    ],
+    "wrongPipeParameterSize": [
+      "severity:HIGH"
+    ],
+    "wrongPrintfScanfArgNum": [
+      "severity:HIGH"
+    ],
+    "wrongPrintfScanfParameterPositionError": [
+      "severity:MEDIUM"
+    ],
+    "wrongmathcall": [
+      "severity:MEDIUM"
+    ],
+    "zerodiv": [
+      "severity:HIGH"
+    ],
+    "zerodivcond": [
+      "severity:HIGH"
+    ]
+  }
+}
