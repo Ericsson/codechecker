@@ -1,0 +1,1151 @@
+{
+  "analyzer": "pylint",
+  "labels": {
+    "abstract-class-instantiated": [
+      "severity:HIGH"
+    ],
+    "abstract-method": [
+      "severity:MEDIUM"
+    ],
+    "access-member-before-definition": [
+      "severity:HIGH"
+    ],
+    "anomalous-backslash-in-string": [
+      "severity:MEDIUM"
+    ],
+    "anomalous-unicode-escape-in-string": [
+      "severity:MEDIUM"
+    ],
+    "apply-builtin": [
+      "severity:MEDIUM"
+    ],
+    "arguments-differ": [
+      "severity:MEDIUM"
+    ],
+    "arguments-out-of-order": [
+      "severity:MEDIUM"
+    ],
+    "arguments-renamed": [
+      "severity:MEDIUM"
+    ],
+    "assert-on-string-literal": [
+      "severity:MEDIUM"
+    ],
+    "assert-on-tuple": [
+      "severity:MEDIUM"
+    ],
+    "assign-to-new-keyword": [
+      "severity:MEDIUM"
+    ],
+    "assigning-non-slot": [
+      "severity:HIGH"
+    ],
+    "assignment-from-no-return": [
+      "severity:HIGH"
+    ],
+    "assignment-from-none": [
+      "severity:HIGH"
+    ],
+    "astroid-error": [
+      "severity:CRITICAL"
+    ],
+    "attribute-defined-outside-init": [
+      "severity:MEDIUM"
+    ],
+    "await-outside-async": [
+      "severity:HIGH"
+    ],
+    "backtick": [
+      "severity:HIGH"
+    ],
+    "bad-classmethod-argument": [
+      "severity:LOW"
+    ],
+    "bad-except-order": [
+      "severity:HIGH"
+    ],
+    "bad-exception-context": [
+      "severity:HIGH"
+    ],
+    "bad-format-character": [
+      "severity:HIGH"
+    ],
+    "bad-format-string": [
+      "severity:MEDIUM"
+    ],
+    "bad-format-string-key": [
+      "severity:MEDIUM"
+    ],
+    "bad-indentation": [
+      "severity:MEDIUM"
+    ],
+    "bad-inline-option": [
+      "severity:UNSPECIFIED"
+    ],
+    "bad-mcs-classmethod-argument": [
+      "severity:LOW"
+    ],
+    "bad-mcs-method-argument": [
+      "severity:LOW"
+    ],
+    "bad-open-mode": [
+      "severity:MEDIUM"
+    ],
+    "bad-option-value": [
+      "severity:HIGH"
+    ],
+    "bad-plugin-value": [
+      "severity:HIGH"
+    ],
+    "bad-python3-import": [
+      "severity:MEDIUM"
+    ],
+    "bad-reversed-sequence": [
+      "severity:HIGH"
+    ],
+    "bad-staticmethod-argument": [
+      "severity:MEDIUM"
+    ],
+    "bad-str-strip-call": [
+      "severity:HIGH"
+    ],
+    "bad-string-format-type": [
+      "severity:HIGH"
+    ],
+    "bad-super-call": [
+      "severity:HIGH"
+    ],
+    "bad-thread-instantiation": [
+      "severity:MEDIUM"
+    ],
+    "bare-except": [
+      "severity:MEDIUM"
+    ],
+    "basestring-builtin": [
+      "severity:MEDIUM"
+    ],
+    "binary-op-exception": [
+      "severity:MEDIUM"
+    ],
+    "boolean-datetime": [
+      "severity:MEDIUM"
+    ],
+    "broad-except": [
+      "severity:MEDIUM"
+    ],
+    "buffer-builtin": [
+      "severity:MEDIUM"
+    ],
+    "c-extension-no-member": [
+      "severity:UNSPECIFIED"
+    ],
+    "catching-non-exception": [
+      "severity:HIGH"
+    ],
+    "cell-var-from-loop": [
+      "severity:MEDIUM"
+    ],
+    "chained-comparison": [
+      "severity:STYLE"
+    ],
+    "class-variable-slots-conflict": [
+      "severity:HIGH"
+    ],
+    "cmp-builtin": [
+      "severity:MEDIUM"
+    ],
+    "cmp-method": [
+      "severity:MEDIUM"
+    ],
+    "coerce-builtin": [
+      "severity:MEDIUM"
+    ],
+    "coerce-method": [
+      "severity:MEDIUM"
+    ],
+    "comparison-with-callable": [
+      "severity:MEDIUM"
+    ],
+    "comparison-with-itself": [
+      "severity:STYLE"
+    ],
+    "comprehension-escape": [
+      "severity:MEDIUM"
+    ],
+    "condition-evals-to-constant": [
+      "severity:STYLE"
+    ],
+    "confusing-with-statement": [
+      "severity:MEDIUM"
+    ],
+    "consider-iterating-dictionary": [
+      "severity:LOW"
+    ],
+    "consider-merging-isinstance": [
+      "severity:STYLE"
+    ],
+    "consider-swap-variables": [
+      "severity:STYLE"
+    ],
+    "consider-using-dict-comprehension": [
+      "severity:STYLE"
+    ],
+    "consider-using-dict-items": [
+      "severity:LOW"
+    ],
+    "consider-using-enumerate": [
+      "severity:LOW"
+    ],
+    "consider-using-from-import": [
+      "severity:STYLE"
+    ],
+    "consider-using-generator": [
+      "severity:STYLE"
+    ],
+    "consider-using-get": [
+      "severity:STYLE"
+    ],
+    "consider-using-in": [
+      "severity:STYLE"
+    ],
+    "consider-using-join": [
+      "severity:STYLE"
+    ],
+    "consider-using-max-builtin": [
+      "severity:STYLE"
+    ],
+    "consider-using-min-builtin": [
+      "severity:STYLE"
+    ],
+    "consider-using-set-comprehension": [
+      "severity:STYLE"
+    ],
+    "consider-using-sys-exit": [
+      "severity:STYLE"
+    ],
+    "consider-using-ternary": [
+      "severity:STYLE"
+    ],
+    "consider-using-with": [
+      "severity:STYLE"
+    ],
+    "continue-in-finally": [
+      "severity:HIGH"
+    ],
+    "cyclic-import": [
+      "severity:STYLE"
+    ],
+    "dangerous-default-value": [
+      "severity:MEDIUM"
+    ],
+    "delslice-method": [
+      "severity:MEDIUM"
+    ],
+    "deprecated-argument": [
+      "severity:MEDIUM"
+    ],
+    "deprecated-class": [
+      "severity:MEDIUM"
+    ],
+    "deprecated-decorator": [
+      "severity:MEDIUM"
+    ],
+    "deprecated-itertools-function": [
+      "severity:MEDIUM"
+    ],
+    "deprecated-method": [
+      "severity:MEDIUM"
+    ],
+    "deprecated-module": [
+      "severity:MEDIUM"
+    ],
+    "deprecated-operator-function": [
+      "severity:MEDIUM"
+    ],
+    "deprecated-pragma": [
+      "severity:UNSPECIFIED"
+    ],
+    "deprecated-str-translate-call": [
+      "severity:MEDIUM"
+    ],
+    "deprecated-string-function": [
+      "severity:MEDIUM"
+    ],
+    "deprecated-sys-function": [
+      "severity:MEDIUM"
+    ],
+    "deprecated-types-field": [
+      "severity:MEDIUM"
+    ],
+    "deprecated-urllib-function": [
+      "severity:MEDIUM"
+    ],
+    "dict-items-not-iterating": [
+      "severity:MEDIUM"
+    ],
+    "dict-iter-method": [
+      "severity:MEDIUM"
+    ],
+    "dict-iter-missing-items": [
+      "severity:HIGH"
+    ],
+    "dict-keys-not-iterating": [
+      "severity:MEDIUM"
+    ],
+    "dict-values-not-iterating": [
+      "severity:MEDIUM"
+    ],
+    "dict-view-method": [
+      "severity:MEDIUM"
+    ],
+    "disallowed-name": [
+      "severity:LOW"
+    ],
+    "div-method": [
+      "severity:MEDIUM"
+    ],
+    "duplicate-argument-name": [
+      "severity:HIGH"
+    ],
+    "duplicate-bases": [
+      "severity:HIGH"
+    ],
+    "duplicate-code": [
+      "severity:STYLE"
+    ],
+    "duplicate-except": [
+      "severity:MEDIUM"
+    ],
+    "duplicate-key": [
+      "severity:MEDIUM"
+    ],
+    "duplicate-string-formatting-argument": [
+      "severity:MEDIUM"
+    ],
+    "empty-docstring": [
+      "severity:LOW"
+    ],
+    "eq-without-hash": [
+      "severity:MEDIUM"
+    ],
+    "eval-used": [
+      "severity:MEDIUM"
+    ],
+    "exception-escape": [
+      "severity:MEDIUM"
+    ],
+    "exception-message-attribute": [
+      "severity:MEDIUM"
+    ],
+    "exec-used": [
+      "severity:MEDIUM"
+    ],
+    "execfile-builtin": [
+      "severity:MEDIUM"
+    ],
+    "expression-not-assigned": [
+      "severity:MEDIUM"
+    ],
+    "f-string-without-interpolation": [
+      "severity:MEDIUM"
+    ],
+    "file-builtin": [
+      "severity:MEDIUM"
+    ],
+    "file-ignored": [
+      "severity:UNSPECIFIED"
+    ],
+    "filter-builtin-not-iterating": [
+      "severity:MEDIUM"
+    ],
+    "forgotten-debug-statement": [
+      "severity:MEDIUM"
+    ],
+    "format-combined-specification": [
+      "severity:MEDIUM"
+    ],
+    "format-needs-mapping": [
+      "severity:HIGH"
+    ],
+    "format-string-without-interpolation": [
+      "severity:MEDIUM"
+    ],
+    "function-redefined": [
+      "severity:HIGH"
+    ],
+    "getslice-method": [
+      "severity:MEDIUM"
+    ],
+    "global-at-module-level": [
+      "severity:MEDIUM"
+    ],
+    "global-statement": [
+      "severity:MEDIUM"
+    ],
+    "global-variable-not-assigned": [
+      "severity:MEDIUM"
+    ],
+    "global-variable-undefined": [
+      "severity:MEDIUM"
+    ],
+    "hex-method": [
+      "severity:MEDIUM"
+    ],
+    "idiv-method": [
+      "severity:MEDIUM"
+    ],
+    "implicit-str-concat": [
+      "severity:MEDIUM"
+    ],
+    "import-error": [
+      "severity:HIGH"
+    ],
+    "import-outside-toplevel": [
+      "severity:LOW"
+    ],
+    "import-self": [
+      "severity:MEDIUM"
+    ],
+    "import-star-module-level": [
+      "severity:HIGH"
+    ],
+    "inconsistent-mro": [
+      "severity:HIGH"
+    ],
+    "inconsistent-quotes": [
+      "severity:MEDIUM"
+    ],
+    "inconsistent-return-statements": [
+      "severity:STYLE"
+    ],
+    "indexing-exception": [
+      "severity:MEDIUM"
+    ],
+    "inherit-non-class": [
+      "severity:HIGH"
+    ],
+    "init-is-generator": [
+      "severity:HIGH"
+    ],
+    "input-builtin": [
+      "severity:MEDIUM"
+    ],
+    "intern-builtin": [
+      "severity:MEDIUM"
+    ],
+    "invalid-all-format": [
+      "severity:HIGH"
+    ],
+    "invalid-all-object": [
+      "severity:HIGH"
+    ],
+    "invalid-bool-returned": [
+      "severity:HIGH"
+    ],
+    "invalid-bytes-returned": [
+      "severity:HIGH"
+    ],
+    "invalid-characters-in-docstring": [
+      "severity:LOW"
+    ],
+    "invalid-class-object": [
+      "severity:HIGH"
+    ],
+    "invalid-envvar-default": [
+      "severity:MEDIUM"
+    ],
+    "invalid-envvar-value": [
+      "severity:HIGH"
+    ],
+    "invalid-format-index": [
+      "severity:MEDIUM"
+    ],
+    "invalid-format-returned": [
+      "severity:HIGH"
+    ],
+    "invalid-getnewargs-ex-returned": [
+      "severity:HIGH"
+    ],
+    "invalid-getnewargs-returned": [
+      "severity:HIGH"
+    ],
+    "invalid-hash-returned": [
+      "severity:HIGH"
+    ],
+    "invalid-index-returned": [
+      "severity:HIGH"
+    ],
+    "invalid-length-hint-returned": [
+      "severity:HIGH"
+    ],
+    "invalid-length-returned": [
+      "severity:HIGH"
+    ],
+    "invalid-metaclass": [
+      "severity:HIGH"
+    ],
+    "invalid-name": [
+      "severity:LOW"
+    ],
+    "invalid-overridden-method": [
+      "severity:MEDIUM"
+    ],
+    "invalid-repr-returned": [
+      "severity:HIGH"
+    ],
+    "invalid-sequence-index": [
+      "severity:HIGH"
+    ],
+    "invalid-slice-index": [
+      "severity:HIGH"
+    ],
+    "invalid-slots": [
+      "severity:HIGH"
+    ],
+    "invalid-slots-object": [
+      "severity:HIGH"
+    ],
+    "invalid-star-assignment-target": [
+      "severity:HIGH"
+    ],
+    "invalid-str-codec": [
+      "severity:MEDIUM"
+    ],
+    "invalid-str-returned": [
+      "severity:HIGH"
+    ],
+    "isinstance-second-argument-not-valid-type": [
+      "severity:MEDIUM"
+    ],
+    "keyword-arg-before-vararg": [
+      "severity:MEDIUM"
+    ],
+    "len-as-condition": [
+      "severity:LOW"
+    ],
+    "line-too-long": [
+      "severity:LOW"
+    ],
+    "literal-comparison": [
+      "severity:STYLE"
+    ],
+    "locally-disabled": [
+      "severity:UNSPECIFIED"
+    ],
+    "logging-format-interpolation": [
+      "severity:MEDIUM"
+    ],
+    "logging-format-truncated": [
+      "severity:HIGH"
+    ],
+    "logging-fstring-interpolation": [
+      "severity:MEDIUM"
+    ],
+    "logging-not-lazy": [
+      "severity:MEDIUM"
+    ],
+    "logging-too-few-args": [
+      "severity:HIGH"
+    ],
+    "logging-too-many-args": [
+      "severity:HIGH"
+    ],
+    "logging-unsupported-format": [
+      "severity:HIGH"
+    ],
+    "long-builtin": [
+      "severity:MEDIUM"
+    ],
+    "long-suffix": [
+      "severity:HIGH"
+    ],
+    "lost-exception": [
+      "severity:MEDIUM"
+    ],
+    "map-builtin-not-iterating": [
+      "severity:MEDIUM"
+    ],
+    "metaclass-assignment": [
+      "severity:MEDIUM"
+    ],
+    "method-check-failed": [
+      "severity:CRITICAL"
+    ],
+    "method-hidden": [
+      "severity:HIGH"
+    ],
+    "misplaced-bare-raise": [
+      "severity:HIGH"
+    ],
+    "misplaced-comparison-constant": [
+      "severity:LOW"
+    ],
+    "misplaced-format-function": [
+      "severity:HIGH"
+    ],
+    "misplaced-future": [
+      "severity:MEDIUM"
+    ],
+    "missing-class-docstring": [
+      "severity:LOW"
+    ],
+    "missing-final-newline": [
+      "severity:LOW"
+    ],
+    "missing-format-argument-key": [
+      "severity:MEDIUM"
+    ],
+    "missing-format-attribute": [
+      "severity:MEDIUM"
+    ],
+    "missing-format-string-key": [
+      "severity:HIGH"
+    ],
+    "missing-function-docstring": [
+      "severity:LOW"
+    ],
+    "missing-kwoa": [
+      "severity:HIGH"
+    ],
+    "missing-module-docstring": [
+      "severity:LOW"
+    ],
+    "missing-parentheses-for-call-in-test": [
+      "severity:MEDIUM"
+    ],
+    "mixed-format-string": [
+      "severity:HIGH"
+    ],
+    "mixed-line-endings": [
+      "severity:LOW"
+    ],
+    "multiple-imports": [
+      "severity:LOW"
+    ],
+    "multiple-statements": [
+      "severity:LOW"
+    ],
+    "nan-comparison": [
+      "severity:MEDIUM"
+    ],
+    "next-method-called": [
+      "severity:MEDIUM"
+    ],
+    "next-method-defined": [
+      "severity:MEDIUM"
+    ],
+    "no-absolute-import": [
+      "severity:MEDIUM"
+    ],
+    "no-classmethod-decorator": [
+      "severity:STYLE"
+    ],
+    "no-else-break": [
+      "severity:STYLE"
+    ],
+    "no-else-continue": [
+      "severity:STYLE"
+    ],
+    "no-else-raise": [
+      "severity:STYLE"
+    ],
+    "no-else-return": [
+      "severity:STYLE"
+    ],
+    "no-init": [
+      "severity:MEDIUM"
+    ],
+    "no-member": [
+      "severity:HIGH"
+    ],
+    "no-method-argument": [
+      "severity:HIGH"
+    ],
+    "no-name-in-module": [
+      "severity:HIGH"
+    ],
+    "no-self-argument": [
+      "severity:HIGH"
+    ],
+    "no-self-use": [
+      "severity:STYLE"
+    ],
+    "no-staticmethod-decorator": [
+      "severity:STYLE"
+    ],
+    "no-value-for-parameter": [
+      "severity:HIGH"
+    ],
+    "non-ascii-bytes-literal": [
+      "severity:HIGH"
+    ],
+    "non-ascii-name": [
+      "severity:LOW"
+    ],
+    "non-iterator-returned": [
+      "severity:HIGH"
+    ],
+    "non-parent-init-called": [
+      "severity:MEDIUM"
+    ],
+    "non-str-assignment-to-dunder-name": [
+      "severity:MEDIUM"
+    ],
+    "nonexistent-operator": [
+      "severity:HIGH"
+    ],
+    "nonlocal-and-global": [
+      "severity:HIGH"
+    ],
+    "nonlocal-without-binding": [
+      "severity:HIGH"
+    ],
+    "nonzero-method": [
+      "severity:MEDIUM"
+    ],
+    "not-a-mapping": [
+      "severity:HIGH"
+    ],
+    "not-an-iterable": [
+      "severity:HIGH"
+    ],
+    "not-async-context-manager": [
+      "severity:HIGH"
+    ],
+    "not-callable": [
+      "severity:HIGH"
+    ],
+    "not-context-manager": [
+      "severity:HIGH"
+    ],
+    "not-in-loop": [
+      "severity:HIGH"
+    ],
+    "notimplemented-raised": [
+      "severity:HIGH"
+    ],
+    "oct-method": [
+      "severity:MEDIUM"
+    ],
+    "old-division": [
+      "severity:MEDIUM"
+    ],
+    "old-ne-operator": [
+      "severity:HIGH"
+    ],
+    "old-octal-literal": [
+      "severity:HIGH"
+    ],
+    "old-raise-syntax": [
+      "severity:HIGH"
+    ],
+    "parameter-unpacking": [
+      "severity:HIGH"
+    ],
+    "parse-error": [
+      "severity:CRITICAL"
+    ],
+    "pointless-statement": [
+      "severity:MEDIUM"
+    ],
+    "pointless-string-statement": [
+      "severity:MEDIUM"
+    ],
+    "possibly-unused-variable": [
+      "severity:MEDIUM"
+    ],
+    "preferred-module": [
+      "severity:MEDIUM"
+    ],
+    "print-statement": [
+      "severity:HIGH"
+    ],
+    "property-with-parameters": [
+      "severity:STYLE"
+    ],
+    "protected-access": [
+      "severity:MEDIUM"
+    ],
+    "raise-missing-from": [
+      "severity:MEDIUM"
+    ],
+    "raising-bad-type": [
+      "severity:HIGH"
+    ],
+    "raising-format-tuple": [
+      "severity:MEDIUM"
+    ],
+    "raising-non-exception": [
+      "severity:HIGH"
+    ],
+    "raising-string": [
+      "severity:MEDIUM"
+    ],
+    "range-builtin-not-iterating": [
+      "severity:MEDIUM"
+    ],
+    "raw-checker-failed": [
+      "severity:UNSPECIFIED"
+    ],
+    "raw_input-builtin": [
+      "severity:MEDIUM"
+    ],
+    "rdiv-method": [
+      "severity:MEDIUM"
+    ],
+    "redeclared-assigned-name": [
+      "severity:MEDIUM"
+    ],
+    "redefined-argument-from-local": [
+      "severity:STYLE"
+    ],
+    "redefined-builtin": [
+      "severity:MEDIUM"
+    ],
+    "redefined-outer-name": [
+      "severity:MEDIUM"
+    ],
+    "reduce-builtin": [
+      "severity:MEDIUM"
+    ],
+    "redundant-keyword-arg": [
+      "severity:HIGH"
+    ],
+    "redundant-u-string-prefix": [
+      "severity:MEDIUM"
+    ],
+    "redundant-unittest-assert": [
+      "severity:MEDIUM"
+    ],
+    "reimported": [
+      "severity:MEDIUM"
+    ],
+    "relative-beyond-top-level": [
+      "severity:HIGH"
+    ],
+    "reload-builtin": [
+      "severity:MEDIUM"
+    ],
+    "repeated-keyword": [
+      "severity:HIGH"
+    ],
+    "return-arg-in-generator": [
+      "severity:HIGH"
+    ],
+    "return-in-init": [
+      "severity:HIGH"
+    ],
+    "return-outside-function": [
+      "severity:HIGH"
+    ],
+    "round-builtin": [
+      "severity:MEDIUM"
+    ],
+    "self-assigning-variable": [
+      "severity:MEDIUM"
+    ],
+    "self-cls-assignment": [
+      "severity:MEDIUM"
+    ],
+    "setslice-method": [
+      "severity:MEDIUM"
+    ],
+    "shallow-copy-environ": [
+      "severity:MEDIUM"
+    ],
+    "signature-differs": [
+      "severity:MEDIUM"
+    ],
+    "simplifiable-condition": [
+      "severity:STYLE"
+    ],
+    "simplifiable-if-expression": [
+      "severity:STYLE"
+    ],
+    "simplifiable-if-statement": [
+      "severity:STYLE"
+    ],
+    "simplify-boolean-expression": [
+      "severity:STYLE"
+    ],
+    "single-string-used-for-slots": [
+      "severity:LOW"
+    ],
+    "singleton-comparison": [
+      "severity:LOW"
+    ],
+    "standarderror-builtin": [
+      "severity:MEDIUM"
+    ],
+    "star-needs-assignment-target": [
+      "severity:HIGH"
+    ],
+    "stop-iteration-return": [
+      "severity:STYLE"
+    ],
+    "subprocess-popen-preexec-fn": [
+      "severity:MEDIUM"
+    ],
+    "subprocess-run-check": [
+      "severity:MEDIUM"
+    ],
+    "super-init-not-called": [
+      "severity:MEDIUM"
+    ],
+    "super-with-arguments": [
+      "severity:STYLE"
+    ],
+    "superfluous-parens": [
+      "severity:LOW"
+    ],
+    "suppressed-message": [
+      "severity:UNSPECIFIED"
+    ],
+    "sys-max-int": [
+      "severity:MEDIUM"
+    ],
+    "too-few-format-args": [
+      "severity:HIGH"
+    ],
+    "too-few-public-methods": [
+      "severity:STYLE"
+    ],
+    "too-many-ancestors": [
+      "severity:STYLE"
+    ],
+    "too-many-arguments": [
+      "severity:STYLE"
+    ],
+    "too-many-boolean-expressions": [
+      "severity:STYLE"
+    ],
+    "too-many-branches": [
+      "severity:STYLE"
+    ],
+    "too-many-format-args": [
+      "severity:HIGH"
+    ],
+    "too-many-function-args": [
+      "severity:HIGH"
+    ],
+    "too-many-instance-attributes": [
+      "severity:STYLE"
+    ],
+    "too-many-lines": [
+      "severity:LOW"
+    ],
+    "too-many-locals": [
+      "severity:STYLE"
+    ],
+    "too-many-nested-blocks": [
+      "severity:STYLE"
+    ],
+    "too-many-public-methods": [
+      "severity:STYLE"
+    ],
+    "too-many-return-statements": [
+      "severity:STYLE"
+    ],
+    "too-many-star-expressions": [
+      "severity:HIGH"
+    ],
+    "too-many-statements": [
+      "severity:STYLE"
+    ],
+    "trailing-comma-tuple": [
+      "severity:STYLE"
+    ],
+    "trailing-newlines": [
+      "severity:LOW"
+    ],
+    "trailing-whitespace": [
+      "severity:LOW"
+    ],
+    "truncated-format-string": [
+      "severity:HIGH"
+    ],
+    "try-except-raise": [
+      "severity:MEDIUM"
+    ],
+    "unbalanced-tuple-unpacking": [
+      "severity:MEDIUM"
+    ],
+    "undefined-all-variable": [
+      "severity:HIGH"
+    ],
+    "undefined-loop-variable": [
+      "severity:MEDIUM"
+    ],
+    "undefined-variable": [
+      "severity:HIGH"
+    ],
+    "unexpected-keyword-arg": [
+      "severity:HIGH"
+    ],
+    "unexpected-line-ending-format": [
+      "severity:LOW"
+    ],
+    "unexpected-special-method-signature": [
+      "severity:HIGH"
+    ],
+    "ungrouped-imports": [
+      "severity:LOW"
+    ],
+    "unhashable-dict-key": [
+      "severity:HIGH"
+    ],
+    "unichr-builtin": [
+      "severity:MEDIUM"
+    ],
+    "unicode-builtin": [
+      "severity:MEDIUM"
+    ],
+    "unidiomatic-typecheck": [
+      "severity:LOW"
+    ],
+    "unnecessary-comprehension": [
+      "severity:STYLE"
+    ],
+    "unnecessary-dict-index-lookup": [
+      "severity:STYLE"
+    ],
+    "unnecessary-lambda": [
+      "severity:MEDIUM"
+    ],
+    "unnecessary-pass": [
+      "severity:MEDIUM"
+    ],
+    "unnecessary-semicolon": [
+      "severity:MEDIUM"
+    ],
+    "unneeded-not": [
+      "severity:LOW"
+    ],
+    "unpacking-in-except": [
+      "severity:HIGH"
+    ],
+    "unpacking-non-sequence": [
+      "severity:HIGH"
+    ],
+    "unreachable": [
+      "severity:MEDIUM"
+    ],
+    "unrecognized-inline-option": [
+      "severity:HIGH"
+    ],
+    "unspecified-encoding": [
+      "severity:MEDIUM"
+    ],
+    "unsubscriptable-object": [
+      "severity:HIGH"
+    ],
+    "unsupported-assignment-operation": [
+      "severity:HIGH"
+    ],
+    "unsupported-delete-operation": [
+      "severity:HIGH"
+    ],
+    "unsupported-membership-test": [
+      "severity:HIGH"
+    ],
+    "unused-argument": [
+      "severity:MEDIUM"
+    ],
+    "unused-format-string-argument": [
+      "severity:MEDIUM"
+    ],
+    "unused-format-string-key": [
+      "severity:MEDIUM"
+    ],
+    "unused-import": [
+      "severity:MEDIUM"
+    ],
+    "unused-private-member": [
+      "severity:MEDIUM"
+    ],
+    "unused-variable": [
+      "severity:MEDIUM"
+    ],
+    "unused-wildcard-import": [
+      "severity:MEDIUM"
+    ],
+    "use-a-generator": [
+      "severity:STYLE"
+    ],
+    "use-dict-literal": [
+      "severity:STYLE"
+    ],
+    "use-list-literal": [
+      "severity:STYLE"
+    ],
+    "use-maxsplit-arg": [
+      "severity:LOW"
+    ],
+    "use-sequence-for-iteration": [
+      "severity:LOW"
+    ],
+    "used-before-assignment": [
+      "severity:HIGH"
+    ],
+    "used-prior-global-declaration": [
+      "severity:HIGH"
+    ],
+    "useless-else-on-loop": [
+      "severity:MEDIUM"
+    ],
+    "useless-import-alias": [
+      "severity:LOW"
+    ],
+    "useless-object-inheritance": [
+      "severity:STYLE"
+    ],
+    "useless-return": [
+      "severity:STYLE"
+    ],
+    "useless-super-delegation": [
+      "severity:MEDIUM"
+    ],
+    "useless-suppression": [
+      "severity:UNSPECIFIED"
+    ],
+    "using-cmp-argument": [
+      "severity:MEDIUM"
+    ],
+    "using-constant-test": [
+      "severity:MEDIUM"
+    ],
+    "wildcard-import": [
+      "severity:MEDIUM"
+    ],
+    "wrong-exception-operation": [
+      "severity:MEDIUM"
+    ],
+    "wrong-import-order": [
+      "severity:LOW"
+    ],
+    "wrong-import-position": [
+      "severity:LOW"
+    ],
+    "wrong-spelling-in-comment": [
+      "severity:LOW"
+    ],
+    "wrong-spelling-in-docstring": [
+      "severity:LOW"
+    ],
+    "xrange-builtin": [
+      "severity:MEDIUM"
+    ],
+    "xreadlines-attribute": [
+      "severity:MEDIUM"
+    ],
+    "yield-inside-async-function": [
+      "severity:HIGH"
+    ],
+    "yield-outside-function": [
+      "severity:HIGH"
+    ],
+    "zip-builtin-not-iterating": [
+      "severity:MEDIUM"
+    ]
+  }
+}
