@@ -73,6 +73,18 @@ class ThriftProductHandler:
 
             return True
 
+    def __administrating(self, args):
+        """ True if the current user can administrate the given product. """
+        if permissions.require_permission(permissions.SUPERUSER, args,
+                                          self.__auth_session):
+            return True
+
+        if permissions.require_permission(permissions.PRODUCT_ADMIN, args,
+                                          self.__auth_session):
+            return True
+
+        return False
+
     def __get_product(self, session, product):
         """
         Retrieve the product connection object and create a Thrift Product
@@ -95,8 +107,6 @@ class ThriftProductHandler:
                 'productID': product.id}
         product_access = permissions.require_permission(
             permissions.PRODUCT_VIEW, args, self.__auth_session)
-        product_admin = permissions.require_permission(
-            permissions.PRODUCT_ADMIN, args, self.__auth_session)
 
         admin_perm_name = permissions.PRODUCT_ADMIN.name
         admins = session.query(ProductPermission). \
@@ -119,7 +129,7 @@ class ThriftProductHandler:
             latestStoreToProduct=latest_storage_date,
             connected=connected,
             accessible=product_access,
-            administrating=product_admin,
+            administrating=self.__administrating(args),
             databaseStatus=server_product.db_status,
             admins=[admin.name for admin in admins])
 

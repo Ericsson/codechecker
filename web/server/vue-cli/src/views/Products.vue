@@ -110,7 +110,7 @@
       <template v-slot:item.action="{ item }">
         <div class="text-no-wrap">
           <edit-product-btn
-            v-if="isSuperUser || item.administrating"
+            v-if="item.administrating"
             :product="item"
             :is-super-user="isSuperUser"
             @on-complete="onCompleteEditProduct"
