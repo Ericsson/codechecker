@@ -6,6 +6,303 @@
         <new-release-item color="green lighten-1">
           <template v-slot:title>
             <a
+              href="https://github.com/Ericsson/codechecker/releases/tag/v6.17.0"
+              target="_blank"
+              class="white--text"
+            >
+              Highlights of CodeChecker 6.17.0 release
+            </a>
+          </template>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Git blame integration
+            </template>
+
+            <v-row>
+              <v-col cols="8">
+                With this feature it will be possible for a developer to check
+                who modified the source line last where a CodeChecker error
+                appears.
+
+                <ul>
+                  <li>
+                    If the project which was analyzed is a git repository
+                    <code>CodeChecker store</code> command will store blame
+                    information for every source files which are not stored
+                    yet.
+                  </li>
+                  <li>
+                    The GUI will have a button on the report detail view to
+                    show blame information alongside the source file.
+                  </li>
+                  <li>
+                    Hovering the mouse over a blame line, commit details will
+                    be shown in a pop-up window. Clicking on the hash will jump
+                    to the remote url of the repository and shows the commit
+                    which related to a blame line.
+                  </li>
+                </ul>
+              </v-col>
+              <v-col>
+                <img
+                  src="@/assets/userguide/images/new_features/6.17.0/git_blame.png"
+                  alt="Git blame"
+                  width="100%"
+                >
+              </v-col>
+            </v-row>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Cleanup plans
+            </template>
+
+            <v-row>
+              <v-col cols="8">
+                Cleanup plans can be used to track progress of reports in your
+                product. The conception is similar to the
+                <i>Github Milestones</i>.
+
+                You can do the following:
+                <ul>
+                  <li>
+                    <strong>Managing cleanup plans</strong>: you can create
+                    cleanup plans by clicking on the pencil icon at the
+                    <i>Cleanup plan </i> filter on the <i>Reports page</i>. A
+                    pop-up window will be opened where you can add, edit, close
+                    or remove existing cleanup plans.
+                  </li>
+                  <li>
+                    <strong>Add reports to a cleanup plan</strong>: you can add
+                    multiple reports to a cleanup plan on the
+                    <i>Reports page</i> or on the <i>Report detail page</i> by
+                    clicking to the <i>Set cleanup plan</i> button and
+                    selecting a cleanup plan.
+
+                    <i>Note</i>: you can remove reports from a cleanup plan the
+                    same way by clicking on the cleanup plan name.
+                  </li>
+                  <li>
+                    <strong>Filter reports by cleanup plans</strong>: you can
+                    filter reports by a cleanup plan by using the
+                    <i>Cleanup plan filter</i> on the <i>Reports page</i>.
+                    Using this filter with other filters
+                    (<i>Detection status</i>, <i>Review status</i> etc.) you
+                    will be able to filter active / resolved reports in your
+                    cleanup plan.
+                  </li>
+                </ul>
+              </v-col>
+              <v-col>
+                <img
+                  src="@/assets/userguide/images/reports/list_of_cleanup_plans.png"
+                  alt="List of cleanup plans"
+                  width="100%"
+                >
+                <img
+                  src="@/assets/userguide/images/reports/assign_reports_to_cleanup_plan.png"
+                  alt="Add reports to cleanup plans"
+                  width="100%"
+                >
+              </v-col>
+            </v-row>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Local diff workflow support
+            </template>
+
+            If you want to use CodeChecker in your project but you don't want
+            to run a CodeChecker server and to fix every reports found by
+            CodeChecker for the first time (legacy findings) with this
+            feature you can do the following:
+            <ul>
+              <li>
+                Analyze your project to a report directory as usual
+                (e.g.: <i>./reports</i>).
+              </li>
+              <li>
+                Create a <i>baseline file</i> from the reports which contains
+                the legacy findings:
+                <code>CodeChecker parse ./reports -e baseline -o reports.baseline</code>.
+                <i>Note</i>: it is recommended to store this baseline file
+                (<i>reports.baseline</i>) in your repository.
+              </li>
+              <li>
+                On source code changes after your project is re-analyzed use
+                the <code>CodeChecker diff</code> command to get the new
+                reports:
+                <code>CodeChecker cmd diff -b ./reports.baseline -n ./reports --new</code>
+              </li>
+              <li>
+                On configuration changes (new checkers / options are enabled /
+                disabled, new CodeChecker / clang version is used, etc.)
+                re-generate the baseline file (step 1-2).
+              </li>
+            </ul>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              LeakSanitizer Parser
+            </template>
+
+            The <i>report-converter</i> tool is extended with LeakSanitizer
+            which is a run-time memory leak detector for C programs.
+
+            <pre>
+    # Compile your program.
+    clang -fsanitize=address -g lsan.c
+
+    # Run your program and redirect the output to a file.
+    ASAN_OPTIONS=detect_leaks=1 ./a.out > lsan.output 2>&1
+
+    # Generate plist files from the output.
+    report-converter -t lsan -o ./lsan_results lsan.output
+
+    # Store reports.
+    CodeChecker store ./lsan_results -n lsan
+            </pre>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Checker label
+            </template>
+
+            Previously the properties of checkers (<i>severity</i>,
+            <i>profile</i>, <i>guideline</i>) are read from several JSON files.
+            The goal was to handle all these and future properties of checkers
+            in a common manner. This new solution uses labels which can be
+            added to checkers.
+
+            The collection of labels is found in <i>config/labels</i>
+            directory. The goal of these labels is that you can enable or
+            disable checkers by these labels.
+
+            <pre>
+    # List checkers in "sensitive" profile.
+    CodeChecker checkers --label profile:sensitive
+
+    # List checkers in "HIGH" severity.
+    CodeChecker checkers --label severity:HIGH
+
+    # List checkers covering str34-c SEI-CERT rule.
+    CodeChecker checkers --label sei-cert:str-34-c
+
+    # List checkers covering all SEI-CERT rules.
+    CodeChecker checkers --label guideline:sei-cert
+
+    # List available profiles, guidelines and severities.
+    CodeChecker checkers --profile
+    CodeChecker checkers --guideline
+    CodeChecker checkers --severity
+
+    # List labels and their available values.
+    CodeChecker checkers --label
+    CodeChecker checkers --label severity
+
+    # Enable HIGH checkers during analysis.
+    CodeChecker analyze \
+      ./compile_commands.json \
+      -o ./reports
+      -e severity:HIGH
+            </pre>
+
+            Note: with this new feature we also added severity levels for
+            <i>pylint</i> and <i>cppcheck</i> analyzers.
+          </new-feature-item>
+        </new-release-item>
+      </v-timeline-item>
+
+      <v-timeline-item fill-dot icon="mdi-star">
+        <new-release-item>
+          <template v-slot:title>
+            <a
+              href="https://github.com/Ericsson/codechecker/releases/tag/v6.16.0"
+              target="_blank"
+              class="white--text"
+            >
+              Highlights of CodeChecker 6.16.0 release
+            </a>
+          </template>
+
+          <new-feature-item>
+            <template v-slot:title>
+              PyPI package support
+            </template>
+            <i>PyPI</i> is the most commonly used central repository for Python
+            packages. For this reason from this release we will provide an
+            official
+            <a href="https://pypi.org/project/codechecker/" target="_blank">
+              PyPI package
+            </a> for CodeChecker. This PyPi package can be easily installed on
+            both <i>Unix</i> and <i>Windows</i> based systems easily by using
+            the pip command: <code>pip install codechecker</code>.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Add compilation database generator for Bazel
+            </template>
+            CodeChecker was extended with a tool that can capture compilation
+            database of a <b>Bazel</b> built product without actually
+            performing compilation. For more information
+            <a href="https://github.com/Ericsson/codechecker/blob/master/docs/tools/bazel.md">see</a>.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Exporter/importer command for CodeChecker cmd
+            </template>
+            New command line options are introduced
+            (<code>CodeChecker cmd export</code> and
+            <code>CodeChecker cmd import</code>) which can be used to export
+            comments and review status for a particular run in a JSON based
+            format from a running CodeChecker server and import it to another
+            server.
+
+            <pre>
+    # Export data from one server.
+    CodeChecker cmd export \
+      -n myrun \
+      --url https://first-server.codechecker.com:443 \
+      2>/dev/null | python -m json.tool > myrun_export.json
+
+    # Import data to another server.
+    CodeChecker cmd import \
+      -i myrun_export.json \
+      --url https://second-server.codechecker.com:443
+            </pre>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Sparse and Cpplint analyzers support
+            </template>
+            The <i>report-converter</i> tool was extend with two more
+            analyzers:
+            <ul>
+              <li>
+                Sparse which is a semantic checker for C programs; it can be
+                used to find a number of potential problems with kernel code.
+              </li>
+              <li>
+                CppLint which is a lint-like tool which checks C++ code
+                against Google C++ Style Guide.
+              </li>
+            </ul>
+          </new-feature-item>
+        </new-release-item>
+      </v-timeline-item>
+
+      <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
+        <new-release-item color="green lighten-1">
+          <template v-slot:title>
+            <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.15.0"
               target="_blank"
               class="white--text"
