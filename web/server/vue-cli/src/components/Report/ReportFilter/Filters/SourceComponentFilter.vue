@@ -16,6 +16,7 @@
     >
       <template v-slot:prepend-toolbar-items>
         <v-btn
+          v-if="currentProduct.administrating"
           class="manage-components-btn"
           icon
           small
@@ -49,6 +50,7 @@
 </template>
 
 <script>
+import { mapGetters } from "vuex";
 import { ccService, handleThriftError } from "@cc-api";
 
 import {
@@ -77,6 +79,12 @@ export default {
       },
       dialog: false
     };
+  },
+
+  computed: {
+    ...mapGetters([
+      "currentProduct"
+    ])
   },
 
   watch: {
