@@ -220,7 +220,7 @@ COMPILE_OPTIONS_MERGED = [
     '-[DIUF]',
     '-idirafter',
     '-isystem',
-    '-macros',
+    '-imacros',
     '-isysroot',
     '-iprefix',
     '-iwithprefix',
