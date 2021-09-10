@@ -255,6 +255,9 @@
     "alpha.webkit.UncountedCallArgsChecker": [
       "profile:extreme"
     ],
+    "alpha.webkit.UncountedLocalVarsChecker": [
+      "profile:extreme"
+    ],
     "altera-struct-pack-align": [
       "severity:LOW"
     ],

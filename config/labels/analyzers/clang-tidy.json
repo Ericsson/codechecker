@@ -194,6 +194,7 @@
       "severity:LOW"
     ],
     "bugprone-forwarding-reference-overload": [
+      "profile:default",
       "profile:sensitive",
       "profile:extreme",
       "severity:LOW"
@@ -382,6 +383,7 @@
     ],
     "bugprone-suspicious-memory-comparison": [
       "profile:default",
+      "profile:security",
       "guideline:sei-cert",
       "sei-cert:exp42-c",
       "sei-cert:flp37-c",
