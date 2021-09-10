@@ -31,13 +31,20 @@ def __get_blame_info(file_path: str):
     except TypeError:
         tracking_branch = repo.head.commit.hexsha
 
+    remote_url = None
+    try:
+        # Handle the use case when a repository doesn't have a remote url.
+        remote_url = next(repo.remote().urls, None)
+    except ValueError:
+        pass
+
     try:
         blame = repo.blame_incremental(repo.head.commit.hexsha, file_path)
 
         res = {
             'version': 'v1',
             'tracking_branch': tracking_branch,
-            'remote_url': next(repo.remote().urls, None),
+            'remote_url': remote_url,
             'commits': {},
             'blame': []}
 
