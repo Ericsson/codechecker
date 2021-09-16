@@ -153,7 +153,7 @@ For more information how to use CodeChecker see our [user guide](usage.md).
 * Server Configuration
   * [Configuring Server Logging](logging.md)
   * [Setting up multiple CodeChecker repositories in one server](web/products.md)
-* Continous Integration(CI)
+* Continuous Integration(CI)
   * [Setting up CI gating with Gerrit and Jenkins](jenkins_gerrit_integration.md)
 * Database Configuration
   * [PostgreSQL database backend setup guide](web/postgresql_setup.md)
