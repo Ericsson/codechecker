@@ -1,9 +1,0 @@
-files/test5.cpp:10:9: error: no matching function for call to 'get_type' [clang-diagnostic-error]
-  (void)get_type(ptr);
-        ^
-files/test5.cpp:2:18: note: candidate template ignored: substitution failure [with T = int *]: type 'int *' cannot be used prior to '::' because it has no members
-typename T::type get_type(const T&);
-                 ^
-files/test5.cpp:5:6: note: candidate template ignored: substitution failure [with T = int]: array size is negative
-void get_type(T *, int[(int)sizeof(T) - 9] = 0);
-     ^

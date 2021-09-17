@@ -27,7 +27,7 @@ NOTSET = logging.NOTSET
 
 CMDLINE_LOG_LEVELS = ['info', 'debug_analyzer', 'debug']
 
-DEBUG_ANALYZER = logging.DEBUG_ANALYZER = 15
+DEBUG_ANALYZER = logging.DEBUG_ANALYZER = 15  # type: ignore
 logging.addLevelName(DEBUG_ANALYZER, 'DEBUG_ANALYZER')
 
 

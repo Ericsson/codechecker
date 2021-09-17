@@ -18,8 +18,9 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
+from codechecker_report_converter.util import load_json_or_empty
+
 from codechecker_common.logger import get_logger
-from codechecker_common.util import load_json_or_empty
 
 from codechecker_web.shared.env import check_file_owner_rw
 from codechecker_web.shared.version import SESSION_COOKIE_NAME as _SCN

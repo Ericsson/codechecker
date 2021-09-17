@@ -15,8 +15,9 @@ import sys
 from codechecker_api.ProductManagement_v6.ttypes import DatabaseConnection, \
     ProductConfiguration
 
+from codechecker_report_converter import twodim
+
 from codechecker_common import logger
-from codechecker_common.output import twodim
 
 from codechecker_web.shared import database_status, convert
 

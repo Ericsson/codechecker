@@ -9,45 +9,43 @@
 Result handler for Clang Tidy.
 """
 
+from typing import Optional
+
+from codechecker_report_converter.analyzers.clang_tidy.analyzer_result import \
+    AnalyzerResult
+from codechecker_report_converter.analyzers.clang_tidy.parser import Parser
+from codechecker_report_converter.report.parser.base import AnalyzerInfo
+from codechecker_report_converter.report import report_file
+from codechecker_report_converter.report.hash import get_report_hash, HashType
 
 from codechecker_common.logger import get_logger
-from codechecker_report_hash.hash import HashType, replace_report_hash
+from codechecker_common.skiplist_handler import SkipListHandler
 
 from ..result_handler_base import ResultHandler
-
-from . import output_converter
 
 LOG = get_logger('report')
 
 
-def generate_plist_from_tidy_result(output_file, tidy_stdout):
+class ClangTidyResultHandler(ResultHandler):
     """
-    Generate a plist file from the clang tidy analyzer results.
-    """
-    parser = output_converter.OutputParser()
-
-    messages = parser.parse_messages(tidy_stdout)
-
-    plist_converter = output_converter.PListConverter()
-    plist_converter.add_messages(messages)
-
-    plist_converter.write_to_file(output_file)
-
-
-class ClangTidyPlistToFile(ResultHandler):
-    """
-    Create a plist file from clang-tidy results.
+    Create analyzer result file for Clang Tidy output.
     """
 
-    def postprocess_result(self):
+    def __init__(self, *args, **kwargs):
+        self.analyzer_info = AnalyzerInfo(name=AnalyzerResult.TOOL_NAME)
+
+        super(ClangTidyResultHandler, self).__init__(*args, **kwargs)
+
+    def postprocess_result(self, skip_handler: Optional[SkipListHandler]):
         """
-        Generate plist file which can be parsed and processed for
-        results which can be stored into the database.
+        Generate analyzer result output file which can be parsed and stored
+        into the database.
         """
-        output_file = self.analyzer_result_file
         LOG.debug_analyzer(self.analyzer_stdout)
         tidy_stdout = self.analyzer_stdout.splitlines()
-        generate_plist_from_tidy_result(output_file, tidy_stdout)
+
+        reports = Parser().get_reports_from_iter(tidy_stdout)
+        reports = [r for r in reports if not r.skip(skip_handler)]
 
         # In the earlier versions of CodeChecker Clang Tidy never used context
         # free hash even if we enabled it with '--report-hash context-free'
@@ -55,7 +53,15 @@ class ClangTidyPlistToFile(ResultHandler):
         # automatically when using this option we introduced a new choice for
         # --report-hash option ('context-free-v2') and we still do not use
         # context free hash for 'context-free' choice.
+        hash_type = HashType.PATH_SENSITIVE
         if self.report_hash_type == 'context-free-v2':
-            replace_report_hash(output_file, HashType.CONTEXT_FREE)
+            hash_type = HashType.CONTEXT_FREE
         elif self.report_hash_type == 'diagnostic-message':
-            replace_report_hash(output_file, HashType.DIAGNOSTIC_MESSAGE)
+            hash_type = HashType.DIAGNOSTIC_MESSAGE
+
+        for report in reports:
+            report.report_hash = get_report_hash(report, hash_type)
+
+        report_file.create(
+            self.analyzer_result_file, reports, self.checker_labels,
+            self.analyzer_info)

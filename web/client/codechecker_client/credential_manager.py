@@ -17,8 +17,9 @@ import stat
 
 import portalocker
 
+from codechecker_report_converter.util import load_json_or_empty
+
 from codechecker_common.logger import get_logger
-from codechecker_common.util import load_json_or_empty
 
 from codechecker_web.shared.env import check_file_owner_rw, get_password_file,\
     get_session_file

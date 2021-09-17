@@ -23,17 +23,33 @@ NORMAL#CodeChecker parse $OUTPUT$
 Found 1 defect(s) in compiler_error.cpp
 
 
-----==== Summary ====----
----------------------------------
-Filename           | Report count
----------------------------------
-compiler_error.cpp |            1
----------------------------------
------------------------
-Severity | Report count
------------------------
-CRITICAL |            1
------------------------
+----==== Severity Statistics ====----
+----------------------------
+Severity | Number of reports
+----------------------------
+CRITICAL |                 1
+----------------------------
 ----=================----
-Total number of reports: 1
+
+----==== Checker Statistics ====----
+-----------------------------------------------------
+Checker name           | Severity | Number of reports
+-----------------------------------------------------
+clang-diagnostic-error | CRITICAL |                 1
+-----------------------------------------------------
+----=================----
+
+----==== File Statistics ====----
+--------------------------------------
+File name          | Number of reports
+--------------------------------------
+compiler_error.cpp |                 1
+--------------------------------------
+----=================----
+
+----======== Summary ========----
+---------------------------------------------
+Number of processed analyzer result files | 1
+Number of analyzer reports                | 1
+---------------------------------------------
 ----=================----

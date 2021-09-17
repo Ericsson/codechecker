@@ -9,7 +9,6 @@
 Setup python modules for the unit tests.
 """
 
-import json
 import os
 import sys
 
@@ -21,3 +20,4 @@ PKG_ROOT = os.path.join(REPO_ROOT, 'build', 'CodeChecker')
 
 sys.path.append(REPO_ROOT)
 sys.path.append(os.path.join(REPO_ROOT, 'web'))
+sys.path.append(os.path.join(REPO_ROOT, 'tools', 'report-converter'))

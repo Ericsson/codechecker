@@ -9,7 +9,8 @@ import os
 
 from typing import List
 
-from codechecker_common.util import load_json_or_empty
+from codechecker_report_converter.util import load_json_or_empty
+
 from codechecker_common import logger
 
 LOG = logger.get_logger('system')

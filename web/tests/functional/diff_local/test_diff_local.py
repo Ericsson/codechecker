@@ -65,7 +65,7 @@ class DiffLocal(unittest.TestCase):
         print(resolved_results)
 
         for resolved in resolved_results:
-            self.assertEqual(resolved['checkerId'], "core.CallAndMessage")
+            self.assertEqual(resolved['checker_name'], "core.CallAndMessage")
 
     def test_new_json(self):
         """Get the new reports.
@@ -78,7 +78,8 @@ class DiffLocal(unittest.TestCase):
         print(new_results)
 
         for new_result in new_results:
-            self.assertEqual(new_result['checkerId'], "core.NullDereference")
+            self.assertEqual(
+                new_result['checker_name'], "core.NullDereference")
 
     def test_non_existent_reports_directory(self):
         """Handles non existent directory well
@@ -188,6 +189,13 @@ class DiffLocal(unittest.TestCase):
         # Rename the file back.
         os.rename(new_file_path, old_file_path)
 
+        # Change files' ctime to the current time in the report directory,
+        # so the CodeChecker diff command will not see report files which
+        # reference the previously renamed file older then the source file.
+        for root, _, files in os.walk(self.new_reports):
+            for file_name in files:
+                os.utime(os.path.join(root, file_name))
+
     def test_suppress_reports(self):
         """
         Check diff command when analysing the same source file which contains
@@ -281,7 +289,8 @@ int main()
         print(new_results)
 
         for new_result in new_results:
-            self.assertEqual(new_result['checkerId'], "core.NullDereference")
+            self.assertEqual(
+                new_result['checker_name'], "core.NullDereference")
 
         # Get unresolved results.
         unresolved_results, _, _ = get_diff_results(
@@ -291,12 +300,12 @@ int main()
 
         self.assertTrue(any(
             r for r in unresolved_results
-            if r['checkerId'] == 'core.DivideZero'))
+            if r['checker_name'] == 'core.DivideZero'))
 
         self.assertFalse(any(
             r for r in unresolved_results
-            if r['checkerId'] == 'core.NullDereference' or
-            r['checkerId'] == 'core.CallAndMessage'))
+            if r['checker_name'] == 'core.NullDereference' or
+            r['checker_name'] == 'core.CallAndMessage'))
 
         # Get resolved results.
         resolved_results, err, returncode = get_diff_results(
@@ -342,7 +351,7 @@ int main()
             [self.base_reports], [baseline_file_path], '--resolved', 'json')
 
         for report in resolved_results:
-            self.assertEqual(report['checkerId'], "core.CallAndMessage")
+            self.assertEqual(report['checker_name'], "core.CallAndMessage")
 
     def test_multiple_baseline_file_json(self):
         """ Test multiple baseline file for basename option. """
@@ -366,7 +375,7 @@ int main()
 
         self.assertTrue(any(
             r for r in unresolved_results
-            if r['checkerId'] == 'core.DivideZero'))
+            if r['checker_name'] == 'core.DivideZero'))
 
         # Get resolved results.
         resolved_results, err, returncode = get_diff_results(

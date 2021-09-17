@@ -22,10 +22,11 @@ import sys
 import tempfile
 import traceback
 
+from codechecker_report_converter.util import load_json_or_empty
+
 from codechecker_analyzer.analyzers import clangsa
 
 from codechecker_common.logger import get_logger
-from codechecker_common.util import load_json_or_empty
 
 from .. import gcc_toolchain
 from .build_action import BuildAction

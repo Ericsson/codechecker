@@ -18,13 +18,15 @@ import sys
 from collections import defaultdict
 from typing import Dict, Iterable, Tuple
 
+from codechecker_report_converter import twodim
+
 from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.analyzers import analyzer_types
 from codechecker_analyzer.analyzers.clangsa.analyzer import ClangSA
 from codechecker_analyzer.analyzers.clangtidy.analyzer import ClangTidy
 
 from codechecker_common import arg, logger
-from codechecker_common.output import USER_FORMATS, twodim
+from codechecker_common.output import USER_FORMATS
 from codechecker_common.checker_labels import CheckerLabels
 from codechecker_analyzer import env
 from codechecker_analyzer.analyzers.config_handler import CheckerState

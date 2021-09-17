@@ -25,7 +25,6 @@ from threading import Timer
 import psutil
 
 from codechecker_analyzer import env
-from codechecker_common import plist_parser
 from codechecker_common.logger import get_logger
 
 from codechecker_statistics_collector.collectors.special_return_value import \
@@ -233,17 +232,12 @@ def handle_success(rh, result_file, result_base, skip_handler,
         save_output(os.path.join(success_dir, result_base),
                     rh.analyzer_stdout, rh.analyzer_stderr)
 
-    rh.postprocess_result()
+    rh.postprocess_result(skip_handler)
+
     # Generated reports will be handled separately at store.
 
     save_metadata(result_file, rh.analyzer_result_file,
                   rh.analyzed_source_file)
-
-    if skip_handler:
-        # We need to check the plist content because skipping
-        # reports in headers can be done only this way.
-        plist_parser.skip_report_from_plist(result_file,
-                                            skip_handler)
 
 
 def handle_reproducer(source_analyzer, rh, zip_file, actions_map):
@@ -321,7 +315,9 @@ def handle_reproducer(source_analyzer, rh, zip_file, actions_map):
     LOG.debug("ZIP file written at '%s'", zip_file)
 
 
-def handle_failure(source_analyzer, rh, zip_file, result_base, actions_map):
+def handle_failure(
+    source_analyzer, rh, zip_file, result_base, actions_map, skip_handler
+):
     """
     If the analysis fails a debug zip is packed together which contains
     build, analysis information and source files to be able to
@@ -335,7 +331,7 @@ def handle_failure(source_analyzer, rh, zip_file, result_base, actions_map):
     checks = source_analyzer.config_handler.checks()
     state = checks.get('clang-diagnostic-error', (CheckerState.default, ''))[0]
     if state != CheckerState.disabled:
-        rh.postprocess_result()
+        rh.postprocess_result(skip_handler)
 
     # Remove files that successfully analyzed earlier on.
     plist_file = result_base + ".plist"
@@ -611,7 +607,7 @@ def check(check_data):
             elif not generate_reproducer:
                 handle_failure(source_analyzer, rh,
                                os.path.join(failed_dir, zip_file),
-                               result_base, actions_map)
+                               result_base, actions_map, skip_handler)
 
         if rh.analyzer_returncode == 0:
             handle_analysis_result(success=True)
@@ -678,12 +674,6 @@ def check(check_data):
 
         collect_ctu_involved_files(rh, source_analyzer,
                                    output_dirs['ctu_connections'])
-
-        if skip_handler and os.path.exists(result_file):
-            # We need to check the plist content because skipping
-            # reports in headers can be done only this way.
-            plist_parser.skip_report_from_plist(result_file,
-                                                skip_handler)
 
         if not quiet_output_on_stdout:
             if rh.analyzer_returncode:

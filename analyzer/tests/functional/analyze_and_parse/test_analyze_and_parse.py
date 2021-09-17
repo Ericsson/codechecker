@@ -24,7 +24,7 @@ from libtest import env
 from libtest import project
 from libtest.codechecker import call_command
 
-from codechecker_common.output import baseline
+from codechecker_report_converter.report.output import baseline
 
 
 class AnalyzeParseTestCaseMeta(type):
@@ -249,17 +249,16 @@ class AnalyzeParseTestCase(
         self.assertEqual(result, 2, "Parsing not found any issue.")
         res = json.loads(out)
 
-        self.assertEqual(len(res), 1)
-        res = res[0]
+        reports = res["reports"]
+        self.assertEqual(len(reports), 1)
+        res = reports[0]
 
-        self.assertIn('check_name', res)
-        self.assertIn('issue_hash_content_of_line_in_context', res)
+        self.assertIn('checker_name', res)
+        self.assertIn('report_hash', res)
+        self.assertIn('file', res)
 
-        self.assertIn('files', res)
-        self.assertEqual(len(res['files']), 1)
-
-        self.assertIn('path', res)
-        self.assertTrue(res['path'])
+        self.assertIn('bug_path_events', res)
+        self.assertTrue(res['bug_path_events'])
 
         self.assertIn('macro_expansions', res)
         self.assertTrue(res['macro_expansions'])
@@ -277,17 +276,16 @@ class AnalyzeParseTestCase(
         self.assertEqual(result, 2, "Parsing not found any issue.")
         res = json.loads(out)
 
-        self.assertEqual(len(res), 1)
-        res = res[0]
+        reports = res["reports"]
+        self.assertEqual(len(reports), 1)
+        res = reports[0]
 
-        self.assertIn('check_name', res)
-        self.assertIn('issue_hash_content_of_line_in_context', res)
+        self.assertIn('checker_name', res)
+        self.assertIn('report_hash', res)
+        self.assertIn('file', res)
 
-        self.assertIn('files', res)
-        self.assertEqual(len(res['files']), 1)
-
-        self.assertIn('path', res)
-        self.assertTrue(res['path'])
+        self.assertIn('bug_path_events', res)
+        self.assertTrue(res['bug_path_events'])
 
         self.assertIn('notes', res)
         self.assertTrue(res['notes'])
@@ -382,11 +380,10 @@ class AnalyzeParseTestCase(
                   errors="ignore") as invalid_plist_f:
             invalid_plist_f.write("Invalid plist file.")
 
-        extract_cmd = ['CodeChecker', 'parse',
-                       invalid_plist_file]
+        extract_cmd = ['CodeChecker', 'parse', invalid_plist_file]
 
-        out, _, result = call_command(extract_cmd, cwd=self.test_dir,
-                                      env=self.env)
+        out, _, result = call_command(
+            extract_cmd, cwd=self.test_dir, env=self.env)
         self.assertEqual(result, 0, "Parsing failed.")
         self.assertTrue("Invalid plist file" in out)
 
@@ -420,15 +417,15 @@ class AnalyzeParseTestCase(
                        test_project_notes, "--output", output_file_path,
                        '--trim-path-prefix', test_project_notes]
 
-        out, _, result = call_command(extract_cmd, cwd=self.test_dir,
-                                      env=self.env)
+        _, _, result = call_command(extract_cmd, cwd=self.test_dir,
+                                    env=self.env)
         self.assertEqual(result, 2, "Parsing not found any issue.")
-        result_from_stdout = json.loads(out)
-        with open(output_file_path, 'r', encoding='utf-8', errors='ignore') \
-                as handle:
-            result_from_file = json.load(handle)
 
-        self.assertEqual(result_from_stdout, result_from_file)
+        with open(output_file_path, 'r', encoding='utf-8', errors='ignore') \
+                as f:
+            results = json.load(f)
+
+        self.assertTrue(results)
 
     def test_codeclimate_export_exit_code_when_all_skipped(self):
         """ Test exporting codeclimate output into the filesystem when all
@@ -501,8 +498,10 @@ class AnalyzeParseTestCase(
         standard_output, _, result = call_command(
             extract_cmd, cwd=self.test_dir, env=self.env)
         self.assertEqual(result, 0, "Parsing should not found any issue.")
-        self.assertEqual("[]\n", standard_output,
-                         "Result should be an empty json array.")
+
+        data = json.loads(standard_output)
+        self.assertEqual(data["version"], 1)
+        self.assertFalse(data["reports"])
 
     def test_parse_exit_code(self):
         """ Test exit code of parsing. """
@@ -604,10 +603,10 @@ class AnalyzeParseTestCase(
             "CodeChecker", "parse", "-e", "baseline", "-o", out_file_path,
             test_project_notes]
 
-        out, _, result = call_command(
+        _, err, result = call_command(
             parse_cmd, cwd=self.test_dir, env=self.env)
         self.assertEqual(result, 1)
-        self.assertIn("Baseline files must have '.baseline' extensions", out)
+        self.assertIn("Baseline files must have '.baseline' extensions", err)
 
         # Try to create baseline file in a directory which exists.
         os.makedirs(output_path)
@@ -615,10 +614,10 @@ class AnalyzeParseTestCase(
             "CodeChecker", "parse", "-e", "baseline", "-o", output_path,
             test_project_notes]
 
-        out, _, result = call_command(
+        _, err, result = call_command(
             parse_cmd, cwd=self.test_dir, env=self.env)
         self.assertEqual(result, 1)
-        self.assertIn("Please provide a file path instead of a directory", out)
+        self.assertIn("Please provide a file path instead of a directory", err)
 
     def test_custom_baseline_file(self):
         """ Test parse baseline custom output file. """

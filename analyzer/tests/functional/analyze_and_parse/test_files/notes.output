@@ -12,17 +12,33 @@ int max(int a, int b) { // expected-warning{{Duplicate code detected}}
 Found 1 defect(s) in notes.cpp
 
 
-----==== Summary ====----
-------------------------
-Filename  | Report count
-------------------------
-notes.cpp |            1
-------------------------
------------------------
-Severity | Report count
------------------------
-LOW      |            1
------------------------
+----==== Severity Statistics ====----
+----------------------------
+Severity | Number of reports
+----------------------------
+LOW      |                 1
+----------------------------
 ----=================----
-Total number of reports: 1
+
+----==== Checker Statistics ====----
+-------------------------------------------------------
+Checker name             | Severity | Number of reports
+-------------------------------------------------------
+alpha.clone.CloneChecker | LOW      |                 1
+-------------------------------------------------------
+----=================----
+
+----==== File Statistics ====----
+-----------------------------
+File name | Number of reports
+-----------------------------
+notes.cpp |                 1
+-----------------------------
+----=================----
+
+----======== Summary ========----
+---------------------------------------------
+Number of processed analyzer result files | 1
+Number of analyzer reports                | 1
+---------------------------------------------
 ----=================----

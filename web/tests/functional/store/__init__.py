@@ -57,8 +57,12 @@ def setup_package():
     dst_dir = os.path.join(TEST_WORKSPACE, "test_proj")
     shutil.copytree(os.path.join(test_dir, "test_proj"), dst_dir)
 
-    report_file = os.path.join(dst_dir, "divide_zero.plist")
-    plist_test.prefix_file_path(report_file, dst_dir)
+    prefix_file_paths = [
+        os.path.join(dst_dir, "divide_zero", "divide_zero.plist"),
+        os.path.join(dst_dir, "double_suppress", "double_suppress.plist")]
+
+    for file_name in prefix_file_paths:
+        plist_test.prefix_file_path(file_name, os.path.dirname(file_name))
 
 
 def teardown_package():

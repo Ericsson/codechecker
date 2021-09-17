@@ -11,7 +11,7 @@ can be parsed by statistics checkers.
 make venv
 source $PWD/venv/bin/activate
 
-# Build and install plist-to-html package.
+# Build and install post-process-stats package.
 make package
 ```
 

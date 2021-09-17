@@ -15,10 +15,11 @@ import os
 import re
 import sys
 
+from codechecker_report_converter.util import load_json_or_empty
+
 from codechecker_common import logger
 from codechecker_common.checker_labels import CheckerLabels
 from codechecker_common.singleton import Singleton
-from codechecker_common.util import load_json_or_empty
 
 LOG = logger.get_logger('system')
 
@@ -176,7 +177,8 @@ class Context(metaclass=Singleton):
 
     @property
     def path_plist_to_html_dist(self):
-        return os.path.join(self._lib_dir_path, 'plist_to_html', 'static')
+        return os.path.join(self._lib_dir_path, 'codechecker_report_converter',
+                            'report', 'output', 'html', 'static')
 
     @property
     def path_env_extra(self):

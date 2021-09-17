@@ -9,11 +9,9 @@
 Handler for suppressing a bug.
 """
 
-
-import os
+from codechecker_report_converter.report import Report
 
 from codechecker_analyzer import suppress_file_handler
-
 from codechecker_common.logger import get_logger
 
 # Warning! this logger should only be used in this module.
@@ -36,7 +34,6 @@ class GenericSuppressHandler:
             self.__revalidate_suppress_data()
         else:
             self.__have_memory_backend = False
-            self.__arrow_write = False
 
             if allow_write:
                 raise ValueError("Can't create allow_write=True suppress "
@@ -79,16 +76,16 @@ class GenericSuppressHandler:
         self.__revalidate_suppress_data()
         return ret
 
-    def skip_suppress_status(self, status):
+    def skip_suppress_status(self, status) -> bool:
         """ Returns True if the given status should be skipped. """
         if not self.src_comment_status_filter:
             return False
 
         return status not in self.src_comment_status_filter
 
-    def get_suppressed(self, bug):
-
+    def get_suppressed(self, report: Report) -> bool:
+        """ True if the given report is suppressed. """
         return any([suppress for suppress in self.__suppress_info
-                    if suppress[0] == bug['hash_value'] and
-                    suppress[1] == os.path.basename(bug['file_path']) and
+                    if suppress[0] == report.report_hash and
+                    suppress[1] == report.file.name and
                     self.skip_suppress_status(suppress[3])])

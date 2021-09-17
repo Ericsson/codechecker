@@ -2,15 +2,28 @@
 
 REPO_ROOT ?= REPO_ROOT=$(ROOT)
 
+# Test project configuration, tests are run on these files.
+TEST_PROJECT ?= TEST_PROJ=$(CURRENT_DIR)/tests/projects
+
+LAYOUT_DIR ?= LAYOUT_DIR=$(STATIC_DIR)
+
 # Nose test runner configuration options.
 NOSECFG = --config .noserc
 
-test: pycodestyle pylint test_unit test_functional
+test: mypy pycodestyle pylint test_unit test_functional
 
-test_in_env: pycodestyle_in_env pylint_in_env test_unit_in_env
+test_in_env: mypy_in_env pycodestyle_in_env pylint_in_env test_unit_in_env
+
+MYPY_TEST_CMD = mypy --ignore-missing-imports codechecker_report_converter
+
+mypy:
+	$(MYPY_TEST_CMD)
+
+mypy_in_env: venv_dev
+	$(ACTIVATE_DEV_VENV) && $(MYPY_TEST_CMD)
 
 PYCODESTYLE_TEST_CMD = pycodestyle codechecker_report_converter tests \
-	--exclude tests/unit/pyflakes_output_test_files/files
+	--exclude tests/unit/analyzers/pyflakes_output_test_files/files
 
 pycodestyle:
 	$(PYCODESTYLE_TEST_CMD)
@@ -27,7 +40,7 @@ pylint:
 pylint_in_env: venv
 	$(ACTIVATE_DEV_VENV) && $(PYLINT_TEST_CMD)
 
-UNIT_TEST_CMD = $(REPO_ROOT) \
+UNIT_TEST_CMD = $(REPO_ROOT) $(TEST_PROJECT) $(LAYOUT_DIR) \
   nosetests $(NOSECFG) tests/unit
 
 test_unit:
@@ -36,7 +49,7 @@ test_unit:
 test_unit_in_env: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(UNIT_TEST_CMD)
 
-FUNCTIONAL_TEST_CMD = $(REPO_ROOT) \
+FUNCTIONAL_TEST_CMD = $(REPO_ROOT) $(TEST_PROJECT) \
   nosetests $(NOSECFG) tests/functional
 
 test_functional:

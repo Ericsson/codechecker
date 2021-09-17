@@ -65,7 +65,7 @@ class LocalRemote(unittest.TestCase):
 
         self._env = self._test_cfg['codechecker_cfg']['check_env']
 
-    def get_local_remote_diff(self, extra_args=None):
+    def get_local_remote_diff(self, extra_args=None, format_type=None):
         """Return the unresolved results comparing local to a remote.
 
         Returns the text output of the diff command comparing the
@@ -79,7 +79,7 @@ class LocalRemote(unittest.TestCase):
             extra_args = []
 
         return get_diff_results([self._local_reports], [self._run_names[0]],
-                                '--unresolved', None,
+                                '--unresolved', format_type,
                                 ['--url', self._url, *extra_args])[0]
 
     def test_local_to_remote_compare_count_new(self):
@@ -100,7 +100,7 @@ class LocalRemote(unittest.TestCase):
         # 5 new core.CallAndMessage issues.
         # 1 is suppressed in code
         count = len(re.findall(r'\[core\.CallAndMessage\]', out))
-        self.assertEqual(count, 4)
+        self.assertEqual(count, 5)
 
         # core.NullDereference was disabled in the remote analysis
         # so no results are new comapared to the local analysis.
@@ -167,7 +167,7 @@ class LocalRemote(unittest.TestCase):
 
         # Only 4 bugs can be found in the following file but in the
         # output the file names are printed again because of the summary.
-        self.assertEqual(len(re.findall(r'divide_zero.cpp', res)), 5)
+        self.assertEqual(len(re.findall(r'divide_zero.cpp', res)), 6)
 
         self.assertEqual(len(re.findall(r'new_delete.cpp', res)), 0)
 
@@ -178,7 +178,7 @@ class LocalRemote(unittest.TestCase):
 
         # Only 6 bugs can be found in the following file but in the
         # output the file names are printed again because of the summary.
-        self.assertEqual(len(re.findall(r'new_delete.cpp', res)), 7)
+        self.assertEqual(len(re.findall(r'new_delete.cpp', res)), 8)
 
     def test_local_cmp_filter_unres_checker_name(self):
         """Filter by checker name."""
@@ -187,7 +187,7 @@ class LocalRemote(unittest.TestCase):
         self.assertEqual(len(re.findall(r'core.NullDereference', res)), 0)
 
         res = self.get_local_remote_diff(['--checker-name', 'core.*'])
-        self.assertEqual(len(re.findall(r'core.*', res)), 13)
+        self.assertEqual(len(re.findall(r'core.*', res)), 15)
 
         # Filter by checker message (case insensitive).
         res = self.get_local_remote_diff(['--checker-msg', 'division by*'])
@@ -200,20 +200,17 @@ class LocalRemote(unittest.TestCase):
 
         # Only 2 bugs can be found in the following file but in the
         # output the file names are printed again because of the summary.
-        self.assertEqual(len(re.findall(r'divide_zero.cpp', res)), 3)
+        self.assertEqual(len(re.findall(r'divide_zero.cpp', res)), 4)
 
         self.assertEqual(len(re.findall(r'\[HIGH\]', res)), 2)
 
     def test_local_cmp_filter_unres_filter_mix_json(self):
         """Filter by multiple filters file and severity with json output."""
         # TODO check if only high severity reports are retuned.
-        res = self.get_local_remote_diff(['--file', '*divide_zero.cpp',
-                                          '--severity', 'high',
-                                          '-o', 'json'])
-        reports = json.loads(res)
+        reports = self.get_local_remote_diff(['--file', '*divide_zero.cpp',
+                                              '--severity', 'high'], 'json')
         for report in reports:
-            print(report)
-            self.assertTrue("divide_zero.cpp" in report['checkedFile'],
+            self.assertTrue("divide_zero.cpp" in report['file']['path'],
                             "Report filename is different from the expected.")
 
     def test_local_compare_res_html_output_unresolved(self):
@@ -225,16 +222,16 @@ class LocalRemote(unittest.TestCase):
                          ["--url", self._url, '-e', html_reports,
                           "--verbose", "debug"])
 
-        diff_res = json.loads(self.get_local_remote_diff(['-o', 'json']))
-
         checked_files = set()
-        for res in diff_res:
-            print(res)
-            checked_files.add(os.path.basename(res['checkedFile']))
+        for res in self.get_local_remote_diff(None, 'json'):
+            checked_files.add(os.path.basename(res['file']['path']))
 
         # Check if index.html file was generated.
         html_index = os.path.join(html_reports, "index.html")
         self.assertTrue(os.path.exists(html_index))
+
+        html_statistics = os.path.join(html_reports, "statistics.html")
+        self.assertTrue(os.path.exists(html_statistics))
 
         # Check that html files were generated for each reports.
         for html_file_names in os.listdir(html_reports):
@@ -242,7 +239,7 @@ class LocalRemote(unittest.TestCase):
             file_name = html_file_names[:suffix] \
                 if suffix != -1 else html_file_names
 
-            if file_name == "index.html":
+            if file_name in ["index.html", "statistics.html"]:
                 continue
 
             self.assertIn(file_name, checked_files)
@@ -319,7 +316,7 @@ class LocalRemote(unittest.TestCase):
         self.assertEqual(lbls["Verified"], -1)
         self.assertEqual(lbls["Code-Review"], -1)
         self.assertEqual(review_data["message"],
-                         "CodeChecker found 4 issue(s) in the code.")
+                         "CodeChecker found 5 issue(s) in the code.")
         self.assertEqual(review_data["tag"], "jenkins")
 
         comments = review_data["comments"]
@@ -327,7 +324,7 @@ class LocalRemote(unittest.TestCase):
 
         file_path = next(iter(comments))
         reports = comments[file_path]
-        self.assertEqual(len(reports), 4)
+        self.assertEqual(len(reports), 5)
         for report in reports:
             self.assertIn("message", report)
 
@@ -362,7 +359,7 @@ class LocalRemote(unittest.TestCase):
         self.assertEqual(lbls["Verified"], -1)
         self.assertEqual(lbls["Code-Review"], -1)
         self.assertEqual(review_data["message"],
-                         "CodeChecker found 4 issue(s) in the code.")
+                         "CodeChecker found 5 issue(s) in the code.")
         self.assertEqual(review_data["tag"], "jenkins")
 
         comments = review_data["comments"]
@@ -370,7 +367,7 @@ class LocalRemote(unittest.TestCase):
 
         file_path = next(iter(comments))
         reports = comments[file_path]
-        self.assertEqual(len(reports), 4)
+        self.assertEqual(len(reports), 5)
         for report in reports:
             self.assertIn("message", report)
 
@@ -539,6 +536,7 @@ class LocalRemote(unittest.TestCase):
              "--url", self._url],
             env)
 
+        print(out)
         # Check the plaintext output.
         count = len(re.findall(r'\[core\.NullDereference\]', out))
         self.assertEqual(count, 4)
@@ -573,7 +571,7 @@ class LocalRemote(unittest.TestCase):
         print(new_results)
 
         for report in new_results:
-            self.assertEqual(report['checkerId'], "core.NullDereference")
+            self.assertEqual(report['checker_name'], "core.NullDereference")
 
         self.assertEqual(returncode, 2)
 
@@ -586,7 +584,7 @@ class LocalRemote(unittest.TestCase):
         self.assertTrue(unresolved_results)
         self.assertFalse(any(
             r for r in unresolved_results
-            if r['checkerId'] == 'core.CallAndMessage'))
+            if r['checker_name'] == 'core.CallAndMessage'))
         self.assertEqual(returncode, 2)
 
         # Get resolved reports.
@@ -614,7 +612,7 @@ class LocalRemote(unittest.TestCase):
             '--new', 'json',
             ["--url", self._url,
              "--review-status", "unreviewed", "confirmed", "false_positive"])
-        new_hashes = sorted(set([n['bugHash'] for n in res]))
+        new_hashes = sorted(set([n['report_hash'] for n in res]))
 
         new_results, err, returncode = get_diff_results(
             [self._run_names[0]], [baseline_file_path], '--new', 'json',
@@ -634,7 +632,7 @@ class LocalRemote(unittest.TestCase):
             '--unresolved', 'json',
             ["--url", self._url,
              "--review-status", "unreviewed", "confirmed", "false_positive"])
-        unresolved_hashes = sorted(set([n['bugHash'] for n in res]))
+        unresolved_hashes = sorted(set([n['report_hash'] for n in res]))
 
         unresolved_results, err, returncode = get_diff_results(
             [self._run_names[0]], [baseline_file_path],
@@ -655,7 +653,7 @@ class LocalRemote(unittest.TestCase):
             '--resolved', 'json',
             ["--url", self._url,
              "--review-status", "unreviewed", "confirmed", "false_positive"])
-        resolved_hashes = set([n['bugHash'] for n in res])
+        resolved_hashes = set([n['report_hash'] for n in res])
 
         resolved_results, _, returncode = get_diff_results(
             [self._run_names[0]], [baseline_file_path], '--resolved', 'json',
@@ -664,5 +662,5 @@ class LocalRemote(unittest.TestCase):
 
         self.assertTrue(resolved_results)
         self.assertSetEqual(
-            {r['bugHash'] for r in resolved_results}, resolved_hashes)
+            {r['report_hash'] for r in resolved_results}, resolved_hashes)
         self.assertEqual(returncode, 2)

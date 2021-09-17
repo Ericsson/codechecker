@@ -6,27 +6,35 @@ a CodeChecker server.
 ## Table of Contents
 * [Install guide](#install-guide)
 * [Usage](#usage)
-* [Sanitizers](#sanitizers)
-  * [Undefined Behaviour Sanitizer](#undefined-behaviour-sanitizer)
-  * [Address Sanitizer](#address-sanitizer)
-  * [Memory Sanitizer](#memory-sanitizer)
-  * [Thread Sanitizer](#thread-sanitizer)
-  * [Leak Sanitizer](#leak-sanitizer)
-* [Cppcheck](#cppcheck)
-* [Spotbugs](#spotbugs)
-* [Facebook Infer](#facebook-infer)
-* [ESLint](#eslint)
-* [Pylint](#pylint)
-* [TSLint](#tslint)
-* [Golint](#golint)
-* [Pyflakes](#pyflakes)
-* [Markdownlint](#markdownlint)
-* [Coccinelle](#coccinelle)
-* [Smatch](#smatch)
-* [Kernel-Doc](#kernel-doc)
-* [Sphinx](#sphinx)
-* [Sparse](#sparse)
-* [cpplint](#cpplint)
+* [Supported analyzer outputs](#supported-analyzer-outputs)
+  * [Sanitizers](#sanitizers)
+    * [Undefined Behaviour Sanitizer](#undefined-behaviour-sanitizer)
+    * [Address Sanitizer](#address-sanitizer)
+    * [Memory Sanitizer](#memory-sanitizer)
+    * [Thread Sanitizer](#thread-sanitizer)
+    * [Leak Sanitizer](#leak-sanitizer)
+  * [Cppcheck](#cppcheck)
+  * [Spotbugs](#spotbugs)
+  * [Facebook Infer](#facebook-infer)
+  * [ESLint](#eslint)
+  * [Pylint](#pylint)
+  * [TSLint](#tslint)
+  * [Golint](#golint)
+  * [Pyflakes](#pyflakes)
+  * [Markdownlint](#markdownlint)
+  * [Coccinelle](#coccinelle)
+  * [Smatch](#smatch)
+  * [Kernel-Doc](#kernel-doc)
+  * [Sphinx](#sphinx)
+  * [Sparse](#sparse)
+  * [cpplint](#cpplint)
+* [Plist to html tool](plist-to-html)
+  * [Usage](#plist-to-html-usage)
+* [Report hash generation module](#report-hash-generation-module)
+  * [Generate path sensitive report hash](#generate-path-sensitive-report-hash)
+  * [Generate context sensitive report hash](#generate-context-sensitive-report-hash)
+  * [Generate diagnostic message hash](#generate-diagnostic-message-hash)
+  * [Generate path hash](#generate-path-hash)
 * [License](#license)
 
 ## Install guide
@@ -113,8 +121,9 @@ Supported analyzers:
 ```
 </details>
 
-## Sanitizers
-### [Undefined Behaviour Sanitizer](https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html)
+## Supported analyzer outputs
+### Sanitizers
+#### [Undefined Behaviour Sanitizer](https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html)
 - Compile with `-g` and `-fno-omit-frame-pointer` to get proper debug
   information in your binary.
 - Run your program with environment variable
@@ -138,7 +147,7 @@ UBSAN_SYMBOLIZER_PATH=/usr/lib/llvm-6.0/bin/llvm-symbolizer \
 report-converter -t ubsan -o ./ubsan_results ubsan.output
 ```
 
-### [Address Sanitizer](https://clang.llvm.org/docs/AddressSanitizer.html)
+#### [Address Sanitizer](https://clang.llvm.org/docs/AddressSanitizer.html)
 - Compile with `-g` and `-fno-omit-frame-pointer` to get proper debug
   information in your binary.
 - Set the `ASAN_SYMBOLIZER_PATH` environment variable to point to the
@@ -156,7 +165,7 @@ ASAN_SYMBOLIZER_PATH=/usr/lib/llvm-6.0/bin/llvm-symbolizer \
 report-converter -t asan -o ./asan_results asan.output
 ```
 
-### [Memory Sanitizer](https://clang.llvm.org/docs/MemorySanitizer.html)
+#### [Memory Sanitizer](https://clang.llvm.org/docs/MemorySanitizer.html)
 - Compile with `-g` and `-fno-omit-frame-pointer` to get proper debug
   information in your binary.
 - Set the `MSAN_SYMBOLIZER_PATH` environment variable to point to the
@@ -174,7 +183,7 @@ MSAN_SYMBOLIZER_PATH=/usr/lib/llvm-6.0/bin/llvm-symbolizer \
 report-converter -t msan -o ./msan_results msan.output
 ```
 
-### [Thread Sanitizer](https://clang.llvm.org/docs/ThreadSanitizer.html)
+#### [Thread Sanitizer](https://clang.llvm.org/docs/ThreadSanitizer.html)
 - Compile with `-g` to get proper debug information in your binary.
 
 ```sh
@@ -188,7 +197,7 @@ clang++ -fsanitize=thread -g tsan.cpp
 report-converter -t tsan -o ./tsan_results tsan.output
 ```
 
-### [Leak Sanitizer](https://clang.llvm.org/docs/LeakSanitizer.html)
+#### [Leak Sanitizer](https://clang.llvm.org/docs/LeakSanitizer.html)
 - Compile with `-g` and `-fsanitize=address`  to get proper debug information in your binary.
 ```sh
 # Compile your program.
@@ -201,7 +210,7 @@ ASAN_OPTIONS=detect_leaks=1 ./a.out > lsan.output 2>&1
 report-converter -t lsan -o ./lsan_results lsan.output
 ```
 
-## [Cppcheck](http://cppcheck.sourceforge.net/)
+### [Cppcheck](http://cppcheck.sourceforge.net/)
 [Cppcheck](http://cppcheck.sourceforge.net/) is a static analysis tool for
 `C/C++` code.
 
@@ -242,7 +251,7 @@ CppCheck: `analysis statistics`, `analysis duration`, `cppcheck command` etc.
 For more information about logging checkout the log section in the
 [user guide](/docs/usage.md).
 
-## [Spotbugs](https://spotbugs.github.io/)
+### [Spotbugs](https://spotbugs.github.io/)
 [Spotbugs](https://spotbugs.github.io/) is a static analysis tool for `Java`
 code.
 
@@ -265,7 +274,7 @@ report-converter -t spotbugs -o ./codechecker_spotbugs_reports ./bugs.xml
 CodeChecker store ./codechecker_spotbugs_reports -n spotbugs
 ```
 
-## [Facebook Infer](https://fbinfer.com/)
+### [Facebook Infer](https://fbinfer.com/)
 [Facebook Infer](https://fbinfer.com/) is a static analysis tool developed by
 Facebook which supports multiple programming languages such as `C/C++`, `Java`
 etc.
@@ -289,7 +298,7 @@ report-converter -t fbinfer -o ./codechecker_fbinfer_reports ./infer-out
 CodeChecker store ./codechecker_fbinfer_reports -n fbinfer
 ```
 
-## [ESLint](https://eslint.org)
+### [ESLint](https://eslint.org)
 [ESLint](https://eslint.org) is a static analysis tool for `JavaScript`.
 
 The recommended way of running the ESLint tool is to generate a json output
@@ -310,7 +319,7 @@ report-converter -t eslint -o ./codechecker_eslint_reports ./eslint_reports.json
 CodeChecker store ./codechecker_eslint_reports -n eslint
 ```
 
-## [Pylint](https://www.pylint.org)
+### [Pylint](https://www.pylint.org)
 [Pylint](https://www.pylint.org) is a static analysis tool for `Python`.
 
 The recommended way of running the Pylint tool is to generate a `json` output
@@ -331,7 +340,7 @@ report-converter -t pylint -o ./codechecker_pylint_reports ./pylint_reports.json
 CodeChecker store ./codechecker_pylint_reports -n pylint
 ```
 
-## [Pyflakes](https://github.com/PyCQA/pyflakes)
+### [Pyflakes](https://github.com/PyCQA/pyflakes)
 [Pyflakes](https://github.com/PyCQA/pyflakes) is a static analysis tool for
 `Python` code.
 
@@ -353,7 +362,7 @@ report-converter -t pyflakes -o ./codechecker_pyflakes_reports ./pyflakes_report
 CodeChecker store ./codechecker_pyflakes_reports -n pyflakes
 ```
 
-## [TSLint](https://palantir.github.io/tslint)
+### [TSLint](https://palantir.github.io/tslint)
 [TSLint](https://palantir.github.io/tslint) is a static analysis tool for
 `TypeScript`.
 
@@ -375,7 +384,7 @@ report-converter -t tslint -o ./codechecker_tslint_reports ./tslint_reports.json
 CodeChecker store ./codechecker_tslint_reports -n tslint
 ```
 
-## [Golint](https://github.com/golang/lint)
+### [Golint](https://github.com/golang/lint)
 [Golint](https://github.com/golang/lint) is a static analysis tool for `Go`
 code.
 
@@ -397,7 +406,7 @@ report-converter -t golint -o ./codechecker_golint_reports ./golint_reports.out
 CodeChecker store ./codechecker_golint_reports -n golint
 ```
 
-## [Markdownlint](https://github.com/markdownlint/markdownlint)
+### [Markdownlint](https://github.com/markdownlint/markdownlint)
 [Markdownlint](https://github.com/markdownlint/markdownlint) is a static
 analysis tool for markdown files.
 
@@ -419,7 +428,7 @@ report-converter -t mdl -o ./codechecker_mdl_reports ./mdl_reports.out
 CodeChecker store ./codechecker_mdl_reports -n mdl
 ```
 
-## [Coccinelle](https://github.com/coccinelle/coccinelle)
+### [Coccinelle](https://github.com/coccinelle/coccinelle)
 [Coccinelle](https://github.com/coccinelle/coccinelle) allows programmers to easily 
 write some complex style-preserving source-to-source transformations on C source code, 
 like for instance to perform some refactorings.
@@ -446,7 +455,7 @@ report-converter -t coccinelle -o ./codechecker_coccinelle_reports ./coccinelle_
 CodeChecker store ./codechecker_coccinelle_reports -n coccinelle
 ```
 
-## [Smatch](https://repo.or.cz/w/smatch.git)
+### [Smatch](https://repo.or.cz/w/smatch.git)
 [Smatch](https://repo.or.cz/w/smatch.git) is a static analysis tool for C that is used on the kernel.
 
 The recommended way of running Smatch is to redirect the output to a file and
@@ -470,7 +479,7 @@ report-converter -t smatch -o ./codechecker_smatch_reports ./smatch_warns.txt
 CodeChecker store ./codechecker_smatch_reports -n smatch
 ```
 
-## [Kernel-Doc](https://github.com/torvalds/linux/blob/master/scripts/kernel-doc)
+### [Kernel-Doc](https://github.com/torvalds/linux/blob/master/scripts/kernel-doc)
 [Kernel-Doc](https://github.com/torvalds/linux/blob/master/scripts/kernel-doc) structure is extracted 
 from the comments, and proper Sphinx C Domain function and type descriptions with anchors are generated 
 from them. The descriptions are filtered for special kernel-doc highlights and cross-references.
@@ -497,7 +506,7 @@ report-converter -t kernel-doc -o ./codechecker_kernel_doc_reports ./kernel-docs
 CodeChecker store ./codechecker_kernel_doc_reports -n kernel-doc
 ```
 
-## [Sphinx](https://github.com/sphinx-doc/sphinx)
+### [Sphinx](https://github.com/sphinx-doc/sphinx)
 [Sphinx](https://github.com/sphinx-doc/sphinx) Sphinx is a documentation generator 
 or a tool that translates a set of plain text source files into various output formats, 
 automatically producing cross-references, indices, etc.
@@ -525,7 +534,7 @@ report-converter -t sphinx -o ./codechecker_sphinx_reports ./sphinx.out
 CodeChecker store ./codechecker_sphinx_reports -n sphinx
 ```
 
-## [Sparse](https://git.kernel.org/pub/scm/devel/sparse/sparse.git)
+### [Sparse](https://git.kernel.org/pub/scm/devel/sparse/sparse.git)
 [Sparse](https://git.kernel.org/pub/scm/devel/sparse/sparse.git) is a semantic checker 
 for C programs; it can be used to find a number of potential problems with kernel code.
 
@@ -550,7 +559,7 @@ report-converter -t sparse -o ./codechecker_sparse_reports ./sparse.out
 CodeChecker store ./codechecker_sparse_reports -n sparse
 ```
 
-## [cpplint](https://github.com/cpplint/cpplint)
+### [cpplint](https://github.com/cpplint/cpplint)
 [cpplint](https://github.com/cpplint/cpplint) is a lint-like tool which checks
 C++ code against [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html).
 
@@ -574,6 +583,100 @@ report-converter -t cpplint -o ./codechecker_cpplint_reports ./sample.out
 # Store the cpplint reports with CodeChecker.
 CodeChecker store ./codechecker_cpplint_reports -n cpplint
 ```
+
+## Plist to html tool
+`plist-to-html` is a python tool which parses and creates HTML files from one
+or more `.plist` result files.
+
+### Usage
+<details>
+  <summary>
+    <i>$ <b>plist-to-html --help</b> (click to expand)</i>
+  </summary>
+
+```
+usage: plist-to-html [-h] -o OUTPUT_DIR [-l LAYOUT_DIR]
+                     file/folder [file/folder ...]
+
+Parse and create HTML files from one or more '.plist' result files.
+
+positional arguments:
+  file/folder           The plist files and/or folders containing analysis
+                        results which should be parsed.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -o OUTPUT_DIR, --output OUTPUT_DIR
+                        Generate HTML output files in the given folder.
+                        (default: None)
+  -l LAYOUT_DIR, --layout LAYOUT_DIR
+                        Directory which contains dependency HTML, CSS and
+                        JavaScript files. (default: plist_to_html/../static)
+```
+</details>
+
+## Report hash generation module
+A report hash identifies a specific bug in the analyzed code. For example if
+a function contains some bug and this function is called from several parts of
+the program then essentially these are the same bug. These bugs get the same
+report hash which indicates a connection between them. CodeChecker web
+interface also helps to group these findings. However, in some special cases
+the hash should be built from specific information which makes bug
+identification sensitive on some different things (for example indentation of
+the code). We recommend using `CONTEXT_FREE` which works in most cases.
+
+Multiple hash types are available:
+- [`PATH_SENSITIVE`](#generate-path-sensitive-report-hash)
+- [`CONTEXT_FREE`](#generate-context-free-report-hash)
+- [`DIAGNOSTIC_MESSAGE`](#generate-diagnostic-message-hash)
+
+You can use this library to generate report hash for these types by using the
+`get_report_hash` function.
+
+### Generate path sensitive report hash
+`get_report_hash` function can be used to generate report hash with bug path
+if the hash type parameter is `PATH_SENSITIVE`.
+
+High level overview of the hash content:
+* `file_name` from the main diag section.
+* `checker name`.
+* `checker message`.
+* `line content` from the source file if can be read up.
+* `column numbers` from the *main diag section*.
+* `range column numbers` only from the control diag sections if column number
+  in the range is not the same as the previous control diag section number in
+  the bug path. If there are no control sections event section column numbers
+  are used.
+
+*Note*: as the *main diagnostic section* the last element from the bug path is
+used.
+
+### Generate context free report hash
+`get_report_hash` function can be used to generate report hash without bug path
+if the hash type parameter is `CONTEXT_FREE`.
+
+High level overview of the hash content:
+* `file_name` from the main diag section.
+* `checker message`.
+* `line content` from the source file if can be read up. All the whitespaces
+  from the source content are removed.
+* `column numbers` from the main diag sections location.
+
+### Generate diagnostic message hash
+`get_report_hash` function can be used to generate report hash with bug event
+messages if the hash type parameter is `DIAGNOSTIC_MESSAGE`.
+
+High level overview of the hash content:
+* Same as `CONTEXT_FREE` (*file name*, *checker message* etc.)
+* `bug step messages` from all events.
+
+**Note**: this is an experimental hash and it is not recommended to use it on
+your project because this hash can change very easily for example on variable /
+function renames.
+
+### Generate path hash
+`get_report_path_hash` can be used to get path hash for the given bug path
+which can be used to filter deduplications of multiple reports.
 
 ## License
 

@@ -15,8 +15,10 @@ import json
 
 from codechecker_analyzer import analyzer_context
 
+from codechecker_report_converter import twodim
+
 from codechecker_common import logger
-from codechecker_common.output import USER_FORMATS, twodim
+from codechecker_common.output import USER_FORMATS
 
 
 def get_argparser_ctor_args():

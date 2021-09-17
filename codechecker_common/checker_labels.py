@@ -1,8 +1,10 @@
 import os
 from collections import defaultdict
-from typing import Any, DefaultDict, Dict, Iterable, List, Optional, Set, \
-    Tuple, Union, cast
-from codechecker_common.util import load_json_or_empty
+
+from typing import Any, cast, DefaultDict, Dict, Iterable, List, Optional, \
+    Set, Tuple, Union
+
+from codechecker_report_converter.util import load_json_or_empty
 
 
 # TODO: Most of the methods of this class get an optional analyzer name. If

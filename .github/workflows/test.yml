@@ -22,7 +22,7 @@ jobs:
         run: make pylint pycodestyle
 
   tools:
-    name: Tools (plist-to-html, report-converter, etc.)
+    name: Tools (report-converter, etc.)
     runs-on: ubuntu-18.04
 
     steps:
@@ -53,18 +53,6 @@ jobs:
 
       - name: Run statistics-collector tests
         working-directory: analyzer/tools/statistics_collector
-        run: |
-          pip install -r requirements_py/dev/requirements.txt
-          make test
-
-      - name: Run codechecker-report-hash tests
-        working-directory: tools/codechecker_report_hash
-        run: |
-          pip install -r requirements_py/dev/requirements.txt
-          make test
-
-      - name: Run plist-to-html tests
-        working-directory: tools/plist_to_html
         run: |
           pip install -r requirements_py/dev/requirements.txt
           make test
@@ -129,13 +117,9 @@ jobs:
         run: |
           pip install -r requirements_py/dev/requirements.txt
 
-      - name: Run unit tests
+      - name: Run mypy tests
         working-directory: codechecker_common/tests
-        run: make -C unit test_unit
-
-      - name: Run unit tests coverage
-        working-directory: codechecker_common/tests
-        run: make -C unit test_unit_cov
+        run: make mypy
 
   web:
     name: Web

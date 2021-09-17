@@ -23,9 +23,6 @@ setuptools.setup(
     license='LICENSE.txt',
     packages=setuptools.find_packages(),
     include_package_data=True,
-    install_requires=[
-        "codechecker_report_hash"
-    ],
     classifiers=[
         "Environment :: Console",
         "Intended Audience :: Developers",
@@ -36,7 +33,8 @@ setuptools.setup(
     python_requires='>=3.6',
     entry_points={
         'console_scripts': [
-            'report-converter = codechecker_report_converter.cli:main'
+            'report-converter = codechecker_report_converter.cli:main',
+            'plist-to-html = codechecker_report_converter.report.output.html.cli:main'
         ]
     },
 )

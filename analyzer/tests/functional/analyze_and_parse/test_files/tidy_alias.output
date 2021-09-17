@@ -28,17 +28,34 @@ CHECK#CodeChecker check --build "make tidy_alias" --output $OUTPUT$ --quiet --an
 Found 2 defect(s) in tidy_alias.cpp
 
 
-----==== Summary ====----
------------------------------
-Filename       | Report count
------------------------------
-tidy_alias.cpp |            2
------------------------------
------------------------
-Severity | Report count
------------------------
-STYLE    |            2
------------------------
+----==== Severity Statistics ====----
+----------------------------
+Severity | Number of reports
+----------------------------
+STYLE    |                 2
+----------------------------
 ----=================----
-Total number of reports: 2
+
+----==== Checker Statistics ====----
+--------------------------------------------------------------------
+Checker name                          | Severity | Number of reports
+--------------------------------------------------------------------
+cppcoreguidelines-avoid-magic-numbers | STYLE    |                 1
+readability-magic-numbers             | STYLE    |                 1
+--------------------------------------------------------------------
+----=================----
+
+----==== File Statistics ====----
+----------------------------------
+File name      | Number of reports
+----------------------------------
+tidy_alias.cpp |                 2
+----------------------------------
+----=================----
+
+----======== Summary ========----
+---------------------------------------------
+Number of processed analyzer result files | 1
+Number of analyzer reports                | 2
+---------------------------------------------
 ----=================----

@@ -18,7 +18,6 @@
 #    gui           (Changes in the web GUI)
 #    fix           (Bug fix)
 #    feat          (New feature)
-#    plist2html    (Changes in the plist-to-html tool)
 #    refactor      (Refactoring code)
 #    server        (Server related changes)
 #    style         (Formatting, missing semi colons, etc; no code change)

@@ -18,8 +18,10 @@ import sys
 import tempfile
 import yaml
 
+from codechecker_report_converter.util import get_last_mod_time
+
 from codechecker_analyzer import analyzer_context
-from codechecker_common import arg, logger, util
+from codechecker_common import arg, logger
 
 LOG = logger.get_logger('system')
 
@@ -163,7 +165,7 @@ def clang_tidy_fixit_filter(content, checker_names, file_paths, reports,
         Return True if the file was not modified after the given timestamp
         otherwise collect it to a set named modified_files.
         """
-        if util.get_last_mod_time(file_path) > modification_time:
+        if get_last_mod_time(file_path) > modification_time:
             modified_files.add(file_path)
             return False
         return True
@@ -232,7 +234,7 @@ def list_fixits(inputs, checker_names, file_paths, interactive, reports):
             fixit_file = os.path.join(fixit_dir, fixit_file)
             with open(fixit_file, encoding='utf-8', errors='ignore') as f:
                 content = yaml.load(f, Loader=yaml.BaseLoader)
-                fixit_mtime = util.get_last_mod_time(fixit_file)
+                fixit_mtime = get_last_mod_time(fixit_file)
 
                 existing, not_existing, modified = clang_tidy_fixit_filter(
                     content, checker_names, file_paths, reports, fixit_mtime,
@@ -281,7 +283,7 @@ def apply_fixits(inputs, checker_names, file_paths, interactive, reports):
                 with open(os.path.join(fixit_dir, fixit_file),
                           encoding='utf-8', errors='ignore') as f:
                     content = yaml.load(f, Loader=yaml.BaseLoader)
-                    fixit_mtime = util.get_last_mod_time(
+                    fixit_mtime = get_last_mod_time(
                         os.path.join(fixit_dir, fixit_file))
 
                     existing, not_existing, modified = clang_tidy_fixit_filter(

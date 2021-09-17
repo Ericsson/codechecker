@@ -102,7 +102,7 @@ def get_diff_results(basenames, newnames, diff_type, format_type=None,
     out, err = proc.communicate()
 
     if format_type == "json":
-        return json.loads(out), err, proc.returncode
+        return json.loads(out)['reports'], err, proc.returncode
 
     return out, err, proc.returncode
 

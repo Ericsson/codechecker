@@ -6,53 +6,41 @@
 #
 # -------------------------------------------------------------------------
 
-"""Convert between the codechecker_common.Report type and
-the thrift ReportData type."""
+""" Convert between Report type and thrift ReportData type. """
 
-from codechecker_common.checker_labels import CheckerLabels
-from codechecker_common.report import Report
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import ReportData, Severity
 
-
-def reportData_to_report(report_data: ReportData) -> Report:
-    """Create a report object from the given thrift report data."""
-    main = {
-        "check_name": report_data.checkerId,
-        "description": report_data.checkerMsg,
-        "issue_hash_content_of_line_in_context": report_data.bugHash,
-        "location": {
-            "line": report_data.line,
-            "col": report_data.column,
-            "file": 0,
-        },
-    }
-    bug_path = None
-    files = {0: report_data.checkedFile}
-    # TODO Can not reconstruct because only the analyzer name was stored
-    # it should be a analyzer_name analyzer_version
-    return Report(main, bug_path, files, metadata=None)
+from codechecker_report_converter.report import File, Report
 
 
-def report_to_reportData(report: Report,
-                         checker_labels: CheckerLabels) -> ReportData:
-    """Convert a Report object to a Thrift ReportData type."""
-    events = [i for i in report.bug_path if i.get("kind") == "event"]
+def to_report(report: ReportData) -> Report:
+    """ Create a Report object from the given thrift report data. """
+    severity = Severity._VALUES_TO_NAMES[report.severity] \
+        if report.severity else 'UNSPECIFIED'
 
-    report_hash = report.main["issue_hash_content_of_line_in_context"]
-    checker_name = report.main["check_name"]
+    return Report(
+        File(report.checkedFile),
+        report.line,
+        report.column,
+        report.checkerMsg,
+        report.checkerId,
+        severity,
+        report.bugHash,
+        report.analyzerName)
 
-    severity = None
-    if checker_labels:
-        severity_name = checker_labels.severity(checker_name)
-        severity = Severity._NAMES_TO_VALUES[severity_name]
 
+def to_report_data(
+    report: Report
+) -> ReportData:
+    """ Convert a Report object to a Thrift ReportData type. """
+    severity = Severity._NAMES_TO_VALUES[report.severity or 'UNSPECIFIED']
     return ReportData(
-        checkerId=checker_name,
-        bugHash=report_hash,
-        checkedFile=report.file_path,
-        checkerMsg=report.main["description"],
-        line=report.main["location"]["line"],
-        column=report.main["location"]["col"],
+        checkerId=report.checker_name,
+        bugHash=report.report_hash,
+        checkedFile=report.file.path,
+        checkerMsg=report.message,
+        line=report.line,
+        column=report.column,
         severity=severity,
-        bugPathLength=len(events),
-    )
+        analyzerName=report.analyzer_name,
+        bugPathLength=len(report.bug_path_events))

@@ -82,7 +82,7 @@ class TestSkeleton(unittest.TestCase):
         ret, out, _ = codechecker.parse(self._codechecker_cfg)
         self.assertEqual(ret, 2)
 
-        msg = 'did change since the last analysis.'
+        msg = 'changed or missing since the latest analysis'
         self.assertTrue(msg in out,
                         '"' + msg + '" was not found in the parse output')
 

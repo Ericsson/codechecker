@@ -26,8 +26,9 @@ from sqlalchemy.orm import sessionmaker
 
 from codechecker_api_shared.ttypes import DBStatus
 
+from codechecker_report_converter import twodim
+
 from codechecker_common import arg, logger, util, cmd_config
-from codechecker_common.output import twodim
 
 from codechecker_server import instance_manager, server
 from codechecker_server.database import database

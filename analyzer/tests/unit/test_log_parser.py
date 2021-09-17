@@ -15,8 +15,9 @@ import shutil
 import tempfile
 import unittest
 
+from codechecker_report_converter.util import load_json_or_empty
+
 from codechecker_analyzer.buildlog import log_parser
-from codechecker_common.util import load_json_or_empty
 from codechecker_common import skiplist_handler
 
 

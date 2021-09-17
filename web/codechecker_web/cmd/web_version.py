@@ -13,8 +13,10 @@ Defines a subcommand for CodeChecker which prints version information.
 import argparse
 import json
 
+from codechecker_report_converter import twodim
+
 from codechecker_common import logger
-from codechecker_common.output import USER_FORMATS, twodim
+from codechecker_common.output import USER_FORMATS
 
 from codechecker_web.shared import webserver_context, version
 
