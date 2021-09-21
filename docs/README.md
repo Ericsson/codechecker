@@ -37,7 +37,7 @@ macOS (OS X) development environment.
 # Main features
 ## Command line C/C++ Analysis
   * Executes [_Clang-Tidy_](http://clang.llvm.org/extra/clang-tidy/) and [_Clang Static Analyzer_](http://clang-analyzer.llvm.org/) with Cross-Translation Unit analysis, Statistical Analysis (when checkers are available).
-  * Creates the JSON compilation database by wirtapping any build process (e.g. `CodeChecker log -b "make"`)
+  * Creates the JSON compilation database by wiretapping any build process (e.g. `CodeChecker log -b "make"`)
   * Automatically analyzes gcc cross-compiled projects: detecting GCC or Clang compiler configuration and forming the corresponding clang analyzer invocations
   * Incremental analysis: only the changed files and its dependencies need to be reanalized
   * False positive suppression with a possibility to add review comments
@@ -153,7 +153,7 @@ For more information how to use CodeChecker see our [user guide](usage.md).
 * Server Configuration
   * [Configuring Server Logging](logging.md)
   * [Setting up multiple CodeChecker repositories in one server](web/products.md)
-* Continous Integration(CI)
+* Continuous Integration(CI)
   * [Setting up CI gating with Gerrit and Jenkins](jenkins_gerrit_integration.md)
 * Database Configuration
   * [PostgreSQL database backend setup guide](web/postgresql_setup.md)
