@@ -263,6 +263,7 @@ struct DateInterval {
 struct ReportDate {
   1: DateInterval detected,  // Date interval when the report was detected at.
   2: DateInterval fixed,     // Date interval when the report was fixed at.
+  3: DateInterval reviewed,  // Date interval when the report was reviewed.
 }
 
 /**

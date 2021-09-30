@@ -307,6 +307,15 @@ def process_report_filter(session, run_ids, report_filter, cmp_data=None):
                 fixed_after = datetime.fromtimestamp(fixed_at.after)
                 AND.append(Report.fixed_at >= fixed_after)
 
+        reviewed_at = report_filter.date.reviewed
+        if reviewed_at:
+            if reviewed_at.before:
+                reviewed_before = datetime.fromtimestamp(reviewed_at.before)
+                AND.append(ReviewStatus.date <= reviewed_before)
+            if reviewed_at.after:
+                reviewed_after = datetime.fromtimestamp(reviewed_at.after)
+                AND.append(ReviewStatus.date >= reviewed_after)
+
     if report_filter.runHistoryTag:
         OR = []
         for history_date in report_filter.runHistoryTag:

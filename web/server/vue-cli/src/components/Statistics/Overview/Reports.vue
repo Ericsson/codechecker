@@ -64,8 +64,9 @@
                         dateTimeToStr(c.date[1]),
                       'diff-type': 'New'
                     } : {
-                      'fixed-after': dateTimeToStr(c.date[0]),
-                      'fixed-before': dateTimeToStr(c.date[1])
+                      'review-status': ['False positive', 'Intentional'],
+                      'reviewed-after': dateTimeToStr(c.date[0]),
+                      'reviewed-before': dateTimeToStr(c.date[1])
                     })
                   }
                 }"
@@ -200,9 +201,10 @@ export default {
     getResolvedReports(column, date) {
       const rFilter = new ReportFilter(this.reportFilter);
       rFilter.detectionStatus = null;
-      rFilter.reviewStatus = this.activeReviewStatuses;
+      rFilter.reviewStatus = this.resolvedReviewStatuses;
+
       rFilter.date = new ReportDate({
-        fixed: new DateInterval({
+        reviewed: new DateInterval({
           after: this.getUnixTime(date[0]),
           before: this.getUnixTime(date[1])
         })

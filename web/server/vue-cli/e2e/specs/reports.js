@@ -677,6 +677,7 @@ module.exports = {
 
     [
       dateSection.section.detectionDateFilter,
+      dateSection.section.reviewDateFilter,
       dateSection.section.fixDateFilter
     ].forEach(section => {
       section.click("@expansionBtn");
@@ -687,6 +688,34 @@ module.exports = {
     const reportPage = browser.page.report();
     const dateSection = reportPage.section.dateFilters;
     const section = dateSection.section.detectionDateFilter;
+    const fromDateDialog = reportPage.section.fromDateDialog;
+    const toDateDialog = reportPage.section.toDateDialog;
+
+    section.click("@from");
+    reportPage.expect.section(fromDateDialog).to.be.visible.before(5000);
+
+    fromDateDialog
+      .click("@date")
+      .click("@ok");
+
+    section.click("@to");
+    reportPage.expect.section(toDateDialog).to.be.visible.before(5000);
+
+    toDateDialog
+      .click("@date")
+      .click("@ok");
+
+    section.click("@clearBtn");
+
+    reportPage
+      .pause(500)
+      .waitForElementNotPresent("@progressBar");
+  },
+
+  "set review date filters" (browser) {
+    const reportPage = browser.page.report();
+    const dateSection = reportPage.section.dateFilters;
+    const section = dateSection.section.reviewDateFilter;
     const fromDateDialog = reportPage.section.fromDateDialog;
     const toDateDialog = reportPage.section.toDateDialog;
 

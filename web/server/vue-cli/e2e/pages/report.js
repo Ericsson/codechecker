@@ -266,6 +266,7 @@ module.exports = {
       sections: {
         detectionDateFilter:
           createDateRageFilterSection("#detection-date-filter"),
+        reviewDateFilter: createDateRageFilterSection("#review-date-filter"),
         fixDateFilter: createDateRageFilterSection("#fix-date-filter")
       }
     },
