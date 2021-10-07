@@ -944,15 +944,14 @@ def __make_root_file(root_file):
     LOG.info("-" * len(credential_msg))
 
     sha = sha256((username + ':' + password).encode('utf-8')).hexdigest()
-    secret = f"{username}:{sha}"
     with open(root_file, 'w', encoding="utf-8", errors="ignore") as f:
-        LOG.debug("Save root SHA256 '%s'", secret)
-        f.write(secret)
+        LOG.debug("Save root SHA256 '%s'", sha)
+        f.write(sha)
 
     # This file should be only readable by the process owner, and noone else.
     os.chmod(root_file, stat.S_IRUSR)
 
-    return secret
+    return sha
 
 
 def start_server(config_directory, package_data, port, config_sql_server,

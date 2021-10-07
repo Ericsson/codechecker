@@ -376,10 +376,10 @@ class SessionManager:
         """
         Try to authenticate the user against the root username:password's hash.
         """
-        user_name = SessionManager.get_user_name(auth_string)
-        sha = hashlib.sha256(auth_string.encode('utf8')).hexdigest()
 
-        if f"{user_name}:{sha}" == self.__auth_config['method_root']:
+        sha = hashlib.sha256(auth_string.encode('utf8')).hexdigest()
+        if 'method_root' in self.__auth_config and \
+                sha == self.__auth_config['method_root']:
             return {
                 'username': SessionManager.get_user_name(auth_string),
                 'groups': [],
@@ -544,10 +544,9 @@ class SessionManager:
         return None
 
     def __is_root_user(self, user_name):
-        """ Return True if the given user has system permissions. """
-        if self.__auth_config['method_root'].split(":")[0] == user_name:
-            return True
-
+        """
+        Return True if the given user in the database has system permissions.
+        """
         transaction = None
         try:
             # Try the database, if it is connected.
