@@ -105,6 +105,7 @@ IGNORED_OPTIONS_GCC = [
     '-frerun-cse-after-loop',
     '-fs$',
     '-fsched-spec',
+    '-fstack-usage',
     '-fstack-reuse',
     '-fthread-jumps',
     '-ftree-pre',
