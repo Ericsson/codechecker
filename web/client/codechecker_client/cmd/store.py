@@ -680,13 +680,13 @@ def assemble_zip(inputs, zip_file, client):
 
             zipf.write(ftc, zip_target)
 
-        collected_file_paths = []
+        collected_file_paths = set()
         for f, h in file_to_hash.items():
             if h in necessary_hashes or h in file_hash_with_review_status:
                 LOG.debug("File contents for '%s' needed by the server", f)
 
                 file_path = os.path.join('root', f.lstrip('/'))
-                collected_file_paths.append(f)
+                collected_file_paths.add(f)
 
                 try:
                     zipf.getinfo(file_path)
