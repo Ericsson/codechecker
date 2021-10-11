@@ -6,7 +6,7 @@ import zipfile
 from concurrent.futures import ProcessPoolExecutor
 from git import Repo
 from git.exc import InvalidGitRepositoryError
-from typing import Dict, List, Optional
+from typing import Dict, Iterable, Optional
 
 from codechecker_common.logger import get_logger
 
@@ -74,7 +74,7 @@ def __get_blame_info(file_path: str):
 
 
 def __collect_blame_info_for_files(
-    file_paths: List[str],
+    file_paths: Iterable[str],
     zip_iter=map
 ) -> FileBlameInfo:
     """ Collect blame information for the given file paths. """
@@ -88,7 +88,7 @@ def __collect_blame_info_for_files(
 
 def assemble_blame_info(
     zip_file: zipfile.ZipFile,
-    file_paths: List[str]
+    file_paths: Iterable[str]
 ) -> bool:
     """
     Collect and write blame information for the given files to the zip file.
