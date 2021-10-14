@@ -40,6 +40,13 @@ class GetCommitUrlTestCase(unittest.TestCase):
                 'https://user@gerrit.ericsson.se/a/team/proj.git',
                 self.__git_commit_urls))
 
+        self.assertEqual(
+            "https://gerrit.ericsson.se/"
+            "gitweb?p=team/proj.git;a=commit;h=$commit",
+            get_commit_url(
+                'https://gerrit.ericsson.se/a/team/proj.git',
+                self.__git_commit_urls))
+
     def test_bitbucket_url(self):
         """ Get commit url for a bitbucket repository. """
         self.assertEqual(
