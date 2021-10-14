@@ -978,7 +978,8 @@ def get_commit_url(
         if m:
             url = git_commit_url["url"]
             for key, value in m.groupdict().items():
-                url = url.replace(f"${key}", value)
+                if value is not None:
+                    url = url.replace(f"${key}", value)
 
             return url
 
