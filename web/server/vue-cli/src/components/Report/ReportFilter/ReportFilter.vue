@@ -247,6 +247,15 @@
 
                 <v-divider />
 
+                <review-date-filter
+                  id="review-date-filter"
+                  ref="filters"
+                  :namespace="namespace"
+                  @update:url="updateUrl"
+                />
+
+                <v-divider />
+
                 <fix-date-filter
                   id="fix-date-filter"
                   ref="filters"
@@ -320,6 +329,7 @@ import {
   FilePathFilter,
   FixDateFilter,
   ReportHashFilter,
+  ReviewDateFilter,
   ReviewStatusFilter,
   SeverityFilter,
   SourceComponentFilter,
@@ -350,6 +360,7 @@ export default {
     DetectionDateFilter,
     FilePathFilter,
     FixDateFilter,
+    ReviewDateFilter,
     SourceComponentFilter,
     CheckerNameFilter,
     CheckerMessageFilter,

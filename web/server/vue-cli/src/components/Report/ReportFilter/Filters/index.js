@@ -11,6 +11,7 @@ import ComparedToRunFilter from "./ComparedToRunFilter";
 import ReviewStatusFilter from "./ReviewStatusFilter";
 import DetectionStatusFilter from "./DetectionStatusFilter";
 import FixDateFilter from "./FixDateFilter";
+import ReviewDateFilter from "./ReviewDateFilter";
 import SeverityFilter from "./SeverityFilter";
 import DetectionDateFilter from "./DetectionDateFilter";
 import FilePathFilter from "./FilePathFilter";
@@ -33,6 +34,7 @@ export {
   ReviewStatusFilter,
   DetectionStatusFilter,
   FixDateFilter,
+  ReviewDateFilter,
   SeverityFilter,
   DetectionDateFilter,
   FilePathFilter,
