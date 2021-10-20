@@ -1,10 +1,16 @@
 import os
 from collections import defaultdict
 from itertools import chain
-from typing import Dict, Iterable, List, Tuple, Union
+from typing import Dict, Iterable, List, Optional, Tuple, Union
 from codechecker_common.util import load_json_or_empty
 
 
+# TODO: Most of the methods of this class get an optional analyzer name. If
+# None is given to these functions then labels of any analyzer's checkers is
+# taken into account. This the union of all analyzers' checkers is a bad
+# approach because different analyzers may theoretically have checkers with the
+# same name. Fortunately this is not the case with the current analyzers'
+# checkers, so now it works properly.
 class CheckerLabels:
     # These labels should be unique by each analyzer. If this uniqueness is
     # violated then an error is thrown during label JSON file parse. The
@@ -125,15 +131,15 @@ class CheckerLabels:
                             f'Label "severity" should be unique for checker '
                             '{checker}.')
 
-    def __get_analyzer_data(self, analyzers: Iterable[str]):
-        for analyzer, checkers in self.__data.items():
-            if analyzers is None or analyzer in analyzers:
-                yield analyzer, checkers
+    def __get_analyzer_data(self, analyzer: Optional[str] = None):
+        for a, c in self.__data.items():
+            if analyzer is None or a == analyzer:
+                yield a, c
 
     def checkers_by_labels(
         self,
         filter_labels: Iterable[str],
-        analyzers: Iterable[str] = None
+        analyzer: Optional[str] = None
     ) -> List[str]:
         """
         Returns a list of checkers that have at least one of the specified
@@ -141,14 +147,14 @@ class CheckerLabels:
 
         filter_labels -- A string list which contains labels with specified
                          values. E.g. ['profile:default', 'severity:high'].
-        analyzers -- A list of analyzers among which checkers are searched.
-                     By default all analyzers are searched.
+        analyzer -- An optional analyzer name of which checkers are searched.
+                    By default all analyzers are searched.
         """
         collection = []
 
         filter_labels = set(map(self.__get_label_key_value, filter_labels))
 
-        for _, checkers in self.__get_analyzer_data(analyzers):
+        for _, checkers in self.__get_analyzer_data(analyzer):
             for checker, labels in checkers.items():
                 labels = set(map(self.__get_label_key_value, labels))
 
@@ -161,7 +167,7 @@ class CheckerLabels:
         self,
         checker: str,
         label: str,
-        analyzers: Iterable[str] = None
+        analyzer: Optional[str] = None
     ) -> Union[str, List[str]]:
         """
         If a label has unique constraint then this function retuns the value
@@ -174,8 +180,8 @@ class CheckerLabels:
         """
         labels = chain.from_iterable([])
 
-        for analyzer, _ in self.labels_of_checker(checker, analyzers):
-            if analyzers is None or analyzer in analyzers:
+        for a, _ in self.labels_of_checker(checker, analyzer):
+            if analyzer is None or a == analyzer:
                 labels = chain(labels, filter(
                     lambda lab: lab[0] == label,
                     self.labels_of_checker(checker)))
@@ -191,18 +197,18 @@ class CheckerLabels:
         # cover this case properly.
         return list(set(map(lambda value: value[1], labels)))
 
-    def severity(self, checker: str, analyzers: Iterable[str] = None) -> str:
+    def severity(self, checker: str, analyzer: Optional[str] = None) -> str:
         """
         Shorthand for the following call:
-        checker_labels.label_of_checker(checker, 'severity', analyzers)
+        checker_labels.label_of_checker(checker, 'severity', analyzer)
         """
-        return self.label_of_checker(checker, 'severity', analyzers)
+        return self.label_of_checker(checker, 'severity', analyzer)
 
     def labels_of_checker(
         self,
         checker: str,
-        analyzers: Iterable[str] = None
-    ) -> List[str]:
+        analyzer: Optional[str] = None
+    ) -> List[Tuple[str, str]]:
         """
         Return the list of labels of a checker. The list contains (label,
         value) pairs. If the checker name is not found in the label config file
@@ -211,7 +217,7 @@ class CheckerLabels:
         """
         labels = []
 
-        for _, checkers in self.__get_analyzer_data(analyzers):
+        for _, checkers in self.__get_analyzer_data(analyzer):
             c = checker
 
             if c not in checkers:
@@ -233,24 +239,24 @@ class CheckerLabels:
         """
         return self.__descriptions.get(label)
 
-    def checkers(self, analyzers: Iterable[str] = None) -> List[str]:
+    def checkers(self, analyzer: Optional[str] = None) -> List[str]:
         """
         Return the list of available checkers.
         """
         collection = []
 
-        for _, checkers in self.__get_analyzer_data(analyzers):
+        for _, checkers in self.__get_analyzer_data(analyzer):
             collection.extend(checkers.keys())
 
         return collection
 
-    def labels(self, analyzers: Iterable[str] = None) -> List[str]:
+    def labels(self, analyzer: Optional[str] = None) -> List[str]:
         """
         Returns a list of occurring labels.
         """
         collection = set()
 
-        for _, checkers in self.__get_analyzer_data(analyzers):
+        for _, checkers in self.__get_analyzer_data(analyzer):
             for labels in checkers.values():
                 collection.update(map(
                     lambda x: self.__get_label_key_value(x)[0], labels))
@@ -260,7 +266,7 @@ class CheckerLabels:
     def occurring_values(
         self,
         label: str,
-        analyzers: Iterable[str] = None
+        analyzer: Optional[str] = None
     ) -> List[str]:
         """
         Return the list of values belonging to the given label which were used
@@ -268,7 +274,7 @@ class CheckerLabels:
         """
         values = set()
 
-        for _, checkers in self.__get_analyzer_data(analyzers):
+        for _, checkers in self.__get_analyzer_data(analyzer):
             for labels in checkers.values():
                 for lab, value in map(self.__get_label_key_value, labels):
                     if lab == label:
