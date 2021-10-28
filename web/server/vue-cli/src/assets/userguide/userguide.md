@@ -18,6 +18,7 @@ Table of Contents
   * [Managing products](#managing-products)
     * [Add new product](#add-new-product)
       * [Disable review status change](#disable-review-status-change)
+      * [Confidentiality classification](#confidentiality-classification)
     * [Edit product configuration](#edit-product-configuration)
     * [Remove a product](#remove-a-product)
   * [Managing permissions](#managing-permissions)
@@ -88,6 +89,8 @@ not between multiple products.
 
 In the product list table you can see the following information:
 - `Product name`: display name of the product.
+- `Confidentiality classification`: The confidentiality category this product
+belongs to.
 - `Description`: short description of the product.
 - `Administrator names`: product admins have the right to allow access for
 individual people or LDAP groups. 
@@ -121,6 +124,14 @@ inline source code comments. This can be configured on the product editing
 window by administrators of a product.
 
 ![Disable review status change](images/products/disable_review_status_change.png)
+
+#### Confidentiality classification
+The confidentiality level of the product can be set here. There are three options:
+* Confidential classified
+* Internal classified
+* Open classified
+
+![Confidentiality classification](images/products/confidentiality.png)
 
 ### Edit product configuration
 Editing a product configuration is done through the pencil icon which can be

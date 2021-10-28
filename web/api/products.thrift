@@ -9,6 +9,11 @@ include "codechecker_api_shared.thrift"
 namespace py ProductManagement_v6
 namespace js codeCheckerProductManagement_v6
 
+enum Confidentiality {
+  CONFIDENTIAL,
+  INTERNAL,
+  OPEN
+}
 
 struct DatabaseConnection {
   1:          string engine,         // The database engine, such as "sqlite" or "postgresql".
@@ -28,6 +33,7 @@ struct ProductConfiguration {
   5: optional DatabaseConnection connection,
   6:          i64                runLimit,
   7: optional bool               isReviewStatusChangeDisabled,
+  8: optional Confidentiality    confidentiality
 }
 typedef list<ProductConfiguration> ProductConfigurations
 
@@ -47,6 +53,7 @@ struct Product {
   11: i64              runLimit,                        // Number of allowed runs for this product.
   12: list<string>     admins,                          // Administrators of this product.
   13: list<string>     runStoreInProgress,              // List of run names which are in progress.
+  14: optional Confidentiality confidentiality          // Confidentiality classification of the product
 }
 typedef list<Product> Products
 

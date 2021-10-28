@@ -95,6 +95,7 @@ module.exports = {
         displayName: "Test",
         description: "Test",
         runLimit: 500,
+        confidentiality: "Internal classified",
         disableReviewStatusChange: true,
         engine: "sqlite",
         dbFile: "test.sqlite"
@@ -108,6 +109,7 @@ module.exports = {
         endpoint: "edit",
         displayName: "Test 2",
         description: "Renamed",
+        confidentiality: "Open classified",
         runLimit: 600,
         disableReviewStatusChange: false
       })

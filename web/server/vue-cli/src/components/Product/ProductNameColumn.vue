@@ -17,6 +17,8 @@
 
     <v-list-item-content>
       <v-list-item-title>
+        <confidentiality-icon :value="product.confidentiality" small />
+
         <span
           v-if="product.databaseStatus !== DBStatus.OK || !product.accessible"
           :style="{ 'text-decoration': 'line-through' }"
@@ -96,6 +98,7 @@
 <script>
 import { DBStatus } from "@cc/shared-types";
 import { StrToColorMixin } from "@/mixins";
+import { ConfidentialityIcon } from "@/components/Icons";
 import { defaultReportFilterValues } from "@/components/Report/ReportFilter";
 
 export default {
@@ -107,6 +110,7 @@ export default {
       return endpoint.charAt(0).toUpperCase();
     }
   },
+  components: { ConfidentialityIcon },
   mixins: [ StrToColorMixin ],
   props: {
     product: { type: Object, required: true }
@@ -123,6 +127,13 @@ export default {
           icon: "mdi-chart-line", query: defaultReportFilterValues },
       ]
     };
+  },
+  computed: {
+    confidentialityTitle() {
+      return this.confidentialityFromCodeToString(
+        this.product.confidentiality
+      );
+    }
   },
   methods: {
     dbStatusFromCodeToString(dbStatus) {
