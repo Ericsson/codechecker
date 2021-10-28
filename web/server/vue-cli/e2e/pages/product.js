@@ -263,7 +263,7 @@ module.exports = {
         description: "textarea[name='description']",
         runLimit: "input[name='run-limit']",
         disableReviewStatusChange: ".v-input--checkbox",
-        confidentiality: ".v-select__selection",
+        confidentiality: ".select-confidentiality",
         sqlite: ".v-radio:nth-child(1)",
         postgresql: ".v-radio:nth-child(2)",
         dbFile: "input[name='db-file']",
