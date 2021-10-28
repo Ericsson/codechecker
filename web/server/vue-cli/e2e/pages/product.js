@@ -9,8 +9,8 @@ const commands = {
       .to.be.visible.before(5000);
 
     this.section.editAnnouncementDialog
-      .clearAndSetValue("@input", value, this.section.editAnnouncementDialog)
-      .click("@confirmBtn");
+      .clearAndSetValue("@input", value, this.section.editAnnouncementDialog);
+    this.section.editAnnouncementDialog.click("@confirmBtn");
 
     this.expect.section("@editAnnouncementDialog")
       .to.not.be.present.before(5000);
@@ -218,8 +218,8 @@ const commands = {
 };
 
 module.exports = {
-  url: function() { 
-    return this.api.launchUrl + '/'; 
+  url: function() {
+    return this.api.launchUrl + '/';
   },
   commands: [ commands ],
   elements: {

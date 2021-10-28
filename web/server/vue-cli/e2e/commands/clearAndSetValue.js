@@ -7,10 +7,11 @@ module.exports.command = function (selector, value, section) {
   return section
     .click(selector)
     .getValue(selector, function (result) {
-      for (c in result.value) {
-        section.setValue(selector, this.Keys.BACK_SPACE);
-      }
-
+      section.setValue(selector, [
+        this.Keys.CONTROL,
+        "a",
+        this.Keys.DELETE,
+      ])
       section.setValue(selector, value);
     });
 };
