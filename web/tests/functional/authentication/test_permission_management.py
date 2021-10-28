@@ -104,7 +104,9 @@ class PermissionManagement(unittest.TestCase):
         Tests if server side supported system permissions changed or not.
         """
         sys_permissions = self._root_auth_client.getPermissions('SYSTEM')
-        expected_permissions = [Permission.SUPERUSER]
+        expected_permissions = [
+            Permission.SUPERUSER,
+            Permission.PERMISSION_VIEW]
         self.assertSetEqual(
             set(expected_permissions), set(sys_permissions),
             "SYSTEM permission set in the database is different.")

@@ -9,13 +9,14 @@
 Handles the management of authentication sessions on the server's side.
 """
 
-
-from datetime import datetime
 import hashlib
 import json
 import os
 import re
 import uuid
+
+from datetime import datetime
+from typing import Optional
 
 from codechecker_common.logger import get_logger
 from codechecker_common.util import load_json_or_empty
@@ -25,6 +26,8 @@ from codechecker_web.shared.version import SESSION_COOKIE_NAME as _SCN
 
 from .database.config_db_model import Session as SessionRecord
 from .database.config_db_model import SystemPermission
+from .permissions import SUPERUSER
+
 
 UNSUPPORTED_METHODS = []
 
@@ -331,6 +334,18 @@ class SessionManager:
             "error": self.__auth_config.get('realm_error')
         }
 
+    @property
+    def default_superuser_name(self) -> Optional[str]:
+        """ Get default superuser name. """
+        root = self.__auth_config['method_root'].split(":")
+
+        # Previously the root file doesn't contain the user name. In this case
+        # we will return with no user name.
+        if len(root) <= 1:
+            return None
+
+        return root[0]
+
     def set_database_connection(self, connection):
         """
         Set the instance's database connection to use in fetching
@@ -554,6 +569,7 @@ class SessionManager:
             transaction = self.__database_connection()
             system_permission = transaction.query(SystemPermission) \
                 .filter(SystemPermission.name == user_name) \
+                .filter(SystemPermission.permission == SUPERUSER.name) \
                 .limit(1).one_or_none()
             return True if system_permission else False
         except Exception as e:

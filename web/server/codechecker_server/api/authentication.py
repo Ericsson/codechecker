@@ -13,17 +13,20 @@ Handle Thrift requests for authentication.
 import json
 import codechecker_api_shared
 
-from codechecker_api.Authentication_v6.ttypes import AuthorisationList, \
-    HandshakeInformation, SessionTokenData
+from collections import defaultdict
+
+from codechecker_api.Authentication_v6.ttypes import AccessControl, \
+    AuthorisationList, HandshakeInformation, Permissions, SessionTokenData
 
 from codechecker_common.logger import get_logger
 
 from codechecker_server.profiler import timeit
 
-from ..database.config_db_model import Session
+from ..database.config_db_model import Product, ProductPermission, Session, \
+    SystemPermission
 from ..database.database import DBSession
-from ..permissions import handler_from_scope_params as make_handler
-from ..permissions import require_manager, require_permission
+from ..permissions import handler_from_scope_params as make_handler, \
+    require_manager, require_permission
 from ..server import permissions
 from ..session_manager import generate_session_token
 
@@ -51,6 +54,24 @@ class ThriftAuthHandler:
                 "The server must be start by using privilaged access to "
                 "execute this action.")
 
+    def __has_permission(self, permission) -> bool:
+        """ True if the current user has given permission rights. """
+        if self.__manager.is_enabled and not self.__auth_session:
+            return False
+
+        return self.hasPermission(permission, None)
+
+    def __require_permission_view(self):
+        """
+        Checks if the curret user has PERMISSION_VIEW rights. Throws an
+        exception if it is not.
+        """
+        permission = codechecker_api_shared.ttypes.Permission.PERMISSION_VIEW
+        if not self.__has_permission(permission):
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
+                "You are not authorized to execute this action.")
+
     @timeit
     def checkAPIVersion(self):
         # This is a deliberate empty call which if succeeds, marks for the
@@ -75,6 +96,52 @@ class ThriftAuthHandler:
     @timeit
     def getAcceptedAuthMethods(self):
         return ["Username:Password"]
+
+    @timeit
+    def getAccessControl(self):
+        self.__require_permission_view()
+
+        with DBSession(self.__config_db) as session:
+            global_permissions = Permissions(
+                user=defaultdict(list),
+                group=defaultdict(list))
+
+            q = session.query(SystemPermission).all()
+            for system_permission in q:
+                name = system_permission.name
+                perm = system_permission.permission
+                if system_permission.is_group:
+                    global_permissions.group[name].append(perm)
+                else:
+                    global_permissions.user[name].append(perm)
+
+            product_permissions = {}
+            q = session \
+                .query(Product.endpoint, ProductPermission) \
+                .outerjoin(Product,
+                           ProductPermission.product_id == Product.id) \
+                .all()
+
+            for endpoint, product_permission in q:
+                if endpoint not in product_permissions:
+                    product_permissions[endpoint] = Permissions(
+                        user=defaultdict(list),
+                        group=defaultdict(list))
+
+                name = product_permission.name
+                perm = product_permission.permission
+                if product_permission.is_group:
+                    product_permissions[endpoint].group[name].append(perm)
+                else:
+                    product_permissions[endpoint].user[name].append(perm)
+
+        default_superuser = self.__manager.default_superuser_name
+        if default_superuser:
+            global_permissions.user[default_superuser].append("SUPERUSER")
+
+        return AccessControl(
+            globalPermissions=global_permissions,
+            productPermissions=product_permissions)
 
     @timeit
     def performLogin(self, auth_method, auth_string):

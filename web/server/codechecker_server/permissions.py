@@ -698,6 +698,11 @@ SUPERUSER = _create_permission(SystemPermission, 'SUPERUSER',
                                default_enable=False,
                                manages_self=True)
 
+PERMISSION_VIEW = _create_permission(
+    SystemPermission, 'PERMISSION_VIEW',
+    default_enable=False,
+    managed_by=[SUPERUSER])
+
 # -- Product-level permissions --
 
 PRODUCT_ADMIN = _create_permission(ProductPermission, 'PRODUCT_ADMIN',
