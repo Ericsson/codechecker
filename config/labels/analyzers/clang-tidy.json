@@ -109,9 +109,6 @@
     "android-comparison-in-temp-failure-retry": [
 
     ],
-    "AddressSanitizer": [
-      "severity:HIGH"
-    ],
     "boost-use-to-string": [
       "profile:sensitive",
       "profile:extreme",
@@ -1142,9 +1139,6 @@
     ],
     "llvmlibc-restrict-system-libc-headers": [
       "severity:LOW"
-    ],
-    "MemorySanitizer": [
-      "severity:HIGH"
     ],
     "misc-argument-comment": [
       "severity:LOW",

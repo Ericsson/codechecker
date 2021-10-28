@@ -826,12 +826,6 @@
       "sei-cert:pos33-c",
       "severity:MEDIUM"
     ],
-    "ThreadSanitizer": [
-      "severity:HIGH"
-    ],
-    "UndefinedBehaviorSanitizer": [
-      "severity:HIGH"
-    ],
     "unix.API": [
       "profile:default",
       "profile:sensitive",

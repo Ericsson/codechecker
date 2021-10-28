@@ -1,0 +1,9 @@
+{
+  "analyzer": "msan",
+  "labels": {
+    "MemorySanitizer": [
+      "doc_url:https://clang.llvm.org/docs/MemorySanitizer.html",
+      "severity:HIGH"
+    ]
+  }
+}
