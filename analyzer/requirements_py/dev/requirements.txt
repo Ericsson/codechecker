@@ -4,7 +4,7 @@ pycodestyle==2.7.0
 psutil==5.8.0
 portalocker==2.2.1
 pylint==2.8.2
-mkdocs==1.1.2
+mkdocs==1.2.3
 PyYAML==5.4.1
 mypy_extensions==0.4.3
 coverage==5.5.0
