@@ -27,7 +27,7 @@
         mdi-chevron-left
       </v-icon>
     </v-btn>
-    
+
     <div>
       {{ value }}
 

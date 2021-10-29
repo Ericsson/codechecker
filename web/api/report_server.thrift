@@ -422,6 +422,11 @@ struct CleanupPlanFilter {
   3: bool         isOpen,
 }
 
+struct Checker {
+  1: string analyzerName,
+  2: string checkerId,
+}
+
 service codeCheckerDBAccess {
 
   // Gives back all analyzed runs.
@@ -595,8 +600,17 @@ service codeCheckerDBAccess {
                      throws(1: codechecker_api_shared.RequestFailed requestError),
 
   // get the md documentation for a checker
+  // DEPRECATED. Use getCheckerLabels() instead which contains checker
+  // documentation URL.
   string getCheckerDoc(1: string checkerId)
                        throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // Return the list of labels to each checker.
+  // The inner list is empty if no labels belong to that checker or the checker
+  // doesn't exist.
+  // The inner lists have the following form: ['label1:value1',
+  // 'label1:value2', 'label2:value3'].
+  list<list<string>> getCheckerLabels(1: list<Checker> checkers)
 
   // returns the CodeChecker version that is running on the server
   // !DEPRECATED Use ServerInfo API to get the package version.
@@ -798,7 +812,7 @@ service codeCheckerDBAccess {
   AnalyzerStatisticsData getAnalysisStatistics(1: i64 runId,
                                                2: i64 runHistoryId)
                                                throws (1: codechecker_api_shared.RequestFailed requestError),
-  
+
   // Export data from the server
   // PERMISSION: PRODUCT_ACCESS
   ExportData exportData(1: RunFilter runFilter)

@@ -157,6 +157,16 @@ class TestCheckerLabels(unittest.TestCase):
             ['security'])
 
         self.assertEqual(
+            cl.label_of_checker(
+                'bugprone-undelegated-constructor', 'severity', 'clang-tidy'),
+            'MEDIUM')
+
+        self.assertEqual(
+            cl.label_of_checker(
+                'bugprone-undelegated-constructor', 'severity', 'clangsa'),
+            'UNSPECIFIED')
+
+        self.assertEqual(
             sorted(cl.labels_of_checker('globalChecker')),
             sorted([
                 ('profile', 'security'),
@@ -169,3 +179,41 @@ class TestCheckerLabels(unittest.TestCase):
         self.assertEqual(
             sorted(cl.occurring_values('profile')),
             sorted(['default', 'extreme', 'security', 'sensitive']))
+
+        self.assertEqual(
+            cl.severity('bugprone-undelegated-constructor'),
+            'MEDIUM')
+
+        self.assertEqual(
+            cl.severity('bugprone-undelegated-constructor', 'clang-tidy'),
+            'MEDIUM')
+
+        self.assertEqual(
+            cl.severity('bugprone-undelegated-constructor', 'clangsa'),
+            'UNSPECIFIED')
+
+        self.assertEqual(
+            cl.get_description('profile'), {
+                'default': 'Default documentation',
+                'sensitive': 'Sensitive documentation',
+                'extreme': 'Extreme documentation'})
+
+        self.assertEqual(
+            sorted(cl.checkers()),
+            sorted([
+                'globalChecker',
+                'core.DivideZero',
+                'core.NonNullParamChecker',
+                'core.builtin.NoReturnFunctions',
+                'globalChecker',
+                'bugprone-undelegated-constructor',
+                'google-objc-global-variable-declaration',
+                'cert-err34-c']))
+
+        self.assertEqual(
+            sorted(cl.checkers('clang-tidy')),
+            sorted([
+                'globalChecker',
+                'bugprone-undelegated-constructor',
+                'google-objc-global-variable-declaration',
+                'cert-err34-c']))

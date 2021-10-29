@@ -18,35 +18,58 @@
         </v-btn>
       </v-card-title>
 
-      <v-card-text class="pa-0">
-        <!-- eslint-disable vue/no-v-html -->
-        <v-container v-html="docs[checkerName]" />
+      <v-card-text>
+        <p v-if="labels.length === 0" class="pt-4">
+          <strong>No labels to this checker.</strong>
+        </p>
+        <v-row
+          v-for="val in formattedLabels"
+          v-else
+          :key="val[0]"
+        >
+          <v-col cols="4" align-self="center">
+            <strong>{{ formatLabel(val[0]) }}</strong>
+          </v-col>
+          <v-col>
+            <severity-icon
+              v-if="val[0] === 'severity'"
+              :status="val[1]"
+            />
+            <a
+              v-else-if="val[0] === 'doc_url'"
+              :href="val[1]"
+              target="_blank"
+            >
+              {{ val[1] }}
+            </a>
+            <span v-else>
+              {{ val[1] }}
+            </span>
+          </v-col>
+        </v-row>
       </v-card-text>
     </v-card>
   </v-dialog>
 </template>
 
 <script>
-import hljs from "highlight.js";
-import "highlight.js/styles/default.css";
-import marked from "marked";
 
 import { ccService, handleThriftError } from "@cc-api";
+import { Checker, Severity } from "@cc/report-server-types";
+import { SeverityIcon } from "@/components/Icons";
 
 export default {
   name: "CheckerDocumentationDialog",
+  components: {
+    SeverityIcon
+  },
   props: {
     value: { type: Boolean, required: true },
-    checkerName: { type: String, default: null },
+    checker: { type: Checker, default: null }
   },
   data() {
     return {
-      docs: {},
-      markedOptions: {
-        highlight: function(code) {
-          return hljs.highlightAuto(code).value;
-        }
-      }
+      labels: []
     };
   },
 
@@ -58,6 +81,33 @@ export default {
       set(val) {
         this.$emit("update:value", val);
       }
+    },
+
+    formattedLabels() {
+      const labels = {};
+
+      for (const label of this.labels) {
+        var pos = label.indexOf(":");
+        var key = label.substring(0, pos);
+        var value = label.substring(pos + 1);
+
+        if (key in labels)
+          labels[key].push(value);
+        else
+          labels[key] = [ value ];
+      }
+
+      if ("severity" in labels)
+        labels["severity"] = Severity[labels["severity"][0]];
+      if ("doc_url" in labels)
+        labels["doc_url"] = labels["doc_url"][0];
+
+      for (const key in labels) {
+        if (Array.isArray(labels[key]))
+          labels[key] = labels[key].join(", ");
+      }
+
+      return Object.entries(labels).sort();
     }
   },
 
@@ -69,11 +119,23 @@ export default {
 
   methods: {
     getCheckerDoc() {
-      if (!this.dialog || this.docs[this.checkerName]) return;
+      ccService.getClient().getCheckerLabels([ this.checker ],
+        handleThriftError(labels => this.labels = labels[0]));
+    },
 
-      ccService.getClient().getCheckerDoc(this.checkerName,
-        handleThriftError(doc => this.$set(
-          this.docs, this.checkerName, marked(doc, this.markedOptions))));
+    formatLabel(key) {
+      switch (key) {
+      case "profile":
+        return "Profile";
+      case "severity":
+        return "Severity";
+      case "doc_url":
+        return "Documentation URL";
+      case "guideline":
+        return "Covered guideline";
+      default:
+        return key;
+      }
     }
   }
 };
