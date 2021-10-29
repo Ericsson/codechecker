@@ -42,7 +42,7 @@ jobs:
 
       - name: Create the pypi package
         run: |
-          BUILD_UI_DIST=NO make dist
+          make dist
 
       - uses: actions/upload-artifact@master
         with:
