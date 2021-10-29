@@ -1030,8 +1030,6 @@ class ThriftRequestHandler:
                  product,
                  auth_session,
                  config_database,
-                 checker_md_docs,
-                 checker_md_docs_map,
                  package_version,
                  context):
 
@@ -1043,8 +1041,6 @@ class ThriftRequestHandler:
         self._product = product
         self._auth_session = auth_session
         self._config_database = config_database
-        self.__checker_md_docs = checker_md_docs
-        self.__checker_doc_map = checker_md_docs_map
         self.__package_version = package_version
         self._Session = Session
         self._context = context
@@ -1998,37 +1994,16 @@ class ThriftRequestHandler:
          - checkerId
         """
 
-        missing_doc = "No documentation found for checker: " + checkerId + \
-                      "\n\nPlease refer to the documentation at the "
+        return ""
 
-        if "." in checkerId:
-            sa_link = "http://clang-analyzer.llvm.org/available_checks.html"
-            missing_doc += "[ClangSA](" + sa_link + ")"
-        elif "-" in checkerId:
-            tidy_link = "http://clang.llvm.org/extra/clang-tidy/checks/" + \
-                checkerId + ".html"
-            missing_doc += "[ClangTidy](" + tidy_link + ")"
-        missing_doc += " homepage."
-
-        try:
-            md_file = self.__checker_doc_map.get(checkerId)
-            if md_file:
-                md_file = os.path.join(self.__checker_md_docs, md_file)
-                try:
-                    with open(md_file, 'r',
-                              encoding='utf-8',
-                              errors='ignore') as md_content:
-                        missing_doc = md_content.read()
-                except (IOError, OSError):
-                    LOG.warning("Failed to read checker documentation: %s",
-                                md_file)
-
-            return missing_doc
-
-        except Exception as ex:
-            msg = str(ex)
-            raise codechecker_api_shared.ttypes.RequestFailed(
-                codechecker_api_shared.ttypes.ErrorCode.IOERROR, msg)
+    @exc_to_thrift_reqfail
+    @timeit
+    def getCheckerLabels(self, checkers):
+        return [
+            list(map(lambda x: f'{x[0]}:{x[1]}',
+                     self._context.checker_labels.labels_of_checker(
+                        checker.checkerId, checker.analyzerName)))
+            for checker in checkers]
 
     @exc_to_thrift_reqfail
     @timeit

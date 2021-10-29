@@ -963,15 +963,8 @@ def server_init_start(args):
             sys.exit(1)
 
     # Start database viewer.
-    checker_md_docs = os.path.join(context.doc_root, 'checker_md_docs')
-    checker_md_docs_map = os.path.join(checker_md_docs,
-                                       'checker_doc_map.json')
-    checker_md_docs_map = util.load_json_or_empty(checker_md_docs_map, {})
-
     package_data = {'www_root': context.www_root,
                     'doc_root': context.doc_root,
-                    'checker_md_docs': checker_md_docs,
-                    'checker_md_docs_map': checker_md_docs_map,
                     'version': context.package_git_tag}
 
     try:

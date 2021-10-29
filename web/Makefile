@@ -12,7 +12,6 @@ CC_BUILD_WEB_DIR = $(CC_BUILD_DIR)/www
 CC_BUILD_PLUGIN_DIR = $(CC_BUILD_DIR)/plugin
 CC_BUILD_BIN_DIR = $(CC_BUILD_DIR)/bin
 CC_BUILD_LIB_DIR = $(CC_BUILD_DIR)/lib/python3
-CC_BUILD_DOCS_DIR = $(CC_BUILD_WEB_DIR)/docs
 CC_BUILD_SCRIPTS_DIR = $(CC_BUILD_WEB_DIR)/scripts
 CC_BUILD_API_DIR = $(CC_BUILD_SCRIPTS_DIR)/codechecker-api
 CC_BUILD_WEB_PLUGINS_DIR = $(CC_BUILD_SCRIPTS_DIR)/plugins
@@ -75,11 +74,6 @@ package_dir_structure:
 	mkdir -p $(CC_BUILD_BIN_DIR) && \
 	mkdir -p $(CC_BUILD_LIB_DIR)
 
-package_docs:
-	mkdir -p $(CC_BUILD_DOCS_DIR) && \
-	mkdir -p $(CC_BUILD_DOCS_DIR)/checker_md_docs && \
-	cp -r $(ROOT)/docs/web/checker_docs/* $(CC_BUILD_DOCS_DIR)/checker_md_docs/
-
 $(DIST_DIR):
 ifeq ($(BUILD_UI_DIST),YES)
 	cd $(CC_SERVER)/vue-cli && \
@@ -91,8 +85,9 @@ endif
 # This target should be used from the top level Makefile to build the package
 # together with the analyzer part. This way we will not build plist-to-html
 # multiple times.
-package_web: check_codechecker_api_version check_dist package_dir_structure package_docs $(DIST_DIR)
+package_web: check_codechecker_api_version check_dist package_dir_structure $(DIST_DIR)
 ifeq ($(BUILD_UI_DIST),YES)
+	mkdir -p $(CC_BUILD_WEB_DIR)
 	cp -r $(DIST_DIR)/* $(CC_BUILD_WEB_DIR)
 endif
 
