@@ -1,0 +1,9 @@
+{
+  "analyzer": "asan",
+  "labels": {
+    "AddressSanitizer": [
+      "doc_url:https://clang.llvm.org/docs/AddressSanitizer.html",
+      "severity:HIGH"
+    ]
+  }
+}
