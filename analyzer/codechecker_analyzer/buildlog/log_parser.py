@@ -1178,7 +1178,7 @@ def extend_compilation_database_entries(compilation_database):
 
             entry['command'] = ' '.join(cmd)
 
-            if '@' in entry['file']:
+            if entry['file'].startswith('@'):
                 for source_file in source_files:
                     new_entry = dict(entry)
                     new_entry['file'] = source_file
