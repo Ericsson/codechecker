@@ -526,3 +526,29 @@ class LogParserTest(unittest.TestCase):
                           if b.source == b_file_path][0]
         self.assertEqual(len(b_build_action.analyzer_options), 1)
         self.assertEqual(b_build_action.analyzer_options[0], '-DVARIABLE=some')
+
+    def test_source_file_contains_at_sign(self):
+        """
+        Test source file which path contains '@' sign in path.
+
+        Source file path can contain '@' sign which doesn't mean it is a
+        response file.
+        """
+        with tempfile.TemporaryDirectory(suffix='@') as tmp_dir:
+            src_file_path = shutil.copy(self.src_file_path, tmp_dir)
+
+            with open(self.compile_command_file_path, "w",
+                      encoding="utf-8", errors="ignore") as f:
+                f.write(json.dumps([dict(
+                    directory=tmp_dir,
+                    command=f"g++ {src_file_path}",
+                    file=src_file_path
+                )]))
+
+        build_actions, _ = log_parser.parse_unique_log(load_json_or_empty(
+            self.compile_command_file_path), self.__this_dir)
+
+        self.assertEqual(len(build_actions), 1)
+
+        build_action = build_actions[0]
+        self.assertEqual(build_action.source, src_file_path)
