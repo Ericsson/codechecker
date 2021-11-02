@@ -17,8 +17,8 @@ import subprocess
 import sys
 
 # clang an clang tidy versions to run the tests
-_CLANG_MIN_VERSION = {"major": 11, "minor": 0}
-_TIDY_MIN_VERSION = {"major": 11, "minor": 0}
+_CLANG_MIN_VERSION = {"major": 13, "minor": 0}
+_TIDY_MIN_VERSION = {"major": 13, "minor": 0}
 
 
 def eprint(*args, **kwargs):

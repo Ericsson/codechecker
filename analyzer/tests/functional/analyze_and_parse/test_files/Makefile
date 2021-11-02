@@ -34,7 +34,7 @@ compiler_warning_unused:
 compiler_error:
 	$(CXX) -w compiler_error.cpp -o /dev/null
 context_hash:
-	$(CXX) -w context_hash.cpp -o /dev/null
+	$(CXX) -w context_hash.cpp -Wno-unused-but-set-variable -Wno-unused-but-set-parameter -o /dev/null
 collision:
 	$(CXX) -w filename_collision/main.cpp filename_collision/a/f.cpp filename_collision/b/f.cpp -o /dev/null
 tidy_alias:
