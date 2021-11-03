@@ -11,7 +11,7 @@
     <pane>
       <checker-documentation-dialog
         :value.sync="checkerDocDialog"
-        :checker-name="selectedCheckerName"
+        :checker="selectedChecker"
       />
 
       <v-data-table
@@ -118,7 +118,7 @@
         <template #item.checkerId="{ item }">
           <span
             class="checker-name primary--text"
-            @click="openCheckerDocDialog(item.checkerId)"
+            @click="openCheckerDocDialog(item.checkerId, item.analyzerName)"
           >
             {{ item.checkerId }}
           </span>
@@ -161,7 +161,7 @@ import { Pane, Splitpanes } from "splitpanes";
 import { mapGetters } from "vuex";
 
 import { ccService, handleThriftError } from "@cc-api";
-import { Order, SortMode, SortType } from "@cc/report-server-types";
+import { Checker, Order, SortMode, SortType } from "@cc/report-server-types";
 
 import { FillHeight } from "@/directives";
 import { BugPathLengthColorMixin, DetectionStatusMixin } from "@/mixins";
@@ -277,9 +277,8 @@ export default {
       reportFilterUnwatch: null,
       cmpDataUnwatch: null,
       initalized: false,
-      checkerDoc: null,
       checkerDocDialog: false,
-      selectedCheckerName: null,
+      selectedChecker: null,
       expanded: []
     };
   },
@@ -384,8 +383,11 @@ export default {
       return [ new SortMode({ type: type, ord: ord }) ];
     },
 
-    openCheckerDocDialog(checkerId) {
-      this.selectedCheckerName = checkerId;
+    openCheckerDocDialog(checkerId, analyzerName) {
+      this.selectedChecker = new Checker({
+        checkerId: checkerId,
+        analyzerName: analyzerName
+      });
       this.checkerDocDialog = true;
     },
 

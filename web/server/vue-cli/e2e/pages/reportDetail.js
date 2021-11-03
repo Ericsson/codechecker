@@ -55,7 +55,7 @@ const bugTreeCommands = {
 module.exports = {
   url: function() {
     return this.api.launchUrl
-      + "/e2e/report-detail?report-hash=0db7fdfc2bc9d487ca571fbbb68029cc"; 
+      + "/e2e/report-detail?report-hash=0db7fdfc2bc9d487ca571fbbb68029cc";
   },
   elements: {
     page: ".container",

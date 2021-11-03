@@ -17,8 +17,8 @@ import re
 import unittest
 import codecs
 
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import Encoding, Order, \
-    ReportFilter, SortMode, SortType, RunSortMode, RunSortType
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import Encoding, Checker, \
+    Order, ReportFilter, SortMode, SortType, RunSortMode, RunSortType
 
 from codechecker_web.shared import convert
 
@@ -351,3 +351,30 @@ class RunResults(unittest.TestCase):
                                                     True)
 
         self.assertTrue(any(res.details for res in run_results))
+
+    def test_get_checker_labels(self):
+        checker_labels = self._cc_client.getCheckerLabels([])
+        self.assertEqual(len(checker_labels), 0)
+
+        div_zero_labels = set([
+            "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html"
+            "#core-dividezero-c-c-objc",
+            "guideline:sei-cert",
+            "profile:default",
+            "profile:extreme",
+            "profile:sensitive",
+            "sei-cert:int33-c",
+            "severity:HIGH"
+        ])
+
+        checker_labels = self._cc_client.getCheckerLabels([
+            Checker('clangsa', 'core.DivideZero')])
+        self.assertEqual(len(checker_labels), 1)
+        self.assertEqual(set(checker_labels[0]), div_zero_labels)
+
+        checker_labels = self._cc_client.getCheckerLabels([
+            Checker('clangsa', 'core.DivideZero'),
+            Checker('clang-tidy', 'dummy-checker')])
+        self.assertEqual(len(checker_labels), 2)
+        self.assertEqual(set(checker_labels[0]), div_zero_labels)
+        self.assertEqual(set(checker_labels[1]), set())

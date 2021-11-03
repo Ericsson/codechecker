@@ -2,158 +2,187 @@
   "analyzer": "clangsa",
   "labels": {
     "alpha.clone.CloneChecker": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-clone-clonechecker-c-c-objc",
       "profile:extreme",
       "severity:LOW"
     ],
     "alpha.core.BoolAssignment": [
-      "profile:sensitive",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-boolassignment-objc",
       "profile:extreme",
+      "profile:sensitive",
       "severity:LOW"
     ],
     "alpha.core.C11Lock": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-c11lock",
       "profile:extreme",
       "severity:HIGH"
     ],
     "alpha.core.CallAndMessageUnInitRefArg": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-callandmessageuninitrefarg-c-c-objc",
       "profile:extreme",
       "severity:HIGH"
     ],
     "alpha.core.CastSize": [
-      "profile:sensitive",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-castsize-c",
       "profile:extreme",
+      "profile:sensitive",
       "severity:LOW"
     ],
     "alpha.core.CastToStruct": [
-      "profile:security",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-casttostruct-c-c",
       "profile:extreme",
+      "profile:security",
       "severity:LOW"
     ],
     "alpha.core.Conversion": [
-      "profile:sensitive",
-      "profile:security",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-conversion-c-c-objc",
       "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
       "severity:LOW"
     ],
     "alpha.core.DynamicTypeChecker": [
-      "profile:sensitive",
-      "profile:extreme"
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-dynamictypechecker-objc",
+      "profile:extreme",
+      "profile:sensitive"
     ],
     "alpha.core.FixedAddr": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-fixedaddr-c",
       "profile:extreme",
       "severity:LOW"
     ],
     "alpha.core.IdenticalExpr": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-identicalexpr-c-c",
       "profile:extreme",
       "severity:LOW"
     ],
     "alpha.core.PointerArithm": [
-      "profile:security",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-pointerarithm-c",
       "profile:extreme",
+      "profile:security",
       "severity:LOW"
     ],
     "alpha.core.PointerSub": [
-      "profile:security",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-pointersub-c",
       "profile:extreme",
+      "profile:security",
       "severity:LOW"
     ],
     "alpha.core.PthreadLockBase": [
       "profile:extreme"
     ],
     "alpha.core.SizeofPtr": [
-      "profile:sensitive",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-sizeofptr-c",
       "profile:extreme",
+      "profile:sensitive",
       "severity:LOW"
     ],
     "alpha.core.StackAddressAsyncEscape": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-stackaddressasyncescape-c",
       "profile:extreme",
       "severity:HIGH"
     ],
     "alpha.core.TestAfterDivZero": [
-      "profile:sensitive",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-testafterdivzero-c",
       "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "alpha.cplusplus.ContainerModeling": [
-      "profile:sensitive",
-      "profile:extreme"
+      "profile:extreme",
+      "profile:sensitive"
     ],
     "alpha.cplusplus.DeleteWithNonVirtualDtor": [
-      "profile:sensitive",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-cplusplus-deletewithnonvirtualdtor-c",
       "profile:extreme",
+      "profile:sensitive",
       "severity:HIGH"
     ],
     "alpha.cplusplus.EnumCastOutOfRange": [
-      "profile:sensitive",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-cplusplus-enumcastoutofrange-c",
       "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "alpha.cplusplus.InvalidatedIterator": [
-      "profile:sensitive",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-cplusplus-invalidatediterator-c",
       "profile:extreme",
+      "profile:sensitive",
       "severity:HIGH"
     ],
     "alpha.cplusplus.IteratorModeling": [
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "alpha.cplusplus.IteratorRange": [
-      "profile:sensitive",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-cplusplus-iteratorrange-c",
       "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "alpha.cplusplus.MismatchedIterator": [
-      "profile:sensitive",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-cplusplus-mismatchediterator-c",
       "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "alpha.cplusplus.PlacementNew": [
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:HIGH"
     ],
     "alpha.cplusplus.STLAlgorithmModeling": [
-      "profile:sensitive",
-      "profile:extreme"
+      "profile:extreme",
+      "profile:sensitive"
     ],
     "alpha.cplusplus.SmartPtr": [
-      "profile:sensitive",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-cplusplus-smartptr-c",
       "profile:extreme",
+      "profile:sensitive",
       "severity:HIGH"
     ],
     "alpha.cplusplus.UninitializedObject": [
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "alpha.deadcode.UnreachableCode": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-deadcode-unreachablecode-c-c",
       "profile:extreme",
       "severity:LOW"
     ],
     "alpha.fuchsia.Lock": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-fuchsia-lock",
       "profile:extreme"
     ],
     "alpha.llvm.Conventions": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-llvm-conventions",
       "profile:extreme",
       "severity:LOW"
     ],
     "alpha.nondeterminism.PointerIteration": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-nondeterminism-pointeriteration-c",
       "profile:extreme",
       "severity:MEDIUM"
     ],
     "alpha.nondeterminism.PointerSorting": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-nondeterminism-pointersorting-c",
       "profile:extreme",
       "severity:MEDIUM"
     ],
     "alpha.osx.cocoa.DirectIvarAssignment": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-osx-cocoa-directivarassignment-objc",
       "profile:extreme",
       "severity:LOW"
     ],
     "alpha.osx.cocoa.DirectIvarAssignmentForAnnotatedFunctions": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-osx-cocoa-directivarassignmentforannotatedfunctions-objc",
       "profile:extreme",
       "severity:LOW"
     ],
     "alpha.osx.cocoa.InstanceVariableInvalidation": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-osx-cocoa-instancevariableinvalidation-objc",
       "profile:extreme",
       "severity:LOW"
     ],
@@ -161,68 +190,81 @@
       "profile:extreme"
     ],
     "alpha.osx.cocoa.MissingInvalidationMethod": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-osx-cocoa-missinginvalidationmethod-objc",
       "profile:extreme",
       "severity:LOW"
     ],
     "alpha.osx.cocoa.localizability.PluralMisuseChecker": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-osx-cocoa-localizability-pluralmisusechecker-objc",
       "profile:extreme",
       "severity:LOW"
     ],
     "alpha.security.ArrayBound": [
-      "profile:security",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-security-arraybound-c",
       "profile:extreme",
+      "profile:security",
       "severity:HIGH"
     ],
     "alpha.security.ArrayBoundV2": [
-      "profile:security",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-security-arrayboundv2-c",
       "profile:extreme",
+      "profile:security",
       "severity:HIGH"
     ],
     "alpha.security.MallocOverflow": [
-      "profile:security",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-security-mallocoverflow-c",
       "profile:extreme",
+      "profile:security",
       "severity:HIGH"
     ],
     "alpha.security.MmapWriteExec": [
-      "profile:sensitive",
-      "profile:security",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-security-mmapwriteexec-c",
       "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "alpha.security.ReturnPtrRange": [
-      "profile:sensitive",
-      "profile:security",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-security-returnptrrange-c",
       "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
       "severity:HIGH"
     ],
     "alpha.security.cert.pos.34c": [
-      "profile:security",
-      "profile:extreme"
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-security-cert-pos-34c",
+      "profile:extreme",
+      "profile:security"
     ],
     "alpha.security.taint.TaintPropagation": [
-      "profile:sensitive",
-      "profile:security",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-security-taint-taintpropagation-c-c",
       "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
       "severity:HIGH"
     ],
     "alpha.unix.BlockInCriticalSection": [
-      "profile:sensitive",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-unix-blockincriticalsection-c",
       "profile:extreme",
+      "profile:sensitive",
       "severity:LOW"
     ],
     "alpha.unix.Chroot": [
-      "profile:sensitive",
-      "profile:security",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-unix-chroot-c",
       "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "alpha.unix.PthreadLock": [
-      "profile:sensitive",
-      "profile:security",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-unix-pthreadlock-c",
       "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
       "severity:HIGH"
     ],
     "alpha.unix.SimpleStream": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-unix-simplestream-c",
       "profile:extreme",
       "severity:MEDIUM"
     ],
@@ -231,31 +273,37 @@
       "severity:HIGH"
     ],
     "alpha.unix.Stream": [
-      "profile:sensitive",
-      "profile:security",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-unix-stream-c",
       "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "alpha.unix.cstring.BufferOverlap": [
-      "profile:security",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-unix-cstring-bufferoverlap-c",
       "profile:extreme",
+      "profile:security",
       "severity:HIGH"
     ],
     "alpha.unix.cstring.NotNullTerminated": [
-      "profile:sensitive",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-unix-cstring-notnullterminated-c",
       "profile:extreme",
+      "profile:sensitive",
       "severity:HIGH"
     ],
     "alpha.unix.cstring.OutOfBounds": [
-      "profile:sensitive",
-      "profile:security",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-unix-cstring-outofbounds-c",
       "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
       "severity:HIGH"
     ],
     "alpha.webkit.UncountedCallArgsChecker": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-webkit-uncountedcallargschecker",
       "profile:extreme"
     ],
     "alpha.webkit.UncountedLocalVarsChecker": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-webkit-uncountedlocalvarschecker",
       "profile:extreme"
     ],
     "altera-struct-pack-align": [
@@ -263,47 +311,48 @@
     ],
     "apiModeling.StdCLibraryFunctions": [
       "profile:default",
-      "profile:sensitive",
-      "profile:portability",
       "profile:extreme",
+      "profile:portability",
+      "profile:sensitive",
       "severity:LOW"
     ],
     "apiModeling.StdCLibraryFunctionArgs": [
       "profile:default",
-      "profile:sensitive",
-      "profile:portability",
       "profile:extreme",
+      "profile:portability",
+      "profile:sensitive",
       "severity:LOW"
     ],
     "apiModeling.TrustNonnull": [
       "profile:default",
-      "profile:sensitive",
+      "profile:extreme",
       "profile:portability",
-      "profile:extreme"
+      "profile:sensitive"
     ],
     "apiModeling.google.GTest": [
       "profile:default",
-      "profile:sensitive",
+      "profile:extreme",
       "profile:portability",
-      "profile:extreme"
+      "profile:sensitive"
     ],
     "apiModeling.llvm.CastValue": [
       "profile:default",
-      "profile:sensitive",
+      "profile:extreme",
       "profile:portability",
-      "profile:extreme"
+      "profile:sensitive"
     ],
     "apiModeling.llvm.ReturnValue": [
       "profile:default",
-      "profile:sensitive",
+      "profile:extreme",
       "profile:portability",
-      "profile:extreme"
+      "profile:sensitive"
     ],
     "core.CallAndMessage": [
-      "profile:default",
-      "profile:sensitive",
-      "profile:extreme",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-callandmessage-c-c-objc",
       "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
       "sei-cert:dcl41-c",
       "sei-cert:exp30-c",
       "sei-cert:exp33-c",
@@ -317,65 +366,70 @@
     ],
     "core.CallAndMessageModeling": [
       "profile:default",
-      "profile:sensitive",
-      "profile:extreme"
+      "profile:extreme",
+      "profile:sensitive"
     ],
     "core.DivideZero": [
-      "profile:default",
-      "profile:sensitive",
-      "profile:extreme",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-dividezero-c-c-objc",
       "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
       "sei-cert:int33-c",
       "severity:HIGH"
     ],
     "core.DynamicTypePropagation": [
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "core.NonNullParamChecker": [
-      "profile:default",
-      "profile:sensitive",
-      "profile:extreme",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-nonnullparamchecker-c-c-objc",
       "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
       "sei-cert:exp34-c",
       "sei-cert:mem34-c",
       "severity:HIGH"
     ],
     "core.NonnilStringConstants": [
       "profile:default",
-      "profile:sensitive",
-      "profile:extreme"
+      "profile:extreme",
+      "profile:sensitive"
     ],
     "core.NullDereference": [
-      "profile:default",
-      "profile:sensitive",
-      "profile:extreme",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-nulldereference-c-c-objc",
       "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
       "sei-cert:arr30-c",
       "sei-cert:dcl38-c",
       "severity:HIGH"
     ],
     "core.StackAddrEscapeBase": [
+      "guideline:sei-cert",
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
-      "guideline:sei-cert"
+      "profile:sensitive"
     ],
     "core.StackAddressEscape": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-stackaddressescape-c",
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "sei-cert:dcl30-c",
       "sei-cert:exp54-cpp",
       "severity:HIGH"
     ],
     "core.UndefinedBinaryOperatorResult": [
-      "profile:default",
-      "profile:sensitive",
-      "profile:extreme",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-undefinedbinaryoperatorresult-c",
       "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
       "sei-cert:exp33-c",
       "sei-cert:exp36-c",
       "sei-cert:exp53-cpp",
@@ -384,79 +438,87 @@
       "severity:HIGH"
     ],
     "core.VLASize": [
-      "profile:default",
-      "profile:sensitive",
-      "profile:extreme",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-vlasize-c",
       "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
       "sei-cert:arr32-c",
       "severity:HIGH"
     ],
     "core.builtin.BuiltinFunctions": [
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "core.builtin.NoReturnFunctions": [
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "core.uninitialized.ArraySubscript": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-uninitialized-arraysubscript-c",
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:HIGH"
     ],
     "core.uninitialized.Assign": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-uninitialized-assign-c",
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:HIGH"
     ],
     "core.uninitialized.Branch": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-uninitialized-branch-c",
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:HIGH"
     ],
     "core.uninitialized.CapturedBlockVariable": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-uninitialized-capturedblockvariable-c",
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:HIGH"
     ],
     "core.uninitialized.UndefReturn": [
-      "profile:default",
-      "profile:sensitive",
-      "profile:extreme",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-uninitialized-undefreturn-c",
       "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
       "sei-cert:oop53-cpp",
       "severity:HIGH"
     ],
     "cplusplus.InnerPointer": [
-      "profile:default",
-      "profile:sensitive",
-      "profile:extreme",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#cplusplus-innerpointer-c",
       "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
       "sei-cert:mem50-cpp",
       "sei-cert:str52-cpp",
       "severity:HIGH"
     ],
     "cplusplus.Move": [
-      "profile:default",
-      "profile:sensitive",
-      "profile:extreme",
       "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
       "sei-cert:exp63-cpp",
       "severity:HIGH"
     ],
     "cplusplus.NewDelete": [
-      "profile:default",
-      "profile:sensitive",
-      "profile:extreme",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#cplusplus-newdelete-c",
       "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
       "sei-cert:exp54-cpp",
       "sei-cert:mem50-cpp",
       "sei-cert:mem51-cpp",
@@ -464,297 +526,292 @@
       "severity:HIGH"
     ],
     "cplusplus.NewDeleteLeaks": [
-      "profile:default",
-      "profile:sensitive",
-      "profile:extreme",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#cplusplus-newdeleteleaks-c",
       "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
       "sei-cert:exp62-cpp",
       "sei-cert:mem51-cpp",
       "severity:HIGH"
     ],
     "cplusplus.PlacementNew": [
-      "profile:default",
-      "profile:sensitive",
-      "profile:security",
-      "profile:extreme",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#cplusplus-placementnewchecker-c",
       "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
       "sei-cert:mem54-cpp",
       "severity:HIGH"
     ],
     "cplusplus.PureVirtualCall": [
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:HIGH"
     ],
     "cplusplus.SelfAssignment": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#cplusplus-selfassignment-c",
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "cplusplus.SmartPtrModeling": [
       "profile:default",
-      "profile:sensitive",
-      "profile:extreme"
+      "profile:extreme",
+      "profile:sensitive"
     ],
     "cplusplus.VirtualCallModeling": [
       "profile:default",
-      "profile:sensitive",
-      "profile:extreme"
+      "profile:extreme",
+      "profile:sensitive"
     ],
     "deadcode.DeadStores": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#deadcode-deadstores-c",
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:LOW"
     ],
     "debug.AnalysisOrder": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#debug-analysisorder"
     ],
     "debug.ConfigDumper": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#debug-configdumper"
     ],
-    "debug.DebugContainerModeling": [
-
-    ],
-    "debug.DebugIteratorModeling": [
-
-    ],
+    "debug.DebugContainerModeling": [],
+    "debug.DebugIteratorModeling": [],
     "debug.DumpCFG": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#debug-dumpcfg-display"
     ],
     "debug.DumpCallGraph": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#debug-dumpcallgraph"
     ],
     "debug.DumpCalls": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#debug-dumpcalls"
     ],
-    "debug.DumpControlDependencies": [
-
-    ],
+    "debug.DumpControlDependencies": [],
     "debug.DumpDominators": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#debug-dumpdominators"
     ],
-    "debug.DumpLiveStmts": [
-
-    ],
+    "debug.DumpLiveStmts": [],
     "debug.DumpLiveVars": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#debug-dumplivevars"
     ],
-    "debug.DumpPostDominators": [
-
-    ],
+    "debug.DumpPostDominators": [],
     "debug.DumpTraversal": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#debug-dumptraversal"
     ],
     "debug.ExprInspection": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#debug-exprinspection"
     ],
-    "debug.ReportStmts": [
-
-    ],
+    "debug.ReportStmts": [],
     "debug.Stats": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#debug-stats"
     ],
-    "debug.StdCLibraryFunctionsTester": [
-
-    ],
-    "debug.StreamTester": [
-
-    ],
+    "debug.StdCLibraryFunctionsTester": [],
+    "debug.StreamTester": [],
     "debug.TaintTest": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#debug-tainttest"
     ],
     "debug.ViewCFG": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#debug-viewcfg"
     ],
     "debug.ViewCallGraph": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#debug-viewcallgraph"
     ],
     "debug.ViewExplodedGraph": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#debug-viewexplodedgraph"
     ],
     "fuchsia.HandleChecker": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#fuchsia-handlechecker"
     ],
     "nullability.NullPassedToNonnull": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#nullability-nullpassedtononnull-objc",
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:HIGH"
     ],
     "nullability.NullReturnedFromNonnull": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#nullability-nullreturnedfromnonnull-objc",
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:HIGH"
     ],
     "nullability.NullabilityBase": [
-      "profile:sensitive",
-      "profile:extreme"
+      "profile:extreme",
+      "profile:sensitive"
     ],
     "nullability.NullableDereferenced": [
-      "profile:sensitive",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#nullability-nullabledereferenced-objc",
       "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "nullability.NullablePassedToNonnull": [
-      "profile:sensitive",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#nullability-nullablepassedtononnull-objc",
       "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "nullability.NullableReturnedFromNonnull": [
-      "profile:sensitive",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#nullability-nullablereturnedfromnonnull-objc",
       "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "optin.cplusplus.UninitializedObject": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-cplusplus-uninitializedobject-c",
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "optin.cplusplus.VirtualCall": [
-      "profile:default",
-      "profile:sensitive",
-      "profile:extreme",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-cplusplus-virtualcall-c",
       "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
       "sei-cert:oop50-cpp",
       "severity:MEDIUM"
     ],
     "optin.mpi.MPI-Checker": [
-      "profile:sensitive",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-mpi-mpi-checker-c",
       "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "optin.osx.OSObjectCStyleCast": [
       "profile:extreme"
     ],
     "optin.osx.cocoa.localizability.EmptyLocalizationContextChecker": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-osx-cocoa-localizability-emptylocalizationcontextchecker-objc",
       "profile:extreme"
     ],
     "optin.osx.cocoa.localizability.NonLocalizedStringChecker": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-osx-cocoa-localizability-nonlocalizedstringchecker-objc",
       "profile:extreme"
     ],
     "optin.performance.GCDAntipattern": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-performance-gcdantipattern",
       "profile:extreme"
     ],
     "optin.performance.Padding": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-performance-padding",
       "profile:extreme",
       "severity:LOW"
     ],
     "optin.portability.UnixAPI": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-portability-unixapi",
+      "guideline:sei-cert",
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
       "profile:portability",
-      "guideline:sei-cert",
+      "profile:sensitive",
       "sei-cert:mem30-c",
       "severity:MEDIUM"
     ],
     "osx.API": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-api-c"
     ],
-    "osx.MIG": [
-
-    ],
-    "osx.NSOrCFErrorDerefChecker": [
-
-    ],
+    "osx.MIG": [],
+    "osx.NSOrCFErrorDerefChecker": [],
     "osx.NumberObjectConversion": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-numberobjectconversion-c-c-objc"
     ],
-    "osx.OSObjectRetainCount": [
-
-    ],
+    "osx.OSObjectRetainCount": [],
     "osx.ObjCProperty": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-objcproperty-objc"
     ],
     "osx.SecKeychainAPI": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-seckeychainapi-c"
     ],
     "osx.cocoa.AtSync": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-cocoa-atsync-objc"
     ],
     "osx.cocoa.AutoreleaseWrite": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-cocoa-autoreleasewrite"
     ],
     "osx.cocoa.ClassRelease": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-cocoa-classrelease-objc"
     ],
     "osx.cocoa.Dealloc": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-cocoa-dealloc-objc"
     ],
     "osx.cocoa.IncompatibleMethodTypes": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-cocoa-incompatiblemethodtypes-objc"
     ],
     "osx.cocoa.Loops": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-cocoa-loops"
     ],
     "osx.cocoa.MissingSuperCall": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-cocoa-missingsupercall-objc"
     ],
     "osx.cocoa.NSAutoreleasePool": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-cocoa-nsautoreleasepool-objc"
     ],
     "osx.cocoa.NSError": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-cocoa-nserror-objc"
     ],
     "osx.cocoa.NilArg": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-cocoa-nilarg-objc"
     ],
     "osx.cocoa.NonNilReturnValue": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-cocoa-nonnilreturnvalue"
     ],
     "osx.cocoa.ObjCGenerics": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-cocoa-objcgenerics-objc"
     ],
     "osx.cocoa.RetainCount": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-cocoa-retaincount-objc"
     ],
-    "osx.cocoa.RetainCountBase": [
-
-    ],
+    "osx.cocoa.RetainCountBase": [],
     "osx.cocoa.RunLoopAutoreleaseLeak": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-cocoa-runloopautoreleaseleak"
     ],
     "osx.cocoa.SelfInit": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-cocoa-selfinit-objc"
     ],
     "osx.cocoa.SuperDealloc": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-cocoa-superdealloc-objc"
     ],
     "osx.cocoa.UnusedIvars": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-cocoa-unusedivars-objc"
     ],
     "osx.cocoa.VariadicMethodTypes": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-cocoa-variadicmethodtypes-objc"
     ],
     "osx.coreFoundation.CFError": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-corefoundation-cferror-c"
     ],
     "osx.coreFoundation.CFNumber": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-corefoundation-cfnumber-c"
     ],
     "osx.coreFoundation.CFRetainRelease": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-corefoundation-cfretainrelease-c"
     ],
     "osx.coreFoundation.containers.OutOfBounds": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-corefoundation-containers-outofbounds-c"
     ],
     "osx.coreFoundation.containers.PointerSizedValues": [
-
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-corefoundation-containers-pointersizedvalues-c"
     ],
     "security.FloatLoopCounter": [
-      "profile:default",
-      "profile:sensitive",
-      "profile:extreme",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-floatloopcounter-c",
       "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
       "sei-cert:flp30-c",
       "severity:MEDIUM"
     ],
     "security.insecureAPI.DeprecatedOrUnsafeBufferHandling": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-insecureapi-deprecatedorunsafebufferhandling-c",
       "profile:extreme",
       "severity:MEDIUM"
     ],
@@ -762,20 +819,24 @@
       "profile:extreme"
     ],
     "security.insecureAPI.UncheckedReturn": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-insecureapi-uncheckedreturn-c",
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "security.insecureAPI.bcmp": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-insecureapi-bcmp-c",
       "profile:extreme",
       "severity:LOW"
     ],
     "security.insecureAPI.bcopy": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-insecureapi-bcopy-c",
       "profile:extreme",
       "severity:LOW"
     ],
     "security.insecureAPI.bzero": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-insecureapi-bzero-c",
       "profile:extreme",
       "severity:LOW"
     ],
@@ -783,138 +844,153 @@
       "profile:extreme"
     ],
     "security.insecureAPI.getpw": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-insecureapi-getpw-c",
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "security.insecureAPI.gets": [
-      "profile:default",
-      "profile:sensitive",
-      "profile:extreme",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-insecureapi-gets-c",
       "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
       "sei-cert:str31-c",
       "severity:MEDIUM"
     ],
     "security.insecureAPI.mkstemp": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-insecureapi-mkstemp-c",
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "security.insecureAPI.mktemp": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-insecureapi-mktemp-c",
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "security.insecureAPI.rand": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-insecureapi-rand-c",
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "security.insecureAPI.strcpy": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-insecureapi-strcpy-c",
       "profile:extreme",
       "severity:MEDIUM"
     ],
     "security.insecureAPI.vfork": [
-      "profile:default",
-      "profile:sensitive",
-      "profile:extreme",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-insecureapi-vfork-c",
       "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
       "sei-cert:pos33-c",
       "severity:MEDIUM"
     ],
     "unix.API": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-api-c",
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "unix.DynamicMemoryModeling": [
       "profile:default",
-      "profile:sensitive",
-      "profile:extreme"
+      "profile:extreme",
+      "profile:sensitive"
     ],
     "unix.Malloc": [
-      "profile:default",
-      "profile:sensitive",
-      "profile:extreme",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-malloc-c",
       "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
       "sei-cert:mem30-c",
       "sei-cert:mem31-c",
       "sei-cert:mem34-c",
       "severity:MEDIUM"
     ],
     "unix.MallocSizeof": [
-      "profile:default",
-      "profile:sensitive",
-      "profile:extreme",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-mallocsizeof-c",
       "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
       "sei-cert:mem35-c",
       "severity:MEDIUM"
     ],
     "unix.MismatchedDeallocator": [
-      "profile:default",
-      "profile:sensitive",
-      "profile:extreme",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-mismatcheddeallocator-c-c",
       "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
       "sei-cert:mem51-cpp",
       "severity:MEDIUM"
     ],
     "unix.Vfork": [
-      "profile:default",
-      "profile:sensitive",
-      "profile:extreme",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-vfork-c",
       "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
       "sei-cert:pos33-c",
       "severity:MEDIUM"
     ],
     "unix.cstring.BadSizeArg": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-cstring-badsizearg-c",
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "unix.cstring.CStringModeling": [
       "profile:default",
-      "profile:sensitive",
-      "profile:extreme"
+      "profile:extreme",
+      "profile:sensitive"
     ],
     "unix.cstring.NullArg": [
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "valist.CopyToSelf": [
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "valist.Uninitialized": [
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "valist.Unterminated": [
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "valist.ValistBase": [
       "profile:default",
-      "profile:sensitive",
-      "profile:extreme"
+      "profile:extreme",
+      "profile:sensitive"
     ],
     "webkit.NoUncountedMemberChecker": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#webkit-nouncountedmemberchecker",
       "severity:MEDIUM"
     ],
     "webkit.RefCntblBaseVirtualDtor": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#webkit-refcntblbasevirtualdtor",
       "severity:MEDIUM"
     ]
   }

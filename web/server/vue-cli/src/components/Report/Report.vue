@@ -2,7 +2,7 @@
   <v-container fluid>
     <checker-documentation-dialog
       :value.sync="checkerDocumentationDialog"
-      :checker-name="checkerName"
+      :checker="selectedChecker"
     />
 
     <analysis-info-dialog
@@ -286,6 +286,7 @@ import { format } from "date-fns";
 
 import { ccService, handleThriftError } from "@cc-api";
 import {
+  Checker,
   Encoding,
   ExtendedReportDataType,
   ReviewData
@@ -354,6 +355,7 @@ export default {
       bus: new Vue(),
       annotation: null,
       checkerDocumentationDialog: false,
+      selectedChecker: null,
       analysisInfoDialog: false,
       reportId: null,
       enableBlameView
@@ -468,6 +470,10 @@ export default {
     });
 
     this.bus.$on("showDocumentation", () => {
+      this.selectedChecker = new Checker({
+        analyzerName: this.report.analyzerName,
+        checkerId: this.report.checkerId
+      });
       this.checkerDocumentationDialog = true;
     });
   },

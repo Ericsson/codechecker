@@ -340,8 +340,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
                  self.path, fname)
 
         # Create new thrift handler.
-        checker_md_docs = self.server.checker_md_docs
-        checker_md_docs_map = self.server.checker_md_docs_map
         version = self.server.version
 
         cstringio_buf = itrans.cstringio_buf.getvalue()
@@ -430,8 +428,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
                             product,
                             self.auth_session,
                             self.server.config_session,
-                            checker_md_docs,
-                            checker_md_docs_map,
                             version,
                             self.server.context)
                         processor = ReportAPI_v6.Processor(acc_handler)
@@ -700,8 +696,6 @@ class CCSimpleHttpServer(HTTPServer):
         self.config_directory = config_directory
         self.www_root = pckg_data['www_root']
         self.doc_root = pckg_data['doc_root']
-        self.checker_md_docs = pckg_data['checker_md_docs']
-        self.checker_md_docs_map = pckg_data['checker_md_docs_map']
         self.version = pckg_data['version']
         self.context = context
         self.check_env = check_env
