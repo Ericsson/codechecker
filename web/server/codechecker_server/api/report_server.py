@@ -1234,6 +1234,8 @@ class ThriftRequestHandler:
     # DEPRECATED: use getAnalysisInfo API function instead of this function.
     def getCheckCommand(self, run_history_id, run_id):
         """ Get analyzer command based on the given filter. """
+        self.__require_view()
+
         limit = None
         offset = 0
         analysis_info_filter = AnalysisInfoFilter(
@@ -1242,7 +1244,6 @@ class ThriftRequestHandler:
 
         analysis_info = self.getAnalysisInfo(
             analysis_info_filter, limit, offset)
-        self.__require_view()
 
         return "; ".join([i.analyzerCommand for i in analysis_info])
 
@@ -1250,7 +1251,7 @@ class ThriftRequestHandler:
     @timeit
     def getAnalysisInfo(self, analysis_info_filter, limit, offset):
         """ Get analysis information based on the given filter. """
-        self.__require_access()
+        self.__require_view()
 
         res: List[ttypes.AnalysisInfo] = []
         if not analysis_info_filter:
@@ -1304,7 +1305,7 @@ class ThriftRequestHandler:
     @exc_to_thrift_reqfail
     @timeit
     def getRunHistory(self, run_ids, limit, offset, run_history_filter):
-        self.__require_access()
+        self.__require_view()
 
         limit = verify_limit_range(limit)
 
@@ -1344,7 +1345,7 @@ class ThriftRequestHandler:
     @exc_to_thrift_reqfail
     @timeit
     def getRunHistoryCount(self, run_ids, run_history_filter):
-        self.__require_access()
+        self.__require_view()
 
         with DBSession(self._Session) as session:
             query = session.query(RunHistory.id)
@@ -1396,7 +1397,7 @@ class ThriftRequestHandler:
     @timeit
     def getDiffResultsHash(self, run_ids, report_hashes, diff_type,
                            skip_detection_statuses, tag_ids):
-        self.__require_access()
+        self.__require_view()
 
         if not skip_detection_statuses:
             skip_detection_statuses = [ttypes.DetectionStatus.RESOLVED,
