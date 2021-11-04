@@ -16,7 +16,7 @@
     >
       <template v-slot:prepend-toolbar-items>
         <v-btn
-          v-if="currentProduct.administrating"
+          v-if="administrating"
           class="manage-components-btn"
           icon
           small
@@ -84,7 +84,11 @@ export default {
   computed: {
     ...mapGetters([
       "currentProduct"
-    ])
+    ]),
+
+    administrating() {
+      return this.currentProduct?.administrating;
+    }
   },
 
   watch: {
