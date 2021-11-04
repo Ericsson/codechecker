@@ -87,7 +87,7 @@ export default {
               return {
                 id : file,
                 title: file,
-                count : res[file]
+                count: res[file]?.toNumber() || 0
               };
             }));
             this.loading = false;
