@@ -99,7 +99,7 @@ export default {
     links() {
       return {
         "runName": { name: "runs", query: {
-          "name": this.runName } },
+          "run": this.runName } },
         "bugHash": { name: "reports", query: {
           "report-hash": this.value.bugHash } },
         "checkedFile": { name: "reports", query: {
