@@ -253,6 +253,8 @@ git clone https://github.com/Ericsson/CodeChecker.git --depth 1 ~/codechecker
 cd ~/codechecker
 
 # Create a Python virtualenv and set it as your environment.
+# NOTE: if you want to develop CodeChecker, use the `venv_dev` target instead
+# of `venv`.
 make venv
 source $PWD/venv/bin/activate
 
