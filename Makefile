@@ -112,8 +112,7 @@ clean_venv:
 	rm -rf venv
 
 PIP_DEV_DEPS_CMD = make -C $(CC_ANALYZER) pip_dev_deps && \
-  make -C $(CC_WEB) pip_dev_deps && \
-  make -C $(CC_TOOLS)/plist_to_html pip_dev_deps
+  make -C $(CC_WEB) pip_dev_deps
 
 pip_dev_deps:
 	# Install the depencies for analyze, web and the tools.
@@ -128,26 +127,19 @@ clean_venv_dev:
 	rm -rf venv_dev
 	$(MAKE) -C $(CC_ANALYZER) clean_venv_dev
 	$(MAKE) -C $(CC_WEB) clean_venv_dev
-	$(MAKE) -C $(CC_TOOLS)/plist_to_html clean_venv_dev
 
 clean: clean_package
 	$(MAKE) -C $(CC_WEB) clean
 
-clean_package: clean_plist_to_html clean_tu_collector clean_report_converter clean_report_hash clean_statistics_collector
+clean_package: clean_tu_collector clean_report_converter clean_statistics_collector
 	rm -rf $(BUILD_DIR)
 	find . -name "*.pyc" -delete
-
-clean_plist_to_html:
-	$(MAKE) -C $(CC_TOOLS)/plist_to_html clean
 
 clean_tu_collector:
 	$(MAKE) -C $(CC_TOOLS)/tu_collector clean
 
 clean_report_converter:
 	$(MAKE) -C $(CC_TOOLS)/report-converter clean
-
-clean_report_hash:
-	$(MAKE) -C $(CC_TOOLS)/codechecker_report_hash clean
 
 clean_statistics_collector:
 	$(MAKE) -C $(CC_ANALYZER_TOOLS)/statistics_collector clean
@@ -168,7 +160,7 @@ pylint_in_env: venv_dev
 
 PYCODE_CMD = $(MAKE) -C $(CC_ANALYZER) pycodestyle && \
 	$(MAKE) -C $(CC_WEB) pycodestyle && \
-	pycodestyle bin codechecker_common scripts
+	pycodestyle bin codechecker_common
 
 pycodestyle:
 	$(PYCODE_CMD)
@@ -176,15 +168,9 @@ pycodestyle:
 pycodestyle_in_env:
 	$(ACTIVATE_DEV_VENV) && $(PYCODE_CMD)
 
-test: test_common test_analyzer test_web
+test: test_analyzer test_web
 
-test_in_env: test_common_in_env test_analyzer_in_env test_web_in_env
-
-test_common:
-	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_COMMON)/tests/unit test_unit
-
-test_common_in_env:
-	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_COMMON)/tests/unit test_unit_in_env
+test_in_env: test_analyzer_in_env test_web_in_env
 
 test_analyzer:
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) test
@@ -221,12 +207,10 @@ test_web_in_env:
 test_unit:
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) test_unit
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) test_unit
-	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_COMMON)/tests/unit test_unit
 
 test_unit_cov:
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) test_unit_cov
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) test_unit_cov
-	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_COMMON)/tests/unit test_unit_cov
 
 test_unit_in_env:
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) test_unit_in_env

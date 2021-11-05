@@ -13,28 +13,31 @@ Command line client.
 from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
 import hashlib
-import json
 import os
-from operator import itemgetter
 import re
 import sys
 import shutil
 import time
-from typing import Dict, Iterable, List, Tuple, Union
-
-from plist_to_html import PlistToHtml
+from typing import Dict, Iterable, List, Optional, Set, Tuple, Union
 
 from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
 from codechecker_api_shared.ttypes import RequestFailed
 
-from codechecker_common import logger, plist_parser, util
-from codechecker_common.checker_labels import CheckerLabels
-from codechecker_common.report import Report
-from codechecker_common.output import twodim, gerrit, codeclimate, baseline
-from codechecker_report_hash.hash import get_report_path_hash
+from codechecker_report_converter import twodim
+from codechecker_report_converter.report import File, Report, report_file, \
+    reports as reports_helper
+from codechecker_report_converter.report.output import baseline, codeclimate, \
+    gerrit, json as report_to_json, plaintext
+from codechecker_report_converter.report.output.html import \
+    html as report_to_html
+from codechecker_report_converter.report.statistics import Statistics
+from codechecker_report_converter.util import dump_json_output, \
+    load_json_or_empty
 
-from codechecker_web.shared import webserver_context
-from codechecker_web.shared import convert
+from codechecker_common import logger
+from codechecker_common.checker_labels import CheckerLabels
+
+from codechecker_web.shared import convert, webserver_context
 
 from codechecker_client import report_type_converter
 from .client import login_user, setup_client
@@ -78,7 +81,7 @@ def filter_local_file_remote_run(
     return local_dirs, baseline_files, run_names
 
 
-def run_sort_type_str(value):
+def run_sort_type_str(value: ttypes.RunSortType) -> Optional[str]:
     """ Converts the given run sort type to string. """
     if value == ttypes.RunSortType.NAME:
         return 'name'
@@ -92,7 +95,7 @@ def run_sort_type_str(value):
         return 'codechecker_version'
 
 
-def run_sort_type_enum(value):
+def run_sort_type_enum(value: str) -> Optional[ttypes.RunSortType]:
     """ Returns the given run sort type Thrift enum value. """
     if value == 'name':
         return ttypes.RunSortType.NAME
@@ -122,62 +125,7 @@ def get_diff_type(args) -> Union[ttypes.DiffType, None]:
     return None
 
 
-def reports_to_html_report_data(reports: List[Report]) -> Dict:
-    """
-    Converts reports from Report class from one plist file
-    to report data events for the HTML plist parser.
-    """
-    file_sources = {}
-    report_data = []
-
-    for report in reports:
-        # Not all report in this list may refer to the same files
-        # thus we need to create a single file list with
-        # all files from all reports.
-        for file_index, file_path in report.files.items():
-            if file_index not in file_sources:
-                try:
-                    with open(file_path, 'r', encoding='utf-8',
-                              errors='ignore') as source_data:
-                        content = source_data.read()
-                except (OSError, IOError):
-                    content = file_path + " NOT FOUND."
-                file_sources[file_index] = {'id': file_index,
-                                            'path': file_path,
-                                            'content': content}
-
-        events = []
-        for element in report.bug_path:
-            kind = element['kind']
-            if kind == 'event':
-                events.append({'location': element['location'],
-                               'message':  element['message']})
-
-        macros = []
-        for macro in report.macro_expansions:
-            macros.append({'location': macro['location'],
-                           'expansion': macro['expansion'],
-                           'name': macro['name']})
-
-        notes = []
-        for note in report.notes:
-            notes.append({'location': note['location'],
-                          'message': note['message']})
-
-        report_hash = report.main['issue_hash_content_of_line_in_context']
-        report_data.append({
-            'events': events,
-            'macros': macros,
-            'notes': notes,
-            'path': report.file_path,
-            'reportHash': report_hash,
-            'checkerName': report.main['check_name']})
-
-    return {'files': file_sources,
-            'reports': report_data}
-
-
-def get_run_tag(client, run_ids, tag_name):
+def get_run_tag(client, run_ids: List[int], tag_name: str):
     """Return run tag information for the given tag name in the given runs."""
     run_history_filter = ttypes.RunHistoryFilter()
     run_history_filter.tagNames = [tag_name]
@@ -187,7 +135,7 @@ def get_run_tag(client, run_ids, tag_name):
     return run_histories[0] if run_histories else None
 
 
-def process_run_args(client, run_args_with_tag):
+def process_run_args(client, run_args_with_tag: Iterable[str]):
     """Process the argument and returns run ids and run tag ids.
 
     The elemnts inside the given run_args_with_tag list has the following
@@ -227,72 +175,45 @@ def process_run_args(client, run_args_with_tag):
 def get_suppressed_reports(reports: List[Report],
                            args: List[str]) -> List[str]:
     """Returns a list of suppressed report hashes."""
-    return [rep.report_hash for rep in reports
-            if not rep.check_source_code_comments(args.review_status)]
+    return [report.report_hash for report in reports
+            if not report.check_source_code_comments(args.review_status)]
 
 
-def get_report_dir_results(report_dirs: List[str],
-                           args: List[str],
-                           checker_labels: CheckerLabels) -> List[Report]:
+def get_report_dir_results(
+    report_dirs: List[str],
+    args: List[str],
+    checker_labels: CheckerLabels
+) -> List[Report]:
     """Get reports from the given report directories.
 
     Absolute paths are expected to the given report directories.
     """
     all_reports = []
+
     processed_path_hashes = set()
-    for report_dir in report_dirs:
-        for filename in os.listdir(report_dir):
-            if not filename.endswith(".plist"):
-                continue
+    for _, file_paths in report_file.analyzer_result_files(report_dirs):
+        for file_path in file_paths:
+            # Get reports.
+            reports = report_file.get_reports(file_path, checker_labels)
 
-            file_path = os.path.join(report_dir, filename)
-            LOG.debug("Parsing: %s", file_path)
-            _, reports = plist_parser.parse_plist_file(file_path)
-            LOG.debug("Parsing: %s done %s", file_path, len(reports))
-            for report in reports:
-                LOG.debug("get report hash")
-                path_hash = get_report_path_hash(report)
-                if path_hash in processed_path_hashes:
-                    LOG.debug("Not showing report because it is a "
-                              "deduplication of an already processed "
-                              "report!")
-                    LOG.debug("Path hash: %s", path_hash)
-                    LOG.debug(report)
-                    continue
+            # Skip duplicated reports.
+            reports = reports_helper.skip(reports, processed_path_hashes)
 
-                if skip_report_dir_result(report, args, checker_labels):
-                    continue
+            # Skip reports based on filter arguments.
+            reports = [
+                report for report in reports
+                if not skip_report_dir_result(report, args, checker_labels)]
 
-                processed_path_hashes.add(path_hash)
-                all_reports.append(report)
+            all_reports.extend(reports)
 
     return all_reports
 
 
-def print_stats(report_count, file_stats, severity_stats):
-    """Print summary of the report statistics."""
-    print("\n----==== Summary ====----")
-    if file_stats:
-        vals = [[os.path.basename(k), v] for k, v in
-                list(dict(file_stats).items())]
-        vals.sort(key=itemgetter(0))
-        keys = ['Filename', 'Report count']
-        table = twodim.to_str('table', keys, vals, 1, True)
-        print(table)
-
-    if severity_stats:
-        vals = [[k, v] for k, v in list(dict(severity_stats).items())]
-        vals.sort(key=itemgetter(0))
-        keys = ['Severity', 'Report count']
-        table = twodim.to_str('table', keys, vals, 1, True)
-        print(table)
-
-    print("----=================----")
-    print("Total number of reports: {}".format(report_count))
-    print("----=================----\n")
-
-
-def skip_report_dir_result(report, args, checker_labels):
+def skip_report_dir_result(
+    report: Report,
+    args: List[str],
+    checker_labels: CheckerLabels
+) -> bool:
     """Returns True if the report should be skipped from the results.
 
     Skipping is done based on the given filter set.
@@ -300,12 +221,12 @@ def skip_report_dir_result(report, args, checker_labels):
     f_severities, f_checkers, f_file_path, _, _, _ = check_filter_values(args)
 
     if f_severities:
-        severity_name = checker_labels.severity(report.main['check_name'])
+        severity_name = checker_labels.severity(report.checker_name)
         if severity_name.lower() not in list(map(str.lower, f_severities)):
             return True
 
     if f_checkers:
-        checker_name = report.main['check_name']
+        checker_name = report.checker_name
         if not any([re.match(r'^' + c.replace("*", ".*") + '$',
                              checker_name, re.IGNORECASE)
                     for c in f_checkers]):
@@ -313,12 +234,12 @@ def skip_report_dir_result(report, args, checker_labels):
 
     if f_file_path:
         if not any([re.match(r'^' + f.replace("*", ".*") + '$',
-                             report.file_path, re.IGNORECASE)
+                             report.file.path, re.IGNORECASE)
                     for f in f_file_path]):
             return True
 
     if 'checker_msg' in args:
-        checker_msg = report.main['description']
+        checker_msg = report.message
         if not any([re.match(r'^' + c.replace("*", ".*") + '$',
                              checker_msg, re.IGNORECASE)
                     for c in args.checker_msg]):
@@ -817,9 +738,15 @@ def handle_diff_results(args):
 
     init_logger(args.verbose if 'verbose' in args else None, stream)
 
+    output_dir = args.export_dir if 'export_dir' in args else None
     if len(args.output_format) > 1 and ('export_dir' not in args):
         LOG.error("Export directory is required if multiple output formats "
                   "are selected!")
+        sys.exit(1)
+
+    if 'html' in args.output_format and not output_dir:
+        LOG.error("Argument --export not allowed without argument --output "
+                  "when exporting to HTML.")
         sys.exit(1)
 
     if 'gerrit' in args.output_format and \
@@ -827,19 +754,88 @@ def handle_diff_results(args):
         sys.exit(1)
 
     check_deprecated_arg_usage(args)
+
+    if 'clean' in args and os.path.isdir(output_dir):
+        print("Previous analysis results in '{0}' have been removed, "
+              "overwriting with current results.".format(output_dir))
+        shutil.rmtree(output_dir)
+
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
     context = webserver_context.get_context()
-    source_line_contents = {}
+
+    file_cache: Dict[int, File] = {}
+
+    def cached_report_file_lookup(file_id):
+        """
+        Get source file data for the given file and caches it in a file cache
+        if file data is not found in the cache. Finally, it returns the source
+        file data from the cache.
+        """
+        nonlocal file_cache
+
+        if file_id not in file_cache:
+            source = client.getSourceFileData(
+                file_id, True, ttypes.Encoding.BASE64)
+            content = convert.from_b64(source.fileContent)
+
+            file_cache[file_id] = File(source.filePath, file_id, content)
+
+        return file_cache[file_id]
+
+    def convert_report_data_to_report(
+        client,
+        reports_data: List[ttypes.ReportData]
+    ) -> List[Report]:
+        """ Convert the given report data list to local reports. """
+        reports = []
+
+        if not reports_data:
+            return reports
+
+        # Get source line contents from the server.
+        source_lines = defaultdict(set)
+        for report_data in reports_data:
+            source_lines[report_data.fileId].add(report_data.line)
+
+        lines_in_files_requested = []
+        for file_id in source_lines:
+            lines_in_files_requested.append(
+                ttypes.LinesInFilesRequested(fileId=file_id,
+                                             lines=source_lines[file_id]))
+
+        source_line_contents = client.getLinesInSourceFileContents(
+            lines_in_files_requested, ttypes.Encoding.BASE64)
+
+        # Convert reports data to reports.
+        for report_data in reports_data:
+            report = report_type_converter.to_report(report_data)
+
+            # For HTML output we need to override the file and get content
+            # from the server.
+            if 'html' in args.output_format:
+                report.file = cached_report_file_lookup(report_data.fileId)
+
+            report.changed_files = []
+            report.source_code_comments = []
+            report.source_line = \
+                source_line_contents[report_data.fileId][report_data.line]
+
+            # TODO: get details
+            reports.append(report)
+
+        return reports
 
     def get_diff_local_dir_remote_run(
         client,
         report_dirs: List[str],
         baseline_files: List[str],
         remote_run_names: List[str]
-    ):
+    ) -> Tuple[List[Report], List[str], List[str]]:
         """ Compare a local report directory with a remote run. """
         filtered_reports = []
-
-        filtered_report_hashes = set()
+        filtered_report_hashes: Set[str] = set()
 
         report_dir_results = get_report_dir_results(
             report_dirs, args, context.checker_labels)
@@ -860,8 +856,8 @@ def handle_diff_results(args):
             results = get_diff_base_results(
                 client, args, run_ids, remote_hashes, suppressed_in_code)
 
-            for result in results:
-                filtered_reports.append(result)
+            filtered_reports.extend(
+                convert_report_data_to_report(client, results))
         elif diff_type == ttypes.DiffType.UNRESOLVED:
             # Get remote hashes which can be found in the remote run and in the
             # local report directory.
@@ -886,7 +882,9 @@ def handle_diff_results(args):
 
                 for result in results:
                     filtered_report_hashes.discard(result.bugHash)
-                    filtered_reports.append(result)
+
+                filtered_reports.extend(
+                    convert_report_data_to_report(client, results))
         elif diff_type == ttypes.DiffType.RESOLVED:
             # Get remote hashes which can be found in the remote run and in the
             # local report directory.
@@ -908,7 +906,7 @@ def handle_diff_results(args):
         remote_run_names: List[str],
         report_dirs: List[str],
         baseline_files: List[str]
-    ):
+    ) -> Tuple[List[Report], List[str], List[str]]:
         """ Compares a remote run with a local report directory. """
         filtered_reports = []
         filtered_report_hashes = []
@@ -948,13 +946,16 @@ def handle_diff_results(args):
             results = get_diff_base_results(
                 client, args, run_ids, remote_hashes, suppressed_in_code)
 
-            for result in results:
-                filtered_reports.append(result)
+            filtered_reports.extend(
+                convert_report_data_to_report(client, results))
 
         return filtered_reports, filtered_report_hashes, run_names
 
-    def get_diff_remote_runs(client, remote_base_run_names,
-                             remote_new_run_names):
+    def get_diff_remote_runs(
+        client,
+        remote_base_run_names: Iterable[str],
+        remote_new_run_names: Iterable[str]
+    ) -> Tuple[List[Report], List[str], List[str]]:
         """
         Compares two remote runs and returns the filtered results.
         """
@@ -984,16 +985,12 @@ def handle_diff_results(args):
             ttypes.SortType.FILENAME,
             ttypes.Order.ASC))]
 
-        all_results = get_run_results(client,
-                                      base_ids,
-                                      constants.MAX_QUERY_SIZE,
-                                      0,
-                                      sort_mode,
-                                      report_filter,
-                                      cmp_data,
-                                      False)
+        all_results = get_run_results(
+            client, base_ids, constants.MAX_QUERY_SIZE, 0, sort_mode,
+            report_filter, cmp_data, False)
 
-        return all_results, base_run_names, new_run_names
+        reports = convert_report_data_to_report(client, all_results)
+        return reports, base_run_names, new_run_names
 
     def get_diff_local_dirs(
         report_dirs: List[str],
@@ -1047,126 +1044,7 @@ def handle_diff_results(args):
 
         return filtered_reports, filtered_report_hashes
 
-    def cached_report_file_lookup(file_cache, file_id):
-        """
-        Get source file data for the given file and caches it in a file cache
-        if file data is not found in the cache. Finally, it returns the source
-        file data from the cache.
-        """
-        if file_id not in file_cache:
-            source = client.getSourceFileData(file_id, True,
-                                              ttypes.Encoding.BASE64)
-            file_content = convert.from_b64(source.fileContent)
-            file_cache[file_id] = {'id': file_id,
-                                   'path': source.filePath,
-                                   'content': file_content}
-
-        return file_cache[file_id]
-
-    def get_report_data(client, reports, file_cache):
-        """
-        Returns necessary report files and report data events for the HTML
-        plist parser.
-        """
-        file_sources = {}
-        report_data = []
-
-        for report in reports:
-            file_sources[report.fileId] = cached_report_file_lookup(
-                file_cache, report.fileId)
-
-            details = client.getReportDetails(report.reportId)
-            events = []
-            for event in details.pathEvents:
-                file_sources[event.fileId] = cached_report_file_lookup(
-                    file_cache, event.fileId)
-
-                location = {'line': event.startLine,
-                            'col': event.startCol,
-                            'file': event.fileId}
-
-                events.append({'location': location,
-                               'message': event.msg})
-
-            # Get extended data.
-            macros = []
-            notes = []
-            for extended_data in details.extendedData:
-                file_sources[extended_data.fileId] = cached_report_file_lookup(
-                    file_cache, extended_data.fileId)
-
-                location = {'line': extended_data.startLine,
-                            'col': extended_data.startCol,
-                            'file': extended_data.fileId}
-
-                if extended_data.type == ttypes.ExtendedReportDataType.MACRO:
-                    macros.append({'location': location,
-                                   'expansion': event.msg})
-                elif extended_data.type == ttypes.ExtendedReportDataType.NOTE:
-                    notes.append({'location': location,
-                                  'message': event.msg})
-
-            report_data.append({
-                'events': events,
-                'macros': macros,
-                'notes': notes,
-                'path': report.checkedFile,
-                'reportHash': report.bugHash,
-                'checkerName': report.checkerId})
-
-        return {'files': file_sources,
-                'reports': report_data}
-
-    def report_to_html(client, reports, output_dir):
-        """
-        Generate HTML output files for the given reports in the given output
-        directory by using the Plist To HTML builder.
-        """
-        html_builder = PlistToHtml.HtmlBuilder(
-            context.path_plist_to_html_dist,
-            context.checker_labels)
-        file_stats = defaultdict(int)
-        severity_stats = defaultdict(int)
-        file_report_map = defaultdict(list)
-        for report in reports:
-            if isinstance(report, Report):
-                file_path = report.file_path
-
-                check_name = report.main['check_name']
-                sev = context.checker_labels.severity(check_name)
-            else:
-                file_path = report.checkedFile
-                sev = ttypes.Severity._VALUES_TO_NAMES[report.severity]
-
-            file_report_map[file_path].append(report)
-            file_stats[file_path] += 1
-            severity_stats[sev] += 1
-
-        file_cache = {}
-        for file_path, file_reports in file_report_map.items():
-            checked_file = file_path
-            filename = os.path.basename(checked_file)
-            h = int(
-                hashlib.md5(
-                    file_path.encode('utf-8')).hexdigest(),
-                16) % (10 ** 8)
-
-            if isinstance(file_reports[0], Report):
-                report_data = reports_to_html_report_data(file_reports)
-            else:
-                report_data = get_report_data(client, file_reports, file_cache)
-
-            output_path = os.path.join(output_dir,
-                                       filename + '_' + str(h) + '.html')
-            html_builder.create(output_path, report_data)
-            print('Html file was generated for file://{0}: file://{1}'.format(
-                checked_file, output_path))
-
-        html_builder.create_index_html(output_dir)
-        print_stats(len(reports), file_stats, severity_stats)
-
     def print_reports(
-        client,
         reports: List[Report],
         report_hashes: Iterable[str],
         output_formats: List[str]
@@ -1175,173 +1053,93 @@ def handle_diff_results(args):
             LOG.info("Couldn't get local reports for the following baseline "
                      "report hashes: %s", ', '.join(sorted(report_hashes)))
 
-        selected_output_format_num = len(output_formats)
-
-        if 'json' in output_formats:
-            out = []
-            for report in reports:
-                if isinstance(report, Report):
-                    report = \
-                        report_type_converter.report_to_reportData(
-                            report, context.checker_labels)
-                    out.append(report)
-                else:
-                    out.append(report)
-
-            encoded_reports = CmdLineOutputEncoder().encode(out)
-            if output_dir:
-                report_json = os.path.join(output_dir, 'reports.json')
-
-                with open(report_json, mode="w", encoding="utf-8",
-                          errors="ignore") as reports_file:
-                    reports_file.write(encoded_reports)
-                LOG.info('JSON report file was created: %s',
-                         os.path.join(output_dir, 'report.json'))
-
-            else:
-                print(encoded_reports)
-
-            # Json was the only format specified.
-            if selected_output_format_num == 1:
-                return
-
-            output_formats.remove('json')
-
-        if 'html' in output_formats:
-            print("Generating HTML output files to file://{0} directory:\n"
-                  .format(output_dir))
-
-            report_to_html(client, reports, output_dir)
-
-            print('\nTo view the results in a browser run:\n'
-                  '  $ firefox {0}\n'.format(os.path.join(output_dir,
-                                                          'index.html')))
-
-            # HTML was the only format specified.
-            if selected_output_format_num == 1:
-                return
-
-            output_formats.remove('html')
-
-        # Collect source line contents for the report type got from the server.
-        source_lines = defaultdict(set)
+        statistics = Statistics()
+        changed_files: Set[str] = set()
+        html_builder: Optional[report_to_html.HtmlBuilder] = None
         for report in reports:
-            if not isinstance(report, Report) and report.line is not None:
-                source_lines[report.fileId].add(report.line)
-        if client:
-            lines_in_files_requested = []
-            for key in source_lines:
-                lines_in_files_requested.append(
-                    ttypes.LinesInFilesRequested(fileId=key,
-                                                 lines=source_lines[key]))
+            statistics.add_report(report)
 
-            source_line_contents.update(client.getLinesInSourceFileContents(
-                lines_in_files_requested, ttypes.Encoding.BASE64))
+            if report.changed_files:
+                changed_files.update(report.changed_files)
 
-        # Convert all the reports to the common Report
-        # type for printing and formatting to various formats.
-        converted_reports = []
-        changed_files = set()
-        for report in reports:
-            if not isinstance(report, Report):
-                r = report_type_converter.reportData_to_report(report)
-                if source_line_contents:
-                    r.source_line = convert.from_b64(
-                        source_line_contents[report.fileId][report.line])
-                converted_reports.append(r)
-            else:
-                if not os.path.exists(report.file_path):
-                    changed_files.add(report.file_path)
-                    continue
-
-                report.source_line = util.get_line(report.file_path,
-                                                   report.line)
-
-                converted_reports.append(report)
-
-        reports = converted_reports
-
-        repo_dir = os.environ.get('CC_REPO_DIR')
-        if repo_dir:
-            for report in reports:
+            repo_dir = os.environ.get('CC_REPO_DIR')
+            if repo_dir:
                 report.trim_path_prefixes([repo_dir])
-
-        if 'gerrit' in output_formats:
-            gerrit_reports = gerrit.convert(reports, context.checker_labels)
-
-            # Gerrit was the only format specified.
-            if selected_output_format_num == 1 and not output_dir:
-                print(json.dumps(gerrit_reports))
-                return
-
-            gerrit_review_json = os.path.join(output_dir,
-                                              'gerrit_review.json')
-            with open(gerrit_review_json, 'w') as review_file:
-                json.dump(gerrit_reports, review_file)
-            LOG.info("Gerrit review file was created: %s\n",
-                     gerrit_review_json)
-
-            output_formats.remove('gerrit')
-
-        if 'codeclimate' in output_formats:
-            cc_reports = codeclimate.convert(reports, context.checker_labels)
-            # Codelimate was the only format specified.
-            if selected_output_format_num == 1 and not output_dir:
-                print(json.dumps(cc_reports))
-                return
-
-            codeclimate_issues_json = os.path.join(output_dir,
-                                                   'codeclimate_issues.json')
-            with open(codeclimate_issues_json, 'w') as issues_f:
-                json.dump(cc_reports, issues_f)
-
-            LOG.info("Code Climate file was created: %s\n",
-                     codeclimate_issues_json)
-
-            output_formats.remove('codeclimate')
-
-        header = ['File', 'Checker', 'Severity', 'Msg', 'Source']
-        rows = []
-
-        file_stats = defaultdict(int)
-        severity_stats = defaultdict(int)
-
-        for report in reports:
-            if report.source_line is None:
-                continue
-
-            severity = context.checker_labels.severity(report.check_name)
-            file_name = report.file_path
-            checked_file = file_name \
-                + ':' + str(report.line) + ":" + str(report.col)
-            check_msg = report.description
-
-            rows.append((severity,
-                         checked_file,
-                         check_msg,
-                         report.check_name,
-                         report.source_line))
-
-            severity_stats[severity] += 1
-            file_stats[file_name] += 1
 
         for output_format in output_formats:
             if output_format == 'plaintext':
-                for row in rows:
-                    print("[{0}] {1}: {2} [{3}]\n{4}\n".format(
-                        row[0], row[1], row[2], row[3], row[4]))
-            else:
+                file_report_map = plaintext.get_file_report_map(reports)
+                plaintext.convert(file_report_map)
+
+            if output_format == 'html':
+                if not html_builder:
+                    html_builder = report_to_html.HtmlBuilder(
+                        context.path_plist_to_html_dist,
+                        context.checker_labels)
+
+                file_report_map = plaintext.get_file_report_map(reports)
+
+                LOG.info("Generating HTML output files to file://%s "
+                         "directory:", output_dir)
+
+                for file_path in file_report_map:
+                    file_name = os.path.basename(file_path)
+                    h = int(
+                        hashlib.md5(
+                            file_path.encode('utf-8')).hexdigest(),
+                        16) % (10 ** 8)
+
+                    output_file_path = os.path.join(
+                        output_dir, f"{file_name}_ {str(h)}.html")
+                    html_builder.create(output_file_path, reports)
+
+            if output_format in ['csv', 'rows', 'table']:
+                header = ['File', 'Checker', 'Severity', 'Msg', 'Source']
+                rows = []
+                for report in reports:
+                    if report.source_line is None:
+                        continue
+
+                    checked_file = f"{report.file.path}:{str(report.line)}:" \
+                                   f"{str(report.column)}"
+                    rows.append((
+                        report.severity,
+                        checked_file,
+                        report.message,
+                        report.checker_name,
+                        report.source_line.rstrip()))
+
                 print(twodim.to_str(output_format, header, rows))
 
-        print_stats(len(reports), file_stats, severity_stats)
+            if output_format == 'json':
+                data = report_to_json.convert(reports)
 
-        if changed_files:
-            changed_f = '\n'.join([' - ' + f for f in changed_files])
-            LOG.warning("The following source file contents changed since the "
-                        "latest analysis:\n%s\nMultiple reports were not "
-                        "shown and skipped from the statistics. Please "
-                        "analyze your project again to update the "
-                        "reports!", changed_f)
+                report_json = os.path.join(output_dir, 'reports.json') \
+                    if output_dir else None
+                dump_json_output(data, report_json)
+
+            if output_format == 'gerrit':
+                data = gerrit.convert(reports)
+
+                report_json = os.path.join(
+                    output_dir, 'gerrit_review.json') if output_dir else None
+                dump_json_output(data, report_json)
+
+            if output_format == 'codeclimate':
+                data = codeclimate.convert(reports)
+
+                report_json = os.path.join(
+                    output_dir, 'codeclimate_issues.json') \
+                    if output_dir else None
+                dump_json_output(data, report_json)
+
+        if 'html' in output_formats:
+            html_builder.finish(output_dir, statistics)
+
+        if 'plaintext' in output_formats:
+            statistics.write()
+
+        reports_helper.dump_changed_files(changed_files)
 
     basename_local_dirs, basename_baseline_files, basename_run_names = \
         filter_local_file_remote_run(args.base_run_names)
@@ -1368,15 +1166,6 @@ def handle_diff_results(args):
 
     if has_different_run_args:
         sys.exit(1)
-
-    output_dir = args.export_dir if 'export_dir' in args else None
-    if 'clean' in args and os.path.isdir(output_dir):
-        print("Previous analysis results in '{0}' have been removed, "
-              "overwriting with current results.".format(output_dir))
-        shutil.rmtree(output_dir)
-
-    if output_dir and not os.path.exists(output_dir):
-        os.makedirs(output_dir)
 
     if basename_local_dirs:
         LOG.info("Matching local report directories (--baseline): %s",
@@ -1419,7 +1208,7 @@ def handle_diff_results(args):
             basename_local_dirs, basename_baseline_files,
             newname_local_dirs, newname_baseline_files)
 
-        print_reports(client, reports, report_hashes, args.output_format)
+        print_reports(reports, report_hashes, args.output_format)
         LOG.info("Compared the following local files / directories: %s and %s",
                  ', '.join([*basename_local_dirs, *basename_baseline_files]),
                  ', '.join([*newname_local_dirs, *newname_baseline_files]))
@@ -1429,7 +1218,7 @@ def handle_diff_results(args):
                 client, basename_run_names,
                 newname_local_dirs, newname_baseline_files)
 
-        print_reports(client, reports, report_hashes, args.output_format)
+        print_reports(reports, report_hashes, args.output_format)
         LOG.info("Compared remote run(s) %s (matching: %s) and local files / "
                  "report directory(s) %s",
                  ', '.join(basename_run_names),
@@ -1441,7 +1230,7 @@ def handle_diff_results(args):
                 client, basename_local_dirs, basename_baseline_files,
                 newname_run_names)
 
-        print_reports(client, reports, report_hashes, args.output_format)
+        print_reports(reports, report_hashes, args.output_format)
         LOG.info("Compared local files / report directory(s) %s and remote "
                  "run(s) %s (matching: %s).",
                  ', '.join([*basename_local_dirs, *basename_baseline_files]),
@@ -1450,7 +1239,7 @@ def handle_diff_results(args):
     else:
         reports, matching_base_run_names, matching_new_run_names = \
             get_diff_remote_runs(client, basename_run_names, newname_run_names)
-        print_reports(client, reports, None, args.output_format)
+        print_reports(reports, None, args.output_format)
         LOG.info("Compared multiple remote runs %s (matching: %s) and %s "
                  "(matching: %s)",
                  ', '.join(basename_run_names),
@@ -1755,7 +1544,7 @@ def handle_import(args):
 
     client = setup_client(args.product_url)
 
-    data = util.load_json_or_empty(args.input, default=None)
+    data = load_json_or_empty(args.input, default=None)
     if not data:
         LOG.error("Failed to import data!")
         sys.exit(1)

@@ -12,8 +12,9 @@ Argument handlers for the 'CodeChecker cmd components' subcommands.
 
 import sys
 
+from codechecker_report_converter import twodim
+
 from codechecker_common import logger
-from codechecker_common.output import twodim
 from codechecker_web.shared.env import get_user_input
 
 from .client import setup_client

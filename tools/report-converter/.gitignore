@@ -1,3 +1,4 @@
 build/
 report_converter.egg-info
 *.class
+codechecker_report_converter/report/output/html/static/vendor

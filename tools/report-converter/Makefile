@@ -5,12 +5,18 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # -------------------------------------------------------------------------
+CODEMIRROR = https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.30.0
+
 CURRENT_DIR = ${CURDIR}
 ROOT = $(CURRENT_DIR)
 
 BUILD_DIR = $(CURRENT_DIR)/build
 PYTHON_BIN ?= python3
 REPORT_CONVERTER_DIR = $(BUILD_DIR)/report_converter
+
+STATIC_DIR = $(CURRENT_DIR)/codechecker_report_converter/report/output/html/static
+VENDOR_DIR = $(STATIC_DIR)/vendor
+CODEMIRROR_DIR = $(VENDOR_DIR)/codemirror
 
 ACTIVATE_DEV_VENV ?= . venv_dev/bin/activate
 ACTIVATE_RUNTIME_VENV ?= . venv/bin/activate
@@ -38,14 +44,14 @@ clean_venv_dev:
 
 include tests/Makefile
 
-package:
+package: dep
 	# Install package in 'development mode'.
-	${PYTHON_BIN} -m pip install -e . -e ../codechecker_report_hash/
+	${PYTHON_BIN} setup.py develop
 
-build:
+build: dep
 	${PYTHON_BIN} setup.py build --build-purelib $(REPORT_CONVERTER_DIR)
 
-dist:
+dist: dep
 	# Create a source distribution.
 	${PYTHON_BIN} setup.py sdist
 
@@ -61,6 +67,46 @@ upload:
 	$(eval PKG_VERSION := $(shell ${PYTHON_BIN} setup.py --version))
 	twine upload -r pypi dist/$(PKG_NAME)-$(PKG_VERSION).tar.gz
 
+vendor_dir:
+	mkdir -p $(VENDOR_DIR)
+
+codemirror_dir: vendor_dir
+	mkdir -p $ $(CODEMIRROR_DIR)
+
+dep: codemirror
+
+codemirror: $(CODEMIRROR_DIR)/codemirror.min.js
+codemirror: $(CODEMIRROR_DIR)/codemirror.min.css
+codemirror: $(CODEMIRROR_DIR)/codemirror.LICENSE
+codemirror: $(CODEMIRROR_DIR)/clike.min.js
+
+$(CODEMIRROR_DIR)/codemirror.min.js: codemirror_dir
+	[ -f $(CODEMIRROR_DIR)/codemirror.min.js ] && : || \
+	curl -sSfLk --get $(CODEMIRROR)/codemirror.min.js \
+			 -z $(CODEMIRROR_DIR)/codemirror.min.js \
+			 -o $(CODEMIRROR_DIR)/codemirror.min.js
+
+$(CODEMIRROR_DIR)/codemirror.min.css: codemirror_dir
+	[ -f $(CODEMIRROR_DIR)/codemirror.min.css ] && : || \
+	curl -sSfLk --get $(CODEMIRROR)/codemirror.min.css \
+			 -z $(CODEMIRROR_DIR)/codemirror.min.css \
+			 -o $(CODEMIRROR_DIR)/codemirror.min.css
+
+$(CODEMIRROR_DIR)/codemirror.LICENSE: codemirror_dir
+	[ -f $(CODEMIRROR_DIR)/codemirror.LICENSE ] && : || \
+	curl -sSfLk --get https://raw.githubusercontent.com/codemirror/CodeMirror/master/LICENSE \
+			 -z $(CODEMIRROR_DIR)/codemirror.LICENSE \
+			 -o $(CODEMIRROR_DIR)/codemirror.LICENSE
+
+$(CODEMIRROR_DIR)/clike.min.js: codemirror_dir
+	[ -f $(CODEMIRROR_DIR)/clike.min.js ] && : || \
+	curl -sSfLk --get $(CODEMIRROR)/mode/clike/clike.min.js \
+			 -z $(CODEMIRROR_DIR)/clike.min.js \
+			 -o $(CODEMIRROR_DIR)/clike.min.js
+
 clean:
 	rm -rf $(BUILD_DIR)
 	rm -rf report_converter.egg-info
+
+clean_vendor:
+	rm -rf $(VENDOR_DIR)

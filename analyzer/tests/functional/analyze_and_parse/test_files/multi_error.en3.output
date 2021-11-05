@@ -24,17 +24,33 @@ CHECK#CodeChecker check --build "make multi_error" --output $OUTPUT$ --quiet --a
 Found 1 defect(s) in multi_error.cpp
 
 
-----==== Summary ====----
-------------------------------
-Filename        | Report count
-------------------------------
-multi_error.cpp |            1
-------------------------------
------------------------
-Severity | Report count
------------------------
-LOW      |            1
------------------------
+----==== Severity Statistics ====----
+----------------------------
+Severity | Number of reports
+----------------------------
+LOW      |                 1
+----------------------------
 ----=================----
-Total number of reports: 1
+
+----==== Checker Statistics ====----
+--------------------------------------------------
+Checker name        | Severity | Number of reports
+--------------------------------------------------
+deadcode.DeadStores | LOW      |                 1
+--------------------------------------------------
+----=================----
+
+----==== File Statistics ====----
+-----------------------------------
+File name       | Number of reports
+-----------------------------------
+multi_error.cpp |                 1
+-----------------------------------
+----=================----
+
+----======== Summary ========----
+---------------------------------------------
+Number of processed analyzer result files | 1
+Number of analyzer reports                | 1
+---------------------------------------------
 ----=================----

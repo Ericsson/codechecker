@@ -19,13 +19,14 @@ import re
 import shutil
 import sys
 
+from codechecker_report_converter.util import load_json_or_empty
+
 from codechecker_analyzer import analyzer, analyzer_context, env
 from codechecker_analyzer.analyzers import analyzer_types, clangsa
 from codechecker_analyzer.arg import OrderedCheckersAction
 from codechecker_analyzer.buildlog import log_parser
 
 from codechecker_common import arg, logger, skiplist_handler, cmd_config
-from codechecker_common.util import load_json_or_empty
 
 
 LOG = logger.get_logger('system')
@@ -743,7 +744,7 @@ output of "CodeChecker checkers --guideline" command.""")
         func=main, func_process_config_file=cmd_config.process_config_file)
 
 
-def __get_skip_handler(args):
+def __get_skip_handler(args) -> skiplist_handler.SkipListHandler:
     """
     Initialize and return a skiplist handler if
     there is a skip list file in the arguments or files options is provided.

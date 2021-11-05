@@ -30,7 +30,7 @@ from . import clang_options
 from . import config_handler
 from . import ctu_triple_arch
 from . import version
-from .result_handler import ResultHandlerClangSA
+from .result_handler import ClangSAResultHandler
 
 LOG = get_logger('analyzer')
 
@@ -410,7 +410,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         """
         See base class for docs.
         """
-        res_handler = ResultHandlerClangSA(buildaction, report_output,
+        res_handler = ClangSAResultHandler(buildaction, report_output,
                                            self.config_handler.report_hash)
 
         res_handler.checker_labels = checker_labels

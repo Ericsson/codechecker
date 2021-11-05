@@ -50,13 +50,6 @@ package_dir_structure:
 	mkdir -p $(CC_BUILD_BIN_DIR) && \
 	mkdir -p $(CC_BUILD_LIB_DIR)
 
-build_plist_to_html:
-	$(MAKE) -C $(ROOT)/tools/plist_to_html build
-
-package_plist_to_html: build_plist_to_html package_dir_structure
-	# Copy plist-to-html files.
-	cp -r $(CC_TOOLS)/plist_to_html/build/plist_to_html/plist_to_html $(CC_BUILD_LIB_DIR)
-
 build_tu_collector:
 	$(MAKE) -C $(ROOT)/tools/tu_collector build
 
@@ -66,12 +59,6 @@ package_tu_collector: build_tu_collector package_dir_structure
 	chmod u+x $(CC_BUILD_LIB_DIR)/tu_collector/tu_collector.py && \
 	cd $(CC_BUILD_BIN_DIR) && \
 	ln -sf ../lib/python3/tu_collector/tu_collector.py tu_collector
-
-build_report_hash:
-	$(MAKE) -C $(CC_TOOLS)/codechecker_report_hash build
-
-package_report_hash: build_report_hash package_dir_structure
-	cp -rp $(CC_TOOLS)/codechecker_report_hash/build/codechecker_report_hash/codechecker_report_hash $(CC_BUILD_LIB_DIR)
 
 build_report_converter:
 	$(MAKE) -C $(CC_TOOLS)/report-converter build
@@ -86,7 +73,7 @@ build_merge_clang_extdef_mappings:
 	$(MAKE) -C $(CC_ANALYZER)/tools/merge_clang_extdef_mappings build
 
 package_merge_clang_extdef_mappings: build_merge_clang_extdef_mappings package_dir_structure
-	# Copy plist-to-html files.
+	# Copy files.
 	cp -r tools/merge_clang_extdef_mappings/build/merge_clang_extdef_mappings/codechecker_merge_clang_extdef_mappings $(CC_BUILD_LIB_DIR) && \
 	chmod u+x $(CC_BUILD_LIB_DIR)/codechecker_merge_clang_extdef_mappings/cli.py && \
 	cd $(CC_BUILD_BIN_DIR) && \
@@ -113,9 +100,8 @@ package_bazel_compile_commands: build_bazel_compile_commands package_dir_structu
 	ln -sf ../lib/python3/bazel_compile_commands/bazel_compile_commands.py bazel-compile-commands
 
 # This target should be used from the top level Makefile to build the package
-# together with the web part. This way we will not build plist-to-html
-# multiple times.
-package_analyzer: package_dir_structure package_plist_to_html package_tu_collector package_report_hash package_merge_clang_extdef_mappings package_report_converter package_statistics_collector package_bazel_compile_commands
+# together with the web part. This way we will not build tools multiple times.
+package_analyzer: package_dir_structure package_tu_collector package_merge_clang_extdef_mappings package_report_converter package_statistics_collector package_bazel_compile_commands
 
 package: package_analyzer
 	# Copy libraries.
@@ -182,12 +168,9 @@ else
   endif
 endif
 
-clean_package: clean_plist_to_html clean_tu_collector clean_bazel_compile_commands
+clean_package: clean_tu_collector clean_bazel_compile_commands
 	rm -rf $(BUILD_DIR)
 	find . -name "*.pyc" -delete
-
-clean_plist_to_html:
-	rm -rf $(ROOT)/tools/plist_to_html/build
 
 clean_tu_collector:
 	rm -rf $(ROOT)/tools/tu_collector/build

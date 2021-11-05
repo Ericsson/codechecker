@@ -24,32 +24,48 @@ CHECK#CodeChecker check --build "make tidy_check multi_error_skipped_in_cmd" --o
 
 Found 1 defect(s) in multi_error_skipped_in_cmd.cpp
 
-[HIGH] multi_error_skipped_in_cmd.HPP:5:3: suspicious usage of 'sizeof(K)'; did you mean 'K'? [bugprone-sizeof-expression]
-  sizeof(42);
-  ^
-
-Found 1 defect(s) in multi_error_skipped_in_cmd.HPP
-
 [HIGH] multi_error_skipped_in_cmd.h:5:3: suspicious usage of 'sizeof(K)'; did you mean 'K'? [bugprone-sizeof-expression]
   sizeof(42);
   ^
 
 Found 1 defect(s) in multi_error_skipped_in_cmd.h
 
+[HIGH] multi_error_skipped_in_cmd.HPP:5:3: suspicious usage of 'sizeof(K)'; did you mean 'K'? [bugprone-sizeof-expression]
+  sizeof(42);
+  ^
 
-----==== Summary ====----
----------------------------------------------
-Filename                       | Report count
----------------------------------------------
-multi_error_skipped_in_cmd.HPP |            1
-multi_error_skipped_in_cmd.cpp |            1
-multi_error_skipped_in_cmd.h   |            1
----------------------------------------------
------------------------
-Severity | Report count
------------------------
-HIGH     |            3
------------------------
+Found 1 defect(s) in multi_error_skipped_in_cmd.HPP
+
+
+----==== Severity Statistics ====----
+----------------------------
+Severity | Number of reports
+----------------------------
+HIGH     |                 3
+----------------------------
 ----=================----
-Total number of reports: 3
+
+----==== Checker Statistics ====----
+---------------------------------------------------------
+Checker name               | Severity | Number of reports
+---------------------------------------------------------
+bugprone-sizeof-expression | HIGH     |                 3
+---------------------------------------------------------
+----=================----
+
+----==== File Statistics ====----
+--------------------------------------------------
+File name                      | Number of reports
+--------------------------------------------------
+multi_error_skipped_in_cmd.HPP |                 1
+multi_error_skipped_in_cmd.cpp |                 1
+multi_error_skipped_in_cmd.h   |                 1
+--------------------------------------------------
+----=================----
+
+----======== Summary ========----
+---------------------------------------------
+Number of processed analyzer result files | 1
+Number of analyzer reports                | 3
+---------------------------------------------
 ----=================----

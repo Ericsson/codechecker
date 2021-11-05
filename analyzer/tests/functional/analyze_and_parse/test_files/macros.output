@@ -13,17 +13,33 @@ NORMAL#CodeChecker parse $WORKSPACE$/test_files/macros/macros.plist --print-step
 Found 1 defect(s) in macros.cpp
 
 
-----==== Summary ====----
--------------------------
-Filename   | Report count
--------------------------
-macros.cpp |            1
--------------------------
------------------------
-Severity | Report count
------------------------
-HIGH     |            1
------------------------
+----==== Severity Statistics ====----
+----------------------------
+Severity | Number of reports
+----------------------------
+HIGH     |                 1
+----------------------------
 ----=================----
-Total number of reports: 1
+
+----==== Checker Statistics ====----
+---------------------------------------------------
+Checker name         | Severity | Number of reports
+---------------------------------------------------
+core.NullDereference | HIGH     |                 1
+---------------------------------------------------
+----=================----
+
+----==== File Statistics ====----
+------------------------------
+File name  | Number of reports
+------------------------------
+macros.cpp |                 1
+------------------------------
+----=================----
+
+----======== Summary ========----
+---------------------------------------------
+Number of processed analyzer result files | 1
+Number of analyzer reports                | 1
+---------------------------------------------
 ----=================----

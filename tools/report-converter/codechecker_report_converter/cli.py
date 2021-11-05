@@ -9,10 +9,15 @@
 
 
 import argparse
+import glob
+import importlib
 import logging
 import os
 import shutil
 import sys
+
+from typing import Dict, Optional, Tuple
+
 
 # If we run this script in an environment where 'codechecker_report_converter'
 # module is not available we should add the grandparent directory of this file
@@ -22,53 +27,14 @@ import sys
 # dependencies.
 if __name__ == '__main__':
     current_dir = os.path.dirname(os.path.realpath(__file__))
-    os.sys.path.insert(0, os.path.dirname(current_dir))
-
-from codechecker_report_converter.clang_tidy.analyzer_result import \
-    ClangTidyAnalyzerResult  # noqa
-from codechecker_report_converter.cppcheck.analyzer_result import \
-    CppcheckAnalyzerResult  # noqa
-from codechecker_report_converter.infer.analyzer_result import \
-    InferAnalyzerResult  # noqa
-from codechecker_report_converter.sanitizers.address.analyzer_result import \
-    ASANAnalyzerResult  # noqa
-from codechecker_report_converter.sanitizers.memory.analyzer_result import \
-    MSANAnalyzerResult  # noqa
-from codechecker_report_converter.sanitizers.thread.analyzer_result import \
-    TSANAnalyzerResult  # noqa
-from codechecker_report_converter.sanitizers.ub.analyzer_result import \
-    UBSANAnalyzerResult  # noqa
-from codechecker_report_converter.spotbugs.analyzer_result import \
-    SpotBugsAnalyzerResult  # noqa
-from codechecker_report_converter.eslint.analyzer_result import \
-    ESLintAnalyzerResult  # noqa
-from codechecker_report_converter.pylint.analyzer_result import \
-    PylintAnalyzerResult  # noqa
-from codechecker_report_converter.tslint.analyzer_result import \
-    TSLintAnalyzerResult  # noqa
-from codechecker_report_converter.golint.analyzer_result import \
-    GolintAnalyzerResult  # noqa
-from codechecker_report_converter.pyflakes.analyzer_result import \
-    PyflakesAnalyzerResult  # noqa
-from codechecker_report_converter.markdownlint.analyzer_result import \
-    MarkdownlintAnalyzerResult  # noqa
-from codechecker_report_converter.coccinelle.analyzer_result import \
-    CoccinelleAnalyzerResult  # noqa
-from codechecker_report_converter.smatch.analyzer_result import \
-    SmatchAnalyzerResult  # noqa
-from codechecker_report_converter.kerneldoc.analyzer_result import \
-    KernelDocAnalyzerResult  # noqa
-from codechecker_report_converter.sphinx.analyzer_result import \
-    SphinxAnalyzerResult  # noqa
-from codechecker_report_converter.sparse.analyzer_result import \
-    SparseAnalyzerResult  # noqa
-from codechecker_report_converter.cpplint.analyzer_result import \
-    CpplintAnalyzerResult  # noqa
-from codechecker_report_converter.sanitizers.leak.analyzer_result import \
-    LSANAnalyzerResult  # noqa
+    sys.path.insert(0, os.path.dirname(current_dir))
 
 
-LOG = logging.getLogger('ReportConverter')
+from codechecker_report_converter.report.report_file import \
+    SUPPORTED_ANALYZER_EXTENSIONS
+from codechecker_report_converter.report.parser import plist
+
+LOG = logging.getLogger('report-converter')
 
 msg_formatter = logging.Formatter('[%(levelname)s] - %(message)s')
 log_handler = logging.StreamHandler(sys.stdout)
@@ -86,35 +52,41 @@ class RawDescriptionDefaultHelpFormatter(
     pass
 
 
-supported_converters = {
-    ClangTidyAnalyzerResult.TOOL_NAME: ClangTidyAnalyzerResult,
-    CppcheckAnalyzerResult.TOOL_NAME: CppcheckAnalyzerResult,
-    InferAnalyzerResult.TOOL_NAME: InferAnalyzerResult,
-    GolintAnalyzerResult.TOOL_NAME: GolintAnalyzerResult,
-    ASANAnalyzerResult.TOOL_NAME: ASANAnalyzerResult,
-    ESLintAnalyzerResult.TOOL_NAME: ESLintAnalyzerResult,
-    MSANAnalyzerResult.TOOL_NAME: MSANAnalyzerResult,
-    PylintAnalyzerResult.TOOL_NAME: PylintAnalyzerResult,
-    PyflakesAnalyzerResult.TOOL_NAME: PyflakesAnalyzerResult,
-    TSANAnalyzerResult.TOOL_NAME: TSANAnalyzerResult,
-    TSLintAnalyzerResult.TOOL_NAME: TSLintAnalyzerResult,
-    UBSANAnalyzerResult.TOOL_NAME: UBSANAnalyzerResult,
-    SpotBugsAnalyzerResult.TOOL_NAME: SpotBugsAnalyzerResult,
-    MarkdownlintAnalyzerResult.TOOL_NAME: MarkdownlintAnalyzerResult,
-    CoccinelleAnalyzerResult.TOOL_NAME: CoccinelleAnalyzerResult,
-    SmatchAnalyzerResult.TOOL_NAME: SmatchAnalyzerResult,
-    KernelDocAnalyzerResult.TOOL_NAME: KernelDocAnalyzerResult,
-    SphinxAnalyzerResult.TOOL_NAME: SphinxAnalyzerResult,
-    SparseAnalyzerResult.TOOL_NAME: SparseAnalyzerResult,
-    CpplintAnalyzerResult.TOOL_NAME: CpplintAnalyzerResult,
-    LSANAnalyzerResult.TOOL_NAME: LSANAnalyzerResult
-}
+# Load supported converters dynamically.
+supported_converters = {}
+analyzers_dir_path = os.path.join(os.path.dirname(
+    os.path.realpath(__file__)), "analyzers")
+
+analyzers = sorted(glob.glob(os.path.join(
+    analyzers_dir_path, '**', 'analyzer_result.py'), recursive=True))
+for analyzer_path in analyzers:
+    analyzer_module = '.'.join(os.path.relpath(
+        os.path.splitext(analyzer_path)[0],
+        analyzers_dir_path).split(os.path.sep))
+    module_name = f"codechecker_report_converter.analyzers.{analyzer_module}"
+
+    try:
+        module = importlib.import_module(module_name)
+
+        if hasattr(module, "AnalyzerResult"):
+            analyzer_result = getattr(module, "AnalyzerResult")
+            supported_converters[analyzer_result.TOOL_NAME] = analyzer_result
+    except ModuleNotFoundError:
+        pass
+
 
 supported_metadata_keys = ["analyzer_command", "analyzer_version"]
 
 
-def output_to_plist(analyzer_result, parser_type, output_dir, file_name,
-                    clean=False, metadata=None):
+def transform_output(
+    analyzer_result: str,
+    parser_type: str,
+    output_dir: str,
+    file_name: str,
+    export_type: str,
+    clean: bool = False,
+    metadata: Optional[Dict[str, str]] = None
+):
     """ Creates .plist files from the given output to the given output dir. """
     if clean and os.path.isdir(output_dir):
         LOG.info("Previous analysis results in '%s' have been removed, "
@@ -125,10 +97,11 @@ def output_to_plist(analyzer_result, parser_type, output_dir, file_name,
         os.makedirs(output_dir)
 
     parser = supported_converters[parser_type]()
-    parser.transform(analyzer_result, output_dir, file_name, metadata)
+    parser.transform(
+        analyzer_result, output_dir, export_type, file_name, metadata)
 
 
-def process_metadata(metadata):
+def process_metadata(metadata) -> Tuple[Dict[str, str], Dict[str, str]]:
     """ Returns a tuple of valid and invalid metadata values. """
     if not metadata:
         return {}, {}
@@ -171,6 +144,17 @@ def __add_arguments_to_parser(parser):
                         help="Specify the format of the code analyzer output. "
                              "Currently supported output types are: " +
                               ', '.join(sorted(supported_converters)) + ".")
+
+    parser.add_argument('-e', '--export',
+                        type=str,
+                        dest='export',
+                        metavar='EXPORT',
+                        choices=SUPPORTED_ANALYZER_EXTENSIONS,
+                        default=plist.EXTENSION,
+                        help="Specify the export format of the converted "
+                             "reports. Currently supported export types "
+                             "are: " + ', '.join(sorted(
+                                  SUPPORTED_ANALYZER_EXTENSIONS)) + ".")
 
     parser.add_argument('--meta',
                         nargs='*',
@@ -248,8 +232,9 @@ Supported analyzers:
                   ', '.join(supported_metadata_keys))
         sys.exit(1)
 
-    return output_to_plist(args.input, args.type, args.output_dir,
-                           args.filename, args.clean, valid_metadata_values)
+    return transform_output(
+        args.input, args.type, args.output_dir, args.filename, args.export,
+        args.clean, valid_metadata_values)
 
 
 if __name__ == "__main__":

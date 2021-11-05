@@ -11,30 +11,49 @@ Result handler for Clang Static Analyzer.
 
 import os
 
+from typing import Optional
+
+from codechecker_report_converter.report.parser.base import AnalyzerInfo
+from codechecker_report_converter.report import report_file
+from codechecker_report_converter.report.hash import get_report_hash, HashType
 from codechecker_common.logger import get_logger
-from codechecker_report_hash.hash import HashType, replace_report_hash
+from codechecker_common.skiplist_handler import SkipListHandler
 
 from ..result_handler_base import ResultHandler
 
 LOG = get_logger('report')
 
 
-class ResultHandlerClangSA(ResultHandler):
+class ClangSAResultHandler(ResultHandler):
     """
-    Use context free hash if enabled.
+    Create analyzer result file for Clang Static Analyzer output.
     """
 
-    def postprocess_result(self):
+    def __init__(self, *args, **kwargs):
+        self.analyzer_info = AnalyzerInfo(name='clangsa')
+
+        super(ClangSAResultHandler, self).__init__(*args, **kwargs)
+
+    def postprocess_result(self, skip_handler: Optional[SkipListHandler]):
         """
-        Override the context sensitive issue hash in the plist files to
-        context insensitive if it is enabled during analysis.
+        Generate analyzer result output file which can be parsed and stored
+        into the database.
         """
         if os.path.exists(self.analyzer_result_file):
+            reports = report_file.get_reports(
+                self.analyzer_result_file, self.checker_labels)
+            reports = [r for r in reports if not r.skip(skip_handler)]
+
+            hash_type = None
             if self.report_hash_type in ['context-free', 'context-free-v2']:
-                replace_report_hash(
-                    self.analyzer_result_file,
-                    HashType.CONTEXT_FREE)
+                hash_type = HashType.CONTEXT_FREE
             elif self.report_hash_type == 'diagnostic-message':
-                replace_report_hash(
-                    self.analyzer_result_file,
-                    HashType.DIAGNOSTIC_MESSAGE)
+                hash_type = HashType.DIAGNOSTIC_MESSAGE
+
+            if hash_type is not None:
+                for report in reports:
+                    report.report_hash = get_report_hash(report, hash_type)
+
+            report_file.create(
+                self.analyzer_result_file, reports, self.checker_labels,
+                self.analyzer_info)

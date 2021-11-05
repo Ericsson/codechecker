@@ -129,7 +129,7 @@ CodeChecker, gerrit integration, debug etc.
 
 #### `tools`
 This folder contains tools which are used by the `analyzer` and `web` part
-of the CodeChecker such as `plist-to-html` and `tu_collector`.
+of the CodeChecker such as `tu_collector`.
 
 #### `web`
 This folder contains source code of the CodeChecker web server and web client.

@@ -82,29 +82,25 @@ ifeq ($(BUILD_UI_DIST),YES)
 	echo $(LATEST_COMMIT) > $(LATEST_COMMIT_FILE)
 endif
 
+build_report_converter:
+	$(MAKE) -C $(CC_TOOLS)/report-converter build
+
+package_report_converter: build_report_converter package_dir_structure
+	cp -rp $(CC_TOOLS)/report-converter/build/report_converter/codechecker_report_converter $(CC_BUILD_LIB_DIR) && \
+	chmod u+x $(CC_BUILD_LIB_DIR)/codechecker_report_converter/cli.py && \
+	cd $(CC_BUILD_BIN_DIR) && \
+	ln -sf ../lib/python3/codechecker_report_converter/cli.py report-converter
+
 # This target should be used from the top level Makefile to build the package
-# together with the analyzer part. This way we will not build plist-to-html
+# together with the analyzer part. This way we will not build tools
 # multiple times.
-package_web: check_codechecker_api_version check_dist package_dir_structure $(DIST_DIR)
+package_web: check_codechecker_api_version check_dist package_dir_structure package_report_converter $(DIST_DIR)
 ifeq ($(BUILD_UI_DIST),YES)
 	mkdir -p $(CC_BUILD_WEB_DIR)
 	cp -r $(DIST_DIR)/* $(CC_BUILD_WEB_DIR)
 endif
 
-build_plist_to_html:
-	$(MAKE) -C $(ROOT)/tools/plist_to_html build
-
-package_plist_to_html: build_plist_to_html package_dir_structure
-	# Copy plist-to-html files.
-	cp -r $(CC_TOOLS)/plist_to_html/build/plist_to_html/plist_to_html $(CC_BUILD_LIB_DIR)
-
-build_report_hash:
-	$(MAKE) -C $(ROOT)/tools/codechecker_report_hash build
-
-package_report_hash: build_report_hash package_dir_structure
-	cp -r $(CC_TOOLS)/codechecker_report_hash/build/codechecker_report_hash/codechecker_report_hash $(CC_BUILD_LIB_DIR)
-
-package: package_dir_structure package_plist_to_html package_report_hash package_web
+package: package_dir_structure package_web
 	# Copy libraries.
 	cp -r $(ROOT)/codechecker_common $(CC_BUILD_LIB_DIR) && \
 	cp -r $(CURRENT_DIR)/codechecker_web $(CC_BUILD_LIB_DIR) && \
@@ -160,13 +156,10 @@ check_dist:
 	  cd server/vue-cli && npm install && rm -rf $(DIST_DIR); \
 	fi
 
-clean_package: clean_plist_to_html
+clean_package:
 	rm -rf $(BUILD_DIR)
 	rm -rf gen-docs
 	find . -name "*.pyc" -delete
-
-clean_plist_to_html:
-	rm -rf $(ROOT)/tools/plist_to_html/build
 
 clean:
 	rm -rf $(CC_SERVER)/vue-cli/dist

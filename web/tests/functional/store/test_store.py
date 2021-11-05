@@ -20,10 +20,10 @@ import shutil
 import subprocess
 import unittest
 
+from codechecker_report_converter import util
+
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import AnalysisInfoFilter
 from libtest import codechecker, env
-
-from codechecker_common import util
 
 
 def _call_cmd(command, cwd=None, env=None):
@@ -46,7 +46,6 @@ class TestStore(unittest.TestCase):
     """Test storage reports"""
 
     def setUp(self):
-
         # Get the test workspace used to cppcheck tests.
         self._test_workspace = os.environ["TEST_WORKSPACE"]
 
@@ -59,6 +58,11 @@ class TestStore(unittest.TestCase):
             inspect.currentframe())))
         self._temp_workspace = os.path.join(self._codechecker_cfg["workspace"],
                                             "test_proj")
+
+        self._divide_zero_workspace = os.path.join(
+            self._temp_workspace, "divide_zero")
+        self._double_suppress_workspace = os.path.join(
+            self._temp_workspace, "double_suppress")
 
         self.product_name = self._codechecker_cfg['viewer_product']
 
@@ -81,7 +85,7 @@ class TestStore(unittest.TestCase):
 
         run_name = "product_details_test"
         store_cmd = [
-            env.codechecker_cmd(), "store", self._temp_workspace,
+            env.codechecker_cmd(), "store", self._divide_zero_workspace,
             "--name", run_name,
             "--url", env.parts_to_url(self._codechecker_cfg)]
 
@@ -109,45 +113,39 @@ class TestStore(unittest.TestCase):
         temporary test directory, the test trims that temporary
         test directory from the source file path during the storage.
         """
-        report_file = os.path.join(self._temp_workspace, "divide_zero.plist")
+        report_file = os.path.join(
+            self._divide_zero_workspace, "divide_zero.plist")
 
         report_content = {}
         with open(report_file, mode="rb") as rf:
             report_content = plistlib.load(rf)
 
         trimmed_paths = [
-            util.trim_path_prefixes(path, [self._temp_workspace])
+            util.trim_path_prefixes(path, [self._divide_zero_workspace])
             for path in report_content["files"]
         ]
 
         run_name = "store_test"
         store_cmd = [
-            env.codechecker_cmd(),
-            "store",
-            self._temp_workspace,
-            "--name",
-            run_name,
-            "--url",
-            env.parts_to_url(self._codechecker_cfg),
-            "--trim-path-prefix",
-            self._temp_workspace,
-            "--verbose",
-            "debug",
+            env.codechecker_cmd(), "store",
+            self._divide_zero_workspace,
+            "--name", run_name,
+            "--url", env.parts_to_url(self._codechecker_cfg),
+            "--trim-path-prefix", self._divide_zero_workspace,
+            "--verbose", "debug",
         ]
 
-        ret, _, _ = _call_cmd(store_cmd)
+        ret, out, err = _call_cmd(store_cmd)
+        print(out)
+        print(err)
         self.assertEqual(ret, 0, "Plist file could not store.")
 
         query_cmd = [
-            env.codechecker_cmd(),
-            "cmd",
-            "results",
+            env.codechecker_cmd(), "cmd", "results",
             run_name,
             # Use the 'Default' product.
-            "--url",
-            env.parts_to_url(self._codechecker_cfg),
-            "-o",
-            "json",
+            "--url", env.parts_to_url(self._codechecker_cfg),
+            "-o", "json",
         ]
 
         ret, out, _ = _call_cmd(query_cmd)
@@ -168,7 +166,7 @@ class TestStore(unittest.TestCase):
         store command to a run.
         """
         cfg = dict(self._codechecker_cfg)
-        codechecker.log(cfg, self._temp_workspace)
+        codechecker.log(cfg, self._divide_zero_workspace)
 
         common_report_dir = os.path.join(self._temp_workspace, 'reports')
         report_dir1 = \
@@ -181,12 +179,12 @@ class TestStore(unittest.TestCase):
         cfg['reportdir'] = report_dir1
         cfg['checkers'] = [
             '-d', 'core.DivideZero', '-e', 'deadcode.DeadStores']
-        codechecker.analyze(cfg, self._temp_workspace)
+        codechecker.analyze(cfg, self._divide_zero_workspace)
 
         cfg['reportdir'] = report_dir2
         cfg['checkers'] = [
             '-e', 'core.DivideZero', '-d', 'deadcode.DeadStores']
-        codechecker.analyze(cfg, self._temp_workspace)
+        codechecker.analyze(cfg, self._divide_zero_workspace)
 
         def store_multiple_report_dirs(report_dirs):
             """ """
@@ -292,7 +290,6 @@ class TestStore(unittest.TestCase):
         Test server if recognise duplicated suppress comments in the stored
         source code.
         """
-
         test_plist_file = "double_suppress.plist"
 
         store_cmd = [env.codechecker_cmd(), "store", "--url",
@@ -300,6 +297,6 @@ class TestStore(unittest.TestCase):
                      "never",  "--input-format", "plist",
                      "--verbose", "debug", test_plist_file]
 
-        ret, _, _ = _call_cmd(store_cmd, self._temp_workspace)
+        ret, _, _ = _call_cmd(store_cmd, self._double_suppress_workspace)
         self.assertEqual(ret, 1, "Duplicated suppress comments was not "
                          "recognised.")

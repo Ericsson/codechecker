@@ -12,9 +12,10 @@ Helpers to parse metadata.json file.
 from typing import Any, Dict, List, Optional, Set, Union
 import os
 
+from codechecker_report_converter.util import load_json_or_empty
 
 from codechecker_common.logger import get_logger
-from codechecker_common.util import load_json_or_empty
+
 
 LOG = get_logger('system')
 
@@ -27,23 +28,6 @@ CodeCheckerVersion = Optional[str]
 DisabledCheckers = Set[str]
 EnabledCheckers = Set[str]
 MetadataCheckers = Dict[str, Union[Dict[str, bool], List[str]]]
-
-
-def get_analyzer_name(
-    checker_name: str,
-    checker_to_analyzer: Optional[CheckerToAnalyzer],
-    metadata: Dict[str, Any]
-) -> Optional[str]:
-    """ Get analyzer name for the given checker name. """
-    analyzer_name = checker_to_analyzer.get(checker_name)
-    if analyzer_name:
-        return analyzer_name
-
-    if metadata:
-        return metadata.get("analyzer", {}).get("name")
-
-    if checker_name.startswith('clang-diagnostic-'):
-        return 'clang-tidy'
 
 
 def checker_is_unavailable(

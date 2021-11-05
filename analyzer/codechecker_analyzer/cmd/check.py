@@ -23,7 +23,8 @@ from codechecker_analyzer.analyzers import analyzer_types
 from codechecker_analyzer.arg import OrderedCheckersAction
 
 from codechecker_common import arg, cmd_config, logger
-from codechecker_common.source_code_comment_handler import REVIEW_STATUS_VALUES
+from codechecker_report_converter.source_code_comment_handler import \
+    REVIEW_STATUS_VALUES
 
 from codechecker_analyzer.cmd.analyze import \
     epilog_env_var as analyzer_epilog_env_var, \

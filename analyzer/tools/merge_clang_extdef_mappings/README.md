@@ -17,7 +17,7 @@ tool into a global one.
 make venv
 source $PWD/venv/bin/activate
 
-# Build and install plist-to-html package.
+# Build and install merge-clang-extdef-mappings package.
 make package
 ```
 

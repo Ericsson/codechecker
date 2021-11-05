@@ -15,12 +15,14 @@ import argparse
 import subprocess
 import sys
 
+from codechecker_report_converter import twodim
+
 from codechecker_analyzer import analyzer_context
 from codechecker_analyzer import env
 from codechecker_analyzer.analyzers import analyzer_types
 
 from codechecker_common import logger
-from codechecker_common.output import twodim, USER_FORMATS
+from codechecker_common.output import USER_FORMATS
 
 LOG = logger.get_logger('system')
 

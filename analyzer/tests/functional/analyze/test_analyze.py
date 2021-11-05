@@ -970,9 +970,9 @@ class TestAnalyze(unittest.TestCase):
         out, _ = process.communicate()
 
         print(out)
-        # First it's printed as the member of enabled checkers at the beginning
-        # of the output. Second it is printed as a found report.
-        self.assertEqual(out.count('hicpp-use-nullptr'), 1)
+
+        # It's printed as a found report and in the checker statistics.
+        self.assertEqual(out.count('hicpp-use-nullptr'), 2)
 
         analyze_cmd = [self._codechecker_cmd, "check", "-l", build_json,
                        "--analyzers", "clang-tidy", "-o", self.report_dir,
@@ -991,9 +991,9 @@ class TestAnalyze(unittest.TestCase):
             errors="ignore")
         out, _ = process.communicate()
 
-        # First it's printed as the member of enabled checkers at the beginning
-        # of the output. Second and third it is printed as a found report.
-        self.assertEqual(out.count('hicpp-use-nullptr'), 2)
+        # It's printed as the member of enabled checkers at the beginning
+        # of the output, a found report and in the checker statistics.
+        self.assertEqual(out.count('hicpp-use-nullptr'), 3)
 
         analyze_cmd = [self._codechecker_cmd, "check", "-l", build_json,
                        "--analyzers", "clangsa", "-o", self.report_dir,
@@ -1011,9 +1011,9 @@ class TestAnalyze(unittest.TestCase):
             errors="ignore")
         out, _ = process.communicate()
         print(out)
-        # First it's printed as the member of enabled checkers at the beginning
-        # of the output. Second it is printed as a found report.
-        self.assertEqual(out.count('UninitializedObject'), 2)
+        # It's printed as the member of enabled checkers at the beginning
+        # of the output, a found report and in the checker statistics.
+        self.assertEqual(out.count('UninitializedObject'), 3)
 
         analyze_cmd = [self._codechecker_cmd, "check", "-l", build_json,
                        "--analyzers", "clangsa", "-o", self.report_dir,

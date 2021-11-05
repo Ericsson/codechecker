@@ -9,8 +9,9 @@
 Argument handlers for the 'CodeChecker cmd token' subcommands.
 """
 
+from codechecker_report_converter import twodim
+
 from codechecker_common import logger
-from codechecker_common.output import twodim
 
 from .client import init_auth_client
 from .cmd_line import CmdLineOutputEncoder

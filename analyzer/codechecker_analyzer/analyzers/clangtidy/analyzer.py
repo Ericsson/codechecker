@@ -327,9 +327,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         See base class for docs.
         """
         report_hash = self.config_handler.report_hash
-        res_handler = result_handler.ClangTidyPlistToFile(buildaction,
-                                                          report_output,
-                                                          report_hash)
+        res_handler = result_handler.ClangTidyResultHandler(
+            buildaction, report_output, report_hash)
 
         res_handler.checker_labels = checker_labels
         res_handler.skiplist_handler = skiplist_handler
