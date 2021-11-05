@@ -1,0 +1,9 @@
+{
+  "analyzer": "golint",
+  "labels": {
+    "golint": [
+      "doc_url:https://github.com/golang/lint",
+      "severity:MEDIUM"
+    ]
+  }
+}
