@@ -36,6 +36,7 @@ Table of Contents
         * [`suppress` (Manage and export/import suppressions)](#manage-suppressions)
             * [Import suppressions between server and suppress file](#import-suppressions)
         * [`products` (Manage product configuration of a server)](#cmd-product)
+        * [`permissions (Get access control)`](#get-access-control-permissions)
         * [`login` (Authenticate to the server)](#cmd-login)
         * [`export` (Export comments and review statuses from CodeChecker)](#cmd-export)
         * [`import` (Import comments and review statuses into CodeChecker)](#cmd-import)
@@ -1622,6 +1623,60 @@ the database on the server.
 ### Manage product configuration of a server (`products`) <a name="cmd-product"></a>
 
 Please see [Product management](products.md) for details.
+
+### Get access control (`permissions`)
+You can use this command to get access control information from a running
+CodeChecker server. This will contain information which user or group has
+global permissions or permissions only for specific products.
+
+The output format of this command is the following:
+```json
+{
+  "version": 1,
+  "global_permissions": {
+    "user_permissions": {
+      "<user-name-1>": ["<permission-1>"]
+    },
+    "group_permissions": {
+    }
+  },
+  "product_permissions": {
+    "<product-name>": {
+      "user_permissions": {
+        "<user-name-2>": ["<permission-2>", "<permission-3>"]
+      },
+      "group_permissions": {
+        "<group-name-1>": ["<permission-3>"]
+      }
+    }
+  }
+}
+```
+
+<details>
+  <summary>
+    <i>$ <b>CodeChecker cmd permissions --help</b> (click to expand)</i>
+  </summary>
+
+```
+usage: CodeChecker cmd permissions [-h] [-o {json}] [--url SERVER_URL]
+                                   [--verbose {info,debug_analyzer,debug}]
+
+Get access control information from a CodeChecker server. PERMISSION_VIEW
+access right is required to run this command.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -o {json}, --output {json}
+                        The output format to use in showing the data.
+                        (default: json)
+
+common arguments:
+  --url SERVER_URL      The URL of the server to access, in the format of
+                        '[http[s]://]host:port'. (default: localhost:8001)
+  --verbose {info,debug_analyzer,debug}
+                        Set verbosity level.
+```
 
 ### Authenticate to the server (`login`) <a name="cmd-login"></a>
 <details>

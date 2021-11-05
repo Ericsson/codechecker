@@ -35,6 +35,10 @@ class ThriftAuthHelper(BaseClientHelper):
         pass
 
     @ThriftClientCall
+    def getAccessControl(self):
+        pass
+
+    @ThriftClientCall
     def performLogin(self, auth_method, auth_string):
         pass
 

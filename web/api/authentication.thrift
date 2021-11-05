@@ -33,6 +33,16 @@ struct SessionTokenData {
 }
 typedef list<SessionTokenData> SessionTokenDataList
 
+struct Permissions {
+  1: map<string, list<string>> user,
+  2: map<string, list<string>> group,
+}
+
+struct AccessControl {
+  1: Permissions globalPermissions,
+  2: map<string, Permissions> productPermissions,
+}
+
 service codeCheckerAuthentication {
 
   // This method is a dummy stub requiring no permissions. When a server is
@@ -49,6 +59,10 @@ service codeCheckerAuthentication {
 
   // Retrieves a list of accepted authentication methods from the server.
   list<string> getAcceptedAuthMethods(),
+
+  // PERMISSION: PERMISSION_VIEW
+  AccessControl getAccessControl()
+                                 throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Handles creating a session token for the user.
   string performLogin(1: string authMethod,

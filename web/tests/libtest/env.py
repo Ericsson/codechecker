@@ -353,7 +353,8 @@ def enable_auth(workspace):
     scfg_dict["authentication"]["method_dictionary"]["enabled"] = True
     scfg_dict["authentication"]["method_dictionary"]["auths"] = \
         ["cc:test", "john:doe", "admin:admin123", "colon:my:password",
-         "admin_group_user:admin123", "regex_admin:blah"]
+         "admin_group_user:admin123", "regex_admin:blah",
+         "permission_view_user:pvu"]
     scfg_dict["authentication"]["method_dictionary"]["groups"] = \
         {"admin_group_user": ["admin_GROUP"]}
     scfg_dict["authentication"]["regex_groups"]["enabled"] = True

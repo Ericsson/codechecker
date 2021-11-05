@@ -31,12 +31,13 @@ exception RequestFailed {
  *     { i64 productID }
 */
 enum Permission {
-  SUPERUSER        = 1,         // scope: SYSTEM
+  SUPERUSER       = 1,         // scope: SYSTEM
+  PERMISSION_VIEW = 2,         // scope: SYSTEM
 
-  PRODUCT_ADMIN    = 16,        // scope: PRODUCT
-  PRODUCT_ACCESS   = 17,        // scope: PRODUCT
-  PRODUCT_STORE    = 18,         // scope: PRODUCT
-  PRODUCT_VIEW     = 19         // scope: PRODUCT
+  PRODUCT_ADMIN   = 16,        // scope: PRODUCT
+  PRODUCT_ACCESS  = 17,        // scope: PRODUCT
+  PRODUCT_STORE   = 18,        // scope: PRODUCT
+  PRODUCT_VIEW    = 19,        // scope: PRODUCT
 }
 
 /**

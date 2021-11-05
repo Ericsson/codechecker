@@ -27,6 +27,7 @@ Table of Contents
 * [Available permissions](#available-permissions)
     * [Server-wide (global) permissions](#global-permissions)
         * [`SUPERUSER`](#superuser)
+        * [`PERMISSION_VIEW`](#permission-view)
     * [Product-level permissions](#product-level-permissions)
         * [`PRODUCT_ADMIN`](#product-admin)
         * [`PRODUCT_ACCESS`](#product-access)
@@ -129,6 +130,16 @@ system.
 > **`SUPERUSER` is a dangerous permission to grant**, as a superuser can
 > immediately change everything on the server, from demoting other superusers
 > to destroying analysis results!
+
+### `PERMISSION_VIEW`
+
+| Default |    Managed by   |          Inherited from          |
+|---------|-----------------|----------------------------------|
+| Granted | `SUPERUSER`     | `SUPERUSER`                      |
+
+Users with this permission can get information about access controls: which
+user or group has global permissions or permissions only for specific products.
+For more information check the `CodeChecker cmd permissions` command.
 
 ## Product-level permissions <a name="product-level-permissions"></a>
 

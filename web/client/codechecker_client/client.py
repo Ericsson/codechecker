@@ -43,6 +43,22 @@ def check_preconfigured_username(username, host, port):
         sys.exit(1)
 
 
+def init_auth_client(protocol, host, port):
+    """ Setup a new auth client. """
+    auth_client = setup_auth_client(protocol, host, port)
+
+    # Check if local token is available.
+    cred_manager = UserCredentials()
+    session_token = cred_manager.get_token(host, port)
+
+    if not session_token:
+        LOG.info("No valid token or session was found for %s:%s", host, port)
+        session_token = perform_auth_for_handler(auth_client, host, port,
+                                                 cred_manager)
+
+    return setup_auth_client(protocol, host, port, session_token)
+
+
 def setup_auth_client(protocol, host, port, session_token=None):
     """
     Setup the Thrift authentication client. Returns the client object and the

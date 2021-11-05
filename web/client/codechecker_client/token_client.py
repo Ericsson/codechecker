@@ -9,13 +9,11 @@
 Argument handlers for the 'CodeChecker cmd token' subcommands.
 """
 
-
 from codechecker_common import logger
 from codechecker_common.output import twodim
 
-from .client import setup_auth_client, perform_auth_for_handler
+from .client import init_auth_client
 from .cmd_line import CmdLineOutputEncoder
-from .credential_manager import UserCredentials
 from .product import split_server_url
 
 # Needs to be set in the handler functions.
@@ -26,22 +24,6 @@ def init_logger(level, stream=None, logger_name='system'):
     logger.setup_logger(level, stream)
     global LOG
     LOG = logger.get_logger(logger_name)
-
-
-def init_auth_client(protocol, host, port):
-    """ Setup a new auth client. """
-    auth_client = setup_auth_client(protocol, host, port)
-
-    # Check if local token is available.
-    cred_manager = UserCredentials()
-    session_token = cred_manager.get_token(host, port)
-
-    if not session_token:
-        LOG.info("No valid token or session was found for %s:%s", host, port)
-        session_token = perform_auth_for_handler(auth_client, host, port,
-                                                 cred_manager)
-
-    return setup_auth_client(protocol, host, port, session_token)
 
 
 def handle_add_token(args):

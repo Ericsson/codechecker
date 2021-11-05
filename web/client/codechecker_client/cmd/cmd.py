@@ -20,7 +20,8 @@ from codechecker_api.codeCheckerDBAccess_v6 import ttypes
 
 from codechecker_client import cmd_line_client
 from codechecker_client import product_client
-from codechecker_client import source_component_client, token_client
+from codechecker_client import permission_client, source_component_client, \
+    token_client
 
 from codechecker_common import arg, logger, util
 from codechecker_common.output import USER_FORMATS
@@ -1200,6 +1201,18 @@ def __register_importer(parser):
                        "the database.")
 
 
+def __register_permissions(parser):
+    """
+    Add argparse subcommand parser for the "handle permissions" action.
+    """
+    parser.add_argument('-o', '--output',
+                        dest="output_format",
+                        required=False,
+                        default="json",
+                        choices=['json'],
+                        help="The output format to use in showing the data.")
+
+
 def __register_token(parser):
     """
     Add argparse subcommand parser for the "handle token" action.
@@ -1498,6 +1511,18 @@ full runs.""",
     __register_importer(importer)
     importer.set_defaults(func=cmd_line_client.handle_import)
     __add_common_arguments(importer)
+
+    permissions = subcommands.add_parser(
+        'permissions',
+        formatter_class=arg.RawDescriptionDefaultHelpFormatter,
+        description="Get access control information from a CodeChecker "
+                    "server. PERMISSION_VIEW access right is required to run "
+                    "this command.",
+        help="Get access control information from a CodeChecker server."
+    )
+    __register_permissions(permissions)
+    permissions.set_defaults(func=permission_client.handle_permissions)
+    __add_common_arguments(permissions, needs_product_url=False)
 
 # 'cmd' does not have a main() method in itself, as individual subcommands are
 # handled later on separately.
