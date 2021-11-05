@@ -1,0 +1,9 @@
+{
+  "analyzer": "pyflakes",
+  "labels": {
+    "pyflakes": [
+      "doc_url:https://github.com/PyCQA/pyflakes",
+      "severity:MEDIUM"
+    ]
+  }
+}
