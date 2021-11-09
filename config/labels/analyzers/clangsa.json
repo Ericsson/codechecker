@@ -233,8 +233,23 @@
     ],
     "alpha.security.cert.pos.34c": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-security-cert-pos-34c",
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
       "profile:extreme",
-      "profile:security"
+      "severity:HIGH",
+      "sei-cert:pos34-c"
+
+    ],
+    "alpha.security.cert.env.InvalidPtr": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-security-cert-env-invalidptr",
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "profile:security",
+      "severity:MEDIUM",
+      "sei-cert:env31-c",
+      "sei-cert:env34-c"
     ],
     "alpha.security.taint.TaintPropagation": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-security-taint-taintpropagation-c-c",
@@ -305,9 +320,6 @@
     "alpha.webkit.UncountedLocalVarsChecker": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-webkit-uncountedlocalvarschecker",
       "profile:extreme"
-    ],
-    "altera-struct-pack-align": [
-      "severity:LOW"
     ],
     "apiModeling.StdCLibraryFunctions": [
       "profile:default",
@@ -562,6 +574,13 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive"
+    ],
+    "cplusplus.StringChecker": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#cplusplus-stringchecker-c",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
     ],
     "cplusplus.VirtualCallModeling": [
       "profile:default",
