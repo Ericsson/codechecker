@@ -4771,6 +4771,8 @@
     ],
     "google-readability-braces-around-statements": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/google-readability-braces-around-statements.html",
+      "guideline:misra-c",
+      "misra-c:14.9",
       "profile:extreme",
       "severity:STYLE"
     ],
