@@ -101,7 +101,7 @@ export default {
         }
 
         return `<span class="${classNames.join(" ")}">${param}</span>`;
-      }).join(" ");
+      }).join(" ").replace(/(?:\r\n|\r|\n)/g, "<br>");
     },
 
     getAnalysisInfo() {
