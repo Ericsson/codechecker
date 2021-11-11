@@ -467,6 +467,15 @@ def assemble_zip(inputs, zip_file, client):
         if file_hashes else []
     LOG.info("Get missing file content hashes done.")
 
+    LOG.info(
+        "Get file content hashes which do not have blame information from the "
+        "server...")
+    necessary_blame_hashes = \
+        client.getMissingContentHashesForBlameInfo(file_hashes) \
+        if file_hashes else []
+    LOG.info(
+        "Get file content hashes which do not have blame information done.")
+
     LOG.info("Collecting review comments ...")
 
     # Get files which can be found on the server but contains source code
@@ -509,10 +518,13 @@ def assemble_zip(inputs, zip_file, client):
                 except KeyError:
                     zipf.write(f, file_path)
 
-        if collected_file_paths:
+        if necessary_blame_hashes:
+            file_paths = list(f for f, h in file_to_hash.items()
+                              if h in necessary_blame_hashes)
+
             LOG.info("Collecting blame information for source files...")
             try:
-                if assemble_blame_info(zipf, collected_file_paths):
+                if assemble_blame_info(zipf, file_paths):
                     LOG.info("Collecting blame information done.")
                 else:
                     LOG.info("No blame information found for source files.")

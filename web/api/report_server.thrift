@@ -764,6 +764,14 @@ service codeCheckerDBAccess {
   list<string> getMissingContentHashes(1: list<string> fileHashes)
                                        throws (1: codechecker_api_shared.RequestFailed requestError),
 
+  // The client can ask the server whether a blame info is already stored in the
+  // database. If it is, then it is not necessary to send it in the ZIP file
+  // with massStoreRun() function. This function requires a list of file hashes
+  // (sha256) and returns the ones to which no blame info is stored yet.
+  // PERMISSION: PRODUCT_STORE
+  list<string> getMissingContentHashesForBlameInfo(1: list<string> fileHashes)
+                                                   throws (1: codechecker_api_shared.RequestFailed requestError),
+
   // This function stores an entire run encapsulated and sent in a ZIP file.
   // The ZIP file has to be compressed and sent as a base64 encoded string. The
   // ZIP file must contain a "reports" and an optional "root" sub-folder.

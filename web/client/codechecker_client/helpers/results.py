@@ -162,6 +162,10 @@ class ThriftResultsHelper(BaseClientHelper):
         pass
 
     @ThriftClientCall
+    def getMissingContentHashesForBlameInfo(self, file_hashes):
+        pass
+
+    @ThriftClientCall
     def massStoreRun(self, name, tag, version, zipdir, force,
                      trim_path_prefixes, description):
         pass

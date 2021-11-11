@@ -494,7 +494,9 @@ def store(codechecker_cfg, test_project_name):
     """
     Store results from a report dir.
     """
-    report_dirs = codechecker_cfg['reportdir']
+    report_dirs = codechecker_cfg['reportdir'] \
+        if 'reportdir' in codechecker_cfg \
+        else os.path.join(codechecker_cfg['workspace'], 'reports')
     if not isinstance(report_dirs, list):
         report_dirs = [report_dirs]
 
