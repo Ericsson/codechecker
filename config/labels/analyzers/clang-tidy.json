@@ -188,10 +188,7 @@
     ],
     "bugprone-exception-escape": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone-exception-escape.html",
-      "guideline:sei-cert",
-      "profile:extreme",
-      "profile:security",
-      "profile:sensitive",
+      "guideline:sei-cert",                
       "sei-cert:dcl57-cpp",
       "sei-cert:err55-cpp",
       "sei-cert:msc53-cpp",
@@ -522,6 +519,15 @@
       "sei-cert:oop54-cpp",
       "severity:MEDIUM"
     ],
+    "bugprone-unhandled-exception-at-new": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone-unhandled-exception-at-new.html",
+      "guideline:sei-cert",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "sei-cert:err51-cpp",
+      "severity:MEDIUM"
+    ],
     "bugprone-unused-raii": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone-unused-raii.html",
       "profile:default",
@@ -672,6 +678,15 @@
       "sei-cert:err09-cpp",
       "sei-cert:err61-cpp",
       "severity:HIGH"
+    ],
+    "cert-err33-c": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert-err33-c.html",
+      "guideline:sei-cert",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "sei-cert:err33-c",
+      "severity:MEDIUM"
     ],
     "cert-err34-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert-err34-c.html",
@@ -845,6 +860,15 @@
       "profile:sensitive",
       "sei-cert:pos44-c",
       "severity:MEDIUM"
+    ],
+    "cert-pos47-c": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert-pos47-c.html",
+      "severity:MEDIUM",
+      "sei-cert:pos47-c",
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
     ],
     "cert-sig30-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert-sig30-c.html",
@@ -4541,6 +4565,15 @@
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/concurrency-mt-unsafe.html",
       "severity:MEDIUM"
     ],
+    "concurrency-thread-canceltype-asynchronous": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/concurrency-thread-canceltype-asynchronous.html",
+      "severity:MEDIUM",
+      "sei-cert:pos47-c",
+      "profile:default",
+      "profile:sensitive",
+      "profile:security",
+      "profile:extreme"
+    ],
     "cppcoreguidelines-avoid-c-arrays": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines-avoid-c-arrays.html",
       "profile:extreme",
@@ -4680,6 +4713,13 @@
       "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
+    ],
+    "cppcoreguidelines-virtual-class-destructor": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines-virtual-class-destructor.html",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
     ],
     "darwin-avoid-spinlock": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/darwin-avoid-spinlock.html"
@@ -5644,6 +5684,13 @@
     "readability-container-size-empty": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability-container-size-empty.html",
       "severity:STYLE"
+    ],
+    "readability-container-data-pointer": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability-container-data-pointer.html",
+      "severity:STYLE",
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
     ],
     "readability-convert-member-functions-to-static": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability-convert-member-functions-to-static.html",
