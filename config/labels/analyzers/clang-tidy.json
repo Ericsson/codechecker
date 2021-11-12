@@ -188,7 +188,10 @@
     ],
     "bugprone-exception-escape": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone-exception-escape.html",
-      "guideline:sei-cert",                
+      "guideline:sei-cert",      
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
       "sei-cert:dcl57-cpp",
       "sei-cert:err55-cpp",
       "sei-cert:msc53-cpp",
@@ -4716,9 +4719,6 @@
     ],
     "cppcoreguidelines-virtual-class-destructor": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines-virtual-class-destructor.html",
-      "profile:default",
-      "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "darwin-avoid-spinlock": [
