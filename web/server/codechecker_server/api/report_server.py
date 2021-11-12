@@ -1999,12 +1999,25 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
-    def getCheckerLabels(self, checkers):
-        return [
-            list(map(lambda x: f'{x[0]}:{x[1]}',
-                     self._context.checker_labels.labels_of_checker(
-                        checker.checkerId, checker.analyzerName)))
-            for checker in checkers]
+    def getCheckerLabels(
+        self,
+        checkers: List[ttypes.Checker]
+    ) -> List[List[str]]:
+        """ Return the list of labels to each checker. """
+        labels = []
+        for checker in checkers:
+            # Analyzer default value in the database is 'unknown' which is not
+            # a valid analyzer name. So this code handles this use case.
+            analyzer_name = None
+            if checker.analyzerName != "unknown":
+                analyzer_name = checker.analyzerName
+
+            labels.append(list(map(
+                lambda x: f'{x[0]}:{x[1]}',
+                self._context.checker_labels.labels_of_checker(
+                    checker.checkerId, analyzer_name))))
+
+        return labels
 
     @exc_to_thrift_reqfail
     @timeit
