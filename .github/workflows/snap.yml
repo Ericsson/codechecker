@@ -18,4 +18,4 @@ jobs:
         with:
           store_login: ${{ secrets.SNAP_TOKEN }}
           snap: ${{ steps.build.outputs.snap }}
-          release: edge
+          release: stable
