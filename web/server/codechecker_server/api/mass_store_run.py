@@ -108,9 +108,7 @@ def parse_codechecker_review_comment(
 def add_file_record(
     session: DBSession,
     file_path: str,
-    content_hash: str,
-    remote_url: Optional[str],
-    tracking_branch: Optional[str]
+    content_hash: str
 ) -> Optional[int]:
     """
     Add the necessary file record pointing to an already existing content.
@@ -123,6 +121,13 @@ def add_file_record(
     finish_checker_run() and since SQLite doesn't support parallel
     transactions, this API call will wait until the other transactions
     finish. In the meantime the run adding transaction times out.
+
+    This function doesn't insert blame info in the File objects because those
+    are added by __add_blame_info(). In previous CodeChecker versions git info
+    was not stored at all, so upgrading to a new CodeChecker results the
+    storage of git blame info even for files that are already stored. For this
+    reason we can't avoid an update on File and FileContent tables, but we can
+    avoid double reading of blame info json files.
     """
     file_record = session.query(File) \
         .filter(File.content_hash == content_hash,
@@ -133,8 +138,7 @@ def add_file_record(
         return file_record.id
 
     try:
-        file_record = File(
-            file_path, content_hash, remote_url, tracking_branch)
+        file_record = File(file_path, content_hash, None, None)
         session.add(file_record)
         session.commit()
     except sqlalchemy.exc.IntegrityError as ex:
@@ -364,7 +368,6 @@ class MassStoreRun:
     def __store_source_files(
         self,
         source_root: str,
-        blame_root: str,
         filename_to_hash: Dict[str, str]
     ) -> Dict[str, int]:
         """ Storing file contents from plist. """
@@ -378,12 +381,6 @@ class MassStoreRun:
             trimmed_file_path = util.trim_path_prefixes(
                 file_name, self.__trim_path_prefixes)
 
-            blame_file = os.path.realpath(os.path.join(
-                blame_root, file_name.strip("/")))
-
-            blame_info, remote_url, tracking_branch = get_blame_file_data(
-                blame_file)
-
             if not os.path.isfile(source_file_name):
                 # The file was not in the ZIP file, because we already
                 # have the content. Let's check if we already have a file
@@ -392,8 +389,7 @@ class MassStoreRun:
                 LOG.debug('%s not found or already stored.', trimmed_file_path)
                 with DBSession(self.__Session) as session:
                     fid = add_file_record(
-                        session, trimmed_file_path, file_hash, remote_url,
-                        tracking_branch)
+                        session, trimmed_file_path, file_hash)
 
                 if not fid:
                     LOG.error("File ID for %s is not found in the DB with "
@@ -404,21 +400,63 @@ class MassStoreRun:
                 continue
 
             with DBSession(self.__Session) as session:
-                self.__add_file_content(
-                    session, source_file_name, file_hash, blame_info)
+                self.__add_file_content(session, source_file_name, file_hash)
 
                 file_path_to_id[trimmed_file_path] = add_file_record(
-                    session, trimmed_file_path, file_hash, remote_url,
-                    tracking_branch)
+                    session, trimmed_file_path, file_hash)
 
         return file_path_to_id
+
+    def __add_blame_info(
+        self,
+        blame_root: str,
+        filename_to_hash: Dict[str, str]
+    ):
+        """
+        This function updates blame info in File and FileContent tables if
+        these were NULL. This function exists only because in earlier
+        CodeChecker versions blame info was not stored in these tables and
+        in a subsequent storage we can't update the tables for an unchanged
+        file since __store_source_files() updates only the ones that are in the
+        .zip file. This function stores blame info even if the corresponding
+        source file is not in the .zip file.
+        """
+        with DBSession(self.__Session) as session:
+            for subdir, _, files in os.walk(blame_root):
+                for f in files:
+                    blame_file = os.path.join(subdir, f)
+                    file_path = blame_file[len(blame_root.rstrip("/")):]
+                    blame_info, remote_url, tracking_branch = \
+                        get_blame_file_data(blame_file)
+
+                    compressed_blame_info = None
+                    if blame_info:
+                        compressed_blame_info = zlib.compress(
+                            json.dumps(blame_info).encode('utf-8'),
+                            zlib.Z_BEST_COMPRESSION)
+
+                    session \
+                        .query(FileContent) \
+                        .filter(FileContent.blame_info.is_(None)) \
+                        .filter(FileContent.content_hash ==
+                                filename_to_hash.get(file_path)) \
+                        .update({"blame_info": compressed_blame_info})
+
+                    session \
+                        .query(File) \
+                        .filter(File.remote_url.is_(None)) \
+                        .filter(File.filepath == file_path) \
+                        .update({
+                            "remote_url": remote_url,
+                            "tracking_branch": tracking_branch})
+
+            session.commit()
 
     def __add_file_content(
         self,
         session: DBSession,
         source_file_name: str,
-        content_hash: Optional[str],
-        blame_info: Optional[dict]
+        content_hash: Optional[str]
     ):
         """
         Add the necessary file contents. If content_hash in None then this
@@ -431,6 +469,14 @@ class MassStoreRun:
         finish_checker_run() and since SQLite doesn't support parallel
         transactions, this API call will wait until the other transactions
         finish. In the meantime the run adding transaction times out.
+
+        This function doesn't insert blame info in the FileContent objects
+        because those are added by __add_blame_info(). In previous CodeChecker
+        versions git info was not stored at all, so upgrading to a new
+        CodeChecker results the storage of git blame info even for files that
+        are already stored. For this reason we can't avoid an update on File
+        and FileContent tables, but we can avoid double reading of blame info
+        json files.
         """
         source_file_content = None
         if not content_hash:
@@ -448,14 +494,7 @@ class MassStoreRun:
                 compressed_content = zlib.compress(
                     source_file_content, zlib.Z_BEST_COMPRESSION)
 
-                compressed_blame_info = None
-                if blame_info:
-                    compressed_blame_info = zlib.compress(
-                        json.dumps(blame_info).encode('utf-8'),
-                        zlib.Z_BEST_COMPRESSION)
-
-                fc = FileContent(
-                    content_hash, compressed_content, compressed_blame_info)
+                fc = FileContent(content_hash, compressed_content, None)
 
                 session.add(fc)
                 session.commit()
@@ -997,7 +1036,8 @@ class MassStoreRun:
 
                 LOG.info("[%s] Store source files...", self.__name)
                 file_path_to_id = self.__store_source_files(
-                    source_root, blame_root, filename_to_hash)
+                    source_root, filename_to_hash)
+                self.__add_blame_info(blame_root, filename_to_hash)
                 LOG.info("[%s] Store source files done.", self.__name)
 
                 run_history_time = datetime.now()

@@ -2829,6 +2829,24 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    def getMissingContentHashesForBlameInfo(self, file_hashes):
+        self.__require_store()
+
+        if not file_hashes:
+            return []
+
+        with DBSession(self._Session) as session:
+
+            q = session.query(FileContent) \
+                .options(sqlalchemy.orm.load_only('content_hash')) \
+                .filter(FileContent.content_hash.in_(file_hashes)) \
+                .filter(FileContent.blame_info.isnot(None))
+
+            return list(set(file_hashes) -
+                        set([fc.content_hash for fc in q]))
+
+    @exc_to_thrift_reqfail
+    @timeit
     def massStoreRun(self, name, tag, version, b64zip, force,
                      trim_path_prefixes, description):
         self.__require_store()

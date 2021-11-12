@@ -11,6 +11,7 @@
 
 import json
 import os
+import subprocess
 import tempfile
 import unittest
 
@@ -50,6 +51,95 @@ class TestBlameInfo(unittest.TestCase):
 
         sort_mode = RunSortMode(RunSortType.DATE, Order.ASC)
         self.test_runs = self._cc_client.getRunData(None, None, 0, sort_mode)
+
+    def test_update_blame_info(self):
+        with tempfile.TemporaryDirectory() as proj_dir:
+            source_file_name = "update_blame.cpp"
+            src_file = os.path.join(proj_dir, source_file_name)
+
+            with open(os.path.join(proj_dir, 'Makefile'), 'w',
+                      encoding="utf-8", errors="ignore") as f:
+                f.write(f"all:\n\t$(CXX) -c {src_file} -o /dev/null")
+
+            with open(os.path.join(proj_dir, 'project_info.json'), 'w',
+                      encoding="utf-8", errors="ignore") as f:
+                json.dump({
+                    "name": "update_blame",
+                    "clean_cmd": "",
+                    "build_cmd": "make"}, f)
+
+            with open(src_file, 'w', encoding="utf-8", errors="ignore") as f:
+                f.write("int main() { sizeof(42); }")
+
+            # Change working dir to testfile dir so CodeChecker can be run
+            # easily.
+            old_pwd = os.getcwd()
+            os.chdir(proj_dir)
+
+            run_name = "update_blame_info"
+            codechecker.check_and_store(
+                self._codechecker_cfg, run_name, proj_dir)
+
+            run_filter = RunFilter(names=[run_name], exactMatch=True)
+            runs = self._cc_client.getRunData(run_filter, None, 0, None)
+            run_id = runs[0].runId
+
+            report_filter = ReportFilter(
+                checkerName=['*'],
+                filepath=[f'*{source_file_name}'])
+
+            run_results = get_all_run_results(
+                self._cc_client, run_id, [], report_filter)
+            self.assertIsNotNone(run_results)
+
+            report = run_results[0]
+
+            # Get source file data.
+            file_data = self._cc_client.getSourceFileData(
+                report.fileId, True, None)
+            self.assertIsNotNone(file_data)
+            self.assertFalse(file_data.hasBlameInfo)
+            self.assertFalse(file_data.remoteUrl)
+            self.assertFalse(file_data.trackingBranch)
+
+            # Get blame information
+            blame_info = self._cc_client.getBlameInfo(report.fileId)
+            self.assertIsNotNone(blame_info)
+            self.assertFalse(blame_info.commits)
+            self.assertFalse(blame_info.blame)
+
+            subprocess.Popen(['git', 'init', proj_dir]).communicate()
+            subprocess.Popen([
+                'git',
+                'remote',
+                'add',
+                'origin',
+                'https://myurl.com']).communicate()
+            subprocess.Popen(['git', 'add', src_file]).communicate()
+            subprocess.Popen([
+                'git',
+                '-c', 'user.name=hello',
+                '-c', 'user.email=world',
+                'commit',
+                '-m', 'message']).communicate()
+
+            codechecker.store(self._codechecker_cfg, run_name)
+
+            os.chdir(old_pwd)
+
+            # Get source file data.
+            file_data = self._cc_client.getSourceFileData(
+                report.fileId, True, None)
+            self.assertIsNotNone(file_data)
+            self.assertTrue(file_data.hasBlameInfo)
+            self.assertTrue(file_data.remoteUrl)
+            self.assertTrue(file_data.trackingBranch)
+
+            # Get blame information
+            blame_info = self._cc_client.getBlameInfo(report.fileId)
+            self.assertIsNotNone(blame_info)
+            self.assertTrue(blame_info.commits)
+            self.assertTrue(blame_info.blame)
 
     def test_no_blame_info(self):
         """ Test if the source file doesn't have any blame information. """
