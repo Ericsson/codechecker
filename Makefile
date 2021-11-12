@@ -112,7 +112,8 @@ clean_venv:
 	rm -rf venv
 
 PIP_DEV_DEPS_CMD = make -C $(CC_ANALYZER) pip_dev_deps && \
-  make -C $(CC_WEB) pip_dev_deps
+  make -C $(CC_WEB) pip_dev_deps && \
+  cd $(CC_COMMON) && pip3 install -r requirements_py/dev/requirements.txt
 
 pip_dev_deps:
 	# Install the depencies for analyze, web and the tools.
