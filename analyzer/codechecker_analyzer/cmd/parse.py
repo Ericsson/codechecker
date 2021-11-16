@@ -192,15 +192,6 @@ def add_arguments_to_parser(parser):
                         help="Print the steps the analyzers took in finding "
                              "the reported defect.")
 
-    parser.add_argument('-i', '--ignore', '--skip',
-                        dest="skipfile",
-                        required=False,
-                        default=argparse.SUPPRESS,
-                        help="Path to the Skipfile dictating which project "
-                             "files should be omitted from analysis. Please "
-                             "consult the User guide on how a Skipfile "
-                             "should be laid out.")
-
     parser.add_argument('--trim-path-prefix',
                         type=str,
                         nargs='*',
@@ -223,6 +214,31 @@ def add_arguments_to_parser(parser):
                         help="Filter results by review statuses. Valid "
                              "values are: {0}".format(
                                  ', '.join(REVIEW_STATUS_VALUES)))
+
+    group = parser.add_argument_group("file filter arguments")
+    group = group.add_mutually_exclusive_group()
+
+    group.add_argument('-i', '--ignore', '--skip',
+                       dest="skipfile",
+                       required=False,
+                       default=argparse.SUPPRESS,
+                       help="Path to the Skipfile dictating which project "
+                            "files should be omitted from analysis. Please "
+                            "consult the User guide on how a Skipfile "
+                            "should be laid out.")
+
+    group.add_argument('--file',
+                       nargs='+',
+                       dest="files",
+                       metavar='FILE',
+                       required=False,
+                       default=argparse.SUPPRESS,
+                       help="Filter results by file path. "
+                            "The file path can contain multiple * "
+                            "quantifiers which matches any number of "
+                            "characters (zero or more). So if you have "
+                            "/a/x.cpp and /a/y.cpp then \"/a/*.cpp\" "
+                            "selects both.")
 
     logger.add_verbose_arguments(parser)
     parser.set_defaults(
@@ -358,7 +374,12 @@ def main(args):
             return os.path.join(output_dir_path, default_file_name)
 
     skip_file_content = ""
-    if 'skipfile' in args:
+    if 'files' in args:
+        items = [f"+{file_path}" for file_path in args.files]
+        items.append("-*")
+
+        skip_file_content = "\n".join(items)
+    elif 'skipfile' in args:
         with open(args.skipfile, 'r',
                   encoding='utf-8', errors='ignore') as skip_file:
             skip_file_content = skip_file.read()
