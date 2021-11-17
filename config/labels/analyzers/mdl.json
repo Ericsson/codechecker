@@ -1,0 +1,157 @@
+{
+  "analyzer": "mdl",
+  "labels": {
+    "MD001": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md001---header-levels-should-only-increment-by-one-level-at-a-time",
+      "severity:STYLE"
+    ],
+    "MD002": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md002---first-header-should-be-a-top-level-header",
+      "severity:STYLE"
+    ],
+    "MD003": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md003---header-style",
+      "severity:STYLE"
+    ],
+    "MD004": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md004---unordered-list-style",
+      "severity:STYLE"
+    ],
+    "MD005": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md005---inconsistent-indentation-for-list-items-at-the-same-level",
+      "severity:STYLE"
+    ],
+    "MD006": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md006---consider-starting-bulleted-lists-at-the-beginning-of-the-line",
+      "severity:STYLE"
+    ],
+    "MD007": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md007---unordered-list-indentation",
+      "severity:STYLE"
+    ],
+    "MD009": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md009---trailing-spaces",
+      "severity:STYLE"
+    ],
+    "MD010": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md010---hard-tabs",
+      "severity:STYLE"
+    ],
+    "MD011": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md011---reversed-link-syntax",
+      "severity:STYLE"
+    ],
+    "MD012": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md012---multiple-consecutive-blank-lines",
+      "severity:STYLE"
+    ],
+    "MD013": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md013---line-length",
+      "severity:STYLE"
+    ],
+    "MD014": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md014---dollar-signs-used-before-commands-without-showing-output",
+      "severity:STYLE"
+    ],
+    "MD018": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md018---no-space-after-hash-on-atx-style-header",
+      "severity:STYLE"
+    ],
+    "MD019": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md019---multiple-spaces-after-hash-on-atx-style-header",
+      "severity:STYLE"
+    ],
+    "MD020": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md020---no-space-inside-hashes-on-closed-atx-style-header",
+      "severity:STYLE"
+    ],
+    "MD021": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md021---multiple-spaces-inside-hashes-on-closed-atx-style-header",
+      "severity:STYLE"
+    ],
+    "MD022": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md022---headers-should-be-surrounded-by-blank-lines",
+      "severity:STYLE"
+    ],
+    "MD023": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md023---headers-must-start-at-the-beginning-of-the-line",
+      "severity:STYLE"
+    ],
+    "MD024": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md024---multiple-headers-with-the-same-content",
+      "severity:STYLE"
+    ],
+    "MD025": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md025---multiple-top-level-headers-in-the-same-document",
+      "severity:STYLE"
+    ],
+    "MD026": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md026---trailing-punctuation-in-header",
+      "severity:STYLE"
+    ],
+    "MD027": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md027---multiple-spaces-after-blockquote-symbol",
+      "severity:STYLE"
+    ],
+    "MD028": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md028---blank-line-inside-blockquote",
+      "severity:STYLE"
+    ],
+    "MD029": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md029---ordered-list-item-prefix",
+      "severity:STYLE"
+    ],
+    "MD030": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md030---spaces-after-list-markers",
+      "severity:STYLE"
+    ],
+    "MD031": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md031---fenced-code-blocks-should-be-surrounded-by-blank-lines",
+      "severity:STYLE"
+    ],
+    "MD032": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md032---lists-should-be-surrounded-by-blank-lines",
+      "severity:STYLE"
+    ],
+    "MD033": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md033---inline-html",
+      "severity:STYLE"
+    ],
+    "MD034": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md034---bare-url-used",
+      "severity:STYLE"
+    ],
+    "MD035": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md035---horizontal-rule-style",
+      "severity:STYLE"
+    ],
+    "MD036": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md036---emphasis-used-instead-of-a-header",
+      "severity:STYLE"
+    ],
+    "MD037": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md037---spaces-inside-emphasis-markers",
+      "severity:STYLE"
+    ],
+    "MD038": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md038---spaces-inside-code-span-elements",
+      "severity:STYLE"
+    ],
+    "MD039": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md039---spaces-inside-link-text",
+      "severity:STYLE"
+    ],
+    "MD040": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md040---fenced-code-blocks-should-have-a-language-specified",
+      "severity:STYLE"
+    ],
+    "MD041": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md041---first-line-in-file-should-be-a-top-level-header",
+      "severity:STYLE"
+    ],
+    "MD046": [
+      "doc_url:https://github.com/markdownlint/markdownlint/blob/v0.11.0/docs/RULES.md#md046---code-block-style",
+      "severity:STYLE"
+    ]
+  }
+}
