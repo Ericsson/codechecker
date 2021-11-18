@@ -1,10 +1,10 @@
-# CodeChecker HOWTO
+# CodeChecker Usage Guide
 
-This is lazy dog HOWTO to using CodeChecker analysis.
-It invokes Clang Static Analyzer and Clang-Tidy tools to analyze your code.
+This document describes the basic steps how the CodeChecker tool should be used to find errors
+in your source code and integrate the static analysis into your CI flow to prevent new errors.
 
 ## Table of Contents
-- CodeChecker HOWTO
+- CodeChecker Usage Guide
   - [Table of Contents](#table-of-contents)
   - [Preface](#preface)
   - [Step 0:](#step-0)
@@ -40,9 +40,9 @@ It invokes Clang Static Analyzer and Clang-Tidy tools to analyze your code.
     - [Storing & Updating runs](#storing-runs)
       - [Alternative 1 (RECOMMENDED): Store the results of each commit in the same run](#storeing-results)
       - [Alternative 2: Store each analysis in a new run](#storing-new-runs)
+    - [Use CodeChecker in the CI without a server](#local-workflow)
     - [Gerrit Integration](#gerrit-integration)
     - [Setting up user authentication](authentication)
-  - [Step 9: Integrate CodeChecker into your local workflow](#step-9)
   - [Updating CodeChecker to new version](#upgrade)
 - [Unique Report Identifier (RI)](#unique-report-identifier)
   - [Listing and Counting Reports](#listing-reports)
@@ -598,6 +598,29 @@ the failed analysis output is collected into `./reports/failed` directory.
 This means that analysis of these files failed and there is no Clang Static
 Analyzer output for these compilation commands.
 
+There is .zip file for each failed anlysis
+```
+<source_file_name>_<analyzer>_<unique_compile_command_id>.plist_compile_error.zip
+```
+
+The `zip` file has the following internal structure
+```
+.
+├── analyzer-command #the failing analysis command
+├── build-action #the original compilation command
+├── compilation_database.json #compliation database part of the failing analysis
+├── compiler_info.json #configuration of the original compiler used
+├── return-code #return code of the anlaysis command
+├── sources-root #all source files needed to reproduce the analysis
+├── stderr # standard error output of the analysis
+└── stdout # standard outpout of the analysis
+```
+
+The analysis may have failed due to the following reasons:
+* C/C++ standard non-compliance. Clang requires more strict compliance to the C/C++ standard than gcc. Please review your source code for any indicated non-compliances. Check the stderr and stdout files to find more information about the details of the error.
+* CodeChecker compiler argument transformation error. If the original compilation command can be executed successfully (see the `analyzer-command` file), but the analysis failes for example with header inclusion errors, there is a chance that CodeChecker incorrectly transformed the original gcc/clang compiler invocation to analyzer invocation. Please report a bug to the CodeChecker developers and attach the `failed.zip` for easy reproduction.
+* The analyzer crashed. This is an analyzer fault and a bug should be reported to the analyzer developers and attach the `failed.zip` for easy reproduction.
+
 ## Step 8: Integrate CodeChecker into your CI loop <a name="step-8"></a>
 This section describes a recommended way on how CodeChecker is designed to be
 used in a CI environment to:
@@ -754,6 +777,29 @@ CodeChecker cmd diff --basename tmux_master_2017_08_28 --newname \
 Please find a [Shell Script](script_daily.md) that can be used
 in a Jenkins or any other CI engine to report new bugs.
 
+### Use CodeChecker in the CI without a server <a name="local-workflow"></a>
+If you want to use CodeChecker in your project but you don't want to run a
+CodeChecker server, you can use the followign workflow.
+
+This workflow makes it possible to block pull requests which would introduce new faults
+and to leave the handling of legacy issues to a later time.
+
+These legacy findings can be stored in a text file, instead of the CodeChecker server
+as in the traditional workflows.
+
+1. Analyze your project to a report directory (e.g.: `./reports`). For more
+information see [Step 2](#step-2).
+2. Create a baseline file from the reports which contains the legacy findings:
+`CodeChecker parse ./reports -e baseline -o reports.baseline`. It is
+recommended to store this baseline file (`reports.baseline`) in your
+repository.
+3. On source code changes after your project is re-analyzed use the
+`CodeChecker diff` command to get the new reports:
+`CodeChecker cmd diff -b ./reports.baseline -n ./reports --new`
+4. On configuration changes (new checkers / options are enabled / disabled,
+new CodeChecker / clang version is used, etc.) re-generate the baseline file
+(step 1-2).
+
 ### Gerrit Integration <a name="gerrit-integration"></a>
 The workflow based on *Alternative 1)* can be used to implement the gerrit
 integration with CodeChecker. Let us assume you would like to run the
@@ -773,25 +819,6 @@ guide.
 ### Setting up user authentication <a name="authentication"></a>
 You can set up authentication for your server and (web,command line) clients
 as described in the [Authentication Guide](web/authentication.md).
-
-
-## Step 9: Integrate CodeChecker into your local workflow <a name="step-9"></a>
-If you want to use CodeChecker in your project but you don't want to run a
-CodeChecker server and to fix every reports found by CodeChecker for the first
-time (legacy findings) you can follow these steps:
-1. Analyze your project to a report directory (e.g.: `./reports`). For more
-information see [Step 2](#step-2).
-2. Create a baseline file from the reports which contains the legacy findings:
-`CodeChecker parse ./reports -e baseline -o reports.baseline`. It is
-recommended to store this baseline file (`reports.baseline`) in your
-repository.
-3. On source code changes after your project is re-analyzed use the
-`CodeChecker diff` command to get the new reports:
-`CodeChecker cmd diff -b ./reports.baseline -n ./reports --new`
-4. On configuration changes (new checkers / options are enabled / disabled,
-new CodeChecker / clang version is used, etc.) re-generate the baseline file
-(step 1-2).
-
 
 ## Updating CodeChecker to new version <a name="upgrade"></a>
 If a new CodeChecker release is available it might be possible that there are
