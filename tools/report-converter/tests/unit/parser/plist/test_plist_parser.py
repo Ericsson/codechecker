@@ -33,7 +33,8 @@ from copy import deepcopy
 
 from codechecker_report_converter.report import BugPathEvent, \
     BugPathPosition, File, Range, Report, report_file
-from codechecker_report_converter.report.reports import get_mentioned_files
+from codechecker_report_converter.report.reports import \
+    get_mentioned_original_files
 
 
 gen_plist_dir_path = os.path.join(
@@ -166,7 +167,7 @@ class PlistParserTestCaseNose(unittest.TestCase):
         reports = report_file.get_reports(clang37_plist)
         self.assertEqual(len(reports), 3)
 
-        files = get_mentioned_files(reports)
+        files = get_mentioned_original_files(reports)
         self.assertEqual(files, set(SRC_FILES))
 
         for report in reports:
@@ -197,7 +198,7 @@ class PlistParserTestCaseNose(unittest.TestCase):
         reports = report_file.get_reports(clang38_plist)
         self.assertEqual(len(reports), 3)
 
-        files = get_mentioned_files(reports)
+        files = get_mentioned_original_files(reports)
         self.assertEqual(files, set(SRC_FILES))
 
         for report in reports:
@@ -220,7 +221,7 @@ class PlistParserTestCaseNose(unittest.TestCase):
         reports = report_file.get_reports(clang40_plist)
         self.assertEqual(len(reports), 3)
 
-        files = get_mentioned_files(reports)
+        files = get_mentioned_original_files(reports)
         self.assertEqual(files, set(SRC_FILES))
 
         for report in reports:
@@ -248,7 +249,7 @@ class PlistParserTestCaseNose(unittest.TestCase):
         reports = report_file.get_reports(clang50_trunk_plist)
         self.assertEqual(len(reports), 3)
 
-        files = get_mentioned_files(reports)
+        files = get_mentioned_original_files(reports)
         self.assertEqual(files, set(SRC_FILES))
 
         for report in reports:
