@@ -22,12 +22,12 @@ class GenericSuppressHandler:
     store_suppress_bug_id: Callable[[Any, str, str, str, str], bool]
 
 
-def get_mentioned_files(reports: List[Report]) -> Set[str]:
+def get_mentioned_original_files(reports: List[Report]) -> Set[str]:
     """ Get all mentioned files from the given reports. """
     files = set()
 
     for report in reports:
-        files.update(report.files)
+        files.update(report.original_files)
 
     return files
 

@@ -438,7 +438,7 @@ def assemble_zip(inputs, zip_file, client):
                 changed_files.update(report.changed_files)
                 continue
 
-            file_paths.update(report.files)
+            file_paths.update(report.original_files)
             file_report_positions[report.file.original_path].add(report.line)
 
     if changed_files:
