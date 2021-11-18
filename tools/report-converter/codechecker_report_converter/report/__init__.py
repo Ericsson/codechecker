@@ -313,7 +313,7 @@ class Report:
         self.__sc_handler = SourceCodeCommentHandler()
 
         self.__source_line: Optional[str] = source_line
-        self.__files: Optional[Set[str]] = None
+        self.__files: Optional[Set[File]] = None
         self.__changed_files: Optional[Set[str]] = None
 
     @property
@@ -350,12 +350,12 @@ class Report:
             event.file.trim(path_prefixes)
 
     @property
-    def files(self) -> Set[str]:
+    def files(self) -> Set[File]:
         """ Returns all referenced file paths. """
         if self.__files is not None:
             return self.__files
 
-        self.__files = {self.file.original_path}
+        self.__files = {self.file}
 
         for event in itertools.chain(
             self.bug_path_events,
@@ -363,9 +363,19 @@ class Report:
             self.notes,
             self.macro_expansions
         ):
-            self.__files.add(event.file.original_path)
+            self.__files.add(event.file)
 
         return self.__files
+
+    @property
+    def trimmed_files(self) -> Set[str]:
+        """ Returns all referenced trimmed file paths. """
+        return {file.path for file in self.files}
+
+    @property
+    def original_files(self) -> Set[str]:
+        """ Returns all referenced original file paths. """
+        return {file.original_path for file in self.files}
 
     @property
     def changed_files(self) -> Set[str]:
@@ -391,7 +401,7 @@ class Report:
             # changed.
             self.__changed_files.add(self.analyzer_result_file_path)
 
-        for file_path in self.files:
+        for file_path in self.original_files:
             if not os.path.exists(file_path):
                 self.__changed_files.add(file_path)
                 continue
@@ -503,7 +513,7 @@ class Report:
     def skip(self, skip_handler: Optional[SkipListHandler]) -> bool:
         """ True if the report should be skipped. """
         if skip_handler:
-            for file_path in self.files:
+            for file_path in self.original_files:
                 if skip_handler(file_path):
                     return True
 

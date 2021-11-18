@@ -831,17 +831,35 @@ class MassStoreRun:
                 self.__wrong_src_code_comments.append(
                     f"{source_file}|{report_line}|{checker_name}")
 
+        def get_missing_file_ids(report: Report) -> List[str]:
+            """ Returns file paths which database file id is missing. """
+            missing_ids_for_files = []
+            for file_path in report.trimmed_files:
+                file_id = file_path_to_id.get(file_path, -1)
+                if file_id == -1:
+                    missing_ids_for_files.append(file_path)
+
+            return missing_ids_for_files
+
         root_dir_path = os.path.dirname(report_file_path)
         mip = self.__mips[root_dir_path]
         analysis_info = self.__analysis_info.get(root_dir_path)
 
         for report in reports:
-            self.__all_report_checkers.add(report.checker_name)
+            report.trim_path_prefixes(self.__trim_path_prefixes)
 
-            if skip_handler.should_skip(report.file.path):
+            missing_ids_for_files = get_missing_file_ids(report)
+            if missing_ids_for_files:
+                LOG.warning("Failed to get database id for file path '%s'! "
+                            "Skip adding report: %s:%d:%d [%s]",
+                            ' '.join(missing_ids_for_files), report.file.path,
+                            report.line, report.column, report.checker_name)
                 continue
 
-            report.trim_path_prefixes(self.__trim_path_prefixes)
+            self.__all_report_checkers.add(report.checker_name)
+
+            if skip_handler.should_skip(report.file.original_path):
+                continue
 
             report_path_hash = get_report_path_hash(report)
             if report_path_hash in self.__already_added_report_hashes:
