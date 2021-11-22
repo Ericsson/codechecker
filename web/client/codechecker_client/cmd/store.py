@@ -777,7 +777,7 @@ def main(args):
         sys.exit(1)
     except Exception as ex:
         import traceback
-        traceback.print_stack()
+        traceback.print_exc()
         LOG.info("Storage failed: %s", str(ex))
         sys.exit(1)
     finally:
