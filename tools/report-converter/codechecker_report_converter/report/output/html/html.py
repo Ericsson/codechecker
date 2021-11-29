@@ -103,7 +103,6 @@ class HtmlBuilder:
         self._checker_labels = checker_labels
         self.layout_dir = layout_dir
         self.generated_html_reports: Dict[str, HTMLReports] = {}
-        self.html_reports: HTMLReports = []
         self.files: FileSources = {}
 
         css_dir = os.path.join(self.layout_dir, 'css')
@@ -151,13 +150,13 @@ class HtmlBuilder:
         return self._checker_labels.severity(checker_name) \
             if self._checker_labels else 'UNSPECIFIED'
 
-    def _add_source_file(self, file: File):
+    def _add_source_file(self, file: File) -> FileSource:
         """
         Updates file source data by file id if the given file hasn't been
         processed.
         """
         if file.id in self.files:
-            return
+            return self.files[file.id]
 
         try:
             file_content = file.content
@@ -167,17 +166,27 @@ class HtmlBuilder:
         self.files[file.id] = {
             'filePath': file.path, 'content': file_content}
 
-    def _add_html_reports(
+        return self.files[file.id]
+
+    def _get_html_reports(
         self,
         reports: List[Report]
-    ):
+    ) -> Tuple[HTMLReports, FileSources]:
+        """ Get HTML reports from the given reports.
+
+        Returns a list of html reports and references to file sources.
+        """
+        html_reports: HTMLReports = []
+        files: FileSources = {}
+
         def to_bug_path_events(
             events: List[BugPathEvent]
         ) -> HTMLBugPathEvents:
             """ Converts the given events to html compatible format. """
             html_events: HTMLBugPathEvents = []
             for event in events:
-                self._add_source_file(event.file)
+                files[event.file.id] = self._add_source_file(event.file)
+
                 html_events.append({
                     'message': event.message,
                     'fileId': event.file.id,
@@ -192,7 +201,9 @@ class HtmlBuilder:
             """ Converts the given events to html compatible format. """
             html_macro_expansions: HTMLMacroExpansions = []
             for macro_expansion in macro_expansions:
-                self._add_source_file(macro_expansion.file)
+                files[macro_expansion.file.id] = self._add_source_file(
+                    macro_expansion.file)
+
                 html_macro_expansions.append({
                     'message': macro_expansion.message,
                     'name': macro_expansion.name,
@@ -203,9 +214,9 @@ class HtmlBuilder:
             return html_macro_expansions
 
         for report in reports:
-            self._add_source_file(report.file)
+            files[report.file.id] = self._add_source_file(report.file)
 
-            self.html_reports.append({
+            html_reports.append({
                 'fileId': report.file.id,
                 'reportHash': report.report_hash,
                 'checkerName': report.checker_name,
@@ -218,6 +229,8 @@ class HtmlBuilder:
                 'reviewStatus': report.review_status,
                 'severity': self.get_severity(report.checker_name)
             })
+
+        return html_reports, files
 
     def create(
         self,
@@ -233,15 +246,15 @@ class HtmlBuilder:
         if changed_files:
             return None, changed_files
 
-        self._add_html_reports(reports)
+        html_reports, files = self._get_html_reports(reports)
 
-        self.generated_html_reports[output_file_path] = self.html_reports
+        self.generated_html_reports[output_file_path] = html_reports
 
         substitute_data = self._tag_contents
         substitute_data.update({
             'report_data': json.dumps({
-                'files': self.files,
-                'reports': self.html_reports
+                'files': files,
+                'reports': html_reports
             })
         })
 
@@ -251,7 +264,7 @@ class HtmlBuilder:
                   encoding='utf-8', errors='replace') as f:
             f.write(content)
 
-        return self.html_reports, changed_files
+        return html_reports, changed_files
 
     def create_index_html(self, output_dir: str):
         """
