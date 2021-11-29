@@ -26,6 +26,7 @@ Table of Contents
             * [`--enable-all`](#enable-all)
         * [Toggling compiler warnings](#toggling-warnings)
         * [Cross Translation Unit (CTU) analysis mode](#ctu)
+        * [Taint analysis configuration](#taint)
         * [Statistical analysis mode](#statistical)
     * [`parse`](#parse)
         * [Exporting source code suppression to suppress file](#suppress-file)
@@ -1540,6 +1541,44 @@ cross translation unit analysis arguments:
                         some runtime CPU overhead in the second phase of the
                         analysis. (default: parse-on-demand)
 ```
+
+### Taint analysis configuration <a name="taint"></a>
+
+Taint analysis is used to detect bugs and potential security-related errors
+caused by untrusted data sources.
+An untrusted data source is usually an IO operation in code, often related to
+the file-system, database, network, or environment variables.
+Taint analysis works by defining operations that introduce tainted values
+(`sources`), operations that cause taint to spread from tainted values
+(`propagators`), and operations that are sensitive to tainted values (`sinks`).
+Developers can also use an additional category of `filters` to express that some
+operations sanitize tainted values, and after sanitization,
+the value is trusted and safe to use.
+
+Taint analysis can be used with the default configuration by enabling the
+`alpha.security.taint.TaintPropagation` checker:
+```sh
+CodeChecker analyze -e alpha.security.taint.TaintPropagation
+```
+
+Taint analysis can be used with custom configuration by specifying the taint
+configuration file as a checker-option in addition to enabling the
+`alpha.security.taint.TaintPropagation` checker:
+```sh
+CodeChecer analyze \
+  -e alpha.security.taint.TaintPropagation \
+  --checker-config 'alpha.security.taint.TaintPropagation:Config=my-cutom-taint-config.yaml'
+```
+
+Taint analysis false positives can be handled by either using the warning
+suppression via comments in the code (same as with other CodeChecker reports),
+or by providing filter operations via a custom configuration file.
+
+The default configuration options of taint analysis are documented in the
+[checker's documentation](https://clang.llvm.org/docs/analyzer/checkers.html#alpha-security-taint-taintpropagation-c-c).
+
+Clang SA's conceptual model of taint analysis and the checker's configuration
+file format is documented in the [Taint Analysis Configuration docs](https://clang.llvm.org/docs/analyzer/user-docs/TaintAnalysisConfiguration.html).
 
 ### Statistical analysis mode <a name="statistical"></a>
 
