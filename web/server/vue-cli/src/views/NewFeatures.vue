@@ -2,6 +2,47 @@
   <!-- eslint-disable max-len -->
   <v-container fluid>
     <v-timeline align-top>
+      <v-timeline-item fill-dot icon="mdi-star">
+        <new-release-item>
+          <template v-slot:title>
+            <a
+              href="https://github.com/Ericsson/codechecker/releases/tag/v6.18.0"
+              target="_blank"
+              class="white--text"
+            >
+              Highlights of CodeChecker 6.18.0 release
+            </a>
+          </template>
+
+          <new-feature-item>
+            <template v-slot:title>
+              <v-alert dense outlined type="error">
+                Backward incompatible CLI change!
+              </v-alert>
+            </template>
+            The <i>JSON</i> output of the CodeChecker parse command was not
+            stable enough and the structure was very similar to the plist
+            structure. Our plan is to support reading/parsing/storing of
+            multiple analyzer output types not only plist but for example
+            <a href="http://docs.oasis-open.org/sarif/sarif/v2.0/csprd01/sarif-v2.0-csprd01.html" target="_blank">sarif</a>
+            format as well. For this reason we changed the format of the
+            JSON output of the <i>CodeChecker parse</i> and
+            <i>CodeChecker cmd diff</i> commands. For more information
+            <a href="https://github.com/Ericsson/codechecker/blob/master/docs/analyzer/user_guide.md" target="_blank">see</a>.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Get access controls
+            </template>
+            Create a new global role (<code>PERMISSION_VIEW</code>) which will
+            be used to allow the users to fetch access control information from
+            a running <i>CodeChecker server</i> by using the
+            <code>CodeChecker cmd permissions</code> subcommand.
+          </new-feature-item>
+        </new-release-item>
+      </v-timeline-item>
+
       <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
         <new-release-item color="green lighten-1">
           <template v-slot:title>
