@@ -185,6 +185,7 @@ output.
             logger.setup_logger(
                 args.verbose if 'verbose' in args else None,
                 'stderr')
+            LOG = logger.get_logger('system')
 
             if len(sys.argv) > 1:
                 called_sub_command = sys.argv[1]
@@ -201,6 +202,7 @@ output.
                     sys.argv[cfg_idx + 2:]
 
                 args = parser.parse_args()
+                LOG.info("Full extended command: %s", ' '.join(sys.argv))
 
         if 'func' in args:
             sys.exit(args.func(args))
