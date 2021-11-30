@@ -492,7 +492,7 @@ def assemble_zip(inputs, zip_file, client):
 
     LOG.info("Collecting review comments done.")
 
-    LOG.debug("Building report zip file.")
+    LOG.info("Building report zip file...")
     with zipfile.ZipFile(zip_file, 'a', allowZip64=True) as zipf:
         # Add the files to the zip which will be sent to the server.
         for file_path in files_to_compress:
@@ -536,14 +536,20 @@ def assemble_zip(inputs, zip_file, client):
 
         zipf.writestr('content_hashes.json', json.dumps(file_to_hash))
 
-    # Compressing .zip file
+    LOG.info("Building report zip file (%s) done.", zip_file)
+    zip_size = os.stat(zip_file).st_size
+
+    LOG.info("Compressing report zip file...")
+
     with open(zip_file, 'rb') as source:
         compressed = zlib.compress(source.read(), zlib.Z_BEST_COMPRESSION)
-
     with open(zip_file, 'wb') as target:
         target.write(compressed)
 
-    LOG.debug("[ZIP] Mass store zip written at '%s'", zip_file)
+    compressed_zip_size = os.stat(zip_file).st_size
+
+    LOG.info("Compressing report zip file done (%s / %s).",
+             sizeof_fmt(zip_size), sizeof_fmt(compressed_zip_size))
 
 
 def should_be_zipped(input_file: str, input_files: Iterable[str]) -> bool:
@@ -708,11 +714,11 @@ def main(args):
                       "--name run_name in the invocation.")
             sys.exit(2)  # argparse returns error code 2 for bad invocations.
 
-    LOG.info("Storing analysis results for run '" + args.name + "'")
+    LOG.info("Storing analysis results for run '%s'", args.name)
 
     if 'force' in args:
-        LOG.info("argument --force was specified: the run with name '" +
-                 args.name + "' will be deleted.")
+        LOG.info("argument --force was specified: the run with name '%s' will "
+                 "be deleted", args.name)
 
     # Setup connection to the remote server.
     client = libclient.setup_client(args.product_url)
@@ -751,7 +757,7 @@ def main(args):
 
         description = args.description if 'description' in args else None
 
-        LOG.info("Storing results (%s) to the server...", sizeof_fmt(zip_size))
+        LOG.info("Storing results to the server...")
 
         client.massStoreRun(args.name,
                             args.tag if 'tag' in args else None,
