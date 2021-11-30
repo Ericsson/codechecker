@@ -527,7 +527,12 @@ def __register_diff(parser):
 
     __add_filtering_arguments(parser, DEFAULT_FILTER_VALUES, True)
 
-    group = parser.add_argument_group("comparison modes")
+    group = parser.add_argument_group(
+        "comparison modes",
+        "List reports that can be found only in baseline or new runs or in "
+        "both. False positive and intentional reports are considered as "
+        "resolved, i.e. these are excluded from the report set as if they "
+        "were not reported.")
     group = group.add_mutually_exclusive_group(required=True)
 
     group.add_argument('--new',

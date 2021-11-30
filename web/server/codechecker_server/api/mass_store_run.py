@@ -996,11 +996,6 @@ class MassStoreRun:
                 reports_to_delete.update([x.id for x in reports])
             else:
                 for report in reports:
-                    # We set the fix date of a report only if the report
-                    # has not been fixed before.
-                    if report.fixed_at:
-                        continue
-
                     checker = report.checker_id
                     if checker in disabled_checkers:
                         report.detection_status = 'off'

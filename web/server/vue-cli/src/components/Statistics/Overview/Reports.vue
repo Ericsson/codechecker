@@ -19,8 +19,8 @@
                 Shows the number of reports which were active in the last
                 <i>x</i> days.<br><br>
 
-                Reports marked as <b>False positive</b> or <b>Intentional</b>
-                will be <i>excluded</i> from these numbers.<br><br>
+                <b>False positive</b> and <b>Intentional</b> reports are not
+                considered outstanding.
               </div>
               <div v-else>
                 Shows the number of reports which were solved in the last

@@ -8,7 +8,7 @@ import { Line, mixins } from "vue-chartjs";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 
 import { ccService, handleThriftError } from "@cc-api";
-import { ReportFilter, ReviewStatus, Severity } from "@cc/report-server-types";
+import { ReportFilter, Severity } from "@cc/report-server-types";
 import { DateMixin, SeverityMixin } from "@/mixins";
 
 const { reactiveData } = mixins;
@@ -205,8 +205,6 @@ export default {
       const rFilter = new ReportFilter(reportFilter);
       rFilter.openReportsDate = this.getUnixTime(date);
       rFilter.detectionStatus = null;
-      rFilter.reviewStatus =
-        [ ReviewStatus.UNREVIEWED, ReviewStatus.CONFIRMED ];
 
       const cmpData = null;
 

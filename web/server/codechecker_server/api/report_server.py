@@ -1419,7 +1419,9 @@ class ThriftRequestHandler:
 
                 base_hashes = session.query(Report.bug_id.label('bug_id')) \
                     .outerjoin(File, Report.file_id == File.id) \
-                    .filter(Report.detection_status.notin_(skip_statuses_str))
+                    .filter(
+                        Report.detection_status.notin_(skip_statuses_str),
+                        Report.fixed_at.is_(None))
 
                 base_hashes = \
                     filter_open_reports_in_tags(base_hashes, run_ids, tag_ids)
@@ -1448,7 +1450,8 @@ class ThriftRequestHandler:
                     return new_hashes
             elif diff_type == DiffType.RESOLVED:
                 results = session.query(Report.bug_id) \
-                    .filter(Report.bug_id.notin_(report_hashes))
+                    .filter(or_(Report.bug_id.notin_(report_hashes),
+                                Report.fixed_at.isnot(None)))
 
                 results = \
                     filter_open_reports_in_tags(results, run_ids, tag_ids)
@@ -1458,7 +1461,9 @@ class ThriftRequestHandler:
             elif diff_type == DiffType.UNRESOLVED:
                 results = session.query(Report.bug_id) \
                     .filter(Report.bug_id.in_(report_hashes)) \
-                    .filter(Report.detection_status.notin_(skip_statuses_str))
+                    .filter(Report.detection_status.notin_(
+                        skip_statuses_str)) \
+                    .filter(Report.fixed_at.is_(None))
 
                 results = \
                     filter_open_reports_in_tags(results, run_ids, tag_ids)
@@ -1776,6 +1781,32 @@ class ThriftRequestHandler:
                                             CommentKindValue.SYSTEM,
                                             review_status.date)
         session.add(system_comment)
+
+        # False positive and intentional reports are considered closed, so
+        # their "fix date" is set. The reports are reopened when they become
+        # unreviewed or confirmed again.
+        if review_status.status in ["false_positive", "intentional"]:
+            session \
+                .query(Report) \
+                .filter(Report.bug_id == report_hash) \
+                .update({"fixed_at": review_status.date})
+        else:
+            reports = session \
+                .query(Report) \
+                .outerjoin(
+                    ReviewStatus, ReviewStatus.bug_hash == Report.bug_id) \
+                .filter(
+                    Report.bug_id == report_hash,
+                    Report.detection_status.in_([
+                        "unresolved", "new", "reopened"]),
+                    ReviewStatus.status.notin([
+                        "false_positive", "intentional"]))
+
+            session \
+                .query(Report) \
+                .filter(Report.id.in_(
+                    map(lambda report: report.id, reports))) \
+                .update({"fixed_at": None}, synchronize_session=False)
 
         session.flush()
 
