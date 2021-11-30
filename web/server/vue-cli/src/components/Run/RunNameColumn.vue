@@ -11,7 +11,7 @@
           }"
           class="name mr-2"
         >
-          {{ name }}
+          <span>{{ name }}</span>
         </router-link>
 
         <run-description
