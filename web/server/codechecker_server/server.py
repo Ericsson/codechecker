@@ -333,11 +333,12 @@ class RequestHandler(SimpleHTTPRequestHandler):
         client_host, client_port, is_ipv6 = \
             RequestHandler._get_client_host_port(self.client_address)
         self.auth_session = self.__check_session_cookie()
-        LOG.info("%s:%s -- [%s] POST %s@%s",
-                 client_host if not is_ipv6 else '[' + client_host + ']',
-                 client_port,
-                 self.auth_session.user if self.auth_session else "Anonymous",
-                 self.path, fname)
+        auth_user = \
+            self.auth_session.user if self.auth_session else "Anonymous"
+        host_info = client_host if not is_ipv6 else '[' + client_host + ']'
+        api_info = f"{host_info}:{client_port} -- [{auth_user}] POST " \
+                   f"{self.path}@{fname}"
+        LOG.info(api_info)
 
         # Create new thrift handler.
         version = self.server.version
@@ -455,9 +456,12 @@ class RequestHandler(SimpleHTTPRequestHandler):
             return
 
         except BrokenPipeError as ex:
-            LOG.debug(ex)
-        except Exception as exn:
-            LOG.warning(str(exn))
+            LOG.warning("%s failed with BrokenPipeError: %s",
+                        api_info, str(ex))
+            import traceback
+            traceback.print_exc()
+        except Exception as ex:
+            LOG.warning("%s failed with Exception: %s", api_info, str(ex))
             import traceback
             traceback.print_exc()
 
@@ -466,7 +470,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 itrans = TTransport.TMemoryBuffer(cstringio_buf)
                 iprot = input_protocol_factory.getProtocol(itrans)
 
-            self.send_thrift_exception(str(exn), iprot, oprot, otrans)
+            self.send_thrift_exception(str(ex), iprot, oprot, otrans)
             return
 
     def list_directory(self, path):
