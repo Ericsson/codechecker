@@ -4719,6 +4719,9 @@
     ],
     "cppcoreguidelines-virtual-class-destructor": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines-virtual-class-destructor.html",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "darwin-avoid-spinlock": [
