@@ -89,11 +89,11 @@ def __collect_blame_info_for_files(
 def assemble_blame_info(
     zip_file: zipfile.ZipFile,
     file_paths: Iterable[str]
-) -> bool:
+) -> int:
     """
     Collect and write blame information for the given files to the zip file.
 
-    Returns true if at least one blame information is collected.
+    Returns the number of collected blame information.
     """
     # Currently ProcessPoolExecutor fails completely in windows.
     # Reason is most likely combination of venv and fork() not
@@ -115,4 +115,4 @@ def assemble_blame_info(
                 os.path.join('blame', f.lstrip('/')),
                 json.dumps(blame_info))
 
-    return any(v for v in file_blame_info.values())
+    return sum(bool(v) for v in file_blame_info.values())
