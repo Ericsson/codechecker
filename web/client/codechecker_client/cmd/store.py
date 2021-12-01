@@ -442,6 +442,10 @@ def assemble_zip(inputs, zip_file, client, checker_labels: CheckerLabels):
 
         skip_file_path = os.path.join(dir_path, 'skip_file')
         if os.path.exists(skip_file_path):
+            with open(skip_file_path, 'r') as f:
+                LOG.info("Found skip file %s with the following content:\n%s",
+                         skip_file_path, f.read())
+
             files_to_compress.add(skip_file_path)
 
     LOG.debug("Processing report files ...")
