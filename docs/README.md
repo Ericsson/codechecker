@@ -258,8 +258,9 @@ cd ~/codechecker
 make venv
 source $PWD/venv/bin/activate
 
-# Optional step in case you want LDAP or PAM authentication support.
-#pip3 install -r web/requirements_py/auth/requirements.txt
+# [Optional] If you want to use external authentication methods (LDAP / PAM)
+# follow the instructions in
+# docs/web/authentication.md#external-authentication-methods
 
 # Build and install a CodeChecker package.
 make package
