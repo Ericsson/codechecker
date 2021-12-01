@@ -188,7 +188,7 @@
     ],
     "bugprone-exception-escape": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone-exception-escape.html",
-      "guideline:sei-cert",      
+      "guideline:sei-cert",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
@@ -525,6 +525,7 @@
     "bugprone-unhandled-exception-at-new": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone-unhandled-exception-at-new.html",
       "guideline:sei-cert",
+      "profile:default",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
