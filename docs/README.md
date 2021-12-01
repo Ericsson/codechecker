@@ -281,7 +281,7 @@ or the UI code is changed. If you wouldn't like to build the UI code you can
 set the `BUILD_UI_DIST` environment variable to `NO` before the package build:
 `BUILD_UI_DIST=NO make package`.
 - Use `make standalone_package` instead of `make package` to avoid
-manually activating the environment before running CodeChecker.
+having to manually activate the environment before running CodeChecker.
 
 ### Upgrading environment after system or Python upgrade
 
