@@ -258,6 +258,10 @@ cd ~/codechecker
 make venv
 source $PWD/venv/bin/activate
 
+# [Optional] If you want to use external authentication methods (LDAP / PAM)
+# follow the instructions in
+# docs/web/authentication.md#external-authentication-methods
+
 # Build and install a CodeChecker package.
 make package
 
@@ -277,6 +281,8 @@ environment variable to `YES` before the package build:
 or the UI code is changed. If you wouldn't like to build the UI code you can
 set the `BUILD_UI_DIST` environment variable to `NO` before the package build:
 `BUILD_UI_DIST=NO make package`.
+- Use `make standalone_package` instead of `make package` to avoid
+having to manually activate the environment before running CodeChecker.
 
 ### Upgrading environment after system or Python upgrade
 
