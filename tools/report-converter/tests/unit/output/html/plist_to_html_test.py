@@ -6,8 +6,9 @@
 #
 # -------------------------------------------------------------------------
 
-
+import glob
 import os
+import re
 import shutil
 import unittest
 
@@ -17,7 +18,8 @@ from libtest import env
 
 from codechecker_report_converter.report.output.html import \
     html as report_to_html
-from codechecker_report_converter.report import report_file
+from codechecker_report_converter.report import report_file, \
+    reports as reports_helper
 
 
 def get_project_path(test_project) -> str:
@@ -37,7 +39,7 @@ class PlistToHtmlTest(unittest.TestCase):
 
         test_file_dir_path = os.path.join(self.test_workspace, "test_files")
 
-        test_projects = ['notes', 'macros', 'simple']
+        test_projects = ['notes', 'macros', 'simple', 'inclusion']
         for test_project in test_projects:
             test_project_path = os.path.join(test_file_dir_path, test_project)
             shutil.copytree(get_project_path(test_project), test_project_path)
@@ -54,31 +56,38 @@ class PlistToHtmlTest(unittest.TestCase):
                         plist_file.truncate()
                         plist_file.write(new_content)
 
-    def __test_html_builder(self, proj: str):
+    def __test_html_builder(self, proj: str) -> str:
         """
         Test building html file from the given proj's plist file.
         """
+        html_builder = report_to_html.HtmlBuilder(self.layout_dir)
+
         proj_dir = os.path.join(self.test_workspace, 'test_files', proj)
-        plist_file = os.path.join(proj_dir, f"{proj}.plist")
-
-        reports = report_file.get_reports(plist_file)
-
         output_dir = os.path.join(proj_dir, 'html')
         if not os.path.exists(output_dir):
             os.mkdir(output_dir)
 
-        output_path = os.path.join(output_dir, f"{proj}.plist.html")
+        processed_path_hashes = set()
+        for file_path in glob.glob(os.path.join(proj_dir, f"*.plist")):
+            file_name = os.path.basename(file_path)
+            output_path = os.path.join(output_dir, f"{file_name}.html")
 
-        html_builder = report_to_html.HtmlBuilder(self.layout_dir)
-        report_to_html.convert(plist_file, reports, output_dir, html_builder)
+            reports = report_file.get_reports(file_path)
+            reports = reports_helper.skip(
+                reports, processed_path_hashes)
 
-        self.assertTrue(os.path.exists(output_path))
+            report_to_html.convert(
+                file_path, reports, output_dir, html_builder)
+
+            self.assertTrue(os.path.exists(output_path))
 
         html_builder.create_index_html(output_dir)
         html_builder.create_statistics_html(output_dir)
 
         index_html = os.path.join(output_dir, 'index.html')
         self.assertTrue(os.path.exists(index_html))
+
+        return output_dir
 
     def test_get_report_data_notes(self):
         """ Get report data for plist which contains notes. """
@@ -88,11 +97,9 @@ class PlistToHtmlTest(unittest.TestCase):
         reports = report_file.get_reports(plist_file)
 
         html_builder = report_to_html.HtmlBuilder(self.layout_dir)
-        html_builder._add_html_reports(reports)
+        html_reports, files = html_builder._get_html_reports(reports)
 
-        self.assertEqual(len(html_builder.files), 1)
-
-        html_reports = html_builder.html_reports
+        self.assertEqual(len(files), 1)
         self.assertEqual(len(html_reports), 1)
 
         report = html_reports[0]
@@ -109,11 +116,9 @@ class PlistToHtmlTest(unittest.TestCase):
         reports = report_file.get_reports(plist_file)
 
         html_builder = report_to_html.HtmlBuilder(self.layout_dir)
-        html_builder._add_html_reports(reports)
+        html_reports, files = html_builder._get_html_reports(reports)
 
-        self.assertEqual(len(html_builder.files), 1)
-
-        html_reports = html_builder.html_reports
+        self.assertEqual(len(files), 1)
         self.assertEqual(len(html_reports), 1)
 
         report = html_reports[0]
@@ -133,11 +138,9 @@ class PlistToHtmlTest(unittest.TestCase):
         reports = report_file.get_reports(plist_file)
 
         html_builder = report_to_html.HtmlBuilder(self.layout_dir)
-        html_builder._add_html_reports(reports)
+        html_reports, files = html_builder._get_html_reports(reports)
 
-        self.assertEqual(len(html_builder.files), 1)
-
-        html_reports = html_builder.html_reports
+        self.assertEqual(len(files), 1)
         self.assertEqual(len(html_reports), 2)
 
         dead_stores = [r for r in html_reports if
@@ -157,3 +160,16 @@ class PlistToHtmlTest(unittest.TestCase):
         self.__test_html_builder('notes')
         self.__test_html_builder('macros')
         self.__test_html_builder('simple')
+
+    def test_html_for_inclusion(self):
+        """ Test generating html files for header inclusions. """
+        output_dir = self.__test_html_builder('inclusion')
+        index_html = os.path.join(output_dir, "index.html")
+
+        report_count = 0
+        with open(index_html, 'r', encoding="utf-8", errors="ignore") as f:
+            for line in f:
+                if re.search("<td file=", line):
+                    report_count += 1
+
+        self.assertEqual(report_count, 3)
