@@ -539,6 +539,25 @@ class DiffRemote(unittest.TestCase):
                                '--resolved', 'json', ["--url", self._url])
         self.assertEqual(len(out[0]), 0)
 
+    def test_diff_between_literal_colon_in_name(self):
+        """Count remote diff compared to a name which contains a literal ':'
+        but does not refer to a tag.
+        """
+        # Name order matters from __init__ !
+        base_to_new = get_diff_results([self._test_runs[0].name],
+                                       [self._test_runs[1].name],
+                                       '--new', 'json', ["--url", self._url])
+
+        colon_base_name = self._test_runs[0].name + r"\:base"
+        colon_new_name = self._test_runs[1].name + r"\:new"
+
+        colon_base_to_new = get_diff_results([colon_base_name],
+                                             [colon_new_name],
+                                             '--new', 'json',
+                                             ["--url", self._url])
+
+        self.assertEqual(len(base_to_new[0]), len(colon_base_to_new[0]))
+
     def test_max_compound_select(self):
         """Test the maximum number of compound select query."""
         base_run_id = self._test_runs[0].runId

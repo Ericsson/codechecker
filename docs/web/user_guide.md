@@ -1102,7 +1102,8 @@ optional arguments:
                         run-a-1, run-a-2 and run-b-1 then "run-a*" selects the
                         first two. In case of run names tag labels can also be
                         used separated by a colon (:) character:
-                        "run_name:tag_name".
+                        "run_name:tag_name". A run name containing a literal
+                        colon (:) must be escaped: "run\:name".
   -n NEW_RUNS [NEW_RUNS ...], --newname NEW_RUNS [NEW_RUNS ...]
                         The 'new' (right) side of the difference: these
                         analysis runs are compared to the -b/--basename runs.
@@ -1115,7 +1116,8 @@ optional arguments:
                         So if you have run-a-1, run-a-2 and run-b-1 then
                         "run-a*" selects the first two. In case of run names
                         tag labels can also be used separated by a colon (:)
-                        character: "run_name:tag_name".
+                        character: "run_name:tag_name". A run name containing
+                        a literal colon (:) must be escaped: "run\:name".
   -o {plaintext,rows,table,csv,json,html,gerrit,codeclimate} [{plaintext,rows,table,csv,json,html,gerrit,codeclimate} ...], --output {plaintext,rows,table,csv,json,html,gerrit,codeclimate} [{plaintext,rows,table,csv,json,html,gerrit,codeclimate} ...]
                         The output format(s) to use in showing the data.
                         - html: multiple html files will be generated in the
