@@ -29,6 +29,14 @@ Table of Contents
         * [Taint analysis configuration](#taint)
         * [Statistical analysis mode](#statistical)
     * [`parse`](#parse)
+        * [`JSON` format of `CodeChecker parse`](#json-format-of-codechecker-parse)
+          * [Report object](#report-object)
+          * [File object](#file-object)
+          * [Range object](#range-object)
+          * [SourceCodeComment object](#sourcecodecomment-object)
+          * [BugPathEvent object](#bugpathevent-object)
+          * [BugPathPosition object](#bugpathposition-object)
+          * [MacroExpansion object](#macroexpansion-object)
         * [Exporting source code suppression to suppress file](#suppress-file)
     * [`fixit`](#fixit)
     * [`checkers`](#checkers)
@@ -1744,6 +1752,348 @@ then the results of the analysis can be printed with
 ```sh
 CodeChecker parse ./my_plists
 ```
+
+### `JSON` format of `CodeChecker parse`
+Let's assume that we have the following source file:
+```cpp
+#define DIV(x, y) x / y
+
+int foo(int p) {
+  // codechecker_confirmed [core.DivideZero] This is a bug.
+  return DIV(1, p);
+}
+
+int main() {
+  return foo(0);
+}
+```
+
+If we analyze this source file with `Clang Static Analyzer` and we call the
+`CodeChecker parse` command with `json` output it will generate an output
+similar to this one:
+
+```json
+{
+  "version": 1,
+  "reports": [
+    {
+      "analyzer_result_file_path": "/home/username/projects/dummy/reports/main.cpp_clangsa_13e0fcf9c1bae0de6da3cb3d0bf1f330.plist",
+      "file": {
+        "id": "/home/username/dummy/simple/main.cpp",
+        "path": "projects/dummy/main.cpp",
+        "original_path": "/home/username/projects/dummy/main.cpp"
+      },
+      "line": 5,
+      "column": 12,
+      "message": "Division by zero",
+      "checker_name": "core.DivideZero",
+      "severity": "HIGH",
+      "report_hash": "7d5ccfef806a23b016a52d0df8f1f5d8",
+      "analyzer_name": "clangsa",
+      "category": "Logic error",
+      "type": null,
+      "source_code_comments": [
+        {
+          "checkers": [ "core.DivideZero" ],
+          "message": "This is a bug.",
+          "status": "confirmed",
+          "line": "  // codechecker_confirmed [core.DivideZero] This is a bug.\n"
+        }
+      ],
+      "review_status": "confirmed",
+      "bug_path_events": [
+        {
+          "file": {
+            "id": "/home/username/dummy/simple/main.cpp",
+            "path": "projects/dummy/main.cpp",
+            "original_path": "/home/username/projects/dummy/main.cpp"
+          },
+          "line": 9,
+          "column": 14,
+          "message": "Passing the value 0 via 1st parameter 'p'",
+          "range": {
+            "start_line": 9,
+            "start_col": 14,
+            "end_line": 9,
+            "end_col": 14
+          }
+        },
+        {
+          "file": {
+            "id": "/home/username/dummy/simple/main.cpp",
+            "path": "projects/dummy/main.cpp",
+            "original_path": "/home/username/projects/dummy/main.cpp"
+          },
+          "line": 9,
+          "column": 10,
+          "message": "Calling 'foo'",
+          "range": {
+            "start_line": 9,
+            "start_col": 10,
+            "end_line": 9,
+            "end_col": 10
+          }
+        },
+        {
+          "file": {
+            "id": "/home/username/dummy/simple/main.cpp",
+            "path": "projects/dummy/main.cpp",
+            "original_path": "/home/username/projects/dummy/main.cpp"
+          },
+          "line": 3,
+          "column": 1,
+          "message": "Entered call from 'main'",
+          "range": {
+            "start_line": 3,
+            "start_col": 1,
+            "end_line": 3,
+            "end_col": 1
+          }
+        },
+        {
+          "file": {
+            "id": "/home/username/dummy/simple/main.cpp",
+            "path": "projects/dummy/main.cpp",
+            "original_path": "/home/username/projects/dummy/main.cpp"
+          },
+          "line": 5,
+          "column": 12,
+          "message": "Division by zero",
+          "range": {
+            "start_line": 5,
+            "start_col": 12,
+            "end_line": 5,
+            "end_col": 12
+          }
+        }
+      ],
+      "bug_path_positions": [
+        {
+          "range": {
+            "start_line": 9,
+            "start_col": 3,
+            "end_line": 9,
+            "end_col": 8
+          },
+          "file": {
+            "id": "/home/username/dummy/simple/main.cpp",
+            "path": "projects/dummy/main.cpp",
+            "original_path": "/home/username/projects/dummy/main.cpp"
+          }
+        },
+        {
+          "range": {
+            "start_line": 9,
+            "start_col": 14,
+            "end_line": 9,
+            "end_col": 14
+          },
+          "file": {
+            "id": "/home/username/dummy/simple/main.cpp",
+            "path": "projects/dummy/main.cpp",
+            "original_path": "/home/username/projects/dummy/main.cpp"
+          }
+        }
+      ],
+      "notes": [],
+      "macro_expansions": [
+        {
+          "name": "DIV",
+          "file": {
+            "id": "/home/username/dummy/simple/main.cpp",
+            "path": "projects/dummy/main.cpp",
+            "original_path": "/home/username/projects/dummy/main.cpp"
+          },
+          "line": 5,
+          "column": 10,
+          "message": "1 / p",
+          "range": {
+            "start_line": 5,
+            "start_col": 10,
+            "end_line": 5,
+            "end_col": 10
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+- `version` (number): version number. If the format of the JSON output will
+  change this value will be incremented too. Currently supported values: `1`.
+- `reports` (list): list of [Report objects](#report-object).
+
+#### Report object
+- `file` (File): file where the report was found in. For more information
+  [see](#file-object).
+- `line` (number): line number.
+- `column` (number): column number.
+- `message` (str): message reported by the checker.
+- `checker_name` (str): identifier of the rule (checker) that was evaluated
+  to produce the result.
+- `severity` (str | null): CodeChecker severity level (optional).
+- `report_hash` (str | null): bug identifier hash (optional).
+- `analyzer_name` (str | null): analyzer name which reported the bug
+  (optional).
+- `analyzer_result_file_path` (str | null): analyzer result file path where
+  the report comes from (optional).
+- `category` (str | null): report category such as 'Logic error',
+  'Code clone' etc. (optional)
+- `type` (str): report type such as 'Division by zero',
+  'Dereference of null pointer', etc. (optional).
+- `source_code_comments` (list): list of CodeChecker source code comments. For
+  more information [see](#sourcecodecomment-object).
+- `review_status` (str): CodeChecker review status (default: 'unreviewed').
+- `bug_path_events` (list[BugPathEvent]): list of bug path events. These events
+will be shown as bug steps on the UI and CLI (e.g.:
+`CodeChecker parse --print-steps`). For more information
+[see](#bugpathevent-object).
+- `bug_path_positions` (list): list of bug report points. These positions will
+be used by the UI and if given, the UI will connect them with arrows. For more
+information [see](#bugpathposition-object).
+- `notes` (list[BugPathEvent]): list of notes. These events will be shown
+on the UI and CLI (e.g.: `CodeChecker parse --print-steps`) separated from
+bug steps and will hold useful information to understand the report. For more
+information [see](#bugpathevent-object).
+- `macro_expansions` (list): list of macro expansions. These events will be
+shown on the UI and CLI (e.g.: `CodeChecker parse --print-steps`) separated
+from bug steps and will hold useful information to understand macros in the bug
+step. For more information [see](#macroexpansion-object).
+
+#### File object
+```json
+{
+  "id": "/home/username/dummy/simple/main.cpp",
+  "path": "projects/dummy/main.cpp",
+  "original_path": "/home/username/projects/dummy/main.cpp"
+}
+```
+
+- `id` (str): unique identifier of the file object. Most of the cases it equals
+with `original_path`.
+- `path` (str): returns the trimmed version of the file path if leading paths
+are removed previously (`--trim-path-prefix` option). Otherwise it will return
+the same value as the `original_path`.
+- `original_path` (str): original file path. Trimming the file path will not
+modify this value.
+
+#### Range object
+```json
+{
+  "start_line": 8,
+  "start_col": 14,
+  "end_line": 8,
+  "end_col": 14
+}
+```
+
+- `start_line` (number): start line number.
+- `start_col` (number): start column number.
+- `end_line` (number): end line number.
+- `end_col` (number): end column number.
+
+#### SourceCodeComment object
+```json
+{
+  "checkers": [ "core.DivideZero" ],
+  "message": "This is a bug.",
+  "status": "confirmed",
+  "line": "  // codechecker_confirmed [core.DivideZero] This is a bug.\n"
+}
+```
+
+- `checkers` (list[str]): list of checker names from the source code comment.
+`all` is a special checker name and it indicates that the source code comment
+is related to all results.
+- `message` (str): source code comment message which will be shown on the UI
+after storage.
+- `status` (str): status of the source code comment. Possible values:
+`unreviewed`, `suppress`, `false_positive`, `intentional`, `confirmed`.
+- `line` (str): full line of the source code comment.
+
+For more information [read](#source-code-comments).
+
+#### BugPathEvent object
+```json
+{
+  "file": {
+    "id": "/home/username/dummy/simple/main.cpp",
+    "path": "projects/dummy/main.cpp",
+    "original_path": "/home/username/projects/dummy/main.cpp"
+  },
+  "line": 8,
+  "column": 14,
+  "message": "Passing the value 0 via 1st parameter 'p'",
+  "range": {
+    "start_line": 8,
+    "start_col": 14,
+    "end_line": 8,
+    "end_col": 14
+  }
+}
+```
+
+- `file` (File): file where the event was found in. For more information
+[see](#file-object).
+- `line` (number): line number.
+- `column` (number): column number.
+- `message` (str): bug path event message.
+- `range` (Range): more precise information about event location (optional).
+For more information [see](#range-object).
+
+#### BugPathPosition object
+```json
+{
+  "range": {
+    "start_line": 8,
+    "start_col": 3,
+    "end_line": 8,
+    "end_col": 8
+  },
+  "file": {
+    "id": "/home/username/dummy/simple/main.cpp",
+    "path": "projects/dummy/main.cpp",
+    "original_path": "/home/username/projects/dummy/main.cpp"
+  },
+}
+```
+
+- `file` (File): file where the position can be found in. For more information
+[see](#file-object).
+- `range` (Range): information about bug path position. For more information
+[see](#range-object).
+
+#### MacroExpansion object
+```json
+{
+  "name": "DIV",
+  "file": {
+    "id": "/home/username/dummy/simple/main.cpp",
+    "path": "projects/dummy/main.cpp",
+    "original_path": "/home/username/projects/dummy/main.cpp"
+  },
+  "line": 5,
+  "column": 10,
+  "message": "1 / p",
+  "range": {
+    "start_line": 5,
+    "start_col": 10,
+    "end_line": 5,
+    "end_col": 10
+  }
+}
+```
+
+- `name` (str): macro name which will be expanded.
+- Same fields as `BugPathEvent` type:
+  - `file` (File): file where the macro expansion was found in. For more
+  information [see](#file-object).
+  - `line` (number): line number.
+  - `column` (number): column number.
+  - `message` (str): expanded message.
+  - `range` (Range | null): more precise information about event location
+  (optional). For more information [see](#range-object).
 
 ## `fixit` <a name="fixit"></a>
 
