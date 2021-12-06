@@ -31,31 +31,43 @@ class Statistics:
         self.checker_statistics = defaultdict(int)
         self.file_statistics = defaultdict(int)
 
-    def write(self, out=sys.stdout):
-        """ Print statistics. """
-        if self.severity_statistics:
-            out.write("\n----==== Severity Statistics ====----\n")
-            header = ["Severity", "Number of reports"]
-            out.write(twodim.to_table(
-                [header] + list(self.severity_statistics.items())))
-            out.write("\n----=================----\n")
+    def _write_severity_statistics(self, out=sys.stdout):
+        """ Print severity statistics if it's available. """
+        if not self.severity_statistics:
+            return None
 
-        if self.checker_statistics:
-            out.write("\n----==== Checker Statistics ====----\n")
-            header = ["Checker name", "Severity", "Number of reports"]
-            out.write(twodim.to_table([header] + [
-                (c.name, c.severity, n)
-                for (c, n) in self.checker_statistics.items()]))
-            out.write("\n----=================----\n")
+        out.write("\n----==== Severity Statistics ====----\n")
+        header = ["Severity", "Number of reports"]
+        out.write(twodim.to_table(
+            [header] + list(self.severity_statistics.items())))
+        out.write("\n----=================----\n")
 
-        if self.file_statistics:
-            out.write("\n----==== File Statistics ====----\n")
-            header = ["File name", "Number of reports"]
-            out.write(twodim.to_table([header] + [
-                (os.path.basename(file_path), n)
-                for (file_path, n) in self.file_statistics.items()]))
-            out.write("\n----=================----\n")
+    def _write_checker_statistics(self, out=sys.stdout):
+        """ Print checker statistics if it's available. """
+        if not self.checker_statistics:
+            return None
 
+        out.write("\n----==== Checker Statistics ====----\n")
+        header = ["Checker name", "Severity", "Number of reports"]
+        out.write(twodim.to_table([header] + [
+            (c.name, c.severity, n)
+            for (c, n) in self.checker_statistics.items()]))
+        out.write("\n----=================----\n")
+
+    def _write_file_statistics(self, out=sys.stdout):
+        """ Print file statistics if it's available. """
+        if not self.file_statistics:
+            return None
+
+        out.write("\n----==== File Statistics ====----\n")
+        header = ["File name", "Number of reports"]
+        out.write(twodim.to_table([header] + [
+            (os.path.basename(file_path), n)
+            for (file_path, n) in self.file_statistics.items()]))
+        out.write("\n----=================----\n")
+
+    def _write_summary(self, out=sys.stdout):
+        """ Print summary. """
         out.write("\n----======== Summary ========----\n")
         statistics_rows = [
             ["Number of processed analyzer result files",
@@ -63,6 +75,13 @@ class Statistics:
             ["Number of analyzer reports", str(self.num_of_reports)]]
         out.write(twodim.to_table(statistics_rows, False))
         out.write("\n----=================----\n")
+
+    def write(self, out=sys.stdout):
+        """ Print statistics. """
+        self._write_severity_statistics()
+        self._write_checker_statistics()
+        self._write_file_statistics()
+        self._write_summary()
 
     def add_report(self, report: Report):
         """ Collect statistics from the given report. """

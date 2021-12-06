@@ -13,6 +13,7 @@ database.
 
 import argparse
 import base64
+import functools
 import hashlib
 import json
 import os
@@ -30,7 +31,7 @@ from codechecker_api_shared.ttypes import RequestFailed, ErrorCode
 
 from codechecker_report_converter import twodim
 from codechecker_report_converter.report import Report, report_file, \
-    reports as reports_helper
+    reports as reports_helper, statistics as report_statistics
 from codechecker_report_converter.report.hash import HashType
 from codechecker_report_converter.source_code_comment_handler import \
     SourceCodeCommentHandler
@@ -38,6 +39,7 @@ from codechecker_report_converter.util import load_json_or_empty
 
 from codechecker_client import client as libclient
 from codechecker_common import arg, logger, cmd_config
+from codechecker_common.checker_labels import CheckerLabels
 
 from codechecker_web.shared import webserver_context, host_check
 from codechecker_web.shared.env import get_default_workspace
@@ -92,6 +94,30 @@ changed_since_report_gen: set of source files where the last modification
 SourceFilesInReport = namedtuple('SourceFilesInReport',
                                  ['source_info', 'missing',
                                   'changed_since_report_gen'])
+
+
+class StorageZipStatistics(report_statistics.Statistics):
+    def __init__(self):
+        super().__init__()
+
+        self.num_of_blame_information = 0
+        self.num_of_source_files = 0
+        self.num_of_source_files_with_source_code_comment = 0
+
+    def _write_summary(self, out=sys.stdout):
+        """ Print summary. """
+        out.write("\n----======== Summary ========----\n")
+        statistics_rows = [
+            ["Number of processed analyzer result files",
+             str(self.num_of_analyzer_result_files)],
+            ["Number of analyzer reports", str(self.num_of_reports)],
+            ["Number of source files", str(self.num_of_source_files)],
+            ["Number of source files with source code comments",
+             str(self.num_of_source_files_with_source_code_comment)],
+            ["Number of blame information files",
+             str(self.num_of_blame_information)]]
+        out.write(twodim.to_table(statistics_rows, False))
+        out.write("\n----=================----\n")
 
 
 def sizeof_fmt(num, suffix='B'):
@@ -360,9 +386,13 @@ def filter_source_files_with_comments(
             return get_source_file_with_comments(jobs, executor.map)
 
 
-def get_reports(analyzer_result_file_path: str) -> List[Report]:
+def get_reports(
+    analyzer_result_file_path: str,
+    checker_labels: CheckerLabels
+) -> List[Report]:
     """ Get reports from the given analyzer result file. """
-    reports = report_file.get_reports(analyzer_result_file_path)
+    reports = report_file.get_reports(
+        analyzer_result_file_path, checker_labels)
 
     # CppCheck generates a '0' value for the report hash. In case all of the
     # reports in a result file contain only a hash with '0' value, overwrite
@@ -371,13 +401,15 @@ def get_reports(analyzer_result_file_path: str) -> List[Report]:
         report_file.replace_report_hash(
             analyzer_result_file_path, HashType.CONTEXT_FREE)
 
-        reports = report_file.get_reports(analyzer_result_file_path)
+        reports = report_file.get_reports(
+            analyzer_result_file_path, checker_labels)
 
     return reports
 
 
 def parse_analyzer_result_files(
     analyzer_result_files: Iterable[str],
+    checker_labels: CheckerLabels,
     zip_iter=map
 ) -> AnalyzerResultFileReports:
     """ Get reports from the given analyzer result files. """
@@ -385,19 +417,21 @@ def parse_analyzer_result_files(
 
     for file_path, reports in zip(
             analyzer_result_files, zip_iter(
-                get_reports, analyzer_result_files)):
+                functools.partial(get_reports, checker_labels=checker_labels),
+                analyzer_result_files)):
         analyzer_result_file_reports[file_path] = reports
 
     return analyzer_result_file_reports
 
 
-def assemble_zip(inputs, zip_file, client):
+def assemble_zip(inputs, zip_file, client, checker_labels: CheckerLabels):
     """Collect and compress report and source files, together with files
     contanining analysis related information into a zip file which
     will be sent to the server.
     """
     files_to_compress = set()
     analyzer_result_file_paths = []
+    stats = StorageZipStatistics()
 
     for dir_path, file_paths in report_file.analyzer_result_files(inputs):
         analyzer_result_file_paths.extend(file_paths)
@@ -408,6 +442,10 @@ def assemble_zip(inputs, zip_file, client):
 
         skip_file_path = os.path.join(dir_path, 'skip_file')
         if os.path.exists(skip_file_path):
+            with open(skip_file_path, 'r') as f:
+                LOG.info("Found skip file %s with the following content:\n%s",
+                         skip_file_path, f.read())
+
             files_to_compress.add(skip_file_path)
 
     LOG.debug("Processing report files ...")
@@ -419,11 +457,11 @@ def assemble_zip(inputs, zip_file, client):
     # are lost.
     if sys.platform == "win32":
         analyzer_result_file_reports = parse_analyzer_result_files(
-            analyzer_result_file_paths)
+            analyzer_result_file_paths, checker_labels)
     else:
         with ProcessPoolExecutor() as executor:
             analyzer_result_file_reports = parse_analyzer_result_files(
-                 analyzer_result_file_paths, executor.map)
+                 analyzer_result_file_paths, checker_labels, executor.map)
 
     LOG.info("Processing report files done.")
 
@@ -432,11 +470,13 @@ def assemble_zip(inputs, zip_file, client):
     file_report_positions: FileReportPositions = defaultdict(set)
     for file_path, reports in analyzer_result_file_reports.items():
         files_to_compress.add(file_path)
+        stats.num_of_analyzer_result_files += 1
 
         for report in reports:
             if report.changed_files:
                 changed_files.update(report.changed_files)
                 continue
+            stats.add_report(report)
 
             file_paths.update(report.original_files)
             file_report_positions[report.file.original_path].add(report.line)
@@ -489,10 +529,11 @@ def assemble_zip(inputs, zip_file, client):
 
     for file_path in files_with_comment:
         necessary_hashes.append(file_to_hash[file_path])
+        stats.num_of_source_files_with_source_code_comment += 1
 
     LOG.info("Collecting review comments done.")
 
-    LOG.debug("Building report zip file.")
+    LOG.info("Building report zip file...")
     with zipfile.ZipFile(zip_file, 'a', allowZip64=True) as zipf:
         # Add the files to the zip which will be sent to the server.
         for file_path in files_to_compress:
@@ -512,7 +553,7 @@ def assemble_zip(inputs, zip_file, client):
 
                 file_path = os.path.join('root', f.lstrip('/'))
                 collected_file_paths.add(f)
-
+                stats.num_of_source_files += 1
                 try:
                     zipf.getinfo(file_path)
                 except KeyError:
@@ -524,7 +565,10 @@ def assemble_zip(inputs, zip_file, client):
 
             LOG.info("Collecting blame information for source files...")
             try:
-                if assemble_blame_info(zipf, file_paths):
+                stats.num_of_blame_information = assemble_blame_info(
+                    zipf, file_paths)
+
+                if stats.num_of_blame_information:
                     LOG.info("Collecting blame information done.")
                 else:
                     LOG.info("No blame information found for source files.")
@@ -536,14 +580,24 @@ def assemble_zip(inputs, zip_file, client):
 
         zipf.writestr('content_hashes.json', json.dumps(file_to_hash))
 
-    # Compressing .zip file
+    LOG.info("Building report zip file (%s) done.", zip_file)
+
+    # Print statistics what will be stored to the server.
+    stats.write()
+
+    zip_size = os.stat(zip_file).st_size
+
+    LOG.info("Compressing report zip file...")
+
     with open(zip_file, 'rb') as source:
         compressed = zlib.compress(source.read(), zlib.Z_BEST_COMPRESSION)
-
     with open(zip_file, 'wb') as target:
         target.write(compressed)
 
-    LOG.debug("[ZIP] Mass store zip written at '%s'", zip_file)
+    compressed_zip_size = os.stat(zip_file).st_size
+
+    LOG.info("Compressing report zip file done (%s / %s).",
+             sizeof_fmt(zip_size), sizeof_fmt(compressed_zip_size))
 
 
 def should_be_zipped(input_file: str, input_files: Iterable[str]) -> bool:
@@ -708,11 +762,11 @@ def main(args):
                       "--name run_name in the invocation.")
             sys.exit(2)  # argparse returns error code 2 for bad invocations.
 
-    LOG.info("Storing analysis results for run '" + args.name + "'")
+    LOG.info("Storing analysis results for run '%s'", args.name)
 
     if 'force' in args:
-        LOG.info("argument --force was specified: the run with name '" +
-                 args.name + "' will be deleted.")
+        LOG.info("argument --force was specified: the run with name '%s' will "
+                 "be deleted", args.name)
 
     # Setup connection to the remote server.
     client = libclient.setup_client(args.product_url)
@@ -721,9 +775,11 @@ def main(args):
     LOG.debug("Will write mass store ZIP to '%s'...", zip_file)
 
     try:
+        context = webserver_context.get_context()
+
         LOG.debug("Assembling zip file.")
         try:
-            assemble_zip(args.input, zip_file, client)
+            assemble_zip(args.input, zip_file, client, context.checker_labels)
         except Exception as ex:
             print(ex)
             import traceback
@@ -744,14 +800,12 @@ def main(args):
             LOG.info("Zip content is empty, nothing to store!")
             sys.exit(1)
 
-        context = webserver_context.get_context()
-
         trim_path_prefixes = args.trim_path_prefix if \
             'trim_path_prefix' in args else None
 
         description = args.description if 'description' in args else None
 
-        LOG.info("Storing results (%s) to the server...", sizeof_fmt(zip_size))
+        LOG.info("Storing results to the server...")
 
         client.massStoreRun(args.name,
                             args.tag if 'tag' in args else None,
