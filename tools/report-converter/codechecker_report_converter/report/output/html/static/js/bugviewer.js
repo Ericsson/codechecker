@@ -141,7 +141,7 @@ var BugViewer = {
     var events = report.events;
     var lastBugEvent = events[events.length - 1];
     this.setCurrentBugEvent(lastBugEvent, events.length - 1);
-    this.setCheckerName(report.checkerName);
+    this.setChecker(report.checker);
     this.setReviewStatus(report.reviewStatus);
 
     window.location.hash = '#reportHash=' + report.reportHash;
@@ -165,8 +165,14 @@ var BugViewer = {
     });
   },
 
-  setCheckerName : function (checkerName) {
-    this._checkerName.innerHTML = checkerName;
+  setChecker : function (checker) {
+    var content = checker.name;
+    if (checker.url) {
+      content = '<a href="' + checker.url + '" target="_blank">' +
+        checker.name + '</a>';
+    }
+
+    this._checkerName.innerHTML = content;
   },
 
   setReviewStatus : function (status) {

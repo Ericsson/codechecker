@@ -106,7 +106,7 @@ class PlistToHtmlTest(unittest.TestCase):
         self.assertEqual(len(report['notes']), 1)
         self.assertEqual(len(report['macros']), 0)
         self.assertGreaterEqual(len(report['events']), 1)
-        self.assertEqual(report['checkerName'], 'alpha.clone.CloneChecker')
+        self.assertEqual(report['checker']['name'], 'alpha.clone.CloneChecker')
 
     def test_get_report_data_macros(self):
         """ Get report data for plist which contains macro expansion. """
@@ -128,7 +128,7 @@ class PlistToHtmlTest(unittest.TestCase):
         self.assertEqual(len(report['notes']), 0)
         self.assertEqual(len(report['macros']), 1)
         self.assertGreaterEqual(len(report['events']), 1)
-        self.assertEqual(report['checkerName'], 'core.NullDereference')
+        self.assertEqual(report['checker']['name'], 'core.NullDereference')
 
     def test_get_report_data_simple(self):
         """ Get report data for plist which contains simple reports. """
@@ -144,13 +144,13 @@ class PlistToHtmlTest(unittest.TestCase):
         self.assertEqual(len(html_reports), 2)
 
         dead_stores = [r for r in html_reports if
-                       r['checkerName'] == 'deadcode.DeadStores'][0]
+                       r['checker']['name'] == 'deadcode.DeadStores'][0]
         self.assertEqual(len(dead_stores['notes']), 0)
         self.assertEqual(len(dead_stores['macros']), 0)
         self.assertGreaterEqual(len(dead_stores['events']), 1)
 
         divide_zero = [r for r in html_reports if
-                       r['checkerName'] == 'core.DivideZero'][0]
+                       r['checker']['name'] == 'core.DivideZero'][0]
         self.assertEqual(len(divide_zero['notes']), 0)
         self.assertEqual(len(divide_zero['macros']), 0)
         self.assertGreaterEqual(len(divide_zero['events']), 1)

@@ -684,3 +684,63 @@ class AnalyzeParseTestCase(
                 os.path.join(output_path, 'notes.plist.html')))
             self.assertFalse(os.path.exists(
                 os.path.join(output_path, f'{plist_file_name}.html')))
+
+    def test_html_checker_url(self):
+        """ Test whether checker documentation urls are generated properly. """
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            notes_plist = os.path.join(
+                self.test_workspaces['NORMAL'], "test_files", "notes",
+                "notes.plist")
+            macros_plist = os.path.join(
+                self.test_workspaces['NORMAL'], "test_files", "macros",
+                "macros.plist")
+            shutil.copy(notes_plist, tmp_dir)
+            shutil.copy(macros_plist, tmp_dir)
+
+            macros_plist = os.path.join(tmp_dir, 'macros.plist')
+            with open(macros_plist, 'r+',
+                      encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+                new_content = content.replace(
+                    "core.NullDereference", "UNKNOWN CHECKER NAME")
+                f.seek(0)
+                f.truncate()
+                f.write(new_content)
+
+            output_path = os.path.join(tmp_dir, 'html')
+            extract_cmd = [
+                'CodeChecker', 'parse', '-e', 'html', '-o', output_path,
+                tmp_dir]
+
+            _, err, result = call_command(extract_cmd, cwd=self.test_dir,
+                                          env=self.env)
+            self.assertEqual(result, 2, "Parsing not found any issue.")
+            self.assertFalse(err)
+
+            # Test whether documentation urls are set properly for known
+            # checkers in the index.html file.
+            index_html = os.path.join(output_path, "index.html")
+            with open(index_html, 'r', encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+
+            self.assertTrue(re.search(
+                '<a href=".*>alpha.clone.CloneChecker', content))
+            self.assertFalse(re.search(
+                '<a href=".*>UNKNOWN CHECKER NAME', content))
+            self.assertTrue(re.search('UNKNOWN CHECKER NAME', content))
+
+            # Test whether documentation urls are set properly for known
+            # checkers in the generated HTML report file.
+            report_html = os.path.join(output_path, "notes.plist.html")
+            with open(report_html, 'r',
+                      encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+            self.assertTrue(re.search('"url": ".+"', content))
+
+            # Test whether documentation urls are not set for unknown checkers
+            # in the generated HTML report file.
+            report_html = os.path.join(output_path, "macros.plist.html")
+            with open(report_html, 'r',
+                      encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+            self.assertTrue(re.search('"url": null', content))
