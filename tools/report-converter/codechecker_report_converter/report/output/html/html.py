@@ -55,10 +55,16 @@ class HTMLMacroExpansion(HTMLBugPathEvent):
 HTMLMacroExpansions = List[HTMLMacroExpansion]
 
 
+class Checker(TypedDict):
+    name: str
+    url: Optional[str]
+
+
 class HTMLReport(TypedDict):
     fileId: str
     reportHash: Optional[str]
-    checkerName: str
+    checker: Checker
+    analyzerName: Optional[str]
     line: int
     column: int
     message: str
@@ -168,6 +174,15 @@ class HtmlBuilder:
 
         return self.files[file.id]
 
+    def _get_doc_url(self, report: Report) -> Optional[str]:
+        """ Get documentation url for the given report if exists. """
+        if self._checker_labels:
+            doc_urls = self._checker_labels.label_of_checker(
+                report.checker_name, 'doc_url', report.analyzer_name)
+            return doc_urls[0] if doc_urls else None
+
+        return None
+
     def _get_html_reports(
         self,
         reports: List[Report]
@@ -219,7 +234,11 @@ class HtmlBuilder:
             html_reports.append({
                 'fileId': report.file.id,
                 'reportHash': report.report_hash,
-                'checkerName': report.checker_name,
+                'checker': {
+                    'name': report.checker_name,
+                    'url': self._get_doc_url(report)
+                },
+                'analyzerName': report.analyzer_name,
                 'line': report.line,
                 'column': report.column,
                 'message': report.message,
@@ -322,6 +341,14 @@ class HtmlBuilder:
                 rs = review_status.lower().replace(' ', '-')
                 file_path = self.files[report['fileId']]['filePath']
 
+                checker = report['checker']
+                doc_url = checker.get('url')
+                if doc_url:
+                    checker_name_col_content = f'<a href="{doc_url}" '\
+                        f'target="_blank">{checker["name"]}</a>'
+                else:
+                    checker_name_col_content = checker["name"]
+
                 table_reports.write(f'''
                   <tr>
                     <td>{i + 1}</td>
@@ -334,7 +361,7 @@ class HtmlBuilder:
                       <i class="severity-{severity}"
                          title="{severity}"></i>
                     </td>
-                    <td>{report['checkerName']}</td>
+                    <td>{checker_name_col_content}</td>
                     <td>{message}</td>
                     <td class="bug-path-length">{bug_path_length}</td>
                     <td class="review-status review-status-{rs}">
@@ -375,7 +402,7 @@ class HtmlBuilder:
         checker_statistics: Dict[str, int] = defaultdict(int)
         for html_file in self.generated_html_reports:
             for report in self.generated_html_reports[html_file]:
-                checker = report['checkerName']
+                checker = report['checker']['name']
                 checker_statistics[checker] += 1
 
         checker_rows: List[List[str]] = []
