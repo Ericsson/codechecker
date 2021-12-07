@@ -442,16 +442,16 @@ def convert(
     Returns the skipped analyzer result files because of source
     file content change.
     """
+    if not reports:
+        LOG.info(f'No report data in {file_path} file.')
+        return set()
+
     html_filename = f"{os.path.basename(file_path)}.html"
     html_output_path = os.path.join(output_dir_path, html_filename)
-    html_reports, changed_files = html_builder.create(
+    _, changed_files = html_builder.create(
         html_output_path, reports)
 
     if changed_files:
-        return changed_files
-
-    if not html_reports:
-        LOG.info(f'No report data in {file_path} file.')
         return changed_files
 
     LOG.info(f"Html file was generated: {html_output_path}")
