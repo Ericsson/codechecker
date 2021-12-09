@@ -4,6 +4,9 @@
 
 FROM python:3.6-slim-stretch as builder
 
+ARG CC_REPO=https://github.com/Ericsson/CodeChecker.git
+ENV CC_REPO ${CC_REPO}
+
 ARG CC_VERSION=master
 ENV CC_VERSION ${CC_VERSION}
 
@@ -20,7 +23,7 @@ RUN set -x && apt-get update -qq \
     && apt-get install -y nodejs
 
 # Download CodeChecker release.
-RUN git clone https://github.com/Ericsson/CodeChecker.git /codechecker
+RUN git clone ${CC_REPO} /codechecker
 WORKDIR /codechecker
 RUN git checkout ${CC_VERSION}
 
