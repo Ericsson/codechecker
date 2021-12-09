@@ -79,7 +79,11 @@ class PlistToHtmlTest(unittest.TestCase):
             report_to_html.convert(
                 file_path, reports, output_dir, html_builder)
 
-            self.assertTrue(os.path.exists(output_path))
+            html_file_exists = os.path.exists(output_path)
+            if reports:
+                self.assertTrue(html_file_exists)
+            else:
+                self.assertFalse(html_file_exists)
 
         html_builder.create_index_html(output_dir)
         html_builder.create_statistics_html(output_dir)
