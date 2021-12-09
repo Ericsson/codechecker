@@ -19,7 +19,7 @@ import zlib
 
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import sqlalchemy
 from sqlalchemy.sql.expression import or_, and_, not_, func, \
@@ -149,7 +149,10 @@ def exc_to_thrift_reqfail(func):
     return wrapper
 
 
-def get_component_values(session, component_name):
+def get_component_values(
+    session: DBSession,
+    component_name: str
+) -> Tuple[List[str], List[str]]:
     """
     Get component values by component names and returns a tuple where the
     first item contains a list path which should be skipped and the second
@@ -373,21 +376,36 @@ def filter_open_reports_in_tags(results, run_ids, tag_ids):
     return results
 
 
-def get_source_component_file_query(session, component_name):
+def get_include_skip_queries(
+    include: List[str],
+    skip: List[str]
+):
+    """ Get queries for include and skip values of a component.
+
+    To get the include and skip lists use the 'get_component_values' function.
+    """
+    include_q = select([File.id]) \
+        .where(or_(*[
+            File.filepath.like(conv(fp)) for fp in include])) \
+        .distinct()
+
+    skip_q = select([File.id]) \
+        .where(or_(*[
+            File.filepath.like(conv(fp)) for fp in skip])) \
+        .distinct()
+
+    return include_q, skip_q
+
+
+def get_source_component_file_query(
+    session: DBSession,
+    component_name: str
+):
     """ Get filter query for a single source component. """
     skip, include = get_component_values(session, component_name)
 
     if skip and include:
-        include_q = select([File.id]) \
-            .where(or_(*[
-                File.filepath.like(conv(fp)) for fp in include])) \
-            .distinct()
-
-        skip_q = select([File.id]) \
-            .where(or_(*[
-                File.filepath.like(conv(fp)) for fp in skip])) \
-            .distinct()
-
+        include_q, skip_q = get_include_skip_queries(include, skip)
         return File.id.in_(include_q.except_(skip_q))
     elif include:
         return or_(*[File.filepath.like(conv(fp)) for fp in include])
@@ -399,6 +417,10 @@ def get_other_source_component_file_query(session):
     """ Get filter query for the auto-generated Others component.
     If there are no user defined source components in the database this
     function will return with None.
+
+    The returned query will look like this:
+        (Files NOT IN Component_1) AND (Files NOT IN Component_2) ... AND
+        (Files NOT IN Component_N)
     """
     component_names = session.query(SourceComponent.name).all()
 
@@ -406,14 +428,20 @@ def get_other_source_component_file_query(session):
     if not component_names:
         return None
 
-    file_queries = [get_source_component_file_query(session, component_name)
-                    for (component_name, ) in component_names]
+    def get_query(component_name: str):
+        """ Get file filter query for auto generated Other component. """
+        skip, include = get_component_values(session, component_name)
 
-    q = select([File.id]) \
-        .where(or_(*file_queries)) \
-        .distinct()
+        if skip and include:
+            include_q, skip_q = get_include_skip_queries(include, skip)
+            return File.id.notin_(include_q.except_(skip_q))
+        elif include:
+            return and_(*[File.filepath.notlike(conv(fp)) for fp in include])
+        elif skip:
+            return or_(*[File.filepath.like(conv(fp)) for fp in skip])
 
-    return File.id.notin_(q)
+    queries = [get_query(n) for (n, ) in component_names]
+    return and_(*queries)
 
 
 def get_open_reports_date_filter_query(tbl=Report, date=RunHistory.time):
