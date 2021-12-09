@@ -1,8 +1,8 @@
 <script>
 import _ from "lodash";
 import {
-  endOfMonth, endOfWeek, endOfYear, format, subDays, subMonths, subWeeks,
-  subYears
+  endOfMonth, endOfToday, endOfWeek, endOfYear, format, subDays, subMonths,
+  subWeeks, subYears
 } from "date-fns";
 import { Line, mixins } from "vue-chartjs";
 import ChartDataLabels from "chartjs-plugin-datalabels";
@@ -135,7 +135,7 @@ export default {
       let dateFormat = "yyyy. MMM. dd";
 
       if (this.resolution === "days") {
-        const today = new Date();
+        const today = endOfToday();
         this.dates = [ ...new Array(interval).keys() ].map(i =>
           subDays(today, i));
       }
