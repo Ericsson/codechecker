@@ -16,6 +16,7 @@ import re
 import shlex
 import shutil
 import subprocess
+import tempfile
 import unittest
 
 from subprocess import CalledProcessError
@@ -24,6 +25,7 @@ from libtest import env
 from libtest import project
 from libtest.codechecker import call_command
 
+from codechecker_report_converter.report import report_file
 from codechecker_report_converter.report.output import baseline
 
 
@@ -640,3 +642,45 @@ class AnalyzeParseTestCase(
         report_hashes = baseline.get_report_hashes([out_file_path])
         self.assertEqual(
             report_hashes, {'3d15184f38c5fa57e479b744fe3f5035'})
+
+    def test_html_output_for_empty_plist(self):
+        """
+        Test that HTML files for empty plist files will not be generated.
+        """
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            plist_file_name = 'empty.plist'
+            plist_file_path = os.path.join(tmp_dir, plist_file_name)
+            report_file.create(plist_file_path, [])
+
+            test_project_notes = os.path.join(
+                self.test_workspaces['NORMAL'], "test_files", "notes",
+                "notes.plist")
+            shutil.copy(test_project_notes, tmp_dir)
+
+            output_path = os.path.join(tmp_dir, 'html')
+            extract_cmd = [
+                'CodeChecker', 'parse',
+                '-e', 'html',
+                '-o', output_path,
+                tmp_dir]
+
+            out, err, result = call_command(
+                extract_cmd, cwd=self.test_dir, env=self.env)
+
+            self.assertEqual(result, 2)
+            self.assertFalse(err)
+
+            self.assertTrue(f'No report data in {plist_file_path}' in out)
+            self.assertTrue(f'Html file was generated:' in out)
+            self.assertTrue('Summary' in out)
+            self.assertTrue('statistics.html' in out)
+            self.assertTrue('index.html' in out)
+
+            self.assertTrue(os.path.exists(
+                os.path.join(output_path, 'index.html')))
+            self.assertTrue(os.path.exists(
+                os.path.join(output_path, 'statistics.html')))
+            self.assertTrue(os.path.exists(
+                os.path.join(output_path, 'notes.plist.html')))
+            self.assertFalse(os.path.exists(
+                os.path.join(output_path, f'{plist_file_name}.html')))
