@@ -10,7 +10,7 @@
 store tests.
 """
 
-
+import html
 import json
 import os
 import shlex
@@ -181,6 +181,15 @@ class TestStore(unittest.TestCase):
             '-d', 'core.DivideZero', '-e', 'deadcode.DeadStores']
         codechecker.analyze(cfg, self._divide_zero_workspace)
 
+        with open(os.path.join(report_dir1, 'metadata.json'), 'r+',
+                  encoding="utf-8", errors="ignore") as f:
+            data = json.load(f)
+            data["tools"][0]["command"].append("<img />")
+
+            f.seek(0)
+            f.truncate()
+            json.dump(data, f)
+
         cfg['reportdir'] = report_dir2
         cfg['checkers'] = [
             '-e', 'core.DivideZero', '-d', 'deadcode.DeadStores']
@@ -234,6 +243,11 @@ class TestStore(unittest.TestCase):
                 any(report_dir1 in i.analyzerCommand for i in analysis_info))
             self.assertTrue(
                 any(report_dir2 in i.analyzerCommand for i in analysis_info))
+
+            self.assertTrue(all(
+                '<' not in i.analyzerCommand for i in analysis_info))
+            self.assertTrue(any(
+                html.escape('<') in i.analyzerCommand for i in analysis_info))
 
             # Get analysis info for a report.
             analysis_info_filter = AnalysisInfoFilter(

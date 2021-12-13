@@ -11,7 +11,6 @@
 Report exporting and importing tests
 """
 
-
 import os
 import unittest
 import logging
@@ -89,7 +88,7 @@ class TestExport(unittest.TestCase):
         comments = self._cc_client.getComments(bug.reportId)
         self.assertEqual(len(comments), 0)
 
-        comment1 = CommentData(author='anybody', message='First msg')
+        comment1 = CommentData(author='anybody', message='First msg <img />')
         success = self._cc_client.addComment(bug.reportId, comment1)
         self.assertTrue(success)
         logging.debug('Bug commented successfully')
