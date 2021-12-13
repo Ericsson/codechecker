@@ -10,7 +10,7 @@
 Report commenting tests.
 """
 
-
+import html
 import logging
 import os
 import unittest
@@ -102,7 +102,8 @@ class TestComment(unittest.TestCase):
         self.assertEqual(num_comment, 0)
 
         # Try to add a new comment for the first bug
-        comment1 = CommentData(author='anybody', message='First msg')
+        first_msg = 'First msg <img />'
+        comment1 = CommentData(author='anybody', message=first_msg)
         success = self._cc_client.addComment(bug.reportId, comment1)
         self.assertTrue(success)
         logging.debug('Bug commented successfully')
@@ -156,11 +157,14 @@ class TestComment(unittest.TestCase):
         comments = self._cc_client.getComments(bug.reportId)
         self.assertEqual(len(comments), 1)
 
+        self.assertIn(html.escape(first_msg), comments[0].message)
+
         num_comment = self._cc_client.getCommentCount(bug.reportId)
         self.assertEqual(num_comment, 1)
 
         # Edit the message of the first remaining comment
-        new_msg = "New msg'\"`"
+        new_msg = "New msg'\"` <img />"
+        new_msg_escaped = html.escape(new_msg)
         success = self._cc_client.updateComment(comments[0].id, new_msg)
         self.assertTrue(success)
         logging.debug('Comment edited successfully')
@@ -179,8 +183,9 @@ class TestComment(unittest.TestCase):
         user_comments, system_comments = separate_comments(comments)
 
         self.assertEqual(len(user_comments), 1)
-        self.assertEqual(user_comments[0].message, new_msg)
+        self.assertEqual(user_comments[0].message, new_msg_escaped)
         self.assertEqual(len(system_comments), 1)
+        self.assertIn(new_msg_escaped, system_comments[0].message)
 
         # Test user and system comments fetched
         details = self._cc_client.getReportDetails(bug.reportId)
