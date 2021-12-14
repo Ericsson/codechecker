@@ -12,7 +12,7 @@ mockldap==0.3.0
 mkdocs==1.2.3
 mypy_extensions==0.4.3
 coverage==5.5.0
-thrift==0.13.0
+thrift==0.15.0
 gitpython==3.1.11
 
 ./api/py/codechecker_api/dist/codechecker_api.tar.gz

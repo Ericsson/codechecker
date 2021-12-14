@@ -1,5 +1,5 @@
 THRIFT_OPTS = -r -o /data
-THRIFT_VERSION = "0.11.0"
+THRIFT_VERSION = "codechecker/thrift:0.15.0"
 TARGET_PY = --gen py
 TARGET_JS = --gen js:node
 PYTHON_BIN ?= python3
@@ -34,7 +34,7 @@ build: clean target_dirs
 	  --rm \
 	  -u "$(uid):$(guid)" \
 	  -v $(API_DIR):/data \
-	  thrift:$(THRIFT_VERSION) \
+	  $(THRIFT_VERSION) \
 	  /bin/bash -c " \
 		thrift $(THRIFT_OPTS) $(TARGET_PY) $(TARGET_JS) /data/authentication.thrift && \
 		thrift $(THRIFT_OPTS) $(TARGET_PY) $(TARGET_JS) /data/products.thrift && \
