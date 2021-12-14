@@ -86,6 +86,8 @@ write a compose file similar to
 
 #### PostgreSQL setup
 
+Follow the instructions [here](postgresql_setup.md) for the general database setup.
+
 #### PostgreSQL (no authentication)
 To run a CodeChecker server and a PostgreSQL database cluster which does not
 require authentication you have to write a compose file similar to
