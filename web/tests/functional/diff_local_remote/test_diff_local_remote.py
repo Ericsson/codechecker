@@ -664,3 +664,13 @@ class LocalRemote(unittest.TestCase):
         self.assertSetEqual(
             {r['report_hash'] for r in resolved_results}, resolved_hashes)
         self.assertEqual(returncode, 2)
+
+    def test_print_bug_steps(self):
+        """ Test printing the steps the analyzers took. """
+        out, _, ret = get_diff_results(
+            [self._run_names[0]], [self._local_reports], '--resolved', None,
+            ["--url", self._url, "--print-steps"])
+
+        self.assertTrue("Steps:" in out)
+        self.assertTrue("Report hash:" in out)
+        self.assertEqual(ret, 2)

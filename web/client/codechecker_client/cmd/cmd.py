@@ -529,6 +529,14 @@ def __register_diff(parser):
                              "name containing a literal colon (:) must be "
                              "escaped: \"run\\:name\".")
 
+    parser.add_argument('--print-steps',
+                        dest="print_steps",
+                        action="store_true",
+                        required=False,
+                        default=argparse.SUPPRESS,
+                        help="Print the steps the analyzers took in finding "
+                             "the reported defect.")
+
     __add_filtering_arguments(parser, DEFAULT_FILTER_VALUES, True)
 
     group = parser.add_argument_group("comparison modes")

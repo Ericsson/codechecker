@@ -1060,7 +1060,7 @@ from the comparison of two runs.
 
 ```
 usage: CodeChecker cmd diff [-h] [-b BASE_RUNS [BASE_RUNS ...]]
-                            [-n NEW_RUNS [NEW_RUNS ...]]
+                            [-n NEW_RUNS [NEW_RUNS ...]] [--print-steps]
                             [--uniqueing {on,off}]
                             [--report-hash [REPORT_HASH [REPORT_HASH ...]]]
                             [--review-status [REVIEW_STATUS [REVIEW_STATUS ...]]]
@@ -1118,6 +1118,8 @@ optional arguments:
                         tag labels can also be used separated by a colon (:)
                         character: "run_name:tag_name". A run name containing
                         a literal colon (:) must be escaped: "run\:name".
+  --print-steps         Print the steps the analyzers took in finding the
+                        reported defect.
   -o {plaintext,rows,table,csv,json,html,gerrit,codeclimate} [{plaintext,rows,table,csv,json,html,gerrit,codeclimate} ...], --output {plaintext,rows,table,csv,json,html,gerrit,codeclimate} [{plaintext,rows,table,csv,json,html,gerrit,codeclimate} ...]
                         The output format(s) to use in showing the data.
                         - html: multiple html files will be generated in the

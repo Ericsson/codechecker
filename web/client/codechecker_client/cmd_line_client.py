@@ -254,8 +254,14 @@ def skip_report_dir_result(
     return False
 
 
-def get_diff_base_results(client, args, baseids, base_hashes,
-                          suppressed_hashes):
+def get_diff_base_results(
+    client,
+    args,
+    baseids,
+    base_hashes,
+    suppressed_hashes,
+    get_details: bool = True
+):
     """Get the run results from the server."""
     report_filter = ttypes.ReportFilter()
     add_filter_conditions(client, report_filter, args)
@@ -270,13 +276,9 @@ def get_diff_base_results(client, args, baseids, base_hashes,
 
     base_results = []
     while True:
-        results = client.getRunResults(baseids,
-                                       limit,
-                                       offset,
-                                       sort_mode,
-                                       report_filter,
-                                       None,
-                                       False)
+        results = client.getRunResults(
+            baseids, limit, offset, sort_mode, report_filter, None,
+            get_details)
 
         base_results.extend(results)
         offset += limit
@@ -774,6 +776,7 @@ def handle_diff_results(args):
     client = None
 
     file_cache: Dict[int, File] = {}
+    print_steps = 'print_steps' in args
 
     def cached_report_file_lookup(file_id: int, file_path: str) -> File:
         """
@@ -854,7 +857,6 @@ def handle_diff_results(args):
                     source_line_contents[report_data.fileId][report_data.line])
                 report.source_line = f"{source_line}{os.linesep}"
 
-            # TODO: get details
             reports.append(report)
 
         return reports
@@ -1016,7 +1018,7 @@ def handle_diff_results(args):
 
         all_results = get_run_results(
             client, base_ids, constants.MAX_QUERY_SIZE, 0, sort_mode,
-            report_filter, cmp_data, False)
+            report_filter, cmp_data, True)
 
         reports = convert_report_data_to_report(all_results)
         return reports, base_run_names, new_run_names
@@ -1095,10 +1097,12 @@ def handle_diff_results(args):
             if repo_dir:
                 report.trim_path_prefixes([repo_dir])
 
+        processed_file_paths = set()
         for output_format in output_formats:
             if output_format == 'plaintext':
                 file_report_map = plaintext.get_file_report_map(reports)
-                plaintext.convert(file_report_map)
+                plaintext.convert(
+                    file_report_map, processed_file_paths, print_steps)
 
             if output_format == 'html':
                 if not html_builder:
