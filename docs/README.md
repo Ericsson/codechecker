@@ -37,33 +37,33 @@ macOS (OS X) development environment.
 # Main features
 ## Command line C/C++ Analysis
   * Executes [_Clang-Tidy_](http://clang.llvm.org/extra/clang-tidy/) and [_Clang Static Analyzer_](http://clang-analyzer.llvm.org/) with Cross-Translation Unit analysis, Statistical Analysis (when checkers are available).
-  * Creates the JSON compilation database by wiretapping any build process (e.g. `CodeChecker log -b "make"`)
-  * Automatically analyzes gcc cross-compiled projects: detecting GCC or Clang compiler configuration and forming the corresponding clang analyzer invocations
-  * Incremental analysis: only the changed files and its dependencies need to be reanalized
-  * False positive suppression with a possibility to add review comments
-  * Result visualization in command line or in static HTML
+  * Creates the JSON compilation database by wiretapping any build process (e.g., `CodeChecker log -b "make"`).
+  * Automatically analyzes GCC cross-compiled projects: detecting GCC or Clang compiler configuration and forming the corresponding clang analyzer invocations.
+  * Incremental analysis: Only the changed files and its dependencies need to be reanalyzed.
+  * False positive suppression with a possibility to add review comments.
+  * Result visualization in command line or in static HTML.
 
-## Web based report storage
+## Web-based report storage
   * **You can store & visualize thousands of analysis reports** of many analyzers like
     Clang Static Analyzer (C/C++), Clang Tidy (C/C++), Facebook Infer (C/C++, Java), Clang Sanitizers (C/C++), Spotbugs (Java), Pylint (Python), Eslint (Javascript) ...  
     For a complete list see [Supported Analyzers](supported_code_analyzers.md)
   * **Web application** for viewing discovered code defects with a streamlined,
-    easy experience (with PostgreSQL, or SQLite backend)
-  * **Gerrit and GitLab integration** Shows analysis results as [Gitlab](gitlab_integration.md) or [Gerrit](jenkins_gerrit_integration.md) reviews
+    easy experience (with PostgreSQL, or SQLite backend).
+  * **Gerrit and GitLab integration** Shows analysis results as [GitLab](gitlab_integration.md) or [Gerrit](jenkins_gerrit_integration.md) reviews.
   * **Filterable** (defect checker name, severity, source paths, ...) and
     **comparable** (calculates difference between two analyses of the project,
     showing which bugs have been fixed and which are newly introduced) result
-    viewing
-  * **Diff mode:** Shows the list of bugs that have been introduced since your last analyzer
-    execution
+    viewing.
+  * **Diff mode:** This shows the list of bugs that have been introduced since your last analyzer
+    execution.
   * Results can be shared with fellow developers, the **comments** and
-    **review** system helps communication of code defects
+    **review** system helps communication of code defects.
   * Easily implementable [Thrift](http://thrift.apache.org)-based
     server-client communication used for storing and querying of discovered
-    defects
-  * Support for multiple bug visualisation frontends, such as the web
+    defects.
+  * Support for multiple bug visualization frontends, such as the web
     application, a [command-line tool](usage.md) and an
-    [Eclipse plugin](http://github.com/Ericsson/CodeCheckerEclipsePlugin)
+    [Eclipse plugin](http://github.com/Ericsson/CodeCheckerEclipsePlugin).
 
 ## Command line features
 `CodeChecker` command has many subcommands which can be used for example to
@@ -120,7 +120,7 @@ executed compilation steps. These steps are written to an output file
 - *Step 2*: `CodeChecker analyze` uses the previously created JSON Compilation
 Database to perform an analysis on the project, outputting analysis results in
 a machine-readable (plist) format.
-- *Step 3*: in this step you can do multiple things:
+- *Step 3*: In this step, you can do multiple things:
     - Parse and pretty-print the summary and results from analysis result files
     (`CodeChecker parse`).
     - Store the results to a running CodeChecker server (`CodeChecker store`).
@@ -224,9 +224,9 @@ and can be installed with the following command:
 sudo snap install codechecker --classic
 ```
 
-**Note:** unfortunately snap package supports only lower case command names.
-For this reason you need to use `codechecker` command instead of `CodeChecker`
-everywhere. For full list of available commands in the codechecker snap package
+**Note:** Unfortunately, the snap package supports only lower case command names.
+For this reason, you need to use `codechecker` command instead of `CodeChecker`
+everywhere. For a full list of available commands in the codechecker snap package,
 run `snap info codechecker`.
 
 ## Linux
@@ -272,12 +272,12 @@ cd ..
 ```
 
 **Notes**:
-- By default `make package` will build ldlogger shared objects for
+- By default, `make package` will build ldlogger shared objects for
 `32bit` and `64bit` too. If you would like to build and package `64 bit only`
 shared objects and ldlogger binary you can set `BUILD_LOGGER_64_BIT_ONLY`
 environment variable to `YES` before the package build:
 `BUILD_LOGGER_64_BIT_ONLY=YES make package`.
-- By default the `make package` will build the UI code if it's not built yet
+- By default, the `make package` will build the UI code if it's not built yet
 or the UI code is changed. If you wouldn't like to build the UI code you can
 set the `BUILD_UI_DIST` environment variable to `NO` before the package build:
 `BUILD_UI_DIST=NO make package`.
@@ -286,7 +286,7 @@ having to manually activate the environment before running CodeChecker.
 
 ### Upgrading environment after system or Python upgrade
 
-If you have upgraded your system's Python to a newer version (e.g. from
+If you have upgraded your system's Python to a newer version (e.g., from
 `2.7.6` to `2.7.12` &ndash; this is the case when upgrading Ubuntu from
 14.04.2 LTS to 16.04.1 LTS), the installed environment will not work
 out-of-the-box. To fix this issue, run the following command to upgrade your
@@ -301,8 +301,8 @@ python3 -m venv .
 For installation instructions for Mac OS X see [Mac OS X Installation Guide](install_macosx.md) documentation.
 
 ## Docker
-To run CodeChecker server in Docker see the [Docker](web/docker.md) documentation.
-You can find the CodeChecker web-server containter at the [Docker Hub](https://hub.docker.com/r/codechecker/codechecker-web).
+To run the CodeChecker server in Docker see the [Docker](web/docker.md) documentation.
+You can find the CodeChecker web-server container at the [Docker Hub](https://hub.docker.com/r/codechecker/codechecker-web).
 
  <img src="https://raw.githubusercontent.com/Ericsson/codechecker/master/docs/images/docker.jpg" width="100">
 
@@ -349,7 +349,7 @@ If you have hundreds of results, you may want to store them on the web
 server with a database backend.
 
 Start a CodeChecker web and storage server in another terminal or as a
-background process. By default it will listen on `localhost:8001`.
+background process. By default, it will listen on `localhost:8001`.
 
 The SQLite database containing the reports will be placed in your workspace
 directory (`~/.codechecker` by default), which can be provided via the `-w`
