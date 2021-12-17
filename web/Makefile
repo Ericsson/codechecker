@@ -142,7 +142,7 @@ standalone_package: venv package
 # python packages are up to date. If not, it will update these packages and
 # removes the dist directory to make sure the the UI part will be built again.
 check_codechecker_api_version:
-	if ! pip3 install -r ./requirements.txt 2>&1 | grep -q "Requirement already satisfied: codechecker_api"; then \
+	if ! pip3 install -r ./requirements.txt 2>&1 | grep -q "Requirement already satisfied (use --upgrade to upgrade): codechecker-api"; then \
 		if [ "$(BUILD_UI_DIST)" = "YES" ]; then \
 		  cd server/vue-cli && npm install && rm -rf $(DIST_DIR); \
 		fi; \
