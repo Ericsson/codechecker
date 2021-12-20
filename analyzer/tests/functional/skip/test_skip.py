@@ -12,7 +12,7 @@ Test skipping the analysis of a file and the removal
 of skipped reports from the report files.
 """
 
-
+import json
 import os
 import plistlib
 import subprocess
@@ -38,7 +38,7 @@ class TestSkip(unittest.TestCase):
         self.report_dir = os.path.join(self.test_workspace, "reports")
         self.test_dir = os.path.join(os.path.dirname(__file__), 'test_files')
 
-    def __test_skip(self):
+    def test_skip(self):
         """Analyze a project with a skip file."""
         test_dir = os.path.join(self.test_dir, "simple")
         build_json = os.path.join(self.test_workspace, "build.json")
@@ -174,3 +174,24 @@ class TestSkip(unittest.TestCase):
                              for f in report_dir_files]))
         self.assertTrue(any(["b.cpp" in f
                              for f in report_dir_files]))
+
+        # Get reports only from the header file.
+        cmd = [
+            self._codechecker_cmd, "parse", self.report_dir,
+            "--file", "*/lib.h",
+            "--export", "json"]
+
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=test_dir,
+            encoding="utf-8",
+            errors="ignore")
+        out, err = process.communicate()
+
+        errcode = process.returncode
+        self.assertEqual(errcode, 2)
+
+        data = json.loads(out)
+        self.assertTrue(len(data['reports']))
