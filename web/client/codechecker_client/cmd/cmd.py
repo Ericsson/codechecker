@@ -501,7 +501,9 @@ def __register_diff(parser):
                              "run-a-1, run-a-2 and run-b-1 then \"run-a*\" "
                              "selects the first two. In case of run names tag "
                              "labels can also be used separated by a colon "
-                             "(:) character: \"run_name:tag_name\".")
+                             "(:) character: \"run_name:tag_name\". A run "
+                             "name containing a literal colon (:) must be "
+                             "escaped: \"run\\:name\".")
 
     parser.add_argument('-n', '--newname',
                         type=str,
@@ -523,7 +525,9 @@ def __register_diff(parser):
                              "\"run-a*\" selects the first two. In case of "
                              "run names tag labels can also be used separated "
                              "by a colon (:) character: "
-                             "\"run_name:tag_name\".")
+                             "\"run_name:tag_name\". A run "
+                             "name containing a literal colon (:) must be "
+                             "escaped: \"run\\:name\".")
 
     __add_filtering_arguments(parser, DEFAULT_FILTER_VALUES, True)
 

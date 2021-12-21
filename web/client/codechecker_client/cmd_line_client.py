@@ -139,14 +139,20 @@ def process_run_args(client, run_args_with_tag: Iterable[str]):
     """Process the argument and returns run ids and run tag ids.
 
     The elemnts inside the given run_args_with_tag list has the following
-    format: <run_name>:<run_tag>
+    format: `<run_name>:<run_tag>`.
+    If the run name is containing a literal ':', it should be escaped with a
+    backslash escape character before the `:`.
     """
+    # (The documentation comment above means \:, but Python would want to
+    # understand that as an escape sequence immediately.)
+
     run_ids = []
     run_names = []
     run_tags = []
 
     for run_arg_with_tag in run_args_with_tag:
-        run_with_tag = run_arg_with_tag.split(':')
+        run_with_tag = list(map(lambda n: n.replace(r"\:", ":"),
+                                re.split(r"(?<!\\):", run_arg_with_tag)))
         run_name = run_with_tag[0]
         run_filter = ttypes.RunFilter(names=[run_name])
 
