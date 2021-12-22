@@ -805,7 +805,6 @@ class MassStoreRun:
             comment.
             """
             checker_name = report.checker_name
-            last_report_event = report.bug_path_events[-1]
 
             # The original file path is needed here, not the trimmed, because
             # the source files are extracted as the original file path.
@@ -818,7 +817,7 @@ class MassStoreRun:
             if not os.path.isfile(source_file_name):
                 return
 
-            report_line = last_report_event.range.end_line
+            report_line = report.line
             source_file = os.path.basename(file_name)
 
             src_comment_data = parse_codechecker_review_comment(
