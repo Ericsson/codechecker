@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
  <key>clang_version</key>
-<string>clang version 12.0.0 (https://github.com/llvm/llvm-project.git 4f3559db1f313eed8bd84377de0fb2300a58125b)</string>
+<string>clang version 13.0.0</string>
  <key>diagnostics</key>
  <array>
   <dict>
@@ -123,8 +123,8 @@
          <key>file</key><integer>0</integer>
         </dict>
         <dict>
-         <key>line</key><integer>13</integer>
-         <key>col</key><integer>17</integer>
+         <key>line</key><integer>14</integer>
+         <key>col</key><integer>7</integer>
          <key>file</key><integer>0</integer>
         </dict>
        </array>
@@ -141,7 +141,7 @@
    <key>type</key><string>Division by zero</string>
    <key>check_name</key><string>core.DivideZero</string>
    <!-- This hash is experimental and going to change! -->
-   <key>issue_hash_content_of_line_in_context</key><string>0a6cf888769a0abb515c318411009cea</string>
+   <key>issue_hash_content_of_line_in_context</key><string>fbb2cdb4eddba27e931a2f49f69f3fb4</string>
   <key>issue_context_kind</key><string>function</string>
   <key>issue_context</key><string>test1</string>
   <key>issue_hash_function_offset</key><string>3</string>
@@ -158,6 +158,7 @@
     <integer>10</integer>
     <integer>11</integer>
     <integer>13</integer>
+    <integer>14</integer>
    </array>
   </dict>
   </dict>
@@ -172,12 +173,12 @@
         <key>start</key>
          <array>
           <dict>
-           <key>line</key><integer>19</integer>
+           <key>line</key><integer>20</integer>
            <key>col</key><integer>3</integer>
            <key>file</key><integer>0</integer>
           </dict>
           <dict>
-           <key>line</key><integer>19</integer>
+           <key>line</key><integer>20</integer>
            <key>col</key><integer>5</integer>
            <key>file</key><integer>0</integer>
           </dict>
@@ -185,12 +186,12 @@
         <key>end</key>
          <array>
           <dict>
-           <key>line</key><integer>21</integer>
+           <key>line</key><integer>22</integer>
            <key>col</key><integer>13</integer>
            <key>file</key><integer>0</integer>
           </dict>
           <dict>
-           <key>line</key><integer>21</integer>
+           <key>line</key><integer>22</integer>
            <key>col</key><integer>13</integer>
            <key>file</key><integer>0</integer>
           </dict>
@@ -202,7 +203,7 @@
      <key>kind</key><string>event</string>
      <key>location</key>
      <dict>
-      <key>line</key><integer>21</integer>
+      <key>line</key><integer>22</integer>
       <key>col</key><integer>13</integer>
       <key>file</key><integer>0</integer>
      </dict>
@@ -210,12 +211,12 @@
      <array>
        <array>
         <dict>
-         <key>line</key><integer>21</integer>
+         <key>line</key><integer>22</integer>
          <key>col</key><integer>11</integer>
          <key>file</key><integer>0</integer>
         </dict>
         <dict>
-         <key>line</key><integer>21</integer>
+         <key>line</key><integer>22</integer>
          <key>col</key><integer>15</integer>
          <key>file</key><integer>0</integer>
         </dict>
@@ -239,7 +240,7 @@
   <key>issue_hash_function_offset</key><string>3</string>
   <key>location</key>
   <dict>
-   <key>line</key><integer>21</integer>
+   <key>line</key><integer>22</integer>
    <key>col</key><integer>13</integer>
    <key>file</key><integer>0</integer>
   </dict>
@@ -247,9 +248,9 @@
   <dict>
    <key>0</key>
    <array>
-    <integer>18</integer>
     <integer>19</integer>
-    <integer>21</integer>
+    <integer>20</integer>
+    <integer>22</integer>
    </array>
   </dict>
   </dict>
