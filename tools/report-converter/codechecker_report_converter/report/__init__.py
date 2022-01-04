@@ -512,12 +512,10 @@ class Report:
 
     def skip(self, skip_handler: Optional[SkipListHandler]) -> bool:
         """ True if the report should be skipped. """
-        if skip_handler:
-            for file_path in self.original_files:
-                if skip_handler(file_path):
-                    return True
+        if not skip_handler:
+            return False
 
-        return False
+        return skip_handler(self.file.original_path)
 
     def to_json(self) -> Dict:
         """ Creates a JSON dictionary. """
