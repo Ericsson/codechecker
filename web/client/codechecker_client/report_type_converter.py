@@ -8,18 +8,22 @@
 
 """ Convert between Report type and thrift ReportData type. """
 
+from typing import Callable
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import ReportData, Severity
 
 from codechecker_report_converter.report import File, Report
 
 
-def to_report(report: ReportData) -> Report:
+def to_report(
+    report: ReportData,
+    get_file: Callable[[int, str], File]
+) -> Report:
     """ Create a Report object from the given thrift report data. """
     severity = Severity._VALUES_TO_NAMES[report.severity] \
         if report.severity else 'UNSPECIFIED'
 
     return Report(
-        File(report.checkedFile),
+        get_file(report.fileId, report.checkedFile),
         report.line,
         report.column,
         report.checkerMsg,

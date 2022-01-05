@@ -87,7 +87,14 @@ class File:
             self.__content = content
 
     def get_line(self, line: int) -> str:
-        return util.get_line(self.original_path, line)
+        """ Get content from the given line.
+
+        Load file content if it's not loaded yet.
+        """
+        if self.__content is None:
+            return util.get_line(self.original_path, line)
+
+        return self.__content.splitlines(keepends=True)[line - 1]
 
     def trim(self, path_prefixes: Optional[List[str]] = None) -> str:
         """ Removes the longest matching leading path from the file paths. """
@@ -116,7 +123,7 @@ class File:
         return builtins.hash(self.id)
 
     def __repr__(self):
-        return self.to_json()
+        return json.dumps(self.to_json())
 
 
 def get_or_create_file(
