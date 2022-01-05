@@ -765,38 +765,46 @@ def handle_diff_results(args):
 
     context = webserver_context.get_context()
 
+    client = None
+
     file_cache: Dict[int, File] = {}
 
-    def cached_report_file_lookup(file_id):
+    def cached_report_file_lookup(file_id: int, file_path: str) -> File:
         """
-        Get source file data for the given file and caches it in a file cache
-        if file data is not found in the cache. Finally, it returns the source
-        file data from the cache.
+        It will create a file object with the given 'file_path' attribute if
+        file data is not found in the cache already based on the following
+        conditions:
+          - if HTML output is given it will try to get source file data for the
+            given file id from the server and set the content attribute of the
+            file object. File content is needed only by the HTML output
+            converter.
+          - otherwise it will create a file object where file content will not
+            be filled automatically but will be loaded from the host machine
+            when it is needed.
+
+        Finally, it returns the source file data from the cache.
         """
         nonlocal file_cache
 
         if file_id not in file_cache:
-            source = client.getSourceFileData(
-                file_id, True, ttypes.Encoding.BASE64)
-            content = convert.from_b64(source.fileContent)
+            file_cache[file_id] = File(file_path, file_id)
 
-            file_cache[file_id] = File(source.filePath, file_id, content)
+            if 'html' in args.output_format:
+                source = client.getSourceFileData(
+                    file_id, True, ttypes.Encoding.BASE64)
+                file_cache[file_id].content = convert.from_b64(
+                    source.fileContent)
 
         return file_cache[file_id]
 
-    def convert_report_data_to_report(
-        client,
-        reports_data: List[ttypes.ReportData]
-    ) -> List[Report]:
-        """ Convert the given report data list to local reports. """
-        reports = []
-
-        if not reports_data:
-            return reports
-
-        # Get source line contents from the server.
+    def get_source_line_contents(
+        reports: List[ttypes.ReportData]
+    ) -> Dict[int, Dict[int, str]]:
+        """
+        Get source line contents from the server for the given report data.
+        """
         source_lines = defaultdict(set)
-        for report_data in reports_data:
+        for report_data in reports:
             source_lines[report_data.fileId].add(report_data.line)
 
         lines_in_files_requested = []
@@ -805,22 +813,40 @@ def handle_diff_results(args):
                 ttypes.LinesInFilesRequested(fileId=file_id,
                                              lines=source_lines[file_id]))
 
-        source_line_contents = client.getLinesInSourceFileContents(
+        return client.getLinesInSourceFileContents(
             lines_in_files_requested, ttypes.Encoding.BASE64)
+
+    def convert_report_data_to_report(
+        reports_data: List[ttypes.ReportData]
+    ) -> List[Report]:
+        """
+        Convert the given report data list to local reports.
+
+        If one of the given output format is HTML it will get full source file
+        contents from the server otherwise for performance reason it will
+        get only necessarry line contents.
+        """
+        reports = []
+
+        if not reports_data:
+            return reports
+
+        source_line_contents = {}
+        if 'html' not in args.output_format:
+            source_line_contents = get_source_line_contents(reports_data)
 
         # Convert reports data to reports.
         for report_data in reports_data:
-            report = report_type_converter.to_report(report_data)
-
-            # For HTML output we need to override the file and get content
-            # from the server.
-            if 'html' in args.output_format:
-                report.file = cached_report_file_lookup(report_data.fileId)
+            report = report_type_converter.to_report(
+                report_data, cached_report_file_lookup)
 
             report.changed_files = []
             report.source_code_comments = []
-            report.source_line = \
-                source_line_contents[report_data.fileId][report_data.line]
+
+            if source_line_contents:
+                source_line = convert.from_b64(
+                    source_line_contents[report_data.fileId][report_data.line])
+                report.source_line = f"{source_line}{os.linesep}"
 
             # TODO: get details
             reports.append(report)
@@ -856,8 +882,7 @@ def handle_diff_results(args):
             results = get_diff_base_results(
                 client, args, run_ids, remote_hashes, suppressed_in_code)
 
-            filtered_reports.extend(
-                convert_report_data_to_report(client, results))
+            filtered_reports.extend(convert_report_data_to_report(results))
         elif diff_type == ttypes.DiffType.UNRESOLVED:
             # Get remote hashes which can be found in the remote run and in the
             # local report directory.
@@ -883,8 +908,7 @@ def handle_diff_results(args):
                 for result in results:
                     filtered_report_hashes.discard(result.bugHash)
 
-                filtered_reports.extend(
-                    convert_report_data_to_report(client, results))
+                filtered_reports.extend(convert_report_data_to_report(results))
         elif diff_type == ttypes.DiffType.RESOLVED:
             # Get remote hashes which can be found in the remote run and in the
             # local report directory.
@@ -946,8 +970,7 @@ def handle_diff_results(args):
             results = get_diff_base_results(
                 client, args, run_ids, remote_hashes, suppressed_in_code)
 
-            filtered_reports.extend(
-                convert_report_data_to_report(client, results))
+            filtered_reports.extend(convert_report_data_to_report(results))
 
         return filtered_reports, filtered_report_hashes, run_names
 
@@ -989,7 +1012,7 @@ def handle_diff_results(args):
             client, base_ids, constants.MAX_QUERY_SIZE, 0, sort_mode,
             report_filter, cmp_data, False)
 
-        reports = convert_report_data_to_report(client, all_results)
+        reports = convert_report_data_to_report(all_results)
         return reports, base_run_names, new_run_names
 
     def get_diff_local_dirs(
@@ -1181,7 +1204,6 @@ def handle_diff_results(args):
         LOG.info("Matching local baseline files (--newname): %s",
                  ', '.join(newname_baseline_files))
 
-    client = None
     # We set up the client if we are not comparing two local report directories
     # or baseline files.
     if basename_run_names or newname_run_names:

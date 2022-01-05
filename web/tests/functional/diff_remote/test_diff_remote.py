@@ -14,12 +14,15 @@ Test the compraison of two remote (in the database) runs.
 
 import os
 import re
+import shutil
 import unittest
 from datetime import datetime, timedelta
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import CompareData, \
     DiffType, Order, ReportFilter, ReviewStatus, RunHistoryFilter, \
     RunSortMode, RunSortType, Severity
+
+from codechecker_report_converter.report import InvalidFileContentMsg
 
 from libtest import env
 from libtest.codechecker import get_diff_results
@@ -48,23 +51,23 @@ class DiffRemote(unittest.TestCase):
     def setUp(self):
 
         # TEST_WORKSPACE is automatically set by test package __init__.py .
-        test_workspace = os.environ['TEST_WORKSPACE']
+        self.test_workspace = os.environ['TEST_WORKSPACE']
 
         test_class = self.__class__.__name__
-        print('Running ' + test_class + ' tests in ' + test_workspace)
+        print('Running ' + test_class + ' tests in ' + self.test_workspace)
 
         # Get the test configuration from the prepared int the test workspace.
-        self.test_cfg = env.import_test_cfg(test_workspace)
+        self.test_cfg = env.import_test_cfg(self.test_workspace)
 
         # Get the clang version which is tested.
         self._clang_to_test = env.clang_to_test()
 
         # Get the test project configuration from the prepared test workspace.
-        self._testproject_data = env.setup_test_proj_cfg(test_workspace)
+        self._testproject_data = env.setup_test_proj_cfg(self.test_workspace)
         self.assertIsNotNone(self._testproject_data)
 
         # Setup a viewer client to test viewer API calls.
-        self._cc_client = env.setup_viewer_client(test_workspace)
+        self._cc_client = env.setup_viewer_client(self.test_workspace)
         self.assertIsNotNone(self._cc_client)
 
         # Get the CodeChecker cmd if needed for the tests.
@@ -72,7 +75,7 @@ class DiffRemote(unittest.TestCase):
 
         # Get the run names which belong to this test.
         # Name order matters from __init__ !
-        run_names = env.get_run_names(test_workspace)
+        run_names = env.get_run_names(self.test_workspace)
 
         sort_mode = RunSortMode(RunSortType.DATE, Order.ASC)
         runs = self._cc_client.getRunData(None, None, 0, sort_mode)
@@ -687,3 +690,39 @@ class DiffRemote(unittest.TestCase):
                              '--unresolved', 'json', ["--url", self._url])
 
         self.assertNotEqual(len(unresolved_results[0]), 0)
+
+    def test_source_line_content(self):
+        """
+        Check that line / file contents are set properly for different
+        output types.
+        """
+        base_run_name = self._test_runs[0].name
+        new_run_name = self._test_runs[1].name
+
+        html_reports = os.path.join(self.test_workspace, "html_reports")
+
+        base_run_names = [base_run_name, new_run_name]
+        new_run_names = [new_run_name, base_run_name]
+        extra_args = [
+            "--url", self._url,
+            "--file", "*/divide_zero.cpp",
+            "--checker-name", "core.DivideZero",
+            "--output", "plaintext", "html",
+            '--export-dir', html_reports]
+
+        # Check plain text output.
+        out, _, _ = \
+            get_diff_results(base_run_names, new_run_names,
+                             '--unresolved', None, extra_args)
+
+        lines = out.split(os.linesep)
+        for idx, line in enumerate(lines):
+            if '[core.DivideZero]' in line:
+                self.assertTrue(lines[idx + 1].strip(), "Invalid line content")
+
+        # Check HTML output
+        for file_path in os.listdir(html_reports):
+            with open(os.path.join(html_reports, file_path)) as f:
+                self.assertNotIn(InvalidFileContentMsg, f.read())
+
+        shutil.rmtree(html_reports, ignore_errors=True)
