@@ -121,7 +121,7 @@ def __convert_reports(reports: List[Report],
                         report_messages_in_unchanged_files)))
 
     if report_url:
-        message += " See: '{0}'".format(report_url)
+        message += f" See: {report_url}"
 
     review = {"tag": "jenkins",
               "message": message,
