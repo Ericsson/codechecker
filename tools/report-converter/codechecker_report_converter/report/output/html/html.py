@@ -79,6 +79,7 @@ HTMLReports = List[HTMLReport]
 
 
 class FileSource(TypedDict):
+    id: str
     filePath: str
     content: str
 
@@ -170,7 +171,7 @@ class HtmlBuilder:
             file_content = InvalidFileContentMsg
 
         self.files[file.id] = {
-            'filePath': file.path, 'content': file_content}
+            'id': file.id, 'filePath': file.path, 'content': file_content}
 
         return self.files[file.id]
 
