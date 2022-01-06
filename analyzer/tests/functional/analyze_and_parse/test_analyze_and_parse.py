@@ -360,7 +360,7 @@ class AnalyzeParseTestCase(
         self.assertEqual(lbls["Code-Review"], -1)
         self.assertEqual(review_data["message"],
                          "CodeChecker found 1 issue(s) in the code. "
-                         "See: '{0}'".format(report_url))
+                         "See: {0}".format(report_url))
         self.assertEqual(review_data["tag"], "jenkins")
 
         # Because the CC_CHANGED_FILES is set we will see reports only for

@@ -110,7 +110,7 @@ class TestReportToGerrit(unittest.TestCase):
         expected = {
             "tag": "jenkins",
             "message": "CodeChecker found 1 issue(s) in the code. "
-            "See: 'localhost:8080/index.html'",
+            "See: localhost:8080/index.html",
             "labels": {"Code-Review": -1, "Verified": -1},
             "comments": {
                 "main.cpp": [

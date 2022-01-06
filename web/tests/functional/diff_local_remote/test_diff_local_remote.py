@@ -433,7 +433,7 @@ class LocalRemote(unittest.TestCase):
         self.assertIn(
             "CodeChecker found 25 issue(s) in the code.",
             review_data["message"])
-        self.assertIn(f"See: '{report_url}'", review_data["message"])
+        self.assertIn(f"See: {report_url}", review_data["message"])
         self.assertEqual(review_data["tag"], "jenkins")
 
         # Because the CC_CHANGED_FILES is set we will see reports only for
