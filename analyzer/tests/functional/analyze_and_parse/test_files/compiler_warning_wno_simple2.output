@@ -3,7 +3,8 @@ NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy -d
 NORMAL#CodeChecker parse $OUTPUT$
 CHECK#CodeChecker check --build "make compiler_warning_unused" --output $OUTPUT$ --quiet --analyzers clang-tidy -d Wno-unused
 --------------------------------------------------------------------------------
-[] - Starting build ...
+[] - Starting build...
+[] - Using CodeChecker ld-logger.
 [] - Build finished successfully.
 [] - Starting static analysis ...
 [] - [1/1] clang-tidy analyzed compiler_warning.cpp successfully.

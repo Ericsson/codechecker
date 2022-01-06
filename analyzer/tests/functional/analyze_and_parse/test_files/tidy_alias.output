@@ -3,7 +3,8 @@ NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy -e
 NORMAL#CodeChecker parse $OUTPUT$
 CHECK#CodeChecker check --build "make tidy_alias" --output $OUTPUT$ --quiet --analyzers clang-tidy -e cppcoreguidelines-avoid-magic-numbers -e readability-magic-numbers
 --------------------------------------------------------------------------------
-[] - Starting build ...
+[] - Starting build...
+[] - Using CodeChecker ld-logger.
 [] - Build finished successfully.
 [] - Starting static analysis ...
 [] - [1/1] clang-tidy analyzed tidy_alias.cpp successfully.

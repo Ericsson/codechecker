@@ -3,7 +3,8 @@ NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy --
 NORMAL#CodeChecker parse $OUTPUT$
 CHECK#CodeChecker check --build "make tidy_check" --output $OUTPUT$ --quiet --analyzers clang-tidy --disable misc --enable bugprone-sizeof-expression
 --------------------------------------------------------------------------------
-[] - Starting build ...
+[] - Starting build...
+[] - Using CodeChecker ld-logger.
 [] - Build finished successfully.
 [] - Starting static analysis ...
 [] - [1/1] clang-tidy analyzed tidy_check.cpp successfully.
