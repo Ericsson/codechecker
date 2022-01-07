@@ -15,6 +15,7 @@ import json
 import os
 import re
 import shlex
+import stat
 import time
 import zlib
 
@@ -2926,7 +2927,7 @@ class ThriftRequestHandler:
                                            self._product.endpoint)
                 # Create report store directory.
                 if not os.path.exists(product_dir):
-                    os.makedirs(product_dir)
+                    os.makedirs(product_dir, mode=stat.S_IRWXU | stat.S_IRGRP)
 
                 # Removes and replaces special characters in the run name.
                 run_name = slugify(run_name)
@@ -2934,6 +2935,12 @@ class ThriftRequestHandler:
                 with open(run_zip_file, 'wb') as run_zip:
                     run_zip.write(zlib.decompress(
                         base64.b64decode(b64zip.encode('utf-8'))))
+
+                # Change permission, so only current user and group have access
+                # to this file.
+                os.chmod(
+                    run_zip_file, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP)
+
                 return True
             except Exception as ex:
                 LOG.error(str(ex))
