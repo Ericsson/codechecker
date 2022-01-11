@@ -40,24 +40,26 @@
 					</dict>
 					<key>message</key>
 					<string>Division by zero</string>
-					<key>range</key>
+					<key>ranges</key>
 					<array>
-						<dict>
-							<key>col</key>
-							<integer>13</integer>
-							<key>file</key>
-							<integer>0</integer>
-							<key>line</key>
-							<integer>17</integer>
-						</dict>
-						<dict>
-							<key>col</key>
-							<integer>13</integer>
-							<key>file</key>
-							<integer>0</integer>
-							<key>line</key>
-							<integer>17</integer>
-						</dict>
+						<array>
+							<dict>
+								<key>col</key>
+								<integer>13</integer>
+								<key>file</key>
+								<integer>0</integer>
+								<key>line</key>
+								<integer>17</integer>
+							</dict>
+							<dict>
+								<key>col</key>
+								<integer>13</integer>
+								<key>file</key>
+								<integer>0</integer>
+								<key>line</key>
+								<integer>17</integer>
+							</dict>
+						</array>
 					</array>
 				</dict>
 			</array>
