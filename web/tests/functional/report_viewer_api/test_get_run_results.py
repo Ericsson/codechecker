@@ -352,6 +352,22 @@ class RunResults(unittest.TestCase):
 
         self.assertTrue(any(res.details for res in run_results))
 
+    def test_report_path_and_events(self):
+        """
+        Test that bug path events and control points are stored properly.
+        """
+        sort_mode = SortMode(SortType.FILENAME, Order.ASC)
+
+        report_filter = ReportFilter(
+            checkerName=['core.DivideZero'],
+            filepath=['*path_begin.cpp'])
+
+        report = self._cc_client.getRunResults(
+            [self._runid], 1, 0, [sort_mode], report_filter, None, True)[0]
+
+        self.assertEqual(len(report.details.executionPath), 7)
+        self.assertEqual(len(report.details.pathEvents), 5)
+
     def test_get_checker_labels(self):
         checker_labels = self._cc_client.getCheckerLabels([])
         self.assertEqual(len(checker_labels), 0)

@@ -475,16 +475,17 @@ class Parser(BaseParser):
             if report.analyzer_name:
                 diagnostic['type'] = report.analyzer_name
 
-            control_edges = []
+            path = []
             if report.bug_path_positions:
                 for i in range(len(report.bug_path_positions) - 1):
                     start = report.bug_path_positions[i]
                     end = report.bug_path_positions[i + 1]
                     if start.range and end.range:
-                        control_edges.append(self._create_control_edge(
+                        edge = self._create_control_edge(
                             start.range, start.file,
                             end.range, end.file,
-                            file_index_map))
+                            file_index_map)
+                        path.append(self._create_control_edges([edge]))
             elif len(report.bug_path_events) > 1:
                 # Create bug path positions from bug path events.
                 for i in range(len(report.bug_path_events) - 1):
@@ -497,14 +498,11 @@ class Parser(BaseParser):
                     if start_range == end_range:
                         continue
 
-                    control_edges.append(self._create_control_edge(
+                    edge = self._create_control_edge(
                         start_range, start.file,
                         end_range, end.file,
-                        file_index_map))
-
-            path = []
-            if control_edges:
-                path.append(self._create_control_edges(control_edges))
+                        file_index_map)
+                    path.append(self._create_control_edges([edge]))
 
             # Add bug path events after control points.
             if report.bug_path_events:
@@ -572,8 +570,8 @@ class Parser(BaseParser):
             'message': event.message}
 
         if event.range:
-            data['range'] = self._create_range(
-                event.range, file_index_map[event.file.original_path])
+            data['ranges'] = [self._create_range(
+                event.range, file_index_map[event.file.original_path])]
 
         return data
 
@@ -609,8 +607,8 @@ class Parser(BaseParser):
             'message': note.message}
 
         if note.range:
-            data['range'] = self._create_range(
-                note.range, file_index_map[note.file.original_path])
+            data['ranges'] = [self._create_range(
+                note.range, file_index_map[note.file.original_path])]
 
         return data
 
