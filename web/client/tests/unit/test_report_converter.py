@@ -59,7 +59,11 @@ class ReportTypeConverterTest(unittest.TestCase):
             bugPathLength=5,
         )
 
-        report = report_type_converter.to_report(rep_data)
+        def get_file(file_id: int, file_path: str) -> File:
+            """ Get file object for the given report. """
+            return File(file_path, file_id)
+
+        report = report_type_converter.to_report(rep_data, get_file)
         self.assertEqual(report.checker_name, rep_data.checkerId)
         self.assertEqual(report.report_hash, rep_data.bugHash)
         self.assertEqual(report.file.path, rep_data.checkedFile)

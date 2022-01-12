@@ -44,13 +44,13 @@ def __get_source_file_for_analyzer_result_file(
     return None
 
 
-def format_source_line(event: BugPathEvent) -> str:
+def format_main_report(report: Report) -> str:
     """ Format bug path event. """
-    line = event.file.get_line(event.line)
+    line = report.source_line
     if line == '':
         return ''
 
-    marker_line = line[0:(event.column - 1)]
+    marker_line = line[0:(report.column - 1)]
     marker_line = ' ' * (len(marker_line) + marker_line.count('\t'))
 
     line = line.replace('\t', '  ')
@@ -158,13 +158,11 @@ def convert(
         reports = sorted(source_file_report_map[file_path],
                          key=lambda report: report.line)
         for report in reports:
-            last_event = report.bug_path_events[-1]
-
             # If file content is changed, do not print the source code comments
             # (if available) and instead of the source line, print a warning
             # message.
             content_is_not_changed = \
-                last_event.file.original_path not in report.changed_files
+                report.file.original_path not in report.changed_files
 
             if content_is_not_changed:
                 report.dump_source_code_comment_warnings()
@@ -177,7 +175,7 @@ def convert(
                     if source_code_comment.line:
                         output.write(f"{source_code_comment.line.rstrip()}\n")
 
-                output.write(f"{format_source_line(last_event)}")
+                output.write(f"{format_main_report(report)}")
             else:
                 output.write(InvalidFileContentMsg)
 

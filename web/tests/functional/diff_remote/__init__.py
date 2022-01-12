@@ -75,7 +75,8 @@ def setup_package():
         'skip_list_file': skip_list_file,
         'check_env': test_env,
         'workspace': TEST_WORKSPACE,
-        'checkers': []
+        'checkers': [],
+        'trim_path_prefix': TEST_WORKSPACE
     }
 
     # Start or connect to the running CodeChecker server and get connection
