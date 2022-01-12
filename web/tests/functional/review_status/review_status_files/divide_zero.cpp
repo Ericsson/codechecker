@@ -9,8 +9,9 @@
 
 int test1(int z) {
   if (z == 0){
-    // codechecker_intentional [core.DivideZero] intentional divide by zero here
-    int x = 1 / z; // warn
+    // codechecker_intentional [core.DivideZero] intentional multiline divide by zero here
+    int x = 1 /
+      z; // warn
     return x;
   }
 }
