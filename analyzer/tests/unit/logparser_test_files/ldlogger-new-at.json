@@ -1,0 +1,7 @@
+[
+	{
+		"directory": "/tmp",
+		"command": "g++ -DVARIABLE=\\\"me@domain.com\\\" /tmp/a.cpp -o /tmp/a.out",
+		"file": "/tmp/a.cpp"
+	}
+]

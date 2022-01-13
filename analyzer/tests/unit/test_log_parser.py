@@ -103,7 +103,7 @@ class LogParserTest(unittest.TestCase):
         self.assertEqual(len(build_action.analyzer_options), 1)
         self.assertTrue(len(build_action.target) > 0)
         self.assertEqual(build_action.analyzer_options[0],
-                         r'-DVARIABLE=some value')
+                         r'-DVARIABLE="some value"')
 
         # Test source file with spaces.
         logfile = os.path.join(self.__test_files, "ldlogger-new-space.json")
@@ -115,16 +115,42 @@ class LogParserTest(unittest.TestCase):
         self.assertEqual(build_action.source, r'/tmp/a b.cpp')
         self.assertEqual(build_action.lang, 'c++')
 
+        # Test @ sign in variable definition.
+        logfile = os.path.join(self.__test_files, "ldlogger-new-at.json")
+
+        build_actions, _ = log_parser.\
+            parse_unique_log(load_json_or_empty(logfile), self.__this_dir)
+        build_action = build_actions[0]
+
+        self.assertEqual(len(build_action.analyzer_options), 1)
+        self.assertEqual(build_action.analyzer_options[0],
+                         r'-DVARIABLE="me@domain.com"')
+
+        # Test the same stuff with response files.
+        logfile = os.path.join(self.__test_files, "ldlogger-new-response.json")
+        logjson = load_json_or_empty(logfile)
+        # Make it relative to the response file.
+        logjson[0]['directory'] = self.__test_files
+
+        build_actions, _ = log_parser.\
+            parse_unique_log(logjson, self.__this_dir)
+        build_action = build_actions[0]
+
+        self.assertEqual(len(build_action.analyzer_options), 2)
+        self.assertEqual(build_action.analyzer_options[0],
+                         r'-DVARIABLE="some value"')
+        self.assertEqual(build_action.analyzer_options[1],
+                         r'-DVARIABLE2="me@domain.com"')
+
     def test_old_intercept_build(self):
         """
         Test log file parsing escape behaviour with clang-5.0 intercept-build.
         """
-        logfile = os.path.join(self.__test_files, "intercept-old.json")
-
+        # FIXME: Yes, the json is actually bad! The space should have been
+        #        escaped by intercept-build along with the backslash.
         # Scan-build-py shipping with clang-5.0 makes a logfile that contains:
         # -DVARIABLE=\"some value\" and --target=x86_64-linux-gnu
-        #
-        # The define is passed to the analyzer properly.
+        logfile = os.path.join(self.__test_files, "intercept-old.json")
 
         build_actions, _ = log_parser.\
             parse_unique_log(load_json_or_empty(logfile), self.__this_dir)
@@ -133,6 +159,8 @@ class LogParserTest(unittest.TestCase):
         self.assertEqual(build_action.source, r'/tmp/a.cpp')
         self.assertEqual(len(build_action.analyzer_options), 1)
         self.assertTrue(len(build_action.target) > 0)
+        # FIXME: We should expect r'-DVARIABLE="some value"' with a fixed
+        #        intercept-build.
         self.assertEqual(build_action.analyzer_options[0],
                          r'-DVARIABLE="some')
 
@@ -454,7 +482,8 @@ class LogParserTest(unittest.TestCase):
             parse_unique_log(load_json_or_empty(logfile), self.__this_dir)
         build_action = build_actions[0]
         self.assertEqual(len(build_action.analyzer_options), 1)
-        self.assertEqual(build_action.analyzer_options[0], '-DVARIABLE=some')
+        self.assertEqual(build_action.analyzer_options[0],
+                         '-DVARIABLE=some value')
 
     def test_response_file_contains_source_file(self):
         """
@@ -481,7 +510,8 @@ class LogParserTest(unittest.TestCase):
 
         self.assertEqual(len(build_action.analyzer_options), 1)
         self.assertEqual(build_action.source, self.src_file_path)
-        self.assertEqual(build_action.analyzer_options[0], '-DVARIABLE=some')
+        self.assertEqual(build_action.analyzer_options[0],
+                         '-DVARIABLE=some value')
 
     def test_response_file_contains_multiple_source_files(self):
         """
@@ -521,12 +551,14 @@ class LogParserTest(unittest.TestCase):
         a_build_action = [b for b in build_actions
                           if b.source == a_file_path][0]
         self.assertEqual(len(a_build_action.analyzer_options), 1)
-        self.assertEqual(a_build_action.analyzer_options[0], '-DVARIABLE=some')
+        self.assertEqual(a_build_action.analyzer_options[0],
+                         '-DVARIABLE=some value')
 
         b_build_action = [b for b in build_actions
                           if b.source == b_file_path][0]
         self.assertEqual(len(b_build_action.analyzer_options), 1)
-        self.assertEqual(b_build_action.analyzer_options[0], '-DVARIABLE=some')
+        self.assertEqual(b_build_action.analyzer_options[0],
+                         '-DVARIABLE=some value')
 
     def test_source_file_contains_at_sign(self):
         """

@@ -15,6 +15,7 @@ import os
 import signal
 import subprocess
 import sys
+import shlex
 
 from codechecker_common.logger import get_logger
 
@@ -82,7 +83,8 @@ class SourceAnalyzer(metaclass=ABCMeta):
         """
         LOG.debug('Running analyzer ...')
 
-        LOG.debug_analyzer('\n%s', ' '.join(analyzer_cmd))
+        LOG.debug_analyzer('\n%s',
+                           ' '.join([shlex.quote(x) for x in analyzer_cmd]))
 
         res_handler.analyzer_cmd = analyzer_cmd
         try:

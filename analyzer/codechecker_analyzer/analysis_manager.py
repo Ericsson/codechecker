@@ -300,7 +300,10 @@ def handle_reproducer(source_analyzer, rh, zip_file, actions_map):
 
         LOG.debug("[ZIP] Writing extra information...")
         archive.writestr("build-action", action.original_command)
-        archive.writestr("analyzer-command", ' '.join(rh.analyzer_cmd))
+        archive.writestr(
+            "analyzer-command",
+            ' '.join([shlex.quote(x) for x in rh.analyzer_cmd]),
+            )
         archive.writestr("return-code", str(rh.analyzer_returncode))
 
         toolchain = gcc_toolchain.toolchain_in_args(

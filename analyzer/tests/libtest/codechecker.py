@@ -29,6 +29,7 @@ def call_command(cmd, cwd, env):
         print("\nTEST execute stderr:\n")
         print(err)
 
+    cmd_log = ' '.join([shlex.quote(x) for x in cmd])
     try:
         proc = subprocess.Popen(
             cmd,
@@ -41,13 +42,13 @@ def call_command(cmd, cwd, env):
         out, err = proc.communicate()
         if proc.returncode != 0:
             show(out, err)
-            print('Unsuccessful run: "' + ' '.join(cmd) + '"')
+            print(f'Unsuccessful run: {cmd_log}')
             print(proc.returncode)
         return out, err, proc.returncode
     except OSError as oerr:
         print(oerr)
         show(out, err)
-        print('Failed to run: "' + ' '.join(cmd) + '"')
+        print(f'Failed to run: {cmd_log}')
         raise
 
 

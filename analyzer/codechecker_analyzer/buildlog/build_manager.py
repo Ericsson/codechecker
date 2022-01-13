@@ -13,6 +13,7 @@ Build and log related functionality.
 import os
 import pickle
 import platform
+import shlex
 import subprocess
 import sys
 from uuid import uuid4
@@ -81,7 +82,7 @@ def perform_build_command(logfile, command, context, keep_link, silent=False,
         final_command = command
         command = ' '.join(["intercept-build",
                             "--cdb", logfile,
-                            "sh -c \"" + final_command + "\""])
+                            "sh -c", shlex.quote(final_command)])
         log_env = original_env
         LOG.debug_analyzer(command)
 
