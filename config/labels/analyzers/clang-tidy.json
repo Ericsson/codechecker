@@ -183,7 +183,6 @@
     "bugprone-easily-swappable-parameters": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone-easily-swappable-parameters.html",
       "profile:extreme",
-      "profile:sensitive",
       "severity:STYLE"
     ],
     "bugprone-exception-escape": [
