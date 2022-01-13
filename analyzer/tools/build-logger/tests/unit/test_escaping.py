@@ -3,7 +3,6 @@
 import json
 import os
 import tempfile
-import unittest
 from . import BasicLoggerTest, empty_env, run_command, REPO_ROOT
 
 
@@ -159,9 +158,6 @@ int main() {
             if os.path.isfile(file):
                 os.remove(file)
 
-    # Currently we don't escape correctly:
-    # '\a', '\e', '\t', '\t', '\b', '\f', '\r', '\v', '\n'.
-    @unittest.expectedFailure
     def test_control_characters(self):
         """
         Test if control-characters are escaped.
@@ -195,9 +191,6 @@ int main() {
             file=file,
         )
 
-    # Currently we don't escape correctly:
-    # '\a', '\e', '\t', '\t', '\b', '\f', '\r', '\v', '\n'.
-    @unittest.expectedFailure
     def test_control_characters2(self):
         """
         Test the more esoteric control-characters.
