@@ -14,5 +14,6 @@ void test1(int z) {
 
 void test2() {
   int x = 1;
+  // insert_suppress_here
   int y = x % 0; // warn
 }

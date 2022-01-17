@@ -141,6 +141,7 @@ class TestSuppress(unittest.TestCase):
                                                    'status': rw_status}
 
         run_results = get_all_run_results(self._cc_client, runid)
+        hash_to_report = {r.bugHash: r for r in run_results}
         logging.debug("Run results:")
         [logging.debug(x) for x in run_results]
         self.assertIsNotNone(run_results)
@@ -160,29 +161,49 @@ class TestSuppress(unittest.TestCase):
             self.assertEqual(report_data.reviewData.status,
                              expected_data['status'])
 
-            # Change review status to confirmed bug.
+            # Review status with source code comment can't change.
             review_comment = "This is really a bug"
             status = ReviewStatus.CONFIRMED
             success = self._cc_client.changeReviewStatus(
                 report_data.reportId, status, review_comment)
 
             self.assertTrue(success)
-            logging.debug("Bug review status changed successfully")
+
+        # Review status without source code comment can change.
+        uncommented_report = next(filter(
+            lambda r: r.reviewData.status == ReviewStatus.UNREVIEWED,
+            iter(run_results)))
+        self._cc_client.changeReviewStatus(
+            uncommented_report.reportId,
+            ReviewStatus.CONFIRMED,
+            'This is a known issue')
 
         # Get the results to compare.
         updated_results = get_all_run_results(self._cc_client, self._runid)
+        hash_to_report_updated = {r.bugHash: r for r in updated_results}
         self.assertIsNotNone(updated_results)
         self.assertNotEqual(len(updated_results), 0)
 
+        # Review status of reports with source code comment doesn't change.
         for bug_hash in hash_to_suppress_msgs:
-            report_data = [report_data for report_data in updated_results
-                           if report_data.bugHash == bug_hash][0]
+            self.assertEqual(
+                hash_to_report[bug_hash].reviewData.status,
+                hash_to_report_updated[bug_hash].reviewData.status)
+            self.assertEqual(
+                hash_to_report[bug_hash].reviewData.comment,
+                hash_to_report_updated[bug_hash].reviewData.comment)
 
-            # Check the stored suppress comment
-            self.assertEqual(report_data.reviewData.comment,
-                             "This is really a bug")
-            self.assertEqual(report_data.reviewData.status,
-                             ReviewStatus.CONFIRMED)
+        # Review status of reports without source code comment changes.
+        uncommented_report_updated = next(filter(
+            lambda r: r.bugHash == uncommented_report.bugHash,
+            iter(updated_results)))
+
+        self.assertEqual(
+            uncommented_report_updated.reviewData.status,
+            ReviewStatus.CONFIRMED)
+        self.assertEqual(
+            uncommented_report_updated.reviewData.comment,
+            'This is a known issue')
 
         # Check the same project again.
         codechecker_cfg = env.import_test_cfg(

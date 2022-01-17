@@ -22,7 +22,7 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import CommentKind, \
     Order, ReviewStatus, ReviewStatusRule, ReviewStatusRuleFilter, \
     ReviewStatusRuleSortMode, ReviewStatusRuleSortType, RunFilter
 
-from libtest import env, codechecker, plist_test
+from libtest import env, codechecker, plist_test, project
 from libtest.thrift_client_to_db import get_all_run_results
 
 
@@ -428,3 +428,151 @@ class TestReviewStatus(unittest.TestCase):
         self.__check_rule_order(
             lambda r: r.associatedReportCount,
             ReviewStatusRuleSortType.ASSOCIATED_REPORTS_COUNT)
+
+    def test_review_status(self):
+        """
+        Test review status changes
+        """
+        project.clean('suppress', env.test_env(self.test_workspace))
+
+        suppress_project_bugs = project.get_info('suppress')['bugs']
+
+        codechecker_cfg = env.import_codechecker_cfg(self.test_workspace)
+        codechecker_cfg['reportdir'] = os.path.join(
+            self.test_workspace, 'suppress_reports')
+
+        test_project_name1 = 'review_status_change1'
+
+        ret = codechecker.check_and_store(
+            codechecker_cfg,
+            test_project_name1,
+            project.path('suppress'))
+        self.assertEqual(ret, 0)
+
+        # Check and store "suppress" sample project. The review status data
+        # should match the ones in project_info.json.
+
+        run_filter = RunFilter(names=[test_project_name1], exactMatch=True)
+        runs = self._cc_client.getRunData(run_filter, None, 0, None)
+        runid1 = next(r.runId for r in runs if r.name == test_project_name1)
+
+        reports1 = get_all_run_results(self._cc_client, runid1)
+
+        for report in reports1:
+            self.assertIn(
+                (report.line,
+                 report.reviewData.status,
+                 report.reviewData.comment),
+                map(lambda x:
+                    (x['line'],
+                     x['review_status'],
+                     x['review_status_comment']),
+                    suppress_project_bugs[report.bugHash]))
+
+        # Change the review status of some reports. The one with source code
+        # comment shouldn't change and the one without source code comment
+        # should.
+
+        NULL_DEREF_BUG_HASH = '0c07579523063acece2d7aebd4357cac'
+        UNCOMMENTED_BUG_HASH = 'f0bf9810fe405de502137f1eb71fb706'
+        MULTI_REPORT_HASH = '2d019b15c17a7cf6aa3b238b916872ba'
+
+        null_deref_report_id = next(
+            r.reportId for r in reports1
+            if r.bugHash == NULL_DEREF_BUG_HASH)
+        uncommented_report_id = next(
+            r.reportId for r in reports1
+            if r.bugHash == UNCOMMENTED_BUG_HASH)
+
+        multi_confirmed_id = next(
+            r.reportId for r in reports1
+            if r.bugHash == MULTI_REPORT_HASH and
+            r.reviewData.status == ReviewStatus.CONFIRMED)
+
+        self._cc_client.changeReviewStatus(
+            null_deref_report_id,
+            ReviewStatus.INTENTIONAL,
+            "This is intentional")
+        self._cc_client.changeReviewStatus(
+            uncommented_report_id,
+            ReviewStatus.INTENTIONAL,
+            "This is intentional")
+        self._cc_client.changeReviewStatus(
+            multi_confirmed_id,
+            ReviewStatus.FALSE_POSITIVE,
+            "This is false positive.")
+
+        reports1 = get_all_run_results(self._cc_client, runid1)
+
+        null_deref_report1 = next(filter(
+            lambda r: r.bugHash == NULL_DEREF_BUG_HASH,
+            reports1))
+        uncommented_report1 = next(filter(
+            lambda r: r.bugHash == UNCOMMENTED_BUG_HASH,
+            reports1))
+
+        multi_confirmed_report = next(filter(
+            lambda r: r.bugHash == MULTI_REPORT_HASH and
+            r.reviewData.status == ReviewStatus.CONFIRMED,
+            reports1))
+        multi_intentional_report = next(filter(
+            lambda r: r.bugHash == MULTI_REPORT_HASH and
+            r.reviewData.status == ReviewStatus.INTENTIONAL,
+            reports1))
+        multi_unreviewed_report = next(filter(
+            lambda r: r.bugHash == MULTI_REPORT_HASH and
+            r.reviewData.status == ReviewStatus.UNREVIEWED,
+            reports1), None)
+        multi_false_positive_report = next(filter(
+            lambda r: r.bugHash == MULTI_REPORT_HASH and
+            r.reviewData.status == ReviewStatus.FALSE_POSITIVE,
+            reports1))
+
+        self.assertIn(
+            (null_deref_report1.reviewData.status,
+             null_deref_report1.reviewData.comment),
+            map(lambda x:
+                (x['review_status'], x['review_status_comment']),
+                suppress_project_bugs[null_deref_report1.bugHash]))
+        self.assertEqual(
+            uncommented_report1.reviewData.status,
+            ReviewStatus.INTENTIONAL)
+        self.assertEqual(
+            uncommented_report1.reviewData.comment,
+            "This is intentional")
+        self.assertEqual(
+            multi_confirmed_report.reviewData.comment,
+            "Has a source code comment.")
+        self.assertEqual(
+            multi_intentional_report.reviewData.comment,
+            "Has a different source code comment.")
+        # Only the one with no source code comment changes its review status.
+        self.assertEqual(
+            multi_false_positive_report.reviewData.comment,
+            "This is false positive.")
+        self.assertIsNone(multi_unreviewed_report)
+
+        # Storing the report directory of the project inserts further reports
+        # to the database with the same bug hashes. The review status of
+        # reports without source code comment should get the default review
+        # status set earlier.
+
+        test_project_name2 = 'review_status_change2'
+        codechecker.store(codechecker_cfg, test_project_name2)
+
+        run_filter = RunFilter(names=[test_project_name2], exactMatch=True)
+        runs = self._cc_client.getRunData(run_filter, None, 0, None)
+        runid2 = next(r.runId for r in runs if r.name == test_project_name2)
+
+        reports2 = get_all_run_results(self._cc_client, runid2)
+
+        uncommented_report2 = next(filter(
+            lambda r: r.bugHash == UNCOMMENTED_BUG_HASH,
+            reports2))
+
+        self.assertEqual(
+            uncommented_report2.reviewData.status,
+            ReviewStatus.INTENTIONAL)
+        self.assertEqual(
+            uncommented_report2.reviewData.comment,
+            "This is intentional")

@@ -666,7 +666,8 @@ class LocalRemote(unittest.TestCase):
 
         resolved_results, _, returncode = get_diff_results(
             [self._run_names[0]], [baseline_file_path], '--resolved', 'json',
-            ["--url", self._url])
+            ["--url", self._url,
+             "--review-status", "unreviewed", "confirmed", "false_positive"])
         print(resolved_results)
 
         self.assertTrue(resolved_results)
