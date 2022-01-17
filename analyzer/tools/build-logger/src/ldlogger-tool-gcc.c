@@ -428,10 +428,10 @@ int loggerGccParserCollectActions(
       char* ext = loggerGetFileExt(current, 1);
       if (ext)
       {
-        int i;
-        for (i = 0; srcExts[i]; ++i)
+        int j;
+        for (j = 0; srcExts[j]; ++j)
         {
-          if (strcmp(srcExts[i], ext) == 0)
+          if (strcmp(srcExts[j], ext) == 0)
           {
             char newPath[PATH_MAX];
 
@@ -554,7 +554,7 @@ int loggerGccParserCollectActions(
   }
   else
   {
-    LOG_WARN("No souce file was found.");
+    LOG_WARN("No source file was found.");
   }
 
   return 1;
