@@ -61,7 +61,6 @@
     "eslint": "^7.4.0",
     "eslint-loader": "^4.0.2",
     "eslint-plugin-vue": "^6.2.2",
-    "fibers": "^5.0.0",
     "file-loader": "^6.0.0",
     "geckodriver": "^1.21.0",
     "html-webpack-plugin": "^4.3.0",
