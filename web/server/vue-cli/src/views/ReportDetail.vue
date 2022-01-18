@@ -41,7 +41,7 @@
     <pane size="20">
       <v-container
         fluid
-        class="px-0"
+        class="pa-0"
       >
         <v-row no-gutters>
           <v-col class="px-2">

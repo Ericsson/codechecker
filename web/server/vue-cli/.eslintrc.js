@@ -25,17 +25,19 @@ module.exports = {
     "sort-imports": ["error", { "ignoreDeclarationSort": true }],
     "vue/max-attributes-per-line": ["error", {
       "singleline": 20,
-      "multiline": {
-        "max": 1,
-        "allowFirstLine": false
-      }
+      "multiline": 1
     }],
+    "vue/v-slot-style": "off",
+    "vue/valid-v-slot": "off",
+    "vue/multi-word-component-names": "off",
+    "vue/no-mutating-props": "off",
+    "vue/valid-next-tick": "off",
     "quotes": ["error", "double", {
       "avoidEscape": true
     }]
   },
   parserOptions: {
-    parser: "babel-eslint",
+    ecmaVersion: "2022",
     sourceType: "module"
   }
 }

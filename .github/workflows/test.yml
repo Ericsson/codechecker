@@ -189,7 +189,7 @@ jobs:
           python-version: '3.6'
       - uses: actions/setup-node@v1
         with:
-          node-version: '12.x'
+          node-version: '16.x'
 
       # - name: Update chrome
       #   run: |

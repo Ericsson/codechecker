@@ -19,7 +19,7 @@ RUN set -x && apt-get update -qq \
     curl \
     git \
     make \
-    && curl -sL https://deb.nodesource.com/setup_12.x | bash - \
+    && curl -sL https://deb.nodesource.com/setup_16.x | bash - \
     && apt-get install -y nodejs
 
 # Download CodeChecker release.

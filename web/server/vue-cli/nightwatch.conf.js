@@ -26,7 +26,7 @@ module.exports = {
         check_process_delay: 5000,
         cli_args: {
           "webdriver.gecko.driver": require("geckodriver").path,
-          "webdriver.chrome.driver": require("chromedriver").path
+          // "webdriver.chrome.driver": require("chromedriver").path
         }
       },
 

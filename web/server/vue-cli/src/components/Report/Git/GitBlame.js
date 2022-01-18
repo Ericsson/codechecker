@@ -69,6 +69,13 @@ export default {
 
         this.$nextTick(() => {
           this.editor.refresh();
+
+          this.$router.replace({
+            query: {
+              ...this.$route.query,
+              "view": undefined
+            }
+          }).catch(() => {});
           res();
         });
       });

@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid>
+  <v-container fluid class="pa-0">
     <checker-documentation-dialog
       :value.sync="checkerDocumentationDialog"
       :checker="selectedChecker"
@@ -10,240 +10,246 @@
       :report-id="reportId"
     />
 
-    <v-row>
+    <v-row class="ma-0">
       <v-col
         class="py-0"
         :cols="editorCols"
       >
-        <v-row class="mb-2 mx-0">
-          <v-col
-            cols="auto"
-            class="pa-0 mr-2"
-            align-self="center"
-          >
-            <show-report-info-dialog :value="report">
-              <template v-slot="{ on }">
-                <report-info-button :on="on" />
-              </template>
-            </show-report-info-dialog>
-          </v-col>
-
-          <v-col
-            cols="auto"
-            class="pa-0 mr-2"
-            align-self="center"
-          >
-            <analysis-info-btn
-              @click.native="openAnalysisInfoDialog"
-            />
-          </v-col>
-
-          <v-col
-            cols="auto"
-            class="pa-0 mr-2"
-            align-self="center"
-          >
-            <set-cleanup-plan-btn
-              :value="report ? [report] : []"
-            />
-          </v-col>
-
-          <v-col
-            cols="auto"
-            class="review-status-wrapper pa-0"
-            align-self="center"
-          >
-            <v-row class="px-4">
-              <select-review-status
-                class="mx-0"
-                :value="reviewData"
-                :on-confirm="confirmReviewStatusChange"
-              />
-
-              <v-menu
-                v-if="reviewData.comment"
-                content-class="review-status-message-dialog"
-                :close-on-content-click="false"
-                :nudge-width="200"
-                offset-x
-              >
-                <template v-slot:activator="{ on }">
-                  <v-btn class="review-status-message" icon v-on="on">
-                    <v-icon>mdi-message-text-outline</v-icon>
-                  </v-btn>
+        <v-container fluid class="pa-0 mb-2">
+          <v-row class="ma-0">
+            <v-col
+              cols="auto"
+              class="pa-0 mr-2"
+              align-self="center"
+            >
+              <show-report-info-dialog :value="report">
+                <template v-slot="{ on }">
+                  <report-info-button :on="on" />
                 </template>
-                <v-card>
-                  <v-list>
-                    <v-list-item>
-                      <v-list-item-avatar>
-                        <user-icon :value="reviewData.author" />
-                      </v-list-item-avatar>
+              </show-report-info-dialog>
+            </v-col>
 
-                      <v-list-item-content>
-                        <v-list-item-title>
-                          {{ reviewData.author }}
-                        </v-list-item-title>
-                        <v-list-item-subtitle>
-                          {{ reviewData.date | prettifyDate }}
-                        </v-list-item-subtitle>
-                      </v-list-item-content>
-                    </v-list-item>
-                  </v-list>
-
-                  <v-divider />
-
-                  <v-list>
-                    <v-list-item>
-                      <v-list-item-title>
-                        {{ reviewData.comment }}
-                      </v-list-item-title>
-                    </v-list-item>
-                  </v-list>
-                </v-card>
-              </v-menu>
-            </v-row>
-          </v-col>
-
-          <v-col
-            cols="auto"
-            class="pa-0"
-            align-self="center"
-          >
-            <v-checkbox
-              v-model="showArrows"
-              class="show-arrows mx-2 my-0 align-center justify-center"
-              label="Show arrows"
-              dense
-              :hide-details="true"
-            />
-          </v-col>
-
-          <v-spacer />
-
-          <v-col
-            cols="auto"
-            class="py-0 pr-0"
-            align-self="center"
-          >
-            <toggle-blame-view-btn
-              v-model="enableBlameView"
-              :disabled="!hasBlameInfo"
-            />
-          </v-col>
-
-          <v-col
-            cols="auto"
-            class="py-0 pr-0"
-            align-self="center"
-          >
-            <v-btn
-              class="comments-btn mx-2 mr-0"
-              color="primary"
-              outlined
-              small
-              :loading="loadNumOfComments"
-              @click="showComments = !showComments"
+            <v-col
+              cols="auto"
+              class="pa-0 mr-2"
+              align-self="center"
             >
-              <v-icon
-                class="mr-1"
-                small
-              >
-                mdi-comment-multiple-outline
-              </v-icon>
-              Comments ({{ numOfComments }})
-            </v-btn>
-          </v-col>
-        </v-row>
+              <analysis-info-btn
+                @click.native="openAnalysisInfoDialog"
+              />
+            </v-col>
 
-        <v-row
-          id="editor-wrapper"
-          class="mx-0"
-        >
-          <v-progress-linear
-            v-if="loading"
-            indeterminate
-            class="mb-0"
-          />
-
-          <v-col class="pa-0">
-            <v-row
-              class="header pa-1 mx-0"
-              justify="space-between"
+            <v-col
+              cols="auto"
+              class="pa-0 mr-2"
+              align-self="center"
             >
-              <v-col
-                v-if="trackingBranch"
-                class="file-path py-0"
-                align-self="center"
-                cols="auto"
-              >
-                <span
-                  v-if="sourceFile"
-                  :title="`Tracking branch: ${trackingBranch}`"
-                  class="grey--text text--darken-3"
-                >
-                  <v-icon class="mr-0" small>mdi-source-branch</v-icon>
-                  ({{ trackingBranch | truncate(20) }})
-                </span>
-              </v-col>
+              <set-cleanup-plan-btn
+                :value="report ? [report] : []"
+              />
+            </v-col>
 
-              <v-col
-                v-if="trackingBranch"
-                class="py-1 px-0"
-                cols="auto"
-              >
-                <v-divider
-                  inset
-                  vertical
-                  :style="{ display: 'inline' }"
+            <v-col
+              cols="auto"
+              class="review-status-wrapper pa-0"
+              align-self="center"
+            >
+              <v-row class="px-4">
+                <select-review-status
+                  class="mx-0"
+                  :value="reviewData"
+                  :on-confirm="confirmReviewStatusChange"
                 />
-              </v-col>
 
-              <v-col
-                class="file-path py-0 pl-1"
-                align-self="center"
-              >
-                <copy-btn v-if="sourceFile" :value="sourceFile.filePath" />
-                <span
-                  v-if="sourceFile"
-                  class="file-path"
-                  :title="`\u200E${sourceFile.filePath}`"
+                <v-menu
+                  v-if="reviewData.comment"
+                  content-class="review-status-message-dialog"
+                  :close-on-content-click="false"
+                  :nudge-width="200"
+                  offset-x
                 >
-                  {{ sourceFile.filePath }}
-                </span>
-              </v-col>
+                  <template v-slot:activator="{ on }">
+                    <v-btn class="review-status-message" icon v-on="on">
+                      <v-icon>mdi-message-text-outline</v-icon>
+                    </v-btn>
+                  </template>
+                  <v-card>
+                    <v-list>
+                      <v-list-item>
+                        <v-list-item-avatar>
+                          <user-icon :value="reviewData.author" />
+                        </v-list-item-avatar>
 
-              <v-col
-                cols="auto"
-                class="py-0"
-                align-self="center"
-              >
-                <v-row
-                  align="center"
-                  class="text-no-wrap"
-                >
-                  Found in:
-                  <select-same-report
-                    class="select-same-report ml-2"
-                    :report="report"
-                    @update:report="(reportId) =>
-                      $emit('update:report', reportId)"
-                  />
-                </v-row>
-              </v-col>
-            </v-row>
+                        <v-list-item-content>
+                          <v-list-item-title>
+                            {{ reviewData.author }}
+                          </v-list-item-title>
+                          <v-list-item-subtitle>
+                            {{ reviewData.date | prettifyDate }}
+                          </v-list-item-subtitle>
+                        </v-list-item-content>
+                      </v-list-item>
+                    </v-list>
 
-            <v-row
-              v-fill-height
-              :class="[
-                'editor',
-                'mx-0',
-                enableBlameView ? 'blame' : undefined
-              ]"
+                    <v-divider />
+
+                    <v-list>
+                      <v-list-item>
+                        <v-list-item-title>
+                          {{ reviewData.comment }}
+                        </v-list-item-title>
+                      </v-list-item>
+                    </v-list>
+                  </v-card>
+                </v-menu>
+              </v-row>
+            </v-col>
+
+            <v-col
+              cols="auto"
+              class="pa-0"
+              align-self="center"
             >
-              <textarea ref="editor" />
-            </v-row>
-          </v-col>
-        </v-row>
+              <v-checkbox
+                v-model="showArrows"
+                class="show-arrows mx-2 my-0 align-center justify-center"
+                label="Show arrows"
+                dense
+                :hide-details="true"
+              />
+            </v-col>
+
+            <v-spacer />
+
+            <v-col
+              cols="auto"
+              class="py-0 pr-0"
+              align-self="center"
+            >
+              <toggle-blame-view-btn
+                v-model="enableBlameView"
+                :disabled="!hasBlameInfo"
+              />
+            </v-col>
+
+            <v-col
+              cols="auto"
+              class="py-0 pr-0"
+              align-self="center"
+            >
+              <v-btn
+                class="comments-btn mx-2 mr-0"
+                color="primary"
+                outlined
+                small
+                :loading="loadNumOfComments"
+                @click="showComments = !showComments"
+              >
+                <v-icon
+                  class="mr-1"
+                  small
+                >
+                  mdi-comment-multiple-outline
+                </v-icon>
+                Comments ({{ numOfComments }})
+              </v-btn>
+            </v-col>
+          </v-row>
+        </v-container>
+
+        <v-container fluid class="pa-0">
+          <v-row
+            id="editor-wrapper"
+            class="ma-0"
+          >
+            <v-progress-linear
+              v-if="loading"
+              indeterminate
+              class="mb-0"
+            />
+
+            <v-col class="pa-0">
+              <v-container fluid class="pa-0">
+                <v-row
+                  class="header pa-1 ma-0"
+                  justify="space-between"
+                >
+                  <v-col
+                    v-if="trackingBranch"
+                    class="file-path py-0"
+                    align-self="center"
+                    cols="auto"
+                  >
+                    <span
+                      v-if="sourceFile"
+                      :title="`Tracking branch: ${trackingBranch}`"
+                      class="grey--text text--darken-3"
+                    >
+                      <v-icon class="mr-0" small>mdi-source-branch</v-icon>
+                      ({{ trackingBranch | truncate(20) }})
+                    </span>
+                  </v-col>
+
+                  <v-col
+                    v-if="trackingBranch"
+                    class="py-1 px-0"
+                    cols="auto"
+                  >
+                    <v-divider
+                      inset
+                      vertical
+                      :style="{ display: 'inline' }"
+                    />
+                  </v-col>
+
+                  <v-col
+                    class="file-path py-0 pl-1"
+                    align-self="center"
+                  >
+                    <copy-btn v-if="sourceFile" :value="sourceFile.filePath" />
+                    <span
+                      v-if="sourceFile"
+                      class="file-path"
+                      :title="`\u200E${sourceFile.filePath}`"
+                    >
+                      {{ sourceFile.filePath }}
+                    </span>
+                  </v-col>
+
+                  <v-col
+                    cols="auto"
+                    class="py-0"
+                    align-self="center"
+                  >
+                    <v-row
+                      align="center"
+                      class="text-no-wrap"
+                    >
+                      Found in:
+                      <select-same-report
+                        class="select-same-report ml-2"
+                        :report="report"
+                        @update:report="(reportId) =>
+                          $emit('update:report', reportId)"
+                      />
+                    </v-row>
+                  </v-col>
+                </v-row>
+
+                <v-row
+                  v-fill-height
+                  :class="[
+                    'editor',
+                    'ma-0',
+                    enableBlameView ? 'blame' : undefined
+                  ]"
+                >
+                  <textarea ref="editor" />
+                </v-row>
+              </v-container>
+            </v-col>
+          </v-row>
+        </v-container>
       </v-col>
       <v-col
         v-if="showComments"
@@ -725,6 +731,7 @@ export default {
           report: this.report
         }
       });
+      widget.$vuetify = this.$vuetify;
       widget.$mount();
 
       this.lineWidgets.push(this.editor.addLineWidget(

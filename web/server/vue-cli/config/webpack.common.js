@@ -2,37 +2,38 @@ const CopyPlugin = require('copy-webpack-plugin');
 const HTMLWebpackPlugin = require('html-webpack-plugin');
 const { VueLoaderPlugin } = require('vue-loader');
 const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin');
-const { DefinePlugin } = require('webpack');
+const { DefinePlugin, ProvidePlugin } = require('webpack');
+const ESLintPlugin = require('eslint-webpack-plugin');
 
 const { join } = require('path');
 
 const codeCheckerApi = require('codechecker-api/package.json');
+const apiVersion = codeCheckerApi.version.split('.').slice(0, 2).join('.');
 
 const helpers = require('./helpers');
-
-const apiVersion = codeCheckerApi.version.split('.').slice(0, 2).join('.');
-const METADATA = {
-  'CC_SERVER_HOST': null,
-  'CC_SERVER_PORT': 80,
-  'CC_API_VERSION': JSON.stringify(apiVersion)
-};
 
 function sassLoaderOptions(indentedSyntax=false) {
   return {
     implementation: require('sass'),
-    prependData: `@import "~@/variables.scss"` + (indentedSyntax ? '' : ';'),
+    additionalData: `@import "~@/variables.scss"` + (indentedSyntax ? '' : ';'),
     sassOptions: { indentedSyntax },
+  }
+}
+
+function cssLoaderOptions() {
+  return {
+    esModule: false
   }
 }
 
 module.exports = {
   entry: helpers.root('src', 'main.js'),
   optimization: {
-    moduleIds: 'hashed',
+    moduleIds: 'deterministic',
     runtimeChunk: 'single',
-     splitChunks: {
+    splitChunks: {
       cacheGroups: {
-        vendor: {
+        defaultVendors: {
           test: /[\\/]node_modules[\\/]/,
           name: 'vendors',
           chunks: 'all',
@@ -41,6 +42,11 @@ module.exports = {
     },
   },
   resolve: {
+    fallback: {
+      "buffer": require.resolve('buffer/'),
+      "util": require.resolve('util/'),
+    },
+    unsafeCache: true,
     extensions: ['.js', '.vue'],
     alias: {
       '@': helpers.root('src'),
@@ -79,27 +85,23 @@ module.exports = {
         loader: 'vue-loader'
       },
       {
-        test: /\.(js|vue)$/,
-        loader: 'eslint-loader',
-        exclude: [/node_modules/],
-        enforce: 'pre',
-        options: {
-          emitWarning: true,
-          configFile: './.eslintrc.js'
-        }
-      },
-      {
         test: /\.css$/,
         use: [
           'vue-style-loader',
-          'css-loader'
+          {
+            loader: 'css-loader',
+            options: cssLoaderOptions()
+          },
         ]
       },
       {
         test:/\.sass$/,
         use: [
           'vue-style-loader',
-          'css-loader',
+          {
+            loader: 'css-loader',
+            options: cssLoaderOptions()
+          },
           {
             loader: 'sass-loader',
             options: sassLoaderOptions(true)
@@ -110,7 +112,10 @@ module.exports = {
         test:/\.scss$/,
         use: [
           'vue-style-loader',
-          'css-loader',
+          {
+            loader: 'css-loader',
+            options: cssLoaderOptions()
+          },
           {
             loader: 'sass-loader',
             options: sassLoaderOptions(false)
@@ -142,7 +147,7 @@ module.exports = {
             loader: 'file-loader',
             options: {
               limit: 10000,
-              name: '[name].[hash:7].[ext]'
+              name: '[name].[contenthash:7].[ext]'
             }
           }
         ]
@@ -159,9 +164,14 @@ module.exports = {
   },
   plugins: [
     new DefinePlugin({
-      'process.env': {
-        'CC_API_VERSION': METADATA.CC_API_VERSION
-      }
+      'process.env.CC_API_VERSION': JSON.stringify(apiVersion)
+    }),
+    new ProvidePlugin({
+      Buffer: ['buffer', 'Buffer'],
+    }),
+    new ESLintPlugin({
+      extensions: ['js', 'vue'],
+      overrideConfigFile: './.eslintrc.js'
     }),
     new VueLoaderPlugin(),
     new VuetifyLoaderPlugin(),
