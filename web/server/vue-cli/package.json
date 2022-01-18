@@ -32,7 +32,6 @@
     "chartjs-plugin-datalabels": "^0.7.0",
     "codemirror": "^5.60.0",
     "date-fns": "^2.20.0",
-    "highlight.js": "^10.7.2",
     "jsplumb": "^2.15.5",
     "js-cookie": "^2.2.1",
     "lodash": "^4.17.21",
