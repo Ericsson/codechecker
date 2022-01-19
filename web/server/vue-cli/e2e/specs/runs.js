@@ -361,6 +361,7 @@ module.exports = {
       .click("@deleteSelectedRunsBtn")
       .expect.section("@removeRunDialog").to.be.visible.before(5000);
 
+    runsPage.expect.element("@overlay").to.be.visible.before(5000);
     removeDialog.click("@confirmBtn");
 
     runsPage.expect.section("@removeRunDialog")

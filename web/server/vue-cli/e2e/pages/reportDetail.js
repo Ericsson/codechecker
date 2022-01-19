@@ -67,7 +67,8 @@ module.exports = {
     selectSameReport: ".select-same-report",
     reportStepMsg: ".report-step-msg",
     toggleBlameViewBtn: ".toggle-blame-view-btn",
-    blameCommitInfo: ".blame-commit-info"
+    blameCommitInfo: ".blame-commit-info",
+    overlay: ".v-overlay.v-overlay--active"
   },
   commands: [ commands ],
   sections: {

@@ -3,6 +3,8 @@ const commands = {
     this
       .click("@editAnnouncementBtn");
 
+    this.expect.element("@overlay").to.be.visible.before(5000);
+
     this.expect.section("@editAnnouncementDialog")
       .to.be.visible.before(5000);
 
@@ -13,12 +15,16 @@ const commands = {
     this.expect.section("@editAnnouncementDialog")
       .to.not.be.present.before(5000);
 
+    this.expect.element("@overlay").to.not.be.present.before(5000);
+
     return this;
   },
 
   showGlobalPermissionsDialog() {
     this
       .click("@editGlobalPermissionBtn");
+
+    this.expect.element("@overlay").to.be.visible.before(5000);
 
     this.expect.section("@editGlobalPermissionsDialog")
       .to.be.visible.before(5000);
@@ -31,6 +37,8 @@ const commands = {
 
     this.expect.section("@editGlobalPermissionsDialog")
       .to.not.be.present.before(5000);
+
+    this.expect.element("@overlay").to.not.be.present.before(5000);
 
     return this;
   },
@@ -80,17 +88,8 @@ const commands = {
     this
       .click("@newProductBtn");
 
+    this.expect.element("@overlay").to.be.visible.before(5000);
     this.expect.section("@productDialog").to.be.visible;
-
-    return this;
-  },
-
-  closeNewProductDialog() {
-    this.section.productDialog
-      .waitForElementVisible("@closeBtn")
-      .click("@closeBtn", () => {
-        this.expect.section("@productDialog").to.not.be.present.before(4000);
-      });
 
     return this;
   },
@@ -165,8 +164,9 @@ const commands = {
   },
 
   saveProduct() {
-    this.section.productDialog
-      .click("@confirmBtn");
+    this.section.productDialog.click("@confirmBtn");
+
+    this.waitForElementNotPresent("@progressBar", 5000);
 
     return this;
   },
@@ -175,10 +175,14 @@ const commands = {
     this.click("@removeBtn");
 
     this.expect.section("@removeProductDialog").to.be.visible.before(5000);
+    this.expect.element("@overlay").to.be.visible.before(5000);
 
     this.section.removeProductDialog
       .waitForElementVisible("@confirmBtn")
       .click("@confirmBtn");
+
+    this.waitForElementNotPresent("@progressBar", 5000);
+    this.expect.element("@overlay").to.not.be.present.before(5000);
 
     return this;
   },
@@ -229,7 +233,8 @@ module.exports = {
     searchInput: ".v-toolbar__content input[type='text']",
     progressBar: ".v-data-table__progress",
     editBtn: "tr .edit-btn",
-    removeBtn: "tr .remove-btn"
+    removeBtn: "tr .remove-btn",
+    overlay: ".v-overlay.v-overlay--active"
   },
   sections: {
     editAnnouncementDialog: {
@@ -252,7 +257,7 @@ module.exports = {
         checkBox: ".v-input--checkbox",
         cancelBtn: ".cancel-btn",
         confirmBtn: ".confirm-btn",
-        closeBtn: ".title button"
+        closeBtn: ".close-btn"
       }
     },
     productDialog: {

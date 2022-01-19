@@ -102,6 +102,8 @@ module.exports = {
       })
       .saveProduct();
 
+    product.expect.element("@overlay").to.not.be.present.before(5000);
+
     product
       .filterProducts("Test")
       .editProduct()
@@ -115,8 +117,10 @@ module.exports = {
       })
       .saveProduct();
 
-    product
-      .removeProduct();
+    product.expect.section("@productDialog").to.not.be.present.before(4000);
+    product.expect.element("@overlay").to.not.be.present.before(5000);
+
+    product.removeProduct();
   },
 
   "sort products" (browser) {

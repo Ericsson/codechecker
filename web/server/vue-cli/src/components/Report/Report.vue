@@ -54,55 +54,61 @@
               class="review-status-wrapper pa-0"
               align-self="center"
             >
-              <v-row class="px-4">
-                <select-review-status
-                  class="mx-0"
-                  :value="reviewData"
-                  :on-confirm="confirmReviewStatusChange"
-                />
+              <v-container fluid class="pa-0">
+                <v-row class="px-4">
+                  <v-col cols="auto" class="pa-0">
+                    <select-review-status
+                      class="mx-0"
+                      :value="reviewData"
+                      :on-confirm="confirmReviewStatusChange"
+                    />
+                  </v-col>
 
-                <v-menu
-                  v-if="reviewData.comment"
-                  content-class="review-status-message-dialog"
-                  :close-on-content-click="false"
-                  :nudge-width="200"
-                  offset-x
-                >
-                  <template v-slot:activator="{ on }">
-                    <v-btn class="review-status-message" icon v-on="on">
-                      <v-icon>mdi-message-text-outline</v-icon>
-                    </v-btn>
-                  </template>
-                  <v-card>
-                    <v-list>
-                      <v-list-item>
-                        <v-list-item-avatar>
-                          <user-icon :value="reviewData.author" />
-                        </v-list-item-avatar>
+                  <v-col cols="auto" class="pa-0">
+                    <v-menu
+                      v-if="reviewData.comment"
+                      content-class="review-status-message-dialog"
+                      :close-on-content-click="false"
+                      :nudge-width="200"
+                      offset-x
+                    >
+                      <template v-slot:activator="{ on }">
+                        <v-btn class="review-status-message" icon v-on="on">
+                          <v-icon>mdi-message-text-outline</v-icon>
+                        </v-btn>
+                      </template>
+                      <v-card>
+                        <v-list>
+                          <v-list-item>
+                            <v-list-item-avatar>
+                              <user-icon :value="reviewData.author" />
+                            </v-list-item-avatar>
 
-                        <v-list-item-content>
-                          <v-list-item-title>
-                            {{ reviewData.author }}
-                          </v-list-item-title>
-                          <v-list-item-subtitle>
-                            {{ reviewData.date | prettifyDate }}
-                          </v-list-item-subtitle>
-                        </v-list-item-content>
-                      </v-list-item>
-                    </v-list>
+                            <v-list-item-content>
+                              <v-list-item-title>
+                                {{ reviewData.author }}
+                              </v-list-item-title>
+                              <v-list-item-subtitle>
+                                {{ reviewData.date | prettifyDate }}
+                              </v-list-item-subtitle>
+                            </v-list-item-content>
+                          </v-list-item>
+                        </v-list>
 
-                    <v-divider />
+                        <v-divider />
 
-                    <v-list>
-                      <v-list-item>
-                        <v-list-item-title>
-                          {{ reviewData.comment }}
-                        </v-list-item-title>
-                      </v-list-item>
-                    </v-list>
-                  </v-card>
-                </v-menu>
-              </v-row>
+                        <v-list>
+                          <v-list-item>
+                            <v-list-item-title>
+                              {{ reviewData.comment }}
+                            </v-list-item-title>
+                          </v-list-item>
+                        </v-list>
+                      </v-card>
+                    </v-menu>
+                  </v-col>
+                </v-row>
+              </v-container>
             </v-col>
 
             <v-col
