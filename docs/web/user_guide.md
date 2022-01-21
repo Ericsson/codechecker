@@ -40,6 +40,8 @@ Table of Contents
         * [`login` (Authenticate to the server)](#cmd-login)
         * [`export` (Export comments and review statuses from CodeChecker)](#cmd-export)
         * [`import` (Import comments and review statuses into CodeChecker)](#cmd-import)
+    * [`version`](#version)
+      * [JSON format](#json-format)
 * [Debugging CodeChecker](#debug)
 
 # CodeChecker <a name="codechecker"></a>
@@ -1679,6 +1681,7 @@ common arguments:
   --verbose {info,debug_analyzer,debug}
                         Set verbosity level.
 ```
+</details>
 
 ### Authenticate to the server (`login`) <a name="cmd-login"></a>
 <details>
@@ -1767,6 +1770,47 @@ optional arguments:
   -i JSON_FILE, --import JSON_FILE
                         Import findings from the json file into the database.
 ```
+
+## `version`
+### JSON format
+The JSON output format looks like this:
+```json
+{
+  "analyzer": {
+    "base_package_version": "6.19.0",
+    "package_build_date": "2021-12-15T16:07",
+    "git_commit": "ed16b5d58f75002b465ea0944be0abf071f0b958",
+    "git_tag": "6.19"
+  },
+  "web": {
+    "base_package_version": "6.19.0",
+    "package_build_date": "2021-12-15T16:07",
+    "git_commit": "ed16b5d58f75002b465ea0944be0abf071f0b958",
+    "git_tag": "6.19",
+    "server_api_version": [
+      "6.47"
+    ],
+    "client_api_version": "6.47"
+  }
+}
+```
+
+In JSON output we have two main sections:
+- `analyzer` (null | object): Analyzer version information if it's available.
+  - `base_package_version` (string): Base package version in
+  `<major>.<minor>.<revision>` format.
+  - `package_build_date` (string): Date time when the package was built.
+  - `git_commit` (null | string): Git commit ID (hash).
+  - `git_tag` (null | string): Git tag information.
+- `web` (null | object): Web version information if it's available.
+  - `base_package_version` (string): Base package version in
+  `<major>.<minor>.<revision>` format.
+  - `package_build_date` (string): Date time when the package was built.
+  - `git_commit` (null | string): Git commit ID (hash).
+  - `git_tag` (null | string): Git tag information.
+  - `server_api_version` (list[string]): Server supported Thrift API version.
+  - `client_api_version` (str): Client Thrift API version.
+
 
 # Debugging CodeChecker <a name="debug"></a>
 
