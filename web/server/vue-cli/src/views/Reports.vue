@@ -62,6 +62,10 @@
                         :title="report.$detectionStatusTitle"
                         :size="18"
                       />
+                      <review-status-icon
+                        :status="parseInt(report.reviewData.status)"
+                        :size="18"
+                      />
                       <router-link
                         :to="{ name: 'report-detail', query: {
                           ...$router.currentRoute.query,
@@ -140,7 +144,15 @@
           </v-chip>
         </template>
 
-        <template #item.reviewData="{ item }">
+        <template v-if="reportFilter.isUnique" #item.reviewData="{ item }">
+          <review-status-icon
+            v-for="status in sameReports[item.bugHash]"
+            :key="status"
+            :status="parseInt(status)"
+            class="pa-1"
+          />
+        </template>
+        <template v-else #item.reviewData="{ item }">
           <review-status-icon :status="parseInt(item.reviewData.status)" />
         </template>
 
@@ -260,6 +272,7 @@ export default {
         }
       ],
       reports: [],
+      sameReports: {},
       selected: [],
       namespace: namespace,
       pagination: {
@@ -328,7 +341,7 @@ export default {
           ...report,
           "$detectionStatusTitle": detectionStatusTitle,
           "$id": id,
-          "sameReports": null
+          "sameReports": report.sameReports
         };
       });
     }
@@ -445,6 +458,14 @@ export default {
           this.reports = reports;
           this.loading = false;
           this.initalized = true;
+
+          reports.forEach(report => {
+            ccService.getSameReports(report.bugHash).then(sameReports => {
+              this.$set(
+                this.sameReports, report.bugHash,
+                [ ...new Set(sameReports.map(r => r.reviewData.status)) ]);
+            });
+          });
         }));
     }
   }

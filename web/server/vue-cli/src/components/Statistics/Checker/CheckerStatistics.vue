@@ -21,6 +21,8 @@
           </v-btn>
         </h3>
 
+        <unique-stat-warning v-if="reportFilter.isUnique" />
+
         <checker-statistics-table
           :items="statistics"
           :loading="loading"
@@ -32,7 +34,7 @@
 
 <script>
 import { ReviewStatusMixin, SeverityMixin, ToCSV } from "@/mixins";
-import { BaseStatistics } from "@/components/Statistics";
+import { BaseStatistics, UniqueStatWarning } from "@/components/Statistics";
 import {
   getCheckerStatistics
 } from "@/components/Statistics/StatisticsHelper";
@@ -41,7 +43,7 @@ import CheckerStatisticsTable from "./CheckerStatisticsTable";
 export default {
   name: "CheckerStatistics",
   components: {
-    CheckerStatisticsTable
+    CheckerStatisticsTable, UniqueStatWarning
   },
   mixins: [ BaseStatistics, ReviewStatusMixin, SeverityMixin, ToCSV ],
 

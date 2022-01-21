@@ -226,7 +226,8 @@ struct ReviewData {
   1: ReviewStatus  status,
   2: string        comment,
   3: string        author,
-  4: string        date
+  4: string        date,
+  5: bool          isInSource, // Indicates whether the review status comes from source code comment.
 }
 
 /*

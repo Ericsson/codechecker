@@ -799,13 +799,15 @@ def create_review_data(
     review_status: str,
     message: Optional[str],
     author,
-    date
+    date,
+    is_in_source: bool
 ):
     return ReviewData(
         status=review_status_enum(review_status),
         comment=None if message is None else message.decode('utf-8'),
         author=author,
-        date=None if date is None else str(date))
+        date=None if date is None else str(date),
+        isInSource=is_in_source)
 
 
 def create_count_expression(report_filter):
@@ -1493,7 +1495,8 @@ class ThriftRequestHandler:
                     report.review_status,
                     report.review_status_message,
                     report.review_status_author,
-                    report.review_status_date),
+                    report.review_status_date,
+                    report.review_status_is_in_source),
                 detectionStatus=detection_status_enum(report.detection_status),
                 detectedAt=str(report.detected_at),
                 fixedAt=str(report.fixed_at) if report.fixed_at else None)
@@ -1633,6 +1636,7 @@ class ThriftRequestHandler:
                                   Report.review_status_author,
                                   Report.review_status_message,
                                   Report.review_status_date,
+                                  Report.review_status_is_in_source,
                                   File.filename, File.filepath,
                                   Report.path_length, Report.analyzer_name) \
                     .outerjoin(File, Report.file_id == File.id) \
@@ -1658,14 +1662,16 @@ class ThriftRequestHandler:
                 for report_id, bug_id, checker_msg, checker, severity, \
                     detected_at, fixed_at, review_status, \
                     review_status_author, review_status_message, \
-                    review_status_date, filename, _, bug_path_len, \
+                    review_status_date, review_status_is_in_source, \
+                    filename, _, bug_path_len, \
                         analyzer_name in query_result:
 
                     review_data = create_review_data(
                         review_status,
                         review_status_message,
                         review_status_author,
-                        review_status_date)
+                        review_status_date,
+                        review_status_is_in_source)
 
                     results.append(
                         ReportData(bugHash=bug_id,
@@ -1695,6 +1701,7 @@ class ThriftRequestHandler:
                                   Report.review_status_author,
                                   Report.review_status_message,
                                   Report.review_status_date,
+                                  Report.review_status_is_in_source,
                                   Report.path_length, Report.analyzer_name)
                 q = apply_report_filter(q, filter_expression, join_tables)
 
@@ -1729,14 +1736,16 @@ class ThriftRequestHandler:
                 for run_id, report_id, file_id, line, column, d_status, \
                     bug_id, checker_msg, checker, severity, detected_at,\
                     fixed_at, review_status, review_status_author, \
-                    review_status_message, review_status_date, bug_path_len, \
+                    review_status_message, review_status_date, \
+                    review_status_is_in_source, bug_path_len, \
                         analyzer_name in query_result:
 
                     review_data = create_review_data(
                         review_status,
                         review_status_message,
                         review_status_author,
-                        review_status_date)
+                        review_status_date,
+                        review_status_is_in_source)
 
                     results.append(
                         ReportData(runId=run_id,
@@ -1999,7 +2008,8 @@ class ThriftRequestHandler:
                     review_status.status,
                     review_status.message,
                     review_status.author,
-                    review_status.date),
+                    review_status.date,
+                    False),
                 associatedReportCount=associated_report_count))
 
         return result
@@ -2565,7 +2575,7 @@ class ThriftRequestHandler:
             if is_unique:
                 q = session.query(
                     Report.bug_id,
-                    func.max(Report.review_status).label('status'))
+                    Report.review_status)
             else:
                 q = session.query(
                     func.max(Report.bug_id),
@@ -2575,11 +2585,11 @@ class ThriftRequestHandler:
             q = apply_report_filter(q, filter_expression, join_tables)
 
             if is_unique:
-                q = q.group_by(Report.bug_id).subquery()
-                review_statuses = session.query(func.max(q.c.bug_id),
-                                                q.c.status,
+                q = q.group_by(Report.bug_id, Report.review_status).subquery()
+                review_statuses = session.query(q.c.bug_id,
+                                                q.c.review_status,
                                                 func.count(q.c.bug_id)) \
-                    .group_by(q.c.status)
+                    .group_by(q.c.review_status)
             else:
                 review_statuses = q.group_by(Report.review_status)
 
@@ -3204,22 +3214,23 @@ class ThriftRequestHandler:
 
             # Logic for getting review status
             review_data_list = {}
-            review_query = session.query(ReviewStatus, Report.bug_id) \
-                .outerjoin(Report, Report.bug_id == ReviewStatus.bug_hash) \
-                .order_by(ReviewStatus.date.desc())
+            review_query = session.query(Report) \
+                .filter(Report.review_status != "unreviewed") \
+                .order_by(Report.review_status_date)
 
             if run_filter:
                 review_query = process_run_filter(session, review_query,
                                                   run_filter) \
                     .outerjoin(Run, Report.run_id == Run.id)
 
-            for data, report_id in review_query:
+            for report in review_query:
                 review_data = create_review_data(
-                    data.status,
-                    data.message,
-                    data.author,
-                    data.date)
-                review_data_list[report_id] = review_data
+                    report.review_status,
+                    report.review_status_message,
+                    report.review_status_author,
+                    report.review_status_date,
+                    report.review_status_is_in_source)
+                review_data_list[report.bug_id] = review_data
 
         return ExportData(comments=comment_data_list,
                           reviewData=review_data_list)
