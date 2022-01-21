@@ -745,3 +745,16 @@ class DiffRemote(unittest.TestCase):
                 self.assertNotIn(InvalidFileContentMsg, f.read())
 
         shutil.rmtree(html_reports, ignore_errors=True)
+
+    def test_print_bug_steps(self):
+        """ Test printing the steps the analyzers took. """
+        base_run_name = self._test_runs[0].name
+        new_run_name = self._test_runs[1].name
+
+        out, _, ret = get_diff_results(
+            [base_run_name], [new_run_name], '--resolved', None,
+            ["--url", self._url, "--print-steps"])
+
+        self.assertTrue("Steps:" in out)
+        self.assertTrue("Report hash:" in out)
+        self.assertEqual(ret, 2)
