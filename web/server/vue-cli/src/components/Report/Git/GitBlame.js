@@ -4,7 +4,6 @@ import { parse } from "date-fns";
 import { ccService, handleThriftError } from "@cc-api";
 
 import GitBlameLine from "./GitBlameLine";
-//import _ from "highlight.js/lib/languages/*";
 const GitBlameLineClass = Vue.extend(GitBlameLine);
 
 function getCommitColor(commit, minDate, maxDate) {
@@ -70,6 +69,13 @@ export default {
 
         this.$nextTick(() => {
           this.editor.refresh();
+
+          this.$router.replace({
+            query: {
+              ...this.$route.query,
+              "view": undefined
+            }
+          }).catch(() => {});
           res();
         });
       });

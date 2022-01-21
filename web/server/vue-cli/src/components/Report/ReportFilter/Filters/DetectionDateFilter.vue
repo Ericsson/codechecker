@@ -32,7 +32,6 @@
           cols="12"
           sm="6"
           md="6"
-          class="py-0"
         >
           <date-time-picker
             :input-class="fromDateTimeId"
@@ -47,7 +46,6 @@
           cols="12"
           sm="6"
           md="6"
-          class="py-0"
         >
           <date-time-picker
             :input-class="toDateTimeId"

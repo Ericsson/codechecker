@@ -1,5 +1,7 @@
 module.exports = {
   before(browser) {
+    browser.resizeWindow(1600, 1000);
+
     const login = browser.page.login();
 
     const reportDetailPage = browser.page.reportDetail();
@@ -68,6 +70,8 @@ module.exports = {
     reportDetailPage.expect.section(changeReviewStatusMessageDialog)
       .to.be.visible.before(5000);
 
+    reportDetailPage.expect.element("@overlay").to.be.visible.before(5000);
+
     // Set the message and save.
     const message = "Test";
     changeReviewStatusMessageDialog
@@ -85,6 +89,7 @@ module.exports = {
     reportDetailPage.click("@page");
     reportDetailPage.expect.section(reviewStatusMessageMenu)
       .to.be.not.present.before(5000);
+    reportDetailPage.expect.element("@overlay").to.not.be.present.before(5000);
   },
 
   "change review status without message" (browser) {
@@ -105,6 +110,8 @@ module.exports = {
 
     reportDetailPage.expect.section(changeReviewStatusMessageDialog)
       .to.be.visible.before(5000);
+
+    reportDetailPage.expect.element("@overlay").to.be.visible.before(5000);
 
     // Clear the message.
     changeReviewStatusMessageDialog
@@ -146,6 +153,8 @@ module.exports = {
     reportDetailPage.expect.section(editCommentDialog)
       .to.be.visible.before(5000);
 
+    reportDetailPage.expect.element("@overlay").to.be.visible.before(5000);
+
     editCommentDialog
       .clearAndSetValue("@message", newMessage, editCommentDialog);
 
@@ -161,6 +170,7 @@ module.exports = {
     userCommentSection.click("@removeBtn");
     reportDetailPage.expect.section(removeCommentDialog)
       .to.be.visible.before(5000);
+    reportDetailPage.expect.element("@overlay").to.be.visible.before(5000);
 
     removeCommentDialog.click("@removeBtn");
 

@@ -34,7 +34,7 @@
 
         <v-spacer />
 
-        <v-btn icon dark @click="dialog = false">
+        <v-btn class="close-btn" icon dark @click="dialog = false">
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-card-title>

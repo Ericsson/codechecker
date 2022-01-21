@@ -1,6 +1,6 @@
 <template>
   <v-container class="py-0">
-    <v-row>
+    <v-row class="ma-0">
       <v-textarea
         v-model="message"
         outlined
@@ -10,7 +10,7 @@
       />
     </v-row>
 
-    <v-row>
+    <v-row class="ma-0">
       <v-spacer />
       <v-col
         cols="auto"

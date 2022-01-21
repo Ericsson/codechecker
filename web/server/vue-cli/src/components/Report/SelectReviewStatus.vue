@@ -6,37 +6,39 @@
     max-width="600px"
   >
     <template v-slot:activator="{}">
-      <v-row>
-        <v-col
-          cols="auto"
-          class="pa-0 mx-4"
-        >
-          <v-select
-            :value="value.status"
-            :items="items"
-            :hide-details="true"
-            :menu-props="{ contentClass: 'select-review-status-menu' }"
-            :disabled="isReviewStatusDisabled"
-            label="Set review status"
-            item-text="label"
-            item-value="id"
-            class="select-review-status small"
-            height="0"
-            flat
-            dense
-            solo
-            @input="onReviewStatusChange"
+      <v-container fluid class="px-0">
+        <v-row>
+          <v-col
+            cols="auto"
+            class="pa-0 mx-4"
           >
-            <template v-slot:selection="{ item }">
-              <select-review-status-item :item="item" />
-            </template>
+            <v-select
+              :value="value.status"
+              :items="items"
+              :hide-details="true"
+              :menu-props="{ contentClass: 'select-review-status-menu' }"
+              :disabled="isReviewStatusDisabled"
+              label="Set review status"
+              item-text="label"
+              item-value="id"
+              class="select-review-status small"
+              height="0"
+              flat
+              dense
+              solo
+              @input="onReviewStatusChange"
+            >
+              <template v-slot:selection="{ item }">
+                <select-review-status-item :item="item" />
+              </template>
 
-            <template v-slot:item="{ item }">
-              <select-review-status-item :item="item" />
-            </template>
-          </v-select>
-        </v-col>
-      </v-row>
+              <template v-slot:item="{ item }">
+                <select-review-status-item :item="item" />
+              </template>
+            </v-select>
+          </v-col>
+        </v-row>
+      </v-container>
     </template>
 
     <v-card>

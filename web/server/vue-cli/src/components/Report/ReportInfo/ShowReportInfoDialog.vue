@@ -5,14 +5,16 @@
     max-width="600px"
   >
     <template v-slot:activator="{ on }">
-      <v-row>
-        <v-col
-          cols="auto"
-          class="pa-0 mx-4"
-        >
-          <slot :on="on" />
-        </v-col>
-      </v-row>
+      <v-container fluid class="px-0">
+        <v-row>
+          <v-col
+            cols="auto"
+            class="pa-0 mx-4"
+          >
+            <slot :on="on" />
+          </v-col>
+        </v-row>
+      </v-container>
     </template>
 
     <v-card>

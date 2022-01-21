@@ -41,7 +41,7 @@ parts:
       - python3-setuptools
       - python  # Needed to compile fibers npm package.
     build-snaps:
-      - node/11/stable
+      - node/16/stable
     override-pull: |
       snapcraftctl pull
 
