@@ -968,7 +968,8 @@ def parse_options(compilation_db_entry,
 
     if 'arguments' in compilation_db_entry:
         gcc_command = compilation_db_entry['arguments']
-        details['original_command'] = ' '.join(gcc_command)
+        details['original_command'] = \
+            ' '.join([shlex.quote(x) for x in gcc_command])
     elif 'command' in compilation_db_entry:
         details['original_command'] = compilation_db_entry['command']
         gcc_command = shlex.split(compilation_db_entry['command'])
@@ -1172,10 +1173,10 @@ def extend_compilation_database_entries(compilation_database):
                         continue
 
                     opts, sources = process_response_file(response_file)
-                    cmd.extend(opts)
+                    cmd.extend([shlex.quote(x) for x in opts])
                     source_files.extend(sources)
                 else:
-                    cmd.append(opt)
+                    cmd.append(shlex.quote(opt))
 
             entry['command'] = ' '.join(cmd)
 
