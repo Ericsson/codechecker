@@ -3,7 +3,8 @@ NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --report-hash=context-fre
 NORMAL#CodeChecker parse $OUTPUT$ --print-steps
 CHECK#CodeChecker check --build "make context_hash" --output $OUTPUT$ --quiet --print-steps --report-hash=context-free-v2 --analyzers clang-tidy
 --------------------------------------------------------------------------------
-[] - Starting build ...
+[] - Starting build...
+[] - Using CodeChecker ld-logger.
 [] - Build finished successfully.
 [] - Starting static analysis ...
 [] - [1/1] clang-tidy analyzed context_hash.cpp successfully.

@@ -3,7 +3,8 @@ NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --report-hash=diagnostic-
 NORMAL#CodeChecker parse $OUTPUT$ --print-steps
 CHECK#CodeChecker check --build "make context_hash" --output $OUTPUT$ --quiet --print-steps --report-hash=diagnostic-message --analyzers clangsa
 --------------------------------------------------------------------------------
-[] - Starting build ...
+[] - Starting build...
+[] - Using CodeChecker ld-logger.
 [] - Build finished successfully.
 [] - Starting static analysis ...
 [] - [1/1] clangsa analyzed context_hash.cpp successfully.

@@ -3,7 +3,8 @@ NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy --
 NORMAL#CodeChecker parse $OUTPUT$
 CHECK#CodeChecker check --build "make tidy_check multi_error_skipped_in_cmd" --output $OUTPUT$ --analyzers clang-tidy --quiet --file "*/multi_error_skipped_in_cmd.cpp" -d clang-diagnostic-unused-value -d misc-definitions-in-headers
 -----------------------------------------------
-[] - Starting build ...
+[] - Starting build...
+[] - Using CodeChecker ld-logger.
 [] - Build finished successfully.
 [] - Starting static analysis ...
 [] - [1/1] clang-tidy analyzed multi_error_skipped_in_cmd.cpp successfully.

@@ -3,7 +3,8 @@ NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clangsa
 NORMAL#CodeChecker parse $OUTPUT$
 CHECK#CodeChecker check --build "make deduplication" --output $OUTPUT$ --quiet --analyzers clangsa
 --------------------------------------------------------------------------------
-[] - Starting build ...
+[] - Starting build...
+[] - Using CodeChecker ld-logger.
 [] - Build finished successfully.
 [] - Starting static analysis ...
 [] - [1/2] clangsa analyzed simple1.cpp successfully.

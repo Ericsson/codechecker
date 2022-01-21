@@ -57,7 +57,7 @@ def perform_build_command(logfile, command, context, keep_link, silent=False,
     """
     Build the project and create a log file.
     """
-    LOG.info("Starting build ...")
+    LOG.info("Starting build...")
 
     original_env = os.environ
     try:
@@ -77,7 +77,7 @@ def perform_build_command(logfile, command, context, keep_link, silent=False,
 
     # Run user's commands with intercept.
     if host_check.check_intercept(original_env):
-        LOG.debug_analyzer("with intercept ...")
+        LOG.info("Using intercept-build.")
         final_command = command
         command = ' '.join(["intercept-build",
                             "--cdb", logfile,
@@ -89,7 +89,7 @@ def perform_build_command(logfile, command, context, keep_link, silent=False,
     else:
         # TODO: better platform detection.
         if platform.system() == 'Linux':
-            LOG.debug_analyzer("with ld logger ...")
+            LOG.info("Using CodeChecker ld-logger.")
             # Same as linux's touch.
             open(logfile, 'a', encoding="utf-8", errors="ignore").close()
             log_env = env.get_log_env(logfile, context, original_env)
