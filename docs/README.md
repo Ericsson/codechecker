@@ -245,7 +245,7 @@ sudo apt-get install clang clang-tidy build-essential curl gcc-multilib \
 # Install nodejs dependency for web. In case of Debian/Ubuntu you can use the
 # following commands. For more information see the official docs:
 # https://nodejs.org/en/download/package-manager/
-curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
 # Check out CodeChecker source code.
