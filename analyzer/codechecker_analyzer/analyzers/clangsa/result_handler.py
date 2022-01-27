@@ -41,7 +41,8 @@ class ClangSAResultHandler(ResultHandler):
         """
         if os.path.exists(self.analyzer_result_file):
             reports = report_file.get_reports(
-                self.analyzer_result_file, self.checker_labels)
+                self.analyzer_result_file, self.checker_labels,
+                source_dir_path=self.source_dir_path)
             reports = [r for r in reports if not r.skip(skip_handler)]
 
             hash_type = None
