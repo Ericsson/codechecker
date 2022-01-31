@@ -19,8 +19,9 @@ import unittest
 from typing import Callable, List
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import CommentKind, \
-    Order, ReviewStatus, ReviewStatusRule, ReviewStatusRuleFilter, \
-    ReviewStatusRuleSortMode, ReviewStatusRuleSortType, RunFilter
+    DetectionStatus, Order, ReviewStatus, ReviewStatusRule, \
+    ReviewStatusRuleFilter, ReviewStatusRuleSortMode, \
+    ReviewStatusRuleSortType, RunFilter
 
 from libtest import env, codechecker, plist_test, project
 from libtest.thrift_client_to_db import get_all_run_results
@@ -429,7 +430,7 @@ class TestReviewStatus(unittest.TestCase):
             lambda r: r.associatedReportCount,
             ReviewStatusRuleSortType.ASSOCIATED_REPORTS_COUNT)
 
-    def test_review_status(self):
+    def test_review_status_changes(self):
         """
         Test review status changes
         """
@@ -477,28 +478,16 @@ class TestReviewStatus(unittest.TestCase):
         UNCOMMENTED_BUG_HASH = 'f0bf9810fe405de502137f1eb71fb706'
         MULTI_REPORT_HASH = '2d019b15c17a7cf6aa3b238b916872ba'
 
-        null_deref_report_id = next(
-            r.reportId for r in reports1
-            if r.bugHash == NULL_DEREF_BUG_HASH)
-        uncommented_report_id = next(
-            r.reportId for r in reports1
-            if r.bugHash == UNCOMMENTED_BUG_HASH)
-
-        multi_confirmed_id = next(
-            r.reportId for r in reports1
-            if r.bugHash == MULTI_REPORT_HASH and
-            r.reviewData.status == ReviewStatus.CONFIRMED)
-
-        self._cc_client.changeReviewStatus(
-            null_deref_report_id,
+        self._cc_client.addReviewStatusRule(
+            NULL_DEREF_BUG_HASH,
             ReviewStatus.INTENTIONAL,
             "This is intentional")
-        self._cc_client.changeReviewStatus(
-            uncommented_report_id,
+        self._cc_client.addReviewStatusRule(
+            UNCOMMENTED_BUG_HASH,
             ReviewStatus.INTENTIONAL,
             "This is intentional")
-        self._cc_client.changeReviewStatus(
-            multi_confirmed_id,
+        self._cc_client.addReviewStatusRule(
+            MULTI_REPORT_HASH,
             ReviewStatus.FALSE_POSITIVE,
             "This is false positive.")
 
@@ -540,9 +529,11 @@ class TestReviewStatus(unittest.TestCase):
         self.assertEqual(
             uncommented_report1.reviewData.comment,
             "This is intentional")
+        self.assertIsNotNone(uncommented_report1.fixedAt)
         self.assertEqual(
             multi_confirmed_report.reviewData.comment,
             "Has a source code comment.")
+        self.assertIsNone(multi_confirmed_report.fixedAt)
         self.assertEqual(
             multi_intentional_report.reviewData.comment,
             "Has a different source code comment.")
@@ -576,3 +567,206 @@ class TestReviewStatus(unittest.TestCase):
         self.assertEqual(
             uncommented_report2.reviewData.comment,
             "This is intentional")
+
+        # A report which gets its review status from "ReviewStatus" table at
+        # storage should be fixed at its storage immediately if its review
+        # status is false positive or intentional.
+
+        self.assertEqual(
+            uncommented_report2.fixedAt,
+            uncommented_report2.detectedAt)
+
+        # After removing a review status rule, the fixed_at date should be None
+        # for reports without source code comment.
+
+        rule_filter = ReviewStatusRuleFilter(
+            reportHashes=[UNCOMMENTED_BUG_HASH])
+        self._cc_client.removeReviewStatusRules(rule_filter)
+
+        reports1 = get_all_run_results(self._cc_client, runid1)
+
+        uncommented_report1 = next(filter(
+            lambda r: r.bugHash == UNCOMMENTED_BUG_HASH,
+            reports1))
+
+        self.assertIsNone(uncommented_report1.fixedAt)
+
+        reports2 = get_all_run_results(self._cc_client, runid2)
+
+        uncommented_report2 = next(filter(
+            lambda r: r.bugHash == UNCOMMENTED_BUG_HASH,
+            reports2))
+
+        self.assertIsNone(uncommented_report2.fixedAt)
+
+    def test_review_and_detection_status_changes(self):
+        def setup_test_project(version):
+            """
+            Setup a test project which contains one "division by zero" report.
+            The project has two versions. Version 0 is emitting this one report
+            and version 1 fixes it. This function creates the project directory
+            in the test workspace with proper source file and compilation
+            database contents.
+            """
+            project_path = os.path.join(self.test_workspace, "detection")
+            build_json_path = os.path.join(project_path, "build.json")
+
+            sources = ["""
+int main() {
+    // codechecker_false_positive [all] This is false positive.
+    return 1 / 0;
+}
+    """, """
+int main() {
+    // codechecker_intentional [all] This is intentional.
+    return 1 / 0;
+}
+    """, """
+int main() {
+    // codechecker_confirmed [all] This is confirmed.
+    return 1 / 0;
+}
+    """, """
+int main() {
+
+    return 1 / 0;
+}
+    """, """
+int main() {
+    return 42;
+}
+"""]
+
+            build_json = f"""
+[{{
+    "directory": "{project_path}",
+    "file": "main.c",
+    "command": "gcc main.c -o /dev/null"
+}}]
+"""
+            os.makedirs(project_path, exist_ok=True)
+
+            with open(os.path.join(project_path, "main.c"), "w") as f:
+                f.write(sources[version])
+
+            with open(build_json_path, "w") as f:
+                f.write(build_json)
+
+            codechecker_cfg = env.import_codechecker_cfg(self.test_workspace)
+            codechecker_cfg["workspace"] = project_path
+            codechecker_cfg["reportdir"] = \
+                os.path.join(project_path, "reports")
+
+            codechecker.analyze(codechecker_cfg, project_path)
+            codechecker.store(codechecker_cfg, "review_and_detection_status")
+
+        def get_report():
+            """
+            The test project of this test case contains only one report. This
+            function returns that report.
+            """
+            run_filter = RunFilter(
+                names=["review_and_detection_status"], exactMatch=True)
+            runs = self._cc_client.getRunData(run_filter, None, 0, None)
+            runid = next(
+                r.runId for r in runs
+                if r.name == "review_and_detection_status")
+            reports = get_all_run_results(self._cc_client, runid)
+
+            self.assertEqual(
+                len(reports), 1,
+                "The project contains only one division by zero report.")
+
+            return reports[0]
+
+        # Store a division by zero report as false positive.
+
+        setup_test_project(0)
+        report = get_report()
+        self.assertEqual(report.detectionStatus, DetectionStatus.NEW)
+        self.assertEqual(report.reviewData.status, ReviewStatus.FALSE_POSITIVE)
+        self.assertIsNotNone(report.fixedAt)
+        fixed_at_old = report.fixedAt
+
+        # Set it to intentional.
+
+        setup_test_project(1)
+        report = get_report()
+        self.assertEqual(report.detectionStatus, DetectionStatus.UNRESOLVED)
+        self.assertEqual(report.reviewData.status, ReviewStatus.INTENTIONAL)
+        self.assertIsNotNone(report.fixedAt)
+        self.assertEqual(report.fixedAt, fixed_at_old)
+
+        # Set it to confirmed
+
+        setup_test_project(2)
+        report = get_report()
+        self.assertEqual(report.detectionStatus, DetectionStatus.UNRESOLVED)
+        self.assertEqual(report.reviewData.status, ReviewStatus.CONFIRMED)
+        self.assertIsNone(report.fixedAt)
+
+        # Remove the source code comment.
+
+        setup_test_project(3)
+        report = get_report()
+        self.assertEqual(report.detectionStatus, DetectionStatus.UNRESOLVED)
+        self.assertEqual(report.reviewData.status, ReviewStatus.UNREVIEWED)
+        self.assertIsNone(report.fixedAt)
+
+        # Resolve the previous report.
+
+        setup_test_project(4)
+        report = get_report()
+        self.assertEqual(report.detectionStatus, DetectionStatus.RESOLVED)
+        self.assertEqual(report.reviewData.status, ReviewStatus.UNREVIEWED)
+        self.assertIsNotNone(report.fixedAt)
+        fixed_at = report.fixedAt
+
+        # Changing the review status of a resolved report to "confirmed"
+        # shouldn't change its "fixed at" date.
+
+        self._cc_client.addReviewStatusRule(
+            report.bugHash,
+            ReviewStatus.CONFIRMED,
+            "This is confirmed")
+
+        report = get_report()
+        self.assertEqual(report.detectionStatus, DetectionStatus.RESOLVED)
+        self.assertEqual(report.reviewData.status, ReviewStatus.CONFIRMED)
+        self.assertEqual(report.fixedAt, fixed_at)
+
+        # Setting a resolved report to false positive doesn't change its
+        # "fixed at" date, because it was fixed earlier and it hasn't left its
+        # fixed state.
+
+        self._cc_client.addReviewStatusRule(
+            report.bugHash,
+            ReviewStatus.FALSE_POSITIVE,
+            "This is false positive")
+
+        report = get_report()
+        self.assertEqual(report.detectionStatus, DetectionStatus.RESOLVED)
+        self.assertEqual(report.reviewData.status, ReviewStatus.FALSE_POSITIVE)
+        self.assertEqual(report.fixedAt, fixed_at)
+
+        # A reopened and false positive report gets its "fixed at" date from
+        # ReviewStatus table. This is the date when the false positive review
+        # status was assigned to this bug.
+
+        setup_test_project(3)
+        report = get_report()
+        self.assertEqual(report.detectionStatus, DetectionStatus.REOPENED)
+        self.assertEqual(report.reviewData.status, ReviewStatus.FALSE_POSITIVE)
+        self.assertNotEqual(report.fixedAt, fixed_at)
+
+        # Setting its review status to confirmed makes it outstanding.
+
+        self._cc_client.addReviewStatusRule(
+            report.bugHash,
+            ReviewStatus.CONFIRMED,
+            "This is confirmed")
+
+        report = get_report()
+        self.assertEqual(report.detectionStatus, DetectionStatus.REOPENED)
+        self.assertEqual(report.reviewData.status, ReviewStatus.CONFIRMED)
+        self.assertIsNone(report.fixedAt)
