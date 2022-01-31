@@ -12,6 +12,7 @@ import os
 
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
+import hashlib
 from typing import Dict, List, Optional
 
 from codechecker_report_converter.report import Report, report_file
@@ -39,7 +40,7 @@ class AnalyzerResultBase(metaclass=ABCMeta):
         analyzer_result_file_path: str,
         output_dir_path: str,
         export_type: str,
-        file_name: str = "{source_file}_{analyzer}",
+        file_name: str = "{source_file}_{analyzer}_{file_hash}",
         metadata: Optional[Dict[str, str]] = None
     ) -> bool:
         """
@@ -143,15 +144,19 @@ class AnalyzerResultBase(metaclass=ABCMeta):
 
         file_to_report: Dict[str, List[Report]] = defaultdict(list)
         for report in reports:
-            file_to_report[report.file.original_path].append(report)
+            file_path = os.path.normpath(report.file.original_path)
+            file_to_report[file_path].append(report)
 
         analyzer_info = AnalyzerInfo(name=self.TOOL_NAME)
         for file_path, file_reports in file_to_report.items():
             source_file = os.path.basename(file_path)
+            file_hash = hashlib.md5(file_path.encode(errors='ignore')) \
+                .hexdigest()
 
             out_file_name = file_name \
                 .replace("{source_file}", source_file) \
-                .replace("{analyzer}", self.TOOL_NAME)
+                .replace("{analyzer}", self.TOOL_NAME) \
+                .replace("{file_hash}", file_hash)
             out_file_name = f"{out_file_name}.{export_type}"
             out_file_path = os.path.join(output_dir, out_file_name)
 

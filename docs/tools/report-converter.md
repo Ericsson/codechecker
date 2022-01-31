@@ -84,14 +84,15 @@ optional arguments:
                         file name output of this tool. This tool can produce
                         multiple plist files on the given code analyzer output
                         result file. The problem is if we run this tool
-                        multiple times on the same directory, it may override
-                        some plist files. To prevent this we can generate a
-                        unique hash into the plist file names with this
-                        option. For example: '{source_file}_{analyzer}_xxxxx'.
-                        {source_file} and {analyzer} are special values which
-                        will be replaced with the current analyzer and source
-                        file name where the bug was found. (default:
-                        {source_file}_{analyzer})
+                        multiple times on the same file, it may override some
+                        plist files. To prevent this we can generate a unique
+                        hash into the plist file names with this option. For
+                        example: '{source_file}_{analyzer}_{file_hash}_xxxxx'.
+                        {source_file}, {analyzer} and {file_hash} are special
+                        values which will be replaced with the current
+                        analyzer, source file name and hash of the absolute
+                        file path where the bug was found. (default:
+                        {source_file}_{analyzer}_{file_hash})
   -c, --clean           Delete files stored in the output directory. (default:
                         False)
   -v, --verbose         Set verbosity level. (default: False)
