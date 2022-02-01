@@ -66,7 +66,7 @@ test_functional_in_env: venv_dev
 		$(ACTIVATE_DEV_VENV) && $(FUNCTIONAL_TEST_CMD)
 
 test_build_logger:
-	make -C tools/build-logger -f Makefile.manual test
+	make -C tools/build-logger test
 
 test_tu_collector:
 	REPO_ROOT=$(REPO_ROOT) make -C $(ROOT)/tools/tu_collector test

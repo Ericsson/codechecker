@@ -42,8 +42,8 @@ jobs:
       - name: Run build-logger tests
         working-directory: analyzer/tools/build-logger
         run: |
-          make -f Makefile.manual
-          make -f Makefile.manual test
+          pip install -r requirements_py/dev/requirements.txt
+          make test
 
       - name: Run merge-clang-extdef-mappings tests
         working-directory: analyzer/tools/merge_clang_extdef_mappings

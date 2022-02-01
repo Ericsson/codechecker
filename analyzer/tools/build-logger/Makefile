@@ -1,6 +1,32 @@
+# -------------------------------------------------------------------------
 #
-# This Makefile is for building the ldlogger and libraries
+#  Part of the CodeChecker project, under the Apache License v2.0 with
+#  LLVM Exceptions. See LICENSE for license information.
+#  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
+# -------------------------------------------------------------------------
+
+CURRENT_DIR = ${CURDIR}
+ROOT = $(CURRENT_DIR)
+
+BUILD_DIR = $(CURRENT_DIR)/build
+PYTHON_BIN ?= python3
+
+ACTIVATE_DEV_VENV ?= . venv_dev/bin/activate
+
+VENV_DEV_REQ_FILE ?= requirements_py/dev/requirements.txt
+
+venv_dev:
+	# Create a virtual environment for development.
+	$(PYTHON_BIN) -m venv venv_dev && \
+		$(ACTIVATE_DEV_VENV) && pip3 install -r $(VENV_DEV_REQ_FILE)
+
+# import the test targets
+include tests/Makefile
+
+
+# build targets
+# =============
 # Input variables:
 #  CC (default is gcc)
 #
@@ -8,8 +34,6 @@
 #  ldlogger
 #  ldlogger_32.so
 #  ldlogger_64.so
-
-.PHONY: test
 
 # C compiler
 CC ?= gcc
@@ -113,6 +137,3 @@ ldlogger_32.so: $(LDLOGGER_LIB_SOURCES) $(LDLOGGER_LIB_HEADERS)
 # ldlogger lib 64
 ldlogger_64.so: $(LDLOGGER_LIB_SOURCES) $(LDLOGGER_LIB_HEADERS)
 	$(CC) -m64 $(CPPFLAGS) $(LIB_CFLAGS) $(LIB_LDFLAGS) $(LDLOGGER_LIB_SOURCES) $(LDLOGGER_SOURCES) -o $@
-
-test:
-	test/test_logger.sh $(BUILD_DIR)
