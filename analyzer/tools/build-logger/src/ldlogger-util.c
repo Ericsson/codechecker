@@ -18,7 +18,6 @@
 #include <stdio.h>
 #include <sys/file.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -67,7 +66,6 @@ static char* makePathAbsRec(const char* path_, char* resolved_)
  * Returns formatted current time.
  *
  * @param buff_ an output buffer (non null).
- * @return anways returns buff_.
  */
 static void getCurrentTime(char* buff_)
 {
@@ -617,12 +615,12 @@ void freeLock(int lockFile_)
   }
 }
 
-int logPrint(char* logLevel_, char* fileName_, int line_, char *fmt_,...)
+void logPrint(char* logLevel_, char* fileName_, int line_, char *fmt_,...)
 {
   const char* debugFile = getenv("CC_LOGGER_DEBUG_FILE");
   if (!debugFile)
   {
-    return 0;
+    return;
   }
 
   int lockFd;
@@ -632,14 +630,14 @@ int logPrint(char* logLevel_, char* fileName_, int line_, char *fmt_,...)
   lockFd = aquireLock(debugFile);
   if (lockFd == -1)
   {
-    return -5;
+    return;
   }
 
   logFd = open(debugFile, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
   if (logFd == -1)
   {
     freeLock(lockFd);
-    return -7;
+    return;
   }
 
   stream = fdopen(logFd, "a");
@@ -647,7 +645,7 @@ int logPrint(char* logLevel_, char* fileName_, int line_, char *fmt_,...)
   {
     close(logFd);
     freeLock(lockFd);
-    return -9;
+    return;
   }
 
   char currentTime[26];
@@ -707,6 +705,4 @@ int logPrint(char* logLevel_, char* fileName_, int line_, char *fmt_,...)
 
   fclose(stream);
   freeLock(lockFd);
-
-  return 0;
 }
