@@ -82,19 +82,36 @@ static void getCurrentTime(char* buff_)
 
 int predictEscapedSize(const char* str_)
 {
-  int size = 0;
+  /// This algorithm encapsulates two escaping operations in this order:
+  /// 1) shell-escape
+  /// 2) json-escape
+  /// We need to do this, since we want to embed the shell-command into
+  /// the compile_command.json.
+  ///
+  /// However, we will need an additional escaping, since we
+  /// want to embed these strings into a json string value.
+  /// Hence, we will need to escape each backslash again.
+  /// We also need to escape the quote characters too.
+  ///
+  /// Examples: <input> -> <shell-escaped> -> <json-escaped>
+  ///   ['\t'] -> ['\\',  't'] -> ['\\', '\\',  't']
+  ///   ['\\'] -> ['\\', '\\'] -> ['\\', '\\',  '\\', '\\']
+  ///   ['"']  -> ['\\',  '"'] -> ['\\', '\\',  '\\', '"']
+  ///
+  /// We apply these two escape operations together.
 
+  int size = 0;
   while (*str_)
   {
-    if (strchr("\t\b\f\r\v\n ", *str_))
-      size += 2;
+    // 0x1B is '\e' (ESC)
+    if (strchr("\a0x1B\t\b\f\r\v\n ", *str_))
+      size += 3; // backslash, backslash, (a|e|t|b|f|r|v| |n)
     else if (*str_ == '"' || *str_ == '\\')
-      /* The quote (") and backslash (\) needs an extra escaped escape
-         character because the JSON string literals are surrounded by quote
-         by default. */
-      size += 3;
-
-    ++size;
+      size += 4; // backslash, backslash, backslash, ('"' or '\\')
+    else if ((unsigned char)*str_ < 0x20)
+      size += 5; // backslash, backslash, 'x', hex-digit, hex-digit
+    else
+      size += 1; // no-escaping required, simply copy
     ++str_;
   }
 
@@ -106,36 +123,99 @@ int predictEscapedSize(const char* str_)
 
 char* shellEscapeStr(const char* str_, char* buff_)
 {
+  // Check the 'predictEscapedSize' for details about this.
   char* out = buff_;
 
   while (*str_)
   {
     switch (*str_)
     {
+      case '\a':
+        *out++ = '\\';
+        *out++ = '\\';
+        *out++ = 'a';
+        break;
+      case 0x1B: // '\e' (ESC)
+        *out++ = '\\';
+        *out++ = '\\';
+        *out++ = 'e';
+        break;
       case '\t':
+        *out++ = '\\';
+        *out++ = '\\';
+        *out++ = 't';
+        break;
       case '\b':
+        *out++ = '\\';
+        *out++ = '\\';
+        *out++ = 'b';
+        break;
       case '\f':
+        *out++ = '\\';
+        *out++ = '\\';
+        *out++ = 'f';
+        break;
       case '\r':
+        *out++ = '\\';
+        *out++ = '\\';
+        *out++ = 'r';
+        break;
       case '\v':
+        *out++ = '\\';
+        *out++ = '\\';
+        *out++ = 'v';
+        break;
       case '\n':
+        *out++ = '\\';
+        *out++ = '\\';
+        *out++ = 'n';
+        break;
       case ' ':
         *out++ = '\\';
         *out++ = '\\';
-        *out++ = *str_++;
+        *out++ = ' ';
         break;
-
       case '\\':
+        *out++ = '\\';
+        *out++ = '\\';
+        *out++ = '\\';
+        *out++ = '\\';
+        break;
       case '\"':
         *out++ = '\\';
         *out++ = '\\';
         *out++ = '\\';
-        *out++ = *str_++;
+        *out++ = '\"';
         break;
-
-      default:
-        *out++ = *str_++;
+      default: {
+        // Escape the rest of the control characters, which were not handled
+        // separately:
+        //   0-8: control codes (NUL, SOH, STX, ..., BEL, BS)
+        //     9: '\t' (tab)
+        // 10-13: whitespaces ['\n', '\v', '\f', '\r']
+        // 14-31: control codes: (SO, SI, DLE, ..., RS, US)
+        // 32-126: regular printable characters
+        //
+        // 32 == 0x20
+        unsigned char value = *str_;
+        if (value < 0x20) {
+          static const unsigned char dec2hex_last_digit[0x20] = {
+            '0','1','2','3','4','5','6','7','8','9', 'A', 'B', 'C', 'D', 'E', 'F',
+            '0','1','2','3','4','5','6','7','8','9', 'A', 'B', 'C', 'D', 'E', 'F',
+          };
+          *out++ = '\\';
+          *out++ = '\\';
+          *out++ = 'x';
+          *out++ = (value < 0x10 ? '0' : '1');
+          *out++ = dec2hex_last_digit[value];
+          break;
+        }
+        // Otherwise no escaping required.
+        *out++ = *str_;
         break;
+      }
     }
+    ++str_; // Advance to the next unprocessed character.
   }
 
   *out = '\0';
