@@ -12,13 +12,15 @@
   ],
   "parse": [
     "--trim-path-prefix",
-    "/$HOME/workspace"
+    "$HOME/workspace"
   ],
   "server": [
     "--workspace=$HOME/workspace",
     "--port=9090"
   ],
   "store": [
-    "--url", "localhost:9090/Default"
+    "--name=run_name",
+    "--tag=my_tag",
+    "--url=http://codechecker.my:9090/MyProduct"
   ]
 }

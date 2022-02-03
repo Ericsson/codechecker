@@ -5,7 +5,9 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # -------------------------------------------------------------------------
+
 import os
+import yaml
 
 from typing import List
 
@@ -14,6 +16,22 @@ from codechecker_report_converter.util import load_json_or_empty
 from codechecker_common import logger
 
 LOG = logger.get_logger('system')
+
+
+def add_option(parser):
+    """ Add config file option to the given parser. """
+    parser.add_argument('--config',
+                        dest='config_file',
+                        required=False,
+                        help="R|Allow the configuration from an explicit "
+                             "configuration file. The values configured in "
+                             "the config file will overwrite the values set "
+                             "in the command line.\n"
+                             "You can use any environment variable inside "
+                             "this file and it will be expaneded.\n"
+                             "For more information see the docs: "
+                             "https://github.com/Ericsson/codechecker/tree/"
+                             "master/docs/config_file.md")
 
 
 def get_analyze_options(cfg) -> List[str]:
@@ -39,8 +57,13 @@ def process_config_file(args, subcommand_name):
     if 'config_file' not in args:
         return {}
 
-    if args.config_file and os.path.exists(args.config_file):
-        cfg = load_json_or_empty(args.config_file, default={})
+    config_file = args.config_file
+    if config_file and os.path.exists(config_file):
+        if config_file.endswith(('.yaml', '.yml')):
+            with open(config_file, encoding='utf-8', errors='ignore') as f:
+                cfg = yaml.load(f, Loader=yaml.BaseLoader)
+        else:
+            cfg = load_json_or_empty(config_file, default={})
 
         # The subcommand name is analyze but the
         # configuration section name is analyzer.

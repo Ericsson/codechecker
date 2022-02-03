@@ -109,21 +109,7 @@ def add_arguments_to_parser(parser):
                              "containing analysis results which should be "
                              "parsed and printed.")
 
-    parser.add_argument('--config',
-                        dest='config_file',
-                        required=False,
-                        help="R|Allow the configuration from an "
-                             "explicit JSON based configuration file. "
-                             "The value of the 'parse' key in the "
-                             "config file will be emplaced as command "
-                             "line arguments. The format of "
-                             "configuration file is:\n"
-                             "{\n"
-                             "  \"parse\": [\n"
-                             "    \"--trim-path-prefix\",\n"
-                             "    \"$HOME/workspace\"\n"
-                             "  ]\n"
-                             "}")
+    cmd_config.add_option(parser)
 
     parser.add_argument('-t', '--type', '--input-format',
                         dest="input_format",
