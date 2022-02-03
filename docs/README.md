@@ -304,7 +304,29 @@ For installation instructions for Mac OS X see [Mac OS X Installation Guide](ins
 To run the CodeChecker server in Docker see the [Docker](web/docker.md) documentation.
 You can find the CodeChecker web-server container at the [Docker Hub](https://hub.docker.com/r/codechecker/codechecker-web).
 
- <img src="https://raw.githubusercontent.com/Ericsson/codechecker/master/docs/images/docker.jpg" width="100">
+<img src="https://raw.githubusercontent.com/Ericsson/codechecker/master/docs/images/docker.jpg" width="100">
+
+## Visual Studio Code Plugin
+<img src="https://raw.githubusercontent.com/Ericsson/codechecker/master/docs/images/vscode.png" width="100">
+
+You can install and use CodeChecker VSCode extension from the
+[Visual Studio Marketplace] or from [Open VSX].
+
+Main features:
+- Run CodeChecker analysis from the editor and see the results automatically.
+- Re-analyze the current file when saved.
+- Commands and build tasks for running CodeChecker as part of a build system.
+- Browse through the found reports and show the reproduction steps directly in the code.
+- Navigate between the reproduction steps.
+
+[Visual Studio Marketplace]: https://marketplace.visualstudio.com/items?itemName=codechecker.vscode-codechecker
+[Open VSX]: https://open-vsx.org/extension/codechecker/codechecker
+
+![VSCode plugin](images/vscode.gif)
+
+For more information how to install and use this plugin see the
+[repository](https://github.com/Ericsson/codecheckervsCodePlugin/) of this
+extension.
 
 # Analyze your first project
 
