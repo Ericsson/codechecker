@@ -58,7 +58,8 @@ class SpotBugsAnalyzerResultTestCase(unittest.TestCase):
                                        'Assign.java')
 
         ret = self.analyzer_result.transform(
-            analyzer_result, self.cc_result_dir, plist.EXTENSION)
+            analyzer_result, self.cc_result_dir, plist.EXTENSION,
+            file_name="{source_file}_{analyzer}")
         self.assertFalse(ret)
 
     def test_parsing_dir(self):
@@ -66,14 +67,16 @@ class SpotBugsAnalyzerResultTestCase(unittest.TestCase):
         analyzer_result = os.path.join(self.test_files, 'files')
 
         ret = self.analyzer_result.transform(
-            analyzer_result, self.cc_result_dir, plist.EXTENSION)
+            analyzer_result, self.cc_result_dir, plist.EXTENSION,
+            file_name="{source_file}_{analyzer}")
         self.assertFalse(ret)
 
     def test_transform_single_file(self):
         """ Test transforming single plist file. """
         analyzer_result = os.path.join(self.test_files, 'assign.xml')
         self.analyzer_result.transform(
-            analyzer_result, self.cc_result_dir, plist.EXTENSION)
+            analyzer_result, self.cc_result_dir, plist.EXTENSION,
+            file_name="{source_file}_{analyzer}")
 
         plist_file = os.path.join(self.cc_result_dir,
                                   'Assign.java_spotbugs.plist')

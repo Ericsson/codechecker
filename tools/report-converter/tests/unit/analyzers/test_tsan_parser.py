@@ -54,7 +54,8 @@ class TSANAnalyzerResultTestCase(unittest.TestCase):
     def test_tsan(self):
         """ Test for the tsan.plist file. """
         self.analyzer_result.transform(
-            'tsan.out', self.cc_result_dir, plist.EXTENSION)
+            'tsan.out', self.cc_result_dir, plist.EXTENSION,
+            file_name="{source_file}_{analyzer}")
 
         with open('tsan.plist', mode='rb') as pfile:
             exp = plistlib.load(pfile)

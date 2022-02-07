@@ -54,7 +54,8 @@ class ClangTidyAnalyzerResultTestCase(unittest.TestCase):
                                 source_files, expected_plist):
         """ Check the result of the analyzer transformation. """
         self.analyzer_result.transform(
-            analyzer_result, self.cc_result_dir, plist.EXTENSION)
+            analyzer_result, self.cc_result_dir, plist.EXTENSION,
+            file_name="{source_file}_{analyzer}")
 
         plist_file = os.path.join(self.cc_result_dir, analyzer_result_plist)
         with open(plist_file, mode='rb') as pfile:

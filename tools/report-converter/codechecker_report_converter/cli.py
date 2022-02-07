@@ -172,20 +172,22 @@ def __add_arguments_to_parser(parser):
                         type=str,
                         dest='filename',
                         metavar='FILENAME',
-                        default="{source_file}_{analyzer}",
+                        default="{source_file}_{analyzer}_{file_hash}",
                         help="This option can be used to override the default "
                              "plist file name output of this tool. This tool "
                              "can produce multiple plist files on the given "
                              "code analyzer output result file. The problem "
                              "is if we run this tool multiple times on the "
-                             "same directory, it may override some plist "
-                             "files. To prevent this we can generate a unique "
-                             "hash into the plist file names with this "
-                             "option. For example: "
-                             "'{source_file}_{analyzer}_xxxxx'. {source_file} "
-                             "and {analyzer} are special values which will "
-                             "be replaced with the current analyzer and "
-                             "source file name where the bug was found.")
+                             "same file, it may override some plist files. To "
+                             "prevent this we can generate a unique hash into "
+                             "the plist file names with this option. For "
+                             "example: "
+                             "'{source_file}_{analyzer}_{file_hash}_xxxxx'. "
+                             "{source_file}, {analyzer} and {file_hash} are "
+                             "special values which will be replaced with the "
+                             "current analyzer, source file name and hash of "
+                             "the absolute file path where the bug was "
+                             "found. ")
 
     parser.add_argument('-c', '--clean',
                         dest="clean",

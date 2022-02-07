@@ -10,6 +10,7 @@
 This module tests the report-converter tool.
 """
 
+import glob
 import json
 import os
 import subprocess
@@ -38,6 +39,9 @@ class TestCmdline(unittest.TestCase):
                                    'analyzer_version=' + analyzer_version,
                                    'analyzer_command=' + analyzer_command])
             self.assertEqual(0, ret)
+
+            self.assertEqual(
+                len(glob.glob(os.path.join(tmp_dir, '*.plist'))), 2)
 
             metadata_file = os.path.join(tmp_dir, "metadata.json")
             self.assertTrue(os.path.exists(metadata_file))
