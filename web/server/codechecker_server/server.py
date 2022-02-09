@@ -745,9 +745,17 @@ class CCSimpleHttpServer(HTTPServer):
                 LOG.info("Initiating SSL. Server listening on secure socket.")
                 LOG.debug("Using cert file: %s", ssl_cert_file)
                 LOG.debug("Using key file: %s", ssl_key_file)
-                self.socket = ssl.wrap_socket(self.socket, server_side=True,
-                                              keyfile=ssl_key_file,
-                                              certfile=ssl_cert_file)
+                ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+                ssl_context.load_cert_chain(certfile=ssl_cert_file,
+                                            keyfile=ssl_key_file)
+                # FIXME introduce with python 3.7
+                # ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2
+
+                # TLS1 and TLS1.1 were deprecated in RFC8996
+                # https://datatracker.ietf.org/doc/html/rfc8996
+                ssl_context.options |= (ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1)
+                self.socket = ssl_context.wrap_socket(self.socket,
+                                                      server_side=True)
 
             else:
                 LOG.info("Searching for SSL key at %s, cert at %s, "
