@@ -20,6 +20,7 @@ import os
 from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.buildlog import build_manager
 from codechecker_analyzer.buildlog.host_check import check_intercept
+from codechecker_analyzer.buildlog.host_check import check_ldlogger
 
 from codechecker_common import arg, logger
 
@@ -64,12 +65,14 @@ def get_argparser_ctor_args():
     argparse.ArgumentParser (either directly or as a subparser).
     """
 
-    is_intercept = check_intercept(os.environ)
+    # Prefer using ldlogger over intercept-build.
+    is_ldlogger = check_ldlogger(os.environ)
+    is_intercept = False if is_ldlogger else check_intercept(os.environ)
     ldlogger_settings = """
 ld-logger can be fine-tuned with some environment variables. For details see
 the following documentation:
 https://github.com/Ericsson/codechecker/blob/master/analyzer/tools/
-build-logger/README.md#usage""" if not is_intercept else ""
+build-logger/README.md#usage""" if not is_ldlogger else ""
 
     return {
         'prog': 'CodeChecker log',
