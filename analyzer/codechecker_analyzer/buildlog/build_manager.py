@@ -41,7 +41,8 @@ def execute_buildcmd(command, silent=False, env=None, cwd=None):
         shell=True,
         universal_newlines=True,
         encoding="utf-8",
-        errors="ignore")
+        errors="ignore",
+        close_fds=False)
 
     while True:
         line = proc.stdout.readline()
