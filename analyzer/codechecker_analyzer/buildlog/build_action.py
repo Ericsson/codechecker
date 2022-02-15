@@ -73,7 +73,7 @@ class BuildAction:
         hash_content = []
         hash_content.extend(self.analyzer_options)
         hash_content.append(str(self.analyzer_type))
-        hash_content.append(self.target[self.lang])
+        hash_content.append(self.target)
         hash_content.append(self.source)
         return hash(''.join(hash_content))
 

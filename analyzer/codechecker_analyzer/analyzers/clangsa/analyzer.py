@@ -274,19 +274,16 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                 analyzer_cmd.extend(['-x', compile_lang])
 
             if not has_flag('--target', analyzer_cmd) and \
-                    self.buildaction.target.get(compile_lang, "") != "":
-                analyzer_cmd.append("--target=" +
-                                    self.buildaction.target.get(compile_lang))
+                    self.buildaction.target != "":
+                analyzer_cmd.append(f"--target={self.buildaction.target}")
 
             if not has_flag('-arch', analyzer_cmd) and \
                     self.buildaction.arch != "":
                 analyzer_cmd.extend(["-arch ", self.buildaction.arch])
 
             if not has_flag('-std', analyzer_cmd) and \
-                    self.buildaction.compiler_standard.get(compile_lang, "") \
-                    != "":
-                analyzer_cmd.append(
-                    self.buildaction.compiler_standard[compile_lang])
+                    self.buildaction.compiler_standard != "":
+                analyzer_cmd.append(self.buildaction.compiler_standard)
 
             analyzer_cmd.extend(config.analyzer_extra_arguments)
 
@@ -294,7 +291,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd.extend(prepend_all(
                 '-isystem',
-                self.buildaction.compiler_includes[compile_lang]))
+                self.buildaction.compiler_includes))
 
             analyzer_cmd.append(self.source_file)
 
