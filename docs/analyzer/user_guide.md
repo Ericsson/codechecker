@@ -2471,3 +2471,49 @@ void test() {
   x = 1; // warn
 }
 ```
+
+## Change review status for multiple checker results in the same line
+You can change multiple checker reports with a single source code comment:
+
+```cpp
+void test() {
+  // codechecker_confirmed [clang-diagnostic-division-by-zero, core.DivideZero] These are real problems.
+  int x = 1 / 0;
+}
+```
+
+The limitation of this format is that you can't use separate status or message
+for checkers. To solve this problem you can use one of the following format:
+
+```cpp
+void test_simple() {
+  // codechecker_confirmed [clang-diagnostic-division-by-zero, core.DivideZero] This is a real bug.
+  // codechecker_intentional [clang-diagnostic-unused-variable] This is not a bug.
+  int x = 1 / 0;
+}
+
+void test_simple() {
+  /**
+   * codechecker_intentional [core.DivideZero] This is a real bug.
+   * codechecker_confirmed [clang-diagnostic-unused-variable] This is not a bug.
+   */
+  int x = 1 / 0;
+}
+```
+
+**WARNING**: using multiple source code comments for the same checker is not
+supported and will give you an error:
+
+```cpp
+void testError1() {
+  // codechecker_confirmed [clang-diagnostic-unused-variable] These are real problems.
+  // codechecker_intentional [clang-diagnostic-unused-variable] This is not a bug.
+  int x = 1 / 0;
+}
+
+void testError2() {
+  // codechecker_confirmed [all] These are real problems.
+  // codechecker_intentional [clang-diagnostic-unused-variable] This is not a bug.
+  int x = 1 / 0;
+}
+```
