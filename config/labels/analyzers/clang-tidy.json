@@ -5709,6 +5709,10 @@
       "doc_url:https://releases.llvm.org/12.0.0/tools/clang/tools/extra/docs/clang-tidy/checks/readability-deleted-default.html",
       "severity:STYLE"
     ],
+    "readability-duplicate-include": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability-duplicate-include.html",
+      "severity:LOW"
+    ],
     "readability-else-after-return": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability-else-after-return.html",
       "severity:STYLE"
