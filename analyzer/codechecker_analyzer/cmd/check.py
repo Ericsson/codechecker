@@ -780,6 +780,7 @@ def main(args):
         os.makedirs(output_dir)
 
     logfile = None
+    analysis_exit_status = 1  # CodeChecker error.
     try:
         # --- Step 1.: Perform logging if build command was specified.
         if 'command' in args:
