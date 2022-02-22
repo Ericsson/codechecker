@@ -14,7 +14,8 @@ import unittest
 from codechecker_report_converter.report import report_file, \
     reports as reports_handler
 
-from codechecker_common.skiplist_handler import SkipListHandler
+from codechecker_common.skiplist_handler import SkipListHandler, \
+    SkipListHandlers
 
 
 OLD_PWD = None
@@ -41,11 +42,11 @@ class TestRemoveReportFromPlist(unittest.TestCase):
         self,
         plist_file_path: str,
         expected_plist_file_path: str,
-        skip_handler: SkipListHandler
+        skip_handlers: SkipListHandlers
     ):
         """ Test skipping reports from a plist file. """
         reports = report_file.get_reports(plist_file_path)
-        reports = reports_handler.skip(reports, skip_handler=skip_handler)
+        reports = reports_handler.skip(reports, skip_handlers=skip_handlers)
 
         expected_reports = report_file.get_reports(expected_plist_file_path)
 
@@ -54,26 +55,26 @@ class TestRemoveReportFromPlist(unittest.TestCase):
     def test_skip_x_header(self):
         """ Test skipping a header file. """
         with open('skip_x_header.txt',
-                  encoding="utf-8", errors="ignore") as skip_file:
-            skip_handler = SkipListHandler(skip_file.read())
+                  encoding="utf-8", errors="ignore") as f:
+            skip_handlers = SkipListHandlers([SkipListHandler(f.read())])
 
         self.__test_skip_reports(
-            'x.plist', 'skip_x_header.expected.plist', skip_handler)
+            'x.plist', 'skip_x_header.expected.plist', skip_handlers)
 
     def test_skip_all_header(self):
         """ Test skipping all header files. """
         with open('skip_all_header.txt',
-                  encoding="utf-8", errors="ignore") as skip_file:
-            skip_handler = SkipListHandler(skip_file.read())
+                  encoding="utf-8", errors="ignore") as f:
+            skip_handlers = SkipListHandlers([SkipListHandler(f.read())])
 
         self.__test_skip_reports(
-            'x.plist', 'skip_all_header.expected.plist', skip_handler)
+            'x.plist', 'skip_all_header.expected.plist', skip_handlers)
 
     def test_keep_only_empty(self):
         """ Test skipping all files except empty. """
         with open('keep_only_empty.txt',
-                  encoding="utf-8", errors="ignore") as skip_file:
-            skip_handler = SkipListHandler(skip_file.read())
+                  encoding="utf-8", errors="ignore") as f:
+            skip_handlers = SkipListHandlers([SkipListHandler(f.read())])
 
         self.__test_skip_reports(
-            'x.plist', 'keep_only_empty.expected.plist', skip_handler)
+            'x.plist', 'keep_only_empty.expected.plist', skip_handlers)

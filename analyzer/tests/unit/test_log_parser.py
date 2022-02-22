@@ -18,7 +18,8 @@ import unittest
 from codechecker_report_converter.util import load_json_or_empty
 
 from codechecker_analyzer.buildlog import log_parser
-from codechecker_common import skiplist_handler
+from codechecker_common.skiplist_handler import SkipListHandler, \
+    SkipListHandlers
 
 
 class LogParserTest(unittest.TestCase):
@@ -324,13 +325,13 @@ class LogParserTest(unittest.TestCase):
         -*/lib1/*
         -*/lib2/*
         """
-        analysis_skip = skiplist_handler.SkipListHandler(skip_list)
-        pre_analysis_skip = skiplist_handler.SkipListHandler(skip_list)
+        analysis_skip = SkipListHandlers([SkipListHandler(skip_list)])
+        pre_analysis_skip = SkipListHandlers([SkipListHandler(skip_list)])
 
         build_actions, _ = log_parser.\
             parse_unique_log(cmp_cmd_json, self.__this_dir,
-                             analysis_skip_handler=analysis_skip,
-                             pre_analysis_skip_handler=pre_analysis_skip)
+                             analysis_skip_handlers=analysis_skip,
+                             pre_analysis_skip_handlers=pre_analysis_skip)
 
         self.assertEqual(len(build_actions), 0)
 
@@ -359,13 +360,13 @@ class LogParserTest(unittest.TestCase):
         -*/lib1/a.cpp
         -/tmp/lib2/a.cpp
         """
-        analysis_skip = skiplist_handler.SkipListHandler(skip_list)
-        pre_analysis_skip = skiplist_handler.SkipListHandler(skip_list)
+        analysis_skip = SkipListHandlers([SkipListHandler(skip_list)])
+        pre_analysis_skip = SkipListHandlers([SkipListHandler(skip_list)])
 
         build_actions, _ = log_parser.\
             parse_unique_log(cmp_cmd_json, self.__this_dir,
-                             analysis_skip_handler=analysis_skip,
-                             pre_analysis_skip_handler=pre_analysis_skip)
+                             analysis_skip_handlers=analysis_skip,
+                             pre_analysis_skip_handlers=pre_analysis_skip)
 
         self.assertEqual(len(build_actions), 1)
         self.assertEqual(build_actions[0].source, '/tmp/lib1/d.cpp')
@@ -391,13 +392,13 @@ class LogParserTest(unittest.TestCase):
         pre_skip_list = """
         -*
         """
-        analysis_skip = skiplist_handler.SkipListHandler(skip_list)
-        pre_analysis_skip = skiplist_handler.SkipListHandler(pre_skip_list)
+        analysis_skip = SkipListHandlers([SkipListHandler(skip_list)])
+        pre_analysis_skip = SkipListHandlers([SkipListHandler(pre_skip_list)])
 
         build_actions, _ = log_parser.\
             parse_unique_log(cmp_cmd_json, self.__this_dir,
-                             analysis_skip_handler=analysis_skip,
-                             pre_analysis_skip_handler=pre_analysis_skip)
+                             analysis_skip_handlers=analysis_skip,
+                             pre_analysis_skip_handlers=pre_analysis_skip)
 
         self.assertEqual(len(build_actions), 1)
 
@@ -421,14 +422,14 @@ class LogParserTest(unittest.TestCase):
         skip_list = """
         -*/lib1/*
         """
-        analysis_skip = skiplist_handler.SkipListHandler(skip_list)
-        pre_analysis_skip = skiplist_handler.SkipListHandler("")
+        analysis_skip = SkipListHandlers([SkipListHandler(skip_list)])
+        pre_analysis_skip = SkipListHandlers([SkipListHandler("")])
 
         build_actions, _ = log_parser.\
             parse_unique_log(cmp_cmd_json, self.__this_dir,
-                             analysis_skip_handler=analysis_skip,
+                             analysis_skip_handlers=analysis_skip,
                              ctu_or_stats_enabled=True,
-                             pre_analysis_skip_handler=pre_analysis_skip)
+                             pre_analysis_skip_handlers=pre_analysis_skip)
 
         self.assertEqual(len(build_actions), 3)
 
@@ -448,13 +449,13 @@ class LogParserTest(unittest.TestCase):
         skip_list = """
         -*/lib1/*
         """
-        analysis_skip = skiplist_handler.SkipListHandler("")
-        pre_analysis_skip = skiplist_handler.SkipListHandler(skip_list)
+        analysis_skip = SkipListHandlers([SkipListHandler("")])
+        pre_analysis_skip = SkipListHandlers([SkipListHandler(skip_list)])
 
         build_actions, _ = log_parser.\
             parse_unique_log(cmp_cmd_json, self.__this_dir,
-                             analysis_skip_handler=analysis_skip,
-                             pre_analysis_skip_handler=pre_analysis_skip)
+                             analysis_skip_handlers=analysis_skip,
+                             pre_analysis_skip_handlers=pre_analysis_skip)
 
         self.assertEqual(len(build_actions), 3)
 
