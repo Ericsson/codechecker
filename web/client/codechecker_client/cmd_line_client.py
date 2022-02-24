@@ -1115,7 +1115,7 @@ def handle_diff_results(args):
                 LOG.info("Generating HTML output files to file://%s "
                          "directory:", output_dir)
 
-                for file_path in file_report_map:
+                for file_path, file_reports in file_report_map.items():
                     file_name = os.path.basename(file_path)
                     h = int(
                         hashlib.md5(
@@ -1124,7 +1124,7 @@ def handle_diff_results(args):
 
                     output_file_path = os.path.join(
                         output_dir, f"{file_name}_ {str(h)}.html")
-                    html_builder.create(output_file_path, reports)
+                    html_builder.create(output_file_path, file_reports)
 
             if output_format in ['csv', 'rows', 'table']:
                 header = ['File', 'Checker', 'Severity', 'Msg', 'Source']
