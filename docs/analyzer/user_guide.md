@@ -1499,10 +1499,15 @@ losing stability and precision, and worst case, might result in a complete and
 utter failure in the analysis itself. **`--enable-all` may only be used at
 your own risk!**
 
-Even specifying `--enable-all` will **NOT** enable checkers from some special
-checker groups, such as `alpha.` and `debug.`. `osx.` checkers are only enabled
-if CodeChecker is run on a macOS machine. `--enable-all` can further be
-fine-tuned with subsequent `--enable` and `--disable` arguments, for example
+Even specifying `--enable-all` will **NOT** enable checkers from the following
+special checker groups: `alpha.`, `debug.`, `osx.`, `abseil-`, `android-`,
+`darwin-`, `objc-`, `cppcoreguidelines-`, `fuchsia.`, `fuchsia-`, `hicpp-`,
+`llvm-`, `llvmlibc-`, `google-`, `zircon`.
+
+`osx.` checkers are only enabled if CodeChecker is run on a macOS machine.
+
+`--enable-all` can further be fine-tuned with subsequent `--enable` and
+`--disable` arguments, for example
 
 ```sh
 --enable-all --enable alpha --disable misc
