@@ -60,7 +60,7 @@ def create_actions_map(actions, manager):
     result = manager.dict()
 
     for act in actions:
-        key = act.source, act.target[act.lang]
+        key = act.source, act.target
         if key in result:
             LOG.debug("Multiple entires in compile database "
                       "with the same (source, target) pair: (%s, %s)",

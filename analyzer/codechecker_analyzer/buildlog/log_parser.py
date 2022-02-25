@@ -7,7 +7,7 @@
 # -------------------------------------------------------------------------
 
 
-from collections import defaultdict
+from collections import namedtuple
 # pylint: disable=no-name-in-module
 from distutils.spawn import find_executable
 from enum import Enum
@@ -21,6 +21,7 @@ import subprocess
 import sys
 import tempfile
 import traceback
+from typing import Dict, List, Optional
 
 from codechecker_report_converter.util import load_json_or_empty
 
@@ -288,13 +289,25 @@ def filter_compiler_includes_extra_args(compiler_flags):
 
 class ImplicitCompilerInfo:
     """
-    This class helps to fetch and set some additional compiler flags which are
-    implicitly added when using GCC.
+    C/C++ compilers have implicit assumptions about the environment. Especially
+    GCC has some built-in options which make build process non-portable to
+    other compilers. For example it comes with a set of include paths that are
+    implicitly added to all build actions. The list of these paths is also
+    configurable by some compiler flags (--sysroot, -x, build target related
+    flags, etc.) The goal of this class is to gather and maintain this implicit
+    information.
     """
-    # TODO: This dict is mapping compiler to the corresponding information.
-    # It may not be enough to use the compiler as a key, because the implicit
-    # information depends on other data like language or target architecture.
-    compiler_info = defaultdict(dict)
+
+    # Implicit compiler settings (include paths, target triple, etc.) depend on
+    # these attributes, so we use them as a dictionary key which maps these
+    # attributes to the implicit settings. In the future we may find that some
+    # other attributes are also dependencies of implicit compiler info in which
+    # case this tuple should be extended.
+    ImplicitInfoSpecifierKey = namedtuple(
+        'ImplicitInfoSpecifierKey',
+        ['compiler', 'language', 'compiler_flags'])
+
+    compiler_info: Dict[ImplicitInfoSpecifierKey, dict] = {}
     compiler_isexecutable = {}
     # Store the already detected compiler version information.
     # If the value is False the compiler is not clang otherwise the value
@@ -318,14 +331,14 @@ class ImplicitCompilerInfo:
         return ImplicitCompilerInfo.compiler_isexecutable[compiler]
 
     @staticmethod
-    def __get_compiler_err(cmd):
+    def __get_compiler_err(cmd: List[str]) -> Optional[str]:
         """
         Returns the stderr of a compiler invocation as string
         or None in case of error.
         """
         try:
             proc = subprocess.Popen(
-                shlex.split(cmd),
+                cmd,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -333,21 +346,34 @@ class ImplicitCompilerInfo:
                 encoding="utf-8",
                 errors="ignore")
 
+            # The parameter is usually a compile command in this context which
+            # gets a dash ("-") as a compiler flag. This flag makes gcc
+            # expecting the source code from the standard input. This is given
+            # to communicate() function.
             _, err = proc.communicate("")
             return err
         except OSError as oerr:
-            LOG.error("Error during process execution: " + cmd + '\n' +
-                      oerr.strerror + "\n")
+            # TODO: shlex.join(cmd) would be more elegant after upgrading to
+            # Python 3.8.
+            LOG.error(
+                "Error during process execution: %s\n%s\n",
+                ' '.join(map(shlex.quote, cmd)), oerr.strerror)
 
     @staticmethod
-    def __parse_compiler_includes(lines):
+    def __parse_compiler_includes(compile_cmd: List[str]):
         """
-        Parse the compiler include paths from a string
+        "gcc -v -E -" prints a set of information about the execution of the
+        preprocessor. This output contains the implicitly included paths. This
+        function collects and returns these paths from the output of the gcc
+        command above. The actual build command is the parameter of this
+        function because the list of implicit include paths is affected by some
+        compiler flags (e.g. --sysroot, -x, etc.)
         """
         start_mark = "#include <...> search starts here:"
         end_mark = "End of search list."
 
         include_paths = []
+        lines = ImplicitCompilerInfo.__get_compiler_err(compile_cmd)
 
         if not lines:
             return include_paths
@@ -383,14 +409,15 @@ class ImplicitCompilerInfo:
         language -- The programming language being compiled (e.g. 'c' or 'c++')
         compiler_flags -- the flags used for compilation
         """
-        extra_opts = filter_compiler_includes_extra_args(compiler_flags)
-        cmd = compiler + " " + ' '.join(extra_opts) \
-            + " -E -x " + language + " - -v "
+        cmd = [compiler, *compiler_flags, '-E', '-x', language, '-', '-v']
 
-        LOG.debug("Retrieving default includes via '" + cmd + "'")
+        # TODO: shlex.join(cmd) would be more elegant after upgrading to
+        # Python 3.8.
+        LOG.debug(
+            "Retrieving default includes via %s",
+            ' '.join(map(shlex.quote, cmd)))
         ICI = ImplicitCompilerInfo
-        include_dirs = \
-            ICI.__parse_compiler_includes(ICI.__get_compiler_err(cmd))
+        include_dirs = ICI.__parse_compiler_includes(cmd)
 
         return list(map(os.path.normpath, include_dirs))
 
@@ -402,7 +429,7 @@ class ImplicitCompilerInfo:
         compiler -- The compiler binary of which the target architecture is
                     fetched.
         """
-        lines = ImplicitCompilerInfo.__get_compiler_err(compiler + ' -v')
+        lines = ImplicitCompilerInfo.__get_compiler_err([compiler, '-v'])
 
         if lines is None:
             return ""
@@ -478,7 +505,7 @@ class ImplicitCompilerInfo:
                 f.write(VERSION_C if language == 'c' else VERSION_CPP)
 
             err = ImplicitCompilerInfo.\
-                __get_compiler_err(" ".join([compiler, source.name]))
+                __get_compiler_err([compiler, source.name])
 
             if err is not None:
                 finding = re.search('CC_FOUND_STANDARD_VER#(.+)', err)
@@ -497,47 +524,26 @@ class ImplicitCompilerInfo:
         return standard
 
     @staticmethod
-    def load_compiler_info(filename, compiler):
+    def dump_compiler_info(file_path: str):
+        dumpable = {
+            json.dumps(k): v for k, v
+            in ImplicitCompilerInfo.compiler_info.items()}
+
+        with open(file_path, 'w', encoding="utf-8", errors="ignore") as f:
+            LOG.debug("Writing compiler info into: %s", file_path)
+            json.dump(dumpable, f)
+
+    @staticmethod
+    def load_compiler_info(file_path: str):
         """Load compiler information from a file."""
-        contents = load_json_or_empty(filename, {})
-        compiler_info = contents.get(compiler)
-        if compiler_info is None:
-            LOG.error("Could not find compiler %s in file %s",
-                      compiler, filename)
-            return
-
         ICI = ImplicitCompilerInfo
+        ICI.compiler_info = {}
 
-        if not ICI.compiler_info.get(compiler):
-            ICI.compiler_info[compiler] = defaultdict(dict)
-
-        # Load for language C
-        ICI.compiler_info[compiler][ICI.c()]['compiler_includes'] = []
-        c_lang_data = compiler_info.get(ICI.c())
-        if c_lang_data:
-            for element in map(shlex.split,
-                               c_lang_data.get("compiler_includes")):
-                element = [x for x in element if x != '-isystem']
-                ICI.compiler_info[compiler][ICI.c()]['compiler_includes'] \
-                    .extend(element)
-            ICI.compiler_info[compiler][ICI.c()]['compiler_standard'] = \
-                c_lang_data.get('compiler_standard')
-            ICI.compiler_info[compiler][ICI.c()]['target'] = \
-                c_lang_data.get('target')
-
-        # Load for language C++
-        ICI.compiler_info[compiler][ICI.cpp()]['compiler_includes'] = []
-        cpp_lang_data = compiler_info.get(ICI.cpp())
-        if cpp_lang_data:
-            for element in map(shlex.split,
-                               cpp_lang_data.get('compiler_includes')):
-                element = [x for x in element if x != '-isystem']
-                ICI.compiler_info[compiler][ICI.cpp()]['compiler_includes'] \
-                    .extend(element)
-            ICI.compiler_info[compiler][ICI.cpp()]['compiler_standard'] = \
-                cpp_lang_data.get('compiler_standard')
-            ICI.compiler_info[compiler][ICI.cpp()]['target'] = \
-                cpp_lang_data.get('target')
+        contents = load_json_or_empty(file_path, {})
+        for k, v in contents.items():
+            k = json.loads(k)
+            ICI.compiler_info[
+                ICI.ImplicitInfoSpecifierKey(k[0], k[1], tuple(k[2]))] = v
 
     @staticmethod
     def set(details, compiler_info_file=None):
@@ -546,61 +552,32 @@ class ImplicitCompilerInfo:
         If compiler_info_file is available the implicit compiler
         information will be loaded and set from it.
         """
+        def compiler_info_key(details):
+            extra_opts = tuple(sorted(filter_compiler_includes_extra_args(
+                details['analyzer_options'])))
+
+            return ICI.ImplicitInfoSpecifierKey(
+                details['compiler'], details['lang'], extra_opts)
+
         ICI = ImplicitCompilerInfo
-        compiler = details['compiler']
+        iisk = compiler_info_key(details)
+
         if compiler_info_file and os.path.exists(compiler_info_file):
             # Compiler info file exists, load it.
-            ICI.load_compiler_info(compiler_info_file, compiler)
+            ICI.load_compiler_info(compiler_info_file)
         else:
-            # Invoke compiler to gather implicit compiler info.
-            # Independently of the actual compilation language in the
-            # compile command collect the iformation for C and C++.
-            if not ICI.compiler_info.get(compiler):
-                ICI.compiler_info[compiler] = defaultdict(dict)
+            if iisk not in ICI.compiler_info:
+                ICI.compiler_info[iisk] = {
+                    'compiler_includes': ICI.get_compiler_includes(
+                        iisk.compiler, iisk.language, iisk.compiler_flags),
+                    'compiler_standard': ICI.get_compiler_standard(
+                        iisk.compiler, iisk.language),
+                    'target': ICI.get_compiler_target(iisk.compiler)
+                }
 
-                # Collect for C
-                ICI.compiler_info[compiler][ICI.c()]['compiler_includes'] = \
-                    ICI.get_compiler_includes(compiler, ICI.c(),
-                                              details['analyzer_options'])
-                ICI.compiler_info[compiler][ICI.c()]['target'] = \
-                    ICI.get_compiler_target(compiler)
-                ICI.compiler_info[compiler][ICI.c()]['compiler_standard'] = \
-                    ICI.get_compiler_standard(compiler, ICI.c())
-
-                # Collect for C++
-                ICI.compiler_info[compiler][ICI.cpp()]['compiler_includes'] = \
-                    ICI.get_compiler_includes(compiler, ICI.cpp(),
-                                              details['analyzer_options'])
-                ICI.compiler_info[compiler][ICI.cpp()]['target'] = \
-                    ICI.get_compiler_target(compiler)
-                ICI.compiler_info[compiler][ICI.cpp()]['compiler_standard'] = \
-                    ICI.get_compiler_standard(compiler, ICI.cpp())
-
-        def set_details_from_ICI(key, lang):
-            """Set compiler related information in the 'details' dictionary.
-
-            If the language dependent value is not set yet, get the compiler
-            information from ICI.
-            """
-
-            parsed_value = details[key].get(lang)
-            if parsed_value:
-                details[key][lang] = parsed_value
-            else:
-                # Only set what is available from ICI.
-                compiler_data = ICI.compiler_info.get(compiler)
-                if compiler_data:
-                    language_data = compiler_data.get(lang)
-                    if language_data:
-                        details[key][lang] = language_data.get(key)
-
-        set_details_from_ICI('compiler_includes', ICI.c())
-        set_details_from_ICI('compiler_standard', ICI.c())
-        set_details_from_ICI('target', ICI.c())
-
-        set_details_from_ICI('compiler_includes', ICI.cpp())
-        set_details_from_ICI('compiler_standard', ICI.cpp())
-        set_details_from_ICI('target', ICI.cpp())
+        for k, v in ICI.compiler_info.get(iisk, {}).items():
+            if not details.get(k):
+                details[k] = v
 
     @staticmethod
     def get():
@@ -954,8 +931,8 @@ def parse_options(compilation_db_entry,
     """
     details = {
         'analyzer_options': [],
-        'compiler_includes': defaultdict(dict),  # For each language c/cpp.
-        'compiler_standard': defaultdict(dict),  # For each language c/cpp.
+        'compiler_includes': [],
+        'compiler_standard': '',
         'compilation_target': '',  # Compilation target in the compilation cmd.
         'analyzer_type': -1,
         'original_command': '',
@@ -963,7 +940,7 @@ def parse_options(compilation_db_entry,
         'output': '',
         'lang': None,
         'arch': '',  # Target in the compile command set by -arch.
-        'target': defaultdict(str),
+        'target': '',
         'source': ''}
 
     if 'arguments' in compilation_db_entry:
@@ -1074,7 +1051,7 @@ def parse_options(compilation_db_entry,
     # Option parser detects target architecture but does not know about the
     # language during parsing. Set the collected compilation target for the
     # language detected language.
-    details['target'][lang] = details['compilation_target']
+    details['target'] = details['compilation_target']
 
     # With gcc-toolchain a non default compiler toolchain can be set. Clang
     # will search for include paths and libraries based on the gcc-toolchain
@@ -1097,14 +1074,14 @@ def parse_options(compilation_db_entry,
         ImplicitCompilerInfo.set(details, compiler_info_file)
 
     if not keep_gcc_include_fixed:
-        for lang, includes in details['compiler_includes'].items():
-            details['compiler_includes'][lang] = \
-                list(filter(__is_not_include_fixed, includes))
+        details['compiler_includes'] = list(filter(
+            __is_not_include_fixed,
+            details['compiler_includes']))
 
     if not keep_gcc_intrin:
-        for lang, includes in details['compiler_includes'].items():
-            details['compiler_includes'][lang] = \
-                list(filter(__contains_no_intrinsic_headers, includes))
+        details['compiler_includes'] = list(filter(
+            __contains_no_intrinsic_headers,
+            details['compiler_includes']))
 
         # filter out intrin directories
         aop_without_intrin = []
@@ -1356,11 +1333,8 @@ def parse_unique_log(compilation_database,
                               compile_uniqueing)
                     sys.exit(1)
 
-        compiler_info_out = os.path.join(report_dir, "compiler_info.json")
-        with open(compiler_info_out, 'w',
-                  encoding="utf-8", errors="ignore") as f:
-            LOG.debug("Writing compiler info into:"+compiler_info_out)
-            json.dump(ImplicitCompilerInfo.get(), f)
+        ImplicitCompilerInfo.dump_compiler_info(
+            os.path.join(report_dir, "compiler_info.json"))
 
         LOG.debug('Parsing log file done.')
         return list(uniqued_build_actions.values()), skipped_cmp_cmd_count

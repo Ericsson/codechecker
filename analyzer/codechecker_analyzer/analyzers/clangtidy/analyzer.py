@@ -242,10 +242,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                 analyzer_cmd.extend(['-x', compile_lang])
 
             if not has_flag('--target', analyzer_cmd) and \
-                    self.buildaction.target.get(compile_lang, "") != "":
-                analyzer_cmd.append(
-                    "--target=" + self.buildaction.target.get(compile_lang,
-                                                              ""))
+                    self.buildaction.target != "":
+                analyzer_cmd.append(f"--target={self.buildaction.target}")
 
             if not has_flag('-arch', analyzer_cmd) and \
                     self.buildaction.arch != "":
@@ -255,12 +253,11 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd.extend(prepend_all(
                 '-isystem',
-                self.buildaction.compiler_includes[compile_lang]))
+                self.buildaction.compiler_includes))
 
             if not has_flag('-std', analyzer_cmd) and not \
                     has_flag('--std', analyzer_cmd):
-                analyzer_cmd.append(
-                    self.buildaction.compiler_standard.get(compile_lang, ""))
+                analyzer_cmd.append(self.buildaction.compiler_standard)
 
             analyzer_cmd.extend(compiler_warnings)
 

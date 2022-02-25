@@ -21,13 +21,10 @@ def get_compile_command(action, config, source='', output=''):
 
     cmd = [config.analyzer_binary]
 
-    compile_lang = action.lang
+    if not has_flag('--target', cmd) and action.target != "":
+        cmd.append(f"--target={action.target}")
 
-    if not has_flag('--target', cmd) and \
-            action.target[compile_lang] != "":
-        cmd.append("--target=" + action.target[compile_lang])
-
-    cmd.extend(prepend_all('-isystem', action.compiler_includes[compile_lang]))
+    cmd.extend(prepend_all('-isystem', action.compiler_includes))
     cmd.append('-c')
     if not has_flag('-x', cmd):
         cmd.extend(['-x', action.lang])
@@ -40,7 +37,7 @@ def get_compile_command(action, config, source='', output=''):
         cmd.append(source)
 
     if not has_flag('-std', cmd) and not has_flag('--std', cmd):
-        cmd.append(action.compiler_standard.get(compile_lang, ""))
+        cmd.append(action.compiler_standard)
     return cmd
 
 

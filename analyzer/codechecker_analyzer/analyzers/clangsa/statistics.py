@@ -59,23 +59,19 @@ def build_stat_coll_cmd(action, config, source):
         return [], False
 
     for coll_check in collector_checkers:
-        cmd.extend(['-Xclang',
-                    '-analyzer-checker=' + coll_check])
+        cmd.extend(['-Xclang', f'-analyzer-checker={coll_check}'])
 
     compile_lang = action.lang
     if not has_flag('-x', cmd):
         cmd.extend(['-x', compile_lang])
 
-    if not has_flag('--target', cmd) and \
-            action.target.get(compile_lang, "") != "":
-        cmd.append("--target=" + action.target[compile_lang])
+    if not has_flag('--target', cmd) and action.target != "":
+        cmd.append(f"--target={action.target}")
 
     if not has_flag('-std', cmd) and not has_flag('--std', cmd):
-        cmd.append(action.compiler_standard.get(compile_lang, ""))
+        cmd.append(action.compiler_standard)
 
-    cmd.extend(prepend_all(
-        '-isystem',
-        action.compiler_includes.get(compile_lang, [])))
+    cmd.extend(prepend_all('-isystem', action.compiler_includes))
 
     if source:
         cmd.append(source)

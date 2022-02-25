@@ -213,15 +213,11 @@ class TestAnalyze(unittest.TestCase):
 
         with open(compiler_info_file, 'w',
                   encoding="utf-8", errors="ignore") as source:
-            source.write('''{
-  "clang++": {
-    "c++": {
-      "compiler_standard": "-std=FAKE_STD",
-      "target": "FAKE_TARGET",
-      "compiler_includes": [
-        "-isystem /FAKE_INCLUDE_DIR"
-      ]
-    }
+            source.write(r'''{
+  "[\"clang++\", \"c++\", []]": {
+    "compiler_includes": ["/FAKE_INCLUDE_DIR"],
+    "compiler_standard": "-std=FAKE_STD",
+    "target": "FAKE_TARGET"
   }
 }''')
 
