@@ -135,7 +135,7 @@ class TestCtuFailure(unittest.TestCase):
         # with a specified name is analyzed.
         output, result = self.__do_ctu_all(
             on_demand=False, extra_args=["--verbose", "debug",
-                                         "-e", "debug.ExprInspection"])
+                                         "--saargs", "./ctu_failure.saargs"])
         self.assertEqual(result, 3, "Analyzer survived the failure.")
 
         # lib.c should be logged as its AST is loaded by Clang
@@ -185,7 +185,7 @@ class TestCtuFailure(unittest.TestCase):
         # with a specified name is analyzed.
         output, result = self.__do_ctu_all(
             on_demand=True, extra_args=["--verbose", "debug",
-                                        "-e", "debug.ExprInspection"])
+                                        "--saargs", "./ctu_failure.saargs"])
         self.assertEqual(result, 3, "Analyzer survived the failure.")
 
         # lib.c should be logged as its AST is loaded by Clang
@@ -235,7 +235,7 @@ class TestCtuFailure(unittest.TestCase):
         # with a specified name is analyzed.
         output, result = self.__do_ctu_all(
             on_demand=False, extra_args=["--verbose", "debug",
-                                         "-e", "debug.ExprInspection"])
+                                         "--saargs", "./ctu_failure.saargs"])
         self.assertEqual(result, 3, "Analyzer survived the failure.")
 
         # lib.c should be logged as its AST is loaded by Clang
@@ -287,7 +287,7 @@ class TestCtuFailure(unittest.TestCase):
         # with a specified name is analyzed.
         output, result = self.__do_ctu_all(
             on_demand=True, extra_args=["--verbose", "debug",
-                                        "-e", "debug.ExprInspection"])
+                                        "--saargs", "./ctu_failure.saargs"])
         self.assertEqual(result, 3, "CTU analyzing should fail.")
 
         # lib.c should be logged as its AST is loaded by Clang
@@ -334,7 +334,7 @@ class TestCtuFailure(unittest.TestCase):
 
         output, result = self.__do_ctu_all(
             on_demand=False, extra_args=["--verbose", "debug",
-                                         "-e", "debug.ExprInspection",
+                                         "--saargs", "./ctu_failure.saargs",
                                          "--ctu-reanalyze-on-failure"])
         self.assertEqual(result, 3, "CTU analyzing should fail.")
 
@@ -362,7 +362,7 @@ class TestCtuFailure(unittest.TestCase):
 
         output, result = self.__do_ctu_all(
             on_demand=True, extra_args=["--verbose", "debug",
-                                        "-e", "debug.ExprInspection",
+                                        "--saargs", "./ctu_failure.saargs",
                                         "--ctu-reanalyze-on-failure"])
         self.assertEqual(result, 3, "CTU analyzing should fail.")
 

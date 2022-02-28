@@ -150,7 +150,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         """Return the list of the supported checkers."""
         checker_list_args = clang_options.get_analyzer_checkers_cmd(
             cfg_handler,
-            alpha=True)
+            alpha=True,
+            debug=False)
         return parse_clang_help_page(checker_list_args, 'CHECKERS:', environ)
 
     @classmethod
@@ -227,16 +228,23 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                     ['-Xclang', '-analyzer-config', '-Xclang', cfg])
 
             # Config handler stores which checkers are enabled or disabled.
+            disabled_checkers = []
+            enabled_checkers = []
             for checker_name, value in config.checks().items():
                 state, _ = value
                 if state == CheckerState.enabled:
-                    analyzer_cmd.extend(['-Xclang',
-                                         '-analyzer-checker=' + checker_name])
+                    enabled_checkers.append(checker_name)
                 elif state == CheckerState.disabled:
-                    analyzer_cmd.extend(['-Xclang',
-                                         '-analyzer-disable-checker=' +
-                                         checker_name])
+                    disabled_checkers.append(checker_name)
 
+            if enabled_checkers:
+                analyzer_cmd.extend(['-Xclang',
+                                     '-analyzer-checker=' +
+                                     ','.join(enabled_checkers)])
+            if disabled_checkers:
+                analyzer_cmd.extend(['-Xclang',
+                                     '-analyzer-disable-checker=' +
+                                     ','.join(disabled_checkers)])
             # Enable aggressive-binary-operation-simplification option.
             analyzer_cmd.extend(
                 clang_options.get_abos_options(config.version_info))
