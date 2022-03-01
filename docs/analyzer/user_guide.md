@@ -1857,7 +1857,8 @@ similar to this one:
 - `message` (str): message reported by the checker.
 - `checker_name` (str): identifier of the rule (checker) that was evaluated
   to produce the result.
-- `severity` (str | null): CodeChecker severity level (optional).
+- `severity` (str | null): CodeChecker severity level (optional). Possible
+values are: `CRITICAL`, `HIGH`, `MEDIUM`, `LOW`, `STYLE`, `UNSPECIFIED`.
 - `report_hash` (str | null): bug identifier hash (optional).
 - `analyzer_name` (str | null): analyzer name which reported the bug
   (optional).
