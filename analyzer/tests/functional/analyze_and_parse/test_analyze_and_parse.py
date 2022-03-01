@@ -409,6 +409,25 @@ class AnalyzeParseTestCase(
         self.assertTrue('Summary' in out)
         self.assertTrue('Statistics' in out)
 
+    def test_html_output_for_empty_dir(self):
+        """ Test parse HTML output for an empty directory. """
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            output_path = os.path.join(self.test_workspaces['OUTPUT'], 'html')
+            extract_cmd = [
+                'CodeChecker', 'parse',
+                '-e', 'html',
+                '-o', output_path,
+                tmp_dir]
+
+            out, err, result = call_command(
+                extract_cmd, cwd=self.test_dir, env=self.env)
+            self.assertEqual(result, 0)
+            self.assertFalse(err)
+
+            self.assertTrue('Summary' in out)
+            self.assertFalse('Html file was generated' in out)
+            self.assertFalse('Statistics' in out)
+
     def test_codeclimate_export(self):
         """ Test exporting codeclimate output. """
         test_project_notes = os.path.join(self.test_workspaces['NORMAL'],

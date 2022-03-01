@@ -381,8 +381,13 @@ def main(args):
     changed_files: Set[str] = set()
     processed_path_hashes = set()
     processed_file_paths = set()
-    html_builder: Optional[report_to_html.HtmlBuilder] = None
     print_steps = 'print_steps' in args
+
+    html_builder: Optional[report_to_html.HtmlBuilder] = None
+    if export == 'html':
+        html_builder = report_to_html.HtmlBuilder(
+            context.path_plist_to_html_dist,
+            context.checker_labels)
 
     for dir_path, file_paths in report_file.analyzer_result_files(args.input):
         metadata = get_metadata(dir_path)
@@ -413,11 +418,6 @@ def main(args):
                 plaintext.convert(
                     file_report_map, processed_file_paths, print_steps)
             elif export == 'html':
-                if not html_builder:
-                    html_builder = report_to_html.HtmlBuilder(
-                        context.path_plist_to_html_dist,
-                        context.checker_labels)
-
                 print(f"Parsing input file '{file_path}'.")
                 report_to_html.convert(
                     file_path, reports, output_dir_path,
