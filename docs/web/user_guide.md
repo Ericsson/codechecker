@@ -208,19 +208,14 @@ optional arguments:
                         removing "/a/b/" prefix will store files like c/x.cpp
                         and c/y.cpp. If multiple prefix is given, the longest
                         match will be removed.
-  --config CONFIG_FILE  Allow the configuration from an explicit JSON based
-                        configuration file. The values configured in the
-                        config file will overwrite the values set in the
-                        command line. The format of configuration file is:
-                        {
-                          "store": [
-                            "--name=run_name",
-                            "--tag=my_tag",
-                            "--url=http://codechecker.my:9090/MyProduct"
-                          ]
-                        }. (default: None)
+  --config CONFIG_FILE  Allow the configuration from an explicit configuration
+                        file. The values configured in the config file will
+                        overwrite the values set in the command line.
                         You can use any environment variable inside this file
-                        and it will be expaneded. (default: None)
+                        and it will be expaneded.
+                        For more information see the docs: https://github.com/
+                        Ericsson/codechecker/tree/master/docs/config_file.md
+                        (default: None)
   -f, --force           Delete analysis results stored in the database for the
                         current analysis run's name and store only the results
                         reported in the 'input' files. (By default,
@@ -344,16 +339,14 @@ optional arguments:
                         "::"'.) (default: False)
   --skip-db-cleanup     Skip performing cleanup jobs on the database like
                         removing unused files. (default: False)
-  --config CONFIG_FILE  Allow the configuration from an explicit JSON based
-                        configuration file. The values configured in the
-                        config file will overwrite the values set in the
-                        command line. The format of configuration file is:
-                        {
-                          "server": [
-                            "--workspace=/home/<username>/workspace",
-                            "--port=9090"
-                          ]
-                        }. (default: None)
+  --config CONFIG_FILE  Allow the configuration from an explicit configuration
+                        file. The values configured in the config file will
+                        overwrite the values set in the command line.
+                        You can use any environment variable inside this file
+                        and it will be expaneded.
+                        For more information see the docs: https://github.com/
+                        Ericsson/codechecker/tree/master/docs/config_file.md
+                        (default: None)
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level.
 

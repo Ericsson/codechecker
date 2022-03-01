@@ -317,28 +317,7 @@ used to generate a log file on the fly.""")
                                     "report directory. When this flag is "
                                     "used, 'failed' directory remains empty.")
 
-    analyzer_opts.add_argument('--config',
-                               dest='config_file',
-                               required=False,
-                               help="R|Allow the configuration from an "
-                                    "explicit JSON based configuration file. "
-                                    "The value of the 'analyzer' key in the "
-                                    "config file will be emplaced as command "
-                                    "line arguments. The format of "
-                                    "configuration file is:\n"
-                                    "{\n"
-                                    "  \"analyzer\": [\n"
-                                    "    \"--enable=core.DivideZero\",\n"
-                                    "    \"--enable=core.CallAndMessage\",\n"
-                                    "    \"--report-hash=context-free-v2\",\n"
-                                    "    \"--verbose=debug\",\n"
-                                    "    \"--skip=$HOME/project/skip.txt\",\n"
-                                    "    \"--clean\"\n"
-                                    "  ]\n"
-                                    "}.\n"
-                                    "You can use any environment variable "
-                                    "inside this file and it will be "
-                                    "expaneded.")
+    cmd_config.add_option(analyzer_opts)
 
     # TODO: One day, get rid of these. See Issue #36, #427.
     analyzer_opts.add_argument('--saargs',

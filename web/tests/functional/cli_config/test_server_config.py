@@ -36,12 +36,14 @@ class TestServerConfig(unittest.TestCase):
         # Get the CodeChecker cmd if needed for the tests.
         self._codechecker_cmd = env.codechecker_cmd()
 
-        self.config_file = os.path.join(self.test_workspace,
-                                        "codechecker.json")
+        self.config_file_json = os.path.join(
+            self.test_workspace, "codechecker.json")
+        self.config_file_yaml = os.path.join(
+            self.test_workspace, "codechecker.yaml")
 
-    def test_valid_config(self):
-        """ Start server with a valid configuration file. """
-        with open(self.config_file, 'w+',
+    def test_valid_json_config(self):
+        """ Start server with a valid JSON configuration file. """
+        with open(self.config_file_json, 'w+',
                   encoding="utf-8", errors="ignore") as config_f:
             json.dump({
                 'server': ['--skip-db-cleanup']}, config_f)
@@ -53,7 +55,31 @@ class TestServerConfig(unittest.TestCase):
 
         server_access = \
             codechecker.start_server(self.codechecker_cfg, event,
-                                     ['--config', self.config_file])
+                                     ['--config', self.config_file_json])
+        event.set()
+        event.clear()
+        with open(server_access['server_output_file'], 'r',
+                  encoding='utf-8', errors='ignore') as out:
+            content = out.read()
+            self.assertFalse('usage: CodeChecker' in content)
+
+    def test_valid_yaml_config(self):
+        """ Start server with a valid YAML configuration file. """
+        with open(self.config_file_yaml, 'w+',
+                  encoding="utf-8", errors="ignore") as config_f:
+            config_f.write("""
+# Server related options:
+server:
+  - --skip-db-cleanup""")
+
+        event = multiprocessing.Event()
+        event.clear()
+
+        self.codechecker_cfg['viewer_port'] = env.get_free_port()
+
+        server_access = \
+            codechecker.start_server(self.codechecker_cfg, event,
+                                     ['--config', self.config_file_yaml])
         event.set()
         event.clear()
         with open(server_access['server_output_file'], 'r',
@@ -63,7 +89,7 @@ class TestServerConfig(unittest.TestCase):
 
     def test_invalid_config(self):
         """ Start server with an invalid configuration file. """
-        with open(self.config_file, 'w+',
+        with open(self.config_file_json, 'w+',
                   encoding="utf-8", errors="ignore") as config_f:
             json.dump({
                 'server': ['--dummy-option']}, config_f)
@@ -75,7 +101,7 @@ class TestServerConfig(unittest.TestCase):
 
         server_access = \
             codechecker.start_server(self.codechecker_cfg, event,
-                                     ['--config', self.config_file])
+                                     ['--config', self.config_file_json])
         event.set()
         event.clear()
         with open(server_access['server_output_file'], 'r',
@@ -85,7 +111,7 @@ class TestServerConfig(unittest.TestCase):
 
     def test_empty_config(self):
         """ Start server with an empty configuration file. """
-        with open(self.config_file, 'w+',
+        with open(self.config_file_json, 'w+',
                   encoding="utf-8", errors="ignore") as config_f:
             config_f.write("")
 
@@ -96,7 +122,7 @@ class TestServerConfig(unittest.TestCase):
 
         server_access = \
             codechecker.start_server(self.codechecker_cfg, event,
-                                     ['--config', self.config_file])
+                                     ['--config', self.config_file_json])
         event.set()
         event.clear()
         with open(server_access['server_output_file'], 'r',

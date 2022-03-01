@@ -250,21 +250,7 @@ def add_arguments_to_parser(parser):
                              "If multiple prefix is given, the longest match "
                              "will be removed.")
 
-    parser.add_argument('--config',
-                        dest='config_file',
-                        required=False,
-                        help="R|Allow the configuration from an explicit JSON "
-                             "based configuration file. The values configured "
-                             "in the config file will overwrite the values "
-                             "set in the command line. The format of "
-                             "configuration file is:\n"
-                             "{\n"
-                             "  \"store\": [\n"
-                             "    \"--name=run_name\",\n"
-                             "    \"--tag=my_tag\",\n"
-                             "    \"--url=http://codechecker.my/MyProduct\"\n"
-                             "  ]\n"
-                             "}.")
+    cmd_config.add_option(parser)
 
     parser.add_argument('-f', '--force',
                         dest="force",

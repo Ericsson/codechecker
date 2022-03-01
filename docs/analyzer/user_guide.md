@@ -13,7 +13,6 @@ Table of Contents
             * [Absolute path examples](#skip-abs-example)
             * [Relative or partial path examples](#skip-rel-example)
         * [CodeChecker analyzer configuration](#analyzer-configuration)
-            * [Configuration file](#analyzer-configuration-file)
             * [Analyzer and checker config options](#analyzer-checker-config-option)
               * [Configuration of analyzer tools](#analyzer-config-option)
               * [Configuration of checkers](#checker-config-option)
@@ -238,22 +237,14 @@ analyzer arguments:
                         folder named 'reproducer' under the report directory.
                         When this flag is used, 'failed' directory remains
                         empty.
-  --config CONFIG_FILE  Allow the configuration from an explicit JSON based
-                        configuration file. The value of the 'analyzer' key in
-                        the config file will be emplaced as command line
-                        arguments. The format of configuration file is:
-                        {
-                          "analyze": [
-                            "--enable=core.DivideZero",
-                            "--enable=core.CallAndMessage",
-                            "--report-hash=context-free-v2",
-                            "--verbose=debug",
-                            "--skip=$HOME/project/skip.txt",
-                            "--clean"
-                          ]
-                        }.
+  --config CONFIG_FILE  Allow the configuration from an explicit configuration
+                        file. The values configured in the config file will
+                        overwrite the values set in the command line.
                         You can use any environment variable inside this file
-                        and it will be expaneded. (default: None)
+                        and it will be expaneded.
+                        For more information see the docs: https://github.com/
+                        Ericsson/codechecker/tree/master/docs/config_file.md
+                        (default: None)
   --saargs CLANGSA_ARGS_CFG_FILE
                         File containing argument which will be forwarded
                         verbatim for the Clang Static analyzer.
@@ -1039,22 +1030,14 @@ analyzer arguments:
                         folder named 'reproducer' under the report directory.
                         When this flag is used, 'failed' directory remains
                         empty.
-  --config CONFIG_FILE  Allow the configuration from an explicit JSON based
-                        configuration file. The value of the 'analyzer' key in
-                        the config file will be emplaced as command line
-                        arguments. The format of configuration file is:
-                        {
-                          "analyze": [
-                            "--enable=core.DivideZero",
-                            "--enable=core.CallAndMessage",
-                            "--report-hash=context-free-v2",
-                            "--verbose=debug",
-                            "--skip=$HOME/project/skip.txt",
-                            "--clean"
-                          ]
-                        }.
+  --config CONFIG_FILE  Allow the configuration from an explicit configuration
+                        file. The values configured in the config file will
+                        overwrite the values set in the command line.
                         You can use any environment variable inside this file
-                        and it will be expaneded. (default: None)
+                        and it will be expaneded.
+                        For more information see the docs: https://github.com/
+                        Ericsson/codechecker/tree/master/docs/config_file.md
+                        (default: None)
   --saargs CLANGSA_ARGS_CFG_FILE
                         File containing argument which will be forwarded
                         verbatim for the Clang Static Analyzer.
@@ -1111,67 +1094,6 @@ not present as they are provided by different binaries.
 See [Configure Clang Static Analyzer and checkers](checker_and_analyzer_configuration.md)
 documentation for a more detailed description how to use the `saargs`,
 `tidyargs` and `z3` arguments.
-
-#### Configuration file <a name="analyzer-configuration-file"></a>
-`--config` option allow the configuration from an explicit configuration file.
-The parameters in the config file will be emplaced as command line arguments.
-
-**Example**:
-Lets assume you have a configuration file
-[`codechecker.json`](../../config/codechecker.json) with the following content:
-```json
-{
-  "analyze": [
-    "--enable=core.DivideZero",
-    "--enable=core.CallAndMessage",
-    "--analyzer-config",
-    "clangsa:unroll-loops=true",
-    "--checker-config",
-    "clang-tidy:google-readability-function-size.StatementThreshold=100"
-    "--report-hash", "context-free-v2"
-    "--verbose=debug",
-    "--clean"
-  ],
-  "parse": [
-    "--trim-path-prefix",
-    "/$HOME/workspace"
-  ],
-  "server": [
-    "--workspace=$HOME/workspace",
-    "--port=9090"
-  ],
-  "store": [
-    "--name=run_name",
-    "--tag=my_tag",
-    "--url=http://codechecker.my:9090/MyProduct"
-  ]
-}
-```
-This configuration file example contains configuration options for multiple
-codechecker subcommands (analyze, parse, server, store) so not just the
-`analyze` subcommand can be configured like this.
-The focus is on the `analyze` subcommand configuration in the next examples.
-
-If you run the following command:
-```sh
-CodeChecker analyze compilation.json -o ./reports --config ./codechecker.json
-```
-then the analyzer parameters from the `codechecker.json` file will be emplaced
-as command line arguments:
-```sh
-CodeChecker analyze compilation.json -o ./reports --enable=core.DivideZero --enable=core.CallAndMessage --analyzer-config clangsa:unroll-loops=true --checker-config clang-tidy:google-readability-function-size.StatementThreshold=100 --report-hash context-free-v2 --verbose debug --clean
-```
-
-Note: Options which require parameters have to be in either of the following
-formats:
-
-- Use equal to separate option and parameter in quotes:
-  `{ "analyze": [ "--verbose=debug" ] }`
-- Use separated values for option and parameter:
-  `{ "analyze": [ "--verbose", "debug" ] }`
-
-Note: environment variables inside this config file will be expanded:
-`{ "analyze": [ "--skip=$HOME/project/skip.txt" ] }`
 
 #### Analyzer and checker config options <a name="analyzer-checker-config-option"></a>
 
@@ -1662,16 +1584,14 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --config CONFIG_FILE  Allow the configuration from an explicit JSON based
-                        configuration file. The value of the 'parse' key in
-                        the config file will be emplaced as command line
-                        arguments. The format of configuration file is:
-                        {
-                          "parse": [
-                            "--trim-path-prefix",
-                            "$HOME/workspace"
-                          ]
-                        } (default: None)
+  --config CONFIG_FILE  Allow the configuration from an explicit configuration
+                        file. The values configured in the config file will
+                        overwrite the values set in the command line.
+                        You can use any environment variable inside this file
+                        and it will be expaneded.
+                        For more information see the docs: https://github.com/
+                        Ericsson/codechecker/tree/master/docs/config_file.md
+                        (default: None)
   -t {plist}, --type {plist}, --input-format {plist}
                         Specify the format the analysis results were created
                         as. (default: plist)

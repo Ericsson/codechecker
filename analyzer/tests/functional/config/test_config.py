@@ -35,8 +35,10 @@ class TestConfig(unittest.TestCase):
         self._codechecker_cmd = env.codechecker_cmd()
 
         self.reports_dir = os.path.join(self.test_workspace, "reports")
-        self.config_file = os.path.join(self.test_workspace,
-                                        "codechecker.json")
+        self.config_file_json = os.path.join(
+            self.test_workspace, "codechecker.json")
+        self.config_file_yaml = os.path.join(
+            self.test_workspace, "codechecker.yaml")
         self.build_json = os.path.join(self.test_workspace,
                                        "build_simple.json")
         self.source_file = os.path.join(self.test_workspace, "simple.cpp")
@@ -59,14 +61,14 @@ class TestConfig(unittest.TestCase):
                   encoding="utf-8", errors="ignore") as source:
             source.write(simple_file_content)
 
-    def __run_analyze(self, extra_options=None):
+    def __run_analyze(self, config_file_path: str, extra_options=None):
         """
         Run the CodeChecker analyze command with a configuration file.
         """
         # Create analyze command.
         analyze_cmd = [self._codechecker_cmd, "analyze", self.build_json,
                        "-o", self.reports_dir,
-                       "--config", self.config_file]
+                       "--config", config_file_path]
 
         if extra_options:
             analyze_cmd.extend(extra_options)
@@ -78,16 +80,17 @@ class TestConfig(unittest.TestCase):
             stderr=subprocess.PIPE,
             encoding="utf-8",
             errors="ignore")
-        out, _ = process.communicate()
+        out, err = process.communicate()
+        print(err)
         return out, process.returncode
 
-    def __run_parse(self):
+    def __run_parse(self, config_file_path: str):
         """
         Run the CodeChecker analyze command with a configuration file.
         """
         # Create analyze command.
         analyze_cmd = [self._codechecker_cmd, "parse", self.reports_dir,
-                       "--config", self.config_file]
+                       "--config", config_file_path]
 
         # Run analyze.
         process = subprocess.Popen(
@@ -104,12 +107,12 @@ class TestConfig(unittest.TestCase):
         Run analyze command with a config file which enables the clangsa
         analyzer only.
         """
-        with open(self.config_file, 'w+',
+        with open(self.config_file_json, 'w+',
                   encoding="utf-8", errors="ignore") as config_f:
             json.dump({
                 'analyze': ['--analyzers', 'clangsa']}, config_f)
 
-        out, returncode = self.__run_analyze()
+        out, returncode = self.__run_analyze(self.config_file_json)
 
         self.assertEqual(returncode, 0)
         self.assertIn("clangsa analyzed simple.cpp", out)
@@ -121,14 +124,14 @@ class TestConfig(unittest.TestCase):
         The config name should be 'analyze' to be in sync with the
         subcommand names.
         """
-        with open(self.config_file, 'w+',
+        with open(self.config_file_json, 'w+',
                   encoding="utf-8", errors="ignore") as config_f:
             json.dump({
                 'analyze': ['--analyzers', 'clangsa'],
                 'analyzer': ['--analyzers', 'clang-tidy']},
                 config_f)
 
-        out, returncode = self.__run_analyze()
+        out, returncode = self.__run_analyze(self.config_file_json)
 
         self.assertEqual(returncode, 0)
         self.assertIn("clangsa analyzed simple.cpp", out)
@@ -140,12 +143,12 @@ class TestConfig(unittest.TestCase):
         The config name should be 'analyze' to be in sync with the
         subcommand names.
         """
-        with open(self.config_file, 'w+',
+        with open(self.config_file_json, 'w+',
                   encoding="utf-8", errors="ignore") as config_f:
             json.dump({
                 'analyzer': ['--analyzers', 'clangsa']}, config_f)
 
-        out, returncode = self.__run_analyze()
+        out, returncode = self.__run_analyze(self.config_file_json)
 
         self.assertEqual(returncode, 0)
         self.assertIn("clangsa analyzed simple.cpp", out)
@@ -157,12 +160,13 @@ class TestConfig(unittest.TestCase):
         analyzer only and override this option from the command line and enable
         only clangsa analyze.
         """
-        with open(self.config_file, 'w+',
+        with open(self.config_file_json, 'w+',
                   encoding="utf-8", errors="ignore") as config_f:
             json.dump({
                 'analyzer': ['--analyzers', 'clang-tidy']}, config_f)
 
-        out, returncode = self.__run_analyze(['--analyzers', 'clangsa'])
+        out, returncode = self.__run_analyze(
+            self.config_file_json, ['--analyzers', 'clangsa'])
 
         self.assertEqual(returncode, 0)
         self.assertIn("clangsa analyzed simple.cpp", out)
@@ -172,11 +176,11 @@ class TestConfig(unittest.TestCase):
         """
         Run analyze with an empty config file.
         """
-        with open(self.config_file, 'w+',
+        with open(self.config_file_json, 'w+',
                   encoding="utf-8", errors="ignore") as config_f:
             config_f.write("")
 
-        out, returncode = self.__run_analyze()
+        out, returncode = self.__run_analyze(self.config_file_json)
 
         self.assertEqual(returncode, 0)
         self.assertIn("clangsa analyzed simple.cpp", out)
@@ -184,24 +188,52 @@ class TestConfig(unittest.TestCase):
 
     def test_parse_config(self):
         """
-        Run analyze command with a config file which enables the clangsa
+        Run analyze command with a JSON config file which enables the clangsa
         analyzer only and parse the results with a parse command
         config.
         """
-        with open(self.config_file, 'w+',
+        with open(self.config_file_json, 'w+',
                   encoding="utf-8", errors="ignore") as config_f:
             json.dump({
                 'analyzer': ['--analyzers', 'clangsa'],
                 'parse': ['--trim-path-prefix', '/workspace']},
                 config_f)
 
-        out, returncode = self.__run_analyze()
+        out, returncode = self.__run_analyze(self.config_file_json)
 
         self.assertEqual(returncode, 0)
         self.assertIn("clangsa analyzed simple.cpp", out)
         self.assertNotIn("clang-tidy analyzed simple.cpp", out)
 
-        out, returncode = self.__run_parse()
+        out, returncode = self.__run_parse(self.config_file_json)
+        print(out)
+        self.assertEqual(returncode, 2)
+
+    def test_yaml_analyze_and_parse(self):
+        """
+        Run analyze command with a yaml config file which enables the clangsa
+        analyzer only and parse the results with a parse command
+        config.
+        """
+        with open(self.config_file_yaml, 'w+',
+                  encoding="utf-8", errors="ignore") as f:
+            f.write("""
+analyzer:
+  # Enable only clangsa analyzer.
+  - --analyzers=clangsa
+
+parse:
+  # Removes leading path from file paths.
+  - --trim-path-prefix=/workspace
+""")
+
+        out, returncode = self.__run_analyze(self.config_file_yaml)
+
+        self.assertEqual(returncode, 0)
+        self.assertIn("clangsa analyzed simple.cpp", out)
+        self.assertNotIn("clang-tidy analyzed simple.cpp", out)
+
+        out, returncode = self.__run_parse(self.config_file_yaml)
         print(out)
         self.assertEqual(returncode, 2)
 
@@ -218,7 +250,7 @@ class TestConfig(unittest.TestCase):
         path_prefix = os.path.join(os.sep, *split_path[:3])
         trimmed_file_path = os.path.join(*split_path[3:])
 
-        with open(self.config_file, 'w+',
+        with open(self.config_file_json, 'w+',
                   encoding="utf-8", errors="ignore") as config_f:
             json.dump({
                 'analyzer': ['--analyzers', 'clangsa'],
@@ -228,7 +260,7 @@ class TestConfig(unittest.TestCase):
         check_cmd = [self._codechecker_cmd, "check",
                      "-l", self.build_json,
                      "-o", self.reports_dir,
-                     "--config", self.config_file]
+                     "--config", self.config_file_json]
 
         # Run analyze.
         process = subprocess.Popen(
