@@ -812,6 +812,10 @@ Example:
 CodeChecker analyze ../codechecker_myProject_build.log -o my_plists
 ```
 
+**Note**: If your compilation database log file contains relative paths you
+have to make sure that you run the analysis command from the same directory
+as the logger was run (i.e. that paths are relative to).
+
 `CodeChecker analyze` supports a myriad of fine-tuning arguments, explained
 below:
 

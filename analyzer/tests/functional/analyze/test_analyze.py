@@ -22,6 +22,7 @@ import zipfile
 
 from libtest import env
 
+from codechecker_report_converter.report import report_file
 from codechecker_analyzer.analyzers.clangsa import version
 
 
@@ -1092,3 +1093,64 @@ class TestAnalyze(unittest.TestCase):
         process.communicate()
 
         self.assertEqual(process.returncode, 1)
+
+    def test_compilation_db_relative_file_path(self):
+        """
+        Test relative path in compilation database.
+
+        If the file/directory paths in the compilation database are relative
+        ClangSA analyzer will generate plist files where the file paths are
+        also relative to the current directory where the analyzer was executed.
+        After the plist files are created, report converter will try to
+        post-process these files and creates absolute paths from the relative
+        paths. This test will check whether these files paths are exist.
+        """
+        test_dir = os.path.join(self.test_workspace, "test_rel_file_path")
+        os.makedirs(test_dir)
+
+        source_file_name = "success.c"
+        shutil.copy(os.path.join(self.test_dir, source_file_name), test_dir)
+
+        cc_files_dir_path = os.path.join(test_dir, "codechecker_files")
+        os.makedirs(cc_files_dir_path, exist_ok=True)
+
+        build_json = os.path.join(cc_files_dir_path, "build.json")
+        report_dir = os.path.join(cc_files_dir_path, "reports")
+
+        # Create a compilation database.
+        build_log = [{
+            "directory": ".",
+            "command": f"cc -c {source_file_name} -o /dev/null",
+            "file": source_file_name}]
+
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
+            json.dump(build_log, outfile)
+
+        # Analyze the project
+        analyze_cmd = [
+            self._codechecker_cmd, "analyze",
+            build_json,
+            "--report-hash", "context-free-v2",
+            "-o", report_dir,
+            "--clean"]
+
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=test_dir,
+            encoding="utf-8",
+            errors="ignore")
+        process.communicate()
+
+        errcode = process.returncode
+        self.assertEqual(errcode, 0)
+
+        # Test that file paths in plist files are exist.
+        plist_files = glob.glob(os.path.join(report_dir, '*.plist'))
+        for plist_file in plist_files:
+            reports = report_file.get_reports(plist_file)
+            for r in reports:
+                for file in r.files:
+                    self.assertTrue(os.path.exists(file.original_path))

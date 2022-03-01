@@ -76,6 +76,12 @@ class ResultHandler(metaclass=ABCMeta):
         return self.__buildaction
 
     @property
+    def source_dir_path(self):
+        """ Get directory path of the compiled source file. """
+        return os.path.normpath(os.path.join(
+            os.getcwd(), self.__buildaction.directory))
+
+    @property
     def workspace(self):
         """
         Workspace where the analysis results and temporarily generated files
