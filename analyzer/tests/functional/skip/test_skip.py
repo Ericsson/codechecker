@@ -79,6 +79,7 @@ class TestSkip(unittest.TestCase):
         print(err)
         errcode = process.returncode
         self.assertEqual(errcode, 0)
+        return out, err
 
     def __run_parse(self, extra_options=None):
         """ Run parse command with the given extra options. """
@@ -226,6 +227,19 @@ class TestSkip(unittest.TestCase):
             self.assertFalse(
                 glob.glob(os.path.join(self.report_dir, '*.plist')))
 
+    def test_analyze_header_with_file_option(self):
+        """ Analyze a header file with the --file option. """
+        header_file = os.path.join(self.test_dir, "simple", "skip.h")
+        out, _ = self.__log_and_analyze_simple(["--file", header_file])
+        self.assertIn(
+            f"Get dependent source files for '{header_file}'...", out)
+        self.assertIn(
+            f"Get dependent source files for '{header_file}' done.", out)
+
+        plist_files = glob.glob(os.path.join(self.report_dir, '*.plist'))
+        self.assertTrue(plist_files)
+        self.assertTrue(all('skip_header.cpp' in f for f in plist_files))
+
     def test_analyze_file_option_skip_everything(self):
         """
         Test analyze command --file option when everything is skipped by a
@@ -295,8 +309,6 @@ class TestSkip(unittest.TestCase):
         """
         self.__log_and_analyze_simple([
             "--file", "*/skip_header.cpp"])
-        print(glob.glob(
-                os.path.join(self.report_dir, '*.plist')))
         self.assertFalse(
             any('skip_header.cpp' not in f for f in glob.glob(
                 os.path.join(self.report_dir, '*.plist'))))

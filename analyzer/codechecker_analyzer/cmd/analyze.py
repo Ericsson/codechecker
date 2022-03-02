@@ -19,7 +19,10 @@ import re
 import shutil
 import sys
 
+from typing import List
+
 from codechecker_report_converter.util import load_json_or_empty
+from tu_collector import tu_collector
 
 from codechecker_analyzer import analyzer, analyzer_context, env
 from codechecker_analyzer.analyzers import analyzer_types, clangsa
@@ -32,6 +35,9 @@ from codechecker_common.skiplist_handler import SkipListHandler, \
 
 
 LOG = logger.get_logger('system')
+
+header_file_extensions = (
+    '.h', '.hh', '.H', '.hp', '.hxx', '.hpp', '.HPP', '.h++', '.tcc')
 
 epilog_env_var = f"""
   CC_ANALYZERS_FROM_PATH   Set to `yes` or `1` to enforce taking the analyzers
@@ -725,22 +731,58 @@ output of "CodeChecker checkers --guideline" command.""")
         func=main, func_process_config_file=cmd_config.process_config_file)
 
 
-def __get_skip_handlers(args) -> SkipListHandlers:
+def get_affected_file_paths(
+    file_filters: List[str],
+    compile_commands: tu_collector.CompilationDB
+) -> List[str]:
+    """
+    Returns a list of source files for existing header file otherwise returns
+    with the same file path expression.
+    """
+    file_paths = []  # Use list to keep the order of the file paths.
+    for file_filter in file_filters:
+        file_paths.append(file_filter)
+
+        if os.path.exists(file_filter) and \
+                file_filter.endswith(header_file_extensions):
+            LOG.info("Get dependent source files for '%s'...", file_filter)
+            dependent_sources = tu_collector.get_dependent_sources(
+                compile_commands, file_filter)
+
+            LOG.info("Get dependent source files for '%s' done.", file_filter)
+            LOG.debug("Dependent source files: %s",
+                      ', '.join(dependent_sources))
+
+            file_paths.extend(dependent_sources)
+
+    return file_paths
+
+
+def __get_skip_handlers(args, compile_commands) -> SkipListHandlers:
     """
     Initialize and return a list of skiplist handlers if
     there is a skip list file in the arguments or files options is provided.
     """
     skip_handlers = SkipListHandlers()
     if 'files' in args:
+        source_file_paths = get_affected_file_paths(
+            args.files, compile_commands)
+
         # Creates a skip file where all source files will be skipped except
         # the given source files and all the header files.
-        skip_files = ['+{0}'.format(f) for f in args.files]
+        skip_files = ['+{0}'.format(f) for f in source_file_paths]
         skip_files.extend(['+/*.h', '+/*.H', '+/*.tcc'])
         skip_files.append('-*')
-        skip_handlers.append(SkipListHandler("\n".join(skip_files)))
+        content = "\n".join(skip_files)
+        skip_handlers.append(SkipListHandler(content))
+        LOG.debug("Skip handler is created for the '--file' option with the "
+                  "following filters:\n%s", content)
     if 'skipfile' in args:
         with open(args.skipfile, encoding="utf-8", errors="ignore") as f:
-            skip_handlers.append(SkipListHandler(f.read()))
+            content = f.read()
+            skip_handlers.append(SkipListHandler(content))
+            LOG.debug("Skip handler is created for the '--ignore' option with "
+                      "the following filters:\n%s", content)
 
     return skip_handlers
 
@@ -868,8 +910,12 @@ def main(args):
             sys.exit(1)
         compiler_info_file = args.compiler_info_file
 
+    compile_commands = load_json_or_empty(args.logfile)
+    if compile_commands is None:
+        sys.exit(1)
+
     # Process the skip list if present.
-    skip_handlers = __get_skip_handlers(args)
+    skip_handlers = __get_skip_handlers(args, compile_commands)
 
     ctu_or_stats_enabled = False
     # Skip list is applied only in pre-analysis
@@ -896,10 +942,6 @@ def main(args):
     context = analyzer_context.get_context()
     analyzer_env = env.extend(context.path_env_extra,
                               context.ld_lib_path_extra)
-
-    compile_commands = load_json_or_empty(args.logfile)
-    if compile_commands is None:
-        sys.exit(1)
 
     # Number of all the compilation commands in the parsed log files,
     # logged by the logger.
