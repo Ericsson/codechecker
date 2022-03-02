@@ -16,7 +16,7 @@ import os
 import subprocess
 import sys
 from collections import defaultdict
-from typing import Dict, Iterable, Tuple
+from typing import Dict, Iterable, List, Tuple
 
 from codechecker_report_converter import twodim
 
@@ -564,6 +564,21 @@ def __print_checkers_json_format(checkers: Iterable, detailed: bool):
         print(json.dumps([c[1] for c in checkers]))
 
 
+def __post_process_result(result: List[Tuple]):
+    """ Postprocess the given result.
+
+    It will update the value of the doc_url label and create an absolute file
+    path if it is a relative path.
+    """
+    data_files_dir_path = os.environ.get('CC_DATA_FILES_DIR', '')
+    www_dir_path = os.path.join(data_files_dir_path, 'www')
+    for res in result:
+        for idx, (name, value) in enumerate(res[4]):
+            if name == 'doc_url' and not value.startswith('http'):
+                res[4][idx] = (name, os.path.normpath(
+                    os.path.join(www_dir_path, value.strip(os.sep))))
+
+
 def __print_checkers(args: argparse.Namespace, cl: CheckerLabels):
     """
     Print checkers according to the command line arguments to the standard
@@ -590,6 +605,8 @@ def __print_checkers(args: argparse.Namespace, cl: CheckerLabels):
                 filter(lambda x: x[1] in checkers, checker_info[analyzer]))
         else:
             result.extend(checker_info[analyzer])
+
+    __post_process_result(result)
 
     if args.output_format == 'custom':
         if result:
