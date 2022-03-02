@@ -14,8 +14,9 @@ import os
 
 import failure_lib as lib
 
-
-def prepare(compiler_info_file, sources_root):
+# Until CodeChecker 6.19.0 it should work.
+# On failure, raises an exception.
+def _try_prepare_as_old_format(compiler_info_file, sources_root):
     json_data = lib.load_json_file(compiler_info_file)
     sources_root_abs = os.path.abspath(sources_root)
     new_json_data = dict()
@@ -35,6 +36,37 @@ def prepare(compiler_info_file, sources_root):
             }
     return new_json_data
 
+# CodeChecker 6.19.0 and above it should parse according to the new format.
+# More details: #3598 [analyzer] Proper handling of multi-target build
+# On failure, raises an exception.
+def _try_prepare_as_new_format(compiler_info_file, sources_root):
+    json_data = lib.load_json_file(compiler_info_file)
+    sources_root_abs = os.path.abspath(sources_root)
+    new_json_data = dict()
+
+    for compiler_id_string in json_data:
+        new_json_data[compiler_id_string] = dict()
+        include_paths = json_data[compiler_id_string]['compiler_includes']
+        changed_includes = [
+            lib.change_paths(p, lib.IncludePathModifier(sources_root_abs))
+            for p in include_paths
+        ]
+
+        new_json_data[compiler_id_string] = {
+            'compiler_includes': changed_includes,
+            'target': json_data[compiler_id_string]['target'],
+            'compiler_standard':
+                json_data[compiler_id_string]['compiler_standard']
+        }
+    return new_json_data
+
+def prepare(compiler_info_file, sources_root):
+    try:
+        return _try_prepare_as_new_format(compiler_info_file, sources_root)
+    except:
+        print(f"Failed to parse {compiler_info_file} in the 'new' "
+              f"compiler_info format; falling back to the old format...")
+        return _try_prepare_as_old_format(compiler_info_file, sources_root)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Prepare compiler info '

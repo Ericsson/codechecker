@@ -12,6 +12,7 @@ import argparse
 import json
 import os
 import platform
+import shutil
 import subprocess
 
 import prepare_compile_cmd
@@ -19,11 +20,12 @@ import prepare_compiler_info
 import prepare_analyzer_cmd
 
 
-def execute(cmd):
+def execute(cmd, env):
     print("Executing command: " + ' '.join(cmd))
     try:
         proc = subprocess.Popen(
             cmd,
+            env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             encoding="utf-8",
@@ -79,13 +81,21 @@ if __name__ == '__main__':
         help="Path to the used clang plugin.")
     args = parser.parse_args()
 
-    compile_cmd_debug = "compile_cmd_DEBUG.json"
+    # CodeChecker log outputs 'compile_cmd.json' by default.
+    # Let's canonicalize the name as 'compilation_database.json' instead.
+    try:
+        shutil.move("compile_cmd.json", "compilation_database.json")
+        print("renamed 'compile_cmd.json' to 'compilation_database.json'")
+    except FileNotFoundError:
+        pass
+
+    compile_cmd_debug = "compilation_database_DEBUG.json"
     with open(compile_cmd_debug, 'w',
               encoding="utf-8", errors="ignore") as f:
         f.write(
             json.dumps(
                 prepare_compile_cmd.prepare(
-                    os.path.join(args.report_dir, "compile_cmd.json"),
+                    os.path.join(args.report_dir, "compilation_database.json"),
                     args.sources_root),
                 indent=4))
 
@@ -99,12 +109,15 @@ if __name__ == '__main__':
                     args.sources_root),
                 indent=4))
 
-    # ctu-collect
+    # ctu-collect, using the provided clang
+    env = os.environ
+    env['PATH'] = f"{os.path.dirname(args.clang)}:{env['PATH']}"
+    env['CC_ANALYZERS_FROM_PATH'] = 'yes'
     out = execute(["CodeChecker", "analyze", "--ctu-collect",
                    compile_cmd_debug,
                    "--compiler-info-file", compiler_info_debug,
                    "-o", "report_debug",
-                   "--verbose", "debug"])
+                   "--verbose", "debug"], env)
 
     analyzer_command_debug = "analyzer-command_DEBUG"
     target = get_triple_arch('./analyzer-command')
