@@ -5594,7 +5594,7 @@
       "severity:LOW"
     ],
     "performance-implicit-cast-in-loop": [
-      "doc_url:https://releases.llvm.org/12.0.0/tools/clang/tools/extra/docs/clang-tidy/checks/performance-implicit-cast-in-loop.html",
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance-implicit-conversion-in-loop.html",
       "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
