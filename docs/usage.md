@@ -61,6 +61,7 @@ used in the later sections to show CodeChecker usage.
 
 ## Step 0: <a name="step-0"></a>
 There are some prerequisite to successfully take this example:
+
 - [Install](README.md/#install-guide) CodeChecker. 
 - Install analyzer binaries: `clang` / `clang-tidy` (on debian based systems update-alternatives is your friend).
 - Install `gcc` and `make` to compile our example project.
