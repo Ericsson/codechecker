@@ -357,6 +357,15 @@
       "profile:sensitive",
       "severity:LOW"
     ],
+    "bugprone-shared-ptr-array-mismatch": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone-shared-ptr-array-mismatch.html",
+      "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "sei-cert:mem51-cpp",
+      "severity:HIGH"
+    ],
     "bugprone-signal-handler": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone-signal-handler.html",
       "profile:extreme",
@@ -5081,6 +5090,13 @@
       "profile:sensitive",
       "severity:MEDIUM"
     ],
+    "misc-misleading-bidirectional": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc-misleading-bidirectional.html",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
     "misc-fold-init-type": [
       "doc_url:https://releases.llvm.org/5.0.0/tools/clang/tools/extra/docs/clang-tidy/checks/misc-fold-init-type.html",
       "profile:default",
@@ -5684,6 +5700,13 @@
     "readability-const-return-type": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability-const-return-type.html",
       "severity:LOW"
+    ],
+    "readability-container-contains": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability-container-contains.html",
+      "severity:STYLE",
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme"
     ],
     "readability-container-size-empty": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability-container-size-empty.html",
