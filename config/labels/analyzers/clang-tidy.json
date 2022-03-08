@@ -310,6 +310,7 @@
       "severity:MEDIUM"
     ],
     "bugprone-narrowing-conversions": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone-narrowing-conversions.html",
       "guideline:sei-cert",
       "profile:extreme",
       "profile:security",
@@ -4865,6 +4866,7 @@
       "severity:LOW"
     ],
     "google-runtime-memset": [
+      "doc_url:https://releases.llvm.org/4.0.0/tools/clang/tools/extra/docs/clang-tidy/checks/google-runtime-memset.html",
       "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
