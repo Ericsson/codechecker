@@ -22,7 +22,7 @@ from ..source_code_comment_handler import SourceCodeCommentHandler, \
 LOG = logging.getLogger('report-converter')
 
 
-SkipListHandler = Callable[[str], bool]
+SkipListHandlers = Callable[[str], bool]
 
 
 InvalidFileContentMsg: str = \
@@ -517,12 +517,12 @@ class Report:
 
         return 'unreviewed'
 
-    def skip(self, skip_handler: Optional[SkipListHandler]) -> bool:
+    def skip(self, skip_handlers: Optional[SkipListHandlers]) -> bool:
         """ True if the report should be skipped. """
-        if not skip_handler:
+        if not skip_handlers:
             return False
 
-        return skip_handler(self.file.original_path)
+        return skip_handlers(self.file.original_path)
 
     def to_json(self) -> Dict:
         """ Creates a JSON dictionary. """

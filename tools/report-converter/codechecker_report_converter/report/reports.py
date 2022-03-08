@@ -11,7 +11,7 @@ import sys
 
 from typing import Any, Callable, Iterable, List, Optional, Set
 
-from codechecker_report_converter.report import Report, SkipListHandler
+from codechecker_report_converter.report import Report, SkipListHandlers
 from codechecker_report_converter.report.hash import get_report_path_hash
 
 LOG = logging.getLogger('report-converter')
@@ -56,14 +56,14 @@ def dump_changed_files(changed_files: Set[str]):
 def skip(
     reports: List[Report],
     processed_path_hashes: Optional[Set[str]] = None,
-    skip_handler: Optional[SkipListHandler] = None,
+    skip_handlers: Optional[SkipListHandlers] = None,
     suppr_handler: Optional[GenericSuppressHandler] = None,
     src_comment_status_filter: Optional[Iterable[str]] = None
 ) -> List[Report]:
     """ Skip reports. """
     kept_reports = []
     for report in reports:
-        if skip_handler and report.skip(skip_handler):
+        if skip_handlers and report.skip(skip_handlers):
             LOG.debug("Skip report because file path (%s) is on the skip "
                       "list.", report.file.path)
             continue

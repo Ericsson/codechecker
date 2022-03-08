@@ -17,7 +17,7 @@ from abc import ABCMeta
 from typing import Optional
 
 from codechecker_common.logger import get_logger
-from codechecker_common.skiplist_handler import SkipListHandler
+from codechecker_common.skiplist_handler import SkipListHandlers
 
 
 LOG = get_logger('analyzer')
@@ -176,7 +176,7 @@ class ResultHandler(metaclass=ABCMeta):
                 # There might be no result file if analysis failed.
                 LOG.debug(oserr)
 
-    def postprocess_result(self, skip_handler: Optional[SkipListHandler]):
+    def postprocess_result(self, skip_handlers: Optional[SkipListHandlers]):
         """
         Postprocess result if needed.
         Should be called after the analyses finished.

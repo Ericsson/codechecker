@@ -33,12 +33,12 @@ class MakeFileCreator:
     """ Creates a Makefile from analyzer actions. """
 
     def __init__(self, analyzers, output_path, config_map, context,
-                 skip_handler, pre_analysis, statistics_data, ctu_data):
+                 skip_handlers, pre_analysis, statistics_data, ctu_data):
         self.__analyzers = analyzers
         self.__output_path = output_path
         self.__config_map = config_map
         self.__context = context
-        self.__skip_handler = skip_handler
+        self.__skip_handlers = skip_handlers
         self.__pre_analysis = pre_analysis
         self.__log_info = "[`date +'%Y-%m-%d %H:%M:%S'`] -"
 
@@ -235,7 +235,7 @@ class MakeFileCreator:
         source_analyzer, rh = analysis_manager.prepare_check(
             action, self.__config_map.get(action.analyzer_type),
             self.__output_path, self.__context.checker_labels,
-            self.__skip_handler, self.__statistics_data)
+            self.__skip_handlers, self.__statistics_data)
 
         if self.__statistics_data and post_pre_all_target:
             stats_cfg = SpecialReturnValueCollector.checker_analyze_cfg(

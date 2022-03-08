@@ -83,7 +83,7 @@ def init_worker(checked_num, action_num):
 
 
 def pre_analyze(params):
-    action, context, clangsa_config, skip_handler, \
+    action, context, clangsa_config, skip_handlers, \
         ctu_data, statistics_data = params
 
     analyzer_environment = env.extend(context.path_env_extra,
@@ -91,7 +91,7 @@ def pre_analyze(params):
 
     progress_checked_num.value += 1
 
-    if skip_handler and skip_handler.should_skip(action.source):
+    if skip_handlers and skip_handlers.should_skip(action.source):
         return
     if action.analyzer_type != ClangSA.ANALYZER_NAME:
         return
@@ -154,7 +154,7 @@ def pre_analyze(params):
 
 
 def run_pre_analysis(actions, context, clangsa_config,
-                     jobs, skip_handler, ctu_data, statistics_data, manager):
+                     jobs, skip_handlers, ctu_data, statistics_data, manager):
     """
     Run multiple pre analysis jobs before the actual analysis.
     """
@@ -196,7 +196,7 @@ def run_pre_analysis(actions, context, clangsa_config,
         collect_actions = [(build_action,
                             context,
                             clangsa_config,
-                            skip_handler,
+                            skip_handlers,
                             ctu_data,
                             statistics_data)
                            for build_action in actions]

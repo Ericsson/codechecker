@@ -1193,8 +1193,8 @@ def parse_unique_log(compilation_database,
                      compiler_info_file=None,
                      keep_gcc_include_fixed=False,
                      keep_gcc_intrin=False,
-                     analysis_skip_handler=None,
-                     pre_analysis_skip_handler=None,
+                     analysis_skip_handlers=None,
+                     pre_analysis_skip_handlers=None,
                      ctu_or_stats_enabled=False,
                      env=None,
                      analyzer_clang_version=None):
@@ -1240,10 +1240,10 @@ def parse_unique_log(compilation_database,
     pre analysis step nothing should be skipped to collect the required
     information for the analysis step where not all the files are analyzed.
 
-    analysis_skip_handler -- skip handler for files which should be skipped
+    analysis_skip_handlers -- skip handlers for files which should be skipped
                              during analysis
-    pre_analysis_skip_handler -- skip handler for files wich should be skipped
-                                 during pre analysis
+    pre_analysis_skip_handlers -- skip handlers for files wich should be
+                                 skipped during pre analysis
     ctu_or_stats_enabled -- ctu or statistics based analysis was enabled
                             influences the behavior which files are skipped.
     env -- Is the environment where a subprocess call should be executed.
@@ -1274,10 +1274,11 @@ def parse_unique_log(compilation_database,
             # at both analysis phases (pre analysis and analysis).
             # Skipping of the compile commands is done differently if no
             # CTU or statistics related feature was enabled.
-            if analysis_skip_handler \
-                and analysis_skip_handler.should_skip(entry['file']) \
-                and (not ctu_or_stats_enabled or pre_analysis_skip_handler
-                     and pre_analysis_skip_handler.should_skip(entry['file'])):
+            if analysis_skip_handlers \
+                and analysis_skip_handlers.should_skip(entry['file']) \
+                and (not ctu_or_stats_enabled or pre_analysis_skip_handlers
+                     and pre_analysis_skip_handlers.should_skip(
+                         entry['file'])):
                 skipped_cmp_cmd_count += 1
                 continue
 

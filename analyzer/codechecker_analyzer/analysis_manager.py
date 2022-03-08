@@ -169,7 +169,7 @@ def is_ctu_active(source_analyzer):
 
 
 def prepare_check(action, analyzer_config, output_dir, checker_labels,
-                  skip_handler, statistics_data, disable_ctu=False):
+                  skip_handlers, statistics_data, disable_ctu=False):
     """ Construct the source analyzer and result handler. """
     # Create a source analyzer.
     source_analyzer = \
@@ -209,7 +209,7 @@ def prepare_check(action, analyzer_config, output_dir, checker_labels,
     rh = source_analyzer.construct_result_handler(action,
                                                   output_dir,
                                                   checker_labels,
-                                                  skip_handler)
+                                                  skip_handlers)
 
     # NOTICE!
     # The currently analyzed source file needs to be set before the
@@ -220,7 +220,7 @@ def prepare_check(action, analyzer_config, output_dir, checker_labels,
     return source_analyzer, rh
 
 
-def handle_success(rh, result_file, result_base, skip_handler,
+def handle_success(rh, result_file, result_base, skip_handlers,
                    capture_analysis_output, success_dir):
     """
     Result postprocessing is required if the analysis was
@@ -232,7 +232,7 @@ def handle_success(rh, result_file, result_base, skip_handler,
         save_output(os.path.join(success_dir, result_base),
                     rh.analyzer_stdout, rh.analyzer_stderr)
 
-    rh.postprocess_result(skip_handler)
+    rh.postprocess_result(skip_handlers)
 
     # Generated reports will be handled separately at store.
 
@@ -319,7 +319,7 @@ def handle_reproducer(source_analyzer, rh, zip_file, actions_map):
 
 
 def handle_failure(
-    source_analyzer, rh, zip_file, result_base, actions_map, skip_handler
+    source_analyzer, rh, zip_file, result_base, actions_map, skip_handlers
 ):
     """
     If the analysis fails a debug zip is packed together which contains
@@ -334,7 +334,7 @@ def handle_failure(
     checks = source_analyzer.config_handler.checks()
     state = checks.get('clang-diagnostic-error', (CheckerState.default, ''))[0]
     if state != CheckerState.disabled:
-        rh.postprocess_result(skip_handler)
+        rh.postprocess_result(skip_handlers)
 
     # Remove files that successfully analyzed earlier on.
     plist_file = result_base + ".plist"
@@ -488,7 +488,7 @@ def check(check_data):
     skiplist handler is None if no skip file was configured.
     """
     actions_map, action, context, analyzer_config, \
-        output_dir, skip_handler, quiet_output_on_stdout, \
+        output_dir, skip_handlers, quiet_output_on_stdout, \
         capture_analysis_output, generate_reproducer, analysis_timeout, \
         analyzer_environment, ctu_reanalyze_on_failure, \
         output_dirs, statistics_data = check_data
@@ -509,7 +509,7 @@ def check(check_data):
 
         source_analyzer, rh = prepare_check(action, analyzer_config,
                                             output_dir, context.checker_labels,
-                                            skip_handler, statistics_data)
+                                            skip_handlers, statistics_data)
 
         reanalyzed = os.path.exists(rh.analyzer_result_file)
 
@@ -605,12 +605,12 @@ def check(check_data):
 
             if success:
                 handle_success(rh, result_file, result_base,
-                               skip_handler, capture_analysis_output,
+                               skip_handlers, capture_analysis_output,
                                success_dir)
             elif not generate_reproducer:
                 handle_failure(source_analyzer, rh,
                                os.path.join(failed_dir, zip_file),
-                               result_base, actions_map, skip_handler)
+                               result_base, actions_map, skip_handlers)
 
         if rh.analyzer_returncode == 0:
             handle_analysis_result(success=True)
@@ -639,7 +639,7 @@ def check(check_data):
                 source_analyzer, rh = \
                     prepare_check(action, analyzer_config,
                                   output_dir, context.checker_labels,
-                                  skip_handler, statistics_data,
+                                  skip_handlers, statistics_data,
                                   True)
                 reanalyzed = os.path.exists(rh.analyzer_result_file)
 
@@ -698,20 +698,20 @@ def check(check_data):
             action.source
 
 
-def skip_cpp(compile_actions, skip_handler):
+def skip_cpp(compile_actions, skip_handlers):
     """If there is no skiplist handler there was no skip list file in
        the command line.
        C++ file skipping is handled here.
     """
 
-    if not skip_handler:
+    if not skip_handlers:
         return compile_actions, []
 
     analyze = []
     skip = []
     for compile_action in compile_actions:
 
-        if skip_handler and skip_handler.should_skip(compile_action.source):
+        if skip_handlers and skip_handlers.should_skip(compile_action.source):
             skip.append(compile_action)
         else:
             analyze.append(compile_action)
@@ -720,7 +720,7 @@ def skip_cpp(compile_actions, skip_handler):
 
 
 def start_workers(actions_map, actions, context, analyzer_config_map,
-                  jobs, output_path, skip_handler, metadata_tool,
+                  jobs, output_path, skip_handlers, metadata_tool,
                   quiet_analyze, capture_analysis_output, generate_reproducer,
                   timeout, ctu_reanalyze_on_failure, statistics_data, manager,
                   compile_cmd_count):
@@ -738,7 +738,7 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
             sys.exit(128 + signum)
 
     signal.signal(signal.SIGINT, signal_handler)
-    actions, skipped_actions = skip_cpp(actions, skip_handler)
+    actions, skipped_actions = skip_cpp(actions, skip_handlers)
     # Start checking parallel.
     checked_var = multiprocessing.Value('i', 1)
     actions_num = multiprocessing.Value('i', len(actions))
@@ -781,7 +781,7 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
                          context,
                          analyzer_config_map.get(build_action.analyzer_type),
                          output_path,
-                         skip_handler,
+                         skip_handlers,
                          quiet_analyze,
                          capture_analysis_output,
                          generate_reproducer,

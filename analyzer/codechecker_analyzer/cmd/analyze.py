@@ -19,17 +19,25 @@ import re
 import shutil
 import sys
 
+from typing import List
+
 from codechecker_report_converter.util import load_json_or_empty
+from tu_collector import tu_collector
 
 from codechecker_analyzer import analyzer, analyzer_context, env
 from codechecker_analyzer.analyzers import analyzer_types, clangsa
 from codechecker_analyzer.arg import OrderedCheckersAction
 from codechecker_analyzer.buildlog import log_parser
 
-from codechecker_common import arg, logger, skiplist_handler, cmd_config
+from codechecker_common import arg, logger, cmd_config
+from codechecker_common.skiplist_handler import SkipListHandler, \
+    SkipListHandlers
 
 
 LOG = logger.get_logger('system')
+
+header_file_extensions = (
+    '.h', '.hh', '.H', '.hp', '.hxx', '.hpp', '.HPP', '.h++', '.tcc')
 
 epilog_env_var = f"""
   CC_ANALYZERS_FROM_PATH   Set to `yes` or `1` to enforce taking the analyzers
@@ -159,7 +167,7 @@ def add_arguments_to_parser(parser):
                              "threads mean faster analysis at the cost of "
                              "using more memory.")
 
-    skip_mode = parser.add_mutually_exclusive_group()
+    skip_mode = parser.add_argument_group("file filter arguments")
     skip_mode.add_argument('-i', '--ignore', '--skip',
                            dest="skipfile",
                            required=False,
@@ -723,29 +731,60 @@ output of "CodeChecker checkers --guideline" command.""")
         func=main, func_process_config_file=cmd_config.process_config_file)
 
 
-def __get_skip_handler(args) -> skiplist_handler.SkipListHandler:
+def get_affected_file_paths(
+    file_filters: List[str],
+    compile_commands: tu_collector.CompilationDB
+) -> List[str]:
     """
-    Initialize and return a skiplist handler if
+    Returns a list of source files for existing header file otherwise returns
+    with the same file path expression.
+    """
+    file_paths = []  # Use list to keep the order of the file paths.
+    for file_filter in file_filters:
+        file_paths.append(file_filter)
+
+        if os.path.exists(file_filter) and \
+                file_filter.endswith(header_file_extensions):
+            LOG.info("Get dependent source files for '%s'...", file_filter)
+            dependent_sources = tu_collector.get_dependent_sources(
+                compile_commands, file_filter)
+
+            LOG.info("Get dependent source files for '%s' done.", file_filter)
+            LOG.debug("Dependent source files: %s",
+                      ', '.join(dependent_sources))
+
+            file_paths.extend(dependent_sources)
+
+    return file_paths
+
+
+def __get_skip_handlers(args, compile_commands) -> SkipListHandlers:
+    """
+    Initialize and return a list of skiplist handlers if
     there is a skip list file in the arguments or files options is provided.
     """
-    skip_file_content = ""
-
+    skip_handlers = SkipListHandlers()
     if 'files' in args:
+        source_file_paths = get_affected_file_paths(
+            args.files, compile_commands)
+
         # Creates a skip file where all source files will be skipped except
         # the given source files and all the header files.
-        skip_files = ['+{0}'.format(f) for f in args.files]
+        skip_files = ['+{0}'.format(f) for f in source_file_paths]
         skip_files.extend(['+/*.h', '+/*.H', '+/*.tcc'])
         skip_files.append('-*')
+        content = "\n".join(skip_files)
+        skip_handlers.append(SkipListHandler(content))
+        LOG.debug("Skip handler is created for the '--file' option with the "
+                  "following filters:\n%s", content)
+    if 'skipfile' in args:
+        with open(args.skipfile, encoding="utf-8", errors="ignore") as f:
+            content = f.read()
+            skip_handlers.append(SkipListHandler(content))
+            LOG.debug("Skip handler is created for the '--ignore' option with "
+                      "the following filters:\n%s", content)
 
-        skip_file_content = "\n".join(skip_files)
-    elif 'skipfile' in args:
-        with open(args.skipfile,
-                  encoding="utf-8", errors="ignore") as skip_file:
-            skip_file_content = skip_file.read()
-
-    if skip_file_content:
-        LOG.debug_analyzer("Creating skiplist handler.")
-        return skiplist_handler.SkipListHandler(skip_file_content)
+    return skip_handlers
 
 
 def __update_skip_file(args):
@@ -858,9 +897,6 @@ def main(args):
                 LOG.error("Checker option in wrong format: %s", config)
                 sys.exit(1)
 
-    # Process the skip list if present.
-    skip_handler = __get_skip_handler(args)
-
     # Enable alpha uniqueing by default if ctu analysis is used.
     if 'none' in args.compile_uniqueing and 'ctu_phases' in args:
         args.compile_uniqueing = "alpha"
@@ -874,15 +910,22 @@ def main(args):
             sys.exit(1)
         compiler_info_file = args.compiler_info_file
 
+    compile_commands = load_json_or_empty(args.logfile)
+    if compile_commands is None:
+        sys.exit(1)
+
+    # Process the skip list if present.
+    skip_handlers = __get_skip_handlers(args, compile_commands)
+
     ctu_or_stats_enabled = False
     # Skip list is applied only in pre-analysis
     # if --ctu-collect was called explicitly.
-    pre_analysis_skip_handler = None
+    pre_analysis_skip_handlers = None
     if 'ctu_phases' in args:
         ctu_collect = args.ctu_phases[0]
         ctu_analyze = args.ctu_phases[1]
         if ctu_collect and not ctu_analyze:
-            pre_analysis_skip_handler = skip_handler
+            pre_analysis_skip_handlers = skip_handlers
 
         if ctu_collect or ctu_analyze:
             ctu_or_stats_enabled = True
@@ -890,7 +933,7 @@ def main(args):
     # Skip list is applied only in pre-analysis
     # if --stats-collect was called explicitly.
     if 'stats_output' in args and args.stats_output:
-        pre_analysis_skip_handler = skip_handler
+        pre_analysis_skip_handlers = skip_handlers
         ctu_or_stats_enabled = True
 
     if 'stats_enabled' in args and args.stats_enabled:
@@ -899,10 +942,6 @@ def main(args):
     context = analyzer_context.get_context()
     analyzer_env = env.extend(context.path_env_extra,
                               context.ld_lib_path_extra)
-
-    compile_commands = load_json_or_empty(args.logfile)
-    if compile_commands is None:
-        sys.exit(1)
 
     # Number of all the compilation commands in the parsed log files,
     # logged by the logger.
@@ -948,8 +987,8 @@ def main(args):
         compiler_info_file,
         args.keep_gcc_include_fixed,
         args.keep_gcc_intrin,
-        skip_handler,
-        pre_analysis_skip_handler,
+        skip_handlers,
+        pre_analysis_skip_handlers,
         ctu_or_stats_enabled,
         analyzer_env,
         analyzer_clang_version)
@@ -1018,7 +1057,7 @@ def main(args):
     LOG.debug_analyzer("Compile commands forwarded for analysis: %d",
                        compile_cmd_count.analyze)
 
-    analyzer.perform_analysis(args, skip_handler, context, actions,
+    analyzer.perform_analysis(args, skip_handlers, context, actions,
                               metadata_tool,
                               compile_cmd_count)
 
