@@ -6,6 +6,92 @@
         <new-release-item>
           <template v-slot:title>
             <a
+              href="https://github.com/Ericsson/codechecker/releases/tag/v6.19.0"
+              target="_blank"
+              class="white--text"
+            >
+              Highlights of CodeChecker 6.19.0 release
+            </a>
+          </template>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Fix JSON format of CodeChecker version subcommand
+              <v-alert dense outlined type="error" class="py-0 ma-0 ml-2">
+                Backward incompatible change!
+              </v-alert>
+            </template>
+            The output of the <code>CodeChecker version -o json</code> command
+            wasn't a valid JSON format. From this release CodeChecker will
+            provide a valid JSON output for this command.
+
+            For more information see the
+            <a href="https://github.com/Ericsson/codechecker/blob/master/docs/web/user_guide.md#json-format" target="_blank">documentation</a>.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Not allowing disabling modeling checkers in ClangSA
+              <v-alert dense outlined type="error" class="py-0 ma-0 ml-2">
+                Backward incompatible change!
+              </v-alert>
+            </template>
+            When a Clang Static Analyzer checker is disabled in CodeChecker,
+            clang is invoked with the <code>analyzer-disable-checker</code>
+            flag. This allows the user disabling core modeling checkers such
+            as <i>unix.DynamicMemoryModeling</i>. This causes malfunctioning of
+            depending checkers.
+
+            From this release modeling and debug checkers (listed with
+            <code>clang -cc1 -analyzer-checker-help-developer</code>) will not
+            be listed and cannot be disabled through CodeChecker with the
+            <code>--enable</code> and <code>--disable</code> flags.
+
+            They can be enabled/disabled through the Clang Static Analyzer
+            specific <code>--saargs</code> flag only.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Add --print-steps option to <code>CodeChecker cmd diff</code> command
+            </template>
+            Without bug steps it is hard to understood the problem by a
+            programmer. With this commit we will introduce a new option for the
+            <code>CodeChecker cmd diff</code> command which can be used to
+            print bug steps similar what we are doing at the
+            <code>CodeChecker parse</code> command. This patch also solve the
+            problem to print bug steps in <i>HTML</i> files for reports which
+            comes from a <i>CodeChecker server</i>.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Support YAML CodeChecker configuration files
+            </template>
+            Multiple subcommands have a <b>--config</b> option which allow the
+            configuration from an explicit configuration file. The parameters
+            in the config file will be emplaced as command line arguments.
+            Previously we supported only JSON format but the limitation of this
+            format is that we can't add comments in this file for example why
+            we enabled/disabled a checker, why an option is important etc.
+
+            From this release we will also support <b>YAML</b> format:
+            <pre>
+analyzer:
+  # Enable/disable checkers.
+  - --enable=core.DivideZero
+            </pre>
+
+            For more information see the
+            <a href="https://github.com/Ericsson/codechecker/blob/master/docs/config_file.md#yaml" target="_blank">documentation</a>.
+          </new-feature-item>
+        </new-release-item>
+      </v-timeline-item>
+
+      <v-timeline-item fill-dot icon="mdi-star">
+        <new-release-item>
+          <template v-slot:title>
+            <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.18.0"
               target="_blank"
               class="white--text"
