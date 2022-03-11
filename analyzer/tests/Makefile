@@ -66,25 +66,25 @@ test_functional_in_env: venv_dev
 		$(ACTIVATE_DEV_VENV) && $(FUNCTIONAL_TEST_CMD)
 
 test_build_logger:
-	make -C tools/build-logger test
+	$(MAKE) -C tools/build-logger test
 
 test_tu_collector:
-	REPO_ROOT=$(REPO_ROOT) make -C $(ROOT)/tools/tu_collector test
+	REPO_ROOT=$(REPO_ROOT) $(MAKE) -C $(ROOT)/tools/tu_collector test
 
 test_tu_collector_in_env:
 	$(ACTIVATE_DEV_VENV) && \
-	REPO_ROOT=$(REPO_ROOT) make -C $(ROOT)/tools/tu_collector test
+	REPO_ROOT=$(REPO_ROOT) $(MAKE) -C $(ROOT)/tools/tu_collector test
 
 test_merge_clang_extdef_mappings:
-	make -C tools/merge_clang_extdef_mappings test
+	$(MAKE) -C tools/merge_clang_extdef_mappings test
 
 test_merge_clang_extdef_mappings_in_env:
 	$(ACTIVATE_DEV_VENV) && \
-	make -C tools/merge_clang_extdef_mappings test
+	$(MAKE) -C tools/merge_clang_extdef_mappings test
 
 test_statistics_collector:
-	make -C tools/statistics_collector test
+	$(MAKE) -C tools/statistics_collector test
 
 test_statistics_collector_in_env:
 	$(ACTIVATE_DEV_VENV) && \
-	make -C tools/statistics_collector test
+	$(MAKE) -C tools/statistics_collector test
