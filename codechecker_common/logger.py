@@ -14,6 +14,7 @@ import json
 import logging
 from logging import config
 import os
+import sys
 
 
 # The logging leaves can be accesses without
@@ -147,6 +148,49 @@ class LOG_CFG_SERVER:
             self.log_server.join()
 
 
+def support_colorlog_output():
+    """ True if the environment supports colorlog output. """
+    if hasattr(sys.stdout, 'isatty') and not sys.stdout.isatty():
+        return False
+
+    if os.environ.get('TERM', '').lower() in ['', 'dumb', 'unknown']:
+        return False
+
+    return True
+
+
+def setup_formatter(formatters):
+    """ Setup formatters.
+
+    If the 'colorlog' module is not available it will remove `colorlog`
+    settings from the the config file.
+
+    Disable log colors if the 'TERM' environment variable is correctly
+    set.
+    """
+    try:
+        # pylint: disable=unused-import
+        import colorlog
+
+        # Disable all colors if it is not supported.
+        if not support_colorlog_output():
+            for _, formatter in formatters.items():
+                if 'log_colors' in formatter:
+                    formatter['log_colors'] = {}
+                    formatter['reset'] = False
+    except ImportError:
+        print("Failed to load 'colorlog' module! To get colored logging "
+              "output please reset your venv: make clean_venv_dev venv_dev",
+              file=sys.stderr)
+
+        # Remove colorlog settings from the config file.
+        for _, formatter in formatters.items():
+            if 'colorlog' in formatter.get('()'):
+                del formatter['()']
+                formatter['format'] = \
+                    formatter['format'].replace("%(log_color)s", "")
+
+
 def setup_logger(log_level=None, stream=None):
     """
     Modifies the log configuration.
@@ -157,6 +201,10 @@ def setup_logger(log_level=None, stream=None):
     """
 
     LOG_CONFIG = json.loads(DEFAULT_LOG_CONFIG)
+
+    formatters = LOG_CONFIG.get("formatters", {})
+    setup_formatter(formatters)
+
     if log_level:
         log_level = validate_loglvl(log_level)
 

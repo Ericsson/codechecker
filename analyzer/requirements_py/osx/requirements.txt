@@ -4,3 +4,4 @@ psutil==5.8.0
 scan-build==2.0.19
 PyYAML==5.4.1
 mypy_extensions==0.4.3
+colorlog==4.0.2

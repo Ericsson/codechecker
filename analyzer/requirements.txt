@@ -3,3 +3,4 @@ portalocker==2.2.1
 psutil==5.8.0
 PyYAML==5.4.1
 mypy_extensions==0.4.3
+colorlog==4.0.2

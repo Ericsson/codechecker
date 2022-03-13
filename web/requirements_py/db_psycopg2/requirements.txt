@@ -4,6 +4,7 @@ alembic==1.5.5
 psycopg2-binary==2.8.6
 psutil==5.8.0
 portalocker==2.2.1
+colorlog==4.0.2
 
 ./api/py/codechecker_api/dist/codechecker_api.tar.gz
 ./api/py/codechecker_api_shared/dist/codechecker_api_shared.tar.gz

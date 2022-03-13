@@ -66,11 +66,29 @@ For more information see: [logging-cookbook](https://docs.python.org/2/howto/log
   "disable_existing_loggers": true,
   "formatters": {
     "brief": {
-      "format": "[%(asctime)s] - %(message)s",
+      "()": "colorlog.ColoredFormatter",
+      "log_colors": {
+        "DEBUG": "cyan",
+        "DEBUG_ANALYZER": "cyan",
+        "INFO":     "green",
+        "WARNING":  "yellow",
+        "ERROR":    "red",
+        "CRITICAL": "red,bg_white"
+      },
+      "format": "%(log_color)s[%(levelname)s %(asctime)s] - %(message)s",
       "datefmt": "%Y-%m-%d %H:%M"
     },
     "precise": {
-      "format": "[%(asctime)s] {%(name)s} [%(process)d] <%(thread)d> - %(filename)s:%(lineno)d %(funcName)s() - %(message)s",
+      "()": "colorlog.ColoredFormatter",
+      "log_colors": {
+        "DEBUG": "cyan",
+        "DEBUG_ANALYZER": "cyan",
+        "INFO":     "green",
+        "WARNING":  "yellow",
+        "ERROR":    "red",
+        "CRITICAL": "red,bg_white"
+      },
+      "format": "%(log_color)s[%(levelname)s][%(asctime)s] {%(name)s} [%(process)d] <%(thread)d> - %(filename)s:%(lineno)d %(funcName)s() - %(message)s",
       "datefmt": "%Y-%m-%d %H:%M:%S"
     }
   },
@@ -136,3 +154,12 @@ For more information see: [logging-cookbook](https://docs.python.org/2/howto/log
   }
 }
 ```
+
+# Terminal colors
+Colored outputs are enabled by default by using
+[`colorlog`](https://pypi.org/project/colorlog/) module. You can modify the
+`log_colors` section for each formatter if you would like to change color for
+a log level.
+
+It can also be turned off if you set the `TERM` environment variable to `dumb`,
+`unknown` or to an empty value.

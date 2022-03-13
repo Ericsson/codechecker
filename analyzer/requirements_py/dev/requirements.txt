@@ -8,3 +8,4 @@ mkdocs==1.2.3
 PyYAML==5.4.1
 mypy_extensions==0.4.3
 coverage==5.5.0
+colorlog==4.0.2
