@@ -61,5 +61,12 @@ parts:
 
       npm config set scripts-prepend-node-path true
       npm config set unsafe-perm true
+
+      # This is needed to fix the following error during npm install:
+      #   npm ERR! path /node_modules/geckodriver
+      #   npm ERR! command failed
+      #   npm ERR! command sh -c node index.js
+      export GECKODRIVER_SKIP_DOWNLOAD=true
+
       make package
       cp -r $SNAPCRAFT_PART_BUILD/build/CodeChecker $SNAPCRAFT_PART_INSTALL
