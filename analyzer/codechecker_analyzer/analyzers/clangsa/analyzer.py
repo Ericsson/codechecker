@@ -145,13 +145,15 @@ class ClangSA(analyzer_base.SourceAnalyzer):
     def get_analyzer_checkers(
         cls,
         cfg_handler: config_handler.ClangSAConfigHandler,
-        environ: Dict[str, str]
+        environ: Dict[str, str],
+        alpha: bool = True,
+        debug: bool = False
     ) -> List[str]:
         """Return the list of the supported checkers."""
         checker_list_args = clang_options.get_analyzer_checkers_cmd(
             cfg_handler,
-            alpha=True,
-            debug=False)
+            alpha=alpha,
+            debug=debug)
         return parse_clang_help_page(checker_list_args, 'CHECKERS:', environ)
 
     @classmethod
