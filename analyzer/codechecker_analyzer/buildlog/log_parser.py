@@ -213,6 +213,7 @@ COMPILE_OPTIONS = [
     '-m',
     '-Wno-',
     '--sysroot=',
+    '-sdkroot',
     '--gcc-toolchain='
 ]
 
@@ -220,6 +221,7 @@ COMPILE_OPTIONS = re.compile('|'.join(COMPILE_OPTIONS))
 
 COMPILE_OPTIONS_MERGED = [
     '--sysroot',
+    '-sdkroot',
     '--include',
     '-include',
     '-iquote',
