@@ -17,6 +17,7 @@ from codechecker_statistics_collector.collectors.special_return_value import \
 from codechecker_statistics_collector.collectors.return_value import \
     ReturnValueCollector
 
+from .analyzer import ClangSA
 from ..flag import has_flag
 from ..flag import prepend_all
 
@@ -47,7 +48,8 @@ def build_stat_coll_cmd(action, config, source):
 
     # Enable the statistics collector checkers only.
     collector_checkers = []
-    for checker_name, _ in config.checks().items():
+    checks = ClangSA.get_analyzer_checkers(config, config.environ, True, True)
+    for checker_name, _ in checks:
         if SpecialReturnValueCollector.checker_collect in checker_name:
             collector_checkers.append(checker_name)
 
