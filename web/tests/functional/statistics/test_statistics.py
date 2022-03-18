@@ -10,6 +10,7 @@
 """ statistics collector feature test.  """
 
 
+from distutils import util
 import os
 import unittest
 import shlex
@@ -47,6 +48,13 @@ class TestSkeleton(unittest.TestCase):
         self.stats_capable = '--stats' in output
         print("'analyze' reported statistics collector-compatibility? " +
               str(self.stats_capable))
+
+        if not self.stats_capable:
+            try:
+                self.stats_capable = bool(util.strtobool(
+                    os.environ['CC_TEST_FORCE_STATS_CAPABLE']))
+            except (ValueError, KeyError):
+                pass
 
         test_project_path = self._testproject_data['project_path']
         test_project_build = shlex.split(self._testproject_data['build_cmd'])
