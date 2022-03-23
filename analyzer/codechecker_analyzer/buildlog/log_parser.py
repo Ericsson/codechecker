@@ -1297,8 +1297,8 @@ def parse_unique_log(compilation_database,
             if action.action_type != BuildAction.COMPILE:
                 continue
             if build_action_uniqueing == CompileActionUniqueingType.NONE:
-                if action.__hash__ not in uniqued_build_actions:
-                    uniqued_build_actions[action.__hash__] = action
+                if action not in uniqued_build_actions:
+                    uniqued_build_actions[action] = action
             elif build_action_uniqueing == CompileActionUniqueingType.STRICT:
                 if action.source not in uniqued_build_actions:
                     uniqued_build_actions[action.source] = action

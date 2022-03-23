@@ -161,7 +161,7 @@ optional arguments:
                         compilation action for a source file, only the one is
                         kept that belongs to the alphabetically first
                         compilation target. If none of the above given, this
-                        parameter should be a python regular expression.If
+                        parameter should be a python regular expression. If
                         there is more than one compilation action for a
                         source, only the one is kept which matches the given
                         python regex. If more than one matches an error is
@@ -916,7 +916,7 @@ optional arguments:
                         compilation action for a source file, only the one is
                         kept that belongs to the alphabetically first
                         compilation target. If none of the above given, this
-                        parameter should be a python regular expression.If
+                        parameter should be a python regular expression. If
                         there is more than one compilation action for a
                         source, only the one is kept which matches the given
                         python regex. If more than one matches an error is

@@ -221,7 +221,7 @@ used to generate a log file on the fly.""")
                              "compilation target. "
                              "If none of the above given, "
                              "this parameter should "
-                             "be a python regular expression."
+                             "be a python regular expression. "
                              "If there is more than one compilation action "
                              "for a source, "
                              "only the one is kept which matches the "
