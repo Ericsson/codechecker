@@ -20,11 +20,7 @@ from libtest import env
 from libtest import project
 
 
-# Test workspace should be initialized in this module.
-TEST_WORKSPACE = None
-
-
-def setup_package():
+def init_projects():
     """
     Setup the environment for testing diff_local_remote_suppress.
 
@@ -66,10 +62,7 @@ def setup_package():
     ------------------------------------------------------
     """
 
-    global TEST_WORKSPACE
-    TEST_WORKSPACE = env.get_workspace('diff_local_remote_suppress')
-
-    os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
+    TEST_WORKSPACE = os.environ['TEST_WORKSPACE']
 
     test_project = 'cpp'
 
@@ -97,8 +90,12 @@ def setup_package():
     print("This test uses a CodeChecker server... connecting...")
     server_access = codechecker.start_or_get_server()
     server_access['viewer_product'] = 'diff_local_remote_suppress'
-    codechecker.add_test_package_product(server_access, TEST_WORKSPACE)
     codechecker_cfg.update(server_access)
+
+    env.export_test_cfg(TEST_WORKSPACE, test_config)
+    cc_client = env.setup_viewer_client(TEST_WORKSPACE)
+    for run_data in cc_client.getRunData(None, None, 0, None):
+        cc_client.removeRun(run_data.runId, None)
 
     # Copy "cpp" test project 3 times to different directories.
 
@@ -106,6 +103,9 @@ def setup_package():
     test_proj_path_1 = os.path.join(TEST_WORKSPACE, "test_proj_1")
     test_proj_path_2 = os.path.join(TEST_WORKSPACE, "test_proj_2")
 
+    shutil.rmtree(test_proj_path_orig, ignore_errors=True)
+    shutil.rmtree(test_proj_path_1, ignore_errors=True)
+    shutil.rmtree(test_proj_path_2, ignore_errors=True)
     shutil.copytree(project.path(test_project), test_proj_path_orig)
     shutil.copytree(project.path(test_project), test_proj_path_1)
     shutil.copytree(project.path(test_project), test_proj_path_2)
@@ -180,12 +180,25 @@ def setup_package():
     env.export_test_cfg(TEST_WORKSPACE, test_config)
 
 
-def teardown_package():
-    """Clean up after the test."""
+def setup_package():
+    """
+    The test files in this diff_local_remote_suppress test share the analyzed
+    projects. These tests are checking report suppression where the order of
+    suppressions matters. Since we can't rely on the ordering of tests, the
+    projects are set up by these tests individually. The setup happens in
+    function init_projects() and that is imported and executed in each test.
+    """
+    os.environ['TEST_WORKSPACE'] = \
+        env.get_workspace('diff_local_remote_suppress')
 
-    # TODO: If environment variable is set keep the workspace
-    # and print out the path.
-    global TEST_WORKSPACE
+    server_access = codechecker.start_or_get_server()
+    server_access['viewer_product'] = 'diff_local_remote_suppress'
+    codechecker.add_test_package_product(
+        server_access, os.environ['TEST_WORKSPACE'])
+
+
+def teardown_package():
+    TEST_WORKSPACE = os.environ['TEST_WORKSPACE']
 
     check_env = env.import_test_cfg(TEST_WORKSPACE)[
         'codechecker_cfg']['check_env']

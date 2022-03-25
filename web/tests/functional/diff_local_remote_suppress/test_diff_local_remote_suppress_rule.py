@@ -18,13 +18,16 @@ based on bug suppressions especially.
 import os
 import unittest
 
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import ReportFilter, \
+    RunFilter, ReviewStatus
+
 from libtest import env
 from libtest.codechecker import get_diff_results
 
 from .__init__ import init_projects
 
 
-class DiffLocalRemoteSuppress(unittest.TestCase):
+class DiffLocalRemoteSuppressRule(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -70,6 +73,26 @@ class DiffLocalRemoteSuppress(unittest.TestCase):
 
         self._env = self._test_cfg['codechecker_cfg']['check_env']
 
+        self.guiSuppressAllHashes('core.CallAndMessage')
+        self.guiSuppressAllHashes('core.StackAddressEscape')
+
+    def guiSuppressAllHashes(self, checker_name):
+        project_orig_run_name = \
+            self._test_cfg['codechecker_cfg']['run_names']['test_project_orig']
+        run_filter = RunFilter(names=[project_orig_run_name])
+        project_orig_run = \
+            self._cc_client.getRunData(run_filter, None, None, None)[0]
+
+        report_filter = ReportFilter(checkerName=[checker_name])
+        reports = self._cc_client.getRunResults(
+            [project_orig_run.runId], 500, 0, None, report_filter, None, False)
+
+        for report in reports:
+            self._cc_client.changeReviewStatus(
+                report.reportId,
+                ReviewStatus.FALSE_POSITIVE,
+                "not a bug")
+
     @staticmethod
     def filter_by_checker(results, checker_name):
         return list(filter(
@@ -99,9 +122,9 @@ class DiffLocalRemoteSuppress(unittest.TestCase):
             ['--url', self._url])[0]
 
         self.assertEqual(
-            len(results), 7)
+            len(results), 2)
         self.assertEqual(
-            len(self.filter_by_checker(results, 'core.CallAndMessage')), 5)
+            len(self.filter_by_checker(results, 'core.CallAndMessage')), 0)
         self.assertEqual(
             len(self.filter_by_checker(results, 'core.DivideZero')), 1)
         self.assertEqual(
@@ -118,7 +141,7 @@ class DiffLocalRemoteSuppress(unittest.TestCase):
             ['--url', self._url])[0]
 
         self.assertEqual(
-            len(results), 27)
+            len(results), 24)
         self.assertEqual(
             len(self.filter_by_checker(results, 'core.DivideZero')), 9)
         self.assertEqual(
@@ -127,8 +150,11 @@ class DiffLocalRemoteSuppress(unittest.TestCase):
             len(self.filter_by_checker(results, 'cplusplus.NewDelete')), 5)
         self.assertEqual(
             len(self.filter_by_checker(results, 'unix.Malloc')), 1)
+        # core.StachAddressEscape reports are not considered unresolved because
+        # a "false positive" review status rule is set for them, so they are
+        # like not even in the system.
         self.assertEqual(
-            len(self.filter_by_checker(results, 'core.StackAddressEscape')), 3)
+            len(self.filter_by_checker(results, 'core.StackAddressEscape')), 0)
 
     def test_remote_local_new(self):
         """
@@ -141,9 +167,9 @@ class DiffLocalRemoteSuppress(unittest.TestCase):
             ['--url', self._url])[0]
 
         self.assertEqual(
-            len(results), 7)
+            len(results), 2)
         self.assertEqual(
-            len(self.filter_by_checker(results, 'core.CallAndMessage')), 5)
+            len(self.filter_by_checker(results, 'core.CallAndMessage')), 0)
         self.assertEqual(
             len(self.filter_by_checker(results, 'core.DivideZero')), 1)
         self.assertEqual(
@@ -172,7 +198,7 @@ class DiffLocalRemoteSuppress(unittest.TestCase):
             ['--url', self._url])[0]
 
         self.assertEqual(
-            len(results), 27)
+            len(results), 24)
         self.assertEqual(
             len(self.filter_by_checker(results, 'core.DivideZero')), 9)
         self.assertEqual(
@@ -181,5 +207,8 @@ class DiffLocalRemoteSuppress(unittest.TestCase):
             len(self.filter_by_checker(results, 'cplusplus.NewDelete')), 5)
         self.assertEqual(
             len(self.filter_by_checker(results, 'unix.Malloc')), 1)
+        # core.StachAddressEscape reports are not considered unresolved because
+        # a "false positive" review status rule is set for them, so they are
+        # like not even in the system.
         self.assertEqual(
-            len(self.filter_by_checker(results, 'core.StackAddressEscape')), 3)
+            len(self.filter_by_checker(results, 'core.StackAddressEscape')), 0)
