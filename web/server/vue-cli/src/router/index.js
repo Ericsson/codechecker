@@ -104,6 +104,11 @@ export default new Router({
           component: () => import("@/views/CleanupPlan")
         },
         {
+          path: "review-status-rules",
+          name: "review-status-rules",
+          component: () => import("@/views/ReviewStatusRules")
+        },
+        {
           path: "source-component",
           name: "source-component",
           component: () => import("@/views/SourceComponent")

@@ -21,7 +21,7 @@ from codechecker_common.logger import get_logger
 
 from .database import DBSession
 from .run_db_model import AnalysisInfo, BugPathEvent, BugReportPoint, \
-    Comment, File, FileContent, Report, ReportAnalysisInfo, ReviewStatus, \
+    Comment, File, FileContent, Report, ReportAnalysisInfo, \
     RunHistoryAnalysisInfo, RunLock
 
 LOG = get_logger('server')
@@ -86,7 +86,6 @@ def remove_unused_data(session_maker):
     """ Remove dangling data (files, comments, etc.) from the database. """
     remove_unused_files(session_maker)
     remove_unused_comments(session_maker)
-    remove_unused_review_statuses(session_maker)
     remove_unused_analysis_info(session_maker)
 
 
@@ -110,29 +109,6 @@ def remove_unused_comments(session_maker):
         except (sqlalchemy.exc.OperationalError,
                 sqlalchemy.exc.ProgrammingError) as ex:
             LOG.error("Failed to remove dangling comments: %s", str(ex))
-
-
-def remove_unused_review_statuses(session_maker):
-    """ Remove unused review statuses from the database. """
-    LOG.debug("Garbage collection of dangling review statuses started...")
-
-    with DBSession(session_maker) as session:
-        try:
-            report_hashes = session.query(Report.bug_id) \
-                .group_by(Report.bug_id) \
-                .subquery()
-
-            session.query(ReviewStatus) \
-                .filter(ReviewStatus.bug_hash.notin_(report_hashes)) \
-                .delete(synchronize_session=False)
-
-            session.commit()
-
-            LOG.debug("Garbage collection of dangling review statuses "
-                      "finished.")
-        except (sqlalchemy.exc.OperationalError,
-                sqlalchemy.exc.ProgrammingError) as ex:
-            LOG.error("Failed to remove dangling review statuses: %s", str(ex))
 
 
 def upgrade_severity_levels(session_maker, checker_labels):

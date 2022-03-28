@@ -205,6 +205,11 @@ export default {
           route: "cleanup-plan"
         },
         {
+          title: "Review Status Rules",
+          icon: "mdi-format-list-checkbox",
+          route: "review-status-rules"
+        },
+        {
           title: "Source Component",
           icon: "mdi-puzzle-outline",
           route: "source-component"

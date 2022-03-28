@@ -32,9 +32,10 @@ from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import AnalysisInfoFilter, \
     BlameData, BlameInfo, BugPathPos, CheckerCount, Commit, CommitAuthor, \
     CommentData, DiffType, Encoding, RunHistoryData, Order, ReportData, \
-    ReportDetails, ReviewData, RunData, RunFilter, RunReportCount, \
-    RunSortType, RunTagCount, SourceComponentData, SourceFileData, SortMode, \
-    SortType, ExportData
+    ReportDetails, ReviewData, ReviewStatusRule, ReviewStatusRuleFilter, \
+    ReviewStatusRuleSortMode, ReviewStatusRuleSortType, RunData, RunFilter, \
+    RunReportCount, RunSortType, RunTagCount, SourceComponentData, \
+    SourceFileData, SortMode, SortType, ExportData
 
 from codechecker_common import util
 from codechecker_common.logger import get_logger
@@ -1049,6 +1050,84 @@ def get_cleanup_plan_report_hashes(
     return cleanup_plan_hashes
 
 
+def sort_review_statuses_query(
+    query,
+    sort_mode: ReviewStatusRuleSortMode,
+    report_count_label
+):
+    """
+    Sort review status rule query by the given sort mode.
+    """
+    # Sort by rule date by default.
+    if not sort_mode:
+        return query.order_by(desc(ReviewStatus.date))
+
+    order_type_map = {Order.ASC: asc, Order.DESC: desc}
+    order_type = order_type_map.get(sort_mode.ord)
+    if sort_mode.type == ReviewStatusRuleSortType.REPORT_HASH:
+        query = query.order_by(order_type(ReviewStatus.bug_hash))
+    elif sort_mode.type == ReviewStatusRuleSortType.STATUS:
+        query = query.order_by(order_type(ReviewStatus.status))
+    elif sort_mode.type == ReviewStatusRuleSortType.AUTHOR:
+        query = query.order_by(order_type(ReviewStatus.author))
+    elif sort_mode.type == ReviewStatusRuleSortType.DATE:
+        query = query.order_by(order_type(ReviewStatus.date))
+    elif sort_mode.type == ReviewStatusRuleSortType.ASSOCIATED_REPORTS_COUNT:
+        query = query.order_by(order_type(report_count_label))
+
+    return query
+
+
+def process_rs_rule_filter(
+    query,
+    rule_filter: Optional[ReviewStatusRuleFilter] = None
+):
+    """ Process review status rule filter. """
+    if rule_filter:
+        if rule_filter.reportHashes is not None:
+            OR = [ReviewStatus.bug_hash.ilike(conv(report_hash))
+                  for report_hash in rule_filter.reportHashes]
+            query = query.filter(or_(*OR))
+
+        if rule_filter.reviewStatuses is not None:
+            query = query.filter(
+                ReviewStatus.status.in_(
+                    map(review_status_str, rule_filter.reviewStatuses)))
+
+        if rule_filter.authors is not None:
+            OR = [ReviewStatus.author.ilike(conv(author))
+                  for author in rule_filter.authors]
+            query = query.filter(or_(*OR))
+
+    return query
+
+
+def get_rs_rule_query(
+    session: DBSession,
+    rule_filter: Optional[ReviewStatusRuleFilter] = None,
+    sort_mode: Optional[ReviewStatusRuleSortMode] = None
+):
+    """ Returns query to get review status rules. """
+    report_count = func.count(Report.id).label('report_count')
+    q = session \
+        .query(ReviewStatus, report_count) \
+        .join(Report,
+              Report.bug_id == ReviewStatus.bug_hash,
+              isouter=True)
+    q = process_rs_rule_filter(q, rule_filter)
+
+    if sort_mode:
+        q = sort_review_statuses_query(q, sort_mode, report_count)
+
+    q = q.group_by(ReviewStatus.bug_hash)
+
+    # Filter review status rules by aggregate columns.
+    if rule_filter and rule_filter.noAssociatedReports:
+        q = q.having(report_count == 0)
+
+    return q
+
+
 class ThriftRequestHandler:
     """
     Connect to database and handle thrift client requests.
@@ -1781,7 +1860,7 @@ class ThriftRequestHandler:
         # the first user who stored the reports. If another user stores the
         # same project with same report status then we don't change it.
         if (old_status, old_msg) == (new_status, new_message):
-            return True
+            return None
 
         review_status.status = new_status
         review_status.author = new_user
@@ -1810,7 +1889,7 @@ class ThriftRequestHandler:
 
         session.flush()
 
-        return True
+        return None
 
     @exc_to_thrift_reqfail
     @timeit
@@ -1839,7 +1918,7 @@ class ThriftRequestHandler:
         with DBSession(self._Session) as session:
             report = session.query(Report).get(report_id)
             if report:
-                res = self._setReviewStatus(
+                self._setReviewStatus(
                     session, report.bug_id, status, message)
             else:
                 raise codechecker_api_shared.ttypes.RequestFailed(
@@ -1851,7 +1930,70 @@ class ThriftRequestHandler:
                      report_id, review_status_str(status),
                      self._get_username())
 
-        return res
+        return True
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getReviewStatusRules(self, rule_filter, sort_mode, limit, offset):
+        self.__require_view()
+
+        result = []
+        with DBSession(self._Session) as session:
+            if not sort_mode:
+                sort_mode = ReviewStatusRuleSortMode(
+                    type=ReviewStatusRuleSortType.DATE,
+                    ord=Order.DESC)
+
+            q = get_rs_rule_query(session, rule_filter, sort_mode)
+
+            if limit:
+                q = q.limit(limit).offset(offset)
+
+        for review_status, associated_report_count in q:
+            result.append(ReviewStatusRule(
+                reportHash=review_status.bug_hash,
+                reviewData=create_review_data(review_status),
+                associatedReportCount=associated_report_count))
+
+        return result
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getReviewStatusRulesCount(self, rule_filter):
+        self.__require_view()
+
+        with DBSession(self._Session) as session:
+            q = get_rs_rule_query(session, rule_filter)
+            return q.count()
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def removeReviewStatusRules(self, rule_filter):
+        self.__require_admin()
+
+        with DBSession(self._Session) as session:
+            q = get_rs_rule_query(session, rule_filter)
+            for review_status, _ in q:
+                session.delete(review_status)
+
+            session.commit()
+
+            LOG.info("Review status rules were removed based on filter '%s' by"
+                     "'%s'.", rule_filter, self._get_username())
+
+            return True
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def addReviewStatusRule(self, report_hash, review_status, message):
+        self.__require_permission([permissions.PRODUCT_ACCESS,
+                                   permissions.PRODUCT_STORE])
+
+        with DBSession(self._Session) as session:
+            self._setReviewStatus(
+                session, report_hash, review_status, message)
+            session.commit()
+            return True
 
     @exc_to_thrift_reqfail
     @timeit

@@ -16,8 +16,11 @@ import os
 import time
 import unittest
 
+from typing import Callable, List
+
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import CommentKind, \
-    ReviewStatus, RunFilter
+    Order, ReviewStatus, ReviewStatusRule, ReviewStatusRuleFilter, \
+    ReviewStatusRuleSortMode, ReviewStatusRuleSortType, RunFilter
 
 from libtest import env, codechecker, plist_test
 from libtest.thrift_client_to_db import get_all_run_results
@@ -53,24 +56,82 @@ class TestReviewStatus(unittest.TestCase):
                          'with the given name configured at the test init.')
         self._runid = test_runs[0].runId
 
-    def __get_system_comments(self, report_hash):
-        """ Get system comments for the given report hash. """
-        return [c for c in self._cc_client.getComments(report_hash)
+    def tearDown(self):
+        """ Remove all review status rules after each test cases. """
+        self.__remove_all_rules()
+
+    def __get_system_comments(self, report_id):
+        """ Get system comments for the given report id. """
+        return [c for c in self._cc_client.getComments(report_id)
                 if c.kind == CommentKind.SYSTEM]
+
+    def __remove_all_rules(self):
+        """ Removes all review status rules from the database. """
+        self._cc_client.removeReviewStatusRules(None)
+
+        # Check that there is no review status rule in the database.
+        self.assertFalse(self._cc_client.getReviewStatusRulesCount(None))
+
+        rules = self._cc_client.getReviewStatusRules(None, None, None, 0)
+        self.assertFalse(rules)
+
+    def __remove_all_comments(self, report_id):
+        """ Removes all comments from the database. """
+        comments = self._cc_client.getComments(report_id)
+        for comment in comments:
+            self.assertTrue(self._cc_client.removeComment(comment.id))
+
+    def __check_value_order(self, values: List, order):
+        """ Checks the order of the given values. """
+        prev = None
+        for value in values:
+            if not prev:
+                prev = value
+                continue
+
+            if order == Order.ASC:
+                self.assertGreaterEqual(value, prev)
+            else:
+                self.assertLessEqual(value, prev)
+
+    def __check_rule_order(
+        self,
+        field_selector: Callable[[ReviewStatusRule], None],
+        sort_type: ReviewStatusRuleSortType
+    ):
+        """ Check review status rules order. """
+        rule_filter = None
+        limit = None
+        offset = 0
+
+        # Sort rules by the given sort type in descending order.
+        sort_mode = ReviewStatusRuleSortMode(
+            type=sort_type, ord=Order.DESC)
+        rules = self._cc_client.getReviewStatusRules(
+            rule_filter, sort_mode, limit, offset)
+        self.__check_value_order(
+            [field_selector(r) for r in rules], Order.DESC)
+
+        # Sort rules by the given sort type in ascending order.
+        sort_mode = ReviewStatusRuleSortMode(
+            type=sort_type, ord=Order.ASC)
+        rules = self._cc_client.getReviewStatusRules(
+            rule_filter, sort_mode, limit, offset)
+        self.__check_value_order(
+            [field_selector(r) for r in rules], Order.ASC)
 
     def test_multiple_change_review_status(self):
         """
         Test changing review status of the same bug.
         """
         runid = self._runid
-        logging.debug('Get all run results from the db for runid: ' +
-                      str(runid))
-
         run_results = get_all_run_results(self._cc_client, runid)
         self.assertIsNotNone(run_results)
         self.assertNotEqual(len(run_results), 0)
 
         bug = run_results[0]
+
+        self.__remove_all_comments(bug.reportId)
 
         # There are no system comments for this bug.
         comments = self.__get_system_comments(bug.reportId)
@@ -79,8 +140,8 @@ class TestReviewStatus(unittest.TestCase):
         # Change review status to confirmed bug.
         review_comment = 'This is really a bug'
         status = ReviewStatus.CONFIRMED
-        success = self._cc_client.changeReviewStatus(
-            bug.reportId, status, review_comment)
+        success = self._cc_client.addReviewStatusRule(
+            bug.bugHash, status, review_comment)
 
         self.assertTrue(success)
         logging.debug('Bug review status changed successfully')
@@ -93,25 +154,38 @@ class TestReviewStatus(unittest.TestCase):
         comments = self.__get_system_comments(bug.reportId)
         self.assertEqual(len(comments), 1)
 
+        # There is only one review status rule in the database.
+        rules = self._cc_client.getReviewStatusRules(None, None, None, 0)
+        self.assertEqual(len(rules), 1)
+
+        self.assertEqual(rules[0].reportHash, bug.bugHash)
+        self.assertEqual(rules[0].reviewData.comment, review_comment)
+        self.assertEqual(rules[0].reviewData.status, status)
+        self.assertTrue(rules[0].associatedReportCount > 0)
+
+        self.assertEqual(self._cc_client.getReviewStatusRulesCount(None), 1)
+
         # Try to update the review status again with the same data and check
         # that no new system comment entry will be created.
-        success = self._cc_client.changeReviewStatus(
-            bug.reportId, status, review_comment)
+        success = self._cc_client.addReviewStatusRule(
+            bug.bugHash, status, review_comment)
         comments = self.__get_system_comments(bug.reportId)
         self.assertEqual(len(comments), 1)
+        self.assertEqual(self._cc_client.getReviewStatusRulesCount(None), 1)
 
         # Test that updating only the review status message a new system
         # comment will be created.
-        success = self._cc_client.changeReviewStatus(
-            bug.reportId, status, "test system comment change")
+        success = self._cc_client.addReviewStatusRule(
+            bug.bugHash, status, "test system comment change")
         self.assertTrue(success)
         comments = self.__get_system_comments(bug.reportId)
         self.assertEqual(len(comments), 2)
+        self.assertEqual(self._cc_client.getReviewStatusRulesCount(None), 1)
 
         # Try to change review status back to unreviewed.
         status = ReviewStatus.UNREVIEWED
-        success = self._cc_client.changeReviewStatus(
-            bug.reportId,
+        success = self._cc_client.addReviewStatusRule(
+            bug.bugHash,
             status,
             None)
 
@@ -125,8 +199,8 @@ class TestReviewStatus(unittest.TestCase):
         # Change review status to false positive.
         review_comment = 'This is not a bug'
         status = ReviewStatus.FALSE_POSITIVE
-        success = self._cc_client.changeReviewStatus(
-            bug.reportId, status, review_comment)
+        success = self._cc_client.addReviewStatusRule(
+            bug.bugHash, status, review_comment)
 
         self.assertTrue(success)
         logging.debug('Bug review status changed successfully')
@@ -138,8 +212,8 @@ class TestReviewStatus(unittest.TestCase):
         # Change review status to intentional.
         review_comment = ''
         status = ReviewStatus.INTENTIONAL
-        success = self._cc_client.changeReviewStatus(
-            bug.reportId, status, review_comment)
+        success = self._cc_client.addReviewStatusRule(
+            bug.bugHash, status, review_comment)
 
         self.assertTrue(success)
         logging.debug('Bug review status changed successfully')
@@ -147,6 +221,15 @@ class TestReviewStatus(unittest.TestCase):
         report = self._cc_client.getReport(bug.reportId)
         self.assertEqual(report.reviewData.comment, review_comment)
         self.assertEqual(report.reviewData.status, status)
+
+        # Make sure that removing a review status rule will change the review
+        # status information of a report back to default values.
+        self.__remove_all_rules()
+        report = self._cc_client.getReport(bug.reportId)
+        self.assertEqual(report.reviewData.comment, None)
+        self.assertEqual(report.reviewData.author, None)
+        self.assertEqual(report.reviewData.date, None)
+        self.assertEqual(report.reviewData.status, ReviewStatus.UNREVIEWED)
 
     def test_review_status_update_from_source_trim(self):
         """
@@ -223,3 +306,125 @@ class TestReviewStatus(unittest.TestCase):
         self.assertEqual(len(reports), 2)
         for report in reports:
             self.assertEqual(report.reviewData.status, ReviewStatus.CONFIRMED)
+
+    def test_filter_review_status_rules(self):
+        """ Test filtering review status rules based on different filters. """
+        run_results = get_all_run_results(self._cc_client, self._runid)
+        self.assertIsNotNone(run_results)
+        self.assertNotEqual(len(run_results), 0)
+
+        bug1 = run_results[0]
+        bug2 = next(r for r in run_results if r.bugHash != bug1.bugHash)
+
+        success = self._cc_client.addReviewStatusRule(
+            bug1.bugHash, ReviewStatus.CONFIRMED, 'bug1')
+        self.assertTrue(success)
+
+        success = self._cc_client.addReviewStatusRule(
+            bug2.bugHash, ReviewStatus.FALSE_POSITIVE, 'bug2')
+        self.assertTrue(success)
+
+        rule_filter = None
+        sort_mode = None
+        limit = None
+        offset = 0
+
+        # There are two rules in the database.
+        rules = self._cc_client.getReviewStatusRules(
+            rule_filter, sort_mode, limit, offset)
+        self.assertEqual(len(rules), 2)
+
+        # Show only Confirmed rules.
+        rule_filter = ReviewStatusRuleFilter(
+            reviewStatuses=[ReviewStatus.CONFIRMED])
+        rules = self._cc_client.getReviewStatusRules(
+            rule_filter, sort_mode, limit, offset)
+        self.assertEqual(len(rules), 1)
+        self.assertEqual(rules[0].reviewData.status, ReviewStatus.CONFIRMED)
+
+        self.assertEqual(
+            self._cc_client.getReviewStatusRulesCount(rule_filter), 1)
+
+        # Show both Confirmed and False positive rules.
+        rule_filter = ReviewStatusRuleFilter(
+            reviewStatuses=[
+                ReviewStatus.CONFIRMED, ReviewStatus.FALSE_POSITIVE])
+        rules = self._cc_client.getReviewStatusRules(
+            rule_filter, sort_mode, limit, offset)
+        self.assertEqual(len(rules), 2)
+        self.assertEqual(
+            self._cc_client.getReviewStatusRulesCount(rule_filter), 2)
+
+        # Filter by report hash.
+        rule_filter = ReviewStatusRuleFilter(reportHashes=[bug1.bugHash])
+        rules = self._cc_client.getReviewStatusRules(
+            rule_filter, sort_mode, limit, offset)
+        self.assertEqual(len(rules), 1)
+        self.assertEqual(rules[0].reviewData.status, ReviewStatus.CONFIRMED)
+
+        # Add a review status rule with a non-existing report hash.
+        success = self._cc_client.addReviewStatusRule(
+            'invalid', ReviewStatus.INTENTIONAL, 'bug3')
+        self.assertTrue(success)
+
+        rule_filter = ReviewStatusRuleFilter(noAssociatedReports=True)
+        rules = self._cc_client.getReviewStatusRules(
+            rule_filter, sort_mode, limit, offset)
+        self.assertEqual(len(rules), 1)
+        self.assertEqual(rules[0].reviewData.status, ReviewStatus.INTENTIONAL)
+        self.assertEqual(rules[0].associatedReportCount, 0)
+
+    def test_sort_review_status_rules(self):
+        """ Test sorting review status rules. """
+        run_results = get_all_run_results(self._cc_client, self._runid)
+        self.assertIsNotNone(run_results)
+        self.assertNotEqual(len(run_results), 0)
+
+        bug1 = run_results[0]
+        bug2 = next(r for r in run_results if r.bugHash != bug1.bugHash)
+
+        success = self._cc_client.addReviewStatusRule(
+            bug1.bugHash, ReviewStatus.CONFIRMED, 'bug1')
+        self.assertTrue(success)
+
+        success = self._cc_client.addReviewStatusRule(
+            bug2.bugHash, ReviewStatus.FALSE_POSITIVE, 'bug2')
+        self.assertTrue(success)
+
+        success = self._cc_client.addReviewStatusRule(
+            'invalid', ReviewStatus.INTENTIONAL, 'bug3')
+        self.assertTrue(success)
+
+        # By default the rules are sorted by the date field in descending
+        # order.
+        rule_filter = None
+        sort_mode = None
+        limit = None
+        offset = 0
+        rules = self._cc_client.getReviewStatusRules(
+            rule_filter, sort_mode, limit, offset)
+        self.assertEqual(len(rules), 3)
+
+        self.__check_value_order(
+            [r.reviewData.date for r in rules], Order.DESC)
+
+        # Test ordering rules by date.
+        self.__check_rule_order(
+            lambda r: r.reviewData.date, ReviewStatusRuleSortType.DATE)
+
+        # Test ordering rules by report hash.
+        self.__check_rule_order(
+            lambda r: r.reportHash, ReviewStatusRuleSortType.REPORT_HASH)
+
+        # Test ordering rules by author.
+        self.__check_rule_order(
+            lambda r: r.reviewData.author, ReviewStatusRuleSortType.AUTHOR)
+
+        # Test ordering rules by review status.
+        self.__check_rule_order(
+            lambda r: r.reviewData.status, ReviewStatusRuleSortType.STATUS)
+
+        # Test ordering rules by associated report count.
+        self.__check_rule_order(
+            lambda r: r.associatedReportCount,
+            ReviewStatusRuleSortType.ASSOCIATED_REPORTS_COUNT)
