@@ -1,0 +1,46 @@
+=================================================================
+==9851==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x6140000001d4 at pc 0x0000004d0ee6 bp 0x7ffd7bf010e0 sp 0x7ffd7bf010d8
+READ of size 4 at 0x6140000001d4 thread T0
+    #0 0x4d0ee5 in main files/asan2.cpp:5:13
+    #1 0x7f8dc59bb62f in __libc_start_call_main (/lib64/libc.so.6+0x4062f)
+    #2 0x7f8dc59bb6ef in __libc_start_main@GLIBC_2.2.5 (/lib64/libc.so.6+0x406ef)
+    #3 0x41f284 in _start /BUILD/glibc-2.35/csu/../sysdeps/x86_64/start.S:115
+
+0x6140000001d4 is located 4 bytes to the right of 400-byte region [0x614000000040,0x6140000001d0)
+allocated by thread T0 here:
+    #0 0x4ce69d in operator new[](unsigned long) /compiler-rt/lib/asan/asan_new_delete.cpp:98:3
+    #1 0x4d0e7c in main files/asan2.cpp:3:16
+
+SUMMARY: AddressSanitizer: heap-buffer-overflow files/asan2.cpp:5:13 in main
+Shadow bytes around the buggy address:
+  0x0c287fff7fe0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c287fff7ff0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c287fff8000: fa fa fa fa fa fa fa fa 00 00 00 00 00 00 00 00
+  0x0c287fff8010: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c287fff8020: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x0c287fff8030: 00 00 00 00 00 00 00 00 00 00[fa]fa fa fa fa fa
+  0x0c287fff8040: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c287fff8050: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c287fff8060: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c287fff8070: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c287fff8080: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==9851==ABORTING
