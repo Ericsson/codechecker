@@ -5,9 +5,9 @@ REPO_ROOT ?= REPO_ROOT=$(ROOT)
 # Nose test runner configuration options.
 NOSECFG = --config .noserc
 
-test: all pycodestyle pylint test_unit
+test: pycodestyle pylint test_unit
 
-test_in_env: all pycodestyle_in_env pylint_in_env test_unit_in_env
+test_in_env: pycodestyle_in_env pylint_in_env test_unit_in_env
 
 PYCODESTYLE_TEST_CMD = pycodestyle tests/unit
 
