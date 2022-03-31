@@ -43,6 +43,7 @@ jobs:
         working-directory: analyzer/tools/build-logger
         run: |
           pip install -r requirements_py/dev/requirements.txt
+          make all
           make test
 
       - name: Run merge-clang-extdef-mappings tests
