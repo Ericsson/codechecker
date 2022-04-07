@@ -2,19 +2,10 @@
 # Each line is a file pattern followed by one or more owners.
 
 # These owners will be the default owners for everything in the repo.
-*      @csordasmarton
-
-# Web files.
-*.js    @csordasmarton @bruntib
-*.html  @csordasmarton @bruntib
-*.css   @csordasmarton @bruntib
+*      @bruntib @Vodorok
 
 # Analyzer.
-/analyzer/ @csordasmarton @bruntib
-/analyzer/codechecker_analyzer/analyzers/clangsa/ctu_*.py @martong @csordasmarton @bruntib
-
-# Build logger.
-/analyzer/tools/build-logger/ @bruntib
+/analyzer/codechecker_analyzer/analyzers/clangsa/ctu_*.py @martong
 
 # Documentations.
-/docs @csordasmarton @dkrupp @bruntib
+/docs @dkrupp
