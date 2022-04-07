@@ -97,7 +97,22 @@ export default new Router({
           path: "report-detail",
           name: "report-detail",
           component: () => import("@/views/ReportDetail")
-        }
+        },
+        {
+          path: "cleanup-plan",
+          name: "cleanup-plan",
+          component: () => import("@/views/CleanupPlan")
+        },
+        {
+          path: "review-status-rules",
+          name: "review-status-rules",
+          component: () => import("@/views/ReviewStatusRules")
+        },
+        {
+          path: "source-component",
+          name: "source-component",
+          component: () => import("@/views/SourceComponent")
+        },
       ]
     }
   ]

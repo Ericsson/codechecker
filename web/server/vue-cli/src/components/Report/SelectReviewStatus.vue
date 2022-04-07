@@ -100,28 +100,15 @@
 <script>
 import { mapGetters } from "vuex";
 import { ReviewStatus } from "@cc/report-server-types";
+import { ReviewStatusMixin } from "@/mixins";
 import SelectReviewStatusItem from "./SelectReviewStatusItem";
-
-function reviewStatusFromCodeToString(reviewCode) {
-  switch (parseInt(reviewCode)) {
-  case ReviewStatus.UNREVIEWED:
-    return "Unreviewed";
-  case ReviewStatus.CONFIRMED:
-    return "Confirmed";
-  case ReviewStatus.FALSE_POSITIVE:
-    return "False positive";
-  case ReviewStatus.INTENTIONAL:
-    return "Intentional";
-  default:
-    console.warn("Non existing review status code: ", reviewCode);
-  }
-}
 
 export default {
   name: "SelectReviewStatus",
   components: {
     SelectReviewStatusItem
   },
+  mixins: [ ReviewStatusMixin ],
   props: {
     value: { type: Object, default: () => {} },
     onConfirm: { type: Function, default: () => {} }
@@ -153,7 +140,7 @@ export default {
     this.items = Object.values(ReviewStatus).map(id => {
       return {
         id: id,
-        label: reviewStatusFromCodeToString(id)
+        label: this.reviewStatusFromCodeToString(parseInt(id))
       };
     });
   },

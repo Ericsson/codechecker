@@ -22,8 +22,8 @@
             Manage cleanup plans
           </v-row>
 
-          <v-row class="subtitle-1">
-            Use cleanup plans to track progress of reports in your product.
+          <v-row>
+            <cleanup-plan-subtitle />
           </v-row>
         </v-container>
 
@@ -58,11 +58,13 @@
 </template>
 
 <script>
+import CleanupPlanSubtitle from "./CleanupPlanSubtitle";
 import ListCleanupPlans from "./ListCleanupPlans";
 
 export default {
   name: "ManageCleanupPlanDialog",
   components: {
+    CleanupPlanSubtitle,
     ListCleanupPlans
   },
   props: {

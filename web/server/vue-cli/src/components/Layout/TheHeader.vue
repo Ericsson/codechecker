@@ -78,6 +78,45 @@
       </v-btn>
     </span>
 
+    <v-menu
+      v-if="showConfigItems"
+      offset-y
+    >
+      <template v-slot:activator="{ on, attrs }">
+        <v-btn
+          text
+          :class="configureMenuItems.map(c => c.route).includes($route.name) &&
+            'v-btn--active router-link-active'"
+          v-bind="attrs"
+          v-on="on"
+        >
+          <v-icon left>
+            mdi-cog-outline
+          </v-icon>
+          Configuration
+          <v-icon right>
+            mdi-menu-down
+          </v-icon>
+        </v-btn>
+      </template>
+
+      <v-list>
+        <v-list-item-group color="primary">
+          <v-list-item
+            v-for="item in configureMenuItems"
+            :key="item.title"
+            :to="{ name: item.route }"
+            exact
+          >
+            <v-list-item-avatar class="mr-1">
+              <v-icon>{{ item.icon }}</v-icon>
+            </v-list-item-avatar>
+            <v-list-item-title>{{ item.title }}</v-list-item-title>
+          </v-list-item>
+        </v-list-item-group>
+      </v-list>
+    </v-menu>
+
     <v-divider
       v-if="showUserInfo && menuItems.length"
       class="mx-2"
@@ -158,6 +197,23 @@ export default {
           query: defaultStatisticsFilterValues,
           hide: [ "products", "login", "404" ]
         }
+      ],
+      configureMenuItems: [
+        {
+          title: "Cleanup Plan",
+          icon: "mdi-sign-direction",
+          route: "cleanup-plan"
+        },
+        {
+          title: "Review Status Rules",
+          icon: "mdi-format-list-checkbox",
+          route: "review-status-rules"
+        },
+        {
+          title: "Source Component",
+          icon: "mdi-puzzle-outline",
+          route: "source-component"
+        }
       ]
     };
   },
@@ -192,6 +248,11 @@ export default {
 
     showUserInfo() {
       return this.authParams?.requiresAuthentication && this.isAuthenticated;
+    },
+
+    showConfigItems() {
+      return ![ "products", "login", "404" ].includes(this.$route.name) &&
+        this.showMenuItems;
     }
   },
 

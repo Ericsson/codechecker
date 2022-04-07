@@ -229,6 +229,73 @@ struct ReviewData {
   4: string        date
 }
 
+/*
+ * Review status rule sort field types. The review status rules can be ordered
+ * only based on these fields.
+ */
+enum ReviewStatusRuleSortType {
+  REPORT_HASH,
+  STATUS,
+  AUTHOR,
+  DATE,
+  ASSOCIATED_REPORTS_COUNT,
+}
+
+/*
+ * This struct can be used for ordering the review status rules (see
+ * getReviewStatusRules()).
+ * - type: Identifies the field type which has to be used for sorting the
+ *     review status rules.
+ * - order: Specifies the ordering (ascending or descending).
+ */
+struct ReviewStatusRuleSortMode {
+  1: ReviewStatusRuleSortType type,
+  2: Order ord
+}
+
+/**
+ * This struct can be used for filtering review status rules (see
+ * getReviewStatusRules()).
+ * Members of this struct are interpreted in "OR" relation with each other.
+ * Between the elements of the list there is "AND" relation.
+ *
+ * - reportHashes: An optional list of report hashes. The result list contains
+ *     the review status only for these report types. If not given then all
+ *     review status rules return in the current product.
+ * - reviewStatuses: An optional list of review statuses that filter the result
+ *     set. If not set then all kinds of review status return. If empty list
+ *     then nothing returns.
+ * - authors: An optional list of review status authors that filter the
+ *     result set. If not set then all kinds of review status return. If empty
+ *     list then nothing returns.
+ * - noAssociatedReports: If true it will filter review status rules which do
+ *     not have any associated report. If it is not set or false it will not
+ *     filter the results.
+ */
+struct ReviewStatusRuleFilter {
+  1: list<string> reportHashes,
+  2: list<ReviewStatus> reviewStatuses,
+  4: list<string> authors,
+  5: bool noAssociatedReports,
+}
+
+/*
+ * Map report hashes to ReviewData's.
+ * - reportHash: Identifies the review status rule. For the same hash there can
+ *     be only one rule.
+ * - reviewData: Review status information.
+ * - associatedReportCount: Number of associated reports. If there is no
+       associated in the product for reportHash the value will be 0.
+ */
+struct ReviewStatusRule {
+  1: string reportHash,
+  2: ReviewData reviewData,
+  3: i64 associatedReportCount,
+}
+
+// List of review status rules whick keep the order when sorting is specified.
+typedef list<ReviewStatusRule> ReviewStatusRules
+
 struct ReportData {
   1: i64              runId,           // Unique id of the run.
   2: string           checkerId,       // The qualified name of the checker that reported this.
@@ -571,6 +638,46 @@ service codeCheckerDBAccess {
                           2: ReviewStatus status,
                           3: string       message)
                           throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // Review status of a bug type can be set manually through GUI. This is like
+  // a "rule" which applies automatically for the reports with a given hash.
+  // This way multiple report instances can share the same review status if for
+  // example multiple runs contain instances of a given bug type. For the
+  // documentation of "filter" parameter see the ReviewStatusRuleFilter struct.
+  // For the documentation of "sortMode" parameter see the
+  // ReviewStatusRuleSortMode struct. If the parameter is not specified by
+  // default the server will order the review status rules in descending order
+  // based on the review status date field.
+  // The limit and offset parameters can be used to paginate the review status
+  // rules.
+  // PERMISSION: PRODUCT_VIEW
+  ReviewStatusRules getReviewStatusRules(1: ReviewStatusRuleFilter filter,
+                                         2: ReviewStatusRuleSortMode sortMode,
+                                         3: i64 limit,
+                                         4: i64 offset)
+                                         throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // Get number of available review status rules based on the given filters.
+  // PERMISSION: PRODUCT_VIEW
+  i64 getReviewStatusRulesCount(1: ReviewStatusRuleFilter filter)
+                                throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // Remove review status rules based on the given filter set. If no filters
+  // are given, it will remove all the review status rules from the database.
+  // To remove a single review status rule use the filter and set the report
+  // hash filter list to contain a single hash.
+  // PERMISSION: PRODUCT_ADMIN
+  bool removeReviewStatusRules(1: ReviewStatusRuleFilter filter)
+                               throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // Add a new review status rule to the given report hash if it does not exist
+  // or update an existing one.
+  // The 'author' and 'date' fields will be set automatically by the server.
+  // PERMISSION: PRODUCT_ACCESS or PRODUCT_STORE
+  bool addReviewStatusRule(1: string reportHash
+                           2: ReviewStatus status,
+                           3: string message)
+                           throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // get comments for a bug
   // PERMISSION: PRODUCT_VIEW
