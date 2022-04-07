@@ -18,7 +18,8 @@ from subprocess import run
 from typing import IO
 
 from libtest import env
-from libtest.codechecker import call_command
+from libtest.codechecker import call_command, is_ctu_capable, \
+    is_ctu_on_demand_capable
 from libtest.ctu_decorators import makeSkipUnlessCTUCapable, \
     makeSkipUnlessCTUOnDemandCapable
 
@@ -53,11 +54,11 @@ class TestCtu(unittest.TestCase):
         cmd = [self._codechecker_cmd, 'analyze', '-h']
         output, _, result = call_command(cmd, cwd=self.test_dir, env=self.env)
         self.assertEqual(result, 0, "Analyzing failed.")
-        setattr(self, CTU_ATTR, '--ctu-' in output)
+        setattr(self, CTU_ATTR, is_ctu_capable(output))
         print("'analyze' reported CTU-compatibility? " +
               str(getattr(self, CTU_ATTR)))
 
-        setattr(self, ON_DEMAND_ATTR, '--ctu-ast-mode' in output)
+        setattr(self, ON_DEMAND_ATTR, is_ctu_on_demand_capable(output))
         print("'analyze' reported CTU-on-demand-compatibility? " +
               str(getattr(self, ON_DEMAND_ATTR)))
 
