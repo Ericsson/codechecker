@@ -608,10 +608,20 @@ class TestAnalyze(unittest.TestCase):
 
         self.assertIn("Dereference of null pointer", out)
 
-    def unique_json_helper(self, unique_json, is_a, is_b, is_s):
-        with open(unique_json,
+    def check_unique_compilation_db(
+        self,
+        compilation_db_file_path: str,
+        num_of_compile_commands: int,
+        is_a: bool,
+        is_b: bool,
+        is_s: bool
+    ):
+        """ """
+        with open(compilation_db_file_path,
                   encoding="utf-8", errors="ignore") as json_file:
             data = json.load(json_file)
+            self.assertEqual(len(data), num_of_compile_commands)
+
             simple_a = False
             simple_b = False
             success = False
@@ -647,6 +657,10 @@ class TestAnalyze(unittest.TestCase):
                       " -Iincludes -o simple_a.o",
                       "file": source_file},
                      {"directory": self.test_dir,
+                      "command": "cc -c " + source_file +
+                      " -Iincludes -o simple_a.o",
+                      "file": source_file},
+                     {"directory": self.test_dir,
                       "command": "cc -c " + source_file2 +
                       " -Iincludes -o success.o",
                       "file": source_file2}]
@@ -673,7 +687,7 @@ class TestAnalyze(unittest.TestCase):
         self.assertEqual(errcode, 0)
         self.assertFalse(os.path.isdir(failed_dir))
 
-        self.unique_json_helper(unique_json, True, False, True)
+        self.check_unique_compilation_db(unique_json, 2, True, False, True)
 
         # Testing regex mode.
         analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
@@ -692,7 +706,7 @@ class TestAnalyze(unittest.TestCase):
         self.assertEqual(errcode, 0)
         self.assertFalse(os.path.isdir(failed_dir))
 
-        self.unique_json_helper(unique_json, False, True, True)
+        self.check_unique_compilation_db(unique_json, 2, False, True, True)
 
         # Testing regex mode.error handling
         analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
@@ -748,7 +762,7 @@ class TestAnalyze(unittest.TestCase):
         errcode = process.returncode
         self.assertEqual(errcode, 0)
         self.assertFalse(os.path.isdir(failed_dir))
-        self.unique_json_helper(unique_json, True, True, True)
+        self.check_unique_compilation_db(unique_json, 3, True, True, True)
 
     def test_invalid_enabled_checker_name(self):
         """Warn in case of an invalid enabled checker."""
