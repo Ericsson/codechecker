@@ -20,7 +20,8 @@ import tempfile
 
 from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.analyzers import analyzer_types
-from codechecker_analyzer.arg import OrderedCheckersAction
+from codechecker_analyzer.arg import \
+        OrderedCheckersAction, OrderedConfigAction
 
 from codechecker_common import arg, cmd_config, logger
 from codechecker_report_converter.source_code_comment_handler import \
@@ -349,6 +350,7 @@ used to generate a log file on the fly.""")
     analyzer_opts.add_argument('--analyzer-config',
                                dest='analyzer_config',
                                nargs='*',
+                               action=OrderedConfigAction,
                                default=["clang-tidy:HeaderFilterRegex=.*"],
                                help="Analyzer configuration options in the "
                                     "following format: analyzer:key=value. "
@@ -371,6 +373,7 @@ used to generate a log file on the fly.""")
     analyzer_opts.add_argument('--checker-config',
                                dest='checker_config',
                                nargs='*',
+                               action=OrderedConfigAction,
                                default=argparse.SUPPRESS,
                                help="Checker configuration options in the "
                                     "following format: analyzer:key=value. "

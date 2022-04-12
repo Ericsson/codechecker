@@ -26,7 +26,8 @@ from tu_collector import tu_collector
 
 from codechecker_analyzer import analyzer, analyzer_context, env
 from codechecker_analyzer.analyzers import analyzer_types, clangsa
-from codechecker_analyzer.arg import OrderedCheckersAction
+from codechecker_analyzer.arg import \
+        OrderedCheckersAction, OrderedConfigAction
 from codechecker_analyzer.buildlog import log_parser
 
 from codechecker_common import arg, logger, cmd_config
@@ -401,6 +402,7 @@ def add_arguments_to_parser(parser):
     analyzer_opts.add_argument('--analyzer-config',
                                dest='analyzer_config',
                                nargs='*',
+                               action=OrderedConfigAction,
                                default=["clang-tidy:HeaderFilterRegex=.*"],
                                help="Analyzer configuration options in the "
                                     "following format: analyzer:key=value. "
@@ -423,6 +425,7 @@ def add_arguments_to_parser(parser):
     analyzer_opts.add_argument('--checker-config',
                                dest='checker_config',
                                nargs='*',
+                               action=OrderedConfigAction,
                                default=argparse.SUPPRESS,
                                help="Checker configuration options in the "
                                     "following format: analyzer:key=value. "

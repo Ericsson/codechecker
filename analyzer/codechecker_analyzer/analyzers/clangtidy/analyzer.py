@@ -362,7 +362,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             LOG.debug_analyzer(aerr)
 
         analyzer_config = {}
-        # TODO: This extra "isinsrance" check is needed for
+        # TODO: This extra "isinstance" check is needed for
         # CodeChecker analyzers --analyzer-config. This command also
         # runs this function in order to construct a config handler.
         if 'analyzer_config' in args and \
@@ -394,7 +394,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             del handler.analyzer_extra_arguments[i:i + arg_num]
             break
 
-        # TODO: This extra "isinsrance" check is needed for
+        # TODO: This extra "isinstance" check is needed for
         # CodeChecker checkers --checker-config. This command also
         # runs this function in order to construct a config handler.
         if 'checker_config' in args and isinstance(args.checker_config, list):
