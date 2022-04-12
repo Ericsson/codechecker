@@ -1,0 +1,167 @@
+{
+  "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json",
+  "version": "2.1.0",
+  "properties": {
+    "comment": "This sample illustrates tool configuration and execution notifications."
+  },
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "SarifSamples",
+          "version": "1.0",
+          "rules": [
+            {
+              "id": "TUT1201",
+              "name": "MissingSemicolon",
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "messageStrings": {
+                "default": {
+                  "text": "The statement does not end with a semicolon."
+                }
+              }
+            }
+          ],
+          "notifications": [
+            {
+              "id": "TUTN9001",
+              "name": "unknown-rule",
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "shortDescription": {
+                "text": "This notification is triggered when the user supplies a command line argument to enable or disable a rule that does not exist."
+              },
+              "messageStrings": {
+                "disabled": {
+                  "text": "'{0}' cannot be disabled because this rule does not exist."
+                },
+                "enabled": {
+                  "text": "'{0}' cannot be enabled because this rule does not exist."
+                }
+              }
+            },
+            {
+              "id": "TUTN9002",
+              "name": "rule-threw-exception",
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "shortDescription": {
+                "text": "This notification is triggered when an analysis rule throws an exception."
+              },
+              "fullDescription": {
+                "text": "This notification is triggered when an analysis rule throws an exception while analyzing a file. Depending on the command line options, the rule might either be disabled, or it might continue to run on subsequent files."
+              },
+              "messageStrings": {
+                "disable": {
+                  "text": "'{0}' threw a '{1}' exception while analyzing file '{2}'. The rule has been disabled."
+                },
+                "continue": {
+                  "text": "'{0}' threw a '{1}' exception while analyzing file '{2}'. The rule will continue to be run on subsequent files."
+                }
+              }
+            }
+          ]
+        }
+      },
+      "results": [],
+      "invocations": [
+        {
+          "executionSuccessful": false,
+          "toolConfigurationNotifications": [
+            {
+              "descriptor": {
+                "id": "TUTN9001",
+                "index": 0
+              },
+              "message": {
+                "id": "disabled",
+                "arguments": [
+                  "UNK1001"
+                ]
+              }
+            }
+          ],
+          "toolExecutionNotifications": [
+            {
+              "descriptor": {
+                "id": "TUTN9002",
+                "index": 1
+              },
+              "message": {
+                "id": "continue",
+                "arguments": [
+                  "TUT1201",
+                  "NullReferenceException",
+                  "example.c"
+                ]
+              },
+              "exception": {
+                "kind": "System.NullReferenceException",
+                "message": "Object reference not set to an instance of an object.",
+                "stack": {
+                  "frames": [
+                    {
+                      "location": {
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "rules/MissingSemicolon.cs"
+                          },
+                          "region": {
+                            "startLine": 42
+                          }
+                        },
+                        "logicalLocations": [
+                          {
+                            "fullyQualifiedName": "SarifSample.Rules.MissingSemicolon.Execute()"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "location": {
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "EvaluationEngine.cs"
+                          },
+                          "region": {
+                            "startLine": 104
+                          }
+                        },
+                        "logicalLocations": [
+                          {
+                            "fullyQualifiedName": "SarifSample.EvaluationEngine.Run()"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "location": {
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "Program.cs"
+                          },
+                          "region": {
+                            "startLine": 25
+                          }
+                        },
+                        "logicalLocations": [
+                          {
+                            "fullyQualifiedName": "SarifSample.Program.Main(string[])"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

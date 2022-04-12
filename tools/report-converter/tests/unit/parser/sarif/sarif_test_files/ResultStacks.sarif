@@ -1,0 +1,127 @@
+{
+  "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json",
+  "version": "2.1.0",
+  "properties": {
+    "comment": "This sample demonstrates the use of stacks to provide information about a result."
+  },
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "SarifSamples",
+          "version": "1.0"
+        }
+      },
+      "results": [
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "Uninitialized variable."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "collections/list.h",
+                  "uriBaseId": "SRCROOT"
+                },
+                "region": {
+                  "startLine": 15
+                }
+              },
+              "logicalLocations": [
+                {
+                  "fullyQualifiedName": "collections::list::add"
+                }
+              ]
+            }
+          ],
+          "stacks": [
+            {
+              "message": {
+                "text": "Call stack resulting from usage of uninitialized variable."
+              },
+              "frames": [
+                {
+                  "location": {
+                    "message": {
+                      "text": "Exception thrown."
+                    },
+                    "physicalLocation": {
+                      "artifactLocation": {
+                        "uri": "collections/list.h",
+                        "uriBaseId": "SRCROOT"
+                      },
+                      "region": {
+                        "startLine": 110,
+                        "startColumn": 15
+                      }
+                    },
+                    "logicalLocations": [
+                      {
+                        "fullyQualifiedName": "collections::list::add_core"
+                      }
+                    ]
+                  },
+                  "module": "platform",
+                  "threadId": 52,
+                  "parameters": [
+                    "null",
+                    "0",
+                    "14"
+                  ]
+                },
+                {
+                  "location": {
+                    "physicalLocation": {
+                      "artifactLocation": {
+                        "uri": "collections/list.h",
+                        "uriBaseId": "SRCROOT"
+                      },
+                      "region": {
+                        "startLine": 43,
+                        "startColumn": 15
+                      }
+                    },
+                    "logicalLocations": [
+                      {
+                        "fullyQualifiedName": "collections::list::add"
+                      }
+                    ]
+                  },
+                  "module": "platform",
+                  "threadId": 52,
+                  "parameters": [
+                    "14"
+                  ]
+                },
+                {
+                  "location": {
+                    "physicalLocation": {
+                      "artifactLocation": {
+                        "uri": "application/main.cpp",
+                        "uriBaseId": "SRCROOT"
+                      },
+                      "region": {
+                        "startLine": 28,
+                        "startColumn": 9
+                      }
+                    },
+                    "logicalLocations": [
+                      {
+                        "fullyQualifiedName": "main"
+                      }
+                    ]
+                  },
+                  "module": "application",
+                  "threadId": 52
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "columnKind": "utf16CodeUnits"
+    }
+  ]
+}

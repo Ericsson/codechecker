@@ -1,0 +1,430 @@
+{
+  "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json",
+  "version": "2.1.0",
+  "properties": {
+    "comment": "This sample demonstrates the various ways a region can be specified."
+  },
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "SarifSamples",
+          "version": "1.0"
+        }
+      },
+      "results": [
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "Result in text file, specified by all line/column properties. See SARIF Spec §3.30.2, Example 1."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "TextFile.txt",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 2,
+                  "endLine": 1,
+                  "endColumn": 4 
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "Result in text file, specified by all charOffset/charLength properties. See SARIF Spec §3.30.2, Example 1."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "TextFile.txt",
+                  "index": 0
+                },
+                "region": {
+                  "charOffset": 1,
+                  "charLength": 2
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "Result in text file, specified by consistent line/column and charOffset/charLength properties. See SARIF Spec §3.30.2, Example 1."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "TextFile.txt",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 2,
+                  "endLine": 1,
+                  "endColumn": 4,
+                  "charOffset": 1,
+                  "charLength": 2
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "Result in text file, specified by inconsistent line/column and charOffset/charLength properties. See SARIF Spec §3.30.2, Example 2."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "TextFile.txt",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "endLine": 1,
+                  "endColumn": 4,
+                  "charOffset": 1,
+                  "charLength": 0
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "Result in text file, specified by startLine only. See SARIF Spec §3.30.2, Example 3."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "TextFile.txt",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 2
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "Result in text file, spanning lines. See SARIF Spec §3.30.2, Example 4."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "TextFile.txt",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 2,
+                  "endLine": 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "Result in text file, including line end. See SARIF Spec §3.30.2, Example 5."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "TextFile.txt",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 2,
+                  "endLine": 3,
+                  "endColumn": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "Result in text file, specifying insertion point with line/column properties. See SARIF Spec §3.30.2, Example 6."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "TextFile.txt",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 2,
+                  "endColumn": 2 
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "Result in text file, specifying insertion point with charOffset/charLength properties. See SARIF Spec §3.30.2, Example 6."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "TextFile.txt",
+                  "index": 0
+                },
+                "region": {
+                  "charOffset": 1,
+                  "charLength": 0
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "Result in text file, specifying insertion point at start of file with line/column properties. See SARIF Spec §3.30.2, Example 7."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "TextFile.txt",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "endColumn": 1 
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "Result in text file, specifying insertion point at start of file with charOffset/charLength properties. See SARIF Spec §3.30.2, Example 7."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "TextFile.txt",
+                  "index": 0
+                },
+                "region": {
+                  "charOffset": 0,
+                  "charLength": 0
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "Result in text file, specifying insertion point at end of file with line/column properties. See SARIF Spec §3.30.2, Example 8."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "TextFile.txt",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 4,
+                  "startColumn": 6,
+                  "endColumn": 6 
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "Result in text file, specifying insertion point at end of file with charOffset/charLength properties. See SARIF Spec §3.30.2, Example 8."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "TextFile.txt",
+                  "index": 0
+                },
+                "region": {
+                  "charOffset": 22,
+                  "charLength": 0
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "Result in text file, specifying a region with consistent line/column, charOffset/charLength, and byteOffset/byteLength properties. See SARIF Spec §3.30.2, Example 8."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "TextFile.txt",
+                  "index": 0
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 2,
+                  "endLine": 1,
+                  "endColumn": 4,
+                  "charOffset": 1,
+                  "charLength": 2,
+                  "byteOffset": 1,
+                  "byteLength": 2
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "Result in binary file, specifying a region of non-zero length."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "BinaryFile.bin",
+                  "index": 1
+                },
+                "region": {
+                  "byteOffset": 1,
+                  "byteLength": 2
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "Result in binary file, specifying an insertion point."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "BinaryFile.bin",
+                  "index": 1
+                },
+                "region": {
+                  "byteOffset": 1,
+                  "byteLength": 0
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "Result in binary file, specifying an insertion point at the beginning of the file."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "BinaryFile.bin",
+                  "index": 1
+                },
+                "region": {
+                  "byteOffset": 0,
+                  "byteLength": 0
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "Result in binary file, specifying an insertion point at the end of the file."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "BinaryFile.txt",
+                  "index": 1
+                },
+                "region": {
+                  "byteOffset": 22,
+                  "byteLength": 0
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "artifacts": [
+        {
+          "location": {
+            "uri": "TextFile.txt",
+            "description": {
+              "text": "A text file used to demonstrate how to specify text regions."
+            }
+          },
+          "contents": {
+            "text": "abcd\r\nefg\r\nhijk\r\nlmn\r\n",
+            "properties": {
+              "comment": "The file contents and some of the examples are taken from the SARIF specification, §3.30.2 ('Text regions') and §3.30.4 ('Independence of text and binary regions')."
+            }
+          },
+          "encoding": "UTF-8"
+        },
+        {
+          "location": {
+            "uri": "BinaryFile.bin",
+            "description": {
+              "text": "A binary file used to demonstrate how to specify binary regions."
+            }
+          },
+          "contents": {
+            "binary": "AQIDBAUGBwgJCgsMDQ4PEA=="
+          },
+          "properties": {
+            "comment": "The MIME Base64 encoding of the byte array { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10 }."
+          }
+        }
+      ],
+      "columnKind": "utf16CodeUnits"
+    }
+  ]
+}

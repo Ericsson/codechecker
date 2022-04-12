@@ -1,0 +1,87 @@
+{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "taxonomies": [
+        {
+          "name": "CWE",
+          "version": "3.2",
+          "releaseDateUtc": "2019-01-03",
+          "guid": "A9282C88-F1FE-4A01-8137-E8D2A037AB82",
+          "informationUri": "https://cwe.mitre.org/data/published/cwe_v3.2.pdf/",
+          "downloadUri": "https://cwe.mitre.org/data/xml/cwec_v3.2.xml.zip",
+          "organization": "MITRE",
+          "shortDescription": {
+            "text": "The MITRE Common Weakness Enumeration"
+          },
+          "taxa": [
+            {
+              "id": "401",
+              "guid": "10F28368-3A92-4396-A318-75B9743282F6",
+              "name": "Memory Leak",
+              "shortDescription": {
+                "text": "Missing Release of Memory After Effective Lifetime"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            }
+          ],
+          "isComprehensive": false
+        }
+      ],
+      "tool": {
+        "driver": {
+          "name": "CodeScanner",
+          "supportedTaxonomies": [
+            {
+              "name": "CWE",
+              "guid": "A9282C88-F1FE-4A01-8137-E8D2A037AB82"
+            }
+          ],
+          "rules": [
+            {
+              "id": "CA2101",
+              "shortDescription": {
+                "text": "Failed to release dynamic memory."
+              },
+              "relationships": [
+                {
+                  "target": {
+                    "id": "401",
+                    "guid": "A9282C88-F1FE-4A01-8137-E8D2A037AB82",
+                    "toolComponent": {
+                      "name": "CWE",
+                      "guid": "10F28368-3A92-4396-A318-75B9743282F6"
+                    }
+                  },
+                  "kinds": [
+                    "superset"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "CA2101",
+          "message": {
+            "text": "Memory allocated in variable 'p' was not released."
+          },
+          "taxa": [
+            {
+              "id": "401",
+              "guid": "A9282C88-F1FE-4A01-8137-E8D2A037AB82",
+              "toolComponent": {
+                "name": "CWE",
+                "guid": "10F28368-3A92-4396-A318-75B9743282F6"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

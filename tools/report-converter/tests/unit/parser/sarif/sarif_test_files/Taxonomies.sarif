@@ -1,0 +1,130 @@
+{
+  "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json",
+  "version": "2.1.0",
+  "properties": {
+    "comment": "This sample demonstrates the use of taxonomies to classify rules."
+  },
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "SarifSamples",
+          "version": "1.0",
+          "rules": [
+            {
+              "id": "TUT0001",
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "relationships": [
+                {
+                  "target": {
+                    "id": "RQL1001",
+                    "index": 0,
+                    "toolComponent": {
+                      "name": "Requirement levels",
+                      "guid": "1A567403-868F-405E-92CF-771A9ECB03A1",
+                      "index": 0
+                    }
+                  },
+                  "kinds": [
+                    "superset"
+                  ],
+                  "description": {
+                    "text": "This relationship specifies that this rule is classified as 'Required'."
+                  }
+                }
+              ]
+            },
+            {
+              "id": "TUT0002",
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "relationships": [
+                {
+                  "target": {
+                    "id": "RQL1002",
+                    "index": 1,
+                    "toolComponent": {
+                      "name": "Requirement levels",
+                      "guid": "1A567403-868F-405E-92CF-771A9ECB03A1",
+                      "index": 0
+                    }
+                  },
+                  "kinds": [
+                    "superset"
+                  ],
+                  "description": {
+                    "text": "This relationship specifies that this rule is classified as 'Recommended'."
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "taxonomies": [
+        {
+          "guid": "1A567403-868F-405E-92CF-771A9ECB03A1",
+          "name": "Requirement levels",
+          "shortDescription": {
+            "text": "This taxonomy classifies rules according to whether their use is required or recommended by company policy."
+          },
+          "taxa": [
+            {
+              "id": "RQL1001",
+              "name": "Required",
+              "shortDescription": {
+                "text": "Rules in this category are required by company policy. All violations must be fixed unless an exemption is granted."
+              }
+            },
+            {
+              "id": "RQL1002",
+              "name": "Recommended",
+              "shortDescription": {
+                "text": "Rules in this category are recommended but not required by company policy. Violations should be fixed but an exemption is not required to suppress a result."
+              }
+            }
+          ]
+        }
+      ],
+      "results": [
+        {
+          "ruleId": "TUT1001",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "This result violates a rule that is classified as 'Required'."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///C:/code/myProject/io/kb.c"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1002",
+          "ruleIndex": 1,
+          "message": {
+            "text": "This result violates a rule that is classified as 'Recommended'."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///C:/code/myProject/io/file.c"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "columnKind": "utf16CodeUnits"
+    }
+  ]
+}

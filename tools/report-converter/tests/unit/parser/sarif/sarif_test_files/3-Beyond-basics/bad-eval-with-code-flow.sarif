@@ -1,0 +1,99 @@
+{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "PythonScanner"
+        }
+      },
+      "results": [
+        {
+          "ruleId": "PY2335",
+          "message": {
+            "text": "Use of tainted variable 'raw_input' in the insecure function 'eval'."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "3-Beyond-basics/bad-eval-with-code-flow.py"
+                },
+                "region": {
+                  "startLine": 8
+                }
+              }
+            }
+          ],
+          "codeFlows": [
+            {
+              "message": {
+                "text": "Tracing the path from user input to insecure usage."
+              },
+              "threadFlows": [
+                {
+                  "locations": [
+                    {
+                      "location": {
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "3-Beyond-basics/bad-eval-with-code-flow.py"
+                          },
+                          "region": {
+                            "startLine": 3
+                          }
+                        }
+                      },
+                      "state": {
+                        "expr": {
+                          "text": "undef"
+                        }
+                      },
+                      "nestingLevel": 0
+                    },
+                    {
+                      "location": {
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "3-Beyond-basics/bad-eval-with-code-flow.py"
+                          },
+                          "region": {
+                            "startLine": 4
+                          }
+                        }
+                      },
+                      "state": {
+                        "expr": {
+                          "text": "42"
+                        }
+                      },
+                      "nestingLevel": 0
+                    },
+                    {
+                      "location": {
+                        "physicalLocation": {
+                          "artifactLocation": {
+                            "uri": "3-Beyond-basics/bad-eval-with-code-flow.py"
+                          },
+                          "region": {
+                            "startLine": 38
+                          }
+                        }
+                      },
+                      "state": {
+                        "raw_input": {
+                          "text": "42"
+                        }
+                      },
+                      "nestingLevel": 1
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -10,7 +10,6 @@ Parse the plist output of an analyzer
 """
 
 import importlib
-import json
 import logging
 import os
 import plistlib
@@ -27,12 +26,11 @@ if sys.version_info >= (3, 8):
 else:
     from mypy_extensions import TypedDict
 
-from codechecker_report_converter import __title__, __version__
 from codechecker_report_converter.report import BugPathEvent, \
     BugPathPosition, File, get_or_create_file, MacroExpansion, Range, Report
 from codechecker_report_converter.report.hash import get_report_hash, HashType
 from codechecker_report_converter.report.parser.base import AnalyzerInfo, \
-    BaseParser
+    BaseParser, get_tool_info
 
 
 LOG = logging.getLogger('report-converter')
@@ -422,58 +420,13 @@ class Parser(BaseParser):
 
         return macro_expansions
 
-    def __load_json(self, path: str):
-        """
-        Load the contents of the given file as a JSON and return it's value,
-        or default if the file can't be loaded.
-        """
-
-        ret = {}
-        try:
-            with open(path, 'r', encoding='utf-8', errors='ignore') as handle:
-                ret = json.load(handle)
-        except IOError as ex:
-            LOG.warning("Failed to open json file: %s", path)
-            LOG.warning(ex)
-        except OSError as ex:
-            LOG.warning("Failed to open json file: %s", path)
-            LOG.warning(ex)
-        except ValueError as ex:
-            LOG.warning("%s is not a valid json file.", path)
-            LOG.warning(ex)
-        except TypeError as ex:
-            LOG.warning('Failed to process json file: %s', path)
-            LOG.warning(ex)
-
-        return ret
-
-    def __get_tool_info(self) -> Tuple[str, str]:
-        """ Get tool info.
-
-        If this was called through CodeChecker, this function will return
-        CodeChecker information, otherwise this tool (report-converter)
-        information.
-        """
-        data_files_dir_path = os.environ.get('CC_DATA_FILES_DIR')
-        if data_files_dir_path:
-            analyzer_version_file_path = os.path.join(
-                data_files_dir_path, 'config', 'analyzer_version.json')
-            if os.path.exists(analyzer_version_file_path):
-                data = self.__load_json(analyzer_version_file_path)
-                version = data.get('version')
-                if version:
-                    return 'CodeChecker', f"{version['major']}." \
-                        f"{version['minor']}.{version['revision']}"
-
-        return __title__, __version__
-
     def convert(
         self,
         reports: List[Report],
         analyzer_info: Optional[AnalyzerInfo] = None
     ):
         """ Converts the given reports. """
-        tool_name, tool_version = self.__get_tool_info()
+        tool_name, tool_version = get_tool_info()
 
         data: Dict[str, Any] = {
             'files': [],
