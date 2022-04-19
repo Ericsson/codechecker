@@ -14,6 +14,10 @@ For available API functions see the .thrift files:
   https://github.com/Ericsson/codechecker/tree/master/web/api
 """
 
+import argparse
+import getpass
+import re
+import subprocess
 import sys
 
 from typing import Optional
@@ -51,24 +55,27 @@ except:
     sys.exit(1)
 
 
-PROTOCOL = "http"
-HOST = "localhost"
-PORT = 8001
+def get_client_api_version() -> str:
+    """ Get client api version from the installed codechecker package. """
+    p = subprocess.run([
+        "pip3", "show", "codechecker_api"], stdout=subprocess.PIPE)
+    ver = p.stdout.decode('utf-8').strip().split('\n')[1]
+    res = re.search('^Version:\ (.*)$', ver)
+    return res.group(1)
 
-USERNAME = "<myusername>"
-PASSWORD = "<mypassword>"
 
-CLIENT_API = "6.47"
+CLIENT_API = get_client_api_version()
 
 
 def create_client(
+    args,
     cls,
     endpoint: str,
     product_name: Optional[str] = None,
     token: Optional[str] = None
 ):
     """ Create a Thrift client. """
-    url = f"{PROTOCOL}://{HOST}:{PORT}/"
+    url = f"{args.protocol}://{args.host}:{args.port}/"
     if product_name:
         url += f"{product_name}/"
 
@@ -84,28 +91,28 @@ def create_client(
     return cls.Client(protocol)
 
 
-def main():
+def main(args):
     """ Send multiple Thrift API requests to the server. """
     # Get server info.
-    cli_server_info = create_client(ServerInfoAPI_v6, "ServerInfo")
+    cli_server_info = create_client(args, ServerInfoAPI_v6, "ServerInfo")
     package_version = cli_server_info.getPackageVersion()
     print(f"Package version: {package_version}\n")
 
     # Login to a running CodeChecker server.
-    cli_auth = create_client(AuthAPI_v6, "Authentication")
+    cli_auth = create_client(args, AuthAPI_v6, "Authentication")
 
     token = None
 
     auth_params = cli_auth.getAuthParameters()
     if auth_params.requiresAuthentication:
         try:
-            print(f"Login '{USERNAME}'...")
+            print(f"Login '{args.username}'...")
             token = cli_auth.performLogin(
-                "Username:Password", f"{USERNAME}:{PASSWORD}")
-            print(f"'{USERNAME}' successfully logged in.\n")
+                "Username:Password", f"{args.username}:{args.password}")
+            print(f"'{args.username}' successfully logged in.\n")
         except RequestFailed as ex:
-            print(f"Failed to login {USERNAME} with the following exception: "
-                f"{ex.message}")
+            print(f"Failed to login {args.username} with the following "
+                  f"exception: {ex.message}")
             sys.exit(1)
         except Exception as ex:
             print(f"Something went wrong: {ex}")
@@ -113,7 +120,7 @@ def main():
             sys.exit(1)
 
     # Get produts from the server.
-    cli_product = create_client(ProductAPI_v6, "Products", None, token)
+    cli_product = create_client(args, ProductAPI_v6, "Products", None, token)
 
     product_endpoint_filter = None
     product_name_filter = None
@@ -127,7 +134,7 @@ def main():
 
     # Get runs for the default product.
     cli_report = create_client(
-        ReportAPI_v6, "CodeCheckerService", "Default", token)
+        args, ReportAPI_v6, "CodeCheckerService", "Default", token)
 
     run_filter = None
     limit = 0
@@ -142,5 +149,39 @@ def main():
         sys.exit(1)
 
 
+def __add_arguments_to_parser(parser):
+    """ Add arguments to the the given parser. """
+    parser.add_argument('--protocol',
+                        dest="protocol",
+                        default="http",
+                        help="CodeChecker server protocol.")
+
+    parser.add_argument('--host',
+                    dest="host",
+                    default="localhost",
+                    help="CodeChecker server host.")
+
+    parser.add_argument('--port',
+                        dest="port",
+                        default="8001",
+                        help="CodeChecker server port.")
+
+    parser.add_argument('--username',
+                        dest="username",
+                        default=getpass.getuser(),
+                        help="The username to authenticate with.")
+
+    parser.add_argument('--password',
+                        dest="password",
+                        help="Password.")
+
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        prog="client",
+        description="""
+Python client to communicate with a CodeChecker server.""",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    __add_arguments_to_parser(parser)
+    args = parser.parse_args()
+
+    main(args)
