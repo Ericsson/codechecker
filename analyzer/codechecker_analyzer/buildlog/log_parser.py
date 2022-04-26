@@ -1184,7 +1184,7 @@ class CompileCommandEncoder(json.JSONEncoder):
 class CompileActionUniqueingType(Enum):
     NONE = 0  # Full Action text
     SOURCE_ALPHA = 1  # Based on source file, uniqueing by
-    # on alphanumerically first target
+    # alphabetically first output object file name
     SOURCE_REGEX = 2  # Based on source file, uniqueing by regex filter
     STRICT = 3  # Gives error in case of duplicate
 
