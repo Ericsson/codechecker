@@ -11,6 +11,7 @@ Run pre analysis, collect statistics or CTU data.
 
 import multiprocessing
 import os
+import shlex
 import shutil
 import signal
 import sys
@@ -43,7 +44,8 @@ def collect_statistics(action, source, clangsa_config,
         LOG.debug('Can not collect statistical data.')
         return
 
-    LOG.debug_analyzer(cmd)
+    # TODO: shlex.join() will be more convenient in Python 3.8.
+    LOG.debug_analyzer(' '.join(map(shlex.quote, cmd)))
 
     ret_code, analyzer_out, analyzer_err = \
         analyzer_base.SourceAnalyzer.run_proc(cmd, env=environ)
