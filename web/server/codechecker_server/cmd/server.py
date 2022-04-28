@@ -965,9 +965,10 @@ def server_init_start(args):
                             environ)
     except socket.error as err:
         if err.errno == errno.EADDRINUSE:
-            LOG.error("Server can't be started, maybe the given port number "
-                      "(%s) is already used. Check the connection "
-                      "parameters.", args.view_port)
+            LOG.error("Server can't be started, maybe port number (%s) is "
+                      "already used. Check the connection parameters. Use "
+                      "the option '-p 0' to find a free port automatically.",
+                      args.view_port)
             sys.exit(1)
         else:
             raise
