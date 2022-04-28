@@ -43,7 +43,6 @@ from codechecker_web.shared import webserver_context, database_status, \
     host_check, env
 
 LOG = logger.get_logger('server')
-DEFAULT_SERVER_PORT = 8001
 
 
 def get_argparser_ctor_args():
@@ -114,7 +113,7 @@ def add_arguments_to_parser(parser):
                         type=int,
                         dest="view_port",
                         metavar='PORT',
-                        default=DEFAULT_SERVER_PORT,
+                        default=8001,
                         required=False,
                         help="The port which will be used as listen port for "
                              "the server.")
@@ -955,31 +954,22 @@ def server_init_start(args):
                     'version': context.package_git_tag}
 
     try:
-        server_args = {
-            'config_directory': args.config_directory,
-            'package_data': package_data,
-            'port': args.view_port,
-            'config_sql_server': cfg_sql_server,
-            'listen_address': args.listen_address,
-            'force_auth': 'force_auth' in args,
-            'skip_db_cleanup': args.skip_db_cleanup,
-            'context': context,
-            'check_env': environ
-        }
-        server.start_server(**server_args)
+        server.start_server(args.config_directory,
+                            package_data,
+                            args.view_port,
+                            cfg_sql_server,
+                            args.listen_address,
+                            'force_auth' in args,
+                            args.skip_db_cleanup,
+                            context,
+                            environ)
     except socket.error as err:
-        # let os find a port, unless user requested specific port in args
-        if (
-            err.errno == errno.EADDRINUSE
-            and args.view_port == DEFAULT_SERVER_PORT
-        ):
-            LOG.info(
-                "Port %s is already used, trying another port.",
-                server_args['port']
-                )
-
-            server_args['port'] = 0
-            server.start_server(**server_args)
+        if err.errno == errno.EADDRINUSE:
+            LOG.error("Server can't be started, maybe port number (%s) is "
+                      "already used. Check the connection parameters. Use "
+                      "the option '-p 0' to find a free port automatically.",
+                      args.view_port)
+            sys.exit(1)
         else:
             raise
 
