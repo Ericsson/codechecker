@@ -780,7 +780,7 @@ in a Jenkins or any other CI engine to report new bugs.
 
 ### Use CodeChecker in the CI without a server <a name="local-workflow"></a>
 If you want to use CodeChecker in your project but you don't want to run a
-CodeChecker server, you can use the followign workflow.
+CodeChecker server, you can use the following workflow.
 
 This workflow makes it possible to block pull requests which would introduce new faults
 and to leave the handling of legacy issues to a later time.
