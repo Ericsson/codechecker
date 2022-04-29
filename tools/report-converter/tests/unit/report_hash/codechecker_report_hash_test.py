@@ -87,9 +87,9 @@ class CodeCheckerReportHashTest(unittest.TestCase):
 
         expected_path_hash = {
             'f48840093ef89e291fb68a95a5181612':
-                '93cb93bdcee10434f9cf9f486947c88e',
+                'b053ba21d4d1f0ad2ef0d5a244c19ea4',
             'e4907182b363faf2ec905fc32cc5a4ab':
-                '71a4dc24bf88af2b13be83d8d15bd6f0'}
+                'de139052a89686cc13828ae9e1e1cc5f'}
 
         reports = get_reports(test_plist)
         for report in reports:
