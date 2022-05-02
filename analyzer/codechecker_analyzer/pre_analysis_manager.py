@@ -206,13 +206,18 @@ def run_pre_analysis(actions, context, clangsa_config,
         #        proxy objects before passing them to other processes via
         #        map_async.
         #        Note that even deep-copying is known to be insufficient.
-        pool.map_async(pre_analyze, collect_actions)
+        result = pool.map_async(pre_analyze, collect_actions)
         pool.close()
     except Exception:
         pool.terminate()
         raise
     finally:
         pool.join()
+        # Return whether the call completed without raising an exception.
+        if not result.successful():
+            # If the remote call raised an exception then that exception will
+            # be reraised by get().
+            result.get()
 
     # Postprocessing the pre analysis results.
     if ctu_data:
