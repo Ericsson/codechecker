@@ -54,7 +54,7 @@ in your source code and integrate the static analysis into your CI flow to preve
 The purpose of this document is to make the developer's first steps easier in
 usage of CodeChecker. The document is a mini course with simple examples that
 guides the developer how he/she can apply CodeChecker in his/her daily routine
-to make his/her code more roubust.
+to make his/her code more robust.
 
 There is a simple [example](examples) program in this repository what will be
 used in the later sections to show CodeChecker usage.
@@ -599,7 +599,7 @@ the failed analysis output is collected into `./reports/failed` directory.
 This means that analysis of these files failed and there is no Clang Static
 Analyzer output for these compilation commands.
 
-There is .zip file for each failed anlysis
+There is .zip file for each failed analysis
 ```
 <source_file_name>_<analyzer>_<unique_compile_command_id>.plist_compile_error.zip
 ```
@@ -619,7 +619,7 @@ The `zip` file has the following internal structure
 
 The analysis may have failed due to the following reasons:
 * C/C++ standard non-compliance. Clang requires more strict compliance to the C/C++ standard than gcc. Please review your source code for any indicated non-compliances. Check the stderr and stdout files to find more information about the details of the error.
-* CodeChecker compiler argument transformation error. If the original compilation command can be executed successfully (see the `analyzer-command` file), but the analysis failes for example with header inclusion errors, there is a chance that CodeChecker incorrectly transformed the original gcc/clang compiler invocation to analyzer invocation. Please report a bug to the CodeChecker developers and attach the `failed.zip` for easy reproduction.
+* CodeChecker compiler argument transformation error. If the original compilation command can be executed successfully (see the `analyzer-command` file), but the analysis fails for example with header inclusion errors, there is a chance that CodeChecker incorrectly transformed the original gcc/clang compiler invocation to analyzer invocation. Please report a bug to the CodeChecker developers and attach the `failed.zip` for easy reproduction.
 * The analyzer crashed. This is an analyzer fault and a bug should be reported to the analyzer developers and attach the `failed.zip` for easy reproduction.
 
 ## Step 8: Integrate CodeChecker into your CI loop <a name="step-8"></a>
@@ -780,7 +780,7 @@ in a Jenkins or any other CI engine to report new bugs.
 
 ### Use CodeChecker in the CI without a server <a name="local-workflow"></a>
 If you want to use CodeChecker in your project but you don't want to run a
-CodeChecker server, you can use the followign workflow.
+CodeChecker server, you can use the following workflow.
 
 This workflow makes it possible to block pull requests which would introduce new faults
 and to leave the handling of legacy issues to a later time.
@@ -808,7 +808,7 @@ CodeChecker analysis to *gerrit merge request* and mark the new findings in the
 gerrit review.
 
 You can implement that by creating a jenkins job that monitors the gerrit merge
-requests, runs the anaysis on the changed files and then uploads the new
+requests, runs the analysis on the changed files and then uploads the new
 findings to gerrit through its
 
 [web-api](https://gerrit-review.googlesource.com/Documentation/rest-api.html).
@@ -956,13 +956,13 @@ In uniqueing mode in the Web UI, only 2 distinct reports would be shown:
 ## Report Uniqueing <a name="report-uniqueing"></a>
 There is an additional uniqueing functionality in the
 Web UI that helps the grouping findings that have the same
-*Report Identifier* within or accross muliple runs.
+*Report Identifier* within or across muliple runs.
 You can enable this functionality by ticking in the "Unique reports" tick box
 in the Bug Overview tab.
 
 This feature is useful when:
 
-* you want to list unique findings accross multiple
+* you want to list unique findings across multiple
 runs. In this mode the same report stored in different runs is shown only once.
 * you want count reports as one which end up in the same same bug location, but
 reached through different paths. For example the same null pointer deference 
