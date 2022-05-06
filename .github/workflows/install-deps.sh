@@ -1,7 +1,7 @@
 #!/bin/bash
 
 wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -
-sudo add-apt-repository 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-13 main' -y
+sudo add-apt-repository 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-14 main' -y
 
 sudo apt-get update -q
 
@@ -13,9 +13,9 @@ sudo apt-get install \
   libldap2-dev \
   libsasl2-dev \
   libssl-dev \
-  clang-13 \
-  clang-tidy-13
+  clang-14 \
+  clang-tidy-14
 
-sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-13 9999
-sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-13 9999
-sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-13 9999
+sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-14 9999
+sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-14 9999
+sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-14 9999
