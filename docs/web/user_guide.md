@@ -912,6 +912,9 @@ optional arguments:
                         you have run_1_a_name, run_2_b_name, run_2_c_name,
                         run_3_d_name then "run_2* run_3_d_name" shows the last
                         three runs.
+  --details             Adds extra details to the run information in JSON
+                        format, such as the list of files that are failed to
+                        analyze.
   --all-before-run RUN_NAME
                         Get all runs that were stored to the server BEFORE the
                         specified one.

@@ -3107,7 +3107,7 @@ class ThriftRequestHandler:
 
             for stat, run_id in query:
                 failed_files = zlib.decompress(stat.failed_files).decode(
-                    'utf-8').split('\n') if stat.failed_files else None
+                    'utf-8').split('\n') if stat.failed_files else []
                 analyzer_version = zlib.decompress(
                     stat.version).decode('utf-8') if stat.version else None
 

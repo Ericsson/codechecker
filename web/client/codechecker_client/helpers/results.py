@@ -179,5 +179,9 @@ class ThriftResultsHelper(BaseClientHelper):
         pass
 
     @ThriftClientCall
+    def getAnalysisStatistics(self, run_id, run_history_id):
+        pass
+
+    @ThriftClientCall
     def storeAnalysisStatistics(self, run_name, zip_file):
         pass
