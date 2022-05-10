@@ -132,21 +132,19 @@ process generally uses more time. If you want to speed up analysis specify a
 higher value for the `--jobs` option.
 
 In the above command the `--enable sensitive` means that a subset of checker
-are run. `sensitive` chooses a predefined "group" of checkers. The further
-info on available checkers use
+are run. `sensitive` chooses a predefined "group" of checkers. For further
+info on available checkers use these commands:
 
 ```sh
 # List available checkers.
 CodeChecker checkers --help
 # Show more information about the checkers.
-CodeChecker checkers --details --help
+CodeChecker checkers --details
 # List profiles.
-CodeChecker checkers --profile list --details
+CodeChecker checkers --profile --details
 # List checkers which are in the sensitive profile.
 CodeChecker checkers --profile sensitive --details
 ```
-commands.
-
 The `./reports` directory is the "database" of CodeChecker that allows to
 manage further working steps.
 
