@@ -118,6 +118,129 @@ class TestConfig(unittest.TestCase):
         self.assertIn("clangsa analyzed simple.cpp", out)
         self.assertNotIn("clang-tidy analyzed simple.cpp", out)
 
+    def test_config_file_multiple_analyzer_config_resolution(self):
+        """
+        Test whether multiple --analyzer-config arguments from a CodeChecker
+        config file are merged, and don't overwrite one another.
+        """
+        with open(self.config_file_json, 'w+',
+                  encoding="utf-8", errors="ignore") as config_f:
+            json.dump({
+                'analyzer': [
+                    "--analyzer-config",
+                    "clangsa:track-conditions=false",
+                    "--analyzer-config",
+                    "clang-tidy:HeaderFilterRegex=.*"
+                ]}, config_f)
+
+        out, returncode = self.__run_analyze(self.config_file_json,
+                                             ["--verbose", "debug_analyzer"])
+
+        self.assertNotEqual(returncode, 1)
+        self.assertIn("track-conditions=false", out)
+        self.assertIn("{\"HeaderFilterRegex\": \".*\"}", out)
+
+    def test_config_file_and_cmd_resolution(self):
+        """
+        Test whether multiple --analyzer-config arguments from *both* a
+        CodeChecker config file and the CLI are merged, and don't overwrite one
+        another.
+        """
+        with open(self.config_file_json, 'w+',
+                  encoding="utf-8", errors="ignore") as config_f:
+            json.dump({
+                'analyzer': [
+                    "--analyzer-config",
+                    "clangsa:track-conditions=false"
+                ]}, config_f)
+
+        out, returncode = self.__run_analyze(self.config_file_json,
+                                             ["--analyzer-config",
+                                              "clang-tidy:"
+                                              "HeaderFilterRegex=.*",
+                                              "--verbose", "debug_analyzer"])
+
+        self.assertNotEqual(returncode, 1)
+        self.assertIn("track-conditions=false", out)
+        self.assertIn("{\"HeaderFilterRegex\": \".*\"}", out)
+
+    def test_cmd_multiple_analyzer_config_resolution(self):
+        """
+        Test whether multiple --analyzer-config arguments from the command line
+        are merged, and don't overwrite one another.
+        """
+
+        with open(self.config_file_json, 'w+',
+                  encoding="utf-8", errors="ignore") as config_f:
+            config_f.write("")
+
+        out, returncode = self.__run_analyze(self.config_file_json,
+                                             ["--analyzer-config",
+                                              "clang-tidy:"
+                                              "HeaderFilterRegex=.*",
+                                              "--analyzer-config",
+                                              "clangsa:track-conditions=false",
+                                              "--verbose", "debug_analyzer"])
+
+        self.assertNotEqual(returncode, 1)
+        self.assertIn("track-conditions=false", out)
+        self.assertIn("{\"HeaderFilterRegex\": \".*\"}", out)
+
+    def test_cmd_multiple_checker_config_resolution(self):
+        """
+        Test whether multiple --checker-config arguments from the command line
+        are merged, and don't overwrite one another.
+        """
+
+        with open(self.config_file_json, 'w+',
+                  encoding="utf-8", errors="ignore") as config_f:
+            config_f.write("")
+
+        out, returncode = self.__run_analyze(self.config_file_json,
+                                             ["--checker-config",
+                                              "clangsa:"
+                                              "core.CallAndMessage:"
+                                              "CXXDeallocationArg=true",
+                                              "--checker-config",
+                                              "clangsa:"
+                                              "core.CallAndMessage:"
+                                              "ParameterCount=true",
+                                              "--verbose", "debug_analyzer"])
+
+        self.assertNotEqual(returncode, 1)
+        self.assertIn("core.CallAndMessage:CXXDeallocationArg=true", out)
+        self.assertIn("core.CallAndMessage:ParameterCount=true", out)
+
+    def test_cmd_overrides_config_file(self):
+        """
+        Test the precedence of multiple --analyzer-config arguments specify the
+        same option from both a CodeChecker config file and the CLI, but with a
+        different value. CLI arguments should in effect override the config
+        file (is the later argument in the invocation).
+        """
+        with open(self.config_file_json, 'w+',
+                  encoding="utf-8", errors="ignore") as config_f:
+            json.dump({
+                'analyze': [
+                    '--analyzers', 'clangsa',
+                    "--analyzer-config",
+                    "clangsa:track-conditions=false"
+                ]}, config_f)
+
+        out, returncode = self.__run_analyze(self.config_file_json,
+                                             ["--analyzer-config",
+                                              "clangsa:track-conditions=true",
+                                              "--verbose", "debug_analyzer"])
+
+        self.assertNotEqual(returncode, 1)
+
+        # If the config from the config file is positioned behind the config
+        # from the CLI, it will override the config file. As intended.
+        cli_idx = out.rfind("track-conditions=true")
+        conf_file_idx = out.rfind("track-conditions=false")
+        self.assertLess(conf_file_idx, cli_idx)
+        self.assertEqual(out.count("track-conditions=true"), 1)
+
     def test_only_clangsa_config_backward_compatible_mixed(self):
         """
         Test the 'analyzer' configuration option backward compatibility.
