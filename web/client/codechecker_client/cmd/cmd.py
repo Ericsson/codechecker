@@ -1085,6 +1085,14 @@ def __register_runs(parser):
                             "run_2_c_name, run_3_d_name then \"run_2* "
                             "run_3_d_name\" shows the last three runs.")
 
+    group.add_argument('--details',
+                       default=argparse.SUPPRESS,
+                       action='store_true',
+                       required=False,
+                       help="Adds extra details to the run information in "
+                            "JSON format, such as the list of files that are "
+                            "failed to analyze.")
+
     group.add_argument('--all-before-run',
                        type=str,
                        dest="all_before_run",

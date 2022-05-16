@@ -628,6 +628,9 @@ def handle_list_runs(args):
         # to a json format.
         results = []
         for run in runs:
+            if 'details' in args and args.details:
+                run.analyzerStatistics = \
+                    client.getAnalysisStatistics(run.runId, None)
             results.append({run.name: run})
         print(CmdLineOutputEncoder().encode(results))
 
