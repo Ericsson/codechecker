@@ -155,9 +155,16 @@ def func_map_list_src_to_ast(func_src_list, ctu_on_demand):
 
     func_ast_list = []
     for fn_src_txt in func_src_list:
-        dpos = fn_src_txt.find(" ")
-        mangled_name = fn_src_txt[0:dpos]
-        path = fn_src_txt[dpos + 1:]
+        if fn_src_txt[0].isdigit():
+            length_str, _ = fn_src_txt.split(':', 1)
+            length = int(length_str)
+            sep_pos = len(length_str) + 1 + length
+            mangled_name = fn_src_txt[0: sep_pos]
+            path = fn_src_txt[sep_pos + 1:]  # Skipping the ' ' separator
+        else:
+            dpos = fn_src_txt.find(" ")
+            mangled_name = fn_src_txt[0:dpos]
+            path = fn_src_txt[dpos + 1:]
 
         # On-demand analysis does not require any preprocessing on the source
         # file paths, contrary to AST-dump based.

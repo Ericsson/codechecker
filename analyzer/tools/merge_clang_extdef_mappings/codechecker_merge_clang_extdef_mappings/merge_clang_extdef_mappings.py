@@ -31,7 +31,16 @@ def _create_global_ctu_function_map(func_map_lines):
 
     # We collect all occurences of a function name into a set.
     for line in func_map_lines:
-        mangled_name, ast_file = line.strip().split(' ', 1)
+        line = line.strip()
+        # The new file format is Length>:<USR> <File-Path>
+        if line[0].isdigit():
+            length_str, _ = line.split(':', 1)
+            length = int(length_str)
+            sep_pos = len(length_str) + 1 + length
+            mangled_name = line[0: sep_pos]
+            ast_file = line[sep_pos + 1:]  # Skipping the ' ' separator
+        else:  # The old file format
+            mangled_name, ast_file = line.split(' ', 1)
         if mangled_name not in mangled_to_asts:
             mangled_to_asts[mangled_name] = {ast_file}
         else:
