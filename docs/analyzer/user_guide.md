@@ -1625,10 +1625,15 @@ optional arguments:
                         User guide on how a Skipfile should be laid out.
   --trim-path-prefix [TRIM_PATH_PREFIX [TRIM_PATH_PREFIX ...]]
                         Removes leading path from files which will be printed.
-                        So if you have /a/b/c/x.cpp and /a/b/c/y.cpp then by
-                        removing "/a/b/" prefix will print files like c/x.cpp
-                        and c/y.cpp. If multiple prefix is given, the longest
-                        match will be removed.
+                        For instance if you analyze files
+                        '/home/jsmith/my_proj/x.cpp' and
+                        '/home/jsmith/my_proj/y.cpp', but would prefer to have
+                        them displayed as 'my_proj/x.cpp' and 'my_proj/y.cpp'
+                        in the web/CLI interface, invoke CodeChecker with '--
+                        trim-path-prefix "/home/jsmith/"'.If multiple prefixes
+                        is given, the longest match will be removed. You may
+                        also use Unix shell-like wildcards (e.g.
+                        '/*/jsmith/').
   --review-status [REVIEW_STATUS [REVIEW_STATUS ...]]
                         Filter results by review statuses. Valid values are:
                         confirmed, false_positive, intentional, suppress,
