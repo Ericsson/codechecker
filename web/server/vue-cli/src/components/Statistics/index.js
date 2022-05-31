@@ -1,3 +1,7 @@
+// This component should be imported before CheckerStatistics,
+// ComponentStatistics and SeverityStatistics.
+import UniqueStatWarning from "./UniqueStatWarning";
+
 import BaseStatistics from "./BaseStatistics";
 import BaseStatisticsTable from "./BaseStatisticsTable";
 import CheckerStatistics from "./Checker/CheckerStatistics";
@@ -17,6 +21,7 @@ import {
 } from "./StatisticsHelper";
 
 export {
+  UniqueStatWarning,
   BaseStatistics,
   BaseStatisticsTable,
   CheckerStatistics,

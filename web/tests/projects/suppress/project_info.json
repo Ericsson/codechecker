@@ -1,5 +1,26 @@
 {
     "name": "suppress",
     "clean_cmd": "make clean",
-    "build_cmd": "make"
+    "build_cmd": "make",
+    "bugs": {
+        "0c07579523063acece2d7aebd4357cac": [{ "line": 6, "review_status": 2, "review_status_comment": "foo1 simple" }],
+        "1a7ddce6d69b031310dd7ad2ff330b53": [{ "line": 12, "review_status": 2, "review_status_comment": "foo2 simple" }],
+        "2984230a8002149de7ab6b66d60508f8": [{ "line": 12, "review_status": 2, "review_status_comment": "foo2 simple" }],
+        "45a2fef6845f54eaf070ad03d19c7981": [{ "line": 18, "review_status": 3, "review_status_comment": "foo3 simple" }],
+        "ec1381853a754540fe6d0881e61b11bd": [{ "line": 18, "review_status": 3, "review_status_comment": "foo3 simple" }],
+        "9fb26da7f3224ec0c63cfe3617c8a14e": [{ "line": 24, "review_status": 1, "review_status_comment": "foo4 simple" }],
+        "4fdd390e0c4db51e3629ce7e372ec757": [{ "line": 24, "review_status": 1, "review_status_comment": "foo4 simple" }],
+        "f81ed46c9a231ece5949d53366acb83e": [{ "line": 30, "review_status": 1, "review_status_comment": "substring of the checker name" }],
+        "fcd1af2745a0fbd6870c2e1645a35de0": [{ "line": 30, "review_status": 0, "review_status_comment": "" }],
+        "f0bf9810fe405de502137f1eb71fb706": [{ "line": 35, "review_status": 0, "review_status_comment": "" }],
+        "b2c9af1dba2447554b2fd715f3f95ee1": [{ "line": 35, "review_status": 0, "review_status_comment": "" }],
+        "2d019b15c17a7cf6aa3b238b916872ba": [
+            { "line": 41, "review_status": 1, "review_status_comment": "Has a source code comment." },
+            { "line": 44, "review_status": 3, "review_status_comment": "Has a different source code comment." },
+            { "line": 46, "review_status": 0, "review_status_comment": "" }],
+        "0c2b5e4098c71d8e986e98f3a79f5efe": [
+            { "line": 41, "review_status": 0, "review_status_comment": "" },
+            { "line": 44, "review_status": 0, "review_status_comment": "" },
+            { "line": 46, "review_status": 0, "review_status_comment": "" }]
+    }
 }

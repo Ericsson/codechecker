@@ -16,7 +16,7 @@ from sqlalchemy import MetaData, Column, Integer, UniqueConstraint, String, \
     DateTime, Boolean, ForeignKey, Binary, Enum, Table, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql.expression import true
+from sqlalchemy.sql.expression import true, false
 
 CC_META = MetaData(naming_convention={
     "ix": 'ix_%(column_0_label)s',
@@ -330,6 +330,14 @@ ReportAnalysisInfo = Table(
 )
 
 
+ReviewStatusType = Enum(
+    'unreviewed',
+    'confirmed',
+    'false_positive',
+    'intentional',
+    name='review_status')
+
+
 class Report(Base):
     __tablename__ = 'reports'
 
@@ -364,8 +372,23 @@ class Report(Base):
                                    'off',
                                    'unavailable',
                                    name='detection_status'))
+    review_status = Column(ReviewStatusType,
+                           nullable=False,
+                           server_default='unreviewed')
+    review_status_author = Column(String)
+    review_status_message = Column(Binary)
+    review_status_date = Column(DateTime, nullable=True)
+    # We'd like to indicate whether a suppression comes from a source code
+    # comment or set via the GUI. Former ones must not change when set from
+    # GUI.
+    review_status_is_in_source = Column(
+        Boolean, nullable=False, server_default=false())
 
     detected_at = Column(DateTime, nullable=False)
+
+    # A report is considered as "fixed" when it is not found in the project
+    # anymore either based on its detection status or its review status is set
+    # to false positive or intentional.
     fixed_at = Column(DateTime)
 
     analysis_info = relationship(
@@ -380,7 +403,9 @@ class Report(Base):
 
     # Priority/severity etc...
     def __init__(self, run_id, bug_id, file_id, checker_message, checker_id,
-                 checker_cat, bug_type, line, column, severity,
+                 checker_cat, bug_type, line, column, severity, review_status,
+                 review_status_author, review_status_message,
+                 review_status_date, review_status_is_in_source,
                  detection_status, detection_date, path_length,
                  analyzer_name=None):
         self.run_id = run_id
@@ -391,6 +416,11 @@ class Report(Base):
         self.checker_id = checker_id
         self.checker_cat = checker_cat
         self.bug_type = bug_type
+        self.review_status = review_status
+        self.review_status_author = review_status_author
+        self.review_status_message = review_status_message
+        self.review_status_date = review_status_date
+        self.review_status_is_in_source = review_status_is_in_source
         self.detection_status = detection_status
         self.line = line
         self.column = column
@@ -423,14 +453,17 @@ class Comment(Base):
 
 
 class ReviewStatus(Base):
+    """
+    This table contains a mapping from bug hashes to review statuses. This
+    mapping determines the default review status of a newly added report which
+    doesn't have a review status source code comment. In case of no source code
+    comment and no entry in this table the default review status is
+    "unreviewed".
+    """
     __tablename__ = 'review_statuses'
 
     bug_hash = Column(String, primary_key=True)
-    status = Column(Enum('unreviewed',
-                         'confirmed',
-                         'false_positive',
-                         'intentional',
-                         name='review_status'), nullable=False)
+    status = Column(ReviewStatusType, nullable=False)
     author = Column(String, nullable=False)
     message = Column(Binary, nullable=False)
     date = Column(DateTime, nullable=False)

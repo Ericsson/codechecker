@@ -60,6 +60,7 @@
                     <select-review-status
                       class="mx-0"
                       :value="reviewData"
+                      :report="report"
                       :on-confirm="confirmReviewStatusChange"
                     />
                   </v-col>

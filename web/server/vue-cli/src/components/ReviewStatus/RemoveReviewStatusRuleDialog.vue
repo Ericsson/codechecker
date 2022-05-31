@@ -33,7 +33,8 @@
           <span v-else>reports</span>
           associated with this rule. Removing a review status rule
           will change the review statuses of these reports back to
-          <i>Unreviewed</i>.
+          <i>Unreviewed</i>, so they become outstanding at the current date.
+          This may affect statistics as well. The operation can't be undone.
         </v-alert>
       </v-container>
     </template>

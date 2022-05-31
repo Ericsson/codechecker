@@ -882,7 +882,25 @@ def handle_diff_results(args):
         run_ids, run_names, tag_ids = \
             process_run_args(client, remote_run_names)
         local_report_hashes = set([r.report_hash for r in report_dir_results])
-        local_report_hashes.update(baseline.get_report_hashes(baseline_files))
+
+        review_status_filter = ttypes.ReviewStatusRuleFilter()
+        review_status_filter.reportHashes = local_report_hashes
+        review_status_filter.reviewStatuses = [
+            ttypes.ReviewStatus.FALSE_POSITIVE,
+            ttypes.ReviewStatus.INTENTIONAL]
+        closed_hashes = set(
+            rule.reportHash for rule in
+            client.getReviewStatusRules(
+                review_status_filter, None, None, None))
+
+        report_dir_results = [
+            r for r in report_dir_results if
+            r.review_status not in ['false positive', 'intentional'] and
+            (r.report_hash not in closed_hashes or
+             r.review_status == 'confirmed')]
+        local_report_hashes = set(r.report_hash for r in report_dir_results)
+        local_report_hashes.update(
+            baseline.get_report_hashes(baseline_files) - closed_hashes)
 
         if diff_type == ttypes.DiffType.NEW:
             # Get report hashes which can be found only in the remote runs.
@@ -955,8 +973,24 @@ def handle_diff_results(args):
             process_run_args(client, remote_run_names)
         local_report_hashes = set([r.report_hash for r in report_dir_results])
 
-        local_report_hashes = local_report_hashes.union(
-            baseline.get_report_hashes(baseline_files))
+        review_status_filter = ttypes.ReviewStatusRuleFilter()
+        review_status_filter.reportHashes = local_report_hashes
+        review_status_filter.reviewStatuses = [
+            ttypes.ReviewStatus.FALSE_POSITIVE,
+            ttypes.ReviewStatus.INTENTIONAL]
+        closed_hashes = set(
+            rule.reportHash for rule in
+            client.getReviewStatusRules(
+                review_status_filter, None, None, None))
+
+        report_dir_results = [
+            r for r in report_dir_results if
+            r.review_status not in ['false positive', 'intentional'] and
+            (r.report_hash not in closed_hashes or
+             r.review_status == 'confirmed')]
+        local_report_hashes = set(r.report_hash for r in report_dir_results)
+        local_report_hashes.update(
+            baseline.get_report_hashes(baseline_files) - closed_hashes)
 
         remote_hashes = client.getDiffResultsHash(
             run_ids, local_report_hashes, diff_type, None, tag_ids)

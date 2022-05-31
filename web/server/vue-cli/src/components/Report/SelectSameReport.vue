@@ -70,7 +70,8 @@ export default {
             fileName: report.checkedFile.replace(/^.*[\\/]/, ""),
             line: report.line,
             bugPathLength: report.bugPathLength,
-            detectionStatus: report.detectionStatus
+            detectionStatus: report.detectionStatus,
+            reviewStatus: report.reviewData.status
           };
         });
       });

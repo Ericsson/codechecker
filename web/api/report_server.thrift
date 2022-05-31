@@ -226,7 +226,8 @@ struct ReviewData {
   1: ReviewStatus  status,
   2: string        comment,
   3: string        author,
-  4: string        date
+  4: string        date,
+  5: bool          isInSource, // Indicates whether the review status comes from source code comment.
 }
 
 /*
@@ -285,7 +286,7 @@ struct ReviewStatusRuleFilter {
  *     be only one rule.
  * - reviewData: Review status information.
  * - associatedReportCount: Number of associated reports. If there is no
-       associated in the product for reportHash the value will be 0.
+ *     associated in the product for reportHash the value will be 0.
  */
 struct ReviewStatusRule {
   1: string reportHash,

@@ -1280,6 +1280,10 @@ filter arguments:
                         :new,unresolved:false_positive,intentional"
 
 comparison modes:
+  List reports that can be found only in baseline or new runs or in both. False
+  positive and intentional reports are considered as resolved, i.e. these are
+  excluded from the report set as if they were not reported.
+
   --new                 Show results that didn't exist in the 'base' but
                         appear in the 'new' run.
   --resolved            Show results that existed in the 'base' but
