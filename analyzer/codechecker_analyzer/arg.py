@@ -50,7 +50,7 @@ class OrderedConfigAction(argparse.Action):
     """
 
     def __init__(self, option_strings, dest, nargs=None, **kwargs):
-        if nargs is not '*':
+        if nargs != '*':
             raise ValueError("nargs must be '*' for backward compatibility "
                              "reasons!")
         super(OrderedConfigAction, self).__init__(option_strings, dest,
