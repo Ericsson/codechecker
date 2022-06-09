@@ -37,7 +37,8 @@ def setup_package():
         'checkers': [],
         'viewer_host': 'localhost',
         'viewer_product': 'db_cleanup',
-        'reportdir': os.path.join(TEST_WORKSPACE, 'reports')
+        'reportdir': os.path.join(TEST_WORKSPACE, 'reports'),
+        'analyzers': ['clangsa', 'clang-tidy']
     }
 
     env.export_test_cfg(TEST_WORKSPACE, {'codechecker_cfg': codechecker_cfg})

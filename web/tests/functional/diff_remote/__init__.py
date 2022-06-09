@@ -76,7 +76,8 @@ def setup_package():
         'check_env': test_env,
         'workspace': TEST_WORKSPACE,
         'checkers': [],
-        'trim_path_prefix': TEST_WORKSPACE
+        'trim_path_prefix': TEST_WORKSPACE,
+        'analyzers': ['clangsa', 'clang-tidy']
     }
 
     # Start or connect to the running CodeChecker server and get connection

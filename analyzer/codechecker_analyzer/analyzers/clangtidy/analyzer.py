@@ -319,6 +319,13 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             LOG.debug("Using '%s' for Clang-tidy!", clangtidy)
         return clangtidy
 
+    @classmethod
+    def version_compatible(cls, configured_binary, environ):
+        """
+        Checker the version compatibility of the given analyzer binary.
+        """
+        return True
+
     def construct_result_handler(self, buildaction, report_output,
                                  checker_labels, skiplist_handler):
         """

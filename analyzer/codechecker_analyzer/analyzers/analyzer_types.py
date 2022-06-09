@@ -22,11 +22,13 @@ from .. import host_check
 
 from .clangtidy.analyzer import ClangTidy
 from .clangsa.analyzer import ClangSA
+from .cppcheck.analyzer import Cppcheck
 
 LOG = get_logger('analyzer')
 
 supported_analyzers = {ClangSA.ANALYZER_NAME: ClangSA,
-                       ClangTidy.ANALYZER_NAME: ClangTidy}
+                       ClangTidy.ANALYZER_NAME: ClangTidy,
+                       Cppcheck.ANALYZER_NAME: Cppcheck}
 
 
 def is_ctu_capable(context):
@@ -188,6 +190,14 @@ def check_supported_analyzers(analyzers, context):
                     os.path.realpath(found_bin)
 
             analyzer_bin = found_bin
+
+        # Check version compatibility of the analyzer binary.
+        if analyzer_bin:
+            analyzer = supported_analyzers[analyzer_name]
+            if not analyzer.version_compatible(analyzer_bin, check_env):
+                failed_analyzers.add((analyzer_name,
+                                     "Incompatible version."))
+                available_analyzer = False
 
         if not analyzer_bin or \
            not host_check.check_clang(analyzer_bin, check_env):

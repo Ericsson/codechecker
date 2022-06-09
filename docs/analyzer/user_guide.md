@@ -109,6 +109,7 @@ usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-t {plist}] [-q]
                          [--analyzers ANALYZER [ANALYZER ...]]
                          [--capture-analysis-output] [--generate-reproducer]
                          [--config CONFIG_FILE]
+                         [--cppcheck-args CPPCHECK_ARGS_CFG_FILE]
                          [--saargs CLANGSA_ARGS_CFG_FILE]
                          [--tidyargs TIDY_ARGS_CFG_FILE]
                          [--tidy-config TIDY_CONFIG]
@@ -245,6 +246,9 @@ analyzer arguments:
                         For more information see the docs: https://github.com/
                         Ericsson/codechecker/tree/master/docs/config_file.md
                         (default: None)
+  --cppcheck-args CPPCHECK_ARGS_CFG_FILE
+                        Configuration file to pass cppcheck command line
+                        arguments.
   --saargs CLANGSA_ARGS_CFG_FILE
                         File containing argument which will be forwarded
                         verbatim for the Clang Static analyzer.
@@ -837,6 +841,7 @@ usage: CodeChecker analyze [-h] [-j JOBS]
                            [--add-compiler-defaults]
                            [--capture-analysis-output] [--generate-reproducer]
                            [--config CONFIG_FILE]
+                           [--cppcheck-args CPPCHECK_ARGS_CFG_FILE]
                            [--saargs CLANGSA_ARGS_CFG_FILE]
                            [--tidyargs TIDY_ARGS_CFG_FILE]
                            [--tidy-config TIDY_CONFIG] [--timeout TIMEOUT]
@@ -1018,12 +1023,6 @@ analyzer arguments:
                         Run analysis only with the analyzers specified.
                         Currently supported analyzers are: clangsa, clang-
                         tidy.
-  --add-compiler-defaults
-                        DEPRECATED. Always True.
-                        Retrieve compiler-specific configuration from the
-                        compilers themselves, and use them with Clang. This is
-                        used when the compiler on the system is special, e.g.
-                        when doing cross-compilation.
   --capture-analysis-output
                         Store standard output and standard error of successful
                         analyzer invocations into the '<OUTPUT_DIR>/success'
@@ -1042,6 +1041,9 @@ analyzer arguments:
                         For more information see the docs: https://github.com/
                         Ericsson/codechecker/tree/master/docs/config_file.md
                         (default: None)
+  --cppcheck-args CPPCHECK_ARGS_CFG_FILE
+                        Configuration file to pass cppcheck command line
+                        arguments.
   --saargs CLANGSA_ARGS_CFG_FILE
                         File containing argument which will be forwarded
                         verbatim for the Clang Static Analyzer.
@@ -1089,8 +1091,9 @@ analyzer arguments:
 ```
 
 CodeChecker supports several analyzer tools. Currently, these analyzers are
-the [_Clang Static Analyzer_](http://clang-analyzer.llvm.org) and
-[_Clang-Tidy_](http://clang.llvm.org/extra/clang-tidy). `--analyzers` can be
+the [_Clang Static Analyzer_](http://clang-analyzer.llvm.org),
+[_Clang-Tidy_](http://clang.llvm.org/extra/clang-tidy) and
+[_Cppcheck_](http://cppcheck.sourceforge.net/). `--analyzers` can be
 used to specify which analyzer tool should be used (by default, all supported
 are used). The tools are completely independent, so either can be omitted if
 not present as they are provided by different binaries.

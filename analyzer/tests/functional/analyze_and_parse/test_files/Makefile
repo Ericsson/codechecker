@@ -39,3 +39,7 @@ collision:
 	$(CXX) -w filename_collision/main.cpp filename_collision/a/f.cpp filename_collision/b/f.cpp -o /dev/null
 tidy_alias:
 	$(CXX) -w tidy_alias.cpp -o /dev/null
+cppcheck_multiple:
+	$(CXX) -w cppcheck_multiple.cpp -o /dev/null
+cppcheck_args:
+	$(CXX) -w cppcheck_args.cpp -o /dev/null

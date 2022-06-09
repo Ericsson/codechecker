@@ -320,6 +320,13 @@ used to generate a log file on the fly.""")
 
     cmd_config.add_option(analyzer_opts)
 
+    analyzer_opts.add_argument('--cppcheck-args',
+                               dest="cppcheck_args_cfg_file",
+                               required=False,
+                               default=argparse.SUPPRESS,
+                               help="Configuration file to pass cppcheck "
+                                    "command line arguments.")
+
     # TODO: One day, get rid of these. See Issue #36, #427.
     analyzer_opts.add_argument('--saargs',
                                dest="clangsa_args_cfg_file",
@@ -808,6 +815,7 @@ def main(args):
                           'skipfile',
                           'files',
                           'analyzers',
+                          'cppcheck_args_cfg_file',
                           'add_compiler_defaults',
                           'clangsa_args_cfg_file',
                           'tidy_args_cfg_file',

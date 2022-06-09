@@ -70,7 +70,8 @@ def setup_package():
         'skip_list_file': skip_list_file,
         'check_env': test_env,
         'workspace': TEST_WORKSPACE,
-        'checkers': []
+        'checkers': [],
+        'analyzers': ['clangsa', 'clang-tidy']
     }
 
     # Base analysis

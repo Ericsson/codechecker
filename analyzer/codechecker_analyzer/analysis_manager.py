@@ -558,6 +558,8 @@ def check(check_data):
                                   "after {0} seconds. <<<\n{1}") \
                 .format(analysis_timeout, rh.analyzer_stderr)
 
+        source_analyzer.post_analyze(rh)
+
         # If source file contains escaped spaces ("\ " tokens), then
         # clangSA writes the plist file with removing this escape
         # sequence, whereas clang-tidy does not. We rewrite the file
