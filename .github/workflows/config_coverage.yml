@@ -3,14 +3,14 @@ name: checker-config-coverage
 on:
   push:
     paths:
-      - '.github/workflow/config_coverage.yml'
-      - '.github/workflow/config_label_check.py'
+      - '.github/workflows/config_coverage.yml'
+      - '.github/workflows/config_label_check.py'
       - 'config/labels/analyzers/clang-tidy.json'
       - 'config/labels/analyzers/clangsa.json'
   pull_request:
     paths:
-      - '.github/workflow/config_coverage.yml'
-      - '.github/workflow/config_label_check.py'
+      - '.github/workflows/config_coverage.yml'
+      - '.github/workflows/config_label_check.py'
       - 'config/labels/analyzers/clang-tidy.json'
       - 'config/labels/analyzers/clangsa.json'
   schedule:
@@ -50,16 +50,17 @@ jobs:
           export LLVM_VER="$(apt-cache search --full 'clang-[[:digit:]]*$' | grep '^Package: clang' | cut -d ' ' -f 2 | sort -V | tail -n 1 | sed 's/clang-//')"
           echo "::group::Install Clang and Clang-Tidy version ${LLVM_VER}"
           sudo apt-get -y --no-install-recommends install \
-            clang-$LLVM_VER      \
+            clang-$LLVM_VER \
             clang-tidy-$LLVM_VER
-          sudo update-alternatives --install                   \
-            /usr/bin/clang clang /usr/bin/clang-$LLVM_VER 1000 \
-            --slave                                            \
-              /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-$LLVM_VER
+          sudo update-alternatives --install \
+            /usr/bin/clang clang /usr/bin/clang-$LLVM_VER 10000
+          sudo update-alternatives --install \
+            /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-$LLVM_VER 10000
           echo "::endgroup::"
 
           echo "Installed Clang:"
           update-alternatives --query clang
+          update-alternatives --query clang-tidy
       - name: "Package CodeChecker"
         id: codechecker
         run: |
