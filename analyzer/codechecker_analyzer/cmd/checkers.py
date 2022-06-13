@@ -24,7 +24,6 @@ from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.analyzers import analyzer_types
 from codechecker_analyzer.analyzers.clangsa.analyzer import ClangSA
 from codechecker_analyzer.analyzers.clangtidy.analyzer import ClangTidy
-from codechecker_analyzer.analyzers.cppcheck.analyzer import Cppcheck
 
 from codechecker_common import arg, logger
 from codechecker_common.output import USER_FORMATS
@@ -606,7 +605,6 @@ def __print_checkers(args: argparse.Namespace, cl: CheckerLabels):
                 filter(lambda x: x[1] in checkers, checker_info[analyzer]))
         else:
             result.extend(checker_info[analyzer])
-            #TODO Insert cppcheck here probably
 
     __post_process_result(result)
 

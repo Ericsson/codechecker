@@ -14,7 +14,6 @@ import xml.etree.ElementTree as ET
 
 from codechecker_common.logger import get_logger
 
-from codechecker_analyzer import host_check
 from codechecker_analyzer.env import extend, get_binary_in_path, \
     replace_env_var
 
@@ -38,12 +37,14 @@ def parse_checkers(cppcheck_output):
     for error in errors.findall('error'):
         name = error.attrib.get('id')
         msg = error.attrib.get('msg')
-        #severity = error.attrib.get('severity')
+        # TODO: Check severity handling in cppcheck
+        # severity = error.attrib.get('severity')
 
-        #checkers.append((name, msg, severity))
+        # checkers.append((name, msg, severity))
         checkers.append((name, msg))
 
     return checkers
+
 
 def parse_version(cppcheck_output):
     """
@@ -90,7 +91,8 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             for checker_name, value in config.checks().items():
                 if not value[0]:
                     suppressed_checkers.add(checker_name)
-                #elif value.severity and value.severity != 'error':
+                # TODO: Check severity handling in cppcheck
+                # elif value.severity and value.severity != 'error':
                 #    enabled_severity_levels.add(value.severity)
 
             if enabled_severity_levels:
@@ -104,9 +106,10 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             analyzer_cmd.extend(config.analyzer_extra_arguments)
 
             # Add compiler includes.
-            #compile_lang = self.buildaction.lang
+            # TODO: Handle -I includes
+            # compile_lang = self.buildaction.lang
             for include in self.buildaction.compiler_includes:
-                analyzer_cmd.extend([ '-isystem',  include])
+                analyzer_cmd.extend(['-isystem',  include])
 
             analyzer_cmd.append('--plist-output=' + result_handler.workspace)
             analyzer_cmd.append(self.source_file)
@@ -192,7 +195,11 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
 
         try:
             command = shlex.split(' '.join(command))
-            result = subprocess.check_output(command, env=env, encoding="utf-8", errors="ignore")
+            result = subprocess.check_output(
+                    command,
+                    env=env,
+                    encoding="utf-8",
+                    errors="ignore")
             return parse_version(result)
         except (subprocess.CalledProcessError, OSError):
             return []
@@ -234,12 +241,12 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         check_env = extend(context.path_env_extra,
                            context.ld_lib_path_extra)
 
-        # Overwrite PATH to contain only the parent of the clang binary.
+        # Overwrite PATH to contain only the parent of the cppcheck binary.
         if os.path.isabs(handler.analyzer_binary):
             check_env['PATH'] = os.path.dirname(handler.analyzer_binary)
-        #cppcheck_bin = cls.resolve_missing_binary('cppcheck', check_env)
+        # cppcheck_bin = cls.resolve_missing_binary('cppcheck', check_env)
 
-        #handler.compiler_resource_dir = \
+        # handler.compiler_resource_dir = \
         #    host_check.get_resource_dir(cppcheck_bin, context)
 
         try:
@@ -257,8 +264,8 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
 
         checkers = cls.get_analyzer_checkers(handler, check_env)
 
-        # TODO implement this / Read cppcheck checkers from the config file.
-        #cppcheck_checkers = context.checker_labels.get(cls.ANALYZER_NAME +
+        # TODO implement this / Read cppcheck checkers from the label file.
+        # cppcheck_checkers = context.checker_labels.get(cls.ANALYZER_NAME +
         #                                               '_checkers')
 
         try:
