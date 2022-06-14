@@ -73,6 +73,19 @@ package: package_dir_structure set_git_commit_template package_gerrit_skiplist
 	# Copy license file.
 	cp $(ROOT)/LICENSE.TXT $(CC_BUILD_DIR)
 
+dev_package: package
+	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_common && \
+	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_analyzer && \
+	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_web && \
+	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_server && \
+	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_client
+
+	ln -fsv $(ROOT)/codechecker_common $(CC_BUILD_LIB_DIR) && \
+	ln -fsv $(CC_ANALYZER)/codechecker_analyzer $(CC_BUILD_LIB_DIR) && \
+	ln -fsv $(CC_WEB)/codechecker_web $(CC_BUILD_LIB_DIR) && \
+	ln -fsv $(CC_SERVER)/codechecker_server $(CC_BUILD_LIB_DIR) && \
+	ln -fsv $(CC_CLIENT)/codechecker_client $(CC_BUILD_LIB_DIR)
+
 package_api:
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) package_api
 
