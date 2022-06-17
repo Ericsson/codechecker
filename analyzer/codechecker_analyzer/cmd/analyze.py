@@ -16,6 +16,7 @@ import json
 import multiprocessing
 import os
 import re
+import shlex
 import shutil
 import sys
 
@@ -851,6 +852,22 @@ def __get_result_source_files(metadata):
     return result_src_files
 
 
+def __change_args_to_command_in_comp_db(compile_commands):
+    """
+    In CodeChecker we support compilation databases where the JSON object of a
+    build action contains "file", "directory" and "command" fields. However,
+    compilation databases from intercept build contain "arguments" instead of
+    "command" which is a list of command-line arguments instead of the same
+    command as a single string. This function make this appropriate conversion.
+    """
+    for cc in compile_commands:
+        if 'command' not in cc:
+            # TODO: shlex.join(cmd) would be more elegant after upgrading to
+            # Python 3.8.
+            cc['command'] = ' '.join(map(shlex.quote, cc['arguments']))
+            del cc['arguments']
+
+
 def main(args):
     """
     Perform analysis on the given logfiles and store the results in a machine-
@@ -916,6 +933,7 @@ def main(args):
     compile_commands = load_json_or_empty(args.logfile)
     if compile_commands is None:
         sys.exit(1)
+    __change_args_to_command_in_comp_db(compile_commands)
 
     # Process the skip list if present.
     skip_handlers = __get_skip_handlers(args, compile_commands)
