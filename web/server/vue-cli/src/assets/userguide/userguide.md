@@ -93,7 +93,7 @@ In the product list table you can see the following information:
 belongs to.
 - `Description`: short description of the product.
 - `Administrator names`: product admins have the right to allow access for
-individual people or LDAP groups. 
+individual people or LDAP groups.
 - `Number of runs`: number of runs in the product.
 - `Latest store to the product`: date of the latest run storage.
 - `Run store in progress`: show run names if a storage is in progress.
@@ -400,17 +400,26 @@ This report is a bug but we don't want to fix it.
 ![Review statuses](images/reports/review_statuses.png)
 
 
-Review statuses are connected to
-[report hashes](https://github.com/Ericsson/codechecker/blob/master/docs/analyzer/report_identification.md).
-If the same report can be found in multiple runs it will have the same review
-status.
-
-It can be changed on the [GUI](#userguide-change-review-status) or by using
+Review status can be set on the [GUI](#userguide-change-review-status) or by using
 [source code comments ](https://github.com/Ericsson/codechecker/blob/master/docs/analyzer/user_guide.md#source-code-comments)
 (*codechecker_false_positive*, *codechecker_confirmed*, etc.)
 
+Review status set in source comments are applied on the individual report
+review status set in the GUI are added as Review Status Rules connected to
+[report hashes](https://github.com/Ericsson/codechecker/blob/master/docs/analyzer/report_identification.md).
+If the same report can be found in multiple runs it will have the same review
+status. Reports stored in the future with the same hash will also get the
+same review status. So once you set the review status in the GUI,
+there is no need to set the same review status again in other runs.
+
+
 **Note**: source code comment is stronger and can overwrite the value in the
 database.
+
+Review status values added in the WEB GUI are stored as Review Status Rules
+and can be managed in the Configuration/ReviewStatusRules tab.
+![Filter run history events](images/review_status_rules/review_status.rules.png)
+
 
 ## Detection status
 The detection status is the state of a bug report in a run.

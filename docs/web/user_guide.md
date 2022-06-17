@@ -1,54 +1,69 @@
-Table of Contents
-=================
-* [CodeChecker](#codechecker)
-    * [Default configuration](#default-configuration)
-* [Easy analysis wrappers](#easy-analysis-wrappers)
-    * [`check`](#check)
-* [`PRODUCT_URL` format](#product-url-format)
-    * [Example](#product-url-format-example)
-* [Available CodeChecker subcommands](#available-commands)
-    * [`store`](#store)
-        * [Using SQLite for database](#sqlite)
-    * [`server`](#server)
-        * [Creating a public server](#public-server)
-        * [Run CodeChecker server in Docker](#server-in-docker)
-        * [Configuring database and server settings' location](#server-settings)
-        * [Master superuser and authentication forcing](#auth-force)
-        * [Enfore secure socket (SSL)](#ssl)
-        * [Managing running servers](#managing-running-servers)
-        * [Manage server database upgrades](#manage-server-database-upgrade)
-    * [`cmd`](#cmd)
-        * [`components` (Source components)](#source-components)
-            * [`new` (New/Edit source component)](#new-source-components)
-                * Format of [component file](#component-file)
-            * [`list` (List source components)](#list-source-components)
-            * [`del` (Delete source components)](#delete-source-components)
-        * [`runs` (List runs)](#cmd-runs)
-        * [`history` (List of run histories)](#cmd-history)
-        * [`results` (List analysis results' summary)](#cmd-results)
-            * [Example](#cmd-results-example)
-        * [`diff` (Show differences between two runs)](#cmd-diff)
-          * [Example](#cmd-diff-example)
-        * [`sum` (Show summarised count of results)](#cmd-sum)
-            * [Example](#cmd-sum-example)
-        * [`del` (Remove analysis runs)](#cmd-del)
-        * [`update` (Update an analysis run)](#cmd-update)
-        * [`suppress` (Manage and export/import suppressions)](#manage-suppressions)
-            * [Import suppressions between server and suppress file](#import-suppressions)
-        * [`products` (Manage product configuration of a server)](#cmd-product)
-        * [`permissions (Get access control)`](#get-access-control-permissions)
-        * [`login` (Authenticate to the server)](#cmd-login)
-        * [`export` (Export comments and review statuses from CodeChecker)](#cmd-export)
-        * [`import` (Import comments and review statuses into CodeChecker)](#cmd-import)
-    * [`version`](#version)
-      * [JSON format](#json-format)
-* [Debugging CodeChecker](#debug)
+# CodeChecker Web Command Line User Guide
 
-# CodeChecker <a name="codechecker"></a>
+## Table of Contents
+- [CodeChecker Web Command Line User Guide](#codechecker-web-command-line-user-guide)
+  - [Table of Contents](#table-of-contents)
+  - [Command Line Overview](#command-line-overview)
+  - [WEB related sub-commands](#web-related-sub-commands)
+    - [Client side configuration file](#client-side-configuration-file)
+    - [`server`](#server)
+      - [Creating a public server](#creating-a-public-server)
+      - [Run CodeChecker server in Docker](#run-codechecker-server-in-docker)
+      - [Configuring database and server settings location](#configuring-database-and-server-settings-location)
+        - [Server Configuration (Authentication and Server Limits)](#server-configuration-authentication-and-server-limits)
+        - [Database Configuration](#database-configuration)
+      - [Master superuser and authentication forcing](#master-superuser-and-authentication-forcing)
+      - [Enfore secure socket (SSL)](#enfore-secure-socket-ssl)
+      - [Managing running servers](#managing-running-servers)
+      - [Manage server database upgrades](#manage-server-database-upgrades)
+    - [`store`](#store)
+      - [`PRODUCT_URL` format](#product_url-format)
+      - [Example](#example)
+    - [`cmd`](#cmd)
+      - [Source components (`components`)](#source-components-components)
+        - [New/Edit source component](#newedit-source-component)
+          - [Format of component file](#format-of-component-file)
+        - [List source components](#list-source-components)
+        - [Delete source components](#delete-source-components)
+      - [List runs (`runs`)](#list-runs-runs)
+      - [List of run histories (`history`)](#list-of-run-histories-history)
+      - [List analysis results' summary (`results`)](#list-analysis-results-summary-results)
+        - [Example](#example-1)
+      - [Show differences between two runs (`diff`)](#show-differences-between-two-runs-diff)
+        - [Diff Example](#diff-example)
+      - [Show summarised count of results (`sum`)](#show-summarised-count-of-results-sum)
+        - [Summary Example](#summary-example)
+      - [Remove analysis runs (`del`)](#remove-analysis-runs-del)
+      - [Update an analysis run (`update`)](#update-an-analysis-run-update)
+      - [Import suppressions (`suppress`)](#import-suppressions-suppress)
+        - [Import suppressions from a suppress file](#import-suppressions-from-a-suppress-file)
+      - [Manage product configuration of a server (`products`)](#manage-product-configuration-of-a-server-products)
+      - [Query authorization settings (`permissions`)](#query-authorization-settings-permissions)
+      - [Authenticate to the server (`login`)](#authenticate-to-the-server-login)
+    - [Exporting source code suppression to suppress file](#exporting-source-code-suppression-to-suppress-file)
+      - [Export comments and review statuses (`export`)](#export-comments-and-review-statuses-export)
+      - [Import comments and review statuses into Codechecker (`import`)](#import-comments-and-review-statuses-into-codechecker-import)
+    - [`version`](#version)
+      - [JSON format](#json-format)
+  - [Log Levels](#log-levels)
 
-First of all, you have to setup the environment for CodeChecker.
-CodeChecker uses SQLite database (by default) to store the results
-which is also packed into the package.
+## Command Line Overview
+
+CodeChecker command line interface consists of **analysis** and **web** related
+sub-commands.
+
+This user guide describes **web server and client** related sub commands
+to perform the following actions:
+* [Start & Manage CodeChecker web server instances](#server)
+* [Store/Read/Manage analysis results](#store)
+* [Calculate diff between runs](#show-differences-between-two-runs-diff)
+* [Configure codechecker repositories (products)](#manage-product-configuration-of-a-server-products)
+* [Configure source code components](#source-components-components)
+* [Use suppression files (instead of in-line suppressions)](#import-suppressions-suppress)
+* [Export/Import Suppression Rules and Comments](#exporting-source-code-suppression-to-suppress-file)
+
+The CodeChecker client uses only HTTP(S) protocol to communicate with the
+server.
 
 Running CodeChecker is via its main invocation script, `CodeChecker`:
 
@@ -86,79 +101,316 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-
-Example scenario: Analyzing, and storing results
-------------------------------------------------
-Start the server where the results will be stored and can be viewed
-after the analysis is done:
-    CodeChecker server
-
-Analyze a project with default settings:
-    CodeChecker check -b "cd ~/myproject && make" -o "~/results"
-
-Store the analyzer results to the server:
-    CodeChecker store "~/results" -n myproject
-
-The results can be viewed:
- * In a web browser: http://localhost:8001
- * In the command line:
-    CodeChecker cmd results myproject
-
-Example scenario: Analyzing, and printing results to Terminal (no storage)
---------------------------------------------------------------------------
-In this case, no database is used, and the results are printed on the standard
-output.
-
-    CodeChecker check -b "cd ~/myproject && make"
 ```
 </details>
 
-## Default configuration <a name="default-configuration"></a>
+## WEB related sub-commands
 
-Used ports:
+### Client side configuration file
 
-* `5432` - PostgreSQL
-* `8001` - CodeChecker server
+CodeChecker command line invocation parameter list can be long.
 
-The server listens only on the local machine.
+All CodeChecker sub-command can use a `--config CONFIG_FILE` to describe
+command line argument lists.
 
-The initial product is called `Default`.
+For example instead of invoking
+`CodeChecker store --name my_run --tag=my_tag --url=http://codechecker.my:9090/MyProduct`
 
-## `PRODUCT_URL` format <a name="product-url-format"></a>
+one can write `CodeChecker store --config client_config.json`.
 
-Several subcommands, such as `store` and `cmd` need a connection specification
-on which server and for which *Product* (read more [about
-products](products.md)) an action, such as report storage or result
-retrieving, should be done.
+`client_config.json`
+```json
+{
+  "store": [
+    "--name=my_run",
+    "--tag=my_tag",
+    "--url=http://codechecker.my:9090/MyProduct"
+  ]
+}
+```
+For details see [Client Configuration File](config_file.md)
 
-This is done via the `PRODUCT_URL` where indicated in the subcommand, which
-contains the server's access protocol, address, and the to-be-used product's
-unique endpoint. The format of this string is:
-`[http[s]://]host:port/ProductEndpoint`. This URL looks like a standar Web
-browsing (HTTP) request URL.
+### `server`
 
-CodeChecker communicates via HTTP requests, thus the first part specifies
-whether or not a more secure SSL/TLS-wrapped `https` protocol should be used.
-If omitted, the default value is `http`. The second part is the host and the
-port the server listens on. After a `/`, the unique endpoint of the product
-must be given, this is case-sensitive. This unique endpoint is configured and
-allocated when the [product is created](products.md), by the server's
-administrators. The product must exist and be properly configured before any
-normal operation could be done on it.
+To view and store the analysis reports in a database, a `CodeChecker server`
+must be started. This is done via the `server` command, which creates a
+standard Web server and initializes or connects to a database with
+the given configuration.
 
-If no URL is specified, the default value `http://localhost:8001/Default` will
-be used: a standard HTTP CodeChecker server running on the local machine, on
-the default port, using the *Default* product.
+The CodeChecker Viewer server can be browsed by a Web browser by opening the
+address of it (by default, [`http://localhost:8001`](http://localhost:8001)),
+or via the `CodeChecker cmd` command-line client.
 
-### Example <a name="product-url-format-example"></a>
+<details>
+  <summary><i>$ <b>CodeChecker server --help</b> (click to expand)</i></summary>
 
-The URL `https://codechecker.example.org:9999/SampleProduct` will access the
-server machine `codechecker.example.org` trying to connect to a server
-listening on port `9999` via HTTPS. The product `SampleProduct` will be used.
+```
+usage: CodeChecker server [-h] [-w WORKSPACE] [-f CONFIG_DIRECTORY]
+                          [--host LISTEN_ADDRESS] [-v PORT] [--not-host-only]
+                          [--skip-db-cleanup] [--config CONFIG_FILE]
+                          [--sqlite SQLITE_FILE | --postgresql]
+                          [--dbaddress DBADDRESS] [--dbport DBPORT]
+                          [--dbusername DBUSERNAME] [--dbname DBNAME]
+                          [--reset-root] [--force-authentication]
+                          [-l | -r | -s | --stop-all]
+                          [--db-status STATUS | --db-upgrade-schema PRODUCT_TO_UPGRADE | --db-force-upgrade]
+                          [--verbose {info,debug,debug_analyzer}]
 
-# Available CodeChecker server subcommands <a name="available-commands"></a>
+The CodeChecker Web server is used to handle the storage and navigation of
+analysis results. A started server can be connected to via a Web browser, or
+by using the 'CodeChecker cmd' command-line client.
 
-## `store` <a name="store"></a>
+optional arguments:
+  -h, --help            show this help message and exit
+  -w WORKSPACE, --workspace WORKSPACE
+                        Directory where CodeChecker can store analysis result
+                        related data, such as the database. (Cannot be
+                        specified at the same time with '--sqlite' or
+                        '--config-directory'.) (default:
+                        /home/<username>/.codechecker)
+  -f CONFIG_DIRECTORY, --config-directory CONFIG_DIRECTORY
+                        Directory where CodeChecker server should read server-
+                        specific configuration (such as authentication
+                        settings, and SSL certificates) from.
+                        (default: /home/<username>/.codechecker)
+  --host LISTEN_ADDRESS
+                        The IP address or hostname of the server on which it
+                        should listen for connections. For IPv6 listening,
+                        specify an IPv6 address, such as "::1". (default:
+                        localhost)
+  -v PORT, --view-port PORT, -p PORT, --port PORT
+                        The port which will be used as listen port for the
+                        server. (default: 8001)
+  --not-host-only       If specified, storing and viewing the results will be
+                        possible not only by browsers and clients running
+                        locally, but to everyone, who can access the server
+                        over the Internet. (Equivalent to specifying '--host
+                        "::"'.) (default: False)
+  --skip-db-cleanup     Skip performing cleanup jobs on the database like
+                        removing unused files. (default: False)
+  --config CONFIG_FILE  Allow the configuration from an explicit configuration
+                        file. The values configured in the config file will
+                        overwrite the values set in the command line.
+                        You can use any environment variable inside this file
+                        and it will be expaneded.
+                        For more information see the docs: https://github.com/
+                        Ericsson/codechecker/tree/master/docs/config_file.md
+                        (default: None)
+  --verbose {info,debug,debug_analyzer}
+                        Set verbosity level.
+
+configuration database arguments:
+  --sqlite SQLITE_FILE  Path of the SQLite database file to use. (default:
+                        <CONFIG_DIRECTORY>/config.sqlite)
+  --postgresql          Specifies that a PostgreSQL database is to be used
+                        instead of SQLite. See the "PostgreSQL arguments"
+                        section on how to configure the database connection.
+
+PostgreSQL arguments:
+  Values of these arguments are ignored, unless '--postgresql' is specified!
+
+  --dbaddress DBADDRESS, --db-host DBADDRESS
+                        Database server address. (default: localhost)
+  --dbport DBPORT, --db-port DBPORT
+                        Database server port. (default: 5432)
+  --dbusername DBUSERNAME, --db-username DBUSERNAME
+                        Username to use for connection. (default: codechecker)
+  --dbname DBNAME, --db-name DBNAME
+                        Name of the database to use. (default: config)
+```
+</details>
+
+To start a server with default configuration, simply execute
+
+```sh
+CodeChecker server
+```
+
+#### Creating a public server
+
+```
+  --host LISTEN_ADDRESS
+                        The IP address or hostname of the server on which it
+                        should listen for connections. (default: localhost)
+  --not-host-only       If specified, viewing the results will be possible not
+                        only by browsers and clients running locally, but to
+                        everyone, who can access the server over the Internet.
+                        (Equivalent to specifying '--host ""'.) (default:
+                        False)
+```
+
+By default, the running server can only be accessed from the same machine
+(`localhost`) where it is running. This can be overridden by specifying
+`--host ""`, instructing the server to listen on all available interfaces.
+
+
+#### Run CodeChecker server in Docker
+To run CodeChecker server in Docker see the [Docker](docker.md) documentation.
+
+#### Configuring database and server settings location
+
+
+CodeChecker server can use PostgreSQL or SQLite databases to store the analysis
+results. SQlite is only recommended high volume production usage,
+only for small test installations.
+
+
+##### Server Configuration (Authentication and Server Limits)
+
+The `server_config.json` file describes
+the run-time settings of the web server.
+
+The following parameters can be configured
+* Auhtentication methods (LDAP, File Based, PAM)
+* Number of server threads
+* Storage Limits:  Maximum number of runs, maximum failiure zip size etc.
+* TCP related settings
+
+You can find a specification of this file in
+[Server Configuration](server_config.md) document and authentication
+related sections in the [Authentication Configuration](authentication.md)
+document.
+
+The `--config-directory (-f)` specifies where the server configuration
+files are located.
+
+For example, one can start
+two servers with two different product layout, but with the same
+(authentication) configuration:
+
+```sh
+CodeChecker server --sqlite ~/major_bugs.sqlite -f ~/.codechecker -p 8001
+CodeChecker server --sqlite ~/minor_bugs.sqlite -f ~/.codechecker -p 8002
+```
+
+If sqlite database is used, the `--workspace` argument can be used to _shortcut_
+this specification. The configuration file and the sqlite files will be located
+in the workspace directory.
+
+##### Database Configuration
+
+The `--sqlite` (or `--postgresql` and the various `--db-` arguments) can be
+used to specify where the database, containing the analysis reports is located.
+
+If the server is started in `--sqlite` mode and fresh, that is, no product
+repository sqlite file is found, a product named `Default`, using `Default.sqlite`
+in the configuration directory is automatically created. Please see
+[Product management](products.md) for details on how to configure products.
+
+In order to use PostgreSQL instead of SQLite, use the `--postgresql` command
+line argument for `CodeChecker server` command.
+If `--postgresql` is not given then SQLite is used by default in
+which case `--dbport`, `--dbaddress`, `--dbname`, and
+`--dbusername` command line arguments are ignored.
+
+**NOTE!** Schema migration is not supported with SQLite. This means if you
+upgrade your CodeChecker to a newer version, you might need to re-check your
+project.
+
+**It is recommended to use only the Postgresql databse for production
+deployments!**
+
+#### Master superuser and authentication forcing
+
+```
+root account arguments:
+  Servers automatically create a root user to access the server's
+  configuration via the clients. This user is created at first start and
+  saved in the CONFIG_DIRECTORY, and the credentials are printed to the
+  server's standard output. The plaintext credentials are NEVER accessible
+  again.
+
+  --reset-root          Force the server to recreate the master superuser
+                        (root) account name and password. The previous
+                        credentials will be invalidated, and the new ones will
+                        be printed to the standard output.
+  --force-authentication
+                        Force the server to run in authentication requiring
+                        mode, despite the configuration value in
+                        'session_config.json'. This is needed if you need to
+                        edit the product configuration of a server that would
+                        not require authentication otherwise.
+```
+
+#### Enfore secure socket (SSL)
+
+You can enforce SSL security on your listening socket. In this case all clients must
+access your server using the `https://host:port` URL format.
+
+To enable SSL simply place an SSL certificate to `<CONFIG_DIRECTORY>/cert.pem`
+and the corresponding private key to `<CONFIG_DIRECTORY>/key.pem`.
+You can generate these certificates for example
+using the [openssl tool](https://www.openssl.org/).
+When the server finds these files upon start-up,
+SSL will be automatically enabled.
+
+#### Managing running servers
+
+```
+running server management:
+  -l, --list            List the servers that has been started by you.
+  -r, --reload          Sends the CodeChecker server process a SIGHUP signal,
+                        causing it to reread it's configuration files.
+  -s, --stop            Stops the server associated with the given view-port
+                        and workspace.
+  --stop-all            Stops all of your running CodeChecker server
+                        instances.
+```
+
+CodeChecker servers can be started in the background as any other service, via
+common shell tools such as `nohup` and `&!`. The running instances can be
+queried via `--list`.
+
+Calling `CodeChecker server --stop` will stop the "default" server, i.e. one
+that was started by simply calling `CodeChecker server`. This _"stop"_ command
+is equivalent to pressing `Ctrl`-`C` in the server's terminal, resulting in an
+immediate termination of the server.
+
+A server running on a specific and port can be stopped by:
+
+```sh
+CodeChecker server -w ~/my_codechecker_workspace -p 8002 --stop
+```
+
+`--stop-all` will stop every running server that is printed by `--list`.
+
+`CodeChecker server --reload` command allows you to changing configuration-file
+options that do not require a complete restart to take effect. For more
+information which option can be reloaded see
+[server config](server_config.md).
+
+#### Manage server database upgrades
+
+Use these arguments to manage the database versions handled by the server.
+For a more detailed description about the schema upgrade check out the
+[schema migration guide](db_schema_guide.md).
+
+```
+Database management arguments.:
+  WARNING these commands needs to be called with the same workspace and
+  configuration arguments as the server so the configuration database will
+  be found which is required for the schema migration. Migration can be done
+  without a running server but pay attention to use the same arguments which
+  will be used to start the server. NOTE: Before migration it is advised to
+  create a full a backup of the product databases.
+
+  --status STATUS       Name of the product to get the database status for.
+                        Use 'all' to list the database statuses for all of the
+                        products.
+  --upgrade-schema PRODUCT_TO_UPGRADE
+                        Name of the product to upgrade to the latest database
+                        schema available in the package. Use 'all' to upgrade
+                        all of the products.NOTE: Before migration it is
+                        advised to create a full backup of the product
+                        databases.
+  --db-force-upgrade    Force the server to do database migration without user
+                        interaction. NOTE: Please use with caution and before
+                        automatic migration it is advised to create a full
+                        backup of the product databases.
+```
+
+
+### `store`
 
 A `Codechecker server` needs to be started before the reports can be stored to
 a database.
@@ -266,262 +518,40 @@ then the results of the analysis can be stored with this command:
 CodeChecker store ./my_plists -n my_project
 ```
 
-### Using SQLite for database <a name="sqlite"></a>
+#### `PRODUCT_URL` format
 
-CodeChecker can also use SQLite for storing the results. In this case the
-SQLite database will be created in the workspace directory.
+Several subcommands, such as `store` and `cmd` need a connection specification
+on which server and for which *Product* (read more [about
+products](products.md)) an action, such as report storage or result
+retrieving, should be done.
 
-In order to use PostgreSQL instead of SQLite, use the `--postgresql` command
-line argument for `CodeChecker server` command.
-If `--postgresql` is not given then SQLite is used by default in
-which case `--dbport`, `--dbaddress`, `--dbname`, and
-`--dbusername` command line arguments are ignored.
+This is done via the `PRODUCT_URL` where indicated in the subcommand, which
+contains the server's access protocol, address, and the to-be-used product's
+unique endpoint. The format of this string is:
+`[http[s]://]host:port/ProductEndpoint`. This URL looks like a standar Web
+browsing (HTTP) request URL.
 
-**NOTE!** Schema migration is not supported with SQLite. This means if you
-upgrade your CodeChecker to a newer version, you might need to re-check your
-project.
+CodeChecker communicates via HTTP requests, thus the first part specifies
+whether or not a more secure SSL/TLS-wrapped `https` protocol should be used.
+If omitted, the default value is `http`. The second part is the host and the
+port the server listens on. After a `/`, the unique endpoint of the product
+must be given, this is case-sensitive. This unique endpoint is configured and
+allocated when the [product is created](products.md), by the server's
+administrators. The product must exist and be properly configured before any
+normal operation could be done on it.
 
-## `server` <a name="server"></a>
+If no URL is specified, the default value `http://localhost:8001/Default` will
+be used: a standard HTTP CodeChecker server running on the local machine, on
+the default port, using the *Default* product.
 
-To view and store the analysis reports in a database, a `CodeChecker server`
-must be started. This is done via the `server` command, which creates a
-standard Web server and initializes or connects to a database with
-the given configuration.
+#### Example
 
-The CodeChecker Viewer server can be browsed by a Web browser by opening the
-address of it (by default, [`http://localhost:8001`](http://localhost:8001)),
-or via the `CodeChecker cmd` command-line client.
-
-<details>
-  <summary><i>$ <b>CodeChecker server --help</b> (click to expand)</i></summary>
-
-```
-usage: CodeChecker server [-h] [-w WORKSPACE] [-f CONFIG_DIRECTORY]
-                          [--host LISTEN_ADDRESS] [-v PORT] [--not-host-only]
-                          [--skip-db-cleanup] [--config CONFIG_FILE]
-                          [--sqlite SQLITE_FILE | --postgresql]
-                          [--dbaddress DBADDRESS] [--dbport DBPORT]
-                          [--dbusername DBUSERNAME] [--dbname DBNAME]
-                          [--reset-root] [--force-authentication]
-                          [-l | -r | -s | --stop-all]
-                          [--db-status STATUS | --db-upgrade-schema PRODUCT_TO_UPGRADE | --db-force-upgrade]
-                          [--verbose {info,debug,debug_analyzer}]
-
-The CodeChecker Web server is used to handle the storage and navigation of
-analysis results. A started server can be connected to via a Web browser, or
-by using the 'CodeChecker cmd' command-line client.
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -w WORKSPACE, --workspace WORKSPACE
-                        Directory where CodeChecker can store analysis result
-                        related data, such as the database. (Cannot be
-                        specified at the same time with '--sqlite' or
-                        '--config-directory'.) (default:
-                        /home/<username>/.codechecker)
-  -f CONFIG_DIRECTORY, --config-directory CONFIG_DIRECTORY
-                        Directory where CodeChecker server should read server-
-                        specific configuration (such as authentication
-                        settings, and SSL certificates) from.
-                        (default: /home/<username>/.codechecker)
-  --host LISTEN_ADDRESS
-                        The IP address or hostname of the server on which it
-                        should listen for connections. For IPv6 listening,
-                        specify an IPv6 address, such as "::1". (default:
-                        localhost)
-  -v PORT, --view-port PORT, -p PORT, --port PORT
-                        The port which will be used as listen port for the
-                        server. (default: 8001)
-  --not-host-only       If specified, storing and viewing the results will be
-                        possible not only by browsers and clients running
-                        locally, but to everyone, who can access the server
-                        over the Internet. (Equivalent to specifying '--host
-                        "::"'.) (default: False)
-  --skip-db-cleanup     Skip performing cleanup jobs on the database like
-                        removing unused files. (default: False)
-  --config CONFIG_FILE  Allow the configuration from an explicit configuration
-                        file. The values configured in the config file will
-                        overwrite the values set in the command line.
-                        You can use any environment variable inside this file
-                        and it will be expaneded.
-                        For more information see the docs: https://github.com/
-                        Ericsson/codechecker/tree/master/docs/config_file.md
-                        (default: None)
-  --verbose {info,debug,debug_analyzer}
-                        Set verbosity level.
-
-configuration database arguments:
-  --sqlite SQLITE_FILE  Path of the SQLite database file to use. (default:
-                        <CONFIG_DIRECTORY>/config.sqlite)
-  --postgresql          Specifies that a PostgreSQL database is to be used
-                        instead of SQLite. See the "PostgreSQL arguments"
-                        section on how to configure the database connection.
-
-PostgreSQL arguments:
-  Values of these arguments are ignored, unless '--postgresql' is specified!
-
-  --dbaddress DBADDRESS, --db-host DBADDRESS
-                        Database server address. (default: localhost)
-  --dbport DBPORT, --db-port DBPORT
-                        Database server port. (default: 5432)
-  --dbusername DBUSERNAME, --db-username DBUSERNAME
-                        Username to use for connection. (default: codechecker)
-  --dbname DBNAME, --db-name DBNAME
-                        Name of the database to use. (default: config)
-```
-</details>
-
-To start a server with default configuration, simply execute
-
-```sh
-CodeChecker server
-```
-
-### Creating a public server <a name="public-server"></a>
-
-```
-  --host LISTEN_ADDRESS
-                        The IP address or hostname of the server on which it
-                        should listen for connections. (default: localhost)
-  --not-host-only       If specified, viewing the results will be possible not
-                        only by browsers and clients running locally, but to
-                        everyone, who can access the server over the Internet.
-                        (Equivalent to specifying '--host ""'.) (default:
-                        False)
-```
-
-By default, the running server can only be accessed from the same machine
-(`localhost`) where it is running. This can be overridden by specifying
-`--host ""`, instructing the server to listen on all available interfaces.
-
-### Run CodeChecker server in Docker <a name="server-in-docker"></a>
-To run CodeChecker server in Docker see the [Docker](docker.md) documentation.
-
-### Configuring database and server settings location  <a name="server-settings"></a>
-
-The `--sqlite` (or `--postgresql` and the various `--db-` arguments) can be
-used to specify where the database, containing the analysis reports is.
-
-`--config-directory` specifies where the server configuration files, such as
-[authentication config](authentication.md) is. For example, one can start
-two servers with two different product layout, but with the same authorisation
-configuration:
-
-```sh
-CodeChecker server --sqlite ~/major_bugs.sqlite -f ~/.codechecker -p 8001
-CodeChecker server --sqlite ~/minor_bugs.sqlite -f ~/.codechecker -p 8002
-```
-
-The `--workspace` argument can be used to _shortcut_ this specification: by
-default, the configuration directory is the _workspace_ itself, and therein
-resides the `config.sqlite` file, containing the product configuration.
-
-If the server is started in `--sqlite` mode and fresh, that is, no product
-configuration file is found, a product named `Default`, using `Default.sqlite`
-in the configuration directory is automatically created. Please see
-[Product management](products.md) for details on how to configure products.
-
-### Master superuser and authentication forcing <a name="auth-force"></a>
-
-```
-root account arguments:
-  Servers automatically create a root user to access the server's
-  configuration via the clients. This user is created at first start and
-  saved in the CONFIG_DIRECTORY, and the credentials are printed to the
-  server's standard output. The plaintext credentials are NEVER accessible
-  again.
-
-  --reset-root          Force the server to recreate the master superuser
-                        (root) account name and password. The previous
-                        credentials will be invalidated, and the new ones will
-                        be printed to the standard output.
-  --force-authentication
-                        Force the server to run in authentication requiring
-                        mode, despite the configuration value in
-                        'session_config.json'. This is needed if you need to
-                        edit the product configuration of a server that would
-                        not require authentication otherwise.
-```
-
-### Enfore secure socket (SSL) <a name="ssl"></a>
-
-You can enforce SSL security on your listening socket. In this case all clients must
-access your server using the `https://host:port` URL format.
-
-To enable SSL simply place an SSL certificate to `<CONFIG_DIRECTORY>/cert.pem`
-and the corresponding private key to `<CONFIG_DIRECTORY>/key.pem`.
-You can generate these certificates for example
-using the [openssl tool](https://www.openssl.org/).
-When the server finds these files upon start-up,
-SSL will be automatically enabled.
-
-### Managing running servers <a name="managing-running-servers"></a>
-
-```
-running server management:
-  -l, --list            List the servers that has been started by you.
-  -r, --reload          Sends the CodeChecker server process a SIGHUP signal,
-                        causing it to reread it's configuration files.
-  -s, --stop            Stops the server associated with the given view-port
-                        and workspace.
-  --stop-all            Stops all of your running CodeChecker server
-                        instances.
-```
-
-CodeChecker servers can be started in the background as any other service, via
-common shell tools such as `nohup` and `&!`. The running instances can be
-queried via `--list`.
-
-Calling `CodeChecker server --stop` will stop the "default" server, i.e. one
-that was started by simply calling `CodeChecker server`. This _"stop"_ command
-is equivalent to pressing `Ctrl`-`C` in the server's terminal, resulting in an
-immediate termination of the server.
-
-A server running on a specific and port can be stopped by:
-
-```sh
-CodeChecker server -w ~/my_codechecker_workspace -p 8002 --stop
-```
-
-`--stop-all` will stop every running server that is printed by `--list`.
-
-`CodeChecker server --reload` command allows you to changing configuration-file
-options that do not require a complete restart to take effect. For more
-information which option can be reloaded see
-[server config](server_config.md).
-
-### Manage server database upgrades <a name="manage-server-database-upgrade"></a>
-
-Use these arguments to manage the database versions handled by the server.
-For a more detailed description about the schema upgrade check out the
-[schema migration guide](db_schema_guide.md).
-
-```
-Database management arguments.:
-  WARNING these commands needs to be called with the same workspace and
-  configuration arguments as the server so the configuration database will
-  be found which is required for the schema migration. Migration can be done
-  without a running server but pay attention to use the same arguments which
-  will be used to start the server. NOTE: Before migration it is advised to
-  create a full a backup of the product databases.
-
-  --status STATUS       Name of the product to get the database status for.
-                        Use 'all' to list the database statuses for all of the
-                        products.
-  --upgrade-schema PRODUCT_TO_UPGRADE
-                        Name of the product to upgrade to the latest database
-                        schema available in the package. Use 'all' to upgrade
-                        all of the products.NOTE: Before migration it is
-                        advised to create a full backup of the product
-                        databases.
-  --db-force-upgrade    Force the server to do database migration without user
-                        interaction. NOTE: Please use with caution and before
-                        automatic migration it is advised to create a full
-                        backup of the product databases.
-```
+The URL `https://codechecker.example.org:9999/SampleProduct` will access the
+server machine `codechecker.example.org` trying to connect to a server
+listening on port `9999` via HTTPS. The product `SampleProduct` will be used.
 
 
-## `cmd` <a name="cmd"></a>
+### `cmd`
 
 The `CodeChecker cmd` is a lightweight command line client that can be used to
 view analysis results from the command-line. The command-line client can also
@@ -752,7 +782,11 @@ filter arguments:
                         :new,unresolved:false_positive,intentional"
 ```
 
-### Source components (`components`) <a name="source-components"></a>
+#### Source components (`components`)
+
+Source components can be used to group analysis results. A component
+is a collection of source files defined by regular expressions on the
+path.
 
 <details>
   <summary>
@@ -779,7 +813,7 @@ available actions:
 </details>
 
 
-#### New/Edit source component <a name="new-source-components"></a>
+##### New/Edit source component
 
 <details>
   <summary>
@@ -819,7 +853,7 @@ optional arguments:
 ```
 </details>
 
-##### Format of component file <a name="component-file"></a>
+###### Format of component file
 
 Source component helps us to filter run results by multiple file paths.
 
@@ -862,7 +896,7 @@ means the same as
 `x.cpp` will be included in the run results and all other files under `/a/b/`
 path will not be included.
 
-#### List source components <a name="list-source-components"></a>
+##### List source components
 List the name and basic information about source component added to the
 server.
 ```
@@ -874,7 +908,7 @@ List the name and basic information about source component added to the
 server.
 ```
 
-#### Delete source components <a name="delete-source-components"></a>
+##### Delete source components
 
 ```
 usage: CodeChecker cmd components del [-h] [--url PRODUCT_URL]
@@ -887,7 +921,7 @@ positional arguments:
   NAME                  The source component name which will be removed.
 ```
 
-### List runs (`runs`) <a name="cmd-runs"></a>
+#### List runs (`runs`)
 
 <details>
   <summary>
@@ -939,7 +973,7 @@ optional arguments:
 ```
 </details>
 
-### List of run histories (`history`) <a name="cmd-history"></a>
+#### List of run histories (`history`)
 
 With this command you can list out the specific storage events which happened
 during storage processes under multiple run names.
@@ -973,7 +1007,7 @@ optional arguments:
 ```
 </details>
 
-### List analysis results' summary (`results`) <a name="cmd-results"></a>
+#### List analysis results' summary (`results`)
 
 Prints basic information about analysis results, such as location, checker
 name, summary.
@@ -1027,7 +1061,7 @@ optional arguments:
 ```
 </details>
 
-#### Example <a name="cmd-results-example"></a>
+##### Example
 ```
 #Get analysis results for a run:
 CodeChecker cmd results my_run
@@ -1046,7 +1080,7 @@ CodeChecker cmd results my_run --severity critical high medium \
 CodeChecker cmd results -o json --details my_run
 ```
 
-### Show differences between two runs (`diff`) <a name="cmd-diff"></a>
+#### Show differences between two runs (`diff`)
 
 This mode shows analysis results (in the same format as `results`) does, but
 from the comparison of two runs.
@@ -1361,7 +1395,7 @@ more information see
 [analyzer report identification](../analyzer/report_identification.md)
 documentation.
 
-#### Example <a name="cmd-diff-example"></a>
+##### Diff Example
 Let's assume you have the following C++ code:
 ```cpp
 int foo(int z)
@@ -1449,7 +1483,7 @@ to the results stored on a remote CodeChecker server previously
     y = x % 2; // deadcode.DeadStores
   ```
 
-### Show summarised count of results (`sum`) <a name="cmd-sum"></a>
+#### Show summarised count of results (`sum`)
 <details>
   <summary>
     <i>$ <b>CodeChecker cmd sum --help</b> (click to expand)</i>
@@ -1503,7 +1537,7 @@ optional arguments:
 ```
 </details>
 
-#### Example <a name="cmd-sum-example"></a>
+##### Summary Example
 ```sh
 # Get statistics for a run:
 CodeChecker cmd sum -n my_run
@@ -1515,7 +1549,7 @@ CodeChecker cmd sum --all --checker-name "core.*" "deadcode.*"
 CodeChecker cmd sum --all --severity "high"
 ```
 
-### Remove analysis runs (`del`) <a name="cmd-del"></a>
+#### Remove analysis runs (`del`)
 <details>
   <summary>
     <i>$ <b>CodeChecker cmd del --help</b> (click to expand)</i>
@@ -1565,7 +1599,7 @@ optional arguments:
 ```
 </details>
 
-### Update an analysis run (`update`) <a name="cmd-update"></a>
+#### Update an analysis run (`update`)
 <details>
   <summary>
     <i>$ <b>CodeChecker cmd update --help</b> (click to expand)</i>
@@ -1588,7 +1622,12 @@ optional arguments:
 ```
 </details>
 
-### Manage and export/import suppressions (`suppress`) <a name="manage-suppressions"></a>
+#### Import suppressions (`suppress`)
+If cannot use `in-line` code suppressions, such as `//codechecker_suppress`,
+but you would like to keep your suppressions under version control, you
+can use suppress files, to indicate which report is **false positive**.
+
+
 <details>
   <summary>
     <i>$ <b>CodeChecker cmd suppress --help</b> (click to expand)</i>
@@ -1614,8 +1653,12 @@ optional arguments:
 ```
 </details>
 
-#### Import suppressions between server and suppress file <a name="import-suppressions"></a>
+##### Import suppressions from a suppress file
 
+Suppressions are imported as individual report suppressions
+(as opposed to suppression rules).
+So only those reports will be suppressed that are part of the given
+RUN_NAME run.
 
 ```
   -i SUPPRESS_FILE, --import SUPPRESS_FILE
@@ -1626,11 +1669,31 @@ optional arguments:
 `--import` **appends** the suppressions found in the given suppress file to
 the database on the server.
 
-### Manage product configuration of a server (`products`) <a name="cmd-product"></a>
+The suppression file has the following format
+```
+report_hash||source_file_name||suppress_comment||type_of_suppression
+
+```
+
+* `report_hash` is the hash identifier of the report to be suppressed
+* `source_file_name` is the name of the source file wher the report is located
+* `suppress_commant` why you think the issue should be suppressed
+* `type_of_suppression` one of the following `false_positive`, `intentional`,
+  `confirmed`
+
+An example suppress file:
+
+```
+1a7ddce6d69b031310dd7ad2ff330b53||suppress.cpp||foo2 simple||false_positive
+45a2fef6845f54eaf070ad03d19c7981||suppress.cpp||foo3 simple||intentional
+9fb26da7f3224ec0c63cfe3617c8a14e||suppress.cpp||foo4 simple||confirmed
+```
+
+#### Manage product configuration of a server (`products`)
 
 Please see [Product management](products.md) for details.
 
-### Get access control (`permissions`)
+#### Query authorization settings (`permissions`)
 You can use this command to get access control information from a running
 CodeChecker server. This will contain information which user or group has
 global permissions or permissions only for specific products.
@@ -1685,7 +1748,7 @@ common arguments:
 ```
 </details>
 
-### Authenticate to the server (`login`) <a name="cmd-login"></a>
+#### Authenticate to the server (`login`)
 <details>
   <summary>
     <i>$ <b>CodeChecker cmd login --help</b> (click to expand)</i>
@@ -1725,7 +1788,7 @@ The password can be saved on the disk. If such "preconfigured" password is
 not found, the user will be asked, in the command-line, to provide credentials.
 
 
-## Exporting source code suppression to suppress file <a name="suppress-file"></a>
+### Exporting source code suppression to suppress file
 
 ```
   --export-source-suppress
@@ -1738,7 +1801,7 @@ not found, the user will be asked, in the command-line, to provide credentials.
 CodeChecker parse ./my_plists --suppress generated.suppress --export-source-suppress
 ```
 
-### Export comments and review statuses (`export`) <a name="cmd-export"></a>
+#### Export comments and review statuses (`export`)
 
 ```sh
 usage: CodeChecker cmd export [-h] [-n RUN_NAME [RUN_NAME ...]]
@@ -1760,7 +1823,7 @@ optional arguments:
  In the above command multiple runs can be pass as, the `...` indicate any additional runs, if needed to be provided
 
 
-### Import comments and review statuses into Codechecker (`import`) <a name="cmd-import"></a>
+#### Import comments and review statuses into Codechecker (`import`)
 ```sh
 usage: CodeChecker cmd import [-h] -i JSON_FILE [--url PRODUCT_URL]
                               [--verbose {info,debug_analyzer,debug}]
@@ -1773,8 +1836,8 @@ optional arguments:
                         Import findings from the json file into the database.
 ```
 
-## `version`
-### JSON format
+### `version`
+#### JSON format
 The JSON output format looks like this:
 ```json
 {
@@ -1814,6 +1877,6 @@ In JSON output we have two main sections:
   - `client_api_version` (str): Client Thrift API version.
 
 
-# Debugging CodeChecker <a name="debug"></a>
+## Log Levels
 
 To change the log levels check out the [logging](../logging.md) documentation.
