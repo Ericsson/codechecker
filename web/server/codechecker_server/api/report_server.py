@@ -1842,10 +1842,11 @@ class ThriftRequestHandler:
     def _setReviewStatus(self, session, report_hash, status,
                          message, date=None):
         """
-        This function sets the review status of the given report. This is the
-        implementation of changeReviewStatus(), but it is also extended with
-        a session parameter which represents a database transaction. This is
-        needed because during storage a specific session object has to be used.
+        This function sets the review status of all the reports of a
+        given hash. This is the implementation of addReviewStatusRule(),
+        but it is also extended with a session parameter which represents a
+        database transaction. This is needed because during storage a specific
+        session object has to be used.
         """
         review_status = session.query(ReviewStatus).get(report_hash)
         if review_status is None:
@@ -1957,21 +1958,40 @@ class ThriftRequestHandler:
     @timeit
     def changeReviewStatus(self, report_id, status, message):
         """
-        Change review status of the bug by report id.
+        Change the review status of a report by report id.
         """
         self.__require_permission([permissions.PRODUCT_ACCESS,
                                    permissions.PRODUCT_STORE])
 
-        if self.isReviewStatusChangeDisabled():
-            msg = "Review status change is disabled!"
-            raise codechecker_api_shared.ttypes.RequestFailed(
-                codechecker_api_shared.ttypes.ErrorCode.GENERAL, msg)
-
         with DBSession(self._Session) as session:
             report = session.query(Report).get(report_id)
             if report:
-                self._setReviewStatus(
-                    session, report.bug_id, status, message)
+                # False positive and intentional reports are considered closed,
+                # so their "fix date" is set. The reports are reopened when
+                # they become unreviewed or confirmed again.
+                # Don't change "fix date" for closed
+                # report which remain closed.
+                if status in ["false_positive", "intentional"]:
+                    if report.detection_status in [
+                            "unresolved", "new", "reopened"]\
+                        and report.review_status not in [
+                            "false_positive", "intentional"]:
+                        session.query(Report).filter(
+                            Report.id == report_id).update(
+                                {"fixed_at": datetime.now()})
+                elif report.detection_status in [
+                    "unresolved", "new", "reopened"]\
+                    and report.review_status in [
+                        "false_positive", "intentional"]:
+                    session.query(Report).filter(
+                        Report.id == report_id).update({"fixed_at": None})
+
+                session.query(Report).filter(Report.id == report_id).update({
+                        'review_status': review_status_str(status),
+                        'review_status_author': self._get_username(),
+                        'review_status_message': bytes(message, 'utf-8'),
+                        'review_status_date': datetime.now()
+                        })
             else:
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.DATABASE,
@@ -2059,6 +2079,11 @@ class ThriftRequestHandler:
     def addReviewStatusRule(self, report_hash, review_status, message):
         self.__require_permission([permissions.PRODUCT_ACCESS,
                                    permissions.PRODUCT_STORE])
+
+        if self.isReviewStatusChangeDisabled():
+            msg = "Review status change is disabled!"
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.GENERAL, msg)
 
         with DBSession(self._Session) as session:
             self._setReviewStatus(
