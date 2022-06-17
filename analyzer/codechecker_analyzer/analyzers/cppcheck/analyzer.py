@@ -105,11 +105,16 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             # Add extra arguments.
             analyzer_cmd.extend(config.analyzer_extra_arguments)
 
-            # Add compiler includes.
-            # TODO: Handle -I includes
-            # compile_lang = self.buildaction.lang
-            for include in self.buildaction.compiler_includes:
-                analyzer_cmd.extend(['-isystem',  include])
+            # Add includes.
+            for analyzer_option in self.buildaction.analyzer_options:
+                if analyzer_option.startswith("-I") or \
+                    analyzer_option.startswith("-D"):
+                    analyzer_cmd.extend([analyzer_option])
+
+            # Cppcheck does not handle compiler includes well
+            #for include in self.buildaction.compiler_includes:
+            #    print(include)
+            #    analyzer_cmd.extend(['-I',  include])
 
             analyzer_cmd.append('--plist-output=' + result_handler.workspace)
             analyzer_cmd.append(self.source_file)
