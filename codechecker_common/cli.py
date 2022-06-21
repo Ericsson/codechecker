@@ -93,8 +93,9 @@ def main():
     """
     CodeChecker main command line.
     """
-    os.environ['CC_LIB_DIR'] = os.path.dirname(os.path.dirname(
-        os.path.realpath(__file__)))
+    if not os.environ.get('CC_LIB_DIR'):
+        os.environ['CC_LIB_DIR'] = \
+                os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
     data_files_dir_path = get_data_files_dir_path()
     os.environ['CC_DATA_FILES_DIR'] = data_files_dir_path
