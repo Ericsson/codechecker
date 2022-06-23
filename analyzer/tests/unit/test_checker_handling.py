@@ -12,6 +12,7 @@ Test the handling of implicitly and explicitly handled checkers in analyzers
 
 
 import unittest
+from argparse import Namespace
 
 from codechecker_analyzer.analyzers.clangsa.analyzer import ClangSA
 from codechecker_analyzer.analyzers.clangtidy.analyzer import ClangTidy
@@ -258,8 +259,7 @@ class MockContextTidy:
     package_root = './'
 
 
-def create_analyzer_tidy():
-    args = []
+def create_analyzer_tidy(args=[]):
     context = MockContextTidy()
     cfg_handler = ClangTidy.construct_config_handler(args, context)
 
@@ -308,12 +308,21 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
             if arg.startswith('-checks='):
                 self.assertIn('-clang-analyzer-*', arg)
 
+        args = Namespace()
+        args.ordered_checkers = [('Wreserved-id-macro', True)]
+        analyzer = create_analyzer_tidy(args)
+        result_handler = create_result_handler(analyzer)
+
         analyzer.config_handler.checker_config = '{}'
         analyzer.config_handler.analyzer_config = \
             {'take-config-from-directory': 'true'}
 
         for arg in analyzer.construct_analyzer_cmd(result_handler):
             self.assertFalse(arg.startswith('-checks'))
+
+        self.assertEqual(
+                analyzer.config_handler.checks()['Wreserved-id-macro'][0],
+                CheckerState.enabled)
 
     def test_default_checkers_are_not_disabled(self):
         """
