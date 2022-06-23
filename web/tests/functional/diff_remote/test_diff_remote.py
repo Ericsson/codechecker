@@ -190,8 +190,8 @@ class DiffRemote(unittest.TestCase):
                                                  None,
                                                  cmp_data,
                                                  False)
-        # 5 resolved core.CallAndMessage
-        self.assertEqual(len(diff_res), 5)
+        # 4 resolved core.CallAndMessage
+        self.assertEqual(len(diff_res), 4)
 
     def test_get_diff_checker_counts_core_resolved(self):
         """
@@ -211,7 +211,7 @@ class DiffRemote(unittest.TestCase):
         diff_dict = dict((res.name, res.count) for res in diff_res)
 
         # Resolved core checkers.
-        test_res = {'core.CallAndMessage': 5}
+        test_res = {'core.CallAndMessage': 4}
         self.assertDictEqual(diff_dict, test_res)
 
     def test_get_diff_results_unresolved(self):
@@ -419,8 +419,7 @@ class DiffRemote(unittest.TestCase):
                                                     cmp_data)
 
         print(res)
-        test_res = {ReviewStatus.UNREVIEWED: 4,
-                    ReviewStatus.FALSE_POSITIVE: 1}
+        test_res = {ReviewStatus.UNREVIEWED: 4}
         self.assertDictEqual(res, test_res)
 
     def test_get_diff_res_types_resolved(self):
@@ -440,7 +439,7 @@ class DiffRemote(unittest.TestCase):
                                                     0)
         diff_dict = dict((res.name, res.count) for res in diff_res)
 
-        test_res = {'core.CallAndMessage': 5}
+        test_res = {'core.CallAndMessage': 4}
         self.assertDictEqual(diff_dict, test_res)
 
     def test_get_diff_res_types_unresolved(self):
@@ -617,7 +616,7 @@ class DiffRemote(unittest.TestCase):
                                                  tag_filter,
                                                  cmp_data,
                                                  False)
-        self.assertEqual(len(diff_res), 3)
+        self.assertEqual(len(diff_res), 0)
 
         cmp_data.diffType = DiffType.UNRESOLVED
         diff_res = self._cc_client.getRunResults([run_id],
@@ -686,7 +685,7 @@ class DiffRemote(unittest.TestCase):
                                                  tag_filter,
                                                  cmp_data,
                                                  False)
-        self.assertEqual(len(diff_res), 3)
+        self.assertEqual(len(diff_res), 0)
 
         cmp_data.diffType = DiffType.UNRESOLVED
         diff_res = self._cc_client.getRunResults([run_id],
