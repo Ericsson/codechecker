@@ -14,59 +14,63 @@ on GitHub</a>
 Table of Contents
 =================
 
-* [Products](#products)
-  * [Managing products](#managing-products)
-    * [Add new product](#add-new-product)
-      * [Disable review status change](#disable-review-status-change)
-      * [Confidentiality classification](#confidentiality-classification)
-    * [Edit product configuration](#edit-product-configuration)
-    * [Remove a product](#remove-a-product)
-  * [Managing permissions](#managing-permissions)
-  * [Notification banner](#notification-banner)
-* [Runs and history events](#runs-and-history-events)
-  * [Runs](#runs)
-    * [Show description](#show-description)
-    * [Show check command](#show-check-command)
-    * [Show analyzer statistics](#show-analyzer-statistics)
-    * [Filter runs](#filter-runs)
-    * [Compare runs](#compare-runs)
-    * [Sorting runs](#sorting-runs)
-    * [Delete runs](#delete-runs)
-  * [Run history](#run-history)
-    * [Compare run history events](#compare-run-history-events)
-    * [Filter run history events](#filter-run-history-events)
-* [Reports](#reports)
-  * [Review status](#review-status)
-  * [Detection status](#detection-status)
-  * [Severity levels](#severity-levels)
-  * [Filtering reports](#filtering-reports)
-    * [Date filters](#date-filters)
-    * [Regex based filters](#regex-based-filters)
-    * [Report count](#report-count)
-    * [Remove filtered reports](#remove-filtered-reports)
-    * [Clear report filters](#clear-report-filters)
-    * [Unique reports](#unique-reports)
-  * [Compare mode](#compare-mode)
-    * [Compare two different runs](#compare-runs)
-    * [Compare two different tagged versions of the same](#compare-tags)
-  * [Manage source components](#manage-source-components)
-* [Report details](#report-details)
-  * [Report navigation tree](#report-navigation-tree)
-  * [Button pane](#button-pane)
-     * [Report info](#report-info)
-     * [Show documentation](#show-documentation)
-     * [Change review status](#change-review-status)
-  * [Same reports](#same-reports)
-  * [Bug path view](#bug-path-view)
-  * [Comment](#comment)
-* [Statistics](#statistics)
-  * [Statistics pages](#statistics-pages)
-    * [Product overview](#product-overview)
-    * [Checker statistics](#checker-statistics)
-    * [Severity statistics](#severity-statistics)
-    * [Component statistics](#component-statistics)
-  * [Filtering statistics](#filtering-statistics)
-    * [Uniqueing checker statistics](#checker-statistics-uniqueing)
+- [WEB GUI User Guide](#web-gui-user-guide)
+- [Table of Contents](#table-of-contents)
+- [Products](#products)
+  - [Managing products](#managing-products)
+    - [Add new product](#add-new-product)
+      - [Disable review status change](#disable-review-status-change)
+      - [Confidentiality classification](#confidentiality-classification)
+    - [Edit product configuration](#edit-product-configuration)
+    - [Remove a product](#remove-a-product)
+  - [Managing permissions](#managing-permissions)
+  - [Notification banner](#notification-banner)
+- [Runs and history events](#runs-and-history-events)
+  - [Runs](#runs)
+    - [Show description](#show-description)
+    - [Show check command](#show-check-command)
+    - [Show analyzer statistics](#show-analyzer-statistics)
+    - [Filter runs](#filter-runs)
+    - [Compare runs](#compare-runs)
+    - [Sorting runs](#sorting-runs)
+    - [Delete runs](#delete-runs)
+  - [Run history](#run-history)
+    - [Compare run history events](#compare-run-history-events)
+    - [Filter run history events](#filter-run-history-events)
+- [Reports](#reports)
+  - [Review status](#review-status)
+  - [Detection status](#detection-status)
+  - [Severity levels](#severity-levels)
+  - [Filtering reports](#filtering-reports)
+    - [Date filters](#date-filters)
+    - [Regex based filters](#regex-based-filters)
+    - [Report count](#report-count)
+    - [Remove filtered reports](#remove-filtered-reports)
+    - [Clear report filters](#clear-report-filters)
+    - [Unique reports](#unique-reports)
+  - [Compare mode](#compare-mode)
+    - [Compare two different runs](#compare-two-different-runs)
+    - [Compare two different tagged versions of the same](#compare-two-different-tagged-versions-of-the-same)
+  - [Manage source components](#manage-source-components)
+  - [Manage cleanup plans](#manage-cleanup-plans)
+  - [Assign reports to cleanup plans](#assign-reports-to-cleanup-plans)
+- [Report details](#report-details)
+  - [Report Navigation Tree](#report-navigation-tree)
+  - [Button pane](#button-pane)
+    - [Report info](#report-info)
+    - [Show documentation](#show-documentation)
+    - [Change review status](#change-review-status)
+  - [Same reports](#same-reports)
+  - [Bug path view](#bug-path-view)
+  - [Comment](#comment)
+- [Statistics](#statistics)
+  - [Statistics pages](#statistics-pages)
+    - [Product overview](#product-overview)
+    - [Checker statistics](#checker-statistics)
+    - [Severity statistics](#severity-statistics)
+    - [Component statistics](#component-statistics)
+  - [Filtering statistics](#filtering-statistics)
+    - [Uniqueing checker statistics](#uniqueing-checker-statistics)
 
 # Products
 The product system allows a single CodeChecker server to serve multiple
@@ -93,7 +97,7 @@ In the product list table you can see the following information:
 belongs to.
 - `Description`: short description of the product.
 - `Administrator names`: product admins have the right to allow access for
-individual people or LDAP groups. 
+individual people or LDAP groups.
 - `Number of runs`: number of runs in the product.
 - `Latest store to the product`: date of the latest run storage.
 - `Run store in progress`: show run names if a storage is in progress.
@@ -597,7 +601,7 @@ found under different file paths.
 ## Compare mode
 In compare mode you can calculate the difference between multiple analyses of
 the project, showing which reports have been fixed and which are newly
-introduced or which can be fined in all runs.
+introduced or which can be found in all runs.
 
 At the **Baseline** filter section you can select the run names / tags against
 which you want to check the difference.
@@ -607,6 +611,35 @@ you want to compare against the *Baseline* runs and run tags.
 
 You can also use the `Outstanding report on a given date` filter to compare
 reports by dates.
+
+By **Diff type** field it can be chosen whether reports **Only in Baseline**,
+**Only in Compare to** or **Both in Baseline and Compare to** should be shown.
+At each option the number of reports is displayed for the given category. Note,
+that the number of **Both in Baseline and Compare to** plus the number of
+**Only in Compare to** add up the number of **Compare to**, but this addition
+may not work for the number of **Baseline** reports. This behavior can be
+demonstrated by the following example. Suppose that two analyses are stored
+with the following reports. Some reports are occurring multiple times in a run.
+These can be made unique by [Unique reports](#unique-reports) tick-box.
+
+| Baseline        | Compare to      |
+|-----------------|---------------- |
+| `report_hash_1` |                 |
+| `report_hash_1` |                 |
+| `report_hash_2` | `report_hash_2` |
+| `report_hash_2` | `report_hash_2` |
+| `report_hash_2` | `report_hash_2` |
+|                 | `report_hash_2` |
+|                 | `report_hash_3` |
+
+The multiplicity of comparison categories:
+
+- **Only in Baseline**: `report_hash_1` (2x)
+- **Only in Compare to**: `report_hash_3` (1x)
+- **Both in Baseline and Compare to**: `report_hash_2` (4x)
+
+Note that `report_hash_2` is displayed 4 times like in **Compare to** and not
+3 times like in **Baseline**.
 
 ### Compare two different runs
 ![Compare two different runs](images/reports/compare_runs.png)
