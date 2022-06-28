@@ -76,8 +76,16 @@ def get_warnings(env=None):
             encoding="utf-8",
             errors="ignore")
         return [w[2:] for w in result.split() if w.startswith("-W")]
-    except (subprocess.CalledProcessError, OSError):
-        return []
+    except subprocess.CalledProcessError as exc:
+        LOG.error("'diagtool' encountered an error while retrieving the "
+                  "checker list. If you are using a custom compiled clang, "
+                  "you may have forgotten to build the 'diagtool' target "
+                  "alongside 'clang' and 'clang-tidy'! Error message: %s",
+                  exc.output)
+
+        raise
+    except OSError:
+        raise
 
 
 def get_argparser_ctor_args():
