@@ -2895,11 +2895,16 @@ class ThriftRequestHandler:
             if not run_filter:
                 run_filter = RunFilter(ids=[run_id])
 
-            q = session.query(Run)
-            q = process_run_filter(session, q, run_filter)
-            q.delete(synchronize_session=False)
+            q = process_run_filter(session, session.query(Run), run_filter)
 
-            session.commit()
+            # q.delete(synchronize_session=False) could also be used here,
+            # however, a run deletion tends to be a slow operation due to
+            # cascades and such. Deleting runs in separate transactions don't
+            # exceed a potential statement timeout threshold in a DBMS.
+            for run in q.all():
+                session.delete(run)
+                session.commit()
+
             session.close()
 
             runs = run_filter.names if run_filter.names else run_filter.ids
