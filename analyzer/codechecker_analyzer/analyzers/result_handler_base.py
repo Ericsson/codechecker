@@ -59,6 +59,7 @@ class ResultHandler(metaclass=ABCMeta):
         self.skiplist_handler = None
         self.analyzed_source_file = None
         self.analyzer_returncode = 1
+        self.buildaction_hash = ''
         self.__buildaction = action
 
         self.__result_file = None
@@ -133,9 +134,12 @@ class ResultHandler(metaclass=ABCMeta):
 
         build_info = source_file + '_' + ' '.join(args)
 
+        self.buildaction_hash = \
+            hashlib.md5(build_info.encode(errors='ignore')).hexdigest()
+
         return analyzed_file_name + '_' + \
             str(self.buildaction.analyzer_type) + '_' + \
-            hashlib.md5(build_info.encode(errors='ignore')).hexdigest()
+            self.buildaction_hash
 
     @property
     def analyzer_result_file(self):

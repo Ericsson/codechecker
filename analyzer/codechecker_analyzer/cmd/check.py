@@ -354,6 +354,20 @@ used to generate a log file on the fly.""")
                                     "'CodeChecker analyzers --dump-config "
                                     "clang-tidy' command.")
 
+    analyzer_opts.add_argument('--cppcheck-addons',
+                               dest='cppcheck_addons',
+                               required=False,
+                               nargs='*',
+                               default=argparse.SUPPRESS,
+                               help="A list of cppcheck addon files.")
+
+    analyzer_opts.add_argument('--cppcheck-libraries',
+                               dest='cppcheck_libraries',
+                               required=False,
+                               nargs='*',
+                               default=argparse.SUPPRESS,
+                               help="A list of cppcheck library definiton files.")
+
     analyzer_opts.add_argument('--analyzer-config',
                                dest='analyzer_config',
                                nargs='*',
@@ -820,6 +834,8 @@ def main(args):
                           'clangsa_args_cfg_file',
                           'tidy_args_cfg_file',
                           'tidy_config',
+                          'cppcheck_addons',
+                          'cppcheck_libraries',
                           'analyzer_config',
                           'checker_config',
                           'capture_analysis_output',

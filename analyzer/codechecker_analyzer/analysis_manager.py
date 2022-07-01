@@ -764,6 +764,11 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
     if not os.path.exists(reproducer_dir) and generate_reproducer:
         os.makedirs(reproducer_dir)
 
+    # Cppcheck raw output directory
+    cppcheck_dir = os.path.join(output_path, "cppcheck")
+    if not os.path.exists(cppcheck_dir):
+        os.makedirs(cppcheck_dir)
+
     # Collect what other TUs were involved during CTU analysis.
     ctu_connections_dir = os.path.join(output_path, "ctu_connections")
     if not os.path.exists(ctu_connections_dir):

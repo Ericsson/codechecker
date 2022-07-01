@@ -7,6 +7,7 @@
 Result handler for Cppcheck.
 """
 from typing import Optional
+from pprint import pprint
 
 from codechecker_report_converter.report.parser.base import AnalyzerInfo
 from codechecker_report_converter.analyzers.cppcheck.analyzer_result import \
@@ -16,6 +17,8 @@ from codechecker_report_converter.report.hash import get_report_hash, HashType
 
 from codechecker_common.logger import get_logger
 from codechecker_common.skiplist_handler import SkipListHandlers
+
+from .config_handler import CppcheckConfigHandler
 
 from ..result_handler_base import ResultHandler
 
@@ -39,8 +42,11 @@ class CppcheckResultHandler(ResultHandler):
         """
         LOG.debug_analyzer(self.analyzer_stdout)
 
-        reports = AnalyzerResult().get_reports(self.workspace)
+        reports = AnalyzerResult().get_reports(self.analyzer_result_file)
         reports = [r for r in reports if not r.skip(skip_handlers)]
+        for report in reports:
+            if not report.checker_name.startswith("cppcheck-"):
+                report.checker_name = "cppcheck-" + report.checker_name
 
         hash_type = HashType.PATH_SENSITIVE
         if self.report_hash_type == 'context-free-v2':
@@ -54,3 +60,4 @@ class CppcheckResultHandler(ResultHandler):
         report_file.create(
             self.analyzer_result_file, reports, self.checker_labels,
             self.analyzer_info)
+

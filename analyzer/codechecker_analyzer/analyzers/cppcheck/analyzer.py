@@ -6,9 +6,11 @@
 """
 """
 from distutils.version import StrictVersion
+from pathlib import Path
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import xml.etree.ElementTree as ET
 
@@ -21,6 +23,8 @@ from .. import analyzer_base
 
 from .config_handler import CppcheckConfigHandler
 from .result_handler import CppcheckResultHandler
+
+from ..config_handler import CheckerState
 
 LOG = get_logger('analyzer.cppcheck')
 
@@ -36,6 +40,8 @@ def parse_checkers(cppcheck_output):
     errors = root.find('errors')
     for error in errors.findall('error'):
         name = error.attrib.get('id')
+        if name:
+            name = "cppcheck-" + name
         msg = error.attrib.get('msg')
         # TODO: Check severity handling in cppcheck
         # severity = error.attrib.get('severity')
@@ -88,19 +94,22 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             # Enable or disable checkers.
             enabled_severity_levels = set()
             suppressed_checkers = set()
+
             for checker_name, value in config.checks().items():
-                if not value[0]:
+                if value[0] == CheckerState.disabled:
                     suppressed_checkers.add(checker_name)
-                # TODO: Check severity handling in cppcheck
-                # elif value.severity and value.severity != 'error':
-                #    enabled_severity_levels.add(value.severity)
+
+            # Cppcheck runs with all checkers enabled for the time being
+            # the unneded checkers are passed as suppressed checkers
+            analyzer_cmd.append('--enable=all')
 
             if enabled_severity_levels:
                 analyzer_cmd.append('--enable=' +
                                     ','.join(enabled_severity_levels))
 
             for checker_name in suppressed_checkers:
-                analyzer_cmd.append('--suppress=' + checker_name)
+                # TODO python3.9 removeprefix method is better than lstrip
+                analyzer_cmd.append('--suppress=' + checker_name.lstrip("cppcheck-"))
 
             # Add extra arguments.
             analyzer_cmd.extend(config.analyzer_extra_arguments)
@@ -110,13 +119,36 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
                 if analyzer_option.startswith("-I") or \
                     analyzer_option.startswith("-D"):
                     analyzer_cmd.extend([analyzer_option])
+                elif analyzer_option.startswith("-std"):
+                    standard = analyzer_option.split("=")[-1] \
+                        .lower().replace("gnu", "c")
+                    analyzer_cmd.extend(["--std=" + standard])
+
+            # TODO no platform translation eg. no cross platform analysis
+            analyzer_cmd.extend(["--platform=native"])
+
+            if 'cppcheck-addons' in config.analyzer_config:
+                for addon in config.analyzer_config["cppcheck-addons"]:
+                    analyzer_cmd.extend(["--addon=" + str(Path(addon).absolute())])
+                #addons = " ".join(config.analyzer_config["cppcheck-addons"])
+                #analyzer_cmd.extend(["--addon=" + addons])
+
+            if 'cppcheck-libraries' in config.analyzer_config:
+                for lib in config.analyzer_config["cppcheck-libraries"]:
+                    analyzer_cmd.extend(["--library=" + str(Path(lib).absolute())])
 
             # Cppcheck does not handle compiler includes well
             #for include in self.buildaction.compiler_includes:
-            #    print(include)
             #    analyzer_cmd.extend(['-I',  include])
 
-            analyzer_cmd.append('--plist-output=' + result_handler.workspace)
+            # TODO Suggest a better place for this
+            # cppcheck wont create the output folders for itself
+            output_dir = Path(result_handler.workspace, "cppcheck",
+                    result_handler.buildaction_hash)
+            output_dir.mkdir(exist_ok=True)
+
+            analyzer_cmd.append('--plist-output=' + str(output_dir))
+
             analyzer_cmd.append(self.source_file)
 
             return analyzer_cmd
@@ -158,16 +190,19 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
 
     def post_analyze(self, result_handler):
         """
-        Renames the generated plist file with a unique name.
+        Copies the generated plist file with a unique name,
+
         """
         file_name = os.path.splitext(os.path.basename(self.source_file))[0]
-        output_file = os.path.join(result_handler.workspace,
+        cppcheck_out = os.path.join(result_handler.workspace, "cppcheck",
+                                    result_handler.buildaction_hash,
                                    file_name + '.plist')
-        if os.path.exists(output_file):
-            output = os.path.join(result_handler.workspace,
+        if os.path.exists(cppcheck_out):
+            codechecker_out = os.path.join(result_handler.workspace,
                                   result_handler.analyzer_result_file)
 
-            os.rename(output_file, output)
+            shutil.copy2(cppcheck_out, codechecker_out)
+            Path(cppcheck_out).rename(cppcheck_out + ".bak")
 
     @classmethod
     def resolve_missing_binary(cls, configured_binary, env):
@@ -242,6 +277,14 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         handler = CppcheckConfigHandler()
         handler.analyzer_binary = context.analyzer_binaries.get(
             cls.ANALYZER_NAME)
+
+        analyzer_config = {}
+
+        if "cppcheck_addons" in args:
+            analyzer_config['cppcheck-addons'] = args.cppcheck_addons
+        if "cppcheck_libraries" in args:
+            analyzer_config["cppcheck-libraries"] = args.cppcheck_libraries
+        handler.analyzer_config = analyzer_config
 
         check_env = extend(context.path_env_extra,
                            context.ld_lib_path_extra)

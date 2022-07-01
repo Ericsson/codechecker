@@ -406,6 +406,20 @@ def add_arguments_to_parser(parser):
                                     "'CodeChecker analyzers --dump-config "
                                     "clang-tidy' command.")
 
+    analyzer_opts.add_argument('--cppcheck-addons',
+                               dest='cppcheck_addons',
+                               required=False,
+                               nargs='*',
+                               default=argparse.SUPPRESS,
+                               help="A list of cppcheck addon files.")
+
+    analyzer_opts.add_argument('--cppcheck-libraries',
+                               dest='cppcheck_libraries',
+                               required=False,
+                               nargs='*',
+                               default=argparse.SUPPRESS,
+                               help="A list of cppcheck library definiton files.")
+
     analyzer_opts.add_argument('--analyzer-config',
                                dest='analyzer_config',
                                nargs='*',
