@@ -14,59 +14,63 @@ on GitHub</a>
 Table of Contents
 =================
 
-* [Products](#products)
-  * [Managing products](#managing-products)
-    * [Add new product](#add-new-product)
-      * [Disable review status change](#disable-review-status-change)
-      * [Confidentiality classification](#confidentiality-classification)
-    * [Edit product configuration](#edit-product-configuration)
-    * [Remove a product](#remove-a-product)
-  * [Managing permissions](#managing-permissions)
-  * [Notification banner](#notification-banner)
-* [Runs and history events](#runs-and-history-events)
-  * [Runs](#runs)
-    * [Show description](#show-description)
-    * [Show check command](#show-check-command)
-    * [Show analyzer statistics](#show-analyzer-statistics)
-    * [Filter runs](#filter-runs)
-    * [Compare runs](#compare-runs)
-    * [Sorting runs](#sorting-runs)
-    * [Delete runs](#delete-runs)
-  * [Run history](#run-history)
-    * [Compare run history events](#compare-run-history-events)
-    * [Filter run history events](#filter-run-history-events)
-* [Reports](#reports)
-  * [Review status](#review-status)
-  * [Detection status](#detection-status)
-  * [Severity levels](#severity-levels)
-  * [Filtering reports](#filtering-reports)
-    * [Date filters](#date-filters)
-    * [Regex based filters](#regex-based-filters)
-    * [Report count](#report-count)
-    * [Remove filtered reports](#remove-filtered-reports)
-    * [Clear report filters](#clear-report-filters)
-    * [Unique reports](#unique-reports)
-  * [Compare mode](#compare-mode)
-    * [Compare two different runs](#compare-runs)
-    * [Compare two different tagged versions of the same](#compare-tags)
-  * [Manage source components](#manage-source-components)
-* [Report details](#report-details)
-  * [Report navigation tree](#report-navigation-tree)
-  * [Button pane](#button-pane)
-     * [Report info](#report-info)
-     * [Show documentation](#show-documentation)
-     * [Change review status](#change-review-status)
-  * [Same reports](#same-reports)
-  * [Bug path view](#bug-path-view)
-  * [Comment](#comment)
-* [Statistics](#statistics)
-  * [Statistics pages](#statistics-pages)
-    * [Product overview](#product-overview)
-    * [Checker statistics](#checker-statistics)
-    * [Severity statistics](#severity-statistics)
-    * [Component statistics](#component-statistics)
-  * [Filtering statistics](#filtering-statistics)
-    * [Uniqueing checker statistics](#checker-statistics-uniqueing)
+- [WEB GUI User Guide](#web-gui-user-guide)
+- [Table of Contents](#table-of-contents)
+- [Products](#products)
+  - [Managing products](#managing-products)
+    - [Add new product](#add-new-product)
+      - [Disable review status change](#disable-review-status-change)
+      - [Confidentiality classification](#confidentiality-classification)
+    - [Edit product configuration](#edit-product-configuration)
+    - [Remove a product](#remove-a-product)
+  - [Managing permissions](#managing-permissions)
+  - [Notification banner](#notification-banner)
+- [Runs and history events](#runs-and-history-events)
+  - [Runs](#runs)
+    - [Show description](#show-description)
+    - [Show check command](#show-check-command)
+    - [Show analyzer statistics](#show-analyzer-statistics)
+    - [Filter runs](#filter-runs)
+    - [Compare runs](#compare-runs)
+    - [Sorting runs](#sorting-runs)
+    - [Delete runs](#delete-runs)
+  - [Run history](#run-history)
+    - [Compare run history events](#compare-run-history-events)
+    - [Filter run history events](#filter-run-history-events)
+- [Reports](#reports)
+  - [Review status](#review-status)
+  - [Detection status](#detection-status)
+  - [Severity levels](#severity-levels)
+  - [Filtering reports](#filtering-reports)
+    - [Date filters](#date-filters)
+    - [Regex based filters](#regex-based-filters)
+    - [Report count](#report-count)
+    - [Remove filtered reports](#remove-filtered-reports)
+    - [Clear report filters](#clear-report-filters)
+    - [Unique reports](#unique-reports)
+  - [Compare mode](#compare-mode)
+    - [Compare two different runs](#compare-two-different-runs)
+    - [Compare two different tagged versions of the same](#compare-two-different-tagged-versions-of-the-same)
+  - [Manage source components](#manage-source-components)
+  - [Manage cleanup plans](#manage-cleanup-plans)
+  - [Assign reports to cleanup plans](#assign-reports-to-cleanup-plans)
+- [Report details](#report-details)
+  - [Report Navigation Tree](#report-navigation-tree)
+  - [Button pane](#button-pane)
+    - [Report info](#report-info)
+    - [Show documentation](#show-documentation)
+    - [Change review status](#change-review-status)
+  - [Same reports](#same-reports)
+  - [Bug path view](#bug-path-view)
+  - [Comment](#comment)
+- [Statistics](#statistics)
+  - [Statistics pages](#statistics-pages)
+    - [Product overview](#product-overview)
+    - [Checker statistics](#checker-statistics)
+    - [Severity statistics](#severity-statistics)
+    - [Component statistics](#component-statistics)
+  - [Filtering statistics](#filtering-statistics)
+    - [Uniqueing checker statistics](#uniqueing-checker-statistics)
 
 # Products
 The product system allows a single CodeChecker server to serve multiple
@@ -93,7 +97,7 @@ In the product list table you can see the following information:
 belongs to.
 - `Description`: short description of the product.
 - `Administrator names`: product admins have the right to allow access for
-individual people or LDAP groups. 
+individual people or LDAP groups.
 - `Number of runs`: number of runs in the product.
 - `Latest store to the product`: date of the latest run storage.
 - `Run store in progress`: show run names if a storage is in progress.
@@ -400,17 +404,30 @@ This report is a bug but we don't want to fix it.
 ![Review statuses](images/reports/review_statuses.png)
 
 
-Review statuses are connected to
-[report hashes](https://github.com/Ericsson/codechecker/blob/master/docs/analyzer/report_identification.md).
-If the same report can be found in multiple runs it will have the same review
-status.
-
-It can be changed on the [GUI](#userguide-change-review-status) or by using
+Review status can be set on the [GUI](#userguide-change-review-status) or by using
 [source code comments ](https://github.com/Ericsson/codechecker/blob/master/docs/analyzer/user_guide.md#source-code-comments)
 (*codechecker_false_positive*, *codechecker_confirmed*, etc.)
 
+Review status set in source comments are applied on the individual report instances, while
+review status set in the GUI are added as Review Status Rules connected to
+[report hashes](https://github.com/Ericsson/codechecker/blob/master/docs/analyzer/report_identification.md).
+
+So when  you chang the review status of a report in the GUI,
+it will change the review status in all reports with the same hash
+in all runs. Reports stored in the future with the same hash will also get the same review status.
+
+So once you set the review status in the GUI,
+there is no need to set the same review status again in other runs.
+
+
+
 **Note**: source code comment is stronger and can overwrite the value in the
 database.
+
+Review status values added in the WEB GUI are stored as Review Status Rules
+and can be managed in the Configuration/ReviewStatusRules tab.
+![Review Status Rules](images/review_status_rules/review_status.rules.png)
+
 
 ## Detection status
 The detection status is the state of a bug report in a run.

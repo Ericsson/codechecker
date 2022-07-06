@@ -200,9 +200,10 @@ int f(int x) { return 1 / x; }
         success = self._cc_client.addComment(report_id, comment)
         self.assertTrue(success)
 
-        # Change review status.
-        success = self._cc_client.changeReviewStatus(
-            report_id, ReviewStatus.CONFIRMED, 'Real bug')
+        # Change review status with a review status rule.
+        success = self._cc_client.addReviewStatusRule(
+            report.bugHash, ReviewStatus.CONFIRMED,
+            'Real bug')
         self.assertTrue(success)
 
         # Remove the first storage.

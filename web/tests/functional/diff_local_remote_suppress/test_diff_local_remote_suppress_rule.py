@@ -88,8 +88,8 @@ class DiffLocalRemoteSuppressRule(unittest.TestCase):
             [project_orig_run.runId], 500, 0, None, report_filter, None, False)
 
         for report in reports:
-            self._cc_client.changeReviewStatus(
-                report.reportId,
+            self._cc_client.addReviewStatusRule(
+                report.bugHash,
                 ReviewStatus.FALSE_POSITIVE,
                 "not a bug")
 
