@@ -5078,6 +5078,13 @@
       "profile:sensitive",
       "severity:LOW"
     ],
+    "misc-confusable-identifiers": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/confusable-identifiers.html",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
     "misc-dangling-handle": [
       "doc_url:https://releases.llvm.org/5.0.0/tools/clang/tools/extra/docs/clang-tidy/checks/misc-dangling-handle.html",
       "profile:default",
@@ -5414,6 +5421,11 @@
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/modernize-loop-convert.html",
       "profile:extreme",
       "severity:STYLE"
+    ],
+    "modernize-macro-to-enum": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/modernize/macro-to-enum.html",
+      "profile:extreme",
+      "severity:LOW"
     ],
     "modernize-make-shared": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/modernize-make-shared.html",
