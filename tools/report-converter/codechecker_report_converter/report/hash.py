@@ -194,7 +194,7 @@ def get_report_path_hash(report: Report) -> str:
     for event in report.bug_path_events:
         line = str(event.line)
         col = str(event.column)
-        report_path_hash += f"{line}|{col}|{event.message}{event.file.name}"
+        report_path_hash += f"{line}|{col}|{event.message}|{event.file.path}"
 
     report_path_hash += report.checker_name
     if report.report_hash:
