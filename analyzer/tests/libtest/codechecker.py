@@ -129,7 +129,7 @@ def log_and_analyze(codechecker_cfg, test_project_path, clean_project=True):
 
 def check_force_ctu_capable(is_capable):
     """
-    Returns True if the given parameter is True of if CTU is force enabled by
+    Returns True if the given parameter is True or if CTU is force enabled by
     the 'CC_TEST_FORCE_CTU_CAPABLE' environment variable.
     """
     if not is_capable:
@@ -140,6 +140,20 @@ def check_force_ctu_capable(is_capable):
             pass
 
     return is_capable
+
+
+def check_force_extdef_mapping_can_read_pch():
+    """
+    Returns True if extdef mapping is force enabled by the
+    'CC_TEST_FORCE_EXTDEF_MAPPING_CAN_READ_PCH' environment variable.
+    """
+    try:
+        return bool(util.strtobool(
+            os.environ['CC_TEST_FORCE_EXTDEF_MAPPING_CAN_READ_PCH']))
+    except (ValueError, KeyError):
+        pass
+
+    return False
 
 
 def is_ctu_capable(output: str) -> bool:

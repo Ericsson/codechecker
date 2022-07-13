@@ -172,6 +172,23 @@ class CTUAutodetection:
             is not False
 
     @property
+    def extdef_mapping_can_read_pch(self):
+        """
+        Detects if the current clang-extdef-mapping can read PCH (.ast) files.
+        """
+
+        tool_path = self.mapping_tool_path
+
+        if not tool_path:
+            return False
+
+        help = invoke_binary_checked(tool_path, ['-help'], self.environ)
+        LOG.debug("output of clang-extdef-mapping\n %s" % help)
+        if not help:
+            return False
+        return 'ast files' in help
+
+    @property
     def is_on_demand_ctu_available(self):
         """
         Detects if the current Clang supports on-demand parsing of ASTs for

@@ -455,6 +455,10 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             handler.path_env_extra = context.path_env_extra
             handler.ld_lib_path_extra = context.ld_lib_path_extra
 
+            handler.detect_extdef_mapping_can_read_pch()
+            LOG.debug("extdef_mapping_can_read_pch: %s",
+                      handler.extdef_mapping_can_read_pch)
+
         try:
             with open(args.clangsa_args_cfg_file, 'r', encoding='utf8',
                       errors='ignore') as sa_cfg:
