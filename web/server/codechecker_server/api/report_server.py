@@ -2903,8 +2903,16 @@ class ThriftRequestHandler:
                 LOG.error(ex)
                 return False
 
-        # Remove unused data (files, comments, etc.) from the database.
-        db_cleanup.remove_unused_data(self._Session)
+        # Remove unused comments and unused analysis info from the database.
+        # Originally db_cleanup.remove_unused_data() was used here which
+        # removes unused file entries too. However, removing files at the same
+        # time with a concurrently ongoing storage may result in a foreign key
+        # constraint error. An alternative solution can be adding the last
+        # access timestamp to file entries to delay their removal (and avoid
+        # removing frequently accessed files). The same comment applies to
+        # removeRun() function.
+        db_cleanup.remove_unused_comments(self._Session)
+        db_cleanup.remove_unused_analysis_info(self._Session)
 
         return True
 
@@ -2940,8 +2948,15 @@ class ThriftRequestHandler:
         # date.
         self._set_run_data_for_curr_product(-1)
 
-        # Remove unused data (files, comments, etc.) from the database.
-        db_cleanup.remove_unused_data(self._Session)
+        # Remove unused comments and unused analysis info from the database.
+        # Originally db_cleanup.remove_unused_data() was used here which
+        # removes unused file entries tool. However removing files at the same
+        # time with a storage concurrently results foreign key constraint
+        # error. An alternative solution can be adding a timestamp to file
+        # entries to delay their removal. The same comment applies to
+        # removeRunReports() function.
+        db_cleanup.remove_unused_comments(self._Session)
+        db_cleanup.remove_unused_analysis_info(self._Session)
 
         return True
 
