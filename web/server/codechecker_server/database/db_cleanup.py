@@ -52,6 +52,14 @@ def remove_expired_run_locks(session_maker):
 def remove_unused_files(session_maker):
     LOG.debug("Garbage collection of dangling files started...")
 
+    # File deletion is a relatively slow operation due to database cascades.
+    # Removing files in big chunks prevents reaching a potential database
+    # statement timeout. This hard-coded value is a safe choice according to
+    # some measurements. Maybe this could be a command-line parameter. But in
+    # the long terms we are planning to reduce cascade deletes by redesigning
+    # bug_path_events and bug_report_points tables.
+    CHUNK_SIZE = 500000
+
     with DBSession(session_maker) as session:
         try:
             bpe_files = session.query(BugPathEvent.file_id) \
@@ -61,10 +69,14 @@ def remove_unused_files(session_maker):
                 .group_by(BugReportPoint.file_id) \
                 .subquery()
 
-            session.query(File) \
-                .filter(File.id.notin_(bpe_files),
-                        File.id.notin_(brp_files)) \
-                .delete(synchronize_session=False)
+            files_to_delete = session.query(File.id) \
+                .filter(File.id.notin_(bpe_files), File.id.notin_(brp_files))
+            files_to_delete = map(lambda x: x[0], files_to_delete)
+
+            for chunk in util.chunks(iter(files_to_delete), CHUNK_SIZE):
+                session.query(File) \
+                    .filter(File.id.in_(chunk)) \
+                    .delete(synchronize_session=False)
 
             files = session.query(File.content_hash) \
                 .group_by(File.content_hash) \
