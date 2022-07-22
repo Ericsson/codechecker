@@ -155,8 +155,26 @@ def add_file_record(
         return file_record.id
 
     try:
-        file_record = File(file_path, content_hash, None, None)
-        session.add(file_record)
+        # Parallel storage of runs containing common file paths results a
+        # "duplicate key violation" error. This is handled by CodeChecker, so
+        # practically it causes no problem. The INSERT command of the second
+        # transaction will be thrown away. However, some DB systems are
+        # supporting "ON CONFLICT DO NOTHING" clause in INSERT statement which
+        # solves the same issue gracefully.
+        # TODO: "ON CONFLICT DO NOTHING" feature is available for SQLite engine
+        # too in SQLAlchemy 1.4.
+        if session.bind.dialect.name == 'postgresql':
+            insert_stmt = sqlalchemy.dialects.postgresql.insert(File).values(
+                filepath=file_path,
+                filename=os.path.basename(file_path),
+                content_hash=content_hash).on_conflict_do_nothing(
+                    index_elements=['filepath', 'content_hash'])
+            file_id = session.execute(insert_stmt).inserted_primary_key[0]
+            session.commit()
+            return file_id
+        else:
+            file_record = File(file_path, content_hash, None, None)
+            session.add(file_record)
         session.commit()
     except sqlalchemy.exc.IntegrityError as ex:
         LOG.error(ex)
@@ -537,9 +555,19 @@ class MassStoreRun:
                 compressed_content = zlib.compress(
                     source_file_content, zlib.Z_BEST_COMPRESSION)
 
-                fc = FileContent(content_hash, compressed_content, None)
+                if session.bind.dialect.name == 'postgresql':
+                    insert_stmt = sqlalchemy.dialects.postgresql \
+                        .insert(FileContent).values(
+                            content_hash=content_hash,
+                            content=compressed_content,
+                            blame_info=None).on_conflict_do_nothing(
+                                index_elements=['content_hash'])
 
-                session.add(fc)
+                    session.execute(insert_stmt)
+                else:
+                    fc = FileContent(content_hash, compressed_content, None)
+                    session.add(fc)
+
                 session.commit()
             except sqlalchemy.exc.IntegrityError:
                 # Other transaction moght have added the same content in
