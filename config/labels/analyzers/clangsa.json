@@ -271,6 +271,11 @@
       "profile:sensitive",
       "severity:MEDIUM"
     ],
+    "alpha.unix.Errno": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-unix-errno-c",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
     "alpha.unix.PthreadLock": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-unix-pthreadlock-c",
       "profile:extreme",
