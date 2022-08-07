@@ -138,6 +138,13 @@
       "sei-cert:pre31-c",
       "severity:MEDIUM"
     ],
+    " bugprone-assignment-in-if-condition": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/assignment-in-if-condition.html",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
     "bugprone-bad-signal-to-kill-thread": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone-bad-signal-to-kill-thread.html",
       "guideline:sei-cert",
@@ -5085,6 +5092,12 @@
       "profile:sensitive",
       "severity:LOW"
     ],
+    "misc-const-correctness": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/const-correctness.html",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+
     "misc-dangling-handle": [
       "doc_url:https://releases.llvm.org/5.0.0/tools/clang/tools/extra/docs/clang-tidy/checks/misc-dangling-handle.html",
       "profile:default",
