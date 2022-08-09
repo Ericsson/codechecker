@@ -93,11 +93,6 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
 
             # Enable or disable checkers.
             enabled_severity_levels = set()
-            suppressed_checkers = set()
-
-            for checker_name, value in config.checks().items():
-                if value[0] == CheckerState.disabled:
-                    suppressed_checkers.add(checker_name)
 
             # Cppcheck runs with all checkers enabled for the time being
             # the unneded checkers are passed as suppressed checkers
@@ -107,9 +102,16 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
                 analyzer_cmd.append('--enable=' +
                                     ','.join(enabled_severity_levels))
 
-            for checker_name in suppressed_checkers:
-                # TODO python3.9 removeprefix method is better than lstrip
-                analyzer_cmd.append('--suppress=' + checker_name.lstrip("cppcheck-"))
+            for checker_name, value in config.checks().items():
+                if value[0] == CheckerState.disabled:
+                    if checker_name.startswith("cppcheck-"):
+                        checker_name = checker_name[9:]
+                    # TODO python3.9 removeprefix method is better than lstrip
+                    analyzer_cmd.append('--suppress=' + checker_name)
+
+            # unusedFunction check is for whole program analysis, which is not compatible with
+            # per source file analysis.
+            analyzer_cmd.append('--suppress=unusedFunction')
 
             # Add extra arguments.
             analyzer_cmd.extend(config.analyzer_extra_arguments)
@@ -124,17 +126,20 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
                         .lower().replace("gnu", "c")
                     analyzer_cmd.extend(["--std=" + standard])
 
-            # TODO no platform translation eg. no cross platform analysis
-            analyzer_cmd.extend(["--platform=native"])
+            # By default there is no platform configuration, but a platform definition xml can be specified.
+            if 'platform' in config.analyzer_config:
+                analyzer_cmd.append("--platform=" + config.analyzer_config['platform'][0])
+            else:
+                analyzer_cmd.append("--platform=native")
 
-            if 'cppcheck-addons' in config.analyzer_config:
-                for addon in config.analyzer_config["cppcheck-addons"]:
+            if 'addons' in config.analyzer_config:
+                for addon in config.analyzer_config["addons"]:
                     analyzer_cmd.extend(["--addon=" + str(Path(addon).absolute())])
                 #addons = " ".join(config.analyzer_config["cppcheck-addons"])
                 #analyzer_cmd.extend(["--addon=" + addons])
 
-            if 'cppcheck-libraries' in config.analyzer_config:
-                for lib in config.analyzer_config["cppcheck-libraries"]:
+            if 'libraries' in config.analyzer_config:
+                for lib in config.analyzer_config["libraries"]:
                     analyzer_cmd.extend(["--library=" + str(Path(lib).absolute())])
 
             # Cppcheck does not handle compiler includes well
@@ -177,9 +182,12 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
     @classmethod
     def get_analyzer_config(cls, cfg_handler, environ):
         """
-        TODO add config options for cppcheck.
+        Config options for cppcheck.
         """
-        return []
+        return [("addons", "A list of cppcheck addon files."),
+                ("libraries", "A list of cppcheck library definiton files."),
+                ("platform", "The platform configuration .xml file.")
+                ]
 
     @classmethod
     def get_checker_config(cls, cfg_handler, environ):
@@ -280,10 +288,17 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
 
         analyzer_config = {}
 
-        if "cppcheck_addons" in args:
-            analyzer_config['cppcheck-addons'] = args.cppcheck_addons
-        if "cppcheck_libraries" in args:
-            analyzer_config["cppcheck-libraries"] = args.cppcheck_libraries
+        if 'analyzer_config' in args and \
+                isinstance(args.analyzer_config, list):
+            r = re.compile(r'(?P<analyzer>.+?):(?P<key>.+?)=(?P<value>.+)')
+            for cfg in args.analyzer_config:
+                m = re.search(r, cfg)
+                if m.group('analyzer') == cls.ANALYZER_NAME:
+                    key = m.group('key')
+                    if key not in analyzer_config:
+                        analyzer_config[key] = []
+                    analyzer_config[m.group('key')].append(m.group('value'))
+
         handler.analyzer_config = analyzer_config
 
         check_env = extend(context.path_env_extra,
@@ -296,19 +311,6 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
 
         # handler.compiler_resource_dir = \
         #    host_check.get_resource_dir(cppcheck_bin, context)
-
-        try:
-            with open(args.cppcheck_args_cfg_file, 'rb') as cppcheck_cfg:
-                handler.analyzer_extra_arguments = \
-                    re.sub(r'\$\((.*?)\)', replace_env_var,
-                           cppcheck_cfg.read().strip())
-                handler.analyzer_extra_arguments = \
-                    shlex.split(handler.analyzer_extra_arguments)
-        except IOError as ioerr:
-            LOG.debug_analyzer(ioerr)
-        except AttributeError as aerr:
-            # No Cppcheck arguments file was given in the command line.
-            LOG.debug_analyzer(aerr)
 
         checkers = cls.get_analyzer_checkers(handler, check_env)
 

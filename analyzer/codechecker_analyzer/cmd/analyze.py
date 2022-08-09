@@ -374,12 +374,6 @@ def add_arguments_to_parser(parser):
 
     cmd_config.add_option(analyzer_opts)
 
-    analyzer_opts.add_argument('--cppcheck-args',
-                               dest="cppcheck_args_cfg_file",
-                               required=False,
-                               default=argparse.SUPPRESS,
-                               help="Configuration file to pass cppcheck "
-                                    "command line arguments.")
 
     analyzer_opts.add_argument('--saargs',
                                dest="clangsa_args_cfg_file",
@@ -405,20 +399,6 @@ def add_arguments_to_parser(parser):
                                     "The file can be dumped by "
                                     "'CodeChecker analyzers --dump-config "
                                     "clang-tidy' command.")
-
-    analyzer_opts.add_argument('--cppcheck-addons',
-                               dest='cppcheck_addons',
-                               required=False,
-                               nargs='*',
-                               default=argparse.SUPPRESS,
-                               help="A list of cppcheck addon files.")
-
-    analyzer_opts.add_argument('--cppcheck-libraries',
-                               dest='cppcheck_libraries',
-                               required=False,
-                               nargs='*',
-                               default=argparse.SUPPRESS,
-                               help="A list of cppcheck library definiton files.")
 
     analyzer_opts.add_argument('--analyzer-config',
                                dest='analyzer_config',

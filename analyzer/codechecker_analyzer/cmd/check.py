@@ -320,13 +320,6 @@ used to generate a log file on the fly.""")
 
     cmd_config.add_option(analyzer_opts)
 
-    analyzer_opts.add_argument('--cppcheck-args',
-                               dest="cppcheck_args_cfg_file",
-                               required=False,
-                               default=argparse.SUPPRESS,
-                               help="Configuration file to pass cppcheck "
-                                    "command line arguments.")
-
     # TODO: One day, get rid of these. See Issue #36, #427.
     analyzer_opts.add_argument('--saargs',
                                dest="clangsa_args_cfg_file",
@@ -353,20 +346,6 @@ used to generate a log file on the fly.""")
                                     "The file can be dumped by "
                                     "'CodeChecker analyzers --dump-config "
                                     "clang-tidy' command.")
-
-    analyzer_opts.add_argument('--cppcheck-addons',
-                               dest='cppcheck_addons',
-                               required=False,
-                               nargs='*',
-                               default=argparse.SUPPRESS,
-                               help="A list of cppcheck addon files.")
-
-    analyzer_opts.add_argument('--cppcheck-libraries',
-                               dest='cppcheck_libraries',
-                               required=False,
-                               nargs='*',
-                               default=argparse.SUPPRESS,
-                               help="A list of cppcheck library definiton files.")
 
     analyzer_opts.add_argument('--analyzer-config',
                                dest='analyzer_config',
@@ -829,13 +808,10 @@ def main(args):
                           'skipfile',
                           'files',
                           'analyzers',
-                          'cppcheck_args_cfg_file',
                           'add_compiler_defaults',
                           'clangsa_args_cfg_file',
                           'tidy_args_cfg_file',
                           'tidy_config',
-                          'cppcheck_addons',
-                          'cppcheck_libraries',
                           'analyzer_config',
                           'checker_config',
                           'capture_analysis_output',
