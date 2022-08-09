@@ -1,14 +1,15 @@
 # -------------------------------------------------------------------------
-#                     The CodeChecker Infrastructure
-#   This file is distributed under the University of Illinois Open Source
-#   License. See LICENSE.TXT for details.
+#
+#  Part of the CodeChecker project, under the Apache License v2.0 with
+#  LLVM Exceptions. See LICENSE for license information.
+#  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
 # -------------------------------------------------------------------------
 """
 Result handler for Cppcheck.
 """
 from typing import Optional
 from pprint import pprint
-
 from codechecker_report_converter.report.parser.base import AnalyzerInfo
 from codechecker_report_converter.analyzers.cppcheck.analyzer_result import \
     AnalyzerResult
