@@ -111,8 +111,8 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
                     # TODO python3.9 removeprefix method is better than lstrip
                     analyzer_cmd.append('--suppress=' + checker_name)
 
-            # unusedFunction check is for whole program analysis, which is not compatible with
-            # per source file analysis.
+            # unusedFunction check is for whole program analysis,
+            # which is not compatible with per source file analysis.
             analyzer_cmd.append('--suppress=unusedFunction')
 
             # Add extra arguments.
@@ -121,37 +121,39 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             # Add includes.
             for analyzer_option in self.buildaction.analyzer_options:
                 if analyzer_option.startswith("-I") or \
-                    analyzer_option.startswith("-D"):
+                        analyzer_option.startswith("-D"):
                     analyzer_cmd.extend([analyzer_option])
                 elif analyzer_option.startswith("-std"):
                     standard = analyzer_option.split("=")[-1] \
                         .lower().replace("gnu", "c")
                     analyzer_cmd.extend(["--std=" + standard])
 
-            # By default there is no platform configuration, but a platform definition xml can be specified.
+            # By default there is no platform configuration,
+            # but a platform definition xml can be specified.
             if 'platform' in config.analyzer_config:
-                analyzer_cmd.append("--platform=" + config.analyzer_config['platform'][0])
+                analyzer_cmd.append(
+                        "--platform=" + config.analyzer_config['platform'][0])
             else:
                 analyzer_cmd.append("--platform=native")
 
             if 'addons' in config.analyzer_config:
                 for addon in config.analyzer_config["addons"]:
-                    analyzer_cmd.extend(["--addon=" + str(Path(addon).absolute())])
-                #addons = " ".join(config.analyzer_config["cppcheck-addons"])
-                #analyzer_cmd.extend(["--addon=" + addons])
+                    analyzer_cmd.extend(
+                            ["--addon=" + str(Path(addon).absolute())])
 
             if 'libraries' in config.analyzer_config:
                 for lib in config.analyzer_config["libraries"]:
-                    analyzer_cmd.extend(["--library=" + str(Path(lib).absolute())])
+                    analyzer_cmd.extend(
+                            ["--library=" + str(Path(lib).absolute())])
 
             # Cppcheck does not handle compiler includes well
-            #for include in self.buildaction.compiler_includes:
+            # for include in self.buildaction.compiler_includes:
             #    analyzer_cmd.extend(['-I',  include])
 
             # TODO Suggest a better place for this
             # cppcheck wont create the output folders for itself
             output_dir = Path(result_handler.workspace, "cppcheck",
-                    result_handler.buildaction_hash)
+                              result_handler.buildaction_hash)
             output_dir.mkdir(exist_ok=True)
 
             analyzer_cmd.append('--plist-output=' + str(output_dir))
@@ -206,10 +208,10 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         file_name = os.path.splitext(os.path.basename(self.source_file))[0]
         cppcheck_out = os.path.join(result_handler.workspace, "cppcheck",
                                     result_handler.buildaction_hash,
-                                   file_name + '.plist')
+                                    file_name + '.plist')
         if os.path.exists(cppcheck_out):
             codechecker_out = os.path.join(result_handler.workspace,
-                                  result_handler.analyzer_result_file)
+                                           result_handler.analyzer_result_file)
 
             shutil.copy2(cppcheck_out, codechecker_out)
             Path(cppcheck_out).rename(cppcheck_out + ".bak")

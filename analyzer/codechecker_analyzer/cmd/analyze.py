@@ -374,7 +374,6 @@ def add_arguments_to_parser(parser):
 
     cmd_config.add_option(analyzer_opts)
 
-
     analyzer_opts.add_argument('--saargs',
                                dest="clangsa_args_cfg_file",
                                required=False,

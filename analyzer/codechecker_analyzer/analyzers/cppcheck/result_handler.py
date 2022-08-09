@@ -60,4 +60,3 @@ class CppcheckResultHandler(ResultHandler):
         report_file.create(
             self.analyzer_result_file, reports, self.checker_labels,
             self.analyzer_info)
-
