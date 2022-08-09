@@ -13,7 +13,8 @@ import os
 
 from typing import Dict, List
 
-from codechecker_report_converter.report import BugPathEvent, Range, File, Report, report_file
+from codechecker_report_converter.report import BugPathEvent, \
+        Range, File, Report, report_file
 
 from ..analyzer_result import AnalyzerResultBase
 
@@ -50,7 +51,8 @@ class AnalyzerResult(AnalyzerResultBase):
                 plist_file, None, file_cache)
             reports.extend(plist_reports)
 
-        # Fix repotrs by adding the actual warining message as the last bug_path_event
+        # Fix repotrs by adding the actual warining message
+        # as the last bug_path_event
         for report in reports:
             bpe = BugPathEvent(
                     report.message,
@@ -58,9 +60,9 @@ class AnalyzerResult(AnalyzerResultBase):
                     report.line,
                     report.column,
                     Range(report.line,
-                        report.column,
-                        report.line,
-                        report.column))
+                          report.column,
+                          report.line,
+                          report.column))
             if bpe != report.bug_path_events[-1]:
                 report.bug_path_events.append(bpe)
 
