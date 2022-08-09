@@ -18,8 +18,7 @@ import xml.etree.ElementTree as ET
 
 from codechecker_common.logger import get_logger
 
-from codechecker_analyzer.env import extend, get_binary_in_path, \
-    replace_env_var
+from codechecker_analyzer.env import extend, get_binary_in_path
 
 from .. import analyzer_base
 

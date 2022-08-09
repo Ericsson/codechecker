@@ -18,8 +18,6 @@ from codechecker_report_converter.report.hash import get_report_hash, HashType
 from codechecker_common.logger import get_logger
 from codechecker_common.skiplist_handler import SkipListHandlers
 
-from .config_handler import CppcheckConfigHandler
-
 from ..result_handler_base import ResultHandler
 
 LOG = get_logger('analyzer.cppcheck')
