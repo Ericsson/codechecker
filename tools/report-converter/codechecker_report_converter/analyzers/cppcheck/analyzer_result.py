@@ -12,7 +12,6 @@ import logging
 import os
 
 from typing import Dict, List
-from pprint import pprint
 
 from codechecker_report_converter.report import BugPathEvent, Range, File, Report, report_file
 

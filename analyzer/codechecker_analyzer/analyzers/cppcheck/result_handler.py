@@ -9,7 +9,6 @@
 Result handler for Cppcheck.
 """
 from typing import Optional
-from pprint import pprint
 from codechecker_report_converter.report.parser.base import AnalyzerInfo
 from codechecker_report_converter.analyzers.cppcheck.analyzer_result import \
     AnalyzerResult
