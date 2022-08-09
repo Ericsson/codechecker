@@ -1,5 +1,6 @@
 {
   "analyzer": "cppcheck",
+  "analyzer_version": "2.9",
   "labels": {
     "cppcheck-AssignmentAddressToInteger": [
       "severity:LOW"
@@ -29,6 +30,10 @@
       "severity:MEDIUM"
     ],
     "cppcheck-accessMoved": [
+      "profile:default",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-argumentSize": [
       "profile:default",
       "severity:MEDIUM"
     ],
@@ -63,6 +68,9 @@
     "cppcheck-assignmentInAssert": [
       "profile:default",
       "severity:MEDIUM"
+    ],
+    "cppcheck-assignmentInCondition": [
+      "severity:LOW"
     ],
     "cppcheck-autoVariables": [
       "profile:default",
@@ -123,6 +131,9 @@
       "profile:default",
       "severity:HIGH"
     ],
+    "cppcheck-compareValueOutOfTypeRangeError": [
+      "severity:LOW"
+    ],
     "cppcheck-comparisonError": [
       "severity:STYLE"
     ],
@@ -142,6 +153,12 @@
     ],
     "cppcheck-comparisonOfTwoFuncsReturningBoolError": [
       "severity:STYLE"
+    ],
+    "cppcheck-constParameter": [
+      "severity:LOW"
+    ],
+    "cppcheck-constParameterCallback": [
+      "severity:LOW"
     ],
     "cppcheck-constStatement": [
       "profile:default",
@@ -283,6 +300,10 @@
       "severity:MEDIUM"
     ],
     "cppcheck-ignoredReturnValue": [
+      "profile:default",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-incompatibleFileOpen": [
       "profile:default",
       "severity:MEDIUM"
     ],
@@ -523,8 +544,16 @@
     "cppcheck-missingIncludeSystem": [
       "severity:LOW"
     ],
+    "cppcheck-missingMemberCopy": [
+      "profile:default",
+      "severity:MEDIUM"
+    ],
     "cppcheck-missingOverride": [
       "severity:STYLE"
+    ],
+    "cppcheck-missingReturn": [
+      "profile:default",
+      "severity:HIGH"
     ],
     "cppcheck-moduloAlwaysTrueFalse": [
       "profile:default",
@@ -543,11 +572,19 @@
     "cppcheck-nanInArithmeticExpression": [
       "severity:STYLE"
     ],
+    "cppcheck-negativeArraySize": [
+      "profile:default",
+      "severity:HIGH"
+    ],
     "cppcheck-negativeContainerIndex": [
       "profile:default",
       "severity:HIGH"
     ],
     "cppcheck-negativeIndex": [
+      "profile:default",
+      "severity:HIGH"
+    ],
+    "cppcheck-negativeMemoryAllocationSize": [
       "profile:default",
       "severity:HIGH"
     ],
@@ -621,6 +658,14 @@
     "cppcheck-overlappingStrcmp": [
       "profile:default",
       "severity:MEDIUM"
+    ],
+    "cppcheck-overlappingWriteFunction": [
+      "profile:default",
+      "severity:HIGH"
+    ],
+    "cppcheck-overlappingWriteUnion": [
+      "profile:default",
+      "severity:HIGH"
     ],
     "cppcheck-passedByValue": [
       "severity:LOW"
@@ -712,6 +757,10 @@
       "profile:default",
       "severity:HIGH"
     ],
+    "cppcheck-rethrowNoCurrentException": [
+      "profile:default",
+      "severity:HIGH"
+    ],
     "cppcheck-returnAddressOfAutoVariable": [
       "profile:default",
       "severity:HIGH"
@@ -738,6 +787,9 @@
     "cppcheck-returnTempReference": [
       "profile:default",
       "severity:HIGH"
+    ],
+    "cppcheck-returnStdMoveLocal": [
+      "severity:LOW"
     ],
     "cppcheck-sameIteratorExpression": [
       "severity:STYLE"
@@ -904,6 +956,14 @@
     ],
     "cppcheck-unhandledExceptionSpecification": [
       "severity:STYLE"
+    ],
+    "cppcheck-uninitDerivedMemberVar": [
+      "profile:default",
+      "severity:MEDIUM"
+    ],
+    "cppcheck-uninitDerivedMemberVarPrivate": [
+      "profile:default",
+      "severity:MEDIUM"
     ],
     "cppcheck-uninitMemberVar": [
       "profile:default",
