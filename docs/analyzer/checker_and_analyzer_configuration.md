@@ -191,3 +191,74 @@ configuration arguments (json in this case) should be in one line :
 ```
 -config="{ "Checks": "clang-diagnostic-*,clang-analyzer-*", "WarningsAsErrors": "", "HeaderFilterRegex": "", "AnalyzeTemporaryDtors": false, "CheckOptions": [ { "key": "google-readability-braces-around-statements.ShortStatementLines", "value": "1" }, { "key": "modernize-loop-convert.MaxCopySize", "value": "16" }, { "key": "modernize-loop-convert.NamingStyle", "value": "CamelCase" }, { "key": "modernize-use-nullptr.NullMacros", "value": "NULL" } ] }"
 ```
+
+# Cppcheck
+
+As of CodeChecker 6.20, Codechecker can now execute the Cppcheck analyzer.
+
+## Configuration
+
+The Cppcheck analyzer can be configured with --analyzer-config cppcheck:* paramterers.
+
+The supporte analyzer configuration items can be listed with `CodeChecker analyzers --analyzer-config cppcheck --details`
+
+As of the CodeChecker 6.20, the following options are supported:
+
+* `cppcheck:addons` A list of cppcheck addon files.
+* `cppcheck:libraries` A list of cppcheck library definiton files.
+* `cppcheck:platform` The platform configuration .xml file.
+
+Please note that for addons and libraries, multiple items can be specified in the following format: --analyzer-config cppcheck:addons <addon.py> --analyzer-config cppcheck:addons <addon2.py>.
+
+Cppcheck only supports a limited number of platforms. Custom bit lengths can be specified with a platform file.
+
+An example platform file from the cppcheck manual:
+
+``` xml
+<?xml version="1"?>
+<platform>
+  <char_bit>8</char_bit>
+  <default-sign>signed</default-sign>
+  <sizeof>
+    <short>2</short>
+    <int>4</int>
+    <long>4</long>
+    <long-long>8</long-long>
+    <float>4</float>
+    <double>8</double>
+    <long-double>12</long-double>
+    <pointer>4</pointer>
+    <size_t>4</size_t>
+    <wchar_t>2</wchar_t>
+  </sizeof>
+</platform>
+```
+
+## Limitations
+
+The following limitations need to be considered when using Cppcheck:
+
+* The whole program analysis feature of cppcheck is not supported. Cppcheck is invoked for every item in the provided compilation database.
+  * The unususedFunction checker of cppcheck is always disabled by default.
+  * The CTU functionality of cppcheck is not supported.
+* The severity categorizations are only provided for the built in checkers. Addon checkeckers can be used, but their report's severity will be displayed as`Unspecified`.
+* The Cppcheck categorization of checkers is not yet introduced into the Cppcheck label file. To enable a whole category, each individual checker needs to be enabled with the `--enable` flag.
+* All Cppcheck Errors and Warnings are enabled by default.
+* If not configured, `Native` platform will be assumed for the analyzed compilation database. No platform translation will occur by CodeChecker. If other is needed, please provide a platform file with the correct bit lengths.
+* To reach maximum compatibility with the existing CodeChecker invocation, Cppcheck is ran with the `--enable=all` parameter, and all non needed checkers are passed in as `--suppress=<checker>`.
+* Due to legal reasons, no Misra rule texts are supplied.
+
+
+## Example invocation
+
+``` shell
+CodeChecker check -l ./compile_commands.json \
+--analyzers cppcheck \ # Run Cppcheck analyzer only
+-e cppcheck-missingOverride \ # enable the missingOverride cppcheck check
+-d cppcheck-virtualCallInConstructor \ # disable the virtualCallInConstructor check
+--analyzer-config cppcheck:addons=../cppcheck/addons/misc.py \ # enable the misc checks
+--analyzer-config cppcheck:addons=../cppcheck/addons/cert.py \ # enable cert cheks
+--analyzer-config cppcheck:libraries=../cppcheck/cfg/zlib.cfg \ # add zlib definitons
+--analyzer-config cppcheck:libraries=../cppcheck/cfg/gnu.cfg \ # add gnu definitions
+-o ./reports
+```

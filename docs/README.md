@@ -36,7 +36,7 @@ macOS (OS X) development environment.
 
 # Main features
 ## Command line C/C++ Analysis
-  * Executes [_Clang-Tidy_](http://clang.llvm.org/extra/clang-tidy/) and [_Clang Static Analyzer_](http://clang-analyzer.llvm.org/) with Cross-Translation Unit analysis, Statistical Analysis (when checkers are available).
+  * Executes [_Clang-Tidy_](http://clang.llvm.org/extra/clang-tidy/), [_Cppcheck_](https://cppcheck.sourceforge.io/) and [_Clang Static Analyzer_](http://clang-analyzer.llvm.org/) with Cross-Translation Unit analysis, Statistical Analysis (when checkers are available).
   * Creates the JSON compilation database by wiretapping any build process (e.g., `CodeChecker log -b "make"`).
   * Automatically analyzes GCC cross-compiled projects: detecting GCC or Clang compiler configuration and forming the corresponding clang analyzer invocations.
   * Incremental analysis: Only the changed files and its dependencies need to be reanalyzed.
@@ -239,7 +239,8 @@ The following commands are used to bootstrap CodeChecker on Ubuntu 20.04 LTS:
 # Install mandatory dependencies for a development and analysis environment.
 # NOTE: clang or clang-tidy can be any sufficiently fresh version, and need not
 #       come from package manager!
-sudo apt-get install clang clang-tidy build-essential curl gcc-multilib \
+#       In case of Cppcheck, the minimal supported version is 1.80.
+sudo apt-get install clang clang-tidy cppcheck build-essential curl gcc-multilib \
       git python3-dev python3-venv
 
 # Install nodejs dependency for web. In case of Debian/Ubuntu you can use the
