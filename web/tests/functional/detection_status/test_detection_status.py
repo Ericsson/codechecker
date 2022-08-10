@@ -320,7 +320,7 @@ int main()
                                                 None,
                                                 False)
 
-        self.assertEqual(len(reports), 2)
+        self.assertEqual(len(reports), 5)
 
     def test_detection_status_off(self):
         """

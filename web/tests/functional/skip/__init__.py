@@ -55,7 +55,7 @@ def setup_package():
         'check_env': test_env,
         'workspace': TEST_WORKSPACE,
         'checkers': [],
-        'analyzers': ['clangsa', 'clang-tidy']
+        'analyzers': ['clangsa']
     }
 
     ret = project.clean(test_project, test_env)
