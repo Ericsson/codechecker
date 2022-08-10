@@ -40,7 +40,9 @@ class CppcheckResultHandler(ResultHandler):
         """
         LOG.debug_analyzer(self.analyzer_stdout)
 
-        reports = AnalyzerResult().get_reports(self.analyzer_result_file)
+        reports = report_file.get_reports(
+            self.analyzer_result_file, self.checker_labels,
+            source_dir_path=self.source_dir_path)
         reports = [r for r in reports if not r.skip(skip_handlers)]
         for report in reports:
             if not report.checker_name.startswith("cppcheck-"):
