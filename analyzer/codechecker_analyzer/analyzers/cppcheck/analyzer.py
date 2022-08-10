@@ -120,6 +120,7 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             # Add includes.
             for analyzer_option in self.buildaction.analyzer_options:
                 if analyzer_option.startswith("-I") or \
+                        analyzer_option.startswith("-U") or \
                         analyzer_option.startswith("-D"):
                     analyzer_cmd.extend([analyzer_option])
                 elif analyzer_option.startswith("-std"):
