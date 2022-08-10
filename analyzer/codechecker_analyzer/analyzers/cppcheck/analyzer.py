@@ -332,10 +332,6 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         for checker in set(checkers_from_label):
             if checker not in parsed_set:
                 checkers.append((checker, ""))
- 
-        # TODO implement this / Read cppcheck checkers from the label file.
-        # cppcheck_checkers = context.checker_labels.get(cls.ANALYZER_NAME +
-        #                                               '_checkers')
 
         try:
             cmdline_checkers = args.ordered_checkers
