@@ -204,16 +204,20 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         Copies the generated plist file with a unique name,
 
         """
-        file_name = os.path.splitext(os.path.basename(self.source_file))[0]
-        cppcheck_out = os.path.join(result_handler.workspace, "cppcheck",
-                                    result_handler.buildaction_hash,
-                                    file_name + '.plist')
-        if os.path.exists(cppcheck_out):
+        # Cppcheck can generate an id into the output plist file name
+        # we get "the" *.plist file from the unique output folder
+
+        cppcheck_out_folder = Path(result_handler.workspace,
+                                   "cppcheck",
+                                   result_handler.buildaction_hash)
+        cppcheck_outs = cppcheck_out_folder.glob('**/*.plist')
+
+        for cppcheck_out in list(cppcheck_outs):
             codechecker_out = os.path.join(result_handler.workspace,
                                            result_handler.analyzer_result_file)
 
             shutil.copy2(cppcheck_out, codechecker_out)
-            Path(cppcheck_out).rename(cppcheck_out + ".bak")
+            Path(cppcheck_out).rename(str(cppcheck_out) + ".bak")
 
     @classmethod
     def resolve_missing_binary(cls, configured_binary, env):
@@ -317,6 +321,17 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
 
         checkers = cls.get_analyzer_checkers(handler, check_env)
 
+        # Cppcheck can and will report with checks that have a different
+        # name than marked in the --errorlist xml. To be able to suppress
+        # these reports, the checkerlist needs to be extended by those found
+        # in the label file.
+        checker_labels = context.checker_labels
+        checkers_from_label = checker_labels.checkers("cppcheck")
+        parsed_set = set([data[0] for data in checkers])
+        for checker in set(checkers_from_label):
+            if checker not in parsed_set:
+                checkers.append((checker, ""))
+ 
         # TODO implement this / Read cppcheck checkers from the label file.
         # cppcheck_checkers = context.checker_labels.get(cls.ANALYZER_NAME +
         #                                               '_checkers')
