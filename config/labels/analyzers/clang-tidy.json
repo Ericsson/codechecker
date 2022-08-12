@@ -138,7 +138,7 @@
       "sei-cert:pre31-c",
       "severity:MEDIUM"
     ],
-    " bugprone-assignment-in-if-condition": [
+    "bugprone-assignment-in-if-condition": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/assignment-in-if-condition.html",
       "profile:default",
       "profile:extreme",
