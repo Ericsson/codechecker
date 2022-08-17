@@ -28,7 +28,7 @@ a CodeChecker server.
   * [Sphinx](#sphinx)
   * [Sparse](#sparse)
   * [cpplint](#cpplint)
-* [Plist to html tool](plist-to-html)
+* [Plist to html tool](#plist-to-html-tool)
   * [Usage](#plist-to-html-usage)
 * [Report hash generation module](#report-hash-generation-module)
   * [Generate path sensitive report hash](#generate-path-sensitive-report-hash)
