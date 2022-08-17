@@ -1,0 +1,13 @@
+[
+  {
+    "directory": ".",
+    "command": "g++ -c space_in_lookup_name.cpp -o space_in_lookup_name.o",
+    "file": "space_in_lookup_name.cpp"
+  },
+  {
+    "directory": ".",
+    "command": "g++ -c space_in_lookup_name_trigger.cpp -o space_in_lookup_name_trigger.o",
+    "file": "space_in_lookup_name_trigger.cpp"
+  }
+]
+

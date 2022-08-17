@@ -37,7 +37,13 @@ class TestCtu(unittest.TestCase):
 
     def setUp(self):
         """ Set up workspace."""
+        self.setUpWith('test_files_c', 'buildlog.json', 'reports_c')
 
+    def setUpWith(self, input_dir, buildlog_json, report_dir):
+        """
+        Set up workspace with a given parameters. If called multiple times,
+        tearDown() must be called before this function.
+        """
         # TEST_WORKSPACE is automatically set by test package __init__.py .
         self.test_workspace = os.environ['TEST_WORKSPACE']
 
@@ -47,9 +53,9 @@ class TestCtu(unittest.TestCase):
         # Get the CodeChecker cmd if needed for the tests.
         self._codechecker_cmd = env.codechecker_cmd()
         self.env = env.codechecker_env()
-        self.report_dir = os.path.join(self.test_workspace, 'reports')
+        self.report_dir = os.path.join(self.test_workspace, report_dir)
         os.makedirs(self.report_dir)
-        self.test_dir = os.path.join(os.path.dirname(__file__), 'test_files')
+        self.test_dir = os.path.join(os.path.dirname(__file__), input_dir)
 
         # Get if clang is CTU-capable or not.
         cmd = [self._codechecker_cmd, 'analyze', '-h']
@@ -63,15 +69,11 @@ class TestCtu(unittest.TestCase):
         print("'analyze' reported CTU-on-demand-compatibility? " +
               str(getattr(self, ON_DEMAND_ATTR)))
 
-        self.buildlog = os.path.join(self.test_workspace, 'buildlog.json')
-        self.complex_buildlog = os.path.join(
-            self.test_workspace, 'complex_buildlog.json')
+        self.buildlog = os.path.join(self.test_workspace, buildlog_json)
 
         # Fix the "template" build JSONs to contain a proper directory.
         env.adjust_buildlog(
-            'buildlog.json', self.test_dir, self.test_workspace)
-        env.adjust_buildlog(
-            'complex_buildlog.json', self.test_dir, self.test_workspace)
+            buildlog_json, self.test_dir, self.test_workspace)
 
         self.__old_pwd = os.getcwd()
         os.chdir(self.test_workspace)
@@ -148,6 +150,21 @@ class TestCtu(unittest.TestCase):
         self.__test_ctu_collect(on_demand=True)
 
     @skipUnlessCTUCapable
+    def test_ctu_analyze_ast_dump_based_cpp(self):
+        """ Test CTU analyze phase with AST-dump based analysis. """
+
+        self.__test_ctu_analyze_cpp(on_demand=False)
+
+    @skipUnlessCTUCapable
+    @skipUnlessCTUOnDemandCapable
+    def test_ctu_analyze_on_demand_parsed_cpp(self):
+        """
+        Test CTU analyze phase with on-demand-parsed AST based analysis.
+        """
+
+        self.__test_ctu_analyze_cpp(on_demand=True)
+
+    @skipUnlessCTUCapable
     def test_ctu_analyze_ast_dump_based(self):
         """ Test CTU analyze phase with AST-dump based analysis. """
 
@@ -180,6 +197,22 @@ class TestCtu(unittest.TestCase):
         self.__do_ctu_collect(on_demand=on_demand)
         output = self.__do_ctu_analyze(on_demand=on_demand)
         self.__check_ctu_analyze(output)
+
+    def __test_ctu_analyze_cpp(self, on_demand=False):
+        """ Test CTU analyze phase. """
+
+        self.tearDown()
+        self.setUpWith('test_files_cpp', 'buildlog.json', 'reports_cpp')
+
+        self.__do_ctu_collect(on_demand=on_demand)
+        # We specifically check whether spaces in the external function map
+        # file work properly. The format of the file changed in between
+        # clang-15 and clang-16, and this call checks whether clang is new
+        # enough.
+        if not self.__is_externalFnDef_in_new_format(on_demand=on_demand):
+            return
+        output = self.__do_ctu_analyze(on_demand=on_demand)
+        self.__check_ctu_analyze_cpp(output)
 
     def __do_ctu_all(self, on_demand):
         """ Execute a full CTU run. """
@@ -224,6 +257,24 @@ class TestCtu(unittest.TestCase):
                 ast_dir = os.path.join(ctu_dir, arch, 'ast')
                 self.assertTrue(os.path.isdir(ast_dir))
 
+    def __is_externalFnDef_in_new_format(self, on_demand):
+        """
+        The format of the external function map file changed in between
+        clang-15 and clang-16, check whether this is the updated format.
+        """
+
+        ctu_dir = os.path.join(self.report_dir, 'ctu-dir')
+        self.assertTrue(os.path.isdir(ctu_dir))
+        for arch in glob.glob(os.path.join(ctu_dir, '*')):
+            new_map_file = os.path.join(ctu_dir, arch, 'externalDefMap.txt')
+
+            try:
+                fn = open(new_map_file, "r")
+                line = fn.readline()
+                return line[0].isdigit()
+            except IOError:
+                print("Error: File does not appear to exist.")
+
     def __do_ctu_analyze(self, on_demand):
         """ Execute CTU analyze phase. """
 
@@ -267,6 +318,24 @@ class TestCtu(unittest.TestCase):
         with open(os.path.join(connections_dir, connections_file)) as f:
             self.assertTrue(f.readline().endswith('lib.c'))
 
+    def __check_ctu_analyze_cpp(self, output):
+        """ Check artifacts of CTU analyze phase. """
+
+        self.assertNotIn("Failed to analyze", output)
+        self.assertIn("analyzed space_in_lookup_name.cpp successfully", output)
+        self.assertIn("analyzed space_in_lookup_name_trigger.cpp "
+                      "successfully", output)
+
+        cmd = [self._codechecker_cmd, 'parse', self.report_dir]
+        output, _, result = call_command(cmd, cwd=self.test_dir, env=self.env)
+        self.assertEqual(result, 2,
+                         "Parsing could not found the expected bug.")
+        self.assertIn("defect(s) in space_in_lookup_name.cpp", output)
+        self.assertIn("no defects in space_in_lookup_name_trigger.cpp",
+                      output)
+        self.assertIn("space_in_lookup_name.cpp:2:", output)
+        self.assertIn("[core.DivideZero]", output)
+
     @skipUnlessCTUCapable
     def test_ctu_makefile_generation(self):
         """ Test makefile generation in CTU mode. """
@@ -296,6 +365,10 @@ class TestCtu(unittest.TestCase):
         """ Test the generated YAML used in CTU on-demand mode.
         The YAML file should not contain newlines in individual entries in the
         generated textual format. """
+
+        self.tearDown()
+        self.setUpWith('test_files_c', 'complex_buildlog.json', 'reports_c')
+
         # Copy test files to a directory which file path will be longer than
         # 128 chars to test the yaml parser.
         test_dir = os.path.join(
@@ -305,7 +378,7 @@ class TestCtu(unittest.TestCase):
         shutil.copytree(self.test_dir, test_dir)
 
         complex_buildlog = os.path.join(test_dir, 'complex_buildlog.json')
-        shutil.copy(self.complex_buildlog, complex_buildlog)
+        shutil.copy(self.buildlog, complex_buildlog)
         env.adjust_buildlog('complex_buildlog.json', test_dir, test_dir)
 
         cmd = [self._codechecker_cmd, 'analyze',
