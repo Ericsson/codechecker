@@ -195,10 +195,10 @@ For details see
 Useful tools that can also be used outside CodeChecker.
 
 * [Build Logger (to generate JSON Compilation Database from your builds)](/analyzer/tools/build-logger/README.md)
-* [Plist to HTML converter (to generate HTML files from the given plist files)](/docs/tools/plist_to_html.md)
+* [Plist to HTML converter (to generate HTML files from the given plist files)](/docs/tools/report-converter.md#plist-to-html-tool)
 * [Report Converter Tool (to convert analysis results from other analyzers to the codechecker report directory format))](/docs/tools/report-converter.md)
 * [Translation Unit Collector (to collect source files of a translation unit or to get source files which depend on the given header files)](/docs/tools/tu_collector.md)
-* [Report Hash generator (to generate unique hash identifiers for reports)](/docs/tools/codechecker_report_hash.md)
+* [Report Hash generator (to generate unique hash identifiers for reports)](/docs/tools/report-converter.md#report-hash-generation-module)
 
 ## Helper Scripts
 * [Helper Scripts for daily analysis](script_daily.md)
