@@ -14,6 +14,11 @@ import os
 import shlex
 import subprocess
 
+from distutils import util
+from typing import Dict
+
+from codechecker_analyzer import host_check
+
 from . import project
 
 
@@ -29,6 +34,7 @@ def call_command(cmd, cwd, env):
         print("\nTEST execute stderr:\n")
         print(err)
 
+    cmd_log = ' '.join([shlex.quote(x) for x in cmd])
     try:
         proc = subprocess.Popen(
             cmd,
@@ -41,13 +47,13 @@ def call_command(cmd, cwd, env):
         out, err = proc.communicate()
         if proc.returncode != 0:
             show(out, err)
-            print('Unsuccessful run: "' + ' '.join(cmd) + '"')
+            print(f'Unsuccessful run: {cmd_log}')
             print(proc.returncode)
         return out, err, proc.returncode
     except OSError as oerr:
         print(oerr)
         show(out, err)
-        print('Failed to run: "' + ' '.join(cmd) + '"')
+        print(f'Failed to run: {cmd_log}')
         raise
 
 
@@ -119,3 +125,48 @@ def log_and_analyze(codechecker_cfg, test_project_path, clean_project=True):
     except subprocess.CalledProcessError as cerr:
         print("Failed to call:\n" + ' '.join(cerr.cmd))
         return cerr.returncode
+
+
+def check_force_ctu_capable(is_capable):
+    """
+    Returns True if the given parameter is True of if CTU is force enabled by
+    the 'CC_TEST_FORCE_CTU_CAPABLE' environment variable.
+    """
+    if not is_capable:
+        try:
+            return bool(util.strtobool(
+                os.environ['CC_TEST_FORCE_CTU_CAPABLE']))
+        except (ValueError, KeyError):
+            pass
+
+    return is_capable
+
+
+def is_ctu_capable(output: str) -> bool:
+    """
+    Returns True if the used clang is CTU capable or if it's force enabled by
+    environment variable.
+    """
+    return check_force_ctu_capable('--ctu' in output)
+
+
+def is_ctu_on_demand_capable(output: str) -> bool:
+    """
+    Returns True if the used clang is CTU on demand capable or if it's force
+    enabled by environment variable.
+    """
+    return check_force_ctu_capable('--ctu-ast-mode' in output)
+
+
+def is_ctu_display_progress_capable(
+    clangsa_path: str,
+    env: Dict
+) -> bool:
+    """
+    Returns True if the used clang is CTU display progress capable or if it's
+    force enabled by environment variable.
+    """
+    ctu_display_progress_capable = host_check.has_analyzer_config_option(
+        clangsa_path, 'display-ctu-progress', env)
+
+    return check_force_ctu_capable(ctu_display_progress_capable)

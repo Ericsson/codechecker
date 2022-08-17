@@ -41,6 +41,7 @@ module.exports = {
     deleteSelectedRunsBtn: ".delete-run-btn",
     diffSelectedRunsBtn: ".diff-runs-btn",
     expandBtn: "button.v-data-table__expand-icon",
+    overlay: ".v-overlay.v-overlay--active",
   },
   sections: {
     table: {

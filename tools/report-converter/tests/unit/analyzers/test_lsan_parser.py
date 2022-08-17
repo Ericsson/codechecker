@@ -55,7 +55,8 @@ class LSANPListConverterTestCase(unittest.TestCase):
     def test_san(self):
         """ Test for the lsan.plist file. """
         self.analyzer_result.transform(
-            'lsan.out', self.cc_result_dir, plist.EXTENSION)
+            'lsan.out', self.cc_result_dir, plist.EXTENSION,
+            file_name="{source_file}_{analyzer}")
 
         with open('lsan.plist', mode='rb') as pfile:
             exp = plistlib.load(pfile)

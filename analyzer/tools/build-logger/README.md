@@ -7,7 +7,7 @@ This tool can capture the build process and generate a
 
 To build the project execute
 ~~~~~~~
-make -f Makefile.manual
+make all test
 ~~~~~~~
 
 ## Usage

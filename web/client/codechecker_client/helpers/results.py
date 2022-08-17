@@ -100,6 +100,10 @@ class ThriftResultsHelper(BaseClientHelper):
         pass
 
     @ThriftClientCall
+    def getReviewStatusRules(self, filter, sortMode, limit, offset):
+        pass
+
+    @ThriftClientCall
     def getRunResults(self, runIds, limit, offset, sortType, reportFilter,
                       cmpData, getDetails):
         pass
@@ -176,6 +180,10 @@ class ThriftResultsHelper(BaseClientHelper):
 
     @ThriftClientCall
     def getAnalysisStatisticsLimits(self):
+        pass
+
+    @ThriftClientCall
+    def getAnalysisStatistics(self, run_id, run_history_id):
         pass
 
     @ThriftClientCall

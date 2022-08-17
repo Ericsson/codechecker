@@ -114,7 +114,7 @@ class HashClash(unittest.TestCase):
         """
         reports = self._reports_for_latest_run()
 
-        # The PList file contains six bugs:
+        # The PList file contains seven bugs:
         # 1. A normal bug
         # 2. Same as the first one (no new report generated)
         # 3. Same as the first one except for line numbers (new report
@@ -124,6 +124,8 @@ class HashClash(unittest.TestCase):
         # 5. Same as the first one except for the file name (new report
         #    generated)
         # 6. Same as the first one except for the checker message (new report
+        #    generated)
+        # 7. Same as the first one except for the report hash (new report
         #    generated)
 
         fileid1 = None
@@ -140,15 +142,19 @@ class HashClash(unittest.TestCase):
                 fileid2 = f.fileId
 
         by_file = defaultdict(int)
+        by_checker_message = defaultdict(int)
+        by_bug_report_hash = defaultdict(int)
+
         for report in reports:
             by_file[report.fileId] += 1
+            by_checker_message[report.checkerMsg] += 1
+            by_bug_report_hash[report.bugHash] += 1
 
-        self.assertEqual(by_file[fileid1], 4)
+        self.assertEqual(by_file[fileid1], 5)
         self.assertEqual(by_file[fileid2], 1)
 
-        by_checker_message = defaultdict(int)
-        for report in reports:
-            by_checker_message[report.checkerMsg] += 1
-
-        self.assertEqual(by_checker_message['checker message'], 4)
+        self.assertEqual(by_checker_message['checker message'], 5)
         self.assertEqual(by_checker_message['checker message 2'], 1)
+
+        self.assertEqual(by_bug_report_hash['11111'], 5)
+        self.assertEqual(by_bug_report_hash['22222'], 1)

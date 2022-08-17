@@ -42,8 +42,9 @@ jobs:
       - name: Run build-logger tests
         working-directory: analyzer/tools/build-logger
         run: |
-          make -f Makefile.manual
-          make -f Makefile.manual test
+          pip install -r requirements_py/dev/requirements.txt
+          make all
+          make test
 
       - name: Run merge-clang-extdef-mappings tests
         working-directory: analyzer/tools/merge_clang_extdef_mappings
@@ -189,7 +190,7 @@ jobs:
           python-version: '3.6'
       - uses: actions/setup-node@v1
         with:
-          node-version: '12.x'
+          node-version: '16.x'
 
       # - name: Update chrome
       #   run: |

@@ -30,6 +30,9 @@ docker build -t codechecker-web:latest web/docker
 
 Multiple build-time variables can be specified:
 
+- `CC_REPO` (default: *https://github.com/Ericsson/CodeChecker.git*):
+repository which will be cloned from Git. Use it when you would like to build
+an image from a custom CodeChecker repository.
 - `CC_VERSION` (default: *master*): branch or tag version which will be cloned
 from Git. Use `master` if you would like to build an image from the latest
 CodeChecker.
@@ -82,6 +85,8 @@ write a compose file similar to
 [this](../../web/docker/services/docker-compose.sqlite.yml).
 
 #### PostgreSQL setup
+
+Follow the instructions [here](postgresql_setup.md) for the general database setup.
 
 #### PostgreSQL (no authentication)
 To run a CodeChecker server and a PostgreSQL database cluster which does not

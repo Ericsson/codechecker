@@ -30,6 +30,22 @@ void foo7()
   sizeof(46);
 }
 
+void foo8()
+{
+  sizeof(47);
+}
+
+void foo9()
+{
+  // codechecker_confirmed [bugprone-sizeof-expression] Has a source code comment.
+  sizeof(48);
+
+  // codechecker_intentional [bugprone-sizeof-expression] Has a different source code comment.
+  sizeof(48);
+
+  sizeof(48);
+}
+
 int main()
 {
   return 0;

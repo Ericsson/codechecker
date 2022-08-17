@@ -137,22 +137,7 @@ def add_arguments_to_parser(parser):
                         help="Skip performing cleanup jobs on the database "
                              "like removing unused files.")
 
-    parser.add_argument('--config',
-                        dest='config_file',
-                        required=False,
-                        help="R|Allow the configuration from an explicit JSON "
-                             "based configuration file. The values configured "
-                             "in the config file will overwrite the values "
-                             "set in the command line. The format of "
-                             "configuration file is: \n"
-                             "{\n"
-                             "  \"server\": [\n"
-                             "    \"--workspace=$HOME/workspace\",\n"
-                             "    \"--port=9090\"\n"
-                             "  ]\n"
-                             "}.\n"
-                             "You can use any environment variable inside "
-                             "this file and it will be expaneded.")
+    cmd_config.add_option(parser)
 
     dbmodes = parser.add_argument_group("configuration database arguments")
 
@@ -980,9 +965,10 @@ def server_init_start(args):
                             environ)
     except socket.error as err:
         if err.errno == errno.EADDRINUSE:
-            LOG.error("Server can't be started, maybe the given port number "
-                      "(%s) is already used. Check the connection "
-                      "parameters.", args.view_port)
+            LOG.error("Server can't be started, maybe port number (%s) is "
+                      "already used. Check the connection parameters. Use "
+                      "the option '-p 0' to find a free port automatically.",
+                      args.view_port)
             sys.exit(1)
         else:
             raise

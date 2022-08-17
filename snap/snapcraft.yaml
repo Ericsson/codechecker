@@ -1,6 +1,6 @@
 name: codechecker
 base: core18
-version: '6.19.0'
+version: '6.20.0'
 summary: CodeChecker is an analyzer tooling, defect database and viewer extension
 description: |
   CodeChecker is an analyzer tooling, defect database and viewer extension.
@@ -33,7 +33,7 @@ parts:
   codechecker:
     plugin: python
     python-version: python3
-    source: https://github.com/Ericsson/codechecker/archive/v6.19.0.tar.gz
+    source: https://github.com/Ericsson/codechecker/archive/v6.20.0.tar.gz
     build-packages:
       - curl
       - gcc-multilib
@@ -41,7 +41,7 @@ parts:
       - python3-setuptools
       - python  # Needed to compile fibers npm package.
     build-snaps:
-      - node/11/stable
+      - node/16/stable
     override-pull: |
       snapcraftctl pull
 
@@ -61,5 +61,12 @@ parts:
 
       npm config set scripts-prepend-node-path true
       npm config set unsafe-perm true
+
+      # This is needed to fix the following error during npm install:
+      #   npm ERR! path /node_modules/geckodriver
+      #   npm ERR! command failed
+      #   npm ERR! command sh -c node index.js
+      export GECKODRIVER_SKIP_DOWNLOAD=true
+
       make package
       cp -r $SNAPCRAFT_PART_BUILD/build/CodeChecker $SNAPCRAFT_PART_INSTALL

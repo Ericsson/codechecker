@@ -117,7 +117,7 @@
       </v-menu>
     </template>
 
-    <template>
+    <template v-slot:default>
       <items-selected
         :selected-items="selectedItems"
         @update:select="updateSelectedItems"

@@ -60,7 +60,7 @@ def create_actions_map(actions, manager):
     result = manager.dict()
 
     for act in actions:
-        key = act.source, act.target[act.lang]
+        key = act.source, act.target
         if key in result:
             LOG.debug("Multiple entires in compile database "
                       "with the same (source, target) pair: (%s, %s)",
@@ -159,7 +159,7 @@ def __get_ctu_data(config_map, ctu_dir):
             'ctu_temp_fnmap_folder': 'tmpExternalFnMaps'}
 
 
-def perform_analysis(args, skip_handler, context, actions, metadata_tool,
+def perform_analysis(args, skip_handlers, context, actions, metadata_tool,
                      compile_cmd_count):
     """
     Perform static analysis via the given (or if not, all) analyzers,
@@ -280,7 +280,7 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
             ctu_data = __get_ctu_data(config_map, ctu_dir)
 
         makefile_creator = MakeFileCreator(analyzers, args.output_path,
-                                           config_map, context, skip_handler,
+                                           config_map, context, skip_handlers,
                                            ctu_collect, statistics_data,
                                            ctu_data)
         makefile_creator.create(actions)
@@ -314,13 +314,13 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
 
         pre_analyze = [a for a in actions
                        if a.analyzer_type == ClangSA.ANALYZER_NAME]
-        pre_anal_skip_handler = None
+        pre_anal_skip_handlers = None
 
         # Skip list is applied only in pre-analysis
         # if --ctu-collect or --stats-collect  was called explicitly
         if ((ctu_collect and not ctu_analyze)
                 or ("stats_output" in args and args.stats_output)):
-            pre_anal_skip_handler = skip_handler
+            pre_anal_skip_handlers = skip_handlers
 
         clangsa_config = config_map.get(ClangSA.ANALYZER_NAME)
 
@@ -329,7 +329,7 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
                                                   context,
                                                   clangsa_config,
                                                   args.jobs,
-                                                  pre_anal_skip_handler,
+                                                  pre_anal_skip_handlers,
                                                   ctu_data,
                                                   statistics_data,
                                                   manager)
@@ -349,7 +349,7 @@ def perform_analysis(args, skip_handler, context, actions, metadata_tool,
         analysis_manager.start_workers(actions_map, actions, context,
                                        config_map, args.jobs,
                                        args.output_path,
-                                       skip_handler,
+                                       skip_handlers,
                                        metadata_tool,
                                        'quiet' in args,
                                        'capture_analysis_output' in args,

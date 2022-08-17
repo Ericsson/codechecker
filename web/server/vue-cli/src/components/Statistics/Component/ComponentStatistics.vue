@@ -21,6 +21,8 @@
           </v-btn>
         </h3>
 
+        <unique-stat-warning v-if="reportFilter.isUnique" />
+
         <component-statistics-table
           :items="statistics"
           :loading="loading"
@@ -42,6 +44,7 @@ import { ToCSV } from "@/mixins";
 
 import {
   BaseStatistics,
+  UniqueStatWarning,
   getComponents,
   initDiffField
 } from "@/components/Statistics";
@@ -54,7 +57,7 @@ import ComponentStatisticsTable from "./ComponentStatisticsTable";
 export default {
   name: "ComponentStatistics",
   components: {
-    ComponentStatisticsTable
+    ComponentStatisticsTable, UniqueStatWarning
   },
   mixins: [ BaseStatistics, ToCSV ],
 

@@ -42,7 +42,8 @@ class GolintAnalyzerResultTestCase(unittest.TestCase):
                                        'simple.go')
 
         ret = self.analyzer_result.transform(
-            analyzer_result, self.cc_result_dir, plist.EXTENSION)
+            analyzer_result, self.cc_result_dir, plist.EXTENSION,
+            file_name="{source_file}_{analyzer}")
         self.assertFalse(ret)
 
     def test_transform_dir(self):
@@ -50,14 +51,16 @@ class GolintAnalyzerResultTestCase(unittest.TestCase):
         analyzer_result = os.path.join(self.test_files)
 
         ret = self.analyzer_result.transform(
-            analyzer_result, self.cc_result_dir, plist.EXTENSION)
+            analyzer_result, self.cc_result_dir, plist.EXTENSION,
+            file_name="{source_file}_{analyzer}")
         self.assertFalse(ret)
 
     def test_transform_single_file(self):
         """ Test transforming single plist file. """
         analyzer_result = os.path.join(self.test_files, 'simple.out')
         self.analyzer_result.transform(
-            analyzer_result, self.cc_result_dir, plist.EXTENSION)
+            analyzer_result, self.cc_result_dir, plist.EXTENSION,
+            file_name="{source_file}_{analyzer}")
 
         plist_file = os.path.join(self.cc_result_dir,
                                   'simple.go_golint.plist')

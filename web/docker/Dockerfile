@@ -2,7 +2,10 @@
 #-----------------------------    BUILD STAGE   ------------------------------#
 ###############################################################################
 
-FROM python:3.6-slim-stretch as builder
+FROM python:3.9.7-slim-buster as builder
+
+ARG CC_REPO=https://github.com/Ericsson/CodeChecker.git
+ENV CC_REPO ${CC_REPO}
 
 ARG CC_VERSION=master
 ENV CC_VERSION ${CC_VERSION}
@@ -16,11 +19,11 @@ RUN set -x && apt-get update -qq \
     curl \
     git \
     make \
-    && curl -sL https://deb.nodesource.com/setup_12.x | bash - \
+    && curl -sL https://deb.nodesource.com/setup_16.x | bash - \
     && apt-get install -y nodejs
 
 # Download CodeChecker release.
-RUN git clone https://github.com/Ericsson/CodeChecker.git /codechecker
+RUN git clone ${CC_REPO} /codechecker
 WORKDIR /codechecker
 RUN git checkout ${CC_VERSION}
 
@@ -37,7 +40,7 @@ RUN chmod a+x /hooks/after_build.sh && sync && /hooks/after_build.sh
 #--------------------------    PRODUCTION STAGE   ----------------------------#
 ###############################################################################
 
-FROM python:3.6-slim-stretch
+FROM python:3.9.7-slim-buster
 
 ARG CC_GID=950
 ARG CC_UID=950

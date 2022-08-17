@@ -4,4 +4,4 @@ all:
 		suppress_already_confirmed.cpp suppress_without_bug.cpp
 
 clean:
-	rm a.out
+	rm -f a.out

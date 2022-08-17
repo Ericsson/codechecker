@@ -46,13 +46,14 @@ def get_parser(
 def get_reports(
     analyzer_result_file_path: str,
     checker_labels: Optional[CheckerLabels] = None,
-    file_cache: Optional[Dict[str, File]] = None
+    file_cache: Optional[Dict[str, File]] = None,
+    source_dir_path: Optional[str] = None
 ) -> List[Report]:
     """ Get reports from the given report file. """
     parser = get_parser(analyzer_result_file_path, checker_labels, file_cache)
 
     if parser:
-        return parser.get_reports(analyzer_result_file_path)
+        return parser.get_reports(analyzer_result_file_path, source_dir_path)
 
     return []
 

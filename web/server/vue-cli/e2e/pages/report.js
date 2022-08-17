@@ -125,7 +125,8 @@ module.exports = {
     setCleanupPlanBtn: ".set-cleanup-plan-btn",
     expandBtn: "button.v-data-table__expand-icon",
     selectReportCheckbox: "tbody .v-simple-checkbox",
-    selectAllReportCheckbox: "thead .v-simple-checkbox"
+    selectAllReportCheckbox: "thead .v-simple-checkbox",
+    overlay: ".v-overlay.v-overlay--active"
   },
   sections: {
     baselineRunFilter: createRunFilterSection("#run"),

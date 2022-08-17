@@ -67,6 +67,13 @@
 								</dict>
 							</array>
 						</dict>
+					</array>
+					<key>kind</key>
+					<string>control</string>
+				</dict>
+				<dict>
+					<key>edges</key>
+					<array>
 						<dict>
 							<key>end</key>
 							<array>
@@ -107,6 +114,13 @@
 								</dict>
 							</array>
 						</dict>
+					</array>
+					<key>kind</key>
+					<string>control</string>
+				</dict>
+				<dict>
+					<key>edges</key>
+					<array>
 						<dict>
 							<key>end</key>
 							<array>
@@ -147,6 +161,13 @@
 								</dict>
 							</array>
 						</dict>
+					</array>
+					<key>kind</key>
+					<string>control</string>
+				</dict>
+				<dict>
+					<key>edges</key>
+					<array>
 						<dict>
 							<key>end</key>
 							<array>
@@ -187,6 +208,13 @@
 								</dict>
 							</array>
 						</dict>
+					</array>
+					<key>kind</key>
+					<string>control</string>
+				</dict>
+				<dict>
+					<key>edges</key>
+					<array>
 						<dict>
 							<key>end</key>
 							<array>

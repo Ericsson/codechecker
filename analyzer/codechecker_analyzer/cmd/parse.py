@@ -32,7 +32,8 @@ from codechecker_report_converter.source_code_comment_handler import \
 from codechecker_analyzer import analyzer_context, suppress_handler
 
 from codechecker_common import arg, logger, cmd_config
-from codechecker_common.skiplist_handler import SkipListHandler
+from codechecker_common.skiplist_handler import SkipListHandler, \
+    SkipListHandlers
 
 
 LOG = logger.get_logger('system')
@@ -109,21 +110,7 @@ def add_arguments_to_parser(parser):
                              "containing analysis results which should be "
                              "parsed and printed.")
 
-    parser.add_argument('--config',
-                        dest='config_file',
-                        required=False,
-                        help="R|Allow the configuration from an "
-                             "explicit JSON based configuration file. "
-                             "The value of the 'parse' key in the "
-                             "config file will be emplaced as command "
-                             "line arguments. The format of "
-                             "configuration file is:\n"
-                             "{\n"
-                             "  \"parse\": [\n"
-                             "    \"--trim-path-prefix\",\n"
-                             "    \"$HOME/workspace\"\n"
-                             "  ]\n"
-                             "}")
+    cmd_config.add_option(parser)
 
     parser.add_argument('-t', '--type', '--input-format',
                         dest="input_format",
@@ -192,15 +179,6 @@ def add_arguments_to_parser(parser):
                         help="Print the steps the analyzers took in finding "
                              "the reported defect.")
 
-    parser.add_argument('-i', '--ignore', '--skip',
-                        dest="skipfile",
-                        required=False,
-                        default=argparse.SUPPRESS,
-                        help="Path to the Skipfile dictating which project "
-                             "files should be omitted from analysis. Please "
-                             "consult the User guide on how a Skipfile "
-                             "should be laid out.")
-
     parser.add_argument('--trim-path-prefix',
                         type=str,
                         nargs='*',
@@ -208,11 +186,16 @@ def add_arguments_to_parser(parser):
                         required=False,
                         default=argparse.SUPPRESS,
                         help="Removes leading path from files which will be "
-                             "printed. So if you have /a/b/c/x.cpp and "
-                             "/a/b/c/y.cpp then by removing \"/a/b/\" prefix "
-                             "will print files like c/x.cpp and c/y.cpp. "
-                             "If multiple prefix is given, the longest match "
-                             "will be removed.")
+                             "printed. For instance if you analyze files "
+                             "'/home/jsmith/my_proj/x.cpp' and "
+                             "'/home/jsmith/my_proj/y.cpp', but would prefer "
+                             "to have them displayed as 'my_proj/x.cpp' and "
+                             "'my_proj/y.cpp' in the web/CLI interface, "
+                             "invoke CodeChecker with '--trim-path-prefix "
+                             "\"/home/jsmith/\"'."
+                             "If multiple prefixes are given, the longest "
+                             "match will be removed. You may also use Unix "
+                             "shell-like wildcards (e.g. '/*/jsmith/').")
 
     parser.add_argument('--review-status',
                         nargs='*',
@@ -223,6 +206,30 @@ def add_arguments_to_parser(parser):
                         help="Filter results by review statuses. Valid "
                              "values are: {0}".format(
                                  ', '.join(REVIEW_STATUS_VALUES)))
+
+    group = parser.add_argument_group("file filter arguments")
+
+    group.add_argument('-i', '--ignore', '--skip',
+                       dest="skipfile",
+                       required=False,
+                       default=argparse.SUPPRESS,
+                       help="Path to the Skipfile dictating which project "
+                            "files should be omitted from analysis. Please "
+                            "consult the User guide on how a Skipfile "
+                            "should be laid out.")
+
+    group.add_argument('--file',
+                       nargs='+',
+                       dest="files",
+                       metavar='FILE',
+                       required=False,
+                       default=argparse.SUPPRESS,
+                       help="Filter results by file path. "
+                            "The file path can contain multiple * "
+                            "quantifiers which matches any number of "
+                            "characters (zero or more). So if you have "
+                            "/a/x.cpp and /a/y.cpp then \"/a/*.cpp\" "
+                            "selects both.")
 
     logger.add_verbose_arguments(parser)
     parser.set_defaults(
@@ -357,13 +364,14 @@ def main(args):
         if output_dir_path:
             return os.path.join(output_dir_path, default_file_name)
 
-    skip_file_content = ""
+    skip_handlers = SkipListHandlers()
+    if 'files' in args:
+        items = [f"+{file_path}" for file_path in args.files]
+        items.append("-*")
+        skip_handlers.append(SkipListHandler("\n".join(items)))
     if 'skipfile' in args:
-        with open(args.skipfile, 'r',
-                  encoding='utf-8', errors='ignore') as skip_file:
-            skip_file_content = skip_file.read()
-
-    skip_handler = SkipListHandler(skip_file_content)
+        with open(args.skipfile, 'r', encoding='utf-8', errors='ignore') as f:
+            skip_handlers.append(SkipListHandler(f.read()))
 
     trim_path_prefixes = args.trim_path_prefix if \
         'trim_path_prefix' in args else None
@@ -374,8 +382,13 @@ def main(args):
     changed_files: Set[str] = set()
     processed_path_hashes = set()
     processed_file_paths = set()
-    html_builder: Optional[report_to_html.HtmlBuilder] = None
     print_steps = 'print_steps' in args
+
+    html_builder: Optional[report_to_html.HtmlBuilder] = None
+    if export == 'html':
+        html_builder = report_to_html.HtmlBuilder(
+            context.path_plist_to_html_dist,
+            context.checker_labels)
 
     for dir_path, file_paths in report_file.analyzer_result_files(args.input):
         metadata = get_metadata(dir_path)
@@ -384,7 +397,7 @@ def main(args):
                 file_path, context.checker_labels, file_cache)
 
             reports = reports_helper.skip(
-                reports, processed_path_hashes, skip_handler, suppr_handler,
+                reports, processed_path_hashes, skip_handlers, suppr_handler,
                 src_comment_status_filter)
 
             statistics.num_of_analyzer_result_files += 1
@@ -406,11 +419,6 @@ def main(args):
                 plaintext.convert(
                     file_report_map, processed_file_paths, print_steps)
             elif export == 'html':
-                if not html_builder:
-                    html_builder = report_to_html.HtmlBuilder(
-                        context.path_plist_to_html_dist,
-                        context.checker_labels)
-
                 print(f"Parsing input file '{file_path}'.")
                 report_to_html.convert(
                     file_path, reports, output_dir_path,

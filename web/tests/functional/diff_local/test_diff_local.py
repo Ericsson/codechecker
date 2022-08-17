@@ -389,3 +389,13 @@ int main()
             "Couldn't get local reports for the following baseline report "
             "hashes: ",
             err)
+
+    def test_print_bug_steps(self):
+        """ Test printing the steps the analyzers took. """
+        out, _, ret = get_diff_results(
+            [self.base_reports], [self.new_reports], '--unresolved', None,
+            ['--print-steps'])
+
+        self.assertTrue("Steps:" in out)
+        self.assertTrue("Report hash:" in out)
+        self.assertEqual(ret, 2)

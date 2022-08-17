@@ -1,5 +1,5 @@
-const merge = require('webpack-merge');
 const { DefinePlugin } = require('webpack');
+const { merge } = require('webpack-merge');
 
 const common = require('./webpack.common.js');
 
@@ -16,15 +16,10 @@ const CC_THRIFT_API_HOST =
   process.env.CC_THRIFT_API_HOST || 'http://localhost';
 const CC_THRIFT_API_PORT = process.env.CC_THRIFT_API_PORT || 8001;
 
-const METADATA = merge(common.METADATA, {
-  'CC_SERVER_HOST': process.env.CC_SERVER_HOST || null,
-  'CC_SERVER_PORT': process.env.CC_SERVER_PORT || null
-});
-
 module.exports = merge(common, {
   mode: 'development',
   output: {
-    filename: '[name].[hash].js',
+    filename: '[name].[contenthash].js',
     publicPath: "/"
   },
   devtool: 'inline-source-map',
@@ -63,8 +58,8 @@ module.exports = merge(common, {
   plugins: [
     new DefinePlugin({
       'process.env': {
-        'CC_SERVER_HOST': METADATA.CC_SERVER_HOST,
-        'CC_SERVER_PORT': METADATA.CC_SERVER_PORT
+        'CC_SERVER_HOST': process.env.CC_SERVER_HOST || null,
+        'CC_SERVER_PORT': process.env.CC_SERVER_PORT || null
       }
     })
   ]

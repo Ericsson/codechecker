@@ -22,7 +22,7 @@ from ..source_code_comment_handler import SourceCodeCommentHandler, \
 LOG = logging.getLogger('report-converter')
 
 
-SkipListHandler = Callable[[str], bool]
+SkipListHandlers = Callable[[str], bool]
 
 
 InvalidFileContentMsg: str = \
@@ -87,7 +87,14 @@ class File:
             self.__content = content
 
     def get_line(self, line: int) -> str:
-        return util.get_line(self.original_path, line)
+        """ Get content from the given line.
+
+        Load file content if it's not loaded yet.
+        """
+        if self.__content is None:
+            return util.get_line(self.original_path, line)
+
+        return self.__content.splitlines(keepends=True)[line - 1]
 
     def trim(self, path_prefixes: Optional[List[str]] = None) -> str:
         """ Removes the longest matching leading path from the file paths. """
@@ -116,7 +123,7 @@ class File:
         return builtins.hash(self.id)
 
     def __repr__(self):
-        return self.to_json()
+        return json.dumps(self.to_json())
 
 
 def get_or_create_file(
@@ -510,14 +517,12 @@ class Report:
 
         return 'unreviewed'
 
-    def skip(self, skip_handler: Optional[SkipListHandler]) -> bool:
+    def skip(self, skip_handlers: Optional[SkipListHandlers]) -> bool:
         """ True if the report should be skipped. """
-        if skip_handler:
-            for file_path in self.original_files:
-                if skip_handler(file_path):
-                    return True
+        if not skip_handlers:
+            return False
 
-        return False
+        return skip_handlers(self.file.original_path)
 
     def to_json(self) -> Dict:
         """ Creates a JSON dictionary. """

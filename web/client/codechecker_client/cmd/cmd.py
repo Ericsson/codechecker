@@ -501,7 +501,9 @@ def __register_diff(parser):
                              "run-a-1, run-a-2 and run-b-1 then \"run-a*\" "
                              "selects the first two. In case of run names tag "
                              "labels can also be used separated by a colon "
-                             "(:) character: \"run_name:tag_name\".")
+                             "(:) character: \"run_name:tag_name\". A run "
+                             "name containing a literal colon (:) must be "
+                             "escaped: \"run\\:name\".")
 
     parser.add_argument('-n', '--newname',
                         type=str,
@@ -523,11 +525,26 @@ def __register_diff(parser):
                              "\"run-a*\" selects the first two. In case of "
                              "run names tag labels can also be used separated "
                              "by a colon (:) character: "
-                             "\"run_name:tag_name\".")
+                             "\"run_name:tag_name\". A run "
+                             "name containing a literal colon (:) must be "
+                             "escaped: \"run\\:name\".")
+
+    parser.add_argument('--print-steps',
+                        dest="print_steps",
+                        action="store_true",
+                        required=False,
+                        default=argparse.SUPPRESS,
+                        help="Print the steps the analyzers took in finding "
+                             "the reported defect.")
 
     __add_filtering_arguments(parser, DEFAULT_FILTER_VALUES, True)
 
-    group = parser.add_argument_group("comparison modes")
+    group = parser.add_argument_group(
+        "comparison modes",
+        "List reports that can be found only in baseline or new runs or in "
+        "both. False positive and intentional reports are considered as "
+        "resolved, i.e. these are excluded from the report set as if they "
+        "were not reported.")
     group = group.add_mutually_exclusive_group(required=True)
 
     group.add_argument('--new',
@@ -1072,6 +1089,14 @@ def __register_runs(parser):
                             "you have run_1_a_name, run_2_b_name, "
                             "run_2_c_name, run_3_d_name then \"run_2* "
                             "run_3_d_name\" shows the last three runs.")
+
+    group.add_argument('--details',
+                       default=argparse.SUPPRESS,
+                       action='store_true',
+                       required=False,
+                       help="Adds extra details to the run information in "
+                            "JSON format, such as the list of files that are "
+                            "failed to analyze.")
 
     group.add_argument('--all-before-run',
                        type=str,

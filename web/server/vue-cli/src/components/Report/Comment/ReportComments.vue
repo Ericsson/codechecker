@@ -1,6 +1,6 @@
 <template>
   <v-container
-    class="py-1"
+    class="pa-0"
     :style="{'position': 'relative'}"
   >
     <v-overlay :absolute="true" :opacity="0.25" :value="loading">
@@ -25,31 +25,33 @@
       :bus="bus"
     />
 
-    <v-row>
-      <v-col cols="auto">
-        <v-timeline
-          v-if="comments.length"
-          dense
-        >
-          <template
-            v-for="comment in comments"
+    <v-container fluid class="px-0">
+      <v-row class="ma-0">
+        <v-col cols="auto">
+          <v-timeline
+            v-if="comments.length"
+            dense
           >
-            <user-comment
-              v-if="comment.kind === CommentKind.USER"
-              :key="comment.id.toString()"
-              :comment="comment"
-              :bus="bus"
-            />
+            <template
+              v-for="comment in comments"
+            >
+              <user-comment
+                v-if="comment.kind === CommentKind.USER"
+                :key="comment.id.toString()"
+                :comment="comment"
+                :bus="bus"
+              />
 
-            <system-comment
-              v-if="comment.kind === CommentKind.SYSTEM"
-              :key="comment.id.toString()"
-              :comment="comment"
-            />
-          </template>
-        </v-timeline>
-      </v-col>
-    </v-row>
+              <system-comment
+                v-if="comment.kind === CommentKind.SYSTEM"
+                :key="comment.id.toString()"
+                :comment="comment"
+              />
+            </template>
+          </v-timeline>
+        </v-col>
+      </v-row>
+    </v-container>
   </v-container>
 </template>
 

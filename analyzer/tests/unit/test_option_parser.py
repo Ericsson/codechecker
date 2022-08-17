@@ -328,7 +328,7 @@ class OptionParserTest(unittest.TestCase):
 
         res = log_parser.parse_options(warning_action_clang)
         self.assertEqual(["-B/tmp/dir"], res.analyzer_options)
-        self.assertEqual("compilation-target", res.target['c++'])
+        self.assertEqual("compilation-target", res.target)
 
     def test_ignore_xclang_flags_clang(self):
         """Skip some specific xclang constructs"""
@@ -501,10 +501,10 @@ class OptionParserTest(unittest.TestCase):
         # fail.
         res = log_parser.parse_options(action, keep_gcc_include_fixed=False)
         self.assertFalse(any([x.endswith('include-fixed')
-                              for x in res.compiler_includes['c++']]))
+                              for x in res.compiler_includes]))
         res = log_parser.parse_options(action, keep_gcc_include_fixed=True)
         self.assertTrue(any([x.endswith('include-fixed')
-                             for x in res.compiler_includes['c++']]))
+                             for x in res.compiler_includes]))
 
     def test_compiler_intrin_headers(self):
         """ Include directories with *intrin.h files should be skipped."""
@@ -554,10 +554,10 @@ class OptionParserTest(unittest.TestCase):
 
         res = log_parser.parse_options(action, keep_gcc_intrin=False)
         self.assertFalse(any(map(contains_intrinsic_headers,
-                                 res.compiler_includes['c++'])))
+                                 res.compiler_includes)))
         res = log_parser.parse_options(action, keep_gcc_intrin=True)
         self.assertTrue(any(map(contains_intrinsic_headers,
-                                res.compiler_includes['c++'])))
+                                res.compiler_includes)))
 
     def test_compiler_include_file(self):
         action = {
@@ -570,19 +570,14 @@ class OptionParserTest(unittest.TestCase):
                 suffix='.json',
                 encoding='utf-8') as info_file_tmp:
 
-            info_file_tmp.write('''{
-  "g++": {
-    "c++": {
-      "compiler_standard": "-std=FAKE_STD",
-      "target": "FAKE_TARGET",
-      "compiler_includes": [
-        "-isystem /FAKE_INCLUDE_DIR"
-      ]
-    }
+            info_file_tmp.write(r'''{
+  "[\"g++\", \"c++\", []]": {
+    "compiler_includes": ["/FAKE_INCLUDE_DIR"],
+    "compiler_standard": "-std=FAKE_STD",
+    "target": "FAKE_TARGET"
   }
 }''')
             info_file_tmp.flush()
 
             res = log_parser.parse_options(action, info_file_tmp.name)
-            self.assertEqual(res.compiler_includes['c++'],
-                             ['/FAKE_INCLUDE_DIR'])
+            self.assertEqual(res.compiler_includes, ['/FAKE_INCLUDE_DIR'])

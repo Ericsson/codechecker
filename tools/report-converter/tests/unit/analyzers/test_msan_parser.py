@@ -54,7 +54,8 @@ class MSANPListConverterTestCase(unittest.TestCase):
     def test_msan(self):
         """ Test for the msan.plist file. """
         self.analyzer_result.transform(
-            'msan.out', self.cc_result_dir, plist.EXTENSION)
+            'msan.out', self.cc_result_dir, plist.EXTENSION,
+            file_name="{source_file}_{analyzer}")
 
         with open('msan.plist', mode='rb') as pfile:
             exp = plistlib.load(pfile)

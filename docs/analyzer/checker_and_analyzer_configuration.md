@@ -1,7 +1,44 @@
 # Configure Clang Static Analyzer and checkers
 
-Analyzer configuration can be done through the `--saargs` analysis option which
-forwards arguments without modification to the Clang Static Analyzer:
+## Analyzer Configuration <a name="analyzer-configuration"></a>
+
+The analysis can be configured using analyzer wide configuration parameters.
+These parameters may have effect on the whole analysis, affecting the result of
+all checkers.
+
+Listing the available configuration options:
+`CodeChecker analyzers --analyzer-config clangsa --details`
+
+Setting analyzer configuration opions:
+`CodeChecker analyze --analyzer-config <key=value>`
+
+You can find a comprehensive list of analyzer configuration options at the
+[clang static analyzer
+documentation](https://github.com/llvm-mirror/clang/tree/master/docs) pages.
+
+## Checker Configuration <a name="checker-configuration"></a>
+
+Clang Static Analyzer checkers can be enabled and disabled using the
+`CodeChekcer analyze --enable <checker_name> --disable <checker_name>` flags.
+You can list/enable/disable all checkers for Clang Static Analyzer, except for
+the developer (debug and modeling) checkers.
+
+Some checkers can be customized using checker specific configuration options.
+
+These can be listed using the `CodeChecker checkers --checker-config` command
+and can be set by `CodeChecker analyze --checker-config
+clangsa:<option-name>=<value>`.
+
+You can find the documentation of the configuration options at hte [Clang Static
+Analyzer
+checkers](https://github.com/llvm-mirror/clang/tree/master/lib/StaticAnalyzer/Checkers)
+page.
+
+## Clang Static Analyzer Special Configuration Options
+In special cases, when the checker and analyzer configurability that is provided
+by CodeChecker is not enough, the Clang Static analyzer configuration can be
+extended through the `--saargs` analysis option. The content of the saargs file
+are forwarded as arguments without modification to the Clang Static Analyzer:
 ```
 CodeChecker analyze --saargs static_analyzer.cfg
 ```
@@ -12,7 +49,7 @@ configuration options can be configured like this:
 -Xclang -analyzer-config -Xclang unix.Malloc:Optimistic=true -Xclang -analyzer-max-loop -Xclang 20
 ```
 __Before every configuration option '-Xclang' argument should be written and
-all the configuration options sould be in one line!__
+all the configuration options sould be in one line! __
 
 In the `static_analyzer.cfg` example file we set a checker specific
 configuration option `unix.Malloc:Optimistic=true` for the `unix.Malloc`
@@ -20,49 +57,17 @@ checker and a static analyzer configuration option `analyzer-max-loop` (the
 maximum number of times the analyzer will go through a loop, the default
 value is 4).
 
-## Checker specific configuration options  
-This is not a comprehensive list view checker
-[documentation or implementation](https://github.com/llvm-mirror/clang/tree/master/lib/StaticAnalyzer/Checkers)
-for available configuration options:
+### Enabling developer checkers
+You cannot enable/disable developer checkers in CodeChecker using the `--enable`
+or `--disable` flags.
 
-| checker name | configuration option           | default value | available values | description                                                                            |
-|--------------|--------------------------------|---------------|------------------|----------------------------------------------------------------------------------------|
-| nullability  | NoDiagnoseCallsToSystemHeaders | false         | true/false       | If true, the checker will not diagnose nullability issues for calls to system headers. |
-| unix.Malloc  | Optimistic                     | false         | true/false       |                                                                                        |
+These (debug and modeling) checkers should not be used normally. They are
+typically used by ClangSA developers debug the analysis or to write test cases.
+These checkers can be listed by `clang -cc1 -analyzer-checker-help-developer`.
 
-
-## Clang Static Analyzer configuration options
-This is not a comprehesive list, check out the
-[clang static analyzer documentation](https://github.com/llvm-mirror/clang/tree/master/docs)
-or source code for more details about the configuration options.
-
-| configuration option                  | default value     | available values                         | description                                                                                         |
-|---------------------------------------|-------------------|------------------------------------------|-----------------------------------------------------------------------------------------------------|
-| analyzer-max-loop                     | 4                 |                                          |                                                                                                     |
-| inline-lambdas                        | true              |                                          |                                                                                                     |
-| ipa                                   | dynamic-bifurcate |                                          | [inter procedural analysis](https://github.com/llvm-mirror/clang/blob/master/docs/analyzer/IPA.txt) |
-| ipa-always-inline-size                | 3                 |                                          |                                                                                                     |
-| mode                                  | deep              | deep, shallow                            |                                                                                                     |
-| max-inlinable-size                    | 100               |                                          | 100 for deep mode, 4 for shallow                                                                    |
-| max-nodes                             | 225000            |                                          | 22500 for deep, 75000 for shallow, maximum number of nodes for top level functions                  |
-| unroll-loops                          | false             | true/false                               |                                                                                                     |
-| widen-loops                           | false             | true/false                               |                                                                                                     |
-| suppress-null-return-paths            | false             |                                          |                                                                                                     |
-| c++-inlining                          | constructors      | constructors, destructors, none, methods | [inlining options](https://github.com/llvm-mirror/clang/blob/master/docs/analyzer/IPA.txt)          |
-| leak-diagnostics-reference-allocation | false             | true/false                               |                                                                                                     |
-| max-times-inline-large                | 32                |                                          |                                                                                                     |
-| region-store-small-struct-limit       | 2                 |                                          |                                                                                                     |
-| path-diagnostics-alternate            | false             | true/false                               |                                                                                                     |
-| report-in-main-source-file            | true              | true/false                               |                                                                                                     |
-| min-cfg-size-treat-functions-as-large | 14                |                                          |                                                                                                     |
-| cfg-conditional-static-initializers   | true              |                                          |                                                                                                     |
-| cfg-implicit-dtors                    | true              | true/false                               |                                                                                                     |
-| cfg-lifetime                          | false             | true/false                               |                                                                                                     |
-| cfg-loopexit                          | false             | true/false                               |                                                                                                     |
-| cfg-temporary-dtors                   | false             | true/false                               |                                                                                                     |
-| faux-bodies                           | true              | true/false                               |                                                                                                     |
-| graph-trim-interval                   | 1000              |                                          |                                                                                                     |
-
+If they are needed, they can be switched on using the following command
+`CodeChecker analyzer --saarg saarg.config`, where the content of saarg.config
+is for example `-Xclang -analyzer-checker=debug.ExprInspection`.
 
 ## Z3 Theorem Prover
 The static analyzer supports using the
@@ -97,13 +102,31 @@ command with the `--z3-refutation` option.
 You can read more about refutation with the Z3 SMT Solver
 [here](https://docs.google.com/document/d/1-HEblH92VxdxDp04vDKjFa4_ZL9l2oPVLFtQUfLKSOo/).
 
-# Configure Clang tidy checkers
+# Configuring Clang-Tidy
 
-## Using Clang tidy configuration files
+## Configuring the analyzer and checkers
 
-__clang-tidy__ attempts to read configuration for each analyzed source file
+You can configure the clang-tidy analyzer and its checkers through CodeChecker
+with the `--analyzer-config` and the `--checker-config` flags of `CodeChecker
+analyze/check` commands as described in sections [Analyzer
+Configuration](#analyzer-configuration) and [Checker
+Configuration](#checker-configuration).
+
+
+## Using Clang-Tidy configuration files
+
+If you want to control the configuration of clang-tidy from the `.clang-tidy`
+configuration files (instead of the CodeChecker command line)  you can use the
+`clang-tidy:take-config-from-directory=true` option. It will skip setting the
+checkers and checker configuration from CodeChecker (even if a profile was
+specified).
+
+Then __clang-tidy__ will attempt to read configuration for each analyzed source file
 from a `.clang-tidy` file located in the closest parent directory of the
 analyzed source file.
+
+So by executing `CodeChecker analyze compile_commands.json -o ./reports --analyzer-config 'clang-tidy:take-config-from-directory=true'`, CodeChecker will generate a clang-tidy command which will NOT 
+contain the -checks option at all so your .clang-tidy file will take precedence.
 
 The `.clang-tidy` configuration file can be in JSON or YAML format.
 

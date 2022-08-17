@@ -470,8 +470,9 @@ class ThriftProductHandler:
                         codechecker_api_shared.ttypes.ErrorCode.GENERAL, msg)
 
                 if self.__server.get_product(new_config.endpoint):
-                    LOG.error("A product endpoint '/%s' is already"
-                              "configured!", product.endpoint)
+                    msg = f"A product endpoint '/{product.endpoint}' is " \
+                          f"already configured!"
+                    LOG.error(msg)
                     raise codechecker_api_shared.ttypes.RequestFailed(
                         codechecker_api_shared.ttypes.ErrorCode.GENERAL, msg)
 
@@ -597,7 +598,13 @@ class ThriftProductHandler:
                 LOG.info("Product change requires database reconnection...")
 
                 LOG.debug("Disconnecting...")
-                self.__server.remove_product(old_endpoint)
+                try:
+                    # Because of the process pool it is possible that in the
+                    # local cache of the current process the product with the
+                    # old endpoint is not found and it will raise an exception.
+                    self.__server.remove_product(old_endpoint)
+                except ValueError:
+                    pass
 
                 LOG.debug("Connecting new settings...")
                 self.__server.add_product(product)

@@ -16,6 +16,27 @@ LOG = get_logger('system')
 FileBlameInfo = Dict[str, Optional[Dict]]
 
 
+def __get_tracking_branch(repo: Repo) -> Optional[str]:
+    """
+    Get the tracking branch name or the current commit hash from the given
+    repository.
+    """
+    try:
+        # If a commit is checked out, accessing the active_branch member will
+        # throw an error.
+        return str(repo.active_branch.tracking_branch())
+    except Exception:
+        pass
+
+    try:
+        # Use the current commit hash if it's available.
+        return repo.head.commit.hexsha
+    except Exception:
+        pass
+
+    return None
+
+
 def __get_blame_info(file_path: str):
     """ Get blame info for the given file. """
     try:
@@ -23,19 +44,13 @@ def __get_blame_info(file_path: str):
     except InvalidGitRepositoryError:
         return
 
-    tracking_branch = None
-    try:
-        # If a commit is checked out, accessing the active_branch member will
-        # throw a type error. In this case we will use the current commit hash.
-        tracking_branch = str(repo.active_branch.tracking_branch())
-    except TypeError:
-        tracking_branch = repo.head.commit.hexsha
+    tracking_branch = __get_tracking_branch(repo)
 
     remote_url = None
     try:
         # Handle the use case when a repository doesn't have a remote url.
         remote_url = next(repo.remote().urls, None)
-    except ValueError:
+    except Exception:
         pass
 
     try:
@@ -89,11 +104,11 @@ def __collect_blame_info_for_files(
 def assemble_blame_info(
     zip_file: zipfile.ZipFile,
     file_paths: Iterable[str]
-) -> bool:
+) -> int:
     """
     Collect and write blame information for the given files to the zip file.
 
-    Returns true if at least one blame information is collected.
+    Returns the number of collected blame information.
     """
     # Currently ProcessPoolExecutor fails completely in windows.
     # Reason is most likely combination of venv and fork() not
@@ -115,4 +130,4 @@ def assemble_blame_info(
                 os.path.join('blame', f.lstrip('/')),
                 json.dumps(blame_info))
 
-    return any(v for v in file_blame_info.values())
+    return sum(bool(v) for v in file_blame_info.values())

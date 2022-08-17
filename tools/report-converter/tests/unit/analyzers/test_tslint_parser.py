@@ -42,7 +42,8 @@ class TSLintAnalyzerResultTestCase(unittest.TestCase):
                                        'index.ts')
 
         ret = self.analyzer_result.transform(
-            analyzer_result, self.cc_result_dir, plist.EXTENSION)
+            analyzer_result, self.cc_result_dir, plist.EXTENSION,
+            file_name="{source_file}_{analyzer}")
         self.assertFalse(ret)
 
     def test_transform_dir(self):
@@ -50,14 +51,16 @@ class TSLintAnalyzerResultTestCase(unittest.TestCase):
         analyzer_result = os.path.join(self.test_files)
 
         ret = self.analyzer_result.transform(
-            analyzer_result, self.cc_result_dir, plist.EXTENSION)
+            analyzer_result, self.cc_result_dir, plist.EXTENSION,
+            file_name="{source_file}_{analyzer}")
         self.assertFalse(ret)
 
     def test_transform_single_file(self):
         """ Test transforming single json file. """
         analyzer_result = os.path.join(self.test_files, 'reports.json')
         self.analyzer_result.transform(
-            analyzer_result, self.cc_result_dir, plist.EXTENSION)
+            analyzer_result, self.cc_result_dir, plist.EXTENSION,
+            file_name="{source_file}_{analyzer}")
 
         plist_file = os.path.join(self.cc_result_dir,
                                   'index.ts_tslint.plist')

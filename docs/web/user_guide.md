@@ -1,52 +1,69 @@
-Table of Contents
-=================
-* [CodeChecker](#codechecker)
-    * [Default configuration](#default-configuration)
-* [Easy analysis wrappers](#easy-analysis-wrappers)
-    * [`check`](#check)
-* [`PRODUCT_URL` format](#product-url-format)
-    * [Example](#product-url-format-example)
-* [Available CodeChecker subcommands](#available-commands)
-    * [`store`](#store)
-        * [Using SQLite for database](#sqlite)
-    * [`server`](#server)
-        * [Creating a public server](#public-server)
-        * [Run CodeChecker server in Docker](#server-in-docker)
-        * [Configuring database and server settings' location](#server-settings)
-        * [Master superuser and authentication forcing](#auth-force)
-        * [Enfore secure socket (SSL)](#ssl)
-        * [Managing running servers](#managing-running-servers)
-        * [Manage server database upgrades](#manage-server-database-upgrade)
-    * [`cmd`](#cmd)
-        * [`components` (Source components)](#source-components)
-            * [`new` (New/Edit source component)](#new-source-components)
-                * Format of [component file](#component-file)
-            * [`list` (List source components)](#list-source-components)
-            * [`del` (Delete source components)](#delete-source-components)
-        * [`runs` (List runs)](#cmd-runs)
-        * [`history` (List of run histories)](#cmd-history)
-        * [`results` (List analysis results' summary)](#cmd-results)
-            * [Example](#cmd-results-example)
-        * [`diff` (Show differences between two runs)](#cmd-diff)
-          * [Example](#cmd-diff-example)
-        * [`sum` (Show summarised count of results)](#cmd-sum)
-            * [Example](#cmd-sum-example)
-        * [`del` (Remove analysis runs)](#cmd-del)
-        * [`update` (Update an analysis run)](#cmd-update)
-        * [`suppress` (Manage and export/import suppressions)](#manage-suppressions)
-            * [Import suppressions between server and suppress file](#import-suppressions)
-        * [`products` (Manage product configuration of a server)](#cmd-product)
-        * [`permissions (Get access control)`](#get-access-control-permissions)
-        * [`login` (Authenticate to the server)](#cmd-login)
-        * [`export` (Export comments and review statuses from CodeChecker)](#cmd-export)
-        * [`import` (Import comments and review statuses into CodeChecker)](#cmd-import)
-* [Debugging CodeChecker](#debug)
+# CodeChecker Web Command Line User Guide
 
-# CodeChecker <a name="codechecker"></a>
+## Table of Contents
+- [CodeChecker Web Command Line User Guide](#codechecker-web-command-line-user-guide)
+  - [Table of Contents](#table-of-contents)
+  - [Command Line Overview](#command-line-overview)
+  - [WEB related sub-commands](#web-related-sub-commands)
+    - [Client side configuration file](#client-side-configuration-file)
+    - [`server`](#server)
+      - [Creating a public server](#creating-a-public-server)
+      - [Run CodeChecker server in Docker](#run-codechecker-server-in-docker)
+      - [Configuring database and server settings location](#configuring-database-and-server-settings-location)
+        - [Server Configuration (Authentication and Server Limits)](#server-configuration-authentication-and-server-limits)
+        - [Database Configuration](#database-configuration)
+      - [Master superuser and authentication forcing](#master-superuser-and-authentication-forcing)
+      - [Enfore secure socket (SSL)](#enfore-secure-socket-ssl)
+      - [Managing running servers](#managing-running-servers)
+      - [Manage server database upgrades](#manage-server-database-upgrades)
+    - [`store`](#store)
+      - [Format of `PRODUCT_URL`](#format-of-product_url)
+      - [Example](#example)
+    - [`cmd`](#cmd)
+      - [Source components (`components`)](#source-components-components)
+        - [New/Edit source component](#newedit-source-component)
+          - [Format of component file](#format-of-component-file)
+        - [List source components](#list-source-components)
+        - [Delete source components](#delete-source-components)
+      - [List runs (`runs`)](#list-runs-runs)
+      - [List of run histories (`history`)](#list-of-run-histories-history)
+      - [List analysis results' summary (`results`)](#list-analysis-results-summary-results)
+        - [Example](#example-1)
+      - [Show differences between two runs (`diff`)](#show-differences-between-two-runs-diff)
+        - [Diff Example](#diff-example)
+      - [Show summarised count of results (`sum`)](#show-summarised-count-of-results-sum)
+        - [Summary Example](#summary-example)
+      - [Remove analysis runs (`del`)](#remove-analysis-runs-del)
+      - [Update an analysis run (`update`)](#update-an-analysis-run-update)
+      - [Import suppressions (`suppress`)](#import-suppressions-suppress)
+        - [Import suppressions from a suppress file](#import-suppressions-from-a-suppress-file)
+      - [Manage product configuration of a server (`products`)](#manage-product-configuration-of-a-server-products)
+      - [Query authorization settings (`permissions`)](#query-authorization-settings-permissions)
+      - [Authenticate to the server (`login`)](#authenticate-to-the-server-login)
+    - [Exporting source code suppression to suppress file](#exporting-source-code-suppression-to-suppress-file)
+      - [Export comments and review statuses (`export`)](#export-comments-and-review-statuses-export)
+      - [Import comments and review statuses into Codechecker (`import`)](#import-comments-and-review-statuses-into-codechecker-import)
+    - [`version`](#version)
+      - [JSON format](#json-format)
+  - [Log Levels](#log-levels)
 
-First of all, you have to setup the environment for CodeChecker.
-CodeChecker uses SQLite database (by default) to store the results
-which is also packed into the package.
+## Command Line Overview
+
+CodeChecker command line interface consists of **analysis** and **web** related
+sub-commands.
+
+This user guide describes **web server and client** related sub commands
+to perform the following actions:
+* [Start & Manage CodeChecker web server instances](#server)
+* [Store/Read/Manage analysis results](#store)
+* [Calculate diff between runs](#show-differences-between-two-runs-diff)
+* [Configure codechecker repositories (products)](#manage-product-configuration-of-a-server-products)
+* [Configure source code components](#source-components-components)
+* [Use suppression files (instead of in-line suppressions)](#import-suppressions-suppress)
+* [Export/Import Suppression Rules and Comments](#exporting-source-code-suppression-to-suppress-file)
+
+The CodeChecker client uses only HTTP(S) protocol to communicate with the
+server.
 
 Running CodeChecker is via its main invocation script, `CodeChecker`:
 
@@ -84,207 +101,36 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-
-Example scenario: Analyzing, and storing results
-------------------------------------------------
-Start the server where the results will be stored and can be viewed
-after the analysis is done:
-    CodeChecker server
-
-Analyze a project with default settings:
-    CodeChecker check -b "cd ~/myproject && make" -o "~/results"
-
-Store the analyzer results to the server:
-    CodeChecker store "~/results" -n myproject
-
-The results can be viewed:
- * In a web browser: http://localhost:8001
- * In the command line:
-    CodeChecker cmd results myproject
-
-Example scenario: Analyzing, and printing results to Terminal (no storage)
---------------------------------------------------------------------------
-In this case, no database is used, and the results are printed on the standard
-output.
-
-    CodeChecker check -b "cd ~/myproject && make"
 ```
 </details>
 
-## Default configuration <a name="default-configuration"></a>
+## WEB related sub-commands
 
-Used ports:
+### Client side configuration file
 
-* `5432` - PostgreSQL
-* `8001` - CodeChecker server
+CodeChecker command line invocation parameter list can be long.
 
-The server listens only on the local machine.
+All CodeChecker sub-command can use a `--config CONFIG_FILE` to describe
+command line argument lists.
 
-The initial product is called `Default`.
+For example instead of invoking
+`CodeChecker store --name my_run --tag=my_tag --url=http://codechecker.my:9090/MyProduct`
 
-## `PRODUCT_URL` format <a name="product-url-format"></a>
+one can write `CodeChecker store --config client_config.json`.
 
-Several subcommands, such as `store` and `cmd` need a connection specification
-on which server and for which *Product* (read more [about
-products](products.md)) an action, such as report storage or result
-retrieving, should be done.
-
-This is done via the `PRODUCT_URL` where indicated in the subcommand, which
-contains the server's access protocol, address, and the to-be-used product's
-unique endpoint. The format of this string is:
-`[http[s]://]host:port/ProductEndpoint`. This URL looks like a standar Web
-browsing (HTTP) request URL.
-
-CodeChecker communicates via HTTP requests, thus the first part specifies
-whether or not a more secure SSL/TLS-wrapped `https` protocol should be used.
-If omitted, the default value is `http`. The second part is the host and the
-port the server listens on. After a `/`, the unique endpoint of the product
-must be given, this is case-sensitive. This unique endpoint is configured and
-allocated when the [product is created](products.md), by the server's
-administrators. The product must exist and be properly configured before any
-normal operation could be done on it.
-
-If no URL is specified, the default value `http://localhost:8001/Default` will
-be used: a standard HTTP CodeChecker server running on the local machine, on
-the default port, using the *Default* product.
-
-### Example <a name="product-url-format-example"></a>
-
-The URL `https://codechecker.example.org:9999/SampleProduct` will access the
-server machine `codechecker.example.org` trying to connect to a server
-listening on port `9999` via HTTPS. The product `SampleProduct` will be used.
-
-# Available CodeChecker server subcommands <a name="available-commands"></a>
-
-## `store` <a name="store"></a>
-
-A `Codechecker server` needs to be started before the reports can be stored to
-a database.
-
-`store` is used to save previously created machine-readable analysis results
-(such as `plist` files), usually previously generated by `CodeChecker analyze`
-to the database.
-
-<details>
-  <summary><i>$ <b>CodeChecker store --help</b> (click to expand)</i></summary>
-
+`client_config.json`
+```json
+{
+  "store": [
+    "--name=my_run",
+    "--tag=my_tag",
+    "--url=http://codechecker.my:9090/MyProduct"
+  ]
+}
 ```
-usage: CodeChecker store [-h] [-t {plist}] [-n NAME] [--tag TAG]
-                         [--description DESCRIPTION]
-                         [--trim-path-prefix [TRIM_PATH_PREFIX [TRIM_PATH_PREFIX ...]]]
-                         [--config CONFIG_FILE] [-f] [--url PRODUCT_URL]
-                         [--verbose {info,debug,debug_analyzer}]
-                         [file/folder [file/folder ...]]
+For details see [Client Configuration File](config_file.md)
 
-Store the results from one or more 'codechecker-analyze' result files in a
-database.
-
-positional arguments:
-  file/folder           The analysis result files and/or folders containing
-                        analysis results which should be parsed and printed.
-                        If multiple report directories are given, OFF and
-                        UNAVAILABLE detection statuses will not be available.
-                        (default: /home/<username>/.codechecker/reports)
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -t {plist}, --type {plist}, --input-format {plist}
-                        Specify the format the analysis results were created
-                        as. (default: plist)
-  -n NAME, --name NAME  The name of the analysis run to use in storing the
-                        reports to the database. If not specified, the '--
-                        name' parameter given to 'codechecker-analyze' will be
-                        used, if exists.
-  --tag TAG             A unique identifier for this individual store of results
-                        in the run's history.
-  --description DESCRIPTION
-                        A custom textual description to be shown alongside the
-                        run.
-  --trim-path-prefix [TRIM_PATH_PREFIX [TRIM_PATH_PREFIX ...]]
-                        Removes leading path from files which will be stored.
-                        So if you have /a/b/c/x.cpp and /a/b/c/y.cpp then by
-                        removing "/a/b/" prefix will store files like c/x.cpp
-                        and c/y.cpp. If multiple prefix is given, the longest
-                        match will be removed.
-  --config CONFIG_FILE  Allow the configuration from an explicit JSON based
-                        configuration file. The values configured in the
-                        config file will overwrite the values set in the
-                        command line. The format of configuration file is:
-                        {
-                          "store": [
-                            "--name=run_name",
-                            "--tag=my_tag",
-                            "--url=http://codechecker.my:9090/MyProduct"
-                          ]
-                        }. (default: None)
-                        You can use any environment variable inside this file
-                        and it will be expaneded. (default: None)
-  -f, --force           Delete analysis results stored in the database for the
-                        current analysis run's name and store only the results
-                        reported in the 'input' files. (By default,
-                        CodeChecker would keep reports that were coming from
-                        files not affected by the analysis, and only
-                        incrementally update defect reports for source files
-                        that were analysed.)
-  --verbose {info,debug,debug_analyzer}
-                        Set verbosity level.
-
-server arguments:
-  Specifies a 'CodeChecker server' instance which will be used to store the
-  results. This server must be running and listening, and the given product
-  must exist prior to the 'store' command being run.
-
-  --url PRODUCT_URL     The URL of the product to store the results for, in
-                        the format of '[http[s]://]host:port/Endpoint'.
-                        (default: localhost:8001/Default)
-
-environment variables:
-  CC_PASS_FILE     The location of the password file for auto login. By default
-                   CodeChecker will use '~/.codechecker.passwords.json' file.
-                   It can also be used to setup different credential files to
-                   login to the same server with a different user.
-
-  CC_SESSION_FILE  The location of the session file where valid sessions are
-                   stored. This file will be automatically created by
-                   CodeChecker. By default CodeChecker will use
-                   '~/.codechecker.session.json'. This can be used if
-                   restrictive permissions forbid CodeChecker from creating
-                   files in the users home directory (e.g. in a CI
-                   environment).
-
-The results can be viewed by connecting to such a server in a Web browser or
-via 'CodeChecker cmd'.
-```
-</details>
-
-For example, if the analysis was run like:
-
-```sh
-CodeChecker analyze ../codechecker_myProject_build.log -o ./my_plists
-```
-
-then the results of the analysis can be stored with this command:
-
-```sh
-CodeChecker store ./my_plists -n my_project
-```
-
-### Using SQLite for database <a name="sqlite"></a>
-
-CodeChecker can also use SQLite for storing the results. In this case the
-SQLite database will be created in the workspace directory.
-
-In order to use PostgreSQL instead of SQLite, use the `--postgresql` command
-line argument for `CodeChecker server` command.
-If `--postgresql` is not given then SQLite is used by default in
-which case `--dbport`, `--dbaddress`, `--dbname`, and
-`--dbusername` command line arguments are ignored.
-
-**NOTE!** Schema migration is not supported with SQLite. This means if you
-upgrade your CodeChecker to a newer version, you might need to re-check your
-project.
-
-## `server` <a name="server"></a>
+### `server`
 
 To view and store the analysis reports in a database, a `CodeChecker server`
 must be started. This is done via the `server` command, which creates a
@@ -342,16 +188,14 @@ optional arguments:
                         "::"'.) (default: False)
   --skip-db-cleanup     Skip performing cleanup jobs on the database like
                         removing unused files. (default: False)
-  --config CONFIG_FILE  Allow the configuration from an explicit JSON based
-                        configuration file. The values configured in the
-                        config file will overwrite the values set in the
-                        command line. The format of configuration file is:
-                        {
-                          "server": [
-                            "--workspace=/home/<username>/workspace",
-                            "--port=9090"
-                          ]
-                        }. (default: None)
+  --config CONFIG_FILE  Allow the configuration from an explicit configuration
+                        file. The values configured in the config file will
+                        overwrite the values set in the command line.
+                        You can use any environment variable inside this file
+                        and it will be expaneded.
+                        For more information see the docs: https://github.com/
+                        Ericsson/codechecker/tree/master/docs/config_file.md
+                        (default: None)
   --verbose {info,debug,debug_analyzer}
                         Set verbosity level.
 
@@ -382,7 +226,7 @@ To start a server with default configuration, simply execute
 CodeChecker server
 ```
 
-### Creating a public server <a name="public-server"></a>
+#### Creating a public server
 
 ```
   --host LISTEN_ADDRESS
@@ -399,34 +243,74 @@ By default, the running server can only be accessed from the same machine
 (`localhost`) where it is running. This can be overridden by specifying
 `--host ""`, instructing the server to listen on all available interfaces.
 
-### Run CodeChecker server in Docker <a name="server-in-docker"></a>
+
+#### Run CodeChecker server in Docker
 To run CodeChecker server in Docker see the [Docker](docker.md) documentation.
 
-### Configuring database and server settings location  <a name="server-settings"></a>
+#### Configuring database and server settings location
 
-The `--sqlite` (or `--postgresql` and the various `--db-` arguments) can be
-used to specify where the database, containing the analysis reports is.
 
-`--config-directory` specifies where the server configuration files, such as
-[authentication config](authentication.md) is. For example, one can start
-two servers with two different product layout, but with the same authorisation
-configuration:
+CodeChecker server can use PostgreSQL or SQLite databases to store the analysis
+results. SQlite is only recommended high volume production usage,
+only for small test installations.
+
+
+##### Server Configuration (Authentication and Server Limits)
+
+The `server_config.json` file describes
+the run-time settings of the web server.
+
+The following parameters can be configured
+* Auhtentication methods (LDAP, File Based, PAM)
+* Number of server threads
+* Storage Limits:  Maximum number of runs, maximum failiure zip size etc.
+* TCP related settings
+
+You can find a specification of this file in
+[Server Configuration](server_config.md) document and authentication
+related sections in the [Authentication Configuration](authentication.md)
+document.
+
+The `--config-directory (-f)` specifies where the server configuration
+files are located.
+
+For example, one can start
+two servers with two different product layout, but with the same
+(authentication) configuration:
 
 ```sh
 CodeChecker server --sqlite ~/major_bugs.sqlite -f ~/.codechecker -p 8001
 CodeChecker server --sqlite ~/minor_bugs.sqlite -f ~/.codechecker -p 8002
 ```
 
-The `--workspace` argument can be used to _shortcut_ this specification: by
-default, the configuration directory is the _workspace_ itself, and therein
-resides the `config.sqlite` file, containing the product configuration.
+If sqlite database is used, the `--workspace` argument can be used to _shortcut_
+this specification. The configuration file and the sqlite files will be located
+in the workspace directory.
+
+##### Database Configuration
+
+The `--sqlite` (or `--postgresql` and the various `--db-` arguments) can be
+used to specify where the database, containing the analysis reports is located.
 
 If the server is started in `--sqlite` mode and fresh, that is, no product
-configuration file is found, a product named `Default`, using `Default.sqlite`
+repository sqlite file is found, a product named `Default`, using `Default.sqlite`
 in the configuration directory is automatically created. Please see
 [Product management](products.md) for details on how to configure products.
 
-### Master superuser and authentication forcing <a name="auth-force"></a>
+In order to use PostgreSQL instead of SQLite, use the `--postgresql` command
+line argument for `CodeChecker server` command.
+If `--postgresql` is not given then SQLite is used by default in
+which case `--dbport`, `--dbaddress`, `--dbname`, and
+`--dbusername` command line arguments are ignored.
+
+**NOTE!** Schema migration is not supported with SQLite. This means if you
+upgrade your CodeChecker to a newer version, you might need to re-check your
+project.
+
+**It is recommended to use only the Postgresql databse for production
+deployments!**
+
+#### Master superuser and authentication forcing
 
 ```
 root account arguments:
@@ -448,7 +332,7 @@ root account arguments:
                         not require authentication otherwise.
 ```
 
-### Enfore secure socket (SSL) <a name="ssl"></a>
+#### Enfore secure socket (SSL)
 
 You can enforce SSL security on your listening socket. In this case all clients must
 access your server using the `https://host:port` URL format.
@@ -460,7 +344,7 @@ using the [openssl tool](https://www.openssl.org/).
 When the server finds these files upon start-up,
 SSL will be automatically enabled.
 
-### Managing running servers <a name="managing-running-servers"></a>
+#### Managing running servers
 
 ```
 running server management:
@@ -495,7 +379,7 @@ options that do not require a complete restart to take effect. For more
 information which option can be reloaded see
 [server config](server_config.md).
 
-### Manage server database upgrades <a name="manage-server-database-upgrade"></a>
+#### Manage server database upgrades
 
 Use these arguments to manage the database versions handled by the server.
 For a more detailed description about the schema upgrade check out the
@@ -526,7 +410,153 @@ Database management arguments.:
 ```
 
 
-## `cmd` <a name="cmd"></a>
+### `store`
+
+A `Codechecker server` needs to be started before the reports can be stored to
+a database.
+
+`store` is used to save previously created machine-readable analysis results
+(such as `plist` files), usually previously generated by `CodeChecker analyze`
+to the database.
+
+<details>
+  <summary><i>$ <b>CodeChecker store --help</b> (click to expand)</i></summary>
+
+```
+usage: CodeChecker store [-h] [-t {plist}] [-n NAME] [--tag TAG]
+                         [--description DESCRIPTION]
+                         [--trim-path-prefix [TRIM_PATH_PREFIX [TRIM_PATH_PREFIX ...]]]
+                         [--config CONFIG_FILE] [-f] [--url PRODUCT_URL]
+                         [--verbose {info,debug,debug_analyzer}]
+                         [file/folder [file/folder ...]]
+
+Store the results from one or more 'codechecker-analyze' result files in a
+database.
+
+positional arguments:
+  file/folder           The analysis result files and/or folders containing
+                        analysis results which should be parsed and printed.
+                        If multiple report directories are given, OFF and
+                        UNAVAILABLE detection statuses will not be available.
+                        (default: /home/<username>/.codechecker/reports)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -t {plist}, --type {plist}, --input-format {plist}
+                        Specify the format the analysis results were created
+                        as. (default: plist)
+  -n NAME, --name NAME  The name of the analysis run to use in storing the
+                        reports to the database. If not specified, the '--
+                        name' parameter given to 'codechecker-analyze' will be
+                        used, if exists.
+  --tag TAG             A unique identifier for this individual store of results
+                        in the run's history.
+  --description DESCRIPTION
+                        A custom textual description to be shown alongside the
+                        run.
+  --trim-path-prefix [TRIM_PATH_PREFIX [TRIM_PATH_PREFIX ...]]
+                        Removes leading path from files which will be printed.
+                        For instance if you analyze files
+                        '/home/jsmith/my_proj/x.cpp' and
+                        '/home/jsmith/my_proj/y.cpp', but would prefer to have
+                        them displayed as 'my_proj/x.cpp' and 'my_proj/y.cpp'
+                        in the web/CLI interface, invoke CodeChecker with '--
+                        trim-path-prefix "/home/jsmith/"'.If multiple prefixes
+                        is given, the longest match will be removed. You may
+                        also use Unix shell-like wildcards (e.g.
+                        '/*/jsmith/').
+  --config CONFIG_FILE  Allow the configuration from an explicit configuration
+                        file. The values configured in the config file will
+                        overwrite the values set in the command line.
+                        You can use any environment variable inside this file
+                        and it will be expaneded.
+                        For more information see the docs: https://github.com/
+                        Ericsson/codechecker/tree/master/docs/config_file.md
+                        (default: None)
+  -f, --force           Delete analysis results stored in the database for the
+                        current analysis run's name and store only the results
+                        reported in the 'input' files. (By default,
+                        CodeChecker would keep reports that were coming from
+                        files not affected by the analysis, and only
+                        incrementally update defect reports for source files
+                        that were analysed.)
+  --verbose {info,debug,debug_analyzer}
+                        Set verbosity level.
+
+server arguments:
+  Specifies a 'CodeChecker server' instance which will be used to store the
+  results. This server must be running and listening, and the given product
+  must exist prior to the 'store' command being run.
+
+  --url PRODUCT_URL     The URL of the product to store the results for, in
+                        the format of '[http[s]://]host:port/Endpoint'.
+                        (default: localhost:8001/Default)
+
+environment variables:
+  CC_PASS_FILE     The location of the password file for auto login. By default
+                   CodeChecker will use '~/.codechecker.passwords.json' file.
+                   It can also be used to setup different credential files to
+                   login to the same server with a different user.
+
+  CC_SESSION_FILE  The location of the session file where valid sessions are
+                   stored. This file will be automatically created by
+                   CodeChecker. By default CodeChecker will use
+                   '~/.codechecker.session.json'. This can be used if
+                   restrictive permissions forbid CodeChecker from creating
+                   files in the users home directory (e.g. in a CI
+                   environment).
+
+The results can be viewed by connecting to such a server in a Web browser or
+via 'CodeChecker cmd'.
+```
+</details>
+
+For example, if the analysis was run like:
+
+```sh
+CodeChecker analyze ../codechecker_myProject_build.log -o ./my_plists
+```
+
+then the results of the analysis can be stored with this command:
+
+```sh
+CodeChecker store ./my_plists -n my_project
+```
+
+#### Format of `PRODUCT_URL`
+
+Several sub-commands, such as `store` and `cmd` need a connection specification
+that identifies a server and a *Product* (read more [about
+products](products.md)). Actions, like report storage or result
+retrieving are performed on these targets.
+
+This is done via the `PRODUCT_URL` where indicated in the subcommand, which
+contains the server's access protocol, address, and the to-be-used product's
+unique endpoint. The format of this string is:
+`[http[s]://]host:port/ProductEndpoint`. This URL looks like a standard Web
+browsing (HTTP) request URL.
+
+CodeChecker communicates via HTTP requests, thus the first part specifies
+whether or not a more secure SSL/TLS-wrapped `https` protocol should be used.
+If omitted, the default value is `http`. The second part is the host and the
+port the server listens on. After a `/`, the unique endpoint of the product
+must be given, this is case-sensitive. This unique endpoint is configured and
+allocated when the [product is created](products.md), by the server's
+administrators. The product must exist and be properly configured before any
+normal operation could be done on it.
+
+If no URL is specified, the default value `http://localhost:8001/Default` will
+be used: a standard HTTP CodeChecker server running on the local machine, on
+the default port, using the *Default* product.
+
+#### Example
+
+The URL `https://codechecker.example.org:9999/SampleProduct` will access the
+server machine `codechecker.example.org` trying to connect to a server
+listening on port `9999` via HTTPS. The product `SampleProduct` will be used.
+
+
+### `cmd`
 
 The `CodeChecker cmd` is a lightweight command line client that can be used to
 view analysis results from the command-line. The command-line client can also
@@ -757,7 +787,11 @@ filter arguments:
                         :new,unresolved:false_positive,intentional"
 ```
 
-### Source components (`components`) <a name="source-components"></a>
+#### Source components (`components`)
+
+Source components can be used to group analysis results. A component
+is a collection of source files defined by regular expressions on the
+path.
 
 <details>
   <summary>
@@ -784,7 +818,7 @@ available actions:
 </details>
 
 
-#### New/Edit source component <a name="new-source-components"></a>
+##### New/Edit source component
 
 <details>
   <summary>
@@ -824,7 +858,7 @@ optional arguments:
 ```
 </details>
 
-##### Format of component file <a name="component-file"></a>
+###### Format of component file
 
 Source component helps us to filter run results by multiple file paths.
 
@@ -867,7 +901,7 @@ means the same as
 `x.cpp` will be included in the run results and all other files under `/a/b/`
 path will not be included.
 
-#### List source components <a name="list-source-components"></a>
+##### List source components
 List the name and basic information about source component added to the
 server.
 ```
@@ -879,7 +913,7 @@ List the name and basic information about source component added to the
 server.
 ```
 
-#### Delete source components <a name="delete-source-components"></a>
+##### Delete source components
 
 ```
 usage: CodeChecker cmd components del [-h] [--url PRODUCT_URL]
@@ -892,7 +926,7 @@ positional arguments:
   NAME                  The source component name which will be removed.
 ```
 
-### List runs (`runs`) <a name="cmd-runs"></a>
+#### List runs (`runs`)
 
 <details>
   <summary>
@@ -917,6 +951,9 @@ optional arguments:
                         you have run_1_a_name, run_2_b_name, run_2_c_name,
                         run_3_d_name then "run_2* run_3_d_name" shows the last
                         three runs.
+  --details             Adds extra details to the run information in JSON
+                        format, such as the list of files that are failed to
+                        analyze.
   --all-before-run RUN_NAME
                         Get all runs that were stored to the server BEFORE the
                         specified one.
@@ -941,7 +978,7 @@ optional arguments:
 ```
 </details>
 
-### List of run histories (`history`) <a name="cmd-history"></a>
+#### List of run histories (`history`)
 
 With this command you can list out the specific storage events which happened
 during storage processes under multiple run names.
@@ -975,7 +1012,7 @@ optional arguments:
 ```
 </details>
 
-### List analysis results' summary (`results`) <a name="cmd-results"></a>
+#### List analysis results' summary (`results`)
 
 Prints basic information about analysis results, such as location, checker
 name, summary.
@@ -1029,7 +1066,7 @@ optional arguments:
 ```
 </details>
 
-#### Example <a name="cmd-results-example"></a>
+##### Example
 ```
 #Get analysis results for a run:
 CodeChecker cmd results my_run
@@ -1048,7 +1085,7 @@ CodeChecker cmd results my_run --severity critical high medium \
 CodeChecker cmd results -o json --details my_run
 ```
 
-### Show differences between two runs (`diff`) <a name="cmd-diff"></a>
+#### Show differences between two runs (`diff`)
 
 This mode shows analysis results (in the same format as `results`) does, but
 from the comparison of two runs.
@@ -1060,7 +1097,7 @@ from the comparison of two runs.
 
 ```
 usage: CodeChecker cmd diff [-h] [-b BASE_RUNS [BASE_RUNS ...]]
-                            [-n NEW_RUNS [NEW_RUNS ...]]
+                            [-n NEW_RUNS [NEW_RUNS ...]] [--print-steps]
                             [--uniqueing {on,off}]
                             [--report-hash [REPORT_HASH [REPORT_HASH ...]]]
                             [--review-status [REVIEW_STATUS [REVIEW_STATUS ...]]]
@@ -1102,7 +1139,8 @@ optional arguments:
                         run-a-1, run-a-2 and run-b-1 then "run-a*" selects the
                         first two. In case of run names tag labels can also be
                         used separated by a colon (:) character:
-                        "run_name:tag_name".
+                        "run_name:tag_name". A run name containing a literal
+                        colon (:) must be escaped: "run\:name".
   -n NEW_RUNS [NEW_RUNS ...], --newname NEW_RUNS [NEW_RUNS ...]
                         The 'new' (right) side of the difference: these
                         analysis runs are compared to the -b/--basename runs.
@@ -1115,7 +1153,10 @@ optional arguments:
                         So if you have run-a-1, run-a-2 and run-b-1 then
                         "run-a*" selects the first two. In case of run names
                         tag labels can also be used separated by a colon (:)
-                        character: "run_name:tag_name".
+                        character: "run_name:tag_name". A run name containing
+                        a literal colon (:) must be escaped: "run\:name".
+  --print-steps         Print the steps the analyzers took in finding the
+                        reported defect.
   -o {plaintext,rows,table,csv,json,html,gerrit,codeclimate} [{plaintext,rows,table,csv,json,html,gerrit,codeclimate} ...], --output {plaintext,rows,table,csv,json,html,gerrit,codeclimate} [{plaintext,rows,table,csv,json,html,gerrit,codeclimate} ...]
                         The output format(s) to use in showing the data.
                         - html: multiple html files will be generated in the
@@ -1278,6 +1319,10 @@ filter arguments:
                         :new,unresolved:false_positive,intentional"
 
 comparison modes:
+  List reports that can be found only in baseline or new runs or in both. False
+  positive and intentional reports are considered as resolved, i.e. these are
+  excluded from the report set as if they were not reported.
+
   --new                 Show results that didn't exist in the 'base' but
                         appear in the 'new' run.
   --resolved            Show results that existed in the 'base' but
@@ -1355,7 +1400,7 @@ more information see
 [analyzer report identification](../analyzer/report_identification.md)
 documentation.
 
-#### Example <a name="cmd-diff-example"></a>
+##### Diff Example
 Let's assume you have the following C++ code:
 ```cpp
 int foo(int z)
@@ -1443,7 +1488,7 @@ to the results stored on a remote CodeChecker server previously
     y = x % 2; // deadcode.DeadStores
   ```
 
-### Show summarised count of results (`sum`) <a name="cmd-sum"></a>
+#### Show summarised count of results (`sum`)
 <details>
   <summary>
     <i>$ <b>CodeChecker cmd sum --help</b> (click to expand)</i>
@@ -1497,7 +1542,7 @@ optional arguments:
 ```
 </details>
 
-#### Example <a name="cmd-sum-example"></a>
+##### Summary Example
 ```sh
 # Get statistics for a run:
 CodeChecker cmd sum -n my_run
@@ -1509,7 +1554,7 @@ CodeChecker cmd sum --all --checker-name "core.*" "deadcode.*"
 CodeChecker cmd sum --all --severity "high"
 ```
 
-### Remove analysis runs (`del`) <a name="cmd-del"></a>
+#### Remove analysis runs (`del`)
 <details>
   <summary>
     <i>$ <b>CodeChecker cmd del --help</b> (click to expand)</i>
@@ -1559,7 +1604,7 @@ optional arguments:
 ```
 </details>
 
-### Update an analysis run (`update`) <a name="cmd-update"></a>
+#### Update an analysis run (`update`)
 <details>
   <summary>
     <i>$ <b>CodeChecker cmd update --help</b> (click to expand)</i>
@@ -1582,7 +1627,12 @@ optional arguments:
 ```
 </details>
 
-### Manage and export/import suppressions (`suppress`) <a name="manage-suppressions"></a>
+#### Import suppressions (`suppress`)
+If cannot use `in-line` code suppressions, such as `//codechecker_suppress`,
+but you would like to keep your suppressions under version control, you
+can use suppress files, to indicate which report is **false positive**.
+
+
 <details>
   <summary>
     <i>$ <b>CodeChecker cmd suppress --help</b> (click to expand)</i>
@@ -1608,8 +1658,12 @@ optional arguments:
 ```
 </details>
 
-#### Import suppressions between server and suppress file <a name="import-suppressions"></a>
+##### Import suppressions from a suppress file
 
+Suppressions are imported as individual report suppressions
+(as opposed to suppression rules).
+So only those reports will be suppressed that are part of the given
+RUN_NAME run.
 
 ```
   -i SUPPRESS_FILE, --import SUPPRESS_FILE
@@ -1620,11 +1674,31 @@ optional arguments:
 `--import` **appends** the suppressions found in the given suppress file to
 the database on the server.
 
-### Manage product configuration of a server (`products`) <a name="cmd-product"></a>
+The suppression file has the following format
+```
+report_hash||source_file_name||suppress_comment||type_of_suppression
+
+```
+
+* `report_hash` is the hash identifier of the report to be suppressed
+* `source_file_name` is the name of the source file wher the report is located
+* `suppress_commant` why you think the issue should be suppressed
+* `type_of_suppression` one of the following `false_positive`, `intentional`,
+  `confirmed`
+
+An example suppress file:
+
+```
+1a7ddce6d69b031310dd7ad2ff330b53||suppress.cpp||foo2 simple||false_positive
+45a2fef6845f54eaf070ad03d19c7981||suppress.cpp||foo3 simple||intentional
+9fb26da7f3224ec0c63cfe3617c8a14e||suppress.cpp||foo4 simple||confirmed
+```
+
+#### Manage product configuration of a server (`products`)
 
 Please see [Product management](products.md) for details.
 
-### Get access control (`permissions`)
+#### Query authorization settings (`permissions`)
 You can use this command to get access control information from a running
 CodeChecker server. This will contain information which user or group has
 global permissions or permissions only for specific products.
@@ -1677,8 +1751,9 @@ common arguments:
   --verbose {info,debug_analyzer,debug}
                         Set verbosity level.
 ```
+</details>
 
-### Authenticate to the server (`login`) <a name="cmd-login"></a>
+#### Authenticate to the server (`login`)
 <details>
   <summary>
     <i>$ <b>CodeChecker cmd login --help</b> (click to expand)</i>
@@ -1718,7 +1793,7 @@ The password can be saved on the disk. If such "preconfigured" password is
 not found, the user will be asked, in the command-line, to provide credentials.
 
 
-## Exporting source code suppression to suppress file <a name="suppress-file"></a>
+### Exporting source code suppression to suppress file
 
 ```
   --export-source-suppress
@@ -1731,7 +1806,7 @@ not found, the user will be asked, in the command-line, to provide credentials.
 CodeChecker parse ./my_plists --suppress generated.suppress --export-source-suppress
 ```
 
-### Export comments and review statuses (`export`) <a name="cmd-export"></a>
+#### Export comments and review statuses (`export`)
 
 ```sh
 usage: CodeChecker cmd export [-h] [-n RUN_NAME [RUN_NAME ...]]
@@ -1753,7 +1828,7 @@ optional arguments:
  In the above command multiple runs can be pass as, the `...` indicate any additional runs, if needed to be provided
 
 
-### Import comments and review statuses into Codechecker (`import`) <a name="cmd-import"></a>
+#### Import comments and review statuses into Codechecker (`import`)
 ```sh
 usage: CodeChecker cmd import [-h] -i JSON_FILE [--url PRODUCT_URL]
                               [--verbose {info,debug_analyzer,debug}]
@@ -1766,6 +1841,47 @@ optional arguments:
                         Import findings from the json file into the database.
 ```
 
-# Debugging CodeChecker <a name="debug"></a>
+### `version`
+#### JSON format
+The JSON output format looks like this:
+```json
+{
+  "analyzer": {
+    "base_package_version": "6.19.0",
+    "package_build_date": "2021-12-15T16:07",
+    "git_commit": "ed16b5d58f75002b465ea0944be0abf071f0b958",
+    "git_tag": "6.19"
+  },
+  "web": {
+    "base_package_version": "6.19.0",
+    "package_build_date": "2021-12-15T16:07",
+    "git_commit": "ed16b5d58f75002b465ea0944be0abf071f0b958",
+    "git_tag": "6.19",
+    "server_api_version": [
+      "6.47"
+    ],
+    "client_api_version": "6.47"
+  }
+}
+```
+
+In JSON output we have two main sections:
+- `analyzer` (null | object): Analyzer version information if it's available.
+  - `base_package_version` (string): Base package version in
+  `<major>.<minor>.<revision>` format.
+  - `package_build_date` (string): Date time when the package was built.
+  - `git_commit` (null | string): Git commit ID (hash).
+  - `git_tag` (null | string): Git tag information.
+- `web` (null | object): Web version information if it's available.
+  - `base_package_version` (string): Base package version in
+  `<major>.<minor>.<revision>` format.
+  - `package_build_date` (string): Date time when the package was built.
+  - `git_commit` (null | string): Git commit ID (hash).
+  - `git_tag` (null | string): Git tag information.
+  - `server_api_version` (list[string]): Server supported Thrift API version.
+  - `client_api_version` (str): Client Thrift API version.
+
+
+## Log Levels
 
 To change the log levels check out the [logging](../logging.md) documentation.

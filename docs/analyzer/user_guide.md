@@ -13,7 +13,6 @@ Table of Contents
             * [Absolute path examples](#skip-abs-example)
             * [Relative or partial path examples](#skip-rel-example)
         * [CodeChecker analyzer configuration](#analyzer-configuration)
-            * [Configuration file](#analyzer-configuration-file)
             * [Analyzer and checker config options](#analyzer-checker-config-option)
               * [Configuration of analyzer tools](#analyzer-config-option)
               * [Configuration of checkers](#checker-config-option)
@@ -26,8 +25,17 @@ Table of Contents
             * [`--enable-all`](#enable-all)
         * [Toggling compiler warnings](#toggling-warnings)
         * [Cross Translation Unit (CTU) analysis mode](#ctu)
+        * [Taint analysis configuration](#taint)
         * [Statistical analysis mode](#statistical)
     * [`parse`](#parse)
+        * [`JSON` format of `CodeChecker parse`](#json-format-of-codechecker-parse)
+          * [Report object](#report-object)
+          * [File object](#file-object)
+          * [Range object](#range-object)
+          * [SourceCodeComment object](#sourcecodecomment-object)
+          * [BugPathEvent object](#bugpathevent-object)
+          * [BugPathPosition object](#bugpathposition-object)
+          * [MacroExpansion object](#macroexpansion-object)
         * [Exporting source code suppression to suppress file](#suppress-file)
     * [`fixit`](#fixit)
     * [`checkers`](#checkers)
@@ -153,7 +161,7 @@ optional arguments:
                         compilation action for a source file, only the one is
                         kept that belongs to the alphabetically first
                         compilation target. If none of the above given, this
-                        parameter should be a python regular expression.If
+                        parameter should be a python regular expression. If
                         there is more than one compilation action for a
                         source, only the one is kept which matches the given
                         python regex. If more than one matches an error is
@@ -229,22 +237,14 @@ analyzer arguments:
                         folder named 'reproducer' under the report directory.
                         When this flag is used, 'failed' directory remains
                         empty.
-  --config CONFIG_FILE  Allow the configuration from an explicit JSON based
-                        configuration file. The value of the 'analyzer' key in
-                        the config file will be emplaced as command line
-                        arguments. The format of configuration file is:
-                        {
-                          "analyze": [
-                            "--enable=core.DivideZero",
-                            "--enable=core.CallAndMessage",
-                            "--report-hash=context-free-v2",
-                            "--verbose=debug",
-                            "--skip=$HOME/project/skip.txt",
-                            "--clean"
-                          ]
-                        }.
+  --config CONFIG_FILE  Allow the configuration from an explicit configuration
+                        file. The values configured in the config file will
+                        overwrite the values set in the command line.
                         You can use any environment variable inside this file
-                        and it will be expaneded. (default: None)
+                        and it will be expaneded.
+                        For more information see the docs: https://github.com/
+                        Ericsson/codechecker/tree/master/docs/config_file.md
+                        (default: None)
   --saargs CLANGSA_ARGS_CFG_FILE
                         File containing argument which will be forwarded
                         verbatim for the Clang Static analyzer.
@@ -812,6 +812,10 @@ Example:
 CodeChecker analyze ../codechecker_myProject_build.log -o my_plists
 ```
 
+**Note**: If your compilation database log file contains relative paths you
+have to make sure that you run the analysis command from the same directory
+as the logger was run (i.e. that paths are relative to).
+
 `CodeChecker analyze` supports a myriad of fine-tuning arguments, explained
 below:
 
@@ -912,7 +916,7 @@ optional arguments:
                         compilation action for a source file, only the one is
                         kept that belongs to the alphabetically first
                         compilation target. If none of the above given, this
-                        parameter should be a python regular expression.If
+                        parameter should be a python regular expression. If
                         there is more than one compilation action for a
                         source, only the one is kept which matches the given
                         python regex. If more than one matches an error is
@@ -1030,22 +1034,14 @@ analyzer arguments:
                         folder named 'reproducer' under the report directory.
                         When this flag is used, 'failed' directory remains
                         empty.
-  --config CONFIG_FILE  Allow the configuration from an explicit JSON based
-                        configuration file. The value of the 'analyzer' key in
-                        the config file will be emplaced as command line
-                        arguments. The format of configuration file is:
-                        {
-                          "analyze": [
-                            "--enable=core.DivideZero",
-                            "--enable=core.CallAndMessage",
-                            "--report-hash=context-free-v2",
-                            "--verbose=debug",
-                            "--skip=$HOME/project/skip.txt",
-                            "--clean"
-                          ]
-                        }.
+  --config CONFIG_FILE  Allow the configuration from an explicit configuration
+                        file. The values configured in the config file will
+                        overwrite the values set in the command line.
                         You can use any environment variable inside this file
-                        and it will be expaneded. (default: None)
+                        and it will be expaneded.
+                        For more information see the docs: https://github.com/
+                        Ericsson/codechecker/tree/master/docs/config_file.md
+                        (default: None)
   --saargs CLANGSA_ARGS_CFG_FILE
                         File containing argument which will be forwarded
                         verbatim for the Clang Static Analyzer.
@@ -1102,67 +1098,6 @@ not present as they are provided by different binaries.
 See [Configure Clang Static Analyzer and checkers](checker_and_analyzer_configuration.md)
 documentation for a more detailed description how to use the `saargs`,
 `tidyargs` and `z3` arguments.
-
-#### Configuration file <a name="analyzer-configuration-file"></a>
-`--config` option allow the configuration from an explicit configuration file.
-The parameters in the config file will be emplaced as command line arguments.
-
-**Example**:
-Lets assume you have a configuration file
-[`codechecker.json`](../../config/codechecker.json) with the following content:
-```json
-{
-  "analyze": [
-    "--enable=core.DivideZero",
-    "--enable=core.CallAndMessage",
-    "--analyzer-config",
-    "clangsa:unroll-loops=true",
-    "--checker-config",
-    "clang-tidy:google-readability-function-size.StatementThreshold=100"
-    "--report-hash", "context-free-v2"
-    "--verbose=debug",
-    "--clean"
-  ],
-  "parse": [
-    "--trim-path-prefix",
-    "/$HOME/workspace"
-  ],
-  "server": [
-    "--workspace=$HOME/workspace",
-    "--port=9090"
-  ],
-  "store": [
-    "--name=run_name",
-    "--tag=my_tag",
-    "--url=http://codechecker.my:9090/MyProduct"
-  ]
-}
-```
-This configuration file example contains configuration options for multiple
-codechecker subcommands (analyze, parse, server, store) so not just the
-`analyze` subcommand can be configured like this.
-The focus is on the `analyze` subcommand configuration in the next examples.
-
-If you run the following command:
-```sh
-CodeChecker analyze compilation.json -o ./reports --config ./codechecker.json
-```
-then the analyzer parameters from the `codechecker.json` file will be emplaced
-as command line arguments:
-```sh
-CodeChecker analyze compilation.json -o ./reports --enable=core.DivideZero --enable=core.CallAndMessage --analyzer-config clangsa:unroll-loops=true --checker-config clang-tidy:google-readability-function-size.StatementThreshold=100 --report-hash context-free-v2 --verbose debug --clean
-```
-
-Note: Options which require parameters have to be in either of the following
-formats:
-
-- Use equal to separate option and parameter in quotes:
-  `{ "analyze": [ "--verbose=debug" ] }`
-- Use separated values for option and parameter:
-  `{ "analyze": [ "--verbose", "debug" ] }`
-
-Note: environment variables inside this config file will be expanded:
-`{ "analyze": [ "--skip=$HOME/project/skip.txt" ] }`
 
 #### Analyzer and checker config options <a name="analyzer-checker-config-option"></a>
 
@@ -1490,10 +1425,15 @@ losing stability and precision, and worst case, might result in a complete and
 utter failure in the analysis itself. **`--enable-all` may only be used at
 your own risk!**
 
-Even specifying `--enable-all` will **NOT** enable checkers from some special
-checker groups, such as `alpha.` and `debug.`. `osx.` checkers are only enabled
-if CodeChecker is run on a macOS machine. `--enable-all` can further be
-fine-tuned with subsequent `--enable` and `--disable` arguments, for example
+Even specifying `--enable-all` will **NOT** enable checkers from the following
+special checker groups: `alpha.`, `debug.`, `osx.`, `abseil-`, `android-`,
+`darwin-`, `objc-`, `cppcoreguidelines-`, `fuchsia.`, `fuchsia-`, `hicpp-`,
+`llvm-`, `llvmlibc-`, `google-`, `zircon`.
+
+`osx.` checkers are only enabled if CodeChecker is run on a macOS machine.
+
+`--enable-all` can further be fine-tuned with subsequent `--enable` and
+`--disable` arguments, for example
 
 ```sh
 --enable-all --enable alpha --disable misc
@@ -1540,6 +1480,44 @@ cross translation unit analysis arguments:
                         some runtime CPU overhead in the second phase of the
                         analysis. (default: parse-on-demand)
 ```
+
+### Taint analysis configuration <a name="taint"></a>
+
+Taint analysis is used to detect bugs and potential security-related errors
+caused by untrusted data sources.
+An untrusted data source is usually an IO operation in code, often related to
+the file-system, database, network, or environment variables.
+Taint analysis works by defining operations that introduce tainted values
+(`sources`), operations that cause taint to spread from tainted values
+(`propagators`), and operations that are sensitive to tainted values (`sinks`).
+Developers can also use an additional category of `filters` to express that some
+operations sanitize tainted values, and after sanitization,
+the value is trusted and safe to use.
+
+Taint analysis can be used with the default configuration by enabling the
+`alpha.security.taint.TaintPropagation` checker:
+```sh
+CodeChecker analyze -e alpha.security.taint.TaintPropagation
+```
+
+Taint analysis can be used with custom configuration by specifying the taint
+configuration file as a checker-option in addition to enabling the
+`alpha.security.taint.TaintPropagation` checker:
+```sh
+CodeChecer analyze \
+  -e alpha.security.taint.TaintPropagation \
+  --checker-config 'clangsa:alpha.security.taint.TaintPropagation:Config=my-cutom-taint-config.yaml'
+```
+
+Taint analysis false positives can be handled by either using the warning
+suppression via comments in the code (same as with other CodeChecker reports),
+or by providing filter operations via a custom configuration file.
+
+The default configuration options of taint analysis are documented in the
+[checker's documentation](https://clang.llvm.org/docs/analyzer/checkers.html#alpha-security-taint-taintpropagation-c-c).
+
+Clang SA's conceptual model of taint analysis and the checker's configuration
+file format is documented in the [Taint Analysis Configuration docs](https://clang.llvm.org/docs/analyzer/user-docs/TaintAnalysisConfiguration.html).
 
 ### Statistical analysis mode <a name="statistical"></a>
 
@@ -1615,16 +1593,14 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --config CONFIG_FILE  Allow the configuration from an explicit JSON based
-                        configuration file. The value of the 'parse' key in
-                        the config file will be emplaced as command line
-                        arguments. The format of configuration file is:
-                        {
-                          "parse": [
-                            "--trim-path-prefix",
-                            "$HOME/workspace"
-                          ]
-                        } (default: None)
+  --config CONFIG_FILE  Allow the configuration from an explicit configuration
+                        file. The values configured in the config file will
+                        overwrite the values set in the command line.
+                        You can use any environment variable inside this file
+                        and it will be expaneded.
+                        For more information see the docs: https://github.com/
+                        Ericsson/codechecker/tree/master/docs/config_file.md
+                        (default: None)
   -t {plist}, --type {plist}, --input-format {plist}
                         Specify the format the analysis results were created
                         as. (default: plist)
@@ -1649,10 +1625,15 @@ optional arguments:
                         User guide on how a Skipfile should be laid out.
   --trim-path-prefix [TRIM_PATH_PREFIX [TRIM_PATH_PREFIX ...]]
                         Removes leading path from files which will be printed.
-                        So if you have /a/b/c/x.cpp and /a/b/c/y.cpp then by
-                        removing "/a/b/" prefix will print files like c/x.cpp
-                        and c/y.cpp. If multiple prefix is given, the longest
-                        match will be removed.
+                        For instance if you analyze files
+                        '/home/jsmith/my_proj/x.cpp' and
+                        '/home/jsmith/my_proj/y.cpp', but would prefer to have
+                        them displayed as 'my_proj/x.cpp' and 'my_proj/y.cpp'
+                        in the web/CLI interface, invoke CodeChecker with '--
+                        trim-path-prefix "/home/jsmith/"'.If multiple prefixes
+                        is given, the longest match will be removed. You may
+                        also use Unix shell-like wildcards (e.g.
+                        '/*/jsmith/').
   --review-status [REVIEW_STATUS [REVIEW_STATUS ...]]
                         Filter results by review statuses. Valid values are:
                         confirmed, false_positive, intentional, suppress,
@@ -1705,6 +1686,349 @@ then the results of the analysis can be printed with
 ```sh
 CodeChecker parse ./my_plists
 ```
+
+### `JSON` format of `CodeChecker parse`
+Let's assume that we have the following source file:
+```cpp
+#define DIV(x, y) x / y
+
+int foo(int p) {
+  // codechecker_confirmed [core.DivideZero] This is a bug.
+  return DIV(1, p);
+}
+
+int main() {
+  return foo(0);
+}
+```
+
+If we analyze this source file with `Clang Static Analyzer` and we call the
+`CodeChecker parse` command with `json` output it will generate an output
+similar to this one:
+
+```json
+{
+  "version": 1,
+  "reports": [
+    {
+      "analyzer_result_file_path": "/home/username/projects/dummy/reports/main.cpp_clangsa_13e0fcf9c1bae0de6da3cb3d0bf1f330.plist",
+      "file": {
+        "id": "/home/username/dummy/simple/main.cpp",
+        "path": "projects/dummy/main.cpp",
+        "original_path": "/home/username/projects/dummy/main.cpp"
+      },
+      "line": 5,
+      "column": 12,
+      "message": "Division by zero",
+      "checker_name": "core.DivideZero",
+      "severity": "HIGH",
+      "report_hash": "7d5ccfef806a23b016a52d0df8f1f5d8",
+      "analyzer_name": "clangsa",
+      "category": "Logic error",
+      "type": null,
+      "source_code_comments": [
+        {
+          "checkers": [ "core.DivideZero" ],
+          "message": "This is a bug.",
+          "status": "confirmed",
+          "line": "  // codechecker_confirmed [core.DivideZero] This is a bug.\n"
+        }
+      ],
+      "review_status": "confirmed",
+      "bug_path_events": [
+        {
+          "file": {
+            "id": "/home/username/dummy/simple/main.cpp",
+            "path": "projects/dummy/main.cpp",
+            "original_path": "/home/username/projects/dummy/main.cpp"
+          },
+          "line": 9,
+          "column": 14,
+          "message": "Passing the value 0 via 1st parameter 'p'",
+          "range": {
+            "start_line": 9,
+            "start_col": 14,
+            "end_line": 9,
+            "end_col": 14
+          }
+        },
+        {
+          "file": {
+            "id": "/home/username/dummy/simple/main.cpp",
+            "path": "projects/dummy/main.cpp",
+            "original_path": "/home/username/projects/dummy/main.cpp"
+          },
+          "line": 9,
+          "column": 10,
+          "message": "Calling 'foo'",
+          "range": {
+            "start_line": 9,
+            "start_col": 10,
+            "end_line": 9,
+            "end_col": 10
+          }
+        },
+        {
+          "file": {
+            "id": "/home/username/dummy/simple/main.cpp",
+            "path": "projects/dummy/main.cpp",
+            "original_path": "/home/username/projects/dummy/main.cpp"
+          },
+          "line": 3,
+          "column": 1,
+          "message": "Entered call from 'main'",
+          "range": {
+            "start_line": 3,
+            "start_col": 1,
+            "end_line": 3,
+            "end_col": 1
+          }
+        },
+        {
+          "file": {
+            "id": "/home/username/dummy/simple/main.cpp",
+            "path": "projects/dummy/main.cpp",
+            "original_path": "/home/username/projects/dummy/main.cpp"
+          },
+          "line": 5,
+          "column": 12,
+          "message": "Division by zero",
+          "range": {
+            "start_line": 5,
+            "start_col": 12,
+            "end_line": 5,
+            "end_col": 12
+          }
+        }
+      ],
+      "bug_path_positions": [
+        {
+          "range": {
+            "start_line": 9,
+            "start_col": 3,
+            "end_line": 9,
+            "end_col": 8
+          },
+          "file": {
+            "id": "/home/username/dummy/simple/main.cpp",
+            "path": "projects/dummy/main.cpp",
+            "original_path": "/home/username/projects/dummy/main.cpp"
+          }
+        },
+        {
+          "range": {
+            "start_line": 9,
+            "start_col": 14,
+            "end_line": 9,
+            "end_col": 14
+          },
+          "file": {
+            "id": "/home/username/dummy/simple/main.cpp",
+            "path": "projects/dummy/main.cpp",
+            "original_path": "/home/username/projects/dummy/main.cpp"
+          }
+        }
+      ],
+      "notes": [],
+      "macro_expansions": [
+        {
+          "name": "DIV",
+          "file": {
+            "id": "/home/username/dummy/simple/main.cpp",
+            "path": "projects/dummy/main.cpp",
+            "original_path": "/home/username/projects/dummy/main.cpp"
+          },
+          "line": 5,
+          "column": 10,
+          "message": "1 / p",
+          "range": {
+            "start_line": 5,
+            "start_col": 10,
+            "end_line": 5,
+            "end_col": 10
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+- `version` (number): version number. If the format of the JSON output will
+  change this value will be incremented too. Currently supported values: `1`.
+- `reports` (list): list of [Report objects](#report-object).
+
+#### Report object
+- `file` (File): file where the report was found in. For more information
+  [see](#file-object).
+- `line` (number): line number.
+- `column` (number): column number.
+- `message` (str): message reported by the checker.
+- `checker_name` (str): identifier of the rule (checker) that was evaluated
+  to produce the result.
+- `severity` (str | null): CodeChecker severity level (optional). Possible
+values are: `CRITICAL`, `HIGH`, `MEDIUM`, `LOW`, `STYLE`, `UNSPECIFIED`.
+- `report_hash` (str | null): bug identifier hash (optional).
+- `analyzer_name` (str | null): analyzer name which reported the bug
+  (optional).
+- `analyzer_result_file_path` (str | null): analyzer result file path where
+  the report comes from (optional).
+- `category` (str | null): report category such as 'Logic error',
+  'Code clone' etc. (optional)
+- `type` (str): report type such as 'Division by zero',
+  'Dereference of null pointer', etc. (optional).
+- `source_code_comments` (list): list of CodeChecker source code comments. For
+  more information [see](#sourcecodecomment-object).
+- `review_status` (str): CodeChecker review status (default: 'unreviewed').
+- `bug_path_events` (list[BugPathEvent]): list of bug path events. These events
+will be shown as bug steps on the UI and CLI (e.g.:
+`CodeChecker parse --print-steps`). For more information
+[see](#bugpathevent-object).
+- `bug_path_positions` (list): list of bug report points. These positions will
+be used by the UI and if given, the UI will connect them with arrows. For more
+information [see](#bugpathposition-object).
+- `notes` (list[BugPathEvent]): list of notes. These events will be shown
+on the UI and CLI (e.g.: `CodeChecker parse --print-steps`) separated from
+bug steps and will hold useful information to understand the report. For more
+information [see](#bugpathevent-object).
+- `macro_expansions` (list): list of macro expansions. These events will be
+shown on the UI and CLI (e.g.: `CodeChecker parse --print-steps`) separated
+from bug steps and will hold useful information to understand macros in the bug
+step. For more information [see](#macroexpansion-object).
+
+#### File object
+```json
+{
+  "id": "/home/username/dummy/simple/main.cpp",
+  "path": "projects/dummy/main.cpp",
+  "original_path": "/home/username/projects/dummy/main.cpp"
+}
+```
+
+- `id` (str): unique identifier of the file object. Most of the cases it equals
+with `original_path`.
+- `path` (str): returns the trimmed version of the file path if leading paths
+are removed previously (`--trim-path-prefix` option). Otherwise it will return
+the same value as the `original_path`.
+- `original_path` (str): original file path. Trimming the file path will not
+modify this value.
+
+#### Range object
+```json
+{
+  "start_line": 8,
+  "start_col": 14,
+  "end_line": 8,
+  "end_col": 14
+}
+```
+
+- `start_line` (number): start line number.
+- `start_col` (number): start column number.
+- `end_line` (number): end line number.
+- `end_col` (number): end column number.
+
+#### SourceCodeComment object
+```json
+{
+  "checkers": [ "core.DivideZero" ],
+  "message": "This is a bug.",
+  "status": "confirmed",
+  "line": "  // codechecker_confirmed [core.DivideZero] This is a bug.\n"
+}
+```
+
+- `checkers` (list[str]): list of checker names from the source code comment.
+`all` is a special checker name and it indicates that the source code comment
+is related to all results.
+- `message` (str): source code comment message which will be shown on the UI
+after storage.
+- `status` (str): status of the source code comment. Possible values:
+`unreviewed`, `suppress`, `false_positive`, `intentional`, `confirmed`.
+- `line` (str): full line of the source code comment.
+
+For more information [read](#source-code-comments).
+
+#### BugPathEvent object
+```json
+{
+  "file": {
+    "id": "/home/username/dummy/simple/main.cpp",
+    "path": "projects/dummy/main.cpp",
+    "original_path": "/home/username/projects/dummy/main.cpp"
+  },
+  "line": 8,
+  "column": 14,
+  "message": "Passing the value 0 via 1st parameter 'p'",
+  "range": {
+    "start_line": 8,
+    "start_col": 14,
+    "end_line": 8,
+    "end_col": 14
+  }
+}
+```
+
+- `file` (File): file where the event was found in. For more information
+[see](#file-object).
+- `line` (number): line number.
+- `column` (number): column number.
+- `message` (str): bug path event message.
+- `range` (Range): more precise information about event location (optional).
+For more information [see](#range-object).
+
+#### BugPathPosition object
+```json
+{
+  "range": {
+    "start_line": 8,
+    "start_col": 3,
+    "end_line": 8,
+    "end_col": 8
+  },
+  "file": {
+    "id": "/home/username/dummy/simple/main.cpp",
+    "path": "projects/dummy/main.cpp",
+    "original_path": "/home/username/projects/dummy/main.cpp"
+  },
+}
+```
+
+- `file` (File): file where the position can be found in. For more information
+[see](#file-object).
+- `range` (Range): information about bug path position. For more information
+[see](#range-object).
+
+#### MacroExpansion object
+```json
+{
+  "name": "DIV",
+  "file": {
+    "id": "/home/username/dummy/simple/main.cpp",
+    "path": "projects/dummy/main.cpp",
+    "original_path": "/home/username/projects/dummy/main.cpp"
+  },
+  "line": 5,
+  "column": 10,
+  "message": "1 / p",
+  "range": {
+    "start_line": 5,
+    "start_col": 10,
+    "end_line": 5,
+    "end_col": 10
+  }
+}
+```
+
+- `name` (str): macro name which will be expanded.
+- Same fields as `BugPathEvent` type:
+  - `file` (File): file where the macro expansion was found in. For more
+  information [see](#file-object).
+  - `line` (number): line number.
+  - `column` (number): column number.
+  - `message` (str): expanded message.
+  - `range` (Range | null): more precise information about event location
+  (optional). For more information [see](#range-object).
 
 ## `fixit` <a name="fixit"></a>
 
@@ -2080,5 +2404,51 @@ void test() {
     comment
   */
   x = 1; // warn
+}
+```
+
+## Change review status for multiple checker results in the same line
+You can change multiple checker reports with a single source code comment:
+
+```cpp
+void test() {
+  // codechecker_confirmed [clang-diagnostic-division-by-zero, core.DivideZero] These are real problems.
+  int x = 1 / 0;
+}
+```
+
+The limitation of this format is that you can't use separate status or message
+for checkers. To solve this problem you can use one of the following format:
+
+```cpp
+void test_simple() {
+  // codechecker_confirmed [clang-diagnostic-division-by-zero, core.DivideZero] This is a real bug.
+  // codechecker_intentional [clang-diagnostic-unused-variable] This is not a bug.
+  int x = 1 / 0;
+}
+
+void test_simple() {
+  /**
+   * codechecker_intentional [core.DivideZero] This is a real bug.
+   * codechecker_confirmed [clang-diagnostic-unused-variable] This is not a bug.
+   */
+  int x = 1 / 0;
+}
+```
+
+**WARNING**: using multiple source code comments for the same checker is not
+supported and will give you an error:
+
+```cpp
+void testError1() {
+  // codechecker_confirmed [clang-diagnostic-unused-variable] These are real problems.
+  // codechecker_intentional [clang-diagnostic-unused-variable] This is not a bug.
+  int x = 1 / 0;
+}
+
+void testError2() {
+  // codechecker_confirmed [all] These are real problems.
+  // codechecker_intentional [clang-diagnostic-unused-variable] This is not a bug.
+  int x = 1 / 0;
 }
 ```

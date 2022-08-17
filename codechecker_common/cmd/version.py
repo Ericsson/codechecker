@@ -9,11 +9,14 @@
 Defines a subcommand for CodeChecker which prints version information.
 """
 
-
 import argparse
+import json
 
 from codechecker_common import logger
 from codechecker_common.output import USER_FORMATS
+
+
+LOG = logger.get_logger('system')
 
 
 def get_argparser_ctor_args():
@@ -61,25 +64,32 @@ def main(args):
 
     output_format = args.output_format
 
-    has_analyzer_version = False
+    # Get analyzer version information if the module is available.
+    analyzer_version = None
     try:
-        from codechecker_analyzer.cmd import analyzer_version
-        has_analyzer_version = True
-
-        # Print analyzer version information.
-        print("CodeChecker analyzer version:")
-        analyzer_version.print_version(output_format)
+        from codechecker_analyzer.cmd.analyzer_version import Version
+        analyzer_version = Version()
     except Exception:
         pass
 
+    # Get web version information if the module is available.
+    web_version = None
     try:
-        from codechecker_web.cmd import web_version
-
-        if has_analyzer_version:
-            print()  # Print a new line to separate version information.
-
-        # Print web server version information.
-        print("CodeChecker web version:")
-        web_version.print_version(output_format)
+        from codechecker_web.cmd.web_version import Version
+        web_version = Version()
     except Exception:
         pass
+
+    # Print the version information.
+    if output_format == "json":
+        print(json.dumps({
+            "analyzer":
+                analyzer_version.to_dict() if analyzer_version else None,
+            "web": web_version.to_dict() if web_version else None}))
+    else:
+        if analyzer_version:
+            analyzer_version.print(output_format)
+            print()
+
+        if web_version:
+            web_version.print(output_format)

@@ -200,9 +200,10 @@ int f(int x) { return 1 / x; }
         success = self._cc_client.addComment(report_id, comment)
         self.assertTrue(success)
 
-        # Change review status.
-        success = self._cc_client.changeReviewStatus(
-            report_id, ReviewStatus.CONFIRMED, 'Real bug')
+        # Change review status with a review status rule.
+        success = self._cc_client.addReviewStatusRule(
+            report.bugHash, ReviewStatus.CONFIRMED,
+            'Real bug')
         self.assertTrue(success)
 
         # Remove the first storage.
@@ -220,12 +221,10 @@ int f(int x) { return 1 / x; }
         comments = self._cc_client.getComments(run_results[0].reportId)
         self.assertTrue(comments)
 
-        # Remove the second run too, so it will cleanup the unused commments
-        # and review statuses.
+        # Remove the second run too, so it will cleanup the unused commments.
         self._cc_client.removeRun(run_id2, None)
 
-        # Store results again and check that previous comments and review
-        # statuses are gone.
+        # Store results again and check that previous comments are gone.
         files_in_report_before = self.__get_files_in_report(run_name1)
 
         r_filter = ReportFilter(reportHash=[report_hash])
@@ -239,7 +238,7 @@ int f(int x) { return 1 / x; }
         r_filter = ReportFilter(reviewStatus=[ReviewStatus.CONFIRMED])
         run_results = self._cc_client.getRunResults(None, 1, 0, None, r_filter,
                                                     None, False)
-        self.assertFalse(run_results)
+        self.assertTrue(run_results)
 
         # Checker severity levels.
         self.__check_serverity_of_reports(run_name1)

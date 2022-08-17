@@ -13,6 +13,7 @@ Build and log related functionality.
 import os
 import pickle
 import platform
+import shlex
 import subprocess
 import sys
 from uuid import uuid4
@@ -57,7 +58,7 @@ def perform_build_command(logfile, command, context, keep_link, silent=False,
     """
     Build the project and create a log file.
     """
-    LOG.info("Starting build ...")
+    LOG.info("Starting build...")
 
     original_env = os.environ
     try:
@@ -75,53 +76,63 @@ def perform_build_command(logfile, command, context, keep_link, silent=False,
                     'using a current copy for logging.')
         original_env = os.environ.copy()
 
-    # Run user's commands with intercept.
-    if host_check.check_intercept(original_env):
-        LOG.debug_analyzer("with intercept ...")
-        final_command = command
+    # Run user's commands in shell, and preload ldlogger.
+    # TODO: better platform detection.
+    if host_check.check_ldlogger(os.environ) and platform.system() == 'Linux':
+        LOG.info("Using CodeChecker ld-logger.")
+
+        # Same as linux's touch.
+        open(logfile, 'a', encoding="utf-8", errors="ignore").close()
+        log_env = env.get_log_env(logfile, context, original_env)
+        if 'CC_LOGGER_GCC_LIKE' not in log_env:
+            log_env['CC_LOGGER_GCC_LIKE'] = 'gcc:g++:clang:clang++:cc:c++'
+        if keep_link or ('CC_LOGGER_KEEP_LINK' in log_env and
+                         log_env['CC_LOGGER_KEEP_LINK'] == 'true'):
+            log_env['CC_LOGGER_KEEP_LINK'] = 'true'
+
+        is_debug = verbose and verbose in ['debug', 'debug_analyzer']
+        if not is_debug and 'CC_LOGGER_DEBUG_FILE' in log_env:
+            del log_env['CC_LOGGER_DEBUG_FILE']
+        elif is_debug and 'CC_LOGGER_DEBUG_FILE' not in log_env:
+            if 'CC_LOGGER_DEBUG_FILE' in os.environ:
+                log_file = os.environ['CC_LOGGER_DEBUG_FILE']
+            else:
+                log_file = os.path.join(os.path.dirname(logfile),
+                                        'codechecker.logger.debug')
+
+            if os.path.exists(log_file):
+                os.remove(log_file)
+
+            log_env['CC_LOGGER_DEBUG_FILE'] = log_file
+    elif host_check.check_intercept(os.environ):
+        LOG.info("Using intercept-build.")
         command = ' '.join(["intercept-build",
                             "--cdb", logfile,
-                            "sh -c \"" + final_command + "\""])
+                            "sh -c", shlex.quote(command)])
         log_env = original_env
         LOG.debug_analyzer(command)
-
-    # Run user's commands in shell.
     else:
-        # TODO: better platform detection.
+        # Print a helpful diagnostic.
         if platform.system() == 'Linux':
-            LOG.debug_analyzer("with ld logger ...")
-            # Same as linux's touch.
-            open(logfile, 'a', encoding="utf-8", errors="ignore").close()
-            log_env = env.get_log_env(logfile, context, original_env)
-            if 'CC_LOGGER_GCC_LIKE' not in log_env:
-                log_env['CC_LOGGER_GCC_LIKE'] = 'gcc:g++:clang:clang++:cc:c++'
-            if keep_link or ('CC_LOGGER_KEEP_LINK' in log_env and
-                             log_env['CC_LOGGER_KEEP_LINK'] == 'true'):
-                log_env['CC_LOGGER_KEEP_LINK'] = 'true'
-
-            is_debug = verbose and verbose in ['debug', 'debug_analyzer']
-            if is_debug and 'CC_LOGGER_DEBUG_FILE' not in log_env:
-                if 'CC_LOGGER_DEBUG_FILE' in os.environ:
-                    log_file = os.environ['CC_LOGGER_DEBUG_FILE']
-                else:
-                    log_file = os.path.join(os.path.dirname(logfile),
-                                            'codechecker.logger.debug')
-
-                if os.path.exists(log_file):
-                    os.remove(log_file)
-
-                log_env['CC_LOGGER_DEBUG_FILE'] = log_file
-        elif platform.system() == 'Windows':
+            LOG.error("Both ldlogger and intercept-build are unavailable.\n"
+                      "Try acquiring the compilation_commands.json in another "
+                      "way.\n"
+                      "Install ldlogger or intercept-build to proceed.")
+            sys.exit(1)
+        if platform.system() == 'Windows':
             LOG.error("This command is not supported on Windows. You can use "
                       "the following tools to generate a compilation "
                       "database: \n"
                       " - CMake (CMAKE_EXPORT_COMPILE_COMMANDS)\n"
                       " - compiledb (https://pypi.org/project/compiledb/)")
             sys.exit(1)
-        else:
+        if platform.system() == 'Darwin':
             LOG.error("Intercept-build is required to run CodeChecker in "
                       "OS X.")
             sys.exit(1)
+        LOG.error("Unrecognized platform. Open a GitHub issue for further "
+                  "guidance.")
+        sys.exit(1)
 
     LOG.debug_analyzer(log_env)
     try:

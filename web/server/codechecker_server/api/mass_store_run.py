@@ -38,7 +38,7 @@ from ..database.config_db_model import Product
 from ..database.database import DBSession
 from ..database.run_db_model import AnalysisInfo, AnalyzerStatistic, \
     BugPathEvent, BugReportPoint, ExtendedReportData, File, FileContent, \
-    Report as DBReport, Run, RunHistory, RunLock
+    Report as DBReport, ReviewStatus, Run, RunHistory, RunLock
 from ..metadata import checker_is_unavailable, MetadataInfoParser
 
 from .report_server import ThriftRequestHandler
@@ -712,10 +712,13 @@ class MassStoreRun:
         run_id: int,
         report: Report,
         file_path_to_id: Dict[str, int],
+        review_status: ReviewStatus,
+        review_status_is_in_source: bool,
         detection_status: str,
         detection_time: datetime,
         analysis_info: AnalysisInfo,
-        analyzer_name: Optional[str] = None
+        analyzer_name: Optional[str] = None,
+        fixed_at: Optional[datetime] = None
     ) -> int:
         """ Add report to the database. """
         try:
@@ -728,8 +731,13 @@ class MassStoreRun:
                 run_id, report.report_hash, file_path_to_id[report.file.path],
                 report.message, checker_name or 'NOT FOUND',
                 report.category, report.type, report.line, report.column,
-                severity, detection_status, detection_time,
+                severity, review_status.status, review_status.author,
+                review_status.message, review_status.date,
+                review_status_is_in_source,
+                detection_status, detection_time,
                 len(report.bug_path_events), analyzer_name)
+
+            db_report.fixed_at = fixed_at
 
             session.add(db_report)
             session.flush()
@@ -799,51 +807,70 @@ class MassStoreRun:
         if not reports:
             return True
 
-        def set_review_status(report: Report):
+        def get_review_status(report: Report) -> Tuple[ReviewStatus, bool]:
             """
-            Set review status for the given report if there is any source code
-            comment.
+            Return the review status belonging to the given report and a
+            boolean value which indicates whether the review status comes from
+            a source code comment.
+
+            - Return the review status and True based on the source code
+              comment.
+            - If the review status is ambiguous (i.e. multiple source code
+              comments belong to it) then (unreviewed, False) returns.
+            - If there is no source code comment then the default review status
+              and True returns based on review_statuses database table.
+            - If the report doesn't have a default review status then an
+              "unreviewed" review status and False returns.
             """
-            checker_name = report.checker_name
-            last_report_event = report.bug_path_events[-1]
+            unreviewed = ReviewStatus()
+            unreviewed.status = 'unreviewed'
+            unreviewed.message = b''
+            unreviewed.bug_hash = report.report_hash
+            unreviewed.author = self.user_name
+            unreviewed.date = run_history_time
 
             # The original file path is needed here, not the trimmed, because
             # the source files are extracted as the original file path.
-            file_name = report.file.original_path
+            source_file_name = os.path.realpath(os.path.join(
+                source_root, report.file.original_path.strip("/")))
 
-            source_file_name = os.path.realpath(
-                os.path.join(source_root, file_name.strip("/")))
+            if os.path.isfile(source_file_name):
+                src_comment_data = parse_codechecker_review_comment(
+                    source_file_name, report.line, report.checker_name)
 
-            # Check and store source code comments.
-            if not os.path.isfile(source_file_name):
-                return
+                if len(src_comment_data) == 1:
+                    data = src_comment_data[0]
+                    rs = data.status, bytes(data.message, 'utf-8')
 
-            report_line = last_report_event.range.end_line
-            source_file = os.path.basename(file_name)
+                    review_status = ReviewStatus()
+                    review_status.status = rs[0]
+                    review_status.message = rs[1]
+                    review_status.bug_hash = report.report_hash
+                    review_status.author = self.user_name
+                    review_status.date = run_history_time
 
-            src_comment_data = parse_codechecker_review_comment(
-                source_file_name, report_line, checker_name)
+                    return review_status, True
+                elif len(src_comment_data) > 1:
+                    LOG.warning(
+                        "Multiple source code comment can be found "
+                        "for '%s' checker in '%s' at line %s. "
+                        "This suppression will not be taken into account!",
+                        report.checker_name, source_file_name, report.line)
 
-            if len(src_comment_data) == 1:
-                status = src_comment_data[0].status
-                rw_status = ttypes.ReviewStatus.FALSE_POSITIVE
-                if status == 'confirmed':
-                    rw_status = ttypes.ReviewStatus.CONFIRMED
-                elif status == 'intentional':
-                    rw_status = ttypes.ReviewStatus.INTENTIONAL
+                    self.__wrong_src_code_comments.append(
+                        f"{source_file_name}|{report.line}|"
+                        f"{report.checker_name}")
 
-                self.__report_server._setReviewStatus(
-                    session, report.report_hash, rw_status,
-                    src_comment_data[0].message, run_history_time)
-            elif len(src_comment_data) > 1:
-                LOG.warning(
-                    "Multiple source code comment can be found "
-                    "for '%s' checker in '%s' at line %s. "
-                    "This bug will not be suppressed!",
-                    checker_name, source_file, report_line)
+                    return unreviewed, False
 
-                self.__wrong_src_code_comments.append(
-                    f"{source_file}|{report_line}|{checker_name}")
+            review_status = session.query(ReviewStatus) \
+                .filter(ReviewStatus.bug_hash == report.report_hash) \
+                .one_or_none()
+
+            if review_status is None:
+                review_status = unreviewed
+
+            return review_status, False
 
         def get_missing_file_ids(report: Report) -> List[str]:
             """ Returns file paths which database file id is missing. """
@@ -885,6 +912,7 @@ class MassStoreRun:
             detection_status = 'new'
             detected_at = run_history_time
 
+            old_report = None
             if report.report_hash in hash_map_reports:
                 old_report = hash_map_reports[report.report_hash][0]
                 old_status = old_report.detection_status
@@ -894,15 +922,26 @@ class MassStoreRun:
 
             analyzer_name = mip.checker_to_analyzer.get(
                 report.checker_name, report.analyzer_name)
+            review_status, scc = get_review_status(report)
+            review_status.date = run_history_time
+
+            # False positive and intentional reports are considered as closed
+            # reports which is indicated with non-null "fixed_at" date.
+            fixed_at = None
+            if review_status.status in ['false_positive', 'intentional']:
+                if old_report and old_report.review_status in \
+                        ['false_positive', 'intentional']:
+                    fixed_at = old_report.review_status_date
+                else:
+                    fixed_at = review_status.date
 
             report_id = self.__add_report(
                 session, run_id, report, file_path_to_id,
-                detection_status, detected_at, analysis_info, analyzer_name)
+                review_status, scc, detection_status, detected_at,
+                analysis_info, analyzer_name, fixed_at)
 
             self.__new_report_hashes.add(report.report_hash)
             self.__already_added_report_hashes.add(report_path_hash)
-
-            set_review_status(report)
 
             LOG.debug("Storing report done. ID=%d", report_id)
 
@@ -996,11 +1035,6 @@ class MassStoreRun:
                 reports_to_delete.update([x.id for x in reports])
             else:
                 for report in reports:
-                    # We set the fix date of a report only if the report
-                    # has not been fixed before.
-                    if report.fixed_at:
-                        continue
-
                     checker = report.checker_id
                     if checker in disabled_checkers:
                         report.detection_status = 'off'
@@ -1009,7 +1043,8 @@ class MassStoreRun:
                     else:
                         report.detection_status = 'resolved'
 
-                    report.fixed_at = run_history_time
+                    if report.fixed_at is None:
+                        report.fixed_at = run_history_time
 
         if reports_to_delete:
             self.__report_server._removeReports(
@@ -1096,14 +1131,17 @@ class MassStoreRun:
                 # thrown: (psycopg2.extensions.TransactionRollbackError)
                 # deadlock detected.
                 # The problem is that the report hash is the key for the
-                # review data table and both of the store actions try to
-                # update the same review data row.
+                # review_statuses table and both of the store actions try to
+                # update the same review_statuses data row.
                 # Neither of the two processes can continue, and they will wait
                 # for each other indefinitely. PostgreSQL in this case will
                 # terminate one transaction with the above exception.
                 # For this reason in case of failure we will wait some seconds
                 # and try to run the storage again.
                 # For more information see #2655 and #2653 issues on github.
+                # TODO: Since review status is stored in "reports" table and
+                # "review_statuses" table is not written during storage, this
+                # multiple trials should be unnecessary.
                 max_num_of_tries = 3
                 num_of_tries = 0
                 sec_to_wait_after_failure = 60

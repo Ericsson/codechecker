@@ -333,11 +333,12 @@ class RequestHandler(SimpleHTTPRequestHandler):
         client_host, client_port, is_ipv6 = \
             RequestHandler._get_client_host_port(self.client_address)
         self.auth_session = self.__check_session_cookie()
-        LOG.info("%s:%s -- [%s] POST %s@%s",
-                 client_host if not is_ipv6 else '[' + client_host + ']',
-                 client_port,
-                 self.auth_session.user if self.auth_session else "Anonymous",
-                 self.path, fname)
+        auth_user = \
+            self.auth_session.user if self.auth_session else "Anonymous"
+        host_info = client_host if not is_ipv6 else '[' + client_host + ']'
+        api_info = f"{host_info}:{client_port} -- [{auth_user}] POST " \
+                   f"{self.path}@{fname}"
+        LOG.info(api_info)
 
         # Create new thrift handler.
         version = self.server.version
@@ -455,9 +456,12 @@ class RequestHandler(SimpleHTTPRequestHandler):
             return
 
         except BrokenPipeError as ex:
-            LOG.debug(ex)
-        except Exception as exn:
-            LOG.warning(str(exn))
+            LOG.warning("%s failed with BrokenPipeError: %s",
+                        api_info, str(ex))
+            import traceback
+            traceback.print_exc()
+        except Exception as ex:
+            LOG.warning("%s failed with Exception: %s", api_info, str(ex))
             import traceback
             traceback.print_exc()
 
@@ -466,7 +470,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 itrans = TTransport.TMemoryBuffer(cstringio_buf)
                 iprot = input_protocol_factory.getProtocol(itrans)
 
-            self.send_thrift_exception(str(exn), iprot, oprot, otrans)
+            self.send_thrift_exception(str(ex), iprot, oprot, otrans)
             return
 
     def list_directory(self, path):
@@ -741,9 +745,17 @@ class CCSimpleHttpServer(HTTPServer):
                 LOG.info("Initiating SSL. Server listening on secure socket.")
                 LOG.debug("Using cert file: %s", ssl_cert_file)
                 LOG.debug("Using key file: %s", ssl_key_file)
-                self.socket = ssl.wrap_socket(self.socket, server_side=True,
-                                              keyfile=ssl_key_file,
-                                              certfile=ssl_cert_file)
+                ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+                ssl_context.load_cert_chain(certfile=ssl_cert_file,
+                                            keyfile=ssl_key_file)
+                # FIXME introduce with python 3.7
+                # ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2
+
+                # TLS1 and TLS1.1 were deprecated in RFC8996
+                # https://datatracker.ietf.org/doc/html/rfc8996
+                ssl_context.options |= (ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1)
+                self.socket = ssl_context.wrap_socket(self.socket,
+                                                      server_side=True)
 
             else:
                 LOG.info("Searching for SSL key at %s, cert at %s, "

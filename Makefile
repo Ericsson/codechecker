@@ -73,6 +73,21 @@ package: package_dir_structure set_git_commit_template package_gerrit_skiplist
 	# Copy license file.
 	cp $(ROOT)/LICENSE.TXT $(CC_BUILD_DIR)
 
+dev_package: package
+	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_common && \
+	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_analyzer && \
+	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_web && \
+	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_server && \
+	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_report_converter && \
+	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_client
+
+	ln -fsv $(ROOT)/codechecker_common $(CC_BUILD_LIB_DIR) && \
+	ln -fsv $(CC_ANALYZER)/codechecker_analyzer $(CC_BUILD_LIB_DIR) && \
+	ln -fsv $(CC_WEB)/codechecker_web $(CC_BUILD_LIB_DIR) && \
+	ln -fsv $(CC_SERVER)/codechecker_server $(CC_BUILD_LIB_DIR) && \
+	ln -fsv $(CC_TOOLS)/report-converter/codechecker_report_converter $(CC_BUILD_LIB_DIR) && \
+	ln -fsv $(CC_CLIENT)/codechecker_client $(CC_BUILD_LIB_DIR)
+
 package_api:
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) package_api
 
@@ -111,8 +126,8 @@ venv_osx:
 clean_venv:
 	rm -rf venv
 
-PIP_DEV_DEPS_CMD = make -C $(CC_ANALYZER) pip_dev_deps && \
-  make -C $(CC_WEB) pip_dev_deps && \
+PIP_DEV_DEPS_CMD = $(MAKE) -C $(CC_ANALYZER) pip_dev_deps && \
+  $(MAKE) -C $(CC_WEB) pip_dev_deps && \
   cd $(CC_COMMON) && pip3 install -r requirements_py/dev/requirements.txt
 
 pip_dev_deps:
@@ -150,7 +165,7 @@ PYLINT_CMD = $(MAKE) -C $(CC_ANALYZER) pylint && \
   pylint -j0 ./bin/** ./codechecker_common \
 	./scripts/** ./scripts/build/** ./scripts/debug_tools/** \
 	./scripts/gerrit_jenkins/** ./scripts/resources/** \
-	./scripts/test/** \
+	./scripts/test/** ./scripts/thrift/** \
 	--rcfile=$(ROOT)/.pylintrc
 
 pylint:

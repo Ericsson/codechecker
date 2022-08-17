@@ -247,13 +247,11 @@ class TestReportFilter(unittest.TestCase):
                                                     None,
                                                     False)
 
-        report_ids = [r.reportId for r in run_results]
-
         # Set all review statuses in case some other tests changed them.
-        for rid in report_ids:
-            self._cc_client.changeReviewStatus(rid,
-                                               ReviewStatus.CONFIRMED,
-                                               '')
+        for r in run_results:
+            self._cc_client.addReviewStatusRule(r.bugHash,
+                                                ReviewStatus.CONFIRMED,
+                                                '')
 
         for level in severity_test_data:
             for review_status, test_result_count in level.items():

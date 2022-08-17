@@ -20,7 +20,8 @@ import tempfile
 
 from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.analyzers import analyzer_types
-from codechecker_analyzer.arg import OrderedCheckersAction
+from codechecker_analyzer.arg import \
+        OrderedCheckersAction, OrderedConfigAction
 
 from codechecker_common import arg, cmd_config, logger
 from codechecker_report_converter.source_code_comment_handler import \
@@ -221,7 +222,7 @@ used to generate a log file on the fly.""")
                              "compilation target. "
                              "If none of the above given, "
                              "this parameter should "
-                             "be a python regular expression."
+                             "be a python regular expression. "
                              "If there is more than one compilation action "
                              "for a source, "
                              "only the one is kept which matches the "
@@ -317,28 +318,7 @@ used to generate a log file on the fly.""")
                                     "report directory. When this flag is "
                                     "used, 'failed' directory remains empty.")
 
-    analyzer_opts.add_argument('--config',
-                               dest='config_file',
-                               required=False,
-                               help="R|Allow the configuration from an "
-                                    "explicit JSON based configuration file. "
-                                    "The value of the 'analyzer' key in the "
-                                    "config file will be emplaced as command "
-                                    "line arguments. The format of "
-                                    "configuration file is:\n"
-                                    "{\n"
-                                    "  \"analyzer\": [\n"
-                                    "    \"--enable=core.DivideZero\",\n"
-                                    "    \"--enable=core.CallAndMessage\",\n"
-                                    "    \"--report-hash=context-free-v2\",\n"
-                                    "    \"--verbose=debug\",\n"
-                                    "    \"--skip=$HOME/project/skip.txt\",\n"
-                                    "    \"--clean\"\n"
-                                    "  ]\n"
-                                    "}.\n"
-                                    "You can use any environment variable "
-                                    "inside this file and it will be "
-                                    "expaneded.")
+    cmd_config.add_option(analyzer_opts)
 
     # TODO: One day, get rid of these. See Issue #36, #427.
     analyzer_opts.add_argument('--saargs',
@@ -370,6 +350,7 @@ used to generate a log file on the fly.""")
     analyzer_opts.add_argument('--analyzer-config',
                                dest='analyzer_config',
                                nargs='*',
+                               action=OrderedConfigAction,
                                default=["clang-tidy:HeaderFilterRegex=.*"],
                                help="Analyzer configuration options in the "
                                     "following format: analyzer:key=value. "
@@ -392,6 +373,7 @@ used to generate a log file on the fly.""")
     analyzer_opts.add_argument('--checker-config',
                                dest='checker_config',
                                nargs='*',
+                               action=OrderedConfigAction,
                                default=argparse.SUPPRESS,
                                help="Checker configuration options in the "
                                     "following format: analyzer:key=value. "
@@ -728,10 +710,15 @@ output of "CodeChecker checkers --guideline" command.""")
         dest="trim_path_prefix",
         required=False,
         default=argparse.SUPPRESS,
-        help="Removes leading path from files which will be printed. So if "
-             "you have /a/b/c/x.cpp and /a/b/c/y.cpp then by removing "
-             "\"/a/b/\" prefix will print files like c/x.cpp and c/y.cpp. "
-             "If multiple prefix is given, the longest match will be removed.")
+        help="Removes leading path from files which will be printed. For "
+             "instance if you analyze files '/home/jsmith/my_proj/x.cpp' and "
+             "'/home/jsmith/my_proj/y.cpp', but would prefer to have them "
+             "displayed as 'my_proj/x.cpp' and 'my_proj/y.cpp' in the web/CLI "
+             "interface, invoke CodeChecker with '--trim-path-prefix "
+             "\"/home/jsmith/\"'."
+             "If multiple prefixes are given, the longest match will be "
+             "removed. You may also use Unix shell-like wildcards (e.g. "
+             "'/*/jsmith/').")
 
     parser.add_argument('--review-status',
                         nargs='*',
@@ -780,6 +767,7 @@ def main(args):
         os.makedirs(output_dir)
 
     logfile = None
+    analysis_exit_status = 1  # CodeChecker error.
     try:
         # --- Step 1.: Perform logging if build command was specified.
         if 'command' in args:

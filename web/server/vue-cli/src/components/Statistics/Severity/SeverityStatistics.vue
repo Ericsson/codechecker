@@ -21,6 +21,8 @@
           </v-btn>
         </h3>
 
+        <unique-stat-warning v-if="reportFilter.isUnique" />
+
         <severity-statistics-table
           :items="statistics"
           :loading="loading"
@@ -33,7 +35,7 @@
 <script>
 import { SeverityMixin, ToCSV } from "@/mixins";
 
-import { BaseStatistics } from "@/components/Statistics";
+import { BaseStatistics, UniqueStatWarning } from "@/components/Statistics";
 import {
   getSeverityStatistics
 } from "@/components/Statistics/StatisticsHelper";
@@ -43,7 +45,7 @@ import SeverityStatisticsTable from "./SeverityStatisticsTable";
 export default {
   name: "SeverityStatistics",
   components: {
-    SeverityStatisticsTable
+    SeverityStatisticsTable, UniqueStatWarning
   },
   mixins: [ BaseStatistics, SeverityMixin, ToCSV ],
 

@@ -38,11 +38,11 @@ class ReportPathHashHandler(unittest.TestCase):
 
         report_hash_to_path_hash = {
             '79e31a6ba028f0b7d9779faf4a6cb9cf':
-                'acb1d3dc1459f681bd3c743e6c015b37',
+                '2dc99e0cd54ee4216bd884d49f0bc8c7',
             '8714f42d8328bc78d5d7bff6ced918cc':
-                'dcaaf2905d607a16e3fa330edb8e9f89',
+                'a316a401913aaef9af56692bef6ba109',
             'a6d3464f8aab9eb31a8ea7e167e84322':
-                'd089a50f34051c68c7bb4c5ac2c4c5d5'
+                '9653c97c587fd7a365fbe0ce3df00d7e'
         }
 
         for report in reports:

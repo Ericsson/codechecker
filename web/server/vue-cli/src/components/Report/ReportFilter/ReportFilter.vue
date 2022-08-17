@@ -245,7 +245,7 @@
                   @update:url="updateUrl"
                 />
 
-                <v-divider />
+                <v-divider class="mt-2" />
 
                 <fix-date-filter
                   id="fix-date-filter"

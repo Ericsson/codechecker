@@ -446,8 +446,11 @@ Command line clients can authenticate itself using the username/password stored
 in the [`.codechecker.passwords.json`](#preconfigured-credentials). It is
 obviously not a good idea to store passwords in text files. Instead of this the
 user is able to generate a token from command line, that can be used to
-authenticate in the name of his/her name. To generate a new token, the user must
-be logged in first.
+authenticate in the name of his/her name.
+
+**Note**: To generate a new token, the user **must be logged in** first. Use
+the `CodeChecker cmd login` command for it. After you have successfully logged
+in you can generate a new token with the `CodeChecker cmd token new` command.
 
 Personal tokens can be written instead of the user's password in the
 `~/.codechecker.passwords.json` file:

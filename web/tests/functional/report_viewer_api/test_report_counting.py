@@ -385,9 +385,8 @@ class TestReportFilter(unittest.TestCase):
 
         # Set report status of all reports to unreviewed.
         for report in reports:
-            self._cc_client.changeReviewStatus(report.reportId,
-                                               ReviewStatus.UNREVIEWED,
-                                               '')
+            self._cc_client.addReviewStatusRule(report.bugHash,
+                                                ReviewStatus.UNREVIEWED, '')
 
         review_status = defaultdict(int)
         review_status[ReviewStatus.UNREVIEWED] = len(reports)
@@ -398,9 +397,9 @@ class TestReportFilter(unittest.TestCase):
             start_range = i * 5
             end_range = (i + 1) * 5
             for report in unique_reports[start_range:end_range]:
-                self._cc_client.changeReviewStatus(report[0],
-                                                   status,
-                                                   'comment')
+                self._cc_client.addReviewStatusRule(report[1],
+                                                    status,
+                                                    'comment')
                 review_status[status] += \
                     reporthash_reports_count[report[1]]
 
@@ -410,6 +409,11 @@ class TestReportFilter(unittest.TestCase):
 
         review_status_dict = dict(review_status)
         self.assertEqual(len(rv_counts), len(review_status_dict))
+        self.assertDictEqual(rv_counts, review_status_dict)
+
+        unique_filter = ReportFilter(isUnique=True)
+        rv_counts = self._cc_client.getReviewStatusCounts(
+            [runid], unique_filter, None)
         self.assertDictEqual(rv_counts, review_status_dict)
 
     def test_run1_run2_all_review_status(self):
@@ -422,38 +426,37 @@ class TestReportFilter(unittest.TestCase):
                                                          None,
                                                          None)
 
-        report_ids = [x.reportId for x
-                      in self._cc_client.getRunResults([runid],
-                                                       report_count,
-                                                       0,
-                                                       [],
-                                                       None,
-                                                       None,
-                                                       False)]
+        report_hashes = [x.bugHash for x
+                         in self._cc_client.getRunResults([runid],
+                                                          report_count, 0,
+                                                          [],
+                                                          None,
+                                                          None,
+                                                          False)]
 
         # Set report status of all reports to unreviewed.
-        for rid in report_ids:
-            self._cc_client.changeReviewStatus(rid,
-                                               ReviewStatus.UNREVIEWED,
-                                               '')
+        for rid in report_hashes:
+            self._cc_client.addReviewStatusRule(rid,
+                                                ReviewStatus.UNREVIEWED,
+                                                '')
 
-        for rid in report_ids[:5]:
-            self._cc_client.changeReviewStatus(rid,
-                                               ReviewStatus.UNREVIEWED,
-                                               'comment')
-        for rid in report_ids[5:10]:
-            self._cc_client.changeReviewStatus(rid,
-                                               ReviewStatus.CONFIRMED,
-                                               'comment')
+        for rid in report_hashes[:5]:
+            self._cc_client.addReviewStatusRule(rid,
+                                                ReviewStatus.UNREVIEWED,
+                                                'comment')
+        for rid in report_hashes[5:10]:
+            self._cc_client.addReviewStatusRule(rid,
+                                                ReviewStatus.CONFIRMED,
+                                                'comment')
 
-        for rid in report_ids[10:15]:
-            self._cc_client.changeReviewStatus(rid,
-                                               ReviewStatus.FALSE_POSITIVE,
-                                               'comment')
-        for rid in report_ids[15:20]:
-            self._cc_client.changeReviewStatus(rid,
-                                               ReviewStatus.INTENTIONAL,
-                                               'comment')
+        for rid in report_hashes[10:15]:
+            self._cc_client.addReviewStatusRule(rid,
+                                                ReviewStatus.FALSE_POSITIVE,
+                                                'comment')
+        for rid in report_hashes[15:20]:
+            self._cc_client.addReviewStatusRule(rid,
+                                                ReviewStatus.INTENTIONAL,
+                                                'comment')
 
         rv_counts_1 = self._cc_client.getReviewStatusCounts([self._runids[0]],
                                                             None,

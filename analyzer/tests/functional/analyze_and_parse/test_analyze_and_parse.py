@@ -16,6 +16,7 @@ import re
 import shlex
 import shutil
 import subprocess
+import tempfile
 import unittest
 
 from subprocess import CalledProcessError
@@ -24,6 +25,7 @@ from libtest import env
 from libtest import project
 from libtest.codechecker import call_command
 
+from codechecker_report_converter.report import report_file
 from codechecker_report_converter.report.output import baseline
 
 
@@ -358,7 +360,7 @@ class AnalyzeParseTestCase(
         self.assertEqual(lbls["Code-Review"], -1)
         self.assertEqual(review_data["message"],
                          "CodeChecker found 1 issue(s) in the code. "
-                         "See: '{0}'".format(report_url))
+                         "See: {0}".format(report_url))
         self.assertEqual(review_data["tag"], "jenkins")
 
         # Because the CC_CHANGED_FILES is set we will see reports only for
@@ -406,6 +408,25 @@ class AnalyzeParseTestCase(
         self.assertTrue('Html file was generated' in out)
         self.assertTrue('Summary' in out)
         self.assertTrue('Statistics' in out)
+
+    def test_html_output_for_empty_dir(self):
+        """ Test parse HTML output for an empty directory. """
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            output_path = os.path.join(self.test_workspaces['OUTPUT'], 'html')
+            extract_cmd = [
+                'CodeChecker', 'parse',
+                '-e', 'html',
+                '-o', output_path,
+                tmp_dir]
+
+            out, err, result = call_command(
+                extract_cmd, cwd=self.test_dir, env=self.env)
+            self.assertEqual(result, 0)
+            self.assertFalse(err)
+
+            self.assertTrue('Summary' in out)
+            self.assertFalse('Html file was generated' in out)
+            self.assertFalse('Statistics' in out)
 
     def test_codeclimate_export(self):
         """ Test exporting codeclimate output. """
@@ -640,3 +661,105 @@ class AnalyzeParseTestCase(
         report_hashes = baseline.get_report_hashes([out_file_path])
         self.assertEqual(
             report_hashes, {'3d15184f38c5fa57e479b744fe3f5035'})
+
+    def test_html_output_for_empty_plist(self):
+        """
+        Test that HTML files for empty plist files will not be generated.
+        """
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            plist_file_name = 'empty.plist'
+            plist_file_path = os.path.join(tmp_dir, plist_file_name)
+            report_file.create(plist_file_path, [])
+
+            test_project_notes = os.path.join(
+                self.test_workspaces['NORMAL'], "test_files", "notes",
+                "notes.plist")
+            shutil.copy(test_project_notes, tmp_dir)
+
+            output_path = os.path.join(tmp_dir, 'html')
+            extract_cmd = [
+                'CodeChecker', 'parse',
+                '-e', 'html',
+                '-o', output_path,
+                tmp_dir]
+
+            out, err, result = call_command(
+                extract_cmd, cwd=self.test_dir, env=self.env)
+
+            self.assertEqual(result, 2)
+            self.assertFalse(err)
+
+            self.assertTrue(f'No report data in {plist_file_path}' in out)
+            self.assertTrue(f'Html file was generated:' in out)
+            self.assertTrue('Summary' in out)
+            self.assertTrue('statistics.html' in out)
+            self.assertTrue('index.html' in out)
+
+            self.assertTrue(os.path.exists(
+                os.path.join(output_path, 'index.html')))
+            self.assertTrue(os.path.exists(
+                os.path.join(output_path, 'statistics.html')))
+            self.assertTrue(os.path.exists(
+                os.path.join(output_path, 'notes.plist.html')))
+            self.assertFalse(os.path.exists(
+                os.path.join(output_path, f'{plist_file_name}.html')))
+
+    def test_html_checker_url(self):
+        """ Test whether checker documentation urls are generated properly. """
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            notes_plist = os.path.join(
+                self.test_workspaces['NORMAL'], "test_files", "notes",
+                "notes.plist")
+            macros_plist = os.path.join(
+                self.test_workspaces['NORMAL'], "test_files", "macros",
+                "macros.plist")
+            shutil.copy(notes_plist, tmp_dir)
+            shutil.copy(macros_plist, tmp_dir)
+
+            macros_plist = os.path.join(tmp_dir, 'macros.plist')
+            with open(macros_plist, 'r+',
+                      encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+                new_content = content.replace(
+                    "core.NullDereference", "UNKNOWN CHECKER NAME")
+                f.seek(0)
+                f.truncate()
+                f.write(new_content)
+
+            output_path = os.path.join(tmp_dir, 'html')
+            extract_cmd = [
+                'CodeChecker', 'parse', '-e', 'html', '-o', output_path,
+                tmp_dir]
+
+            _, err, result = call_command(extract_cmd, cwd=self.test_dir,
+                                          env=self.env)
+            self.assertEqual(result, 2, "Parsing not found any issue.")
+            self.assertFalse(err)
+
+            # Test whether documentation urls are set properly for known
+            # checkers in the index.html file.
+            index_html = os.path.join(output_path, "index.html")
+            with open(index_html, 'r', encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+
+            self.assertTrue(re.search(
+                '<a href=".*>alpha.clone.CloneChecker', content))
+            self.assertFalse(re.search(
+                '<a href=".*>UNKNOWN CHECKER NAME', content))
+            self.assertTrue(re.search('UNKNOWN CHECKER NAME', content))
+
+            # Test whether documentation urls are set properly for known
+            # checkers in the generated HTML report file.
+            report_html = os.path.join(output_path, "notes.plist.html")
+            with open(report_html, 'r',
+                      encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+            self.assertTrue(re.search('"url": ".+"', content))
+
+            # Test whether documentation urls are not set for unknown checkers
+            # in the generated HTML report file.
+            report_html = os.path.join(output_path, "macros.plist.html")
+            with open(report_html, 'r',
+                      encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+            self.assertTrue(re.search('"url": null', content))

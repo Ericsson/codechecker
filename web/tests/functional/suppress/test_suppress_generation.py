@@ -64,16 +64,21 @@ class TestSuppress(unittest.TestCase):
 
         test_runs = [run for run in runs if run.name in run_names]
 
-        self.assertEqual(len(test_runs), 1,
-                         'There should be only one run for this test.')
+        self.assertEqual(len(test_runs), 2,
+                         'There should 2 runs for this test.')
         self._runid = test_runs[0].runId
         self._run_name = test_runs[0].name
+
+        self._runid_dup = test_runs[1].runId
+        self._run_name_dup = test_runs[1].name
+
         self._test_directory = os.path.dirname(os.path.realpath(__file__))
 
     def test_suppress_import(self):
         """
         Test the suppress file importing.
         """
+        logging.info("testing suppress import")
 
         generated_file = os.path.join(self._test_workspace,
                                       "generated.suppress")
@@ -147,6 +152,7 @@ class TestSuppress(unittest.TestCase):
         self.assertNotEqual(len(run_results), 0)
 
         for bug_hash in hash_to_suppress_msgs:
+            logging.debug("tesing for bug hash " + bug_hash)
             expected_data = hash_to_suppress_msgs[bug_hash]
             report_data_of_bug = [
                 report_data for report_data in run_results
@@ -160,29 +166,62 @@ class TestSuppress(unittest.TestCase):
             self.assertEqual(report_data.reviewData.status,
                              expected_data['status'])
 
-            # Change review status to confirmed bug.
+            # Even review status with source code comment can change.
             review_comment = "This is really a bug"
             status = ReviewStatus.CONFIRMED
             success = self._cc_client.changeReviewStatus(
                 report_data.reportId, status, review_comment)
 
             self.assertTrue(success)
-            logging.debug("Bug review status changed successfully")
 
-        # Get the results to compare.
+        # Review status without source code comment can change.
+        uncommented_report = next(filter(
+            lambda r: r.reviewData.status == ReviewStatus.UNREVIEWED,
+            iter(run_results)))
+        self._cc_client.changeReviewStatus(
+            uncommented_report.reportId,
+            ReviewStatus.CONFIRMED,
+            'This is a known issue')
+
+        # Get the results to compare from the primary run
         updated_results = get_all_run_results(self._cc_client, self._runid)
+        # Get the results from the duplicated run
+        updated_results_dup = \
+            get_all_run_results(self._cc_client, self._runid_dup)
+        hash_to_report_updated = {r.bugHash: r for r in updated_results}
         self.assertIsNotNone(updated_results)
         self.assertNotEqual(len(updated_results), 0)
 
+        # Review status of reports with source code comment can change
+        # as they are stored as individual comments
         for bug_hash in hash_to_suppress_msgs:
-            report_data = [report_data for report_data in updated_results
-                           if report_data.bugHash == bug_hash][0]
+            self.assertEqual(
+                ReviewStatus.CONFIRMED,
+                hash_to_report_updated[bug_hash].reviewData.status)
+            self.assertEqual(
+                "This is really a bug",
+                hash_to_report_updated[bug_hash].reviewData.comment)
 
-            # Check the stored suppress comment
-            self.assertEqual(report_data.reviewData.comment,
-                             "This is really a bug")
-            self.assertEqual(report_data.reviewData.status,
-                             ReviewStatus.CONFIRMED)
+        # Review status of reports without source code comment changes.
+        uncommented_report_updated = next(filter(
+            lambda r: r.bugHash == uncommented_report.bugHash,
+            iter(updated_results)))
+
+        self.assertEqual(
+            uncommented_report_updated.reviewData.status,
+            ReviewStatus.CONFIRMED)
+        self.assertEqual(
+            uncommented_report_updated.reviewData.comment,
+            'This is a known issue')
+
+        # Review status of the same report in the duplicate run must not change
+        uncommented_report_updated_dup = next(filter(
+            lambda r: r.bugHash == uncommented_report.bugHash,
+            iter(updated_results_dup)))
+
+        self.assertEqual(
+            uncommented_report_updated_dup.reviewData.status,
+            ReviewStatus.UNREVIEWED)
 
         # Check the same project again.
         codechecker_cfg = env.import_test_cfg(

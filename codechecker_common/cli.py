@@ -93,8 +93,9 @@ def main():
     """
     CodeChecker main command line.
     """
-    os.environ['CC_LIB_DIR'] = os.path.dirname(os.path.dirname(
-        os.path.realpath(__file__)))
+    if not os.environ.get('CC_LIB_DIR'):
+        os.environ['CC_LIB_DIR'] = \
+                os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
     data_files_dir_path = get_data_files_dir_path()
     os.environ['CC_DATA_FILES_DIR'] = data_files_dir_path
@@ -185,6 +186,7 @@ output.
             logger.setup_logger(
                 args.verbose if 'verbose' in args else None,
                 'stderr')
+            LOG = logger.get_logger('system')
 
             if len(sys.argv) > 1:
                 called_sub_command = sys.argv[1]
@@ -201,6 +203,7 @@ output.
                     sys.argv[cfg_idx + 2:]
 
                 args = parser.parse_args()
+                LOG.info("Full extended command: %s", ' '.join(sys.argv))
 
         if 'func' in args:
             sys.exit(args.func(args))

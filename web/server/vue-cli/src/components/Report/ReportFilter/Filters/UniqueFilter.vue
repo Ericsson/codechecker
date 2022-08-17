@@ -8,9 +8,9 @@
     <template v-slot:label>
       Unique reports
       <tooltip-help-icon>
-        This narrows the report list to unique bug. The same bug may appear
-        several times if it is found on different control paths, i.e. through
-        different function calls or in different runs. By checking
+        This narrows the report list to unique report types. The same bug may
+        appear several times if it is found in different runs or on different
+        control paths, i.e. through different function calls. By checking
         <b>Unique reports</b>, a report appears only once even if it is found
         on several paths or in different runs.
       </tooltip-help-icon>

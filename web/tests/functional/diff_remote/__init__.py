@@ -75,7 +75,8 @@ def setup_package():
         'skip_list_file': skip_list_file,
         'check_env': test_env,
         'workspace': TEST_WORKSPACE,
-        'checkers': []
+        'checkers': [],
+        'trim_path_prefix': TEST_WORKSPACE
     }
 
     # Start or connect to the running CodeChecker server and get connection
@@ -100,6 +101,7 @@ def setup_package():
     ret = codechecker.log_and_analyze(codechecker_cfg, test_proj_path_base)
     if ret:
         sys.exit(1)
+    print('Analyzing base was successful.')
 
     # Store base results.
     codechecker_cfg['reportdir'] = os.path.join(test_proj_path_base,
@@ -109,7 +111,11 @@ def setup_package():
     ret = codechecker.store(codechecker_cfg, test_project_name_base)
     if ret:
         sys.exit(1)
-    print('Analyzing base was successful.')
+
+    # Store with a literal ':' in the name.
+    ret = codechecker.store(codechecker_cfg, test_project_name_base + ":base")
+    if ret:
+        sys.exit(1)
 
     # New analysis
     altered_file = os.path.join(test_proj_path_new, "call_and_message.cpp")
@@ -130,6 +136,11 @@ def setup_package():
 
     test_project_name_new = project_info['name'] + '_' + uuid.uuid4().hex
     ret = codechecker.store(codechecker_cfg, test_project_name_new)
+    if ret:
+        sys.exit(1)
+
+    # Store with a literal ':' in the name.
+    ret = codechecker.store(codechecker_cfg, test_project_name_new + ":new")
     if ret:
         sys.exit(1)
 

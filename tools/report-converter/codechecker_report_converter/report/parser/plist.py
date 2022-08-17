@@ -166,7 +166,7 @@ def parse(fp: BinaryIO):
 
 def get_file_index_map(
     plist: Any,
-    analyzer_result_dir_path: str,
+    source_dir_path: str,
     file_cache: Dict[str, File]
 ) -> Dict[int, File]:
     """ Get file index map from the given plist object. """
@@ -174,7 +174,7 @@ def get_file_index_map(
 
     for i, orig_file_path in enumerate(plist.get('files', [])):
         file_path = os.path.normpath(os.path.join(
-            analyzer_result_dir_path, orig_file_path))
+            source_dir_path, orig_file_path))
         file_index_map[i] = get_or_create_file(file_path, file_cache)
 
     return file_index_map
@@ -183,10 +183,14 @@ def get_file_index_map(
 class Parser(BaseParser):
     def get_reports(
         self,
-        analyzer_result_file_path: str
+        analyzer_result_file_path: str,
+        source_dir_path: Optional[str] = None
     ) -> List[Report]:
         """ Get reports from the given analyzer result file. """
         reports: List[Report] = []
+
+        if not source_dir_path:
+            source_dir_path = os.path.dirname(analyzer_result_file_path)
 
         try:
             with open(analyzer_result_file_path, 'rb') as fp:
@@ -196,10 +200,9 @@ class Parser(BaseParser):
                 return reports
 
             metadata = plist.get('metadata')
-            analyzer_result_dir_path = os.path.dirname(
-                analyzer_result_file_path)
+
             files = get_file_index_map(
-                plist, analyzer_result_dir_path, self._file_cache)
+                plist, source_dir_path, self._file_cache)
 
             for diag in plist.get('diagnostics', []):
                 report = self.__create_report(
@@ -475,16 +478,17 @@ class Parser(BaseParser):
             if report.analyzer_name:
                 diagnostic['type'] = report.analyzer_name
 
-            control_edges = []
+            path = []
             if report.bug_path_positions:
                 for i in range(len(report.bug_path_positions) - 1):
                     start = report.bug_path_positions[i]
                     end = report.bug_path_positions[i + 1]
                     if start.range and end.range:
-                        control_edges.append(self._create_control_edge(
+                        edge = self._create_control_edge(
                             start.range, start.file,
                             end.range, end.file,
-                            file_index_map))
+                            file_index_map)
+                        path.append(self._create_control_edges([edge]))
             elif len(report.bug_path_events) > 1:
                 # Create bug path positions from bug path events.
                 for i in range(len(report.bug_path_events) - 1):
@@ -497,14 +501,11 @@ class Parser(BaseParser):
                     if start_range == end_range:
                         continue
 
-                    control_edges.append(self._create_control_edge(
+                    edge = self._create_control_edge(
                         start_range, start.file,
                         end_range, end.file,
-                        file_index_map))
-
-            path = []
-            if control_edges:
-                path.append(self._create_control_edges(control_edges))
+                        file_index_map)
+                    path.append(self._create_control_edges([edge]))
 
             # Add bug path events after control points.
             if report.bug_path_events:
@@ -572,8 +573,8 @@ class Parser(BaseParser):
             'message': event.message}
 
         if event.range:
-            data['range'] = self._create_range(
-                event.range, file_index_map[event.file.original_path])
+            data['ranges'] = [self._create_range(
+                event.range, file_index_map[event.file.original_path])]
 
         return data
 
@@ -609,8 +610,8 @@ class Parser(BaseParser):
             'message': note.message}
 
         if note.range:
-            data['range'] = self._create_range(
-                note.range, file_index_map[note.file.original_path])
+            data['ranges'] = [self._create_range(
+                note.range, file_index_map[note.file.original_path])]
 
         return data
 
