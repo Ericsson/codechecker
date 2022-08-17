@@ -2601,7 +2601,8 @@ class ThriftRequestHandler:
             if is_unique:
                 q = session.query(
                     Report.bug_id,
-                    Report.review_status)
+                    Report.review_status,
+                    func.count(Report.bug_id))
             else:
                 q = session.query(
                     func.max(Report.bug_id),
@@ -2611,11 +2612,8 @@ class ThriftRequestHandler:
             q = apply_report_filter(q, filter_expression, join_tables)
 
             if is_unique:
-                q = q.group_by(Report.bug_id, Report.review_status).subquery()
-                review_statuses = session.query(q.c.bug_id,
-                                                q.c.review_status,
-                                                func.count(q.c.bug_id)) \
-                    .group_by(q.c.review_status)
+                review_statuses = q.group_by(Report.bug_id,
+                                             Report.review_status)
             else:
                 review_statuses = q.group_by(Report.review_status)
 

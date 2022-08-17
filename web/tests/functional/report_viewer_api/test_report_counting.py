@@ -411,6 +411,11 @@ class TestReportFilter(unittest.TestCase):
         self.assertEqual(len(rv_counts), len(review_status_dict))
         self.assertDictEqual(rv_counts, review_status_dict)
 
+        unique_filter = ReportFilter(isUnique=True)
+        rv_counts = self._cc_client.getReviewStatusCounts(
+            [runid], unique_filter, None)
+        self.assertDictEqual(rv_counts, review_status_dict)
+
     def test_run1_run2_all_review_status(self):
         """
         Get all the file checker messages for for run1.
