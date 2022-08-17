@@ -29,7 +29,7 @@ a CodeChecker server.
   * [Sparse](#sparse)
   * [cpplint](#cpplint)
 * [Plist to html tool](#plist-to-html-tool)
-  * [Usage](#plist-to-html-usage)
+  * [Usage](#usage-1)
 * [Report hash generation module](#report-hash-generation-module)
   * [Generate path sensitive report hash](#generate-path-sensitive-report-hash)
   * [Generate context sensitive report hash](#generate-context-sensitive-report-hash)
