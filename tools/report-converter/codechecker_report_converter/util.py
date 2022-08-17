@@ -11,6 +11,8 @@ import logging
 import os
 import portalocker
 import sys
+import fnmatch
+import re
 
 from typing import Dict, List, Optional, TextIO
 
@@ -76,9 +78,19 @@ def trim_path_prefixes(path: str, prefixes: Optional[List[str]]) -> str:
         if not prefix.endswith('/'):
             prefix += '/'
 
-        if path.startswith(prefix) and (not longest_matching_prefix or
-                                        longest_matching_prefix < prefix):
-            longest_matching_prefix = prefix
+        regex_str = fnmatch.translate(prefix)
+        assert regex_str[-2:] == '\\Z', \
+               r'fnmatch.translate should leave \\Z at the end of the matcher!'
+
+        prefix_matcher = re.compile(regex_str[:-2])
+
+        matches = prefix_matcher.match(path)
+        if matches:
+            matching_prefix = matches[0]
+            if not longest_matching_prefix or \
+                    len(longest_matching_prefix) < len(matching_prefix):
+
+                longest_matching_prefix = matching_prefix
 
     # If no prefix found or the longest prefix is the root do not trim the
     # path.

@@ -455,11 +455,16 @@ optional arguments:
                         A custom textual description to be shown alongside the
                         run.
   --trim-path-prefix [TRIM_PATH_PREFIX [TRIM_PATH_PREFIX ...]]
-                        Removes leading path from files which will be stored.
-                        So if you have /a/b/c/x.cpp and /a/b/c/y.cpp then by
-                        removing "/a/b/" prefix will store files like c/x.cpp
-                        and c/y.cpp. If multiple prefix is given, the longest
-                        match will be removed.
+                        Removes leading path from files which will be printed.
+                        For instance if you analyze files
+                        '/home/jsmith/my_proj/x.cpp' and
+                        '/home/jsmith/my_proj/y.cpp', but would prefer to have
+                        them displayed as 'my_proj/x.cpp' and 'my_proj/y.cpp'
+                        in the web/CLI interface, invoke CodeChecker with '--
+                        trim-path-prefix "/home/jsmith/"'.If multiple prefixes
+                        is given, the longest match will be removed. You may
+                        also use Unix shell-like wildcards (e.g.
+                        '/*/jsmith/').
   --config CONFIG_FILE  Allow the configuration from an explicit configuration
                         file. The values configured in the config file will
                         overwrite the values set in the command line.
