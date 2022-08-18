@@ -14,6 +14,11 @@
       @clear="clear(true)"
       @input="setSelectedItems"
     >
+      <template v-slot:append-toolbar>
+        <AnywhereOnReportPath
+          @change="setAnywhere"
+        />
+      </template>
       <template v-slot:prepend-toolbar-items>
         <v-btn
           v-if="administrating"
@@ -60,10 +65,12 @@ import {
 
 import SelectOption from "./SelectOption/SelectOption";
 import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
+import AnywhereOnReportPath from "./SelectOption/AnywhereOnReportPath.vue";
 
 export default {
   name: "SourceComponentFilter",
   components: {
+    AnywhereOnReportPath,
     ManageSourceComponentDialog,
     SelectOption,
     SourceComponentTooltip
@@ -77,7 +84,8 @@ export default {
         placeHolder : "Search for source components...",
         filterItems: this.filterItems
       },
-      dialog: false
+      dialog: false,
+      isAnywhere: false
     };
   },
 
@@ -104,12 +112,19 @@ export default {
   methods: {
     updateReportFilter() {
       this.setReportFilter({
-        componentNames: this.selectedItems.map(item => item.id)
+        componentNames: this.selectedItems.map(item => item.id),
+        componentMatchesAnyPoint: this.isAnywhere
       });
     },
 
     onReportFilterChange(key) {
       if (key === "componentNames") return;
+      this.update();
+    },
+
+    setAnywhere(isAnywhere) {
+      this.isAnywhere = isAnywhere;
+      this.updateReportFilter();
       this.update();
     },
 

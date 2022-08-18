@@ -455,3 +455,53 @@ class TestComponent(unittest.TestCase):
 
         for c in components:
             self.__remove_source_component(c['name'])
+
+    def test_component_anywhere_on_path(self):
+        """
+        Check "anywhere on report path" feature. With this flag one can query
+        all reports where the bug path not only ends in the component, but any
+        point of the bug path is inside the component.
+        """
+        components = [
+            {
+                'name': 'pb1cpp',
+                'value': '+*/path_begin1.cpp'
+            },
+            {
+                'name': 'pb2cpp',
+                'value': '+*/path_begin2.cpp'
+            },
+            {
+                'name': 'peh',
+                'value': '+*/path_end.h'
+            }
+        ]
+
+        for c in components:
+            self.__add_new_component(c)
+
+        r_filter = ReportFilter(componentNames=['peh'])
+        component_results = self._cc_client.getRunResults(
+            None, 500, 0, None, r_filter, None, False)
+
+        self.assertEqual(len(component_results), 3)
+        self.assertTrue(
+            all(c.checkedFile.endswith('path_end.h')
+                for c in component_results))
+
+        r_filter = ReportFilter(componentNames=['pb1cpp'])
+        component_results = self._cc_client.getRunResults(
+            None, 500, 0, None, r_filter, None, False)
+        self.assertEqual(len(component_results), 0)
+
+        r_filter = ReportFilter(
+            componentNames=['pb1cpp'],
+            componentMatchesAnyPoint=True)
+        component_results = self._cc_client.getRunResults(
+            None, 500, 0, None, r_filter, None, False)
+        self.assertEqual(len(component_results), 1)
+        self.assertTrue(
+            component_results[0].checkedFile.endswith('path_end.h'))
+
+        for c in components:
+            self.__remove_source_component(c['name'])

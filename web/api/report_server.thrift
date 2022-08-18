@@ -357,6 +357,12 @@ struct ReportFilter {
   17: optional list<string>       analyzerNames, // Names of the code analyzers.
   18: optional i64                openReportsDate, // Open reports date in unix time format.
   19: optional list<string>       cleanupPlanNames, // Cleanup plan names.
+  // By default "filepath" field matches only the last bug path event's location.
+  // If fileMatchesAnyPoint is true then every path even, warning, note, etc. location
+  // is taken into account.
+  20: optional bool fileMatchesAnyPoint,
+  // Similar to fileMatchesAnyPoint but for component filtering.
+  21: optional bool componentMatchesAnyPoint,
 }
 
 struct RunReportCount {

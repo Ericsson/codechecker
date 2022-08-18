@@ -67,6 +67,9 @@
             @cancel="cancel"
             @select="select"
           >
+            <template v-slot:append-toolbar>
+              <slot name="append-toolbar" />
+            </template>
             <template v-slot:icon="{ item }">
               <slot name="icon" :item="item" />
             </template>
