@@ -15,7 +15,7 @@ import plistlib
 import tempfile
 
 from codechecker_report_converter.report.hash import get_report_hash, \
-    get_report_path_hash, HashType
+    HashType
 from codechecker_report_converter.report.report_file import get_reports, \
     replace_report_hash
 
@@ -79,23 +79,6 @@ class CodeCheckerReportHashTest(unittest.TestCase):
             report_hash = get_report_hash(report, HashType.CONTEXT_FREE)
             self.assertEqual(report_hash,
                              expected_report_hash[report.report_hash])
-
-    def test_gen_report_path_hash(self):
-        """ Test path hash generation for multiple errors. """
-        test_plist = os.path.join(
-            self.test_file_dir, 'cpp', 'multi_error.plist')
-
-        expected_path_hash = {
-            'f48840093ef89e291fb68a95a5181612':
-                'b053ba21d4d1f0ad2ef0d5a244c19ea4',
-            'e4907182b363faf2ec905fc32cc5a4ab':
-                'de139052a89686cc13828ae9e1e1cc5f'}
-
-        reports = get_reports(test_plist)
-        for report in reports:
-            report_hash = get_report_path_hash(report)
-            self.assertEqual(report_hash,
-                             expected_path_hash[report.report_hash])
 
     def test_replace_report_hash_in_empty_plist(self):
         """ Test replacing hash in an empty plist file. """
