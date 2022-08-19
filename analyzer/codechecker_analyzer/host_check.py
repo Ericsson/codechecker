@@ -20,7 +20,7 @@ from codechecker_common.logger import get_logger
 LOG = get_logger('analyzer')
 
 
-def check_clang(compiler_bin, env):
+def check_analyzer(compiler_bin, env):
     """
     Simple check if clang is available.
     """

@@ -558,6 +558,8 @@ def check(check_data):
                                   "after {0} seconds. <<<\n{1}") \
                 .format(analysis_timeout, rh.analyzer_stderr)
 
+        source_analyzer.post_analyze(rh)
+
         # If source file contains escaped spaces ("\ " tokens), then
         # clangSA writes the plist file with removing this escape
         # sequence, whereas clang-tidy does not. We rewrite the file
@@ -761,6 +763,11 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
     reproducer_dir = os.path.join(output_path, "reproducer")
     if not os.path.exists(reproducer_dir) and generate_reproducer:
         os.makedirs(reproducer_dir)
+
+    # Cppcheck raw output directory.
+    cppcheck_dir = os.path.join(output_path, "cppcheck")
+    if not os.path.exists(cppcheck_dir):
+        os.makedirs(cppcheck_dir)
 
     # Collect what other TUs were involved during CTU analysis.
     ctu_connections_dir = os.path.join(output_path, "ctu_connections")

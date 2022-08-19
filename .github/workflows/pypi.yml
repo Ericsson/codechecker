@@ -73,18 +73,19 @@ jobs:
       - name: "Install run-time dependencies (Linux)"
         if: ${{ matrix.os == 'ubuntu-18.04' }}
         run:
-          sudo apt-get update && sudo apt-get install g++ clang clang-tidy
+          sudo apt-get update && sudo apt-get install g++ clang clang-tidy cppcheck
 
       - name: "Install run-time dependencies (OSX)"
         if: ${{ matrix.os == 'macos-10.15' }}
         run:
-          brew install llvm
+          brew install llvm cppcheck
 
       - name: "Install run-time dependencies (Windows)"
         if: ${{ matrix.os == 'windows-2019' }}
         shell: powershell
         run: |
           choco install llvm;
+          choco install --ignore-package-exit-codes cppcheck;
           echo "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: "Install pypi package"

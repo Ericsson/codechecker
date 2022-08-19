@@ -2,7 +2,8 @@
   "runtime": {
     "analyzers": {
       "clangsa": "clang",
-      "clang-tidy": "clang-tidy"
+      "clang-tidy": "clang-tidy",
+      "cppcheck": "cppcheck"
     },
     "clang-apply-replacements": "clang-apply-replacements"
   },
