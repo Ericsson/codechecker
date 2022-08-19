@@ -672,8 +672,10 @@ def __print_checker_config(args: argparse.Namespace):
         configs = analyzer_class.get_checker_config(config_handler,
                                                     analyzer_environment)
         if not configs:
-            analyzer_failures.append(analyzer)
-            continue
+            # Checker configurations are not supported by cppcheck
+            if analyzer != "cppcheck":
+                analyzer_failures.append(analyzer)
+                continue
 
         rows.extend((':'.join((analyzer, c[0])), c[1]) if 'details' in args
                     else (':'.join((analyzer, c[0])),) for c in configs)

@@ -56,7 +56,9 @@ class SourceAnalyzer(metaclass=ABCMeta):
     @classmethod
     def version_compatible(cls, configured_binary, environ):
         """
-        Checker the version compatibility of the given analyzer binary.
+        CodeChecker can only execute certain versions of analyzers.
+        This function should return True if the analyzer binary is
+        compatible with the current CodeChecker version.
         """
         raise NotImplementedError("Subclasses should implement this!")
 

@@ -9,10 +9,12 @@
 Result handler for Cppcheck.
 """
 from typing import Optional
+
 from codechecker_report_converter.report.parser.base import AnalyzerInfo
 from codechecker_report_converter.analyzers.cppcheck.analyzer_result import \
     AnalyzerResult
-from codechecker_report_converter.report import report_file
+from codechecker_report_converter.report import BugPathEvent, \
+        Range, report_file
 from codechecker_report_converter.report.hash import get_report_hash, HashType
 
 from codechecker_common.logger import get_logger
@@ -25,7 +27,7 @@ LOG = get_logger('analyzer.cppcheck')
 
 class CppcheckResultHandler(ResultHandler):
     """
-    Use context free hash if enabled.
+    Create analyzer result file for Cppcheck output.
     """
 
     def __init__(self, *args, **kwargs):
@@ -43,8 +45,10 @@ class CppcheckResultHandler(ResultHandler):
         reports = report_file.get_reports(
             self.analyzer_result_file, self.checker_labels,
             source_dir_path=self.source_dir_path)
+
         reports = [r for r in reports if not r.skip(skip_handlers)]
         for report in reports:
+            # TODO check if prefix cascading still occurs.
             if not report.checker_name.startswith("cppcheck-"):
                 report.checker_name = "cppcheck-" + report.checker_name
 
@@ -56,6 +60,17 @@ class CppcheckResultHandler(ResultHandler):
 
         for report in reports:
             report.report_hash = get_report_hash(report, hash_type)
+            bpe = BugPathEvent(
+                    report.message,
+                    report.file,
+                    report.line,
+                    report.column,
+                    Range(report.line,
+                          report.column,
+                          report.line,
+                          report.column))
+            if bpe != report.bug_path_events[-1]:
+                report.bug_path_events.append(bpe)
 
         report_file.create(
             self.analyzer_result_file, reports, self.checker_labels,

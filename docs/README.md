@@ -36,7 +36,7 @@ macOS (OS X) development environment.
 
 # Main features
 ## Command line C/C++ Analysis
-  * Executes [_Clang-Tidy_](http://clang.llvm.org/extra/clang-tidy/), [_Cppcheck_](https://cppcheck.sourceforge.io/) and [_Clang Static Analyzer_](http://clang-analyzer.llvm.org/) with Cross-Translation Unit analysis, Statistical Analysis (when checkers are available).
+  * Executes [_Clang-Tidy_](http://clang.llvm.org/extra/clang-tidy/), [_Clang Static Analyzer_](http://clang-analyzer.llvm.org/) with Cross-Translation Unit analysis, Statistical Analysis (when checkers are available), and [_Cppcheck_](https://cppcheck.sourceforge.io/).
   * Creates the JSON compilation database by wiretapping any build process (e.g., `CodeChecker log -b "make"`).
   * Automatically analyzes GCC cross-compiled projects: detecting GCC or Clang compiler configuration and forming the corresponding clang analyzer invocations.
   * Incremental analysis: Only the changed files and its dependencies need to be reanalyzed.

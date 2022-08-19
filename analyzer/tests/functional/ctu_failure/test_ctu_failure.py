@@ -406,6 +406,5 @@ class TestCtuFailure(unittest.TestCase):
         json_data = json.loads(output)
 
         for i in range(len(json_data)):
-            print(json_data[i]["name"])
             if json_data[i]["name"] == "clangsa":
                 return json_data[i]["path"]

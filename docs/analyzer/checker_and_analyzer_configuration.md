@@ -200,19 +200,19 @@ As of CodeChecker 6.20, Codechecker can now execute the Cppcheck analyzer.
 
 The Cppcheck analyzer can be configured with --analyzer-config cppcheck:* paramterers.
 
-The supporte analyzer configuration items can be listed with `CodeChecker analyzers --analyzer-config cppcheck --details`
+The supported analyzer configuration items can be listed with `CodeChecker analyzers --analyzer-config cppcheck --details`
 
-As of the CodeChecker 6.20, the following options are supported:
+As of CodeChecker 6.20, the following options are supported:
 
-* `cppcheck:addons` A list of cppcheck addon files.
-* `cppcheck:libraries` A list of cppcheck library definiton files.
+* `cppcheck:addons` A list of Cppcheck addon files.
+* `cppcheck:libraries` A list of Cppcheck library definiton files.
 * `cppcheck:platform` The platform configuration .xml file.
 
-Please note that for addons and libraries, multiple items can be specified in the following format: --analyzer-config cppcheck:addons <addon.py> --analyzer-config cppcheck:addons <addon2.py>.
+Please note that for addons and libraries, multiple items can be specified in the following format: `--analyzer-config cppcheck:addons <addon.py> --analyzer-config cppcheck:addons <addon2.py>`.
 
 Cppcheck only supports a limited number of platforms. Custom bit lengths can be specified with a platform file.
 
-An example platform file from the cppcheck manual:
+An example platform file from the Cppcheck manual:
 
 ``` xml
 <?xml version="1"?>
@@ -238,27 +238,26 @@ An example platform file from the cppcheck manual:
 
 The following limitations need to be considered when using Cppcheck:
 
-* The whole program analysis feature of cppcheck is not supported. Cppcheck is invoked for every item in the provided compilation database.
-  * The unususedFunction checker of cppcheck is always disabled by default.
-  * The CTU functionality of cppcheck is not supported.
-* The severity categorizations are only provided for the built in checkers. Addon checkeckers can be used, but their report's severity will be displayed as`Unspecified`.
-* The Cppcheck categorization of checkers is not yet introduced into the Cppcheck label file. To enable a whole category, each individual checker needs to be enabled with the `--enable` flag.
+* The whole program analysis feature of Cppcheck is not supported. Cppcheck is invoked for every item in the provided compilation database.
+  * The `cppcheck-unususedFunction` checker of Cppcheck is always disabled by default.
+  * The CTU functionality of Cppcheck is not supported.
+* The severity categorizations are only provided for the built in checkers. Addon checkers can be used, but their reports severity will be displayed as `Unspecified`.
+* The Cppcheck categorization of checkers is not yet introduced into the Cppcheck label [file](../../config/labels/analyzers/cppcheck.json). To enable a whole category, each individual checker needs to be enabled with the `--enable` flag.
 * All Cppcheck Errors and Warnings are enabled by default.
-* If not configured, `Native` platform will be assumed for the analyzed compilation database. No platform translation will occur by CodeChecker. If other is needed, please provide a platform file with the correct bit lengths.
-* To reach maximum compatibility with the existing CodeChecker invocation, Cppcheck is ran with the `--enable=all` parameter, and all non needed checkers are passed in as `--suppress=<checker>`.
-* Due to legal reasons, no Misra rule texts are supplied.
+* If not configured, `Native` platform will be assumed for the analyzed compilation database (i.e. the type sizes of the host system are used). No platform translation will occur by CodeChecker. If another one is needed, please provide a platform file with the correct bit lengths.
+* To reach maximum compatibility with the existing CodeChecker invocation, Cppcheck is invoked with the `--enable=all` parameter, and all non-needed checkers are passed in as `--suppress=<checker>`.
+* Due to legal reasons, no MISRA rule texts are supplied.
 
 
 ## Example invocation
-
 ``` shell
 CodeChecker check -l ./compile_commands.json \
---analyzers cppcheck \ # Run Cppcheck analyzer only
--e cppcheck-missingOverride \ # enable the missingOverride cppcheck check
--d cppcheck-virtualCallInConstructor \ # disable the virtualCallInConstructor check
---analyzer-config cppcheck:addons=../cppcheck/addons/misc.py \ # enable the misc checks
---analyzer-config cppcheck:addons=../cppcheck/addons/cert.py \ # enable cert cheks
---analyzer-config cppcheck:libraries=../cppcheck/cfg/zlib.cfg \ # add zlib definitons
---analyzer-config cppcheck:libraries=../cppcheck/cfg/gnu.cfg \ # add gnu definitions
--o ./reports
+  --analyzers cppcheck \ # Run Cppcheck analyzer only
+  -e Cppcheck-missingOverride \ # enable the missingOverride Cppcheck check
+  -d Cppcheck-virtualCallInConstructor \ # disable the virtualCallInConstructor check
+  --analyzer-config cppcheck:addons=../cppcheck/addons/misc.py \ # enable the misc checks
+  --analyzer-config cppcheck:addons=../cppcheck/addons/cert.py \ # enable cert cheks
+  --analyzer-config cppcheck:libraries=../cppcheck/cfg/zlib.cfg \ # add zlib definitons
+  --analyzer-config cppcheck:libraries=../cppcheck/cfg/gnu.cfg \ # add gnu definitions
+  -o ./reports
 ```

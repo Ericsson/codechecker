@@ -415,7 +415,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
     @classmethod
     def version_compatible(cls, configured_binary, environ):
         """
-        Checker the version compatibility of the given analyzer binary.
+        Check the version compatibility of the given analyzer binary.
         """
         return True
 

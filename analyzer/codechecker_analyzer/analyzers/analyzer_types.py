@@ -200,7 +200,7 @@ def check_supported_analyzers(analyzers, context):
                 available_analyzer = False
 
         if not analyzer_bin or \
-           not host_check.check_clang(analyzer_bin, check_env):
+           not host_check.check_analyzer(analyzer_bin, check_env):
             # Analyzers unavailable under absolute paths are deliberately a
             # configuration problem.
             failed_analyzers.add((analyzer_name,

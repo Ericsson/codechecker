@@ -7,6 +7,7 @@
 # -------------------------------------------------------------------------
 """
 """
+# TODO distutils will be removed in python3.12
 from distutils.version import StrictVersion
 from pathlib import Path
 import os
@@ -32,7 +33,8 @@ LOG = get_logger('analyzer.cppcheck')
 
 def parse_checkers(cppcheck_output):
     """
-    Parse cppcheck checkers list.
+    Parse cppcheck checkers list given by '--errorlist' flag. Return a list of
+    (checker_name, description) pairs.
     """
     checkers = []
 
@@ -43,7 +45,7 @@ def parse_checkers(cppcheck_output):
         name = error.attrib.get('id')
         if name:
             name = "cppcheck-" + name
-        msg = error.attrib.get('msg')
+        msg = str(error.attrib.get('msg') or '')
         # TODO: Check severity handling in cppcheck
         # severity = error.attrib.get('severity')
 
@@ -62,18 +64,16 @@ def parse_version(cppcheck_output):
     if match:
         return StrictVersion(match.group('version'))
 
-    return None
-
 
 class Cppcheck(analyzer_base.SourceAnalyzer):
     """
-    Constructs the clang tidy analyzer commands.
+    Constructs the Cppcheck analyzer commands.
     """
 
     ANALYZER_NAME = 'cppcheck'
 
     def add_checker_config(self, checker_cfg):
-        LOG.error("Not implemented yet")
+        LOG.error("Checker configuration for Cppcheck is not implemented yet")
 
     def get_analyzer_mentioned_files(self, output):
         """
@@ -92,22 +92,17 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd = [config.analyzer_binary]
 
-            # Enable or disable checkers.
-            enabled_severity_levels = set()
-
+            # TODO implement a more granular commandline checker config
             # Cppcheck runs with all checkers enabled for the time being
             # the unneded checkers are passed as suppressed checkers
             analyzer_cmd.append('--enable=all')
 
-            if enabled_severity_levels:
-                analyzer_cmd.append('--enable=' +
-                                    ','.join(enabled_severity_levels))
-
             for checker_name, value in config.checks().items():
                 if value[0] == CheckerState.disabled:
+                    # TODO python3.9 removeprefix method would be nicer
+                    # than startswith and a hardcoded slicing
                     if checker_name.startswith("cppcheck-"):
                         checker_name = checker_name[9:]
-                    # TODO python3.9 removeprefix method is better than lstrip
                     analyzer_cmd.append('--suppress=' + checker_name)
 
             # unusedFunction check is for whole program analysis,
@@ -117,16 +112,24 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             # Add extra arguments.
             analyzer_cmd.extend(config.analyzer_extra_arguments)
 
-            # Add includes.
+            # Pass includes, and macro (un)definitions
             for analyzer_option in self.buildaction.analyzer_options:
                 if analyzer_option.startswith("-I") or \
                         analyzer_option.startswith("-U") or \
                         analyzer_option.startswith("-D"):
                     analyzer_cmd.extend([analyzer_option])
+                elif analyzer_option.startswith("-i"):
+                    analyzer_cmd.extend(["-I" + analyzer_option[2:]])
                 elif analyzer_option.startswith("-std"):
                     standard = analyzer_option.split("=")[-1] \
                         .lower().replace("gnu", "c")
                     analyzer_cmd.extend(["--std=" + standard])
+
+            # TODO fix this in a follow up patch, because it is failing
+            # the macos pypy test.
+            # analyzer_cmd.extend(["--std=" +
+            #                    self.buildaction.compiler_standard
+            #                    .split("=")[-1].lower().replace("gnu", "c")])
 
             # By default there is no platform configuration,
             # but a platform definition xml can be specified.
@@ -145,10 +148,6 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
                 for lib in config.analyzer_config["libraries"]:
                     analyzer_cmd.extend(
                             ["--library=" + str(Path(lib).absolute())])
-
-            # Cppcheck does not handle compiler includes well
-            # for include in self.buildaction.compiler_includes:
-            #    analyzer_cmd.extend(['-I',  include])
 
             # TODO Suggest a better place for this
             # cppcheck wont create the output folders for itself
@@ -177,11 +176,13 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         command = [cfg_handler.analyzer_binary, "--errorlist"]
 
         try:
-            command = shlex.split(' '.join(command))
             result = subprocess.check_output(command, env=env)
             return parse_checkers(result)
-        except (subprocess.CalledProcessError, OSError):
-            return []
+        except (subprocess.CalledProcessError) as e:
+            LOG.error(e.stderr)
+        except (OSError) as e:
+            LOG.error(e.errno)
+        return []
 
     @classmethod
     def get_analyzer_config(cls, cfg_handler, environ):
@@ -202,7 +203,11 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
 
     def post_analyze(self, result_handler):
         """
-        Copies the generated plist file with a unique name,
+        Post process the reuslts after the analysis.
+        Will copy the plist files created by cppcheck into the
+        root of the reports folder.
+        Renames the source plist files to *.plist.bak because
+        The report parsing of the Parse command is done recursively.
 
         """
         # Cppcheck can generate an id into the output plist file name
@@ -217,8 +222,14 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             codechecker_out = os.path.join(result_handler.workspace,
                                            result_handler.analyzer_result_file)
 
-            shutil.copy2(cppcheck_out, codechecker_out)
-            Path(cppcheck_out).rename(str(cppcheck_out) + ".bak")
+            # plists generated by cppcheck are still "parsable" by our plist
+            # parser. Renaming is needed to circumvent the processing of the
+            # raw files.
+            try:
+                shutil.copy2(cppcheck_out, codechecker_out)
+                Path(cppcheck_out).rename(str(cppcheck_out) + ".bak")
+            except(OSError) as e:
+                LOG.error(e.errno)
 
     @classmethod
     def resolve_missing_binary(cls, configured_binary, env):
@@ -263,7 +274,7 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
     @classmethod
     def version_compatible(cls, configured_binary, environ):
         """
-        Checker the version compatibility of the given analyzer binary.
+        Check the version compatibility of the given analyzer binary.
         """
         analyzer_version = \
             cls.__get_analyzer_version(configured_binary, environ)
@@ -315,10 +326,6 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         # Overwrite PATH to contain only the parent of the cppcheck binary.
         if os.path.isabs(handler.analyzer_binary):
             check_env['PATH'] = os.path.dirname(handler.analyzer_binary)
-        # cppcheck_bin = cls.resolve_missing_binary('cppcheck', check_env)
-
-        # handler.compiler_resource_dir = \
-        #    host_check.get_resource_dir(cppcheck_bin, context)
 
         checkers = cls.get_analyzer_checkers(handler, check_env)
 

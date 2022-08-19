@@ -51,8 +51,9 @@ class AnalyzerResult(AnalyzerResultBase):
                 plist_file, None, file_cache)
             reports.extend(plist_reports)
 
-        # Fix repotrs by adding the actual warining message
-        # as the last bug_path_event
+        # Until we refactor the gui to indicate the error in the location of
+        # the diagnostic message, we should add diagnostic message as the
+        # last bug path event.
         for report in reports:
             bpe = BugPathEvent(
                     report.message,

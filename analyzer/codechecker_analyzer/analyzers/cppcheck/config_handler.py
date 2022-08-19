@@ -19,8 +19,10 @@ class CppcheckConfigHandler(config_handler.AnalyzerConfigHandler):
     def initialize_checkers(self,
                             analyzer_context,
                             checkers,
-                            cmdline_enable=...,
+                            cmdline_enable=None,
                             enable_all=False):
+        if not cmdline_enable:
+            cmdline_enable = list()
         """
         Set all the default checkers to disabled. This will ensure that
         --enable=all will not run with all the possible checkers
@@ -31,9 +33,11 @@ class CppcheckConfigHandler(config_handler.AnalyzerConfigHandler):
                             cmdline_enable,
                             enable_all)
 
-        # Set all the default checkers to disabled. This will ensure that
-        # --enable=all will not run with all the possible checkers
+        # Set all the checkers with default CheckerState checkers to
+        # disabled. This will ensure that --enable=all will not run with
+        # all the possible checkers. All the checkers that are in the default
+        # profile (or configured othewise, eg.: from the cli) should be
+        # already enabled at this point.
         for checker_name, data in self.checks().items():
             if data[0] == CheckerState.default:
                 self.set_checker_enabled(checker_name, enabled=False)
-        return
