@@ -318,7 +318,7 @@ CodeChecker check --ignore skip.list --output ./reports --enable sensitive \
     --logfile ./compile_commands.json
 ```
 For more details regarding the skip file format see
-the [user guide](analyzer/user_guide.md#skip).
+the [user guide](analyzer/user_guide.md#skip-file).
 
 #### Analyze explicitly selected source files from the compilation database
 You can select which files you would like to analyze from the compilation
