@@ -2721,11 +2721,12 @@ class ThriftRequestHandler:
             unique = report_filter is not None and report_filter.isUnique
             stmt = session.query(
                 File.filepath,
-                func.count(
-                    Report.bug_id.distinct() if unique else Report.bug_id)) \
-                .join(Report, File.id == Report.file_id)
+                func.count(Report.bug_id.distinct()
+                           if unique else Report.bug_id).label('report_num')) \
+                .join(Report, File.id == Report.file_id, isouter=True)
             stmt = apply_report_filter(stmt, filter_expression, join_tables) \
-                .group_by(File.filepath)
+                .group_by(File.filepath) \
+                .order_by(desc('report_num'))
 
             if limit:
                 stmt = stmt.limit(limit).offset(offset)
