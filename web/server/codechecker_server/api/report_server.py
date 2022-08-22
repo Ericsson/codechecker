@@ -21,11 +21,11 @@ import zlib
 
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 import sqlalchemy
 from sqlalchemy.sql.expression import or_, and_, not_, func, \
-    asc, desc, union_all, select, bindparam, literal_column, cast
+    asc, desc, union_all, select, bindparam, literal_column
 
 import codechecker_api_shared
 from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
@@ -209,11 +209,16 @@ def process_report_filter(session, run_ids, report_filter, cmp_data=None):
         return and_(False), []
 
     if report_filter.filepath:
-        OR = [File.filepath.ilike(conv(fp))
-              for fp in report_filter.filepath]
+        if report_filter.fileMatchesAnyPoint:
+            AND.append(Report.id.in_(get_reports_by_files(
+                session,
+                report_filter.filepath)))
+        else:
+            OR = [File.filepath.ilike(conv(fp))
+                  for fp in report_filter.filepath]
 
-        AND.append(or_(*OR))
-        join_tables.append(File)
+            AND.append(or_(*OR))
+            join_tables.append(File)
 
     if report_filter.checkerMsg:
         OR = [Report.checker_message.ilike(conv(cm))
@@ -319,9 +324,14 @@ def process_report_filter(session, run_ids, report_filter, cmp_data=None):
         AND.append(or_(*OR))
 
     if report_filter.componentNames:
-        AND.append(process_source_component_filter(
-            session, report_filter.componentNames))
-        join_tables.append(File)
+        if report_filter.componentMatchesAnyPoint:
+            AND.append(Report.id.in_(get_reports_by_components(
+                session,
+                report_filter.componentNames)))
+        else:
+            AND.append(process_source_component_filter(
+                session, report_filter.componentNames))
+            join_tables.append(File)
 
     if report_filter.bugPathLength is not None:
         min_path_length = report_filter.bugPathLength.min
@@ -410,6 +420,64 @@ def get_source_component_file_query(
         return or_(*[File.filepath.like(conv(fp)) for fp in include])
     elif skip:
         return and_(*[not_(File.filepath.like(conv(fp))) for fp in skip])
+
+
+def get_reports_by_bugpath_filter(session, file_filter_q) -> Set[int]:
+    """
+    This function returns a set of report IDs that are related to any file
+    described by the query in the second parameter, either because their bug
+    path goes through these files, or there is any bug note, etc. in these
+    files.
+    """
+    def first_col_values(query):
+        """
+        This function executes a query and returns the set of first columns'
+        values.
+        """
+        return set(map(lambda x: x[0], query.all()))
+
+    report_ids = set()
+
+    q = session.query(Report.id) \
+        .join(File, File.id == Report.file_id) \
+        .filter(file_filter_q)
+
+    report_ids.update(first_col_values(q))
+
+    q = session.query(BugPathEvent.report_id) \
+        .join(File, File.id == BugPathEvent.file_id) \
+        .filter(file_filter_q)
+
+    report_ids.update(first_col_values(q))
+
+    q = session.query(ExtendedReportData.report_id) \
+        .join(File, File.id == ExtendedReportData.file_id) \
+        .filter(file_filter_q)
+
+    report_ids.update(first_col_values(q))
+
+    return report_ids
+
+
+def get_reports_by_components(session, component_names: List[str]) -> Set[int]:
+    """
+    This function returns a set of report IDs that are related to any component
+    in the second parameter, either because their bug path goes through these
+    components, or there is any bug note, etc. in these components.
+    """
+    source_component_filter = \
+        process_source_component_filter(session, component_names)
+    return get_reports_by_bugpath_filter(session, source_component_filter)
+
+
+def get_reports_by_files(session, files: List[str]) -> Set[int]:
+    """
+    This function returns a set of report IDs that are related to any file in
+    the second parameter, either because their bug path goes through these
+    files, or there is any bug note, etc. in these files.
+    """
+    file_filter = or_(*[File.filepath.ilike(conv(fp)) for fp in files])
+    return get_reports_by_bugpath_filter(session, file_filter)
 
 
 def get_other_source_component_file_query(session):
@@ -2640,35 +2708,29 @@ class ThriftRequestHandler:
             filter_expression, join_tables = process_report_filter(
                 session, run_ids, report_filter, cmp_data)
 
-            stmt = session.query(Report.bug_id,
-                                 Report.file_id)
-            stmt = apply_report_filter(stmt, filter_expression,
-                                       join_tables)
+            # The File table is joined explicitly in the next query. Joining it
+            # twice results an ambiguous reference to this table in the SQL
+            # query.
+            # TODO: It is not an elegant solution that rocess_report_filter()
+            # returns the list of tables to join and the caller needs to join
+            # them. It would be better if it's automatic and every table is
+            # joined once.
+            if File in join_tables:
+                join_tables.remove(File)
 
-            if report_filter is not None and report_filter.isUnique:
-                stmt = stmt.group_by(Report.bug_id, Report.file_id)
-
-            stmt = stmt.subquery()
-
-            # When using pg8000, 1 cannot be passed as parameter to the count
-            # function. This is the reason why we have to convert it to
-            # Integer (see: https://github.com/mfenniak/pg8000/issues/110)
-            count_int = cast(1, sqlalchemy.Integer)
-            report_count = session.query(stmt.c.file_id,
-                                         func.count(count_int).label(
-                                             'report_count')) \
-                .group_by(stmt.c.file_id)
+            unique = report_filter is not None and report_filter.isUnique
+            stmt = session.query(
+                File.filepath,
+                func.count(
+                    Report.bug_id.distinct() if unique else Report.bug_id)) \
+                .join(Report, File.id == Report.file_id)
+            stmt = apply_report_filter(stmt, filter_expression, join_tables) \
+                .group_by(File.filepath)
 
             if limit:
-                report_count = report_count.limit(limit).offset(offset)
+                stmt = stmt.limit(limit).offset(offset)
 
-            report_count = report_count.subquery()
-            file_paths = session.query(File.filepath,
-                                       report_count.c.report_count) \
-                .join(report_count,
-                      report_count.c.file_id == File.id)
-
-            for fp, count in file_paths:
+            for fp, count in stmt:
                 results[fp] = count
         return results
 

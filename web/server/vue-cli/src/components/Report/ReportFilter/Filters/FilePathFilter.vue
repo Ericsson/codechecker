@@ -12,6 +12,12 @@
     @clear="clear(true)"
     @input="setSelectedItems"
   >
+    <template v-slot:append-toolbar>
+      <AnywhereOnReportPath
+        @change="setAnywhere"
+      />
+    </template>
+
     <template v-slot:icon>
       <v-icon color="grey">
         mdi-file-document-outline
@@ -33,12 +39,14 @@
 import { ccService, handleThriftError } from "@cc-api";
 import { ReportFilter } from "@cc/report-server-types";
 
+import AnywhereOnReportPath from "./SelectOption/AnywhereOnReportPath.vue";
 import SelectOption from "./SelectOption/SelectOption";
 import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
 
 export default {
   name: "FilePathFilter",
   components: {
+    AnywhereOnReportPath,
     SelectOption
   },
   mixins: [ BaseSelectOptionFilterMixin ],
@@ -50,19 +58,27 @@ export default {
         placeHolder: "Search for files (e.g.: */src/*)...",
         regexLabel: "Filter by wildcard pattern (e.g.: */src/*)",
         filterItems: this.filterItems
-      }
+      },
+      isAnywhere: false
     };
   },
 
   methods: {
     updateReportFilter() {
       this.setReportFilter({
-        filepath: this.selectedItems.map(item => item.id)
+        filepath: this.selectedItems.map(item => item.id),
+        fileMatchesAnyPoint: this.isAnywhere
       });
     },
 
     onReportFilterChange(key) {
       if (key === "filepath") return;
+      this.update();
+    },
+
+    setAnywhere(isAnywhere) {
+      this.isAnywhere = isAnywhere;
+      this.updateReportFilter();
       this.update();
     },
 
