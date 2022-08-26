@@ -241,7 +241,7 @@ The following commands are used to bootstrap CodeChecker on Ubuntu 20.04 LTS:
 #       come from package manager!
 #       In case of Cppcheck, the minimal supported version is 1.80.
 sudo apt-get install clang clang-tidy cppcheck build-essential curl gcc-multilib \
-      git python3-dev python3-venv
+      git python3-dev python3-venv python3-setuptools
 
 # Install nodejs dependency for web. In case of Debian/Ubuntu you can use the
 # following commands. For more information see the official docs:
