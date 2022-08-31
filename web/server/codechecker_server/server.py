@@ -30,6 +30,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler, \
     SimpleHTTPRequestHandler
 
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql.expression import func
 from thrift.protocol import TJSONProtocol
 from thrift.transport import TTransport
 from thrift.Thrift import TApplicationException
@@ -840,6 +841,25 @@ class CCSimpleHttpServer(HTTPServer):
         if prod.db_status == DBStatus.SCHEMA_MISSING and init_db:
             LOG.debug("Schema was missing in the database. Initializing new")
             prod.connect(init_db=True)
+
+        # The "num_of_runs" column of the config database is shown on the
+        # product page of the web interface. This is intentionally redundant
+        # with a simple query that would count the number of runs in a product:
+        # measurements have proven that this caching significantly improves
+        # responsibility.
+        # This field is incremented whenever a run is added to a product, and
+        # decreased when run(s) are removed. However, if these numbers ever
+        # diverge, the product page and the bottom right of the run page would
+        # display different run counts. To help on this, the num_of_runs column
+        # is updated at every server startup.
+        # FIXME: Pylint emits a false positive here, and states that
+        # session_factory() is not callable, because it initializes to None.
+        # More on this:
+        # https://github.com/Ericsson/codechecker/pull/3733#issuecomment-1235304179
+        # https://github.com/PyCQA/pylint/issues/6005
+        orm_product.num_of_runs = \
+            prod.session_factory().query(func.count(Run.id)).one_or_none()[0] \
+            # pylint: disable=not-callable
 
         self.__products[prod.endpoint] = prod
 

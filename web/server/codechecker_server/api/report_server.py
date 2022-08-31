@@ -1241,6 +1241,10 @@ class ThriftRequestHandler:
 
         if inc_num_of_runs is not None:
             values["num_of_runs"] = Product.num_of_runs + inc_num_of_runs
+            # FIXME: This log is likely overkill.
+            LOG.info("Run counter in the config database was %s by %i.",
+                     'increased' if inc_num_of_runs >= 0 else 'decreased',
+                     abs(inc_num_of_runs))
 
         if latest_storage_date is not None:
             values["latest_storage_date"] = latest_storage_date
@@ -2995,19 +2999,20 @@ class ThriftRequestHandler:
             # however, a run deletion tends to be a slow operation due to
             # cascades and such. Deleting runs in separate transactions don't
             # exceed a potential statement timeout threshold in a DBMS.
+            runs = []
             for run in q.all():
+                runs.append(run.name)
                 session.delete(run)
                 session.commit()
 
             session.close()
 
-            runs = run_filter.names if run_filter.names else run_filter.ids
-            LOG.info("Runs '%s' were removed by '%s'.", runs,
+            LOG.info("Runs '%s' were removed by '%s'.", "', '".join(runs),
                      self._get_username())
 
         # Decrement the number of runs but do not update the latest storage
         # date.
-        self._set_run_data_for_curr_product(-1)
+        self._set_run_data_for_curr_product(-1 * len(runs))
 
         # Remove unused comments and unused analysis info from the database.
         # Originally db_cleanup.remove_unused_data() was used here which
