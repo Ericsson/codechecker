@@ -60,9 +60,6 @@
               Shows the number of reports which were active in the last
               <i>x</i> months/days.<br><br>
 
-              Reports marked as <b>False positive</b> or <b>Intentional</b>
-              will be <i>excluded</i> from these numbers.<br><br>
-
               The following filters don't affect these values:
               <ul>
                 <li><b>Outstanding reports on a given date</b> filter.</li>
