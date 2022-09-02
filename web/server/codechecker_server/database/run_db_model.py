@@ -12,8 +12,8 @@ from datetime import datetime, timedelta
 from math import ceil
 import os
 
-from sqlalchemy import MetaData, Column, Integer, UniqueConstraint, String, \
-    DateTime, Boolean, ForeignKey, Binary, Enum, Table, Text
+from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, \
+    LargeBinary, MetaData, String, UniqueConstraint, Table, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import true, false
@@ -34,7 +34,7 @@ class AnalysisInfo(Base):
     __tablename__ = 'analysis_info'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    analyzer_command = Column(Binary)
+    analyzer_command = Column(LargeBinary)
 
     def __init__(self, analyzer_command):
         self.analyzer_command = analyzer_command
@@ -110,10 +110,10 @@ class AnalyzerStatistic(Base):
                                        ondelete='CASCADE'),
                             index=True)
     analyzer_type = Column(String)
-    version = Column(Binary)
+    version = Column(LargeBinary)
     successful = Column(Integer)
     failed = Column(Integer)
-    failed_files = Column(Binary, nullable=True)
+    failed_files = Column(LargeBinary, nullable=True)
 
     def __init__(self, run_history_id, analyzer_type, version, successful,
                  failed, failed_files):
@@ -178,11 +178,11 @@ class FileContent(Base):
     __tablename__ = 'file_contents'
 
     content_hash = Column(String, primary_key=True)
-    content = Column(Binary)
+    content = Column(LargeBinary)
 
     # Note: two different authors can commit the same file content to
     # different paths in which case the blame info will be the same.
-    blame_info = Column(Binary, nullable=True)
+    blame_info = Column(LargeBinary, nullable=True)
 
     def __init__(self, content_hash, content, blame_info):
         self.content_hash, self.content, self.blame_info = \
@@ -376,7 +376,7 @@ class Report(Base):
                            nullable=False,
                            server_default='unreviewed')
     review_status_author = Column(String)
-    review_status_message = Column(Binary)
+    review_status_message = Column(LargeBinary)
     review_status_date = Column(DateTime, nullable=True)
     # We'd like to indicate whether a suppression comes from a source code
     # comment or set via the GUI. Former ones must not change when set from
@@ -454,7 +454,7 @@ class Comment(Base):
     id = Column(Integer, autoincrement=True, primary_key=True)
     bug_hash = Column(String, nullable=False, index=True)
     author = Column(String, nullable=False)
-    message = Column(Binary, nullable=False)
+    message = Column(LargeBinary, nullable=False)
 
     # Default value is 0 which means a user given comment.
     kind = Column(Integer,
@@ -484,7 +484,7 @@ class ReviewStatus(Base):
     bug_hash = Column(String, primary_key=True)
     status = Column(ReviewStatusType, nullable=False)
     author = Column(String, nullable=False)
-    message = Column(Binary, nullable=False)
+    message = Column(LargeBinary, nullable=False)
     date = Column(DateTime, nullable=False)
 
 
@@ -496,7 +496,7 @@ class SourceComponent(Base):
     # Contains multiple file paths separated by new line characters. Each file
     # path start with a '+' (path should be filtered) or '-' (path should not
     # be filtered) sign. E.g.: "+/a/b/x.cpp\n-/a/b/"
-    value = Column(Binary, nullable=False)
+    value = Column(LargeBinary, nullable=False)
 
     description = Column(Text, nullable=True)
     username = Column(String, nullable=True)
