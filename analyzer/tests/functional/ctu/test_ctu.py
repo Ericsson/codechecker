@@ -9,6 +9,7 @@
 """ CTU function test."""
 
 
+import subprocess
 import glob
 import os
 import shutil
@@ -90,6 +91,33 @@ class TestCtu(unittest.TestCase):
 
         self.assertEqual(1,
                          run(cmd, cwd=self.test_dir, env=self.env).returncode)
+
+    @skipUnlessCTUCapable
+    def test_system_headers_last(self):
+        """
+        Test if implicit system include paths are appended after all
+        user-defined flags and include paths in the pre-ctu phase.
+
+        The build command in compilation_database.json is extended by the
+        implicit include paths that are queried from the host compiler, since
+        during analysis clang doesn't have these in case of a custom gcc host
+        compiler. These implicit paths should always be appended to the end of
+        the analyzer command otherwise the user's explicit include paths must
+        take precedence. FYI: Compilers include a header file from the first(!)
+        directory given by -I, -isystem, etc. flags where it is found.
+        """
+        cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
+               '--analyzers', 'clangsa', '--ctu', self.buildlog,
+               '--verbose', 'debug']
+        out = run(
+            cmd, cwd=self.test_dir, env=self.env,
+            stdout=subprocess.PIPE).stdout.decode()
+        ast_cmd = next(filter(
+            lambda line: 'Generating AST using' in line, out.splitlines()))
+
+        self.assertLess(
+            ast_cmd.index('non_existing'),
+            ast_cmd.index('/usr/include'))
 
     @skipUnlessCTUCapable
     def test_ctu_all_ast_dump_based(self):

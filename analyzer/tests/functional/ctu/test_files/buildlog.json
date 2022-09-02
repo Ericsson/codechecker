@@ -1,12 +1,12 @@
 [
   {
     "directory": ".",
-    "command": "gcc -c lib.c -o lib.o",
+    "command": "gcc -c lib.c -o lib.o -isystem non_existing",
     "file": "lib.c"
   },
   {
     "directory": ".",
-    "command": "gcc -c main.c -o main.o",
+    "command": "gcc -c main.c -o main.o -isystem non_existing",
     "file": "main.c"
   }
 ]
