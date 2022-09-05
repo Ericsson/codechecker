@@ -83,6 +83,29 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         """
         pass
 
+    def parse_analyzer_config(self):
+        "Parses a white listed compiler flags"
+        params = []
+        interesting_option = re.compile("^-[I|U|D].*$")
+        for i, analyzer_option in enumerate(self.buildaction.analyzer_options):
+            if interesting_option.match(analyzer_option):
+                params.extend([analyzer_option])
+                # The above extend() won't properly insert the analyzer_option
+                # in case of the following format -I <path/to/include>.
+                # The below check will add the next item in the
+                # analyzer_options list if the parameter is specified with a
+                # space, as that should be actual path to the include.
+                if interesting_option.match(analyzer_option).span() == (0, 2):
+                    params.extend(
+                        [self.buildaction.analyzer_options[i+1]]
+                    )
+            if analyzer_option.startswith("-std"):
+                standard = analyzer_option.split("=")[-1] \
+                    .lower().replace("gnu", "c")
+                params.extend(["--std=" + standard])
+        LOG.debug(params)
+        return params
+
     def construct_analyzer_cmd(self, result_handler):
         """
         Construct analyzer command for cppcheck.
@@ -112,18 +135,8 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             # Add extra arguments.
             analyzer_cmd.extend(config.analyzer_extra_arguments)
 
-            # Pass includes, and macro (un)definitions
-            for analyzer_option in self.buildaction.analyzer_options:
-                if analyzer_option.startswith("-I") or \
-                        analyzer_option.startswith("-U") or \
-                        analyzer_option.startswith("-D"):
-                    analyzer_cmd.extend([analyzer_option])
-                elif analyzer_option.startswith("-i"):
-                    analyzer_cmd.extend(["-I" + analyzer_option[2:]])
-                elif analyzer_option.startswith("-std"):
-                    standard = analyzer_option.split("=")[-1] \
-                        .lower().replace("gnu", "c")
-                    analyzer_cmd.extend(["--std=" + standard])
+            # Pass whitelisted parameters
+            analyzer_cmd.extend(self.parse_analyzer_config())
 
             # TODO fix this in a follow up patch, because it is failing
             # the macos pypy test.
