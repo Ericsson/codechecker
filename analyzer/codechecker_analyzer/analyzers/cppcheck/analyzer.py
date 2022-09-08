@@ -139,6 +139,9 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             else:
                 analyzer_cmd.append("--platform=native")
 
+            if 'inconclusive' in config.analyzer_config:
+                analyzer_cmd.append("--inconclusive")
+
             if 'addons' in config.analyzer_config:
                 for addon in config.analyzer_config["addons"]:
                     analyzer_cmd.extend(
@@ -191,7 +194,8 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         """
         return [("addons", "A list of cppcheck addon files."),
                 ("libraries", "A list of cppcheck library definiton files."),
-                ("platform", "The platform configuration .xml file.")
+                ("platform", "The platform configuration .xml file."),
+                ("inconclusive", "Enable inconclusive reports.")
                 ]
 
     @classmethod
