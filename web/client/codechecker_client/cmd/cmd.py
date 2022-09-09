@@ -84,7 +84,10 @@ def __add_output_formats(parser, output_formats=None,
         output_formats = DEFAULT_OUTPUT_FORMATS
 
     if not help_msg:
-        help_msg = "The output format(s) to use in showing the data."
+        help_msg = \
+                "The output format(s) to use in showing the data. Mind that " \
+                "some output formats are (like 'json') more verbose than " \
+                "others (like 'plaintext')."
 
     if allow_multiple_outputs:
         parser.add_argument('-o', '--output',

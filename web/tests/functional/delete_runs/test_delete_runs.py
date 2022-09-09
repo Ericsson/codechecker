@@ -78,6 +78,21 @@ class TestCmdLineDeletion(unittest.TestCase):
                          self._cc_client.getRunData(None, None, 0, None)]
             return not bool(set(runs).intersection(run_names))
 
+        # The config database caches the number of runs in a product. We also
+        # test whether this cache is accurate, or if the cached number and the
+        # actual one diverged due to a bug in CodeChecker.
+        def get_run_count_in_config_db():
+            get_products_cmd = [self._codechecker_cmd,
+                                'cmd', 'products',
+                                'list',
+                                '-o', 'json',
+                                '--url', self.server_url]
+            out_products, _ = run_cmd(get_products_cmd, env=check_env)
+
+            ret_products = json.loads(out_products)
+            print(ret_products)
+            return ret_products[1]['delete_runs']['runCount']
+
         check_env = self._test_config['codechecker_cfg']['check_env']
 
         project_name = self._testproject_data['name']
@@ -94,13 +109,14 @@ class TestCmdLineDeletion(unittest.TestCase):
                         '--all-after-run', run2_name,
                         '-o', 'json',
                         '--url', self.server_url]
-        out, _ = run_cmd(get_runs_cmd, env=check_env)
-        ret = json.loads(out)
+        out_runs, _ = run_cmd(get_runs_cmd, env=check_env)
+        ret_runs = json.loads(out_runs)
 
-        self.assertEqual(len(ret), 2)
-        self.assertSetEqual({run_name for r in ret for run_name in r},
+        self.assertEqual(len(ret_runs), 2)
+        self.assertSetEqual({run_name for r in ret_runs for run_name in r},
                             {project_name + '_' + str(i) for i in range(3, 5)})
 
+        self.assertEqual(get_run_count_in_config_db(), 5)
         # Remove runs after run 2 by run name.
 
         del_cmd = [self._codechecker_cmd,
@@ -108,6 +124,8 @@ class TestCmdLineDeletion(unittest.TestCase):
                    '--all-after-run', run2_name,
                    '--url', self.server_url]
         run_cmd(del_cmd, env=check_env)
+
+        self.assertEqual(get_run_count_in_config_db(), 3)
 
         self.assertTrue(all_exists(
             [project_name + '_' + str(i) for i in range(0, 3)]))
@@ -135,11 +153,11 @@ class TestCmdLineDeletion(unittest.TestCase):
                         '--all-before-time', date_run2,
                         '-o', 'json',
                         '--url', self.server_url]
-        out, _ = run_cmd(get_runs_cmd, env=check_env)
-        ret = json.loads(out)
+        out_runs, _ = run_cmd(get_runs_cmd, env=check_env)
+        ret_runs = json.loads(out_runs)
 
-        self.assertEqual(len(ret), 2)
-        self.assertSetEqual({run_name for r in ret for run_name in r},
+        self.assertEqual(len(ret_runs), 2)
+        self.assertSetEqual({run_name for r in ret_runs for run_name in r},
                             {project_name + '_' + str(i) for i in range(0, 2)})
 
         # Remove runs before run 2 by run date.
@@ -164,3 +182,5 @@ class TestCmdLineDeletion(unittest.TestCase):
 
         self.assertTrue(none_exists(
             [project_name + '_' + str(i) for i in range(0, 5)]))
+
+        self.assertEqual(get_run_count_in_config_db(), 0)
