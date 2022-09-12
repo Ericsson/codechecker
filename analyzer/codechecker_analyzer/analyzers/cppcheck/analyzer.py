@@ -84,9 +84,25 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         pass
 
     def parse_analyzer_config(self):
-        "Parses a white listed compiler flags"
+        """
+        Parses a set of a white listed compiler flags.
+        Cppcheck can only use a subset of the parametes
+        found in compilation commands.
+        These are:
+        * -I: flag for specifing include directories
+        * -D: for build time defines
+        * -U: for undefining names
+        * -std: The languange standard
+        Any other parameter different from the above list will be dropped.
+        """
         params = []
-        interesting_option = re.compile("^-[I|U|D].*$")
+        interesting_option = re.compile("-[I|U|D].*")
+        # the std flag is different. the following are all valid flags:
+        # * --std c99
+        # * -std=c99
+        # * --std=c99
+        # BUT NOT: -std c99
+        std_regex = re.compile("-?-std.*")
         for i, analyzer_option in enumerate(self.buildaction.analyzer_options):
             if interesting_option.match(analyzer_option):
                 params.extend([analyzer_option])
@@ -99,11 +115,18 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
                     params.extend(
                         [self.buildaction.analyzer_options[i+1]]
                     )
-            if analyzer_option.startswith("-std"):
-                standard = analyzer_option.split("=")[-1] \
-                    .lower().replace("gnu", "c")
+            if std_regex.match(analyzer_option):
+                standard = ""
+                if "=" in analyzer_option:
+                    standard = analyzer_option.split("=")[-1]
+                # Handle space separated parameter
+                # The else clause is never executed until a log parser
+                # limitation is addressed, as only this "-std=xxx" version
+                # of the paramter is forwareded in the analyzer_option list.
+                else:
+                    standard = self.buildaction.analyzer_options[i+1]
+                standard = standard.lower().replace("gnu", "c")
                 params.extend(["--std=" + standard])
-        LOG.debug(params)
         return params
 
     def construct_analyzer_cmd(self, result_handler):
