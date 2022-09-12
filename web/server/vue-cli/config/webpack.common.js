@@ -191,6 +191,10 @@ module.exports = {
         {
           from: helpers.root('src', 'browsersupport.js'),
           to: helpers.root('dist')
+        },
+        {
+          from: helpers.root('src', 'static.js'),
+          to: helpers.root('dist')
         }
       ]
     }),
