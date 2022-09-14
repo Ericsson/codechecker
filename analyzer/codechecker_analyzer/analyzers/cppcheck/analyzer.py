@@ -115,7 +115,7 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
                     params.extend(
                         [self.buildaction.analyzer_options[i+1]]
                     )
-            if std_regex.match(analyzer_option):
+            elif std_regex.match(analyzer_option):
                 standard = ""
                 if "=" in analyzer_option:
                     standard = analyzer_option.split("=")[-1]
