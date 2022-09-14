@@ -2715,12 +2715,12 @@ class ThriftRequestHandler:
             # The File table is joined explicitly in the next query. Joining it
             # twice results an ambiguous reference to this table in the SQL
             # query.
-            # TODO: It is not an elegant solution that rocess_report_filter()
+            # TODO: It is not an elegant solution that process_report_filter()
             # returns the list of tables to join and the caller needs to join
             # them. It would be better if it's automatic and every table is
             # joined once.
-            if File in join_tables:
-                join_tables.remove(File)
+
+            join_tables = [t for t in join_tables if t != File]
 
             unique = report_filter is not None and report_filter.isUnique
             stmt = session.query(
