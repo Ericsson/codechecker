@@ -24,13 +24,17 @@ def get_compile_command(action, config, source='', output=''):
     if not has_flag('--target', cmd) and action.target != "":
         cmd.append(f"--target={action.target}")
 
-    cmd.extend(prepend_all('-isystem', action.compiler_includes))
     cmd.append('-c')
     if not has_flag('-x', cmd):
         cmd.extend(['-x', action.lang])
 
     cmd.extend(config.analyzer_extra_arguments)
     cmd.extend(action.analyzer_options)
+    # Compilers include a header file from the first(!) directory given by -I,
+    # -isystem, etc. flags where it is found. For this reason we append the
+    # implicit include paths to the end of the analyzer command in order to get
+    # less precedence than the user's explicit include paths.
+    cmd.extend(prepend_all('-isystem', action.compiler_includes))
     if output:
         cmd.extend(['-o', output])
     if source:
