@@ -12,6 +12,7 @@
 import glob
 import multiprocessing
 import os
+import pickle
 import shlex
 import shutil
 import signal
@@ -543,6 +544,17 @@ def check(check_data):
                 pass
 
         result_file_exists = os.path.exists(rh.analyzer_result_file)
+
+        # FIXME: cppcheck (and other analyzers)
+        # need the original env when invoked
+        # we should handle this in a generic way.
+        if "cppcheck" in os.path.basename(analyzer_cmd[0]):
+            original_env_file = os.environ.get(
+                'CODECHECKER_ORIGINAL_BUILD_ENV')
+            if original_env_file:
+                with open(original_env_file, 'rb') as env_file:
+                    analyzer_environment = \
+                        pickle.load(env_file, encoding='utf-8')
 
         # Fills up the result handler with the analyzer information.
         source_analyzer.analyze(analyzer_cmd, rh, analyzer_environment,
