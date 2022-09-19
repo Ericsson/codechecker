@@ -1205,6 +1205,7 @@ class ThriftRequestHandler:
                  auth_session,
                  config_database,
                  package_version,
+                 client_version,
                  context):
 
         if not product:
@@ -1216,6 +1217,7 @@ class ThriftRequestHandler:
         self._auth_session = auth_session
         self._config_database = config_database
         self.__package_version = package_version
+        self.__client_version = client_version
         self._Session = Session
         self._context = context
         self.__permission_args = {
@@ -1580,6 +1582,18 @@ class ThriftRequestHandler:
                            skip_detection_statuses, tag_ids):
         self.__require_view()
 
+        # FIXME: This getDiffResultsHash() function is returning a set of
+        # reports based on what are they compared to in a "CodeChecker cmd
+        # diff" command. Earlier this function didn't consider false positive
+        # and intentional reports as closed reports. The client's behavior also
+        # changed from CodeChecker 6.20.0 and this behavior is adapted to the
+        # new server behavior. The problem is that the old client works
+        # correcly only with the old server. For this reason we are branching
+        # based on the client's version. We are having access to the Thrift
+        # API version here. The behavior change happend in Thrift API version
+        # 6.50.
+        client_version = tuple(map(int, self.__client_version.split('.')))
+
         if not skip_detection_statuses:
             skip_detection_statuses = [ttypes.DetectionStatus.RESOLVED,
                                        ttypes.DetectionStatus.OFF,
@@ -1599,10 +1613,15 @@ class ThriftRequestHandler:
                     return []
 
                 base_hashes = session.query(Report.bug_id.label('bug_id')) \
-                    .outerjoin(File, Report.file_id == File.id) \
-                    .filter(
+                    .outerjoin(File, Report.file_id == File.id)
+
+                if client_version >= (6, 50):
+                    base_hashes = base_hashes.filter(
                         Report.detection_status.notin_(skip_statuses_str),
                         Report.fixed_at.is_(None))
+                else:
+                    base_hashes = base_hashes.filter(
+                        Report.detection_status.notin_(skip_statuses_str))
 
                 base_hashes = \
                     filter_open_reports_in_tags(base_hashes, run_ids, tag_ids)
@@ -1630,9 +1649,15 @@ class ThriftRequestHandler:
 
                     return new_hashes
             elif diff_type == DiffType.RESOLVED:
-                results = session.query(Report.bug_id) \
-                    .filter(or_(Report.bug_id.notin_(report_hashes),
-                                Report.fixed_at.isnot(None)))
+                results = session.query(Report.bug_id)
+
+                if client_version >= (6, 50):
+                    results = results.filter(or_(
+                        Report.bug_id.notin_(report_hashes),
+                        Report.fixed_at.isnot(None)))
+                else:
+                    results = results.filter(
+                        Report.bug_id.notin_(report_hashes))
 
                 results = \
                     filter_open_reports_in_tags(results, run_ids, tag_ids)
@@ -1641,10 +1666,16 @@ class ThriftRequestHandler:
 
             elif diff_type == DiffType.UNRESOLVED:
                 results = session.query(Report.bug_id) \
-                    .filter(Report.bug_id.in_(report_hashes)) \
-                    .filter(Report.detection_status.notin_(
-                        skip_statuses_str)) \
-                    .filter(Report.fixed_at.is_(None))
+                    .filter(Report.bug_id.in_(report_hashes))
+
+                if client_version >= (6, 50):
+                    results = results \
+                        .filter(Report.detection_status.notin_(
+                            skip_statuses_str)) \
+                        .filter(Report.fixed_at.is_(None))
+                else:
+                    results = results.filter(
+                        Report.detection_status.notin_(skip_statuses_str))
 
                 results = \
                     filter_open_reports_in_tags(results, run_ids, tag_ids)

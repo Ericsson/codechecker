@@ -431,6 +431,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
                             self.auth_session,
                             self.server.config_session,
                             version,
+                            api_ver,
                             self.server.context)
                         processor = ReportAPI_v6.Processor(acc_handler)
                     else:
