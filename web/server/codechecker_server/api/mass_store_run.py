@@ -716,6 +716,7 @@ class MassStoreRun:
         review_status_is_in_source: bool,
         detection_status: str,
         detection_time: datetime,
+        run_history_time: datetime,
         analysis_info: AnalysisInfo,
         analyzer_name: Optional[str] = None,
         fixed_at: Optional[datetime] = None
@@ -732,7 +733,7 @@ class MassStoreRun:
                 report.message, checker_name or 'NOT FOUND',
                 report.category, report.type, report.line, report.column,
                 severity, review_status.status, review_status.author,
-                review_status.message, review_status.date,
+                review_status.message, run_history_time,
                 review_status_is_in_source,
                 detection_status, detection_time,
                 len(report.bug_path_events), analyzer_name)
@@ -923,7 +924,6 @@ class MassStoreRun:
             analyzer_name = mip.checker_to_analyzer.get(
                 report.checker_name, report.analyzer_name)
             review_status, scc = get_review_status(report)
-            review_status.date = run_history_time
 
             # False positive and intentional reports are considered as closed
             # reports which is indicated with non-null "fixed_at" date.
@@ -933,12 +933,12 @@ class MassStoreRun:
                         ['false_positive', 'intentional']:
                     fixed_at = old_report.review_status_date
                 else:
-                    fixed_at = review_status.date
+                    fixed_at = run_history_time
 
             report_id = self.__add_report(
                 session, run_id, report, file_path_to_id,
                 review_status, scc, detection_status, detected_at,
-                analysis_info, analyzer_name, fixed_at)
+                run_history_time, analysis_info, analyzer_name, fixed_at)
 
             self.__new_report_hashes.add(report.report_hash)
             self.__already_added_report_hashes.add(report_path_hash)
