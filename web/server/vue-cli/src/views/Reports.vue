@@ -269,10 +269,17 @@ export default {
           value: "detectionStatus",
           align: "center",
           sortable: true
+        },
+        {
+          text: "Timestamp",
+          value: "timestamp",
+          align: "center",
+          sortable: true
         }
       ],
       reports: [],
       sameReports: {},
+      hasTimeStamp: false,
       selected: [],
       namespace: namespace,
       pagination: {
@@ -314,6 +321,9 @@ export default {
         if (header.value === "data-table-expand") {
           return this.reportFilter.isUnique;
         }
+
+        if (header.value === "timestamp") {
+          return this.hasTimeStamp; }
 
         return true;
       });

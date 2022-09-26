@@ -315,6 +315,7 @@ struct ReportData {
   15: i64             bugPathLength,   // Length of the bug path.
   16: optional ReportDetails details,  // Details of the report.
   17: optional string analyzerName,    // Analyzer name.
+  18: optional string timeStamp,       // Timestamp for dynamic analyzers.
 }
 typedef list<ReportData> ReportDataList
 
