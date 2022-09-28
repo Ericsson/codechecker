@@ -21,7 +21,7 @@ class Parser(SANParser):
 
     # Regex for parsing MemorySanitizer output message.
     line_re = re.compile(
-            # Error code
-            r'==(?P<code>\d+)==(ERROR|WARNING): LeakSanitizer: '
-            # Checker message.
-            r'(?P<message>[\S \t]+)')
+        r'(?P<message>(Ind|D)irect leak of \d+ byte\(s\) '
+        r'in \d+ object\(s\) allocated from:)')
+
+    skip_line_after_match = False
