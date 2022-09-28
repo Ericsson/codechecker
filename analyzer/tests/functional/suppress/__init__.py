@@ -110,7 +110,8 @@ def _generate_suppress_file(suppress_file):
         random_integer = random.randint(1, 9999999)
         suppress_line = str(curr_time) + str(random_integer)
         suppress_stuff.append(
-            hashlib.md5(suppress_line.encode("utf-8")).hexdigest() +
+            hashlib.md5(suppress_line.encode("utf-8"),
+                 usedforsecurity=False).hexdigest() +
             '#' + hash_version)
 
     s_file = open(suppress_file, 'w', encoding='utf-8', errors='ignore')
@@ -120,7 +121,8 @@ def _generate_suppress_file(suppress_file):
             k + '||' + 'test_~!@#$%^&*.cpp' +
             '||' + 'idziei éléáálk ~!@#$%^&*(\n')
         s_file.write(
-            hashlib.md5(suppress_line.encode("utf-8")).hexdigest() + '||' +
+            hashlib.md5(suppress_line.encode("utf-8"),
+                usedforsecurity=False).hexdigest() + '||' +
             'test_~!@#$%^&*.cpp' + '||' + 'idziei éléáálk ~!@#$%^&*(\n')
 
     s_file.close()

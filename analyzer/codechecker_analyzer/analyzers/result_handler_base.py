@@ -135,7 +135,8 @@ class ResultHandler(metaclass=ABCMeta):
         build_info = source_file + '_' + ' '.join(args)
 
         self.buildaction_hash = \
-            hashlib.md5(build_info.encode(errors='ignore')).hexdigest()
+            hashlib.md5(build_info.encode(errors='ignore'),
+            usedforsecurity=False).hexdigest()
 
         return analyzed_file_name + '_' + \
             str(self.buildaction.analyzer_type) + '_' + \

@@ -1162,7 +1162,7 @@ def handle_diff_results(args):
                     file_name = os.path.basename(file_path)
                     h = int(
                         hashlib.md5(
-                            file_path.encode('utf-8')).hexdigest(),
+                            file_path.encode('utf-8'), usedforsecurity=False).hexdigest(),
                         16) % (10 ** 8)
 
                     output_file_path = os.path.join(

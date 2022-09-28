@@ -150,8 +150,8 @@ class AnalyzerResultBase(metaclass=ABCMeta):
         analyzer_info = AnalyzerInfo(name=self.TOOL_NAME)
         for file_path, file_reports in file_to_report.items():
             source_file = os.path.basename(file_path)
-            file_hash = hashlib.md5(file_path.encode(errors='ignore')) \
-                .hexdigest()
+            file_hash = hashlib.md5(file_path.encode(errors='ignore'),
+                                    usedforsecurity=False).hexdigest()
 
             out_file_name = file_name \
                 .replace("{source_file}", source_file) \

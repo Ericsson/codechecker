@@ -78,7 +78,8 @@ class MakeFileCreator:
         analyzer_name = self.__format_analyzer_type(action.analyzer_type)
         target_name = analyzer_name + '_' + action.source + '_' + \
             action.original_command
-        return hashlib.md5(target_name.encode('utf-8')).hexdigest()
+        return hashlib.md5(target_name.encode('utf-8'),
+                           usedforsecurity=False).hexdigest()
 
     def __write_header(self, mfile):
         """ Write header section to the given file.

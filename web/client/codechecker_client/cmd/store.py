@@ -532,7 +532,7 @@ def assemble_zip(inputs, zip_file, client, checker_labels: CheckerLabels):
 
             # Create a unique report directory name.
             report_dir_name = hashlib.md5(os.path.dirname(
-                file_path).encode('utf-8')).hexdigest()
+                file_path).encode('utf-8'), usedforsecurity=False).hexdigest()
 
             zip_target = os.path.join('reports', report_dir_name, file_name)
             zipf.write(file_path, zip_target)
