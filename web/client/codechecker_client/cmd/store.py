@@ -40,6 +40,7 @@ from codechecker_report_converter.util import load_json_or_empty
 from codechecker_client import client as libclient
 from codechecker_common import arg, logger, cmd_config
 from codechecker_common.checker_labels import CheckerLabels
+from codechecker_common.hash import md5
 
 from codechecker_web.shared import webserver_context, host_check
 from codechecker_web.shared.env import get_default_workspace
@@ -531,8 +532,8 @@ def assemble_zip(inputs, zip_file, client, checker_labels: CheckerLabels):
             _, file_name = os.path.split(file_path)
 
             # Create a unique report directory name.
-            report_dir_name = hashlib.md5(os.path.dirname(
-                file_path).encode('utf-8'), usedforsecurity=False).hexdigest()
+            report_dir_name = md5(os.path.dirname(
+                file_path).encode('utf-8')).hexdigest()
 
             zip_target = os.path.join('reports', report_dir_name, file_name)
             zipf.write(file_path, zip_target)

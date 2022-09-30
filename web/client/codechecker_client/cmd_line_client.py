@@ -12,7 +12,6 @@ Command line client.
 
 from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
-import hashlib
 import os
 import re
 import sys
@@ -36,6 +35,7 @@ from codechecker_report_converter.util import dump_json_output, \
 
 from codechecker_common import logger
 from codechecker_common.checker_labels import CheckerLabels
+from codechecker_common.hash import md5
 
 from codechecker_web.shared import convert, webserver_context
 
@@ -1160,10 +1160,8 @@ def handle_diff_results(args):
 
                 for file_path, file_reports in file_report_map.items():
                     file_name = os.path.basename(file_path)
-                    h = int(
-                        hashlib.md5(
-                            file_path.encode('utf-8'), usedforsecurity=False).hexdigest(),
-                        16) % (10 ** 8)
+                    h = int(md5(file_path.encode('utf-8')).hexdigest(), 16)
+                          % (10 ** 8)
 
                     output_file_path = os.path.join(
                         output_dir, f"{file_name}_ {str(h)}.html")

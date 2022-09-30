@@ -9,13 +9,13 @@
 Result handlers to manage the output of the static analyzers.
 """
 
-import hashlib
 import os
 import shlex
 
 from abc import ABCMeta
 from typing import Optional
 
+from codechecker_common.hash import md5
 from codechecker_common.logger import get_logger
 from codechecker_common.skiplist_handler import SkipListHandlers
 
@@ -135,8 +135,7 @@ class ResultHandler(metaclass=ABCMeta):
         build_info = source_file + '_' + ' '.join(args)
 
         self.buildaction_hash = \
-            hashlib.md5(build_info.encode(errors='ignore'),
-            usedforsecurity=False).hexdigest()
+            md5(build_info.encode(errors='ignore')).hexdigest()
 
         return analyzed_file_name + '_' + \
             str(self.buildaction.analyzer_type) + '_' + \

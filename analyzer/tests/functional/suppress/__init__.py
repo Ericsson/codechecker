@@ -103,6 +103,8 @@ def _generate_suppress_file(suppress_file):
     import random
     import time
 
+    from codechecker_common.hash import md5
+
     hash_version = '1'
     suppress_stuff = []
     for _ in range(10):
@@ -110,8 +112,7 @@ def _generate_suppress_file(suppress_file):
         random_integer = random.randint(1, 9999999)
         suppress_line = str(curr_time) + str(random_integer)
         suppress_stuff.append(
-            hashlib.md5(suppress_line.encode("utf-8"),
-                 usedforsecurity=False).hexdigest() +
+            md5(suppress_line.encode("utf-8")).hexdigest() +
             '#' + hash_version)
 
     s_file = open(suppress_file, 'w', encoding='utf-8', errors='ignore')
@@ -121,8 +122,7 @@ def _generate_suppress_file(suppress_file):
             k + '||' + 'test_~!@#$%^&*.cpp' +
             '||' + 'idziei éléáálk ~!@#$%^&*(\n')
         s_file.write(
-            hashlib.md5(suppress_line.encode("utf-8"),
-                usedforsecurity=False).hexdigest() + '||' +
+            md5(suppress_line.encode("utf-8")).hexdigest() + '||' +
             'test_~!@#$%^&*.cpp' + '||' + 'idziei éléáálk ~!@#$%^&*(\n')
 
     s_file.close()
