@@ -13,6 +13,7 @@ Test case for the CodeChecker fixit command's direct functionality.
 
 
 import datetime
+import hashlib
 import json
 import os
 import shutil
@@ -328,3 +329,81 @@ int main()
         out, err = process.communicate(input=out)
         print('\n' + out + '\n')
         self.assertEqual(out.count("DiagnosticMessage"), 1)
+
+    @unittest.skipIf(find_executable('clang-apply-replacements') is None,
+                     "clang-apply-replacements clang tool must be available "
+                     "in the environment.")
+    def test_fixit_apply_failure(self):
+        def content_hash(filename):
+            md5 = hashlib.md5()
+
+            with open(filename, 'rb') as f:
+                md5.update(f.read())
+
+            return md5.hexdigest()
+
+        # --- Common files and variables --- #
+
+        build_json = os.path.join(self.test_workspace, "build.json")
+        source_file1 = os.path.join(self.test_workspace, "main1.c")
+        source_file2 = os.path.join(self.test_workspace, "main2.c")
+        report_dir = os.path.join(self.test_workspace, "reports")
+        source = '#include <stdio.h>\n' + \
+                 'int main() { printf("%d", "hello");\n'
+
+        build_log = [{"directory": self.test_workspace,
+                      "command": "gcc -c " + source_file1,
+                      "file": source_file1},
+                     {"directory": self.test_workspace,
+                      "command": "gcc -c " + source_file2,
+                      "file": source_file2}]
+
+        with open(build_json, 'w', encoding="utf-8", errors="ignore") as f:
+            json.dump(build_log, f)
+
+        # --- Analysis --- #
+
+        with open(source_file1, 'w', encoding="utf-8", errors="ignore") as f:
+            f.write(source)
+        with open(source_file2, 'w', encoding="utf-8", errors="ignore") as f:
+            f.write(source)
+
+        analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
+                       "--analyzers", "clang-tidy", "-o", report_dir]
+
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_workspace,
+            encoding="utf-8",
+            errors="ignore")
+        process.communicate()
+
+        # --- Test fixit --- #
+
+        orig_hash_1 = content_hash(source_file1)
+        orig_hash_2 = content_hash(source_file2)
+
+        # Toudh file so "CodeChecker fixit" doesn't apply on the first file.
+        # We want to test that the other file is changed despite the failure of
+        # this first fail.
+        os.utime(source_file1, None)
+
+        fixit_cmd = [self._codechecker_cmd, "fixit", report_dir, "--apply"]
+
+        process = subprocess.Popen(
+            fixit_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.test_workspace,
+            encoding="utf-8",
+            errors="ignore")
+        process.communicate()
+
+        new_hash_1 = content_hash(source_file1)
+        new_hash_2 = content_hash(source_file2)
+
+        # The first file doesn't change due to the touch operation above.
+        self.assertEqual(orig_hash_1, new_hash_1)
+        self.assertNotEqual(orig_hash_2, new_hash_2)

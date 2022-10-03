@@ -13,6 +13,7 @@ Supported analyzer types.
 
 import os
 import re
+import subprocess
 import sys
 
 from codechecker_analyzer import env
@@ -116,6 +117,22 @@ def is_z3_refutation_capable(context):
     return host_check.has_analyzer_config_option(analyzer_binary,
                                                  'crosscheck-with-z3',
                                                  analyzer_env)
+
+
+def is_ignore_conflict_supported(context):
+    """
+    Detects if clang-apply-replacements supports --ignore-insert-conflict flag.
+    """
+    analyzer_env = env.extend(context.path_env_extra,
+                              context.ld_lib_path_extra)
+
+    proc = subprocess.Popen([context.replacer_binary, '--help'],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            env=analyzer_env,
+                            encoding="utf-8", errors="ignore")
+    out, _ = proc.communicate()
+    return '--ignore-insert-conflict' in out
 
 
 def print_unsupported_analyzers(errored):
