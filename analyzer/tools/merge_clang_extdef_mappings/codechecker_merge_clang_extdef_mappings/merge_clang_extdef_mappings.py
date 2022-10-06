@@ -32,7 +32,10 @@ def _create_global_ctu_function_map(func_map_lines):
     # We collect all occurences of a function name into a set.
     for line in func_map_lines:
         line = line.strip()
-        # The new file format is Length>:<USR> <File-Path>
+        # FIXME: Detect and report invalid input.
+        # The format of the external function map file changed in between
+        # clang-15 and clang-16, check whether this is the updated format.
+        # The new file format is <Length>:<USR> <File-Path>
         if line[0].isdigit():
             length_str, _ = line.split(':', 1)
             length = int(length_str)

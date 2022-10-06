@@ -36,6 +36,9 @@ def call_command(cmd, cwd, env):
 
     cmd_log = ' '.join([shlex.quote(x) for x in cmd])
     try:
+        # In case the Popen fails, have these initialized.
+        out = ''
+        err = ''
         proc = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
