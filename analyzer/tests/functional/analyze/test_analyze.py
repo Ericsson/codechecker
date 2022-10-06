@@ -1067,9 +1067,12 @@ class TestAnalyze(unittest.TestCase):
             errors="ignore")
         out, _ = process.communicate()
 
-        print(out)
-
         # It's printed as a found report and in the checker statistics.
+        # Note: If this test case fails, its pretty sure that something totally
+        # unrelated to the analysis broke in CodeChecker. Comment out the line
+        # starting with 'nocapture' in 'analyzer/.noserc', and print both the
+        # stdout and stderr streams from the above communicate() call (the
+        # latter of which is ignored with _ above)
         self.assertEqual(out.count('hicpp-use-nullptr'), 2)
 
         analyze_cmd = [self._codechecker_cmd, "check", "-l", build_json,
