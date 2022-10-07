@@ -471,6 +471,13 @@
       "profile:sensitive",
       "severity:HIGH"
     ],
+    "bugprone-suspicious-realloc-usage": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/suspicious-realloc-usage.html",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
     "bugprone-suspicious-semicolon": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/suspicious-semicolon.html",
       "profile:default",
