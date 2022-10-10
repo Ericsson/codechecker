@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Roslynator>
+  <CodeAnalysis>
+    <Summary>
+      <Diagnostic Id="CA1822" Title="Mark members as static" Count="1" />
+      <Diagnostic Id="CS0168" Title="Variable is declared but never used" Count="1" />
+    </Summary>
+    <Projects>
+      <Project Name="files" FilePath="files/files.csproj">
+        <Diagnostics>
+          <Diagnostic Id="CA1822">
+            <Severity>Info</Severity>
+            <Message>Mark members as static</Message>
+            <FilePath>files/Sample.cs</FilePath>
+            <Location Line="5" Character="16" />
+          </Diagnostic>
+        </Diagnostics>
+      </Project>
+    </Projects>
+  </CodeAnalysis>
+</Roslynator>
