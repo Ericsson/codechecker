@@ -28,6 +28,7 @@ a CodeChecker server.
   * [Sphinx](#sphinx)
   * [Sparse](#sparse)
   * [cpplint](#cpplint)
+  * [Roslynator.DotNet.Cli](#roslynator-dotnet-cli)
 * [Plist to html tool](#plist-to-html-tool)
   * [Usage](#usage-1)
 * [Report hash generation module](#report-hash-generation-module)
@@ -583,6 +584,37 @@ report-converter -t cpplint -o ./codechecker_cpplint_reports ./sample.out
 
 # Store the cpplint reports with CodeChecker.
 CodeChecker store ./codechecker_cpplint_reports -n cpplint
+```
+
+### [Roslynator.DotNet.Cli](https://github.com/JosefPihrt/Roslynator#roslynator-command-line-tool-)
+The [Roslynator](https://github.com/JosefPihrt/Roslynator) project contains
+several analyzers built on top of Microsoft Roslyn.
+
+It also provides a [command-line tool](https://github.com/JosefPihrt/Roslynator#roslynator-command-line-tool-) which is able to run Roslyn
+code-analysis from the command line line. 
+It is not limited to Microsoft and Roslynator analyzers, it supports any
+Roslyn anaylzer. It can also report MSBuild compiler diagnostics.
+
+The recommended way of running the roslynator cli tool is to save the 
+output to a xml file and give this file to the report converter tool.
+
+The following example shows you how to run roslynator cli and store the results
+found by roslynator to the CodeChecker database.
+
+```sh
+# Change Directory to your project
+cd path/to/your/ProjectOrSolution
+
+# Run roslynator
+# Provide a sln file if you want to analyze a solution
+roslynator analyze Sample.csproj --output sample.xml
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of roslynator
+report-converter -t roslynator -o ./codechecker_roslynator_reports ./sample.xml
+
+# Store the roslynator with CodeChecker.
+CodeChecker store ./codechecker_roslynator_reports -n roslynator
 ```
 
 ## Plist to html tool

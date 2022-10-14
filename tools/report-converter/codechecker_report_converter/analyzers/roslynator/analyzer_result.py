@@ -25,8 +25,8 @@ class AnalyzerResult(AnalyzerResultBase):
     """ Transform analyzer result of Roslynator. """
 
     TOOL_NAME = 'roslynator'
-    NAME = 'Roslynator'
-    URL = 'https://github.com/JosefPihrt/Roslynator'
+    NAME = 'Roslynator.DotNet.Cli'
+    URL = 'https://github.com/JosefPihrt/Roslynator#roslynator-command-line-tool-'
 
     def __init__(self):
         super(AnalyzerResult, self).__init__()
