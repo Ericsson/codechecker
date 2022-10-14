@@ -176,6 +176,7 @@ The following tools are supported:
 |                | [Kernel-Doc](/docs/tools/report-converter.md#kernel-doc)    |
 |                | [Sparse](/docs/tools/report-converter.md#sparse)    |
 |                | [cpplint](/docs/tools/report-converter.md#cpplint)    |
+| **C#**         | [Roslynator.DotNet.Cli](/docs/tools/report-converter.md#roslynatordotnetcli)    |
 | **Java**       | [SpotBugs](/docs/tools/report-converter.md#spotbugs)    |
 |                | [Facebook Infer](/docs/tools/report-converter.md#fbinfer)    |
 | **Python**     | [Pylint](/docs/tools/report-converter.md#pylint)    |

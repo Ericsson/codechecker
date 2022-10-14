@@ -28,7 +28,7 @@ a CodeChecker server.
   * [Sphinx](#sphinx)
   * [Sparse](#sparse)
   * [cpplint](#cpplint)
-  * [Roslynator.DotNet.Cli](#roslynator-dotnet-cli)
+  * [Roslynator.DotNet.Cli](#roslynatordotnetcli)
 * [Plist to html tool](#plist-to-html-tool)
   * [Usage](#usage-1)
 * [Report hash generation module](#report-hash-generation-module)
@@ -73,7 +73,7 @@ optional arguments:
                         Currently supported output types are: asan, clang-
                         tidy, coccinelle, cppcheck, cpplint, eslint,
                         fbinfer, golint, kernel-doc, lsan, mdl, msan, 
-                        pyflakes, pylint, smatch, sparse, sphinx, spotbugs, 
+                        pyflakes, pylint, roslynator, smatch, sparse, sphinx, spotbugs, 
                         tsan, tslint, ubsan.
   --meta [META [META ...]]
                         Metadata information which will be stored alongside
