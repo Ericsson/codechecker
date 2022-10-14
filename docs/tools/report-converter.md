@@ -596,7 +596,7 @@ It is not limited to Microsoft and Roslynator analyzers, it supports any
 Roslyn anaylzer. It can also report MSBuild compiler diagnostics.
 
 The recommended way of running the roslynator cli tool is to save the 
-output to a xml file and give this file to the report converter tool.
+output to an XML file and give this file to the report converter tool.
 
 The following example shows you how to run roslynator cli and store the results
 found by roslynator to the CodeChecker database.
@@ -606,7 +606,7 @@ found by roslynator to the CodeChecker database.
 cd path/to/your/ProjectOrSolution
 
 # Run roslynator
-# Provide a sln file if you want to analyze a solution
+# Provide an SLN file if you want to analyze a solution
 roslynator analyze Sample.csproj --output sample.xml
 
 # Use 'report-converter' to create a CodeChecker report directory from the
