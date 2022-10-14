@@ -603,11 +603,11 @@ found by roslynator to the CodeChecker database.
 
 ```sh
 # Change Directory to your project
-cd path/to/your/ProjectOrSolution
+cd path/to/your/project_or_solution
 
 # Run roslynator
 # Provide an SLN file if you want to analyze a solution
-roslynator analyze Sample.csproj --output sample.xml
+roslynator analyze sample.csproj --output sample.xml
 
 # Use 'report-converter' to create a CodeChecker report directory from the
 # analyzer result of roslynator
