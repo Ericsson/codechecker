@@ -7,7 +7,7 @@ description: |
   You can store and visualize thousands of analysis reports of many analyzers
   like Clang Static Analyzer (C/C++), Clang Tidy (C/C++), Facebook Infer
   (C/C++, Java), Clang Sanitizers (C/C++), Spotbugs (Java), Pylint (Python),
-  Roslynator.DotNet.Cli (C#), Eslint (Javascript).
+  Eslint (Javascript).
 
 grade: stable
 confinement: classic
