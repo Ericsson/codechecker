@@ -113,6 +113,7 @@ Supported analyzers:
   msan - MemorySanitizer, https://clang.llvm.org/docs/MemorySanitizer.html
   pyflakes - Pyflakes, https://github.com/PyCQA/pyflakes
   pylint - Pylint, https://www.pylint.org
+  roslynator - Roslynator.DotNet.Cli, https://github.com/JosefPihrt/Roslynator#roslynator-command-line-tool-
   smatch - Smatch, https://repo.or.cz/w/smatch.git
   sparse - Sparse, https://git.kernel.org/pub/scm/devel/sparse/sparse.git
   sphinx - Sphinx, https://github.com/sphinx-doc/sphinx
