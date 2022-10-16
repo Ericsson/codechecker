@@ -2,17 +2,28 @@
 <Roslynator>
   <CodeAnalysis>
     <Summary>
+      <Diagnostic Id="CA1014" Title="Mark assemblies with CLSCompliant" Count="1" />
+      <Diagnostic Id="CA1806" Title="Do not ignore method results" Count="1" />
       <Diagnostic Id="CA1822" Title="Mark members as static" Count="1" />
-      <Diagnostic Id="CS0168" Title="Variable is declared but never used" Count="1" />
     </Summary>
     <Projects>
       <Project Name="files" FilePath="files/files.csproj">
         <Diagnostics>
+          <Diagnostic Id="CA1014">
+            <Severity>Warning</Severity>
+            <Message>Mark assemblies with CLSCompliant</Message>
+          </Diagnostic>
+          <Diagnostic Id="CA1806">
+            <Severity>Warning</Severity>
+            <Message>Do not ignore method results</Message>
+            <FilePath>files/Sample.cs</FilePath>
+            <Location Line="17" Character="9" />
+          </Diagnostic>
           <Diagnostic Id="CA1822">
-            <Severity>Info</Severity>
+            <Severity>Warning</Severity>
             <Message>Mark members as static</Message>
             <FilePath>files/Sample.cs</FilePath>
-            <Location Line="5" Character="16" />
+            <Location Line="9" Character="16" />
           </Diagnostic>
         </Diagnostics>
       </Project>

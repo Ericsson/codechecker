@@ -1,2 +1,2 @@
 all:
-	roslynator analyze files/files.csproj -o out.xml
+	roslynator analyze files/files.csproj --output out.xml
