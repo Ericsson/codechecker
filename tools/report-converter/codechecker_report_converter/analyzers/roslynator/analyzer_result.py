@@ -81,23 +81,29 @@ class AnalyzerResult(AnalyzerResultBase):
         Returns the Report from the parsed diagnostic or None if something goes
         wrong.
         """
-        analyzer_id = diag.get('Id')
-        message = diag.find('Message').text
-        source_file_path = os.path.join(os.path.dirname(input_file_path),
-                            diag.find('FilePath').text)
+        id = diag.get('Id')
 
+        filePathElement = diag.find('FilePath')
+        if filePathElement is None:
+            LOG.warning("Diagnostic does not belong to a file: %s", id)
+            return None
+
+        source_file_path = os.path.join(os.path.dirname(input_file_path),
+                            filePathElement.text)
+        if not os.path.exists(source_file_path):
+            LOG.warning("Source file does not exist: %s", source_file_path)
+            return None
+
+        message = diag.find('Message').text
         location = diag.find('Location')
         line = location.get('Line')
         column = location.get('Character')
 
-        if os.path.exists(source_file_path):
-            return Report(
-                get_or_create_file(source_file_path, self.__file_cache),
-                int(line),
-                int(column),
-                message,
-                analyzer_id
-            )
-        else:
-            LOG.warning("Source file does not exists: %s", source_file_path)
+        return Report(
+            get_or_create_file(source_file_path, self.__file_cache),
+            int(line),
+            int(column),
+            message,
+            id
+        )
 
