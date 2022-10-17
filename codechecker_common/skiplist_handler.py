@@ -38,7 +38,8 @@ class SkipListHandler:
 
         self.__skip_file_lines = [line.strip() for line
                                   in skip_file_content.splitlines()
-                                  if line.strip()]
+                                  if line.strip() and
+                                  not line.strip().startswith('#')]
 
         valid_lines = self.__check_line_format(self.__skip_file_lines)
         self.__gen_regex(valid_lines)
