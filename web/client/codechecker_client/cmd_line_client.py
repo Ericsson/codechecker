@@ -682,7 +682,8 @@ def handle_list_results(args):
 
     run_filter = ttypes.RunFilter(names=args.names)
 
-    run_ids = [run.runId for run in get_run_data(client, run_filter)]
+    run_data = get_run_data(client, run_filter)
+    run_ids = [run.runId for run in run_data]
     if not run_ids:
         LOG.warning("No runs were found!")
         sys.exit(1)
@@ -703,6 +704,11 @@ def handle_list_results(args):
                                   query_report_details)
 
     if args.output_format == 'json':
+        if 'details' in args:
+            run_id2name = {run.runId: run.name for run in run_data}
+            for report in all_results:
+                report.runName = run_id2name[report.runId]
+
         print(CmdLineOutputEncoder().encode(all_results))
     else:
         header = ['File', 'Checker', 'Severity', 'Message', 'Bug path length',
