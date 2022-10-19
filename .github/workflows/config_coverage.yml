@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.8'
       - name: "Install dependencies"
@@ -129,7 +129,7 @@ jobs:
           deactivate
           echo "::endgroup::"
 
-          echo "::set-output name=CODECHECKER_PATH::$(readlink -f ./build/CodeChecker/bin)"
+          echo "CODECHECKER_PATH=$(readlink -f ./build/CodeChecker/bin)" >> "$GITHUB_OUTPUT"
           popd # analyzer
       - name: "Dump checker list"
         run: |
