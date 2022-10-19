@@ -70,16 +70,19 @@ If they are needed, they can be switched on using the following command
 is for example `-Xclang -analyzer-checker=debug.ExprInspection`.
 
 ## Z3 Theorem Prover
-The static analyzer supports using the
+The _Clang Static Analyzer_ supports using the
 [Z3 Theorem Prover](https://github.com/Z3Prover/z3) from Microsoft Research as
 an external constraint solver. This allows reasoning over more complex queries,
-but performance is `~15x` slower than the default range-based constraint
-solver. To enable the Z3 solver backend, Clang must be built with the
-`CLANG_ANALYZER_BUILD_Z3=ON` option, and the
+but performance is expected to be **15-20 times** slower than the default
+range-based constraint solver engine.
+
+To enable the Z3 solver backend, Clang must be built with the
+`LLVM_ENABLE_Z3_SOLVER=ON` compile-time option (for versions earlier than
+**9.0**, `CLANG_ANALYZER_BUILD_Z3=ON` must be used instead!), and the
 `-Xanalyzer -analyzer-constraints=z3` arguments passed at runtime. CodeChecker
-will automatically detect that the Clang was built with this option and you
+will automatically detect whether Clang was built with this option and you
 don't have to pass these arguments to the analyzer command itself when using
-CodeChecker, you just have to run the CodeChecker analyze command with the
+CodeChecker, you just have to run the `CodeChecker analyze` command with the
 `--z3` option.
 
 You can read more about Z3 Theorem Prover
