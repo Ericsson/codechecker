@@ -195,7 +195,9 @@ var BugViewer = {
 
     this._sourceFileData = file;
     this._filepath.innerHTML = file.filePath;
-    this._codeMirror.doc.setValue(file.content);
+    let e = document.createElement('div');
+    e.innerHTML = file.content;
+    this._codeMirror.doc.setValue(e.innerText);
     this._refresh();
   },
 
