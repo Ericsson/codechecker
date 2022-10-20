@@ -2,62 +2,80 @@
   "analyzer": "clang-tidy",
   "labels": {
     "abseil-cleanup-ctad": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/cleanup-ctad.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/cleanup-ctad.html",
+      "severity:STYLE"
     ],
     "abseil-duration-addition": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/duration-addition.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/duration-addition.html",
+      "severity:STYLE"
     ],
     "abseil-duration-comparison": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/duration-comparison.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/duration-comparison.html",
+      "severity:STYLE"
     ],
     "abseil-duration-conversion-cast": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/duration-conversion-cast.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/duration-conversion-cast.html",
+      "severity:STYLE"
     ],
     "abseil-duration-division": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/duration-division.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/duration-division.html",
+      "severity:STYLE"
     ],
     "abseil-duration-factory-float": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/duration-factory-float.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/duration-factory-float.html",
+      "severity:STYLE"
     ],
     "abseil-duration-factory-scale": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/duration-factory-scale.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/duration-factory-scale.html",
+      "severity:STYLE"
     ],
     "abseil-duration-subtraction": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/duration-subtraction.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/duration-subtraction.html",
+      "severity:STYLE"
     ],
     "abseil-duration-unnecessary-conversion": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/duration-unnecessary-conversion.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/duration-unnecessary-conversion.html",
+      "severity:STYLE"
     ],
     "abseil-faster-strsplit-delimiter": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/faster-strsplit-delimiter.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/faster-strsplit-delimiter.html",
+      "severity:LOW"
     ],
     "abseil-no-internal-dependencies": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/no-internal-dependencies.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/no-internal-dependencies.html",
+      "severity:STYLE"
     ],
     "abseil-no-namespace": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/no-namespace.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/no-namespace.html",
+      "severity:MEDIUM"
     ],
     "abseil-redundant-strcat-calls": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/redundant-strcat-calls.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/redundant-strcat-calls.html",
+      "severity:LOW"
     ],
     "abseil-str-cat-append": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/str-cat-append.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/str-cat-append.html",
+      "severity:LOW"
     ],
     "abseil-string-find-startswith": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/string-find-startswith.html",
-      "severity:STYLE"
+      "severity:LOW"
     ],
     "abseil-string-find-str-contains": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/string-find-str-contains.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/string-find-str-contains.html",
+      "severity:LOW"
     ],
     "abseil-time-comparison": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/time-comparison.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/time-comparison.html",
+      "severity:STYLE"
     ],
     "abseil-time-subtraction": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/time-subtraction.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/time-subtraction.html",
+      "severity:STYLE"
     ],
     "abseil-upgrade-duration-conversions": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/upgrade-duration-conversions.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/abseil/upgrade-duration-conversions.html",
+      "severity:STYLE"
     ],
     "altera-id-dependent-backward-branch": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/altera/id-dependent-backward-branch.html",
@@ -80,53 +98,64 @@
       "severity:LOW"
     ],
     "android-cloexec-accept": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-accept.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-accept.html",
+      "severity:HIGH"
     ],
     "android-cloexec-accept4": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-accept4.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-accept4.html",
+      "severity:HIGH"
     ],
     "android-cloexec-creat": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-creat.html",
-      "severity:MEDIUM"
+      "severity:LOW"
     ],
     "android-cloexec-dup": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-dup.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-dup.html",
+      "severity:HIGH"
     ],
     "android-cloexec-epoll-create": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-epoll-create.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-epoll-create.html",
+      "severity:LOW"
     ],
     "android-cloexec-epoll-create1": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-epoll-create1.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-epoll-create1.html",
+      "severity:HIGH"
     ],
     "android-cloexec-fopen": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-fopen.html",
-      "severity:MEDIUM"
+      "severity:HIGH"
     ],
     "android-cloexec-inotify-init": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-inotify-init.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-inotify-init.html",
+      "severity:LOW"
     ],
     "android-cloexec-inotify-init1": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-inotify-init1.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-inotify-init1.html",
+      "severity:HIGH"
     ],
     "android-cloexec-memfd-create": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-memfd-create.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-memfd-create.html",
+      "severity:HIGH"
     ],
     "android-cloexec-open": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-open.html",
-      "severity:MEDIUM"
+      "severity:HIGH"
     ],
     "android-cloexec-pipe": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-pipe.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-pipe.html",
+      "severity:HIGH"
     ],
     "android-cloexec-pipe2": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-pipe2.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-pipe2.html",
+      "severity:HIGH"
     ],
     "android-cloexec-socket": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/cloexec-socket.html",
-      "severity:MEDIUM"
+      "severity:HIGH"
     ],
     "android-comparison-in-temp-failure-retry": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/comparison-in-temp-failure-retry.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/android/comparison-in-temp-failure-retry.html",
+      "severity:MEDIUM"
     ],
     "boost-use-to-string": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/boost/use-to-string.html",
@@ -5964,7 +5993,8 @@
       "severity:STYLE"
     ],
     "zircon-temporary-objects": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/zircon/temporary-objects.html"
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/zircon/temporary-objects.html",
+      "severity:STYLE"
     ]
   }
 }
