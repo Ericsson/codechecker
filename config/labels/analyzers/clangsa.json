@@ -273,6 +273,7 @@
     ],
     "alpha.unix.Errno": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-unix-errno-c",
+      "profile:sensitive",
       "profile:extreme",
       "severity:HIGH"
     ],
@@ -325,6 +326,13 @@
     "alpha.webkit.UncountedLocalVarsChecker": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-webkit-uncountedlocalvarschecker",
       "profile:extreme"
+    ],
+    "apiModeling.Errno": [
+      "profile:default",
+      "profile:extreme",
+      "profile:portability",
+      "profile:sensitive",
+      "severity:LOW"
     ],
     "apiModeling.StdCLibraryFunctions": [
       "profile:default",
@@ -503,6 +511,13 @@
       "profile:sensitive",
       "severity:HIGH"
     ],
+    "core.uninitialized.NewArraySize": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-uninitialized-newarraysize-c",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
     "core.uninitialized.UndefReturn": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-uninitialized-undefreturn-c",
       "guideline:sei-cert",
@@ -510,6 +525,11 @@
       "profile:extreme",
       "profile:sensitive",
       "sei-cert:oop53-cpp",
+      "severity:HIGH"
+    ],
+    "alpha.unix.cstring.UninitializedRead": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-unix-cstring-uninitializedread-c",
+      "profile:extreme",
       "severity:HIGH"
     ],
     "cplusplus.InnerPointer": [
@@ -1011,6 +1031,10 @@
     ],
     "webkit.NoUncountedMemberChecker": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#webkit-nouncountedmemberchecker",
+      "severity:MEDIUM"
+    ],
+    "webkit.UncountedLambdaCapturesChecker": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#webkit-uncountedlambdacaptureschecker",
       "severity:MEDIUM"
     ],
     "webkit.RefCntblBaseVirtualDtor": [
