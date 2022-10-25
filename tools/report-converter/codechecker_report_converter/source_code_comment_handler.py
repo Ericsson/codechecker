@@ -34,7 +34,8 @@ def contains_codechecker_comment(fp):
     pos_before_read = fp.tell()
     if pos_before_read != 0:
         fp.seek(0)
-    match = re.search(".*codechecker_.*", fp.read())
+    source_text = fp.read()
+    match = "codechecker_" in source_text
     fp.seek(pos_before_read)
     if not match:
         return False
