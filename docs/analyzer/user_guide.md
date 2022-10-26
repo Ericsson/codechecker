@@ -1036,6 +1036,9 @@ checked, `+` means that it should be.
  * Path parts should start and end with `*`.
  * To skip everything use the `-*` mark. **Watch out for the order!**
 
+Comments can also be used in skipfiles: a line starting with `#` will not be
+taken into account.
+
 ##### Absolute path examples
 
 ```
