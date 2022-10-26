@@ -19,6 +19,7 @@ import stat
 import time
 import zlib
 
+from copy import deepcopy
 from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Set, Tuple
@@ -2157,31 +2158,49 @@ class ThriftRequestHandler:
     @timeit
     def getReviewStatusRules(self, rule_filter, sort_mode, limit, offset):
         self.__require_view()
+        if not sort_mode:
+            sort_mode = ReviewStatusRuleSortMode(
+                type=ReviewStatusRuleSortType.DATE,
+                ord=Order.DESC)
 
         result = []
-        with DBSession(self._Session) as session:
-            if not sort_mode:
-                sort_mode = ReviewStatusRuleSortMode(
-                    type=ReviewStatusRuleSortType.DATE,
-                    ord=Order.DESC)
 
-            q = get_rs_rule_query(session, rule_filter, sort_mode)
+        # To avoid modifiying the collection due to chunking
+        rule_filter_copy = deepcopy(rule_filter)
+
+        def getRules(reportHashes=None):
+            if rule_filter and reportHashes:
+                rule_filter_copy.reportHashes = reportHashes
+            q = get_rs_rule_query(session, rule_filter_copy, sort_mode)
 
             if limit:
                 q = q.limit(limit).offset(offset)
 
-        for review_status, associated_report_count in q:
-            result.append(ReviewStatusRule(
-                reportHash=review_status.bug_hash,
-                reviewData=create_review_data(
-                    review_status.status,
-                    review_status.message,
-                    review_status.author,
-                    review_status.date,
-                    False),
-                associatedReportCount=associated_report_count))
+            for review_status, associated_report_count in q:
+                result.append(ReviewStatusRule(
+                    reportHash=review_status.bug_hash,
+                    reviewData=create_review_data(
+                        review_status.status,
+                        review_status.message,
+                        review_status.author,
+                        review_status.date,
+                        False),
+                    associatedReportCount=associated_report_count))
+            return result
 
-        return result
+        with DBSession(self._Session) as session:
+            if rule_filter and rule_filter.reportHashes:
+                # Diffing with a large ammount of report hashes passed in the
+                # filter (60K) caused a hanging report diffing.
+                # The probable cause of this is the ILIKE matching in the
+                # underlying logic. Chunking the request solves this issue.
+                for hash_chunk in util.chunks(
+                        rule_filter.reportHashes,
+                        SQLITE_MAX_VARIABLE_NUMBER):
+                    getRules(hash_chunk)
+                return result
+            else:
+                return getRules()
 
     @exc_to_thrift_reqfail
     @timeit
@@ -2534,20 +2553,38 @@ class ThriftRequestHandler:
         self.__require_view()
         with DBSession(self._Session) as session:
             res = defaultdict(lambda: defaultdict(str))
-            for lines_in_file in lines_in_files_requested:
-                if lines_in_file.fileId is None:
-                    LOG.warning("File content requested without a fileId.")
-                    LOG.warning(lines_in_file)
-                    continue
-                sourcefile = session.query(File).get(lines_in_file.fileId)
-                cont = session.query(FileContent).get(sourcefile.content_hash)
-                lines = zlib.decompress(
-                    cont.content).decode('utf-8', 'ignore').split('\n')
-                for line in lines_in_file.lines:
+
+            # This will contain all the lines for the given fileId
+            contents_to_file_id = defaultdict(list)
+            # The goal of the chunking is not for achieving better performace
+            # but to be compatible with SQLITE dbms with larger report counts,
+            # with larger report data.
+            for chunk in util.chunks(
+                    lines_in_files_requested, SQLITE_MAX_VARIABLE_NUMBER):
+                contents = session.query(FileContent.content, File.id) \
+                        .join(
+                            File,
+                            FileContent.content_hash == File.content_hash) \
+                        .filter(File.id.in_(
+                                [line.fileId if line.fileId is not None
+                                    else LOG.warning(
+                                        f"File content "
+                                        "requested without fileId {l}")
+                                    for line in chunk])) \
+                        .all()
+                for content in contents:
+                    lines = zlib.decompress(
+                        content.content).decode('utf-8', 'ignore').split('\n')
+                    contents_to_file_id[content.id] = lines
+
+            for files in lines_in_files_requested:
+                for line in files.lines:
+                    lines = contents_to_file_id[files.fileId]
                     content = '' if len(lines) < line else lines[line - 1]
                     if encoding == Encoding.BASE64:
                         content = convert.to_b64(content)
-                    res[lines_in_file.fileId][line] = content
+                    res[files.fileId][line] = content
+
             return res
 
     @exc_to_thrift_reqfail
