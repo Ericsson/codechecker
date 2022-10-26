@@ -247,6 +247,23 @@ class TestCmdline(unittest.TestCase):
         ret, _, _ = run_cmd(res_cmd, env=check_env)
         self.assertEqual(0, ret)
 
+    def test_detailed_results_contain_run_names(self):
+        """
+        Test detailed results contain run names.
+        """
+        check_env = self._test_config['codechecker_cfg']['check_env']
+
+        res_cmd = [self._codechecker_cmd, 'cmd', 'results', 'test_files1*',
+                   'test_files1*', '-o', 'json', '--url', str(self.server_url),
+                   '--details']
+
+        ret, out, _ = run_cmd(res_cmd, env=check_env)
+        self.assertEqual(0, ret)
+
+        results = json.loads(out)
+        for result in results:
+            self.assertTrue(result['runName'].startswith('test_files1'))
+
     def test_stderr_results(self):
         """
         Test results command that we redirect logger's output to the stderr if
