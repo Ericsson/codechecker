@@ -327,51 +327,6 @@
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-webkit-uncountedlocalvarschecker",
       "profile:extreme"
     ],
-    "apiModeling.Errno": [
-      "profile:default",
-      "profile:extreme",
-      "profile:portability",
-      "profile:sensitive",
-      "severity:LOW"
-    ],
-    "apiModeling.StdCLibraryFunctions": [
-      "profile:default",
-      "profile:extreme",
-      "profile:portability",
-      "profile:sensitive",
-      "severity:LOW"
-    ],
-    "apiModeling.StdCLibraryFunctionArgs": [
-      "profile:default",
-      "profile:extreme",
-      "profile:portability",
-      "profile:sensitive",
-      "severity:LOW"
-    ],
-    "apiModeling.TrustNonnull": [
-      "profile:default",
-      "profile:extreme",
-      "profile:portability",
-      "profile:sensitive"
-    ],
-    "apiModeling.google.GTest": [
-      "profile:default",
-      "profile:extreme",
-      "profile:portability",
-      "profile:sensitive"
-    ],
-    "apiModeling.llvm.CastValue": [
-      "profile:default",
-      "profile:extreme",
-      "profile:portability",
-      "profile:sensitive"
-    ],
-    "apiModeling.llvm.ReturnValue": [
-      "profile:default",
-      "profile:extreme",
-      "profile:portability",
-      "profile:sensitive"
-    ],
     "core.CallAndMessage": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-callandmessage-c-c-objc",
       "guideline:sei-cert",
