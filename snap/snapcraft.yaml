@@ -1,6 +1,6 @@
 name: codechecker
 base: core18
-version: '6.21.0'
+version: '6.21.0-rc1'
 summary: CodeChecker is an analyzer tooling, defect database and viewer extension
 description: |
   CodeChecker is an analyzer tooling, defect database and viewer extension.
