@@ -40,6 +40,9 @@ class Version:
         self.git_tag = context.package_git_tag
         self.client_api = version.CLIENT_API
 
+    def is_release_candidate(self):
+        return 'rc' in self.version
+
     def to_dict(self) -> Dict[str, str]:
         """ Get version information in dictionary format. """
         return {
@@ -68,7 +71,12 @@ class Version:
         else:
             LOG.info("CodeChecker web version:")
             print(twodim.to_str(
-                output_format, ["Kind", "Version"], self.to_list()))
+                output_format, ["Kind", "Version"], self.to_list()),
+                flush=True)
+            if self.is_release_candidate():
+                LOG.warning("This version is only a release candidate! If you "
+                            "encounter any problems, please submit a bug "
+                            "report!")
 
 
 def get_argparser_ctor_args():
