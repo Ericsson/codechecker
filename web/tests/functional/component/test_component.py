@@ -48,7 +48,7 @@ class TestComponent(unittest.TestCase):
         self._auth_client = env.setup_auth_client(self._test_workspace,
                                                   session_token='_PROHIBIT')
 
-        # Create an PRODUCT_ADMIN login.
+        # Create a PRODUCT_ADMIN login.
         admin_token = self._auth_client.performLogin("Username:Password",
                                                      "admin:admin123")
 

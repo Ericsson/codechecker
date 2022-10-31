@@ -46,7 +46,7 @@ class CheckerLabels:
         label_files: Iterable[str]
     ) -> Dict[str, DefaultDict[str, List[str]]]:
         """
-        This function creates an union object of the given label files. The
+        This function creates a union object of the given label files. The
         resulting object maps analyzers to the collection of their checkers
         with their labels:
 

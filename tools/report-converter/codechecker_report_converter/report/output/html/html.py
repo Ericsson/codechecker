@@ -384,7 +384,7 @@ class HtmlBuilder:
 
     def create_statistics_html(self, output_dir: str):
         """
-        Creates an statistics.html file which contains statistics information
+        Creates a statistics.html file which contains statistics information
         from the HTML generation process.
         """
         def severity_order(severity: str) -> int:

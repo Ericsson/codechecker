@@ -128,7 +128,7 @@ static void writeActions(FILE* stream_, char const* wd_, const LoggerVector* act
 
   fprintf(stream_, "]");
 
-  /* An fclose also closes the file descriptor, so wo only call an fflush
+  /* fclose() also closes the file descriptor, so we only call fflush()
    * here */
   fflush(stream_);
 }

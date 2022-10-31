@@ -55,7 +55,7 @@ class AnalyzerResult(AnalyzerResultBase):
                 bugs = json.load(f)
         except IOError:
             LOG.error("Failed to parse the given analyzer result '%s'. Please "
-                      "give a infer output directory which contains a valid "
+                      "give an infer output directory which contains a valid "
                       "'report.json' file.", result_file_path)
             return reports
 

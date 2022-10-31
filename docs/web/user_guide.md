@@ -13,7 +13,7 @@
         - [Server Configuration (Authentication and Server Limits)](#server-configuration-authentication-and-server-limits)
         - [Database Configuration](#database-configuration)
       - [Master superuser and authentication forcing](#master-superuser-and-authentication-forcing)
-      - [Enfore secure socket (SSL)](#enfore-secure-socket-ssl)
+      - [Enfore secure socket (TLS/SSL)](#enfore-secure-socket-ssl)
       - [Managing running servers](#managing-running-servers)
       - [Manage server database upgrades](#manage-server-database-upgrades)
     - [`store`](#store)
@@ -171,7 +171,7 @@ optional arguments:
   -f CONFIG_DIRECTORY, --config-directory CONFIG_DIRECTORY
                         Directory where CodeChecker server should read server-
                         specific configuration (such as authentication
-                        settings, and SSL certificates) from.
+                        settings, and TLS/SSL certificates) from.
                         (default: /home/<username>/.codechecker)
   --host LISTEN_ADDRESS
                         The IP address or hostname of the server on which it
@@ -332,17 +332,17 @@ root account arguments:
                         not require authentication otherwise.
 ```
 
-#### Enfore secure socket (SSL)
+#### Enfore secure socket (TLS/SSL)
 
-You can enforce SSL security on your listening socket. In this case all clients must
-access your server using the `https://host:port` URL format.
+You can enforce TLS/SSL security on your listening socket. In this case all clients
+must access your server using the `https://host:port` URL format.
 
-To enable SSL simply place an SSL certificate to `<CONFIG_DIRECTORY>/cert.pem`
+To enable TLS/SSL simply place a TLS certificate to `<CONFIG_DIRECTORY>/cert.pem`
 and the corresponding private key to `<CONFIG_DIRECTORY>/key.pem`.
 You can generate these certificates for example
 using the [openssl tool](https://www.openssl.org/).
 When the server finds these files upon start-up,
-SSL will be automatically enabled.
+TLS/SSL will be automatically enabled.
 
 #### Managing running servers
 
