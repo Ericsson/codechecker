@@ -633,8 +633,8 @@ def check(check_data):
                      action.analyzer_type, source_file_name)
 
             if result_file_exists:
-                LOG.warning("Previous analysis results in '%s' has been "
-                            "overwritten.", rh.analyzer_result_file)
+                LOG.debug("Previous analysis results in '%s' has been "
+                          "overwritten.", rh.analyzer_result_file)
         else:
             LOG.error("Analyzing %s with %s %s failed!",
                       source_file_name,
@@ -678,9 +678,9 @@ def check(check_data):
                              source_file_name)
 
                     if result_file_exists:
-                        LOG.warning("Previous analysis results in '%s' has "
-                                    "been overwritten.",
-                                    rh.analyzer_result_file)
+                        LOG.debug("Previous analysis results in '%s' has "
+                                  "been overwritten.",
+                                  rh.analyzer_result_file)
 
                 else:
                     LOG.error("Analyzing '%s' with %s without CTU failed.",
