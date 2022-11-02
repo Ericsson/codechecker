@@ -143,9 +143,9 @@ def ast_dump_path(path, config, triple_arch):
     'ast' and the filename suffix '.ast' is added to the name of the original
     source file. """
 
-    # If clang-extdef-mapping can read a pch then the file entry is an absolute
-    # path to the ast file. Let's transform that to a relative path from the
-    # ctu-dir; that is the same format we have in the other cases.
+    # If clang-extdef-mapping can read a pch then the parameter 'path' is an
+    # absolute path to the ast file. Let's transform that to a relative path
+    # from the ctu-dir; that is the same format we have in the other cases.
     if config.extdef_mapping_can_read_pch:
         path = os.path.relpath(path,
                                os.path.join(config.ctu_dir,
@@ -192,12 +192,13 @@ def func_map_list_src_to_ast(func_src_list, config, triple_arch):
 
 
 def get_extdef_mapping_cmd(
-        action, config, source, func_map_cmd, triple_arch, makefile):
+        action, config, source, func_map_cmd, triple_arch,
+        for_makefile_generation):
     """ Get command to create CTU index file. """
 
     cmd = ctu_triple_arch.get_compile_command(action, config)
     cmd[0] = func_map_cmd
-    if not makefile \
+    if not for_makefile_generation \
             and not config.ctu_on_demand \
             and config.extdef_mapping_can_read_pch:
         cmd.insert(1, get_ast_path(action, config, triple_arch, source))
@@ -217,7 +218,7 @@ def map_functions(triple_arch, action, source, config, env,
     """
 
     cmd = get_extdef_mapping_cmd(action, config, source, func_map_cmd,
-                                 triple_arch, makefile=False)
+                                 triple_arch, for_makefile_generation=False)
 
     cmdstr = ' '.join(cmd)
     LOG.debug_analyzer("Generating function map using '%s'", cmdstr)

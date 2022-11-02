@@ -143,7 +143,8 @@ class MakeFileCreator:
         # still meaningful.
         cmd = get_extdef_mapping_cmd(action, self.__config,
                                      action.source, self.__func_map_cmd,
-                                     triple_arch, makefile=True)
+                                     triple_arch,
+                                     for_makefile_generation=True)
 
         fnmap_tmp_dir = os.path.join(self.__ctu_dir, triple_arch,
                                      self.__ctu_temp_fnmap_folder)
