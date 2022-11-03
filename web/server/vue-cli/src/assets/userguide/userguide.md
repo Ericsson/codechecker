@@ -614,7 +614,7 @@ found under different file paths.
 ## Compare mode
 In compare mode you can calculate the difference between multiple analyses of
 the project, showing which reports have been fixed and which are newly
-introduced or which can be fined in all runs.
+introduced or which can be found in all runs.
 
 At the **Baseline** filter section you can select the run names / tags against
 which you want to check the difference.
@@ -624,6 +624,35 @@ you want to compare against the *Baseline* runs and run tags.
 
 You can also use the `Outstanding report on a given date` filter to compare
 reports by dates.
+
+By **Diff type** field it can be chosen whether reports **Only in Baseline**,
+**Only in Compare to** or **Both in Baseline and Compare to** should be shown.
+At each option the number of reports is displayed for the given category. Note,
+that the number of **Both in Baseline and Compare to** plus the number of
+**Only in Compare to** add up the number of **Compare to**, but this addition
+may not work for the number of **Baseline** reports. This behavior can be
+demonstrated by the following example. Suppose that two analyses are stored
+with the following reports. Some reports are occurring multiple times in a run.
+These can be made unique by [Unique reports](#unique-reports) tick-box.
+
+| Baseline        | Compare to      |
+|-----------------|---------------- |
+| `report_hash_1` |                 |
+| `report_hash_1` |                 |
+| `report_hash_2` | `report_hash_2` |
+| `report_hash_2` | `report_hash_2` |
+| `report_hash_2` | `report_hash_2` |
+|                 | `report_hash_2` |
+|                 | `report_hash_3` |
+
+The multiplicity of comparison categories:
+
+- **Only in Baseline**: `report_hash_1` (2x)
+- **Only in Compare to**: `report_hash_3` (1x)
+- **Both in Baseline and Compare to**: `report_hash_2` (4x)
+
+Note that `report_hash_2` is displayed 4 times like in **Compare to** and not
+3 times like in **Baseline**.
 
 ### Compare two different runs
 ![Compare two different runs](images/reports/compare_runs.png)

@@ -62,6 +62,44 @@
 						</array>
 					</array>
 				</dict>
+				<dict>
+					<key>depth</key>
+					<integer>0</integer>
+					<key>kind</key>
+					<string>event</string>
+					<key>location</key>
+					<dict>
+						<key>col</key>
+						<integer>13</integer>
+						<key>file</key>
+						<integer>0</integer>
+						<key>line</key>
+						<integer>17</integer>
+					</dict>
+					<key>message</key>
+					<string>Division by zero.</string>
+					<key>ranges</key>
+					<array>
+						<array>
+							<dict>
+								<key>col</key>
+								<integer>13</integer>
+								<key>file</key>
+								<integer>0</integer>
+								<key>line</key>
+								<integer>17</integer>
+							</dict>
+							<dict>
+								<key>col</key>
+								<integer>13</integer>
+								<key>file</key>
+								<integer>0</integer>
+								<key>line</key>
+								<integer>17</integer>
+							</dict>
+						</array>
+					</array>
+				</dict>
 			</array>
 			<key>type</key>
 			<string>cppcheck</string>

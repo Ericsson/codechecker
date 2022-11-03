@@ -26,17 +26,13 @@ Static Analyzer](http://clang-analyzer.llvm.org) toolchain, replacing
 [`scan-build`](http://clang-analyzer.llvm.org/scan-build.html) in a Linux or
 macOS (OS X) development environment.
 
-**CodeChecker is ported to Python3!**  
-**No Python2 support is planned. The minimal required Python3 version is 3.6.**  
-**Old virtual environments needs to be removed!**
-
 ![Web interface showing list of analysed projects and bugs](images/demo.gif)
 
 **:bulb: Check out our [DEMO](https://codechecker-demo.eastus.cloudapp.azure.com) showing some analysis results of open-source projects!**
 
 # Main features
 ## Command line C/C++ Analysis
-  * Executes [_Clang-Tidy_](http://clang.llvm.org/extra/clang-tidy/) and [_Clang Static Analyzer_](http://clang-analyzer.llvm.org/) with Cross-Translation Unit analysis, Statistical Analysis (when checkers are available).
+  * Executes [_Clang-Tidy_](http://clang.llvm.org/extra/clang-tidy/), [_Clang Static Analyzer_](http://clang-analyzer.llvm.org/) with Cross-Translation Unit analysis, Statistical Analysis (when checkers are available), and [_Cppcheck_](https://cppcheck.sourceforge.io/).
   * Creates the JSON compilation database by wiretapping any build process (e.g., `CodeChecker log -b "make"`).
   * Automatically analyzes GCC cross-compiled projects: detecting GCC or Clang compiler configuration and forming the corresponding clang analyzer invocations.
   * Incremental analysis: Only the changed files and its dependencies need to be reanalyzed.
@@ -71,21 +67,21 @@ log and analyze your projects, print the results or start a web server. For
 full list see the following table or check the help message of this command
 (`CodeChecker --help`):
 
-| `CodeChecker` subcommand | Description |
-|--------------|-----------------------------------------|
-| `analyze` | Execute the supported code analyzers for the files recorded in a JSON Compilation Database. |
-| `analyzer-version` | Print the version of CodeChecker analyzer package that is being used. |
-| `analyzers` | List supported and available analyzers. |
-| `check` | Perform analysis on a project and print results to standard output. |
-| `checkers` | List the checkers available for code analysis. |
-| `cmd` | View analysis results on a running server from the command line. |
-| `fixit` | Apply automatic fixes based on the suggestions of the analyzers. |
-| `log` | Run a build command, collect the executed compilation commands and store them in a JSON file. |
-| `parse` | Print analysis summary and results in a human-readable format. |
-| `server` | Start and manage the CodeChecker Web server. |
-| `store` | Save analysis results to a database. |
-| `version` | Print the version of CodeChecker package that is being used. |
-| `web-version` | Print the version of CodeChecker server package that is being used. |
+| `CodeChecker` subcommand | Description                                                                                   |
+|--------------------------|-----------------------------------------------------------------------------------------------|
+| `analyze`                | Execute the supported code analyzers for the files recorded in a JSON Compilation Database.   |
+| `analyzer-version`       | Print the version of CodeChecker analyzer package that is being used.                         |
+| `analyzers`              | List supported and available analyzers.                                                       |
+| `check`                  | Perform analysis on a project and print results to standard output.                           |
+| `checkers`               | List the checkers available for code analysis.                                                |
+| `cmd`                    | View analysis results on a running server from the command line.                              |
+| `fixit`                  | Apply automatic fixes based on the suggestions of the analyzers.                              |
+| `log`                    | Run a build command, collect the executed compilation commands and store them in a JSON file. |
+| `parse`                  | Print analysis summary and results in a human-readable format.                                |
+| `server`                 | Start and manage the CodeChecker Web server.                                                  |
+| `store`                  | Save analysis results to a database.                                                          |
+| `version`                | Print the version of CodeChecker package that is being used.                                  |
+| `web-version`            | Print the version of CodeChecker server package that is being used.                           |
 
 
 `CodeChecker cmd` subcommand also has many other subcommands which can be used
@@ -93,22 +89,22 @@ to get data (products, runs, results, statistics) from a running CodeChecker
 server. For full list see the following table or check the help message of this
 subcommand (`CodeChecker cmd --help`):
 
-| `CodeChecker cmd` subcommand | Description |
-|--------------|-----------------------------------------|
-| `runs` | List the available analysis runs. |
-| `history` | Show run history of multiple runs. |
-| `results` | List analysis result (finding) summary for a given run. |
-| `diff` | Compare two analysis runs and show the difference. |
-| `sum` | Show statistics of checkers. |
-| `token` | Access subcommands related to configuring personal access tokens managed by a CodeChecker server. |
-| `del` | Delete analysis runs. |
-| `update` | Update an analysis run. |
-| `suppress` | Manage and import suppressions of reports on a CodeChecker server. |
-| `products` | Access subcommands related to configuring the products managed by a CodeChecker server. |
-| `components` | Access subcommands related to configuring the source components managed by a CodeChecker server. |
-| `login` | Authenticate into CodeChecker servers that require privileges. |
-| `export` | Export comments and review statuses from CodeChecker. |
-| `import` | Import comments and review statuses into CodeChecker. |
+| `CodeChecker cmd` subcommand | Description                                                                                       |
+|------------------------------|---------------------------------------------------------------------------------------------------|
+| `runs`                       | List the available analysis runs.                                                                 |
+| `history`                    | Show run history of multiple runs.                                                                |
+| `results`                    | List analysis result (finding) summary for a given run.                                           |
+| `diff`                       | Compare two analysis runs and show the difference.                                                |
+| `sum`                        | Show statistics of checkers.                                                                      |
+| `token`                      | Access subcommands related to configuring personal access tokens managed by a CodeChecker server. |
+| `del`                        | Delete analysis runs.                                                                             |
+| `update`                     | Update an analysis run.                                                                           |
+| `suppress`                   | Manage and import suppressions of reports on a CodeChecker server.                                |
+| `products`                   | Access subcommands related to configuring the products managed by a CodeChecker server.           |
+| `components`                 | Access subcommands related to configuring the source components managed by a CodeChecker server.  |
+| `login`                      | Authenticate into CodeChecker servers that require privileges.                                    |
+| `export`                     | Export comments and review statuses from CodeChecker.                                             |
+| `import`                     | Import comments and review statuses into CodeChecker.                                             |
 
 
 # Usage flow
@@ -153,7 +149,8 @@ For more information how to use CodeChecker see our [user guide](usage.md).
 * Server Configuration
   * [Configuring Server Logging](logging.md)
   * [Setting up multiple CodeChecker repositories in one server](web/products.md)
-* Continuous Integration(CI)
+* Continuous Integration (CI)
+  * [CodeChecker as a GitHub Action](http://github.com/marketplace/actions/codechecker-static-analysis)
   * [Setting up CI gating with Gerrit and Jenkins](jenkins_gerrit_integration.md)
 * Database Configuration
   * [PostgreSQL database backend setup guide](web/postgresql_setup.md)
@@ -164,27 +161,28 @@ CodeChecker can be used as a generic tool for visualizing analyzer results.
 
 The following tools are supported:
 
-| Language       | Analyzer     |
-| -------------- |--------------|
-| **C/C++**      | [Clang Static Analyzer](https://clang-analyzer.llvm.org/)    |
-|                | [Clang Tidy](https://clang.llvm.org/extra/clang-tidy/)  |
-|                | [Clang Sanitizers](supported_code_analyzers.md#clang-sanitizers)    |
-|                | [Cppcheck](/docs/tools/report-converter.md#cppcheck)    |
-|                | [Facebook Infer](/docs/tools/report-converter.md#facebook-infer)    |
-|                | [Coccinelle](/docs/tools/report-converter.md#coccinelle)    |
-|                | [Smatch](/docs/tools/report-converter.md#smatch)    |
-|                | [Kernel-Doc](/docs/tools/report-converter.md#kernel-doc)    |
-|                | [Sparse](/docs/tools/report-converter.md#sparse)    |
-|                | [cpplint](/docs/tools/report-converter.md#cpplint)    |
-| **Java**       | [SpotBugs](/docs/tools/report-converter.md#spotbugs)    |
-|                | [Facebook Infer](/docs/tools/report-converter.md#fbinfer)    |
-| **Python**     | [Pylint](/docs/tools/report-converter.md#pylint)    |
-|                | [Pyflakes](/docs/tools/report-converter.md#pyflakes)    |
-| **JavaScript** | [ESLint](/docs/tools/report-converter.md#eslint)    |
-| **TypeScript** | [TSLint](/docs/tools/report-converter.md#tslint)    |
-| **Go**         | [Golint](/docs/tools/report-converter.md#golint)    |
-| **Markdown**   | [Markdownlint](/docs/tools/report-converter.md#markdownlint)    |
-|                | [Sphinx](/docs/tools/report-converter.md#sphinx)    |
+| Language       | Analyzer                                                                     |
+|----------------|------------------------------------------------------------------------------|
+| **C/C++**      | [Clang Static Analyzer](https://clang-analyzer.llvm.org/)                    |
+|                | [Clang Tidy](https://clang.llvm.org/extra/clang-tidy/)                       |
+|                | [Clang Sanitizers](supported_code_analyzers.md#clang-sanitizers)             |
+|                | [Cppcheck](/docs/tools/report-converter.md#cppcheck)                         |
+|                | [Facebook Infer](/docs/tools/report-converter.md#facebook-infer)             |
+|                | [Coccinelle](/docs/tools/report-converter.md#coccinelle)                     |
+|                | [Smatch](/docs/tools/report-converter.md#smatch)                             |
+|                | [Kernel-Doc](/docs/tools/report-converter.md#kernel-doc)                     |
+|                | [Sparse](/docs/tools/report-converter.md#sparse)                             |
+|                | [cpplint](/docs/tools/report-converter.md#cpplint)                           |
+| **C#**         | [Roslynator.DotNet.Cli](/docs/tools/report-converter.md#roslynatordotnetcli) |
+| **Java**       | [SpotBugs](/docs/tools/report-converter.md#spotbugs)                         |
+|                | [Facebook Infer](/docs/tools/report-converter.md#fbinfer)                    |
+| **Python**     | [Pylint](/docs/tools/report-converter.md#pylint)                             |
+|                | [Pyflakes](/docs/tools/report-converter.md#pyflakes)                         |
+| **JavaScript** | [ESLint](/docs/tools/report-converter.md#eslint)                             |
+| **TypeScript** | [TSLint](/docs/tools/report-converter.md#tslint)                             |
+| **Go**         | [Golint](/docs/tools/report-converter.md#golint)                             |
+| **Markdown**   | [Markdownlint](/docs/tools/report-converter.md#markdownlint)                 |
+|                | [Sphinx](/docs/tools/report-converter.md#sphinx)                             |
 
 
 For details see 
@@ -195,10 +193,10 @@ For details see
 Useful tools that can also be used outside CodeChecker.
 
 * [Build Logger (to generate JSON Compilation Database from your builds)](/analyzer/tools/build-logger/README.md)
-* [Plist to HTML converter (to generate HTML files from the given plist files)](/docs/tools/plist_to_html.md)
+* [Plist to HTML converter (to generate HTML files from the given plist files)](/docs/tools/report-converter.md#plist-to-html-tool)
 * [Report Converter Tool (to convert analysis results from other analyzers to the codechecker report directory format))](/docs/tools/report-converter.md)
 * [Translation Unit Collector (to collect source files of a translation unit or to get source files which depend on the given header files)](/docs/tools/tu_collector.md)
-* [Report Hash generator (to generate unique hash identifiers for reports)](/docs/tools/codechecker_report_hash.md)
+* [Report Hash generator (to generate unique hash identifiers for reports)](/docs/tools/report-converter.md#report-hash-generation-module)
 
 ## Helper Scripts
 * [Helper Scripts for daily analysis](script_daily.md)
@@ -217,17 +215,17 @@ systems where `pip3` command is available. On `OSX`, `intercept-build` must be
 installed for logging (`CodeChecker log`). On `Windows`, logging is not
 available.
 
-## Installing CodeChecker via `Snap package manager`
+## Installing CodeChecker via the `snap` package manager
 CodeChecker is available on the [Snap Store](https://snapcraft.io/codechecker)
 and can be installed with the following command:
 ```sh
 sudo snap install codechecker --classic
 ```
 
-**Note:** Unfortunately, the snap package supports only lower case command names.
+**Note:** Unfortunately, the snap package supports only lower-case command names.
 For this reason, you need to use `codechecker` command instead of `CodeChecker`
-everywhere. For a full list of available commands in the codechecker snap package,
-run `snap info codechecker`.
+everywhere. For a full list of available commands in the _codechecker_ snap
+package, run `snap info codechecker`.
 
 ## Linux
 
@@ -239,7 +237,8 @@ The following commands are used to bootstrap CodeChecker on Ubuntu 20.04 LTS:
 # Install mandatory dependencies for a development and analysis environment.
 # NOTE: clang or clang-tidy can be any sufficiently fresh version, and need not
 #       come from package manager!
-sudo apt-get install clang clang-tidy build-essential curl gcc-multilib \
+#       In case of Cppcheck, the minimal supported version is 1.80.
+sudo apt-get install clang clang-tidy cppcheck build-essential curl gcc-multilib \
       git python3-dev python3-venv
 
 # Install nodejs dependency for web. In case of Debian/Ubuntu you can use the
@@ -306,11 +305,12 @@ You can find the CodeChecker web-server container at the [Docker Hub](https://hu
 
 <img src="https://raw.githubusercontent.com/Ericsson/codechecker/master/docs/images/docker.jpg" width="100">
 
-## Visual Studio Code Plugin
+## Visual Studio Code plugin
 <img src="https://raw.githubusercontent.com/Ericsson/codechecker/master/docs/images/vscode.png" width="100">
 
 You can install and use CodeChecker VSCode extension from the
-[Visual Studio Marketplace] or from [Open VSX].
+[Visual Studio Marketplace](http://marketplace.visualstudio.com/items?itemName=codechecker.vscode-codechecker)
+or from [Open VSX](http://open-vsx.org/extension/codechecker/codechecker).
 
 Main features:
 - Run CodeChecker analysis from the editor and see the results automatically.
@@ -319,14 +319,23 @@ Main features:
 - Browse through the found reports and show the reproduction steps directly in the code.
 - Navigate between the reproduction steps.
 
-[Visual Studio Marketplace]: https://marketplace.visualstudio.com/items?itemName=codechecker.vscode-codechecker
-[Open VSX]: https://open-vsx.org/extension/codechecker/codechecker
-
 ![VSCode plugin](images/vscode.gif)
 
 For more information how to install and use this plugin see the
 [repository](https://github.com/Ericsson/codecheckervsCodePlugin/) of this
 extension.
+
+## GitHub Actions CI
+
+![CodeChecker executed in GitHub Actions](images/github-actions.png)
+
+CodeChecker can be executed via a reusable GitHub action for your project!
+You need only specify the build command, as if you would run the analysis
+locally.
+
+For more information, check out the
+[CodeChecker Static Analysis](http://github.com/marketplace/actions/codechecker-static-analysis)
+action on the GitHub Actions Marketplace.
 
 # Analyze your first project
 
@@ -386,7 +395,30 @@ Store your analysis reports onto the server to be able to use the Web Viewer.
 Open the [CodeChecker Web Viewer](http://localhost:8001) in your browser, and
 you should be greeted with a web application showing you the analysis results.
 
-# Important limitations with older Clang versions
+# Important environmental limitations
+
+## Python 2 and older Python 3 releases
+
+CodeChecker has been ported completely to Python **3**.
+**No Python 2 support is planned.**
+You will need at least Python version **`3.6`**.
+Old virtual environments that were created with a Python 2 interpreter need to
+be removed.
+
+### Upgrading environment after system or Python upgrade
+
+If you have upgraded your system's Python to a newer version (e.g., from
+`2.7` to `3.8` &ndash; this is the case when upgrading Ubuntu from 14.04 LTS
+to 20.04 LTS), the installed environment will not work out-of-the-box. To fix
+this issue, run the following command to upgrade your `checker_env` too:
+
+```sh
+cd ~/codechecker/venv
+python3 -m venv .
+```
+
+
+## Older Clang versions
 
 Clang `3.6` or earlier releases are **NOT** supported due to CodeChecker
 relying on features not available in those releases.
@@ -395,10 +427,11 @@ If you have Clang `3.7` installed you might see the following warning message:
 
 > Hash value wasn't found in the plist file.
 
- * Use Clang `>= 3.8` or trunk `r251011` &mdash; otherwise CodeChecker
-   generates a simple hash based on the filename and the line content. This
-   method is applied for Clang-Tidy results too, because Clang-Tidy does not
-   support bug identifier hash generation currently.
+Use Clang `>= 3.8` or SVN trunk `r251011` / Git commit
+[`efec163`](http://github.com/llvm/llvm-project)  &mdash; otherwise,
+CodeChecker generates a simple hash based on the filename and the line content.
+This method is applied for Clang-Tidy results too, because Clang-Tidy does not
+support bug identifier hash generation currently.
 
 
 ## Developer documentations
@@ -410,7 +443,10 @@ If you have Clang `3.7` installed you might see the following warning message:
 * [Checker documentation mapping file](web/checker_docs.md)
 
 ## Conference papers, presentations
+* An overview about the CodeChecker infrastructure was given at [PLDI 2020](http://pldi20.sigplan.org).<br />
+  **Márton, Gábor and Krupp, Dániel**:<br />
+  [_Tool Talk: CodeChecker_](http://youtube.com/watch?v=bVqrhaoxHlc)
 * A high-level overview about the infrastructure is available amongst the
-  [2015Euro LLVM Conference](http://llvm.org/devmtg/2015-04) presentations.<br/>
-  **Dániel KRUPP, György ORBÁN, Gábor HORVÁTH and Bence BABATI**:<br/>
+  [2015 Euro LLVM Conference](http://llvm.org/devmtg/2015-04) presentations.<br/>
+  **Krupp, Dániel and Orbán, György and Horváth, Gábor and Babati, Bence**:<br/>
   [_Industrial Experiences with the Clang Static Analysis Toolset_](http://llvm.org/devmtg/2015-04/slides/Clang_static_analysis_toolset_final.pdf)

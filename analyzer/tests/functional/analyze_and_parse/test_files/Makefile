@@ -39,3 +39,13 @@ collision:
 	$(CXX) -w filename_collision/main.cpp filename_collision/a/f.cpp filename_collision/b/f.cpp -o /dev/null
 tidy_alias:
 	$(CXX) -w tidy_alias.cpp -o /dev/null
+cppcheck_multiple:
+	$(CXX) -w cppcheck_multiple.cpp -o /dev/null
+cppcheck_args:
+	$(CXX) -w cppcheck_args.cpp -o /dev/null
+cppcheck_undef_args:
+	$(CXX) -w cppcheck_args.cpp -UHAVE_NULL_DEREFERENCE -o /dev/null
+cppcheck_include:
+	$(CXX) -w cppcheck_include.cpp -I ./includes/ -o /dev/null
+cppcheck_undef_include:
+	$(CXX) -w cppcheck_include.cpp -I./includes/ -U HAVE_NULL_DEREFERENCE -o /dev/null

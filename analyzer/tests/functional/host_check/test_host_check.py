@@ -19,7 +19,7 @@ class Test_has_analyzer_option(unittest.TestCase):
     def test_existing_option(self):
         self.assertEqual(
             hc.has_analyzer_option("clang",
-                                   ["-analyzer-display-progress"]),
+                                   ["-Xclang", "-analyzer-display-progress"]),
             True)
 
     def test_non_existing_option(self):

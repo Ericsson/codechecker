@@ -938,6 +938,57 @@ class TestAnalyze(unittest.TestCase):
 
         self.assertEqual(errcode, 0)
 
+    def test_cppcheck_standard(self):
+        """
+        Testing the standard ("--std") compiler paramater translation
+        to cppcheck input parameter.
+        Cppcheck can only understand a subset of the available options.
+        """
+        build_json = os.path.join(self.test_workspace, "cppcheck_std.json")
+        analyze_cmd = [self._codechecker_cmd, "analyze",
+                       build_json,
+                       "--analyzers", "cppcheck",
+                       "-o", self.report_dir, "--verbose",
+                       "debug_analyzer"]
+        source_file = os.path.join(self.test_dir, "simple.c")
+
+        build_log = [{"directory": self.test_workspace,
+                      "command": "gcc -c -std=c99 " + source_file,
+                      "file": source_file
+                      }]
+
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
+            json.dump(build_log, outfile)
+
+        out = subprocess.run(analyze_cmd,
+                             cwd=self.test_dir,
+                             # env=self.env,
+                             stdout=subprocess.PIPE).stdout.decode()
+
+        # Test correct handover.
+        self.assertTrue("--std=c99" in out)
+
+        # Cppcheck does not support gnu variants of the standards,
+        # These are transformed into their respective c and c++
+        # varinats inside CodeChecker
+        build_log = [{"directory": self.test_workspace,
+                      "command": "gcc -c -std=gnu99 " + source_file,
+                      "file": source_file
+                      }]
+
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
+            json.dump(build_log, outfile)
+
+        out = subprocess.run(analyze_cmd,
+                             cwd=self.test_dir,
+                             # env=self.env,
+                             stdout=subprocess.PIPE).stdout.decode()
+
+        # Test if the standard is correctly transformed
+        self.assertTrue("--std=c99" in out)
+
     def test_makefile_generation(self):
         """ Test makefile generation. """
         build_json = os.path.join(self.test_workspace, "build_extra_args.json")
@@ -1016,9 +1067,12 @@ class TestAnalyze(unittest.TestCase):
             errors="ignore")
         out, _ = process.communicate()
 
-        print(out)
-
         # It's printed as a found report and in the checker statistics.
+        # Note: If this test case fails, its pretty sure that something totally
+        # unrelated to the analysis broke in CodeChecker. Comment out the line
+        # starting with 'nocapture' in 'analyzer/.noserc', and print both the
+        # stdout and stderr streams from the above communicate() call (the
+        # latter of which is ignored with _ above)
         self.assertEqual(out.count('hicpp-use-nullptr'), 2)
 
         analyze_cmd = [self._codechecker_cmd, "check", "-l", build_json,

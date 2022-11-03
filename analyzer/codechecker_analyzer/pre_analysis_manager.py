@@ -11,6 +11,7 @@ Run pre analysis, collect statistics or CTU data.
 
 import multiprocessing
 import os
+import shlex
 import shutil
 import signal
 import sys
@@ -43,7 +44,8 @@ def collect_statistics(action, source, clangsa_config,
         LOG.debug('Can not collect statistical data.')
         return
 
-    LOG.debug_analyzer(cmd)
+    # TODO: shlex.join() will be more convenient in Python 3.8.
+    LOG.debug_analyzer(' '.join(map(shlex.quote, cmd)))
 
     ret_code, analyzer_out, analyzer_err = \
         analyzer_base.SourceAnalyzer.run_proc(cmd, env=environ)
@@ -204,13 +206,18 @@ def run_pre_analysis(actions, context, clangsa_config,
         #        proxy objects before passing them to other processes via
         #        map_async.
         #        Note that even deep-copying is known to be insufficient.
-        pool.map_async(pre_analyze, collect_actions)
+        result = pool.map_async(pre_analyze, collect_actions)
         pool.close()
     except Exception:
         pool.terminate()
         raise
     finally:
         pool.join()
+        # Return whether the call completed without raising an exception.
+        if not result.successful():
+            # If the remote call raised an exception then that exception will
+            # be reraised by get().
+            result.get()
 
     # Postprocessing the pre analysis results.
     if ctu_data:

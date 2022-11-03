@@ -454,11 +454,14 @@ def add_arguments_to_parser(parser):
                                    dest='enable_z3',
                                    choices=['on', 'off'],
                                    default='off',
-                                   help="Enable the z3 solver backend. This "
-                                        "allows reasoning over more complex "
-                                        "queries, but performance is worse "
-                                        "than the default range-based "
-                                        "constraint solver.")
+                                   help="Enable Z3 as the solver backend. "
+                                        "This allows reasoning over more "
+                                        "complex queries, but performance is "
+                                        "much worse than the default "
+                                        "range-based constraint solver "
+                                        "system. WARNING: Z3 as the only "
+                                        "backend is a highly experimental "
+                                        "and likely unstable feature.")
 
     clang_has_z3_refutation = analyzer_types.is_z3_refutation_capable(context)
 
@@ -476,7 +479,7 @@ def add_arguments_to_parser(parser):
                                         "will be cross checked with the Z3 "
                                         "SMT solver. This should not cause "
                                         "that much of a slowdown compared to "
-                                        "using the Z3 solver only.")
+                                        "using only the Z3 solver.")
 
     if analyzer_types.is_ctu_capable(context):
         ctu_opts = parser.add_argument_group(

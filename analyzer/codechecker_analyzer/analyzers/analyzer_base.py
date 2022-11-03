@@ -54,6 +54,15 @@ class SourceAnalyzer(metaclass=ABCMeta):
         raise NotImplementedError("Subclasses should implement this!")
 
     @classmethod
+    def version_compatible(cls, configured_binary, environ):
+        """
+        CodeChecker can only execute certain versions of analyzers.
+        This function should return True if the analyzer binary is
+        compatible with the current CodeChecker version.
+        """
+        raise NotImplementedError("Subclasses should implement this!")
+
+    @classmethod
     def construct_config_handler(cls, args, context):
         """ Should return a subclass of AnalyzerConfigHandler."""
         raise NotImplementedError("Subclasses should implement this!")
@@ -109,6 +118,12 @@ class SourceAnalyzer(metaclass=ABCMeta):
         Return the checkers available in the analyzer.
         """
         raise NotImplementedError("Subclasses should implement this!")
+
+    def post_analyze(self, result_handler):
+        """
+        Run immediately after the analyze function.
+        """
+        pass
 
     @staticmethod
     def run_proc(command, env=None, cwd=None, proc_callback=None):

@@ -8,11 +8,11 @@ jobs:
   lint:
     name: Linters (pylint, pycodestyle)
 
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
 
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.6'
       - name: Install dependencies
@@ -23,11 +23,11 @@ jobs:
 
   tools:
     name: Tools (report-converter, etc.)
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
 
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.6'
       - name: Setup Bazel
@@ -79,11 +79,11 @@ jobs:
 
   analyzer:
     name: Analyzer
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
 
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.6'
 
@@ -105,11 +105,11 @@ jobs:
 
   common:
     name: Common libraries
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
 
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.6'
 
@@ -124,7 +124,7 @@ jobs:
 
   web:
     name: Web
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
 
     services:
       postgres:
@@ -145,7 +145,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.6'
 
@@ -174,7 +174,7 @@ jobs:
 
   gui:
     name: GUI
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
 
     strategy:
       matrix:
@@ -185,7 +185,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.6'
       - uses: actions/setup-node@v1

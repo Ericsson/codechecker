@@ -63,6 +63,8 @@ class TestStore(unittest.TestCase):
             self._temp_workspace, "divide_zero")
         self._double_suppress_workspace = os.path.join(
             self._temp_workspace, "double_suppress")
+        self._same_headers_workspace = os.path.join(
+            self._temp_workspace, "same_headers")
 
         self.product_name = self._codechecker_cfg['viewer_product']
 
@@ -314,3 +316,79 @@ class TestStore(unittest.TestCase):
         ret, _, _ = _call_cmd(store_cmd, self._double_suppress_workspace)
         self.assertEqual(ret, 1, "Duplicated suppress comments was not "
                          "recognised.")
+
+    def test_same_headers(self):
+        """
+        Same headers in different folders.
+
+        On server side "path hash" prevents multiple storage of a report in a
+        header when the header is included in multiple translation units.
+        Otherwise a report would be stored as many times as many TU contains
+        it. Earlier this "path hash" contained only the header file's name, so
+        the reports of another header with the same name but different
+        directory weren't stored.
+        """
+        def create_build_json(source_file):
+            build_json = \
+                os.path.join(self._same_headers_workspace, 'build.json')
+            with open(build_json, 'w') as f:
+                json.dump([{
+                    'directory': '.',
+                    'command': f'g++ -c {source_file}',
+                    'file': source_file}], f)
+
+        def analyze_tidy(cfg):
+            build_json = os.path.join(cfg['workspace'], 'build.json')
+            analyze_cmd = [env.codechecker_cmd(), "analyze", build_json,
+                           "--analyzers", "clang-tidy", "-o",
+                           cfg['reportdir']]
+            _call_cmd(analyze_cmd, cfg['workspace'])
+
+        cfg = dict(self._codechecker_cfg)
+        cfg['workspace'] = self._same_headers_workspace
+        cfg['reportdir'] = \
+            os.path.join(self._same_headers_workspace, 'reports')
+
+        store_cmd = [
+            env.codechecker_cmd(), "store",
+            "--url", env.parts_to_url(self._codechecker_cfg),
+            "--name", "same_headers", cfg['reportdir']]
+        query_cmd = [
+            env.codechecker_cmd(), "cmd", "results",
+            "same_headers",
+            "--checker-name", "bugprone-sizeof-expression",
+            "--url", env.parts_to_url(self._codechecker_cfg),
+            "-o", "json"]
+
+        create_build_json('same_headers1.cpp')
+        analyze_tidy(cfg)
+
+        _call_cmd(store_cmd, self._same_headers_workspace)
+
+        out = subprocess.check_output(
+            query_cmd, encoding="utf-8", errors="ignore")
+        reports = json.loads(out)
+
+        self.assertEqual(len(reports), 1)
+
+        create_build_json('same_headers2.cpp')
+        analyze_tidy(cfg)
+
+        _call_cmd(store_cmd, self._same_headers_workspace)
+
+        out = subprocess.check_output(
+            query_cmd, encoding="utf-8", errors="ignore")
+        reports = json.loads(out)
+
+        self.assertEqual(len(reports), 2)
+
+        create_build_json('same_headers3.cpp')
+        analyze_tidy(cfg)
+
+        _call_cmd(store_cmd, self._same_headers_workspace)
+
+        out = subprocess.check_output(
+            query_cmd, encoding="utf-8", errors="ignore")
+        reports = json.loads(out)
+
+        self.assertEqual(len(reports), 2)

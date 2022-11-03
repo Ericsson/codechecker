@@ -21,12 +21,12 @@
           </v-btn>
         </h3>
 
-        <unique-stat-warning v-if="reportFilter.isUnique" />
-
         <checker-statistics-table
           :items="statistics"
           :loading="loading"
         />
+
+        <unique-stat-warning v-if="reportFilter.isUnique" />
       </v-col>
     </v-row>
   </v-container>

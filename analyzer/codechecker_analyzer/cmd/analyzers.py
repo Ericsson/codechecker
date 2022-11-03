@@ -146,6 +146,9 @@ def main(args):
                 LOG.warning("'--dump-config clangsa' is not supported yet. "
                             "Please make sure that you are using Clang 9 or "
                             "newer.")
+        elif args.dump_config == 'cppcheck':
+            # TODO: Not supported by CppCheck yet!
+            LOG.warning("'--dump-config cppcheck' is not supported.")
 
         return
 

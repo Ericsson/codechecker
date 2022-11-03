@@ -172,6 +172,9 @@ def func_map_list_src_to_ast(func_src_list, config, triple_arch):
 
     func_ast_list = []
     for fn_src_txt in func_src_list:
+        # FIXME: Detect and report invalid input.
+        # The format of the external function map file changed in between
+        # clang-15 and clang-16, check whether this is the updated format.
         if fn_src_txt[0].isdigit():
             length_str, _ = fn_src_txt.split(':', 1)
             length = int(length_str)

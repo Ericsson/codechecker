@@ -78,12 +78,14 @@ dev_package: package
 	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_analyzer && \
 	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_web && \
 	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_server && \
+	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_report_converter && \
 	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_client
 
 	ln -fsv $(ROOT)/codechecker_common $(CC_BUILD_LIB_DIR) && \
 	ln -fsv $(CC_ANALYZER)/codechecker_analyzer $(CC_BUILD_LIB_DIR) && \
 	ln -fsv $(CC_WEB)/codechecker_web $(CC_BUILD_LIB_DIR) && \
 	ln -fsv $(CC_SERVER)/codechecker_server $(CC_BUILD_LIB_DIR) && \
+	ln -fsv $(CC_TOOLS)/report-converter/codechecker_report_converter $(CC_BUILD_LIB_DIR) && \
 	ln -fsv $(CC_CLIENT)/codechecker_client $(CC_BUILD_LIB_DIR)
 
 package_api:

@@ -1,62 +1,87 @@
-Table of Contents
-=================
-* [Easy analysis wrappers](#easy-analysis-wrappers)
-    * [`check`](#check)
-* [Available CodeChecker analyzer subcommands](#available-analyzer-commands)
-    * [`log`](#log)
-        * [BitBake](#bitbake)
-        * [CCache](#ccache)
-        * [intercept-build](#intercept-build)
-        * [Bazel](#bazel)
-    * [`analyze`](#analyze)
-        * [_Skip_ file](#skip)
-            * [Absolute path examples](#skip-abs-example)
-            * [Relative or partial path examples](#skip-rel-example)
-        * [CodeChecker analyzer configuration](#analyzer-configuration)
-            * [Analyzer and checker config options](#analyzer-checker-config-option)
-              * [Configuration of analyzer tools](#analyzer-config-option)
-              * [Configuration of checkers](#checker-config-option)
-            * [Forwarding compiler options](#forwarding-compiler-options)
-              * [_Clang Static Analyzer_](#clang-static-analyzer)
-              * [_Clang-Tidy_](#clang-tidy)
-            * [Compiler-specific include path and define detection (cross compilation)](#include-path)
-        * [Toggling checkers](#toggling-checkers)
-            * [Checker profiles](#checker-profiles)
-            * [`--enable-all`](#enable-all)
-        * [Toggling compiler warnings](#toggling-warnings)
-        * [Cross Translation Unit (CTU) analysis mode](#ctu)
-        * [Taint analysis configuration](#taint)
-        * [Statistical analysis mode](#statistical)
-    * [`parse`](#parse)
-        * [`JSON` format of `CodeChecker parse`](#json-format-of-codechecker-parse)
-          * [Report object](#report-object)
-          * [File object](#file-object)
-          * [Range object](#range-object)
-          * [SourceCodeComment object](#sourcecodecomment-object)
-          * [BugPathEvent object](#bugpathevent-object)
-          * [BugPathPosition object](#bugpathposition-object)
-          * [MacroExpansion object](#macroexpansion-object)
-        * [Exporting source code suppression to suppress file](#suppress-file)
-    * [`fixit`](#fixit)
-    * [`checkers`](#checkers)
-    * [`analyzers`](#analyzers)
- * [`Configuring Clang version`](#clang_version)
- * [Source code comments (review status)](#source-code-comments)
-    * [Supported formats](#supported-formats)
+# CodeChecker Analyzer Command Line User Guide
+## Table of Contents
+- [CodeChecker Analyzer Command Line User Guide](#codechecker-analyzer-command-line-user-guide)
+  - [Table of Contents](#table-of-contents)
+  - [Overview](#overview)
+  - [Quick Analysis](#quick-analysis)
+    - [`check`](#check)
+  - [Analysis configuration file](#analysis-configuration-file)
+  - [CodeChecker analyzer subcommands](#codechecker-analyzer-subcommands)
+    - [`log`](#log)
+      - [Change user inside the build command](#change-user-inside-the-build-command)
+      - [BitBake](#bitbake)
+      - [CCache](#ccache)
+      - [intercept-build](#intercept-build)
+      - [Bazel](#bazel)
+    - [`analyze`](#analyze)
+      - [_Skip_ file](#skip-file)
+        - [Absolute path examples](#absolute-path-examples)
+        - [Relative or partial path examples](#relative-or-partial-path-examples)
+      - [CodeChecker analyzer configuration](#codechecker-analyzer-configuration)
+        - [Analyzer and checker config options](#analyzer-and-checker-config-options)
+        - [Configuration of analyzer tools](#configuration-of-analyzer-tools)
+        - [Configuration of checkers](#configuration-of-checkers)
+        - [Forwarding compiler options](#forwarding-compiler-options)
+        - [_Clang Static Analyzer_](#clang-static-analyzer)
+        - [_Clang-Tidy_](#clang-tidy)
+        - [Compiler-specific include path and define detection (cross compilation)](#compiler-specific-include-path-and-define-detection-cross-compilation)
+      - [Toggling checkers](#toggling-checkers)
+      - [Toggling compiler warnings](#toggling-compiler-warnings)
+      - [Checker profiles](#checker-profiles)
+        - [`--enable-all`](#--enable-all)
+      - [Cross Translation Unit (CTU) analysis mode](#cross-translation-unit-ctu-analysis-mode)
+      - [Taint analysis configuration](#taint-analysis-configuration)
+      - [Statistical analysis mode](#statistical-analysis-mode)
+    - [`parse`](#parse)
+      - [`JSON` format of `CodeChecker parse`](#json-format-of-codechecker-parse)
+        - [Report object](#report-object)
+        - [File object](#file-object)
+        - [Range object](#range-object)
+        - [SourceCodeComment object](#sourcecodecomment-object)
+        - [BugPathEvent object](#bugpathevent-object)
+        - [BugPathPosition object](#bugpathposition-object)
+        - [MacroExpansion object](#macroexpansion-object)
+    - [`fixit`](#fixit)
+    - [`checkers`](#checkers)
+    - [`analyzers`](#analyzers)
+  - [Configuring Clang version](#configuring-clang-version)
+  - [Suppressing False positives (source code comments for review status)](#suppressing-false-positives-source-code-comments-for-review-status)
+    - [Supported formats](#supported-formats)
+    - [Change review status of a specific checker result](#change-review-status-of-a-specific-checker-result)
+    - [Change review status of a specific checker result by using a substring of the checker name](#change-review-status-of-a-specific-checker-result-by-using-a-substring-of-the-checker-name)
+    - [Change review status of all checker result](#change-review-status-of-all-checker-result)
+    - [Change review status of all checker result with C style comment](#change-review-status-of-all-checker-result-with-c-style-comment)
+    - [Multi line comments](#multi-line-comments)
+    - [Multi line C style comments](#multi-line-c-style-comments)
+    - [Change review status for multiple checker results in the same line](#change-review-status-for-multiple-checker-results-in-the-same-line)
+## Overview
+CodeChecker command line tooling provides sub-commands to perform
+**static code analysis** and to store reports into a **web-based storage**.
 
-# Easy analysis wrappers <a name="easy-analysis-wrappers"></a>
+This document describes the **analysis** related sub-commands.
+
+The analysis related use-cases can be fully performed without a web-server.
+
+* [Integration of the analysis with your build system](#log)
+* [Execuing Static Analysis](#analyze)
+* [Showing analysis results in the command line](#parse)
+* [Applying code fixes](#fixit)
+* [Suppressing false positives with source-code comments](#suppressing-false-positives-source-code-comments-for-review-status)
+
+
+## Quick Analysis
 
 CodeChecker provides, along with the more fine-tuneable commands, some easy
 out-of-the-box invocations to ensure the most user-friendly operation, the
 **check** mode.
 
-## `check` <a name="check"></a>
+### `check`
 
-It is possible to easily analyse the project for defects without keeping the
+It is possible to easily analyze the project for defects without keeping the
 temporary analysis files and without using any database to store the reports
 in, but instead printing the found issues to the standard output.
 
-To analyse your project by doing a build and reporting every found issue in the
+To analyze your project by doing a build and reporting every found issue in the
 built files, execute
 
 ```sh
@@ -64,32 +89,33 @@ CodeChecker check --build "make"
 ```
 
 Please make sure your build command actually compiles (builds) the source
-files you intend to analyse, as CodeChecker only analyzes files that had been
+files you intend to analyze, as CodeChecker only analyzes files that had been
 used by the build system.
 
-If you have an already existing JSON Compilation Commands file, you can also
-supply it to `check`:
+If you have an already existing  [JSON Compilation Database file](https://clang.llvm.org/docs/JSONCompilationDatabase.html),
+you can also supply it to `check`:
 
 ```sh
 CodeChecker check --logfile ./my-build.json
 ```
 
 By default, only the report's main messages are printed. To print the
-individual steps the analysers took in discovering the issue, specify
+individual steps the analyzers took in discovering the issue, specify
 `--print-steps`.
 
 `check` is a wrapper over the following calls:
 
  * If `--build` is specified, the build is executed as if `CodeChecker log`
    were invoked.
- * The resulting logfile, or a `--logfile` specified is used for `CodeChecker
+ * The resulting logfile (compilation database) is used for `CodeChecker
    analyze`, which will put analysis reports into `--output`.
  * The analysis results are fed for `CodeChecker parse`.
 
 After the results has been printed to the standard output, the temporary files
 used for the analysis are cleaned up.
 
-Please see the individual help for `log`, `analyze` and `parse` (below in this
+Please see the individual help for [`log`](#log), [`analyze`](#analyze) and
+[`parse`](#parse) (below in this
 _User guide_) for information about the arguments which are not documented
 here. For example the CTU related arguments are documented at `analyze`
 subcommand.
@@ -241,7 +267,7 @@ analyzer arguments:
                         file. The values configured in the config file will
                         overwrite the values set in the command line.
                         You can use any environment variable inside this file
-                        and it will be expaneded.
+                        and it will be expanded.
                         For more information see the docs: https://github.com/
                         Ericsson/codechecker/tree/master/docs/config_file.md
                         (default: None)
@@ -278,17 +304,18 @@ analyzer arguments:
                         analysis of a particular file takes longer than this
                         time, the analyzer is killed and the analysis is
                         considered as a failed one.
-  --z3 {on,off}         Enable the z3 solver backend. This allows reasoning
-                        over more complex queries, but performance is worse
-                        than the default range-based constraint solver.
-                        (default: off)
+  --z3 {on,off}         Enable Z3 as the solver backend. This allows reasoning
+                        over more complex queries, but performance is much worse
+                        than the default range-based constraint solver system.
+                        WARNING: Z3 as the only backend is a highly
+                        experimental and likely unstable feature. (default: off)
   --z3-refutation {on,off}
                         Switch on/off the Z3 SMT Solver backend to reduce
                         false positives. The results of the ranged based
                         constraint solver in the Clang Static Analyzer will be
                         cross checked with the Z3 SMT solver. This should not
-                        cause that much of a slowdown compared to using the Z3
-                        solver only. (default: on)
+                        cause that much of a slowdown compared to using only the
+                        Z3 solver. (default: on)
 
 cross translation unit analysis arguments:
 
@@ -541,14 +568,46 @@ been used by the build system.
 ```
 </details>
 
-# Available CodeChecker analyzer subcommands <a name="available-analyzer-commands"></a>
+## Analysis configuration file
 
-## `log` <a name="log"></a>
+CodeChecker command line invocation parameter list can be long.
+
+All CodeChecker sub-command can use a `--config CONFIG_FILE` to describe
+command line argument lists.
+
+For example instead of always typing
+`CodeChecker analyze --enable=core.DivideZero --enable=core.CallAndMessage --analyzer-config clangsa:unroll-loops=true...`
+
+one can write `CodeChecker store --config client_config.json`.
+
+`client_config.json`
+```json
+{
+  "analyze": [
+    "--enable=core.DivideZero",
+    "--enable=core.CallAndMessage",
+    "--analyzer-config",
+    "clangsa:unroll-loops=true",
+    "--checker-config",
+    "clang-tidy:google-readability-function-size.StatementThreshold=100",
+    "--report-hash", "context-free-v2",
+    "--verbose=debug",
+    "--clean"
+  ],
+}
+```
+For details see [Client Configuration File](config_file.md)
+
+## CodeChecker analyzer subcommands
+
+### `log`
 
 The first step in performing an analysis on your project is to record
 information about the files in your project for the analyzers. This is done by
-recording a build of your project, which is done by the command `CodeChecker
-log`.
+recording a build of your project using  `CodeChecker
+log` command, that creates a
+[compilation database](https://clang.llvm.org/docs/JSONCompilationDatabase.html)
+ file.
 
 <details>
   <summary>
@@ -673,7 +732,7 @@ object files as input) should be captured. For further details see
 [this documentation](/analyzer/tools/build-logger/README.md).
 
 
-### Change user inside the build command
+#### Change user inside the build command
 If we change user inside the build command of the CodeChecker log command
 before the actual compiler invocation, the compilation database will be empty:
 
@@ -698,7 +757,7 @@ su myuser  -c "CodeChecker log -o log_dir/compile_commands.json -b 'g++ main.cpp
 ```
 
 
-### BitBake
+#### BitBake
 
 Note: for an alternative integration, check-out [meta-codechecker](https://github.com/dl9pf/meta-codechecker).
 
@@ -726,7 +785,7 @@ export CC_LOGGER_GCC_LIKE
 CodeChecker log -o ../compile_commands.json -b "bitbake myProject"
 ```
 
-### CCache
+#### CCache
 If your build system setup uses CCache then it can be logged too. If
 `CC_LOGGER_GCC_LIKE` contains "cc" or "ccache" directly then these actions will
 also be logged. Depending on CCache configuration there are two forms how it
@@ -742,18 +801,18 @@ variable.
 Currently CodeChecker supports only the first case where the compiler name is
 also included in the build command.
 
-### intercept-build <a name="intercept-build"></a>
+#### intercept-build
 [`intercept-build`](https://github.com/rizsotto/scan-build) is an alternative
 tool for logging the compilation actions. Note that its first version (1.1) had
 a bug in case the original build command contained a space character:
 ```bash
 intercept-build bash -c 'g++ -DVARIABLE="hello world" main.cpp'
 ```
-When analysing this build action, CodeChecker will most probably give a
+When analyzing this build action, CodeChecker will most probably give a
 compilation error on the underlying Clang invocation.
 
 
-### Bazel <a name="bazel"></a>
+#### Bazel
 Do the following steps to log compiler calls made by
 [Bazel](https://www.bazel.build/) using CodeChecker.
 
@@ -795,7 +854,7 @@ forget to [clear](https://docs.bazel.build/versions/master/user-manual.html#clea
 your project first: `bazel clean --expunge`.
 
 
-## `analyze` <a name="analyze"></a>
+### `analyze`
 
 After a JSON Compilation Command Database has been created, the next step is
 to invoke and execute the analyzers. CodeChecker will use the specified
@@ -834,9 +893,9 @@ usage: CodeChecker analyze [-h] [-j JOBS]
                            [--compile-uniqueing COMPILE_UNIQUEING]
                            [--report-hash {context-free,context-free-v2,diagnostic-message}]
                            [-n NAME] [--analyzers ANALYZER [ANALYZER ...]]
-                           [--add-compiler-defaults]
                            [--capture-analysis-output] [--generate-reproducer]
                            [--config CONFIG_FILE]
+                           [--cppcheck-args CPPCHECK_ARGS_CFG_FILE]
                            [--saargs CLANGSA_ARGS_CFG_FILE]
                            [--tidyargs TIDY_ARGS_CFG_FILE]
                            [--tidy-config TIDY_CONFIG] [--timeout TIMEOUT]
@@ -956,7 +1015,7 @@ Environment variables
 </details>
 
 
-### _Skip_ file <a name="skip"></a>
+#### _Skip_ file
 
 ```
 -i SKIPFILE, --ignore SKIPFILE, --skip SKIPFILE
@@ -977,7 +1036,10 @@ checked, `+` means that it should be.
  * Path parts should start and end with `*`.
  * To skip everything use the `-*` mark. **Watch out for the order!**
 
-#### Absolute path examples <a name="skip-abs-example"></a>
+Comments can also be used in skipfiles: a line starting with `#` will not be
+taken into account.
+
+##### Absolute path examples
 
 ```
 -/skip/all/files/in/directory/*
@@ -989,7 +1051,7 @@ checked, `+` means that it should be.
 In the above example, every file under `/dir` **will be** skipped, except the
 one explicitly specified to **be analyzed** (`/dir/do.check.this.file`).
 
-#### Relative or partial path examples <a name="skip-rel-example"></a>
+##### Relative or partial path examples
 
 ```
 +*/my_project/my_lib_to_skip/important_file.cpp
@@ -1010,7 +1072,7 @@ Please note that when `-i SKIPFILE` is used along with `--stats` or
 that statistics and ctu-pre-analysis will be created for *all* files in the
 *compilation database*.
 
-### CodeChecker analyzer configuration <a name="analyzer-configuration"></a>
+#### CodeChecker analyzer configuration
 
 ```
 analyzer arguments:
@@ -1018,12 +1080,6 @@ analyzer arguments:
                         Run analysis only with the analyzers specified.
                         Currently supported analyzers are: clangsa, clang-
                         tidy.
-  --add-compiler-defaults
-                        DEPRECATED. Always True.
-                        Retrieve compiler-specific configuration from the
-                        compilers themselves, and use them with Clang. This is
-                        used when the compiler on the system is special, e.g.
-                        when doing cross-compilation.
   --capture-analysis-output
                         Store standard output and standard error of successful
                         analyzer invocations into the '<OUTPUT_DIR>/success'
@@ -1042,6 +1098,9 @@ analyzer arguments:
                         For more information see the docs: https://github.com/
                         Ericsson/codechecker/tree/master/docs/config_file.md
                         (default: None)
+  --cppcheck-args CPPCHECK_ARGS_CFG_FILE
+                        Configuration file to pass cppcheck command line
+                        arguments.
   --saargs CLANGSA_ARGS_CFG_FILE
                         File containing argument which will be forwarded
                         verbatim for the Clang Static Analyzer.
@@ -1075,22 +1134,24 @@ analyzer arguments:
                         analysis of a particular file takes longer than this
                         time, the analyzer is killed and the analysis is
                         considered as a failed one.
-  --z3 {on,off}         Enable the z3 solver backend. This allows reasoning
-                        over more complex queries, but performance is worse
-                        than the default range-based constraint solver.
-                        (default: off)
+  --z3 {on,off}         Enable Z3 as the solver backend. This allows reasoning
+                        over more complex queries, but performance is much worse
+                        than the default range-based constraint solver system.
+                        WARNING: Z3 as the only backend is a highly
+                        experimental and likely unstable feature. (default: off)
   --z3-refutation {on,off}
                         Switch on/off the Z3 SMT Solver backend to reduce
                         false positives. The results of the ranged based
                         constraint solver in the Clang Static Analyzer will be
                         cross checked with the Z3 SMT solver. This should not
-                        cause that much of a slowdown compared to using the Z3
-                        solver only. (default: on)
+                        cause that much of a slowdown compared to using only the
+                        Z3 solver. (default: on)
 ```
 
 CodeChecker supports several analyzer tools. Currently, these analyzers are
-the [_Clang Static Analyzer_](http://clang-analyzer.llvm.org) and
-[_Clang-Tidy_](http://clang.llvm.org/extra/clang-tidy). `--analyzers` can be
+the [_Clang Static Analyzer_](http://clang-analyzer.llvm.org),
+[_Clang-Tidy_](http://clang.llvm.org/extra/clang-tidy) and
+[_Cppcheck_](http://cppcheck.sourceforge.net/). `--analyzers` can be
 used to specify which analyzer tool should be used (by default, all supported
 are used). The tools are completely independent, so either can be omitted if
 not present as they are provided by different binaries.
@@ -1099,7 +1160,7 @@ See [Configure Clang Static Analyzer and checkers](checker_and_analyzer_configur
 documentation for a more detailed description how to use the `saargs`,
 `tidyargs` and `z3` arguments.
 
-#### Analyzer and checker config options <a name="analyzer-checker-config-option"></a>
+##### Analyzer and checker config options
 
 CodeChecker's analyzer module currently handles ClangSA and ClangTidy. The main
 purpose of this analyzer module is to hide the differences between the
@@ -1107,7 +1168,7 @@ interfaces and parameterization of these two tools. Both ClangSA and ClangTidy
 have a set of checkers with fine-tuning config options and the analyzer tools
 themselves can also be configured.
 
-##### Configuration of analyzer tools <a name="analyzer-config-option"></a>
+##### Configuration of analyzer tools
 
 ClangSA performs symbolic execution which is a resource consuming method of
 simulating the program run. Some heuristics are guiding the analyzer engine in
@@ -1146,7 +1207,7 @@ CodeChecker analyze build.json \
   -o reports
 ```
 
-##### Configuration of checkers <a href="checker-config-option"></a>
+##### Configuration of checkers
 
 Each analyzer tool provides a set of checkers. These can be listed with the
 following command:
@@ -1192,7 +1253,7 @@ The analyzer and checker configuration options can also be inserted in the
 CodeChecker configuration file. See an example
 [above](#analyzer-configuration-file).
 
-#### Forwarding compiler options <a name="forwarding-compiler-options"></a>
+##### Forwarding compiler options
 
 In those rare cases when the specific analyzer tools need an option other than
 the ones listed in the previous section, you can create a file of which the
@@ -1212,7 +1273,7 @@ value. Otherwise an error message is logged saying that the variable is not
 set, and in this case an empty string is inserted in the place of the
 placeholder.
 
-##### <a name="clang-static-analyzer"></a> _Clang Static Analyzer_
+##### _Clang Static Analyzer_
 
 Use the `--saargs` argument to a file which contains compilation options.
 
@@ -1229,7 +1290,7 @@ options, for example:
 
 (where `MY_LIB` is the path of a library code)
 
-##### _Clang-Tidy_ <a name="clang-tidy"></a>
+##### _Clang-Tidy_
 
 Use the `--tidyargs` argument to a file which contains compilation options.
 
@@ -1252,13 +1313,7 @@ Example:
 
 (where `MY_LIB` is the path of a library code)
 
-#### Compiler-specific include path and define detection (cross compilation) <a name="include-path"></a>
-
-Some of the include paths are hardcoded during compiler build. If a (cross)
-compiler is used to build a project it is possible that the wrong include
-paths are searched and the wrong headers will be included which causes
-analyses to fail. These hardcoded include paths and defines can be marked for
-automatically detection by specifying the `--add-compiler-defaults` flag.
+##### Compiler-specific include path and define detection (cross compilation)
 
 CodeChecker will get the hardcoded values for the compilers set in the
 `CC_LOGGER_GCC_LIKE` environment variable.
@@ -1266,14 +1321,6 @@ CodeChecker will get the hardcoded values for the compilers set in the
 ```sh
 export CC_LOGGER_GCC_LIKE="gcc:g++:clang:clang++:cc:c++"
 ```
-
-If there are still compilation errors after using the `--add-compiler-defaults`
-argument, it is possible that the wrong build target architecture
-(32bit, 64bit) is used. Please try to forward these compilation flags
-to the analyzers:
-
- - `-m32` (32-bit build)
- - `-m64` (64-bit build)
 
 GCC specific hard-coded values are detected during the analysis and
 recorded int the `<report-directory>/compiler_info.json`.
@@ -1292,7 +1339,7 @@ analysis unless `--keep-gcc-include-fixed` or `--keep-gcc-intrin` flag is
 given. For further information see
 [GCC incompatibilities](gcc_incompatibilities.md).
 
-### Toggling checkers <a name="toggling-checkers"></a>
+#### Toggling checkers
 
 The list of checkers to be used in the analysis can be fine-tuned with the
 `--enable` and `--disable` options. See `codechecker-checkers` for the list of
@@ -1361,7 +1408,7 @@ Checkers are taken into account based on the following order:
 Disabling certain checkers - such as the `core` group - is unsupported by
 the LLVM/Clang community, and thus discouraged.
 
-### Toggling compiler warnings <a name="toggling-warnings"></a>
+#### Toggling compiler warnings
 Compiler warnings are diagnostic messages that report constructions that are
 not inherently erroneous but that are risky or suggest there may have been an
 error. Compiler warnings are named `clang-diagnostic-<warning-option>`, e.g.
@@ -1397,7 +1444,7 @@ critical severity bug.
 **Note**: by default `-Wall` and `-Wextra` warnings are enabled.
 
 
-#### Checker profiles <a name="checker-profiles"></a>
+#### Checker profiles
 
 Checker profiles describe custom sets of enabled checks which can be specified
 in the `{INSTALL_DIR}/config/labels` directory. Three built-in
@@ -1415,7 +1462,7 @@ different from checker(-group) names as they are enabled using the same syntax
 and coinciding names could cause unintended behavior.
 
 
-#### `--enable-all` <a name="enable-all"></a>
+##### `--enable-all`
 
 Specifying `--enable-all` will "force" CodeChecker to enable **every** checker
 available in the analyzers. This presents an easy shortcut to force such an
@@ -1441,7 +1488,7 @@ special checker groups: `alpha.`, `debug.`, `osx.`, `abseil-`, `android-`,
 
 can be used to "further" enable `alpha.` checkers, and disable `misc` ones.
 
-### Cross Translation Unit (CTU) analysis mode <a name="ctu"></a>
+#### Cross Translation Unit (CTU) analysis mode
 
 If the `clang` static analyzer binary in your installation supports
 [Cross Translation Unit analysis](http://llvm.org/devmtg/2017-03//2017/02/20/accepted-sessions.html#7),
@@ -1481,7 +1528,7 @@ cross translation unit analysis arguments:
                         analysis. (default: parse-on-demand)
 ```
 
-### Taint analysis configuration <a name="taint"></a>
+#### Taint analysis configuration
 
 Taint analysis is used to detect bugs and potential security-related errors
 caused by untrusted data sources.
@@ -1519,7 +1566,7 @@ The default configuration options of taint analysis are documented in the
 Clang SA's conceptual model of taint analysis and the checker's configuration
 file format is documented in the [Taint Analysis Configuration docs](https://clang.llvm.org/docs/analyzer/user-docs/TaintAnalysisConfiguration.html).
 
-### Statistical analysis mode <a name="statistical"></a>
+#### Statistical analysis mode
 
 If the `clang` static analyzer binary in your installation supports
 statistical checkers CodeChecker can execute the analyzers
@@ -1560,7 +1607,7 @@ Statistics analysis feature arguments:
 
 ```
 
-## `parse` <a name="parse"></a>
+### `parse`
 
 `parse` is used to read previously created machine-readable analysis results
 (such as `plist` files), usually previously generated by `CodeChecker analyze`.
@@ -1625,10 +1672,15 @@ optional arguments:
                         User guide on how a Skipfile should be laid out.
   --trim-path-prefix [TRIM_PATH_PREFIX [TRIM_PATH_PREFIX ...]]
                         Removes leading path from files which will be printed.
-                        So if you have /a/b/c/x.cpp and /a/b/c/y.cpp then by
-                        removing "/a/b/" prefix will print files like c/x.cpp
-                        and c/y.cpp. If multiple prefix is given, the longest
-                        match will be removed.
+                        For instance if you analyze files
+                        '/home/jsmith/my_proj/x.cpp' and
+                        '/home/jsmith/my_proj/y.cpp', but would prefer to have
+                        them displayed as 'my_proj/x.cpp' and 'my_proj/y.cpp'
+                        in the web/CLI interface, invoke CodeChecker with '--
+                        trim-path-prefix "/home/jsmith/"'.If multiple prefixes
+                        is given, the longest match will be removed. You may
+                        also use Unix shell-like wildcards (e.g.
+                        '/*/jsmith/').
   --review-status [REVIEW_STATUS [REVIEW_STATUS ...]]
                         Filter results by review statuses. Valid values are:
                         confirmed, false_positive, intentional, suppress,
@@ -1682,7 +1734,7 @@ then the results of the analysis can be printed with
 CodeChecker parse ./my_plists
 ```
 
-### `JSON` format of `CodeChecker parse`
+#### `JSON` format of `CodeChecker parse`
 Let's assume that we have the following source file:
 ```cpp
 #define DIV(x, y) x / y
@@ -1853,7 +1905,7 @@ similar to this one:
   change this value will be incremented too. Currently supported values: `1`.
 - `reports` (list): list of [Report objects](#report-object).
 
-#### Report object
+##### Report object
 - `file` (File): file where the report was found in. For more information
   [see](#file-object).
 - `line` (number): line number.
@@ -1891,7 +1943,7 @@ shown on the UI and CLI (e.g.: `CodeChecker parse --print-steps`) separated
 from bug steps and will hold useful information to understand macros in the bug
 step. For more information [see](#macroexpansion-object).
 
-#### File object
+##### File object
 ```json
 {
   "id": "/home/username/dummy/simple/main.cpp",
@@ -1908,7 +1960,7 @@ the same value as the `original_path`.
 - `original_path` (str): original file path. Trimming the file path will not
 modify this value.
 
-#### Range object
+##### Range object
 ```json
 {
   "start_line": 8,
@@ -1923,7 +1975,7 @@ modify this value.
 - `end_line` (number): end line number.
 - `end_col` (number): end column number.
 
-#### SourceCodeComment object
+##### SourceCodeComment object
 ```json
 {
   "checkers": [ "core.DivideZero" ],
@@ -1944,7 +1996,7 @@ after storage.
 
 For more information [read](#source-code-comments).
 
-#### BugPathEvent object
+##### BugPathEvent object
 ```json
 {
   "file": {
@@ -1972,7 +2024,7 @@ For more information [read](#source-code-comments).
 - `range` (Range): more precise information about event location (optional).
 For more information [see](#range-object).
 
-#### BugPathPosition object
+##### BugPathPosition object
 ```json
 {
   "range": {
@@ -1994,7 +2046,7 @@ For more information [see](#range-object).
 - `range` (Range): information about bug path position. For more information
 [see](#range-object).
 
-#### MacroExpansion object
+##### MacroExpansion object
 ```json
 {
   "name": "DIV",
@@ -2025,7 +2077,7 @@ For more information [see](#range-object).
   - `range` (Range | null): more precise information about event location
   (optional). For more information [see](#range-object).
 
-## `fixit` <a name="fixit"></a>
+### `fixit`
 
 ClangTidy is able to provide suggestions on automatic fixes of reported issues.
 For example there is a ClangTidy checker which suggests using
@@ -2079,7 +2131,7 @@ optional arguments:
 ```
 </details>
 
-## `checkers`<a name="checkers"></a>
+### `checkers`
 
 List the checkers available in the installed analyzers which can be used when
 performing an analysis.
@@ -2198,7 +2250,7 @@ detailed output of `CodeChecker checkers` command contains information about
 which checkers cover certain guideline rules. This mapping is given in the
 config files of `<package>/config/labels` directory.
 
-## <a name="analyzers"></a> 6. `analyzers` mode
+###  `analyzers`
 
 List the available and supported analyzers installed on the system. This command
 can be used to retrieve the to-be-used analyzers' install path and version
@@ -2254,7 +2306,7 @@ A detailed view of the available analyzers is available via `--details`. In the
 A machine-readable `csv` or `json` output can be generated by supplying the
 `--output csv` or `--output json` argument.
 
-# Configuring Clang version <a name="clang_version"></a>
+## Configuring Clang version
 
 _Clang_ and/or _Clang-Tidy_ must be available on your system before you can
 run analysis on a project. CodeChecker automatically detects and uses the
@@ -2287,7 +2339,7 @@ Clang based tools search by default for
 in a path relative to the tool binary.
 `$(dirname /path/to/tool)/../lib/clang/8.0.0/include`
 
-# Suppressing False positives (source code comments for review status) <a name="source-code-comments"></a>
+## Suppressing False positives (source code comments for review status)
 
 Source code comments can be used in the source files to change the review
 status of a specific or all checker results found in a particular line of code.
@@ -2298,7 +2350,7 @@ code comment.
 Comment lines staring with `//` or C style `/**/` comments are supported.
 Watch out for the comment format!
 
-## Supported formats <a name="supported-formats"></a>
+### Supported formats
 The source code comment has the following format:
 ```sh
 // codechecker comment type [checker name] comment
@@ -2321,7 +2373,7 @@ Note: `codechecker_suppress` does the same as `codechecker_false_positive`.
 
 You can read more about review status [here](https://github.com/Ericsson/codechecker/blob/master/www/userguide/userguide.md#userguide-review-status)
 
-## Change review status of a specific checker result
+### Change review status of a specific checker result
 ```cpp
 void test() {
   int x;
@@ -2330,7 +2382,7 @@ void test() {
 }
 ```
 
-## Change review status of a specific checker result by using a substring of the checker name
+### Change review status of a specific checker result by using a substring of the checker name
 There is no need to specify the whole checker name in the source code comment
 like `deadcode.DeadStores`, because it will not be resilient to package name
 changes. You are able to specify only a substring of the checker name for the
@@ -2344,7 +2396,7 @@ void test() {
 ```
 
 
-## Change review status of all checker result
+### Change review status of all checker result
 ```cpp
 void test() {
   int x;
@@ -2353,7 +2405,7 @@ void test() {
 }
 ```
 
-## Change review status of all checker result with C style comment
+### Change review status of all checker result with C style comment
 ```cpp
 void test() {
   int x;
@@ -2362,7 +2414,7 @@ void test() {
 }
 ```
 
-## Multi line comments
+### Multi line comments
 ```cpp
 void test() {
   int x;
@@ -2375,7 +2427,7 @@ void test() {
 }
 ```
 
-## Multi line C style comments
+### Multi line C style comments
 ```cpp
 void test() {
   int x;
@@ -2402,7 +2454,7 @@ void test() {
 }
 ```
 
-## Change review status for multiple checker results in the same line
+### Change review status for multiple checker results in the same line
 You can change multiple checker reports with a single source code comment:
 
 ```cpp

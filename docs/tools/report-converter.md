@@ -28,8 +28,9 @@ a CodeChecker server.
   * [Sphinx](#sphinx)
   * [Sparse](#sparse)
   * [cpplint](#cpplint)
-* [Plist to html tool](plist-to-html)
-  * [Usage](#plist-to-html-usage)
+  * [Roslynator.DotNet.Cli](#roslynatordotnetcli)
+* [Plist to html tool](#plist-to-html-tool)
+  * [Usage](#usage-1)
 * [Report hash generation module](#report-hash-generation-module)
   * [Generate path sensitive report hash](#generate-path-sensitive-report-hash)
   * [Generate context sensitive report hash](#generate-context-sensitive-report-hash)
@@ -72,7 +73,7 @@ optional arguments:
                         Currently supported output types are: asan, clang-
                         tidy, coccinelle, cppcheck, cpplint, eslint,
                         fbinfer, golint, kernel-doc, lsan, mdl, msan, 
-                        pyflakes, pylint, smatch, sparse, sphinx, spotbugs, 
+                        pyflakes, pylint, roslynator, smatch, sparse, sphinx, spotbugs, 
                         tsan, tslint, ubsan.
   --meta [META [META ...]]
                         Metadata information which will be stored alongside
@@ -112,6 +113,7 @@ Supported analyzers:
   msan - MemorySanitizer, https://clang.llvm.org/docs/MemorySanitizer.html
   pyflakes - Pyflakes, https://github.com/PyCQA/pyflakes
   pylint - Pylint, https://www.pylint.org
+  roslynator - Roslynator.DotNet.Cli, https://github.com/JosefPihrt/Roslynator#roslynator-command-line-tool-
   smatch - Smatch, https://repo.or.cz/w/smatch.git
   sparse - Sparse, https://git.kernel.org/pub/scm/devel/sparse/sparse.git
   sphinx - Sphinx, https://github.com/sphinx-doc/sphinx
@@ -583,6 +585,37 @@ report-converter -t cpplint -o ./codechecker_cpplint_reports ./sample.out
 
 # Store the cpplint reports with CodeChecker.
 CodeChecker store ./codechecker_cpplint_reports -n cpplint
+```
+
+### [Roslynator.DotNet.Cli](https://github.com/JosefPihrt/Roslynator#roslynator-command-line-tool-)
+The [Roslynator](https://github.com/JosefPihrt/Roslynator) project contains
+several analyzers built on top of Microsoft Roslyn.
+
+It also provides a [.NET tool](https://github.com/JosefPihrt/Roslynator#roslynator-command-line-tool-)
+for running Roslyn code analysis from the command line.
+It is not limited to Microsoft and Roslynator analyzers, it supports any
+Roslyn anaylzer. It can also report MSBuild compiler diagnostics.
+
+The recommended way of running the Roslynator CLI tool is to save the 
+output to an XML file and give this file to the report converter tool.
+
+The following example shows you how to run Roslynator CLI and store the results
+found by Roslynator to the CodeChecker database.
+
+```sh
+# Change directory to your project
+cd path/to/your/project_or_solution
+
+# Run Roslynator
+# Provide an .sln file instead of .csproj if you want to analyze a solution
+roslynator analyze sample.csproj --output sample.xml
+
+# Use 'report-converter' to create a CodeChecker report directory from the
+# analyzer result of Roslynator
+report-converter -t roslynator -o ./codechecker_roslynator_reports ./sample.xml
+
+# Store the Roslynator report with CodeChecker
+CodeChecker store ./codechecker_roslynator_reports -n roslynator
 ```
 
 ## Plist to html tool

@@ -13,7 +13,8 @@ import os
 
 from typing import Dict, List
 
-from codechecker_report_converter.report import File, Report, report_file
+from codechecker_report_converter.report import BugPathEvent, \
+        Range, File, Report, report_file
 
 from ..analyzer_result import AnalyzerResultBase
 
@@ -49,5 +50,21 @@ class AnalyzerResult(AnalyzerResultBase):
             plist_reports = report_file.get_reports(
                 plist_file, None, file_cache)
             reports.extend(plist_reports)
+
+        # Until we refactor the gui to indicate the error in the location of
+        # the diagnostic message, we should add diagnostic message as the
+        # last bug path event.
+        for report in reports:
+            bpe = BugPathEvent(
+                    report.message,
+                    report.file,
+                    report.line,
+                    report.column,
+                    Range(report.line,
+                          report.column,
+                          report.line,
+                          report.column))
+            if bpe != report.bug_path_events[-1]:
+                report.bug_path_events.append(bpe)
 
         return reports

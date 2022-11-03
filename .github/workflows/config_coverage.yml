@@ -7,12 +7,14 @@ on:
       - '.github/workflows/config_label_check.py'
       - 'config/labels/analyzers/clang-tidy.json'
       - 'config/labels/analyzers/clangsa.json'
+      - 'config/labels/analyzers/cppcheck.json'
   pull_request:
     paths:
       - '.github/workflows/config_coverage.yml'
       - '.github/workflows/config_label_check.py'
       - 'config/labels/analyzers/clang-tidy.json'
       - 'config/labels/analyzers/clangsa.json'
+      - 'config/labels/analyzers/cppcheck.json'
   schedule:
     # Run every Sunday at 21:30 (to latest master at that time).
     - cron: '30 21 * * SUN'
@@ -24,19 +26,70 @@ jobs:
     name: "Config coverage of checkers"
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.8'
       - name: "Install dependencies"
         run: |
+          # Some packages, e.g. build-essential and curl are available
+          # implicitly in GitHub Actions-specific images.
           sudo apt-get -qy update
           sudo apt-get -y --no-install-recommends install \
-            build-essential \
-            curl            \
             gcc-multilib    \
             python3-dev     \
             python3-venv
+      # Unfortunately, there is no "daily" Cppcheck PPA or Linux binary source,
+      # so we have to build this manually. Luckily, it seems to be a trivial
+      # enough process.
+      #
+      # We do this BEFORE grabbing Clang, so a potentially broken Clang binary
+      # won't miscompile Cppcheck itself.
+      - name: "Download Cppcheck source code"
+        uses: actions/checkout@v3
+        with:
+          repository: "danmar/cppcheck"
+          path: "cppcheck"
+      - name: "Build Cppcheck"
+        run: |
+          set +e # Do not hard exit on an erroring call!
+          pushd cppcheck
+
+          # Note: Cppcheck's compilation would require CMake, but a new enough
+          # version is automatically present in the GitHub Actions-specific
+          # image.
+
+          echo "::group::Building Cppcheck"
+          mkdir Build
+          pushd Build
+
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+          cmake --build . -- -j $(nproc)
+
+          if [[ $? -eq 0 ]]
+          then
+            export CPPCHECK_BUILD_SUCCESSFUL=YES
+          fi
+
+          popd # Build
+
+          if [[ x"$CPPCHECK_BUILD_SUCCESSFUL"y == "xYESy" ]]
+          then
+            sudo update-alternatives --install \
+              /usr/bin/cppcheck cppcheck "$(pwd)/Build/bin/cppcheck" 10000
+            echo "::endgroup::"
+
+            echo "Installed Cppcheck:"
+            update-alternatives --query cppcheck
+          else
+            echo "::endgroup::"
+            echo "::notice title=Cppcheck failed to build locally::Coverage will check using Ubuntu official Cppcheck release instead."
+
+            sudo apt-get install -y --no-install-recommends \
+              cppcheck
+          fi
+
+          popd # cppcheck
       - name: "Get latest LLVM binary package from the community PPA"
         run: |
           export DISTRO_FANCYNAME="$(lsb_release -c | awk '{ print $2 }')"
@@ -76,18 +129,18 @@ jobs:
           deactivate
           echo "::endgroup::"
 
-          echo "::set-output name=CODECHECKER_PATH::$(readlink -f ./build/CodeChecker/bin)"
+          echo "CODECHECKER_PATH=$(readlink -f ./build/CodeChecker/bin)" >> "$GITHUB_OUTPUT"
           popd # analyzer
       - name: "Dump checker list"
         run: |
           export PATH="${{ steps.codechecker.outputs.CODECHECKER_PATH }}:$PATH"
           CodeChecker analyzers --details
           CodeChecker checkers \
-            --analyzer clangsa clang-tidy \
+            --analyzer clangsa clang-tidy cppcheck \
             --output rows \
               > checker_list_normal.txt
           CodeChecker checkers \
-            --analyzer clangsa clang-tidy \
+            --analyzer clangsa clang-tidy cppcheck \
             --warnings \
             --output rows \
               > checker_list_diagnostics.txt
@@ -99,6 +152,7 @@ jobs:
             "checker_list_diagnostics.txt" \
             "config/labels/analyzers/clangsa.json" \
             "config/labels/analyzers/clang-tidy.json" \
+            "config/labels/analyzers/cppcheck.json" \
             --existing-filter "clang-diagnostic-" \
             --new-filter "clang-diagnostic-"
           EXIT_STATUS=$?
@@ -124,6 +178,7 @@ jobs:
             "checker_list_normal.txt" \
             "config/labels/analyzers/clangsa.json" \
             "config/labels/analyzers/clang-tidy.json" \
+            "config/labels/analyzers/cppcheck.json" \
             --existing-ignore "clang-diagnostic-" \
             --new-ignore \
               "clang-diagnostic-" \

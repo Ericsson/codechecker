@@ -1,8 +1,9 @@
 ## Code Analysis tools
-CodeChecker can execute two main `C/C++` static analyzer tools:
+CodeChecker can execute three main `C/C++` static analyzer tools:
 
 - [Clang Tidy](https://clang.llvm.org/extra/clang-tidy/)
 - [Clang Static Analyzer](https://clang-analyzer.llvm.org/)
+- [Cppcheck](https://cppcheck.sourceforge.io/)
 
 We have created a separate [converter tool](/tools/report-converter) which
 can be used to convert the output of different source code analyzer tools to a
@@ -20,6 +21,7 @@ CodeChecker result directory which can be stored to a CodeChecker server.
 |                | [Kernel-Doc](/docs/tools/report-converter.md#kernel-doc)   | ✓ |
 |                | [Sparse](/docs/tools/report-converter.md#sparse)   | ✓ |
 |                | [cpplint](/docs/tools/report-converter.md#cpplint)   | ✓ |
+| **C#**         | [Roslynator.DotNet.Cli](/docs/tools/report-converter.md#roslynatordotnetcli)  | ✓ |
 | **Java**       | [FindBugs](http://findbugs.sourceforge.net/)    | ✗ |
 |                | [SpotBugs](/docs/tools/report-converter.md#spotbugs)    | ✓ |
 |                | [Facebook Infer](/docs/tools/report-converter.md#fbinfer)    | ✓ |

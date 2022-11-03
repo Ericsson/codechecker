@@ -404,7 +404,7 @@ class TestCtuFailure(unittest.TestCase):
                                          env=self.env)
         self.assertEqual(result, 0, "Failed to run analyzer.")
         json_data = json.loads(output)
-        if json_data[0]["name"] == "clangsa":
-            return json_data[0]["path"]
-        if json_data[1]["name"] == "clangsa":
-            return json_data[1]["path"]
+
+        for i in range(len(json_data)):
+            if json_data[i]["name"] == "clangsa":
+                return json_data[i]["path"]

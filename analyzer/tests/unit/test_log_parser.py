@@ -335,6 +335,37 @@ class LogParserTest(unittest.TestCase):
 
         self.assertEqual(len(build_actions), 0)
 
+    def test_skip_everything_from_parse_with_comment(self):
+        """
+        Same skip file for pre analysis and analysis. Skip everything.
+        Comment used in skipfile.
+        """
+        cmp_cmd_json = [
+            {"directory": "/tmp/lib1",
+             "command": "g++ /tmp/lib1/a.cpp",
+             "file": "a.cpp"},
+            {"directory": "/tmp/lib1",
+             "command": "g++ /tmp/lib1/b.cpp",
+             "file": "b.cpp"},
+            {"directory": "/tmp/lib2",
+             "command": "g++ /tmp/lib2/a.cpp",
+             "file": "a.cpp"}]
+
+        skip_list = """
+        -*/lib1/*
+        #+*/lib2/*
+        -*/lib2/*
+        """
+        analysis_skip = SkipListHandlers([SkipListHandler(skip_list)])
+        pre_analysis_skip = SkipListHandlers([SkipListHandler(skip_list)])
+
+        build_actions, _ = log_parser.\
+            parse_unique_log(cmp_cmd_json, self.__this_dir,
+                             analysis_skip_handlers=analysis_skip,
+                             pre_analysis_skip_handlers=pre_analysis_skip)
+
+        self.assertEqual(len(build_actions), 0)
+
     def test_skip_everything_from_parse_relative_path(self):
         """
         Same skip file for pre analysis and analysis. Skip everything.

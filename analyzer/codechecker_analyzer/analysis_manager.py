@@ -12,6 +12,7 @@
 import glob
 import multiprocessing
 import os
+import pickle
 import shlex
 import shutil
 import signal
@@ -544,6 +545,17 @@ def check(check_data):
 
         result_file_exists = os.path.exists(rh.analyzer_result_file)
 
+        # FIXME: cppcheck (and other analyzers)
+        # need the original env when invoked
+        # we should handle this in a generic way.
+        if "cppcheck" in os.path.basename(analyzer_cmd[0]):
+            original_env_file = os.environ.get(
+                'CODECHECKER_ORIGINAL_BUILD_ENV')
+            if original_env_file:
+                with open(original_env_file, 'rb') as env_file:
+                    analyzer_environment = \
+                        pickle.load(env_file, encoding='utf-8')
+
         # Fills up the result handler with the analyzer information.
         source_analyzer.analyze(analyzer_cmd, rh, analyzer_environment,
                                 __create_timeout)
@@ -557,6 +569,8 @@ def check(check_data):
             rh.analyzer_stderr = (">>> CodeChecker: Analysis timed out "
                                   "after {0} seconds. <<<\n{1}") \
                 .format(analysis_timeout, rh.analyzer_stderr)
+
+        source_analyzer.post_analyze(rh)
 
         # If source file contains escaped spaces ("\ " tokens), then
         # clangSA writes the plist file with removing this escape
@@ -761,6 +775,11 @@ def start_workers(actions_map, actions, context, analyzer_config_map,
     reproducer_dir = os.path.join(output_path, "reproducer")
     if not os.path.exists(reproducer_dir) and generate_reproducer:
         os.makedirs(reproducer_dir)
+
+    # Cppcheck raw output directory.
+    cppcheck_dir = os.path.join(output_path, "cppcheck")
+    if not os.path.exists(cppcheck_dir):
+        os.makedirs(cppcheck_dir)
 
     # Collect what other TUs were involved during CTU analysis.
     ctu_connections_dir = os.path.join(output_path, "ctu_connections")

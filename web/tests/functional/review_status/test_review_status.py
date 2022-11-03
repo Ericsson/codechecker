@@ -543,13 +543,28 @@ class TestReviewStatus(unittest.TestCase):
             "This is false positive.")
         self.assertIsNone(multi_unreviewed_report)
 
+        rule_filter = ReviewStatusRuleFilter(
+            reportHashes=[UNCOMMENTED_BUG_HASH])
+        review_status_rule_before = self._cc_client.getReviewStatusRules(
+            rule_filter, None, None, 0)[0]
+
         # Storing the report directory of the project inserts further reports
         # to the database with the same bug hashes. The review status of
         # reports without source code comment should get the default review
-        # status set earlier.
+        # status set earlier. In the meantime, the review status rule date must
+        # not change.
 
         test_project_name2 = 'review_status_change2'
         codechecker.store(codechecker_cfg, test_project_name2)
+
+        rule_filter = ReviewStatusRuleFilter(
+            reportHashes=[UNCOMMENTED_BUG_HASH])
+        review_status_rule_after = self._cc_client.getReviewStatusRules(
+            rule_filter, None, None, 0)[0]
+
+        self.assertEqual(
+            review_status_rule_before.reviewData.date,
+            review_status_rule_after.reviewData.date)
 
         run_filter = RunFilter(names=[test_project_name2], exactMatch=True)
         runs = self._cc_client.getRunData(run_filter, None, 0, None)

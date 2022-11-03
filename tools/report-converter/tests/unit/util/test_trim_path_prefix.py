@@ -57,3 +57,16 @@ class TrimPathPrefixTestCase(unittest.TestCase):
                          trim_path_prefixes(test_path, ['/a/b/common']))
         self.assertEqual('common.txt',
                          trim_path_prefixes(test_path, ['/a/b/']))
+
+    def test_prefix_blob(self):
+        test_path = '/a/b/common.txt'
+        self.assertEqual('common.txt', trim_path_prefixes(test_path, ['/*/b']))
+        self.assertEqual('common.txt', trim_path_prefixes(test_path, ['/a/*']))
+        self.assertEqual('common.txt',
+                         trim_path_prefixes(test_path, ['/*/']))
+        self.assertEqual('common.txt',
+                         trim_path_prefixes(test_path, ['/a/?/']))
+
+        self.assertEqual('my_proj/x.cpp',
+                         trim_path_prefixes('/home/jsmith/my_proj/x.cpp',
+                                            ['/home/jsmith/']))

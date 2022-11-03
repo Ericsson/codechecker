@@ -6,6 +6,7 @@
 #
 # -------------------------------------------------------------------------
 
+import html
 import io
 import json
 import logging
@@ -171,7 +172,9 @@ class HtmlBuilder:
             file_content = InvalidFileContentMsg
 
         self.files[file.id] = {
-            'id': file.id, 'filePath': file.path, 'content': file_content}
+            'id': file.id, 'filePath': file.path,
+            'content': html.escape(file_content)
+        }
 
         return self.files[file.id]
 
@@ -381,7 +384,7 @@ class HtmlBuilder:
 
     def create_statistics_html(self, output_dir: str):
         """
-        Creates an statistics.html file which contains statistics information
+        Creates a statistics.html file which contains statistics information
         from the HTML generation process.
         """
         def severity_order(severity: str) -> int:

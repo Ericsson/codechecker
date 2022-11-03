@@ -53,7 +53,8 @@ def setup_package():
         'workspace': TEST_WORKSPACE,
         'reportdir': os.path.join(TEST_WORKSPACE, 'reports'),
         'checkers': ['-d', 'core.CallAndMessage',
-                     '-e', 'core.StackAddressEscape']
+                     '-e', 'core.StackAddressEscape'],
+        'analyzers': ['clangsa', 'clang-tidy']
     }
 
     # Start or connect to the running CodeChecker server and get connection

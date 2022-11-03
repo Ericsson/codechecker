@@ -37,6 +37,8 @@ def extend_with_git_information(repository_root, version_json_data):
         version_string += ".{0}".format(version['minor'])
     if int(version['revision']) != 0:
         version_string += ".{0}".format(version['revision'])
+    if version['rc'] != '' and int(version['rc']) != 0:
+        version_string += "-rc{0}".format(version['rc'])
 
     LOG.info("This is CodeChecker v%s", version_string)
 

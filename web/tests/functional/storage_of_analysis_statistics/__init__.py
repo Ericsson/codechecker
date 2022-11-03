@@ -47,7 +47,8 @@ def setup_package():
         'workspace': TEST_WORKSPACE,
         'checkers': [],
         'viewer_product': 'storage_of_analysis_statistics',
-        'reportdir': os.path.join(TEST_WORKSPACE, 'reports')
+        'reportdir': os.path.join(TEST_WORKSPACE, 'reports'),
+        'analyzers': ['clangsa', 'clang-tidy']
     }
 
     codechecker_cfg.update(host_port_cfg)

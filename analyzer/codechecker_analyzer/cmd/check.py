@@ -402,11 +402,14 @@ used to generate a log file on the fly.""")
                                    dest='enable_z3',
                                    choices=['on', 'off'],
                                    default='off',
-                                   help="Enable the z3 solver backend. This "
-                                        "allows reasoning over more complex "
-                                        "queries, but performance is worse "
-                                        "than the default range-based "
-                                        "constraint solver.")
+                                   help="Enable Z3 as the solver backend. "
+                                        "This allows reasoning over more "
+                                        "complex queries, but performance is "
+                                        "much worse than the default "
+                                        "range-based constraint solver "
+                                        "system. WARNING: Z3 as the only "
+                                        "backend is a highly experimental "
+                                        "and likely unstable feature.")
 
     clang_has_z3_refutation = analyzer_types.is_z3_refutation_capable(context)
 
@@ -424,7 +427,7 @@ used to generate a log file on the fly.""")
                                         "will be cross checked with the Z3 "
                                         "SMT solver. This should not cause "
                                         "that much of a slowdown compared to "
-                                        "using the Z3 solver only.")
+                                        "using only the Z3 solver.")
 
     if analyzer_types.is_ctu_capable(context):
         ctu_opts = parser.add_argument_group(
@@ -710,10 +713,15 @@ output of "CodeChecker checkers --guideline" command.""")
         dest="trim_path_prefix",
         required=False,
         default=argparse.SUPPRESS,
-        help="Removes leading path from files which will be printed. So if "
-             "you have /a/b/c/x.cpp and /a/b/c/y.cpp then by removing "
-             "\"/a/b/\" prefix will print files like c/x.cpp and c/y.cpp. "
-             "If multiple prefix is given, the longest match will be removed.")
+        help="Removes leading path from files which will be printed. For "
+             "instance if you analyze files '/home/jsmith/my_proj/x.cpp' and "
+             "'/home/jsmith/my_proj/y.cpp', but would prefer to have them "
+             "displayed as 'my_proj/x.cpp' and 'my_proj/y.cpp' in the web/CLI "
+             "interface, invoke CodeChecker with '--trim-path-prefix "
+             "\"/home/jsmith/\"'."
+             "If multiple prefixes are given, the longest match will be "
+             "removed. You may also use Unix shell-like wildcards (e.g. "
+             "'/*/jsmith/').")
 
     parser.add_argument('--review-status',
                         nargs='*',

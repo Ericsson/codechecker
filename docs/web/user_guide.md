@@ -13,7 +13,7 @@
         - [Server Configuration (Authentication and Server Limits)](#server-configuration-authentication-and-server-limits)
         - [Database Configuration](#database-configuration)
       - [Master superuser and authentication forcing](#master-superuser-and-authentication-forcing)
-      - [Enfore secure socket (SSL)](#enfore-secure-socket-ssl)
+      - [Enfore secure socket (TLS/SSL)](#enfore-secure-socket-ssl)
       - [Managing running servers](#managing-running-servers)
       - [Manage server database upgrades](#manage-server-database-upgrades)
     - [`store`](#store)
@@ -171,7 +171,7 @@ optional arguments:
   -f CONFIG_DIRECTORY, --config-directory CONFIG_DIRECTORY
                         Directory where CodeChecker server should read server-
                         specific configuration (such as authentication
-                        settings, and SSL certificates) from.
+                        settings, and TLS/SSL certificates) from.
                         (default: /home/<username>/.codechecker)
   --host LISTEN_ADDRESS
                         The IP address or hostname of the server on which it
@@ -332,17 +332,17 @@ root account arguments:
                         not require authentication otherwise.
 ```
 
-#### Enfore secure socket (SSL)
+#### Enfore secure socket (TLS/SSL)
 
-You can enforce SSL security on your listening socket. In this case all clients must
-access your server using the `https://host:port` URL format.
+You can enforce TLS/SSL security on your listening socket. In this case all clients
+must access your server using the `https://host:port` URL format.
 
-To enable SSL simply place an SSL certificate to `<CONFIG_DIRECTORY>/cert.pem`
+To enable TLS/SSL simply place a TLS certificate to `<CONFIG_DIRECTORY>/cert.pem`
 and the corresponding private key to `<CONFIG_DIRECTORY>/key.pem`.
 You can generate these certificates for example
 using the [openssl tool](https://www.openssl.org/).
 When the server finds these files upon start-up,
-SSL will be automatically enabled.
+TLS/SSL will be automatically enabled.
 
 #### Managing running servers
 
@@ -455,11 +455,16 @@ optional arguments:
                         A custom textual description to be shown alongside the
                         run.
   --trim-path-prefix [TRIM_PATH_PREFIX [TRIM_PATH_PREFIX ...]]
-                        Removes leading path from files which will be stored.
-                        So if you have /a/b/c/x.cpp and /a/b/c/y.cpp then by
-                        removing "/a/b/" prefix will store files like c/x.cpp
-                        and c/y.cpp. If multiple prefix is given, the longest
-                        match will be removed.
+                        Removes leading path from files which will be printed.
+                        For instance if you analyze files
+                        '/home/jsmith/my_proj/x.cpp' and
+                        '/home/jsmith/my_proj/y.cpp', but would prefer to have
+                        them displayed as 'my_proj/x.cpp' and 'my_proj/y.cpp'
+                        in the web/CLI interface, invoke CodeChecker with '--
+                        trim-path-prefix "/home/jsmith/"'.If multiple prefixes
+                        is given, the longest match will be removed. You may
+                        also use Unix shell-like wildcards (e.g.
+                        '/*/jsmith/').
   --config CONFIG_FILE  Allow the configuration from an explicit configuration
                         file. The values configured in the config file will
                         overwrite the values set in the command line.

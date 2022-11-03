@@ -93,7 +93,7 @@ def add_arguments_to_parser(parser):
                         required=False,
                         help="Directory where CodeChecker server should read "
                              "server-specific configuration (such as "
-                             "authentication settings, SSL certificate"
+                             "authentication settings, TLS certificate"
                              " (cert.pem) and key (key.pem)) from.")
 
     parser.add_argument('--host',
