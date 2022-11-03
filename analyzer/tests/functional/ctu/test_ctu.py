@@ -70,7 +70,6 @@ class TestCtu(unittest.TestCase):
         print("'analyze' reported CTU-on-demand-compatibility? " +
               str(getattr(self, ON_DEMAND_ATTR)))
 
-
         setattr(self, EXTDEF_MAPPING_CAN_READ_PCH_ATTR,
                 check_force_extdef_mapping_can_read_pch())
         print("'analyze' forced extdef_mapping_can_read_pch capability? " +
