@@ -140,7 +140,11 @@ class MakeFileCreator:
         # Get command to create CTU index file.
         # FIXME Even if clang-extdef-mapping supports pch files as parameters,
         # feed the source files rather. This way, the below 'sed' command is
-        # still meaningful.
+        # still meaningful. Unfortunately, there is a legacy technical debt
+        # here: The makefile generation implementation in makefile.py diverges
+        # and uses its own implementation for generating the ext-def-mapping
+        # file. E.g., Instead of using a generic version of ast-dump_path, it
+        # uses sed.
         cmd = get_extdef_mapping_cmd(action, self.__config,
                                      action.source, self.__func_map_cmd,
                                      triple_arch,
