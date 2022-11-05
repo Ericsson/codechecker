@@ -2,7 +2,7 @@
   <v-list-item-group lighten-4>
     <v-list-item class="my-1">
       <v-list-item-action class="ma-1 mr-5">
-        <v-switch @change="change" />
+        <v-switch :input-value="value" @change="change" />
       </v-list-item-action>
       <v-list-item-content>
         <span>
@@ -24,9 +24,12 @@ import TooltipHelpIcon from "@/components/TooltipHelpIcon.vue";
 export default {
   name: "AnywhereOnReportPath",
   components: { TooltipHelpIcon },
+  props: {
+    value: { type: Boolean, default: false }
+  },
   methods: {
-    change(isAnywhere) {
-      this.$emit("change", isAnywhere);
+    change(value) {
+      this.$emit("input", value);
     }
   }
 };

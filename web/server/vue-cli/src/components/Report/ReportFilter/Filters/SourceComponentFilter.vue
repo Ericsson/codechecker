@@ -15,9 +15,7 @@
       @input="setSelectedItems"
     >
       <template v-slot:append-toolbar>
-        <AnywhereOnReportPath
-          @change="setAnywhere"
-        />
+        <AnywhereOnReportPath v-model="isAnywhere" />
       </template>
       <template v-slot:prepend-toolbar-items>
         <v-btn
@@ -80,6 +78,7 @@ export default {
   data() {
     return {
       id: "source-component",
+      anywhereId: "anywhere-sourcecomponent",
       search: {
         placeHolder : "Search for source components...",
         filterItems: this.filterItems
@@ -106,6 +105,12 @@ export default {
       // If the source component manager dialog is closed we need to update
       // the filter items to make sure that new items will be shown.
       this.bus.$emit("update");
+    },
+
+    isAnywhere() {
+      this.updateReportFilter();
+      this.$emit("update:url");
+      this.update();
     }
   },
 
@@ -122,10 +127,19 @@ export default {
       this.update();
     },
 
-    setAnywhere(isAnywhere) {
-      this.isAnywhere = isAnywhere;
-      this.updateReportFilter();
-      this.update();
+    getUrlState() {
+      const state =
+        this.selectedItems.map(item => this.encodeValue(item.id));
+
+      return {
+        [this.id]: state.length ? state : undefined,
+        [this.anywhereId]: this.isAnywhere || undefined
+      };
+    },
+
+    initByUrl() {
+      this.isAnywhere = !!this.$route.query[this.anywhereId];
+      this.initCheckOptionsByUrl();
     },
 
     fetchItems(opt={}) {

@@ -46,7 +46,7 @@ export default {
 
     getIconClass() {},
 
-    initByUrl() {
+    initCheckOptionsByUrl() {
       return new Promise(resolve => {
         let state = [].concat(this.$route.query[this.id] || []);
         if (!state.length && this.defaultValues) {
@@ -68,6 +68,10 @@ export default {
 
         resolve();
       });
+    },
+
+    initByUrl() {
+      return this.initCheckOptionsByUrl();
     },
 
     async afterInit() {
