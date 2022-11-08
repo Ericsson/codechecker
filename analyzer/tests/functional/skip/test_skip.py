@@ -16,6 +16,7 @@ import glob
 import json
 import os
 import plistlib
+import shlex
 import subprocess
 import tempfile
 import unittest
@@ -40,6 +41,30 @@ class TestSkip(unittest.TestCase):
         self.report_dir = os.path.join(self.test_workspace, "reports")
         self.test_dir = os.path.join(os.path.dirname(__file__), 'test_files')
 
+    def __analyze_simple(self, build_json, analyzer_extra_options=None):
+        """ Analyze the 'simple' project. """
+        test_dir = os.path.join(self.test_dir, "simple")
+        analyze_cmd = [
+            self._codechecker_cmd, "analyze", "-c", build_json,
+            "--analyzers", "clangsa", "-o", self.report_dir]
+
+        if analyzer_extra_options:
+            analyze_cmd.extend(analyzer_extra_options)
+
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=test_dir,
+            encoding="utf-8",
+            errors="ignore")
+        out, err = process.communicate()
+
+        print(out)
+        print(err)
+        self.assertEqual(process.returncode, 0)
+        return out, err
+
     def __log_and_analyze_simple(self, analyzer_extra_options=None):
         """ Log and analyze the 'simple' project. """
         test_dir = os.path.join(self.test_dir, "simple")
@@ -59,27 +84,7 @@ class TestSkip(unittest.TestCase):
                                       encoding="utf-8", errors="ignore")
         print(out)
         # Create and run analyze command.
-        analyze_cmd = [
-            self._codechecker_cmd, "analyze", "-c", build_json,
-            "--analyzers", "clangsa", "-o", self.report_dir]
-
-        if analyzer_extra_options:
-            analyze_cmd.extend(analyzer_extra_options)
-
-        process = subprocess.Popen(
-            analyze_cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            cwd=test_dir,
-            encoding="utf-8",
-            errors="ignore")
-        out, err = process.communicate()
-
-        print(out)
-        print(err)
-        errcode = process.returncode
-        self.assertEqual(errcode, 0)
-        return out, err
+        return self.__analyze_simple(build_json, analyzer_extra_options)
 
     def __run_parse(self, extra_options=None):
         """ Run parse command with the given extra options. """
@@ -231,6 +236,38 @@ class TestSkip(unittest.TestCase):
         """ Analyze a header file with the --file option. """
         header_file = os.path.join(self.test_dir, "simple", "skip.h")
         out, _ = self.__log_and_analyze_simple(["--file", header_file])
+        self.assertIn(
+            f"Get dependent source files for '{header_file}'...", out)
+        self.assertIn(
+            f"Get dependent source files for '{header_file}' done.", out)
+
+        plist_files = glob.glob(os.path.join(self.report_dir, '*.plist'))
+        self.assertTrue(plist_files)
+        self.assertTrue(all('skip_header.cpp' in f for f in plist_files))
+
+    def test_analyze_header_with_file_option_and_intercept_json(self):
+        """
+        Analyze a header file with the --file option and a compilation database
+        produced by intercept build.
+        """
+        build_json = os.path.join(self.test_workspace, "build.json")
+
+        # We used to crash when the build log contained 'arguments' fields in
+        # place of 'command'. Test that we don't crash on it anymore by
+        # manually changing 'command' to 'arguments' here.
+        with open(build_json) as f:
+            build_actions = json.load(f)
+            for ba in build_actions:
+                ba['arguments'] = shlex.split(ba['command'])
+                del ba['command']
+
+        build_json = os.path.join(self.test_workspace, "build_intercept.json")
+
+        with open(build_json, 'w') as f:
+            json.dump(build_actions, f)
+
+        header_file = os.path.join(self.test_dir, "simple", "skip.h")
+        out, _ = self.__analyze_simple(build_json, ["--file", header_file])
         self.assertIn(
             f"Get dependent source files for '{header_file}'...", out)
         self.assertIn(
