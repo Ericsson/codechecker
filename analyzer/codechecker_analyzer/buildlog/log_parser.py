@@ -120,6 +120,7 @@ IGNORED_OPTIONS_GCC = [
     '-m(no-)?dsbt',
     '-m(no-)?fixed-ssp',
     '-m(no-)?pointers-to-nested-functions',
+    '-m(no-)?word-relocations',
     '-mno-fp-ret-in-387',
     '-mpreferred-stack-boundary',
     '-mpcrel-func-addr',
