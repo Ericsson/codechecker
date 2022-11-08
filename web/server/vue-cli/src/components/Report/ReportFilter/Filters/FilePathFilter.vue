@@ -13,9 +13,7 @@
     @input="setSelectedItems"
   >
     <template v-slot:append-toolbar>
-      <AnywhereOnReportPath
-        @change="setAnywhere"
-      />
+      <AnywhereOnReportPath v-model="isAnywhere" />
     </template>
 
     <template v-slot:icon>
@@ -54,6 +52,7 @@ export default {
   data() {
     return {
       id: "filepath",
+      anywhereId: "anywhere-filepath",
       search: {
         placeHolder: "Search for files (e.g.: */src/*)...",
         regexLabel: "Filter by wildcard pattern (e.g.: */src/*)",
@@ -61,6 +60,14 @@ export default {
       },
       isAnywhere: false
     };
+  },
+
+  watch: {
+    isAnywhere() {
+      this.updateReportFilter();
+      this.$emit("update:url");
+      this.update();
+    }
   },
 
   methods: {
@@ -76,10 +83,19 @@ export default {
       this.update();
     },
 
-    setAnywhere(isAnywhere) {
-      this.isAnywhere = isAnywhere;
-      this.updateReportFilter();
-      this.update();
+    getUrlState() {
+      const state =
+        this.selectedItems.map(item => this.encodeValue(item.id));
+
+      return {
+        [this.id]: state.length ? state : undefined,
+        [this.anywhereId]: this.isAnywhere || undefined
+      };
+    },
+
+    initByUrl() {
+      this.isAnywhere = !!this.$route.query[this.anywhereId];
+      this.initCheckOptionsByUrl();
     },
 
     fetchItems(opt={}) {
