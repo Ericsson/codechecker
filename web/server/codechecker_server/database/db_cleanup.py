@@ -197,24 +197,37 @@ def upgrade_severity_levels(session_maker, checker_labels):
 
 def remove_unused_analysis_info(session_maker):
     """ Remove unused analysis information from the database. """
+    # Analysis info deletion is a relatively slow operation due to database
+    # cascades. Removing files in smaller chunks prevents reaching a potential
+    # database statement timeout. This hard-coded value is a safe choice
+    # according to some measurements.
+    CHUNK_SIZE = 500
+
     LOG.debug("Garbage collection of dangling analysis info started...")
 
     with DBSession(session_maker) as session:
         try:
-            run_history_analysis_info = session \
-                .query(RunHistoryAnalysisInfo.c.analysis_info_id.distinct()) \
-                .subquery()
+            to_delete = session.query(AnalysisInfo.id) \
+                .join(
+                    RunHistoryAnalysisInfo,
+                    RunHistoryAnalysisInfo.c.analysis_info_id ==
+                    AnalysisInfo.id,
+                    isouter=True) \
+                .join(
+                    ReportAnalysisInfo,
+                    ReportAnalysisInfo.c.analysis_info_id == AnalysisInfo.id,
+                    isouter=True) \
+                .filter(
+                    RunHistoryAnalysisInfo.c.analysis_info_id.is_(None),
+                    ReportAnalysisInfo.c.analysis_info_id.is_(None))
 
-            report_analysis_info = session \
-                .query(ReportAnalysisInfo.c.analysis_info_id.distinct()) \
-                .subquery()
+            to_delete = map(lambda x: x[0], to_delete)
 
-            session.query(AnalysisInfo) \
-                .filter(AnalysisInfo.id.notin_(run_history_analysis_info),
-                        AnalysisInfo.id.notin_(report_analysis_info)) \
-                .delete(synchronize_session=False)
-
-            session.commit()
+            for chunk in util.chunks(to_delete, CHUNK_SIZE):
+                session.query(AnalysisInfo) \
+                    .filter(AnalysisInfo.id.in_(chunk)) \
+                    .delete(synchronize_session=False)
+                session.commit()
 
             LOG.debug("Garbage collection of dangling analysis info finished.")
         except (sqlalchemy.exc.OperationalError,
