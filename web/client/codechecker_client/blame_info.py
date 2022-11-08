@@ -41,6 +41,9 @@ def __get_blame_info(file_path: str):
     """ Get blame info for the given file. """
     try:
         repo = Repo(file_path, search_parent_directories=True)
+        if repo.ignored(file_path):
+            LOG.debug(f"File {file_path} is an ignored file")
+            return
     except InvalidGitRepositoryError:
         return
 
