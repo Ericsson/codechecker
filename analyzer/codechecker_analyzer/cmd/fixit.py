@@ -21,6 +21,7 @@ import yaml
 from codechecker_report_converter.util import get_last_mod_time
 
 from codechecker_analyzer import analyzer_context
+from codechecker_analyzer.analyzers import analyzer_types
 from codechecker_common import arg, logger
 
 LOG = logger.get_logger('system')
@@ -180,6 +181,11 @@ def clang_tidy_fixit_filter(content, checker_names, file_paths, reports,
 
         row, col = get_location_by_offset(diag_msg['FilePath'],
                                           int(diag_msg['FileOffset']))
+        # TODO: There are different formats for "reports" object. These are
+        # supposed to be marked with a version number in the JSON object. For
+        # example in some "CodeChecker cmd diff" command output there is no
+        # "checkedFile" attribute for a report, but the file path is stored in
+        # another structure.
         return any(row == report['line'] and col == report['column'] and
                    diag_msg['FilePath'] == report['checkedFile']
                    for report in reports)
@@ -263,13 +269,31 @@ def list_fixits(inputs, checker_names, file_paths, interactive, reports):
 
 def apply_fixits(inputs, checker_names, file_paths, interactive, reports):
     """
-    This function applies the replacements from the .yaml files.
+    This function applies the replacements from the .yaml files. A Clang tool
+    clang-apply-replacements is used which may or may not provide
+    --ignore-insert-conflict flag depending on the Clang version. If this flag
+    doesn't exist then the replacement process stops when a .yaml file doesn't
+    apply for some reason. In this case each .yaml file needs to be applied one
+    by one.
     inputs -- A list of report directories which contains the fixit dumps in a
               subdirectory named "fixit".
     """
+    def apply_process(out_dir):
+        """
+        Execute clang-apply-replacements binary.
+        """
+        subprocess.Popen([
+            analyzer_context.get_context().replacer_binary,
+            *ignore_flag,
+            out_dir]).communicate()
+
     not_existing_files = set()
     existing_files = set()
     modified_files = set()
+
+    ignore_flag = ["--ignore-insert-conflict"] if \
+        analyzer_types.is_ignore_conflict_supported(
+            analyzer_context.get_context()) else []
 
     for i in inputs:
         fixit_dir = os.path.join(i, 'fixit')
@@ -294,15 +318,21 @@ def apply_fixits(inputs, checker_names, file_paths, interactive, reports):
                     not_existing_files.update(not_existing)
                     modified_files.update(modified)
 
+                fixit_file = os.path.join(out_dir, fixit_file)
                 if len(content['Diagnostics']) != 0:
-                    with open(os.path.join(out_dir, fixit_file), 'w',
+                    with open(fixit_file, 'w',
                               encoding='utf-8', errors='ignore') as out:
                         yaml.dump(content, out)
 
-            proc = subprocess.Popen([
-                analyzer_context.get_context().replacer_binary,
-                out_dir])
-            proc.communicate()
+                if not ignore_flag:
+                    apply_process(out_dir)
+                    try:
+                        os.remove(fixit_file)
+                    except FileNotFoundError:
+                        pass
+
+            if ignore_flag:
+                apply_process(out_dir)
 
     if existing_files:
         print("Updated files:\n{}".format(
@@ -346,6 +376,13 @@ def main(args):
     except json.decoder.JSONDecodeError as ex:
         LOG.error("JSON format error on standard input: %s", ex)
         sys.exit(1)
+
+    # "CodeChecker fixit" can be applied on the output of
+    # "CodeChecker cmd diff" command. Earlier this was a simple list of
+    # reports, but now this is an object with the list of reports and a version
+    # number indicating the version of the object's format.
+    if reports is not None and 'version' in reports:
+        reports = reports['reports']
 
     if 'apply' in args or args.interactive:
         apply_fixits(args.input, args.checker_name, args.file,
