@@ -6,6 +6,47 @@
         <new-release-item>
           <template v-slot:title>
             <a
+              href="https://github.com/Ericsson/codechecker/releases/tag/v6.21.0"
+              target="_blank"
+              class="white--text"
+            >
+              Highlights of CodeChecker 6.21.0 release
+            </a>
+          </template>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Support Roslynator in the report-converter
+            </template>
+            The <a href="https://github.com/JosefPihrt/Roslynator" target="_blank">Roslynator</a>
+            project contains several analyzers for C# built on top of Microsoft
+            Roslyn. CodeChecker now supports the visualization of these C#
+            anlaysis results. It also provides a
+            <a href="https://github.com/JosefPihrt/Roslynator#roslynator-command-line-tool-" target="_blank">.NET tool</a>
+            for running Roslyn code analysis from the command line. It is not
+            limited to Microsoft and Roslynator analyzers, it supports any
+            Roslyn anaylzer. It can also report MSBuild compiler diagnostics.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Optimizations to <code>CodeChecker store</code> and
+              <code>CodeChecker cmd diff</code>
+            </template>
+            After a round of optimizations on <code>CodeChecker store</code>,
+            we expect it to be 2x faster in certain cases (especially for
+            larger projects)!
+
+            For runs with a lot of reports, <code>CodeChecker cmd diff</code>
+            should be faster as well.
+          </new-feature-item>
+        </new-release-item>
+      </v-timeline-item>
+
+      <v-timeline-item fill-dot icon="mdi-star">
+        <new-release-item>
+          <template v-slot:title>
+            <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.19.0"
               target="_blank"
               class="white--text"
