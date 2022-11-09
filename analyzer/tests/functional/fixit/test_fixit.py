@@ -385,7 +385,7 @@ int main()
         orig_hash_1 = content_hash(source_file1)
         orig_hash_2 = content_hash(source_file2)
 
-        # Toudh file so "CodeChecker fixit" doesn't apply on the first file.
+        # Touch file so "CodeChecker fixit" doesn't apply on the first file.
         # We want to test that the other file is changed despite the failure of
         # this first fail.
         os.utime(source_file1, None)
