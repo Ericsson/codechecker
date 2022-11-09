@@ -47,6 +47,73 @@
         <new-release-item>
           <template v-slot:title>
             <a
+              href="https://github.com/Ericsson/codechecker/releases/tag/v6.20.0"
+              target="_blank"
+              class="white--text"
+            >
+              Highlights of CodeChecker 6.20.0 release
+            </a>
+          </template>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Cppcheck support in CodeChecker
+            </template>
+
+            <code>CodeChecker analyze</code> sub-command was originally designed
+            to drive ClangSA and ClangTidy analyzers. Now it has been extended
+            with Cppcheck support
+
+            The output of the <code>CodeChecker version -o json</code> command
+            wasn't a valid JSON format. From this release CodeChecker will
+            provide a valid JSON output for this command.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Change review status handling
+            </template>
+
+            <p>
+              Review status is a categorization of reports by the developers.
+              They can indicate whether a report is false-positive, confirmed,
+              intentional, etc. These markings were bound to a report hash, so
+              different reports sharing the same hash were attached the same
+              review status. The problem with this approach was that review
+              status comments written in the source code could have swapped
+              review statuses back and forth if different review status was
+              attached to the same bug in different runs.
+            </p>
+
+            <p>
+              In this release a review status is attached to each report
+              individually, so a review status given in source code comment
+              doesn't affect reports with the same hash in other runs.
+            </p>
+
+            <p>
+              Review status can still be set via GUI. This works like an e-mail
+              rule: when a new report appears with the given hash, the review
+              status will be applied automatically.
+            </p>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Filter by files anywhere on bugpath
+            </template>
+
+            At file and source component filters reports can be selected where the
+            bug path ends in those files or source components. In this release
+            these file filters can be applied to any point of the bug path.
+          </new-feature-item>
+        </new-release-item>
+      </v-timeline-item>
+
+      <v-timeline-item fill-dot icon="mdi-star">
+        <new-release-item>
+          <template v-slot:title>
+            <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.19.0"
               target="_blank"
               class="white--text"
