@@ -306,7 +306,6 @@
     "bugprone-macro-parentheses": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/macro-parentheses.html",
       "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "bugprone-macro-repeated-side-effects": [
@@ -400,7 +399,6 @@
     "bugprone-reserved-identifier": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/reserved-identifier.html",
       "profile:extreme",
-      "profile:sensitive",
       "severity:LOW"
     ],
     "bugprone-shared-ptr-array-mismatch": [
@@ -696,7 +694,6 @@
       "guideline:sei-cert",
       "profile:extreme",
       "profile:security",
-      "profile:sensitive",
       "sei-cert:dcl37-c",
       "severity:LOW"
     ],
@@ -714,7 +711,6 @@
       "guideline:sei-cert",
       "profile:extreme",
       "profile:security",
-      "profile:sensitive",
       "sei-cert:dcl51-cpp",
       "severity:LOW"
     ],
@@ -5268,7 +5264,6 @@
       "doc_url:https://releases.llvm.org/6.0.0/tools/clang/tools/extra/docs/clang-tidy/checks/misc-macro-parentheses.html",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "severity:MEDIUM"
     ],
     "misc-macro-repeated-side-effects": [
