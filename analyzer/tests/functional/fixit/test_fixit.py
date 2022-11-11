@@ -396,10 +396,11 @@ int main()
             fixit_cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE,
             cwd=self.test_workspace,
             encoding="utf-8",
             errors="ignore")
-        process.communicate()
+        process.communicate(input='[]')
 
         new_hash_1 = content_hash(source_file1)
         new_hash_2 = content_hash(source_file2)
