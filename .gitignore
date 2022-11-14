@@ -37,6 +37,10 @@ web/server/www/userguide/gen-docs/
 [._]s[a-v][a-z]
 [._]sw[a-p]
 
+# vim session files
+Session.vim
+*.vim
+
 # Auto-generated tag files
 tags
 .tags
