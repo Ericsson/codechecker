@@ -1551,7 +1551,7 @@ Taint analysis can be used with custom configuration by specifying the taint
 configuration file as a checker-option in addition to enabling the
 `alpha.security.taint.TaintPropagation` checker:
 ```sh
-CodeChecer analyze \
+CodeChecker analyze \
   -e alpha.security.taint.TaintPropagation \
   --checker-config 'clangsa:alpha.security.taint.TaintPropagation:Config=my-cutom-taint-config.yaml'
 ```
