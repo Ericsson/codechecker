@@ -489,6 +489,7 @@ def __register_diff(parser):
                         type=str,
                         nargs='+',
                         dest="base_run_names",
+                        required=True,
                         metavar='BASE_RUNS',
                         default=argparse.SUPPRESS,
                         help="The 'base' (left) side of the difference: these "
@@ -512,6 +513,7 @@ def __register_diff(parser):
                         type=str,
                         nargs='+',
                         dest="new_run_names",
+                        required=True,
                         metavar='NEW_RUNS',
                         default=argparse.SUPPRESS,
                         help="The 'new' (right) side of the difference: these "
