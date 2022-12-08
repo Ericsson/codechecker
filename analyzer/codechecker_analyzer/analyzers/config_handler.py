@@ -103,13 +103,27 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         """
         Explicitly handle checker state, keep description if already set.
         """
+        changed_states = []
+
         for ch_name, values in self.__available_checkers.items():
             if ch_name.startswith(checker_name) or \
                ch_name.endswith(checker_name):
                 _, description = values
                 state = CheckerState.enabled if enabled \
                     else CheckerState.disabled
-                self.__available_checkers[ch_name] = (state, description)
+                changed_states.append((ch_name, state, description))
+
+        # Enabled/disable checkers are stored in an ordered dict. When a
+        # checker group (e.g. clang-diagnostic) is disabled then all checkers
+        # in this group are added to this list in order, including
+        # clang-diagnostic itself at the end. Enabling a specific member of a
+        # disabled group (e.g. clang-diagnostic-vla) resets the status at an
+        # earlier position than the group name, so due to its order the group
+        # disable will be stronger. The solution is removing the given checker
+        # and inserting it back to the end.
+        for ch_name, state, description in changed_states:
+            del self.__available_checkers[ch_name]
+            self.__available_checkers[ch_name] = (state, description)
 
     def checks(self):
         """

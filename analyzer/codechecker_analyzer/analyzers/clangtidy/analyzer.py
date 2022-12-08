@@ -19,6 +19,7 @@ from typing import List, Tuple
 from codechecker_common.logger import get_logger
 
 from codechecker_analyzer import analyzer_context, env
+from codechecker_analyzer.analyzers.clangsa.analyzer import ClangSA
 
 from .. import analyzer_base
 from ..config_handler import CheckerState, get_compiler_warning_name
@@ -70,6 +71,61 @@ def parse_analyzer_config(config_dump):
     return re.findall(r'^(\S+):\s+(\S+)$', config_dump, re.MULTILINE)
 
 
+def get_diagtool_bin():
+    """
+    Return full path of diagtool.
+
+    Select clang binary, check for a 'diagtool' binary next to the selected
+    clang binary and return full path of this binary if it exists.
+    """
+    context = analyzer_context.get_context()
+    clang_bin = context.analyzer_binaries.get(ClangSA.ANALYZER_NAME)
+
+    if not clang_bin:
+        return None
+
+    # Resolve symlink.
+    clang_bin = os.path.realpath(clang_bin)
+
+    # Find diagtool next to the clang binary.
+    diagtool_bin = os.path.join(os.path.dirname(clang_bin), 'diagtool')
+    if os.path.exists(diagtool_bin):
+        return diagtool_bin
+
+    LOG.debug("'diagtool' can not be found next to the clang binary (%s)!",
+              clang_bin)
+
+
+def get_warnings(env=None):
+    """
+    Returns list of warning flags by using diagtool.
+    """
+    diagtool_bin = get_diagtool_bin()
+
+    if not diagtool_bin:
+        return []
+
+    try:
+        result = subprocess.check_output(
+            [diagtool_bin, 'tree'],
+            env=env,
+            universal_newlines=True,
+            encoding="utf-8",
+            errors="ignore")
+        return [w[2:] for w in result.split()
+                if w.startswith("-W") and w != "-W"]
+    except subprocess.CalledProcessError as exc:
+        LOG.error("'diagtool' encountered an error while retrieving the "
+                  "checker list. If you are using a custom compiled clang, "
+                  "you may have forgotten to build the 'diagtool' target "
+                  "alongside 'clang' and 'clang-tidy'! Error message: %s",
+                  exc.output)
+
+        raise
+    except OSError:
+        raise
+
+
 class ClangTidy(analyzer_base.SourceAnalyzer):
     """
     Constructs the clang tidy analyzer commands.
@@ -86,13 +142,20 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         Return the list of the all of the supported checkers.
         """
         try:
+            environ = analyzer_context.get_context().analyzer_env
             result = subprocess.check_output(
                 [cfg_handler.analyzer_binary, "-list-checks", "-checks=*"],
-                env=analyzer_context.get_context().analyzer_env,
+                env=environ,
                 universal_newlines=True,
                 encoding="utf-8",
                 errors="ignore")
-            return parse_checkers(result)
+            checker_description = parse_checkers(result)
+
+            checker_description.extend(
+                ("clang-diagnostic-" + warning, "")
+                for warning in get_warnings(environ))
+
+            return checker_description
         except (subprocess.CalledProcessError, OSError):
             return []
 
