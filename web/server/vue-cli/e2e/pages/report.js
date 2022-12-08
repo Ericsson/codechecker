@@ -103,7 +103,7 @@ const createOpenReportsDateFilterSection = (selector) => {
 const settingsMenuElements = {
   searchInput: "header input[type='text']",
   progressBar: ".v-progress-linear",
-  regexItem: ".v-item-group > .v-list-item",
+  regexItem: ".v-item-group > .regex-label",
   item: ".v-item-group:last-child > .v-list-item",
   applyBtn: ".apply-btn",
   cancelBtn: ".cancel-btn"
