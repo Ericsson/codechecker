@@ -17,7 +17,6 @@ invoked and ran.
 import argparse
 import os
 
-from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.buildlog import build_manager
 from codechecker_analyzer.buildlog.host_check import check_intercept
 from codechecker_analyzer.buildlog.host_check import check_ldlogger
@@ -174,12 +173,10 @@ def main(args):
               encoding="utf-8", errors="ignore") as logfile:
         logfile.write("[\n]")
 
-    context = analyzer_context.get_context()
     verbose = args.verbose if 'verbose' in args else None
 
     build_manager.perform_build_command(args.logfile,
                                         args.command,
-                                        context,
                                         'keep_link' in args,
                                         silent='quiet' in args,
                                         verbose=verbose)

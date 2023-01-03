@@ -16,6 +16,7 @@ import collections
 import platform
 import subprocess
 
+from codechecker_analyzer import analyzer_context
 from codechecker_common.logger import get_logger
 
 LOG = get_logger('system')
@@ -137,7 +138,6 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         return reserved_names
 
     def initialize_checkers(self,
-                            analyzer_context,
                             checkers,
                             cmdline_enable=[],
                             enable_all=False):
@@ -155,7 +155,6 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
           - Without prefix it means a profile name, a guideline name or a
             checker group/name in this priority order.
 
-        analyzer_context -- Context object.
         checkers -- [(checker name, description), ...] Checkers to add with
                     their description.
         cmdline_enable -- [(argument, enabled), ...] Arguments of
@@ -164,7 +163,7 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         enable_all -- Boolean value whether "--enable-all" is given.
         """
 
-        checker_labels = analyzer_context.checker_labels
+        checker_labels = analyzer_context.get_context().checker_labels
 
         # Add all checkers marked as default. This means the analyzer should
         # manage whether it is enabled or disabled.

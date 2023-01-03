@@ -11,17 +11,19 @@
 import os
 import re
 
+from codechecker_analyzer import analyzer_context
 from codechecker_common.logger import get_logger
 
 LOG = get_logger('system')
 
 
-def get_log_env(logfile, context, original_env):
+def get_log_env(logfile, original_env):
     """
     Environment for logging. With the ld logger.
     Keep the original environment unmodified as possible.
     Only environment variables required for logging are changed.
     """
+    context = analyzer_context.get_context()
     new_env = original_env
 
     new_env[context.env_var_cc_logger_bin] = context.path_logger_bin

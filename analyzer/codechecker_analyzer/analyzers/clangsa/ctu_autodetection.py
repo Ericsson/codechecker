@@ -137,7 +137,7 @@ class CTUAutodetection:
                                      'display-ctu-progress=true']
 
         ok = host_check.has_analyzer_config_option(
-            self.__analyzer_binary, "display-ctu-progress", self.environ)
+            self.__analyzer_binary, "display-ctu-progress")
         if not ok:
             return None
         return ctu_display_progress_args

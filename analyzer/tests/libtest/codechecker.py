@@ -15,7 +15,6 @@ import shlex
 import subprocess
 
 from distutils import util
-from typing import Dict
 
 from codechecker_analyzer import host_check
 
@@ -161,15 +160,12 @@ def is_ctu_on_demand_capable(output: str) -> bool:
     return check_force_ctu_capable('--ctu-ast-mode' in output)
 
 
-def is_ctu_display_progress_capable(
-    clangsa_path: str,
-    env: Dict
-) -> bool:
+def is_ctu_display_progress_capable(clangsa_path: str) -> bool:
     """
     Returns True if the used clang is CTU display progress capable or if it's
     force enabled by environment variable.
     """
     ctu_display_progress_capable = host_check.has_analyzer_config_option(
-        clangsa_path, 'display-ctu-progress', env)
+        clangsa_path, 'display-ctu-progress')
 
     return check_force_ctu_capable(ctu_display_progress_capable)

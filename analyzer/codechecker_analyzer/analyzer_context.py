@@ -28,7 +28,14 @@ LOG = logger.get_logger('system')
 
 # -----------------------------------------------------------------------------
 class Context(metaclass=Singleton):
-    """ Generic package specific context. """
+    """
+    Generic package specific context.
+
+    This class is to query all information that might be important about the
+    running environment around CodeChecker analysis. This is a singleton
+    object, so it is cheap to construct and can be used as a read-only
+    dictionary of the data on its interface.
+    """
 
     def __init__(self):
         """ Initialize analyzer context. """
@@ -54,6 +61,7 @@ class Context(metaclass=Singleton):
         self.__package_build_date = None
         self.__package_git_hash = None
         self.__analyzers = {}
+        self.__analyzer_env = None
 
         self.logger_lib_dir_path = os.path.join(
             self._data_files_dir_path, 'ld_logger', 'lib')
@@ -146,8 +154,7 @@ class Context(metaclass=Singleton):
         analyzer_env = None
         analyzer_from_path = env.is_analyzer_from_path()
         if not analyzer_from_path:
-            analyzer_env = env.extend(self.path_env_extra,
-                                      self.ld_lib_path_extra)
+            analyzer_env = self.analyzer_env
 
         compiler_binaries = self.pckg_layout.get('analyzers')
         for name, value in compiler_binaries.items():
@@ -256,6 +263,13 @@ class Context(metaclass=Singleton):
         for path in extra_lib:
             ld_paths.append(os.path.join(self._data_files_dir_path, path))
         return ld_paths
+
+    @property
+    def analyzer_env(self):
+        if not self.__analyzer_env:
+            self.__analyzer_env = \
+                env.extend(self.path_env_extra, self.ld_lib_path_extra)
+        return self.__analyzer_env
 
     @property
     def analyzer_binaries(self):

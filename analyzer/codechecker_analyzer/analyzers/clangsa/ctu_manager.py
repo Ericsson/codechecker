@@ -78,7 +78,7 @@ def generate_ast_cmd(action, config, triple_arch, source):
     return cmd, ast_dir
 
 
-def generate_invocation_list(triple_arch, action, source, config, env):
+def generate_invocation_list(triple_arch, action, source, config):
     """ Generates the invocation for the source file of the current
     compilation command. Used during on-demand analysis. The invocation list
     is a mapping from absolute paths of the source files to the parts of the
@@ -112,7 +112,7 @@ def generate_invocation_list(triple_arch, action, source, config, env):
         invocation_file.write(invocation_line)
 
 
-def generate_ast(triple_arch, action, source, config, env):
+def generate_ast(triple_arch, action, source, config):
     """ Generates ASTs for the current compilation command. Used during
     ast-dump based analysis. """
 
@@ -127,7 +127,7 @@ def generate_ast(triple_arch, action, source, config, env):
     cmdstr = ' '.join(cmd)
     LOG.debug_analyzer("Generating AST using '%s'", cmdstr)
     ret_code, _, err = \
-        analyzer_base.SourceAnalyzer.run_proc(cmd, env, action.directory)
+        analyzer_base.SourceAnalyzer.run_proc(cmd, action.directory)
 
     if ret_code != 0:
         LOG.error("Error generating AST.\n\ncommand:\n\n%s\n\nstderr:\n\n%s",
@@ -187,7 +187,7 @@ def get_extdef_mapping_cmd(action, config, source, func_map_cmd):
     return cmd
 
 
-def map_functions(triple_arch, action, source, config, env,
+def map_functions(triple_arch, action, source, config,
                   func_map_cmd, temp_fnmap_folder):
     """ Generate function map file for the current source.
 
@@ -201,9 +201,7 @@ def map_functions(triple_arch, action, source, config, env,
     cmdstr = ' '.join(cmd)
     LOG.debug_analyzer("Generating function map using '%s'", cmdstr)
     ret_code, stdout, err \
-        = analyzer_base.SourceAnalyzer.run_proc(cmd,
-                                                env,
-                                                action.directory)
+        = analyzer_base.SourceAnalyzer.run_proc(cmd, action.directory)
     if ret_code != 0:
         LOG.error("Error generating function map."
                   "\n\ncommand:\n\n%s\n\nstderr:\n\n%s", cmdstr, err)

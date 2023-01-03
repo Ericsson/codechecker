@@ -29,8 +29,6 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
         self.ctu_dir = ''
         self.ctu_on_demand = False
         self.log_file = ''
-        self.path_env_extra = ''
-        self.ld_lib_path_extra = ''
         self.enable_z3 = False
         self.enable_z3_refutation = False
         self.environ = environ

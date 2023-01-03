@@ -902,7 +902,6 @@ def parse_options(compilation_db_entry,
                   keep_gcc_include_fixed=False,
                   keep_gcc_intrin=False,
                   get_clangsa_version_func=None,
-                  env=None,
                   analyzer_clang_version=None):
     """
     This function parses a GCC compilation action and returns a BuildAction
@@ -928,7 +927,6 @@ def parse_options(compilation_db_entry,
                             It requires the compiler binary and an env.
                             get_clangsa_version_func(compiler_binary, env)
                             Should return false for a non clang compiler.
-    env -- Is the environment where a subprocess call should be executed.
     analyzer_clang_version -- version information about the clang which is
                               used to execute the analysis
     """
@@ -1003,7 +1001,7 @@ def parse_options(compilation_db_entry,
         # did not find in the cache yet
         try:
             compiler_version_info = \
-                get_clangsa_version_func(details['compiler'], env)
+                get_clangsa_version_func(details['compiler'])
         except (subprocess.CalledProcessError, OSError) as cerr:
             LOG.error('Failed to get and parse version of: %s',
                       details['compiler'])
@@ -1199,7 +1197,6 @@ def parse_unique_log(compilation_database,
                      analysis_skip_handlers=None,
                      pre_analysis_skip_handlers=None,
                      ctu_or_stats_enabled=False,
-                     env=None,
                      analyzer_clang_version=None):
     """
     This function reads up the compilation_database
@@ -1249,7 +1246,6 @@ def parse_unique_log(compilation_database,
                                  skipped during pre analysis
     ctu_or_stats_enabled -- ctu or statistics based analysis was enabled
                             influences the behavior which files are skipped.
-    env -- Is the environment where a subprocess call should be executed.
     analyzer_clang_version -- version information about the clang which is
                               used to execute the analysis
     """
@@ -1290,7 +1286,6 @@ def parse_unique_log(compilation_database,
                                    keep_gcc_include_fixed,
                                    keep_gcc_intrin,
                                    clangsa.version.get,
-                                   env,
                                    analyzer_clang_version)
 
             if not action.lang:

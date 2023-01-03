@@ -13,10 +13,8 @@ Prepare and start different analysis types
 from collections import defaultdict
 from multiprocessing.managers import SyncManager
 import os
-import shlex
 import shutil
 import signal
-import subprocess
 import time
 
 from codechecker_common.logger import get_logger
@@ -26,7 +24,8 @@ from codechecker_statistics_collector.collectors.special_return_value import \
 from codechecker_statistics_collector.collectors.return_value import \
     ReturnValueCollector
 
-from . import analysis_manager, pre_analysis_manager, env, checkers
+from . import analyzer_context, analysis_manager, pre_analysis_manager, \
+    checkers
 from .analyzers import analyzer_types
 from .analyzers.config_handler import CheckerState
 from .analyzers.clangsa.analyzer import ClangSA
@@ -67,41 +66,6 @@ def create_actions_map(actions, manager):
                       act.source, act.target)
         result[key] = act
     return result
-
-
-def __get_analyzer_version(context, analyzer_config_map):
-    """
-    Get the path and the version of the analyzer binaries.
-    """
-    check_env = env.extend(context.path_env_extra,
-                           context.ld_lib_path_extra)
-
-    # Get the analyzer binaries from the config_map which
-    # contains only the checked and available analyzers.
-    versions = {}
-    for _, analyzer_cfg in analyzer_config_map.items():
-        analyzer_bin = analyzer_cfg.analyzer_binary
-        version = [analyzer_bin, ' --version']
-        try:
-            output = subprocess.check_output(
-                shlex.split(
-                    ' '.join(version)),
-                env=check_env,
-                universal_newlines=True,
-                encoding="utf-8",
-                errors="ignore")
-            versions[analyzer_bin] = output
-        except subprocess.CalledProcessError as oerr:
-            LOG.warning("Failed to get analyzer version: %s",
-                        ' '.join(version))
-            LOG.warning(oerr.output)
-            LOG.warning(oerr.stderr)
-        except OSError as oerr:
-            LOG.warning("Failed to get analyzer version: %s",
-                        ' '.join(version))
-            LOG.warning(oerr.strerror)
-
-    return versions
 
 
 def __mgr_init():
@@ -159,13 +123,15 @@ def __get_ctu_data(config_map, ctu_dir):
             'ctu_temp_fnmap_folder': 'tmpExternalFnMaps'}
 
 
-def perform_analysis(args, skip_handlers, context, actions, metadata_tool,
+def perform_analysis(args, skip_handlers, actions, metadata_tool,
                      compile_cmd_count):
     """
     Perform static analysis via the given (or if not, all) analyzers,
     in the given analysis context for the supplied build actions.
     Additionally, insert statistical information into the metadata dict.
     """
+
+    context = analyzer_context.get_context()
 
     ctu_reanalyze_on_failure = 'ctu_reanalyze_on_failure' in args and \
         args.ctu_reanalyze_on_failure
@@ -176,8 +142,7 @@ def perform_analysis(args, skip_handlers, context, actions, metadata_tool,
 
     analyzers = args.analyzers if 'analyzers' in args \
         else analyzer_types.supported_analyzers
-    analyzers, errored = analyzer_types.check_supported_analyzers(
-        analyzers, context)
+    analyzers, errored = analyzer_types.check_supported_analyzers(analyzers)
     analyzer_types.check_available_analyzers(analyzers, errored)
 
     ctu_collect = False
@@ -199,7 +164,7 @@ def perform_analysis(args, skip_handlers, context, actions, metadata_tool,
             return
 
     actions = prepare_actions(actions, analyzers)
-    config_map = analyzer_types.build_config_handlers(args, context, analyzers)
+    config_map = analyzer_types.build_config_handlers(args, analyzers)
 
     available_checkers = set()
     # Add profile names to the checkers list so we will not warn
@@ -241,9 +206,6 @@ def perform_analysis(args, skip_handlers, context, actions, metadata_tool,
         config_map[ClangSA.ANALYZER_NAME].set_checker_enabled(
             ReturnValueCollector.checker_collect, False)
 
-    check_env = env.extend(context.path_env_extra,
-                           context.ld_lib_path_extra)
-
     enabled_checkers = defaultdict(list)
 
     # Save some metadata information.
@@ -264,7 +226,8 @@ def perform_analysis(args, skip_handlers, context, actions, metadata_tool,
             if state == CheckerState.enabled:
                 enabled_checkers[analyzer].append(check)
 
-        version = config_map[analyzer].get_version(check_env)
+        # TODO: cppcheck may require a different environment than clang.
+        version = config_map[analyzer].get_version(context.analyzer_env)
         metadata_info['analyzer_statistics']['version'] = version
 
         metadata_tool['analyzers'][analyzer] = metadata_info
@@ -280,7 +243,7 @@ def perform_analysis(args, skip_handlers, context, actions, metadata_tool,
             ctu_data = __get_ctu_data(config_map, ctu_dir)
 
         makefile_creator = MakeFileCreator(analyzers, args.output_path,
-                                           config_map, context, skip_handlers,
+                                           config_map, skip_handlers,
                                            ctu_collect, statistics_data,
                                            ctu_data)
         makefile_creator.create(actions)
@@ -326,7 +289,6 @@ def perform_analysis(args, skip_handlers, context, actions, metadata_tool,
 
         if clangsa_config is not None:
             pre_analysis_manager.run_pre_analysis(pre_analyze,
-                                                  context,
                                                   clangsa_config,
                                                   args.jobs,
                                                   pre_anal_skip_handlers,
@@ -346,7 +308,7 @@ def perform_analysis(args, skip_handlers, context, actions, metadata_tool,
     if ctu_analyze or statistics_data or (not ctu_analyze and not ctu_collect):
 
         LOG.info("Starting static analysis ...")
-        analysis_manager.start_workers(actions_map, actions, context,
+        analysis_manager.start_workers(actions_map, actions,
                                        config_map, args.jobs,
                                        args.output_path,
                                        skip_handlers,

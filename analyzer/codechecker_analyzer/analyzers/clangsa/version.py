@@ -12,6 +12,8 @@ import re
 import shutil
 import subprocess
 
+from codechecker_analyzer import analyzer_context
+
 
 class ClangVersionInfo:
     """ClangVersionInfo holds the version information of the used Clang."""
@@ -67,7 +69,7 @@ class ClangVersionInfoParser:
             version_match.group('vendor'))
 
 
-def get(clang_binary, env=None):
+def get(clang_binary):
     """Get and parse the version information from given clang binary
 
     Should return False for getting the version
@@ -75,7 +77,7 @@ def get(clang_binary, env=None):
     """
     compiler_version = subprocess.check_output(
         [clang_binary, '--version'],
-        env=env,
+        env=analyzer_context.get_context().analyzer_env,
         encoding="utf-8",
         errors="ignore")
     version_parser = ClangVersionInfoParser(clang_binary)

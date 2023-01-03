@@ -18,7 +18,6 @@ import sys
 import traceback
 import uuid
 
-from codechecker_analyzer import env
 from codechecker_common.logger import get_logger
 
 from codechecker_statistics_collector import post_process_stats
@@ -31,8 +30,7 @@ from .analyzers.clangsa.analyzer import ClangSA
 LOG = get_logger('analyzer')
 
 
-def collect_statistics(action, source, clangsa_config,
-                       environ, statistics_data):
+def collect_statistics(action, source, clangsa_config, statistics_data):
     """
     Run the statistics collection command and save the
     stdout and stderr to a file.
@@ -48,7 +46,7 @@ def collect_statistics(action, source, clangsa_config,
     LOG.debug_analyzer(' '.join(map(shlex.quote, cmd)))
 
     ret_code, analyzer_out, analyzer_err = \
-        analyzer_base.SourceAnalyzer.run_proc(cmd, env=environ)
+        analyzer_base.SourceAnalyzer.run_proc(cmd)
 
     LOG.debug(analyzer_out)
     LOG.debug(analyzer_err)
@@ -85,11 +83,7 @@ def init_worker(checked_num, action_num):
 
 
 def pre_analyze(params):
-    action, context, clangsa_config, skip_handlers, \
-        ctu_data, statistics_data = params
-
-    analyzer_environment = env.extend(context.path_env_extra,
-                                      context.ld_lib_path_extra)
+    action, clangsa_config, skip_handlers, ctu_data, statistics_data = params
 
     progress_checked_num.value += 1
 
@@ -112,27 +106,24 @@ def pre_analyze(params):
 
             triple_arch = \
                 ctu_triple_arch.get_triple_arch(action, action.source,
-                                                clangsa_config,
-                                                analyzer_environment)
+                                                clangsa_config)
 
             # TODO: reorganize the various ctu modes parameters
             # Dump-based analysis requires serialized ASTs.
             if clangsa_config.ctu_on_demand:
                 ctu_manager.generate_invocation_list(triple_arch, action,
                                                      action.source,
-                                                     clangsa_config,
-                                                     analyzer_environment)
+                                                     clangsa_config)
             else:
                 ctu_manager.generate_ast(triple_arch, action, action.source,
-                                         clangsa_config, analyzer_environment)
+                                         clangsa_config)
             # On-demand analysis does not require AST-dumps.
             # We map the function names to corresponding sources of ASTs.
             # In case of On-demand analysis this source is the original source
             # code. In case of AST-dump based analysis these sources are the
             # generated AST-dumps.
             ctu_manager.map_functions(triple_arch, action, action.source,
-                                      clangsa_config, analyzer_environment,
-                                      ctu_func_map_cmd,
+                                      clangsa_config, ctu_func_map_cmd,
                                       ctu_temp_fnmap_folder)
 
     except Exception as ex:
@@ -146,7 +137,6 @@ def pre_analyze(params):
             collect_statistics(action,
                                action.source,
                                clangsa_config,
-                               analyzer_environment,
                                statistics_data)
 
     except Exception as ex:
@@ -155,7 +145,7 @@ def pre_analyze(params):
         raise
 
 
-def run_pre_analysis(actions, context, clangsa_config,
+def run_pre_analysis(actions, clangsa_config,
                      jobs, skip_handlers, ctu_data, statistics_data, manager):
     """
     Run multiple pre analysis jobs before the actual analysis.
@@ -196,7 +186,6 @@ def run_pre_analysis(actions, context, clangsa_config,
 
     try:
         collect_actions = [(build_action,
-                            context,
                             clangsa_config,
                             skip_handlers,
                             ctu_data,

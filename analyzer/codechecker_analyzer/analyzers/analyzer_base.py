@@ -17,6 +17,7 @@ import subprocess
 import sys
 import shlex
 
+from codechecker_analyzer import analyzer_context
 from codechecker_common.logger import get_logger
 
 LOG = get_logger('analyzer')
@@ -63,7 +64,7 @@ class SourceAnalyzer(metaclass=ABCMeta):
         raise NotImplementedError("Subclasses should implement this!")
 
     @classmethod
-    def construct_config_handler(cls, args, context):
+    def construct_config_handler(cls, args):
         """ Should return a subclass of AnalyzerConfigHandler."""
         raise NotImplementedError("Subclasses should implement this!")
 
@@ -78,7 +79,7 @@ class SourceAnalyzer(metaclass=ABCMeta):
 
     @abstractmethod
     def construct_result_handler(self, buildaction, report_output,
-                                 checker_labels, skiplist_handler):
+                                 skiplist_handler):
         """
         This method constructs the class that is responsible to handle the
         results of the analysis. The result should be a subclass of
@@ -86,7 +87,7 @@ class SourceAnalyzer(metaclass=ABCMeta):
         """
         raise NotImplementedError("Subclasses should implement this!")
 
-    def analyze(self, analyzer_cmd, res_handler, env=None, proc_callback=None):
+    def analyze(self, analyzer_cmd, res_handler, proc_callback=None, env=None):
         """
         Run the analyzer.
         """
@@ -99,9 +100,9 @@ class SourceAnalyzer(metaclass=ABCMeta):
         try:
             ret_code, stdout, stderr \
                 = SourceAnalyzer.run_proc(analyzer_cmd,
-                                          env,
                                           res_handler.buildaction.directory,
-                                          proc_callback)
+                                          proc_callback,
+                                          env)
             res_handler.analyzer_returncode = ret_code
             res_handler.analyzer_stdout = stdout
             res_handler.analyzer_stderr = stderr
@@ -113,7 +114,7 @@ class SourceAnalyzer(metaclass=ABCMeta):
             return res_handler
 
     @classmethod
-    def get_analyzer_checkers(cls, cfg_handler, environ):
+    def get_analyzer_checkers(cls, cfg_handler):
         """
         Return the checkers available in the analyzer.
         """
@@ -126,7 +127,7 @@ class SourceAnalyzer(metaclass=ABCMeta):
         pass
 
     @staticmethod
-    def run_proc(command, env=None, cwd=None, proc_callback=None):
+    def run_proc(command, cwd=None, proc_callback=None, env=None):
         """
         Just run the given command and return the return code
         and the stdout and stderr outputs of the process.
@@ -141,6 +142,9 @@ class SourceAnalyzer(metaclass=ABCMeta):
                 sys.exit(128 + signum)
 
         signal.signal(signal.SIGINT, signal_handler)
+
+        if env is None:
+            env = analyzer_context.get_context().analyzer_env
 
         proc = subprocess.Popen(
             command,

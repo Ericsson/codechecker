@@ -16,7 +16,7 @@ import re
 import subprocess
 import sys
 
-from codechecker_analyzer import env
+from codechecker_analyzer import analyzer_context
 from codechecker_common.logger import get_logger
 
 from .. import host_check
@@ -32,45 +32,38 @@ supported_analyzers = {ClangSA.ANALYZER_NAME: ClangSA,
                        Cppcheck.ANALYZER_NAME: Cppcheck}
 
 
-def is_ctu_capable(context):
+def is_ctu_capable():
     """ Detects if the current clang is CTU compatible. """
-    enabled_analyzers, _ = \
-        check_supported_analyzers([ClangSA.ANALYZER_NAME], context)
+    enabled_analyzers, _ = check_supported_analyzers([ClangSA.ANALYZER_NAME])
     if not enabled_analyzers:
         return False
 
-    clangsa_cfg = ClangSA.construct_config_handler([], context)
+    clangsa_cfg = ClangSA.construct_config_handler([])
 
     return clangsa_cfg.ctu_capability.is_ctu_capable
 
 
-def is_ctu_on_demand_available(context):
+def is_ctu_on_demand_available():
     """ Detects if the current clang is capable of on-demand AST loading. """
-    enabled_analyzers, _ = \
-        check_supported_analyzers([ClangSA.ANALYZER_NAME], context)
+    enabled_analyzers, _ = check_supported_analyzers([ClangSA.ANALYZER_NAME])
     if not enabled_analyzers:
         return False
 
-    clangsa_cfg = ClangSA.construct_config_handler([], context)
+    clangsa_cfg = ClangSA.construct_config_handler([])
 
     return clangsa_cfg.ctu_capability.is_on_demand_ctu_available
 
 
-def is_statistics_capable(context):
+def is_statistics_capable():
     """ Detects if the current clang is Statistics compatible. """
     # Resolve potentially missing binaries.
-    enabled_analyzers, _ = \
-        check_supported_analyzers([ClangSA.ANALYZER_NAME], context)
+    enabled_analyzers, _ = check_supported_analyzers([ClangSA.ANALYZER_NAME])
     if not enabled_analyzers:
         return False
 
-    clangsa_cfg = ClangSA.construct_config_handler([], context)
+    clangsa_cfg = ClangSA.construct_config_handler([])
 
-    check_env = env.extend(context.path_env_extra,
-                           context.ld_lib_path_extra)
-
-    checkers = ClangSA.get_analyzer_checkers(
-        clangsa_cfg, check_env, True, True)
+    checkers = ClangSA.get_analyzer_checkers(clangsa_cfg, True, True)
 
     stat_checkers_pattern = re.compile(r'.+statisticscollector.+')
 
@@ -81,55 +74,46 @@ def is_statistics_capable(context):
     return False
 
 
-def is_z3_capable(context):
+def is_z3_capable():
     """ Detects if the current clang is Z3 compatible. """
-    enabled_analyzers, _ = \
-        check_supported_analyzers([ClangSA.ANALYZER_NAME], context)
+    enabled_analyzers, _ = check_supported_analyzers([ClangSA.ANALYZER_NAME])
     if not enabled_analyzers:
         return False
 
-    analyzer_binary = context.analyzer_binaries.get(ClangSA.ANALYZER_NAME)
-
-    analyzer_env = env.extend(context.path_env_extra,
-                              context.ld_lib_path_extra)
+    analyzer_binary = analyzer_context.get_context() \
+        .analyzer_binaries.get(ClangSA.ANALYZER_NAME)
 
     return host_check.has_analyzer_option(analyzer_binary,
                                           ['-Xclang',
-                                           '-analyzer-constraints=z3'],
-                                          analyzer_env)
+                                           '-analyzer-constraints=z3'])
 
 
-def is_z3_refutation_capable(context):
+def is_z3_refutation_capable():
     """ Detects if the current clang is Z3 refutation compatible. """
 
     # This function basically checks whether the corresponding analyzer config
     # option exists i.e. it is visible on analyzer config option help page.
     # However, it doesn't mean that Clang itself is compiled with Z3.
-    if not is_z3_capable(context):
+    if not is_z3_capable():
         return False
 
-    check_supported_analyzers([ClangSA.ANALYZER_NAME], context)
-    analyzer_binary = context.analyzer_binaries.get(ClangSA.ANALYZER_NAME)
-
-    analyzer_env = env.extend(context.path_env_extra,
-                              context.ld_lib_path_extra)
+    check_supported_analyzers([ClangSA.ANALYZER_NAME])
+    analyzer_binary = analyzer_context.get_context() \
+        .analyzer_binaries.get(ClangSA.ANALYZER_NAME)
 
     return host_check.has_analyzer_config_option(analyzer_binary,
-                                                 'crosscheck-with-z3',
-                                                 analyzer_env)
+                                                 'crosscheck-with-z3')
 
 
-def is_ignore_conflict_supported(context):
+def is_ignore_conflict_supported():
     """
     Detects if clang-apply-replacements supports --ignore-insert-conflict flag.
     """
-    analyzer_env = env.extend(context.path_env_extra,
-                              context.ld_lib_path_extra)
-
+    context = analyzer_context.get_context()
     proc = subprocess.Popen([context.replacer_binary, '--help'],
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE,
-                            env=analyzer_env,
+                            env=context.analyzer_env,
                             encoding="utf-8", errors="ignore")
     out, _ = proc.communicate()
     return '--ignore-insert-conflict' in out
@@ -156,7 +140,7 @@ def check_available_analyzers(analyzers, errored):
     sys.exit(1)
 
 
-def check_supported_analyzers(analyzers, context):
+def check_supported_analyzers(analyzers):
     """
     Checks the given analyzers in the current context for their executability
     and support in CodeChecker.
@@ -168,8 +152,8 @@ def check_supported_analyzers(analyzers, context):
      and failed is a list of (analyzer, reason) tuple.
     """
 
-    check_env = env.extend(context.path_env_extra,
-                           context.ld_lib_path_extra)
+    context = analyzer_context.get_context()
+    check_env = context.analyzer_env
 
     analyzer_binaries = context.analyzer_binaries
 
@@ -249,7 +233,7 @@ def construct_analyzer(buildaction,
         return None
 
 
-def build_config_handlers(args, context, enabled_analyzers):
+def build_config_handlers(args, enabled_analyzers):
     """
     Handle config from command line or from config file if no command line
     config is given.
@@ -261,8 +245,7 @@ def build_config_handlers(args, context, enabled_analyzers):
     analyzer_config_map = {}
 
     for ea in enabled_analyzers:
-        config_handler = supported_analyzers[ea].\
-            construct_config_handler(args, context)
+        config_handler = supported_analyzers[ea].construct_config_handler(args)
         analyzer_config_map[ea] = config_handler
 
     return analyzer_config_map
