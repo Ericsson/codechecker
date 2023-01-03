@@ -5488,6 +5488,13 @@
       "sei-cert:exp63-cpp",
       "severity:HIGH"
     ],
+    "misc-use-anonymous-namespace": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/use-anonymous-namespace.html",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
     "misc-virtual-near-miss": [
       "doc_url:https://releases.llvm.org/5.0.0/tools/clang/tools/extra/docs/clang-tidy/checks/misc-virtual-near-miss.html",
       "profile:default",
