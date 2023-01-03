@@ -67,6 +67,26 @@ class DiffLocal(unittest.TestCase):
         for resolved in resolved_results:
             self.assertEqual(resolved['checker_name'], "core.CallAndMessage")
 
+    def test_missing_new_run(self):
+        """
+        Don't crash, but gracefully exit if -n is not specified.
+        """
+        _, err, return_code = get_diff_results(
+            [self.base_reports], [], '--resolved', 'json')
+        self.assertEqual(return_code, 1)
+        self.assertIn("the following arguments are required: -n/--newname",
+                      err)
+
+    def test_missing_base_run(self):
+        """
+        Don't crash, but gracefully exit if -b is not specified.
+        """
+        _, err, return_code = get_diff_results(
+            [], [self.new_reports], '--resolved', 'json')
+        self.assertEqual(return_code, 1)
+        self.assertIn("the following arguments are required: -b/--basename",
+                      err)
+
     def test_new_json(self):
         """Get the new reports.
 

@@ -90,8 +90,10 @@ def get_diff_results(basenames, newnames, diff_type, format_type=None,
     if format_type:
         diff_cmd.extend(['-o', format_type])
 
-    diff_cmd.extend(['--basename'] + basenames)
-    diff_cmd.extend(['--newname'] + newnames)
+    if len(basenames) != 0:
+        diff_cmd.extend(['--basename'] + basenames)
+    if len(newnames) != 0:
+        diff_cmd.extend(['--newname'] + newnames)
 
     if extra_args:
         diff_cmd.extend(extra_args)
@@ -101,7 +103,7 @@ def get_diff_results(basenames, newnames, diff_type, format_type=None,
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = proc.communicate()
 
-    if format_type == "json":
+    if proc.returncode != 1 and format_type == "json":
         return json.loads(out)['reports'], err, proc.returncode
 
     return out, err, proc.returncode
