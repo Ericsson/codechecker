@@ -17,7 +17,6 @@ sources.
 import argparse
 import collections
 import fnmatch
-import hashlib
 import json
 import logging
 import os
@@ -37,6 +36,8 @@ if sys.version_info >= (3, 8):
     from typing import TypedDict  # pylint: disable=no-name-in-module
 else:
     from mypy_extensions import TypedDict
+
+from codechecker_common.hash import md5
 
 
 LOG = logging.getLogger('tu_collector')
@@ -259,7 +260,7 @@ def __analyzer_action_hash(build_action: CompileAction) -> str:
 
     build_info = source_file + '_' + ' '.join(args)
 
-    return hashlib.md5(build_info.encode(errors='ignore')).hexdigest()
+    return md5(build_info.encode(errors='ignore')).hexdigest()
 
 
 def __get_ctu_buildactions(

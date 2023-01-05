@@ -115,9 +115,10 @@ def _generate_suppress_file(suppress_file):
     print("Generating suppress file: " + suppress_file)
 
     import calendar
-    import hashlib
     import random
     import time
+
+    from codechecker_common.hash import md5
 
     hash_version = '1'
     suppress_stuff = []
@@ -126,7 +127,7 @@ def _generate_suppress_file(suppress_file):
         random_integer = random.randint(1, 9999999)
         suppress_line = str(curr_time) + str(random_integer)
         suppress_stuff.append(
-            hashlib.md5(
+            md5(
                 suppress_line.encode('utf-8')).hexdigest() +
             '#' + hash_version)
 
@@ -137,7 +138,7 @@ def _generate_suppress_file(suppress_file):
             k + '||' + 'test_~!@#$%^&*.cpp' +
             '||' + 'idziei éléáálk ~!@#$%^&*(\n')
         s_file.write(
-            hashlib.md5(suppress_line.encode('utf-8')).hexdigest() + '||' +
+            md5(suppress_line.encode('utf-8')).hexdigest() + '||' +
             'test_~!@#$%^&*.cpp' + '||' + 'idziei éléáálk ~!@#$%^&*(\n')
 
     s_file.close()

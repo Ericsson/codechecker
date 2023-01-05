@@ -7,11 +7,11 @@
 # -------------------------------------------------------------------------
 """ Creates a Makefile from analyzer actions. """
 
-import hashlib
 import os
 import shlex
 import uuid
 
+from codechecker_common.hash import md5
 from codechecker_common.logger import get_logger
 
 from codechecker_statistics_collector.collectors.special_return_value import \
@@ -78,7 +78,7 @@ class MakeFileCreator:
         analyzer_name = self.__format_analyzer_type(action.analyzer_type)
         target_name = analyzer_name + '_' + action.source + '_' + \
             action.original_command
-        return hashlib.md5(target_name.encode('utf-8')).hexdigest()
+        return md5(target_name.encode('utf-8')).hexdigest()
 
     def __write_header(self, mfile):
         """ Write header section to the given file.

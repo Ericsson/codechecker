@@ -7,7 +7,6 @@
 # -------------------------------------------------------------------------
 """ CodeChecker hash generation algorithms. """
 
-import hashlib
 import logging
 import os
 
@@ -16,6 +15,8 @@ from enum import Enum
 from typing import List, Tuple
 
 from codechecker_report_converter.report import Report
+
+from codechecker_common.hash import md5
 
 LOG = logging.getLogger('report-converter')
 
@@ -30,7 +31,7 @@ class HashType(Enum):
 def __str_to_hash(string_to_hash: str, errors: str = 'ignore') -> str:
     """ Encodes the given string and generates a hash from it. """
     string_hash = string_to_hash.encode(encoding="utf-8", errors=errors)
-    return hashlib.md5(string_hash).hexdigest()
+    return md5(string_hash).hexdigest()
 
 
 def _remove_whitespace(line_content: str, old_col: int) -> Tuple[str, int]:

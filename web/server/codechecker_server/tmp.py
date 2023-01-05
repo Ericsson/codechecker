@@ -11,10 +11,9 @@ Temporary directory module.
 
 
 import datetime
-import hashlib
 import os
 
-
+from codechecker_common.hash import md5
 from codechecker_common.logger import get_logger
 
 LOG = get_logger('system')
@@ -28,10 +27,8 @@ def get_tmp_dir_hash():
 
     data = str(pid) + str(time)
 
-    dir_hash = hashlib.md5()
-    dir_hash.update(data.encode("utf-8"))
+    dir_hash = md5(data.encode("utf-8")).hexdigest()
 
-    LOG.debug('The generated temporary directory hash is %s.',
-              dir_hash.hexdigest())
+    LOG.debug('The generated temporary directory hash is %s.', dir_hash)
 
-    return dir_hash.hexdigest()
+    return dir_hash
