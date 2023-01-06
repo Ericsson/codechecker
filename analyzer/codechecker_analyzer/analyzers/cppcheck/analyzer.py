@@ -101,8 +101,10 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         # * --std c99
         # * -std=c99
         # * --std=c99
-        # BUT NOT: -std c99
-        std_regex = re.compile("-?-std.*")
+        # BUT NOT:
+        # * -std c99
+        # * -stdlib=libc++
+        std_regex = re.compile("-?-std[ |=].*")
         for i, analyzer_option in enumerate(self.buildaction.analyzer_options):
             if interesting_option.match(analyzer_option):
                 params.extend([analyzer_option])
