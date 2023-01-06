@@ -31,11 +31,11 @@ from codechecker_report_converter.report.output import baseline, codeclimate, \
 from codechecker_report_converter.report.output.html import \
     html as report_to_html
 from codechecker_report_converter.report.statistics import Statistics
-from codechecker_report_converter.util import dump_json_output, \
-    load_json_or_empty
+from codechecker_report_converter.util import dump_json_output
 
 from codechecker_common import logger
 from codechecker_common.checker_labels import CheckerLabels
+from codechecker_common.util import load_json
 
 from codechecker_web.shared import convert, webserver_context
 
@@ -1619,7 +1619,7 @@ def handle_import(args):
 
     client = setup_client(args.product_url)
 
-    data = load_json_or_empty(args.input, default=None)
+    data = load_json(args.input, default=None)
     if not data:
         LOG.error("Failed to import data!")
         sys.exit(1)

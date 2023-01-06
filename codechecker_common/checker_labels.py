@@ -4,7 +4,7 @@ from collections import defaultdict
 from typing import Any, cast, DefaultDict, Dict, Iterable, List, Optional, \
     Set, Tuple, Union
 
-from codechecker_report_converter.util import load_json_or_empty
+from codechecker_common.util import load_json
 
 
 # TODO: Most of the methods of this class get an optional analyzer name. If
@@ -31,7 +31,7 @@ class CheckerLabels:
         self.__descriptions = {}
 
         if 'descriptions.json' in os.listdir(checker_labels_dir):
-            self.__descriptions = load_json_or_empty(os.path.join(
+            self.__descriptions = load_json(os.path.join(
                 checker_labels_dir, 'descriptions.json'))
 
         label_json_files = map(
@@ -63,7 +63,7 @@ class CheckerLabels:
         all_labels = {}
 
         for label_file in label_files:
-            data = load_json_or_empty(label_file)
+            data = load_json(label_file)
             analyzer_labels = defaultdict(list)
 
             for checker, labels in data['labels'].items():

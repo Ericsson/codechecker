@@ -22,7 +22,6 @@ import sys
 
 from typing import List
 
-from codechecker_report_converter.util import load_json_or_empty
 from tu_collector import tu_collector
 
 from codechecker_analyzer import analyzer, analyzer_context, env
@@ -34,6 +33,7 @@ from codechecker_analyzer.buildlog import log_parser
 from codechecker_common import arg, logger, cmd_config
 from codechecker_common.skiplist_handler import SkipListHandler, \
     SkipListHandlers
+from codechecker_common.util import load_json
 
 
 LOG = logger.get_logger('system')
@@ -933,7 +933,7 @@ def main(args):
             sys.exit(1)
         compiler_info_file = args.compiler_info_file
 
-    compile_commands = load_json_or_empty(args.logfile)
+    compile_commands = load_json(args.logfile)
     if compile_commands is None:
         sys.exit(1)
     __change_args_to_command_in_comp_db(compile_commands)
@@ -1052,7 +1052,7 @@ def main(args):
     metadata_file = os.path.join(args.output_path, 'metadata.json')
     metadata_prev = None
     if os.path.exists(metadata_file):
-        metadata_prev = load_json_or_empty(metadata_file)
+        metadata_prev = load_json(metadata_file)
         metadata_tool['result_source_files'] = \
             __get_result_source_files(metadata_prev)
 

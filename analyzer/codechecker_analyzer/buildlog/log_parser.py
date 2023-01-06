@@ -23,11 +23,10 @@ import tempfile
 import traceback
 from typing import Dict, List, Optional
 
-from codechecker_report_converter.util import load_json_or_empty
-
 from codechecker_analyzer.analyzers import clangsa
 
 from codechecker_common.logger import get_logger
+from codechecker_common.util import load_json
 
 from .. import gcc_toolchain
 from .build_action import BuildAction
@@ -542,7 +541,7 @@ class ImplicitCompilerInfo:
         ICI = ImplicitCompilerInfo
         ICI.compiler_info = {}
 
-        contents = load_json_or_empty(file_path, {})
+        contents = load_json(file_path, {})
         for k, v in contents.items():
             k = json.loads(k)
             ICI.compiler_info[

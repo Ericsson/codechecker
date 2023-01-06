@@ -11,9 +11,8 @@ import yaml
 
 from typing import List
 
-from codechecker_report_converter.util import load_json_or_empty
-
 from codechecker_common import logger
+from codechecker_common.util import load_json
 
 LOG = logger.get_logger('system')
 
@@ -63,7 +62,7 @@ def process_config_file(args, subcommand_name):
             with open(config_file, encoding='utf-8', errors='ignore') as f:
                 cfg = yaml.load(f, Loader=yaml.BaseLoader)
         else:
-            cfg = load_json_or_empty(config_file, default={})
+            cfg = load_json(config_file, default={})
 
         # The subcommand name is analyze but the
         # configuration section name is analyzer.

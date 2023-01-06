@@ -15,11 +15,10 @@ import shutil
 import tempfile
 import unittest
 
-from codechecker_report_converter.util import load_json_or_empty
-
 from codechecker_analyzer.buildlog import log_parser
 from codechecker_common.skiplist_handler import SkipListHandler, \
     SkipListHandlers
+from codechecker_common.util import load_json
 
 
 class LogParserTest(unittest.TestCase):
@@ -77,7 +76,7 @@ class LogParserTest(unittest.TestCase):
         # define being considered a file and ignored, for now.
 
         build_actions, _ = log_parser.\
-            parse_unique_log(load_json_or_empty(logfile), self.__this_dir)
+            parse_unique_log(load_json(logfile), self.__this_dir)
         build_action = build_actions[0]
 
         self.assertEqual(build_action.source, r'/tmp/a.cpp')
@@ -97,7 +96,7 @@ class LogParserTest(unittest.TestCase):
         # and --target=x86_64-linux-gnu.
 
         build_actions, _ = log_parser.\
-            parse_unique_log(load_json_or_empty(logfile), self.__this_dir)
+            parse_unique_log(load_json(logfile), self.__this_dir)
         build_action = build_actions[0]
 
         self.assertEqual(build_action.source, r'/tmp/a.cpp')
@@ -110,7 +109,7 @@ class LogParserTest(unittest.TestCase):
         logfile = os.path.join(self.__test_files, "ldlogger-new-space.json")
 
         build_actions, _ = log_parser.\
-            parse_unique_log(load_json_or_empty(logfile), self.__this_dir)
+            parse_unique_log(load_json(logfile), self.__this_dir)
         build_action = build_actions[0]
 
         self.assertEqual(build_action.source, r'/tmp/a b.cpp')
@@ -120,7 +119,7 @@ class LogParserTest(unittest.TestCase):
         logfile = os.path.join(self.__test_files, "ldlogger-new-at.json")
 
         build_actions, _ = log_parser.\
-            parse_unique_log(load_json_or_empty(logfile), self.__this_dir)
+            parse_unique_log(load_json(logfile), self.__this_dir)
         build_action = build_actions[0]
 
         self.assertEqual(len(build_action.analyzer_options), 1)
@@ -129,7 +128,7 @@ class LogParserTest(unittest.TestCase):
 
         # Test the same stuff with response files.
         logfile = os.path.join(self.__test_files, "ldlogger-new-response.json")
-        logjson = load_json_or_empty(logfile)
+        logjson = load_json(logfile)
         # Make it relative to the response file.
         logjson[0]['directory'] = self.__test_files
 
@@ -154,7 +153,7 @@ class LogParserTest(unittest.TestCase):
         logfile = os.path.join(self.__test_files, "intercept-old.json")
 
         build_actions, _ = log_parser.\
-            parse_unique_log(load_json_or_empty(logfile), self.__this_dir)
+            parse_unique_log(load_json(logfile), self.__this_dir)
         build_action = build_actions[0]
 
         self.assertEqual(build_action.source, r'/tmp/a.cpp')
@@ -169,7 +168,7 @@ class LogParserTest(unittest.TestCase):
         logfile = os.path.join(self.__test_files, "intercept-old-space.json")
 
         build_actions, _ = log_parser.\
-            parse_unique_log(load_json_or_empty(logfile), self.__this_dir)
+            parse_unique_log(load_json(logfile), self.__this_dir)
         build_action = build_actions[0]
 
         self.assertEqual(build_action.source, '/tmp/a b.cpp')
@@ -191,7 +190,7 @@ class LogParserTest(unittest.TestCase):
         # The define is passed to the analyzer properly.
 
         build_actions, _ = log_parser.\
-            parse_unique_log(load_json_or_empty(logfile), self.__this_dir)
+            parse_unique_log(load_json(logfile), self.__this_dir)
         build_action = build_actions[0]
 
         self.assertEqual(build_action.source, r'/tmp/a.cpp')
@@ -204,7 +203,7 @@ class LogParserTest(unittest.TestCase):
         logfile = os.path.join(self.__test_files, "intercept-new-space.json")
 
         build_actions, _ = log_parser.\
-            parse_unique_log(load_json_or_empty(logfile), self.__this_dir)
+            parse_unique_log(load_json(logfile), self.__this_dir)
         build_action = build_actions[0]
 
         self.assertEqual(build_action.source, '/tmp/a b.cpp')
@@ -278,7 +277,7 @@ class LogParserTest(unittest.TestCase):
         logfile = os.path.join(self.__test_files, "include.json")
 
         build_actions, _ = log_parser.\
-            parse_unique_log(load_json_or_empty(logfile), self.__this_dir)
+            parse_unique_log(load_json(logfile), self.__this_dir)
         build_action = build_actions[0]
 
         self.assertEqual(len(build_action.analyzer_options), 4)
@@ -511,7 +510,7 @@ class LogParserTest(unittest.TestCase):
         logfile = os.path.join(self.compile_command_file_path)
 
         build_actions, _ = log_parser. \
-            parse_unique_log(load_json_or_empty(logfile), self.__this_dir)
+            parse_unique_log(load_json(logfile), self.__this_dir)
         build_action = build_actions[0]
         self.assertEqual(len(build_action.analyzer_options), 1)
         self.assertEqual(build_action.analyzer_options[0],
@@ -537,7 +536,7 @@ class LogParserTest(unittest.TestCase):
         logfile = os.path.join(self.compile_command_file_path)
 
         build_actions, _ = log_parser. \
-            parse_unique_log(load_json_or_empty(logfile), self.__this_dir)
+            parse_unique_log(load_json(logfile), self.__this_dir)
         build_action = build_actions[0]
 
         self.assertEqual(len(build_action.analyzer_options), 1)
@@ -576,7 +575,7 @@ class LogParserTest(unittest.TestCase):
         logfile = os.path.join(self.compile_command_file_path)
 
         build_actions, _ = log_parser. \
-            parse_unique_log(load_json_or_empty(logfile), self.__this_dir)
+            parse_unique_log(load_json(logfile), self.__this_dir)
 
         self.assertEqual(len(build_actions), 2)
 
@@ -610,7 +609,7 @@ class LogParserTest(unittest.TestCase):
                     file=src_file_path
                 )]))
 
-        build_actions, _ = log_parser.parse_unique_log(load_json_or_empty(
+        build_actions, _ = log_parser.parse_unique_log(load_json(
             self.compile_command_file_path), self.__this_dir)
 
         self.assertEqual(len(build_actions), 1)

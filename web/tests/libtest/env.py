@@ -19,7 +19,7 @@ import socket
 import stat
 import subprocess
 
-from codechecker_report_converter.util import load_json_or_empty
+from codechecker_common.util import load_json
 
 from .thrift_client_to_db import get_auth_client
 from .thrift_client_to_db import get_config_client
@@ -348,7 +348,7 @@ def enable_auth(workspace):
     server_cfg_file = os.path.join(workspace,
                                    server_config_filename)
 
-    scfg_dict = load_json_or_empty(server_cfg_file, {})
+    scfg_dict = load_json(server_cfg_file, {})
     scfg_dict["authentication"]["enabled"] = True
     scfg_dict["authentication"]["method_dictionary"]["enabled"] = True
     scfg_dict["authentication"]["method_dictionary"]["auths"] = \
@@ -388,7 +388,7 @@ def enable_storage_of_analysis_statistics(workspace):
     server_cfg_file = os.path.join(workspace,
                                    server_config_filename)
 
-    scfg_dict = load_json_or_empty(server_cfg_file, {})
+    scfg_dict = load_json(server_cfg_file, {})
     scfg_dict["store"]["analysis_statistics_dir"] = \
         os.path.join(workspace, 'analysis_statistics')
 

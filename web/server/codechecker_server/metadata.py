@@ -12,9 +12,8 @@ Helpers to parse metadata.json file.
 from typing import Any, Dict, List, Optional, Set, Union
 import os
 
-from codechecker_report_converter.util import load_json_or_empty
-
 from codechecker_common.logger import get_logger
+from codechecker_common.util import load_json
 
 
 LOG = get_logger('system')
@@ -64,7 +63,7 @@ class MetadataInfoParser:
 
         self.__metadata_dict = {}
         if os.path.isfile(metadata_file_path):
-            self.__metadata_dict = load_json_or_empty(metadata_file_path, {})
+            self.__metadata_dict = load_json(metadata_file_path, {})
 
             if 'version' in self.__metadata_dict:
                 self.__process_metadata_info_v2()

@@ -16,8 +16,7 @@ import os
 import sys
 from typing import Dict, Optional, Set
 
-from codechecker_report_converter.util import dump_json_output, \
-    load_json_or_empty
+from codechecker_report_converter.util import dump_json_output
 from codechecker_report_converter.report import report_file, \
     reports as reports_helper
 from codechecker_report_converter.report.output import baseline, codeclimate, \
@@ -34,6 +33,7 @@ from codechecker_analyzer import analyzer_context, suppress_handler
 from codechecker_common import arg, logger, cmd_config
 from codechecker_common.skiplist_handler import SkipListHandler, \
     SkipListHandlers
+from codechecker_common.util import load_json
 
 
 LOG = logger.get_logger('system')
@@ -257,7 +257,7 @@ def get_metadata(dir_path: str) -> Optional[Dict]:
     """ Get metadata from the given dir path or None if not exists. """
     metadata_file = os.path.join(dir_path, "metadata.json")
     if os.path.exists(metadata_file):
-        return load_json_or_empty(metadata_file)
+        return load_json(metadata_file)
 
     return None
 
