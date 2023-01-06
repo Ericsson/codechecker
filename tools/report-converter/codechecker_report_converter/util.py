@@ -9,7 +9,6 @@
 import json
 import logging
 import os
-import portalocker
 import sys
 import fnmatch
 import re
@@ -98,46 +97,6 @@ def trim_path_prefixes(path: str, prefixes: Optional[List[str]]) -> str:
         return path
 
     return path[len(longest_matching_prefix):]
-
-
-def load_json_or_empty(path: str, default=None, kind=None, lock=False):
-    """
-    Load the contents of the given file as a JSON and return it's value,
-    or default if the file can't be loaded.
-    """
-
-    ret = default
-    try:
-        with open(path, 'r', encoding='utf-8', errors='ignore') as handle:
-            if lock:
-                portalocker.lock(handle, portalocker.LOCK_SH)
-
-            ret = json.loads(handle.read())
-
-            if lock:
-                portalocker.unlock(handle)
-    except IOError as ex:
-        LOG.warning("Failed to open %s file: %s",
-                    kind if kind else 'json',
-                    path)
-        LOG.warning(ex)
-    except OSError as ex:
-        LOG.warning("Failed to open %s file: %s",
-                    kind if kind else 'json',
-                    path)
-        LOG.warning(ex)
-    except ValueError as ex:
-        LOG.warning("'%s' is not a valid %s file.",
-                    kind if kind else 'json',
-                    path)
-        LOG.warning(ex)
-    except TypeError as ex:
-        LOG.warning('Failed to process %s file: %s',
-                    kind if kind else 'json',
-                    path)
-        LOG.warning(ex)
-
-    return ret
 
 
 def dump_json_output(

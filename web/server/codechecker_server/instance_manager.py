@@ -20,9 +20,8 @@ import stat
 
 import portalocker
 
-from codechecker_report_converter.util import load_json_or_empty
-
 from codechecker_common.logger import get_logger
+from codechecker_common.util import load_json
 
 LOG = get_logger('system')
 
@@ -135,6 +134,6 @@ def get_instances(folder=None):
     # This method does NOT write the descriptor file.
 
     descriptor = __get_instance_descriptor_path(folder)
-    instances = load_json_or_empty(descriptor, {}, lock=True)
+    instances = load_json(descriptor, {}, lock=True)
 
     return [i for i in instances if __check_instance(i['hostname'], i['pid'])]

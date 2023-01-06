@@ -9,9 +9,8 @@
 Helpers to manage metadata.json file.
 """
 
-from codechecker_report_converter.util import load_json_or_empty
-
 from codechecker_common.logger import get_logger
+from codechecker_common.util import load_json
 
 LOG = get_logger('system')
 
@@ -63,7 +62,7 @@ def merge_metadata_json(metadata_files, num_of_report_dir=1):
 
     for metadata_file in metadata_files:
         try:
-            metadata_dict = load_json_or_empty(metadata_file, {})
+            metadata_dict = load_json(metadata_file, {})
             metadata = metadata_v1_to_v2(metadata_dict)
             for tool in metadata['tools']:
                 ret['tools'].append(tool)

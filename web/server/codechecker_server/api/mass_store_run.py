@@ -24,10 +24,11 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 import codechecker_api_shared
 from codechecker_api.codeCheckerDBAccess_v6 import ttypes
 
-from codechecker_common import skiplist_handler, util
+from codechecker_common import skiplist_handler
 from codechecker_common.logger import get_logger
+from codechecker_common.util import load_json
 
-from codechecker_report_converter import util
+from codechecker_report_converter.util import trim_path_prefixes
 from codechecker_report_converter.report import report_file, Report
 from codechecker_report_converter.report.hash import get_report_path_hash
 from codechecker_report_converter.source_code_comment_handler import \
@@ -181,7 +182,7 @@ def get_blame_file_data(
     tracking_branch = None
 
     if os.path.isfile(blame_file):
-        data = util.load_json_or_empty(blame_file)
+        data = load_json(blame_file)
         if data:
             remote_url = data.get("remote_url")
             tracking_branch = data.get("tracking_branch")
@@ -392,7 +393,7 @@ class MassStoreRun:
             source_file_name = os.path.join(source_root, file_name.strip("/"))
             source_file_name = os.path.realpath(source_file_name)
             LOG.debug("Storing source file: %s", source_file_name)
-            trimmed_file_path = util.trim_path_prefixes(
+            trimmed_file_path = trim_path_prefixes(
                 file_name, self.__trim_path_prefixes)
 
             if not os.path.isfile(source_file_name):
@@ -1103,8 +1104,7 @@ class MassStoreRun:
                 content_hash_file = os.path.join(
                     zip_dir, 'content_hashes.json')
 
-                filename_to_hash = \
-                    util.load_json_or_empty(content_hash_file, {})
+                filename_to_hash = load_json(content_hash_file, {})
 
                 with LogTask(run_name=self.__name,
                              message="Store source files"):

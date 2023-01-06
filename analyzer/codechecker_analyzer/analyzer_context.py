@@ -16,11 +16,10 @@ from distutils.spawn import find_executable
 import os
 import sys
 
-from codechecker_report_converter.util import load_json_or_empty
-
 from codechecker_common import logger
 from codechecker_common.checker_labels import CheckerLabels
 from codechecker_common.singleton import Singleton
+from codechecker_common.util import load_json
 
 from . import env
 
@@ -80,7 +79,7 @@ class Context(metaclass=Singleton):
             self._data_files_dir_path, "config", "config.json")
 
         LOG.debug('Reading config: %s', pckg_config_file)
-        cfg_dict = load_json_or_empty(pckg_config_file)
+        cfg_dict = load_json(pckg_config_file)
 
         if not cfg_dict:
             raise ValueError(f"No configuration file '{pckg_config_file}' can "
@@ -95,7 +94,7 @@ class Context(metaclass=Singleton):
             self._data_files_dir_path, "config", "package_layout.json")
 
         LOG.debug('Reading config: %s', layout_cfg_file)
-        lcfg_dict = load_json_or_empty(layout_cfg_file)
+        lcfg_dict = load_json(layout_cfg_file)
 
         if not lcfg_dict:
             raise ValueError(f"No configuration file '{layout_cfg_file}' can "
@@ -117,7 +116,7 @@ class Context(metaclass=Singleton):
         """
         Get the package version from the version config file.
         """
-        vfile_data = load_json_or_empty(self.version_file)
+        vfile_data = load_json(self.version_file)
 
         if not vfile_data:
             sys.exit(1)

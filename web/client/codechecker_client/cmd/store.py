@@ -35,11 +35,11 @@ from codechecker_report_converter.report import Report, report_file, \
 from codechecker_report_converter.report.hash import HashType
 from codechecker_report_converter.source_code_comment_handler import \
     SourceCodeCommentHandler
-from codechecker_report_converter.util import load_json_or_empty
 
 from codechecker_client import client as libclient
 from codechecker_common import arg, logger, cmd_config
 from codechecker_common.checker_labels import CheckerLabels
+from codechecker_common.util import load_json
 
 from codechecker_web.shared import webserver_context, host_check
 from codechecker_web.shared.env import get_default_workspace
@@ -299,7 +299,7 @@ def __get_run_name(input_list):
     for input_path in input_list:
         metafile = os.path.join(input_path, "metadata.json")
         if os.path.isdir(input_path) and os.path.exists(metafile):
-            metajson = load_json_or_empty(metafile)
+            metajson = load_json(metafile)
 
             if 'version' in metajson and metajson['version'] >= 2:
                 for tool in metajson.get('tools', {}):

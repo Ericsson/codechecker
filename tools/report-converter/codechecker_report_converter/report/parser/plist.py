@@ -10,6 +10,7 @@ Parse the plist output of an analyzer
 """
 
 import importlib
+import json
 import logging
 import os
 import plistlib
@@ -32,7 +33,6 @@ from codechecker_report_converter.report import BugPathEvent, \
 from codechecker_report_converter.report.hash import get_report_hash, HashType
 from codechecker_report_converter.report.parser.base import AnalyzerInfo, \
     BaseParser
-from codechecker_report_converter.util import load_json_or_empty
 
 
 LOG = logging.getLogger('report-converter')
@@ -413,6 +413,31 @@ class Parser(BaseParser):
 
         return macro_expansions
 
+    def __load_json(self, path: str):
+        """
+        Load the contents of the given file as a JSON and return it's value,
+        or default if the file can't be loaded.
+        """
+
+        ret = {}
+        try:
+            with open(path, 'r', encoding='utf-8', errors='ignore') as handle:
+                ret = json.load(handle)
+        except IOError as ex:
+            LOG.warning("Failed to open json file: %s", path)
+            LOG.warning(ex)
+        except OSError as ex:
+            LOG.warning("Failed to open json file: %s", path)
+            LOG.warning(ex)
+        except ValueError as ex:
+            LOG.warning("%s is not a valid json file.", path)
+            LOG.warning(ex)
+        except TypeError as ex:
+            LOG.warning('Failed to process json file: %s', path)
+            LOG.warning(ex)
+
+        return ret
+
     def __get_tool_info(self) -> Tuple[str, str]:
         """ Get tool info.
 
@@ -425,7 +450,7 @@ class Parser(BaseParser):
             analyzer_version_file_path = os.path.join(
                 data_files_dir_path, 'config', 'analyzer_version.json')
             if os.path.exists(analyzer_version_file_path):
-                data = load_json_or_empty(analyzer_version_file_path, {})
+                data = self.__load_json(analyzer_version_file_path)
                 version = data.get('version')
                 if version:
                     return 'CodeChecker', f"{version['major']}." \

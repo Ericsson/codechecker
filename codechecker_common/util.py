@@ -11,6 +11,8 @@ Util module.
 
 
 import itertools
+import json
+import portalocker
 
 from codechecker_common.logger import get_logger
 
@@ -39,3 +41,35 @@ def chunks(iterator, n):
     for first in iterator:
         rest_of_chunk = itertools.islice(iterator, 0, n - 1)
         yield itertools.chain([first], rest_of_chunk)
+
+
+def load_json(path: str, default=None, lock=False):
+    """
+    Load the contents of the given file as a JSON and return it's value,
+    or default if the file can't be loaded.
+    """
+
+    ret = default
+    try:
+        with open(path, 'r', encoding='utf-8', errors='ignore') as handle:
+            if lock:
+                portalocker.lock(handle, portalocker.LOCK_SH)
+
+            ret = json.load(handle)
+
+            if lock:
+                portalocker.unlock(handle)
+    except IOError as ex:
+        LOG.warning("Failed to open json file: %s", path)
+        LOG.warning(ex)
+    except OSError as ex:
+        LOG.warning("Failed to open json file: %s", path)
+        LOG.warning(ex)
+    except ValueError as ex:
+        LOG.warning("%s is not a valid json file.", path)
+        LOG.warning(ex)
+    except TypeError as ex:
+        LOG.warning('Failed to process json file: %s', path)
+        LOG.warning(ex)
+
+    return ret
