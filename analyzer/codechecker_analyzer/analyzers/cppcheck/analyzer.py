@@ -12,7 +12,6 @@ from distutils.version import StrictVersion
 from pathlib import Path
 import os
 import re
-import shlex
 import shutil
 import subprocess
 import xml.etree.ElementTree as ET
@@ -301,7 +300,6 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         command = [analyzer_binary, "--version"]
 
         try:
-            command = shlex.split(' '.join(command))
             result = subprocess.check_output(
                     command,
                     env=env,
