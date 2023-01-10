@@ -91,6 +91,16 @@ class LocalRemote(unittest.TestCase):
         count = len(re.findall(r'\[core\.NullDereference\]', out))
         self.assertEqual(count, 4)
 
+    def test_local_to_remote_unique_diff(self):
+        """Check whether CodeChecker cmd diff crashes when --unique is on."""
+        _, _, code = get_diff_results([self._local_reports],
+                                      [self._run_names[0]],
+                                      '--new', None,
+                                      ["--url", self._url,
+                                       "--uniqueing", "on"])
+
+        self.assertEqual(code, 2)
+
     def test_remote_to_local_compare_count_new(self):
         """Count the new results with no filter."""
         out, _, _ = get_diff_results([self._run_names[0]],
