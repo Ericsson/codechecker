@@ -800,7 +800,7 @@ def main(args):
 
         # --- Step 2.: Perform the analysis.
         analyze_args = argparse.Namespace(
-            logfile=logfile,
+            input=logfile,
             output_path=output_dir,
             output_format='plist',
             jobs=args.jobs,

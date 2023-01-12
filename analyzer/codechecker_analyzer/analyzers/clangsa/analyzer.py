@@ -451,7 +451,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             handler.ctu_on_demand = \
                 'ctu_ast_mode' in args and \
                 args.ctu_ast_mode == 'parse-on-demand'
-            handler.log_file = args.logfile
 
         try:
             with open(args.clangsa_args_cfg_file, 'r', encoding='utf8',

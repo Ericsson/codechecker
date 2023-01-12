@@ -43,10 +43,17 @@ def chunks(iterator, n):
         yield itertools.chain([first], rest_of_chunk)
 
 
-def load_json(path: str, default=None, lock=False):
+def load_json(path: str, default=None, lock=False, display_warning=True):
     """
     Load the contents of the given file as a JSON and return it's value,
     or default if the file can't be loaded.
+
+    path -- JSON file path to load.
+    defaut -- Value to return if JSON can't be loaded for some reason (e.g
+              file doesn't exist, bad JSON format, etc.)
+    lock -- Use portalocker to lock the JSON file for exclusive use.
+    display_warning -- Display warning messages why the JSON file can't be
+                       loaded (e.g. bad format, failed to open file, etc.)
     """
 
     ret = default
@@ -60,16 +67,20 @@ def load_json(path: str, default=None, lock=False):
             if lock:
                 portalocker.unlock(handle)
     except IOError as ex:
-        LOG.warning("Failed to open json file: %s", path)
-        LOG.warning(ex)
+        if display_warning:
+            LOG.warning("Failed to open json file: %s", path)
+            LOG.warning(ex)
     except OSError as ex:
-        LOG.warning("Failed to open json file: %s", path)
-        LOG.warning(ex)
+        if display_warning:
+            LOG.warning("Failed to open json file: %s", path)
+            LOG.warning(ex)
     except ValueError as ex:
-        LOG.warning("%s is not a valid json file.", path)
-        LOG.warning(ex)
+        if display_warning:
+            LOG.warning("%s is not a valid json file.", path)
+            LOG.warning(ex)
     except TypeError as ex:
-        LOG.warning('Failed to process json file: %s', path)
-        LOG.warning(ex)
+        if display_warning:
+            LOG.warning('Failed to process json file: %s', path)
+            LOG.warning(ex)
 
     return ret

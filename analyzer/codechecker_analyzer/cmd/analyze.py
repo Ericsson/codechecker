@@ -16,7 +16,6 @@ import json
 import multiprocessing
 import os
 import re
-import shlex
 import shutil
 import sys
 
@@ -24,10 +23,11 @@ from typing import List
 
 from tu_collector import tu_collector
 
-from codechecker_analyzer import analyzer, analyzer_context
+from codechecker_analyzer import analyzer, analyzer_context, \
+    compilation_database
 from codechecker_analyzer.analyzers import analyzer_types, clangsa
 from codechecker_analyzer.arg import \
-        OrderedCheckersAction, OrderedConfigAction
+        OrderedCheckersAction, OrderedConfigAction, existing_abspath
 from codechecker_analyzer.buildlog import log_parser
 
 from codechecker_common import arg, logger, cmd_config
@@ -153,12 +153,12 @@ def add_arguments_to_parser(parser):
     Add the subcommand's arguments to the given argparse.ArgumentParser.
     """
 
-    parser.add_argument('logfile',
-                        type=str,
-                        help="Path to the JSON compilation command database "
-                             "files which were created during the build. "
-                             "The analyzers will check only the files "
-                             "registered in these build databases.")
+    parser.add_argument('input',
+                        type=existing_abspath,
+                        help="The input of the analysis can be either a "
+                             "compilation database JSON file, a path to a "
+                             "source file or a path to a directory containing "
+                             "source files.")
 
     parser.add_argument('-j', '--jobs',
                         type=int,
@@ -854,26 +854,11 @@ def __get_result_source_files(metadata):
     return result_src_files
 
 
-def __change_args_to_command_in_comp_db(compile_commands):
-    """
-    In CodeChecker we support compilation databases where the JSON object of a
-    build action contains "file", "directory" and "command" fields. However,
-    compilation databases from intercept build contain "arguments" instead of
-    "command" which is a list of command-line arguments instead of the same
-    command as a single string. This function make this appropriate conversion.
-    """
-    for cc in compile_commands:
-        if 'command' not in cc:
-            # TODO: shlex.join(cmd) would be more elegant after upgrading to
-            # Python 3.8.
-            cc['command'] = ' '.join(map(shlex.quote, cc['arguments']))
-            del cc['arguments']
-
-
 def main(args):
     """
-    Perform analysis on the given logfiles and store the results in a machine-
-    readable format.
+    Perform analysis on the given inputs. Possible inputs are a compilation
+    database, a source file or the path of a project. The analysis results are
+    stored to a report directory given by -o flag.
     """
     logger.setup_logger(args.verbose if 'verbose' in args else None)
 
@@ -886,10 +871,6 @@ def main(args):
         cmd_config.check_config_file(args)
     except FileNotFoundError as fnerr:
         LOG.error(fnerr)
-        sys.exit(1)
-
-    if not os.path.exists(args.logfile):
-        LOG.error("The specified logfile '%s' does not exist!", args.logfile)
         sys.exit(1)
 
     args.output_path = os.path.abspath(args.output_path)
@@ -932,10 +913,10 @@ def main(args):
             sys.exit(1)
         compiler_info_file = args.compiler_info_file
 
-    compile_commands = load_json(args.logfile)
+    compile_commands = \
+        compilation_database.gather_compilation_database(args.input)
     if compile_commands is None:
         sys.exit(1)
-    __change_args_to_command_in_comp_db(compile_commands)
 
     # Process the skip list if present.
     skip_handlers = __get_skip_handlers(args, compile_commands)
@@ -1092,16 +1073,8 @@ def main(args):
 
     # WARN: store command will search for this file!!!!
     compile_cmd_json = os.path.join(args.output_path, 'compile_cmd.json')
-    try:
-        source = os.path.abspath(args.logfile)
-        target = os.path.abspath(compile_cmd_json)
-
-        if source != target:
-            shutil.copyfile(source, target)
-    except shutil.Error:
-        LOG.debug("Compilation database JSON file is the same.")
-    except Exception:
-        LOG.debug("Copying compilation database JSON file failed.")
+    with open(compile_cmd_json, 'w', encoding="utf-8", errors="ignore") as f:
+        json.dump(compile_commands, f, indent=2)
 
     try:
         # pylint: disable=no-name-in-module

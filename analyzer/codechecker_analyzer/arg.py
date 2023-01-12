@@ -9,6 +9,7 @@
 
 
 import argparse
+import os
 
 
 class OrderedCheckersAction(argparse.Action):
@@ -71,3 +72,18 @@ class OrderedConfigAction(argparse.Action):
             if flag in dest:
                 dest.remove(flag)
             dest.append(flag)
+
+
+def existing_abspath(path: str) -> str:
+    """
+    This function can be used at "type" argument of argparse.add_argument()
+    function. It returns the absolute path of the given path if exists
+    otherwise raises an argparse.ArgumentTypeError which constitutes in a
+    graceful error message automatically by argparse module.
+    """
+    path = os.path.abspath(path)
+
+    if not os.path.exists(path):
+        raise argparse.ArgumentTypeError(f"File doesn't exist: {path}")
+
+    return path
