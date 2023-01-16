@@ -1788,7 +1788,9 @@ class ThriftRequestHandler:
                                   Report.review_status_date,
                                   Report.review_status_is_in_source,
                                   File.filename, File.filepath,
-                                  Report.path_length, Report.analyzer_name) \
+                                  Report.path_length, Report.analyzer_name,
+                                  Report.file_id, Report.run_id, Report.line,
+                                  Report.column, Report.detection_status) \
                     .outerjoin(File, Report.file_id == File.id) \
                     .outerjoin(sorted_reports,
                                sorted_reports.c.id == Report.id) \
@@ -1814,7 +1816,8 @@ class ThriftRequestHandler:
                     review_status_author, review_status_message, \
                     review_status_date, review_status_is_in_source, \
                     filename, _, bug_path_len, \
-                        analyzer_name in query_result:
+                        analyzer_name, file_id, run_id, line, column, \
+                        d_status in query_result:
 
                     review_data = create_review_data(
                         review_status,
@@ -1824,18 +1827,25 @@ class ThriftRequestHandler:
                         review_status_is_in_source)
 
                     results.append(
-                        ReportData(bugHash=bug_id,
+                        ReportData(runId=run_id,
+                                   bugHash=bug_id,
                                    checkedFile=filename,
                                    checkerMsg=checker_msg,
+                                   reportId=report_id,
+                                   fileId=file_id,
+                                   line=line,
+                                   column=column,
                                    checkerId=checker,
                                    severity=severity,
                                    reviewData=review_data,
+                                   detectionStatus=detection_status_enum(
+                                       d_status),
                                    detectedAt=str(detected_at),
                                    fixedAt=str(fixed_at),
                                    bugPathLength=bug_path_len,
                                    details=report_details.get(report_id),
                                    analyzerName=analyzer_name))
-            else:
+            else:  # not is_unique
                 sort_types, sort_type_map, order_type_map = \
                     get_sort_map(sort_types)
 
