@@ -1080,7 +1080,7 @@ class TestAnalyze(unittest.TestCase):
                        "--analyzer-config",
                        "clang-tidy:Checks=hicpp-use-nullptr",
                        "--checker-config",
-                       "clang-tidy:hicpp-use-nullptr.NullMacros=MY_NULL"]
+                       "clang-tidy:hicpp-use-nullptr:NullMacros=MY_NULL"]
 
         print(analyze_cmd)
         process = subprocess.Popen(

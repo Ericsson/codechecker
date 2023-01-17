@@ -9,7 +9,6 @@
 Clang Static Analyzer related functions.
 """
 
-
 import os
 import re
 import shlex
@@ -482,17 +481,15 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             'enable_all' in args and args.enable_all)
 
         handler.checker_config = []
-        r = re.compile(r'(?P<analyzer>.+?):(?P<key>.+?)=(?P<value>.+)')
 
         # TODO: This extra "isinstance" check is needed for
         # CodeChecker checkers --checker-config. This command also runs
         # this function in order to construct a config handler.
         if 'checker_config' in args and isinstance(args.checker_config, list):
             for cfg in args.checker_config:
-                m = re.search(r, cfg)
-                if m.group('analyzer') == cls.ANALYZER_NAME:
+                if cfg.analyzer == cls.ANALYZER_NAME:
                     handler.checker_config.append(
-                        m.group('key') + '=' + m.group('value'))
+                        f"{cfg.checker}:{cfg.option}={cfg.value}")
 
         # TODO: This extra "isinstance" check is needed for
         # CodeChecker analyzers --analyzer-config. This command also runs
@@ -500,9 +497,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         if 'analyzer_config' in args and \
                 isinstance(args.analyzer_config, list):
             for cfg in args.analyzer_config:
-                m = re.search(r, cfg)
-                if m.group('analyzer') == cls.ANALYZER_NAME:
-                    handler.checker_config.append(
-                        m.group('key') + '=' + m.group('value'))
+                if cfg.analyzer == cls.ANALYZER_NAME:
+                    handler.checker_config.append(f"{cfg.option}={cfg.value}")
 
         return handler

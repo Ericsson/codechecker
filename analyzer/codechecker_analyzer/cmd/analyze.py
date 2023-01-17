@@ -15,7 +15,6 @@ import collections
 import json
 import multiprocessing
 import os
-import re
 import shutil
 import sys
 
@@ -27,7 +26,8 @@ from codechecker_analyzer import analyzer, analyzer_context, \
     compilation_database
 from codechecker_analyzer.analyzers import analyzer_types, clangsa
 from codechecker_analyzer.arg import \
-        OrderedCheckersAction, OrderedConfigAction, existing_abspath
+    OrderedCheckersAction, OrderedConfigAction, existing_abspath, \
+    analyzer_config, checker_config
 from codechecker_analyzer.buildlog import log_parser
 
 from codechecker_common import arg, logger, cmd_config
@@ -402,10 +402,11 @@ def add_arguments_to_parser(parser):
                                     "clang-tidy' command.")
 
     analyzer_opts.add_argument('--analyzer-config',
+                               type=analyzer_config,
                                dest='analyzer_config',
                                nargs='*',
                                action=OrderedConfigAction,
-                               default=["clang-tidy:HeaderFilterRegex=.*"],
+                               default=argparse.SUPPRESS,
                                help="Analyzer configuration options in the "
                                     "following format: analyzer:key=value. "
                                     "The collection of the options can be "
@@ -414,9 +415,8 @@ def add_arguments_to_parser(parser):
                                     "--analyzer-config'.\n"
                                     "If the file at --tidyargs "
                                     "contains a -config flag then those "
-                                    "options extend these and override "
-                                    "\"HeaderFilterRegex\" if any.\n"
-                                    "To use analyzer configuration file "
+                                    "options extend these.\n"
+                                    "To use an analyzer configuration file "
                                     "in case of Clang Tidy (.clang-tidy) use "
                                     "the "
                                     "'clang-tidy:take-config-from-directory="
@@ -425,6 +425,7 @@ def add_arguments_to_parser(parser):
                                     "binary.")
 
     analyzer_opts.add_argument('--checker-config',
+                               type=checker_config,
                                dest='checker_config',
                                nargs='*',
                                action=OrderedConfigAction,
@@ -887,23 +888,6 @@ def main(args):
 
     if 'enable_all' in args:
         LOG.info("'--enable-all' was supplied for this analysis.")
-
-    config_option_re = re.compile(r'^({}):.+=.+$'.format(
-        '|'.join(analyzer_types.supported_analyzers)))
-
-    # Check the format of analyzer options.
-    if 'analyzer_config' in args:
-        for config in args.analyzer_config:
-            if not re.match(config_option_re, config):
-                LOG.error("Analyzer option in wrong format: %s", config)
-                sys.exit(1)
-
-    # Check the format of checker options.
-    if 'checker_config' in args:
-        for config in args.checker_config:
-            if not re.match(config_option_re, config):
-                LOG.error("Checker option in wrong format: %s", config)
-                sys.exit(1)
 
     # Enable alpha uniqueing by default if ctu analysis is used.
     if 'none' in args.compile_uniqueing and 'ctu_phases' in args:

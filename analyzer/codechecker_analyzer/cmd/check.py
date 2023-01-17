@@ -20,7 +20,8 @@ import tempfile
 
 from codechecker_analyzer.analyzers import analyzer_types
 from codechecker_analyzer.arg import \
-        OrderedCheckersAction, OrderedConfigAction
+    OrderedCheckersAction, OrderedConfigAction, \
+    analyzer_config, checker_config
 
 from codechecker_common import arg, cmd_config, logger
 from codechecker_report_converter.source_code_comment_handler import \
@@ -348,10 +349,11 @@ used to generate a log file on the fly.""")
                                     "clang-tidy' command.")
 
     analyzer_opts.add_argument('--analyzer-config',
+                               type=analyzer_config,
                                dest='analyzer_config',
                                nargs='*',
                                action=OrderedConfigAction,
-                               default=["clang-tidy:HeaderFilterRegex=.*"],
+                               default=argparse.SUPPRESS,
                                help="Analyzer configuration options in the "
                                     "following format: analyzer:key=value. "
                                     "The collection of the options can be "
@@ -360,9 +362,8 @@ used to generate a log file on the fly.""")
                                     "--analyzer-config'.\n"
                                     "If the file at --tidyargs "
                                     "contains a -config flag then those "
-                                    "options extend these and override "
-                                    "\"HeaderFilterRegex\" if any.\n"
-                                    "To use analyzer configuration file "
+                                    "options extend these.\n"
+                                    "To use an analyzer configuration file "
                                     "in case of Clang Tidy (.clang-tidy) use "
                                     "the "
                                     "'clang-tidy:take-config-from-directory="
@@ -371,6 +372,7 @@ used to generate a log file on the fly.""")
                                     "binary.")
 
     analyzer_opts.add_argument('--checker-config',
+                               type=checker_config,
                                dest='checker_config',
                                nargs='*',
                                action=OrderedConfigAction,
