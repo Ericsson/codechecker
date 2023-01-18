@@ -15,6 +15,7 @@ from multiprocessing.managers import SyncManager
 import os
 import shutil
 import signal
+import sys
 import time
 
 from codechecker_common.logger import get_logger
@@ -180,11 +181,9 @@ def perform_analysis(args, skip_handlers, actions, metadata_tool,
         missing_checkers = checkers.available(args.ordered_checkers,
                                               available_checkers)
         if missing_checkers:
-            LOG.warning("No checker(s) with these names was found:\n%s",
-                        '\n'.join(missing_checkers))
-            LOG.warning("Please review the checker names.\n"
-                        "In the next release the analysis will not start "
-                        "with invalid checker names.")
+            LOG.error("No checker(s) with these names was found:\n%s",
+                      '\n'.join(missing_checkers))
+            sys.exit(1)
 
     if 'stats_enabled' in args:
         config_map[ClangSA.ANALYZER_NAME].set_checker_enabled(
