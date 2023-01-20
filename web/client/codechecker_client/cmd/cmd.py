@@ -424,30 +424,6 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                               "\"time\" part can be omitted, in which case "
                               "midnight (00:00:00) is used).")
 
-    f_group.add_argument('-s', '--suppressed',
-                         default=argparse.SUPPRESS,
-                         dest="suppressed",
-                         action='store_true',
-                         help="DEPRECATED. Use the '--filter' option to get "
-                              "false positive (suppressed) results. Show only "
-                              "suppressed results instead of only "
-                              "unsuppressed ones.")
-
-    f_group.add_argument('--filter',
-                         type=str,
-                         dest='filter',
-                         default=argparse.SUPPRESS,
-                         help="DEPRECATED. Filter results. Use separated "
-                              "filter options to filter the results. The "
-                              "filter string has the following format: "
-                              "[<SEVERITIES>]:[<CHECKER_NAMES>]:"
-                              "[<FILE_PATHS>]:[<DETECTION_STATUSES>]:"
-                              "[<REVIEW_STATUSES>] where severites, "
-                              "checker_names, file_paths, detection_statuses, "
-                              "review_statuses should be a comma separated "
-                              "list, e.g.: \"high,medium:unix,core:*.cpp,*.h:"
-                              "new,unresolved:false_positive,intentional\"")
-
 
 def __register_results(parser):
     """
@@ -619,17 +595,6 @@ def __register_sum(parser):
                             action='store_true',
                             default=argparse.SUPPRESS,
                             help="Show breakdown for all analysis runs.")
-
-    parser.add_argument('--disable-unique',
-                        dest="disable_unique",
-                        action='store_true',
-                        default=argparse.SUPPRESS,
-                        help="DEPRECATED. Use the '--uniqueing' option to "
-                             "get uniqueing results. List all bugs even if "
-                             "these end up in the same bug location, but "
-                             "reached through different paths. By uniqueing "
-                             "the bugs a report will be appeared only once "
-                             "even if it is found on several paths.")
 
     default_filter_values = DEFAULT_FILTER_VALUES
     default_filter_values['uniqueing'] = 'on'

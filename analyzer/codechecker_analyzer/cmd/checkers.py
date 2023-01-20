@@ -229,28 +229,6 @@ def add_arguments_to_parser(parser):
                              "These can be given to 'CodeChecker analyze "
                              "--checker-config'.")
 
-    filters = parser.add_mutually_exclusive_group(required=False)
-
-    # --only-enabled and --only-disabled flags are deprecated because they're
-    # not used anymore. Earlier we listed all checkers that would be enabled
-    # during analysis with the given filter set (--label, --profile,
-    # --guideline) and that list contained default checkers among others which
-    # were not explicitly enabled. (These could have been eliminated by
-    # --only-enabled). Now we list only those checkers which fulfill the
-    # conjunction of the provided labels, or we list all checkers if no filter
-    # is given.
-    filters.add_argument('--only-enabled',
-                         dest='only_enabled',
-                         default=argparse.SUPPRESS,
-                         action='store_true',
-                         help="DEPRECATED. Show only the enabled checkers.")
-
-    filters.add_argument('--only-disabled',
-                         dest='only_disabled',
-                         default=argparse.SUPPRESS,
-                         action='store_true',
-                         help="DEPRECATED. Show only the disabled checkers.")
-
     parser.add_argument('-o', '--output',
                         dest='output_format',
                         required=False,

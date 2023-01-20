@@ -325,16 +325,6 @@ def check_run_names(client, check_names):
 
 
 def check_deprecated_arg_usage(args):
-    if 'suppressed' in args:
-        LOG.warning('"--suppressed" option has been deprecated. Use '
-                    '"--review-status" option to get false positive '
-                    '(suppressed) results.')
-
-    if 'filter' in args:
-        LOG.warning('"--filter" option has been deprecated. Use '
-                    'separate filter options of this command to filter the '
-                    'results. For more information see the help.')
-
     if 'detected_at' in args:
         LOG.warning('"--detected-at" option has been deprecated. Use '
                     '--detected-before/--detected-after options to filter the '
@@ -426,22 +416,6 @@ def check_filter_values(args):
     """
     severities = checkers = file_path = dt_statuses = rw_statuses = None
     bug_path_length = None
-
-    filter_str = args.filter if 'filter' in args else None
-    if filter_str:
-        if filter_str.count(':') != 4:
-            LOG.warning("Filter string has to contain four colons (e.g. "
-                        "\"high,medium:unix,core:*.cpp:new,unresolved:"
-                        "false_positive,intentional\").")
-        else:
-            filter_values = []
-            for x in filter_str.strip().split(':'):
-                values = [y.strip() for y in x.strip().split(',') if y.strip()]
-                filter_values.append(values if values else None)
-
-            # pylint: disable=unbalanced-tuple-unpacking
-            severities, checkers, file_path, dt_statuses, rw_statuses = \
-                filter_values
 
     if 'severity' in args:
         severities = args.severity
@@ -1335,11 +1309,6 @@ def handle_list_result_types(args):
 
     init_logger(args.verbose if 'verbose' in args else None, stream)
     check_deprecated_arg_usage(args)
-
-    if 'disable_unique' in args:
-        LOG.warning("--disable-unique option is deprecated. Please use the "
-                    "'--uniqueing on' option to get uniqueing results.")
-        args.uniqueing = 'off'
 
     def get_statistics(client, run_ids, field, values):
         report_filter = ttypes.ReportFilter()

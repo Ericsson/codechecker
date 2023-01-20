@@ -169,10 +169,6 @@ def perform_analysis(args, skip_handlers, context, actions, metadata_tool,
 
     ctu_reanalyze_on_failure = 'ctu_reanalyze_on_failure' in args and \
         args.ctu_reanalyze_on_failure
-    if ctu_reanalyze_on_failure:
-        LOG.warning("Usage of a DEPRECATED FLAG!\n"
-                    "The --ctu-reanalyze-on-failure flag will be removed "
-                    "in the upcoming releases!")
 
     analyzers = args.analyzers if 'analyzers' in args \
         else analyzer_types.supported_analyzers

@@ -2148,7 +2148,6 @@ providing a quick overview on which checkers are available in the analyzers.
 usage: CodeChecker checkers [-h] [--analyzers ANALYZER [ANALYZER ...]]
                             [--details] [--label LABEL [LABEL ...]]
                             [--profile {PROFILE/list}]
-                            [--only-enabled | --only-disabled]
                             [-o {rows,table,csv,json}]
                             [--verbose {info,debug,debug_analyzer}]
 
@@ -2186,8 +2185,6 @@ optional arguments:
                         existing checkers supported by the analyzer.
                         These can be given to 'CodeChecker analyze
                         --checker-config'.
-  --only-enabled        DEPRECATED. Show only the enabled checkers.
-  --only-disabled       DEPRECATED. Show only the disabled checkers.
   -o {rows,table,csv,json}, --output {rows,table,csv,json}
                         The format to list the applicable checkers as.
                         (default: rows)
@@ -2225,10 +2222,6 @@ List labels and their available values:
     CodeChecker checkers --label severity
 ```
 </details>
-
-The list provided by default is formatted for easy machine and human
-reading. Use the `--only-` options (`--only-enabled` and `--only-disabled`) to
-filter the list if you wish to see just the enabled/disabled checkers.
 
 A detailed view of the available checkers is available via `--details`. In the
 *detailed view*, checker status, severity and description (if available) is
