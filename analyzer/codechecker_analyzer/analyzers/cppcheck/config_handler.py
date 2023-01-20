@@ -17,7 +17,6 @@ class CppcheckConfigHandler(config_handler.AnalyzerConfigHandler):
     Configuration handler for Cppcheck analyzer.
     """
     def initialize_checkers(self,
-                            analyzer_context,
                             checkers,
                             cmdline_enable=None,
                             enable_all=False):
@@ -28,7 +27,6 @@ class CppcheckConfigHandler(config_handler.AnalyzerConfigHandler):
         --enable=all will not run with all the possible checkers
         """
         super().initialize_checkers(
-                            analyzer_context,
                             checkers,
                             cmdline_enable,
                             enable_all)

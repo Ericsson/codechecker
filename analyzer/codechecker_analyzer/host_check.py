@@ -15,6 +15,7 @@ import re
 import subprocess
 import tempfile
 
+from codechecker_analyzer import analyzer_context
 from codechecker_common.logger import get_logger
 
 LOG = get_logger('analyzer')
@@ -47,17 +48,19 @@ def check_analyzer(compiler_bin, env):
             return False
 
 
-def has_analyzer_config_option(clang_bin, config_option_name, env=None):
+def has_analyzer_config_option(clang_bin, config_option_name):
     """Check if an analyzer config option is available."""
     cmd = [clang_bin, "-cc1", "-analyzer-config-help"]
 
     LOG.debug('run: "%s"', ' '.join(cmd))
 
     try:
-        proc = subprocess.Popen(cmd,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                env=env, encoding="utf-8", errors="ignore")
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=analyzer_context.get_context().analyzer_env,
+            encoding="utf-8", errors="ignore")
         out, err = proc.communicate()
         LOG.debug("stdout:\n%s", out)
         LOG.debug("stderr:\n%s", err)
@@ -72,7 +75,7 @@ def has_analyzer_config_option(clang_bin, config_option_name, env=None):
         raise
 
 
-def has_analyzer_option(clang_bin, feature, env=None):
+def has_analyzer_option(clang_bin, feature):
     """Test if the analyzer has a specific option.
 
     Testing a feature is done by compiling a dummy file."""
@@ -85,10 +88,12 @@ def has_analyzer_option(clang_bin, feature, env=None):
 
         LOG.debug('run: "%s"', ' '.join(cmd))
         try:
-            proc = subprocess.Popen(cmd,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE,
-                                    env=env, encoding="utf-8", errors="ignore")
+            proc = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                env=analyzer_context.get_context().analyzer_env,
+                encoding="utf-8", errors="ignore")
             out, err = proc.communicate()
             LOG.debug("stdout:\n%s", out)
             LOG.debug("stderr:\n%s", err)

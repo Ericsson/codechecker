@@ -48,7 +48,7 @@ def build_stat_coll_cmd(action, config, source):
 
     # Enable the statistics collector checkers only.
     collector_checkers = []
-    checks = ClangSA.get_analyzer_checkers(config, config.environ, True, True)
+    checks = ClangSA.get_analyzer_checkers(config, True, True)
     for checker_name, _ in checks:
         if SpecialReturnValueCollector.checker_collect in checker_name:
             collector_checkers.append(checker_name)

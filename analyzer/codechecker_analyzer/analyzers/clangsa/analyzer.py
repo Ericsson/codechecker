@@ -15,11 +15,11 @@ import re
 import shlex
 import subprocess
 
-from typing import Dict, List
+from typing import List
 
 from codechecker_common.logger import get_logger
 
-from codechecker_analyzer import env
+from codechecker_analyzer import analyzer_context, env
 
 from .. import analyzer_base
 from ..config_handler import CheckerState
@@ -37,8 +37,7 @@ LOG = get_logger('analyzer')
 
 def parse_clang_help_page(
     command: List[str],
-    start_label: str,
-    environ: Dict[str, str]
+    start_label: str
 ) -> List[str]:
     """
     Parse the clang help page starting from a specific label.
@@ -48,7 +47,7 @@ def parse_clang_help_page(
         help_page = subprocess.check_output(
             command,
             stderr=subprocess.STDOUT,
-            env=environ,
+            env=analyzer_context.get_context().analyzer_env,
             universal_newlines=True,
             encoding="utf-8",
             errors="ignore")
@@ -145,7 +144,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
     def get_analyzer_checkers(
         cls,
         cfg_handler: config_handler.ClangSAConfigHandler,
-        environ: Dict[str, str],
         alpha: bool = True,
         debug: bool = False
     ) -> List[str]:
@@ -154,30 +152,28 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             cfg_handler,
             alpha=alpha,
             debug=debug)
-        return parse_clang_help_page(checker_list_args, 'CHECKERS:', environ)
+        return parse_clang_help_page(checker_list_args, 'CHECKERS:')
 
     @classmethod
     def get_checker_config(
         cls,
-        cfg_handler: config_handler.ClangSAConfigHandler,
-        environ: Dict[str, str]
+        cfg_handler: config_handler.ClangSAConfigHandler
     ) -> List[str]:
         """Return the list of checker config options."""
         checker_config_args = clang_options.get_checker_config_cmd(
             cfg_handler,
             alpha=True)
-        return parse_clang_help_page(checker_config_args, 'OPTIONS:', environ)
+        return parse_clang_help_page(checker_config_args, 'OPTIONS:')
 
     @classmethod
     def get_analyzer_config(
         cls,
-        cfg_handler: config_handler.ClangSAConfigHandler,
-        environ: Dict[str, str]
+        cfg_handler: config_handler.ClangSAConfigHandler
     ) -> List[str]:
         """Return the list of analyzer config options."""
         analyzer_config_args = clang_options.get_analyzer_config_cmd(
             cfg_handler)
-        return parse_clang_help_page(analyzer_config_args, 'OPTIONS:', environ)
+        return parse_clang_help_page(analyzer_config_args, 'OPTIONS:')
 
     def construct_analyzer_cmd(self, result_handler):
         """
@@ -316,11 +312,9 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         Returns the path of the ctu directory (containing the triple).
         """
         config = self.config_handler
-        environ = env.extend(config.path_env_extra,
-                             config.ld_lib_path_extra)
         triple_arch = ctu_triple_arch.get_triple_arch(self.buildaction,
                                                       self.source_file,
-                                                      config, environ)
+                                                      config)
         ctu_dir = os.path.join(config.ctu_dir, triple_arch)
         return ctu_dir
 
@@ -420,29 +414,28 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         return True
 
     def construct_result_handler(self, buildaction, report_output,
-                                 checker_labels, skiplist_handler):
+                                 skiplist_handler):
         """
         See base class for docs.
         """
         res_handler = ClangSAResultHandler(buildaction, report_output,
                                            self.config_handler.report_hash)
 
-        res_handler.checker_labels = checker_labels
         res_handler.skiplist_handler = skiplist_handler
 
         return res_handler
 
     @classmethod
-    def construct_config_handler(cls, args, context):
+    def construct_config_handler(cls, args):
 
-        environ = env.extend(context.path_env_extra,
-                             context.ld_lib_path_extra)
+        context = analyzer_context.get_context()
+        environ = context.analyzer_env
 
         handler = config_handler.ClangSAConfigHandler(environ)
         handler.analyzer_plugins_dir = context.checker_plugin
         handler.analyzer_binary = context.analyzer_binaries.get(
             cls.ANALYZER_NAME)
-        handler.version_info = version.get(handler.analyzer_binary, environ)
+        handler.version_info = version.get(handler.analyzer_binary)
 
         handler.report_hash = args.report_hash \
             if 'report_hash' in args else None
@@ -459,8 +452,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                 'ctu_ast_mode' in args and \
                 args.ctu_ast_mode == 'parse-on-demand'
             handler.log_file = args.logfile
-            handler.path_env_extra = context.path_env_extra
-            handler.ld_lib_path_extra = context.ld_lib_path_extra
 
         try:
             with open(args.clangsa_args_cfg_file, 'r', encoding='utf8',
@@ -477,7 +468,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             # No clangsa arguments file was given in the command line.
             LOG.debug_analyzer(aerr)
 
-        checkers = ClangSA.get_analyzer_checkers(handler, environ)
+        checkers = ClangSA.get_analyzer_checkers(handler)
 
         try:
             cmdline_checkers = args.ordered_checkers
@@ -487,7 +478,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             cmdline_checkers = []
 
         handler.initialize_checkers(
-            context,
             checkers,
             cmdline_checkers,
             'enable_all' in args and args.enable_all)

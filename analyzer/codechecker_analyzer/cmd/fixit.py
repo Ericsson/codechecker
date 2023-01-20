@@ -292,8 +292,7 @@ def apply_fixits(inputs, checker_names, file_paths, interactive, reports):
     modified_files = set()
 
     ignore_flag = ["--ignore-insert-conflict"] if \
-        analyzer_types.is_ignore_conflict_supported(
-            analyzer_context.get_context()) else []
+        analyzer_types.is_ignore_conflict_supported() else []
 
     for i in inputs:
         fixit_dir = os.path.join(i, 'fixit')

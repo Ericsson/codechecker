@@ -18,7 +18,6 @@ import sys
 from codechecker_report_converter import twodim
 
 from codechecker_analyzer import analyzer_context
-from codechecker_analyzer import env
 from codechecker_analyzer.analyzers import analyzer_types
 
 from codechecker_common import logger
@@ -52,10 +51,8 @@ def add_arguments_to_parser(parser):
     Add the subcommand's arguments to the given argparse.ArgumentParser.
     """
 
-    context = analyzer_context.get_context()
     working_analyzers, _ = analyzer_types.check_supported_analyzers(
-        analyzer_types.supported_analyzers,
-        context)
+        analyzer_types.supported_analyzers)
 
     parser.add_argument('--all',
                         dest="all",
@@ -123,8 +120,7 @@ def main(args):
     context = analyzer_context.get_context()
     working_analyzers, errored = \
         analyzer_types.check_supported_analyzers(
-            analyzer_types.supported_analyzers,
-            context)
+            analyzer_types.supported_analyzers)
 
     if args.dump_config:
         binary = context.analyzer_binaries.get(args.dump_config)
@@ -152,10 +148,8 @@ def main(args):
 
         return
 
-    analyzer_environment = env.extend(context.path_env_extra,
-                                      context.ld_lib_path_extra)
     analyzer_config_map = analyzer_types.build_config_handlers(
-        args, context, working_analyzers)
+        args, working_analyzers)
 
     def uglify(text):
         """
@@ -177,8 +171,7 @@ def main(args):
         config_handler = analyzer_config_map.get(analyzer)
         analyzer_class = analyzer_types.supported_analyzers[analyzer]
 
-        configs = analyzer_class.get_analyzer_config(config_handler,
-                                                     analyzer_environment)
+        configs = analyzer_class.get_analyzer_config(config_handler)
         if not configs:
             LOG.error("Failed to get analyzer configuration options for '%s' "
                       "analyzer! Please try to upgrade your analyzer version "

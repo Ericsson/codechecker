@@ -18,7 +18,7 @@ from typing import List, Tuple
 
 from codechecker_common.logger import get_logger
 
-from codechecker_analyzer import env
+from codechecker_analyzer import analyzer_context, env
 
 from .. import analyzer_base
 from ..config_handler import CheckerState, get_compiler_warning_name
@@ -81,14 +81,14 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         LOG.error("Not implemented yet")
 
     @classmethod
-    def get_analyzer_checkers(cls, cfg_handler, environ):
+    def get_analyzer_checkers(cls, cfg_handler):
         """
         Return the list of the all of the supported checkers.
         """
         try:
             result = subprocess.check_output(
                 [cfg_handler.analyzer_binary, "-list-checks", "-checks=*"],
-                env=environ,
+                env=analyzer_context.get_context().analyzer_env,
                 universal_newlines=True,
                 encoding="utf-8",
                 errors="ignore")
@@ -97,14 +97,14 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             return []
 
     @classmethod
-    def get_checker_config(cls, cfg_handler, environ):
+    def get_checker_config(cls, cfg_handler):
         """
         Return the checker configuration of the all of the supported checkers.
         """
         try:
             result = subprocess.check_output(
                 [cfg_handler.analyzer_binary, "-dump-config", "-checks=*"],
-                env=environ,
+                env=analyzer_context.get_context().analyzer_env,
                 universal_newlines=True,
                 encoding="utf-8",
                 errors="ignore")
@@ -113,14 +113,14 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             return []
 
     @classmethod
-    def get_analyzer_config(cls, cfg_handler, environ):
+    def get_analyzer_config(cls, cfg_handler):
         """
         Return the analyzer configuration with all checkers enabled.
         """
         try:
             result = subprocess.check_output(
                 [cfg_handler.analyzer_binary, "-dump-config", "-checks=*"],
-                env=environ,
+                env=analyzer_context.get_context().analyzer_env,
                 universal_newlines=True,
                 encoding="utf-8",
                 errors="ignore")
@@ -327,7 +327,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         return True
 
     def construct_result_handler(self, buildaction, report_output,
-                                 checker_labels, skiplist_handler):
+                                 skiplist_handler):
         """
         See base class for docs.
         """
@@ -335,12 +335,12 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         res_handler = result_handler.ClangTidyResultHandler(
             buildaction, report_output, report_hash)
 
-        res_handler.checker_labels = checker_labels
         res_handler.skiplist_handler = skiplist_handler
         return res_handler
 
     @classmethod
-    def construct_config_handler(cls, args, context):
+    def construct_config_handler(cls, args):
+        context = analyzer_context.get_context()
         handler = config_handler.ClangTidyConfigHandler()
         handler.analyzer_binary = context.analyzer_binaries.get(
             cls.ANALYZER_NAME)
@@ -350,11 +350,6 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         # FIXME We cannot get the resource dir from the clang-tidy binary,
         # therefore we get a sibling clang binary which of clang-tidy.
         # TODO Support "clang-tidy -print-resource-dir" .
-        check_env = env.extend(context.path_env_extra,
-                               context.ld_lib_path_extra)
-        # Overwrite PATH to contain only the parent of the clang binary.
-        if os.path.isabs(handler.analyzer_binary):
-            check_env['PATH'] = os.path.dirname(handler.analyzer_binary)
         try:
             with open(args.tidy_args_cfg_file, 'r', encoding='utf-8',
                       errors='ignore') as tidy_cfg:
@@ -435,10 +430,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                 analyzer_config.get('take-config-from-directory') != 'true':
             handler.checker_config = json.dumps(analyzer_config)
 
-        check_env = env.extend(context.path_env_extra,
-                               context.ld_lib_path_extra)
-
-        checkers = ClangTidy.get_analyzer_checkers(handler, check_env)
+        checkers = ClangTidy.get_analyzer_checkers(handler)
 
         try:
             cmdline_checkers = args.ordered_checkers
@@ -449,7 +441,6 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             cmdline_checkers = []
 
         handler.initialize_checkers(
-            context,
             checkers,
             cmdline_checkers,
             'enable_all' in args and args.enable_all)

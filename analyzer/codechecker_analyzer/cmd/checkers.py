@@ -28,7 +28,6 @@ from codechecker_analyzer.analyzers.clangtidy.analyzer import ClangTidy
 from codechecker_common import arg, logger
 from codechecker_common.output import USER_FORMATS
 from codechecker_common.checker_labels import CheckerLabels
-from codechecker_analyzer import env
 from codechecker_analyzer.analyzers.config_handler import CheckerState
 
 LOG = logger.get_logger('system')
@@ -59,7 +58,7 @@ def get_diagtool_bin():
               clang_bin)
 
 
-def get_warnings(env=None):
+def get_warnings():
     """
     Returns list of warning flags by using diagtool.
     """
@@ -71,7 +70,7 @@ def get_warnings(env=None):
     try:
         result = subprocess.check_output(
             [diagtool_bin, 'tree'],
-            env=env,
+            env=analyzer_context.get_context().analyzer_env,
             universal_newlines=True,
             encoding="utf-8",
             errors="ignore")
@@ -270,26 +269,6 @@ def __uglify(text: str) -> str:
     return text.lower().replace(' ', '_')
 
 
-def guideline_rules_for_checker(
-    checker: str,
-    context: analyzer_context.Context
-) -> Dict[str, list]:
-    """
-    Returns the guideline and rules covered by the given checker. This
-    function returns a dict which maps guideline names to the covered
-    rules: { "sei-cert": ["arr30-c", ...], ... }.
-    """
-    result = defaultdict(list)
-    labels = context.checker_labels.labels_of_checker(checker)
-    guidelines = context.checker_labels.get_description('guideline')
-
-    for label in labels:
-        if label[0] in guidelines:
-            result[label[0]].append(label[1])
-
-    return result
-
-
 def __guideline_to_label(
     args: argparse.Namespace,
     cl: CheckerLabels
@@ -323,18 +302,11 @@ def __get_detailed_checker_info(
     supported checkers. Checker information is described with tuples of this
     information: (status, checker name, analyzer name, description, labels).
     """
-    context = analyzer_context.get_context()
-
     working_analyzers, _ = analyzer_types.check_supported_analyzers(
-        analyzer_types.supported_analyzers,
-        context)
+        analyzer_types.supported_analyzers)
 
     analyzer_config_map = analyzer_types.build_config_handlers(
-        args, context, working_analyzers)
-
-    analyzer_environment = env.extend(
-        context.path_env_extra,
-        context.ld_lib_path_extra)
+        args, working_analyzers)
 
     checker_info = defaultdict(list)
 
@@ -342,8 +314,7 @@ def __get_detailed_checker_info(
         config_handler = analyzer_config_map.get(analyzer)
         analyzer_class = analyzer_types.supported_analyzers[analyzer]
 
-        checkers = analyzer_class.get_analyzer_checkers(
-            config_handler, analyzer_environment)
+        checkers = analyzer_class.get_analyzer_checkers(config_handler)
 
         profile_checkers = []
         if 'profile' in args:
@@ -366,25 +337,16 @@ def __get_detailed_checker_info(
         if 'guideline' in args:
             profile_checkers.append((__guideline_to_label(args, cl), True))
 
-        config_handler.initialize_checkers(
-            context, checkers, profile_checkers)
+        config_handler.initialize_checkers(checkers, profile_checkers)
 
         for checker, (state, description) in config_handler.checks().items():
-            # severity = cl.severity(checker)
-            # guideline = guideline_rules_for_checker(checker, context)
-            # checker_info[analyzer].append(
-            #     (state, checker, analyzer, severity, guideline, description))
             checker_info[analyzer].append(
                 (state, checker, analyzer, description,
                  sorted(cl.labels_of_checker(checker, analyzer))))
 
     if 'show_warnings' in args:
-        for warning in get_warnings(analyzer_environment):
+        for warning in get_warnings():
             warning = 'clang-diagnostic-' + warning
-            # guideline = guideline_rules_for_checker(warning, context)
-            # checker_info[ClangTidy.ANALYZER_NAME].append(
-            #     (CheckerState.default, warning, ClangTidy.ANALYZER_NAME,
-            #      'MEDIUM', guideline, ''))
             checker_info[ClangTidy.ANALYZER_NAME].append(
                 (CheckerState.default, warning, ClangTidy.ANALYZER_NAME, '',
                  sorted(cl.labels_of_checker(
@@ -651,17 +613,12 @@ def __print_checker_config(args: argparse.Namespace):
     if args.output_format == 'custom':
         args.output_format = 'rows'
 
-    context = analyzer_context.get_context()
     working_analyzers, errored = analyzer_types.check_supported_analyzers(
-        args.analyzers,
-        context)
+        args.analyzers)
     analyzer_types.check_available_analyzers(working_analyzers, errored)
 
-    analyzer_environment = env.extend(context.path_env_extra,
-                                      context.ld_lib_path_extra)
-
     analyzer_config_map = analyzer_types.build_config_handlers(
-        args, context, working_analyzers)
+        args, working_analyzers)
 
     if 'details' in args:
         header = ['Option', 'Description']
@@ -677,8 +634,7 @@ def __print_checker_config(args: argparse.Namespace):
         config_handler = analyzer_config_map.get(analyzer)
         analyzer_class = analyzer_types.supported_analyzers[analyzer]
 
-        configs = analyzer_class.get_checker_config(config_handler,
-                                                    analyzer_environment)
+        configs = analyzer_class.get_checker_config(config_handler)
         if not configs:
             # Checker configurations are not supported by cppcheck
             if analyzer != "cppcheck":

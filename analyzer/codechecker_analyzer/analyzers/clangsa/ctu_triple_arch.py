@@ -62,14 +62,13 @@ def _find_arch_in_command(output):
         pass
 
 
-def get_triple_arch(action, source, config, env):
+def get_triple_arch(action, source, config):
     """Returns the architecture part of the target triple for the given
     compilation command. """
 
     cmd = get_compile_command(action, config, source)
     cmd.insert(1, '-###')
     _, stdout, stderr = analyzer_base.SourceAnalyzer.run_proc(cmd,
-                                                              env,
                                                               action.directory)
 
     # The -### flag in a Clang invocation emits the commands of substeps in a

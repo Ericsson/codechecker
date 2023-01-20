@@ -11,6 +11,7 @@
 from distutils.version import StrictVersion
 from pathlib import Path
 import os
+import pickle
 import re
 import shutil
 import subprocess
@@ -18,7 +19,8 @@ import xml.etree.ElementTree as ET
 
 from codechecker_common.logger import get_logger
 
-from codechecker_analyzer.env import extend, get_binary_in_path
+from codechecker_analyzer import analyzer_context
+from codechecker_analyzer.env import get_binary_in_path
 
 from .. import analyzer_base
 
@@ -206,17 +208,14 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             return []
 
     @classmethod
-    def get_analyzer_checkers(
-            cls,
-            cfg_handler: CppcheckConfigHandler,
-            env):
+    def get_analyzer_checkers(cls, cfg_handler: CppcheckConfigHandler):
         """
         Return the list of the supported checkers.
         """
         command = [cfg_handler.analyzer_binary, "--errorlist"]
 
         try:
-            result = subprocess.check_output(command, env=env)
+            result = subprocess.check_output(command)
             return parse_checkers(result)
         except (subprocess.CalledProcessError) as e:
             LOG.error(e.stderr)
@@ -225,7 +224,7 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         return []
 
     @classmethod
-    def get_analyzer_config(cls, cfg_handler, environ):
+    def get_analyzer_config(cls, cfg_handler):
         """
         Config options for cppcheck.
         """
@@ -236,11 +235,22 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
                 ]
 
     @classmethod
-    def get_checker_config(cls, cfg_handler, environ):
+    def get_checker_config(cls, cfg_handler):
         """
         TODO add config options for cppcheck checkers.
         """
         return []
+
+    def analyze(self, analyzer_cmd, res_handler, proc_callback=None):
+        env = None
+
+        original_env_file = os.environ.get(
+            'CODECHECKER_ORIGINAL_BUILD_ENV')
+        if original_env_file:
+            with open(original_env_file, 'rb') as env_file:
+                env = pickle.load(env_file, encoding='utf-8')
+
+        return super().analyze(analyzer_cmd, res_handler, proc_callback, env)
 
     def post_analyze(self, result_handler):
         """
@@ -327,20 +337,20 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         return False
 
     def construct_result_handler(self, buildaction, report_output,
-                                 checker_labels, skiplist_handler):
+                                 skiplist_handler):
         """
         See base class for docs.
         """
         res_handler = CppcheckResultHandler(buildaction, report_output,
                                             self.config_handler.report_hash)
 
-        res_handler.checker_labels = checker_labels
         res_handler.skiplist_handler = skiplist_handler
 
         return res_handler
 
     @classmethod
-    def construct_config_handler(cls, args, context):
+    def construct_config_handler(cls, args):
+        context = analyzer_context.get_context()
         handler = CppcheckConfigHandler()
         handler.analyzer_binary = context.analyzer_binaries.get(
             cls.ANALYZER_NAME)
@@ -360,14 +370,13 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
 
         handler.analyzer_config = analyzer_config
 
-        check_env = extend(context.path_env_extra,
-                           context.ld_lib_path_extra)
+        check_env = context.analyzer_env
 
         # Overwrite PATH to contain only the parent of the cppcheck binary.
         if os.path.isabs(handler.analyzer_binary):
             check_env['PATH'] = os.path.dirname(handler.analyzer_binary)
 
-        checkers = cls.get_analyzer_checkers(handler, check_env)
+        checkers = cls.get_analyzer_checkers(handler)
 
         # Cppcheck can and will report with checks that have a different
         # name than marked in the --errorlist xml. To be able to suppress
@@ -389,7 +398,6 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             cmdline_checkers = []
 
         handler.initialize_checkers(
-            context,
             checkers,
             cmdline_checkers,
             'enable_all' in args and args.enable_all)

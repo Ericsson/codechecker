@@ -66,7 +66,7 @@ class TestCtuFailure(unittest.TestCase):
 
         setattr(self, DISPLAY_PROGRESS_ATTR,
                 is_ctu_display_progress_capable(
-                    self.__getClangSaPath(), self.env))
+                    self.__getClangSaPath()))
 
         print("Has display-ctu-progress=true? " +
               str(getattr(self, DISPLAY_PROGRESS_ATTR)))
