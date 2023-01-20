@@ -36,6 +36,12 @@ class CppcheckConfigHandler(config_handler.AnalyzerConfigHandler):
         # all the possible checkers. All the checkers that are in the default
         # profile (or configured othewise, eg.: from the cli) should be
         # already enabled at this point.
-        for checker_name, data in self.checks().items():
-            if data[0] == CheckerState.default:
-                self.set_checker_enabled(checker_name, enabled=False)
+        # This happens in two phases in order to avoid iterator invalidation.
+        # (self.set_checker_enabled() removes elements, so we can't use it
+        # while iterating over the checker list.)
+        default_state_checkers = [
+            checker_name for checker_name, data in
+            self.checks().items() if data[0] == CheckerState.default]
+
+        for checker_name in default_state_checkers:
+            self.set_checker_enabled(checker_name, enabled=False)
