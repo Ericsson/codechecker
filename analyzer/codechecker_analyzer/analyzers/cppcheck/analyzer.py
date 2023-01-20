@@ -180,14 +180,14 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
                 analyzer_cmd.append("--inconclusive")
 
             if 'addons' in config.analyzer_config:
-                for addon in config.analyzer_config["addons"]:
-                    analyzer_cmd.extend(
-                            ["--addon=" + str(Path(addon).absolute())])
+                analyzer_cmd.extend(
+                    f"--addon={addon}" for addon
+                    in config.analyzer_config["addons"])
 
             if 'libraries' in config.analyzer_config:
-                for lib in config.analyzer_config["libraries"]:
-                    analyzer_cmd.extend(
-                            ["--library=" + str(Path(lib).absolute())])
+                analyzer_cmd.extend(
+                    f"--library={library}" for library
+                    in config.analyzer_config["libraries"])
 
             # TODO Suggest a better place for this
             # cppcheck wont create the output folders for itself
