@@ -25,10 +25,10 @@ from ..config_handler import CheckerState
 from ..flag import has_flag
 from ..flag import prepend_all
 
-from . import clang_options
 from . import config_handler
 from . import ctu_triple_arch
 from . import version
+from .ctu_autodetection import CTUAutodetection
 from .result_handler import ClangSAResultHandler
 
 LOG = get_logger('analyzer')
@@ -100,10 +100,91 @@ class ClangSA(analyzer_base.SourceAnalyzer):
     """
     ANALYZER_NAME = 'clangsa'
 
+    __ctu_autodetection = None
+
     def __init__(self, cfg_handler, buildaction):
         super(ClangSA, self).__init__(cfg_handler, buildaction)
         self.__disable_ctu = False
         self.__checker_configs = []
+
+    @classmethod
+    def analyzer_binary(cls):
+        """
+        Return the path of the analyzer binary.
+        """
+        return analyzer_context.get_context() \
+            .analyzer_binaries[cls.ANALYZER_NAME]
+
+    @classmethod
+    def analyzer_plugins(cls) -> List[str]:
+        """
+        Return the list of .so file paths which contain checker plugins to
+        ClangSA.
+        """
+        plugin_dir = analyzer_context.get_context().checker_plugin
+
+        clangsa_plugin_dir = env.get_clangsa_plugin_dir()
+        is_analyzer_from_path = env.is_analyzer_from_path()
+        if is_analyzer_from_path:
+            if not clangsa_plugin_dir:
+                return []
+
+            # If the CC_ANALYZERS_FROM_PATH and CC_CLANGSA_PLUGIN_DIR
+            # environment variables are set we will use this value as the
+            # plugin directory.
+            plugin_dir = clangsa_plugin_dir
+
+        if not plugin_dir or not os.path.exists(plugin_dir):
+            return []
+
+        return [os.path.join(plugin_dir, f)
+                for f in os.listdir(plugin_dir)
+                if os.path.isfile(os.path.join(plugin_dir, f))
+                and f.endswith(".so")]
+
+    @classmethod
+    def __add_plugin_load_flags(cls, analyzer_cmd: List[str]):
+        """
+        ClangSA can be extended with checker plugins. This function extends a
+        clang command with these plugins.
+        """
+        for plugin in ClangSA.analyzer_plugins():
+            analyzer_cmd.extend(["-load", plugin])
+
+    @classmethod
+    def get_version(cls, env=None):
+        """ Get analyzer version information. """
+        version = [cls.analyzer_binary(), '--version']
+        try:
+            output = subprocess.check_output(version,
+                                             env=env,
+                                             universal_newlines=True,
+                                             encoding="utf-8",
+                                             errors="ignore")
+            return output
+        except (subprocess.CalledProcessError, OSError) as oerr:
+            LOG.warning("Failed to get analyzer version: %s",
+                        ' '.join(version))
+            LOG.warning(oerr)
+
+        return None
+
+    @classmethod
+    def version_info(cls):
+        return version.get(cls.analyzer_binary())
+
+    @classmethod
+    def ctu_capability(cls):
+        """
+        Return a CTUAutodetection object which describes the availability of
+        CTU feature with some additional CTU-related info.
+        """
+        if not cls.__ctu_autodetection:
+            cls.__ctu_autodetection = CTUAutodetection(
+                cls.analyzer_binary(),
+                analyzer_context.get_context().analyzer_env)
+
+        return cls.__ctu_autodetection
 
     def is_ctu_available(self):
         """
@@ -142,37 +223,70 @@ class ClangSA(analyzer_base.SourceAnalyzer):
     @classmethod
     def get_analyzer_checkers(
         cls,
-        cfg_handler: config_handler.ClangSAConfigHandler,
         alpha: bool = True,
         debug: bool = False
     ) -> List[str]:
-        """Return the list of the supported checkers."""
-        checker_list_args = clang_options.get_analyzer_checkers_cmd(
-            cfg_handler,
-            alpha=alpha,
-            debug=debug)
-        return parse_clang_help_page(checker_list_args, 'CHECKERS:')
+        """
+        Return the list of the supported checkers.
+
+        Before clang9 alpha and debug checkers were printed by default. Since
+        clang9 there are extra arguments to print the additional checkers.
+        """
+        command = [cls.analyzer_binary(), "-cc1"]
+
+        cls.__add_plugin_load_flags(command)
+
+        command.append("-analyzer-checker-help")
+
+        # The clang compiler on OSX is a few
+        # relases older than the open source clang release.
+        # The new checker help printig flags are not available there yet.
+        # If the OSX clang will be updated to based on clang v8
+        # this early return can be removed.
+        version_info = cls.version_info()
+        if version_info and version_info.vendor == "clang":
+            if alpha and version_info.major_version >= 9:
+                command.append("-analyzer-checker-help-alpha")
+
+            if debug and version_info.major_version >= 9:
+                command.append("-analyzer-checker-help-developer")
+
+        return parse_clang_help_page(command, 'CHECKERS:')
 
     @classmethod
-    def get_checker_config(
-        cls,
-        cfg_handler: config_handler.ClangSAConfigHandler
-    ) -> List[str]:
-        """Return the list of checker config options."""
-        checker_config_args = clang_options.get_checker_config_cmd(
-            cfg_handler,
-            alpha=True)
-        return parse_clang_help_page(checker_config_args, 'OPTIONS:')
+    def get_checker_config(cls) -> List[str]:
+        """
+        Return the list of checker config options.
+
+        Before clang9 alpha and debug checkers were printed by default. Since
+        clang9 there are extra arguments to print the additional checkers.
+        """
+        command = [cls.analyzer_binary(), "-cc1"]
+
+        cls.__add_plugin_load_flags(command)
+
+        command.append("-analyzer-checker-option-help")
+
+        version_info = ClangSA.version_info()
+        if version_info.vendor == "clang":
+            if version_info.major_version >= 9:
+                command.append("-analyzer-checker-option-help-alpha")
+
+            if version_info.major_version >= 9:
+                command.append("-analyzer-checker-option-help-developer")
+
+        return parse_clang_help_page(command, 'OPTIONS:')
 
     @classmethod
-    def get_analyzer_config(
-        cls,
-        cfg_handler: config_handler.ClangSAConfigHandler
-    ) -> List[str]:
+    def get_analyzer_config(cls) -> List[str]:
         """Return the list of analyzer config options."""
-        analyzer_config_args = clang_options.get_analyzer_config_cmd(
-            cfg_handler)
-        return parse_clang_help_page(analyzer_config_args, 'OPTIONS:')
+        command = [cls.analyzer_binary(), "-cc1"]
+
+        cls.__add_plugin_load_flags(command)
+
+        command.append("-analyzer-config-help")
+
+        return parse_clang_help_page(command, 'OPTIONS:')
 
     def construct_analyzer_cmd(self, result_handler):
         """
@@ -187,11 +301,11 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             # Checker order matters.
             config = self.config_handler
 
-            analyzer_cmd = [config.analyzer_binary, '--analyze',
+            analyzer_cmd = [ClangSA.analyzer_binary(), '--analyze',
                             # Do not warn about the unused gcc/g++ arguments.
                             '-Qunused-arguments']
 
-            for plugin in config.analyzer_plugins:
+            for plugin in ClangSA.analyzer_plugins():
                 analyzer_cmd.extend(["-Xclang", "-plugin",
                                      "-Xclang", "checkercfg",
                                      "-Xclang", "-load",
@@ -243,8 +357,13 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                      '-analyzer-disable-checker=' +
                                      ','.join(disabled_checkers)])
             # Enable aggressive-binary-operation-simplification option.
-            analyzer_cmd.extend(
-                clang_options.get_abos_options(config.version_info))
+            version_info = ClangSA.version_info()
+            if version_info and version_info.major_version >= 8:
+                analyzer_cmd.extend([
+                    '-Xclang',
+                    '-analyzer-config',
+                    '-Xclang',
+                    'aggressive-binary-operation-simplification=true'])
 
             # Enable the z3 solver backend.
             if config.enable_z3:
@@ -262,7 +381,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                      'experimental-enable-naive-ctu-analysis=true',
                      '-Xclang', '-analyzer-config', '-Xclang',
                      'ctu-dir=' + self.get_ctu_dir()])
-                ctu_display_progress = config.ctu_capability.display_progress
+                ctu_display_progress = \
+                    ClangSA.ctu_capability().display_progress
                 if ctu_display_progress:
                     analyzer_cmd.extend(ctu_display_progress)
 
@@ -431,10 +551,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         environ = context.analyzer_env
 
         handler = config_handler.ClangSAConfigHandler(environ)
-        handler.analyzer_plugins_dir = context.checker_plugin
-        handler.analyzer_binary = context.analyzer_binaries.get(
-            cls.ANALYZER_NAME)
-        handler.version_info = version.get(handler.analyzer_binary)
 
         handler.report_hash = args.report_hash \
             if 'report_hash' in args else None
@@ -466,7 +582,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             # No clangsa arguments file was given in the command line.
             LOG.debug_analyzer(aerr)
 
-        checkers = ClangSA.get_analyzer_checkers(handler)
+        checkers = ClangSA.get_analyzer_checkers()
 
         try:
             cmdline_checkers = args.ordered_checkers

@@ -148,9 +148,6 @@ def main(args):
 
         return
 
-    analyzer_config_map = analyzer_types.build_config_handlers(
-        args, working_analyzers)
-
     def uglify(text):
         """
         csv and json format output contain this non human readable header
@@ -168,10 +165,9 @@ def main(args):
             header = list(map(uglify, header))
 
         analyzer = args.analyzer_config
-        config_handler = analyzer_config_map.get(analyzer)
         analyzer_class = analyzer_types.supported_analyzers[analyzer]
 
-        configs = analyzer_class.get_analyzer_config(config_handler)
+        configs = analyzer_class.get_analyzer_config()
         if not configs:
             LOG.error("Failed to get analyzer configuration options for '%s' "
                       "analyzer! Please try to upgrade your analyzer version "

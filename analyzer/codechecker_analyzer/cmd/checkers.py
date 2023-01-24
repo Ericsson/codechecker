@@ -234,7 +234,7 @@ def __get_detailed_checker_info(
         config_handler = analyzer_config_map.get(analyzer)
         analyzer_class = analyzer_types.supported_analyzers[analyzer]
 
-        checkers = analyzer_class.get_analyzer_checkers(config_handler)
+        checkers = analyzer_class.get_analyzer_checkers()
 
         profile_checkers = []
         if 'profile' in args:
@@ -529,9 +529,6 @@ def __print_checker_config(args: argparse.Namespace):
         args.analyzers)
     analyzer_types.check_available_analyzers(working_analyzers, errored)
 
-    analyzer_config_map = analyzer_types.build_config_handlers(
-        args, working_analyzers)
-
     if 'details' in args:
         header = ['Option', 'Description']
     else:
@@ -543,10 +540,9 @@ def __print_checker_config(args: argparse.Namespace):
     rows = []
     analyzer_failures = []
     for analyzer in working_analyzers:
-        config_handler = analyzer_config_map.get(analyzer)
         analyzer_class = analyzer_types.supported_analyzers[analyzer]
 
-        configs = analyzer_class.get_checker_config(config_handler)
+        configs = analyzer_class.get_checker_config()
         if not configs:
             # Checker configurations are not supported by cppcheck
             if analyzer != "cppcheck":

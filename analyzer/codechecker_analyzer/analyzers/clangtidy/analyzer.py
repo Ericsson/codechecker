@@ -136,18 +136,41 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
     ANALYZER_NAME = 'clang-tidy'
 
+    @classmethod
+    def analyzer_binary(cls):
+        return analyzer_context.get_context() \
+            .analyzer_binaries[cls.ANALYZER_NAME]
+
+    @classmethod
+    def get_version(cls, env=None):
+        """ Get analyzer version information. """
+        version = [cls.analyzer_binary(), '--version']
+        try:
+            output = subprocess.check_output(version,
+                                             env=env,
+                                             universal_newlines=True,
+                                             encoding="utf-8",
+                                             errors="ignore")
+            return output
+        except (subprocess.CalledProcessError, OSError) as oerr:
+            LOG.warning("Failed to get analyzer version: %s",
+                        ' '.join(version))
+            LOG.warning(oerr)
+
+        return None
+
     def add_checker_config(self, checker_cfg):
         LOG.error("Not implemented yet")
 
     @classmethod
-    def get_analyzer_checkers(cls, cfg_handler):
+    def get_analyzer_checkers(cls):
         """
         Return the list of the all of the supported checkers.
         """
         try:
             environ = analyzer_context.get_context().analyzer_env
             result = subprocess.check_output(
-                [cfg_handler.analyzer_binary, "-list-checks", "-checks=*"],
+                [cls.analyzer_binary(), "-list-checks", "-checks=*"],
                 env=environ,
                 universal_newlines=True,
                 encoding="utf-8",
@@ -163,13 +186,13 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             return []
 
     @classmethod
-    def get_checker_config(cls, cfg_handler):
+    def get_checker_config(cls):
         """
         Return the checker configuration of the all of the supported checkers.
         """
         try:
             result = subprocess.check_output(
-                [cfg_handler.analyzer_binary, "-dump-config", "-checks=*"],
+                [cls.analyzer_binary(), "-dump-config", "-checks=*"],
                 env=analyzer_context.get_context().analyzer_env,
                 universal_newlines=True,
                 encoding="utf-8",
@@ -179,13 +202,13 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             return []
 
     @classmethod
-    def get_analyzer_config(cls, cfg_handler):
+    def get_analyzer_config(cls):
         """
         Return the analyzer configuration with all checkers enabled.
         """
         try:
             result = subprocess.check_output(
-                [cfg_handler.analyzer_binary, "-dump-config", "-checks=*"],
+                [cls.analyzer_binary(), "-dump-config", "-checks=*"],
                 env=analyzer_context.get_context().analyzer_env,
                 universal_newlines=True,
                 encoding="utf-8",
@@ -295,7 +318,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         try:
             config = self.config_handler
 
-            analyzer_cmd = [config.analyzer_binary]
+            analyzer_cmd = [ClangTidy.analyzer_binary()]
 
             checks, compiler_warnings = self.get_checker_list(config)
 
@@ -427,10 +450,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
     @classmethod
     def construct_config_handler(cls, args):
-        context = analyzer_context.get_context()
         handler = config_handler.ClangTidyConfigHandler()
-        handler.analyzer_binary = context.analyzer_binaries.get(
-            cls.ANALYZER_NAME)
         handler.report_hash = args.report_hash \
             if 'report_hash' in args else None
 
@@ -519,7 +539,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                 analyzer_config.get('take-config-from-directory') != 'true':
             handler.checker_config = json.dumps(analyzer_config)
 
-        checkers = ClangTidy.get_analyzer_checkers(handler)
+        checkers = ClangTidy.get_analyzer_checkers()
 
         try:
             cmdline_checkers = args.ordered_checkers
