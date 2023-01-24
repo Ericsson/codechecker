@@ -1195,6 +1195,14 @@ class MassStoreRun:
                                  self.__name, run_id,
                                  round(time.time() - start_time, 2))
 
+                        LOG.store_time(f"{datetime.fromtimestamp(start_time).isoformat()}, "
+                                       f"{round(time.time() - start_time, 2)}s, "
+                                       f'"{self.__product.name}", '
+                                       f'"{self.__name}", '
+                                       f"{round(zip_size / 1024)}KB, "
+                                       f"{len(self.__new_report_hashes) + len(self.__already_added_report_hashes)}, "
+                                       f"{run_id}")
+
                         return run_id
                     except (sqlalchemy.exc.OperationalError,
                             sqlalchemy.exc.ProgrammingError) as ex:

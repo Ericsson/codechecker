@@ -13,6 +13,7 @@ import argparse
 import json
 import logging
 from logging import config
+from pathlib import Path
 import os
 
 
@@ -30,6 +31,8 @@ CMDLINE_LOG_LEVELS = ['info', 'debug_analyzer', 'debug']
 DEBUG_ANALYZER = logging.DEBUG_ANALYZER = 15  # type: ignore
 logging.addLevelName(DEBUG_ANALYZER, 'DEBUG_ANALYZER')
 
+STORE_TIME = logging.STORE_TIME = 25
+logging.addLevelName(STORE_TIME, 'STORE_TIME')
 
 class CCLogger(logging.Logger):
     def __init__(self, name, level=NOTSET):
@@ -39,6 +42,8 @@ class CCLogger(logging.Logger):
         if self.isEnabledFor(logging.DEBUG_ANALYZER):
             self._log(logging.DEBUG_ANALYZER, msg, args, **kwargs)
 
+    def store_time(self, msg, *args, **kwargs):
+        self._log(logging.STORE_TIME, msg, args, **kwargs)
 
 logging.setLoggerClass(CCLogger)
 
@@ -53,6 +58,9 @@ DEFAULT_LOG_CONFIG = '''{
   "version": 1,
   "disable_existing_loggers": false,
   "formatters": {
+    "store_time_formatter": {
+      "format": "%(message)s"
+    },
     "brief": {
       "format": "[%(asctime)s][%(levelname)s] - %(message)s",
       "datefmt": "%Y-%m-%d %H:%M"
@@ -63,16 +71,29 @@ DEFAULT_LOG_CONFIG = '''{
       "datefmt": "%Y-%m-%d %H:%M"
     }
   },
+  "filters": {
+    "store_time": {
+      "()": "codechecker_common.logger.store_time_filter_maker"
+    }
+  },
   "handlers": {
     "default": {
       "level": "INFO",
       "formatter": "brief",
       "class": "logging.StreamHandler"
+    },
+    "store_time_file_handler": {
+      "class": "logging.handlers.TimedRotatingFileHandler",
+      "formatter": "store_time_formatter",
+      "interval": 7,
+      "backupCount": 8,
+      "filters": ["store_time"],
+      "filename": "store_time.log"
     }
   },
   "loggers": {
     "": {
-      "handlers": ["default"],
+      "handlers": ["default", "store_time_file_handler"]
       "level": "INFO",
       "propagate": true
     }
@@ -87,6 +108,16 @@ try:
 except IOError as ex:
     print(ex)
     print("Failed to load logger configuration. Using built-in config.")
+
+
+def store_time_filter_maker():
+    """
+    This function returns a filter which filters out logs,
+    which are not about store time.
+    """
+    def filter(record):
+        return record.levelno == STORE_TIME
+    return filter
 
 
 def add_verbose_arguments(parser):
@@ -125,10 +156,10 @@ class LOG_CFG_SERVER:
     'CC_LOG_CONFIG_PORT' environment variable is set.
     """
 
-    def __init__(self, log_level='INFO'):
+    def __init__(self, log_level='INFO', workspace=None):
 
         # Configure the logging with the default config.
-        setup_logger(log_level)
+        setup_logger(log_level, workspace=workspace)
 
         self.log_server = None
 
@@ -147,7 +178,7 @@ class LOG_CFG_SERVER:
             self.log_server.join()
 
 
-def setup_logger(log_level=None, stream=None):
+def setup_logger(log_level=None, stream=None, workspace=None):
     """
     Modifies the log configuration.
     Overwrites the log levels for the loggers and handlers in the
@@ -181,5 +212,11 @@ def setup_logger(log_level=None, stream=None):
             handler = LOG_CONFIG['handlers'][k]
             if 'stream' in handler:
                 handler['stream'] = stream
+
+    # Modify the file handler's filename if the log configuration
+    if workspace:
+        handlers = LOG_CONFIG.get("handlers", {})
+        log_path = Path(workspace, "store_time.log")
+        handlers["store_time_file_handler"]["filename"] = log_path
 
     config.dictConfig(LOG_CONFIG)
