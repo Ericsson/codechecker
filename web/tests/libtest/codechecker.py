@@ -285,6 +285,7 @@ def check_and_store(codechecker_cfg, test_project_name, test_project_path,
             encoding="utf-8",
             errors="ignore")
         out, err = process.communicate()
+        # errcode = process.returncode
         print(out)
         print(err)
 

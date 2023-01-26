@@ -134,7 +134,7 @@ int main()
             f.write(self.sources[version])
 
     def _check_source_file(self, cfg):
-        codechecker.check_and_store(cfg, self._run_name, self._test_dir)
+        return codechecker.check_and_store(cfg, self._run_name, self._test_dir)
 
     def _create_clang_tidy_cfg_file(self, checkers):
         """ This function will create a .clang-tidy config file. """
@@ -382,8 +382,8 @@ int main()
 
         self._create_source_file(1)
         self._create_clang_tidy_cfg_file(['-*', 'hicpp-*', 'modernize-*'])
-        self._check_source_file(cfg)
-
+        return_code = self._check_source_file(cfg)
+        self.assertEqual(return_code, 0)
         reports = self._cc_client.getRunResults(None, 100, 0, [], None, None,
                                                 False)
 
