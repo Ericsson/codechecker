@@ -476,8 +476,7 @@ is called.""")
                               action='store_true',
                               dest='ctu_reanalyze_on_failure',
                               default=argparse.SUPPRESS,
-                              help="DEPRECATED. The flag will be removed. "
-                                   "If Cross-TU analysis is enabled and "
+                              help="If Cross-TU analysis is enabled and "
                                    "fails for some reason, try to re analyze "
                                    "the same translation unit without "
                                    "Cross-TU enabled.")

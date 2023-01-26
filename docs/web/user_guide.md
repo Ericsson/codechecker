@@ -774,17 +774,6 @@ filter arguments:
                         'year:month:day:hour:minute:second' (the "time" part
                         can be omitted, in which case midnight (00:00:00) is
                         used).
-  -s, --suppressed      DEPRECATED. Use the '--filter' option to get false
-                        positive (suppressed) results. Show only suppressed
-                        results instead of only unsuppressed ones.
-  --filter FILTER       DEPRECATED. Filter results. Use separated filter
-                        options to filter the results. The filter string has
-                        the following format: [<SEVERITIES>]:[<CHECKER_NAMES>]
-                        :[<FILE_PATHS>]:[<DETECTION_STATUSES>]:[<REVIEW_STATUS
-                        ES>] where severites, checker_names, file_paths,
-                        detection_statuses, review_statuses should be a comma
-                        separated list, e.g.: "high,medium:unix,core:*.cpp,*.h
-                        :new,unresolved:false_positive,intentional"
 ```
 
 #### Source components (`components`)
@@ -1042,7 +1031,7 @@ usage: CodeChecker cmd results [-h] [--details] [--uniqueing {on,off}]
                                [--detected-after TIMESTAMP]
                                [--fixed-before TIMESTAMP]
                                [--fixed-after TIMESTAMP] [-s]
-                               [--filter FILTER] [--url PRODUCT_URL]
+                               [--url PRODUCT_URL]
                                [-o {plaintext,rows,table,csv,json}]
                                [--verbose {info,debug,debug_analyzer}]
                                RUN_NAMES [RUN_NAMES ...]
@@ -1115,7 +1104,7 @@ usage: CodeChecker cmd diff [-h] [-b BASE_RUNS [BASE_RUNS ...]]
                             [--detected-before TIMESTAMP]
                             [--detected-after TIMESTAMP]
                             [--fixed-before TIMESTAMP]
-                            [--fixed-after TIMESTAMP] [-s] [--filter FILTER]
+                            [--fixed-after TIMESTAMP] [-s]
                             (--new | --resolved | --unresolved)
                             [--url PRODUCT_URL]
                             [-o {plaintext,rows,table,csv,json,html,gerrit,codeclimate} [{plaintext,rows,table,csv,json,html,gerrit,codeclimate} ...]]
@@ -1306,17 +1295,6 @@ filter arguments:
                         'year:month:day:hour:minute:second' (the "time" part
                         can be omitted, in which case midnight (00:00:00) is
                         used).
-  -s, --suppressed      DEPRECATED. Use the '--filter' option to get false
-                        positive (suppressed) results. Show only suppressed
-                        results instead of only unsuppressed ones.
-  --filter FILTER       DEPRECATED. Filter results. Use separated filter
-                        options to filter the results. The filter string has
-                        the following format: [<SEVERITIES>]:[<CHECKER_NAMES>]
-                        :[<FILE_PATHS>]:[<DETECTION_STATUSES>]:[<REVIEW_STATUS
-                        ES>] where severites, checker_names, file_paths,
-                        detection_statuses, review_statuses should be a comma
-                        separated list, e.g.: "high,medium:unix,core:*.cpp,*.h
-                        :new,unresolved:false_positive,intentional"
 
 comparison modes:
   List reports that can be found only in baseline or new runs or in both. False
@@ -1496,7 +1474,7 @@ to the results stored on a remote CodeChecker server previously
 
 ```
 usage: CodeChecker cmd sum [-h] (-n RUN_NAME [RUN_NAME ...] | -a)
-                           [--disable-unique] [--uniqueing {on,off}]
+                           [--uniqueing {on,off}]
                            [--report-hash [REPORT_HASH [REPORT_HASH ...]]]
                            [--review-status [REVIEW_STATUS [REVIEW_STATUS ...]]]
                            [--detection-status [DETECTION_STATUS [DETECTION_STATUS ...]]]
@@ -1513,7 +1491,7 @@ usage: CodeChecker cmd sum [-h] (-n RUN_NAME [RUN_NAME ...] | -a)
                            [--detected-before TIMESTAMP]
                            [--detected-after TIMESTAMP]
                            [--fixed-before TIMESTAMP]
-                           [--fixed-after TIMESTAMP] [-s] [--filter FILTER]
+                           [--fixed-after TIMESTAMP] [-s]
                            [--url PRODUCT_URL]
                            [-o {plaintext,rows,table,csv,json}]
                            [--verbose {info,debug,debug_analyzer}]
@@ -1533,12 +1511,6 @@ optional arguments:
                         runs. Use 'CodeChecker cmd runs' to get the available
                         runs.
   -a, --all             Show breakdown for all analysis runs.
-  --disable-unique      DEPRECATED. Use the '--uniqueing' option to get
-                        uniqueing results. List all bugs even if these end up
-                        in the same bug location, but reached through
-                        different paths. By uniqueing the bugs a report will
-                        be appeared only once even if it is found on several
-                        paths.
 ```
 </details>
 
@@ -1682,7 +1654,7 @@ report_hash||source_file_name||suppress_comment||type_of_suppression
 
 * `report_hash` is the hash identifier of the report to be suppressed
 * `source_file_name` is the name of the source file wher the report is located
-* `suppress_commant` why you think the issue should be suppressed
+* `suppress_comment` why you think the issue should be suppressed
 * `type_of_suppression` one of the following `false_positive`, `intentional`,
   `confirmed`
 
