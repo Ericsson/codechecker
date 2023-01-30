@@ -207,6 +207,9 @@ class TestInstances(unittest.TestCase):
                          "Two servers were started but they don't appear "
                          "in the instance list.")
 
+        # Print all the folder content in the workspace
+        print(os.listdir(self._test_workspace))
+
         # Kill the servers via cmdline.
         self.assertEqual(0, self.run_cmd([env.codechecker_cmd(),
                                           'server', '--stop-all']),

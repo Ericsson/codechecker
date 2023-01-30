@@ -1073,6 +1073,7 @@ class TestAnalyze(unittest.TestCase):
         # starting with 'nocapture' in 'analyzer/.noserc', and print both the
         # stdout and stderr streams from the above communicate() call (the
         # latter of which is ignored with _ above)
+        # Put a + if the above instructions saved you: +
         self.assertEqual(out.count('hicpp-use-nullptr'), 2)
 
         analyze_cmd = [self._codechecker_cmd, "check", "-l", build_json,

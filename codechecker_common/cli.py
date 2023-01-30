@@ -185,8 +185,7 @@ output.
             from codechecker_common import logger
             logger.setup_logger(
                 args.verbose if 'verbose' in args else None,
-                'stderr',
-                workspace=args.workspace if 'workspace' in args else None)
+                'stderr')
             LOG = logger.get_logger('system')
 
             if len(sys.argv) > 1:

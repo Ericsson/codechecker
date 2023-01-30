@@ -47,6 +47,7 @@ from .thrift_enum_helper import report_extended_data_type_str
 
 
 LOG = get_logger('server')
+STORE_TIME_LOG = get_logger('store_time')
 
 
 class LogTask:
@@ -222,6 +223,7 @@ class MassStoreRun:
         self.__mips: Dict[str, MetadataInfoParser] = {}
         self.__analysis_info: Dict[str, AnalysisInfo] = {}
         self.__duration: int = 0
+        self.__report_count: int = 0
         self.__wrong_src_code_comments: List[str] = []
         self.__already_added_report_hashes: Set[str] = set()
         self.__new_report_hashes: Set[str] = set()
@@ -889,6 +891,7 @@ class MassStoreRun:
         analysis_info = self.__analysis_info.get(root_dir_path)
 
         for report in reports:
+            self.__report_count += 1
             report.trim_path_prefixes(self.__trim_path_prefixes)
 
             missing_ids_for_files = get_missing_file_ids(report)
@@ -1188,20 +1191,26 @@ class MassStoreRun:
                         self.__report_server._set_run_data_for_curr_product(
                             inc_num_of_runs, run_history_time)
 
+                        runtime = round(time.time() - start_time, 2)
+                        zip_size_kb = round(zip_size / 1024)
+
                         LOG.info("'%s' stored results (%s KB "
                                  "/decompressed/) to run '%s' (id: %d) in "
                                  "%s seconds.", self.user_name,
-                                 round(zip_size / 1024),
-                                 self.__name, run_id,
-                                 round(time.time() - start_time, 2))
+                                 zip_size_kb, self.__name, run_id, runtime)
 
-                        LOG.store_time(f"{datetime.fromtimestamp(start_time).isoformat()}, "
-                                       f"{round(time.time() - start_time, 2)}s, "
-                                       f'"{self.__product.name}", '
-                                       f'"{self.__name}", '
-                                       f"{round(zip_size / 1024)}KB, "
-                                       f"{len(self.__new_report_hashes) + len(self.__already_added_report_hashes)}, "
-                                       f"{run_id}")
+                        iso_start_time = datetime.fromtimestamp(
+                            start_time).isoformat()
+
+                        log_msg = f"{iso_start_time}, " +\
+                                  f"{runtime}s, " +\
+                                  f'"{self.__product.name}", ' +\
+                                  f'"{self.__name}", ' +\
+                                  f"{zip_size_kb}KB, " +\
+                                  f"{self.__report_count}, " +\
+                                  f"{run_id}"
+
+                        STORE_TIME_LOG.info(log_msg)
 
                         return run_id
                     except (sqlalchemy.exc.OperationalError,

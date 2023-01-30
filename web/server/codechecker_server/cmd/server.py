@@ -980,7 +980,8 @@ def main(args):
     manage the CodeChecker server.
     """
     with logger.LOG_CFG_SERVER(args.verbose if 'verbose' in args else None,
-                               workspace=args.config_directory if 'config_directory' in args else None):
+                               workspace=args.config_directory
+                               if 'config_directory' in args else None):
         try:
             cmd_config.check_config_file(args)
         except FileNotFoundError as fnerr:
