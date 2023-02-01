@@ -417,6 +417,10 @@ databases.
             # If --postgresql is given, --sqlite is useless.
             delattr(args, 'sqlite')
 
+        # Indicate in args that we are in instance manager mode.
+        if "list" in args or "stop" in args or "stop_all" in args:
+            setattr(args, "instance_manager", True)
+
         # If everything is fine, do call the handler for the subcommand.
         main(args)
 
@@ -761,6 +765,9 @@ def server_init_start(args):
     """
 
     if 'list' in args or 'stop' in args or 'stop_all' in args:
+        # Set the instance manager flag to True to be able watch for it during
+        # logger setup.
+        setattr(args, "instance_manager", True)
         __instance_management(args)
         sys.exit(0)
 
@@ -979,9 +986,15 @@ def main(args):
     Setup a logger server based on the configuration and
     manage the CodeChecker server.
     """
-    with logger.LOG_CFG_SERVER(args.verbose if 'verbose' in args else None,
-                               workspace=args.config_directory
-                               if 'config_directory' in args else None):
+    workspace = (
+        args.config_directory
+        if "config_directory" in args and not hasattr(args, "instance_manager")
+        else None
+    )
+
+    with logger.LOG_CFG_SERVER(
+        args.verbose if "verbose" in args else None, workspace=workspace
+    ):
         try:
             cmd_config.check_config_file(args)
         except FileNotFoundError as fnerr:

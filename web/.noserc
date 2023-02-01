@@ -10,4 +10,4 @@ detailed-errors=1
 stop=1
 
 # do not capture stdout
-nocapture=1
+#nocapture=1
