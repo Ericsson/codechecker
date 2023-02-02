@@ -729,11 +729,15 @@ def start_workers(actions_map, actions, analyzer_config_map,
     def signal_handler(signum, frame):
         try:
             pool.terminate()
+            pool.join()
             manager.shutdown()
+        except Exception as e:
+            LOG.error("Failed to clean up after the pool!:\n")
+            LOG.error(e)
+            raise
         finally:
             sys.exit(128 + signum)
 
-    signal.signal(signal.SIGINT, signal_handler)
     actions, skipped_actions = skip_cpp(actions, skip_handlers)
     # Start checking parallel.
     checked_var = multiprocessing.Value('i', 1)
@@ -742,6 +746,7 @@ def start_workers(actions_map, actions, analyzer_config_map,
                                 initializer=init_worker,
                                 initargs=(checked_var,
                                           actions_num))
+    signal.signal(signal.SIGINT, signal_handler)
 
     # If the analysis has failed, we help debugging.
     failed_dir = os.path.join(output_path, "failed")
