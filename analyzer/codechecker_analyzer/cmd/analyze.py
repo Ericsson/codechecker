@@ -394,7 +394,8 @@ def add_arguments_to_parser(parser):
                                dest='tidy_config',
                                required=False,
                                default=argparse.SUPPRESS,
-                               help="A file in YAML format containing the "
+                               help="DEPRECATED. "
+                                    "A file in YAML format containing the "
                                     "configuration of clang-tidy checkers. "
                                     "The file can be dumped by "
                                     "'CodeChecker analyzers --dump-config "
@@ -875,6 +876,11 @@ def main(args):
     readable format.
     """
     logger.setup_logger(args.verbose if 'verbose' in args else None)
+
+    if 'tidy_config' in args:
+        LOG.warning(
+            "--tidy-config is deprecated and will be removed in the next "
+            "release. Use --analyzer-config or --checker-config instead.")
 
     # CTU loading mode is only meaningful if CTU itself is enabled.
     if 'ctu_ast_mode' in args and 'ctu_phases' not in args:

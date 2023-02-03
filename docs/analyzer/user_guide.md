@@ -137,7 +137,6 @@ usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-t {plist}] [-q]
                          [--config CONFIG_FILE]
                          [--saargs CLANGSA_ARGS_CFG_FILE]
                          [--tidyargs TIDY_ARGS_CFG_FILE]
-                         [--tidy-config TIDY_CONFIG]
                          [--analyzer-config [ANALYZER_CONFIG [ANALYZER_CONFIG ...]]]
                          [--checker-config [CHECKER_CONFIG [CHECKER_CONFIG ...]]]
                          [--timeout TIMEOUT]
@@ -277,11 +276,6 @@ analyzer arguments:
   --tidyargs TIDY_ARGS_CFG_FILE
                         File containing argument which will be forwarded
                         verbatim for the Clang-Tidy analyzer.
-  --tidy-config TIDY_CONFIG
-                        A file in YAML format containing the configuration of
-                        clang-tidy checkers. The file can be dumped by
-                        'CodeChecker analyzers --dump-config clang-tidy'
-                        command.
   --analyzer-config [ANALYZER_CONFIG [ANALYZER_CONFIG ...]]
                         Analyzer configuration options in the following
                         format: analyzer:key=value. The collection of the
@@ -898,7 +892,7 @@ usage: CodeChecker analyze [-h] [-j JOBS]
                            [--cppcheck-args CPPCHECK_ARGS_CFG_FILE]
                            [--saargs CLANGSA_ARGS_CFG_FILE]
                            [--tidyargs TIDY_ARGS_CFG_FILE]
-                           [--tidy-config TIDY_CONFIG] [--timeout TIMEOUT]
+                           [--timeout TIMEOUT]
                            [--ctu | --ctu-collect | --ctu-analyze]
                            [--ctu-ast-mode {load-from-pch, parse-on-demand}]
                            [--ctu-reanalyze-on-failure]
@@ -1107,11 +1101,6 @@ analyzer arguments:
   --tidyargs TIDY_ARGS_CFG_FILE
                         File containing argument which will be forwarded
                         verbatim for Clang-Tidy.
-  --tidy-config TIDY_CONFIG
-                        A file in YAML format containing the configuration of
-                        clang-tidy checkers. The file can be dumped by
-                        'CodeChecker analyzers --dump-config clang-tidy'
-                        command.
   --analyzer-config [ANALYZER_CONFIG [ANALYZER_CONFIG ...]]
                         Analyzer configuration options in the following
                         format: analyzer:key=value. The collection of the

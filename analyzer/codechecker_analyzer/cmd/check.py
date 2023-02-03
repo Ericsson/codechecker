@@ -340,7 +340,8 @@ used to generate a log file on the fly.""")
                                dest='tidy_config',
                                required=False,
                                default=argparse.SUPPRESS,
-                               help="A file in YAML format containing the "
+                               help="DEPRECATED. "
+                                    "A file in YAML format containing the "
                                     "configuration of clang-tidy checkers. "
                                     "The file can be dumped by "
                                     "'CodeChecker analyzers --dump-config "
@@ -816,7 +817,6 @@ def main(args):
                           'add_compiler_defaults',
                           'clangsa_args_cfg_file',
                           'tidy_args_cfg_file',
-                          'tidy_config',
                           'analyzer_config',
                           'checker_config',
                           'capture_analysis_output',

@@ -196,8 +196,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         Return a list of checkers and warnings what needs to be enabled during
         analysis.
 
-        If the file specified by the '--tidy-config' option contains a 'Checks'
-        key or the 'Checks' option is specified through the '--analyzer-config'
+        If 'Checks' option is specified through '--analyzer-config'
         the return value will be a tuple of empty lists which means do not turn
         checkers explicitly. "clang-analyzer-*" is an exception, because we
         want to disable these even if analyzer config is given. If we wouldn't
