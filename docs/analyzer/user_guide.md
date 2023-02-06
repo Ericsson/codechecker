@@ -859,15 +859,23 @@ for printing an overview in the terminal (`CodeChecker parse`) or storing
 (`CodeChecker store`) analysis results in a database, which can later on be
 viewed in a browser.
 
-Example:
+Examples:
 
 ```sh
 CodeChecker analyze ../codechecker_myProject_build.log -o my_plists
+CodeChecker analyze main.cpp -o my_plists
+CodeChecker analyze project_root -o my_plists
 ```
 
 **Note**: If your compilation database log file contains relative paths you
 have to make sure that you run the analysis command from the same directory
 as the logger was run (i.e. that paths are relative to).
+
+In case a source file or a project directory is given as analysis input, the
+process still relies on the compilation database JSON file, because CodeChecker
+tries to find it implicitly. So make sure that a `compile_commands.json`
+describing the build commands of analyzed modules is available in the project
+tree.
 
 `CodeChecker analyze` supports a myriad of fine-tuning arguments, explained
 below:
@@ -899,16 +907,15 @@ usage: CodeChecker analyze [-h] [-j JOBS]
                            [-e checker/group/profile]
                            [-d checker/group/profile] [--enable-all]
                            [--verbose {info,debug,debug_analyzer}]
-                           logfile
+                           input
 
 Use the previously created JSON Compilation Database to perform an analysis on
 the project, outputting analysis results in a machine-readable format.
 
 positional arguments:
-  logfile               Path to the JSON compilation command database files
-                        which were created during the build. The analyzers
-                        will check only the files registered in these build
-                        databases.
+  input                 The input of the analysis can be either a compilation
+                        database JSON file, a path to a source file or a path
+                        to a directory containing source files.
 
 optional arguments:
   -h, --help            show this help message and exit

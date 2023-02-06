@@ -131,6 +131,18 @@ During analysis, CodeChecker compiles/analyses sources again. The analysis
 process generally uses more time. If you want to speed up analysis specify a
 higher value for the `--jobs` option.
 
+The input of the analysis can be either a compilation database JSON file like
+in the example above or a source file or a project/module directory. In all
+cases the analysis relies on the compilation database, but with a file/directory
+input the `compile_commands.json` is searched automatically by CodeChecker in
+the parent directories:
+
+```sh
+CodeChecker analyze my_source_file.cpp
+CodeChecker analyze project_dir
+CodeChecker analyze project_dir/sub_module_dir
+```
+
 In the above command the `--enable sensitive` means that a subset of checker
 are run. `sensitive` chooses a predefined "group" of checkers. For further
 info on available checkers use these commands:
