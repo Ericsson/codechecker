@@ -3,7 +3,7 @@ const path = require("path");
 const fs = require("fs");
 
 const host = process.env.HOST || "localhost";
-const port = process.env.PORT || 8001;
+const port = process.env.PORT || 8002;
 const url = `http://${host}:${port}`;
 
 const CC_DIR = path.join(__dirname, "__codechecker");
