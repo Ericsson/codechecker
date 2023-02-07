@@ -1779,18 +1779,7 @@ class ThriftRequestHandler:
                 sorted_reports = sorted_reports \
                     .limit(limit).offset(offset).subquery()
 
-                q = session.query(Report.id, Report.bug_id,
-                                  Report.checker_message, Report.checker_id,
-                                  Report.severity, Report.detected_at,
-                                  Report.fixed_at, Report.review_status,
-                                  Report.review_status_author,
-                                  Report.review_status_message,
-                                  Report.review_status_date,
-                                  Report.review_status_is_in_source,
-                                  File.filename, File.filepath,
-                                  Report.path_length, Report.analyzer_name,
-                                  Report.file_id, Report.run_id, Report.line,
-                                  Report.column, Report.detection_status) \
+                q = session.query(Report, File.filename) \
                     .outerjoin(File, Report.file_id == File.id) \
                     .outerjoin(sorted_reports,
                                sorted_reports.c.id == Report.id) \
@@ -1808,43 +1797,36 @@ class ThriftRequestHandler:
                 # Get report details if it is required.
                 report_details = {}
                 if get_details:
-                    report_ids = [r[0] for r in query_result]
+                    report_ids = [r[0].id for r in query_result]
                     report_details = get_report_details(session, report_ids)
 
-                for report_id, bug_id, checker_msg, checker, severity, \
-                    detected_at, fixed_at, review_status, \
-                    review_status_author, review_status_message, \
-                    review_status_date, review_status_is_in_source, \
-                    filename, _, bug_path_len, \
-                        analyzer_name, file_id, run_id, line, column, \
-                        d_status in query_result:
-
+                for report, filename in query_result:
                     review_data = create_review_data(
-                        review_status,
-                        review_status_message,
-                        review_status_author,
-                        review_status_date,
-                        review_status_is_in_source)
+                        report.review_status,
+                        report.review_status_message,
+                        report.review_status_author,
+                        report.review_status_date,
+                        report.review_status_is_in_source)
 
                     results.append(
-                        ReportData(runId=run_id,
-                                   bugHash=bug_id,
+                        ReportData(runId=report.run_id,
+                                   bugHash=report.bug_id,
                                    checkedFile=filename,
-                                   checkerMsg=checker_msg,
-                                   reportId=report_id,
-                                   fileId=file_id,
-                                   line=line,
-                                   column=column,
-                                   checkerId=checker,
-                                   severity=severity,
+                                   checkerMsg=report.checker_message,
+                                   reportId=report.id,
+                                   fileId=report.file_id,
+                                   line=report.line,
+                                   column=report.column,
+                                   checkerId=report.checker_id,
+                                   severity=report.severity,
                                    reviewData=review_data,
                                    detectionStatus=detection_status_enum(
-                                       d_status),
-                                   detectedAt=str(detected_at),
-                                   fixedAt=str(fixed_at),
-                                   bugPathLength=bug_path_len,
-                                   details=report_details.get(report_id),
-                                   analyzerName=analyzer_name))
+                                       report.detection_status),
+                                   detectedAt=str(report.detected_at),
+                                   fixedAt=str(report.fixed_at),
+                                   bugPathLength=report.path_length,
+                                   details=report_details.get(report.id),
+                                   analyzerName=report.analyzer_name))
             else:  # not is_unique
                 sort_types, sort_type_map, order_type_map = \
                     get_sort_map(sort_types)
@@ -1852,17 +1834,7 @@ class ThriftRequestHandler:
                 if SortType.FILENAME in map(lambda x: x.type, sort_types):
                     join_tables.append(File)
 
-                q = session.query(Report.run_id, Report.id, Report.file_id,
-                                  Report.line, Report.column,
-                                  Report.detection_status, Report.bug_id,
-                                  Report.checker_message, Report.checker_id,
-                                  Report.severity, Report.detected_at,
-                                  Report.fixed_at, Report.review_status,
-                                  Report.review_status_author,
-                                  Report.review_status_message,
-                                  Report.review_status_date,
-                                  Report.review_status_is_in_source,
-                                  Report.path_length, Report.analyzer_name)
+                q = session.query(Report)
                 q = apply_report_filter(q, filter_expression, join_tables)
 
                 q = sort_results_query(q, sort_types, sort_type_map,
@@ -1875,7 +1847,7 @@ class ThriftRequestHandler:
                 # Get report details if it is required.
                 report_details = {}
                 if get_details:
-                    report_ids = [r[1] for r in query_result]
+                    report_ids = [r.id for r in query_result]
                     report_details = get_report_details(session, report_ids)
 
                 # Earlier file table was joined to the query of reports.
@@ -1887,45 +1859,40 @@ class ThriftRequestHandler:
                 # separate query of file table results a query strategy for the
                 # previous query which doesn't contain such an inner loop. See
                 # EXPLAIN SELECT columns FROM ...
-                file_ids = set(map(lambda r: r[2], query_result))
+                file_ids = set(map(lambda r: r.file_id, query_result))
                 all_files = dict()
                 for chunk in util.chunks(file_ids, SQLITE_MAX_VARIABLE_NUMBER):
                     all_files.update(dict(session.query(File.id, File.filepath)
                                      .filter(File.id.in_(chunk)).all()))
 
-                for run_id, report_id, file_id, line, column, d_status, \
-                    bug_id, checker_msg, checker, severity, detected_at,\
-                    fixed_at, review_status, review_status_author, \
-                    review_status_message, review_status_date, \
-                    review_status_is_in_source, bug_path_len, \
-                        analyzer_name in query_result:
-
+                for report in query_result:
                     review_data = create_review_data(
-                        review_status,
-                        review_status_message,
-                        review_status_author,
-                        review_status_date,
-                        review_status_is_in_source)
+                        report.review_status,
+                        report.review_status_message,
+                        report.review_status_author,
+                        report.review_status_date,
+                        report.review_status_is_in_source)
 
                     results.append(
-                        ReportData(runId=run_id,
-                                   bugHash=bug_id,
-                                   checkedFile=all_files[file_id],
-                                   checkerMsg=checker_msg,
-                                   reportId=report_id,
-                                   fileId=file_id,
-                                   line=line,
-                                   column=column,
-                                   checkerId=checker,
-                                   severity=severity,
+                        ReportData(runId=report.run_id,
+                                   bugHash=report.bug_id,
+                                   checkedFile=all_files[report.file_id],
+                                   checkerMsg=report.checker_message,
+                                   reportId=report.id,
+                                   fileId=report.file_id,
+                                   line=report.line,
+                                   column=report.column,
+                                   checkerId=report.checker_id,
+                                   severity=report.severity,
                                    reviewData=review_data,
                                    detectionStatus=detection_status_enum(
-                                       d_status),
-                                   detectedAt=str(detected_at),
-                                   fixedAt=str(fixed_at) if fixed_at else None,
-                                   bugPathLength=bug_path_len,
-                                   details=report_details.get(report_id),
-                                   analyzerName=analyzer_name))
+                                       report.detection_status),
+                                   detectedAt=str(report.detected_at),
+                                   fixedAt=str(report.fixed_at) if
+                                       report.fixed_at else None,
+                                   bugPathLength=report.path_length,
+                                   details=report_details.get(report.id),
+                                   analyzerName=report.analyzer_name))
 
             return results
 
