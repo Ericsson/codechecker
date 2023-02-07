@@ -15,7 +15,7 @@ CodeChecker result directory which can be stored to a CodeChecker server.
 |                | [Clang Static Analyzer](https://clang-analyzer.llvm.org/)    | ✓ |
 |                | [Clang Sanitizers](#clang-sanitizers)    | ✓ |
 |                | [Cppcheck](/docs/tools/report-converter.md#cppcheck)    | ✓ |
-|                | [Facebook Infer](/docs/tools/report-converter.md#fbinfer)    | ✓ |
+|                | [Facebook Infer](/docs/tools/report-converter.md#facebook-infer)    | ✓ |
 |                | [Coccinelle](/docs/tools/report-converter.md#coccinelle)   | ✓ |
 |                | [Smatch](/docs/tools/report-converter.md#smatch)   | ✓ |
 |                | [Kernel-Doc](/docs/tools/report-converter.md#kernel-doc)   | ✓ |
@@ -24,7 +24,7 @@ CodeChecker result directory which can be stored to a CodeChecker server.
 | **C#**         | [Roslynator.DotNet.Cli](/docs/tools/report-converter.md#roslynatordotnetcli)  | ✓ |
 | **Java**       | [FindBugs](http://findbugs.sourceforge.net/)    | ✗ |
 |                | [SpotBugs](/docs/tools/report-converter.md#spotbugs)    | ✓ |
-|                | [Facebook Infer](/docs/tools/report-converter.md#fbinfer)    | ✓ |
+|                | [Facebook Infer](/docs/tools/report-converter.md#facebook-infer)    | ✓ |
 | **Python**     | [Pylint](/docs/tools/report-converter.md#pylint)    | ✓ |
 |                | [Pyflakes](/docs/tools/report-converter.md#pyflakes)    | ✓ |
 |                | [mypy](http://mypy-lang.org/)    | ✗ |
