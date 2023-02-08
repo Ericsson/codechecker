@@ -175,7 +175,7 @@ The following tools are supported:
 |                | [cpplint](/docs/tools/report-converter.md#cpplint)                           |
 | **C#**         | [Roslynator.DotNet.Cli](/docs/tools/report-converter.md#roslynatordotnetcli) |
 | **Java**       | [SpotBugs](/docs/tools/report-converter.md#spotbugs)                         |
-|                | [Facebook Infer](/docs/tools/report-converter.md#fbinfer)                    |
+|                | [Facebook Infer](/docs/tools/report-converter.md#facebook-infer)                    |
 | **Python**     | [Pylint](/docs/tools/report-converter.md#pylint)                             |
 |                | [Pyflakes](/docs/tools/report-converter.md#pyflakes)                         |
 | **JavaScript** | [ESLint](/docs/tools/report-converter.md#eslint)                             |
