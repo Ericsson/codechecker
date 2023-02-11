@@ -276,12 +276,17 @@ def check_and_store(codechecker_cfg, test_project_name, test_project_path,
     try:
         print("RUNNING CHECK")
         print(check_cmd)
-        subprocess.call(
+        process = subprocess.Popen(
             check_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             cwd=test_project_path,
             env=codechecker_cfg['check_env'],
             encoding="utf-8",
             errors="ignore")
+        out, err = process.communicate()
+        print(out)
+        print(err)
 
     except CalledProcessError as cerr:
         print("Failed to call:\n" + ' '.join(cerr.cmd))
