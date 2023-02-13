@@ -17,6 +17,8 @@ from argparse import Namespace
 from codechecker_analyzer.analyzers.clangsa.analyzer import ClangSA
 from codechecker_analyzer.analyzers.clangtidy.analyzer import ClangTidy
 from codechecker_analyzer.analyzers.config_handler import CheckerState
+from codechecker_analyzer.analyzers.clangtidy.config_handler \
+        import is_compiler_warning
 
 from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.buildlog import log_parser
@@ -278,6 +280,9 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
         for arg in analyzer.construct_analyzer_cmd(result_handler):
             if arg.startswith('-checks='):
                 self.assertIn('-clang-analyzer-*', arg)
+
+        self.assertTrue(is_compiler_warning('Wreserved-id-macro'))
+        self.assertFalse(is_compiler_warning('hicpp'))
 
         args = Namespace()
         args.ordered_checkers = [('Wreserved-id-macro', True)]
