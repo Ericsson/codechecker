@@ -3,7 +3,7 @@
     <the-header />
 
     <v-main>
-      <keep-alive include="Products">
+      <keep-alive :include="keepAliveList">
         <router-view />
       </keep-alive>
       <errors />
@@ -20,7 +20,27 @@ export default {
   components: {
     Errors,
     TheHeader
-  }
+  },
+  data() {
+    return {
+      keepAliveList: []
+    };
+  },
+  computed: {
+    isAuthenticated() {
+      return this.$store.getters.isAuthenticated;
+    }
+  },
+  watch: {
+    // eslint-disable-next-line no-unused-vars
+    isAuthenticated(newValue, _) {
+      if (newValue) {
+        this.keepAliveList.push("Products");
+      } else {
+        this.keepAliveList = [];
+      }
+    },
+  },
 };
 </script>
 
