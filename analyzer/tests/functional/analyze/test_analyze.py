@@ -765,7 +765,7 @@ class TestAnalyze(unittest.TestCase):
         self.check_unique_compilation_db(unique_json, 3, True, True, True)
 
     def test_invalid_enabled_checker_name(self):
-        """Warn in case of an invalid enabled checker."""
+        """Error out in case of an invalid enabled checker."""
         build_json = os.path.join(self.test_workspace, "build_success.json")
         analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
                        "--analyzers", "clangsa", "-o", self.report_dir,
@@ -796,7 +796,7 @@ class TestAnalyze(unittest.TestCase):
         self.assertTrue("non-existing-checker-name" in out)
 
         errcode = process.returncode
-        self.assertEqual(errcode, 0)
+        self.assertEqual(errcode, 1)
 
     def test_disable_all_warnings(self):
         """Test disabling warnings as checker groups."""
@@ -831,7 +831,7 @@ class TestAnalyze(unittest.TestCase):
                       out)
 
     def test_invalid_disabled_checker_name(self):
-        """Warn in case of an invalid disabled checker."""
+        """Error out in case of an invalid disabled checker."""
         build_json = os.path.join(self.test_workspace, "build_success.json")
         analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
                        "--analyzers", "clangsa", "-o", self.report_dir,
@@ -862,7 +862,7 @@ class TestAnalyze(unittest.TestCase):
         self.assertTrue("non-existing-checker-name" in out)
 
         errcode = process.returncode
-        self.assertEqual(errcode, 0)
+        self.assertEqual(errcode, 1)
 
     def test_disabling_clangsa_modeling_checkers(self):
         """Warn in case a modeling checker is disabled from clangsa"""
@@ -898,7 +898,7 @@ class TestAnalyze(unittest.TestCase):
         self.assertEqual(errcode, 0)
 
     def test_multiple_invalid_checker_names(self):
-        """Warn in case of multiple invalid checker names."""
+        """Error out in case of multiple invalid checker names."""
         build_json = os.path.join(self.test_workspace, "build_success.json")
         analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
                        "--analyzers", "clangsa", "-o", self.report_dir,
@@ -936,7 +936,7 @@ class TestAnalyze(unittest.TestCase):
 
         errcode = process.returncode
 
-        self.assertEqual(errcode, 0)
+        self.assertEqual(errcode, 1)
 
     def test_cppcheck_standard(self):
         """

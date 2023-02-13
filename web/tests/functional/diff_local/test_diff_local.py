@@ -34,7 +34,7 @@ class DiffLocal(unittest.TestCase):
         test_class = self.__class__.__name__
         print('Running ' + test_class + ' tests in ' + test_workspace)
 
-        # Get the test configuration from the prepared int the test workspace.
+        # Get the test configuration from the prepared into the test workspace.
         self._test_cfg = env.import_test_cfg(test_workspace)
         self._codechecker_cfg = self._test_cfg['codechecker_cfg']
         # Get the test project configuration from the prepared test workspace.
@@ -222,7 +222,6 @@ class DiffLocal(unittest.TestCase):
         source code comments.
         """
         cfg = dict(self._codechecker_cfg)
-        cfg['analyzers'] = ['clang-tidy']
 
         makefile = f"all:\n\t$(CXX) -c main.cpp -Wno-all -Wno-extra " \
                    f"-o /dev/null\n"
@@ -285,7 +284,6 @@ int main()
         # Run the diff command and check the results.
         res, _, _ = get_diff_results(
             [report_dir_base], [report_dir_new], '--new', 'json')
-        print(res)
         self.assertEqual(len(res), 2)
 
         res, _, _ = get_diff_results(
