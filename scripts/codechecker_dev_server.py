@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+"""
+This script intents to help with development of CodeChecker server.
+By using this wrapper, modification of the source files will restart the server.
+"""
 
 from pathlib import Path
 import threading
@@ -57,13 +61,13 @@ class SourceFileModifiedEventHandler(FileSystemEventHandler):
             print(out_line.decode("utf-8"), end="")
             if "Server waiting for client requests" in str(out_line):
                 # print("Server started")
-                t = threading.Thread(target=self.print_stout)
+                t = threading.Thread(target=self.print_stdout)
                 t.start()
                 break
         if self.__proc.poll():
             print("CodeChecker exited")
 
-    def print_stout(self):
+    def print_stdout(self):
         try:
             for out_line in iter(self.__proc.stdout.readline, b""):
                 print(out_line.decode("utf-8"), end="")
