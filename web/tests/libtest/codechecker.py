@@ -717,7 +717,7 @@ def start_server(codechecker_cfg, event, server_args=None, pg_config=None):
 
 
 def add_test_package_product(server_data, test_folder, check_env=None,
-                             protocol='http',
+                             protocol='http', report_limit=None,
                              user_permissions=DEFAULT_USER_PERMISSIONS):
     """
     Add a product for a test suite to the server provided by server_data.
@@ -745,6 +745,8 @@ def add_test_package_product(server_data, test_folder, check_env=None,
                    '--name', os.path.basename(test_folder),
                    '--description', "Automatically created product for test.",
                    '--verbose', 'debug']
+    if report_limit:
+        add_command.extend(['--report-limit', str(report_limit)])
 
     # If tests are running on postgres, we need to create a database.
     pg_config = env.get_postgresql_cfg()
@@ -806,7 +808,8 @@ def add_test_package_product(server_data, test_folder, check_env=None,
         raise Exception("Failed to add the product to the test server!")
 
 
-def remove_test_package_product(test_folder, check_env=None, protocol='http'):
+def remove_test_package_product(test_folder, check_env=None, protocol='http',
+                                product=None):
     """
     Remove the product associated with the given test folder.
     The folder must exist, as the server configuration is read from the folder.
@@ -817,6 +820,7 @@ def remove_test_package_product(test_folder, check_env=None, protocol='http'):
 
     server_data = env.import_test_cfg(test_folder)['codechecker_cfg']
     print(server_data)
+    product_to_remove = product if product else server_data['viewer_product']
 
     if 'check_env' not in server_data:
         server_data['check_env'] = check_env
@@ -827,12 +831,11 @@ def remove_test_package_product(test_folder, check_env=None, protocol='http'):
                              str(server_data['viewer_port']),
                              '')
     del_command = ['CodeChecker', 'cmd', 'products', 'del',
-                   server_data['viewer_product'],
-                   '--url', url]
+                   product_to_remove, '--url', url]
 
     print(' '.join(del_command))
 
-    # Authenticate as SUPERUSER to be able to create the product.
+    # Authenticate as SUPERUSER to be able to delete the product.
     login(server_data, test_folder, "root", "root", protocol)
     returncode = subprocess.call(
         del_command,
@@ -845,7 +848,7 @@ def remove_test_package_product(test_folder, check_env=None, protocol='http'):
     # SQLite databases are deleted automatically as part of the
     # workspace removal.
     if env.get_postgresql_cfg():
-        env.del_database(server_data['viewer_product'], check_env)
+        env.del_database(product_to_remove, check_env)
 
     if returncode:
         raise Exception("Failed to remove the product from the test server!")

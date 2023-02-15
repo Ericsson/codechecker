@@ -33,7 +33,8 @@ struct ProductConfiguration {
   5: optional DatabaseConnection connection,
   6:          i64                runLimit,
   7: optional bool               isReviewStatusChangeDisabled,
-  8: optional Confidentiality    confidentiality
+  8: optional Confidentiality    confidentiality,
+  9: optional i64                reportLimit
 }
 typedef list<ProductConfiguration> ProductConfigurations
 
@@ -53,7 +54,8 @@ struct Product {
   11: i64              runLimit,                        // Number of allowed runs for this product.
   12: list<string>     admins,                          // Administrators of this product.
   13: list<string>     runStoreInProgress,              // List of run names which are in progress.
-  14: optional Confidentiality confidentiality          // Confidentiality classification of the product
+  14: optional Confidentiality confidentiality,         // Confidentiality classification of the product.
+  15: optional i64     reportLimit                      // Maximum number of reports allowed in a run.
 }
 typedef list<Product> Products
 

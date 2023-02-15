@@ -32,11 +32,13 @@ from codechecker_api_shared.ttypes import RequestFailed, ErrorCode
 from codechecker_report_converter import twodim
 from codechecker_report_converter.report import Report, report_file, \
     reports as reports_helper, statistics as report_statistics
-from codechecker_report_converter.report.hash import HashType
+from codechecker_report_converter.report.hash import HashType, \
+    get_report_path_hash
 from codechecker_report_converter.source_code_comment_handler import \
     SourceCodeCommentHandler
 
 from codechecker_client import client as libclient
+from codechecker_client import product
 from codechecker_common import arg, logger, cmd_config
 from codechecker_common.checker_labels import CheckerLabels
 from codechecker_common.util import load_json
@@ -415,7 +417,11 @@ def parse_analyzer_result_files(
     return analyzer_result_file_reports
 
 
-def assemble_zip(inputs, zip_file, client, checker_labels: CheckerLabels):
+def assemble_zip(inputs,
+                 zip_file,
+                 client,
+                 prod_client,
+                 checker_labels: CheckerLabels):
     """Collect and compress report and source files, together with files
     contanining analysis related information into a zip file which
     will be sent to the server.
@@ -459,6 +465,7 @@ def assemble_zip(inputs, zip_file, client, checker_labels: CheckerLabels):
     changed_files = set()
     file_paths = set()
     file_report_positions: FileReportPositions = defaultdict(set)
+    unique_reports = set()
     for file_path, reports in analyzer_result_file_reports.items():
         files_to_compress.add(file_path)
         stats.num_of_analyzer_result_files += 1
@@ -467,6 +474,9 @@ def assemble_zip(inputs, zip_file, client, checker_labels: CheckerLabels):
             if report.changed_files:
                 changed_files.update(report.changed_files)
                 continue
+            # Need to calculate unique reoirt count to determine report limit
+            unique_reports.add(get_report_path_hash(report))
+
             stats.add_report(report)
 
             file_paths.update(report.original_files)
@@ -575,6 +585,25 @@ def assemble_zip(inputs, zip_file, client, checker_labels: CheckerLabels):
 
     # Print statistics what will be stored to the server.
     stats.write()
+
+    # Fail store early if too many reports.
+    p = prod_client.getCurrentProduct()
+    if len(unique_reports) > p.reportLimit:
+        LOG.error(f"""Report Limit Exceeded
+
+This report folder cannot be stored because the number of reports in the
+result folder is too high. Usually noisy checkers, generating a lot of
+reports are not useful and it is better to disable them.
+
+Run `CodeChecker parse <report_folder>` to gain a better understanding on
+report counts.
+
+Disable checkers that have generated an excessive number of reports and then
+rerun the analysis to be able to store the results on the server.
+
+Configured report limit for this product: {p.reportLimit}
+        """)
+        sys.exit(1)
 
     zip_size = os.stat(zip_file).st_size
 
@@ -761,6 +790,12 @@ def main(args):
 
     # Setup connection to the remote server.
     client = libclient.setup_client(args.product_url)
+    protocol, host, port, product_name = \
+        product.split_product_url(args.product_url)
+    prod_client = libclient.setup_product_client(protocol,
+                                                 host,
+                                                 port,
+                                                 product_name=product_name)
 
     zip_file_handle, zip_file = tempfile.mkstemp('.zip')
     LOG.debug("Will write mass store ZIP to '%s'...", zip_file)
@@ -770,7 +805,11 @@ def main(args):
 
         LOG.debug("Assembling zip file.")
         try:
-            assemble_zip(args.input, zip_file, client, context.checker_labels)
+            assemble_zip(args.input,
+                         zip_file,
+                         client,
+                         prod_client,
+                         context.checker_labels)
         except Exception as ex:
             print(ex)
             import traceback

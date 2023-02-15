@@ -129,6 +129,8 @@ class ThriftProductHandler:
             confidentiality = \
                     confidentiality_enum(product.confidentiality)
 
+        report_limit = product.report_limit
+
         return server_product, ttypes.Product(
             id=product.id,
             endpoint=product.endpoint,
@@ -141,7 +143,8 @@ class ThriftProductHandler:
             administrating=self.__administrating(args),
             databaseStatus=server_product.db_status,
             admins=[admin.name for admin in admins],
-            confidentiality=confidentiality)
+            confidentiality=confidentiality,
+            reportLimit=report_limit)
 
     @timeit
     def getPackageVersion(self):
@@ -295,6 +298,7 @@ class ThriftProductHandler:
                 description_b64=descr,
                 connection=dbc,
                 runLimit=product.run_limit,
+                reportLimit=product.report_limit,
                 isReviewStatusChangeDisabled=is_review_status_change_disabled,
                 confidentiality=confidentiality)
 
@@ -387,6 +391,7 @@ class ThriftProductHandler:
                 name=displayed_name,
                 description=description,
                 run_limit=product.runLimit,
+                report_limit=product.reportLimit,
                 is_review_status_change_disabled=is_rws_change_disabled,
                 confidentiality=confidentiality)
 
@@ -583,6 +588,7 @@ class ThriftProductHandler:
             # Update the settings in the database.
             product.endpoint = new_config.endpoint
             product.run_limit = new_config.runLimit
+            product.report_limit = new_config.reportLimit
             product.is_review_status_change_disabled = \
                 new_config.isReviewStatusChangeDisabled
             product.connection = conn_str
