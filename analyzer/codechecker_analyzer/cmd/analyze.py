@@ -627,30 +627,27 @@ statisticsCollector.SpecialReturnValue checkers are available).""")
         """
 Checkers
 ------------------------------------------------
-The analyzer performs checks that are categorized into families or "checkers".
-See 'CodeChecker checkers' for the list of available checkers. You can
-fine-tune which checkers to use in the analysis by setting the enabled and
-disabled flags starting from the bigger groups and going inwards, e.g.
-'-e core -d core.uninitialized -e core.uninitialized.Assign' will enable every
-'core' checker, but only 'core.uninitialized.Assign' from the
-'core.uninitialized' group. Please consult the manual for details. Disabling
-certain checkers - such as the 'core' group - is unsupported by the LLVM/Clang
-community, and thus discouraged.
+An analyzer checks the source code with the help of checkers. Checkers
+implement a specific rule, such as "don't divide by zero", and emit a warning
+if the corresponding rule is violated. Available checkers can be listed by
+'CodeChecker checkers'.
+
+Checkers are grouped by CodeChecker via labels (described below), and sometimes
+by their analyzer tool. An example for the latter is 'clangsa', which orders
+checkers in a package hierarchy (e.g. in 'core.uninitialized.Assign', 'core'
+and 'core.uninitialized' are packages).
 
 Compiler warnings and errors
 ------------------------------------------------
 Compiler warnings are diagnostic messages that report constructions that are
 not inherently erroneous but that are risky or suggest there may have been an
-error. Compiler warnings are named 'clang-diagnostic-<warning-option>', e.g.
-Clang warning controlled by '-Wliteral-conversion' will be reported with check
-name 'clang-diagnostic-literal-conversion'. You can fine-tune which warnings to
-use in the analysis by setting the enabled and disabled flags starting from the
-bigger groups and going inwards, e.g. '-e Wunused -d Wno-unused-parameter' will
-enable every 'unused' warnings except 'unused-parameter'. These flags should
-start with a capital 'W' or 'Wno-' prefix followed by the waning name (E.g.:
-'-e Wliteral-conversion', '-d Wno-literal-conversion'). By default '-Wall' and
-'-Wextra' warnings are enabled. For more information see:
-https://clang.llvm.org/docs/DiagnosticsReference.html.
+error. However, CodeChecker views them as regular checkers.
+
+Compiler warning names are transformed by CodeChecker to reflect the analyzer
+name. For example, '-Wliteral-conversion' from clang-tidy is transformed to
+'clang-diagnostic-literal-conversion'. However, they need to be enabled by
+their original name, e.g. '-e Wliteral-conversion'.
+
 Sometimes GCC is more permissive than Clang, so it is possible that a specific
 construction doesn't compile with Clang but compiles with GCC. These
 compiler errors are also collected as CodeChecker reports as
@@ -660,20 +657,38 @@ was emitted by clang-tidy.
 
 Checker labels
 ------------------------------------------------
-In CodeChecker there is a manual grouping of checkers. These groups are
-determined by labels. The collection of labels is found in
-config/labels directory. The goal of these labels is that you can
-enable or disable checkers by these labels. See the --label flag of
-"CodeChecker checkers" command.
+Each checker is assigned several '<label>:<value>' pairs. For instance,
+'cppcheck-deallocret' has the labels 'profile:default' and 'severity:HIGH'. The
+goal of labels is that you can enable or disable a batch of checkers with them.
+
+You can enable/disable checkers belonging to a label: '-e <label>:<value>',
+e.g. '-e profile:default'.
+
+See "CodeChecker checkers --help" to learn more.
 
 Guidelines
 ------------------------------------------------
-There are several coding guidelines like CppCoreGuideline, SEI-CERT, etc. These
-are collections of best programming practices to avoid common programming
-errors. Some checkers cover the rules of these guidelines. In CodeChecker there
-is a mapping between guidelines and checkers. This way you can list and enable
+CodeChecker recognizes several third party coding guidelines, such as
+CppCoreGuidelines, SEI-CERT, or MISRA. These are collections of best
+programming practices to avoid common programming errors. Some checkers cover
+the rules of these guidelines. CodeChecker assigns the 'guideline' label to
+these checkers, such as 'guideline:sei-cert'. This way you can list and enable
 those checkers which check the fulfillment of certain guideline rules. See the
-output of "CodeChecker checkers --guideline" command.""")
+output of "CodeChecker checkers --guideline" command.
+
+Guidelines are labels themselves, and can be used as a label:
+'-e guideline:<value>', e.g. '-e guideline:sei-cert'.
+
+Batch enabling/disabling checkers
+------------------------------------------------
+You can fine-tune which checkers to use in the analysis by setting the enable
+and disable flags starting from the bigger groups and going inwards. Taking
+for example the package hierarchy of 'clangsa', '-e core -d core.uninitialized
+-e core.uninitialized.Assign' will enable every 'core' checker, but only
+'core.uninitialized.Assign' from the 'core.uninitialized' group. Mind that
+disabling certain checkers - such as the 'core' group is unsupported by the
+LLVM/Clang community, and thus discouraged.
+""")
 
     checkers_opts.add_argument('-e', '--enable',
                                dest="enable",
