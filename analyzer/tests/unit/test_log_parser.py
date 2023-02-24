@@ -616,3 +616,51 @@ class LogParserTest(unittest.TestCase):
 
         build_action = build_actions[0]
         self.assertEqual(build_action.source, src_file_path)
+
+    def test_symlink(self):
+        """
+        Test if each source file is analyzed exclusively once,
+        even when symbolic links are present
+        """
+
+        fileA = os.path.join(self.tmp_dir, "mainA.cpp")
+        fileB = os.path.join(self.tmp_dir, "mainB.cpp")
+        fileC = os.path.join(self.tmp_dir, "mainC.cpp")
+
+        fileA_sym = os.path.join(self.tmp_dir, "mainA_sym.cpp")
+        fileB_sym = os.path.join(self.tmp_dir, "mainB_sym.cpp")
+
+        tmp_symdir = tempfile.mkdtemp()
+        fileC_symdir = os.path.join(tmp_symdir, "mainC_sym.cpp")
+
+        os.symlink(fileA, fileA_sym)
+        os.symlink(fileB, fileB_sym)
+        os.symlink(fileC, fileC_symdir)
+
+        compilation_cmd = [
+            {"directory": self.tmp_dir,
+             "command": "g++ " + fileA,
+             "file": fileA},
+            {"directory": self.tmp_dir,
+             "command": "g++ " + fileB,
+             "file": fileB},
+            {"directory": tmp_symdir,
+             "command": "g++ " + fileC_symdir,
+             "file": fileC_symdir},
+            {"directory": self.tmp_dir,
+             "command": "g++ " + fileC,
+             "file": fileC},
+            {"directory": self.tmp_dir,
+             "command": "g++ " + fileA_sym,
+             "file": fileA_sym},
+            {"directory": self.tmp_dir,
+             "command": "g++ " + fileB_sym,
+             "file": fileB_sym}]
+
+        build_actions, _ = log_parser.parse_unique_log(compilation_cmd,
+                                                       self.__this_dir,
+                                                       "symlink")
+        build_action = build_actions[2]
+
+        self.assertEqual(len(build_actions), 3)
+        self.assertEqual(build_action.source, fileC_symdir)

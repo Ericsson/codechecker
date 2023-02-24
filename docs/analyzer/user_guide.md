@@ -182,14 +182,16 @@ optional arguments:
                         non CTU mode): no uniqueing is done. strict: no
                         uniqueing is done, and an error is given if there is
                         more than one compilation action for a source file.
-                        alpha(default in CTU mode): If there is more than one
-                        compilation action for a source file, only the one is
-                        kept that belongs to the alphabetically first
-                        compilation target. If none of the above given, this
-                        parameter should be a python regular expression. If
-                        there is more than one compilation action for a
-                        source, only the one is kept which matches the given
-                        python regex. If more than one matches an error is
+                        symlink: recognizes symlinks and removes duplication
+                        in the compilation database to ensure that each source
+                        file is analyzed only once. alpha(default in CTU mode):
+                        If there is more than one compilation action for a
+                        source file, only the one is kept that belongs to the
+                        alphabetically first compilation target. If none of the
+                        above given, this parameter should be a python regular
+                        expression. If there is more than one compilation action
+                        for a source, only the one is kept which matches the
+                        given python regex. If more than one matches an error is
                         given. The whole compilation action text is searched
                         for match. (default: none)
   --review-status [REVIEW_STATUS [REVIEW_STATUS ...]]
@@ -972,14 +974,16 @@ optional arguments:
                         non CTU mode): no uniqueing is done. strict: no
                         uniqueing is done, and an error is given if there is
                         more than one compilation action for a source file.
-                        alpha(default in CTU mode): If there is more than one
-                        compilation action for a source file, only the one is
-                        kept that belongs to the alphabetically first
-                        compilation target. If none of the above given, this
-                        parameter should be a python regular expression. If
-                        there is more than one compilation action for a
-                        source, only the one is kept which matches the given
-                        python regex. If more than one matches an error is
+                        symlink: recognizes symlinks and removes duplication
+                        in the compilation database to ensure that each source
+                        file is analyzed only once. alpha(default in CTU mode):
+                        If there is more than one compilation action for a
+                        source file, only the one is kept that belongs to the
+                        alphabetically first compilation target. If none of the
+                        above given, this parameter should be a python regular
+                        expression. If there is more than one compilation action
+                        for a source, only the one is kept which matches the
+                        given python regex. If more than one matches an error is
                         given. The whole compilation action text is searched
                         for match. (default: none)
   --report-hash {context-free,context-free-v2,diagnostic-message}
