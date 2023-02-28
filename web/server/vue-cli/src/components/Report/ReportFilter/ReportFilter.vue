@@ -283,6 +283,18 @@
         </v-list-item-content>
       </v-list-item>
 
+      <v-divider />
+
+      <v-list-item class="pl-1">
+        <v-list-item-content class="pa-0">
+          <testsuite-filter
+            ref="filters"
+            :namespace="namespace"
+            @update:url="updateUrl"
+          />
+        </v-list-item-content>
+      </v-list-item>
+
       <v-divider v-if="showRemoveFilteredReports" />
 
       <v-list-item

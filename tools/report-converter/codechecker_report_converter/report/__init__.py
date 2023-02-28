@@ -291,7 +291,8 @@ class Report:
         bug_path_events: Optional[List[BugPathEvent]] = None,
         bug_path_positions: Optional[List[BugPathPosition]] = None,
         notes: Optional[List[BugPathEvent]] = None,
-        macro_expansions: Optional[List[MacroExpansion]] = None
+        macro_expansions: Optional[List[MacroExpansion]] = None,
+        annotations: Optional[Dict[str, str]] = None
     ):
         self.analyzer_result_file_path = analyzer_result_file_path
         self.file = file
@@ -304,6 +305,7 @@ class Report:
         self.analyzer_name = analyzer_name
         self.category = category
         self.type = type
+        self.annotations = annotations
 
         self.bug_path_events = bug_path_events \
             if bug_path_events is not None else \

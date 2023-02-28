@@ -72,6 +72,7 @@ enum SortType {
   REVIEW_STATUS,
   DETECTION_STATUS,
   BUG_PATH_LENGTH,
+  TIMESTAMP,
 }
 
 enum RunSortType {
@@ -96,6 +97,11 @@ enum ExtendedReportDataType {
 enum CommentKind {
   USER,    // User-given comments.
   SYSTEM   // System events.
+}
+
+struct Pair {
+  1: string first,
+  2: string second
 }
 
 struct SourceFileData {
@@ -315,7 +321,10 @@ struct ReportData {
   15: i64             bugPathLength,   // Length of the bug path.
   16: optional ReportDetails details,  // Details of the report.
   17: optional string analyzerName,    // Analyzer name.
-  18: optional string timeStamp,       // Timestamp for dynamic analyzers.
+  // Report annotations are key-value pairs attached to a report. This is a set
+  // of custom labels that describe some properties of a report. For example the
+  // timestamp in case of dynamic analyzers when the report was actually emitted.
+  18: optional map<string, string> annotations,
 }
 typedef list<ReportData> ReportDataList
 
@@ -364,6 +373,12 @@ struct ReportFilter {
   20: optional bool fileMatchesAnyPoint,
   // Similar to fileMatchesAnyPoint but for component filtering.
   21: optional bool componentMatchesAnyPoint,
+  // Filter on reports that match some annotations. Annotations are key-value
+  // pairs, however, as a filter field a list of pairs is required. This way
+  // several possible values of a key can be provided. For example:
+  // [(key1, value1), (key1, value2), (key2, value3)] returns reports which
+  // have "value1" OR "value2" for "key1" AND have "value3" for "key2".
+  22: optional list<Pair> annotations,
 }
 
 struct RunReportCount {
@@ -574,7 +589,6 @@ service codeCheckerDBAccess {
                                6: CompareData    cmpData,
                                7: optional bool  getDetails)
                                throws (1: codechecker_api_shared.RequestFailed requestError),
-
 
   // Count the results separately for multiple runs.
   // If an empty run id list is provided the report

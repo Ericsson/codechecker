@@ -275,11 +275,17 @@ export default {
           value: "timestamp",
           align: "center",
           sortable: true
+        },
+        {
+          text: "Testsuite",
+          value: "testsuite",
+          align: "center",
+          sortable: false
         }
       ],
       reports: [],
       sameReports: {},
-      hasTimeStamp: false,
+      hasTimeStamp: true,
       selected: [],
       namespace: namespace,
       pagination: {
@@ -323,7 +329,8 @@ export default {
         }
 
         if (header.value === "timestamp") {
-          return this.hasTimeStamp; }
+          return this.hasTimeStamp;
+        }
 
         return true;
       });
@@ -351,7 +358,9 @@ export default {
           ...report,
           "$detectionStatusTitle": detectionStatusTitle,
           "$id": id,
-          "sameReports": report.sameReports
+          "sameReports": report.sameReports,
+          "timestamp": report.annotations["timestamp"],
+          "testsuite": report.annotations["testsuite"]
         };
       });
     }
@@ -396,6 +405,9 @@ export default {
         break;
       case "bugPathLength":
         type = SortType.BUG_PATH_LENGTH;
+        break;
+      case "timestamp":
+        type = SortType.TIMESTAMP;
         break;
       default:
         type = SortType.SEVERITY;
