@@ -285,7 +285,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
             if not has_flag('-arch', analyzer_cmd) and \
                     self.buildaction.arch != "":
-                analyzer_cmd.extend(["-arch ", self.buildaction.arch])
+                analyzer_cmd.extend(["-arch", self.buildaction.arch])
 
             if not has_flag('-std', analyzer_cmd) and \
                     self.buildaction.compiler_standard != "":
