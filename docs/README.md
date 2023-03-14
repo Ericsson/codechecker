@@ -401,7 +401,7 @@ you should be greeted with a web application showing you the analysis results.
 
 CodeChecker has been ported completely to Python **3**.
 **No Python 2 support is planned.**
-You will need at least Python version **`3.6`**.
+You will need at least Python version **`3.8`**.
 Old virtual environments that were created with a Python 2 interpreter need to
 be removed.
 
