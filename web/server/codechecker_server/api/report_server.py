@@ -344,6 +344,19 @@ def process_report_filter(session, run_ids, report_filter, cmp_data=None):
         if max_path_length is not None:
             AND.append(Report.path_length <= max_path_length)
 
+    if report_filter.annotations is not None:
+        annotations = defaultdict(list)
+        for annotation in report_filter.annotations:
+            annotations[annotation.first].append(annotation.second)
+
+        OR = []
+        for key, values in annotations.items():
+            OR.append(or_(
+                ReportAnnotations.key != key,
+                ReportAnnotations.value.in_(values)))
+
+        AND.append(or_(*OR))
+
     filter_expr = and_(*AND)
     return filter_expr, join_tables
 
@@ -1972,13 +1985,33 @@ class ThriftRequestHandler:
                                        report.detection_status),
                                    detectedAt=str(report.detected_at),
                                    fixedAt=str(report.fixed_at) if
-                                       report.fixed_at else None,
+                                   report.fixed_at else None,
                                    bugPathLength=report.path_length,
                                    details=report_details.get(report.id),
                                    analyzerName=report.analyzer_name,
                                    annotations=annotations))
 
             return results
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getReportAnnotations(self, key):
+        self.__require_view()
+
+        with DBSession(self._Session) as session:
+            if key:
+                result = session \
+                    .query(ReportAnnotations.value) \
+                    .distinct() \
+                    .filter(ReportAnnotations.key == key) \
+                    .all()
+            else:
+                result = session \
+                    .query(ReportAnnotations.key) \
+                    .distinct() \
+                    .all()
+
+        return list(map(lambda x: x[0], result))
 
     @timeit
     def getRunReportCounts(self, run_ids, report_filter, limit, offset):

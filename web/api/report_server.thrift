@@ -590,6 +590,11 @@ service codeCheckerDBAccess {
                                7: optional bool  getDetails)
                                throws (1: codechecker_api_shared.RequestFailed requestError),
 
+  // Get report annotation values belonging to the given key.
+  // The "key" parameter is optional. If not given then the list of keys returns.
+  // PERMISSION: PRODUCT_VIEW
+  list<string> getReportAnnotations(1: optional string key),
+
   // Count the results separately for multiple runs.
   // If an empty run id list is provided the report
   // counts will be calculated for all of the available runs.

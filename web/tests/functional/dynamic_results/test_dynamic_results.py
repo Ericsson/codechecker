@@ -16,7 +16,7 @@ import os
 import unittest
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
-    Order, Pair, ReportFilter, SortMode, SortType
+    Order, SortMode, SortType
 
 from libtest import env
 
@@ -53,7 +53,8 @@ class DiffRemote(unittest.TestCase):
             lambda report: 'timestamp' in report.annotations, results)))
 
         for i in range(len(results) - 1):
-            if 'timestamp' not in results[i].annotations:
+            if 'timestamp' not in results[i].annotations or \
+               'timestamp' not in results[i + 1].annotations:
                 continue
 
             self.assertLess(

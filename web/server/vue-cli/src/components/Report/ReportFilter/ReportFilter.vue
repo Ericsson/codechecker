@@ -335,6 +335,7 @@ import {
   ReviewStatusFilter,
   SeverityFilter,
   SourceComponentFilter,
+  TestsuiteFilter,
   UniqueFilter
 } from "./Filters";
 
@@ -366,7 +367,8 @@ export default {
     CheckerNameFilter,
     CheckerMessageFilter,
     RemoveFilteredReports,
-    BugPathLengthFilter
+    BugPathLengthFilter,
+    TestsuiteFilter
   },
   props: {
     namespace: { type: String, required: true },
