@@ -30,7 +30,7 @@ setuptools.setup(
         "Operating System :: POSIX",
         "Programming Language :: Python :: 3"
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.8',
     entry_points={
         'console_scripts': [
             'report-converter = codechecker_report_converter.cli:main',
