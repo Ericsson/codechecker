@@ -52,9 +52,10 @@ from ..database.config_db_model import Product
 from ..database.database import conv, DBSession, escape_like
 from ..database.run_db_model import \
     AnalysisInfo, AnalyzerStatistic, BugPathEvent, BugReportPoint, \
-    CleanupPlan, CleanupPlanReportHash, Comment, ExtendedReportData, File, \
-    FileContent, Report, ReportAnalysisInfo, ReviewStatus, Run, RunHistory, \
-    RunHistoryAnalysisInfo, RunLock, SourceComponent
+    CleanupPlan, CleanupPlanReportHash, Comment, ReportAnnotations, \
+    ExtendedReportData, File, FileContent, Report, ReportAnalysisInfo, \
+    ReviewStatus, Run, RunHistory, RunHistoryAnalysisInfo, RunLock, \
+    SourceComponent
 
 from .thrift_enum_helper import detection_status_enum, \
     detection_status_str, review_status_enum, review_status_str, \
@@ -342,6 +343,19 @@ def process_report_filter(session, run_ids, report_filter, cmp_data=None):
         max_path_length = report_filter.bugPathLength.max
         if max_path_length is not None:
             AND.append(Report.path_length <= max_path_length)
+
+    if report_filter.annotations is not None:
+        annotations = defaultdict(list)
+        for annotation in report_filter.annotations:
+            annotations[annotation.first].append(annotation.second)
+
+        OR = []
+        for key, values in annotations.items():
+            OR.append(or_(
+                ReportAnnotations.key != key,
+                ReportAnnotations.value.in_(values)))
+
+        AND.append(or_(*OR))
 
     filter_expr = and_(*AND)
     return filter_expr, join_tables
@@ -953,7 +967,8 @@ def get_sort_map(sort_types, is_unique=False):
         SortType.CHECKER_NAME: [(Report.checker_id, 'checker_id')],
         SortType.SEVERITY: [(Report.severity, 'severity')],
         SortType.REVIEW_STATUS: [(Report.review_status, 'rw_status')],
-        SortType.DETECTION_STATUS: [(Report.detection_status, 'dt_status')]}
+        SortType.DETECTION_STATUS: [(Report.detection_status, 'dt_status')],
+        SortType.TIMESTAMP: [('annotation_timestamp', 'annotation_timestamp')]}
 
     if is_unique:
         sort_type_map[SortType.FILENAME] = [(File.filename, 'filename')]
@@ -1745,6 +1760,71 @@ class ThriftRequestHandler:
             filter_expression, join_tables = process_report_filter(
                 session, run_ids, report_filter, cmp_data)
 
+            # Extending "reports" table with report annotation columns.
+            #
+            # Suppose that we have these tables in the database:
+            #
+            # reports
+            # =================
+            # id, severity, ...
+            # -----------------
+            # 1,  HIGH,     ...
+            # 2,  MEDIUM,   ...
+            #
+            # report_annotations
+            # =======================
+            # report_id, key,  value
+            # -----------------------
+            # 1,         key1, value1
+            # 1,         key2, value2
+            # 2,         key1, value3
+            #
+            # The resulting table should look like this:
+            #
+            # reports extended
+            # ===================================================
+            # id, severity, ..., annotation_key1, annotation_key2
+            # ---------------------------------------------------
+            # 1,  HIGH,     ..., value1,          value2
+            # 2,  MEDIUM,   ..., value3,          NULL
+            #
+            # The SQL query which results this table is similar to this:
+            #
+            # SELECT
+            #   <every column in "reports" table>,
+            #   MAX(CASE WHEN report_annotations.key == <col1> THEN
+            #       report_annotations.value END) AS annotation_<col1>
+            #   MAX(CASE WHEN report_annotations.key == <col2> THEN
+            #       report_annotations.value END) AS annotation_<col2>
+            # FROM
+            #   reports
+            #   LEFT OUTER JOIN report_annotations ON
+            #     report_annotations.report_id = reports.id
+            # GROUP BY
+            #   reports.id;
+            #
+            # <col1>, <col2>... are the distinct keys in table
+            # "report_annotations". These are collected in a previous query.
+            #
+            # Since the "join" operation makes a Cartesian product of the two
+            # tables, the resulting table contains as many rows for a report as
+            # many annotations belong to it. These have to be joined by report
+            # ID and this is the reason of the aggregating MAX() functions.
+            #
+            # TODO: The creation of this extended table should be produced by
+            # a helper function and it could be used as a sub-query in every
+            # other query which originally works on "reports" table.
+
+            annotation_keys = list(map(
+                lambda x: x[0],
+                session.query(ReportAnnotations.key).distinct().all()))
+
+            annotation_cols = [
+                func.max(sqlalchemy.case([(
+                    ReportAnnotations.key == col,
+                    ReportAnnotations.value)])).label(f"annotation_{col}")
+                for col in annotation_keys]
+
             is_unique = report_filter is not None and report_filter.isUnique
             if is_unique:
                 sort_types, sort_type_map, order_type_map = \
@@ -1779,22 +1859,16 @@ class ThriftRequestHandler:
                 sorted_reports = sorted_reports \
                     .limit(limit).offset(offset).subquery()
 
-                q = session.query(Report.id, Report.bug_id,
-                                  Report.checker_message, Report.checker_id,
-                                  Report.severity, Report.detected_at,
-                                  Report.fixed_at, Report.review_status,
-                                  Report.review_status_author,
-                                  Report.review_status_message,
-                                  Report.review_status_date,
-                                  Report.review_status_is_in_source,
-                                  File.filename, File.filepath,
-                                  Report.path_length, Report.analyzer_name,
-                                  Report.file_id, Report.run_id, Report.line,
-                                  Report.column, Report.detection_status) \
-                    .outerjoin(File, Report.file_id == File.id) \
+                q = session.query(Report, File.filename, *annotation_cols) \
+                    .outerjoin(
+                        ReportAnnotations,
+                        Report.id == ReportAnnotations.report_id) \
                     .outerjoin(sorted_reports,
                                sorted_reports.c.id == Report.id) \
                     .filter(sorted_reports.c.id.isnot(None))
+
+                if File not in join_tables:
+                    q = q.outerjoin(File, Report.file_id == File.id)
 
                 # We have to sort the results again because an ORDER BY in a
                 # subtable is broken by the JOIN.
@@ -1802,67 +1876,70 @@ class ThriftRequestHandler:
                                        sort_types,
                                        sort_type_map,
                                        order_type_map)
+                q = q.group_by(Report.id, File.id)
 
                 query_result = q.all()
 
                 # Get report details if it is required.
                 report_details = {}
                 if get_details:
-                    report_ids = [r[0] for r in query_result]
+                    report_ids = [r[0].id for r in query_result]
                     report_details = get_report_details(session, report_ids)
 
-                for report_id, bug_id, checker_msg, checker, severity, \
-                    detected_at, fixed_at, review_status, \
-                    review_status_author, review_status_message, \
-                    review_status_date, review_status_is_in_source, \
-                    filename, _, bug_path_len, \
-                        analyzer_name, file_id, run_id, line, column, \
-                        d_status in query_result:
+                for row in query_result:
+                    report = row[0]
+                    filename = row[1]
+                    annotations = {
+                        k: v for k, v in zip(annotation_keys, row[2:])
+                        if v is not None}
 
                     review_data = create_review_data(
-                        review_status,
-                        review_status_message,
-                        review_status_author,
-                        review_status_date,
-                        review_status_is_in_source)
+                        report.review_status,
+                        report.review_status_message,
+                        report.review_status_author,
+                        report.review_status_date,
+                        report.review_status_is_in_source)
 
                     results.append(
-                        ReportData(runId=run_id,
-                                   bugHash=bug_id,
+                        ReportData(runId=report.run_id,
+                                   bugHash=report.bug_id,
                                    checkedFile=filename,
-                                   checkerMsg=checker_msg,
-                                   reportId=report_id,
-                                   fileId=file_id,
-                                   line=line,
-                                   column=column,
-                                   checkerId=checker,
-                                   severity=severity,
+                                   checkerMsg=report.checker_message,
+                                   reportId=report.id,
+                                   fileId=report.file_id,
+                                   line=report.line,
+                                   column=report.column,
+                                   checkerId=report.checker_id,
+                                   severity=report.severity,
                                    reviewData=review_data,
                                    detectionStatus=detection_status_enum(
-                                       d_status),
-                                   detectedAt=str(detected_at),
-                                   fixedAt=str(fixed_at),
-                                   bugPathLength=bug_path_len,
-                                   details=report_details.get(report_id),
-                                   analyzerName=analyzer_name))
+                                       report.detection_status),
+                                   detectedAt=str(report.detected_at),
+                                   fixedAt=str(report.fixed_at),
+                                   bugPathLength=report.path_length,
+                                   details=report_details.get(report.id),
+                                   analyzerName=report.analyzer_name,
+                                   annotations=annotations))
             else:  # not is_unique
                 sort_types, sort_type_map, order_type_map = \
                     get_sort_map(sort_types)
 
-                if SortType.FILENAME in map(lambda x: x.type, sort_types):
-                    join_tables.append(File)
+                q = session.query(Report, File.filepath, *annotation_cols) \
+                    .outerjoin(
+                        ReportAnnotations,
+                        Report.id == ReportAnnotations.report_id)
 
-                q = session.query(Report.run_id, Report.id, Report.file_id,
-                                  Report.line, Report.column,
-                                  Report.detection_status, Report.bug_id,
-                                  Report.checker_message, Report.checker_id,
-                                  Report.severity, Report.detected_at,
-                                  Report.fixed_at, Report.review_status,
-                                  Report.review_status_author,
-                                  Report.review_status_message,
-                                  Report.review_status_date,
-                                  Report.review_status_is_in_source,
-                                  Report.path_length, Report.analyzer_name)
+                if File not in join_tables:
+                    q = q.outerjoin(File, Report.file_id == File.id)
+
+                # Grouping by "reports.id" is described at the beginning of
+                # this function. Grouping by "files.id" is necessary, because
+                # "files" table is joined for gathering file names belonging to
+                # the given report. According to SQL syntax if there is a group
+                # by report IDs then files should also be either grouped or an
+                # aggregate function must be applied on them.
+                q = q.group_by(Report.id, File.id)
+
                 q = apply_report_filter(q, filter_expression, join_tables)
 
                 q = sort_results_query(q, sort_types, sort_type_map,
@@ -1875,59 +1952,66 @@ class ThriftRequestHandler:
                 # Get report details if it is required.
                 report_details = {}
                 if get_details:
-                    report_ids = [r[1] for r in query_result]
+                    report_ids = [r[0].id for r in query_result]
                     report_details = get_report_details(session, report_ids)
 
-                # Earlier file table was joined to the query of reports.
-                # However, that created an SQL strategy in PostgreSQL which
-                # resulted in timeout. Based on heuristics the query strategy
-                # (which not only depends on the query statement but the table
-                # size and many other things) may contain an inner loop on
-                # "reports" table which is one of the largest tables. This
-                # separate query of file table results a query strategy for the
-                # previous query which doesn't contain such an inner loop. See
-                # EXPLAIN SELECT columns FROM ...
-                file_ids = set(map(lambda r: r[2], query_result))
-                all_files = dict()
-                for chunk in util.chunks(file_ids, SQLITE_MAX_VARIABLE_NUMBER):
-                    all_files.update(dict(session.query(File.id, File.filepath)
-                                     .filter(File.id.in_(chunk)).all()))
-
-                for run_id, report_id, file_id, line, column, d_status, \
-                    bug_id, checker_msg, checker, severity, detected_at,\
-                    fixed_at, review_status, review_status_author, \
-                    review_status_message, review_status_date, \
-                    review_status_is_in_source, bug_path_len, \
-                        analyzer_name in query_result:
+                for row in query_result:
+                    report = row[0]
+                    filepath = row[1]
+                    annotations = {
+                        k: v for k, v in zip(annotation_keys, row[2:])
+                        if v is not None}
 
                     review_data = create_review_data(
-                        review_status,
-                        review_status_message,
-                        review_status_author,
-                        review_status_date,
-                        review_status_is_in_source)
+                        report.review_status,
+                        report.review_status_message,
+                        report.review_status_author,
+                        report.review_status_date,
+                        report.review_status_is_in_source)
 
                     results.append(
-                        ReportData(runId=run_id,
-                                   bugHash=bug_id,
-                                   checkedFile=all_files[file_id],
-                                   checkerMsg=checker_msg,
-                                   reportId=report_id,
-                                   fileId=file_id,
-                                   line=line,
-                                   column=column,
-                                   checkerId=checker,
-                                   severity=severity,
+                        ReportData(runId=report.run_id,
+                                   bugHash=report.bug_id,
+                                   checkedFile=filepath,
+                                   checkerMsg=report.checker_message,
+                                   reportId=report.id,
+                                   fileId=report.file_id,
+                                   line=report.line,
+                                   column=report.column,
+                                   checkerId=report.checker_id,
+                                   severity=report.severity,
                                    reviewData=review_data,
                                    detectionStatus=detection_status_enum(
-                                       d_status),
-                                   detectedAt=str(detected_at),
-                                   fixedAt=str(fixed_at) if fixed_at else None,
-                                   bugPathLength=bug_path_len,
-                                   details=report_details.get(report_id),
-                                   analyzerName=analyzer_name))
+                                       report.detection_status),
+                                   detectedAt=str(report.detected_at),
+                                   fixedAt=str(report.fixed_at) if
+                                   report.fixed_at else None,
+                                   bugPathLength=report.path_length,
+                                   details=report_details.get(report.id),
+                                   analyzerName=report.analyzer_name,
+                                   annotations=annotations))
 
             return results
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getReportAnnotations(self, key):
+        self.__require_view()
+
+        with DBSession(self._Session) as session:
+            if key:
+                result = session \
+                    .query(ReportAnnotations.value) \
+                    .distinct() \
+                    .filter(ReportAnnotations.key == key) \
+                    .all()
+            else:
+                result = session \
+                    .query(ReportAnnotations.key) \
+                    .distinct() \
+                    .all()
+
+        return list(map(lambda x: x[0], result))
 
     @timeit
     def getRunReportCounts(self, run_ids, report_filter, limit, offset):

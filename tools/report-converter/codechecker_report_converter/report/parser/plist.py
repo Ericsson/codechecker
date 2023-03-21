@@ -244,6 +244,9 @@ class Parser(BaseParser):
         analyzer_name = self.__get_analyzer_name(checker_name, metadata)
         severity = self.get_severity(checker_name)
 
+        report_annotation = diag["report-annotation"] \
+            if "report-annotation" in diag else None
+
         return Report(
             analyzer_result_file_path=analyzer_result_file_path,
             file=files[location['file']],
@@ -259,7 +262,8 @@ class Parser(BaseParser):
             bug_path_events=self.__get_bug_path_events(diag, files),
             bug_path_positions=self.__get_bug_path_positions(diag, files),
             notes=self.__get_notes(diag, files),
-            macro_expansions=self.__get_macro_expansions(diag, files))
+            macro_expansions=self.__get_macro_expansions(diag, files),
+            annotations=report_annotation)
 
     def __get_analyzer_name(
         self,

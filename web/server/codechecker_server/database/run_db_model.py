@@ -401,6 +401,8 @@ class Report(Base):
         'confirm_deleted_rows': False
     }
 
+    annotations = relationship("ReportAnnotations")
+
     # Priority/severity etc...
     def __init__(self, run_id, bug_id, file_id, checker_message, checker_id,
                  checker_cat, bug_type, line, column, severity, review_status,
@@ -427,6 +429,23 @@ class Report(Base):
         self.detected_at = detection_date
         self.path_length = path_length
         self.analyzer_name = analyzer_name
+
+
+class ReportAnnotations(Base):
+    __tablename__ = "report_annotations"
+
+    def __init__(self, report_id: int, key: str, value: str):
+        self.report_id = report_id
+        self.key = key
+        self.value = value
+
+    report_id = Column(
+        Integer,
+        ForeignKey("reports.id", ondelete="CASCADE"),
+        primary_key=True,
+        index=True)
+    key = Column(String, primary_key=True, nullable=False)
+    value = Column(String, nullable=False)
 
 
 class Comment(Base):

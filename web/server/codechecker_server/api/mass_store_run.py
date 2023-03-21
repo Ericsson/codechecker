@@ -38,8 +38,9 @@ from ..database import db_cleanup
 from ..database.config_db_model import Product
 from ..database.database import DBSession
 from ..database.run_db_model import AnalysisInfo, AnalyzerStatistic, \
-    BugPathEvent, BugReportPoint, ExtendedReportData, File, FileContent, \
-    Report as DBReport, ReviewStatus, Run, RunHistory, RunLock
+    BugPathEvent, BugReportPoint, ReportAnnotations, ExtendedReportData, \
+    File, FileContent, Report as DBReport, ReviewStatus, Run, RunHistory, \
+    RunLock
 from ..metadata import checker_is_unavailable, MetadataInfoParser
 
 from .report_server import ThriftRequestHandler
@@ -941,12 +942,63 @@ class MassStoreRun:
                 review_status, scc, detection_status, detected_at,
                 run_history_time, analysis_info, analyzer_name, fixed_at)
 
+            if report.annotations:
+                self.__validate_and_add_report_annotations(
+                    session, report_id, report.annotations)
+
             self.__new_report_hashes.add(report.report_hash)
             self.__already_added_report_hashes.add(report_path_hash)
 
             LOG.debug("Storing report done. ID=%d", report_id)
 
         return True
+
+    def __validate_and_add_report_annotations(
+        self,
+        session: DBSession,
+        report_id: int,
+        report_annotation: Dict
+    ):
+        """
+        This function checks the format of the annotations. For example a
+        "timestamp" annotation must be in datetime format. If the format
+        doesn't match then an exception is thrown. In case of proper format the
+        annotation is added to the database.
+        """
+        ALLOWED_TYPES = {
+            "datetime": {
+                "func": datetime.fromisoformat,
+                "display": "date-time in ISO format"
+            },
+            "string": {
+                "func": str,
+                "display": "string"
+            }
+        }
+
+        ALLOWED_ANNOTATIONS = {
+            "timestamp": ALLOWED_TYPES["datetime"],
+            "testsuite": ALLOWED_TYPES["string"],
+            "testcase": ALLOWED_TYPES["string"]
+        }
+
+        for key, value in report_annotation.items():
+            try:
+                ALLOWED_ANNOTATIONS[key]["func"](value)
+                session.add(ReportAnnotations(report_id, key, value))
+            except KeyError:
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.REPORT_FORMAT,
+                    f"'{key}' is not an allowed report annotation.",
+                    ALLOWED_ANNOTATIONS.keys())
+            except ValueError:
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.REPORT_FORMAT,
+                    f"'{value}' has wrong format. '{key}' annotations must be "
+                    f"'{ALLOWED_ANNOTATIONS[key]['display']}'."
+                )
+
+        session.flush()
 
     def __store_reports(
         self,

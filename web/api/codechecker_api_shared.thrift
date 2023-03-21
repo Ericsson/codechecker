@@ -12,6 +12,7 @@ enum ErrorCode {
   UNAUTHORIZED, // Authorization denied. User does not have right to perform an action.
   API_MISMATCH, // The client attempted to query an API version that is not supported by the server.
   SOURCE_FILE,  // The client sent a source code which contains errors (e.g.: source code comment errors).
+  REPORT_FORMAT, // The client sent a report with wrong format (e.g. report annotation has bad type in a .plist)
 }
 
 exception RequestFailed {

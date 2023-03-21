@@ -109,6 +109,10 @@ class ThriftResultsHelper(BaseClientHelper):
         pass
 
     @ThriftClientCall
+    def getReportAnnotations(self, key):
+        pass
+
+    @ThriftClientCall
     def getRunResultCount(self, runIds, reportFilter, cmpData):
         pass
 
