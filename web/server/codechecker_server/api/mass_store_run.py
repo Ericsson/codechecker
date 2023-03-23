@@ -828,6 +828,10 @@ class MassStoreRun:
                         macro.message, file_path_to_id[macro.file.path],
                         db_report.id, data_type))
 
+                if report.annotations:
+                    self.__validate_and_add_report_annotations(
+                        session, db_report.id, report.annotations)
+
             session.flush()
 
         except Exception as ex:
@@ -982,9 +986,6 @@ class MassStoreRun:
                 rs_from_source, detection_status, detected_at,
                 run_history_time, analysis_info, analyzer_name, fixed_at)
 
-            if report.annotations:
-                self.__validate_and_add_report_annotations(
-                    session, report_id, report.annotations)
             self.__new_report_hashes[report.report_hash] = \
                 rs_from_source.status
             self.__already_added_report_hashes.add(report_path_hash)
@@ -1037,8 +1038,6 @@ class MassStoreRun:
                     f"'{value}' has wrong format. '{key}' annotations must be "
                     f"'{ALLOWED_ANNOTATIONS[key]['display']}'."
                 )
-
-        session.flush()
 
     def __store_reports(
         self,
