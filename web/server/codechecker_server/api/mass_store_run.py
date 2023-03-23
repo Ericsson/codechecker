@@ -862,8 +862,7 @@ class MassStoreRun:
                 report: Report) -> SourceReviewStatus:
             """
             Return the review status set in the source code belonging to
-            the given report whether the review status comes from
-            a source code comment.
+            the given report.
 
             - Return the review status if it is set in the source code.
             - If the review status is ambiguous (i.e. multiple source code
