@@ -460,6 +460,13 @@
       "profile:sensitive",
       "severity:MEDIUM"
     ],
+    "bugprone-standalone-empty": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/standalone-empty.html",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
     "bugprone-string-constructor": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/string-constructor.html",
       "profile:default",
@@ -630,6 +637,16 @@
       "profile:sensitive",
       "sei-cert:exp63-cpp",
       "severity:MEDIUM"
+    ],
+    "bugprone-unsafe-functions":[
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/unsafe-functions.html",
+      "guideline:sei-cert",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "sei-cert:msc24-c",
+      "sei-cert:msc33-c",
+      "severity:LOW"
     ],
     "bugprone-use-after-move": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/use-after-move.html",
@@ -859,6 +876,13 @@
       "sei-cert:mem57-cpp",
       "severity:MEDIUM"
     ],
+    "cert-msc24-c": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc24-c.html",
+      "guideline:sei-cert",
+      "sei-cert:msc24-c",
+      "sei-cert:msc33-c",
+      "severity:LOW"
+    ],
     "cert-msc30-c": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc30-c.html",
       "guideline:sei-cert",
@@ -878,6 +902,13 @@
       "sei-cert:msc32-c",
       "sei-cert:msc51-cpp",
       "severity:MEDIUM"
+    ],
+    "cert-msc33-c": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc33-c.html",
+      "guideline:sei-cert",
+      "sei-cert:msc24-c",
+      "sei-cert:msc33-c",
+      "severity:LOW"
     ],
     "cert-msc50-cpp": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cert/msc50-cpp.html",
@@ -4669,11 +4700,31 @@
       "profile:extreme",
       "severity:LOW"
     ],
+    "cppcoreguidelines-avoid-capture-default-when-capturing-this": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/avoid-capture-default-when-capturing-this.html",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "cppcoreguidelines-avoid-capturing-lambda-coroutines": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/avoid-capturing-lambda-coroutines.html",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
+    ],
     "cppcoreguidelines-avoid-const-or-ref-data-members": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/avoid-const-or-ref-data-members.html",
       "profile:extreme",
       "profile:sensitive",
       "severity:STYLE"
+    ],
+    "cppcoreguidelines-avoid-reference-coroutine-parameters": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/avoid-reference-coroutine-parameters.html",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
     ],
     "cppcoreguidelines-avoid-do-while": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/avoid-do-while.html",
@@ -4796,6 +4847,12 @@
     "cppcoreguidelines-pro-type-vararg": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/pro-type-vararg.html",
       "profile:extreme",
+      "severity:LOW"
+    ],
+    "cppcoreguidelines-rvalue-reference-param-not-moved": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/rvalue-reference-param-not-moved.html",
+      "profile:extreme",
+      "profile:sensitive",
       "severity:LOW"
     ],
     "cppcoreguidelines-slicing": [
@@ -5142,6 +5199,10 @@
     "llvmlibc-implementation-in-namespace": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/llvmlibc/implementation-in-namespace.html",
       "severity:LOW"
+    ],
+    "llvmlibc-inline-function-decl": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/llvmlibc/inline-function-decl.html",
+      "severity:STYLE"
     ],
     "llvmlibc-restrict-system-libc-headers": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/llvmlibc/restrict-system-libc-headers.html",
