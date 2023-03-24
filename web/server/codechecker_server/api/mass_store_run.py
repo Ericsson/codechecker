@@ -39,8 +39,8 @@ from ..database.config_db_model import Product
 from ..database.database import DBSession
 from ..database.run_db_model import AnalysisInfo, AnalyzerStatistic, \
     BugPathEvent, BugReportPoint, ReportAnnotations, ExtendedReportData, \
-    File, FileContent, Report as DBReport, ReviewStatus, Run, RunHistory, \
-    RunLock
+    File, FileContent, Report as DBReport, ReviewStatus as ReviewStatusRule, \
+    Run, RunHistory, RunLock
 from ..metadata import checker_is_unavailable, MetadataInfoParser
 
 from .report_server import ThriftRequestHandler
@@ -197,6 +197,29 @@ def get_blame_file_data(
     return blame_info, remote_url, tracking_branch
 
 
+class SourceReviewStatus:
+    """
+    Helper class for handling in source review statuses.
+    Collect the same info as a review status rule.
+    FIXME Change this to dataclass when available
+    """
+    def __init__(
+        self,
+        status: str,
+        message: bytes,
+        bug_hash: Any,
+        author: str,
+        date: datetime,
+        in_source: bool,
+    ):
+        self.status = status
+        self.message = message
+        self.bug_hash = bug_hash
+        self.author = author
+        self.date = date
+        self.in_source = in_source
+
+
 class MassStoreRun:
     def __init__(
         self,
@@ -225,8 +248,10 @@ class MassStoreRun:
         self.__duration: int = 0
         self.__wrong_src_code_comments: List[str] = []
         self.__already_added_report_hashes: Set[str] = set()
-        self.__new_report_hashes: Set[str] = set()
+        self.__severity_map: Dict[str, int] = {}
+        self.__new_report_hashes: Dict[str, Tuple] = {}
         self.__all_report_checkers: Set[str] = set()
+        self.__added_reports: List[Tuple[DBReport, Report]] = list()
 
     @property
     def __manager(self):
@@ -714,8 +739,7 @@ class MassStoreRun:
         run_id: int,
         report: Report,
         file_path_to_id: Dict[str, int],
-        review_status: ReviewStatus,
-        review_status_is_in_source: bool,
+        review_status: SourceReviewStatus,
         detection_status: str,
         detection_time: datetime,
         run_history_time: datetime,
@@ -726,9 +750,15 @@ class MassStoreRun:
         """ Add report to the database. """
         try:
             checker_name = report.checker_name
-            severity_name = \
-                self.__context.checker_labels.severity(checker_name)
-            severity = ttypes.Severity._NAMES_TO_VALUES[severity_name]
+
+            # Cache the severity of the checkers
+            try:
+                severity = self.__severity_map[checker_name]
+            except KeyError:
+                severity_name = \
+                    self.__context.checker_labels.severity(checker_name)
+                severity = ttypes.Severity._NAMES_TO_VALUES[severity_name]
+                self.__severity_map[checker_name] = severity
 
             db_report = DBReport(
                 run_id, report.report_hash, file_path_to_id[report.file.path],
@@ -736,56 +766,74 @@ class MassStoreRun:
                 report.category, report.type, report.line, report.column,
                 severity, review_status.status, review_status.author,
                 review_status.message, run_history_time,
-                review_status_is_in_source,
+                review_status.in_source,
                 detection_status, detection_time,
                 len(report.bug_path_events), analyzer_name)
 
             db_report.fixed_at = fixed_at
 
-            session.add(db_report)
-            session.flush()
-
-            LOG.debug("Storing bug path positions.")
-            for i, p in enumerate(report.bug_path_positions):
-                session.add(BugReportPoint(
-                    p.range.start_line, p.range.start_col,
-                    p.range.end_line, p.range.end_col,
-                    i, file_path_to_id[p.file.path], db_report.id))
-
-            LOG.debug("Storing bug path events.")
-            for i, event in enumerate(report.bug_path_events):
-                session.add(BugPathEvent(
-                    event.range.start_line, event.range.start_col,
-                    event.range.end_line, event.range.end_col,
-                    i, event.message, file_path_to_id[event.file.path],
-                    db_report.id))
-
-            LOG.debug("Storing notes.")
-            for note in report.notes:
-                data_type = report_extended_data_type_str(
-                    ttypes.ExtendedReportDataType.NOTE)
-
-                session.add(ExtendedReportData(
-                    note.range.start_line, note.range.start_col,
-                    note.range.end_line, note.range.end_col,
-                    note.message, file_path_to_id[note.file.path],
-                    db_report.id, data_type))
-
-            LOG.debug("Storing macro expansions.")
-            for macro in report.macro_expansions:
-                data_type = report_extended_data_type_str(
-                    ttypes.ExtendedReportDataType.MACRO)
-
-                session.add(ExtendedReportData(
-                    macro.range.start_line, macro.range.start_col,
-                    macro.range.end_line, macro.range.end_col,
-                    macro.message, file_path_to_id[macro.file.path],
-                    db_report.id, data_type))
-
             if analysis_info:
                 db_report.analysis_info.append(analysis_info)
 
+            session.add(db_report)
+            self.__added_reports.append((db_report, report))
+
+            # THE id is none at this point of time
+            # wondering if not returning anything is good?
+            # The report is already handled at the above lines
             return db_report.id
+
+        except Exception as ex:
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.GENERAL,
+                str(ex))
+
+    def __add_report_context(self, session, file_path_to_id):
+        try:
+            for db_report, report in self.__added_reports:
+                LOG.debug("Storing bug path positions.")
+                for i, p in enumerate(report.bug_path_positions):
+                    session.add(BugReportPoint(
+                        p.range.start_line, p.range.start_col,
+                        p.range.end_line, p.range.end_col,
+                        i, file_path_to_id[p.file.path], db_report.id))
+
+                LOG.debug("Storing bug path events.")
+                for i, event in enumerate(report.bug_path_events):
+                    session.add(BugPathEvent(
+                        event.range.start_line, event.range.start_col,
+                        event.range.end_line, event.range.end_col,
+                        i, event.message, file_path_to_id[event.file.path],
+                        db_report.id))
+
+                LOG.debug("Storing notes.")
+                for note in report.notes:
+                    data_type = report_extended_data_type_str(
+                        ttypes.ExtendedReportDataType.NOTE)
+
+                    session.add(ExtendedReportData(
+                        note.range.start_line, note.range.start_col,
+                        note.range.end_line, note.range.end_col,
+                        note.message, file_path_to_id[note.file.path],
+                        db_report.id, data_type))
+
+                LOG.debug("Storing macro expansions.")
+                for macro in report.macro_expansions:
+                    data_type = report_extended_data_type_str(
+                        ttypes.ExtendedReportDataType.MACRO)
+
+                    session.add(ExtendedReportData(
+                        macro.range.start_line, macro.range.start_col,
+                        macro.range.end_line, macro.range.end_col,
+                        macro.message, file_path_to_id[macro.file.path],
+                        db_report.id, data_type))
+
+                if report.annotations:
+                    self.__validate_and_add_report_annotations(
+                        session, db_report.id, report.annotations)
+
+            session.flush()
+
         except Exception as ex:
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.GENERAL,
@@ -810,28 +858,17 @@ class MassStoreRun:
         if not reports:
             return True
 
-        def get_review_status(report: Report) -> Tuple[ReviewStatus, bool]:
+        def get_review_status_from_source(
+                report: Report) -> SourceReviewStatus:
             """
-            Return the review status belonging to the given report and a
-            boolean value which indicates whether the review status comes from
-            a source code comment.
+            Return the review status set in the source code belonging to
+            the given report.
 
-            - Return the review status and True based on the source code
-              comment.
+            - Return the review status if it is set in the source code.
             - If the review status is ambiguous (i.e. multiple source code
-              comments belong to it) then (unreviewed, False) returns.
-            - If there is no source code comment then the default review status
-              and True returns based on review_statuses database table.
-            - If the report doesn't have a default review status then an
-              "unreviewed" review status and False returns.
+              comments belong to it) then (unreviewed, in_source=False)
+              returns.
             """
-            unreviewed = ReviewStatus()
-            unreviewed.status = 'unreviewed'
-            unreviewed.message = b''
-            unreviewed.bug_hash = report.report_hash
-            unreviewed.author = self.user_name
-            unreviewed.date = run_history_time
-
             # The original file path is needed here, not the trimmed, because
             # the source files are extracted as the original file path.
             source_file_name = os.path.realpath(os.path.join(
@@ -843,16 +880,18 @@ class MassStoreRun:
 
                 if len(src_comment_data) == 1:
                     data = src_comment_data[0]
-                    rs = data.status, bytes(data.message, 'utf-8')
+                    status, message = data.status, bytes(data.message, 'utf-8')
 
-                    review_status = ReviewStatus()
-                    review_status.status = rs[0]
-                    review_status.message = rs[1]
-                    review_status.bug_hash = report.report_hash
-                    review_status.author = self.user_name
-                    review_status.date = run_history_time
+                    review_status = SourceReviewStatus(
+                        status=status,
+                        message=message,
+                        bug_hash=report.report_hash,
+                        author=self.user_name,
+                        date=run_history_time,
+                        in_source=True
+                    )
 
-                    return review_status, True
+                    return review_status
                 elif len(src_comment_data) > 1:
                     LOG.warning(
                         "Multiple source code comment can be found "
@@ -864,16 +903,17 @@ class MassStoreRun:
                         f"{source_file_name}|{report.line}|"
                         f"{report.checker_name}")
 
-                    return unreviewed, False
-
-            review_status = session.query(ReviewStatus) \
-                .filter(ReviewStatus.bug_hash == report.report_hash) \
-                .one_or_none()
-
-            if review_status is None:
-                review_status = unreviewed
-
-            return review_status, False
+            # A better way to handle reports where the review status is not
+            # set in the source is to return None, and set the reviews status
+            # and set the review status info at report addition time.
+            return SourceReviewStatus(
+                status="unreviewed",
+                message=b'',
+                bug_hash=report.report_hash,
+                author=self.user_name,
+                date=run_history_time,
+                in_source=False
+            )
 
         def get_missing_file_ids(report: Report) -> List[str]:
             """ Returns file paths which database file id is missing. """
@@ -925,12 +965,15 @@ class MassStoreRun:
 
             analyzer_name = mip.checker_to_analyzer.get(
                 report.checker_name, report.analyzer_name)
-            review_status, scc = get_review_status(report)
+
+            rs_from_source = get_review_status_from_source(report)
 
             # False positive and intentional reports are considered as closed
             # reports which is indicated with non-null "fixed_at" date.
             fixed_at = None
-            if review_status.status in ['false_positive', 'intentional']:
+            if rs_from_source.status in ['false_positive', 'intentional']:
+                # Keep in mind that now this is not handling review status
+                # rules, only review status source code comments
                 if old_report and old_report.review_status in \
                         ['false_positive', 'intentional']:
                     fixed_at = old_report.review_status_date
@@ -939,14 +982,11 @@ class MassStoreRun:
 
             report_id = self.__add_report(
                 session, run_id, report, file_path_to_id,
-                review_status, scc, detection_status, detected_at,
+                rs_from_source, detection_status, detected_at,
                 run_history_time, analysis_info, analyzer_name, fixed_at)
 
-            if report.annotations:
-                self.__validate_and_add_report_annotations(
-                    session, report_id, report.annotations)
-
-            self.__new_report_hashes.add(report.report_hash)
+            self.__new_report_hashes[report.report_hash] = \
+                rs_from_source.status
             self.__already_added_report_hashes.add(report_path_hash)
 
             LOG.debug("Storing report done. ID=%d", report_id)
@@ -998,8 +1038,6 @@ class MassStoreRun:
                     f"'{ALLOWED_ANNOTATIONS[key]['display']}'."
                 )
 
-        session.flush()
-
     def __store_reports(
         self,
         session: DBSession,
@@ -1010,6 +1048,7 @@ class MassStoreRun:
         run_history_time: datetime
     ):
         """ Parse up and store the plist report files. """
+
         def get_skip_handler(
             report_dir: str
         ) -> skiplist_handler.SkipListHandler:
@@ -1032,22 +1071,24 @@ class MassStoreRun:
 
         # Reset internal data.
         self.__already_added_report_hashes = set()
-        self.__new_report_hashes = set()
+        self.__new_report_hashes = dict()
         self.__all_report_checkers = set()
+        self.__severity_map = dict()
 
         all_reports = session.query(DBReport) \
             .filter(DBReport.run_id == run_id) \
             .all()
 
-        hash_map_reports = defaultdict(list)
-        for report in all_reports:
-            hash_map_reports[report.bug_id].append(report)
+        report_to_report_id = defaultdict(list)
+        for db_report in all_reports:
+            report_to_report_id[db_report.bug_id].append(db_report)
 
         enabled_checkers: Set[str] = set()
         disabled_checkers: Set[str] = set()
 
         # Processing analyzer result files.
         processed_result_file_count = 0
+
         for root_dir_path, _, report_file_paths in os.walk(report_dir):
             LOG.debug("Get reports from '%s' directory", root_dir_path)
 
@@ -1067,8 +1108,44 @@ class MassStoreRun:
                 self.__process_report_file(
                     report_file_path, session, source_root, run_id,
                     file_path_to_id, run_history_time,
-                    skip_handler, hash_map_reports)
+                    skip_handler, report_to_report_id)
                 processed_result_file_count += 1
+
+        session.flush()
+
+        self.__add_report_context(session, file_path_to_id)
+        # Get all relevant review_statuses for the newly stored reports
+        # CHHECK: Call self.getReviewStatusRules instead of the below query
+        # but before first check the performance
+        reports_to_rs_rules = session.query(ReviewStatusRule, DBReport) \
+            .join(DBReport, DBReport.bug_id == ReviewStatusRule.bug_hash) \
+            .filter(sqlalchemy.and_(DBReport.run_id == run_id,
+                                    ReviewStatusRule.bug_hash.
+                                    in_(self.__new_report_hashes)))
+
+        # Set the newly stored reports
+        for review_status, db_report in reports_to_rs_rules:
+            old_report = None
+            if db_report.bug_id in report_to_report_id:
+                old_report = report_to_report_id[db_report.bug_id][0]
+            fixed_at = None
+            if review_status.status in ['false_positive', 'intentional']:
+                # Keep in mind that now this is not handling review status
+                # rules, only review status source code comments
+                if old_report and old_report.review_status in \
+                        ['false_positive', 'intentional']:
+                    fixed_at = old_report.review_status_date
+                else:
+                    fixed_at = run_history_time
+
+            db_report.review_status = review_status.status
+            db_report.review_statuses_author = review_status.author
+            db_report.review_status_message = review_status.message
+            db_report.review_statuses_date = review_status.date
+            db_report.fixed_at = fixed_at
+            db_report.review_status_is_in_source = False
+
+        session.flush()
 
         LOG.info("[%s] Processed %d analyzer result file(s).", self.__name,
                  processed_result_file_count)
@@ -1083,7 +1160,7 @@ class MassStoreRun:
         disabled_checkers -= self.__all_report_checkers
 
         reports_to_delete = set()
-        for bug_hash, reports in hash_map_reports.items():
+        for bug_hash, reports in report_to_report_id.items():
             if bug_hash in self.__new_report_hashes:
                 reports_to_delete.update([x.id for x in reports])
             else:
