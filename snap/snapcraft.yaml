@@ -1,6 +1,6 @@
 name: codechecker
 base: core18
-version: '6.22.0'
+version: '6.22.0-rc1'
 summary: CodeChecker is an analyzer tooling, defect database and viewer extension
 description: |
   CodeChecker is an analyzer tooling, defect database and viewer extension.
@@ -33,7 +33,7 @@ parts:
   codechecker:
     plugin: python
     python-version: python3
-    source: https://github.com/Ericsson/codechecker/archive/v6.22.0.tar.gz
+    source: https://github.com/Ericsson/codechecker/archive/v6.22.0-rc1.tar.gz
     build-packages:
       - curl
       - gcc-multilib
