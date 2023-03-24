@@ -9,7 +9,15 @@
 
 
 import argparse
+import collections
 import os
+import re
+
+
+AnalyzerConfig = collections.namedtuple(
+    'AnalyzerConfig', ["analyzer", "option", "value"])
+CheckerConfig = collections.namedtuple(
+    "CheckerConfig", ["analyzer", "checker", "option", "value"])
 
 
 class OrderedCheckersAction(argparse.Action):
@@ -87,3 +95,41 @@ def existing_abspath(path: str) -> str:
         raise argparse.ArgumentTypeError(f"File doesn't exist: {path}")
 
     return path
+
+
+def analyzer_config(arg: str) -> AnalyzerConfig:
+    """
+    This function can be used at "type" argument of argparse.add_argument().
+    It checks the format of --analyzer-config flag:
+    <analyzer>:<option>=<value>
+    These three things return as a tuple.
+    """
+    m = re.match(r"(?P<analyzer>.+):(?P<option>.+)=(?P<value>.+)", arg)
+
+    if not m:
+        raise argparse.ArgumentTypeError(
+            f"Analyzer option in wrong format: {arg}, should be "
+            "<analyzer>:<option>=<value>")
+
+    return AnalyzerConfig(
+        m.group("analyzer"), m.group("option"), m.group("value"))
+
+
+def checker_config(arg: str) -> CheckerConfig:
+    """
+    This function can be used at "type" argument of argparse.add_argument().
+    It checks the format of --checker-config flag:
+    <analyzer>:<checker>:<option>=<value>
+    These four things return as a tuple.
+    """
+    m = re.match(
+        r"(?P<analyzer>.+):(?P<checker>.+):(?P<option>.+)=(?P<value>.+)", arg)
+
+    if not m:
+        raise argparse.ArgumentTypeError(
+            f"Checker option in wrong format: {arg}, should be"
+            "<analyzer>:<checker>:<option>=<value>")
+
+    return CheckerConfig(
+        m.group("analyzer"), m.group("checker"),
+        m.group("option"), m.group("value"))

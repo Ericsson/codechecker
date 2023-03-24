@@ -281,13 +281,12 @@ analyzer arguments:
                         format: analyzer:key=value. The collection of the
                         options can be printed with 'CodeChecker analyzers
                         --analyzer-config'. If the file at --tidyargs contains
-                        a -config flag then those options extend these and
-                        override "HeaderFilterRegex" if any. To use analyzer
-                        configuration file in case of Clang Tidy (.clang-tidy)
-                        use the 'clang-tidy:take-config-from-directory=true'
-                        option. It will skip setting the '-checks' parameter
-                        of the clang-tidy binary. (default: ['clang-
-                        tidy:HeaderFilterRegex=.*'])
+                        a -config flag then those options extend these. To use
+                        an analyzer configuration file in case of Clang Tidy
+                        (.clang-tidy) use the
+                        'clang-tidy:take-config-from-directory=true' option.
+                        It will skip setting the '-checks' parameter of the
+                        clang-tidy binary.
   --checker-config [CHECKER_CONFIG [CHECKER_CONFIG ...]]
                         Checker configuration options in the following format:
                         analyzer:key=value. The collection of the options can
@@ -1127,13 +1126,12 @@ analyzer arguments:
                         format: analyzer:key=value. The collection of the
                         options can be printed with 'CodeChecker analyzers
                         --analyzer-config'. If the file at --tidyargs contains
-                        a -config flag then those options extend these and
-                        override "HeaderFilterRegex" if any. To use analyzer
-                        configuration file in case of Clang Tidy (.clang-tidy)
-                        use the 'clang-tidy:take-config-from-directory=true'
-                        option. It will skip setting the '-checks' parameter
-                        of the clang-tidy binary. (default: ['clang-
-                        tidy:HeaderFilterRegex=.*'])
+                        a -config flag then those options extend these. To use
+                        an analyzer configuration file in case of Clang Tidy
+                        (.clang-tidy) use the
+                        'clang-tidy:take-config-from-directory=true' option.
+                        It will skip setting the '-checks' parameter of the
+                        clang-tidy binary.
   --checker-config [CHECKER_CONFIG [CHECKER_CONFIG ...]]
                         Checker configuration options in the following format:
                         analyzer:key=value. The collection of the options can

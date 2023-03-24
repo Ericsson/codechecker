@@ -6,6 +6,8 @@
 #
 # -------------------------------------------------------------------------
 """
+Module for handling ClangTidy-related functionality related to analysis,
+checker handling and configuration.
 """
 
 import ast
@@ -432,11 +434,14 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         # runs this function in order to construct a config handler.
         if 'analyzer_config' in args and \
                 isinstance(args.analyzer_config, list):
-            r = re.compile(r'(?P<analyzer>.+?):(?P<key>.+?)=(?P<value>.+)')
             for cfg in args.analyzer_config:
-                m = re.search(r, cfg)
-                if m.group('analyzer') == cls.ANALYZER_NAME:
-                    analyzer_config[m.group('key')] = m.group('value')
+                if cfg.analyzer == cls.ANALYZER_NAME:
+                    analyzer_config[cfg.option] = cfg.value
+
+        # Reports in headers are hidden by default in clang-tidy. Re-enable it
+        # if the analyzer doesn't provide any other config options.
+        if not analyzer_config:
+            analyzer_config["HeaderFilterRegex"] = ".*"
 
         # If both --analyzer-config and -config (in --tidyargs) is given then
         # these need to be merged. Since "HeaderFilterRegex" has a default
@@ -463,14 +468,13 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         # CodeChecker checkers --checker-config. This command also
         # runs this function in order to construct a config handler.
         if 'checker_config' in args and isinstance(args.checker_config, list):
-            r = re.compile(r'(?P<analyzer>.+?):(?P<key>.+?)=(?P<value>.+)')
             check_options = []
 
             for cfg in args.checker_config:
-                m = re.search(r, cfg)
-                if m.group('analyzer') == cls.ANALYZER_NAME:
-                    check_options.append({'key': m.group('key'),
-                                          'value': m.group('value')})
+                if cfg.analyzer == cls.ANALYZER_NAME:
+                    check_options.append({
+                        'key': f"{cfg.checker}.{cfg.option}",
+                        'value': cfg.value})
             analyzer_config['CheckOptions'] = check_options
         else:
             try:

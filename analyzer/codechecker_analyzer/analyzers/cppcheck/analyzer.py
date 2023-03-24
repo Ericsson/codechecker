@@ -6,7 +6,10 @@
 #
 # -------------------------------------------------------------------------
 """
+Cppcheck related functions.
 """
+
+from collections import defaultdict
 # TODO distutils will be removed in python3.12
 from distutils.version import StrictVersion
 from pathlib import Path
@@ -355,18 +358,13 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         handler.analyzer_binary = context.analyzer_binaries.get(
             cls.ANALYZER_NAME)
 
-        analyzer_config = {}
+        analyzer_config = defaultdict(list)
 
         if 'analyzer_config' in args and \
                 isinstance(args.analyzer_config, list):
-            r = re.compile(r'(?P<analyzer>.+?):(?P<key>.+?)=(?P<value>.+)')
             for cfg in args.analyzer_config:
-                m = re.search(r, cfg)
-                if m.group('analyzer') == cls.ANALYZER_NAME:
-                    key = m.group('key')
-                    if key not in analyzer_config:
-                        analyzer_config[key] = []
-                    analyzer_config[m.group('key')].append(m.group('value'))
+                if cfg.analyzer == cls.ANALYZER_NAME:
+                    analyzer_config[cfg.option].append(cfg.value)
 
         handler.analyzer_config = analyzer_config
 

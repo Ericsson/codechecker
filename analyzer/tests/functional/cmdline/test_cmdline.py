@@ -230,3 +230,29 @@ class TestCmdline(unittest.TestCase):
             desc = cfg['description']
             self.assertTrue(desc)
             self.assertFalse(desc[0].islower())
+
+    def test_checker_config_format(self):
+        """
+        Test if checker config option is meeting the reqired format.
+        """
+        test_file = os.path.join(self.test_workspace, 'main.cpp')
+
+        with open(test_file, 'w', encoding="utf-8", errors="ignore") as f:
+            f.write("int main() {}")
+
+        cmd = [env.codechecker_cmd(), 'check',
+               '--checker-config', 'clangsa:checker.option=value',
+               '-b', f'g++ {test_file}']
+
+        return_code, _, err = run_cmd(cmd)
+
+        self.assertEqual(return_code, 1)
+        self.assertIn("Checker option in wrong format", err)
+
+        cmd = [env.codechecker_cmd(), 'check',
+               '--checker-config', 'clangsa:checker:option=value',
+               '-b', f'g++ {test_file}']
+
+        _, _, err = run_cmd(cmd)
+
+        self.assertNotIn("Checker option in wrong format", err)
