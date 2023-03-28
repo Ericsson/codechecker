@@ -721,26 +721,31 @@ def handle_list_results(args):
 
 
 def handle_diff_results(args):
+    handle_diff_results_impl(args)
+
+
+def handle_diff_results_impl(args):
     # If the given output format is not 'table', redirect logger's output to
     # the stderr.
     stream = None
-    if 'output_format' in args and args.output_format != 'table':
+    output_formats = args.output_formats
+    if output_formats != 'table':
         stream = 'stderr'
 
     init_logger(args.verbose if 'verbose' in args else None, stream)
 
     output_dir = args.export_dir if 'export_dir' in args else None
-    if len(args.output_format) > 1 and ('export_dir' not in args):
+    if len(output_formats) > 1 and ('export_dir' not in args):
         LOG.error("Export directory is required if multiple output formats "
                   "are selected!")
         sys.exit(1)
 
-    if 'html' in args.output_format and not output_dir:
+    if 'html' in output_formats and not output_dir:
         LOG.error("Argument --export not allowed without argument --output "
                   "when exporting to HTML.")
         sys.exit(1)
 
-    if 'gerrit' in args.output_format and \
+    if 'gerrit' in output_formats and \
             not gerrit.mandatory_env_var_is_set():
         sys.exit(1)
 
@@ -781,7 +786,7 @@ def handle_diff_results(args):
         if file_id not in file_cache:
             file_cache[file_id] = File(file_path, file_id)
 
-            if 'html' in args.output_format:
+            if 'html' in output_formats:
                 source = client.getSourceFileData(
                     file_id, True, ttypes.Encoding.BASE64)
                 file_cache[file_id].content = convert.from_b64(
@@ -824,7 +829,7 @@ def handle_diff_results(args):
             return reports
 
         source_line_contents = {}
-        if 'html' not in args.output_format:
+        if 'html' not in output_formats:
             source_line_contents = get_source_line_contents(reports_data)
 
         # Convert reports data to reports.
@@ -1257,7 +1262,7 @@ def handle_diff_results(args):
             basename_local_dirs, basename_baseline_files,
             newname_local_dirs, newname_baseline_files)
 
-        print_reports(reports, report_hashes, args.output_format)
+        print_reports(reports, report_hashes, output_formats)
         LOG.info("Compared the following local files / directories: %s and %s",
                  ', '.join([*basename_local_dirs, *basename_baseline_files]),
                  ', '.join([*newname_local_dirs, *newname_baseline_files]))
@@ -1267,7 +1272,7 @@ def handle_diff_results(args):
                 client, basename_run_names,
                 newname_local_dirs, newname_baseline_files)
 
-        print_reports(reports, report_hashes, args.output_format)
+        print_reports(reports, report_hashes, output_formats)
         LOG.info("Compared remote run(s) %s (matching: %s) and local files / "
                  "report directory(s) %s",
                  ', '.join(basename_run_names),
@@ -1279,7 +1284,7 @@ def handle_diff_results(args):
                 client, basename_local_dirs, basename_baseline_files,
                 newname_run_names)
 
-        print_reports(reports, report_hashes, args.output_format)
+        print_reports(reports, report_hashes, output_formats)
         LOG.info("Compared local files / report directory(s) %s and remote "
                  "run(s) %s (matching: %s).",
                  ', '.join([*basename_local_dirs, *basename_baseline_files]),
@@ -1288,7 +1293,7 @@ def handle_diff_results(args):
     else:
         reports, matching_base_run_names, matching_new_run_names = \
             get_diff_remote_runs(client, basename_run_names, newname_run_names)
-        print_reports(reports, None, args.output_format)
+        print_reports(reports, None, output_formats)
         LOG.info("Compared multiple remote runs %s (matching: %s) and %s "
                  "(matching: %s)",
                  ', '.join(basename_run_names),
