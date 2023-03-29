@@ -224,7 +224,7 @@ def skip_report_dir_result(
 
     Skipping is done based on the given filter set.
     """
-    report_filter = check_filter_values(args)
+    report_filter = parse_report_filter_offline(args)
 
     if report_filter.severity:
         severity_name = checker_labels.severity(report.checker_name)
@@ -266,7 +266,7 @@ def get_diff_base_results(
     get_details: bool = True
 ):
     """Get the run results from the server."""
-    report_filter = add_filter_conditions(client, args)
+    report_filter = parse_report_filter(client, args)
     report_filter.reportHash = base_hashes + suppressed_hashes
 
     sort_mode = [(ttypes.SortMode(
@@ -487,7 +487,20 @@ def check_filter_values(args):
     return report_filter
 
 
-def add_filter_conditions(client, args):
+def parse_report_filter(client, args):
+    report_filter = parse_report_filter_offline(args)
+
+    if 'tag' in args:
+        run_history_filter = ttypes.RunHistoryFilter(tagNames=args.tag)
+        run_histories = client.getRunHistory(None, None, None,
+                                             run_history_filter)
+        if run_histories:
+            report_filter.runTag = [t.id for t in run_histories]
+
+    return report_filter
+
+
+def parse_report_filter_offline(args):
     """
     This function fills some attributes of the given report filter based on
     the arguments which is provided in the command line.
@@ -507,13 +520,6 @@ def add_filter_conditions(client, args):
 
     if 'report_hash' in args:
         report_filter.reportHash = args.report_hash
-
-    if 'tag' in args:
-        run_history_filter = ttypes.RunHistoryFilter(tagNames=args.tag)
-        run_histories = client.getRunHistory(None, None, None,
-                                             run_history_filter)
-        if run_histories:
-            report_filter.runTag = [t.id for t in run_histories]
 
     if 'open_reports_date' in args:
         report_filter.openReportsDate = \
@@ -665,7 +671,7 @@ def handle_list_results(args):
         LOG.warning("No runs were found!")
         sys.exit(1)
 
-    report_filter = add_filter_conditions(client, args)
+    report_filter = parse_report_filter(client, args)
 
     query_report_details = args.details and args.output_format == 'json' \
         if 'details' in args else None
@@ -992,7 +998,7 @@ def get_diff_remote_runs(
     """
     Compares two remote runs and returns the filtered results.
     """
-    report_filter = add_filter_conditions(client, args)
+    report_filter = parse_report_filter(client, args)
 
     base_ids, base_run_names, base_run_tags = \
         process_run_args(client, remote_base_run_names)
@@ -1320,7 +1326,8 @@ def handle_diff_results_impl(args):
     else:
         reports, matching_base_run_names, matching_new_run_names = \
             get_diff_remote_runs(client, args, output_formats,
-                                 basename_run_names, newname_run_names)
+                                 basename_run_names,
+                                 newname_run_names)
         print_reports(args, reports, None, output_dir, output_formats)
         LOG.info("Compared multiple remote runs %s (matching: %s) and %s "
                  "(matching: %s)",
@@ -1344,7 +1351,7 @@ def handle_list_result_types(args):
     check_deprecated_arg_usage(args)
 
     def get_statistics(client, run_ids, field, values):
-        report_filter = add_filter_conditions(client, args)
+        report_filter = parse_report_filter(client, args)
 
         setattr(report_filter, field, values)
         checkers = client.getCheckerCounts(run_ids,
@@ -1368,7 +1375,7 @@ def handle_list_result_types(args):
             LOG.warning("No runs were found!")
             sys.exit(1)
 
-    all_checkers_report_filter = add_filter_conditions(client, args)
+    all_checkers_report_filter = parse_report_filter(client, args)
 
     all_checkers = client.getCheckerCounts(run_ids,
                                            all_checkers_report_filter,
@@ -1390,7 +1397,7 @@ def handle_list_result_types(args):
                                           [ttypes.ReviewStatus.INTENTIONAL])
 
     # Get severity counts
-    report_filter = add_filter_conditions(client, args)
+    report_filter = parse_report_filter(client, args)
 
     sev_count = client.getSeverityCounts(run_ids, report_filter, None)
 
