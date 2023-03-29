@@ -224,24 +224,27 @@ def skip_report_dir_result(
 
     Skipping is done based on the given filter set.
     """
-    f_severities, f_checkers, f_file_path, _, _, _ = check_filter_values(args)
+    report_filter = check_filter_values(args)
 
-    if f_severities:
+    if report_filter.severity:
         severity_name = checker_labels.severity(report.checker_name)
-        if severity_name.lower() not in list(map(str.lower, f_severities)):
+        filter_severities_str = [ttypes.Severity._VALUES_TO_NAMES[x]
+                                 for x in report_filter.severity]
+        if severity_name.lower() not in \
+                list(map(str.lower, filter_severities_str)):
             return True
 
-    if f_checkers:
+    if report_filter.checkerName:
         checker_name = report.checker_name
         if not any([re.match(r'^' + c.replace("*", ".*") + '$',
                              checker_name, re.IGNORECASE)
-                    for c in f_checkers]):
+                    for c in report_filter.checkerName]):
             return True
 
-    if f_file_path:
+    if report_filter.filepath:
         if not any([re.match(r'^' + f.replace("*", ".*") + '$',
                              report.file.path, re.IGNORECASE)
-                    for f in f_file_path]):
+                    for f in report_filter.filepath]):
             return True
 
     if 'checker_msg' in args:
@@ -263,8 +266,7 @@ def get_diff_base_results(
     get_details: bool = True
 ):
     """Get the run results from the server."""
-    report_filter = ttypes.ReportFilter()
-    add_filter_conditions(client, report_filter, args)
+    report_filter = add_filter_conditions(client, args)
     report_filter.reportHash = base_hashes + suppressed_hashes
 
     sort_mode = [(ttypes.SortMode(
@@ -454,24 +456,18 @@ def check_filter_values(args):
     if not all(valid for valid in
                [validate_filter_values(*x) for x in values_to_check]):
         sys.exit(1)
-    return severities, checkers, file_path, dt_statuses, rw_statuses, \
-        bug_path_length
 
-
-def add_filter_conditions(client, report_filter, args):
-    """
-    This function fills some attributes of the given report filter based on
-    the arguments which is provided in the command line.
-    """
-
-    severities, checkers, file_path, dt_statuses, rw_statuses, \
-        bug_path_length = check_filter_values(args)
-
-    report_filter.isUnique = args.uniqueing == 'on'
+    report_filter = ttypes.ReportFilter()
 
     if severities:
         report_filter.severity = [
             ttypes.Severity._NAMES_TO_VALUES[x.upper()] for x in severities]
+
+    if checkers:
+        report_filter.checkerName = checkers
+
+    if file_path:
+        report_filter.filepath = file_path
 
     if dt_statuses:
         report_filter.detectionStatus = [
@@ -483,8 +479,22 @@ def add_filter_conditions(client, report_filter, args):
             ttypes.ReviewStatus._NAMES_TO_VALUES[x.upper()] for x in
             rw_statuses]
 
-    if checkers:
-        report_filter.checkerName = checkers
+    if bug_path_length:
+        report_filter.bugPathLength = \
+            ttypes.BugPathLengthRange(min=bug_path_length.min,
+                                      max=bug_path_length.max)
+
+    return report_filter
+
+
+def add_filter_conditions(client, args):
+    """
+    This function fills some attributes of the given report filter based on
+    the arguments which is provided in the command line.
+    """
+    report_filter = check_filter_values(args)
+
+    report_filter.isUnique = args.uniqueing == 'on'
 
     if 'checker_msg' in args:
         report_filter.checkerMsg = args.checker_msg
@@ -497,14 +507,6 @@ def add_filter_conditions(client, report_filter, args):
 
     if 'report_hash' in args:
         report_filter.reportHash = args.report_hash
-
-    if file_path:
-        report_filter.filepath = file_path
-
-    if bug_path_length:
-        report_filter.bugPathLength = \
-            ttypes.BugPathLengthRange(min=bug_path_length.min,
-                                      max=bug_path_length.max)
 
     if 'tag' in args:
         run_history_filter = ttypes.RunHistoryFilter(tagNames=args.tag)
@@ -548,6 +550,7 @@ def add_filter_conditions(client, report_filter, args):
     if detected_at or fixed_at:
         report_filter.date = ttypes.ReportDate(detected=detected_at,
                                                fixed=fixed_at)
+    return report_filter
 
 
 def process_run_filter_conditions(args):
@@ -662,8 +665,7 @@ def handle_list_results(args):
         LOG.warning("No runs were found!")
         sys.exit(1)
 
-    report_filter = ttypes.ReportFilter()
-    add_filter_conditions(client, report_filter, args)
+    report_filter = add_filter_conditions(client, args)
 
     query_report_details = args.details and args.output_format == 'json' \
         if 'details' in args else None
@@ -728,7 +730,8 @@ def handle_diff_results_impl(args):
     # If the given output format is not 'table', redirect logger's output to
     # the stderr.
     stream = None
-    output_formats = args.output_formats
+    assert 'output_format' in args
+    output_formats = args.output_format
     if output_formats != 'table':
         stream = 'stderr'
 
@@ -1012,8 +1015,7 @@ def handle_diff_results_impl(args):
         """
         Compares two remote runs and returns the filtered results.
         """
-        report_filter = ttypes.ReportFilter()
-        add_filter_conditions(client, report_filter, args)
+        report_filter = add_filter_conditions(client, args)
 
         base_ids, base_run_names, base_run_tags = \
             process_run_args(client, remote_base_run_names)
@@ -1316,8 +1318,7 @@ def handle_list_result_types(args):
     check_deprecated_arg_usage(args)
 
     def get_statistics(client, run_ids, field, values):
-        report_filter = ttypes.ReportFilter()
-        add_filter_conditions(client, report_filter, args)
+        report_filter = add_filter_conditions(client, args)
 
         setattr(report_filter, field, values)
         checkers = client.getCheckerCounts(run_ids,
@@ -1341,8 +1342,7 @@ def handle_list_result_types(args):
             LOG.warning("No runs were found!")
             sys.exit(1)
 
-    all_checkers_report_filter = ttypes.ReportFilter()
-    add_filter_conditions(client, all_checkers_report_filter, args)
+    all_checkers_report_filter = add_filter_conditions(client, args)
 
     all_checkers = client.getCheckerCounts(run_ids,
                                            all_checkers_report_filter,
@@ -1364,8 +1364,7 @@ def handle_list_result_types(args):
                                           [ttypes.ReviewStatus.INTENTIONAL])
 
     # Get severity counts
-    report_filter = ttypes.ReportFilter()
-    add_filter_conditions(client, report_filter, args)
+    report_filter = add_filter_conditions(client, args)
 
     sev_count = client.getSeverityCounts(run_ids, report_filter, None)
 
