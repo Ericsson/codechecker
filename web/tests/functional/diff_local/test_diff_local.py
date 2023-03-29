@@ -138,7 +138,6 @@ class DiffLocal(unittest.TestCase):
         high_severity_res, _, _ = get_diff_results(
             [self.base_reports], [self.new_reports], '--new', 'json',
             ['--severity', 'high'])
-        print(high_severity_res)
         self.assertEqual(len(high_severity_res), 4)
 
     def test_filter_severity_high_text(self):
