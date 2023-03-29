@@ -726,6 +726,465 @@ def handle_diff_results(args):
     handle_diff_results_impl(args)
 
 
+def get_source_line_contents(
+    client,
+    reports: List[ttypes.ReportData]
+) -> Dict[int, Dict[int, str]]:
+    """
+    Get source line contents from the server for the given report data.
+    """
+    source_lines = defaultdict(set)
+    for report_data in reports:
+        source_lines[report_data.fileId].add(report_data.line)
+
+    lines_in_files_requested = []
+    for file_id in source_lines:
+        lines_in_files_requested.append(
+            ttypes.LinesInFilesRequested(fileId=file_id,
+                                         lines=source_lines[file_id]))
+
+    return client.getLinesInSourceFileContents(
+        lines_in_files_requested, ttypes.Encoding.BASE64)
+
+
+def convert_report_data_to_report(
+    client,
+    reports_data: List[ttypes.ReportData],
+    output_formats: List[str]
+) -> List[Report]:
+    """
+    Convert the given report data list to local reports.
+
+    If one of the given output format is HTML it will get full source file
+    contents from the server otherwise for performance reason it will
+    get only necessarry line contents.
+    """
+    reports = []
+
+    if not reports_data:
+        return reports
+
+    source_line_contents = {}
+    if 'html' not in output_formats:
+        source_line_contents = get_source_line_contents(client, reports_data)
+
+    file_cache: Dict[int, File] = {}
+
+    def cached_report_file_lookup(file_id: int, file_path: str) -> File:
+        """
+        It will create a file object with the given 'file_path' attribute if
+        file data is not found in the cache already based on the following
+        conditions:
+          - if HTML output is given it will try to get source file data for the
+            given file id from the server and set the content attribute of the
+            file object. File content is needed only by the HTML output
+            converter.
+          - otherwise it will create a file object where file content will not
+            be filled automatically but will be loaded from the host machine
+            when it is needed.
+
+        Finally, it returns the source file data from the cache.
+        """
+        nonlocal file_cache
+
+        if file_id not in file_cache:
+            file_cache[file_id] = File(file_path, file_id)
+
+            if 'html' in output_formats:
+                source = client.getSourceFileData(
+                    file_id, True, ttypes.Encoding.BASE64)
+                file_cache[file_id].content = convert.from_b64(
+                    source.fileContent)
+
+        return file_cache[file_id]
+
+    # Convert reports data to reports.
+    for report_data in reports_data:
+        report = report_type_converter.to_report(
+            report_data, cached_report_file_lookup)
+
+        report.changed_files = []
+        report.source_code_comments = []
+
+        if source_line_contents:
+            source_line = convert.from_b64(
+                source_line_contents[report_data.fileId][report_data.line])
+            report.source_line = f"{source_line}{os.linesep}"
+
+        reports.append(report)
+
+    return reports
+
+
+def get_diff_local_dir_remote_run(
+    client,
+    args,
+    output_formats,
+    report_dirs: List[str],
+    baseline_files: List[str],
+    remote_run_names: List[str]
+) -> Tuple[List[Report], List[str], List[str]]:
+    """ Compare a local report directory with a remote run. """
+    filtered_reports = []
+    filtered_report_hashes: Set[str] = set()
+
+    context = webserver_context.get_context()
+    report_dir_results = get_report_dir_results(
+        report_dirs, args, context.checker_labels)
+    suppressed_in_code = get_suppressed_reports(report_dir_results, args)
+
+    diff_type = get_diff_type(args)
+    run_ids, run_names, tag_ids = \
+        process_run_args(client, remote_run_names)
+    local_report_hashes = set([r.report_hash for r in report_dir_results])
+
+    review_status_filter = ttypes.ReviewStatusRuleFilter()
+    review_status_filter.reportHashes = local_report_hashes
+    review_status_filter.reviewStatuses = [
+        ttypes.ReviewStatus.FALSE_POSITIVE,
+        ttypes.ReviewStatus.INTENTIONAL]
+    closed_hashes = set(
+        rule.reportHash for rule in
+        client.getReviewStatusRules(
+            review_status_filter, None, None, None))
+
+    report_dir_results = [
+        r for r in report_dir_results if
+        r.review_status not in ['false positive', 'intentional'] and
+        (r.report_hash not in closed_hashes or
+         r.review_status == 'confirmed')]
+    local_report_hashes = set(r.report_hash for r in report_dir_results)
+    local_report_hashes.update(
+        baseline.get_report_hashes(baseline_files) - closed_hashes)
+
+    if diff_type == ttypes.DiffType.NEW:
+        # Get report hashes which can be found only in the remote runs.
+        remote_hashes = client.getDiffResultsHash(
+            run_ids, local_report_hashes, ttypes.DiffType.RESOLVED,
+            None, tag_ids)
+
+        results = get_diff_base_results(
+            client, args, run_ids, remote_hashes, suppressed_in_code)
+
+        filtered_reports.extend(
+            convert_report_data_to_report(client, results, output_formats))
+    elif diff_type == ttypes.DiffType.UNRESOLVED:
+        # Get remote hashes which can be found in the remote run and in the
+        # local report directory.
+        remote_hashes = client.getDiffResultsHash(
+            run_ids, local_report_hashes, ttypes.DiffType.UNRESOLVED,
+            None, tag_ids)
+
+        filtered_report_hashes = local_report_hashes.copy()
+        for result in report_dir_results:
+            rep_h = result.report_hash
+            filtered_report_hashes.discard(rep_h)
+            if rep_h in remote_hashes and rep_h not in suppressed_in_code:
+                filtered_reports.append(result)
+        filtered_report_hashes &= set(remote_hashes)
+
+        # Try to get missing report from the server based on the report
+        # hashes.
+        if filtered_report_hashes:
+            results = get_diff_base_results(
+                client, args, run_ids, list(filtered_report_hashes),
+                suppressed_in_code)
+
+            for result in results:
+                filtered_report_hashes.discard(result.bugHash)
+
+            filtered_reports.extend(
+                convert_report_data_to_report(client, results, output_formats))
+    elif diff_type == ttypes.DiffType.RESOLVED:
+        # Get remote hashes which can be found in the remote run and in the
+        # local report directory.
+        remote_hashes = client.getDiffResultsHash(
+            run_ids, local_report_hashes, ttypes.DiffType.UNRESOLVED,
+            None, tag_ids)
+
+        filtered_report_hashes = local_report_hashes.copy()
+        for result in report_dir_results:
+            filtered_report_hashes.discard(result.report_hash)
+            if result.report_hash not in remote_hashes:
+                filtered_reports.append(result)
+        filtered_report_hashes -= set(remote_hashes)
+
+    return filtered_reports, filtered_report_hashes, run_names
+
+
+def get_diff_remote_run_local_dir(
+    client,
+    args,
+    output_formats,
+    remote_run_names: List[str],
+    report_dirs: List[str],
+    baseline_files: List[str]
+) -> Tuple[List[Report], List[str], List[str]]:
+    """ Compares a remote run with a local report directory. """
+    filtered_reports = []
+    filtered_report_hashes = []
+
+    context = webserver_context.get_context()
+    report_dir_results = get_report_dir_results(
+        report_dirs, args, context.checker_labels)
+    suppressed_in_code = get_suppressed_reports(report_dir_results, args)
+
+    diff_type = get_diff_type(args)
+    run_ids, run_names, tag_ids = \
+        process_run_args(client, remote_run_names)
+    local_report_hashes = set([r.report_hash for r in report_dir_results])
+
+    review_status_filter = ttypes.ReviewStatusRuleFilter()
+    review_status_filter.reportHashes = local_report_hashes
+    review_status_filter.reviewStatuses = [
+        ttypes.ReviewStatus.FALSE_POSITIVE,
+        ttypes.ReviewStatus.INTENTIONAL]
+    closed_hashes = set(
+        rule.reportHash for rule in
+        client.getReviewStatusRules(
+            review_status_filter, None, None, None))
+
+    report_dir_results = [
+        r for r in report_dir_results if
+        r.review_status not in ['false positive', 'intentional'] and
+        (r.report_hash not in closed_hashes or
+         r.review_status == 'confirmed')]
+    local_report_hashes = set(r.report_hash for r in report_dir_results)
+    local_report_hashes.update(
+        baseline.get_report_hashes(baseline_files) - closed_hashes)
+
+    remote_hashes = client.getDiffResultsHash(
+        run_ids, local_report_hashes, diff_type, None, tag_ids)
+
+    if not remote_hashes:
+        return filtered_reports, filtered_report_hashes, run_names
+
+    if diff_type in [ttypes.DiffType.NEW, ttypes.DiffType.UNRESOLVED]:
+        # Shows reports from the report dir which are not present in
+        # the baseline (NEW reports) or appear in both side (UNRESOLVED
+        # reports) and not suppressed in the code.
+        filtered_report_hashes = set(remote_hashes)
+
+        for result in report_dir_results:
+            rep_h = result.report_hash
+            filtered_report_hashes.discard(rep_h)
+            if rep_h in remote_hashes and rep_h not in suppressed_in_code:
+                filtered_reports.append(result)
+    elif diff_type == ttypes.DiffType.RESOLVED:
+        # Show bugs in the baseline (server) which are not present in
+        # the report dir or suppressed.
+        results = get_diff_base_results(
+            client, args, run_ids, remote_hashes, suppressed_in_code)
+
+        filtered_reports.extend(
+            convert_report_data_to_report(client, results, output_formats))
+
+    return filtered_reports, filtered_report_hashes, run_names
+
+
+def get_diff_remote_runs(
+    client,
+    args,
+    output_formats,
+    remote_base_run_names: Iterable[str],
+    remote_new_run_names: Iterable[str]
+) -> Tuple[List[Report], List[str], List[str]]:
+    """
+    Compares two remote runs and returns the filtered results.
+    """
+    report_filter = add_filter_conditions(client, args)
+
+    base_ids, base_run_names, base_run_tags = \
+        process_run_args(client, remote_base_run_names)
+    report_filter.runTag = base_run_tags
+
+    cmp_data = ttypes.CompareData()
+    cmp_data.diffType = get_diff_type(args)
+
+    new_ids, new_run_names, new_run_tags = \
+        process_run_args(client, remote_new_run_names)
+    cmp_data.runIds = new_ids
+    cmp_data.runTag = new_run_tags
+
+    # Do not show resolved bugs in compare mode new.
+    if cmp_data.diffType == ttypes.DiffType.NEW:
+        report_filter.detectionStatus = [
+            ttypes.DetectionStatus.NEW,
+            ttypes.DetectionStatus.UNRESOLVED,
+            ttypes.DetectionStatus.REOPENED]
+
+    sort_mode = [(ttypes.SortMode(
+        ttypes.SortType.FILENAME,
+        ttypes.Order.ASC))]
+
+    all_results = get_run_results(
+        client, base_ids, constants.MAX_QUERY_SIZE, 0, sort_mode,
+        report_filter, cmp_data, True)
+
+    reports = \
+        convert_report_data_to_report(client, all_results, output_formats)
+    return reports, base_run_names, new_run_names
+
+
+def get_diff_local_dirs(
+    args,
+    report_dirs: List[str],
+    baseline_files: List[str],
+    new_report_dirs: List[str],
+    new_baseline_files: List[str]
+) -> Tuple[List[Report], List[str]]:
+    """
+    Compares two report directories and returns the filtered results.
+    """
+    filtered_reports = []
+    filtered_report_hashes = []
+
+    context = webserver_context.get_context()
+    base_results = get_report_dir_results(
+        report_dirs, args, context.checker_labels)
+    new_results = get_report_dir_results(
+        new_report_dirs, args, context.checker_labels)
+
+    new_results = [res for res in new_results
+                   if res.check_source_code_comments(args.review_status)]
+
+    base_hashes = set([res.report_hash for res in base_results])
+    new_hashes = set([res.report_hash for res in new_results])
+
+    # Add hashes from the baseline files.
+    base_hashes.update(baseline.get_report_hashes(baseline_files))
+    new_hashes.update(baseline.get_report_hashes(new_baseline_files))
+
+    diff_type = get_diff_type(args)
+    if diff_type == ttypes.DiffType.NEW:
+        filtered_report_hashes = new_hashes.copy()
+        for res in new_results:
+            filtered_report_hashes.discard(res.report_hash)
+
+            if res.report_hash not in base_hashes:
+                filtered_reports.append(res)
+    if diff_type == ttypes.DiffType.UNRESOLVED:
+        filtered_report_hashes = new_hashes.copy()
+        for res in new_results:
+            filtered_report_hashes.discard(res.report_hash)
+
+            if res.report_hash in base_hashes:
+                filtered_reports.append(res)
+    elif diff_type == ttypes.DiffType.RESOLVED:
+        filtered_report_hashes = base_hashes.copy()
+        for res in base_results:
+            filtered_report_hashes.discard(res.report_hash)
+
+            if res.report_hash not in new_hashes:
+                filtered_reports.append(res)
+
+    return filtered_reports, filtered_report_hashes
+
+
+def print_reports(
+    args,
+    reports: List[Report],
+    report_hashes: Iterable[str],
+    output_dir,
+    output_formats: List[str]
+):
+    if report_hashes:
+        LOG.info("Couldn't get local reports for the following baseline "
+                 "report hashes: %s", ', '.join(sorted(report_hashes)))
+
+    statistics = Statistics()
+    changed_files: Set[str] = set()
+    html_builder: Optional[report_to_html.HtmlBuilder] = None
+    for report in reports:
+        statistics.add_report(report)
+
+        if report.changed_files:
+            changed_files.update(report.changed_files)
+
+        repo_dir = os.environ.get('CC_REPO_DIR')
+        if repo_dir:
+            report.trim_path_prefixes([repo_dir])
+
+    processed_file_paths = set()
+    for output_format in output_formats:
+        if output_format == 'plaintext':
+            file_report_map = plaintext.get_file_report_map(reports)
+            print_steps = 'print_steps' in args
+            plaintext.convert(
+                file_report_map, processed_file_paths, print_steps)
+
+        context = webserver_context.get_context()
+        if output_format == 'html':
+            if not html_builder:
+                html_builder = report_to_html.HtmlBuilder(
+                    context.path_plist_to_html_dist,
+                    context.checker_labels)
+
+            file_report_map = plaintext.get_file_report_map(reports)
+
+            LOG.info("Generating HTML output files to file://%s "
+                     "directory:", output_dir)
+
+            for file_path, file_reports in file_report_map.items():
+                file_name = os.path.basename(file_path)
+                h = int(
+                    hashlib.md5(
+                        file_path.encode('utf-8')).hexdigest(),
+                    16) % (10 ** 8)
+
+                output_file_path = os.path.join(
+                    output_dir, f"{file_name}_ {str(h)}.html")
+                html_builder.create(output_file_path, file_reports)
+
+        if output_format in ['csv', 'rows', 'table']:
+            header = ['File', 'Checker', 'Severity', 'Msg', 'Source']
+            rows = []
+            for report in reports:
+                if report.source_line is None:
+                    continue
+
+                checked_file = f"{report.file.path}:{str(report.line)}:" \
+                               f"{str(report.column)}"
+                rows.append((
+                    report.severity,
+                    checked_file,
+                    report.message,
+                    report.checker_name,
+                    report.source_line.rstrip()))
+
+            print(twodim.to_str(output_format, header, rows))
+
+        if output_format == 'json':
+            data = report_to_json.convert(reports)
+
+            report_json = os.path.join(output_dir, 'reports.json') \
+                if output_dir else None
+            dump_json_output(data, report_json)
+
+        if output_format == 'gerrit':
+            data = gerrit.convert(reports)
+
+            report_json = os.path.join(
+                output_dir, 'gerrit_review.json') if output_dir else None
+            dump_json_output(data, report_json)
+
+        if output_format == 'codeclimate':
+            data = codeclimate.convert(reports)
+
+            report_json = os.path.join(
+                output_dir, 'codeclimate_issues.json') \
+                if output_dir else None
+            dump_json_output(data, report_json)
+
+    if 'html' in output_formats:
+        html_builder.finish(output_dir, statistics)
+
+    if 'plaintext' in output_formats:
+        statistics.write()
+
+    reports_helper.dump_changed_files(changed_files)
+
+
 def handle_diff_results_impl(args):
     # If the given output format is not 'table', redirect logger's output to
     # the stderr.
@@ -762,441 +1221,7 @@ def handle_diff_results_impl(args):
     if output_dir and not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    context = webserver_context.get_context()
-
     client = None
-
-    file_cache: Dict[int, File] = {}
-    print_steps = 'print_steps' in args
-
-    def cached_report_file_lookup(file_id: int, file_path: str) -> File:
-        """
-        It will create a file object with the given 'file_path' attribute if
-        file data is not found in the cache already based on the following
-        conditions:
-          - if HTML output is given it will try to get source file data for the
-            given file id from the server and set the content attribute of the
-            file object. File content is needed only by the HTML output
-            converter.
-          - otherwise it will create a file object where file content will not
-            be filled automatically but will be loaded from the host machine
-            when it is needed.
-
-        Finally, it returns the source file data from the cache.
-        """
-        nonlocal file_cache
-
-        if file_id not in file_cache:
-            file_cache[file_id] = File(file_path, file_id)
-
-            if 'html' in output_formats:
-                source = client.getSourceFileData(
-                    file_id, True, ttypes.Encoding.BASE64)
-                file_cache[file_id].content = convert.from_b64(
-                    source.fileContent)
-
-        return file_cache[file_id]
-
-    def get_source_line_contents(
-        reports: List[ttypes.ReportData]
-    ) -> Dict[int, Dict[int, str]]:
-        """
-        Get source line contents from the server for the given report data.
-        """
-        source_lines = defaultdict(set)
-        for report_data in reports:
-            source_lines[report_data.fileId].add(report_data.line)
-
-        lines_in_files_requested = []
-        for file_id in source_lines:
-            lines_in_files_requested.append(
-                ttypes.LinesInFilesRequested(fileId=file_id,
-                                             lines=source_lines[file_id]))
-
-        return client.getLinesInSourceFileContents(
-            lines_in_files_requested, ttypes.Encoding.BASE64)
-
-    def convert_report_data_to_report(
-        reports_data: List[ttypes.ReportData]
-    ) -> List[Report]:
-        """
-        Convert the given report data list to local reports.
-
-        If one of the given output format is HTML it will get full source file
-        contents from the server otherwise for performance reason it will
-        get only necessarry line contents.
-        """
-        reports = []
-
-        if not reports_data:
-            return reports
-
-        source_line_contents = {}
-        if 'html' not in output_formats:
-            source_line_contents = get_source_line_contents(reports_data)
-
-        # Convert reports data to reports.
-        for report_data in reports_data:
-            report = report_type_converter.to_report(
-                report_data, cached_report_file_lookup)
-
-            report.changed_files = []
-            report.source_code_comments = []
-
-            if source_line_contents:
-                source_line = convert.from_b64(
-                    source_line_contents[report_data.fileId][report_data.line])
-                report.source_line = f"{source_line}{os.linesep}"
-
-            reports.append(report)
-
-        return reports
-
-    def get_diff_local_dir_remote_run(
-        client,
-        report_dirs: List[str],
-        baseline_files: List[str],
-        remote_run_names: List[str]
-    ) -> Tuple[List[Report], List[str], List[str]]:
-        """ Compare a local report directory with a remote run. """
-        filtered_reports = []
-        filtered_report_hashes: Set[str] = set()
-
-        report_dir_results = get_report_dir_results(
-            report_dirs, args, context.checker_labels)
-        suppressed_in_code = get_suppressed_reports(report_dir_results, args)
-
-        diff_type = get_diff_type(args)
-        run_ids, run_names, tag_ids = \
-            process_run_args(client, remote_run_names)
-        local_report_hashes = set([r.report_hash for r in report_dir_results])
-
-        review_status_filter = ttypes.ReviewStatusRuleFilter()
-        review_status_filter.reportHashes = local_report_hashes
-        review_status_filter.reviewStatuses = [
-            ttypes.ReviewStatus.FALSE_POSITIVE,
-            ttypes.ReviewStatus.INTENTIONAL]
-        closed_hashes = set(
-            rule.reportHash for rule in
-            client.getReviewStatusRules(
-                review_status_filter, None, None, None))
-
-        report_dir_results = [
-            r for r in report_dir_results if
-            r.review_status not in ['false positive', 'intentional'] and
-            (r.report_hash not in closed_hashes or
-             r.review_status == 'confirmed')]
-        local_report_hashes = set(r.report_hash for r in report_dir_results)
-        local_report_hashes.update(
-            baseline.get_report_hashes(baseline_files) - closed_hashes)
-
-        if diff_type == ttypes.DiffType.NEW:
-            # Get report hashes which can be found only in the remote runs.
-            remote_hashes = client.getDiffResultsHash(
-                run_ids, local_report_hashes, ttypes.DiffType.RESOLVED,
-                None, tag_ids)
-
-            results = get_diff_base_results(
-                client, args, run_ids, remote_hashes, suppressed_in_code)
-
-            filtered_reports.extend(convert_report_data_to_report(results))
-        elif diff_type == ttypes.DiffType.UNRESOLVED:
-            # Get remote hashes which can be found in the remote run and in the
-            # local report directory.
-            remote_hashes = client.getDiffResultsHash(
-                run_ids, local_report_hashes, ttypes.DiffType.UNRESOLVED,
-                None, tag_ids)
-
-            filtered_report_hashes = local_report_hashes.copy()
-            for result in report_dir_results:
-                rep_h = result.report_hash
-                filtered_report_hashes.discard(rep_h)
-                if rep_h in remote_hashes and rep_h not in suppressed_in_code:
-                    filtered_reports.append(result)
-            filtered_report_hashes &= set(remote_hashes)
-
-            # Try to get missing report from the server based on the report
-            # hashes.
-            if filtered_report_hashes:
-                results = get_diff_base_results(
-                    client, args, run_ids, list(filtered_report_hashes),
-                    suppressed_in_code)
-
-                for result in results:
-                    filtered_report_hashes.discard(result.bugHash)
-
-                filtered_reports.extend(convert_report_data_to_report(results))
-        elif diff_type == ttypes.DiffType.RESOLVED:
-            # Get remote hashes which can be found in the remote run and in the
-            # local report directory.
-            remote_hashes = client.getDiffResultsHash(
-                run_ids, local_report_hashes, ttypes.DiffType.UNRESOLVED,
-                None, tag_ids)
-
-            filtered_report_hashes = local_report_hashes.copy()
-            for result in report_dir_results:
-                filtered_report_hashes.discard(result.report_hash)
-                if result.report_hash not in remote_hashes:
-                    filtered_reports.append(result)
-            filtered_report_hashes -= set(remote_hashes)
-
-        return filtered_reports, filtered_report_hashes, run_names
-
-    def get_diff_remote_run_local_dir(
-        client,
-        remote_run_names: List[str],
-        report_dirs: List[str],
-        baseline_files: List[str]
-    ) -> Tuple[List[Report], List[str], List[str]]:
-        """ Compares a remote run with a local report directory. """
-        filtered_reports = []
-        filtered_report_hashes = []
-
-        report_dir_results = get_report_dir_results(
-            report_dirs, args, context.checker_labels)
-        suppressed_in_code = get_suppressed_reports(report_dir_results, args)
-
-        diff_type = get_diff_type(args)
-        run_ids, run_names, tag_ids = \
-            process_run_args(client, remote_run_names)
-        local_report_hashes = set([r.report_hash for r in report_dir_results])
-
-        review_status_filter = ttypes.ReviewStatusRuleFilter()
-        review_status_filter.reportHashes = local_report_hashes
-        review_status_filter.reviewStatuses = [
-            ttypes.ReviewStatus.FALSE_POSITIVE,
-            ttypes.ReviewStatus.INTENTIONAL]
-        closed_hashes = set(
-            rule.reportHash for rule in
-            client.getReviewStatusRules(
-                review_status_filter, None, None, None))
-
-        report_dir_results = [
-            r for r in report_dir_results if
-            r.review_status not in ['false positive', 'intentional'] and
-            (r.report_hash not in closed_hashes or
-             r.review_status == 'confirmed')]
-        local_report_hashes = set(r.report_hash for r in report_dir_results)
-        local_report_hashes.update(
-            baseline.get_report_hashes(baseline_files) - closed_hashes)
-
-        remote_hashes = client.getDiffResultsHash(
-            run_ids, local_report_hashes, diff_type, None, tag_ids)
-
-        if not remote_hashes:
-            return filtered_reports, filtered_report_hashes, run_names
-
-        if diff_type in [ttypes.DiffType.NEW, ttypes.DiffType.UNRESOLVED]:
-            # Shows reports from the report dir which are not present in
-            # the baseline (NEW reports) or appear in both side (UNRESOLVED
-            # reports) and not suppressed in the code.
-            filtered_report_hashes = set(remote_hashes)
-
-            for result in report_dir_results:
-                rep_h = result.report_hash
-                filtered_report_hashes.discard(rep_h)
-                if rep_h in remote_hashes and rep_h not in suppressed_in_code:
-                    filtered_reports.append(result)
-        elif diff_type == ttypes.DiffType.RESOLVED:
-            # Show bugs in the baseline (server) which are not present in
-            # the report dir or suppressed.
-            results = get_diff_base_results(
-                client, args, run_ids, remote_hashes, suppressed_in_code)
-
-            filtered_reports.extend(convert_report_data_to_report(results))
-
-        return filtered_reports, filtered_report_hashes, run_names
-
-    def get_diff_remote_runs(
-        client,
-        remote_base_run_names: Iterable[str],
-        remote_new_run_names: Iterable[str]
-    ) -> Tuple[List[Report], List[str], List[str]]:
-        """
-        Compares two remote runs and returns the filtered results.
-        """
-        report_filter = add_filter_conditions(client, args)
-
-        base_ids, base_run_names, base_run_tags = \
-            process_run_args(client, remote_base_run_names)
-        report_filter.runTag = base_run_tags
-
-        cmp_data = ttypes.CompareData()
-        cmp_data.diffType = get_diff_type(args)
-
-        new_ids, new_run_names, new_run_tags = \
-            process_run_args(client, remote_new_run_names)
-        cmp_data.runIds = new_ids
-        cmp_data.runTag = new_run_tags
-
-        # Do not show resolved bugs in compare mode new.
-        if cmp_data.diffType == ttypes.DiffType.NEW:
-            report_filter.detectionStatus = [
-                ttypes.DetectionStatus.NEW,
-                ttypes.DetectionStatus.UNRESOLVED,
-                ttypes.DetectionStatus.REOPENED]
-
-        sort_mode = [(ttypes.SortMode(
-            ttypes.SortType.FILENAME,
-            ttypes.Order.ASC))]
-
-        all_results = get_run_results(
-            client, base_ids, constants.MAX_QUERY_SIZE, 0, sort_mode,
-            report_filter, cmp_data, True)
-
-        reports = convert_report_data_to_report(all_results)
-        return reports, base_run_names, new_run_names
-
-    def get_diff_local_dirs(
-        report_dirs: List[str],
-        baseline_files: List[str],
-        new_report_dirs: List[str],
-        new_baseline_files: List[str]
-    ) -> Tuple[List[Report], List[str]]:
-        """
-        Compares two report directories and returns the filtered results.
-        """
-        filtered_reports = []
-        filtered_report_hashes = []
-
-        base_results = get_report_dir_results(
-            report_dirs, args, context.checker_labels)
-        new_results = get_report_dir_results(
-            new_report_dirs, args, context.checker_labels)
-
-        new_results = [res for res in new_results
-                       if res.check_source_code_comments(args.review_status)]
-
-        base_hashes = set([res.report_hash for res in base_results])
-        new_hashes = set([res.report_hash for res in new_results])
-
-        # Add hashes from the baseline files.
-        base_hashes.update(baseline.get_report_hashes(baseline_files))
-        new_hashes.update(baseline.get_report_hashes(new_baseline_files))
-
-        diff_type = get_diff_type(args)
-        if diff_type == ttypes.DiffType.NEW:
-            filtered_report_hashes = new_hashes.copy()
-            for res in new_results:
-                filtered_report_hashes.discard(res.report_hash)
-
-                if res.report_hash not in base_hashes:
-                    filtered_reports.append(res)
-        if diff_type == ttypes.DiffType.UNRESOLVED:
-            filtered_report_hashes = new_hashes.copy()
-            for res in new_results:
-                filtered_report_hashes.discard(res.report_hash)
-
-                if res.report_hash in base_hashes:
-                    filtered_reports.append(res)
-        elif diff_type == ttypes.DiffType.RESOLVED:
-            filtered_report_hashes = base_hashes.copy()
-            for res in base_results:
-                filtered_report_hashes.discard(res.report_hash)
-
-                if res.report_hash not in new_hashes:
-                    filtered_reports.append(res)
-
-        return filtered_reports, filtered_report_hashes
-
-    def print_reports(
-        reports: List[Report],
-        report_hashes: Iterable[str],
-        output_formats: List[str]
-    ):
-        if report_hashes:
-            LOG.info("Couldn't get local reports for the following baseline "
-                     "report hashes: %s", ', '.join(sorted(report_hashes)))
-
-        statistics = Statistics()
-        changed_files: Set[str] = set()
-        html_builder: Optional[report_to_html.HtmlBuilder] = None
-        for report in reports:
-            statistics.add_report(report)
-
-            if report.changed_files:
-                changed_files.update(report.changed_files)
-
-            repo_dir = os.environ.get('CC_REPO_DIR')
-            if repo_dir:
-                report.trim_path_prefixes([repo_dir])
-
-        processed_file_paths = set()
-        for output_format in output_formats:
-            if output_format == 'plaintext':
-                file_report_map = plaintext.get_file_report_map(reports)
-                plaintext.convert(
-                    file_report_map, processed_file_paths, print_steps)
-
-            if output_format == 'html':
-                if not html_builder:
-                    html_builder = report_to_html.HtmlBuilder(
-                        context.path_plist_to_html_dist,
-                        context.checker_labels)
-
-                file_report_map = plaintext.get_file_report_map(reports)
-
-                LOG.info("Generating HTML output files to file://%s "
-                         "directory:", output_dir)
-
-                for file_path, file_reports in file_report_map.items():
-                    file_name = os.path.basename(file_path)
-                    h = int(
-                        hashlib.md5(
-                            file_path.encode('utf-8')).hexdigest(),
-                        16) % (10 ** 8)
-
-                    output_file_path = os.path.join(
-                        output_dir, f"{file_name}_ {str(h)}.html")
-                    html_builder.create(output_file_path, file_reports)
-
-            if output_format in ['csv', 'rows', 'table']:
-                header = ['File', 'Checker', 'Severity', 'Msg', 'Source']
-                rows = []
-                for report in reports:
-                    if report.source_line is None:
-                        continue
-
-                    checked_file = f"{report.file.path}:{str(report.line)}:" \
-                                   f"{str(report.column)}"
-                    rows.append((
-                        report.severity,
-                        checked_file,
-                        report.message,
-                        report.checker_name,
-                        report.source_line.rstrip()))
-
-                print(twodim.to_str(output_format, header, rows))
-
-            if output_format == 'json':
-                data = report_to_json.convert(reports)
-
-                report_json = os.path.join(output_dir, 'reports.json') \
-                    if output_dir else None
-                dump_json_output(data, report_json)
-
-            if output_format == 'gerrit':
-                data = gerrit.convert(reports)
-
-                report_json = os.path.join(
-                    output_dir, 'gerrit_review.json') if output_dir else None
-                dump_json_output(data, report_json)
-
-            if output_format == 'codeclimate':
-                data = codeclimate.convert(reports)
-
-                report_json = os.path.join(
-                    output_dir, 'codeclimate_issues.json') \
-                    if output_dir else None
-                dump_json_output(data, report_json)
-
-        if 'html' in output_formats:
-            html_builder.finish(output_dir, statistics)
-
-        if 'plaintext' in output_formats:
-            statistics.write()
-
-        reports_helper.dump_changed_files(changed_files)
 
     basename_local_dirs, basename_baseline_files, basename_run_names = \
         filter_local_file_remote_run(args.base_run_names)
@@ -1261,20 +1286,20 @@ def handle_diff_results_impl(args):
     if (basename_local_dirs or basename_baseline_files) and \
        (newname_local_dirs or newname_baseline_files):
         reports, report_hashes = get_diff_local_dirs(
-            basename_local_dirs, basename_baseline_files,
+            args, basename_local_dirs, basename_baseline_files,
             newname_local_dirs, newname_baseline_files)
 
-        print_reports(reports, report_hashes, output_formats)
+        print_reports(args, reports, report_hashes, output_dir, output_formats)
         LOG.info("Compared the following local files / directories: %s and %s",
                  ', '.join([*basename_local_dirs, *basename_baseline_files]),
                  ', '.join([*newname_local_dirs, *newname_baseline_files]))
     elif newname_local_dirs or newname_baseline_files:
         reports, report_hashes, matching_base_run_names = \
             get_diff_remote_run_local_dir(
-                client, basename_run_names,
+                client, args, output_formats, basename_run_names,
                 newname_local_dirs, newname_baseline_files)
 
-        print_reports(reports, report_hashes, output_formats)
+        print_reports(args, reports, report_hashes, output_dir, output_formats)
         LOG.info("Compared remote run(s) %s (matching: %s) and local files / "
                  "report directory(s) %s",
                  ', '.join(basename_run_names),
@@ -1283,10 +1308,10 @@ def handle_diff_results_impl(args):
     elif (basename_local_dirs or basename_baseline_files):
         reports, report_hashes, matching_new_run_names = \
             get_diff_local_dir_remote_run(
-                client, basename_local_dirs, basename_baseline_files,
-                newname_run_names)
+                client, args, output_formats, basename_local_dirs,
+                basename_baseline_files, newname_run_names)
 
-        print_reports(reports, report_hashes, output_formats)
+        print_reports(args, reports, report_hashes, output_dir, output_formats)
         LOG.info("Compared local files / report directory(s) %s and remote "
                  "run(s) %s (matching: %s).",
                  ', '.join([*basename_local_dirs, *basename_baseline_files]),
@@ -1294,8 +1319,9 @@ def handle_diff_results_impl(args):
                  ', '.join(matching_new_run_names))
     else:
         reports, matching_base_run_names, matching_new_run_names = \
-            get_diff_remote_runs(client, basename_run_names, newname_run_names)
-        print_reports(reports, None, output_formats)
+            get_diff_remote_runs(client, args, output_formats,
+                                 basename_run_names, newname_run_names)
+        print_reports(args, reports, None, output_dir, output_formats)
         LOG.info("Compared multiple remote runs %s (matching: %s) and %s "
                  "(matching: %s)",
                  ', '.join(basename_run_names),
