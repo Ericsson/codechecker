@@ -389,15 +389,18 @@ def get_run_results(client,
     return all_results
 
 
-def validate_filter_values(user_values, valid_values, value_type):
+def validate_filter_values(converted_values: List[int], valid_values,
+                           value_type):
     """
     Check if the value provided by the user is a valid value.
     """
-    if not user_values:
+    # Can be None if the user provided no value to this option -- that is
+    # valid.
+    if not converted_values:
         return True
 
-    non_valid_values = [status for status in user_values
-                        if valid_values.get(status.upper(), None) is None]
+    non_valid_values = [status for status in converted_values
+                        if valid_values.get(status, None) is None]
 
     if non_valid_values:
         invalid_values = ','.join([x.lower() for x in non_valid_values])
@@ -409,82 +412,6 @@ def validate_filter_values(user_values, valid_values, value_type):
         return False
 
     return True
-
-
-def check_filter_values(args):
-    """
-    Check if filter values are valid values. Returns values which are checked
-    or exit from the interpreter.
-    """
-    severities = checkers = file_path = dt_statuses = rw_statuses = None
-    bug_path_length = None
-
-    if 'severity' in args:
-        severities = args.severity
-
-    if 'detection_status' in args:
-        dt_statuses = args.detection_status
-
-    if 'review_status' in args:
-        rw_statuses = args.review_status
-
-    if 'checker_name' in args:
-        checkers = args.checker_name
-
-    if 'file_path' in args:
-        file_path = args.file_path
-
-    if 'bug_path_length' in args:
-        path_lengths = args.bug_path_length.split(':')
-
-        min_bug_path_length = int(path_lengths[0]) if \
-            path_lengths and path_lengths[0].isdigit() else None
-
-        max_bug_path_length = int(path_lengths[1]) if \
-            len(path_lengths) > 1 and path_lengths[1].isdigit() else None
-
-        bug_path_length = BugPathLengthRange(min=min_bug_path_length,
-                                             max=max_bug_path_length)
-
-    values_to_check = [
-        (severities, ttypes.Severity._NAMES_TO_VALUES, 'severity'),
-        (dt_statuses, ttypes.DetectionStatus._NAMES_TO_VALUES,
-         'detection status'),
-        (rw_statuses, ttypes.ReviewStatus._NAMES_TO_VALUES,
-         'review status')]
-
-    if not all(valid for valid in
-               [validate_filter_values(*x) for x in values_to_check]):
-        sys.exit(1)
-
-    report_filter = ttypes.ReportFilter()
-
-    if severities:
-        report_filter.severity = [
-            ttypes.Severity._NAMES_TO_VALUES[x.upper()] for x in severities]
-
-    if checkers:
-        report_filter.checkerName = checkers
-
-    if file_path:
-        report_filter.filepath = file_path
-
-    if dt_statuses:
-        report_filter.detectionStatus = [
-            ttypes.DetectionStatus._NAMES_TO_VALUES[x.upper()] for x in
-            dt_statuses]
-
-    if rw_statuses:
-        report_filter.reviewStatus = [
-            ttypes.ReviewStatus._NAMES_TO_VALUES[x.upper()] for x in
-            rw_statuses]
-
-    if bug_path_length:
-        report_filter.bugPathLength = \
-            ttypes.BugPathLengthRange(min=bug_path_length.min,
-                                      max=bug_path_length.max)
-
-    return report_filter
 
 
 def parse_report_filter(client, args):
@@ -504,8 +431,55 @@ def parse_report_filter_offline(args):
     """
     This function fills some attributes of the given report filter based on
     the arguments which is provided in the command line.
+    Check if filter values are valid values. Returns values which are checked
+    or exit from the interpreter.
     """
-    report_filter = check_filter_values(args)
+    report_filter = ttypes.ReportFilter()
+
+    if 'severity' in args:
+        report_filter.severity = [
+            ttypes.Severity._NAMES_TO_VALUES[x.upper()] for x in args.severity]
+
+    if 'detection_status' in args:
+        report_filter.detectionStatus = [
+            ttypes.DetectionStatus._NAMES_TO_VALUES[x.upper()] for x in
+            args.detection_status]
+
+    if 'review_status' in args:
+        report_filter.reviewStatus = [
+            ttypes.ReviewStatus._NAMES_TO_VALUES[x.upper()] for x in
+            args.review_status]
+
+    if 'checker_name' in args:
+        report_filter.checkerName = args.checker_name
+
+    if 'file_path' in args:
+        report_filter.filepath = args.file_path
+
+    if 'bug_path_length' in args:
+        path_lengths = args.bug_path_length.split(':')
+
+        min_bug_path_length = int(path_lengths[0]) if \
+            path_lengths and path_lengths[0].isdigit() else None
+
+        max_bug_path_length = int(path_lengths[1]) if \
+            len(path_lengths) > 1 and path_lengths[1].isdigit() else None
+
+        report_filter.bugPathLength = \
+            BugPathLengthRange(min=min_bug_path_length,
+                               max=max_bug_path_length)
+
+    values_to_check = [
+        (report_filter.severity, ttypes.Severity._VALUES_TO_NAMES, 'severity'),
+        (report_filter.detectionStatus,
+         ttypes.DetectionStatus._VALUES_TO_NAMES,
+         'detection status'),
+        (report_filter.reviewStatus, ttypes.ReviewStatus._VALUES_TO_NAMES,
+         'review status')]
+
+    if not all(valid for valid in
+               [validate_filter_values(*x) for x in values_to_check]):
+        sys.exit(1)
 
     report_filter.isUnique = args.uniqueing == 'on'
 
@@ -726,10 +700,6 @@ def handle_list_results(args):
                          dt_status))
 
         print(twodim.to_str(args.output_format, header, rows))
-
-
-def handle_diff_results(args):
-    handle_diff_results_impl(args)
 
 
 def get_source_line_contents(
@@ -1194,11 +1164,10 @@ def print_reports(
     reports_helper.dump_changed_files(changed_files)
 
 
-def handle_diff_results_impl(args):
+def handle_diff_results(args):
     # If the given output format is not 'table', redirect logger's output to
     # the stderr.
     stream = None
-    assert 'output_format' in args
     output_formats = args.output_format
     if output_formats != 'table':
         stream = 'stderr'
