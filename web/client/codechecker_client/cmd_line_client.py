@@ -415,6 +415,11 @@ def validate_filter_values(converted_values: List[int], valid_values,
 
 
 def parse_report_filter(client, args):
+    """
+    Parse and check attributes of the given report filter based on
+    the arguments which is provided in the command line.
+    Also, check if filter values are valid values.
+    """
     report_filter = parse_report_filter_offline(args)
 
     if 'tag' in args:
@@ -429,10 +434,9 @@ def parse_report_filter(client, args):
 
 def parse_report_filter_offline(args):
     """
-    This function fills some attributes of the given report filter based on
-    the arguments which is provided in the command line.
-    Check if filter values are valid values. Returns values which are checked
-    or exit from the interpreter.
+    Same as parse_report_filter, but will not make calls to the server.
+    As of writing this comment, this means that the 'tag' argument will be
+    ignored (as that would require a getRunHistory API call).
     """
     report_filter = ttypes.ReportFilter()
 
@@ -796,7 +800,7 @@ def get_diff_local_dir_remote_run(
     client,
     report_filter: ttypes.ReportFilter,
     diff_type: ttypes.DiffType,
-    output_formats,
+    output_formats: List[str],
     report_dirs: List[str],
     baseline_files: List[str],
     remote_run_names: List[str]
@@ -894,7 +898,7 @@ def get_diff_remote_run_local_dir(
     client,
     report_filter: ttypes.ReportFilter,
     diff_type: ttypes.DiffType,
-    output_formats,
+    output_formats: List[str],
     remote_run_names: List[str],
     report_dirs: List[str],
     baseline_files: List[str]
@@ -965,7 +969,7 @@ def get_diff_remote_runs(
     client,
     report_filter: ttypes.ReportFilter,
     diff_type: ttypes.DiffType,
-    output_formats,
+    output_formats: List[str],
     remote_base_run_names: Iterable[str],
     remote_new_run_names: Iterable[str]
 ) -> Tuple[List[Report], List[str], List[str]]:
@@ -1007,6 +1011,8 @@ def get_diff_remote_runs(
 def get_diff_local_dirs(
     report_filter: ttypes.ReportFilter,
     diff_type: ttypes.DiffType,
+    # TODO: No output_format argument? How come? Maybe the other functions
+    # don't need it either?
     report_dirs: List[str],
     baseline_files: List[str],
     new_report_dirs: List[str],
@@ -1065,7 +1071,7 @@ def print_reports(
     print_steps: bool,
     reports: List[Report],
     report_hashes: Iterable[str],
-    output_dir,
+    output_dir: str,
     output_formats: List[str]
 ):
     if report_hashes:
