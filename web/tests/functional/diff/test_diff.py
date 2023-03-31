@@ -13,6 +13,7 @@
 import datetime
 import logging
 import os
+import shutil
 import time
 import unittest
 
@@ -44,20 +45,6 @@ class TestReviewStatus(unittest.TestCase):
 
         self._cc_client = env.setup_viewer_client(self.test_workspace)
         self.assertIsNotNone(self._cc_client)
-
-        # Get the run names which belong to this test.
-        run_names = env.get_run_names(self.test_workspace)
-        # get the current run data
-        run_filter = RunFilter(names=run_names, exactMatch=True)
-
-        runs = self._cc_client.getRunData(run_filter, None, 0, None)
-
-        test_runs = [run for run in runs if run.name in run_names]
-
-        self.assertEqual(len(test_runs), 1,
-                         'There should be only one run for this test, '
-                         'with the given name configured at the test init.')
-        self._runid = test_runs[0].runId
 
     def tearDown(self):
         """ Remove all review status rules after each test cases. """
@@ -95,8 +82,8 @@ class TestReviewStatus(unittest.TestCase):
 
         codechecker_cfg = env.import_codechecker_cfg(self.test_workspace)
         codechecker_cfg["workspace"] = file_dir
-        codechecker_cfg["reportdir"] = \
-            os.path.join(file_dir, "reports")
+        codechecker_cfg["reportdir"] = os.path.join(file_dir, "reports")
+        codechecker_cfg['analyzers'] = ['clangsa', 'clang-tidy']
 
         codechecker.analyze(codechecker_cfg, file_dir)
 
@@ -111,7 +98,20 @@ class TestReviewStatus(unittest.TestCase):
             os.path.join(file_dir, "reports")
         codechecker.store(codechecker_cfg, store_name)
 
-    def test_review_and_detection_status_changes(self):
+    def __get_run_id(self, run_name):
+        runs = self._cc_client.getRunData(None, None, 0, None)
+        self.assertEqual(len(runs), 1)
+        test_run = [run for run in runs if run.name == run_name]
+        self.assertEqual(len(test_run), 1)
+        return test_run[0].runid
+
+    def __remove_run(self, run_names):
+        run_filter = RunFilter()
+        run_filter.names = run_names
+        ret = self._cc_client.removeRun(None, run_filter)
+        self.assertTrue(ret)
+
+    def test_1(self):
 
         dir1 = os.path.join(self.test_workspace, "dir1")
         dir2 = os.path.join(self.test_workspace, "dir2")
@@ -124,20 +124,39 @@ void a() {
         self.__analyze_and_store(dir1, "run1", src_div_by_zero)
         self.__analyze(dir2, src_div_by_zero)
 
-        args = []
-
         report_filter = ReportFilter()
         report_filter.reviewStatus = \
                 [ReviewStatus.CONFIRMED, ReviewStatus.UNREVIEWED]
-        # we need to invoke codechecker cmd diff... ugh...
         reports, _, _ = get_diff_remote_run_local_dir(
                 self._cc_client, report_filter, DiffType.UNRESOLVED, [],
                 ["run1"], [dir2], [])
 
-        print(reports)
-        print(len(reports))
-        assert False
-        # self.assertEqual(report.detectionStatus, DetectionStatus.NEW)
-        # self.assertEqual(report.reviewData.status, ReviewStatus.FALSE_POSITIVE)
-        # self.assertIsNotNone(report.fixedAt)
-        # fixed_at_old = report.fixedAt
+        self.assertEqual(len(reports), 1)
+        self.__remove_run(["run1"])
+        shutil.rmtree(dir1, ignore_errors=True)
+        shutil.rmtree(dir2, ignore_errors=True)
+
+    def test_2(self):
+
+        dir1 = os.path.join(self.test_workspace, "dir1")
+        dir2 = os.path.join(self.test_workspace, "dir2")
+        src_div_by_zero = """
+void a() {
+  int i = 0;
+  (void)(10 / i);
+}
+"""
+        self.__analyze_and_store(dir1, "run1", src_div_by_zero)
+        self.__analyze(dir2, src_div_by_zero)
+
+        results = get_all_run_results(self._cc_client)
+        # self.assertEqual(len(results), 1)
+
+        report_filter = ReportFilter()
+        report_filter.reviewStatus = \
+                [ReviewStatus.CONFIRMED, ReviewStatus.UNREVIEWED]
+        reports, _, _ = get_diff_remote_run_local_dir(
+                self._cc_client, report_filter, DiffType.UNRESOLVED, [],
+                ["run1"], [dir2], [])
+
+        # self.assertEqual(len(reports), 1)

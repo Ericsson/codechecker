@@ -27,7 +27,7 @@ def setup_package():
     """Setup the environment for testing review_status."""
 
     global TEST_WORKSPACE
-    TEST_WORKSPACE = env.get_workspace('review_status')
+    TEST_WORKSPACE = env.get_workspace('diff')
 
     os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
 
@@ -60,23 +60,11 @@ def setup_package():
     # details.
     print("This test uses a CodeChecker server... connecting...")
     server_access = codechecker.start_or_get_server()
-    server_access['viewer_product'] = 'review_status'
+    server_access['viewer_product'] = 'diff'
     codechecker.add_test_package_product(server_access, TEST_WORKSPACE)
 
     # Extend the checker configuration with the server access.
     codechecker_cfg.update(server_access)
-
-    test_project_name = project_info['name'] + '_' + uuid.uuid4().hex
-
-    ret = codechecker.check_and_store(codechecker_cfg,
-                                      test_project_name,
-                                      project.path(test_project))
-
-    if ret:
-        sys.exit(1)
-    print("Analyzing the test project was successful.")
-
-    codechecker_cfg['run_names'] = [test_project_name]
 
     test_config['codechecker_cfg'] = codechecker_cfg
 
