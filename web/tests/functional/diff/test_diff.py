@@ -21,7 +21,7 @@ from typing import Callable, List
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import CommentKind, \
     DetectionStatus, Order, ReviewStatus, ReviewStatusRule, \
     ReviewStatusRuleFilter, ReviewStatusRuleSortMode, \
-    ReviewStatusRuleSortType, RunFilter
+    ReviewStatusRuleSortType, RunFilter, DiffType, ReportFilter
 
 from codechecker_client.cmd_line_client import get_diff_remote_run_local_dir
 
@@ -121,18 +121,22 @@ void a() {
   (void)(10 / i);
 }
 """
-
         self.__analyze_and_store(dir1, "run1", src_div_by_zero)
         self.__analyze(dir2, src_div_by_zero)
 
         args = []
 
+        report_filter = ReportFilter()
+        report_filter.reviewStatus = \
+                [ReviewStatus.CONFIRMED, ReviewStatus.UNREVIEWED]
         # we need to invoke codechecker cmd diff... ugh...
-        reports, _, _ = get_diff_remote_run_local_dir(self._cc_client, \
-                                                      ["run1"],\
-                                                      [dir2], [])
+        reports, _, _ = get_diff_remote_run_local_dir(
+                self._cc_client, report_filter, DiffType.UNRESOLVED, [],
+                ["run1"], [dir2], [])
 
-        print(diff_res)
+        print(reports)
+        print(len(reports))
+        assert False
         # self.assertEqual(report.detectionStatus, DetectionStatus.NEW)
         # self.assertEqual(report.reviewData.status, ReviewStatus.FALSE_POSITIVE)
         # self.assertIsNotNone(report.fixedAt)
