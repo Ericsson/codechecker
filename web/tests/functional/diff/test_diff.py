@@ -137,7 +137,8 @@ void a() {
         shutil.rmtree(dir2, ignore_errors=True)
 
     def test_2(self):
-
+        # Create two identical runs, store one on the server, leave one
+        # locally.
         dir1 = os.path.join(self.test_workspace, "dir1")
         dir2 = os.path.join(self.test_workspace, "dir2")
         src_div_by_zero = """
@@ -149,9 +150,15 @@ void a() {
         self.__analyze_and_store(dir1, "run1", src_div_by_zero)
         self.__analyze(dir2, src_div_by_zero)
 
+        # Add a "false positive" review status rule on the stored report.
         results = get_all_run_results(self._cc_client)
-        # self.assertEqual(len(results), 1)
+        self.assertEqual(len(results), 1)
 
+        self._cc_client.addReviewStatusRule(
+                results[0].bugHash, ReviewStatus.FALSE_POSITIVE, "")
+
+        # Even though the local report is not marked as a false positive, we
+        # expect the review status rule on the server to affect it.
         report_filter = ReportFilter()
         report_filter.reviewStatus = \
                 [ReviewStatus.CONFIRMED, ReviewStatus.UNREVIEWED]
@@ -159,4 +166,8 @@ void a() {
                 self._cc_client, report_filter, DiffType.UNRESOLVED, [],
                 ["run1"], [dir2], [])
 
-        # self.assertEqual(len(reports), 1)
+        self.assertEqual(len(reports), 0)
+
+        self.__remove_run(["run1"])
+        shutil.rmtree(dir1, ignore_errors=True)
+        shutil.rmtree(dir2, ignore_errors=True)
