@@ -118,6 +118,49 @@ class TestReviewStatus(unittest.TestCase):
     #===-------------------------------------------------------------------===#
 
     def test_local_local(self):
+        # Diff two different, local runs.
+        dir1 = os.path.join(self.test_workspace, "dir1")
+        dir2 = os.path.join(self.test_workspace, "dir2")
+
+        src_div_by_zero = """
+void a() {
+  int i = 0;
+  (void)(10 / i);
+}
+"""
+
+        src_nullptr_deref = """
+void b() {
+  int *i = 0;
+  *i = 5;
+}
+"""
+        self.__analyze(dir1, src_div_by_zero)
+        self.__analyze(dir2, src_nullptr_deref)
+
+        # We set no review statuses via //codechecker-suppress, so the report
+        # must be unreviewed.
+        report_filter = ReportFilter()
+        report_filter.reviewStatus = [ReviewStatus.UNREVIEWED]
+
+        def get_run_diff_count(diff_type: DiffType):
+            reports, _ = get_diff_local_dirs(
+                    report_filter, diff_type, [dir1], [], [dir2], [])
+            return len(reports)
+
+        # b() is a new report.
+        self.assertEqual(get_run_diff_count(DiffType.NEW), 1)
+
+        # a() is the old report.
+        self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 1)
+
+        # There are no common reports.
+        self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED), 0)
+
+        shutil.rmtree(dir1, ignore_errors=True)
+        shutil.rmtree(dir2, ignore_errors=True)
+
+    def test_local_local_identical(self):
         # Diff two identical, local runs.
         dir1 = os.path.join(self.test_workspace, "dir1")
         dir2 = os.path.join(self.test_workspace, "dir2")
@@ -147,7 +190,7 @@ void a() {
         shutil.rmtree(dir1, ignore_errors=True)
         shutil.rmtree(dir2, ignore_errors=True)
 
-    def test_localFPAnnotated_local(self):
+    def test_localFPAnnotated_local_identical(self):
         # Diff identical, local runs, where the baseline report is suppressed
         # via //codechecker_suppress.
         dir1 = os.path.join(self.test_workspace, "dir1")
