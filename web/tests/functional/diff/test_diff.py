@@ -262,29 +262,46 @@ void a() {
     #===-------------------------------------------------------------------===#
 
     def test_local_remote(self):
-
+        # Diff two different, local runs.
         dir1 = os.path.join(self.test_workspace, "dir1")
         dir2 = os.path.join(self.test_workspace, "dir2")
+
         src_div_by_zero = """
 void a() {
   int i = 0;
   (void)(10 / i);
 }
 """
-        self.__analyze_and_store(dir1, "run1", src_div_by_zero)
-        self.__analyze(dir2, src_div_by_zero)
 
+        src_nullptr_deref = """
+void b() {
+  int *i = 0;
+  *i = 5;
+}
+"""
+        self.__analyze_and_store(dir1, "run1", src_div_by_zero)
+        self.__analyze(dir2, src_nullptr_deref)
+
+        # We set no review statuses via //codechecker-suppress, nor review
+        # status rules on the server, so the report must be unreviewed.
         report_filter = ReportFilter()
         report_filter.reviewStatus = [ReviewStatus.UNREVIEWED]
 
-        diff_type = DiffType.UNRESOLVED
+        def get_run_diff_count(diff_type: DiffType):
+            reports, _, _ = get_diff_remote_run_local_dir(
+                    self._cc_client, report_filter, diff_type, [],
+                    ["run1"], [dir2], [])
+            return len(reports)
 
-        reports, _, _ = get_diff_remote_run_local_dir(
-                self._cc_client, report_filter, diff_type, [],
-                ["run1"], [dir2], [])
+        # b() is a new report.
+        self.assertEqual(get_run_diff_count(DiffType.NEW), 1)
 
-        self.assertEqual(len(reports), 1)
-        self.__remove_run(["run1"])
+        # a() is the old report.
+        self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 1)
+
+        # There are no common reports.
+        self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED), 0)
+
         shutil.rmtree(dir1, ignore_errors=True)
         shutil.rmtree(dir2, ignore_errors=True)
 
