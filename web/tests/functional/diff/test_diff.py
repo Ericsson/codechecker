@@ -24,7 +24,9 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import CommentKind, \
     ReviewStatusRuleFilter, ReviewStatusRuleSortMode, \
     ReviewStatusRuleSortType, RunFilter, DiffType, ReportFilter
 
-from codechecker_client.cmd_line_client import get_diff_remote_run_local_dir
+from codechecker_client.cmd_line_client import \
+    get_diff_local_dirs, get_diff_remote_run_local_dir, \
+    get_diff_local_dir_remote_run, get_diff_remote_runs
 
 from libtest import env, codechecker, plist_test, project
 from libtest.thrift_client_to_db import get_all_run_results
@@ -111,7 +113,49 @@ class TestReviewStatus(unittest.TestCase):
         ret = self._cc_client.removeRun(None, run_filter)
         self.assertTrue(ret)
 
-    def test_1(self):
+    #===-------------------------------------------------------------------===#
+    # Local-local tests.
+    #===-------------------------------------------------------------------===#
+
+    def test_localFPAnnotated_local(self):
+
+        dir1 = os.path.join(self.test_workspace, "dir1")
+        dir2 = os.path.join(self.test_workspace, "dir2")
+
+        src_div_by_zero_FP = """
+void a() {
+  int i = 0;
+  // codechecker_suppress [all] SUPPRESS ALL
+  (void)(10 / i);
+}
+"""
+        src_div_by_zero = """
+void a() {
+  int i = 0;
+  (void)(10 / i);
+}
+"""
+        self.__analyze(dir1, src_div_by_zero_FP)
+        self.__analyze(dir2, src_div_by_zero)
+
+        report_filter = ReportFilter()
+        report_filter.reviewStatus = [ReviewStatus.UNREVIEWED]
+
+        diff_type = DiffType.UNRESOLVED
+
+        reports, _ = get_diff_local_dirs(
+                report_filter, diff_type, [dir1], [], [dir2], [])
+
+        self.assertEqual(len(reports), 1)
+
+        shutil.rmtree(dir1, ignore_errors=True)
+        shutil.rmtree(dir2, ignore_errors=True)
+
+    #===-------------------------------------------------------------------===#
+    # Local-Remote tests.
+    #===-------------------------------------------------------------------===#
+
+    def test_local_remote(self):
 
         dir1 = os.path.join(self.test_workspace, "dir1")
         dir2 = os.path.join(self.test_workspace, "dir2")
@@ -125,10 +169,12 @@ void a() {
         self.__analyze(dir2, src_div_by_zero)
 
         report_filter = ReportFilter()
-        report_filter.reviewStatus = \
-                [ReviewStatus.CONFIRMED, ReviewStatus.UNREVIEWED]
+        report_filter.reviewStatus = [ReviewStatus.UNREVIEWED]
+
+        diff_type = DiffType.UNRESOLVED
+
         reports, _, _ = get_diff_remote_run_local_dir(
-                self._cc_client, report_filter, DiffType.UNRESOLVED, [],
+                self._cc_client, report_filter, diff_type, [],
                 ["run1"], [dir2], [])
 
         self.assertEqual(len(reports), 1)
@@ -136,7 +182,7 @@ void a() {
         shutil.rmtree(dir1, ignore_errors=True)
         shutil.rmtree(dir2, ignore_errors=True)
 
-    def test_2(self):
+    def test_local_remoteReviewStatusRule(self):
         # Create two identical runs, store one on the server, leave one
         # locally.
         dir1 = os.path.join(self.test_workspace, "dir1")
@@ -162,8 +208,11 @@ void a() {
         report_filter = ReportFilter()
         report_filter.reviewStatus = \
                 [ReviewStatus.CONFIRMED, ReviewStatus.UNREVIEWED]
+
+        diff_type = DiffType.NEW
+
         reports, _, _ = get_diff_remote_run_local_dir(
-                self._cc_client, report_filter, DiffType.UNRESOLVED, [],
+                self._cc_client, report_filter, diff_type, [],
                 ["run1"], [dir2], [])
 
         self.assertEqual(len(reports), 0)
