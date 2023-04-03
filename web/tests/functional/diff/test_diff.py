@@ -89,7 +89,7 @@ class TestReviewStatus(unittest.TestCase):
 
         codechecker.analyze(codechecker_cfg, file_dir)
 
-    def __analyze_and_store(self, file_dir, store_name, source_code):
+    def __analyze_and_store(self, file_dir, store_name, source_code, tag=None):
         """
         """
         self.__analyze(file_dir, source_code)
@@ -140,6 +140,7 @@ void b() {
 
         # We set no review statuses via //codechecker-suppress, so the report
         # must be unreviewed.
+        # TODO: We expect this to be the case, but testing it wouldn't hurt...
         report_filter = ReportFilter()
         report_filter.reviewStatus = [ReviewStatus.UNREVIEWED]
 
@@ -176,6 +177,7 @@ void a() {
 
         # We set no review statuses via //codechecker-suppress, so the report
         # must be unreviewed.
+        # TODO: We expect this to be the case, but testing it wouldn't hurt...
         report_filter = ReportFilter()
         report_filter.reviewStatus = [ReviewStatus.UNREVIEWED]
 
@@ -205,7 +207,7 @@ void a() {
         src_div_by_zero_FP = """
 void a() {
   int i = 0;
-  // codechecker_suppress [all] SUPPRESS ALL
+  // codechecker_false_positive [all] SUPPRESS ALL
   (void)(10 / i);
 }
 """
@@ -234,7 +236,7 @@ void a() {
                                                   ReviewStatus.INTENTIONAL,
                                                   ReviewStatus.CONFIRMED]), 0)
 
-        # No new reports appeared.
+        # No reports disappeared.
         self.assertEqual(get_run_diff_count(DiffType.RESOLVED,
                                             [ReviewStatus.UNREVIEWED,
                                              ReviewStatus.FALSE_POSITIVE,
@@ -249,10 +251,16 @@ void a() {
         self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED,
                                             [ReviewStatus.UNREVIEWED]), 1)
 
-        self.assertEqual(get_run_diff_count(DiffType.RESOLVED,
-                                            [ReviewStatus.FALSE_POSITIVE,
-                                             ReviewStatus.INTENTIONAL,
-                                             ReviewStatus.CONFIRMED]), 0)
+        # With that said, the report that was marked a FP didn't disappear
+        # either.
+        self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED,
+                                            [ReviewStatus.FALSE_POSITIVE]), 1)
+
+        # FIXME: Shouldn't both of these be 0?
+        self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED,
+                                            [ReviewStatus.CONFIRMED]), 1)
+        self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED,
+                                            [ReviewStatus.INTENTIONAL]), 1)
 
         shutil.rmtree(dir1, ignore_errors=True)
         shutil.rmtree(dir2, ignore_errors=True)
@@ -284,10 +292,13 @@ void b() {
 
         # We set no review statuses via //codechecker-suppress, nor review
         # status rules on the server, so the report must be unreviewed.
+        # TODO: We expect this to be the case, but testing it wouldn't hurt...
         report_filter = ReportFilter()
         report_filter.reviewStatus = [ReviewStatus.UNREVIEWED]
 
         def get_run_diff_count(diff_type: DiffType):
+            # Observe that the remote run is the baseline, and the local run
+            # is new.
             reports, _, _ = get_diff_remote_run_local_dir(
                     self._cc_client, report_filter, diff_type, [],
                     ["run1"], [dir2], [])
@@ -305,7 +316,9 @@ void b() {
         shutil.rmtree(dir1, ignore_errors=True)
         shutil.rmtree(dir2, ignore_errors=True)
 
-    def test_local_remoteReviewStatusRule(self):
+    # TODO: local_remote non-identical diffs
+
+    def test_local_remoteReviewStatusRule_identical(self):
         # Create two identical runs, store one on the server, leave one
         # locally.
         dir1 = os.path.join(self.test_workspace, "dir1")
@@ -317,29 +330,120 @@ void a() {
 }
 """
         self.__analyze_and_store(dir1, "run1", src_div_by_zero)
-        self.__analyze(dir2, src_div_by_zero)
 
         # Add a "false positive" review status rule on the stored report.
         results = get_all_run_results(self._cc_client)
         self.assertEqual(len(results), 1)
-
         self._cc_client.addReviewStatusRule(
                 results[0].bugHash, ReviewStatus.FALSE_POSITIVE, "")
 
+        self.__analyze(dir2, src_div_by_zero)
+
+        def get_run_diff_count(diff_type: DiffType,
+                               review_statuses: List[ReviewStatus]):
+            report_filter = ReportFilter()
+            # Observe that the remote run is the baseline, and the local run
+            # is new.
+            report_filter.reviewStatus = review_statuses
+            reports, _, _ = get_diff_remote_run_local_dir(
+                    self._cc_client, report_filter, diff_type, [],
+                    ["run1"], [dir2], [])
+            return len(reports)
+
+        # No new reports appeared.
+        self.assertEqual(
+                get_run_diff_count(DiffType.NEW, [ReviewStatus.UNREVIEWED,
+                                                  ReviewStatus.INTENTIONAL,
+                                                  ReviewStatus.CONFIRMED]), 0)
+
+        # FIXME: A new false positive DID appear!
+        self.assertEqual(get_run_diff_count(DiffType.RESOLVED,
+                                            [ReviewStatus.FALSE_POSITIVE]), 0)
+
+
         # Even though the local report is not marked as a false positive, we
         # expect the review status rule on the server to affect it.
-        report_filter = ReportFilter()
-        report_filter.reviewStatus = \
-                [ReviewStatus.CONFIRMED, ReviewStatus.UNREVIEWED]
+        # Note that the remote run is the baseline, which suggests that the
+        # review status rule is also a part of the baseline (it precedes the
+        # local run), yet the rule still affects the local run.
+        # This implies that review status rules are a timeless property -- once
+        # a hash has a rule, all reports matching it before or after the rule
+        # was made are affected.
+        self.assertEqual(get_run_diff_count(DiffType.RESOLVED,
+                                            [ReviewStatus.FALSE_POSITIVE]), 1)
 
-        diff_type = DiffType.NEW
+        self.assertEqual(get_run_diff_count(DiffType.RESOLVED,
+                                            [ReviewStatus.UNREVIEWED,
+                                             ReviewStatus.INTENTIONAL,
+                                             ReviewStatus.CONFIRMED]), 0)
 
-        reports, _, _ = get_diff_remote_run_local_dir(
-                self._cc_client, report_filter, diff_type, [],
-                ["run1"], [dir2], [])
-
-        self.assertEqual(len(reports), 0)
+        # No UNRESOLVED results.
+        self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED,
+                                            [ReviewStatus.UNREVIEWED,
+                                             ReviewStatus.FALSE_POSITIVE,
+                                             ReviewStatus.INTENTIONAL,
+                                             ReviewStatus.CONFIRMED]), 0)
 
         self.__remove_run(["run1"])
         shutil.rmtree(dir1, ignore_errors=True)
         shutil.rmtree(dir2, ignore_errors=True)
+
+    # TODO: source code suppression and review status rule conflict resolution
+    # TODO: diff against a tag on the server, not just a run
+
+    #===-------------------------------------------------------------------===#
+    # Remote-Remote tests.
+    #===-------------------------------------------------------------------===#
+
+    # TODO: remote-remote diffs not concerning tags
+
+    #===--- Remote-Remote tests in between tags. --------------------------===#
+
+    def test_local_remote(self):
+        # Diff two different, local runs.
+        dir1 = os.path.join(self.test_workspace, "dir1")
+        dir2 = os.path.join(self.test_workspace, "dir2")
+
+        src_div_by_zero = """
+void a() {
+  int i = 0;
+  (void)(10 / i);
+}
+"""
+
+        src_nullptr_deref = """
+void b() {
+  int *i = 0;
+  *i = 5;
+}
+"""
+        self.__analyze_and_store(dir1, "run1", src_div_by_zero)
+        self.__analyze(dir2, src_nullptr_deref)
+
+        # We set no review statuses via //codechecker-suppress, nor review
+        # status rules on the server, so the report must be unreviewed.
+        # TODO: We expect this to be the case, but testing it wouldn't hurt...
+        report_filter = ReportFilter()
+        report_filter.reviewStatus = [ReviewStatus.UNREVIEWED]
+
+        def get_run_diff_count(diff_type: DiffType):
+            # Observe that the remote run is the baseline, and the local run
+            # is new.
+            reports, _, _ = get_diff_remote_run_local_dir(
+                    self._cc_client, report_filter, diff_type, [],
+                    ["run1"], [dir2], [])
+            return len(reports)
+
+        # b() is a new report.
+        self.assertEqual(get_run_diff_count(DiffType.NEW), 1)
+
+        # a() is the old report.
+        self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 1)
+
+        # There are no common reports.
+        self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED), 0)
+
+        shutil.rmtree(dir1, ignore_errors=True)
+        shutil.rmtree(dir2, ignore_errors=True)
+
+
