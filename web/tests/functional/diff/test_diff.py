@@ -179,13 +179,19 @@ void a() {
         report_filter = ReportFilter()
         report_filter.reviewStatus = [ReviewStatus.UNREVIEWED]
 
-        # The report is present in both runs.
-        diff_type = DiffType.UNRESOLVED
+        def get_run_diff_count(diff_type: DiffType):
+            reports, _ = get_diff_local_dirs(
+                    report_filter, diff_type, [dir1], [], [dir2], [])
+            return len(reports)
 
-        reports, _ = get_diff_local_dirs(
-                report_filter, diff_type, [dir1], [], [dir2], [])
+        # No new reports appeared.
+        self.assertEqual(get_run_diff_count(DiffType.NEW), 0)
 
-        self.assertEqual(len(reports), 1)
+        # No reports disappeared.
+        self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 0)
+
+        # There is a single report that has remained.
+        self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED), 1)
 
         shutil.rmtree(dir1, ignore_errors=True)
         shutil.rmtree(dir2, ignore_errors=True)
@@ -212,21 +218,41 @@ void a() {
         self.__analyze(dir1, src_div_by_zero_FP)
         self.__analyze(dir2, src_div_by_zero)
 
+        def get_run_diff_count(diff_type: DiffType,
+                               review_statuses: List[ReviewStatus]):
+            report_filter = ReportFilter()
+            report_filter.reviewStatus = review_statuses
+
+            reports, _ = get_diff_local_dirs(
+                    report_filter, diff_type, [dir1], [], [dir2], [])
+            return len(reports)
+
+        # No new reports appeared.
+        self.assertEqual(
+                get_run_diff_count(DiffType.NEW, [ReviewStatus.UNREVIEWED,
+                                                  ReviewStatus.FALSE_POSITIVE,
+                                                  ReviewStatus.INTENTIONAL,
+                                                  ReviewStatus.CONFIRMED]), 0)
+
+        # No new reports appeared.
+        self.assertEqual(get_run_diff_count(DiffType.RESOLVED,
+                                            [ReviewStatus.UNREVIEWED,
+                                             ReviewStatus.FALSE_POSITIVE,
+                                             ReviewStatus.INTENTIONAL,
+                                             ReviewStatus.CONFIRMED]), 0)
+
         # Although we set a review status in the baseline, the new run is not
         # annotated. Statuses from source code annotations should not carry
         # over from one local directory to another.
         # You could think of this as someone removed the suppression, and the
         # report reappeared as non-reviewed.
-        report_filter = ReportFilter()
-        report_filter.reviewStatus = [ReviewStatus.UNREVIEWED]
+        self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED,
+                                            [ReviewStatus.UNREVIEWED]), 1)
 
-        # The report is present in both runs.
-        diff_type = DiffType.UNRESOLVED
-
-        reports, _ = get_diff_local_dirs(
-                report_filter, diff_type, [dir1], [], [dir2], [])
-
-        self.assertEqual(len(reports), 1)
+        self.assertEqual(get_run_diff_count(DiffType.RESOLVED,
+                                            [ReviewStatus.FALSE_POSITIVE,
+                                             ReviewStatus.INTENTIONAL,
+                                             ReviewStatus.CONFIRMED]), 0)
 
         shutil.rmtree(dir1, ignore_errors=True)
         shutil.rmtree(dir2, ignore_errors=True)
