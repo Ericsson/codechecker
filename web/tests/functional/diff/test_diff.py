@@ -117,8 +117,39 @@ class TestReviewStatus(unittest.TestCase):
     # Local-local tests.
     #===-------------------------------------------------------------------===#
 
-    def test_localFPAnnotated_local(self):
+    def test_local_local(self):
+        # Diff two identical, local runs.
+        dir1 = os.path.join(self.test_workspace, "dir1")
+        dir2 = os.path.join(self.test_workspace, "dir2")
 
+        src_div_by_zero = """
+void a() {
+  int i = 0;
+  (void)(10 / i);
+}
+"""
+        self.__analyze(dir1, src_div_by_zero)
+        self.__analyze(dir2, src_div_by_zero)
+
+        # We set no review statuses via //codechecker-suppress, so the report
+        # must be unreviewed.
+        report_filter = ReportFilter()
+        report_filter.reviewStatus = [ReviewStatus.UNREVIEWED]
+
+        # The report is present in both runs.
+        diff_type = DiffType.UNRESOLVED
+
+        reports, _ = get_diff_local_dirs(
+                report_filter, diff_type, [dir1], [], [dir2], [])
+
+        self.assertEqual(len(reports), 1)
+
+        shutil.rmtree(dir1, ignore_errors=True)
+        shutil.rmtree(dir2, ignore_errors=True)
+
+    def test_localFPAnnotated_local(self):
+        # Diff identical, local runs, where the baseline report is suppressed
+        # via //codechecker_suppress.
         dir1 = os.path.join(self.test_workspace, "dir1")
         dir2 = os.path.join(self.test_workspace, "dir2")
 
@@ -138,9 +169,15 @@ void a() {
         self.__analyze(dir1, src_div_by_zero_FP)
         self.__analyze(dir2, src_div_by_zero)
 
+        # Although we set a review status in the baseline, the new run is not
+        # annotated. Statuses from source code annotations should not carry
+        # over from one local directory to another.
+        # You could think of this as someone removed the suppression, and the
+        # report reappeared as non-reviewed.
         report_filter = ReportFilter()
         report_filter.reviewStatus = [ReviewStatus.UNREVIEWED]
 
+        # The report is present in both runs.
         diff_type = DiffType.UNRESOLVED
 
         reports, _ = get_diff_local_dirs(
