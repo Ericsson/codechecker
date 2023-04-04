@@ -350,15 +350,14 @@ void a() {
                     ["run1"], [dir2], [])
             return len(reports)
 
-        # No new reports appeared.
+        # A new false positive appeared.
+        self.assertEqual(get_run_diff_count(DiffType.RESOLVED,
+                                            [ReviewStatus.FALSE_POSITIVE]), 1)
+
         self.assertEqual(
                 get_run_diff_count(DiffType.NEW, [ReviewStatus.UNREVIEWED,
                                                   ReviewStatus.INTENTIONAL,
                                                   ReviewStatus.CONFIRMED]), 0)
-
-        # FIXME: A new false positive DID appear!
-        self.assertEqual(get_run_diff_count(DiffType.RESOLVED,
-                                            [ReviewStatus.FALSE_POSITIVE]), 0)
 
 
         # Even though the local report is not marked as a false positive, we
