@@ -10,25 +10,19 @@
 """ Test review status functionality."""
 
 
-import datetime
-import logging
 import os
 import shutil
-import time
 import unittest
 
-from typing import Callable, List
+from typing import List
 
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import CommentKind, \
-    DetectionStatus, Order, ReviewStatus, ReviewStatusRule, \
-    ReviewStatusRuleFilter, ReviewStatusRuleSortMode, \
-    ReviewStatusRuleSortType, RunFilter, DiffType, ReportFilter
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
+        ReviewStatus, RunFilter, DiffType, ReportFilter
 
 from codechecker_client.cmd_line_client import \
-    get_diff_local_dirs, get_diff_remote_run_local_dir, \
-    get_diff_local_dir_remote_run, get_diff_remote_runs
+    get_diff_local_dirs, get_diff_remote_run_local_dir
 
-from libtest import env, codechecker, plist_test, project
+from libtest import env, codechecker
 from libtest.thrift_client_to_db import get_all_run_results
 
 
@@ -113,9 +107,9 @@ class TestReviewStatus(unittest.TestCase):
         ret = self._cc_client.removeRun(None, run_filter)
         self.assertTrue(ret)
 
-    #===-------------------------------------------------------------------===#
+    # ===-----------------------------------------------------------------=== #
     # Local-local tests.
-    #===-------------------------------------------------------------------===#
+    # ===-----------------------------------------------------------------=== #
 
     def test_local_local(self):
         # Diff two different, local runs.
@@ -265,9 +259,9 @@ void a() {
         shutil.rmtree(dir1, ignore_errors=True)
         shutil.rmtree(dir2, ignore_errors=True)
 
-    #===-------------------------------------------------------------------===#
+    # ===-----------------------------------------------------------------=== #
     # Local-Remote tests.
-    #===-------------------------------------------------------------------===#
+    # ===-----------------------------------------------------------------=== #
 
     def test_local_remote(self):
         # Diff two different, local runs.
@@ -359,7 +353,6 @@ void a() {
                                                   ReviewStatus.INTENTIONAL,
                                                   ReviewStatus.CONFIRMED]), 0)
 
-
         # Even though the local report is not marked as a false positive, we
         # expect the review status rule on the server to affect it.
         # Note that the remote run is the baseline, which suggests that the
@@ -390,59 +383,57 @@ void a() {
     # TODO: source code suppression and review status rule conflict resolution
     # TODO: diff against a tag on the server, not just a run
 
-    #===-------------------------------------------------------------------===#
+    # ===-----------------------------------------------------------------=== #
     # Remote-Remote tests.
-    #===-------------------------------------------------------------------===#
+    # ===-----------------------------------------------------------------=== #
 
     # TODO: remote-remote diffs not concerning tags
 
-    #===--- Remote-Remote tests in between tags. --------------------------===#
+    # ===--- Remote-Remote tests in between tags. ------------------------=== #
 
-    def test_local_remote(self):
-        # Diff two different, local runs.
-        dir1 = os.path.join(self.test_workspace, "dir1")
-        dir2 = os.path.join(self.test_workspace, "dir2")
-
-        src_div_by_zero = """
-void a() {
-  int i = 0;
-  (void)(10 / i);
-}
-"""
-
-        src_nullptr_deref = """
-void b() {
-  int *i = 0;
-  *i = 5;
-}
-"""
-        self.__analyze_and_store(dir1, "run1", src_div_by_zero)
-        self.__analyze(dir2, src_nullptr_deref)
-
-        # We set no review statuses via //codechecker-suppress, nor review
-        # status rules on the server, so the report must be unreviewed.
-        # TODO: We expect this to be the case, but testing it wouldn't hurt...
-        report_filter = ReportFilter()
-        report_filter.reviewStatus = [ReviewStatus.UNREVIEWED]
-
-        def get_run_diff_count(diff_type: DiffType):
-            # Observe that the remote run is the baseline, and the local run
-            # is new.
-            reports, _, _ = get_diff_remote_run_local_dir(
-                    self._cc_client, report_filter, diff_type, [],
-                    ["run1"], [dir2], [])
-            return len(reports)
-
-        # b() is a new report.
-        self.assertEqual(get_run_diff_count(DiffType.NEW), 1)
-
-        # a() is the old report.
-        self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 1)
-
-        # There are no common reports.
-        self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED), 0)
-
-        shutil.rmtree(dir1, ignore_errors=True)
-        shutil.rmtree(dir2, ignore_errors=True)
-
-
+#    def test_remotetag_remotetag(self):
+#        # Diff two different, local runs.
+#        dir1 = os.path.join(self.test_workspace, "dir1")
+#        dir2 = os.path.join(self.test_workspace, "dir2")
+#
+#        src_div_by_zero = """
+# void a() {
+#   int i = 0;
+#   (void)(10 / i);
+# }
+# """
+#
+#        src_nullptr_deref = """
+# void b() {
+#   int *i = 0;
+#   *i = 5;
+# }
+# """
+#        self.__analyze_and_store(dir1, "run1", src_div_by_zero)
+#        self.__analyze(dir2, src_nullptr_deref)
+#
+#        # We set no review statuses via //codechecker-suppress, nor review
+#        # status rules on the server, so the report must be unreviewed.
+#        # TODO: We expect this to be the case, but testing it wouldn't hurt...
+#        report_filter = ReportFilter()
+#        report_filter.reviewStatus = [ReviewStatus.UNREVIEWED]
+#
+#        def get_run_diff_count(diff_type: DiffType):
+#            # Observe that the remote run is the baseline, and the local run
+#            # is new.
+#            reports, _, _ = get_diff_remote_run_local_dir(
+#                    self._cc_client, report_filter, diff_type, [],
+#                    ["run1"], [dir2], [])
+#            return len(reports)
+#
+#        # b() is a new report.
+#        self.assertEqual(get_run_diff_count(DiffType.NEW), 1)
+#
+#        # a() is the old report.
+#        self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 1)
+#
+#        # There are no common reports.
+#        self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED), 0)
+#
+#        shutil.rmtree(dir1, ignore_errors=True)
+#        shutil.rmtree(dir2, ignore_errors=True)

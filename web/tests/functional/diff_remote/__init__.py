@@ -215,7 +215,7 @@ def teardown_package():
 
     check_env = env.import_test_cfg(TEST_WORKSPACE)[
         'codechecker_cfg']['check_env']
-    # codechecker.remove_test_package_product(TEST_WORKSPACE, check_env)
+    codechecker.remove_test_package_product(TEST_WORKSPACE, check_env)
 
-    # print("Removing: " + TEST_WORKSPACE)
-    # shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
+    print("Removing: " + TEST_WORKSPACE)
+    shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
