@@ -181,9 +181,17 @@ def perform_analysis(args, skip_handlers, actions, metadata_tool,
         missing_checkers = checkers.available(args.ordered_checkers,
                                               available_checkers)
         if missing_checkers:
-            LOG.error("No checker(s) with these names was found:\n%s",
-                      '\n'.join(missing_checkers))
-            sys.exit(1)
+            diag_msg = "No checker(s) with these names was found:\n{}".format(
+                '\n'.join(missing_checkers))
+            if 'no_missing_checker_error' in args:
+                LOG.warning(diag_msg)
+            else:
+                LOG.error(diag_msg)
+                LOG.info("Although it is not reccomended, if you want to "
+                         "suppress errors relating to unknown "
+                         "checker names, consider using the option "
+                         "'--no-missing-checker-error'")
+                sys.exit(1)
 
     if 'stats_enabled' in args:
         config_map[ClangSA.ANALYZER_NAME].set_checker_enabled(

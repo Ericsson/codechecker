@@ -764,12 +764,12 @@ class TestAnalyze(unittest.TestCase):
         self.assertFalse(os.path.isdir(failed_dir))
         self.check_unique_compilation_db(unique_json, 3, True, True, True)
 
-    def test_invalid_enabled_checker_name(self):
-        """Error out in case of an invalid enabled checker."""
+    def __run_with_invalid_enabled_checker_name(self, extra_args):
         build_json = os.path.join(self.test_workspace, "build_success.json")
         analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
                        "--analyzers", "clangsa", "-o", self.report_dir,
                        "-e", "non-existing-checker-name"]
+        analyze_cmd.extend(extra_args)
 
         source_file = os.path.join(self.test_dir, "success.c")
         build_log = [{"directory": self.test_workspace,
@@ -789,14 +789,32 @@ class TestAnalyze(unittest.TestCase):
             cwd=self.test_dir,
             encoding="utf-8",
             errors="ignore")
-        out, _ = process.communicate()
+        out, err = process.communicate()
+        return out, err, process.returncode
+
+    def test_invalid_enabled_checker_name(self):
+        """Error out in case of an invalid enabled checker."""
+        out, _, errcode = self.__run_with_invalid_enabled_checker_name([])
 
         match = self.missing_checker_regex.search(out)
         self.assertIsNotNone(match)
         self.assertTrue("non-existing-checker-name" in out)
 
-        errcode = process.returncode
         self.assertEqual(errcode, 1)
+
+    def test_invalid_enabled_checker_name_warn(self):
+        """
+        Warn in case of an invalid enabled checker when using
+        --no-missing-checker-error.
+        """
+        out, _, errcode = self.__run_with_invalid_enabled_checker_name(
+            ['--no-missing-checker-error'])
+
+        match = self.missing_checker_regex.search(out)
+        self.assertIsNotNone(match)
+        self.assertTrue("non-existing-checker-name" in out)
+
+        self.assertEqual(errcode, 0)
 
     def test_disable_all_warnings(self):
         """Test disabling warnings as checker groups."""
@@ -830,12 +848,12 @@ class TestAnalyze(unittest.TestCase):
         self.assertIn("unused variable 'i' [clang-diagnostic-unused-variable]",
                       out)
 
-    def test_invalid_disabled_checker_name(self):
-        """Error out in case of an invalid disabled checker."""
+    def __run_with_invalid_disabled_checker_name(self, extra_args):
         build_json = os.path.join(self.test_workspace, "build_success.json")
         analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
                        "--analyzers", "clangsa", "-o", self.report_dir,
                        "-d", "non-existing-checker-name"]
+        analyze_cmd.extend(extra_args)
 
         source_file = os.path.join(self.test_dir, "success.c")
         build_log = [{"directory": self.test_workspace,
@@ -855,14 +873,32 @@ class TestAnalyze(unittest.TestCase):
             cwd=self.test_dir,
             encoding="utf-8",
             errors="ignore")
-        out, _ = process.communicate()
+        out, err = process.communicate()
+        return out, err, process.returncode
+
+    def test_invalid_disabled_checker_name(self):
+        """Error out in case of an invalid disabled checker."""
+        out, _, errcode = self.__run_with_invalid_disabled_checker_name([])
 
         match = self.missing_checker_regex.search(out)
         self.assertIsNotNone(match)
         self.assertTrue("non-existing-checker-name" in out)
 
-        errcode = process.returncode
         self.assertEqual(errcode, 1)
+
+    def test_invalid_disabled_checker_name_warn(self):
+        """
+        Warn in case of an invalid disabled checker when using
+        --no-missing-checker-error.
+        """
+        out, _, errcode = self.__run_with_invalid_disabled_checker_name(
+            ['--no-missing-checker-error'])
+
+        match = self.missing_checker_regex.search(out)
+        self.assertIsNotNone(match)
+        self.assertTrue("non-existing-checker-name" in out)
+
+        self.assertEqual(errcode, 0)
 
     def test_disabling_clangsa_modeling_checkers(self):
         """Warn in case a modeling checker is disabled from clangsa"""
