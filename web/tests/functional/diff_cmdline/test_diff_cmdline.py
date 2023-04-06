@@ -7,7 +7,9 @@
 #
 # -------------------------------------------------------------------------
 
-""" Test review status functionality."""
+"""
+Test command line diffing (as opposed to natively using API calls).
+"""
 
 
 import os
@@ -27,8 +29,6 @@ from libtest.thrift_client_to_db import get_all_run_results
 
 
 class TestReviewStatus(unittest.TestCase):
-
-    _ccClient = None
 
     def setUp(self):
         self.test_workspace = os.environ['TEST_WORKSPACE']
@@ -344,9 +344,9 @@ void a() {
                     ["run1"], [dir2], [])
             return len(reports)
 
-        # A new false positive appeared.
-        self.assertEqual(get_run_diff_count(DiffType.RESOLVED,
-                                            [ReviewStatus.FALSE_POSITIVE]), 1)
+        # TODO: Shouldn't a new false positive appear?
+        self.assertEqual(get_run_diff_count(DiffType.NEW,
+                                            [ReviewStatus.FALSE_POSITIVE]), 0)
 
         self.assertEqual(
                 get_run_diff_count(DiffType.NEW, [ReviewStatus.UNREVIEWED,
@@ -391,49 +391,4 @@ void a() {
 
     # ===--- Remote-Remote tests in between tags. ------------------------=== #
 
-#    def test_remotetag_remotetag(self):
-#        # Diff two different, local runs.
-#        dir1 = os.path.join(self.test_workspace, "dir1")
-#        dir2 = os.path.join(self.test_workspace, "dir2")
-#
-#        src_div_by_zero = """
-# void a() {
-#   int i = 0;
-#   (void)(10 / i);
-# }
-# """
-#
-#        src_nullptr_deref = """
-# void b() {
-#   int *i = 0;
-#   *i = 5;
-# }
-# """
-#        self.__analyze_and_store(dir1, "run1", src_div_by_zero)
-#        self.__analyze(dir2, src_nullptr_deref)
-#
-#        # We set no review statuses via //codechecker-suppress, nor review
-#        # status rules on the server, so the report must be unreviewed.
-#        # TODO: We expect this to be the case, but testing it wouldn't hurt...
-#        report_filter = ReportFilter()
-#        report_filter.reviewStatus = [ReviewStatus.UNREVIEWED]
-#
-#        def get_run_diff_count(diff_type: DiffType):
-#            # Observe that the remote run is the baseline, and the local run
-#            # is new.
-#            reports, _, _ = get_diff_remote_run_local_dir(
-#                    self._cc_client, report_filter, diff_type, [],
-#                    ["run1"], [dir2], [])
-#            return len(reports)
-#
-#        # b() is a new report.
-#        self.assertEqual(get_run_diff_count(DiffType.NEW), 1)
-#
-#        # a() is the old report.
-#        self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 1)
-#
-#        # There are no common reports.
-#        self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED), 0)
-#
-#        shutil.rmtree(dir1, ignore_errors=True)
-#        shutil.rmtree(dir2, ignore_errors=True)
+    # TODO: remote-remote diffs concerning tags

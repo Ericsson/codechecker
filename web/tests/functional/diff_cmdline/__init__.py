@@ -7,7 +7,10 @@
 #
 # -------------------------------------------------------------------------
 
-"""Setup for the test package review_status."""
+"""
+Setup for the test package for command line diffing (as opposed to natively
+using API calls).
+"""
 
 
 import os
@@ -27,7 +30,7 @@ def setup_package():
     """Setup the environment for testing review_status."""
 
     global TEST_WORKSPACE
-    TEST_WORKSPACE = env.get_workspace('diff')
+    TEST_WORKSPACE = env.get_workspace('diff_cmdline')
 
     os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
 
@@ -60,7 +63,7 @@ def setup_package():
     # details.
     print("This test uses a CodeChecker server... connecting...")
     server_access = codechecker.start_or_get_server()
-    server_access['viewer_product'] = 'diff'
+    server_access['viewer_product'] = 'diff_cmdline'
     codechecker.add_test_package_product(server_access, TEST_WORKSPACE)
 
     # Extend the checker configuration with the server access.
