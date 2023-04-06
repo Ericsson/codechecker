@@ -276,7 +276,7 @@ def filter_compiler_includes_extra_args(compiler_flags):
     # If these options are present in the original build command, they must
     # be forwarded to get_compiler_includes and get_compiler_defines so the
     # resulting includes point to the target that was used in the build.
-    pattern = re.compile('-m(32|64)|-std=|-stdlib=|-nostdinc')
+    pattern = re.compile('-m(32|64)|-std=|-stdlib=|-nostdinc|--driver-mode=')
     extra_opts = list(filter(pattern.match, compiler_flags))
 
     pos = next((pos for pos, val in enumerate(compiler_flags)
