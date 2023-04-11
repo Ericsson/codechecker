@@ -38,14 +38,14 @@ class DiffRemote(unittest.TestCase):
         Test if the reports can be sorted by their "timestamp" attribute.
         """
         results = self._cc_client.getRunResults(
-            None, 500, 0, None, None, None, False)
+            None, 500, 0, None, ReportFilter(), None, False)
 
         self.assertEqual(len(results), 4)
 
         sort_timestamp = SortMode(SortType.TIMESTAMP, Order.ASC)
 
         results = self._cc_client.getRunResults(
-            None, 500, 0, [sort_timestamp], None, None, False)
+            None, 500, 0, [sort_timestamp], ReportFilter(), None, False)
 
         # At least one report has a timestamp.
         # Needed for the next sorting test.
@@ -77,3 +77,21 @@ class DiffRemote(unittest.TestCase):
         self.assertTrue(all(map(
             lambda report: report.annotations['testcase'] == 'TC-1',
             results)))
+
+    def test_count_by_attribute(self):
+        """
+        Test the report count functions with the usage of report annotations.
+        """
+        num = self._cc_client.getRunResultCount(
+            None, ReportFilter(), None)
+
+        self.assertEqual(num, 4)
+
+        testcase_filter = ReportFilter(annotations=[Pair(
+            first='testcase',
+            second='TC-1')])
+
+        num = self._cc_client.getRunResultCount(
+            None, testcase_filter, None)
+
+        self.assertEqual(num, 3)

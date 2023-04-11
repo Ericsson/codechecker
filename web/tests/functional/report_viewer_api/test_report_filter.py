@@ -63,20 +63,16 @@ class TestReportFilter(unittest.TestCase):
 
     def test_filter_none(self):
         """ Filter value is None should return all results."""
-        runid = self._runids[0]
-        sort_types = None
-        simple_filters = None
-
-        run_result_count = self._cc_client.getRunResultCount([runid],
-                                                             simple_filters,
+        run_result_count = self._cc_client.getRunResultCount([self._runids[0]],
+                                                             ReportFilter(),
                                                              None)
         self.assertIsNotNone(run_result_count)
 
-        run_results = self._cc_client.getRunResults([runid],
+        run_results = self._cc_client.getRunResults([self._runids[0]],
                                                     run_result_count,
                                                     0,
-                                                    sort_types,
-                                                    simple_filters,
+                                                    None,
+                                                    ReportFilter(),
                                                     None,
                                                     False)
         self.assertIsNotNone(run_results)
@@ -213,7 +209,7 @@ class TestReportFilter(unittest.TestCase):
         """
 
         run_result_count = self._cc_client.getRunResultCount(self._runids,
-                                                             None,
+                                                             ReportFilter(),
                                                              None)
 
         self.assertEqual(run_result_count, 75)
@@ -222,7 +218,7 @@ class TestReportFilter(unittest.TestCase):
                                                     run_result_count,
                                                     0,
                                                     [],
-                                                    None,
+                                                    ReportFilter(),
                                                     None,
                                                     False)
 
@@ -237,13 +233,13 @@ class TestReportFilter(unittest.TestCase):
             'filter_review_status']
 
         run_result_count = self._cc_client.getRunResultCount([runid],
-                                                             None,
+                                                             ReportFilter(),
                                                              None)
         run_results = self._cc_client.getRunResults([runid],
                                                     run_result_count,
                                                     0,
                                                     [],
-                                                    None,
+                                                    ReportFilter(),
                                                     None,
                                                     False)
 
@@ -357,8 +353,8 @@ class TestReportFilter(unittest.TestCase):
 
     def test_detection_date_filters(self):
         """ Filter by detection dates. """
-        run_results = self._cc_client.getRunResults([self._runids[0]], 1, 0,
-                                                    None, None, None, False)
+        run_results = self._cc_client.getRunResults(
+            [self._runids[0]], 1, 0, None, ReportFilter(), None, False)
         self.assertEqual(len(run_results), 1)
 
         detected_after = datetime.strptime(run_results[0].detectedAt,

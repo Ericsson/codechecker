@@ -79,7 +79,7 @@ class RemoveRunResults(unittest.TestCase):
         run_id = runs[0].runId
 
         orig_results_count = \
-            self._cc_client.getRunResultCount([run_id], None, None)
+            self._cc_client.getRunResultCount([run_id], ReportFilter(), None)
         self.assertNotEqual(orig_results_count, 0)
 
         checker_filter = ReportFilter(checkerName=["core.CallAndMessage"])
@@ -101,5 +101,5 @@ class RemoveRunResults(unittest.TestCase):
         self._cc_client.removeRun(run_id, None)
 
         # Check that we removed all results from the run.
-        res = self._cc_client.getRunResultCount([run_id], None, None)
+        res = self._cc_client.getRunResultCount([run_id], ReportFilter(), None)
         self.assertEqual(res, 0)

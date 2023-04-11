@@ -106,7 +106,7 @@ class DiffRemote(unittest.TestCase):
                                diffType=DiffType.NEW)
 
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
-                                                    None,
+                                                    ReportFilter(),
                                                     cmp_data,
                                                     None,
                                                     0)
@@ -148,7 +148,7 @@ class DiffRemote(unittest.TestCase):
                                diffType=DiffType.NEW)
 
         diff_res = self._cc_client.getRunResultCount([],
-                                                     None,
+                                                     ReportFilter(),
                                                      cmp_data)
         # No differences.
         self.assertEqual(diff_res, 0)
@@ -167,7 +167,7 @@ class DiffRemote(unittest.TestCase):
                                                  500,
                                                  0,
                                                  [],
-                                                 None,
+                                                 ReportFilter(),
                                                  cmp_data,
                                                  False)
         # 4 new core.NullDereference issues.
@@ -187,7 +187,7 @@ class DiffRemote(unittest.TestCase):
                                                  500,
                                                  0,
                                                  [],
-                                                 None,
+                                                 ReportFilter(),
                                                  cmp_data,
                                                  False)
         # 4 resolved core.CallAndMessage
@@ -228,7 +228,7 @@ class DiffRemote(unittest.TestCase):
                                                  500,
                                                  0,
                                                  [],
-                                                 None,
+                                                 ReportFilter(),
                                                  cmp_data,
                                                  False)
         self.assertEqual(len(diff_res), 25)
@@ -262,7 +262,7 @@ class DiffRemote(unittest.TestCase):
         new_run_id = self._new_runid
 
         base_count = self._cc_client.getRunResultCount([base_run_id],
-                                                       None,
+                                                       ReportFilter(),
                                                        None)
         print("Base run id: %d", base_run_id)
         print("Base count: %d", base_count)
@@ -272,7 +272,7 @@ class DiffRemote(unittest.TestCase):
         print_run_results(base_run_res)
 
         new_count = self._cc_client.getRunResultCount([new_run_id],
-                                                      None,
+                                                      ReportFilter(),
                                                       None)
         print("New run id: %d", new_run_id)
         print("New count: %d", new_count)
@@ -285,7 +285,7 @@ class DiffRemote(unittest.TestCase):
                                diffType=DiffType.UNRESOLVED)
 
         diff_res = self._cc_client.getRunResultCount([base_run_id],
-                                                     None,
+                                                     ReportFilter(),
                                                      cmp_data)
 
         self.assertEqual(diff_res, 25)
@@ -322,7 +322,7 @@ class DiffRemote(unittest.TestCase):
                                diffType=DiffType.UNRESOLVED)
 
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
-                                                    None,
+                                                    ReportFilter(),
                                                     cmp_data,
                                                     None,
                                                     0)
@@ -347,7 +347,7 @@ class DiffRemote(unittest.TestCase):
                                diffType=DiffType.UNRESOLVED)
 
         sev_res = self._cc_client.getSeverityCounts([base_run_id],
-                                                    None,
+                                                    ReportFilter(),
                                                     cmp_data)
         test_res = {Severity.HIGH: 18,
                     Severity.LOW: 6,
@@ -365,7 +365,7 @@ class DiffRemote(unittest.TestCase):
                                diffType=DiffType.NEW)
 
         sev_res = self._cc_client.getSeverityCounts([base_run_id],
-                                                    None,
+                                                    ReportFilter(),
                                                     cmp_data)
         test_res = {Severity.HIGH: 4}
         self.assertDictEqual(sev_res, test_res)
@@ -381,7 +381,7 @@ class DiffRemote(unittest.TestCase):
                                diffType=DiffType.NEW)
 
         res = self._cc_client.getReviewStatusCounts([base_run_id],
-                                                    None,
+                                                    ReportFilter(),
                                                     cmp_data)
 
         test_res = {ReviewStatus.UNREVIEWED: 4}
@@ -398,7 +398,7 @@ class DiffRemote(unittest.TestCase):
                                diffType=DiffType.UNRESOLVED)
 
         res = self._cc_client.getReviewStatusCounts([base_run_id],
-                                                    None,
+                                                    ReportFilter(),
                                                     cmp_data)
 
         test_res = {ReviewStatus.UNREVIEWED: 25}
@@ -415,7 +415,7 @@ class DiffRemote(unittest.TestCase):
                                diffType=DiffType.RESOLVED)
 
         res = self._cc_client.getReviewStatusCounts([base_run_id],
-                                                    None,
+                                                    ReportFilter(),
                                                     cmp_data)
 
         print(res)
@@ -433,7 +433,7 @@ class DiffRemote(unittest.TestCase):
                                diffType=DiffType.RESOLVED)
 
         diff_res = self._cc_client.getCheckerCounts([base_run_id],
-                                                    None,
+                                                    ReportFilter(),
                                                     cmp_data,
                                                     None,
                                                     0)
@@ -455,7 +455,7 @@ class DiffRemote(unittest.TestCase):
 
         diff_res = \
             self._cc_client.getCheckerCounts([base_run_id],
-                                             None,
+                                             ReportFilter(),
                                              cmp_data,
                                              None,
                                              0)

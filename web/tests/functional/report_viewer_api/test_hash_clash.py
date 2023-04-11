@@ -23,7 +23,8 @@ from uuid import uuid4
 from libtest import env
 from libtest import codechecker
 
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import Encoding, RunFilter
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import Encoding, \
+    RunFilter, ReportFilter
 
 
 def _generate_content(cols, lines):
@@ -100,7 +101,7 @@ class HashClash(unittest.TestCase):
                                           100,
                                           0,
                                           [],
-                                          None,
+                                          ReportFilter(),
                                           None,
                                           False)
 

@@ -1,7 +1,7 @@
 <template>
   <select-option
     :id="id"
-    title="Testsuite"
+    title="Testcase"
     :bus="bus"
     :fetch-items="fetchItems"
     :selected-items="selectedItems"
@@ -29,7 +29,7 @@ import SelectOption from "./SelectOption/SelectOption";
 import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
 
 export default {
-  name: "TestsuiteFilter",
+  name: "TestcaseFilter",
   components: {
     SelectOption
   },
@@ -37,9 +37,9 @@ export default {
 
   data() {
     return {
-      id: "testsuite",
+      id: "testcase",
       search: {
-        placeHolder: "Search for testsuite names...",
+        placeHolder: "Search for testcase names...",
         regexLabel: "Filter by wildcard pattern",
         filterItems: this.filterItems
       }
@@ -51,14 +51,14 @@ export default {
       this.setReportFilter({
         annotations: this.selectedItems.length == 0
           ? null : this.selectedItems.map(item => new Pair({
-            first: "testsuite",
+            first: "testcase",
             second: item.id
           }))
       });
     },
 
     onReportFilterChange(key) {
-      if (key === "testsuiteName") return;
+      if (key === "testcaseName") return;
       this.update();
     },
 
@@ -66,7 +66,7 @@ export default {
       this.loading = true;
 
       return new Promise(resolve => {
-        ccService.getClient().getReportAnnotations("testsuite",
+        ccService.getClient().getReportAnnotations("testcase",
           handleThriftError(res => {
             resolve(res.map(annotation => {
               return {

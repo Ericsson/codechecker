@@ -15,7 +15,7 @@ import shutil
 import unittest
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import DetectionStatus, \
-    Encoding
+    Encoding, ReportFilter
 
 from libtest import codechecker
 from libtest import env
@@ -157,7 +157,7 @@ int main()
                                                 100,
                                                 0,
                                                 [],
-                                                None,
+                                                ReportFilter(),
                                                 None,
                                                 False)
 
@@ -172,7 +172,7 @@ int main()
                                                 100,
                                                 0,
                                                 [],
-                                                None,
+                                                ReportFilter(),
                                                 None,
                                                 False)
         for report in reports:
@@ -194,7 +194,7 @@ int main()
                                                 100,
                                                 0,
                                                 [],
-                                                None,
+                                                ReportFilter(),
                                                 None,
                                                 False)
         for report in reports:
@@ -242,7 +242,7 @@ int main()
                                                 100,
                                                 0,
                                                 [],
-                                                None,
+                                                ReportFilter(),
                                                 None,
                                                 False)
         for report in reports:
@@ -265,7 +265,7 @@ int main()
                                                 100,
                                                 0,
                                                 [],
-                                                None,
+                                                ReportFilter(),
                                                 None,
                                                 False)
         for report in reports:
@@ -316,7 +316,7 @@ int main()
                                                 100,
                                                 0,
                                                 [],
-                                                None,
+                                                ReportFilter(),
                                                 None,
                                                 False)
 
@@ -338,7 +338,7 @@ int main()
                                                 100,
                                                 0,
                                                 [],
-                                                None,
+                                                ReportFilter(),
                                                 None,
                                                 False)
         offed_reports = [r for r in reports
@@ -358,7 +358,7 @@ int main()
                                                 100,
                                                 0,
                                                 [],
-                                                None,
+                                                ReportFilter(),
                                                 None,
                                                 False)
 
@@ -384,8 +384,8 @@ int main()
         self._create_clang_tidy_cfg_file(['-*', 'hicpp-*', 'modernize-*'])
         return_code = self._check_source_file(cfg)
         self.assertEqual(return_code, 0)
-        reports = self._cc_client.getRunResults(None, 100, 0, [], None, None,
-                                                False)
+        reports = self._cc_client.getRunResults(
+            None, 100, 0, [], ReportFilter(), None, False)
 
         hicpp_results = [r for r in reports
                          if r.checkerId.startswith('hicpp')]
@@ -403,8 +403,8 @@ int main()
         # OFF (every report marked as Unresolved).
         self._check_source_file(cfg)
 
-        reports = self._cc_client.getRunResults(None, 100, 0, [], None, None,
-                                                False)
+        reports = self._cc_client.getRunResults(
+            None, 100, 0, [], ReportFilter(), None, False)
         self.assertTrue([r for r in reports
                          if r.detectionStatus == DetectionStatus.UNRESOLVED])
 
@@ -453,8 +453,8 @@ int main()
         codechecker.store(cfg, 'hello')
 
         # Check that no reports are marked as OFF.
-        reports = self._cc_client.getRunResults(None, 100, 0, [], None, None,
-                                                False)
+        reports = self._cc_client.getRunResults(
+            None, 100, 0, [], ReportFilter(), None, False)
 
         offed_reports = [r for r in reports
                          if r.detectionStatus == DetectionStatus.OFF]

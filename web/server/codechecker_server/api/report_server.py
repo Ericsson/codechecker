@@ -20,7 +20,7 @@ import time
 import zlib
 
 from copy import deepcopy
-from collections import defaultdict
+from collections import OrderedDict, defaultdict
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -192,7 +192,13 @@ def get_component_values(
     return skip, include
 
 
-def process_report_filter(session, run_ids, report_filter, cmp_data=None):
+def process_report_filter(
+    session,
+    run_ids,
+    report_filter,
+    cmp_data=None,
+    keep_all_annotations=False
+):
     """
     Process the new report filter.
     """
@@ -351,10 +357,14 @@ def process_report_filter(session, run_ids, report_filter, cmp_data=None):
 
         OR = []
         for key, values in annotations.items():
-            OR.append(or_(
-                ReportAnnotations.key != key,
-                ReportAnnotations.value.in_(values)))
-
+            if keep_all_annotations:
+                OR.append(or_(
+                    ReportAnnotations.key != key,
+                    ReportAnnotations.value.in_(values)))
+            else:
+                OR.append(and_(
+                    ReportAnnotations.key == key,
+                    ReportAnnotations.value.in_(values)))
         AND.append(or_(*OR))
 
     filter_expr = and_(*AND)
@@ -934,13 +944,6 @@ def create_review_data(
         author=author,
         date=None if date is None else str(date),
         isInSource=is_in_source)
-
-
-def create_count_expression(report_filter):
-    if report_filter is not None and report_filter.isUnique:
-        return func.count(Report.bug_id.distinct())
-    else:
-        return func.count(literal_column('*'))
 
 
 def apply_report_filter(q, filter_expression, join_tables):
@@ -1757,9 +1760,6 @@ class ThriftRequestHandler:
         with DBSession(self._Session) as session:
             results = []
 
-            filter_expression, join_tables = process_report_filter(
-                session, run_ids, report_filter, cmp_data)
-
             # Extending "reports" table with report annotation columns.
             #
             # Suppose that we have these tables in the database:
@@ -1819,14 +1819,17 @@ class ThriftRequestHandler:
                 lambda x: x[0],
                 session.query(ReportAnnotations.key).distinct().all()))
 
-            annotation_cols = [
-                func.max(sqlalchemy.case([(
+            annotation_cols = OrderedDict()
+            for col in annotation_keys:
+                annotation_cols[col] = func.max(sqlalchemy.case([(
                     ReportAnnotations.key == col,
                     ReportAnnotations.value)])).label(f"annotation_{col}")
-                for col in annotation_keys]
 
-            is_unique = report_filter is not None and report_filter.isUnique
-            if is_unique:
+            if report_filter.isUnique:
+                filter_expression, join_tables = process_report_filter(
+                    session, run_ids, report_filter, cmp_data,
+                    keep_all_annotations=False)
+
                 sort_types, sort_type_map, order_type_map = \
                     get_sort_map(sort_types, True)
 
@@ -1842,6 +1845,10 @@ class ThriftRequestHandler:
                 unique_reports = apply_report_filter(unique_reports,
                                                      filter_expression,
                                                      join_tables)
+                if report_filter.annotations is not None:
+                    unique_reports = unique_reports.outerjoin(
+                        ReportAnnotations,
+                        Report.id == ReportAnnotations.report_id)
                 unique_reports = unique_reports \
                     .group_by(Report.bug_id) \
                     .subquery()
@@ -1859,7 +1866,9 @@ class ThriftRequestHandler:
                 sorted_reports = sorted_reports \
                     .limit(limit).offset(offset).subquery()
 
-                q = session.query(Report, File.filename, *annotation_cols) \
+                q = session.query(Report,
+                                  File.filename,
+                                  *annotation_cols.values()) \
                     .outerjoin(
                         ReportAnnotations,
                         Report.id == ReportAnnotations.report_id) \
@@ -1869,6 +1878,16 @@ class ThriftRequestHandler:
 
                 if File not in join_tables:
                     q = q.outerjoin(File, Report.file_id == File.id)
+
+                if report_filter.annotations is not None:
+                    annotations = defaultdict(list)
+                    for annotation in report_filter.annotations:
+                        annotations[annotation.first].append(annotation.second)
+
+                    OR = []
+                    for key, values in annotations.items():
+                        OR.append(annotation_cols[key].in_(values))
+                    q = q.having(or_(*OR))
 
                 # We have to sort the results again because an ORDER BY in a
                 # subtable is broken by the JOIN.
@@ -1921,10 +1940,16 @@ class ThriftRequestHandler:
                                    analyzerName=report.analyzer_name,
                                    annotations=annotations))
             else:  # not is_unique
+                filter_expression, join_tables = process_report_filter(
+                    session, run_ids, report_filter, cmp_data,
+                    keep_all_annotations=True)
+
                 sort_types, sort_type_map, order_type_map = \
                     get_sort_map(sort_types)
 
-                q = session.query(Report, File.filepath, *annotation_cols) \
+                q = session.query(Report,
+                                  File.filepath,
+                                  *annotation_cols.values()) \
                     .outerjoin(
                         ReportAnnotations,
                         Report.id == ReportAnnotations.report_id)
@@ -1944,6 +1969,16 @@ class ThriftRequestHandler:
 
                 q = sort_results_query(q, sort_types, sort_type_map,
                                        order_type_map)
+
+                if report_filter.annotations is not None:
+                    annotations = defaultdict(list)
+                    for annotation in report_filter.annotations:
+                        annotations[annotation.first].append(annotation.second)
+
+                    OR = []
+                    for key, values in annotations.items():
+                        OR.append(annotation_cols[key].in_(values))
+                    q = q.having(or_(*OR))
 
                 q = q.limit(limit).offset(offset)
 
@@ -2030,15 +2065,28 @@ class ThriftRequestHandler:
             filter_expression, join_tables = process_report_filter(
                 session, run_ids, report_filter)
 
-            count_expr = create_count_expression(report_filter)
-            q = session.query(Run.id,
-                              Run.name,
-                              count_expr) \
-                .select_from(Report)
+            reports_subq = session.query(Report.bug_id, Report.run_id)
+            reports_subq = apply_report_filter(
+                reports_subq, filter_expression, join_tables)
 
-            q = apply_report_filter(
-                q, filter_expression, join_tables + [Run])
-            q = q.order_by(Run.name).group_by(Run.id)
+            if report_filter.annotations is not None:
+                reports_subq = reports_subq.outerjoin(
+                    ReportAnnotations,
+                    ReportAnnotations.report_id == Report.id)
+                reports_subq = reports_subq.group_by(Report.id)
+
+            reports_subq = reports_subq.subquery()
+
+            if report_filter is not None and report_filter.isUnique:
+                count_col = func.count(reports_subq.c.bug_id.distinct())
+            else:
+                count_col = func.count(literal_column('*'))
+
+            q = session.query(Run.id, func.max(Run.name), count_col) \
+                .select_from(reports_subq) \
+                .join(Run, Run.id == reports_subq.c.run_id) \
+                .group_by(Run.id) \
+                .order_by(Run.name)
 
             if limit:
                 q = q.limit(limit).offset(offset)
@@ -2060,11 +2108,17 @@ class ThriftRequestHandler:
             filter_expression, join_tables = process_report_filter(
                 session, run_ids, report_filter, cmp_data)
 
-            q = session.query(Report.bug_id)
-            q = apply_report_filter(q, filter_expression, join_tables)
+            if report_filter.isUnique:
+                q = session.query(Report.bug_id.distinct())
+            else:
+                q = session.query(Report.bug_id)
 
-            if report_filter is not None and report_filter.isUnique:
-                q = q.group_by(Report.bug_id)
+            if report_filter.annotations is not None:
+                q = q.outerjoin(ReportAnnotations,
+                                ReportAnnotations.report_id == Report.id)
+                q = q.group_by(Report.id)
+
+            q = apply_report_filter(q, filter_expression, join_tables)
 
             report_count = q.count()
             if report_count is None:
@@ -2699,31 +2753,46 @@ class ThriftRequestHandler:
             filter_expression, join_tables = process_report_filter(
                 session, run_ids, report_filter, cmp_data)
 
-            is_unique = report_filter is not None and report_filter.isUnique
-            if is_unique:
-                q = session.query(func.max(Report.checker_id).label(
-                    'checker_id'),
-                    func.max(Report.severity).label(
-                    'severity'),
-                    Report.bug_id)
+            extended_table = session.query(
+                Report.checker_id,
+                Report.severity,
+                Report.bug_id)
+
+            if report_filter.annotations is not None:
+                extended_table = extended_table.outerjoin(
+                    ReportAnnotations,
+                    ReportAnnotations.report_id == Report.id)
+                extended_table = extended_table.group_by(Report.id)
+
+            extended_table = apply_report_filter(
+                extended_table, filter_expression, join_tables)
+
+            extended_table = extended_table.subquery()
+
+            if report_filter.isUnique:
+                q = session.query(
+                    func.max(extended_table.c.checker_id).label('checker_id'),
+                    func.max(extended_table.c.severity).label('severity'),
+                    extended_table.c.bug_id)
             else:
-                q = session.query(Report.checker_id,
-                                  Report.severity,
-                                  func.count(Report.id))
+                q = session.query(
+                    extended_table.c.checker_id,
+                    extended_table.c.severity,
+                    func.count(literal_column('*')))
 
-            q = apply_report_filter(q, filter_expression, join_tables)
+            q = q.select_from(extended_table)
 
-            if is_unique:
-                q = q.group_by(Report.bug_id).subquery()
+            if report_filter.isUnique:
+                q = q.group_by(extended_table.c.bug_id).subquery()
                 unique_checker_q = session.query(q.c.checker_id,
                                                  func.max(q.c.severity),
                                                  func.count(q.c.bug_id)) \
                     .group_by(q.c.checker_id) \
                     .order_by(q.c.checker_id)
             else:
-                unique_checker_q = q.group_by(Report.checker_id,
-                                              Report.severity) \
-                    .order_by(Report.checker_id)
+                unique_checker_q = q.group_by(extended_table.c.checker_id,
+                                              extended_table.c.severity) \
+                    .order_by(extended_table.c.checker_id)
 
             if limit:
                 unique_checker_q = unique_checker_q.limit(limit).offset(offset)
@@ -2753,26 +2822,40 @@ class ThriftRequestHandler:
             filter_expression, join_tables = process_report_filter(
                 session, run_ids, report_filter, cmp_data)
 
-            is_unique = report_filter is not None and report_filter.isUnique
-            if is_unique:
-                q = session.query(func.max(Report.analyzer_name).label(
-                    'analyzer_name'),
-                    Report.bug_id)
+            extended_table = session.query(
+                Report.analyzer_name,
+                Report.bug_id)
+
+            if report_filter.annotations is not None:
+                extended_table = extended_table.outerjoin(
+                    ReportAnnotations,
+                    ReportAnnotations.report_id == Report.id)
+                extended_table = extended_table.group_by(Report.id)
+
+            extended_table = apply_report_filter(
+                extended_table, filter_expression, join_tables)
+
+            extended_table = extended_table.subquery()
+
+            if report_filter.isUnique:
+                q = session.query(func.max(
+                    extended_table.c.analyzer_name).label('analyzer_name'),
+                    extended_table.c.bug_id)
             else:
-                q = session.query(Report.analyzer_name,
-                                  func.count(Report.id))
+                q = session.query(extended_table.c.analyzer_name,
+                                  func.count(literal_column('*')))
 
-            q = apply_report_filter(q, filter_expression, join_tables)
+            q = q.select_from(extended_table)
 
-            if is_unique:
-                q = q.group_by(Report.bug_id).subquery()
+            if report_filter.isUnique:
+                q = q.group_by(extended_table.c.bug_id).subquery()
                 analyzer_name_q = session.query(q.c.analyzer_name,
                                                 func.count(q.c.bug_id)) \
                     .group_by(q.c.analyzer_name) \
                     .order_by(q.c.analyzer_name)
             else:
-                analyzer_name_q = q.group_by(Report.analyzer_name) \
-                    .order_by(Report.analyzer_name)
+                analyzer_name_q = q.group_by(extended_table.c.analyzer_name) \
+                    .order_by(extended_table.c.analyzer_name)
 
             if limit:
                 analyzer_name_q = analyzer_name_q.limit(limit).offset(offset)
@@ -2796,23 +2879,38 @@ class ThriftRequestHandler:
             filter_expression, join_tables = process_report_filter(
                 session, run_ids, report_filter, cmp_data)
 
-            is_unique = report_filter is not None and report_filter.isUnique
-            if is_unique:
-                q = session.query(func.max(Report.severity).label('severity'),
-                                  Report.bug_id)
+            extended_table = session.query(
+                Report.severity,
+                Report.bug_id)
+
+            if report_filter.annotations is not None:
+                extended_table = extended_table.outerjoin(
+                    ReportAnnotations,
+                    ReportAnnotations.report_id == Report.id)
+                extended_table = extended_table.group_by(Report.id)
+
+            extended_table = apply_report_filter(
+                extended_table, filter_expression, join_tables)
+
+            extended_table = extended_table.subquery()
+
+            if report_filter.isUnique:
+                q = session.query(
+                    func.max(extended_table.c.severity).label('severity'),
+                    extended_table.c.bug_id)
             else:
-                q = session.query(Report.severity,
-                                  func.count(Report.id))
+                q = session.query(extended_table.c.severity,
+                                  func.count(literal_column('*')))
 
-            q = apply_report_filter(q, filter_expression, join_tables)
+            q = q.select_from(extended_table)
 
-            if is_unique:
-                q = q.group_by(Report.bug_id).subquery()
+            if report_filter.isUnique:
+                q = q.group_by(extended_table.c.bug_id).subquery()
                 severities = session.query(q.c.severity,
                                            func.count(q.c.bug_id)) \
                     .group_by(q.c.severity)
             else:
-                severities = q.group_by(Report.severity)
+                severities = q.group_by(extended_table.c.severity)
 
             results = dict(severities)
         return results
@@ -2835,26 +2933,42 @@ class ThriftRequestHandler:
             filter_expression, join_tables = process_report_filter(
                 session, run_ids, report_filter, cmp_data)
 
-            is_unique = report_filter is not None and report_filter.isUnique
-            if is_unique:
-                q = session.query(func.max(Report.checker_message).label(
-                    'checker_message'),
-                    Report.bug_id)
+            extended_table = session.query(
+                Report.checker_message,
+                Report.bug_id)
+
+            if report_filter.annotations is not None:
+                extended_table = extended_table.outerjoin(
+                    ReportAnnotations,
+                    ReportAnnotations.report_id == Report.id)
+                extended_table = extended_table.group_by(Report.id)
+
+            extended_table = apply_report_filter(
+                extended_table, filter_expression, join_tables)
+
+            extended_table = extended_table.subquery()
+
+            if report_filter.isUnique:
+                q = session.query(
+                    func.max(extended_table.c.checker_message).label(
+                        'checker_message'),
+                    extended_table.c.bug_id)
             else:
-                q = session.query(Report.checker_message,
-                                  func.count(Report.id))
+                q = session.query(extended_table.c.checker_message,
+                                  func.count(literal_column('*')))
 
-            q = apply_report_filter(q, filter_expression, join_tables)
+            q = q.select_from(extended_table)
 
-            if is_unique:
-                q = q.group_by(Report.bug_id).subquery()
+            if report_filter.isUnique:
+                q = q.group_by(extended_table.c.bug_id).subquery()
                 checker_messages = session.query(q.c.checker_message,
                                                  func.count(q.c.bug_id)) \
                     .group_by(q.c.checker_message) \
                     .order_by(q.c.checker_message)
             else:
-                checker_messages = q.group_by(Report.checker_message) \
-                                    .order_by(Report.checker_message)
+                checker_messages = q \
+                    .group_by(extended_table.c.checker_message) \
+                    .order_by(extended_table.c.checker_message)
 
             if limit:
                 checker_messages = checker_messages.limit(limit).offset(offset)
@@ -2871,36 +2985,40 @@ class ThriftRequestHandler:
           will be used as a baseline excluding the runs in compare data.
         """
         self.__require_view()
-        results = defaultdict(int)
         with DBSession(self._Session) as session:
             filter_expression, join_tables = process_report_filter(
                 session, run_ids, report_filter, cmp_data)
 
-            is_unique = report_filter is not None and report_filter.isUnique
-            if is_unique:
+            extended_table = session.query(
+                Report.review_status,
+                Report.bug_id)
+
+            if report_filter.annotations is not None:
+                extended_table = extended_table.outerjoin(
+                    ReportAnnotations,
+                    ReportAnnotations.report_id == Report.id)
+                extended_table = extended_table.group_by(Report.id)
+
+            extended_table = apply_report_filter(
+                extended_table, filter_expression, join_tables)
+
+            extended_table = extended_table.subquery()
+
+            if report_filter.isUnique:
                 q = session.query(
-                    Report.bug_id,
-                    Report.review_status,
-                    func.count(Report.bug_id))
+                    extended_table.c.review_status,
+                    func.count(extended_table.c.bug_id.distinct()))
             else:
                 q = session.query(
-                    func.max(Report.bug_id),
-                    Report.review_status,
-                    func.count(Report.id))
+                    extended_table.c.review_status,
+                    func.count(extended_table.c.bug_id))
 
-            q = apply_report_filter(q, filter_expression, join_tables)
+            q = q \
+                .select_from(extended_table) \
+                .group_by(extended_table.c.review_status)
 
-            if is_unique:
-                review_statuses = q.group_by(Report.bug_id,
-                                             Report.review_status)
-            else:
-                review_statuses = q.group_by(Report.review_status)
-
-            for _, rev_status, count in review_statuses:
-                rev_status = review_status_enum(rev_status)
-                results[rev_status] += count
-
-        return results
+        return {review_status_enum(rev_status): count
+                for rev_status, count in q}
 
     @exc_to_thrift_reqfail
     @timeit
@@ -2919,23 +3037,30 @@ class ThriftRequestHandler:
             filter_expression, join_tables = process_report_filter(
                 session, run_ids, report_filter, cmp_data)
 
-            # The File table is joined explicitly in the next query. Joining it
-            # twice results an ambiguous reference to this table in the SQL
-            # query.
-            # TODO: It is not an elegant solution that process_report_filter()
-            # returns the list of tables to join and the caller needs to join
-            # them. It would be better if it's automatic and every table is
-            # joined once.
+            extended_table = session.query(
+                Report.file_id,
+                Report.bug_id,
+                Report.id)
 
-            join_tables = [t for t in join_tables if t != File]
+            if report_filter.annotations is not None:
+                extended_table = extended_table.outerjoin(
+                    ReportAnnotations,
+                    ReportAnnotations.report_id == Report.id)
+                extended_table = extended_table.group_by(Report.id)
 
-            unique = report_filter is not None and report_filter.isUnique
+            extended_table = apply_report_filter(
+                extended_table, filter_expression, join_tables)
+
+            extended_table = extended_table.subquery()
+
+            count_col = extended_table.c.bug_id.distinct() if \
+                report_filter.isUnique else extended_table.c.bug_id
+
             stmt = session.query(
-                File.filepath,
-                func.count(Report.bug_id.distinct()
-                           if unique else Report.bug_id).label('report_num')) \
-                .join(Report, File.id == Report.file_id, isouter=True)
-            stmt = apply_report_filter(stmt, filter_expression, join_tables) \
+                    File.filepath,
+                    func.count(count_col).label('report_num')) \
+                .join(
+                    extended_table, File.id == extended_table.c.file_id) \
                 .group_by(File.filepath) \
                 .order_by(desc('report_num'))
 
@@ -2976,14 +3101,21 @@ class ThriftRequestHandler:
                                          Report.bug_id,
                                          Report.detected_at,
                                          Report.fixed_at)
+
+            if report_filter.annotations is not None:
+                report_cnt_q = report_cnt_q.outerjoin(
+                    ReportAnnotations,
+                    ReportAnnotations.report_id == Report.id)
+                report_cnt_q = report_cnt_q.group_by(Report.id)
+
             report_cnt_q = apply_report_filter(
                 report_cnt_q, filter_expression, join_tables)
             report_cnt_q = report_cnt_q.filter(
                 Report.run_id.in_(tag_run_ids)).subquery()
 
-            is_unique = report_filter is not None and report_filter.isUnique
-            count_expr = func.count(report_cnt_q.c.bug_id if not is_unique
-                                    else report_cnt_q.c.bug_id.distinct())
+            count_expr = func.count(
+                report_cnt_q.c.bug_id if not report_filter.isUnique
+                else report_cnt_q.c.bug_id.distinct())
 
             count_q = session.query(RunHistory.id.label('run_history_id'),
                                     count_expr.label('report_count')) \
@@ -3045,19 +3177,37 @@ class ThriftRequestHandler:
             filter_expression, join_tables = process_report_filter(
                 session, run_ids, report_filter, cmp_data)
 
-            count_expr = func.count(literal_column('*'))
+            extended_table = session.query(
+                Report.detection_status,
+                Report.bug_id)
 
-            q = session.query(Report.detection_status,
-                              count_expr)
+            if report_filter.annotations is not None:
+                extended_table = extended_table.outerjoin(
+                    ReportAnnotations,
+                    ReportAnnotations.report_id == Report.id)
+                extended_table = extended_table.group_by(Report.id)
 
-            q = apply_report_filter(q, filter_expression, join_tables)
+            extended_table = apply_report_filter(
+                extended_table, filter_expression, join_tables)
 
-            detection_stats = q.group_by(Report.detection_status).all()
+            extended_table = extended_table.subquery()
 
-            results = dict(detection_stats)
+            if report_filter.isUnique:
+                q = session.query(
+                    extended_table.c.detection_status,
+                    func.count(extended_table.c.bug_id.distinct()))
+            else:
+                q = session.query(
+                    extended_table.c.detection_status,
+                    func.count(literal_column('*')))
+
+            q = q \
+                .select_from(extended_table) \
+                .group_by(extended_table.c.detection_status)
+
             results = {
                 detection_status_enum(k): v for k,
-                v in results.items()}
+                v in q}
 
         return results
 
@@ -3158,6 +3308,12 @@ class ThriftRequestHandler:
                     session, run_ids, report_filter, cmp_data)
 
                 q = session.query(Report.id)
+
+                if report_filter.annotations is not None:
+                    q = q.outerjoin(ReportAnnotations,
+                                    ReportAnnotations.report_id == Report.id)
+                    q = q.group_by(Report.id)
+
                 q = apply_report_filter(q, filter_expression, join_tables)
 
                 reports_to_delete = [r[0] for r in q]

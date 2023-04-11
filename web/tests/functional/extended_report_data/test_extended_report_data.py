@@ -16,8 +16,8 @@ import unittest
 
 from libtest import env
 
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import RunFilter, \
-    ExtendedReportDataType
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import ReportFilter, \
+    RunFilter, ExtendedReportDataType
 
 
 class TestExtendedReportData(unittest.TestCase):
@@ -52,8 +52,8 @@ class TestExtendedReportData(unittest.TestCase):
         runs = self._cc_client.getRunData(run_filter, None, 0, None)
         run_id = runs[0].runId
 
-        return self._cc_client.getRunResults([run_id], None, 0, [], None, None,
-                                             False)
+        return self._cc_client.getRunResults(
+            [run_id], None, 0, [], ReportFilter(), None, False)
 
     def test_notes(self):
         """

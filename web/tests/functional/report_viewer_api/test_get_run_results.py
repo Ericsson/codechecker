@@ -83,7 +83,7 @@ class RunResults(unittest.TestCase):
                       str(runid))
 
         run_result_count = self._cc_client.getRunResultCount([runid],
-                                                             None,
+                                                             ReportFilter(),
                                                              None)
         self.assertTrue(run_result_count)
 
@@ -102,7 +102,7 @@ class RunResults(unittest.TestCase):
                       str(runid))
 
         run_result_count = self._cc_client.getRunResultCount([runid],
-                                                             None,
+                                                             ReportFilter(),
                                                              None)
         self.assertTrue(run_result_count)
 
@@ -239,14 +239,13 @@ class RunResults(unittest.TestCase):
         sort_types = [sort_mode1, sort_mode2]
 
         run_result_count = self._cc_client.getRunResultCount([runid],
-                                                             None,
+                                                             ReportFilter(),
                                                              None)
         self.assertTrue(run_result_count)
 
         run_results = get_all_run_results(self._cc_client,
                                           runid,
-                                          sort_types,
-                                          None)
+                                          sort_types)
         self.assertIsNotNone(run_results)
 
         for i in range(run_result_count - 1):
@@ -271,14 +270,13 @@ class RunResults(unittest.TestCase):
         sort_types = [sortMode1, sortMode2]
 
         run_result_count = self._cc_client.getRunResultCount([runid],
-                                                             None,
+                                                             ReportFilter(),
                                                              None)
         self.assertTrue(run_result_count)
 
         run_results = get_all_run_results(self._cc_client,
                                           runid,
-                                          sort_types,
-                                          None)
+                                          sort_types)
         self.assertIsNotNone(run_results)
 
         print_run_results(run_results)

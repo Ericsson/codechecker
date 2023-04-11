@@ -131,7 +131,7 @@ class TestReportFilter(unittest.TestCase):
         """
         runid = self._runids[0]
         checker_counts = self._cc_client.getCheckerCounts([runid],
-                                                          None,
+                                                          ReportFilter(),
                                                           None,
                                                           None,
                                                           0)
@@ -165,7 +165,7 @@ class TestReportFilter(unittest.TestCase):
         """
         runid = self._runids[1]
         checker_counts = self._cc_client.getCheckerCounts([runid],
-                                                          None,
+                                                          ReportFilter(),
                                                           None,
                                                           None,
                                                           0)
@@ -179,7 +179,7 @@ class TestReportFilter(unittest.TestCase):
         Get all the checker counts for run1 and run2.
         """
         checker_counts = self._cc_client.getCheckerCounts(self._runids,
-                                                          None,
+                                                          ReportFilter(),
                                                           None,
                                                           None,
                                                           0)
@@ -223,7 +223,7 @@ class TestReportFilter(unittest.TestCase):
         """
         runid = self._runids[0]
         severity_counts = self._cc_client.getSeverityCounts([runid],
-                                                            None,
+                                                            ReportFilter(),
                                                             None)
 
         print(severity_counts)
@@ -236,7 +236,7 @@ class TestReportFilter(unittest.TestCase):
         """
         runid = self._runids[1]
         severity_counts = self._cc_client.getSeverityCounts([runid],
-                                                            None,
+                                                            ReportFilter(),
                                                             None)
 
         print(severity_counts)
@@ -248,7 +248,7 @@ class TestReportFilter(unittest.TestCase):
         Get all the severity counts for run1 and run2.
         """
         severity_counts = self._cc_client.getSeverityCounts(self._runids,
-                                                            None,
+                                                            ReportFilter(),
                                                             None)
         r1_sev = Counter(self.run1_sev_counts)
         r2_sev = Counter(self.run2_sev_counts)
@@ -263,8 +263,8 @@ class TestReportFilter(unittest.TestCase):
         Get all the file counts for run1.
         """
         runid = self._runids[0]
-        file_counts = self._cc_client.getFileCounts([runid], None, None, None,
-                                                    0)
+        file_counts = self._cc_client.getFileCounts([runid], ReportFilter(),
+                                                    None, None, 0)
         res = {get_filename(k): v for k, v in file_counts.items()}
 
         print(res)
@@ -300,8 +300,8 @@ class TestReportFilter(unittest.TestCase):
         Get all the file counts for run2.
         """
         runid = self._runids[1]
-        file_counts = self._cc_client.getFileCounts([runid], None, None, None,
-                                                    0)
+        file_counts = self._cc_client.getFileCounts([runid], ReportFilter(),
+                                                    None, None, 0)
         res = {get_filename(k): v for k, v in file_counts.items()}
 
         print(res)
@@ -313,7 +313,7 @@ class TestReportFilter(unittest.TestCase):
         Get all the file counts for run1 and run2.
         """
         file_counts = self._cc_client.getFileCounts(self._runids,
-                                                    None,
+                                                    ReportFilter(),
                                                     None,
                                                     None,
                                                     0)
@@ -365,19 +365,19 @@ class TestReportFilter(unittest.TestCase):
         Get all the file checker messages for run1 and run2.
         """
         run1_msgs = self._cc_client.getCheckerMsgCounts([self._runids[0]],
-                                                        None,
+                                                        ReportFilter(),
                                                         None,
                                                         None,
                                                         0)
 
         run2_msgs = self._cc_client.getCheckerMsgCounts([self._runids[1]],
-                                                        None,
+                                                        ReportFilter(),
                                                         None,
                                                         None,
                                                         0)
 
         run1_run2_msgs = self._cc_client.getCheckerMsgCounts(self._runids,
-                                                             None,
+                                                             ReportFilter(),
                                                              None,
                                                              None,
                                                              0)
@@ -395,11 +395,11 @@ class TestReportFilter(unittest.TestCase):
         runid = self._runids[0]
 
         report_count = self._cc_client.getRunResultCount([runid],
-                                                         None,
+                                                         ReportFilter(),
                                                          None)
 
         reports = self._cc_client.getRunResults(
-            [runid], report_count, 0, [], None, None, False)
+            [runid], report_count, 0, [], ReportFilter(), None, False)
 
         reporthash_reports_count = dict(Counter([r.bugHash for r in reports]))
 
@@ -414,6 +414,8 @@ class TestReportFilter(unittest.TestCase):
 
         review_status = defaultdict(int)
         review_status[ReviewStatus.UNREVIEWED] = len(reports)
+        review_status_unique = defaultdict(int)
+        review_status_unique[ReviewStatus.UNREVIEWED] = len(bug_hashes)
 
         for i, status in enumerate([ReviewStatus.CONFIRMED,
                                     ReviewStatus.FALSE_POSITIVE,
@@ -426,19 +428,22 @@ class TestReportFilter(unittest.TestCase):
                                                     'comment')
                 review_status[status] += \
                     reporthash_reports_count[report[1]]
+                review_status_unique[status] += 1
 
             review_status[ReviewStatus.UNREVIEWED] -= review_status[status]
+            review_status_unique[ReviewStatus.UNREVIEWED] -= 5
 
-        rv_counts = self._cc_client.getReviewStatusCounts([runid], None, None)
+        rv_counts = self._cc_client.getReviewStatusCounts(
+            [runid], ReportFilter(), None)
 
         review_status_dict = dict(review_status)
         self.assertEqual(len(rv_counts), len(review_status_dict))
         self.assertDictEqual(rv_counts, review_status_dict)
 
-        unique_filter = ReportFilter(isUnique=True)
+        review_status_unique_dict = dict(review_status_unique)
         rv_counts = self._cc_client.getReviewStatusCounts(
-            [runid], unique_filter, None)
-        self.assertDictEqual(rv_counts, review_status_dict)
+            [runid], ReportFilter(isUnique=True), None)
+        self.assertDictEqual(rv_counts, review_status_unique_dict)
 
     def test_run1_run2_all_review_status(self):
         """
@@ -447,14 +452,14 @@ class TestReportFilter(unittest.TestCase):
         runid = self._runids[0]
 
         report_count = self._cc_client.getRunResultCount([runid],
-                                                         None,
+                                                         ReportFilter(),
                                                          None)
 
         report_hashes = [x.bugHash for x
                          in self._cc_client.getRunResults([runid],
                                                           report_count, 0,
                                                           [],
-                                                          None,
+                                                          ReportFilter(),
                                                           None,
                                                           False)]
 
@@ -483,15 +488,15 @@ class TestReportFilter(unittest.TestCase):
                                                 'comment')
 
         rv_counts_1 = self._cc_client.getReviewStatusCounts([self._runids[0]],
-                                                            None,
+                                                            ReportFilter(),
                                                             None)
 
         rv_counts_2 = self._cc_client.getReviewStatusCounts([self._runids[1]],
-                                                            None,
+                                                            ReportFilter(),
                                                             None)
 
         rv_counts_all = self._cc_client.getReviewStatusCounts(self._runids,
-                                                              None,
+                                                              ReportFilter(),
                                                               None)
 
         self.assertDictEqual(rv_counts_all,
@@ -502,8 +507,8 @@ class TestReportFilter(unittest.TestCase):
         Get all the report detection statuses for run1.
         """
         runid = self._runids[0]
-        detection_counts = \
-            self._cc_client.getDetectionStatusCounts([runid], None, None)
+        detection_counts = self._cc_client.getDetectionStatusCounts(
+            [runid], ReportFilter(), None)
 
         self.assertEqual(len(detection_counts),
                          len(self.run1_detection_counts))
@@ -514,8 +519,8 @@ class TestReportFilter(unittest.TestCase):
         Get all the report detection statuses for run2.
         """
         runid = self._runids[1]
-        detection_counts = \
-            self._cc_client.getDetectionStatusCounts([runid], None, None)
+        detection_counts = self._cc_client.getDetectionStatusCounts(
+            [runid], ReportFilter(), None)
 
         self.assertEqual(len(detection_counts),
                          len(self.run2_detection_counts))
@@ -525,8 +530,8 @@ class TestReportFilter(unittest.TestCase):
         """
         Get all the report detection statuses for all the runs.
         """
-        detection_counts = \
-            self._cc_client.getDetectionStatusCounts(self._runids, None, None)
+        detection_counts = self._cc_client.getDetectionStatusCounts(
+            self._runids, ReportFilter(), None)
 
         r1_detection_counts = Counter(self.run1_detection_counts)
         r2_detection_counts = Counter(self.run2_detection_counts)
@@ -626,14 +631,14 @@ class TestReportFilter(unittest.TestCase):
         separate_report_counts = 0
         for run in runs:
             run_report_count = self._cc_client.getRunReportCounts(
-                [run.runId], None, None, 0)
+                [run.runId], ReportFilter(), None, 0)
             # Should return the count for only one run.
             self.assertEqual(len(run_report_count), 1)
             separate_report_counts += run_report_count[0].reportCount
 
         all_report_counts = 0
         report_counts = \
-            self._cc_client.getRunReportCounts([], None, None, 0)
+            self._cc_client.getRunReportCounts([], ReportFilter(), None, 0)
 
         for rc in report_counts:
             all_report_counts += rc.reportCount
