@@ -32,6 +32,7 @@
       - [Cross Translation Unit (CTU) analysis mode](#cross-translation-unit-ctu-analysis-mode)
       - [Taint analysis configuration](#taint-analysis-configuration)
       - [Statistical analysis mode](#statistical-analysis-mode)
+      - [Dynamic analysis results](#dynamic-analysis-results)
     - [`parse`](#parse)
       - [`JSON` format of `CodeChecker parse`](#json-format-of-codechecker-parse)
         - [Report object](#report-object)
@@ -352,41 +353,41 @@ checker configuration:
   implement a specific rule, such as "don't divide by zero", and emit a warning
   if the corresponding rule is violated. Available checkers can be listed by
   'CodeChecker checkers'.
-  
+
   Checkers are grouped by CodeChecker via labels (described below), and sometimes
   by their analyzer tool. An example for the latter is 'clangsa', which orders
   checkers in a package hierarchy (e.g. in 'core.uninitialized.Assign', 'core'
   and 'core.uninitialized' are packages).
-  
+
   Compiler warnings and errors
   ------------------------------------------------
   Compiler warnings are diagnostic messages that report constructions that are
   not inherently erroneous but that are risky or suggest there may have been an
   error. However, CodeChecker views them as regular checkers.
-  
+
   Compiler warning names are transformed by CodeChecker to reflect the analyzer
   name. For example, '-Wliteral-conversion' from clang-tidy is transformed to
   'clang-diagnostic-literal-conversion'. However, they need to be enabled by
   their original name, e.g. '-e Wliteral-conversion'.
-  
+
   Sometimes GCC is more permissive than Clang, so it is possible that a specific
   construction doesn't compile with Clang but compiles with GCC. These
   compiler errors are also collected as CodeChecker reports as
   'clang-diagnostic-error'.
   Note that compiler errors and warnings are captured by CodeChecker only if it
   was emitted by clang-tidy.
-  
+
   Checker labels
   ------------------------------------------------
   Each checker is assigned several '<label>:<value>' pairs. For instance,
   'cppcheck-deallocret' has the labels 'profile:default' and 'severity:HIGH'. The
   goal of labels is that you can enable or disable a batch of checkers with them.
-  
+
   You can enable/disable checkers belonging to a label: '-e <label>:<value>',
   e.g. '-e profile:default'.
-  
+
   See "CodeChecker checkers --help" to learn more.
-  
+
   Guidelines
   ------------------------------------------------
   CodeChecker recognizes several third party coding guidelines, such as
@@ -396,10 +397,10 @@ checker configuration:
   these checkers, such as 'guideline:sei-cert'. This way you can list and enable
   those checkers which check the fulfillment of certain guideline rules. See the
   output of "CodeChecker checkers --guideline" command.
-  
+
   Guidelines are labels themselves, and can be used as a label:
   '-e guideline:<value>', e.g. '-e guideline:sei-cert'.
-  
+
   Batch enabling/disabling checkers
   ------------------------------------------------
   You can fine-tune which checkers to use in the analysis by setting the enable
@@ -1614,6 +1615,60 @@ Statistics analysis feature arguments:
                         not have that property.(default: 0.85)
 
 ```
+
+#### Dynamic analysis results
+
+CodeChecker supports the storage of dynamic analysis reports through the
+[report-converter](https://github.com/Ericsson/codechecker/tree/master/tools/report-converter)
+tool which is able to produce `.plist` files based on the output of some
+sanitizers. `.plist` is currently the common format for describing analysis
+reports that serves as an interface between analyzers and CodeChecker. Clang
+Static Analyzer emits this format natively and report-converter also uses this
+output format.
+
+In terms of dynamic analysis the order of emitted reports may also carry some
+information: an earlier report may be the root cause of a later report. The
+ordering can be accomplished by a timestamp when an issue was reported.
+
+Dynamic analyzers are usually executed during a test CI job in parallel. This
+parallelism results overlapping dynamic reports of independent testcase
+executions in time. These can be separated by the indication of the testcase's
+name.
+
+`.plist` files can be extended with a `report-annotation` section shown in the
+following example. Report annotations are custom labels that can be attached to
+a report. CodeChecker supports the usage of `testcase` and `timestamp`
+annotations. `timestamp` can be used for ordering and `testcase` can be used
+for filtering reports in the CodeChecker GUI.
+
+<pre>
+&lt;dict&gt;
+  &lt;key&gt;diagnostics&lt;/key&gt;
+  &lt;array&gt;
+    &lt;dict&gt;
+      &lt;key&gt;category&lt;/key&gt;
+      &lt;string&gt;unknown&lt;/string&gt;
+      &lt;key&gt;check_name&lt;/key&gt;
+      &lt;string&gt;UndefinedBehaviorSanitizer&lt;/string&gt;
+      &lt;key&gt;description&lt;/key&gt;
+      &lt;string&gt;...&lt;/string&gt;
+      &lt;key&gt;issue_hash_content_of_line_in_context&lt;/key&gt;
+      &lt;string&gt;...&lt;/string&gt;
+      &lt;key&gt;location&lt;/key&gt;
+      &lt;dict&gt;...&lt;/dict&gt;
+      <b>&lt;key&gt;report-annotation&lt;/key&gt;
+      &lt;dict&gt;
+        &lt;key&gt;testcase&lt;/key&gt;
+        &lt;string&gt;yhegalkoei&lt;/string&gt;
+        &lt;key&gt;timestamp&lt;/key&gt;
+        &lt;string&gt;1970-04-26T17:27:55&lt;/string&gt;
+      &lt;/dict&gt;</b>
+      &lt;key&gt;path&lt;/key&gt;
+      &lt;array&gt;
+        ...
+      &lt;/array&gt;
+    &lt;/dict&gt;
+</pre>
 
 ### `parse`
 
