@@ -6,6 +6,107 @@
         <new-release-item>
           <template v-slot:title>
             <a
+              href="https://github.com/Ericsson/codechecker/releases/tag/v6.22.0"
+              target="_blank"
+              class="white--text"
+            >
+              Highlights of CodeChecker 6.22.0 release
+            </a>
+          </template>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Further enhancements to speed up the store procedure
+            </template>
+            After another round of optimizations, CodeChecker store is ~2 times
+            faster than in v6.21.0. Combined with the previous release, storing
+            may be as much as 4 times faster than v6.20.0., with larger result
+            directories seeing a greater degree of improvement.
+            <br>
+            This should allow those that use CodeChecker in CI loops to see
+            fewer timeouts due to long storages, or lower timeout tresholds
+            significantly.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Multiroot analysis
+            </template>
+            CodeChecker now supports an analysis mode where for each source
+            file, it tries to find the closest compile_commands.json file up in
+            the directory hierarchy starting from the source file.
+
+            If your project is structured such that multiple folders act as
+            their own root folder (hence the name multiroot), CodeChecker
+            should be able to support that out of the box. clangd and
+            clang-tidy already works this way.
+            <br>
+            This feature also affects the CodeChecker Visual Studio Code
+            plugin, where analysis will be done on multiroot projects as well.
+            <br>
+            Previously the input of analysis must have been a compilation
+            database JSON file. This PR supports the following new CodeChecker
+            analyze invocations, as long as a corresponding compilation
+            database file is found:
+            <pre>
+# Analyze a single file.
+CodeChecker analyze analyze.cpp -o reports
+
+# Analyze all source files under a directory.
+CodeChecker analyze my_project -o reports
+            </pre>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Support report annotations and add dynamic analyzer related annotations
+            </template>
+            Unlike for static analyzers, the time of the detection can be a
+            crucial piece of information, as a report may be a result of
+            another preceding report. Users that record the timestamp of the
+            detection and store it in CodeChecker under the new 'Timestamp'
+            field will be able to sort reports by it. CodeChecker now also
+            supports the 'Testsuite' field.
+            You can read more about this feature in its PR:
+            <a href="https://github.com/Ericsson/codechecker/pull/3849" target="_blank">#3849</a>.
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Removed deprecated flags, turn missing checker warnings to errors
+              <v-alert dense outlined type="error" class="py-0 ma-0 ml-2">
+                Backward incompatible change!
+              </v-alert>
+            </template>
+            Removed <code>CodeChecker checkers --only-enabled</code>, use
+            <code>CodeChecker checkers --details</code> instead.
+            <br>
+            Removed <code>CodeChecker checkers --only-disabled</code>, use
+            <code>CodeChecker checkers --details</code> instead.
+            <br>
+            Removed <code>CodeChecker cmd diff --suppressed</code> and <code>CodeChecker cmd diff -s</code>, use
+            <code>CodeChecker cmd diff --review-status [REVIEW_STATUS [REVIEW_STATUS ...]]</code> instead.
+            <br>
+            Removed <code>CodeChecker cmd diff --filter</code>, use
+            <code>CodeChecker cmd diff --review-status false_positive</code> instead.
+            <br>
+            Removed <code>CodeChecker cmd sum --disable-unique</code>, use
+            <code>CodeChecker cmd sum --uniqueing'</code> instead.
+            <br>
+            Removed <code>CodeChecker analyze --tidy-config</code>, use
+            <code>CodeChecker analyze --analyzer-config'</code> instead.
+            <br>
+            Incorrect checker names now emit errors instead of errors, but if
+            necessary, the old behaviour can be restored with
+            <code>--no-missing-checker-error</code>.
+          </new-feature-item>
+        </new-release-item>
+      </v-timeline-item>
+
+      <v-timeline-item fill-dot icon="mdi-star">
+        <new-release-item>
+          <template v-slot:title>
+            <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.21.0"
               target="_blank"
               class="white--text"
