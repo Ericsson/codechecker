@@ -48,8 +48,6 @@ def get_compiler_warning_name(checker_name):
     if checker_name.startswith('W'):
         return checker_name[4:] if \
             checker_name.startswith('Wno-') else checker_name[1:]
-    elif checker_name.startswith('clang-diagnostic-'):
-        return checker_name[len('clang-diagnostic-'):]
 
 
 class AnalyzerConfigHandler(metaclass=ABCMeta):

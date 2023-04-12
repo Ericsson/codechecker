@@ -284,10 +284,6 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
         self.assertTrue(is_compiler_warning('Wreserved-id-macro'))
         self.assertFalse(is_compiler_warning('hicpp'))
 
-        # Test that clang-diagnostic-* checkers are treated as compiler
-        # warnings.
-        self.assertTrue(is_compiler_warning("clang-diagnostic-vla"))
-
         args = Namespace()
         args.ordered_checkers = [('Wreserved-id-macro', True)]
         analyzer = create_analyzer_tidy(args)
@@ -347,4 +343,3 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
         # -Wno-unused-value.
         self.assertEqual(cmd.count('-Wvla'), 1)
         self.assertEqual(cmd.count('-Wvla-extension'), 1)
-        self.assertEqual(cmd.count('-Wno-unused-value'), 1)
