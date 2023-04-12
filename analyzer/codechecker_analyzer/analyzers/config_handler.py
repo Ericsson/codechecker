@@ -40,13 +40,16 @@ class CheckerState(Enum):
 
 def get_compiler_warning_name(checker_name):
     """
-    Removes 'W' or 'Wno' from the compiler warning name, if this is a
-    compiler warning. Returns None otherwise.
+    Removes 'W' or 'Wno' from the compiler warning name, or
+    'clang-diagnostic-' from the checker name.
+    Returns None otherwise.
     """
     # Checker name is a compiler warning.
     if checker_name.startswith('W'):
         return checker_name[4:] if \
             checker_name.startswith('Wno-') else checker_name[1:]
+    elif checker_name.startswith('clang-diagnostic-'):
+        return checker_name[len('clang-diagnostic-'):]
 
 
 class AnalyzerConfigHandler(metaclass=ABCMeta):
