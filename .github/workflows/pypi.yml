@@ -11,7 +11,7 @@ on:
 jobs:
   build:
     name: Build pypi package
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
 
     steps:
       - uses: actions/checkout@v2
@@ -58,7 +58,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-18.04, macos-10.15, windows-2019]
+        os: [ubuntu-20.04, macos-10.15, windows-2019]
 
     steps:
       - uses: actions/setup-python@v4
@@ -71,7 +71,7 @@ jobs:
           path: ./
 
       - name: "Install run-time dependencies (Linux)"
-        if: ${{ matrix.os == 'ubuntu-18.04' }}
+        if: ${{ matrix.os == 'ubuntu-20.04' }}
         run:
           sudo apt-get update && sudo apt-get install g++ clang clang-tidy cppcheck
 
@@ -102,7 +102,7 @@ jobs:
   publish:
     name: Publish pypi package
     if: github.event_name == 'release'
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     needs: test
     steps:
       - uses: actions/download-artifact@master
