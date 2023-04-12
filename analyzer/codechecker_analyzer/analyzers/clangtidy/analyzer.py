@@ -248,8 +248,10 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                     compiler_warnings.add('-Wno-' + warning_name)
                 continue
 
-            # If clang-diagnostic is enabled, else add it as a disabled
-            # check.
+            # If a clang-diagnostic-... is enabled add it as a compiler
+            # warning as -W..., if it is disabled, tidy can suppress when
+            # specified in the -checks parameter list, so we add it there
+            # as -clang-diagnostic-... .
             if checker_name.startswith('clang-diagnostic-') and \
                     state == CheckerState.enabled:
                 warning_name = checker_name[len('clang-diagnostic-'):]
@@ -263,7 +265,6 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                 checkers.append(checker_name)
             elif state == CheckerState.disabled:
                 checkers.append('-' + checker_name)
-
         # -checks=-clang-analyzer-* option is added to the analyzer command by
         # default except when all analyzer config options come from .clang-tidy
         # file. The content of this file overrides every other custom config
