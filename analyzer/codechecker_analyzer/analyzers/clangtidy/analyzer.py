@@ -230,10 +230,10 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             # Checker name is a compiler warning.
             if checker_name.startswith('W'):
-                LOG.warning(f"The following usage of {checker_name} "
-                            "compiler warning as a checker name is "
-                            "deprecated, please use "
-                            "clang-diagnostic-<checker-name> instead")
+                LOG.warning("As of CodeChecker v6.22, the following usage"
+                            f"of '{checker_name}' compiler warning as a "
+                            "checker name is deprecated, please use "
+                            f"'clang-diagnostic-{checker_name[1:]}' instead.")
 
             warning_name = get_compiler_warning_name(checker_name)
             if warning_name is not None:
@@ -241,6 +241,10 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                 if state == CheckerState.enabled:
                     compiler_warnings.add('-W' + warning_name)
                 elif state == CheckerState.disabled:
+                    if config.enable_all:
+                        LOG.warning("Disabling compiler warning with compiler"
+                                    f" flag '-d W{warning_name}' is not "
+                                    "supported.")
                     compiler_warnings.add('-Wno-' + warning_name)
                 continue
 
@@ -253,6 +257,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                     compiler_warnings.add('-W' + warning_name)
                 elif state == CheckerState.disabled:
                     checkers.append('-' + checker_name)
+                continue
 
             if state == CheckerState.enabled:
                 checkers.append(checker_name)
@@ -340,7 +345,10 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                     has_flag('--std', analyzer_cmd):
                 analyzer_cmd.append(self.buildaction.compiler_standard)
 
-            analyzer_cmd.extend(compiler_warnings)
+            if config.enable_all:
+                analyzer_cmd.append("-Weverything")
+            else:
+                analyzer_cmd.extend(compiler_warnings)
 
             return analyzer_cmd
 

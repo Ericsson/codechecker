@@ -63,6 +63,7 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         self.checker_config = ''
         self.analyzer_config = None
         self.report_hash = None
+        self.enable_all = None
 
         # The key is the checker name, the value is a tuple.
         # False if disabled (should be by default).
@@ -196,6 +197,7 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
             for checker in default_profile_checkers:
                 self.set_checker_enabled(checker)
 
+        self.enable_all = enable_all
         # If enable_all is given, almost all checkers should be enabled.
         disabled_groups = ["alpha.", "debug.", "osx.", "abseil-", "android-",
                            "darwin-", "objc-", "cppcoreguidelines-",
