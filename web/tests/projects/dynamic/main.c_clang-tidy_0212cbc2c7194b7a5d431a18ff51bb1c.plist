@@ -17,7 +17,7 @@
 			<dict>
 				<key>timestamp</key>
 				<string>2000-01-01 09:01</string>
-				<key>testsuite</key>
+				<key>testcase</key>
 				<string>TS-1</string>
 				<key>testcase</key>
 				<string>TC-1</string>

@@ -23,6 +23,8 @@ import codechecker_api_shared
 from codechecker_client.product import create_product_url
 from codechecker_web.shared.version import CLIENT_API as VERSION
 
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import ReportFilter
+
 
 class ThriftAPIHelper:
 
@@ -239,7 +241,12 @@ class CCConfigHelper(ThriftAPIHelper):
         return partial(self._thrift_client_call, attr)
 
 
-def get_all_run_results(client, run_id=None, sort_mode=None, filters=None):
+def get_all_run_results(
+    client,
+    run_id=None,
+    sort_mode=None,
+    filters=ReportFilter()
+):
     """
     Get all the results for a run.
     Query limit limits the number of results can be got from the

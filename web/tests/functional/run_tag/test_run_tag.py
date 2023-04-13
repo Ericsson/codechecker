@@ -98,9 +98,8 @@ int main()
         """
         Get run history tag for the given run.
         """
-        test_run_tags = \
-            self._cc_client.getRunHistoryTagCounts([run_id], None, None,
-                                                   limit, offset)
+        test_run_tags = self._cc_client.getRunHistoryTagCounts(
+            [run_id], ReportFilter(), None, limit, offset)
 
         self.assertGreater(len(test_run_tags), 0)
 

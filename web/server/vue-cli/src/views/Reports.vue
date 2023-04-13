@@ -277,8 +277,8 @@ export default {
           sortable: true
         },
         {
-          text: "Testsuite",
-          value: "testsuite",
+          text: "Testcase",
+          value: "testcase",
           align: "center",
           sortable: false
         }
@@ -360,7 +360,7 @@ export default {
           "$id": id,
           "sameReports": report.sameReports,
           "timestamp": report.annotations["timestamp"],
-          "testsuite": report.annotations["testsuite"]
+          "testcase": report.annotations["testcase"]
         };
       });
     }

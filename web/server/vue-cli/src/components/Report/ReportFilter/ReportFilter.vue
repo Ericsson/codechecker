@@ -287,7 +287,7 @@
 
       <v-list-item class="pl-1">
         <v-list-item-content class="pa-0">
-          <testsuite-filter
+          <testcase-filter
             ref="filters"
             :namespace="namespace"
             @update:url="updateUrl"
@@ -335,7 +335,7 @@ import {
   ReviewStatusFilter,
   SeverityFilter,
   SourceComponentFilter,
-  TestsuiteFilter,
+  TestcaseFilter,
   UniqueFilter
 } from "./Filters";
 
@@ -368,7 +368,7 @@ export default {
     CheckerMessageFilter,
     RemoveFilteredReports,
     BugPathLengthFilter,
-    TestsuiteFilter
+    TestcaseFilter
   },
   props: {
     namespace: { type: String, required: true },

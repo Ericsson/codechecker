@@ -147,8 +147,8 @@ class TestComponent(unittest.TestCase):
         Other component doesn't contain reports which are covered by rest of
         the component.
         """
-        all_results = self._cc_client.getRunResults(None, 500, 0, None, None,
-                                                    None, False)
+        all_results = self._cc_client.getRunResults(
+            None, 500, 0, None, ReportFilter(), None, False)
 
         r_filter = ReportFilter(componentNames=[c['name'] for c in components])
         component_results = self._cc_client.getRunResults(None, 500, 0, None,
@@ -385,8 +385,8 @@ class TestComponent(unittest.TestCase):
         components = self.__get_user_defined_source_components()
         self.assertEqual(len(components), 0)
 
-        all_results = self._cc_client.getRunResults(None, 500, 0, None, None,
-                                                    None, False)
+        all_results = self._cc_client.getRunResults(
+            None, 500, 0, None, ReportFilter(), None, False)
         self.assertIsNotNone(all_results)
 
         r_filter = ReportFilter(componentNames=[GEN_OTHER_COMPONENT_NAME])

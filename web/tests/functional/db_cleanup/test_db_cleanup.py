@@ -112,9 +112,8 @@ int f(int x) { return 1 / x; }
 
         run_id = self.__get_run_id([run_name])
 
-        reports \
-            = self._cc_client.getRunResults([run_id], 10, 0, [], None, None,
-                                            False)
+        reports = self._cc_client.getRunResults(
+            [run_id], 10, 0, [], ReportFilter(), None, False)
 
         details = self._cc_client.getReportDetails(reports[0].reportId)
 
@@ -142,9 +141,8 @@ int f(int x) { return 1 / x; }
         runs = self._cc_client.getRunData(run_filter, None, 0, None)
         run_id = runs[0].runId
 
-        reports \
-            = self._cc_client.getRunResults([run_id], 10, 0, [], None, None,
-                                            False)
+        reports = self._cc_client.getRunResults(
+            [run_id], 10, 0, [], ReportFilter(), None, False)
 
         checker_labels = CheckerLabels(self.workspace_labels_dir)
         for report in reports:
@@ -189,8 +187,8 @@ int f(int x) { return 1 / x; }
                                     self.test_dir)
 
         run_id1 = self.__get_run_id([run_name1])
-        report = self._cc_client.getRunResults(None, 1, 0, [], None,
-                                               None, False)[0]
+        report = self._cc_client.getRunResults(
+            None, 1, 0, [], ReportFilter(), None, False)[0]
 
         report_hash = report.bugHash
         report_id = report.reportId
