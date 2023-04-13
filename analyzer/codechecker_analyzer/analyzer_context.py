@@ -138,7 +138,8 @@ class Context(metaclass=Singleton):
         self.__package_version = package_version['major'] + '.' + \
             package_version['minor'] + '.' + \
             package_version['revision'] + \
-            ('-rc' + package_version['rc'] if 'rc' in package_version else '')
+            ('-rc' + package_version['rc'] if 'rc' in package_version and
+             package_version['rc'] else '')
 
         self.__package_build_date = package_build_date
         self.__package_git_hash = package_git_hash
