@@ -182,11 +182,11 @@ def setup_logger(log_level=None, stream=None, workspace=None):
             if 'stream' in handler:
                 handler['stream'] = stream
 
-    # if workspace is set, we will log to a file in the workspace
-    # This is added dynamically because the declaratice config is not
-    # flexible enough, and will always create a log file in wierd locations,
-    # before we can initialize the filneame attribute, to the workspace
-    # directories
+    # If workspace is set, we will log to a file in the workspace.
+    # This is added dynamically because the declarative config
+    # (config/logger.conf) is not flexible enough, and will always
+    # create a log file in weird locations, before we can initialize
+    # the filename attribute, to the workspace directories.
     if workspace:
         # Add file_handler to store_time logger,
         # and add the handler to the config
