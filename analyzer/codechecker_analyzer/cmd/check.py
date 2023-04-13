@@ -698,6 +698,15 @@ LLVM/Clang community, and thus discouraged.
                                     "the analysis. USE WISELY AND AT YOUR "
                                     "OWN RISK!")
 
+    checkers_opts.add_argument('--no-missing-checker-error',
+                               dest="no_missing_checker_error",
+                               action='store_true',
+                               required=False,
+                               default=argparse.SUPPRESS,
+                               help="Emit a warning instead of an error when "
+                                    "an unknown checker name is given to "
+                                    "either --enable or --disable.")
+
     output_opts = parser.add_argument_group("output arguments")
 
     output_opts.add_argument('--print-steps',

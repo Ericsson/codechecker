@@ -752,6 +752,15 @@ LLVM/Clang community, and thus discouraged.
                                     "the analysis. USE WISELY AND AT YOUR "
                                     "OWN RISK!")
 
+    checkers_opts.add_argument('--no-missing-checker-error',
+                               dest="no_missing_checker_error",
+                               action='store_true',
+                               required=False,
+                               default=argparse.SUPPRESS,
+                               help="Emit a warning instead of an error when "
+                                    "an unknown checker name is given to "
+                                    "either --enable or --disable.")
+
     logger.add_verbose_arguments(parser)
     parser.set_defaults(
         func=main, func_process_config_file=cmd_config.process_config_file)
