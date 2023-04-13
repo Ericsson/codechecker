@@ -13,11 +13,12 @@ Config handler for Clang Tidy analyzer.
 from codechecker_common.logger import get_logger
 
 from ..config_handler import AnalyzerConfigHandler, CheckerState, \
-                             get_compiler_warning_name
+                             get_compiler_warning_name_and_type
 
 
 def is_compiler_warning(checker_name):
-    return (get_compiler_warning_name(checker_name) is not None)
+    name, _ = get_compiler_warning_name_and_type(checker_name)
+    return name is not None
 
 
 LOG = get_logger('analyzer.tidy')

@@ -24,7 +24,8 @@ from codechecker_analyzer import analyzer_context, env
 from codechecker_analyzer.analyzers.clangsa.analyzer import ClangSA
 
 from .. import analyzer_base
-from ..config_handler import CheckerState, get_compiler_warning_name
+from ..config_handler import CheckerState, CheckerType, \
+    get_compiler_warning_name_and_type
 from ..flag import has_flag
 from ..flag import prepend_all
 
@@ -228,37 +229,34 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         for checker_name, value in config.checks().items():
             state, _ = value
 
-            # Checker name is a compiler warning.
-            if checker_name.startswith('W'):
-                LOG.warning("As of CodeChecker v6.22, the following usage"
-                            f"of '{checker_name}' compiler warning as a "
-                            "checker name is deprecated, please use "
-                            f"'clang-diagnostic-{checker_name[1:]}' instead.")
-
-            warning_name = get_compiler_warning_name(checker_name)
+            warning_name, warning_type = \
+                get_compiler_warning_name_and_type(checker_name)
             if warning_name is not None:
                 # -W and clang-diagnostic- are added as compiler warnings.
-                if state == CheckerState.enabled:
-                    compiler_warnings.add('-W' + warning_name)
-                elif state == CheckerState.disabled:
-                    if config.enable_all:
-                        LOG.warning("Disabling compiler warning with compiler"
-                                    f" flag '-d W{warning_name}' is not "
-                                    "supported.")
-                    compiler_warnings.add('-Wno-' + warning_name)
-                continue
+                if warning_type == CheckerType.compiler:
+                    LOG.warning("As of CodeChecker v6.22, the following usage"
+                                f"of '{checker_name}' compiler warning as a "
+                                "checker name is deprecated, please use "
+                                f"'clang-diagnostic-{checker_name[1:]}' "
+                                "instead.")
+                    if state == CheckerState.enabled:
+                        compiler_warnings.add('-W' + warning_name)
+                    elif state == CheckerState.disabled:
+                        if config.enable_all:
+                            LOG.warning("Disabling compiler warning with "
+                                        f"compiler flag '-d W{warning_name}' "
+                                        "is not supported.")
+                        compiler_warnings.add('-Wno-' + warning_name)
+                # If a clang-diagnostic-... is enabled add it as a compiler
+                # warning as -W..., if it is disabled, tidy can suppress when
+                # specified in the -checks parameter list, so we add it there
+                # as -clang-diagnostic-... .
+                elif warning_type == CheckerType.analyzer:
+                    if state == CheckerState.enabled:
+                        compiler_warnings.add('-W' + warning_name)
+                    elif state == CheckerState.disabled:
+                        checkers.append('-' + checker_name)
 
-            # If a clang-diagnostic-... is enabled add it as a compiler
-            # warning as -W..., if it is disabled, tidy can suppress when
-            # specified in the -checks parameter list, so we add it there
-            # as -clang-diagnostic-... .
-            if checker_name.startswith('clang-diagnostic-') and \
-                    state == CheckerState.enabled:
-                warning_name = checker_name[len('clang-diagnostic-'):]
-                if state == CheckerState.enabled:
-                    compiler_warnings.add('-W' + warning_name)
-                elif state == CheckerState.disabled:
-                    checkers.append('-' + checker_name)
                 continue
 
             if state == CheckerState.enabled:
