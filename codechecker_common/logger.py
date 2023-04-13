@@ -13,8 +13,8 @@ import argparse
 import json
 import logging
 from logging import config
+from pathlib import Path
 import os
-
 
 # The logging leaves can be accesses without
 # importing the logging module in other modules.
@@ -125,10 +125,10 @@ class LOG_CFG_SERVER:
     'CC_LOG_CONFIG_PORT' environment variable is set.
     """
 
-    def __init__(self, log_level='INFO'):
+    def __init__(self, log_level='INFO', workspace=None):
 
         # Configure the logging with the default config.
-        setup_logger(log_level)
+        setup_logger(log_level, workspace=workspace)
 
         self.log_server = None
 
@@ -147,7 +147,7 @@ class LOG_CFG_SERVER:
             self.log_server.join()
 
 
-def setup_logger(log_level=None, stream=None):
+def setup_logger(log_level=None, stream=None, workspace=None):
     """
     Modifies the log configuration.
     Overwrites the log levels for the loggers and handlers in the
@@ -181,5 +181,27 @@ def setup_logger(log_level=None, stream=None):
             handler = LOG_CONFIG['handlers'][k]
             if 'stream' in handler:
                 handler['stream'] = stream
+
+    # If workspace is set, we will log to a file in the workspace.
+    # This is added dynamically because the declarative config
+    # (config/logger.conf) is not flexible enough, and will always
+    # create a log file in weird locations, before we can initialize
+    # the filename attribute, to the workspace directories.
+    if workspace:
+        # Add file_handler to store_time logger,
+        # and add the handler to the config
+        loggers = LOG_CONFIG.get("loggers", {})
+        loggers["store_time"]["handlers"].append('store_time_file_handler')
+
+        handlers = LOG_CONFIG.get("handlers", {})
+        log_path = Path(workspace, "store_time.log")
+        handlers["store_time_file_handler"] = {}
+        store_time_handler = {
+            'backupCount': 8,
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            "filename": log_path,
+            'formatter': 'store_time_formatter',
+            'interval': 7}
+        handlers["store_time_file_handler"] = store_time_handler
 
     config.dictConfig(LOG_CONFIG)
