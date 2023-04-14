@@ -992,6 +992,12 @@ def main(args):
         else None
     )
 
+    # Create workspace directory before logging is initialized.
+    if workspace and not os.path.exists(args.config_directory):
+        LOG.info("Creating non existing config directory: %s",
+                 args.config_directory)
+        os.makedirs(args.config_directory)
+
     with logger.LOG_CFG_SERVER(
         args.verbose if "verbose" in args else None, workspace=workspace
     ):
