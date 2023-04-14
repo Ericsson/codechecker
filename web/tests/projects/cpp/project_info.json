@@ -30,12 +30,17 @@
             { "file": "null_dereference.cpp", "line": 29, "checker": "core.NullDereference", "hash": "240a6bd741a985007d87f072630e0642" },
             { "file": "null_dereference.cpp", "line": 14, "checker": "deadcode.DeadStores", "hash": "71da3e2139080a65790f108f17bb7f15" },
             { "file": "null_dereference.cpp", "line": 29, "checker": "deadcode.DeadStores", "hash": "98db15ea41ba255ba5e98d5ed35b5037" },
+            { "file": "path_begin1.cpp", "line": 14, "checker": "clang-diagnostic-return-type", "hash": "6b2b9dc26f72c9713b0ea859d139236d" },
+            { "file": "path_begin2.cpp", "line": 17, "checker": "clang-diagnostic-return-type", "hash": "acb65d71fb29931f08ff5e49bd2d3f11" },
+            { "file": "path_begin.cpp", "line": 22, "checker": "clang-diagnostic-return-type", "hash": "e6614665f179dac75fbde1efca58d069" },
+            { "file": "path_end.h", "line": 13, "checker": "clang-diagnostic-return-type", "hash": "fa629700fc11cffecdc866126cf0ad1d" },
             { "file": "path_end.h", "line": 9, "checker": "core.DivideZero", "hash": "4073351ef6106178688407bc3c4aa6ae" },
             { "file": "path_end.h", "line": 9, "checker": "core.DivideZero", "hash": "4073351ef6106178688407bc3c4aa6ae" },
             { "file": "path_end.h", "line": 7, "checker": "misc-definitions-in-headers", "hash": "682eed27e6a1ff49414d7e2f057cf113" },
             { "file": "stack_address_escape.cpp", "line": 15, "checker": "core.StackAddressEscape", "hash": "a785826f20c20d703c98eacb6f014bc0" },
             { "file": "stack_address_escape.cpp", "line": 18, "checker": "core.StackAddressEscape", "hash": "79838e6f63246dda474910da1d37ae32" },
             { "file": "stack_address_escape.cpp", "line": 25, "checker": "core.StackAddressEscape", "hash": "d8284a4775702c394deb2b9f6ae7c2fd" },
+            { "file": "statistical_checkers.cpp", "line": 21, "checker": "clang-diagnostic-return-type", "hash": "21fcd271f92a09af62b0ecbca52df9db" },
             { "file": "skip_header.cpp", "line": 15, "checker": "core.DivideZero", "hash": "6323bb2b22ffeff5c265eb14ae402d29" },
             { "file": "skip_header.cpp", "line": 15, "checker": "clang-diagnostic-division-by-zero", "hash": "480caff35245121deb7d14f7fcf6787c" },
             { "file": "skip.h", "line": 8, "checker": "core.DivideZero", "hash": "269d82a20d38f23bbf730a2cf1d1668b" },
@@ -44,12 +49,12 @@
             { "file": "path_begin.cpp", "line": 12, "checker": "core.DivideZero", "hash": "73e6a2e1091295da065a6527f8540366" },
             { "file": "path_begin.cpp", "line": 18, "checker": "core.DivideZero", "hash": "73e6a2e1091295da065a6527f8540366" }
         ],
-        "filter_severity_levels": [{"MEDIUM": 6}, {"LOW": 6}, {"HIGH": 27}, {"STYLE": 0}, {"CRITICAL": 0}],
+        "filter_severity_levels": [{"MEDIUM": 6}, {"LOW": 6}, {"HIGH": 32}, {"STYLE": 0}, {"CRITICAL": 0}],
         "filter_checker_id": [{"*unix*": 1}, {"core*": 22}, {"*DeadStores": 6}],
-        "filter_analyzer_name": [{"clang-tidy": 5}, {"clangsa": 34}],
+        "filter_analyzer_name": [{"clang-tidy": 10}, {"clangsa": 34}],
         "filter_filepath": [{"*null*": 5}],
         "filter_filepath_case_insensitive": [{"*null*": 5}, {"*nULl*": 5}, {"*NULL*": 5}, {"*Null*": 5}],
-        "filter_review_status": [{"UNREVIEWED": 0}, {"CONFIRMED": 39}, {"FALSE_POSITIVE": 0}, {"INTENTIONAL": 0}],
+        "filter_review_status": [{"UNREVIEWED": 0}, {"CONFIRMED": 44}, {"FALSE_POSITIVE": 0}, {"INTENTIONAL": 0}],
         "diff_res_types_filter": [{"deadcode.DeadStores": 6},  {"cplusplus.NewDelete": 5}, {"unix.Malloc": 1}]
     }
 }

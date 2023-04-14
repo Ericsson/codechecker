@@ -63,6 +63,7 @@ class TestReportFilter(unittest.TestCase):
 
         self.run1_checkers = \
             {'clang-diagnostic-division-by-zero': 3,
+             'clang-diagnostic-return-type': 5,
              'core.CallAndMessage': 5,
              'core.DivideZero': 10,
              'core.NullDereference': 4,
@@ -84,31 +85,34 @@ class TestReportFilter(unittest.TestCase):
 
         self.run1_sev_counts = {Severity.MEDIUM: 6,
                                 Severity.LOW: 6,
-                                Severity.HIGH: 27}
+                                Severity.HIGH: 32}
 
         self.run2_sev_counts = {Severity.MEDIUM: 6,
                                 Severity.LOW: 6,
                                 Severity.HIGH: 24}
 
         self.run1_detection_counts = \
-            {DetectionStatus.NEW: 39}
+            {DetectionStatus.NEW: 44}
 
         self.run2_detection_counts = \
             {DetectionStatus.NEW: 36}
 
         self.run1_files = \
-            {'file_to_be_skipped.cpp': 2,
-             'null_dereference.cpp': 5,
-             'new_delete.cpp': 6,
-             'stack_address_escape.cpp': 3,
+            {'new_delete.cpp': 6,
              'call_and_message.cpp': 5,
              'divide_zero.cpp': 5,
-             'divide_zero_duplicate.cpp': 2,
-             'has a space.cpp': 1,
-             'skip_header.cpp': 2,
+             'null_dereference.cpp': 5,
+             'path_end.h': 4,
+             'path_begin.cpp': 3,
              'skip.h': 3,
-             'path_begin.cpp': 2,
-             'path_end.h': 3
+             'stack_address_escape.cpp': 3,
+             'divide_zero_duplicate.cpp': 2,
+             'file_to_be_skipped.cpp': 2,
+             'skip_header.cpp': 2,
+             'has a space.cpp': 1,
+             'path_begin1.cpp': 1,
+             'path_begin2.cpp': 1,
+             'statistical_checkers.cpp': 1
              }
 
         self.run2_files = \
@@ -293,7 +297,7 @@ class TestReportFilter(unittest.TestCase):
         file_counts = self._cc_client.getFileCounts(
             [runid], run_filter, None, None, 0)
 
-        self.assertEqual(len(file_counts), 12)
+        self.assertEqual(len(file_counts), len(self.run1_files))
 
     def test_run2_all_file(self):
         """
@@ -557,6 +561,7 @@ class TestReportFilter(unittest.TestCase):
         checkers_dict = dict((res.name, res.count) for res in new_reports)
 
         new = {'clang-diagnostic-division-by-zero': 3,
+               'clang-diagnostic-return-type': 5,
                'core.CallAndMessage': 5,
                'core.StackAddressEscape': 3,
                'cplusplus.NewDelete': 5,

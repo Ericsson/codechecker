@@ -24,7 +24,8 @@ from codechecker_analyzer import analyzer_context, env
 from codechecker_analyzer.analyzers.clangsa.analyzer import ClangSA
 
 from .. import analyzer_base
-from ..config_handler import CheckerState, get_compiler_warning_name
+from ..config_handler import CheckerState, CheckerType, \
+    get_compiler_warning_name_and_type
 from ..flag import has_flag
 from ..flag import prepend_all
 
@@ -207,7 +208,9 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         some ClangSA bug.
         """
         checkers = []
-        compiler_warnings = []
+        # Usage of a set will remove compiler warnings and clang-diagnostics
+        # which are the same.
+        compiler_warnings = set()
 
         has_checker_config = \
             config.checker_config and config.checker_config != '{}'
@@ -226,23 +229,40 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         for checker_name, value in config.checks().items():
             state, _ = value
 
-            # Checker name is a compiler warning.
-            warning_name = get_compiler_warning_name(checker_name)
+            warning_name, warning_type = \
+                get_compiler_warning_name_and_type(checker_name)
             if warning_name is not None:
-                if state == CheckerState.enabled:
-                    compiler_warnings.append('-W' + warning_name)
-                elif state == CheckerState.disabled:
-                    compiler_warnings.append('-Wno-' + warning_name)
+                # -W and clang-diagnostic- are added as compiler warnings.
+                if warning_type == CheckerType.compiler:
+                    LOG.warning("As of CodeChecker v6.22, the following usage"
+                                f"of '{checker_name}' compiler warning as a "
+                                "checker name is deprecated, please use "
+                                f"'clang-diagnostic-{checker_name[1:]}' "
+                                "instead.")
+                    if state == CheckerState.enabled:
+                        compiler_warnings.add('-W' + warning_name)
+                    elif state == CheckerState.disabled:
+                        if config.enable_all:
+                            LOG.warning("Disabling compiler warning with "
+                                        f"compiler flag '-d W{warning_name}' "
+                                        "is not supported.")
+                        compiler_warnings.add('-Wno-' + warning_name)
+                # If a clang-diagnostic-... is enabled add it as a compiler
+                # warning as -W..., if it is disabled, tidy can suppress when
+                # specified in the -checks parameter list, so we add it there
+                # as -clang-diagnostic-... .
+                elif warning_type == CheckerType.analyzer:
+                    if state == CheckerState.enabled:
+                        compiler_warnings.add('-W' + warning_name)
+                    elif state == CheckerState.disabled:
+                        checkers.append('-' + checker_name)
 
                 continue
-            elif checker_name.startswith('clang-diagnostic'):
-                checker_name += '*'
 
             if state == CheckerState.enabled:
                 checkers.append(checker_name)
             elif state == CheckerState.disabled:
                 checkers.append('-' + checker_name)
-
         # -checks=-clang-analyzer-* option is added to the analyzer command by
         # default except when all analyzer config options come from .clang-tidy
         # file. The content of this file overrides every other custom config
@@ -250,7 +270,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         # for the compiler, clang-tidy is just capable to emit them in its own
         # format.
         if config.analyzer_config.get('take-config-from-directory') == 'true':
-            return [], compiler_warnings
+            return [], list(compiler_warnings)
 
         if has_checker_config:
             try:
@@ -263,12 +283,12 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                 # valid dictionary.
                 checker_cfg = ast.literal_eval(config.checker_config.strip())
                 if checker_cfg.get('Checks'):
-                    return [], compiler_warnings
+                    return [], list(compiler_warnings)
             except SyntaxError as ex:
                 LOG.debug("Invalid checker configuration: %s. Error: %s",
                           config.checker_config, ex)
 
-        return checkers, compiler_warnings
+        return checkers, list(compiler_warnings)
 
     def construct_analyzer_cmd(self, result_handler):
         """ Contruct command which will be executed on analysis. """
@@ -324,7 +344,10 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                     has_flag('--std', analyzer_cmd):
                 analyzer_cmd.append(self.buildaction.compiler_standard)
 
-            analyzer_cmd.extend(compiler_warnings)
+            if config.enable_all:
+                analyzer_cmd.append("-Weverything")
+            else:
+                analyzer_cmd.extend(compiler_warnings)
 
             return analyzer_cmd
 

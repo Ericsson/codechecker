@@ -38,15 +38,31 @@ class CheckerState(Enum):
     enabled = 2
 
 
-def get_compiler_warning_name(checker_name):
+class CheckerType(Enum):
+    """
+    Checker type.
+    """
+    analyzer = 0  # A checker which is not a compiler warning.
+    compiler = 1  # A checker which specified as "-W<name>" or "-Wno-<name>".
+
+
+def get_compiler_warning_name_and_type(checker_name):
     """
     Removes 'W' or 'Wno' from the compiler warning name, if this is a
-    compiler warning. Returns None otherwise.
+    compiler warning and returns the name and CheckerType.compiler.
+    If it is a clang-diagnostic-<name> warning then it returns the name
+    and CheckerType.analyzer.
+    Otherwise returns None and CheckerType.analyzer.
     """
     # Checker name is a compiler warning.
     if checker_name.startswith('W'):
-        return checker_name[4:] if \
+        name = checker_name[4:] if \
             checker_name.startswith('Wno-') else checker_name[1:]
+        return name, CheckerType.compiler
+    elif checker_name.startswith('clang-diagnostic-'):
+        return checker_name[17:], CheckerType.analyzer
+    else:
+        return None, CheckerType.analyzer
 
 
 class AnalyzerConfigHandler(metaclass=ABCMeta):
@@ -62,6 +78,7 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         self.checker_config = ''
         self.analyzer_config = None
         self.report_hash = None
+        self.enable_all = None
 
         # The key is the checker name, the value is a tuple.
         # False if disabled (should be by default).
@@ -195,6 +212,7 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
             for checker in default_profile_checkers:
                 self.set_checker_enabled(checker)
 
+        self.enable_all = enable_all
         # If enable_all is given, almost all checkers should be enabled.
         disabled_groups = ["alpha.", "debug.", "osx.", "abseil-", "android-",
                            "darwin-", "objc-", "cppcoreguidelines-",

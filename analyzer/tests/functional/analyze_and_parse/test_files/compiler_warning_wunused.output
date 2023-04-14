@@ -1,7 +1,7 @@
 NORMAL#CodeChecker log --output $LOGFILE$ --build "make compiler_warning_unused" --quiet
-NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy -d Wunused
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy -d clang-diagnostic-unused
 NORMAL#CodeChecker parse $OUTPUT$
-CHECK#CodeChecker check --build "make compiler_warning_unused" --output $OUTPUT$ --quiet --analyzers clang-tidy -d Wunused
+CHECK#CodeChecker check --build "make compiler_warning_unused" --output $OUTPUT$ --quiet --analyzers clang-tidy -d clang-diagnostic-unused
 --------------------------------------------------------------------------------
 [] - Starting build...
 [] - Using CodeChecker ld-logger.
