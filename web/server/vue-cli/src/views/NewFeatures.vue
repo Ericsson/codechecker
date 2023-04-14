@@ -103,8 +103,8 @@ CodeChecker analyze my_project -o reports
         </new-release-item>
       </v-timeline-item>
 
-      <v-timeline-item fill-dot icon="mdi-star">
-        <new-release-item>
+      <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
+        <new-release-item color="green lighten-1">
           <template v-slot:title>
             <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.21.0"
@@ -211,8 +211,8 @@ CodeChecker analyze my_project -o reports
         </new-release-item>
       </v-timeline-item>
 
-      <v-timeline-item fill-dot icon="mdi-star">
-        <new-release-item>
+      <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
+        <new-release-item color="green lighten-1">
           <template v-slot:title>
             <a
               href="https://github.com/Ericsson/codechecker/releases/tag/v6.19.0"
@@ -1595,7 +1595,7 @@ analyzer:
         </new-release-item>
       </v-timeline-item>
 
-      <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
+      <v-timeline-item fill-dot icon="mdi-star">
         <new-release-item>
           <template v-slot:title>
             <a
