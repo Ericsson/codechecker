@@ -2,6 +2,28 @@
   <!-- eslint-disable max-len -->
   <v-container fluid>
     <v-timeline align-top>
+      <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
+        <new-release-item color="green lighten-1">
+          <template v-slot:title>
+            <a
+              href="https://github.com/Ericsson/codechecker/releases/tag/v6.22.1"
+              target="_blank"
+              class="white--text"
+            >
+              Highlights of CodeChecker 6.22.1 release
+            </a>
+          </template>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Bugfix, related to CodeChecker server
+            </template>
+            CodeChecker webapp was crashing when using the component filter,
+            which has been fixed in this release.
+          </new-feature-item>
+        </new-release-item>
+      </v-timeline-item>
+
       <v-timeline-item fill-dot icon="mdi-star">
         <new-release-item>
           <template v-slot:title>
