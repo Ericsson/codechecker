@@ -1870,14 +1870,14 @@ class ThriftRequestHandler:
                                   File.filename,
                                   *annotation_cols.values()) \
                     .outerjoin(
+                        File,
+                        Report.file_id == File.id) \
+                    .outerjoin(
                         ReportAnnotations,
                         Report.id == ReportAnnotations.report_id) \
                     .outerjoin(sorted_reports,
                                sorted_reports.c.id == Report.id) \
                     .filter(sorted_reports.c.id.isnot(None))
-
-                if File not in join_tables:
-                    q = q.outerjoin(File, Report.file_id == File.id)
 
                 if report_filter.annotations is not None:
                     annotations = defaultdict(list)
