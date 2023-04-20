@@ -102,6 +102,20 @@
             mdi-select-compare
           </v-icon>
           Diff
+          <tooltip-help-icon>
+            Compare the set of <i>outstanding reports</i> in two run (or tag)
+            sets.<br>
+            A report is outstanding if <b> all of the following is true</b>:
+            <ul>
+              <li>
+                its detection status is <i>new</i>, <i>reopened</i>, or
+                <i>unresolved</i>,
+              </li>
+              <li>
+                its review status is <i>unreviewed</i> or <i>confirmed</i>.
+              </li>
+            </ul>
+          </tooltip-help-icon>
         </v-btn>
 
         <v-btn
