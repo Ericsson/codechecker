@@ -15,7 +15,8 @@ jobs:
       - uses: snapcore/action-build@v1
         id: build
       - uses: snapcore/action-publish@v1
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAP_TOKEN }}
         with:
-          store_login: ${{ secrets.SNAP_TOKEN }}
           snap: ${{ steps.build.outputs.snap }}
           release: stable
