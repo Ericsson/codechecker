@@ -164,6 +164,7 @@ jobs:
           export PGPASSFILE=$HOME/.pgpass
 
           make pip_dev_deps
+          pip3 install -r web/requirements_py/auth/requirements.txt
           BUILD_UI_DIST=NO make package
 
           make -C web test_matrix_${{ matrix.database }}
