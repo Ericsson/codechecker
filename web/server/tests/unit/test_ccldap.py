@@ -11,10 +11,49 @@ Unit tests for LDAP.
 
 
 import unittest
-
-from mockldap import MockLdap
+from unittest.mock import patch
 
 from codechecker_server.auth import cc_ldap
+
+
+class MockLdap:
+    def __init__(self, directory) -> None:
+        self.directory = directory
+
+    def simple_bind_s(
+        self,
+        who=None,
+        cred=None,
+        serverctrls=None,
+        clientctrls=None
+    ):
+        success = False
+
+        if not who and not cred:
+            success = True
+        elif cred in self.directory[who.lower()]['userPassword']:
+            success = True
+
+        return 42 if success else None
+
+    def unbind(self):
+        pass
+
+    def whoami_s(self):
+        return "Joe"
+
+    def search_s(
+        self,
+        base,
+        scope,
+        filterstr='(objectClass=*)',
+        attrlist=None,
+        attrsonly=0
+    ):
+        if base == 'ou=other,o=test' and filterstr == '(cn=user2)':
+            return [(
+                'cn=user2,ou=other,o=test',
+                {'cn': ['user2'], 'userPassword': ['user2pw']})]
 
 
 class CCLDAPTest(unittest.TestCase):
@@ -46,19 +85,10 @@ class CCLDAPTest(unittest.TestCase):
                    "groupNameAttr": ""
                    }
 
-    @classmethod
-    def setup_class(cls):
-        cls.mockldap = MockLdap(cls.directory)
-
     def setUp(self):
-        # Patch ldap.initialize
-        self.mockldap.start()
-        self.ldapobj = self.mockldap['ldap://localhost/']
-
-    def tearDown(self):
-        # Stop patching ldap.initialize and reset state.
-        self.mockldap.stop()
-        del self.ldapobj
+        self.ldap_patcher = patch('ldap.initialize')
+        self.mock_ldap = self.ldap_patcher.start()
+        self.mock_ldap.return_value = MockLdap(self.directory)
 
     def test_empty_config(self):
         """
