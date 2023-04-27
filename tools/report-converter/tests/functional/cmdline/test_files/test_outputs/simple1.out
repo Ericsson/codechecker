@@ -1,0 +1,1 @@
+./files/simple.go:3:6: exported type T should have comment or be unexported

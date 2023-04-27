@@ -1,0 +1,2 @@
+./files/simple.go:5:5: exported var Z should have its own declaration
+./files/b/simple.go:3:6: exported type T2 should have comment or be unexported

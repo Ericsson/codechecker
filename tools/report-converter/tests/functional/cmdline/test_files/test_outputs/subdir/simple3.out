@@ -1,0 +1,1 @@
+./files/b/simple.go:5:5: exported var Z2 should have its own declaration

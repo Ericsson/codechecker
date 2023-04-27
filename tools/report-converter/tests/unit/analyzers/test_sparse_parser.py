@@ -41,7 +41,7 @@ class SparseAnalyzerResultTestCase(unittest.TestCase):
                                        'sample.c')
 
         ret = self.analyzer_result.transform(
-            analyzer_result, self.cc_result_dir, plist.EXTENSION,
+            [analyzer_result], self.cc_result_dir, plist.EXTENSION,
             file_name="{source_file}_{analyzer}")
         self.assertFalse(ret)
 
@@ -50,7 +50,7 @@ class SparseAnalyzerResultTestCase(unittest.TestCase):
         analyzer_result = os.path.join(self.test_files)
 
         ret = self.analyzer_result.transform(
-            analyzer_result, self.cc_result_dir, plist.EXTENSION,
+            [analyzer_result], self.cc_result_dir, plist.EXTENSION,
             file_name="{source_file}_{analyzer}")
         self.assertFalse(ret)
 
@@ -58,7 +58,7 @@ class SparseAnalyzerResultTestCase(unittest.TestCase):
         """ Test transforming single output file. """
         analyzer_result = os.path.join(self.test_files, 'sample.out')
         self.analyzer_result.transform(
-            analyzer_result, self.cc_result_dir, plist.EXTENSION,
+            [analyzer_result], self.cc_result_dir, plist.EXTENSION,
             file_name="{source_file}_{analyzer}")
 
         for test_file in ['sample.c', 'sample.h']:

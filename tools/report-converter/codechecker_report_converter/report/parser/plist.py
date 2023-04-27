@@ -80,10 +80,11 @@ class _LXMLPlistParser(_PlistParser):
         # complain that too many arguments are used to invoke __init__, but
         # with newer interpreters, this is deadcode.
         if len(params) == 3 and "use_builtin_types" in params:
+            # Before 3.9 interpreter.
             # pylint: disable=E1121
             _PlistParser.__init__(self, True, dict_type)
-        # After 3.9 interpreter.
         else:
+            # After 3.9 interpreter.
             _PlistParser.__init__(self, dict_type)  # pylint: disable=E1120
 
         self.event_handler = _LXMLPlistEventHandler()

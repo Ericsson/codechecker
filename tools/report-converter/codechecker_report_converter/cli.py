@@ -9,6 +9,7 @@
 
 
 import argparse
+from collections.abc import Iterable, Sequence
 import glob
 import importlib
 import logging
@@ -16,7 +17,7 @@ import os
 import shutil
 import sys
 
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Iterable, Optional, Sequence, Tuple, Union
 
 
 # If we run this script in an environment where 'codechecker_report_converter'
@@ -79,7 +80,7 @@ supported_metadata_keys = ["analyzer_command", "analyzer_version"]
 
 
 def transform_output(
-    analyzer_result: str,
+    analyzer_result: Iterable[str],
     parser_type: str,
     output_dir: str,
     file_name: str,
@@ -118,15 +119,57 @@ def process_metadata(metadata) -> Tuple[Dict[str, str], Dict[str, str]]:
     return valid_values, invalid_values
 
 
+class CollectFiles(argparse.Action):
+    """
+    This report-converter tool can be given a set of files and directories as
+    positional command line arguments. This action collects all files at the
+    given locations: if an argument is a file then that file is collected, if
+    it's a directory then its content is inspected recursively.
+    """
+    def __init__(
+        self,
+        option_strings: Sequence[str],
+        dest: str,
+        nargs: Union[int, str, None],
+        **kwargs
+    ) -> None:
+        if nargs != "+":
+            raise ValueError("'nargs' option for 'input' should be '+'.")
+        super().__init__(option_strings, dest, nargs, **kwargs)
+
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: Union[str, Sequence[Any], None],
+        option_string: Union[str, None] = None
+    ):
+        # Type of "values" can have any of the indicated types above. But in
+        # argument parser it is given by "nargs='+'", so it will be a list in
+        # this specific case.
+        assert isinstance(values, Sequence)
+
+        all_files = []
+
+        for path in values:
+            if os.path.isfile(path):
+                all_files.append(path)
+            else:
+                for root, _, files in os.walk(path):
+                    all_files.extend(os.path.join(root, f) for f in files)
+
+        setattr(namespace, 'input', all_files)
+
+
 def __add_arguments_to_parser(parser):
     """ Add arguments to the the given parser. """
     parser.add_argument('input',
-                        type=str,
-                        metavar='file',
+                        nargs='+',
+                        action=CollectFiles,
                         default=argparse.SUPPRESS,
-                        help="Code analyzer output result file which will be "
-                             "parsed and used to generate a CodeChecker "
-                             "report directory.")
+                        help="Code analyzer output result files or "
+                             "directories which will be parsed and used to "
+                             "generate a CodeChecker report directory.")
 
     parser.add_argument('-o', '--output',
                         dest="output_dir",

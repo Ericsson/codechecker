@@ -13,7 +13,7 @@ import os
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 import hashlib
-from typing import Dict, List, Optional
+from typing import Dict, Iterable, List, Optional
 
 from codechecker_report_converter.report import Report, report_file
 from codechecker_report_converter.report.hash import get_report_hash, HashType
@@ -37,7 +37,7 @@ class AnalyzerResultBase(metaclass=ABCMeta):
 
     def transform(
         self,
-        analyzer_result_file_path: str,
+        analyzer_result_file_paths: Iterable[str],
         output_dir_path: str,
         export_type: str,
         file_name: str = "{source_file}_{analyzer}_{file_hash}",
@@ -53,23 +53,27 @@ class AnalyzerResultBase(metaclass=ABCMeta):
                       export_type)
             return False
 
-        analyzer_result_file_path = os.path.abspath(analyzer_result_file_path)
-        reports = self.get_reports(analyzer_result_file_path)
-        if not reports:
-            LOG.info("No '%s' results can be found in the given code analyzer "
-                     "output.", self.TOOL_NAME)
-            return False
+        all_reports = []
 
-        self._post_process_result(reports)
+        for file_path in analyzer_result_file_paths:
+            file_path = os.path.abspath(file_path)
+            reports = self.get_reports(file_path)
+            if not reports:
+                LOG.info("No '%s' results can be found in '%s'.",
+                         self.TOOL_NAME, file_path)
 
-        for report in reports:
-            report.analyzer_result_file_path = analyzer_result_file_path
+            self._post_process_result(reports)
 
-            if not report.checker_name:
-                report.checker_name = self.TOOL_NAME
+            for report in reports:
+                report.analyzer_result_file_path = file_path
+
+                if not report.checker_name:
+                    report.checker_name = self.TOOL_NAME
+
+            all_reports.extend(reports)
 
         self._write(
-            reports, output_dir_path, parser, export_type, file_name)
+            all_reports, output_dir_path, parser, export_type, file_name)
 
         if metadata:
             self._save_metadata(metadata, output_dir_path)
@@ -79,7 +83,7 @@ class AnalyzerResultBase(metaclass=ABCMeta):
                         "and analysis command when storing the results to it. "
                         "For more information see the --help.")
 
-        return True
+        return bool(all_reports)
 
     @abstractmethod
     def get_reports(self, analyzer_result_file_path: str) -> List[Report]:
