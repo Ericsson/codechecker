@@ -107,9 +107,13 @@ class SANParser(BaseParser):
         line: int,
         column: int,
         message: str,
-        stack_traces: List[str]
+        stack_traces: List[str],
+        checker_name: Optional[str] = None
     ) -> Report:
-        """ Create a report for the sanitizer output. """
+        """
+        Create a report for the sanitizer output with the given data.
+        checker_name: if None then the sanitizer name will be applied.
+        """
         # The original message should be the last part of the path. This is
         # displayed by quick check, and this is the main event displayed by
         # the web interface.
@@ -120,7 +124,7 @@ class SANParser(BaseParser):
             notes = [BugPathEvent(''.join(stack_traces), file, line, column)]
 
         return Report(
-            file, line, column, message, self.checker_name,
+            file, line, column, message, checker_name or self.checker_name,
             bug_path_events=events,
             notes=notes)
 

@@ -8,7 +8,7 @@
 			<key>category</key>
 			<string>unknown</string>
 			<key>check_name</key>
-			<string>UndefinedBehaviorSanitizer</string>
+			<string>UndefinedBehaviorSanitizer.enum</string>
 			<key>description</key>
 			<string>load of value 7, which is not a valid value for type 'enum E'</string>
 			<key>issue_hash_content_of_line_in_context</key>
@@ -49,7 +49,7 @@
 			<key>category</key>
 			<string>unknown</string>
 			<key>check_name</key>
-			<string>UndefinedBehaviorSanitizer</string>
+			<string>UndefinedBehaviorSanitizer.bool</string>
 			<key>description</key>
 			<string>load of value 2, which is not a valid value for type 'bool'</string>
 			<key>issue_hash_content_of_line_in_context</key>
