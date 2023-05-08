@@ -43,9 +43,9 @@ class Parser(SANParser):
 
     # This list of diagnostic messages is extracted from the LLVM project:
     #   https://github.com/llvm/llvm-project
-    # /llvm/llvm-project/blob/main/compiler-rt/lib/ubsan/ubsan_handlers.cpp
-    # /llvm/llvm-project/blob/main/compiler-rt/lib/ubsan/ubsan_handlers_cxx.cpp
-    # /llvm/llvm-project/blob/main/compiler-rt/lib/ubsan/ubsan_checks.inc
+    # /blob/main/compiler-rt/lib/ubsan/ubsan_handlers.cpp
+    # /blob/main/compiler-rt/lib/ubsan/ubsan_handlers_cxx.cpp
+    # /blob/main/compiler-rt/lib/ubsan/ubsan_checks.inc
     checks = {
         "alignment": [
             re.compile(
