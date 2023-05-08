@@ -38,7 +38,7 @@ package_dir_structure:
 mkdocs_build:
 	mkdocs build
 
-package_gerrit_skiplist:
+package_gerrit_skiplist: package_dir_structure
 	cp -p scripts/gerrit_changed_files_to_skipfile.py $(CC_BUILD_BIN_DIR)
 
 package: package_dir_structure set_git_commit_template package_gerrit_skiplist
