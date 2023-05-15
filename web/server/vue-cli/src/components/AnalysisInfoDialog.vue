@@ -1,6 +1,7 @@
 <template>
   <v-dialog
     v-model="dialog"
+    hide-overlay
     content-class="analysis-info"
     max-width="80%"
     scrollable

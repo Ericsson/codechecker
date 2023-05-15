@@ -1,6 +1,7 @@
 <template>
   <v-dialog
     v-model="dialog"
+    hide-overlay
     content-class="edit-comment-dialog"
     persistent
     max-width="600px"

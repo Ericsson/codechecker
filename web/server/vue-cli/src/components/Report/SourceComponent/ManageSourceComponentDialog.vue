@@ -1,11 +1,11 @@
 <template>
   <v-dialog
     v-model="dialog"
+    hide-overlay
     content-class="manage-source-component-dialog"
     max-width="600px"
     transition="dialog-bottom-transition"
     fullscreen
-    hide-overlay
     scrollable
   >
     <template v-slot:activator="{}">

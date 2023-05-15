@@ -1,6 +1,7 @@
 <template>
   <v-dialog
     v-model="dialog"
+    hide-overlay
     content-class="edit-cleanup-plan-dialog"
     max-width="600px"
     scrollable

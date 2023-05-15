@@ -1,11 +1,11 @@
 <template>
   <v-dialog
     v-model="dialog"
+    hide-overlay
     content-class="manage-cleanup-plan-dialog"
     max-width="600px"
     transition="dialog-bottom-transition"
     fullscreen
-    hide-overlay
     scrollable
   >
     <template v-slot:activator="{}">

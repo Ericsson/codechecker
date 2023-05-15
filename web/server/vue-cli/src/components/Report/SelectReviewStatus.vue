@@ -1,6 +1,7 @@
 <template>
   <v-dialog
     v-model="dialog"
+    hide-overlay
     content-class="select-review-status-dialog"
     persistent
     max-width="600px"

@@ -2,6 +2,7 @@
   <div>
     <v-dialog
       v-model="dialog"
+      hide-overlay
       width="500"
       :scrollable="true"
     >
