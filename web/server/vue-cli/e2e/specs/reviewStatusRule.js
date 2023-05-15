@@ -32,7 +32,6 @@ module.exports = {
     reviewStatusRulePage.click("@newReviewStatusRuleBtn");
 
     reviewStatusRulePage.expect.section(dialog).to.be.visible.before(5000);
-    reviewStatusRulePage.expect.element("@overlay").to.be.visible.before(5000);
 
     dialog.clearAndSetValue("@reportHash", "INVALID1", dialog);
 
@@ -48,8 +47,6 @@ module.exports = {
     dialog.click("@confirmBtn");
 
     reviewStatusRulePage.expect.section(dialog).to.not.be.present.before(5000);
-    reviewStatusRulePage.expect.element("@overlay")
-      .to.not.be.present.before(5000);
 
     reviewStatusRulePage.waitForProgressBarNotPresent();
   },
@@ -91,14 +88,11 @@ module.exports = {
     reviewStatusRulePage.click("@editReviewStatusRuleBtn");
 
     reviewStatusRulePage.expect.section(dialog).to.be.visible.before(5000);
-    reviewStatusRulePage.expect.element("@overlay").to.be.visible.before(5000);
 
     dialog.clearAndSetValue("@message", "Updated message", dialog);
     dialog.click("@confirmBtn");
 
     reviewStatusRulePage.expect.section(dialog).to.not.be.present.before(5000);
-    reviewStatusRulePage.expect.element("@overlay")
-      .to.not.be.present.before(5000);
 
     reviewStatusRulePage.waitForProgressBarNotPresent();
   },
@@ -109,14 +103,11 @@ module.exports = {
 
     reviewStatusRulePage.click("@removeReviewStatusRuleBtn");
 
-    reviewStatusRulePage.expect.element("@overlay").to.be.visible.before(5000);
     reviewStatusRulePage.expect.section(dialog).to.be.visible.before(5000);
 
     reviewStatusRulePage.section.removeReviewStatusRuleDialog.click("@confirmBtn");
 
     reviewStatusRulePage.expect.section(dialog).to.not.be.present.before(5000);
-    reviewStatusRulePage.expect.element("@overlay")
-      .to.not.be.present.before(5000);
 
     reviewStatusRulePage.waitForProgressBarNotPresent();
 
@@ -148,7 +139,6 @@ module.exports = {
     reviewStatusRulePage.click("@newReviewStatusRuleBtn");
 
     reviewStatusRulePage.expect.section(editDialog).to.be.visible.before(5000);
-    reviewStatusRulePage.expect.element("@overlay").to.be.visible.before(5000);
     
     const reportHash = "INVALID1";
     editDialog.clearAndSetValue("@reportHash", reportHash, editDialog);
@@ -164,8 +154,6 @@ module.exports = {
 
     reviewStatusRulePage.expect.section(editDialog)
       .to.not.be.present.before(5000);
-    reviewStatusRulePage.expect.element("@overlay")
-      .to.not.be.present.before(5000);
 
     reviewStatusRulePage.waitForProgressBarNotPresent();
 
@@ -179,11 +167,8 @@ module.exports = {
 
     reviewStatusRulePage.expect.section(removeDialog)
       .to.be.visible.before(5000);
-    reviewStatusRulePage.expect.element("@overlay").to.be.visible.before(5000);
     removeDialog.click("@confirmBtn");
     reviewStatusRulePage.expect.section(removeDialog)
-      .to.not.be.present.before(5000);
-    reviewStatusRulePage.expect.element("@overlay")
       .to.not.be.present.before(5000);
 
     reviewStatusRulePage.waitForProgressBarNotPresent();

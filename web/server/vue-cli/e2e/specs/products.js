@@ -102,7 +102,7 @@ module.exports = {
       })
       .saveProduct();
 
-    product.expect.element("@overlay").to.not.be.present.before(5000);
+    product.expect.section("@productDialog").to.not.be.present.before(4000);
 
     product
       .filterProducts("Test")
@@ -118,7 +118,6 @@ module.exports = {
       .saveProduct();
 
     product.expect.section("@productDialog").to.not.be.present.before(4000);
-    product.expect.element("@overlay").to.not.be.present.before(5000);
 
     product.removeProduct();
   },

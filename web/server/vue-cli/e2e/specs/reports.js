@@ -182,13 +182,10 @@ module.exports = {
 
     section.click("@input");
     reportPage.expect.section(dateDialog).to.be.visible.before(5000);
-    reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
     dateDialog
       .click("@date")
       .click("@ok");
-
-    reportPage.expect.element("@overlay").to.not.be.present.before(5000);
 
     section.click("@clearBtn");
 
@@ -275,13 +272,12 @@ module.exports = {
 
     section.click("@input");
     reportPage.expect.section(dateDialog).to.be.visible.before(5000);
-    reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
     dateDialog
       .click("@date")
       .click("@ok");
 
-    reportPage.expect.element("@overlay").to.not.be.present.before(5000);
+    reportPage.expect.section(dateDialog).to.not.be.present.before(5000);
 
     section.click("@clearBtn");
 
@@ -446,8 +442,6 @@ module.exports = {
     dialogSection.click("@newComponentBtn");
     reportPage.expect.section(newComponentDialog).to.be.visible.before(5000);
 
-    reportPage.expect.element("@overlay").to.be.visible.before(5000);
-
     let [ name, value, description ] = [ "e2e", "+*", "Test" ];
     newComponentDialog
       .clearAndSetValue("@name", name, newComponentDialog)
@@ -455,7 +449,7 @@ module.exports = {
       .clearAndSetValue("@description", description, newComponentDialog)
       .click("@saveBtn");
 
-    reportPage.expect.element("@overlay").to.not.be.present.before(5000);
+    reportPage.expect.section(newComponentDialog).to.not.be.present.before(5000);
 
     dialogSection.api.elements("@tableRows", (elements) => {
       browser.assert.ok(elements.result.value.length === 1);
@@ -464,7 +458,6 @@ module.exports = {
     // Edit component.
     dialogSection.click({ selector: "@editBtn", index: 0 });
     reportPage.expect.section(newComponentDialog).to.be.visible.before(5000);
-    reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
     [ value, description ] = [ "+*\n-dummy", "Renamed" ];
     newComponentDialog
@@ -472,7 +465,7 @@ module.exports = {
       .clearAndSetValue("@description", description, newComponentDialog)
       .click("@saveBtn");
 
-    reportPage.expect.element("@overlay").to.not.be.present.before(5000);
+    reportPage.expect.section(newComponentDialog).to.not.be.present.before(5000);
 
     dialogSection.api.elements("@tableRows", (elements) => {
       browser.assert.ok(elements.result.value.length === 1);
@@ -511,8 +504,6 @@ module.exports = {
     reportPage.expect.section(removeComponentDialog)
       .to.be.visible.before(5000);
 
-    reportPage.expect.element("@overlay").to.be.visible.before(5000);
-
     removeComponentDialog.click("@confirmBtn");
 
     dialogSection
@@ -544,7 +535,6 @@ module.exports = {
     dialogSection.waitForElementVisible("@newCleanupPlanBtn")
     dialogSection.click("@newCleanupPlanBtn");
     reportPage.expect.section(newCleanupPlanDialog).to.be.visible.before(5000);
-    reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
     let [ name, description ] = [ "e2e", "Test" ];
     newCleanupPlanDialog
@@ -552,7 +542,7 @@ module.exports = {
       .clearAndSetValue("@description", description, newCleanupPlanDialog)
       .click("@saveBtn");
 
-    reportPage.expect.element("@overlay").to.not.be.present.before(5000);
+    reportPage.expect.section(newCleanupPlanDialog).to.not.be.present.before(5000);
 
     dialogSection.api.elements("@tableRows", (elements) => {
       browser.assert.ok(elements.result.value.length === 1);
@@ -561,14 +551,13 @@ module.exports = {
     // Edit cleanup plan.
     dialogSection.click({ selector: "@editCleanupPlanBtn", index: 0 });
     reportPage.expect.section(newCleanupPlanDialog).to.be.visible.before(5000);
-    reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
     [ description ] = [ "Renamed" ];
     newCleanupPlanDialog
       .clearAndSetValue("@description", description, newCleanupPlanDialog)
       .click("@saveBtn");
 
-    reportPage.expect.element("@overlay").to.not.be.present.before(5000);
+    reportPage.expect.section(newCleanupPlanDialog).to.not.be.present.before(5000);
 
     dialogSection.api.elements("@tableRows", (elements) => {
       browser.assert.ok(elements.result.value.length === 1);
@@ -662,8 +651,6 @@ module.exports = {
     reportPage.expect.section(removeCleanupPlanDialog)
       .to.be.visible.before(5000);
 
-    reportPage.expect.element("@overlay").to.be.visible.before(5000);
-
     removeCleanupPlanDialog.click("@confirmBtn");
 
     dialogSection
@@ -715,23 +702,21 @@ module.exports = {
 
     section.click("@from");
     reportPage.expect.section(fromDateDialog).to.be.visible.before(5000);
-    reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
     fromDateDialog
       .click("@date")
       .click("@ok");
 
-    reportPage.expect.element("@overlay").to.not.be.present.before(5000);
+    reportPage.expect.section(fromDateDialog).to.not.be.present.before(5000);
 
     section.click("@to");
     reportPage.expect.section(toDateDialog).to.be.visible.before(5000);
-    reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
     toDateDialog
       .click("@date")
       .click("@ok");
 
-    reportPage.expect.element("@overlay").to.not.be.present.before(5000);
+    reportPage.expect.section(toDateDialog).to.not.be.present.before(5000);
     section.click("@clearBtn");
 
     reportPage
@@ -748,23 +733,21 @@ module.exports = {
 
     section.click("@from");
     reportPage.expect.section(fromDateDialog).to.be.visible.before(5000);
-    reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
     fromDateDialog
       .click("@date")
       .click("@ok");
 
-    reportPage.expect.element("@overlay").to.not.be.present.before(5000);
+    reportPage.expect.section(fromDateDialog).to.not.be.present.before(5000);
 
     section.click("@to");
     reportPage.expect.section(toDateDialog).to.be.visible.before(5000);
-    reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
     toDateDialog
       .click("@date")
       .click("@ok");
 
-    reportPage.expect.element("@overlay").to.not.be.present.before(5000);
+    reportPage.expect.section(toDateDialog).to.not.be.present.before(5000);
 
     section.click("@clearBtn");
 

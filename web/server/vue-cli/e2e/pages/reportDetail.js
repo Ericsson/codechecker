@@ -20,12 +20,6 @@ const commands = {
 };
 
 const commentsPaneCommands = {
-  waitForOverlayNotPresent() {
-    this.pause(500, () => {
-      this.waitForElementNotPresent("@overlay");
-    });
-    return this;
-  }
 };
 
 const bugTreeCommands = {

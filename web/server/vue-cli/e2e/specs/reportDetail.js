@@ -70,8 +70,6 @@ module.exports = {
     reportDetailPage.expect.section(changeReviewStatusMessageDialog)
       .to.be.visible.before(5000);
 
-    reportDetailPage.expect.element("@overlay").to.be.visible.before(5000);
-
     // Set the message and save.
     const message = "Test";
     changeReviewStatusMessageDialog
@@ -89,7 +87,6 @@ module.exports = {
     reportDetailPage.click("@page");
     reportDetailPage.expect.section(reviewStatusMessageMenu)
       .to.be.not.present.before(5000);
-    reportDetailPage.expect.element("@overlay").to.not.be.present.before(5000);
   },
 
   "change review status without message" (browser) {
@@ -110,8 +107,6 @@ module.exports = {
 
     reportDetailPage.expect.section(changeReviewStatusMessageDialog)
       .to.be.visible.before(5000);
-
-    reportDetailPage.expect.element("@overlay").to.be.visible.before(5000);
 
     // Clear the message.
     changeReviewStatusMessageDialog
@@ -142,8 +137,6 @@ module.exports = {
     commentsPane.clearAndSetValue("@message", message, commentsPane);
     commentsPane.click("@addBtn");
 
-    commentsPane.waitForOverlayNotPresent();
-
     commentsPane.waitForElementVisible(userCommentSection);
 
     userCommentSection.expect.element("@message").text.to.equal(message);
@@ -153,14 +146,10 @@ module.exports = {
     reportDetailPage.expect.section(editCommentDialog)
       .to.be.visible.before(5000);
 
-    reportDetailPage.expect.element("@overlay").to.be.visible.before(5000);
-
     editCommentDialog
       .clearAndSetValue("@message", newMessage, editCommentDialog);
 
     editCommentDialog.click("@saveBtn");
-
-    commentsPane.waitForOverlayNotPresent();
 
     userCommentSection.expect.element("@message").text.to.equal(newMessage);
     systemCommentSection.expect.element("@message").text.to.contain(
@@ -170,14 +159,11 @@ module.exports = {
     userCommentSection.click("@removeBtn");
     reportDetailPage.expect.section(removeCommentDialog)
       .to.be.visible.before(5000);
-    reportDetailPage.expect.element("@overlay").to.be.visible.before(5000);
 
     removeCommentDialog.click("@removeBtn");
 
     reportDetailPage.expect.section(removeCommentDialog)
       .to.be.not.present.before(5000);
-
-    commentsPane.waitForOverlayNotPresent();
 
     commentsPane.waitForElementNotPresent(userCommentSection);
 
