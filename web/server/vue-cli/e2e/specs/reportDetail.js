@@ -34,7 +34,7 @@ module.exports = {
 
     dialog.expect.element("@content").text.to.not.equal(null);
 
-    dialog.click("@closeBtn");
+    dialog.pause(100).click("@closeBtn");
 
     reportDetailPage.expect.section(dialog).to.not.be.present.before(5000);
   },
@@ -47,6 +47,36 @@ module.exports = {
       .waitForElementVisible("@blameCommitInfo")
       .click("@toggleBlameViewBtn")
       .waitForElementNotPresent("@blameCommitInfo");
+  },
+
+  "change review status without message" (browser) {
+    const reportDetailPage = browser.page.reportDetail();
+    const selectReviewStatusMenu =
+      reportDetailPage.section.selectReviewStatusMenu;
+    const changeReviewStatusMessageDialog =
+      reportDetailPage.section.changeReviewStatusMessageDialog;
+
+    // Open the selector.
+    reportDetailPage.click("@selectReviewStatus");
+
+    reportDetailPage.expect.section(selectReviewStatusMenu)
+      .to.be.visible.before(5000);
+
+    // Select an item.
+    selectReviewStatusMenu.click({ selector: "@item", index: 1 });
+
+    reportDetailPage.expect.section(changeReviewStatusMessageDialog)
+      .to.be.visible.before(5000);
+
+    reportDetailPage.expect.element("@overlay").to.be.visible.before(5000);
+
+    // Clear the message.
+    changeReviewStatusMessageDialog
+      .clearAndSetValue("@message", "", changeReviewStatusMessageDialog)
+      .click("@save");
+
+    reportDetailPage.expect.element("@reviewStatusMessage")
+      .to.be.not.present.before(5000);
   },
 
   "change review status with a message" (browser) {
@@ -90,36 +120,6 @@ module.exports = {
     reportDetailPage.expect.section(reviewStatusMessageMenu)
       .to.be.not.present.before(5000);
     reportDetailPage.expect.element("@overlay").to.not.be.present.before(5000);
-  },
-
-  "change review status without message" (browser) {
-    const reportDetailPage = browser.page.reportDetail();
-    const selectReviewStatusMenu =
-      reportDetailPage.section.selectReviewStatusMenu;
-    const changeReviewStatusMessageDialog =
-      reportDetailPage.section.changeReviewStatusMessageDialog;
-
-    // Open the selector.
-    reportDetailPage.click("@selectReviewStatus");
-
-    reportDetailPage.expect.section(selectReviewStatusMenu)
-      .to.be.visible.before(5000);
-
-    // Select an item.
-    selectReviewStatusMenu.click({ selector: "@item", index: 1 });
-
-    reportDetailPage.expect.section(changeReviewStatusMessageDialog)
-      .to.be.visible.before(5000);
-
-    reportDetailPage.expect.element("@overlay").to.be.visible.before(5000);
-
-    // Clear the message.
-    changeReviewStatusMessageDialog
-      .clearAndSetValue("@message", "", changeReviewStatusMessageDialog)
-      .click("@save");
-
-    reportDetailPage.expect.element("@reviewStatusMessage")
-      .to.be.not.present.before(5000);
   },
 
   async "manage comments" (browser) {
@@ -172,7 +172,7 @@ module.exports = {
       .to.be.visible.before(5000);
     reportDetailPage.expect.element("@overlay").to.be.visible.before(5000);
 
-    removeCommentDialog.click("@removeBtn");
+    removeCommentDialog.pause(100).click("@removeBtn");
 
     reportDetailPage.expect.section(removeCommentDialog)
       .to.be.not.present.before(5000);

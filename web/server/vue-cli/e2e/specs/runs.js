@@ -92,7 +92,7 @@ module.exports = {
     dialogSection.assert.containsText("@content", checkCommand);
 
     // Close check command dialog.
-    dialogSection.click("@closeBtn");
+    dialogSection.pause(100).click("@closeBtn");
 
     runsPage.expect.section(dialogSection)
       .to.not.be.present.before(5000);
@@ -104,6 +104,7 @@ module.exports = {
 
     runsPage
       .click("@name")
+      .pause(100)
       .assert.urlContains(`run=${runName}`)
       .assert.urlContains("review-status=Unreviewed")
       .assert.urlContains("review-status=Confirmed%20bug")
@@ -362,7 +363,7 @@ module.exports = {
       .expect.section("@removeRunDialog").to.be.visible.before(5000);
 
     runsPage.expect.element("@overlay").to.be.visible.before(5000);
-    removeDialog.click("@confirmBtn");
+    removeDialog.pause(100).click("@confirmBtn");
 
     runsPage.expect.section("@removeRunDialog")
       .to.not.be.present.before(5000);

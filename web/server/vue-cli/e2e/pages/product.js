@@ -164,7 +164,7 @@ const commands = {
   },
 
   saveProduct() {
-    this.section.productDialog.click("@confirmBtn");
+    this.section.productDialog.pause(100).click("@confirmBtn");
 
     this.waitForElementNotPresent("@progressBar", 5000);
 
@@ -179,6 +179,7 @@ const commands = {
 
     this.section.removeProductDialog
       .waitForElementVisible("@confirmBtn")
+      .pause(100)
       .click("@confirmBtn");
 
     this.waitForElementNotPresent("@progressBar", 5000);

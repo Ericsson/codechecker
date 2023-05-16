@@ -507,13 +507,13 @@ module.exports = {
     dialogSection.pause(500);
 
     dialogSection.waitForElementVisible("@removeBtn");
-    dialogSection.click({ selector: "@removeBtn", index: 0 });
+    dialogSection.pause(100).click({ selector: "@removeBtn", index: 0 });
     reportPage.expect.section(removeComponentDialog)
       .to.be.visible.before(5000);
 
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
-    removeComponentDialog.click("@confirmBtn");
+    removeComponentDialog.pause(100).click("@confirmBtn");
 
     dialogSection
       .waitForElementVisible("@emptyTable")
