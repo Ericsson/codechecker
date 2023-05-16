@@ -5,6 +5,9 @@ module.exports.command = function (selector, value, section) {
     section = this;
 
   return section
+    // This pause(100) is required to make sure the element
+    // is visible before clicking it.
+    .pause(100)
     .click(selector)
     .getValue(selector, function (result) {
       section.setValue(selector, [
