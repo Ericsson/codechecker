@@ -112,7 +112,7 @@ module.exports = {
     reviewStatusRulePage.expect.element("@overlay").to.be.visible.before(5000);
     reviewStatusRulePage.expect.section(dialog).to.be.visible.before(5000);
 
-    reviewStatusRulePage.section.removeReviewStatusRuleDialog.click("@confirmBtn");
+    reviewStatusRulePage.section.removeReviewStatusRuleDialog.pause(100).click("@confirmBtn");
 
     reviewStatusRulePage.expect.section(dialog).to.not.be.present.before(5000);
     reviewStatusRulePage.expect.element("@overlay")
