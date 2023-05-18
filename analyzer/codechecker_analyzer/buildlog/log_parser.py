@@ -1068,10 +1068,11 @@ def parse_options(compilation_db_entry,
         gcc_toolchain.toolchain_in_args(details['analyzer_options'])
 
     # Store the compiler built in include paths and defines.
-    # If clang compiler is used for compilation and analysis,
-    # do not collect the implicit include paths.
-    if (not toolchain and not using_same_clang_to_compile_and_analyze) or \
-            (compiler_info_file and os.path.exists(compiler_info_file)):
+    # If clang compiler is used for compilation and analysis, or language is
+    # not recognized, do not collect the implicit include paths.
+    if ((not toolchain and not using_same_clang_to_compile_and_analyze) or
+            (compiler_info_file and os.path.exists(compiler_info_file))) and \
+            details['lang']:
         ImplicitCompilerInfo.set(details, compiler_info_file)
 
     if not keep_gcc_include_fixed:
