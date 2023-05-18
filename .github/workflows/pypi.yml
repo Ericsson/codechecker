@@ -1,10 +1,8 @@
 name: codechecker-pypi-package
 
-# Triggers the workflow on 'push', 'pull' and 'release' request events.
+# Triggers the workflow on 'release' request events.
 # The pypi package will be published only on the release event.
 on:
-  push:
-  pull_request:
   release:
     types: [published]
 
