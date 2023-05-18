@@ -93,6 +93,7 @@ IGNORED_OPTIONS_GCC = [
     '-fno-jump-table',
     '-fno-keep-inline-dllexport'
     '-fno-keep-static-consts',
+    '-fno-lifetime-dse',
     '-f(no-)?reorder-functions',
     '-fno-strength-reduce',
     '-fno-toplevel-reorder',
