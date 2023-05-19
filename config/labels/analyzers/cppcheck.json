@@ -695,7 +695,6 @@
       "severity:LOW"
     ],
     "cppcheck-preprocessorErrorDirective": [
-      "profile:default",
       "severity:HIGH"
     ],
     "cppcheck-publicAllocationError": [
