@@ -32,6 +32,9 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
         self.enable_z3_refutation = False
         self.environ = environ
         self.version_info = None
+        # True if the clang-extdef-mapping tool can read the definitions from
+        # PCH (.ast) files.
+        self.extdef_mapping_can_read_pch = None
 
     @property
     def analyzer_plugins(self):
@@ -60,3 +63,8 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
     @property
     def ctu_capability(self):
         return CTUAutodetection(self.analyzer_binary, self.environ)
+
+    def detect_extdef_mapping_can_read_pch(self):
+        self.extdef_mapping_can_read_pch = \
+           CTUAutodetection(self.analyzer_binary,
+                            self.environ).extdef_mapping_can_read_pch

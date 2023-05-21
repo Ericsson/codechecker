@@ -451,6 +451,10 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                 'ctu_ast_mode' in args and \
                 args.ctu_ast_mode == 'parse-on-demand'
 
+            handler.detect_extdef_mapping_can_read_pch()
+            LOG.debug("extdef_mapping_can_read_pch: %s",
+                      handler.extdef_mapping_can_read_pch)
+
         try:
             with open(args.clangsa_args_cfg_file, 'r', encoding='utf8',
                       errors='ignore') as sa_cfg:

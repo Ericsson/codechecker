@@ -20,12 +20,13 @@ from typing import IO
 
 from libtest import env
 from libtest.codechecker import call_command, is_ctu_capable, \
-    is_ctu_on_demand_capable
+    is_ctu_on_demand_capable, check_force_extdef_mapping_can_read_pch
 from libtest.ctu_decorators import makeSkipUnlessCTUCapable, \
     makeSkipUnlessCTUOnDemandCapable
 
 CTU_ATTR = 'ctu_capable'
 ON_DEMAND_ATTR = 'ctu_on_demand_capable'
+EXTDEF_MAPPING_CAN_READ_PCH_ATTR = 'extdef_mapping_can_read_pch'
 
 skipUnlessCTUCapable = makeSkipUnlessCTUCapable(attribute=CTU_ATTR)
 skipUnlessCTUOnDemandCapable = \
@@ -68,6 +69,11 @@ class TestCtu(unittest.TestCase):
         setattr(self, ON_DEMAND_ATTR, is_ctu_on_demand_capable(output))
         print("'analyze' reported CTU-on-demand-compatibility? " +
               str(getattr(self, ON_DEMAND_ATTR)))
+
+        setattr(self, EXTDEF_MAPPING_CAN_READ_PCH_ATTR,
+                check_force_extdef_mapping_can_read_pch())
+        print("'analyze' forced extdef_mapping_can_read_pch capability? " +
+              str(getattr(self, EXTDEF_MAPPING_CAN_READ_PCH_ATTR)))
 
         self.buildlog = os.path.join(self.test_workspace, buildlog_json)
 
@@ -183,12 +189,14 @@ class TestCtu(unittest.TestCase):
         """ Test full CTU. """
 
         output = self.__do_ctu_all(on_demand=on_demand)
-        self.__check_ctu_analyze(output)
+        self.__check_ctu_analyze(output, on_demand=on_demand)
+        self.__check_ctu_collect_output(on_demand, output)
 
     def __test_ctu_collect(self, on_demand=False):
         """ Test CTU collect phase. """
 
-        self.__do_ctu_collect(on_demand=on_demand)
+        output = self.__do_ctu_collect(on_demand=on_demand)
+        self.__check_ctu_collect_output(on_demand, output)
         self.__check_ctu_collect(on_demand=on_demand)
 
     def __test_ctu_analyze(self, on_demand=False):
@@ -196,7 +204,7 @@ class TestCtu(unittest.TestCase):
 
         self.__do_ctu_collect(on_demand=on_demand)
         output = self.__do_ctu_analyze(on_demand=on_demand)
-        self.__check_ctu_analyze(output)
+        self.__check_ctu_analyze(output, on_demand=on_demand)
 
     def __test_ctu_analyze_cpp(self, on_demand=False):
         """ Test CTU analyze phase. """
@@ -220,6 +228,9 @@ class TestCtu(unittest.TestCase):
         cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
                '--analyzers', 'clangsa', '--ctu-all']
 
+        if not on_demand and getattr(self, EXTDEF_MAPPING_CAN_READ_PCH_ATTR):
+            cmd.extend(['--verbose', 'debug'])
+
         if getattr(self, ON_DEMAND_ATTR):
             cmd.extend(['--ctu-ast-mode',
                         'parse-on-demand' if on_demand else 'load-from-pch'])
@@ -235,13 +246,31 @@ class TestCtu(unittest.TestCase):
         cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
                '--analyzers', 'clangsa', '--ctu-collect']
 
+        if not on_demand and getattr(self, EXTDEF_MAPPING_CAN_READ_PCH_ATTR):
+            cmd.extend(['--verbose', 'debug'])
+
         if getattr(self, ON_DEMAND_ATTR):
             cmd.extend(['--ctu-ast-mode',
                         'parse-on-demand' if on_demand else 'load-from-pch'])
 
         cmd.append(self.buildlog)
-        _, _, result = call_command(cmd, cwd=self.test_dir, env=self.env)
+        out, _, result = call_command(cmd, cwd=self.test_dir, env=self.env)
         self.assertEqual(result, 0, "Analyzing failed.")
+        return out
+
+    def __check_ctu_collect_output(self, on_demand, output):
+        """ Check artifacts of CTU collect phase. """
+
+        # Check in the DEBUG logs of CodeChecker that clang-extdef-mapping is
+        # called with the ast files as parameters.
+        if not on_demand and getattr(self, EXTDEF_MAPPING_CAN_READ_PCH_ATTR):
+            self.assertIn("extdef_mapping_can_read_pch: True", output)
+            self.assertRegex(output,
+                             "Generating function map using"
+                             ".*clang-extdef-mapping.*main\\.c\\.ast")
+            self.assertRegex(output,
+                             "Generating function map using"
+                             ".*clang-extdef-mapping.*lib\\.c\\.ast")
 
     def __check_ctu_collect(self, on_demand):
         """ Check artifacts of CTU collect phase. """
@@ -290,7 +319,7 @@ class TestCtu(unittest.TestCase):
         self.assertEqual(result, 0, "Analyzing failed.")
         return out
 
-    def __check_ctu_analyze(self, output):
+    def __check_ctu_analyze(self, output, on_demand):
         """ Check artifacts of CTU analyze phase. """
 
         self.assertNotIn("Failed to analyze", output)
@@ -343,11 +372,11 @@ class TestCtu(unittest.TestCase):
         cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
                '--analyzers', 'clangsa', '--ctu', '--makefile']
         cmd.append(self.buildlog)
-        _, _, result = call_command(cmd, cwd=self.test_dir, env=self.env)
+        output, _, result = call_command(cmd, cwd=self.test_dir, env=self.env)
         self.assertEqual(result, 0, "Analyzing failed.")
 
-        _, _, result = call_command(["make"], cwd=self.report_dir,
-                                    env=self.env)
+        output, _, result = call_command(["make"], cwd=self.report_dir,
+                                         env=self.env)
         self.assertEqual(result, 0, "Performing generated Makefile failed.")
 
         # Check the output.
