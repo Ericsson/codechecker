@@ -50,12 +50,21 @@ class AnalyzerResult(AnalyzerResultBase):
 
         return reports
 
-    def __get_abs_path(self, source_path: str):
-        """ Returns full path of the given source path.
+    def __get_abs_path(self, source_line):
+        """ Returns full source path of the given source line.
 
         It will try to find the given source path in the project paths and
         returns full path if it founds.
         """
+        if source_line is None:
+            return None
+
+        source_path = source_line.attrib.get('sourcepath')
+        if source_path is None:
+            LOG.warning("No source path attribute found for class: %s",
+                        source_line.attrib.get('classname'))
+            return None
+
         if os.path.exists(source_path):
             return source_path
 
@@ -105,7 +114,7 @@ class AnalyzerResult(AnalyzerResultBase):
         long_message = bug.find('LongMessage').text
 
         source_line = bug.find('SourceLine')
-        source_path = self.__get_source_path(source_line)
+        source_path = self.__get_abs_path(source_line)
         if not source_path:
             return
 
@@ -147,7 +156,7 @@ class AnalyzerResult(AnalyzerResultBase):
         message = element.find('Message').text
 
         source_line = element.find('SourceLine')
-        source_path = self.__get_source_path(source_line)
+        source_path = self.__get_abs_path(source_line)
         if not source_path:
             return None
 
@@ -165,7 +174,7 @@ class AnalyzerResult(AnalyzerResultBase):
         message = element.find('Message').text
 
         source_line = element.find('SourceLine')
-        source_path = self.__get_source_path(source_line)
+        source_path = self.__get_abs_path(source_line)
         if not source_path:
             return None
 
@@ -177,15 +186,3 @@ class AnalyzerResult(AnalyzerResultBase):
             get_or_create_file(source_path, self.__file_cache),
             line,
             col)
-
-    def __get_source_path(self, source_line):
-        """ Get source path from the source line. """
-        if source_line is None:
-            return None
-
-        source_path_attrib = source_line.attrib.get('sourcepath')
-        if source_path_attrib is None:
-            LOG.warning("No source path attribute found for class: %s", source_line.attrib.get('classname'))
-            return None
-
-        return self.__get_abs_path(source_path_attrib)
