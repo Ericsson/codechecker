@@ -28,14 +28,7 @@ def get_log_env(logfile, original_env):
 
     new_env[context.env_var_cc_logger_bin] = context.path_logger_bin
 
-    new_env['LD_PRELOAD'] = context.logger_lib_name
-
-    try:
-        original_ld_library_path = new_env['LD_LIBRARY_PATH']
-        new_env['LD_LIBRARY_PATH'] = context.path_logger_lib + ':' + \
-            original_ld_library_path
-    except KeyError:
-        new_env['LD_LIBRARY_PATH'] = context.path_logger_lib
+    new_env['LD_PRELOAD'] = context.logger_lib_path
 
     # Set ld logger logfile.
     new_env[context.env_var_cc_logger_file] = logfile

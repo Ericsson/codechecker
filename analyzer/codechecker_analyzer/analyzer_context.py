@@ -16,6 +16,8 @@ from distutils.spawn import find_executable
 import os
 import sys
 
+from pathlib import Path
+
 from codechecker_common import logger
 from codechecker_common.checker_labels import CheckerLabels
 from codechecker_common.singleton import Singleton
@@ -63,12 +65,18 @@ class Context(metaclass=Singleton):
         self.__analyzers = {}
         self.__analyzer_env = None
 
+        machine = os.uname().machine
+
         self.logger_lib_dir_path = os.path.join(
-            self._data_files_dir_path, 'ld_logger', 'lib')
+            self._data_files_dir_path, 'ld_logger', 'lib', machine)
 
         if not os.path.exists(self.logger_lib_dir_path):
             self.logger_lib_dir_path = os.path.join(
-                self._lib_dir_path, 'codechecker_analyzer', 'ld_logger', 'lib')
+                self._lib_dir_path,
+                'codechecker_analyzer',
+                'ld_logger',
+                'lib',
+                machine)
 
         self.logger_bin = None
         self.logger_file = None
@@ -231,8 +239,12 @@ class Context(metaclass=Singleton):
         return os.path.join(self._bin_dir_path, 'ld_logger')
 
     @property
-    def path_logger_lib(self):
-        return self.logger_lib_dir_path
+    def logger_lib_path(self):
+        """
+        Returns the absolute path to the logger library.
+        """
+        return str(Path(self.logger_lib_dir_path,
+                        self.logger_lib_name).absolute())
 
     @property
     def logger_lib_name(self):
