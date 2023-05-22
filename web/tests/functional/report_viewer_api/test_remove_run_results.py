@@ -103,3 +103,12 @@ class RemoveRunResults(unittest.TestCase):
         # Check that we removed all results from the run.
         res = self._cc_client.getRunResultCount([run_id], ReportFilter(), None)
         self.assertEqual(res, 0)
+
+    def test_remove_nonexisting_run(self):
+        """
+        Test if False is returned on the removal of a non-existing run's
+        removal.
+        """
+        run_filter = RunFilter(names=['non_existing'], exactMatch=True)
+        res = self._cc_client.removeRun(None, run_filter)
+        self.assertFalse(res)

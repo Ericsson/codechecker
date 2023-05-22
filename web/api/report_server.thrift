@@ -764,7 +764,7 @@ service codeCheckerDBAccess {
                         3: CompareData  cmpData)
                         throws (1: codechecker_api_shared.RequestFailed requestError),
 
-  // Remove run from the database.
+  // Remove run from the database. Return true if at least one report removed with the given criteria.
   // PERMISSION: PRODUCT_STORE
   bool removeRun(1: i64 runId,
                  2: optional RunFilter runFilter)

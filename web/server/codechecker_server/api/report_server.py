@@ -3387,7 +3387,7 @@ class ThriftRequestHandler:
         db_cleanup.remove_unused_comments(self._Session)
         db_cleanup.remove_unused_analysis_info(self._Session)
 
-        return True
+        return bool(runs)
 
     @exc_to_thrift_reqfail
     @timeit
