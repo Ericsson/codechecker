@@ -76,9 +76,13 @@ class _LXMLPlistParser(_PlistParser):
         # To be backward compatible with old interpreters we need to call this
         # function based on conditions:
         params = _PlistParser.__init__.__code__.co_varnames
+        # Before 3.9 interpreter. When a newer interpreter is used, pylint will
+        # complain that too many arguments are used to invoke __init__, but
+        # with newer interpreters, this is deadcode.
         if len(params) == 3 and "use_builtin_types" in params:
-            # Before 3.9 interpreter.
+            # pylint: disable=E1121
             _PlistParser.__init__(self, True, dict_type)
+        # After 3.9 interpreter.
         else:
             _PlistParser.__init__(self, dict_type)  # pylint: disable=E1120
 
