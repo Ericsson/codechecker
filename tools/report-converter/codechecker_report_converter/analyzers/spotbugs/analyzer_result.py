@@ -105,8 +105,7 @@ class AnalyzerResult(AnalyzerResultBase):
         long_message = bug.find('LongMessage').text
 
         source_line = bug.find('SourceLine')
-        source_path = source_line.attrib.get('sourcepath')
-        source_path = self.__get_abs_path(source_path)
+        source_path = self.__get_source_path(source_line)
         if not source_path:
             return
 
@@ -148,11 +147,7 @@ class AnalyzerResult(AnalyzerResultBase):
         message = element.find('Message').text
 
         source_line = element.find('SourceLine')
-        if source_line is None:
-            return None
-
-        source_path = source_line.attrib.get('sourcepath')
-        source_path = self.__get_abs_path(source_path)
+        source_path = self.__get_source_path(source_line)
         if not source_path:
             return None
 
@@ -170,11 +165,7 @@ class AnalyzerResult(AnalyzerResultBase):
         message = element.find('Message').text
 
         source_line = element.find('SourceLine')
-        if source_line is None:
-            return None
-
-        source_path = source_line.attrib.get('sourcepath')
-        source_path = self.__get_abs_path(source_path)
+        source_path = self.__get_source_path(source_line)
         if not source_path:
             return None
 
@@ -186,3 +177,15 @@ class AnalyzerResult(AnalyzerResultBase):
             get_or_create_file(source_path, self.__file_cache),
             line,
             col)
+
+    def __get_source_path(self, source_line):
+        """ Get source path from the source line. """
+        if source_line is None:
+            return None
+
+        source_path_attrib = source_line.attrib.get('sourcepath')
+        if source_path_attrib is None:
+            LOG.warning("No source path attribute found for class: %s", source_line.attrib.get('classname'))
+            return None
+
+        return self.__get_abs_path(source_path_attrib)
