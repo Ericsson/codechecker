@@ -668,6 +668,7 @@ module.exports = {
 
     dialogSection
       .waitForElementVisible("@emptyTable")
+      .pause(100)
       .click("@closeBtn");
   },
 
