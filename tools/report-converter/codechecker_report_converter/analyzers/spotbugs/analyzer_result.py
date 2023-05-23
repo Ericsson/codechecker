@@ -50,12 +50,21 @@ class AnalyzerResult(AnalyzerResultBase):
 
         return reports
 
-    def __get_abs_path(self, source_path: str):
-        """ Returns full path of the given source path.
+    def __get_abs_path(self, source_line):
+        """ Returns full source path of the given source line.
 
         It will try to find the given source path in the project paths and
         returns full path if it founds.
         """
+        if source_line is None:
+            return None
+
+        source_path = source_line.attrib.get('sourcepath')
+        if source_path is None:
+            LOG.warning("No source path attribute found for class: %s",
+                        source_line.attrib.get('classname'))
+            return None
+
         if os.path.exists(source_path):
             return source_path
 
@@ -105,8 +114,7 @@ class AnalyzerResult(AnalyzerResultBase):
         long_message = bug.find('LongMessage').text
 
         source_line = bug.find('SourceLine')
-        source_path = source_line.attrib.get('sourcepath')
-        source_path = self.__get_abs_path(source_path)
+        source_path = self.__get_abs_path(source_line)
         if not source_path:
             return
 
@@ -148,11 +156,7 @@ class AnalyzerResult(AnalyzerResultBase):
         message = element.find('Message').text
 
         source_line = element.find('SourceLine')
-        if source_line is None:
-            return None
-
-        source_path = source_line.attrib.get('sourcepath')
-        source_path = self.__get_abs_path(source_path)
+        source_path = self.__get_abs_path(source_line)
         if not source_path:
             return None
 
@@ -170,11 +174,7 @@ class AnalyzerResult(AnalyzerResultBase):
         message = element.find('Message').text
 
         source_line = element.find('SourceLine')
-        if source_line is None:
-            return None
-
-        source_path = source_line.attrib.get('sourcepath')
-        source_path = self.__get_abs_path(source_path)
+        source_path = self.__get_abs_path(source_line)
         if not source_path:
             return None
 
