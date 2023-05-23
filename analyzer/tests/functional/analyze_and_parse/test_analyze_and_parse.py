@@ -30,6 +30,7 @@ from codechecker_report_converter.report.output import baseline
 
 
 class AnalyzeParseTestCaseMeta(type):
+
     def __new__(mcs, name, bases, test_dict):
 
         def gen_test(path, mode):
@@ -64,7 +65,11 @@ class AnalyzeParseTestCase(
     def setup_class(cls):
         """Setup the class."""
 
-        # TEST_WORKSPACE is automatically set by test package __init__.py
+        global TEST_WORKSPACE
+        TEST_WORKSPACE = env.get_workspace('analyze_and_parse')
+
+        os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
+
         test_workspace = os.environ['TEST_WORKSPACE']
         cls.test_workspaces = {'NORMAL': os.path.join(test_workspace,
                                                       'NORMAL'),
@@ -108,7 +113,14 @@ class AnalyzeParseTestCase(
         """Restore environment after tests have ran."""
         os.chdir(cls.__old_pwd)
 
-    def tearDown(self):
+        # TODO: If environment variable is set keep the workspace
+        # and print out the path.
+        global TEST_WORKSPACE
+
+        print("Removing: " + TEST_WORKSPACE)
+        shutil.rmtree(TEST_WORKSPACE)
+
+    def teardown_method(self, method):
         """Restore environment after a particular test has run."""
         output_dir = AnalyzeParseTestCase.test_workspaces['OUTPUT']
         if os.path.isdir(output_dir):

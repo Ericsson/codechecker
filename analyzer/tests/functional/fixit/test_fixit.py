@@ -29,7 +29,28 @@ from libtest import env
 class TestFixit(unittest.TestCase):
     _ccClient = None
 
-    def setUp(self):
+    def setup_class(self):
+        """Setup the environment for the tests."""
+
+        global TEST_WORKSPACE
+        TEST_WORKSPACE = env.get_workspace('fixit')
+
+        report_dir = os.path.join(TEST_WORKSPACE, 'reports')
+        os.makedirs(report_dir)
+
+        os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
+
+    def teardown_class(self):
+        """Delete the workspace associated with this test"""
+
+        # TODO: If environment variable is set keep the workspace
+        # and print out the path.
+        global TEST_WORKSPACE
+
+        print("Removing: " + TEST_WORKSPACE)
+        shutil.rmtree(TEST_WORKSPACE)
+
+    def setup_method(self, method):
 
         # TEST_WORKSPACE is automatically set by test package __init__.py .
         self.test_workspace = os.environ['TEST_WORKSPACE']
@@ -43,7 +64,7 @@ class TestFixit(unittest.TestCase):
         # Change working dir to testfile dir so CodeChecker can be run easily.
         self.__old_pwd = os.getcwd()
 
-    def tearDown(self):
+    def teardown_method(self, method):
         """Restore environment after tests have run."""
         os.chdir(self.__old_pwd)
         if os.path.isdir(self.report_dir):

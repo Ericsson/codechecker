@@ -8,13 +8,50 @@
 
 import os
 import unittest
+import shutil
+import tempfile
 
 from codechecker_merge_clang_extdef_mappings import merge_clang_extdef_mappings
 
 
-class MergeClangExtdefMappingsTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(self):
+def get_workspace(test_id='test'):
+    """ Return a temporary workspace for the tests. """
+    workspace_root = os.environ.get("MERGE_CTU_FUNC_MAPS_TEST_WORKSPACE_ROOT")
+    if not workspace_root:
+        # if no external workspace is set create under the build dir
+        workspace_root = os.path.join(os.environ['REPO_ROOT'], 'build',
+                                      'workspace')
+
+    if not os.path.exists(workspace_root):
+        os.makedirs(workspace_root)
+
+    if test_id:
+        return tempfile.mkdtemp(prefix=test_id + "-", dir=workspace_root)
+    else:
+        return workspace_root
+
+
+class TestMergeClangExtdefMappingsTest(unittest.TestCase):
+
+    def setup_class(self):
+        """ Setup the environment for the tests. """
+
+        global TEST_WORKSPACE
+        TEST_WORKSPACE = get_workspace('merge_clang_extdef_mappings')
+
+        os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
+
+    def teardown_class(self):
+        """ Delete the workspace associated with this test. """
+
+        # TODO: If environment variable is set keep the workspace
+        # and print out the path.
+        global TEST_WORKSPACE
+
+        print("Removing: " + TEST_WORKSPACE)
+        shutil.rmtree(TEST_WORKSPACE)
+
+    def setup_method(self, method):
         """ Initialize test files. """
         self.test_workspace = os.environ['TEST_WORKSPACE']
 
