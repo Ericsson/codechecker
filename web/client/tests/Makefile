@@ -1,5 +1,5 @@
-CLIENT_UNIT_TEST_CMD = $(REPO_ROOT) BUILD_DIR=$(BUILD_DIR) pytest $(NOSECFG) client tests/unit
-CLIENT_UNIT_TEST_COV_CMD = #$(REPO_ROOT) BUILD_DIR=$(BUILD_DIR) coverage run -m nose $(NOSECFG) -w client tests/unit && coverage report && coverage html
+CLIENT_UNIT_TEST_CMD = $(REPO_ROOT) BUILD_DIR=$(BUILD_DIR) nosetests $(NOSECFG) -w client tests/unit
+CLIENT_UNIT_TEST_COV_CMD = $(REPO_ROOT) BUILD_DIR=$(BUILD_DIR) coverage run -m nose $(NOSECFG) -w client tests/unit && coverage report && coverage html
 
 
 test_unit_client:

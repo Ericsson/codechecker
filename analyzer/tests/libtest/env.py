@@ -50,7 +50,6 @@ def get_workspace(test_id='test'):
         os.makedirs(workspace_root)
 
     if test_id:
-        print("Creating directory")
         return tempfile.mkdtemp(prefix=test_id+"-", dir=workspace_root)
     else:
         return workspace_root
