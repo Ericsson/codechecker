@@ -19,7 +19,6 @@ import shutil
 import subprocess
 import unittest
 import zipfile
-import pytest
 
 from libtest import env
 
@@ -30,7 +29,7 @@ from codechecker_analyzer.analyzers.clangsa import version
 class TestAnalyze(unittest.TestCase):
     _ccClient = None
 
-    def setup_method(self, method):
+    def setup_class(self):
         """Setup the environment for the tests."""
 
         global TEST_WORKSPACE
@@ -41,7 +40,15 @@ class TestAnalyze(unittest.TestCase):
 
         os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
 
-        # TEST_WORKSPACE is automatically set by test package __init__.py .
+    def teardown_class(self):
+        """Delete the workspace associated with this test"""
+
+        print("Removing: " + TEST_WORKSPACE)
+        shutil.rmtree(TEST_WORKSPACE)
+
+    def setup_method(self, method):
+        """Setup the environment for the tests."""
+
         self.test_workspace = os.environ['TEST_WORKSPACE']
 
         test_class = self.__class__.__name__
@@ -66,10 +73,6 @@ class TestAnalyze(unittest.TestCase):
         os.chdir(self.__old_pwd)
         if os.path.isdir(self.report_dir):
             shutil.rmtree(self.report_dir)
-
-        """Delete the workspace associated with this test"""
-        print("Removing: " + TEST_WORKSPACE)
-        shutil.rmtree(TEST_WORKSPACE)
 
     def __analyze_incremental(self, content_, build_json, reports_dir,
                               plist_count, failed_count):
