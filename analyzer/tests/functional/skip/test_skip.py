@@ -28,7 +28,7 @@ from libtest import env
 class TestSkip(unittest.TestCase):
     _ccClient = None
 
-    def setup_class():
+    def setup_class(self):
         """Setup the environment for the tests."""
 
         global TEST_WORKSPACE
@@ -39,8 +39,7 @@ class TestSkip(unittest.TestCase):
 
         os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
 
-
-    def teardown_class():
+    def teardown_class(self):
         """Delete the workspace associated with this test"""
 
         # TODO: If environment variable is set keep the workspace

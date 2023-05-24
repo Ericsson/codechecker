@@ -39,7 +39,7 @@ class TestCmdline(unittest.TestCase):
     Simple tests to check CodeChecker command line.
     """
 
-    def setup_class():
+    def setup_class(self):
         """Setup the environment for the tests."""
 
         global TEST_WORKSPACE
@@ -47,8 +47,7 @@ class TestCmdline(unittest.TestCase):
 
         os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
 
-
-    def teardown_class():
+    def teardown_class(self):
         """Delete the workspace associated with this test"""
 
         # TODO: If environment variable is set keep the workspace

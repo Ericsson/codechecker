@@ -13,6 +13,7 @@ Test source-code level suppression data writing to suppress file.
 import os
 import inspect
 import shutil
+import sys
 import unittest
 
 from libtest import env, codechecker, project
@@ -57,35 +58,35 @@ class TestSuppress(unittest.TestCase):
     """
     Test source-code level suppression data writing to suppress file.
     """
-    def setup_class():
+    def setup_class(self):
         """Setup the environment for the tests."""
-    
+
         global TEST_WORKSPACE
         TEST_WORKSPACE = env.get_workspace('suppress')
-    
+
         os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
-    
+
         test_project = 'suppress'
-    
+
         test_config = {}
-    
+
         project_info = project.get_info(test_project)
-    
+
         test_proj_path = os.path.join(TEST_WORKSPACE, "test_proj")
         shutil.copytree(project.path(test_project), test_proj_path)
-    
+
         project_info['project_path'] = test_proj_path
-    
+
         test_config['test_project'] = project_info
-    
+
         # Generate a suppress file for the tests.
         suppress_file = os.path.join(TEST_WORKSPACE, 'suppress_file')
         if os.path.isfile(suppress_file):
             os.remove(suppress_file)
         _generate_suppress_file(suppress_file)
-    
+
         test_env = env.test_env(TEST_WORKSPACE)
-    
+
         codechecker_cfg = {
             'suppress_file': None,
             'skip_list_file': None,
@@ -93,36 +94,35 @@ class TestSuppress(unittest.TestCase):
             'workspace': TEST_WORKSPACE,
             'checkers': []
         }
-    
+
         ret = project.clean(test_project, test_env)
         if ret:
             sys.exit(ret)
-    
+
         output_dir = codechecker_cfg['reportdir'] \
             if 'reportdir' in codechecker_cfg \
             else os.path.join(codechecker_cfg['workspace'], 'reports')
-    
+
         codechecker_cfg['reportdir'] = output_dir
-    
+
         ret = codechecker.log_and_analyze(codechecker_cfg,
                                           project.path(test_project))
-    
+
         if ret:
             sys.exit(1)
         print("Analyzing the test project was successful.")
-    
+
         test_config['codechecker_cfg'] = codechecker_cfg
-    
+
         env.export_test_cfg(TEST_WORKSPACE, test_config)
-    
-    
-    def teardown_class():
+
+    def teardown_class(self):
         """Clean up after the test."""
-    
+
         # TODO: If environment variable is set keep the workspace
         # and print out the path.
         global TEST_WORKSPACE
-    
+
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE)
 

@@ -36,7 +36,7 @@ skipUnlessCTUDisplayCapable = \
 class TestCtuFailure(unittest.TestCase):
     """ Test CTU functionality. """
 
-    def setup_class():
+    def setup_class(self):
         """Setup the environment for testing ctu."""
 
         global TEST_WORKSPACE
@@ -45,8 +45,7 @@ class TestCtuFailure(unittest.TestCase):
         # Set the TEST_WORKSPACE used by the tests.
         os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
 
-
-    def teardown_class():
+    def teardown_class(self):
         """Delete workspace."""
 
         # TODO: If environment variable is set keep the workspace
