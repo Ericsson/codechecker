@@ -7,7 +7,7 @@ PYTHON_BIN ?= python3
 REPO_ROOT ?= REPO_ROOT=$(ROOT)
 
 # Nose test runner configuration options.
-NOSECFG = #--config .noserc
+NOSECFG = -c pytest.ini
 
 test_in_env: pycodestyle_in_env pylint_in_env test_unit_in_env test_functional_in_env test_build_logger test_tu_collector_in_env
 
