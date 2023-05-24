@@ -12,6 +12,7 @@ This module tests the CodeChecker command line.
 
 import json
 import os
+import shutil
 import subprocess
 import unittest
 
@@ -38,7 +39,26 @@ class TestCmdline(unittest.TestCase):
     Simple tests to check CodeChecker command line.
     """
 
-    def setUp(self):
+    def setup_class():
+        """Setup the environment for the tests."""
+
+        global TEST_WORKSPACE
+        TEST_WORKSPACE = env.get_workspace('cmdline')
+
+        os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
+
+
+    def teardown_class():
+        """Delete the workspace associated with this test"""
+
+        # TODO: If environment variable is set keep the workspace
+        # and print out the path.
+        global TEST_WORKSPACE
+
+        print("Removing: " + TEST_WORKSPACE)
+        shutil.rmtree(TEST_WORKSPACE)
+
+    def setup_method(self, method):
         # TEST_WORKSPACE is automatically set by test package __init__.py .
         self.test_workspace = os.environ['TEST_WORKSPACE']
 
