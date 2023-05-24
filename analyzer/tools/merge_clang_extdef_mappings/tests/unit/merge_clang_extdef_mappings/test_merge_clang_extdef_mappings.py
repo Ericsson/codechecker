@@ -30,6 +30,7 @@ def get_workspace(test_id='test'):
     else:
         return workspace_root
 
+
 class TestMergeClangExtdefMappingsTest(unittest.TestCase):
 
     def setup_class(self):
@@ -39,7 +40,6 @@ class TestMergeClangExtdefMappingsTest(unittest.TestCase):
         TEST_WORKSPACE = get_workspace('merge_clang_extdef_mappings')
 
         os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
-
 
     def teardown_class(self):
         """ Delete the workspace associated with this test. """
