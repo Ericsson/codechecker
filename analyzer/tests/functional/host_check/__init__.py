@@ -7,10 +7,5 @@
 #
 # -------------------------------------------------------------------------
 
-
-def setup_package():
-    pass
-
-
-def teardown_package():
-    pass
+# This file is empty, and is only present so that this directory will form a
+# package.

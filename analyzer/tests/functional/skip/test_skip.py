@@ -17,6 +17,7 @@ import json
 import os
 import plistlib
 import shlex
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -27,7 +28,29 @@ from libtest import env
 class TestSkip(unittest.TestCase):
     _ccClient = None
 
-    def setUp(self):
+    def setup_class():
+        """Setup the environment for the tests."""
+
+        global TEST_WORKSPACE
+        TEST_WORKSPACE = env.get_workspace('skip')
+
+        report_dir = os.path.join(TEST_WORKSPACE, 'reports')
+        os.makedirs(report_dir)
+
+        os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
+
+
+    def teardown_class():
+        """Delete the workspace associated with this test"""
+
+        # TODO: If environment variable is set keep the workspace
+        # and print out the path.
+        global TEST_WORKSPACE
+
+        print("Removing: " + TEST_WORKSPACE)
+        shutil.rmtree(TEST_WORKSPACE)
+
+    def setup_method(self, method):
 
         # TEST_WORKSPACE is automatically set by test package __init__.py .
         self.test_workspace = os.environ['TEST_WORKSPACE']
