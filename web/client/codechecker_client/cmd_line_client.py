@@ -1477,7 +1477,9 @@ def handle_remove_run_results(args):
     if client.removeRun(None, run_filter):
         LOG.info("Done.")
     else:
-        LOG.error("Failed to remove runs!")
+        LOG.warning(
+            "No runs were removed, check if the given criteria match existing "
+            "run names.")
 
 
 def handle_update_run(args):
