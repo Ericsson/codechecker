@@ -29,12 +29,12 @@ def build_stat_coll_cmd(action, config, source):
     Build the statistics collector analysis command.
     """
 
-    cmd = [config.analyzer_binary, '-c', '-x', action.lang, '--analyze',
+    cmd = [ClangSA.analyzer_binary(), '-c', '-x', action.lang, '--analyze',
            # Do not warn about the unused gcc/g++ arguments.
            '-Qunused-arguments',
            '--analyzer-output', 'text']
 
-    for plugin in config.analyzer_plugins:
+    for plugin in ClangSA.analyzer_plugins():
         cmd.extend(["-Xclang", "-plugin",
                     "-Xclang", "checkercfg",
                     "-Xclang", "-load",
@@ -48,7 +48,7 @@ def build_stat_coll_cmd(action, config, source):
 
     # Enable the statistics collector checkers only.
     collector_checkers = []
-    checks = ClangSA.get_analyzer_checkers(config, True, True)
+    checks = ClangSA.get_analyzer_checkers(alpha=True, debug=True)
     for checker_name, _ in checks:
         if SpecialReturnValueCollector.checker_collect in checker_name:
             collector_checkers.append(checker_name)

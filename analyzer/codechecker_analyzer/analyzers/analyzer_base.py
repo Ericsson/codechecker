@@ -114,7 +114,7 @@ class SourceAnalyzer(metaclass=ABCMeta):
             return res_handler
 
     @classmethod
-    def get_analyzer_checkers(cls, cfg_handler):
+    def get_analyzer_checkers(cls):
         """
         Return the checkers available in the analyzer.
         """

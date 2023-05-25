@@ -38,9 +38,7 @@ def is_ctu_capable():
     if not enabled_analyzers:
         return False
 
-    clangsa_cfg = ClangSA.construct_config_handler([])
-
-    return clangsa_cfg.ctu_capability.is_ctu_capable
+    return ClangSA.ctu_capability().is_ctu_capable
 
 
 def is_ctu_on_demand_available():
@@ -49,9 +47,7 @@ def is_ctu_on_demand_available():
     if not enabled_analyzers:
         return False
 
-    clangsa_cfg = ClangSA.construct_config_handler([])
-
-    return clangsa_cfg.ctu_capability.is_on_demand_ctu_available
+    return ClangSA.ctu_capability().is_on_demand_ctu_available
 
 
 def is_statistics_capable():
@@ -61,9 +57,7 @@ def is_statistics_capable():
     if not enabled_analyzers:
         return False
 
-    clangsa_cfg = ClangSA.construct_config_handler([])
-
-    checkers = ClangSA.get_analyzer_checkers(clangsa_cfg, True, True)
+    checkers = ClangSA.get_analyzer_checkers(alpha=True, debug=True)
 
     stat_checkers_pattern = re.compile(r'.+statisticscollector.+')
 
@@ -80,10 +74,7 @@ def is_z3_capable():
     if not enabled_analyzers:
         return False
 
-    analyzer_binary = analyzer_context.get_context() \
-        .analyzer_binaries.get(ClangSA.ANALYZER_NAME)
-
-    return host_check.has_analyzer_option(analyzer_binary,
+    return host_check.has_analyzer_option(ClangSA.analyzer_binary(),
                                           ['-Xclang',
                                            '-analyzer-constraints=z3'])
 
@@ -98,10 +89,8 @@ def is_z3_refutation_capable():
         return False
 
     check_supported_analyzers([ClangSA.ANALYZER_NAME])
-    analyzer_binary = analyzer_context.get_context() \
-        .analyzer_binaries.get(ClangSA.ANALYZER_NAME)
 
-    return host_check.has_analyzer_config_option(analyzer_binary,
+    return host_check.has_analyzer_config_option(ClangSA.analyzer_binary(),
                                                  'crosscheck-with-z3')
 
 

@@ -76,6 +76,29 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
 
     ANALYZER_NAME = 'cppcheck'
 
+    @classmethod
+    def analyzer_binary(cls):
+        return analyzer_context.get_context() \
+            .analyzer_binaries[cls.ANALYZER_NAME]
+
+    @classmethod
+    def get_version(cls, env=None):
+        """ Get analyzer version information. """
+        version = [cls.analyzer_binary(), '--version']
+        try:
+            output = subprocess.check_output(version,
+                                             env=env,
+                                             universal_newlines=True,
+                                             encoding="utf-8",
+                                             errors="ignore")
+            return output
+        except (subprocess.CalledProcessError, OSError) as oerr:
+            LOG.warning("Failed to get analyzer version: %s",
+                        ' '.join(version))
+            LOG.warning(oerr)
+
+        return None
+
     def add_checker_config(self, checker_cfg):
         LOG.error("Checker configuration for Cppcheck is not implemented yet")
 
@@ -142,7 +165,7 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         try:
             config = self.config_handler
 
-            analyzer_cmd = [config.analyzer_binary]
+            analyzer_cmd = [Cppcheck.analyzer_binary()]
 
             # TODO implement a more granular commandline checker config
             # Cppcheck runs with all checkers enabled for the time being
@@ -211,11 +234,11 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             return []
 
     @classmethod
-    def get_analyzer_checkers(cls, cfg_handler: CppcheckConfigHandler):
+    def get_analyzer_checkers(cls):
         """
         Return the list of the supported checkers.
         """
-        command = [cfg_handler.analyzer_binary, "--errorlist"]
+        command = [cls.analyzer_binary(), "--errorlist"]
 
         try:
             result = subprocess.check_output(command)
@@ -227,7 +250,7 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         return []
 
     @classmethod
-    def get_analyzer_config(cls, cfg_handler):
+    def get_analyzer_config(cls):
         """
         Config options for cppcheck.
         """
@@ -238,7 +261,7 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
                 ]
 
     @classmethod
-    def get_checker_config(cls, cfg_handler):
+    def get_checker_config(cls):
         """
         TODO add config options for cppcheck checkers.
         """
@@ -355,8 +378,6 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
     def construct_config_handler(cls, args):
         context = analyzer_context.get_context()
         handler = CppcheckConfigHandler()
-        handler.analyzer_binary = context.analyzer_binaries.get(
-            cls.ANALYZER_NAME)
 
         analyzer_config = defaultdict(list)
 
@@ -371,10 +392,10 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         check_env = context.analyzer_env
 
         # Overwrite PATH to contain only the parent of the cppcheck binary.
-        if os.path.isabs(handler.analyzer_binary):
-            check_env['PATH'] = os.path.dirname(handler.analyzer_binary)
+        if os.path.isabs(Cppcheck.analyzer_binary()):
+            check_env['PATH'] = os.path.dirname(Cppcheck.analyzer_binary())
 
-        checkers = cls.get_analyzer_checkers(handler)
+        checkers = cls.get_analyzer_checkers()
 
         # Cppcheck can and will report with checks that have a different
         # name than marked in the --errorlist xml. To be able to suppress

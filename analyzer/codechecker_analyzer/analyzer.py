@@ -115,9 +115,9 @@ def __get_statistics_data(args):
     return statistics_data
 
 
-def __get_ctu_data(config_map, ctu_dir):
+def __get_ctu_data(ctu_dir):
     """ Get CTU data. """
-    ctu_capability = config_map[ClangSA.ANALYZER_NAME].ctu_capability
+    ctu_capability = ClangSA.ctu_capability()
     return {'ctu_dir': ctu_dir,
             'ctu_func_map_cmd': ctu_capability.mapping_tool_path,
             'ctu_func_map_file': ctu_capability.mapping_file_name,
@@ -230,7 +230,8 @@ def perform_analysis(args, skip_handlers, actions, metadata_tool,
                 enabled_checkers[analyzer].append(check)
 
         # TODO: cppcheck may require a different environment than clang.
-        version = config_map[analyzer].get_version(context.analyzer_env)
+        version = analyzer_types.supported_analyzers[analyzer] \
+            .get_version(context.analyzer_env)
         metadata_info['analyzer_statistics']['version'] = version
 
         metadata_tool['analyzers'][analyzer] = metadata_info
@@ -243,7 +244,7 @@ def perform_analysis(args, skip_handlers, actions, metadata_tool,
 
         ctu_data = None
         if ctu_collect or statistics_data:
-            ctu_data = __get_ctu_data(config_map, ctu_dir)
+            ctu_data = __get_ctu_data(ctu_dir)
 
         makefile_creator = MakeFileCreator(analyzers, args.output_path,
                                            config_map, skip_handlers,
@@ -276,7 +277,7 @@ def perform_analysis(args, skip_handlers, actions, metadata_tool,
     if ctu_collect or statistics_data:
         ctu_data = None
         if ctu_collect or ctu_analyze:
-            ctu_data = manager.dict(__get_ctu_data(config_map, ctu_dir))
+            ctu_data = manager.dict(__get_ctu_data(ctu_dir))
 
         pre_analyze = [a for a in actions
                        if a.analyzer_type == ClangSA.ANALYZER_NAME]

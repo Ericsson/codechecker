@@ -10,6 +10,7 @@ Helpers for determining triple arch of a compile action
 """
 
 
+from . import analyzer
 from .. import analyzer_base
 from ..flag import has_flag
 from ..flag import prepend_all
@@ -19,7 +20,7 @@ def get_compile_command(action, config, source='', output=''):
     """ Generate a standardized and cleaned compile command serving as a base
     for other operations. """
 
-    cmd = [config.analyzer_binary]
+    cmd = [analyzer.ClangSA.analyzer_binary()]
 
     if not has_flag('--target', cmd) and action.target != "":
         cmd.append(f"--target={action.target}")

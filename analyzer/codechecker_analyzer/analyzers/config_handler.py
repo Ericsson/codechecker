@@ -14,7 +14,6 @@ from abc import ABCMeta
 from enum import Enum
 import collections
 import platform
-import subprocess
 
 from codechecker_analyzer import analyzer_context
 from codechecker_common.logger import get_logger
@@ -72,8 +71,6 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
 
     def __init__(self):
 
-        self.analyzer_binary = None
-        self.analyzer_plugins_dir = None
         self.analyzer_extra_arguments = []
         self.checker_config = ''
         self.analyzer_config = None
@@ -85,28 +82,6 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         # True if checker is enabled.
         # (False/True, 'checker_description')
         self.__available_checkers = collections.OrderedDict()
-
-    @property
-    def analyzer_plugins(self):
-        """ Full path of the analyzer plugins. """
-        return []
-
-    def get_version(self, env=None):
-        """ Get analyzer version information. """
-        version = [self.analyzer_binary, '--version']
-        try:
-            output = subprocess.check_output(version,
-                                             env=env,
-                                             universal_newlines=True,
-                                             encoding="utf-8",
-                                             errors="ignore")
-            return output
-        except (subprocess.CalledProcessError, OSError) as oerr:
-            LOG.warning("Failed to get analyzer version: %s",
-                        ' '.join(version))
-            LOG.warning(oerr)
-
-        return None
 
     def add_checker(self, checker_name, description='',
                     state=CheckerState.default):
