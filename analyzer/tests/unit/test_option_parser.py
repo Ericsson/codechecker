@@ -79,6 +79,21 @@ class OptionParserTest(unittest.TestCase):
         self.assertTrue('main.cpp' == res.source)
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
+    def test_nasm_action(self):
+        """
+        Test if an assembler is logged and analyzed.
+        """
+        action = {
+            'file': 'main.asm',
+            'command': "nasm -f elf64 main.asm",
+            'directory': ''}
+
+        res = log_parser.parse_options(action)
+        print(res)
+        self.assertIsNone(res.lang)
+        self.assertEqual(res.source, 'main.asm')
+        self.assertEqual(res.analyzer_type, -1)
+
     def test_preprocess_onefile(self):
         """
         Test the preprocess command of one file.
