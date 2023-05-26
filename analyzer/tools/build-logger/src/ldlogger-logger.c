@@ -184,6 +184,10 @@ static void logProgramArgs(
  */
 int logExec(int argc_, char const* argv_[])
 {
+  LOG_INFO("Program arguments: ");
+  for (int i = 0; i < argc_; ++i)
+    LOG_INFO("%s ", argv_[i]);
+  printf("\n");
   int lockFd;
   int logFd;
   FILE* stream;
@@ -239,6 +243,10 @@ int logExec(int argc_, char const* argv_[])
 #ifdef __LOGGER_MAIN__
 int main(int argc_, char const* argv_[])
 {
+  printf("Program arguments: ");
+  for (int i = 0; i < argc_; ++i)
+    printf("%s ", argv_[i]);
+  printf("\n");
   return logExec(argc_ - 1, argv_ + 1);
 }
 #endif
