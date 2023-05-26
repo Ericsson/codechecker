@@ -17,23 +17,51 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <spawn.h>
 #include <stdbool.h>
 
 #include "ldlogger-hooks.h"
+
+// We are done intercepting system calls by pretending that the functions below
+// are the real thing -- time to call the actual system call.
+#define CALL_ORIGINAL_FN(funName_, arglist, ...) \
+  typedef int (*FunType) arglist; \
+  FunType fun = (FunType) dlsym(RTLD_NEXT, #funName_); \
+  if (!fun) \
+  { \
+    return -1; \
+  } \
+  return (*fun)( __VA_ARGS__ );
 
 #define CC_LOGGER_CALL_EXEC(funName_, arglist, ...) \
   tryLog(__VA_ARGS__); \
   { \
     unsetLDPRELOAD(__VA_ARGS__); \
-    typedef int (*FunType) arglist; \
-    FunType fun = (FunType) dlsym(RTLD_NEXT, #funName_); \
-    if (!fun) \
-    { \
-      return -1; \
-    } \
-    return (*fun)( __VA_ARGS__ ); \
+    CALL_ORIGINAL_FN(funName_, arglist, __VA_ARGS__) \
   }
 
+#define CC_LOGGER_CALL_POSIX_SPAWN(funName_)                                   \
+  /*                                                                           \
+    The first arg of posix_spawn (unlike the exec* calls) is not the path to   \
+    the program to execute, so we're not reusing CC_LOGGER_CALL_EXEC.          \
+  */                                                                           \
+  tryLog(path, argv);                                                          \
+  /*                                                                           \
+    Note that envp is not passed through (which would be the environment that  \
+    that the process will be spawned it), but is replaced by environ, which is \
+    a global variable that stores our environment. We added quite a few        \
+    variables into it, and for some reason, they are not present in envp.      \
+  */                                                                           \
+  (void)envp;                                                                  \
+  CALL_ORIGINAL_FN(funName_,                                                   \
+                   (pid_t *restrict, const char *restrict,                     \
+                    const posix_spawn_file_actions_t *restrict,                \
+                    const posix_spawnattr_t *restrict, char *const[restrict],  \
+                    char *const[restrict]),                                    \
+                   pid, path, file_actions, attrp, argv, environ)
+
+// FIXME: What does this function do? Does it do anything? Does it *need* to do
+// the thing we are not sure it does?
 static void unsetLDPRELOAD(const char* const filename_, ...)
 {
   char ldd[] = "ldd";
@@ -42,6 +70,7 @@ static void unsetLDPRELOAD(const char* const filename_, ...)
   {
     unsigned int pos_number = pos-filename_;
     unsigned int prefix_length = strlen(filename_)-strlen(ldd);
+    // FIXME: Why should we care? Is that bad?
     /* is there /ldd suffix in filename? or is filename equal ldd? */
     if ((prefix_length == pos_number) && ( pos_number == 0 || (pos-1 && *--pos == '/')))
     {
@@ -54,6 +83,8 @@ static void unsetLDPRELOAD(const char* const filename_, ...)
  * Tries to log an exec* call.
  *
  * @param origin_ the exec* function name.
+ * FIXME: lookupPath_ is not a thing in the entire CodeChecker repo, neither is
+ * it in its entire git history.
  * @param filename_ the filename / command (see lookupPath_).
  * @param argv_ arguments.
  */
@@ -83,8 +114,24 @@ static void tryLog(
   free(loggerArgs);
 }
 
-__attribute__ ((visibility ("default"))) int execv(const char* filename_, char* const argv_[])
-{
+__attribute__((visibility("default"))) int
+posix_spawn(pid_t *restrict pid, const char *restrict path,
+            const posix_spawn_file_actions_t *restrict file_actions,
+            const posix_spawnattr_t *restrict attrp, char *const argv[restrict],
+            char *const envp[restrict]) {
+  CC_LOGGER_CALL_POSIX_SPAWN(posix_spawn)
+}
+
+__attribute__((visibility("default"))) int
+posix_spawnp(pid_t *restrict pid, const char *restrict path,
+             const posix_spawn_file_actions_t *restrict file_actions,
+             const posix_spawnattr_t *restrict attrp,
+             char *const argv[restrict], char *const envp[restrict]) {
+  CC_LOGGER_CALL_POSIX_SPAWN(posix_spawnp)
+}
+
+__attribute__((visibility("default"))) int execv(const char *filename_,
+                                                 char *const argv_[]) {
   CC_LOGGER_CALL_EXEC(execv, (const char*, char* const*),
     filename_, argv_);
 }
