@@ -2,8 +2,8 @@
 
 REPO_ROOT ?= REPO_ROOT=$(ROOT)
 
-# Nose test runner configuration options.
-NOSECFG = -c pytest.ini
+# pytest test runner configuration options.
+PYTESTCFG = -c pytest.ini
 
 test: pycodestyle pylint test_unit
 
@@ -27,7 +27,7 @@ pylint_in_env: venv
 	$(ACTIVATE_DEV_VENV) && $(PYLINT_TEST_CMD)
 
 UNIT_TEST_CMD = $(REPO_ROOT) \
-  pytest $(NOSECFG) tests/unit
+  pytest $(PYTESTCFG) tests/unit
 
 test_unit:
 	$(UNIT_TEST_CMD)
