@@ -65,7 +65,9 @@ def __get_report_hash_path_sensitive(report: Report) -> List[str]:
     High level overview of the hash content:
      * 'file_name' from the main diag section.
      * 'checker name'
-     * 'checker message'
+     * 'checker message' (Some analyzers may generate dynamic content to
+         messages, line memory addresses in case of sanitizers. The report
+         converter of these analyzers may exclude these dynamic parts.)
      * 'line content' from the source file if can be read up
      * 'column numbers' from the main diag section
      * 'range column numbers' from bug_path_positions.
@@ -87,7 +89,7 @@ def __get_report_hash_path_sensitive(report: Report) -> List[str]:
 
         hash_content = [report.file.name,
                         report.checker_name,
-                        event.message,
+                        report.static_message,
                         line_content,
                         str(from_col),
                         str(until_col)]
@@ -140,7 +142,7 @@ def __get_report_hash_context_free(report: Report) -> List[str]:
 
         return [
             report.file.name,
-            report.message,
+            report.static_message,
             line_content,
             str(from_col),
             str(until_col)]
