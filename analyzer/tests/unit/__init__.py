@@ -22,3 +22,4 @@ sys.path.append(REPO_ROOT)
 sys.path.append(os.path.join(
   REPO_ROOT, 'analyzer', 'tools', 'statistics_collector'))
 sys.path.append(os.path.join(REPO_ROOT, 'tools', 'report-converter'))
+sys.path.append(os.path.join(PKG_ROOT, 'lib', 'python3'))

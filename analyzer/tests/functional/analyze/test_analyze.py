@@ -29,9 +29,26 @@ from codechecker_analyzer.analyzers.clangsa import version
 class TestAnalyze(unittest.TestCase):
     _ccClient = None
 
-    def setUp(self):
+    def setup_class(self):
+        """Setup the environment for the tests."""
 
-        # TEST_WORKSPACE is automatically set by test package __init__.py .
+        global TEST_WORKSPACE
+        TEST_WORKSPACE = env.get_workspace('analyze')
+
+        report_dir = os.path.join(TEST_WORKSPACE, 'reports')
+        os.makedirs(report_dir)
+
+        os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
+
+    def teardown_class(self):
+        """Delete the workspace associated with this test"""
+
+        print("Removing: " + TEST_WORKSPACE)
+        shutil.rmtree(TEST_WORKSPACE)
+
+    def setup_method(self, method):
+        """Setup the environment for the tests."""
+
         self.test_workspace = os.environ['TEST_WORKSPACE']
 
         test_class = self.__class__.__name__
@@ -51,7 +68,7 @@ class TestAnalyze(unittest.TestCase):
         self.disabling_modeling_checker_regex = re.compile(
             r"analyzer-disable-checker=.*unix.cstring.CStringModeling.*")
 
-    def tearDown(self):
+    def teardown_method(self, method):
         """Restore environment after tests have ran."""
         os.chdir(self.__old_pwd)
         if os.path.isdir(self.report_dir):
@@ -1105,11 +1122,9 @@ class TestAnalyze(unittest.TestCase):
 
         # It's printed as a found report and in the checker statistics.
         # Note: If this test case fails, its pretty sure that something totally
-        # unrelated to the analysis broke in CodeChecker. Comment out the line
-        # starting with 'nocapture' in 'analyzer/.noserc', and print both the
+        # unrelated to the analysis broke in CodeChecker. Print both the
         # stdout and stderr streams from the above communicate() call (the
-        # latter of which is ignored with _ above)
-        # Put a + if the above instructions saved you: +
+        # latter of which is ignored with _ above).
         self.assertEqual(out.count('hicpp-use-nullptr'), 2)
 
         analyze_cmd = [self._codechecker_cmd, "check", "-l", build_json,

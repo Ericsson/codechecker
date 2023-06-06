@@ -35,14 +35,33 @@ skipUnlessCTUOnDemandCapable = \
 class TestCtu(unittest.TestCase):
     """ Test CTU functionality. """
 
-    def setUp(self):
+    def setup_class(self):
+        """Setup the environment for testing ctu."""
+
+        global TEST_WORKSPACE
+        TEST_WORKSPACE = env.get_workspace('ctu')
+
+        # Set the TEST_WORKSPACE used by the tests.
+        os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
+
+    def teardown_class(self):
+        """Delete workspace."""
+
+        # TODO: If environment variable is set keep the workspace
+        # and print out the path.
+        global TEST_WORKSPACE
+
+        print('Removing: ' + TEST_WORKSPACE)
+        shutil.rmtree(TEST_WORKSPACE)
+
+    def setup_method(self, method):
         """ Set up workspace."""
         self.setUpWith('test_files_c', 'buildlog.json', 'reports_c')
 
     def setUpWith(self, input_dir, buildlog_json, report_dir):
         """
         Set up workspace with a given parameters. If called multiple times,
-        tearDown() must be called before this function.
+        teardown_method() must be called before this function.
         """
         # TEST_WORKSPACE is automatically set by test package __init__.py .
         self.test_workspace = os.environ['TEST_WORKSPACE']
@@ -78,7 +97,7 @@ class TestCtu(unittest.TestCase):
         self.__old_pwd = os.getcwd()
         os.chdir(self.test_workspace)
 
-    def tearDown(self):
+    def teardown_method(self, method):
         """ Tear down workspace."""
 
         shutil.rmtree(self.report_dir, ignore_errors=True)
@@ -201,7 +220,7 @@ class TestCtu(unittest.TestCase):
     def __test_ctu_analyze_cpp(self, on_demand=False):
         """ Test CTU analyze phase. """
 
-        self.tearDown()
+        self.teardown_method(self.__test_ctu_analyze_cpp)
         self.setUpWith('test_files_cpp', 'buildlog.json', 'reports_cpp')
 
         self.__do_ctu_collect(on_demand=on_demand)
@@ -366,7 +385,7 @@ class TestCtu(unittest.TestCase):
         The YAML file should not contain newlines in individual entries in the
         generated textual format. """
 
-        self.tearDown()
+        self.teardown_method(self.test_ctu_ondemand_yaml_format)
         self.setUpWith('test_files_c', 'complex_buildlog.json', 'reports_c')
 
         # Copy test files to a directory which file path will be longer than

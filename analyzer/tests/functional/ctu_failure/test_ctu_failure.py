@@ -36,7 +36,26 @@ skipUnlessCTUDisplayCapable = \
 class TestCtuFailure(unittest.TestCase):
     """ Test CTU functionality. """
 
-    def setUp(self):
+    def setup_class(self):
+        """Setup the environment for testing ctu."""
+
+        global TEST_WORKSPACE
+        TEST_WORKSPACE = env.get_workspace('ctu_failure')
+
+        # Set the TEST_WORKSPACE used by the tests.
+        os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
+
+    def teardown_class(self):
+        """Delete workspace."""
+
+        # TODO: If environment variable is set keep the workspace
+        # and print out the path.
+        global TEST_WORKSPACE
+
+        print('Removing: ' + TEST_WORKSPACE)
+        shutil.rmtree(TEST_WORKSPACE)
+
+    def setup_method(self, method):
         """ Set up workspace."""
 
         # TEST_WORKSPACE is automatically set by test package __init__.py .
@@ -91,7 +110,7 @@ class TestCtuFailure(unittest.TestCase):
                   encoding="utf-8", errors="ignore") as log_file:
             json.dump(build_json, log_file)
 
-    def tearDown(self):
+    def teardown_method(self, method):
         """ Tear down workspace."""
 
         shutil.rmtree(self.report_dir, ignore_errors=True)

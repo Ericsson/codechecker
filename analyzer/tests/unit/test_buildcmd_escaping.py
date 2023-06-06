@@ -19,7 +19,7 @@ from codechecker_analyzer.buildlog import build_manager
 from codechecker_analyzer.buildlog import log_parser
 
 
-class BuildCmdTestNose(unittest.TestCase):
+class BuildCmdTest(unittest.TestCase):
     """
     Test the build command escaping and execution.
     """

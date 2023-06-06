@@ -19,7 +19,7 @@ class BuildAction:
     original_command = None
 
 
-class ResultHandlerTestNose(unittest.TestCase):
+class ResultHandlerTest(unittest.TestCase):
     """
     Test some functions of ResultHandler base class.
     """

@@ -12,17 +12,121 @@ Test source-code level suppression data writing to suppress file.
 
 import os
 import inspect
+import shutil
+import sys
 import unittest
 
-from libtest import env, codechecker
+from libtest import env, codechecker, project
+
+
+def _generate_suppress_file(suppress_file):
+    """
+    Create a dummy suppress file just to check if the old and the new
+    suppress format can be processed.
+    """
+    print("Generating suppress file: " + suppress_file)
+
+    import calendar
+    import hashlib
+    import random
+    import time
+
+    hash_version = '1'
+    suppress_stuff = []
+    for _ in range(10):
+        curr_time = calendar.timegm(time.gmtime())
+        random_integer = random.randint(1, 9999999)
+        suppress_line = str(curr_time) + str(random_integer)
+        suppress_stuff.append(
+            hashlib.md5(suppress_line.encode("utf-8")).hexdigest() +
+            '#' + hash_version)
+
+    s_file = open(suppress_file, 'w', encoding='utf-8', errors='ignore')
+    for k in suppress_stuff:
+        s_file.write(k + '||' + 'idziei éléáálk ~!@#$#%^&*() \n')
+        s_file.write(
+            k + '||' + 'test_~!@#$%^&*.cpp' +
+            '||' + 'idziei éléáálk ~!@#$%^&*(\n')
+        s_file.write(
+            hashlib.md5(suppress_line.encode("utf-8")).hexdigest() + '||' +
+            'test_~!@#$%^&*.cpp' + '||' + 'idziei éléáálk ~!@#$%^&*(\n')
+
+    s_file.close()
 
 
 class TestSuppress(unittest.TestCase):
     """
     Test source-code level suppression data writing to suppress file.
     """
+    def setup_class(self):
+        """Setup the environment for the tests."""
 
-    def setUp(self):
+        global TEST_WORKSPACE
+        TEST_WORKSPACE = env.get_workspace('suppress')
+
+        os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
+
+        test_project = 'suppress'
+
+        test_config = {}
+
+        project_info = project.get_info(test_project)
+
+        test_proj_path = os.path.join(TEST_WORKSPACE, "test_proj")
+        shutil.copytree(project.path(test_project), test_proj_path)
+
+        project_info['project_path'] = test_proj_path
+
+        test_config['test_project'] = project_info
+
+        # Generate a suppress file for the tests.
+        suppress_file = os.path.join(TEST_WORKSPACE, 'suppress_file')
+        if os.path.isfile(suppress_file):
+            os.remove(suppress_file)
+        _generate_suppress_file(suppress_file)
+
+        test_env = env.test_env(TEST_WORKSPACE)
+
+        codechecker_cfg = {
+            'suppress_file': None,
+            'skip_list_file': None,
+            'check_env': test_env,
+            'workspace': TEST_WORKSPACE,
+            'checkers': []
+        }
+
+        ret = project.clean(test_project, test_env)
+        if ret:
+            sys.exit(ret)
+
+        output_dir = codechecker_cfg['reportdir'] \
+            if 'reportdir' in codechecker_cfg \
+            else os.path.join(codechecker_cfg['workspace'], 'reports')
+
+        codechecker_cfg['reportdir'] = output_dir
+
+        ret = codechecker.log_and_analyze(codechecker_cfg,
+                                          project.path(test_project))
+
+        if ret:
+            sys.exit(1)
+        print("Analyzing the test project was successful.")
+
+        test_config['codechecker_cfg'] = codechecker_cfg
+
+        env.export_test_cfg(TEST_WORKSPACE, test_config)
+
+    def teardown_class(self):
+        """Clean up after the test."""
+
+        # TODO: If environment variable is set keep the workspace
+        # and print out the path.
+        global TEST_WORKSPACE
+
+        print("Removing: " + TEST_WORKSPACE)
+        shutil.rmtree(TEST_WORKSPACE)
+
+    def setup_method(self, method):
         self._test_workspace = os.environ['TEST_WORKSPACE']
 
         self._testproject_data = env.setup_test_proj_cfg(self._test_workspace)
