@@ -7,8 +7,8 @@ TEST_PROJECT ?= TEST_PROJ=$(CURRENT_DIR)/tests/projects
 
 LAYOUT_DIR ?= LAYOUT_DIR=$(STATIC_DIR)
 
-# Nose test runner configuration options.
-NOSECFG = --config .noserc
+# pytest test runner configuration options.
+PYTESTCFG = -c pytest.ini
 
 test: mypy pycodestyle pylint test_unit test_functional
 
@@ -41,7 +41,7 @@ pylint_in_env: venv
 	$(ACTIVATE_DEV_VENV) && $(PYLINT_TEST_CMD)
 
 UNIT_TEST_CMD = $(REPO_ROOT) $(TEST_PROJECT) $(LAYOUT_DIR) \
-  nosetests $(NOSECFG) tests/unit
+  pytest $(PYTESTCFG) tests/unit
 
 test_unit:
 	$(UNIT_TEST_CMD)
@@ -50,7 +50,7 @@ test_unit_in_env: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(UNIT_TEST_CMD)
 
 FUNCTIONAL_TEST_CMD = $(REPO_ROOT) $(TEST_PROJECT) \
-  nosetests $(NOSECFG) tests/functional
+  pytest $(PYTESTCFG) tests/functional
 
 test_functional:
 	$(FUNCTIONAL_TEST_CMD)

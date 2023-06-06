@@ -31,9 +31,14 @@ class PlistToHtmlTest(unittest.TestCase):
     test_workspace: ClassVar[str]
     layout_dir: ClassVar[str]
 
-    @classmethod
-    def setUpClass(self):
+    def setup_class(self):
         """ Initialize test files. """
+
+        global TEST_WORKSPACE
+        TEST_WORKSPACE = env.get_workspace('plist_to_html')
+
+        os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
+
         self.test_workspace = os.environ['TEST_WORKSPACE']
         self.layout_dir = os.environ['LAYOUT_DIR']
 
@@ -55,6 +60,16 @@ class PlistToHtmlTest(unittest.TestCase):
                         plist_file.seek(0)
                         plist_file.truncate()
                         plist_file.write(new_content)
+
+    def teardown_class(self):
+        """ Delete the workspace associated with this test. """
+
+        # TODO: If environment variable is set keep the workspace
+        # and print out the path.
+        global TEST_WORKSPACE
+
+        print("Removing: " + TEST_WORKSPACE)
+        shutil.rmtree(TEST_WORKSPACE)
 
     def __test_html_builder(self, proj: str) -> str:
         """
