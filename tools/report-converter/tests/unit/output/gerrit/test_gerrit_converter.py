@@ -63,7 +63,7 @@ class TestReportToGerrit(unittest.TestCase):
                 ]
             },
         }
-        self.assertEquals(res, expected)
+        self.assertEqual(res, expected)
 
     def test_report_to_gerrit_conversion_abs_filepath(self):
         """ Conversion report with absolute filepath. """
@@ -94,7 +94,7 @@ class TestReportToGerrit(unittest.TestCase):
                 ]
             },
         }
-        self.assertEquals(res, expected)
+        self.assertEqual(res, expected)
 
     def test_report_to_gerrit_conversion_report_url(self):
         """ Conversion report with absolute filepath and CC_REPORT_URL env. """
@@ -127,7 +127,7 @@ class TestReportToGerrit(unittest.TestCase):
                 ]
             },
         }
-        self.assertEquals(res, expected)
+        self.assertEqual(res, expected)
 
     def test_report_to_gerrit_conversion_filter_changed_files(self):
         """Conversion report with changed files filter.
@@ -173,10 +173,10 @@ class TestReportToGerrit(unittest.TestCase):
         review_comments = res["comments"]
 
         # Reports were found in two source files.
-        self.assertEquals(len(review_comments), 1)
+        self.assertEqual(len(review_comments), 1)
 
         # Two reports in the main.cpp file.
-        self.assertEquals(len(review_comments[report.file.path]), 2)
+        self.assertEqual(len(review_comments[report.file.path]), 2)
 
         self.assertIn(
             "CodeChecker found 3 issue(s) in the code.", res["message"])

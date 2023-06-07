@@ -23,7 +23,9 @@ class TestCmdline(unittest.TestCase):
 
     def test_help(self):
         """ Get help for report-converter tool. """
-        ret = subprocess.call(['report-converter', '--help'])
+        ret = subprocess.call(['report-converter', '--help'],
+                              stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE)
         self.assertEqual(0, ret)
 
     def test_metadata(self):

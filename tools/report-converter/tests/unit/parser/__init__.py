@@ -5,3 +5,6 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # -------------------------------------------------------------------------
+
+# This file is empty, and is only present so that this directory will form a
+# package.
