@@ -14,6 +14,7 @@ Test database cleanup.
 import json
 import multiprocessing
 import os
+import shutil
 import unittest
 from shutil import copytree, rmtree
 
@@ -27,7 +28,42 @@ from libtest import env
 
 class TestDbCleanup(unittest.TestCase):
 
-    def setUp(self):
+    def setup_class(self):
+        """Setup the environment for testing db_cleanup."""
+
+        global TEST_WORKSPACE
+        TEST_WORKSPACE = env.get_workspace('db_cleanup')
+
+        # Set the TEST_WORKSPACE used by the tests.
+        os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
+
+        # Create a basic CodeChecker config for the tests, this should
+        # be imported by the tests and they should only depend on these
+        # configuration options.
+        codechecker_cfg = {
+            'suppress_file': None,
+            'skip_list_file': None,
+            'check_env': env.test_env(TEST_WORKSPACE),
+            'workspace': TEST_WORKSPACE,
+            'checkers': [],
+            'viewer_host': 'localhost',
+            'viewer_product': 'db_cleanup',
+            'reportdir': os.path.join(TEST_WORKSPACE, 'reports'),
+            'analyzers': ['clangsa', 'clang-tidy']
+        }
+
+        env.export_test_cfg(TEST_WORKSPACE,
+                            {'codechecker_cfg': codechecker_cfg})
+
+    def teardown_class(self):
+        """Clean up after the test."""
+
+        global TEST_WORKSPACE
+
+        print("Removing: " + TEST_WORKSPACE)
+        shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
+
+    def setup_method(self, method):
         self.test_workspace = os.environ['TEST_WORKSPACE']
 
         test_class = self.__class__.__name__

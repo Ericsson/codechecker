@@ -13,14 +13,55 @@ Test source-code level suppression data writing to suppress file.
 import logging
 import os
 import shlex
+import shutil
 import subprocess
+import sys
 from subprocess import CalledProcessError
 import unittest
+import uuid
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import ReviewStatus
 
-from libtest import env, codechecker
+from libtest import codechecker
+from libtest import env
+from libtest import project
 from libtest.thrift_client_to_db import get_all_run_results
+
+
+def _generate_suppress_file(suppress_file):
+    """
+    Create a dummy suppress file just to check if the old and the new
+    suppress format can be processed.
+    """
+    print("Generating suppress file: " + suppress_file)
+
+    import calendar
+    import hashlib
+    import random
+    import time
+
+    hash_version = '1'
+    suppress_stuff = []
+    for _ in range(10):
+        curr_time = calendar.timegm(time.gmtime())
+        random_integer = random.randint(1, 9999999)
+        suppress_line = str(curr_time) + str(random_integer)
+        suppress_stuff.append(
+            hashlib.md5(
+                suppress_line.encode('utf-8')).hexdigest() +
+            '#' + hash_version)
+
+    s_file = open(suppress_file, 'w', encoding="utf-8", errors="ignore")
+    for k in suppress_stuff:
+        s_file.write(k + '||' + 'idziei éléáálk ~!@#$#%^&*() \n')
+        s_file.write(
+            k + '||' + 'test_~!@#$%^&*.cpp' +
+            '||' + 'idziei éléáálk ~!@#$%^&*(\n')
+        s_file.write(
+            hashlib.md5(suppress_line.encode('utf-8')).hexdigest() + '||' +
+            'test_~!@#$%^&*.cpp' + '||' + 'idziei éléáálk ~!@#$%^&*(\n')
+
+    s_file.close()
 
 
 def call_cmd(command, cwd, env):
@@ -46,7 +87,91 @@ class TestSuppress(unittest.TestCase):
     Test source-code level suppression data writing to suppress file.
     """
 
-    def setUp(self):
+    def setup_class(self):
+        """Setup the environment for the tests."""
+
+        global TEST_WORKSPACE
+        TEST_WORKSPACE = env.get_workspace('suppress')
+
+        os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
+
+        test_project = 'suppress'
+
+        test_config = {}
+
+        project_info = project.get_info(test_project)
+
+        test_proj_path = os.path.join(TEST_WORKSPACE, "test_proj")
+        shutil.copytree(project.path(test_project), test_proj_path)
+
+        project_info['project_path'] = test_proj_path
+
+        test_config['test_project'] = project_info
+
+        # Generate a suppress file for the tests.
+        suppress_file = os.path.join(TEST_WORKSPACE, 'suppress_file')
+        if os.path.isfile(suppress_file):
+            os.remove(suppress_file)
+        _generate_suppress_file(suppress_file)
+
+        test_env = env.test_env(TEST_WORKSPACE)
+
+        codechecker_cfg = {
+            'suppress_file': None,
+            'skip_list_file': None,
+            'check_env': test_env,
+            'workspace': TEST_WORKSPACE,
+            'checkers': [],
+            'analyzers': ['clangsa', 'clang-tidy']
+        }
+
+        ret = project.clean(test_project, test_env)
+        if ret:
+            sys.exit(ret)
+
+        # Start or connect to the running CodeChecker server and get connection
+        # details.
+        print("This test uses a CodeChecker server... connecting...")
+        server_access = codechecker.start_or_get_server()
+        server_access['viewer_product'] = 'suppress'
+        codechecker.add_test_package_product(server_access, TEST_WORKSPACE)
+
+        # Extend the checker configuration with the server access.
+        codechecker_cfg.update(server_access)
+
+        test_project_name = project_info['name'] + '_' + uuid.uuid4().hex
+
+        ret = codechecker.check_and_store(codechecker_cfg,
+                                          test_project_name,
+                                          project.path(test_project))
+
+        if ret:
+            sys.exit(1)
+        print("Analyzing the test project was successful.")
+        test_project_name_dup = test_project_name + "_duplicate"
+        ret = codechecker.store(codechecker_cfg, test_project_name_dup)
+
+        codechecker_cfg['run_names'] = [test_project_name,
+                                        test_project_name_dup]
+        test_config['codechecker_cfg'] = codechecker_cfg
+
+        env.export_test_cfg(TEST_WORKSPACE, test_config)
+
+    def teardown_class(self):
+        """Clean up after the test."""
+
+        # TODO: If environment variable is set keep the workspace
+        # and print out the path.
+        global TEST_WORKSPACE
+
+        check_env = env.import_test_cfg(TEST_WORKSPACE)[
+            'codechecker_cfg']['check_env']
+        codechecker.remove_test_package_product(TEST_WORKSPACE, check_env)
+
+        print("Removing: " + TEST_WORKSPACE)
+        shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
+
+    def setup_method(self, method):
         self._test_workspace = os.environ['TEST_WORKSPACE']
 
         self._testproject_data = env.setup_test_proj_cfg(self._test_workspace)

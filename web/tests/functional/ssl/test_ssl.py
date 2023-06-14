@@ -10,8 +10,9 @@
 SSL test.
 """
 
-
+import multiprocessing
 import os
+import shutil
 import subprocess
 import unittest
 
@@ -26,7 +27,66 @@ class TestSSL(unittest.TestCase):
     Test SSL layering on the server.
     """
 
-    def setUp(self):
+    def setup_class(self):
+        """Setup the environment for the tests then start the server."""
+
+        # Stopping event for CodeChecker server.
+        global __STOP_SERVER
+        __STOP_SERVER = multiprocessing.Event()
+
+        global TEST_WORKSPACE
+        TEST_WORKSPACE = env.get_workspace('ssl')
+
+        os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
+
+        test_config = {}
+
+        # Setup environment variables for the test cases.
+        host_port_cfg = {'viewer_host': 'localhost',
+                         'viewer_port': env.get_free_port(),
+                         'viewer_product': 'ssl'}
+
+        test_env = env.test_env(TEST_WORKSPACE)
+
+        codechecker_cfg = {
+            'check_env': test_env,
+            'workspace': TEST_WORKSPACE,
+            'checkers': [],
+            'analyzers': ['clangsa', 'clang-tidy']
+        }
+
+        codechecker_cfg.update(host_port_cfg)
+        test_config['codechecker_cfg'] = codechecker_cfg
+
+        # Export configuration for the tests.
+        env.export_test_cfg(TEST_WORKSPACE, test_config)
+
+        # Enable SSL
+        # ON travis auto-test fails because due to the environment
+        # self signed certs are not accepted
+        # [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed
+        # (_ssl.c:661)
+        # Operation not permitted
+        # Will need to solve this to re-enable SSL in this test.
+        # env.enable_ssl(TEST_WORKSPACE)
+
+        # Enable authentication and start the CodeChecker server.
+        env.enable_auth(TEST_WORKSPACE)
+        print("Starting server to get results")
+        codechecker.start_server(codechecker_cfg, __STOP_SERVER)
+
+    def teardown_class(self):
+        """Stop the CodeChecker server and clean up after the tests."""
+        # TODO If environment variable is set keep the workspace
+        # and print out the path.
+        global TEST_WORKSPACE
+        __STOP_SERVER.set()
+        __STOP_SERVER.clear()
+
+        print("Removing: " + TEST_WORKSPACE)
+        shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
+
+    def setup_method(self, method):
 
         # Get the test workspace used to authentication tests.
         self._test_workspace = os.environ['TEST_WORKSPACE']

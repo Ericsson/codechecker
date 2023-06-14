@@ -12,8 +12,11 @@
 import json
 import os
 import subprocess
+import shutil
+import sys
 import tempfile
 import unittest
+import uuid
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import Order, \
   ReportFilter, RunFilter, RunSortMode, RunSortType
@@ -21,11 +24,87 @@ from libtest.thrift_client_to_db import get_all_run_results
 
 from libtest import codechecker
 from libtest import env
+from libtest import project
 
 
 class TestBlameInfo(unittest.TestCase):
 
-    def setUp(self):
+    def setup_class(self):
+        """Setup the environment for testing blame information."""
+
+        global TEST_WORKSPACE
+        TEST_WORKSPACE = env.get_workspace('blame')
+
+        os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
+
+        test_project = 'cpp'
+        test_config = {}
+        project_info = project.get_info(test_project)
+
+        test_project_path = os.path.join(TEST_WORKSPACE, "test_proj")
+        shutil.copytree(project.path(test_project), test_project_path)
+
+        project_info['project_path'] = test_project_path
+        test_project_name = project_info['name'] + '_' + uuid.uuid4().hex
+        test_config['test_project'] = project_info
+
+        suppress_file = None
+        skip_list_file = None
+        test_env = env.test_env(TEST_WORKSPACE)
+
+        codechecker_cfg = {
+            'suppress_file': suppress_file,
+            'skip_list_file': skip_list_file,
+            'check_env': test_env,
+            'workspace': TEST_WORKSPACE,
+            'checkers': [],
+            'clean': True
+        }
+
+        # Start or connect to the running CodeChecker server and get connection
+        # details.
+        print("This test uses a CodeChecker server... connecting...")
+        server_access = codechecker.start_or_get_server(auth_required=True)
+        server_access['viewer_product'] = 'blame'
+        codechecker.add_test_package_product(server_access, TEST_WORKSPACE)
+
+        # Extend the checker configuration with the server access.
+        codechecker_cfg.update(server_access)
+
+        # Clean the test project, if needed by the tests.
+        ret = project.clean(test_project)
+        if ret:
+            sys.exit(ret)
+
+        ret = codechecker.check_and_store(
+          codechecker_cfg, test_project_name, project.path(test_project))
+        if ret:
+            sys.exit(1)
+        print("Analyzing test project was succcessful.")
+
+        # Save the run names in the configuration.
+        codechecker_cfg['run_names'] = [test_project_name]
+
+        test_config['codechecker_cfg'] = codechecker_cfg
+
+        # Export the test configuration to the workspace.
+        env.export_test_cfg(TEST_WORKSPACE, test_config)
+
+    def teardown_class(self):
+        """Clean up after the test."""
+
+        # TODO: If environment variable is set keep the workspace
+        # and print out the path.
+        global TEST_WORKSPACE
+
+        check_env = env.import_test_cfg(TEST_WORKSPACE)[
+            'codechecker_cfg']['check_env']
+        codechecker.remove_test_package_product(TEST_WORKSPACE, check_env)
+
+        print("Removing: " + TEST_WORKSPACE)
+        shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
+
+    def setup_method(self, method):
         # TEST_WORKSPACE is automatically set by test package __init__.py .
         self.test_workspace = os.environ['TEST_WORKSPACE']
 

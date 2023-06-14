@@ -11,6 +11,7 @@ Test storage of analysis statistics.
 """
 
 
+import multiprocessing
 import json
 import os
 import shutil
@@ -42,7 +43,72 @@ class TestStorageOfAnalysisStatistics(unittest.TestCase):
     This class tests the CodeChecker analysis statistics storage feature.
     """
 
-    def setUp(self):
+    def setup_class(self):
+        """Setup the environment for the tests then start the server."""
+
+        # Stopping event for CodeChecker server.
+        global EVENT_1
+        EVENT_1 = multiprocessing.Event()
+
+        global TEST_WORKSPACE
+        TEST_WORKSPACE = env.get_workspace('storage_of_analysis_statistics')
+
+        os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
+
+        test_config = {}
+
+        # Setup environment variables for the test cases.
+        host_port_cfg = {'viewer_host': 'localhost',
+                         'viewer_port': env.get_free_port(),
+                         'viewer_product': 'storage_of_analysis_statistics'}
+
+        test_env = env.test_env(TEST_WORKSPACE)
+
+        codechecker_cfg = {
+            'check_env': test_env,
+            'workspace': TEST_WORKSPACE,
+            'checkers': [],
+            'viewer_product': 'storage_of_analysis_statistics',
+            'reportdir': os.path.join(TEST_WORKSPACE, 'reports'),
+            'analyzers': ['clangsa', 'clang-tidy']
+        }
+
+        codechecker_cfg.update(host_port_cfg)
+
+        codechecker_cfg['run_names'] = []
+
+        test_config['codechecker_cfg'] = codechecker_cfg
+
+        # Export configuration for the tests.
+        env.export_test_cfg(TEST_WORKSPACE, test_config)
+
+        # Enable storage of analysis statistics and start the CodeChecker
+        # server.
+        env.enable_storage_of_analysis_statistics(TEST_WORKSPACE)
+        print("Starting server to get results")
+        server_access = codechecker.start_server(codechecker_cfg, EVENT_1)
+
+        server_access['viewer_product'] = codechecker_cfg['viewer_product']
+        codechecker.add_test_package_product(server_access, TEST_WORKSPACE)
+
+    def teardown_class(self):
+        """Stop the CodeChecker server and clean up after the tests."""
+
+        # TODO If environment variable is set keep the workspace
+        # and print out the path.
+        global TEST_WORKSPACE
+
+        check_env = env.import_test_cfg(TEST_WORKSPACE)[
+            'codechecker_cfg']['check_env']
+        codechecker.remove_test_package_product(TEST_WORKSPACE, check_env)
+
+        # Let the remaining CodeChecker servers die.
+        EVENT_1.set()
+
+        print("Removing: " + TEST_WORKSPACE)
+        shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
+
+    def setup_method(self, method):
 
         # Get the test workspace.
         self.test_workspace = os.environ['TEST_WORKSPACE']
@@ -111,7 +177,7 @@ int main()
   xxx // Will cause a compilation error
 }"""]
 
-    def tearDown(self):
+    def teardown_method(self, method):
         """Restore environment after tests have ran."""
         os.chdir(self.__old_pwd)
 

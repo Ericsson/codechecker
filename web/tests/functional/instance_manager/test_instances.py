@@ -11,7 +11,9 @@ Instance manager tests.
 """
 
 
+import multiprocessing
 import os
+import shutil
 import subprocess
 import time
 import unittest
@@ -20,7 +22,10 @@ from codechecker_server import instance_manager
 
 from libtest import env
 from libtest.codechecker import start_server
-from . import EVENT_1, EVENT_2
+
+# Stopping events for CodeChecker servers.
+EVENT_1 = multiprocessing.Event()
+EVENT_2 = multiprocessing.Event()
 
 
 class TestInstances(unittest.TestCase):
@@ -28,7 +33,73 @@ class TestInstances(unittest.TestCase):
     Server instance manager tests.
     """
 
-    def setUp(self):
+    def setup_class(self):
+        """Setup the environment for the tests then start the server."""
+
+        global TEST_WORKSPACE
+        TEST_WORKSPACE = env.get_workspace('instances')
+
+        os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
+
+        test_config = {}
+
+        test_env = env.test_env(TEST_WORKSPACE)
+
+        # Setup environment variables for the test cases.
+        host_port_cfg = {'viewer_host': 'localhost',
+                         'viewer_port': env.get_free_port()}
+
+        codechecker_cfg = {
+            'workspace': TEST_WORKSPACE,
+            'check_env': test_env,
+            'run_names': [],
+            'checkers': [],
+            'analyzers': ['clangsa', 'clang-tidy']
+        }
+        codechecker_cfg.update(host_port_cfg)
+        test_config['codechecker_1'] = codechecker_cfg
+
+        # We need a second server
+        codechecker_cfg = {
+            'workspace': TEST_WORKSPACE,
+            'check_env': test_env,
+            'run_names': [],
+            'checkers': [],
+            'analyzers': ['clangsa', 'clang-tidy']
+        }
+        host_port_cfg = {'viewer_host': 'localhost',
+                         'viewer_port': env.get_free_port()}
+
+        if host_port_cfg['viewer_port'] == \
+                test_config['codechecker_1']['viewer_port']:
+            host_port_cfg['viewer_port'] = \
+                int(host_port_cfg['viewer_port']) + 1
+
+        codechecker_cfg.update(host_port_cfg)
+        test_config['codechecker_2'] = codechecker_cfg
+
+        # Export configuration for the tests.
+        env.export_test_cfg(TEST_WORKSPACE, test_config)
+
+        # Wait for previous test instances to terminate properly and
+        # clean the instance file in the user's home directory.
+        time.sleep(5)
+
+    def teardown_class(self):
+        """Stop the CodeChecker server."""
+
+        # Let the remaining CodeChecker servers die.
+        EVENT_1.set()
+        EVENT_2.set()
+
+        # TODO If environment variable is set keep the workspace
+        # and print out the path.
+        global TEST_WORKSPACE
+
+        print("Removing: " + TEST_WORKSPACE)
+        shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
+
+    def setup_method(self, method):
         # Get the test workspace used to tests.
         self._test_workspace = os.environ['TEST_WORKSPACE']
 
