@@ -89,12 +89,12 @@ jobs:
       - name: "Install pypi package"
         shell: bash
         run: |
-          pip install wheel nose
+          pip install wheel pytest
           pip install dist/codechecker-*.tar.gz
 
       - name: "Test CodeChecker commands"
         run: |
-          nosetests tests/functional/binary_package/
+          pytest tests/functional/binary_package/
 
   # Publish pypi package when a new CodeChecker version is released.
   publish:

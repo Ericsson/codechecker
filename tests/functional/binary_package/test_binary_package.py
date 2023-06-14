@@ -24,7 +24,7 @@ class TestBinaryPackage(unittest.TestCase):
     Binary package tests.
     """
 
-    def setUp(self):
+    def setup_method(self):
         self.codechecker_bin = os.environ.get("CODECHECKER_BIN", "CodeChecker")
         self.compiler_bin = os.environ.get("CC", "gcc")
 
@@ -46,7 +46,7 @@ int main()
         self.old_pwd = os.getcwd()
         os.chdir(self.test_workspace)
 
-    def tearDown(self):
+    def teardown_method(self):
         """ Restore environment and clear the workspace. """
         os.chdir(self.old_pwd)
         shutil.rmtree(self.test_workspace, True)
