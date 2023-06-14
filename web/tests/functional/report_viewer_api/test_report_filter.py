@@ -22,6 +22,8 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import BugPathLengthRange, \
 
 from libtest import env
 
+from . import setup_class_common, teardown_class_common
+
 
 def get_severity_level(name):
     """ Convert severity name to value. """
@@ -37,7 +39,13 @@ class TestReportFilter(unittest.TestCase):
 
     _ccClient = None
 
-    def setUp(self):
+    def setup_class(self):
+        setup_class_common("report_filter")
+
+    def teardown_class(self):
+        teardown_class_common()
+
+    def setup_method(self, method):
         test_workspace = os.environ['TEST_WORKSPACE']
 
         test_class = self.__class__.__name__

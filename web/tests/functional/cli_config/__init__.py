@@ -22,11 +22,11 @@ from libtest import project
 TEST_WORKSPACE = None
 
 
-def setup_package():
+def setup_class_common(workspace_name):
     """Setup the environment for the tests."""
 
     global TEST_WORKSPACE
-    TEST_WORKSPACE = env.get_workspace('config')
+    TEST_WORKSPACE = env.get_workspace(workspace_name)
 
     # Set the TEST_WORKSPACE used by the tests.
     os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
@@ -44,7 +44,7 @@ def setup_package():
     # details.
     print("This test uses a CodeChecker server... connecting...")
     server_access = codechecker.start_or_get_server()
-    server_access['viewer_product'] = 'config'
+    server_access['viewer_product'] = workspace_name
     codechecker.add_test_package_product(server_access, TEST_WORKSPACE)
 
     # Extend the checker configuration with the server access.
@@ -56,7 +56,7 @@ def setup_package():
     env.export_test_cfg(TEST_WORKSPACE, test_config)
 
 
-def teardown_package():
+def teardown_class_common():
     """ Delete the workspace associated with this test. """
 
     # TODO: If environment variable is set keep the workspace

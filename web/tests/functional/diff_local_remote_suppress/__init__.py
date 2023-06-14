@@ -7,7 +7,7 @@
 #
 # -------------------------------------------------------------------------
 
-"""Setup for the test package diff_local_remote_suppress."""
+"""Setup for the test package workspace_name."""
 
 
 import os
@@ -20,9 +20,9 @@ from libtest import env
 from libtest import project
 
 
-def init_projects():
+def setup_class_common(workspace_name):
     """
-    Setup the environment for testing diff_local_remote_suppress.
+    Setup the environment for testing workspace_name.
 
     Original project
     ------------------------------------------------------
@@ -62,6 +62,15 @@ def init_projects():
     ------------------------------------------------------
     """
 
+    os.environ['TEST_WORKSPACE'] = \
+        env.get_workspace(workspace_name)
+
+    print("This test uses a CodeChecker server... connecting...")
+    server_access = codechecker.start_or_get_server()
+    server_access['viewer_product'] = workspace_name
+    codechecker.add_test_package_product(
+        server_access, os.environ['TEST_WORKSPACE'])
+
     TEST_WORKSPACE = os.environ['TEST_WORKSPACE']
 
     test_project = 'cpp'
@@ -87,9 +96,6 @@ def init_projects():
     # Start or connect to the running CodeChecker server and get connection
     # details.
 
-    print("This test uses a CodeChecker server... connecting...")
-    server_access = codechecker.start_or_get_server()
-    server_access['viewer_product'] = 'diff_local_remote_suppress'
     codechecker_cfg.update(server_access)
 
     env.export_test_cfg(TEST_WORKSPACE, test_config)
@@ -180,24 +186,7 @@ def init_projects():
     env.export_test_cfg(TEST_WORKSPACE, test_config)
 
 
-def setup_package():
-    """
-    The test files in this diff_local_remote_suppress test share the analyzed
-    projects. These tests are checking report suppression where the order of
-    suppressions matters. Since we can't rely on the ordering of tests, the
-    projects are set up by these tests individually. The setup happens in
-    function init_projects() and that is imported and executed in each test.
-    """
-    os.environ['TEST_WORKSPACE'] = \
-        env.get_workspace('diff_local_remote_suppress')
-
-    server_access = codechecker.start_or_get_server()
-    server_access['viewer_product'] = 'diff_local_remote_suppress'
-    codechecker.add_test_package_product(
-        server_access, os.environ['TEST_WORKSPACE'])
-
-
-def teardown_package():
+def teardown_class_common():
     TEST_WORKSPACE = os.environ['TEST_WORKSPACE']
 
     check_env = env.import_test_cfg(TEST_WORKSPACE)[

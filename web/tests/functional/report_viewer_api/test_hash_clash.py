@@ -26,6 +26,8 @@ from libtest import codechecker
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import Encoding, \
     RunFilter, ReportFilter
 
+from . import setup_class_common, teardown_class_common
+
 
 def _generate_content(cols, lines):
     """Generates a random file content string."""
@@ -48,7 +50,13 @@ def _replace_path(file_path, path):
 class HashClash(unittest.TestCase):
     """Unit test for testing hash clash handling."""
 
-    def setUp(self):
+    def setup_class(self):
+        setup_class_common("hash_clash")
+
+    def teardown_class(self):
+        teardown_class_common()
+
+    def setup_method(self, method):
         """
         Not much setup is needed.
         Runs and results are automatically generated.
@@ -83,7 +91,7 @@ class HashClash(unittest.TestCase):
         self._run_name = 'test_hash_clash_' + uuid4().hex
         codechecker.store(self._codechecker_cfg, self._run_name)
 
-    def tearDown(self):
+    def teardown_method(self, method):
         """
         Remove the run which was stored by this test case.
         """

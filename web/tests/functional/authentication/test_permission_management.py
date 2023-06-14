@@ -18,10 +18,18 @@ from codechecker_api_shared.ttypes import Permission
 
 from libtest import codechecker, env
 
+from . import setup_class_common, teardown_class_common
+
 
 class PermissionManagement(unittest.TestCase):
 
-    def setUp(self):
+    def setup_class(self):
+        setup_class_common()
+
+    def teardown_class(self):
+        teardown_class_common()
+
+    def setup_method(self, method):
         # TEST_WORKSPACE is automatically set by test package __init__.py .
         self._test_workspace = os.environ['TEST_WORKSPACE']
 
