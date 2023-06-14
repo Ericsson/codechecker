@@ -9,15 +9,17 @@
 Setup python modules for the unit tests.
 """
 
+
 import os
 import sys
-
-# Add the generated thrift files for the unit tests.
-BUILD_DIR = os.path.abspath(os.environ['BUILD_DIR'])
 
 REPO_ROOT = os.path.abspath(os.environ['REPO_ROOT'])
 PKG_ROOT = os.path.join(REPO_ROOT, 'build', 'CodeChecker')
 
+os.environ["CC_DATA_FILES_DIR"] = PKG_ROOT
+
 sys.path.append(REPO_ROOT)
-sys.path.append(os.path.join(REPO_ROOT, 'web'))
+sys.path.append(os.path.join(
+  REPO_ROOT, 'analyzer', 'tools', 'statistics_collector'))
 sys.path.append(os.path.join(REPO_ROOT, 'tools', 'report-converter'))
+sys.path.append(os.path.join(PKG_ROOT, 'lib', 'python3'))
