@@ -7,7 +7,7 @@ PYTHON_BIN ?= python3
 REPO_ROOT ?= REPO_ROOT=$(ROOT)
 
 # pytest test runner configuration options.
-PYTESTCFG = -c pytest.ini
+PYTESTCFG = -c pytest.ini ${EXTRA_PYTEST_ARGS}
 
 test_in_env: pycodestyle_in_env pylint_in_env test_unit_in_env test_functional_in_env test_build_logger test_tu_collector_in_env
 
@@ -31,11 +31,25 @@ pylint:
 pylint_in_env: venv_dev
 	$(ACTIVATE_DEV_VENV) && $(PYLINT_TEST_CMD)
 
-run_test:
+is_TEST_set:
+	@if [ -z ${TEST} ]; then \
+		echo "!!!!!!!!!!!!!!! ERROR !!!!!!!!!!!!!!!"; \
+		echo "Environmental variable 'TEST' is not set!"; \
+		echo "'TEST' should be set to a test file/directory."; \
+		echo "Example: 'TEST=tests/functional/suppress make test_analyzer_feature'."; \
+		echo "Note: You may provide additional pytest argument by setting "\
+		     "'EXTRA_PYTEST_ARGS', which allows you to select a specific test "\
+				 "inside a test file (via the -k option)."; \
+		echo "Example: EXTRA_PYTEST_ARGS='-k test_source_suppress_export'  TEST=tests/functional/suppress make test_analyzer_feature"; \
+		echo "!!!!!!!!!!!!!!! ERROR !!!!!!!!!!!!!!!"; \
+		exit 1; \
+	fi
+
+run_test: is_TEST_set
 	$(REPO_ROOT) $(TEST_PROJECT) \
 		pytest $(PYTESTCFG) ${TEST} || exit 1
 
-run_test_in_env: venv_dev
+run_test_in_env: venv_dev is_TEST_set
 	$(ACTIVATE_DEV_VENV) && $(REPO_ROOT) $(TEST_PROJECT) \
 		pytest $(PYTESTCFG) ${TEST} || exit 1
 
