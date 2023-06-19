@@ -18,6 +18,8 @@ import shlex
 import subprocess
 from typing import List, Tuple
 
+import yaml
+
 from codechecker_common.logger import get_logger
 
 from codechecker_analyzer import analyzer_context, env
@@ -55,14 +57,48 @@ def parse_checkers(tidy_output):
     return checkers
 
 
+def parse_checker_config_old(config_dump):
+    """
+    Return the parsed clang-tidy config options as a list of
+    (flag, default_value) tuples. This variant works
+    for clang-tidy up to version 14.
+
+    config_dump -- clang-tidy config options YAML dump in pre-LLVM15 format.
+    """
+    reg = re.compile(r'key:\s+(\S+)\s+value:\s+([^\n]+)')
+    return re.findall(reg, config_dump)
+
+
+def parse_checker_config_new(config_dump):
+    """
+    Return the parsed clang-tidy config options as a list of
+    (flag, default_value) tuples. This variant works
+    for clang-tidy starting with version 15
+
+    config_dump -- clang-tidy config options YAML dump in post-LLVM15 format.
+    """
+    try:
+        data = yaml.safe_load(config_dump)
+        if 'CheckOptions' not in data:
+            return None
+
+        return [[key, value]
+                for (key, value) in data['CheckOptions'].items()]
+    except ImportError:
+        return None
+
+
 def parse_checker_config(config_dump):
     """
     Return the parsed clang-tidy config options as a list of
     (flag, default_value) tuples.
     config_dump -- clang-tidy config options YAML dump.
     """
-    reg = re.compile(r'key:\s+(\S+)\s+value:\s+([^\n]+)')
-    return re.findall(reg, config_dump)
+    result = parse_checker_config_old(config_dump)
+    if not result:
+        result = parse_checker_config_new(config_dump)
+
+    return result
 
 
 def parse_analyzer_config(config_dump):
