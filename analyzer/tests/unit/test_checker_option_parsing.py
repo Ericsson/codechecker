@@ -11,7 +11,6 @@ Test the parsing of checker options reported by the analyzers
 """
 
 import unittest
-from argparse import Namespace
 from codechecker_analyzer.analyzers.clangtidy.analyzer \
     import parse_checker_config as clangtidy_parse_checker_config
 
