@@ -4,7 +4,6 @@ import glob
 import os
 import shutil
 import tempfile
-from typing import Mapping
 from . import BasicLoggerTest, empty_env, REPO_ROOT
 
 AVAILABLE_GNU_COMPILERS = [
@@ -12,13 +11,6 @@ AVAILABLE_GNU_COMPILERS = [
     for path in os.getenv("PATH").split(":")
     for compiler in glob.glob(f"{path}/g++-*")
 ]
-
-
-def append_host_LD_LIBRARY_PATH(env: Mapping[str, str]) -> Mapping[str, str]:
-    LD_LIBRARY_PATH = os.getenv("LD_LIBRARY_PATH")
-    if LD_LIBRARY_PATH:
-        env["LD_LIBRARY_PATH"] += ':' + LD_LIBRARY_PATH
-    return env
 
 
 class EscapingTests(BasicLoggerTest):
@@ -250,7 +242,6 @@ class EscapingTests(BasicLoggerTest):
         """Test clang-specific response files."""
         logger_env = self.get_envvars()
         # clang might need Z3
-        logger_env = append_host_LD_LIBRARY_PATH(logger_env)
         file = self.source_file
         binary = self.binary_file
         clang = shutil.which("clang")
@@ -286,7 +277,6 @@ class EscapingTests(BasicLoggerTest):
         """
         logger_env = self.get_envvars()
         # clang might need Z3
-        logger_env = append_host_LD_LIBRARY_PATH(logger_env)
         file = self.source_file
         binary = self.binary_file
         clang = shutil.which("clang")

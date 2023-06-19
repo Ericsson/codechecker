@@ -16,6 +16,7 @@ import tempfile
 import unittest
 
 from codechecker_analyzer.buildlog import log_parser
+from codechecker_analyzer.env import get_log_env
 from codechecker_common.skiplist_handler import SkipListHandler, \
     SkipListHandlers
 from codechecker_common.util import load_json
@@ -664,3 +665,24 @@ class LogParserTest(unittest.TestCase):
 
         self.assertEqual(len(build_actions), 3)
         self.assertEqual(build_action.source, fileC_symdir)
+
+    def test_get_log_env(self):
+        """
+        Test if get_log_env returns the correct environment
+        with LD_PRELOAD set to pointing to the correct directory
+        of the ldlogger.so lib.
+        """
+        log_file = os.path.join(self.tmp_dir, "compile_commands.json")
+        original_env = os.environ.copy()
+        # If this asset fails, make sure that you don't have LD_PRELOAD set
+        # in your environment.
+        self.assertNotIn("LD_PRELOAD", original_env)
+        env = get_log_env(log_file, original_env)
+
+        # The new environment should contain the LD_PRELOAD variable.
+        self.assertIn("LD_PRELOAD", env)
+
+        # Make sure that the test running machine architecture is in the
+        # LD_PRELOAD path.
+        machine = os.uname().machine
+        self.assertTrue(env["LD_PRELOAD"].endswith(machine + "/ldlogger.so"))
