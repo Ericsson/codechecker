@@ -44,10 +44,10 @@ At least one of the database drivers needs to be available to use the
 PostgreSQL database backend.
 `psycopg2` is used by default if not found `pg8000` is used.
 
-## Nosetest configuration
-`.noserc` configuration file in the repository root is used to configure running the tests:
+## Pytest configuration
+`pytest.ini` configuration file in the repository root is used to configure running the tests:
 Further configuration options can be found here
-[Nosetest usage](http://nose.readthedocs.io/en/latest/usage.html).
+[Pytest configuration](https://docs.pytest.org/en/7.1.x/reference/customize.html).
 
 ## Virtual environment to run tests
 Test running virtual environment is automatically created and sourced by the
