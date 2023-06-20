@@ -54,7 +54,7 @@ class ClangTidyAnalyzerResultTestCase(unittest.TestCase):
                                 source_files, expected_plist):
         """ Check the result of the analyzer transformation. """
         self.analyzer_result.transform(
-            analyzer_result, self.cc_result_dir, plist.EXTENSION,
+            [analyzer_result], self.cc_result_dir, plist.EXTENSION,
             file_name="{source_file}_{analyzer}")
 
         plist_file = os.path.join(self.cc_result_dir, analyzer_result_plist)
@@ -75,13 +75,13 @@ class ClangTidyAnalyzerResultTestCase(unittest.TestCase):
     def test_empty1(self):
         """ Test for empty Messages. """
         ret = self.analyzer_result.transform(
-            'empty1.out', self.cc_result_dir, plist.EXTENSION)
+            ['empty1.out'], self.cc_result_dir, plist.EXTENSION)
         self.assertFalse(ret)
 
     def test_empty2(self):
         """ Test for empty Messages with multiple line. """
         ret = self.analyzer_result.transform(
-            'empty2.out', self.cc_result_dir, plist.EXTENSION)
+            ['empty2.out'], self.cc_result_dir, plist.EXTENSION)
         self.assertFalse(ret)
 
     def test_tidy1(self):

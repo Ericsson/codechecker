@@ -60,3 +60,41 @@ class TestCmdline(unittest.TestCase):
                 self.assertEqual(tool['name'], "golint")
                 self.assertEqual(tool['version'], analyzer_version)
                 self.assertEqual(tool['command'], analyzer_command)
+
+    def test_input_dir(self):
+        """ Execution with file and directory inputs. """
+        def count_reports(report_dir):
+            counter = 0
+
+            for plist_file in os.listdir(report_dir):
+                plist_file = os.path.join(report_dir, plist_file)
+                with open(plist_file, encoding="utf-8", errors="ignore") as f:
+                    counter += f.read().count(
+                        "issue_hash_content_of_line_in_context")
+
+            return counter
+
+        test_dir = os.path.dirname(os.path.realpath(__file__))
+        outputs_dir = os.path.join(test_dir, "test_files", "test_outputs")
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            ret = subprocess.call(['report-converter', '-t', 'golint',
+                                   '-o', tmp_dir, outputs_dir])
+            self.assertEqual(0, ret)
+
+            self.assertEqual(
+                len(glob.glob(os.path.join(tmp_dir, '*.plist'))), 3)
+
+            self.assertEqual(count_reports(tmp_dir), 4)
+
+        test_input1 = os.path.join(outputs_dir, "subdir", "simple2.out")
+        test_input2 = os.path.join(outputs_dir, "subdir", "simple3.out")
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            ret = subprocess.call(['report-converter', '-t', 'golint',
+                                   '-o', tmp_dir, test_input1, test_input2])
+            self.assertEqual(0, ret)
+
+            self.assertEqual(
+                len(glob.glob(os.path.join(tmp_dir, '*.plist'))), 2)
+
+            self.assertEqual(count_reports(tmp_dir), 3)

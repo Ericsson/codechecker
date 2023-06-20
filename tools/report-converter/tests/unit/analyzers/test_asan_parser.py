@@ -52,7 +52,7 @@ class ASANAnalyzerResultTestCase(unittest.TestCase):
     def test_asan(self):
         """ Test for the asan.plist file. """
         self.analyzer_result.transform(
-            'asan.out', self.cc_result_dir, plist.EXTENSION,
+            ['asan.out'], self.cc_result_dir, plist.EXTENSION,
             file_name="{source_file}_{analyzer}")
 
         with open('asan.plist', mode='rb') as pfile:

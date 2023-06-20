@@ -59,7 +59,7 @@ class CppcheckAnalyzerResultTestCase(unittest.TestCase):
                                        'divide_zero.cpp')
 
         ret = self.analyzer_result.transform(
-            analyzer_result, self.cc_result_dir, plist.EXTENSION,
+            [analyzer_result], self.cc_result_dir, plist.EXTENSION,
             file_name="{source_file}_{analyzer}")
         self.assertFalse(ret)
 
@@ -68,7 +68,7 @@ class CppcheckAnalyzerResultTestCase(unittest.TestCase):
         analyzer_result = os.path.join(self.test_files, 'non_existing')
 
         ret = self.analyzer_result.transform(
-            analyzer_result, self.cc_result_dir, plist.EXTENSION,
+            [analyzer_result], self.cc_result_dir, plist.EXTENSION,
             file_name="{source_file}_{analyzer}")
         self.assertFalse(ret)
 
@@ -77,7 +77,7 @@ class CppcheckAnalyzerResultTestCase(unittest.TestCase):
         analyzer_result = os.path.join(
             self.test_files, 'out', 'divide_zero.plist')
         self.analyzer_result.transform(
-            analyzer_result, self.cc_result_dir, plist.EXTENSION,
+            [analyzer_result], self.cc_result_dir, plist.EXTENSION,
             file_name="{source_file}_{analyzer}")
 
         plist_file = os.path.join(self.cc_result_dir,
@@ -102,7 +102,7 @@ class CppcheckAnalyzerResultTestCase(unittest.TestCase):
         """ Test transforming a directory of plist files. """
         analyzer_result = os.path.join(self.test_files, 'out')
         self.analyzer_result.transform(
-            analyzer_result, self.cc_result_dir, plist.EXTENSION,
+            [analyzer_result], self.cc_result_dir, plist.EXTENSION,
             file_name="{source_file}_{analyzer}")
 
         plist_file = os.path.join(self.cc_result_dir,

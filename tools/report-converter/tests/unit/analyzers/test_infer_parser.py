@@ -57,7 +57,7 @@ class InferAnalyzerResultTestCase(unittest.TestCase):
         analyzer_result = os.path.join(self.test_files, 'infer-out-dead_store')
 
         ret = self.analyzer_result.transform(
-            analyzer_result, self.cc_result_dir, plist.EXTENSION,
+            [analyzer_result], self.cc_result_dir, plist.EXTENSION,
             file_name="{source_file}_{analyzer}")
         self.assertTrue(ret)
 
@@ -86,7 +86,7 @@ class InferAnalyzerResultTestCase(unittest.TestCase):
                                        'report.json')
 
         ret = self.analyzer_result.transform(
-            analyzer_result, self.cc_result_dir, plist.EXTENSION,
+            [analyzer_result], self.cc_result_dir, plist.EXTENSION,
             file_name="{source_file}_{analyzer}")
         self.assertTrue(ret)
 
@@ -114,7 +114,7 @@ class InferAnalyzerResultTestCase(unittest.TestCase):
                                        'infer-out-null_dereference')
 
         ret = self.analyzer_result.transform(
-            analyzer_result, self.cc_result_dir, plist.EXTENSION,
+            [analyzer_result], self.cc_result_dir, plist.EXTENSION,
             file_name="{source_file}_{analyzer}")
         self.assertTrue(ret)
 
@@ -144,7 +144,7 @@ class InferAnalyzerResultTestCase(unittest.TestCase):
                                        'report.json')
 
         ret = self.analyzer_result.transform(
-            analyzer_result, self.cc_result_dir, plist.EXTENSION,
+            [analyzer_result], self.cc_result_dir, plist.EXTENSION,
             file_name="{source_file}_{analyzer}")
         self.assertTrue(ret)
 
