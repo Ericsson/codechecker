@@ -22,14 +22,21 @@ from codechecker_client.credential_manager import UserCredentials
 from libtest import codechecker
 from libtest import env
 
+from . import setup_class_common, teardown_class_common
+
 
 class DictAuth(unittest.TestCase):
     """
     Dictionary based authentication tests.
     """
 
-    def setUp(self):
+    def setup_class(self):
+        setup_class_common()
 
+    def teardown_class(self):
+        teardown_class_common()
+
+    def setup_method(self, method):
         # Get the test workspace used to authentication tests.
         self._test_workspace = os.environ['TEST_WORKSPACE']
 

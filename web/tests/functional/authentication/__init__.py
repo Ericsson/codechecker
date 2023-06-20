@@ -24,7 +24,7 @@ __STOP_SERVER = multiprocessing.Event()
 TEST_WORKSPACE = None
 
 
-def setup_package():
+def setup_class_common():
     """Setup the environment for the tests then start the server."""
 
     global TEST_WORKSPACE
@@ -65,7 +65,7 @@ def setup_package():
     codechecker.add_test_package_product(host_port_cfg, TEST_WORKSPACE)
 
 
-def teardown_package():
+def teardown_class_common():
     """Stop the CodeChecker server and clean up after the tests."""
     # TODO If environment variable is set keep the workspace
     # and print out the path.
@@ -77,6 +77,7 @@ def teardown_package():
                                             codechecker_cfg['check_env'])
 
     __STOP_SERVER.set()
+    __STOP_SERVER.clear()
 
     print("Removing: " + TEST_WORKSPACE)
     shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)

@@ -13,6 +13,8 @@ environment.
 """
 
 
+from . import setup_class_common, teardown_class_common
+
 from copy import deepcopy
 import multiprocessing
 import os
@@ -35,7 +37,14 @@ EVENT = multiprocessing.Event()
 
 class TestProductConfigShare(unittest.TestCase):
 
-    def setUp(self):
+    def setup_class(self):
+        (self).product_name = "config_db_share"
+        setup_class_common("config_db_share")
+
+    def teardown_class(self):
+        teardown_class_common()
+
+    def setup_method(self, method):
         """
         Set up the environment and the test module's configuration from the
         package.
@@ -132,8 +141,8 @@ class TestProductConfigShare(unittest.TestCase):
 
         # Check if the main server's product is visible on the second server.
         self.assertEqual(
-            self._pr_client_2.getProducts('producttest', None)[0].endpoint,
-            'producttest',
+            self._pr_client_2.getProducts(self.product_name, None)[0].endpoint,
+            self.product_name,
             "Main server's product was not loaded by the secondary server.")
 
         def create_test_product(product_name, product_endpoint):
@@ -223,7 +232,7 @@ class TestProductConfigShare(unittest.TestCase):
                             "the product missing should've resulted in "
                             "an error.")
 
-    def tearDown(self):
+    def teardown_method(self, method):
         """
         Clean the environment after running this test module
         """

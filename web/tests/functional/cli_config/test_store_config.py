@@ -19,11 +19,19 @@ import unittest
 
 from libtest import env
 
+from . import setup_class_common, teardown_class_common
+
 
 class TestStoreConfig(unittest.TestCase):
     _ccClient = None
 
-    def setUp(self):
+    def setup_class(self):
+        setup_class_common("store_config")
+
+    def teardown_class(self):
+        teardown_class_common()
+
+    def setup_method(self, method):
 
         # TEST_WORKSPACE is automatically set by test package __init__.py .
         self.test_workspace = os.environ['TEST_WORKSPACE']

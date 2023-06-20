@@ -20,8 +20,8 @@ WOKSPACE_GLOBAL_SIMPLE_SERVER = $(CC_TEST_WORKSPACE_ROOT)/global_simple_server
 
 CLEAR_WORKSPACE_CMD = rm -rf $(CC_TEST_WORKSPACE_ROOT)
 
-# Nose test runner configuration options.
-NOSECFG = --config .noserc
+# pytest test runner configuration options.
+PYTESTCFG = -c pytest.ini
 
 test: pycodestyle pylint test_unit test_functional
 
@@ -75,7 +75,7 @@ SHUTDOWN_GLOBAL_SERVERS_CMD = \
 EXIT_ERROR = { ${SHUTDOWN_GLOBAL_SERVERS_CMD}; exit 1; }
 
 FUNCTIONAL_TEST_CMD = $(REPO_ROOT) BUILD_DIR=$(BUILD_DIR) $(CLANG_VERSION) $(TEST_PROJECT) \
-  nosetests $(NOSECFG) tests/functional \
+  pytest $(PYTESTCFG) tests/functional \
   && { ${SHUTDOWN_GLOBAL_SERVERS_CMD}; } || ${EXIT_ERROR}
 
 MAKE_DB_CMD = bash -c 'psql -h localhost \
@@ -88,7 +88,7 @@ DROP_DB_CMD = bash -c 'psql -h localhost \
 
 RUN_TEST_CMD = $(CLEAR_WORKSPACE_CMD) && \
   $(REPO_ROOT) BUILD_DIR=$(BUILD_DIR) $(CLANG_VERSION) $(TEST_PROJECT) \
-  nosetests $(NOSECFG) $(ROOT)/web/${TEST} \
+  pytest $(PYTESTCFG) $(ROOT)/web/${TEST} \
   && { ${SHUTDOWN_GLOBAL_SERVERS_CMD}; } || ${EXIT_ERROR}
 
 run_test:

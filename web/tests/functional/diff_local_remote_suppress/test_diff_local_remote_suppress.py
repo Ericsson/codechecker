@@ -21,16 +21,18 @@ import unittest
 from libtest import env
 from libtest.codechecker import get_diff_results
 
-from .__init__ import init_projects
+from . import setup_class_common, teardown_class_common
 
 
 class DiffLocalRemoteSuppress(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        init_projects()
+    def setup_class(self):
+        setup_class_common("diff_local_remote_suppress")
 
-    def setUp(self):
+    def teardown_class(self):
+        teardown_class_common()
+
+    def setup_method(self, method):
         # TEST_WORKSPACE is automatically set by test package __init__.py .
         test_workspace = os.environ['TEST_WORKSPACE']
 
