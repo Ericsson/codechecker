@@ -163,10 +163,10 @@ IGNORED_OPTIONS_GCC = [
     # '-Werror', '-Wno-error', '-pedantic-errors' the analysis with Clang can
     # fail even if the compilation passes with GCC.
     '-Werror',
-    '-Wno-error'
+    '-Wno-error',
     '-pedantic-errors',
     # Profiling flags are different or behave differently in GCC
-    '-fprofile'
+    '-fprofile',
     # Remove the option disabling the warnings.
     '-w',
     '-g(.+)?$',
