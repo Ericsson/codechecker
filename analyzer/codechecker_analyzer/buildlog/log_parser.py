@@ -160,10 +160,13 @@ IGNORED_OPTIONS_GCC = [
     # --- IGNORED --- #
     '-save-temps',
     # Clang gives different warnings than GCC. Thus if these flags are kept,
-    # '-Werror', '-pedantic-errors' the analysis with Clang can fail even
-    # if the compilation passes with GCC.
+    # '-Werror', '-Wno-error', '-pedantic-errors' the analysis with Clang can
+    # fail even if the compilation passes with GCC.
     '-Werror',
+    '-Wno-error'
     '-pedantic-errors',
+    # Profiling flags are different or behave differently in GCC
+    '-fprofile'
     # Remove the option disabling the warnings.
     '-w',
     '-g(.+)?$',
