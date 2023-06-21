@@ -2,4 +2,4 @@ portalocker==2.2.1
 coverage==5.5.0
 mypy==0.812
 mypy_extensions==0.4.3
-PyYAML==5.4.1
+PyYAML==6.0

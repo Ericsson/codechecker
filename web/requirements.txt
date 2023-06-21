@@ -6,7 +6,7 @@ psutil==5.8.0
 mypy_extensions==0.4.3
 thrift==0.13.0
 gitpython==3.1.30
-PyYAML==5.4.1
+PyYAML==6.0
 
 ./api/py/codechecker_api/dist/codechecker_api.tar.gz
 ./api/py/codechecker_api_shared/dist/codechecker_api_shared.tar.gz
