@@ -11,6 +11,7 @@
 
 import subprocess
 import glob
+import json
 import os
 import shutil
 import unittest
@@ -102,6 +103,28 @@ class TestCtu(unittest.TestCase):
 
         shutil.rmtree(self.report_dir, ignore_errors=True)
         os.chdir(self.__old_pwd)
+
+    @skipUnlessCTUCapable
+    def test_ctu_non_existing_dir(self):
+        """
+        If the compilation database contains a build action with non-existing
+        directory then analysis shouldn't fail in the pre-analysis phase of
+        CTU.
+        """
+        with open(self.buildlog) as f:
+            buildlog = json.load(f)
+            buildlog.append(buildlog[0])
+            buildlog[-1]['directory'] = 'non_existing'
+
+        with open(self.buildlog, 'w') as f:
+            json.dump(buildlog, f)
+
+        cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
+               '--analyzers', 'clangsa', '--ctu', self.buildlog]
+        proc = run(cmd, cwd=self.test_dir, env=self.env,
+                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        self.assertIn('Analysis finished', str(proc.stdout))
 
     @skipUnlessCTUCapable
     def test_ctu_loading_mode_requires_ctu_mode(self):
