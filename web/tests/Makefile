@@ -21,7 +21,7 @@ WOKSPACE_GLOBAL_SIMPLE_SERVER = $(CC_TEST_WORKSPACE_ROOT)/global_simple_server
 CLEAR_WORKSPACE_CMD = rm -rf $(CC_TEST_WORKSPACE_ROOT)
 
 # pytest test runner configuration options.
-PYTESTCFG = -c pytest.ini
+PYTESTCFG = -c pytest.ini ${EXTRA_PYTEST_ARGS}
 
 test: pycodestyle pylint test_unit test_functional
 
@@ -91,10 +91,24 @@ RUN_TEST_CMD = $(CLEAR_WORKSPACE_CMD) && \
   pytest $(PYTESTCFG) $(ROOT)/web/${TEST} \
   && { ${SHUTDOWN_GLOBAL_SERVERS_CMD}; } || ${EXIT_ERROR}
 
-run_test:
+is_TEST_set:
+	@if [ -z ${TEST} ]; then \
+		echo "!!!!!!!!!!!!!!! ERROR !!!!!!!!!!!!!!!"; \
+		echo "Environmental variable 'TEST' is not set!"; \
+		echo "'TEST' should be set to a test file/directory inside the 'web/' directory."; \
+		echo "Example: 'TEST=tests/functional/skip make test_web_feature'."; \
+		echo "Note: You may provide additional pytest argument by setting "\
+		     "'EXTRA_PYTEST_ARGS', which allows you to select a specific test "\
+				 "inside a test file (via the -k option)."; \
+		echo "Example: EXTRA_PYTEST_ARGS='-k test_skip_plist_without_diag' TEST=tests/functional/skip make test_web_feature"; \
+		echo "!!!!!!!!!!!!!!! ERROR !!!!!!!!!!!!!!!"; \
+		exit 1; \
+	fi
+
+run_test: is_TEST_set
 	$(RUN_TEST_CMD)
 
-run_test_in_env: venv_dev
+run_test_in_env: venv_dev is_TEST_set
 	$(ACTIVATE_DEV_VENV) && $(RUN_TEST_CMD)
 
 test_unit: test_unit_server test_unit_client

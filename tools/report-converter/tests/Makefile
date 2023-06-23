@@ -8,7 +8,7 @@ TEST_PROJECT ?= TEST_PROJ=$(CURRENT_DIR)/tests/projects
 LAYOUT_DIR ?= LAYOUT_DIR=$(STATIC_DIR)
 
 # pytest test runner configuration options.
-PYTESTCFG = -c pytest.ini
+PYTESTCFG = -c pytest.ini ${EXTRA_PYTEST_ARGS}
 
 test: mypy pycodestyle pylint test_unit test_functional
 

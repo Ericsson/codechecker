@@ -6,7 +6,7 @@ TEST_PROJECT ?= TEST_PROJ=$(CURRENT_DIR)/tests/projects
 REPO_ROOT ?= REPO_ROOT=$(ROOT)
 
 # pytest test runner configuration options.
-PYTESTCFG = -c pytest.ini
+PYTESTCFG = -c pytest.ini ${EXTRA_PYTEST_ARGS}
 
 test: mypy pycodestyle pylint test_unit
 
