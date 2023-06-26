@@ -8,7 +8,7 @@
 			<key>category</key>
 			<string>unknown</string>
 			<key>check_name</key>
-			<string>UndefinedBehaviorSanitizer</string>
+			<string>UndefinedBehaviorSanitizer.signed-integer-overflow</string>
 			<key>description</key>
 			<string>signed integer overflow: 2147483647 + 1 cannot be represented in type 'int'</string>
 			<key>issue_hash_content_of_line_in_context</key>

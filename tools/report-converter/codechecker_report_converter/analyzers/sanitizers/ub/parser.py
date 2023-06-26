@@ -41,6 +41,117 @@ class Parser(SANParser):
         # Checker message.
         r'(?P<message>[\S \t]+)')
 
+    # This list of diagnostic messages is extracted from the LLVM project:
+    #   https://github.com/llvm/llvm-project
+    # /blob/main/compiler-rt/lib/ubsan/ubsan_handlers.cpp
+    # /blob/main/compiler-rt/lib/ubsan/ubsan_handlers_cxx.cpp
+    # /blob/main/compiler-rt/lib/ubsan/ubsan_checks.inc
+    checks = {
+        "alignment": [
+            re.compile(
+                ".+ misaligned address .+ for type .+, which requires .+ byte "
+                "alignment"),
+            re.compile(
+                "assumption of .+ byte alignment for pointer of type .+ "
+                "failed"),
+            re.compile(
+                "assumption of .+ byte alignment (with offset of .+ byte) for "
+                "pointer of type .+ failed")],
+        "bool": [
+            re.compile(
+                "load of value .+, which is not a valid value for type "
+                ".*bool.*")],
+        "builtin": [
+            re.compile("passing zero to .+, which is not a valid argument")],
+        "bounds": [
+            re.compile("index .+ out of bounds for type .+")],
+        "enum": [
+            re.compile(
+                "load of value .+, which is not a valid value for type .+")],
+        "float-cast-overflow": [
+            re.compile(
+                ".+ is outside the range of representable values of type .+")],
+        "integer-divide-by-zero-or-float-divide-by-zero": [
+            re.compile("division by zero")],
+        "implicit-signed-integer-truncation": [
+            re.compile(
+                "implicit conversion from type .+ of value .+ (.+-bit, "
+                "signed) to type .+ changed the value to .+ (.+-bit, "
+                "signed)")],
+        "implicit-unsigned-integer-truncation": [
+            re.compile(
+                "implicit conversion from type .+ of value .+ (.+-bit, "
+                "unsigned) to type .+ changed the value to .+ (.+-bit, "
+                "unsigned)")],
+        "implicit-integer-sign-change": [
+            re.compile(
+                "implicit conversion from type .+ of value .+ (.+-bit, "
+                ".*signed) to type .+ changed the value to .+ (.+-bit, "
+                ".*signed)")],
+        "nonnull-attribute-or-nullability-arg": [
+            re.compile(
+                "null pointer passed as argument .+, which is declared to "
+                "never be null")],
+        "null-or-nullability-assign": [
+            re.compile(".+ null pointer of type .+")],
+        "nullability-return-or-returns-nonnull-attribute": [
+            re.compile(
+                "null pointer returned from function declared to never return "
+                "null")],
+        "objc-cast": [
+            re.compile(
+                "invalid ObjC cast, object is a '.+', but expected a .+")],
+        "object-size": [
+            re.compile(
+                ".+ address .+ with insufficient space for an object of type "
+                ".+")],
+        "pointer-overflow": [
+            re.compile("applying zero offset to null pointer"),
+            re.compile("applying non-zero offset .+ to null pointer"),
+            re.compile(
+                "applying non-zero offset to non-null pointer .+ produced "
+                "null pointer"),
+            re.compile("addition of unsigned offset to .+ overflowed to .+"),
+            re.compile(
+                "subtraction of unsigned offset from .+ overflowed to .+"),
+            re.compile(
+                "pointer index expression with base .+ overflowed to .+")],
+        "return": [
+            re.compile(
+                "execution reached the end of a value-returning function "
+                "without returning a value")],
+        "shift": [
+            re.compile("shift exponent .+ is negative"),
+            re.compile("shift exponent .+ is too large for .+-bit type .+"),
+            re.compile("left shift of negative value .+")],
+        "signed-integer-overflow": [
+            re.compile(
+                "signed integer overflow: .+ .+ .+ cannot be represented in "
+                "type .+"),
+            re.compile(
+                "negation of .+ cannot be represented in type .+; cast to an "
+                "unsigned type to negate this value to itself"),
+            re.compile(
+                "division of .+ by -1 cannot be represented in type .+")],
+        "unreachable": [
+            re.compile("execution reached an unreachable program point")],
+        "unsigned-integer-overflow": [
+            re.compile(
+                "unsigned integer overflow: .+ .+ .+ cannot be represented "
+                "in type .+"),
+            re.compile("negation of .+ cannot be represented in type .+"),
+            re.compile(
+                "left shift of .+ by .+ places cannot be represented in type "
+                ".+")],
+        "vla-bound": [
+            re.compile(
+                "variable length array bound evaluates to non-positive value "
+                ".+")],
+        "vptr": [
+            re.compile(
+                ".+ address .+ which does not point to an object of type .+")]
+    }
+
     def parse_stack_trace(self, it, line):
         """ Iterate over lines and parse stack traces. """
         events = []
@@ -76,8 +187,14 @@ class Parser(SANParser):
         line = get_next(it)
         stack_traces, events, line = self.parse_stack_trace(it, line)
 
+        message = match.group('message').strip()
+        for check, patterns in self.checks.items():
+            if any(pattern.search(message) for pattern in patterns):
+                checker_name = f"{self.checker_name}.{check}"
+                break
+
         report = self.create_report(
             events, report_file, report_line, report_col,
-            match.group('message').strip(), stack_traces)
+            message, stack_traces, checker_name)
 
         return report, line
