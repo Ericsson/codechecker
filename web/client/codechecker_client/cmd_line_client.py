@@ -1025,13 +1025,16 @@ def get_diff_local_dirs(
     filtered_report_hashes = []
 
     context = webserver_context.get_context()
-    base_results = get_report_dir_results(
-        report_dirs, report_filter, context.checker_labels)
-    new_results = get_report_dir_results(
-        new_report_dirs, report_filter, context.checker_labels)
-
     statuses_str = [ttypes.ReviewStatus._VALUES_TO_NAMES[x].lower()
                     for x in report_filter.reviewStatus]
+
+    base_results = get_report_dir_results(
+        report_dirs, report_filter, context.checker_labels)
+    base_results = [res for res in base_results
+                    if res.check_source_code_comments(statuses_str)]
+
+    new_results = get_report_dir_results(
+        new_report_dirs, report_filter, context.checker_labels)
     new_results = [res for res in new_results
                    if res.check_source_code_comments(statuses_str)]
 
