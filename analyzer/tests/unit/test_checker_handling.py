@@ -110,9 +110,15 @@ class CheckerHandlingClangSATest(unittest.TestCase):
         """
         Test that ClangSA only uses enable lists.
         """
-        self.assertFalse(
-            any(arg.startswith('-analyzer-disable-checker')
-                for arg in self.__class__.cmd))
+        # TODO: This test is currently removed, because checkers that are not
+        # enabled are explicitly disabled. In a next commit ClangSA reports
+        # will be hidden instead of disabled. In that commit this test could be
+        # re-enabled.
+        pass
+
+        # self.assertFalse(
+        #     any(arg.startswith('-analyzer-disable-checker')
+        #         for arg in self.__class__.cmd))
 
     def test_checker_initializer(self):
         """
@@ -161,19 +167,19 @@ class CheckerHandlingClangSATest(unittest.TestCase):
         checkers.extend(map(add_description, statisticsbased))
 
         # "default" profile checkers are enabled explicitly. Others are in
-        # "default" state.
+        # "disabled" state.
         cfg_handler = ClangSA.construct_config_handler(args)
         cfg_handler.initialize_checkers(checkers)
         self.assertTrue(all_with_status(CheckerState.enabled)
                         (cfg_handler.checks(), default_profile))
-        self.assertTrue(all_with_status(CheckerState.default)
+        self.assertTrue(all_with_status(CheckerState.disabled)
                         (cfg_handler.checks(), security_profile_alpha))
 
-        # "--enable-all" leaves alpha checkers in "default" state. Others
+        # "--enable-all" leaves alpha checkers in "disabled" state. Others
         # become enabled.
         cfg_handler = ClangSA.construct_config_handler(args)
         cfg_handler.initialize_checkers(checkers, enable_all=True)
-        self.assertTrue(all_with_status(CheckerState.default)
+        self.assertTrue(all_with_status(CheckerState.disabled)
                         (cfg_handler.checks(), security_profile_alpha))
         self.assertTrue(all_with_status(CheckerState.enabled)
                         (cfg_handler.checks(), default_profile))
@@ -333,15 +339,15 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
 
         self.assertFalse('-*' in self.__class__.checks_list)
 
-    def test_only_clangsa_analyzer_checks_are_disabled(self):
+    def test_clangsa_analyzer_checks_are_disabled(self):
         """
-        Test that exactly the clang-analyzer group is disabled in Clang Tidy.
+        Test that the clang-analyzer group is disabled in Clang Tidy.
         """
 
         self.assertTrue('-clang-analyzer-*' in self.__class__.checks_list)
-        self.assertFalse(
-            any(check.startswith('-') and check != '-clang-analyzer-*'
-                for check in self.__class__.checks_list))
+        # self.assertFalse(
+        #     any(check.startswith('-') and check != '-clang-analyzer-*'
+        #         for check in self.__class__.checks_list))
 
     def test_clang_diags_as_compiler_warnings(self):
         """

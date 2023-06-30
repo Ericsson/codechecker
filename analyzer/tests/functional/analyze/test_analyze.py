@@ -1046,7 +1046,9 @@ class TestAnalyze(unittest.TestCase):
         """ Test makefile generation. """
         build_json = os.path.join(self.test_workspace, "build_extra_args.json")
         analyze_cmd = [self._codechecker_cmd, "analyze", build_json,
-                       "-o", self.report_dir, '--makefile']
+                       "-o", self.report_dir,
+                       "-e", "clang-diagnostic",
+                       '--makefile']
 
         source_file = os.path.join(self.test_dir, "extra_args.cpp")
         build_log = [{"directory": self.test_workspace,

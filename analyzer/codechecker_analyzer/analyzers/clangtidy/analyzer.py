@@ -290,6 +290,13 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             warning_name, warning_type = \
                 get_compiler_warning_name_and_type(checker_name)
+
+            # This warning must be given a parameter separated by either '=' or
+            # space. This warning is not supported as a checker name so its
+            # special usage is avoided.
+            if warning_name and warning_name.startswith('frame-larger-than'):
+                continue
+
             if warning_name is not None:
                 # -W and clang-diagnostic- are added as compiler warnings.
                 if warning_type == CheckerType.compiler:
