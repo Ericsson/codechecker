@@ -51,7 +51,8 @@ function getHighlightData(stack, step) {
         + " while the last function " + "was "
         + stack.funcStack[stack.funcStack.length - 1]);
     }
-  } else if (msg === "Returned allocated memory") {
+  } else if (msg === "Returned allocated memory" ||
+             msg.startsWith("Returning;")) {
     stack.funcStack.pop();
     stack.bgColor = highlightColours[
       stack.funcStack.length % highlightColours];
