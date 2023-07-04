@@ -127,9 +127,8 @@ def pre_analyze(params):
                                       ctu_temp_fnmap_folder)
 
     except Exception as ex:
-        LOG.debug_analyzer(str(ex))
+        LOG.error("Pre-analysis failed for %s: %s", action.source, str(ex))
         traceback.print_exc(file=sys.stdout)
-        raise
 
     try:
         if statistics_data:
