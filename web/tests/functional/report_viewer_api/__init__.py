@@ -24,7 +24,18 @@ TEST_WORKSPACE = None
 
 
 def setup_class_common(workspace_name):
-    """Setup the environment for the tests."""
+    """
+    Setup the environment for the tests.
+
+    This test suite analyzes and stores a sample project with different
+    configurations in different runs and tags. The test cases are observing the
+    effect of configurations by checking the number of results. The number of
+    reports by checkers are commented above the specific configurations so it
+    is easier to see the content of the current analysis.
+
+    There is no concept behind which checkers are enabled or disabled during an
+    analysis. The point is that the result sets are different in the runs.
+    """
 
     global TEST_WORKSPACE
     TEST_WORKSPACE = env.get_workspace(workspace_name)
@@ -52,12 +63,29 @@ def setup_class_common(workspace_name):
 
     test_env = env.test_env(TEST_WORKSPACE)
 
+    # -----------------------------------------------------
+    # Checker name                      | Number of reports
+    # -----------------------------------------------------
+    # clang-diagnostic-division-by-zero |                 3
+    # clang-diagnostic-return-type      |                 5
+    # core.CallAndMessage               |                 5
+    # core.DivideZero                   |                10
+    # core.NullDereference              |                 4
+    # core.StackAddressEscape           |                 3
+    # cplusplus.NewDelete               |                 5
+    # deadcode.DeadStores               |                 6
+    # misc-definitions-in-headers       |                 2
+    # unix.Malloc                       |                 1
+    # -----------------------------------------------------
+
     codechecker_cfg = {
         'suppress_file': suppress_file,
         'skip_list_file': skip_list_file,
         'check_env': test_env,
         'workspace': TEST_WORKSPACE,
-        'checkers': ['-e', 'clang-diagnostic-return-type'],
+        'checkers': ['-d', 'clang-diagnostic',
+                     '-e', 'clang-diagnostic-division-by-zero',
+                     '-e', 'clang-diagnostic-return-type'],
         'tag': tag,
         'analyzers': ['clangsa', 'clang-tidy']
     }
@@ -87,11 +115,25 @@ def setup_class_common(workspace_name):
 
     test_project_name_new = project_info['name'] + '*' + uuid.uuid4().hex + '%'
 
+    # -----------------------------------------------------
+    # Checker name                      | Number of reports
+    # -----------------------------------------------------
+    # clang-diagnostic-division-by-zero |                 3
+    # core.CallAndMessage               |                 5
+    # core.DivideZero                   |                10
+    # core.NullDereference              |                 4
+    # cplusplus.NewDelete               |                 5
+    # deadcode.DeadStores               |                 6
+    # misc-definitions-in-headers       |                 2
+    # -----------------------------------------------------
+
     # Let's run the second analysis with different
     # checkers to have some real difference.
     codechecker_cfg['checkers'] = ['-e', 'core.CallAndMessage',
                                    '-d', 'core.StackAddressEscape',
-                                   '-d', 'unix.Malloc'
+                                   '-d', 'unix.Malloc',
+                                   '-d', 'clang-diagnostic',
+                                   '-e', 'clang-diagnostic-division-by-zero'
                                    ]
     codechecker_cfg['tag'] = None
     ret = codechecker.check_and_store(codechecker_cfg,
@@ -104,6 +146,19 @@ def setup_class_common(workspace_name):
 
     test_project_name_third = project_info['name'] + uuid.uuid4().hex
 
+    # -----------------------------------------------------
+    # Checker name                      | Number of reports
+    # -----------------------------------------------------
+    # clang-diagnostic-division-by-zero |                 3
+    # core.CallAndMessage               |                 5
+    # core.DivideZero                   |                10
+    # core.NullDereference              |                 4
+    # cplusplus.NewDelete               |                 5
+    # deadcode.DeadStores               |                 6
+    # misc-definitions-in-headers       |                 2
+    # unix.Malloc                       |                 1
+    # -----------------------------------------------------
+
     # Let's run the third analysis.
     ret = codechecker.check_and_store(codechecker_cfg,
                                       test_project_name_third,
@@ -113,8 +168,24 @@ def setup_class_common(workspace_name):
         sys.exit(1)
     print("Third analysis of the test project was successful.")
 
+    # -----------------------------------------------------
+    # Checker name                      | Number of reports
+    # -----------------------------------------------------
+    # clang-diagnostic-division-by-zero |                 3
+    # clang-diagnostic-return-type      |                 5
+    # core.CallAndMessage               |                 5
+    # core.DivideZero                   |                10
+    # core.NullDereference              |                 4
+    # cplusplus.NewDelete               |                 5
+    # deadcode.DeadStores               |                 6
+    # misc-definitions-in-headers       |                 2
+    # -----------------------------------------------------
+
     # Let's run the second analysis and updat the same run.
-    codechecker_cfg['checkers'] = ['-d', 'core.StackAddressEscape']
+    codechecker_cfg['checkers'] = ['-d', 'core.StackAddressEscape',
+                                   '-d', 'clang-diagnostic',
+                                   '-e', 'clang-diagnostic-division-by-zero',
+                                   '-e', 'clang-diagnostic-return-type']
     ret = codechecker.check_and_store(codechecker_cfg,
                                       test_project_name_third,
                                       project.path(test_project))

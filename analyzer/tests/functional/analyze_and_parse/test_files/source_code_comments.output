@@ -1,7 +1,7 @@
 NORMAL#CodeChecker log --output $LOGFILE$ --build "make source_code_comments" --quiet
-NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy --enable bugprone-sizeof-expression
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy --enable bugprone-sizeof-expression --disable clang-diagnostic-unused-value
 NORMAL#CodeChecker parse $OUTPUT$
-CHECK#CodeChecker check --build "make source_code_comments" --output $OUTPUT$ --quiet --analyzers clang-tidy --enable bugprone-sizeof-expression
+CHECK#CodeChecker check --build "make source_code_comments" --output $OUTPUT$ --quiet --analyzers clang-tidy --enable bugprone-sizeof-expression --disable clang-diagnostic-unused-value
 --------------------------------------------------------------------------------
 [] - Starting build...
 [] - Using CodeChecker ld-logger.

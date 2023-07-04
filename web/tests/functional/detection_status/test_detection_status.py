@@ -38,7 +38,7 @@ class TestDetectionStatus(unittest.TestCase):
             'skip_list_file': None,
             'check_env': env.test_env(TEST_WORKSPACE),
             'workspace': TEST_WORKSPACE,
-            'checkers': [],
+            'checkers': ['-d', 'clang-diagnostic'],
             'reportdir': os.path.join(TEST_WORKSPACE, 'reports'),
             'test_project': 'hello',
             'analyzers': ['clangsa', 'clang-tidy']
