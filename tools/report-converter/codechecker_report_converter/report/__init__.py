@@ -292,8 +292,21 @@ class Report:
         bug_path_positions: Optional[List[BugPathPosition]] = None,
         notes: Optional[List[BugPathEvent]] = None,
         macro_expansions: Optional[List[MacroExpansion]] = None,
-        annotations: Optional[Dict[str, str]] = None
+        annotations: Optional[Dict[str, str]] = None,
+        static_message: Optional[str] = None
     ):
+        """
+        This constructor populates the members of the Report object.
+
+        static_message: hash.get_report_hash() function generates a hash value
+            based on this report object. The checker message is usually the
+            part of this hash. However, sometimes a checker message may contain
+            dynamically generated parts (e.g. sanitizers include some memory
+            addresses). This results changing hashes at every analysis
+            execution. In this case the report converter of that analyzer may
+            provide a more stable message which is used only for hash
+            generation.
+        """
         self.analyzer_result_file_path = analyzer_result_file_path
         self.file = file
         self.line = line
@@ -306,6 +319,9 @@ class Report:
         self.category = category
         self.type = type
         self.annotations = annotations
+
+        self.static_message = \
+            message if static_message is None else static_message
 
         self.bug_path_events = bug_path_events \
             if bug_path_events is not None else \

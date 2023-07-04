@@ -123,10 +123,17 @@ class SANParser(BaseParser):
         if stack_traces:
             notes = [BugPathEvent(''.join(stack_traces), file, line, column)]
 
+        # Dynamic analyzers usually generate checker messages containing
+        # memory addresses. Since checker messages are included in the report
+        # hash, the subsequent executions of the analysis produces different
+        # reports even if they refer the same problem. For this reason the
+        # memory addresses are cut out from "static_message" for sake of
+        # stabile hash generation.
         return Report(
             file, line, column, message, checker_name or self.checker_name,
             bug_path_events=events,
-            notes=notes)
+            notes=notes,
+            static_message=re.sub(r'0x[0-9a-fA-F]+', '', message))
 
     def parse_stack_trace(
         self,
