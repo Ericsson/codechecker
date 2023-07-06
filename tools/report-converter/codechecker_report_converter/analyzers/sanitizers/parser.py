@@ -52,7 +52,8 @@ class SANParser(BaseParser):
         if not match:
             return None, line
 
-        line = get_next(it)
+        if getattr(self, 'skip_line_after_match', True):
+            line = get_next(it)
         stack_traces, events, line = self.parse_stack_trace(it, line)
 
         if not events:

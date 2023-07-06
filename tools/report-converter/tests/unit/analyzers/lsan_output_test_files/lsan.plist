@@ -10,9 +10,9 @@
 			<key>check_name</key>
 			<string>LeakSanitizer</string>
 			<key>description</key>
-			<string>detected memory leaks</string>
+			<string>Direct leak of 7 byte(s) in 1 object(s) allocated from:</string>
 			<key>issue_hash_content_of_line_in_context</key>
-			<string>37e6fc6c7fb792d5e91ac6c3dbbe46b0</string>
+			<string>fc4736f48db89336bad8b03c6a7e9a49</string>
 			<key>location</key>
 			<dict>
 				<key>col</key>
@@ -77,7 +77,7 @@ SUMMARY: AddressSanitizer: 7 byte(s) leaked in 1 allocation(s)
 						<integer>4</integer>
 					</dict>
 					<key>message</key>
-					<string>detected memory leaks</string>
+					<string>Direct leak of 7 byte(s) in 1 object(s) allocated from:</string>
 				</dict>
 			</array>
 			<key>type</key>
