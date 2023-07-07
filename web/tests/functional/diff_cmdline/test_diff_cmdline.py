@@ -276,15 +276,9 @@ void a() {
                     report_filter, diff_type, [dir1], [], [dir2], [])
             return len(reports)
 
-        # FIXME: The report turned from source code suppressed to no longer
-        # suppressed, so it should be in this set.
-        self.assertEqual(get_run_diff_count(DiffType.NEW), 0)
-
-        # No reports disappeared.
+        self.assertEqual(get_run_diff_count(DiffType.NEW), 1)
         self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 0)
-
-        # FIXME: The report should not appear here.
-        self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED), 1)
+        self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED), 0)
 
         def get_run_diff_count_reverse(diff_type: DiffType):
             report_filter = ReportFilter()
@@ -295,9 +289,7 @@ void a() {
             return len(reports)
 
         self.assertEqual(get_run_diff_count_reverse(DiffType.NEW), 0)
-
         self.assertEqual(get_run_diff_count_reverse(DiffType.RESOLVED), 1)
-
         self.assertEqual(get_run_diff_count_reverse(DiffType.UNRESOLVED), 0)
 
     # ===-----------------------------------------------------------------=== #
