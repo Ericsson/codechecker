@@ -1323,10 +1323,15 @@ class MassStoreRun:
                         runtime = round(time.time() - start_time, 2)
                         zip_size_kb = round(zip_size / 1024)
 
+                        tag_desc = ""
+                        if self.__tag:
+                            tag_desc = f", under tag '{self.__tag}'"
+
                         LOG.info("'%s' stored results (%s KB "
-                                 "/decompressed/) to run '%s' (id: %d) in "
+                                 "/decompressed/) to run '%s' (id: %d) %s in "
                                  "%s seconds.", self.user_name,
-                                 zip_size_kb, self.__name, run_id, runtime)
+                                 zip_size_kb, self.__name, run_id, tag_desc,
+                                 runtime)
 
                         iso_start_time = datetime.fromtimestamp(
                             start_time).isoformat()
