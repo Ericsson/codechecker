@@ -160,6 +160,11 @@ def setup_class_common(workspace_name):
     # -----------------------------------------------------
 
     # Let's run the third analysis.
+    codechecker_cfg['checkers'] = ['-e', 'core.CallAndMessage',
+                                   '-d', 'core.StackAddressEscape',
+                                   '-d', 'clang-diagnostic',
+                                   '-e', 'clang-diagnostic-division-by-zero'
+                                   ]
     ret = codechecker.check_and_store(codechecker_cfg,
                                       test_project_name_third,
                                       project.path(test_project))
@@ -183,6 +188,7 @@ def setup_class_common(workspace_name):
 
     # Let's run the second analysis and updat the same run.
     codechecker_cfg['checkers'] = ['-d', 'core.StackAddressEscape',
+                                   '-d', 'unix.Malloc',
                                    '-d', 'clang-diagnostic',
                                    '-e', 'clang-diagnostic-division-by-zero',
                                    '-e', 'clang-diagnostic-return-type']

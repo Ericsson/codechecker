@@ -111,15 +111,9 @@ class CheckerHandlingClangSATest(unittest.TestCase):
         """
         Test that ClangSA only uses enable lists.
         """
-        # TODO: This test is currently removed, because checkers that are not
-        # enabled are explicitly disabled. In a next commit ClangSA reports
-        # will be hidden instead of disabled. In that commit this test could be
-        # re-enabled.
-        pass
-
-        # self.assertFalse(
-        #     any(arg.startswith('-analyzer-disable-checker')
-        #         for arg in self.__class__.cmd))
+        self.assertFalse(
+            any(arg.startswith('-analyzer-disable-checker')
+                for arg in self.__class__.cmd))
 
     def test_checker_initializer(self):
         """
