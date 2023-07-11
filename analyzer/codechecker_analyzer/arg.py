@@ -127,7 +127,7 @@ def checker_config(arg: str) -> CheckerConfig:
 
     if not m:
         raise argparse.ArgumentTypeError(
-            f"Checker option in wrong format: {arg}, should be"
+            f"Checker option in wrong format: {arg}, should be "
             "<analyzer>:<checker>:<option>=<value>")
 
     return CheckerConfig(
