@@ -2,6 +2,31 @@
   <!-- eslint-disable max-len -->
   <v-container fluid>
     <v-timeline align-top>
+      <v-timeline-item fill-dot icon="mdi-star">
+        <new-release-item>
+          <template v-slot:title>
+            <a
+              href="https://github.com/Ericsson/codechecker/releases/tag/v6.22.2"
+              target="_blank"
+              class="white--text"
+            >
+              Highlights of CodeChecker 6.22.2 release
+            </a>
+          </template>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Support for Ubuntu 22.04
+            </template>
+            CodeChecker failed to build on Ubuntu 22.04 in its previous release
+            because of two issues: some of our dependencies broke with the
+            release of python3.9, and we didn't support GNU Make-s new way of
+            creating build jobs. These issues are all fixed now, so CodeChecker
+            should work with the latest version of python and GNU Make!
+          </new-feature-item>
+        </new-release-item>
+      </v-timeline-item>
+
       <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
         <new-release-item color="green lighten-1">
           <template v-slot:title>
