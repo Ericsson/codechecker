@@ -5434,7 +5434,6 @@
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/const-correctness.html",
       "severity:STYLE"
     ],
-
     "misc-dangling-handle": [
       "doc_url:https://releases.llvm.org/5.0.0/tools/clang/tools/extra/docs/clang-tidy/checks/misc-dangling-handle.html",
       "profile:default",
