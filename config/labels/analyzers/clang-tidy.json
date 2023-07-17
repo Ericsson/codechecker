@@ -4964,6 +4964,11 @@
       "profile:extreme",
       "severity:LOW"
     ],
+    "cppcoreguidelines-missing-std-forward": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/missing-std-forward.html",
+      "profile:extreme",
+      "severity:LOW"
+    ],
     "cppcoreguidelines-narrowing-conversions": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/narrowing-conversions.html",
       "severity:MEDIUM"
