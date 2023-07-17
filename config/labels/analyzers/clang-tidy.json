@@ -5850,6 +5850,11 @@
       "profile:extreme",
       "severity:STYLE"
     ],
+    "modernize-type-traits": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/modernize/type-traits.html",
+      "profile:extreme",
+      "severity:STYLE"
+    ],
     "modernize-unary-static-assert": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/modernize/unary-static-assert.html",
       "profile:extreme",
