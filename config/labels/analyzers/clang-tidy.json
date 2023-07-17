@@ -5064,6 +5064,11 @@
       "profile:sensitive",
       "severity:LOW"
     ],
+    "cppcoreguidelines-use-default-member-init": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/use-default-member-init.html",
+      "profile:extreme",
+      "severity:STYLE"
+    ],
     "cppcoreguidelines-virtual-class-destructor": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/virtual-class-destructor.html",
       "profile:default",
