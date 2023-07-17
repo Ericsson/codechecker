@@ -4964,6 +4964,11 @@
       "profile:extreme",
       "severity:LOW"
     ],
+    "cppcoreguidelines-missing-std-forward": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/missing-std-forward.html",
+      "profile:extreme",
+      "severity:LOW"
+    ],
     "cppcoreguidelines-narrowing-conversions": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/narrowing-conversions.html",
       "severity:MEDIUM"
@@ -5063,6 +5068,11 @@
       "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
+    ],
+    "cppcoreguidelines-use-default-member-init": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/use-default-member-init.html",
+      "profile:extreme",
+      "severity:STYLE"
     ],
     "cppcoreguidelines-virtual-class-destructor": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/virtual-class-destructor.html",
@@ -5434,7 +5444,6 @@
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/const-correctness.html",
       "severity:STYLE"
     ],
-
     "misc-dangling-handle": [
       "doc_url:https://releases.llvm.org/5.0.0/tools/clang/tools/extra/docs/clang-tidy/checks/misc-dangling-handle.html",
       "profile:default",
@@ -5492,6 +5501,13 @@
       "profile:extreme",
       "profile:sensitive",
       "severity:HIGH"
+    ],
+    "misc-include-cleaner": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/include-cleaner.html",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
     ],
     "misc-incorrect-roundings": [
       "doc_url:https://releases.llvm.org/6.0.0/tools/clang/tools/extra/docs/clang-tidy/checks/misc-incorrect-roundings.html",
@@ -5844,6 +5860,11 @@
       "profile:extreme",
       "severity:STYLE"
     ],
+    "modernize-type-traits": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/modernize/type-traits.html",
+      "profile:extreme",
+      "severity:STYLE"
+    ],
     "modernize-unary-static-assert": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/modernize/unary-static-assert.html",
       "profile:extreme",
@@ -5964,6 +5985,12 @@
       "profile:sensitive",
       "severity:LOW"
     ],
+    "performance-avoid-endl": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/avoid-endl.html",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
     "performance-for-range-copy": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/for-range-copy.html",
       "profile:extreme",
@@ -6074,6 +6101,10 @@
     ],
     "readability-avoid-const-params-in-decls": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/avoid-const-params-in-decls.html",
+      "severity:STYLE"
+    ],
+    "readability-avoid-unconditional-preprocessor-if": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/avoid-unconditional-preprocessor-if.html",
       "severity:STYLE"
     ],
     "readability-braces-around-statements": [
