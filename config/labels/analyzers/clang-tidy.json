@@ -5975,6 +5975,12 @@
       "profile:sensitive",
       "severity:LOW"
     ],
+    "performance-avoid-endl": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/avoid-endl.html",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
     "performance-for-range-copy": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/for-range-copy.html",
       "profile:extreme",
