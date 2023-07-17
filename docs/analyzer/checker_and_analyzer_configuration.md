@@ -29,7 +29,7 @@ These can be listed using the `CodeChecker checkers --checker-config` command
 and can be set by `CodeChecker analyze --checker-config
 clangsa:<option-name>=<value>`.
 
-You can find the documentation of the configuration options at hte [Clang Static
+You can find the documentation of the configuration options at the [Clang Static
 Analyzer
 checkers](https://github.com/llvm-mirror/clang/tree/master/lib/StaticAnalyzer/Checkers)
 page.
