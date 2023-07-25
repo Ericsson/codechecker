@@ -380,13 +380,8 @@ void a() {
                     ["run1"], [dir2], [])
             return len(reports)
 
-        # b() is a new report.
         self.assertEqual(get_run_diff_count(DiffType.NEW), 0)
-
-        # a() is the old report.
         self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 0)
-
-        # There are no common reports.
         self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED), 1)
 
         def get_run_diff_count_reverse(diff_type: DiffType):
@@ -396,13 +391,8 @@ void a() {
                     [dir2], [], ["run1"])
             return len(reports)
 
-        # b() is a new report.
         self.assertEqual(get_run_diff_count_reverse(DiffType.NEW), 0)
-
-        # a() is the old report.
         self.assertEqual(get_run_diff_count_reverse(DiffType.RESOLVED), 0)
-
-        # There are no common reports.
         self.assertEqual(get_run_diff_count_reverse(DiffType.UNRESOLVED), 1)
 
     def test_localFPAnnotated_remote_identical(self):
@@ -496,15 +486,8 @@ void a() {
                     ["run2"], [dir1], [])
             return len(reports)
 
-        # b() is a new report.
         self.assertEqual(get_run_diff_count(DiffType.NEW), 1)
-
-        # FIXME: This should be 0 -- the "before" set is suppressed, the
-        # "after" set is no longer, so it should only be in the NEW set.
-        # Not to mention that these sets must be disjointed.
-        self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 1)
-
-        # There are no common reports.
+        self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 0)
         self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED), 0)
 
         def get_run_diff_count_reverse(diff_type: DiffType):
@@ -514,15 +497,8 @@ void a() {
                     [dir1], [], ["run2"])
             return len(reports)
 
-        # FIXME: This should be 0 -- the "before" set is suppressed, the
-        # "after" set is no longer, so it should only be in the RESOLVED set.
-        # Not to mention that these sets must be disjointed.
-        self.assertEqual(get_run_diff_count_reverse(DiffType.NEW), 1)
-
-        # a() is the old report.
+        self.assertEqual(get_run_diff_count_reverse(DiffType.NEW), 0)
         self.assertEqual(get_run_diff_count_reverse(DiffType.RESOLVED), 1)
-
-        # There are no common reports.
         self.assertEqual(get_run_diff_count_reverse(DiffType.UNRESOLVED), 0)
 
     def test_local_remoteReviewStatusRule_identical(self):
@@ -534,7 +510,10 @@ void a() {
         local run), yet the rule still affects the local run.
         This implies that review status rules are a timeless property -- once
         a hash has a rule, all reports matching it before or after the rule
-        was made are affected. As a result, it should be in the UNRESOLVED set.
+        was made are affected.
+        Since neither the report is not present in either of the baseline's,
+        nor the new run's set outstanding reports, it shouldn't be present in
+        any of the NEW, RESOLVED or UNRESOLVED sets.
         """
         # Create two identical runs, store one on the server, leave one
         # locally.
@@ -567,8 +546,7 @@ void a() {
             return len(reports)
 
         self.assertEqual(get_run_diff_count(DiffType.NEW), 0)
-        # FIXME: This should be in the UNRESOLVED set.
-        self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 1)
+        self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 0)
         self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED), 0)
 
         def get_run_diff_count_reverse(diff_type: DiffType):
@@ -580,8 +558,7 @@ void a() {
                     [dir2], [], ["run1"])
             return len(reports)
 
-        # FIXME: This should be in the UNRESOLVED set.
-        self.assertEqual(get_run_diff_count_reverse(DiffType.NEW), 1)
+        self.assertEqual(get_run_diff_count_reverse(DiffType.NEW), 0)
         self.assertEqual(get_run_diff_count_reverse(DiffType.RESOLVED), 0)
         self.assertEqual(get_run_diff_count_reverse(DiffType.UNRESOLVED), 0)
 
@@ -596,7 +573,109 @@ void a() {
 
     # ===--- Remote-Remote tests in between tags. ------------------------=== #
 
+    # Ideally, diffing tags should work the same as diffing two remote runs or
+    # local directory.
+
     # TODO: remote-remote diffs concerning tags
+
+    def test_remoteFPAnnotated_remote_tag(self):
+        dir1 = os.path.join(self.test_workspace, "dir1")
+        dir2 = os.path.join(self.test_workspace, "dir2")
+
+        src_div_by_zero_FP = """
+void a() {
+  int i = 0;
+  // codechecker_false_positive [all] SUPPRESS ALL
+  (void)(10 / i);
+}
+"""
+        src_div_by_zero = """
+void a() {
+  int i = 0;
+  (void)(10 / i);
+}
+"""
+        # Note that we're storing under the same run.
+        self.__analyze_and_store(dir1, "run1", src_div_by_zero_FP, "tag1")
+        self.__analyze_and_store(dir2, "run1", src_div_by_zero, "tag2")
+
+        report_filter = ReportFilter()
+        report_filter.reviewStatus = []
+        report_filter.detection_status = []
+
+        def get_run_diff_count(diff_type: DiffType):
+            reports, _, _ = get_diff_remote_runs(
+                    self._cc_client, report_filter, diff_type, [],
+                    ["run1:tag1"], ["run1:tag2"])
+            return len(reports)
+
+        # FIXME: The FP suppression disappeared from one tag to the next, so it
+        # should be in the NEW set.
+        self.assertEqual(get_run_diff_count(DiffType.NEW), 0)
+        self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 0)
+        self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED), 1)
+
+        def get_run_diff_count_reverse(diff_type: DiffType):
+            reports, _, _ = get_diff_remote_runs(
+                    self._cc_client, report_filter, diff_type, [],
+                    ["run1:tag1"], ["run1:tag2"])
+            return len(reports)
+
+        # FIXME: The FP suppression disappeared from one tag to the next, so it
+        # should be in the RESOLVED set when the diff sets are reversed.
+        self.assertEqual(get_run_diff_count_reverse(DiffType.NEW), 0)
+        self.assertEqual(get_run_diff_count_reverse(DiffType.RESOLVED), 0)
+        self.assertEqual(get_run_diff_count_reverse(DiffType.UNRESOLVED), 1)
+
+    def test_remote_remoteFPAnnotated_tag(self):
+        # Diff two different, local runs.
+        dir1 = os.path.join(self.test_workspace, "dir1")
+        dir2 = os.path.join(self.test_workspace, "dir2")
+
+        src_div_by_zero = """
+void a() {
+  int i = 0;
+  (void)(10 / i);
+}
+"""
+        src_div_by_zero_FP = """
+void a() {
+  int i = 0;
+  // codechecker_false_positive [all] SUPPRESS ALL
+  (void)(10 / i);
+}
+"""
+        # Note that we're storing under the same run.
+        self.__analyze_and_store(dir1, "run1", src_div_by_zero, "tag1")
+        self.__analyze_and_store(dir2, "run1", src_div_by_zero_FP, "tag2")
+
+        report_filter = ReportFilter()
+        report_filter.reviewStatus = []
+        report_filter.detection_status = []
+
+        def get_run_diff_count(diff_type: DiffType):
+            reports, _, _ = get_diff_remote_runs(
+                    self._cc_client, report_filter, diff_type, [],
+                    ["run1:tag1"], ["run1:tag2"])
+            return len(reports)
+
+        # FIXME: The FP suppression appeared from one tag to the next, so it
+        # should be in the RESOLVED set.
+        self.assertEqual(get_run_diff_count(DiffType.NEW), 0)
+        self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 0)
+        self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED), 0)
+
+        def get_run_diff_count_reverse(diff_type: DiffType):
+            reports, _, _ = get_diff_remote_runs(
+                    self._cc_client, report_filter, diff_type, [],
+                    ["run1:tag1"], ["run1:tag2"])
+            return len(reports)
+
+        # FIXME: The FP suppression appeared from one tag to the next, so it
+        # should be in the NEW set when the diff sets are reversed.
+        self.assertEqual(get_run_diff_count_reverse(DiffType.NEW), 0)
+        self.assertEqual(get_run_diff_count_reverse(DiffType.RESOLVED), 0)
+        self.assertEqual(get_run_diff_count_reverse(DiffType.UNRESOLVED), 0)
 
     def test_remote_remote_tag_FixedAtDate(self):
         """
@@ -608,7 +687,6 @@ void a() {
         You can read more about this bug here:
         https://github.com/Ericsson/codechecker/pull/3853
         """
-        # Diff two different, local runs.
         dir1 = os.path.join(self.test_workspace, "dir1")
         dir2 = os.path.join(self.test_workspace, "dir2")
 

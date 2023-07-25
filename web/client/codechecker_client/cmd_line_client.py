@@ -268,6 +268,9 @@ def get_diff_base_results(
 ):
     """Get the run results from the server."""
     report_filter.reportHash = base_hashes + suppressed_hashes
+    report_filter.reviewStatus = [
+        ttypes.ReviewStatus.UNREVIEWED,
+        ttypes.ReviewStatus.CONFIRMED]
 
     sort_mode = [(ttypes.SortMode(
         ttypes.SortType.FILENAME,
