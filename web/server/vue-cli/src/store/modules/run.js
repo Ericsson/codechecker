@@ -36,10 +36,24 @@ const getters = {
     return state.storedAfter;
   },
   runFilter(state) {
-    if (!state.runName)
+    if (!state.runName && !state.storedAfter && !state.storedBefore)
       return null;
 
-    return new RunFilter({ names: [ `*${state.runName}*` ] });
+    let names = null;
+    if (state.runName)
+      names = [ `*${state.runName}*` ];
+    let after = null;
+    if (state.storedAfter)
+      after = getUnixTime(state.storedAfter);
+    let before = null;
+    if (state.storedBefore)
+      before = getUnixTime(state.storedBefore);
+
+    return new RunFilter({
+      names: names,
+      afterTime: after,
+      beforeTime: before
+    });
   },
   runHistoryFilter(state) {
     if (!state.runTag && !state.storedAfter && !state.storedBefore)

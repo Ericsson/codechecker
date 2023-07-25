@@ -220,6 +220,7 @@ export default {
         ? this.dateTimeToStr(this.storedAfter) : undefined;
       this.updateUrl({ "stored-after": date });
 
+      this.$emit("on-run-filter-changed");
       this.$emit("on-run-history-filter-changed");
     }, 500));
 
@@ -228,6 +229,7 @@ export default {
         ? this.dateTimeToStr(this.storedBefore) : undefined;
       this.updateUrl({ "stored-before": date });
 
+      this.$emit("on-run-filter-changed");
       this.$emit("on-run-history-filter-changed");
     }, 500));
   },
