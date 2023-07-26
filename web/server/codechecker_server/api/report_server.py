@@ -588,9 +588,11 @@ def get_open_reports_date_filter_query_old(tbl=Report, date=RunHistory.time):
 def get_diff_bug_id_query(session, run_ids, tag_ids, open_reports_date):
     """ Get bug id query for diff. """
     q = session.query(Report.bug_id.distinct())
-    q = q.filter(Report.fixed_at.is_(None))
+
     if run_ids:
         q = q.filter(Report.run_id.in_(run_ids))
+        if not tag_ids and not open_reports_date:
+            q = q.filter(Report.fixed_at.is_(None))
 
     if tag_ids:
         q = q.outerjoin(RunHistory,

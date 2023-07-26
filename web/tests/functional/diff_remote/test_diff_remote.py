@@ -119,8 +119,11 @@ class DiffRemote(unittest.TestCase):
         # Extend the checker configuration with the server access.
         codechecker_cfg.update(server_access)
 
-        # Base analysis
+        # ===-------------------------------------------------------------=== #
+        # Baseline analysis.
+        # ===-------------------------------------------------------------=== #
 
+        # ===-------------------------- Analysis -------------------------=== #
         altered_file = os.path.join(test_proj_path_base,
                                     "call_and_message.cpp")
         project.insert_suppression(altered_file)
@@ -138,18 +141,24 @@ class DiffRemote(unittest.TestCase):
         codechecker_cfg['reportdir'] = os.path.join(test_proj_path_base,
                                                     'reports')
 
+        # ===------------------------- Store 1. --------------------------=== #
         test_project_name_base = project_info['name'] + '_' + uuid.uuid4().hex
         ret = codechecker.store(codechecker_cfg, test_project_name_base)
         if ret:
             sys.exit(1)
 
+        # ===------------------------- Store 2. --------------------------=== #
         # Store with a literal ':' in the name.
         ret = codechecker.store(codechecker_cfg,
                                 test_project_name_base + ":base")
         if ret:
             sys.exit(1)
 
-        # New analysis
+        # ===-------------------------------------------------------------=== #
+        # New analysis (as opposed to baseline, this is the newer version).
+        # ===-------------------------------------------------------------=== #
+
+        # ===-------------------------- Analysis -------------------------=== #
         altered_file = os.path.join(test_proj_path_new, "call_and_message.cpp")
         project.insert_suppression(altered_file)
         codechecker_cfg['reportdir'] = os.path.join(test_proj_path_new,
@@ -166,24 +175,30 @@ class DiffRemote(unittest.TestCase):
         codechecker_cfg['reportdir'] = os.path.join(test_proj_path_new,
                                                     'reports')
 
+        # ===------------------------- Store 1. --------------------------=== #
         test_project_name_new = project_info['name'] + '_' + uuid.uuid4().hex
         ret = codechecker.store(codechecker_cfg, test_project_name_new)
         if ret:
             sys.exit(1)
 
+        # ===------------------------- Store 2. --------------------------=== #
         # Store with a literal ':' in the name.
         ret = codechecker.store(codechecker_cfg,
                                 test_project_name_new + ":new")
         if ret:
             sys.exit(1)
 
+        # ===-------------------------------------------------------------=== #
+        # Another round of analyses for tags -- tag1
+        # ===-------------------------------------------------------------=== #
+
+        # ===-------------------------- Analysis -------------------------=== #
         # Analyze multiple times to store results with multiple tags.
         codechecker_cfg['reportdir'] = os.path.join(test_proj_path_update,
                                                     'reports')
 
         test_project_name_update = \
             project_info['name'] + '_' + uuid.uuid4().hex
-        codechecker_cfg['tag'] = 't1'
         codechecker_cfg['checkers'] = ['-d', 'core.CallAndMessage',
                                        '-e', 'core.StackAddressEscape'
                                        ]
@@ -196,12 +211,18 @@ class DiffRemote(unittest.TestCase):
         if ret:
             sys.exit(1)
 
+        # ===--------------------------- Store ---------------------------=== #
         # Store update with t1 tag.
+        codechecker_cfg['tag'] = 't1'
         ret = codechecker.store(codechecker_cfg, test_project_name_update)
         if ret:
             sys.exit(1)
 
-        codechecker_cfg['tag'] = 't2'
+        # ===-------------------------------------------------------------=== #
+        # Another round of analyses for tags -- tag2
+        # ===-------------------------------------------------------------=== #
+
+        # ===-------------------------- Analysis -------------------------=== #
         codechecker_cfg['checkers'] = ['-e', 'core.CallAndMessage',
                                        '-d', 'core.StackAddressEscape'
                                        ]
@@ -209,21 +230,34 @@ class DiffRemote(unittest.TestCase):
         if ret:
             sys.exit(1)
 
+        # ===--------------------------- Store ---------------------------=== #
         # Store update with t2 tag.
+        codechecker_cfg['tag'] = 't2'
         ret = codechecker.store(codechecker_cfg, test_project_name_update)
         if ret:
             sys.exit(1)
 
-        codechecker_cfg['tag'] = 't3'
+        # ===-------------------------------------------------------------=== #
+        # Another round of analyses for tags -- tag3
+        # Mind that the analysis config from tag2 to tag3 is unchanged.
+        # ===-------------------------------------------------------------=== #
+
+        # ===-------------------------- Analysis -------------------------=== #
         ret = codechecker.log_and_analyze(codechecker_cfg,
                                           test_proj_path_update)
         if ret:
             sys.exit(1)
 
+        # ===--------------------------- Store ---------------------------=== #
         # Store update with t3 tag.
+        codechecker_cfg['tag'] = 't3'
         ret = codechecker.store(codechecker_cfg, test_project_name_update)
         if ret:
             sys.exit(1)
+
+        # ===-------------------------------------------------------------=== #
+        # Done with the analyses and stores.
+        # ===-------------------------------------------------------------=== #
 
         # Order of the test run names matter at comparison!
         codechecker_cfg['run_names'] = [test_project_name_base,
@@ -811,7 +845,8 @@ class DiffRemote(unittest.TestCase):
                                                  cmp_data,
                                                  False)
 
-        # 5 new core.CallAndMessage issues.
+        # 5 new core.CallAndMessage issues (as the checker was enabled from
+        # tag1 to tag2).
         self.assertEqual(len(diff_res), 5)
 
         cmp_data.diffType = DiffType.RESOLVED
@@ -822,7 +857,10 @@ class DiffRemote(unittest.TestCase):
                                                  tag_filter,
                                                  cmp_data,
                                                  False)
-        self.assertEqual(len(diff_res), 0)
+
+        # 3 core.StackAddressEscape reports are resolved (as the checker was
+        # disabled from tag1 to tag2).
+        self.assertEqual(len(diff_res), 3)
 
         cmp_data.diffType = DiffType.UNRESOLVED
         diff_res = self._cc_client.getRunResults([run_id],
@@ -880,7 +918,8 @@ class DiffRemote(unittest.TestCase):
                                                  cmp_data,
                                                  False)
 
-        # 5 new core.CallAndMessage issues.
+        # 5 new core.CallAndMessage issues (as the checker was enabled from
+        # tag1 to tag2).
         self.assertEqual(len(diff_res), 5)
 
         cmp_data.diffType = DiffType.RESOLVED
@@ -891,7 +930,10 @@ class DiffRemote(unittest.TestCase):
                                                  tag_filter,
                                                  cmp_data,
                                                  False)
-        self.assertEqual(len(diff_res), 0)
+
+        # 3 core.StackAddressEscape reports are resolved (as the checker was
+        # disabled from tag1 to tag2).
+        self.assertEqual(len(diff_res), 3)
 
         cmp_data.diffType = DiffType.UNRESOLVED
         diff_res = self._cc_client.getRunResults([run_id],

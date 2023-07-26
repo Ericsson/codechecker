@@ -755,10 +755,8 @@ void a() {
                     ["run1:tag1"], ["run1:tag2"])
             return len(reports)
 
-        # FIXME: The FP suppression appeared from one tag to the next, so it
-        # should be in the RESOLVED set.
         self.assertEqual(get_run_diff_count(DiffType.NEW), 0)
-        self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 0)
+        self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 1)
         self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED), 0)
 
         def get_run_diff_count_reverse(diff_type: DiffType):
@@ -767,9 +765,7 @@ void a() {
                     ["run1:tag2"], ["run1:tag1"])
             return len(reports)
 
-        # FIXME: The FP suppression appeared from one tag to the next, so it
-        # should be in the NEW set when the diff sets are reversed.
-        self.assertEqual(get_run_diff_count_reverse(DiffType.NEW), 0)
+        self.assertEqual(get_run_diff_count_reverse(DiffType.NEW), 1)
         self.assertEqual(get_run_diff_count_reverse(DiffType.RESOLVED), 0)
         self.assertEqual(get_run_diff_count_reverse(DiffType.UNRESOLVED), 0)
 
@@ -809,7 +805,7 @@ void a() {
             return len(reports)
 
         self.assertEqual(get_run_diff_count(DiffType.NEW), 0)
-        self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 0)
+        self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 1)
         self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED), 0)
 
         def get_run_diff_count_reverse(diff_type: DiffType):
@@ -818,7 +814,7 @@ void a() {
                     ["run1:tag2"], ["run1:tag1"])
             return len(reports)
 
-        self.assertEqual(get_run_diff_count_reverse(DiffType.NEW), 0)
+        self.assertEqual(get_run_diff_count_reverse(DiffType.NEW), 1)
         self.assertEqual(get_run_diff_count_reverse(DiffType.RESOLVED), 0)
         self.assertEqual(get_run_diff_count_reverse(DiffType.UNRESOLVED), 0)
 
