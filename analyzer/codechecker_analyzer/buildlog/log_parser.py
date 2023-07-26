@@ -219,7 +219,8 @@ COMPILE_OPTIONS = [
     '-Wno-',
     '--sysroot=',
     '-sdkroot',
-    '--gcc-toolchain='
+    '--gcc-toolchain=',
+    '-pthread'
 ]
 
 COMPILE_OPTIONS = re.compile('|'.join(COMPILE_OPTIONS))
