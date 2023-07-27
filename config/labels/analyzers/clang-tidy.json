@@ -528,9 +528,11 @@
     ],
     "bugprone-suspicious-realloc-usage": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/suspicious-realloc-usage.html",
+      "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
+      "sei-cert:err33-c",
       "severity:HIGH"
     ],
     "bugprone-suspicious-semicolon": [
@@ -1150,6 +1152,9 @@
     ],
     "clang-diagnostic-array-bounds-pointer-arithmetic": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#warray-bounds-pointer-arithmetic",
+      "guideline:sei-cert",
+      "profile:default",
+      "sei-cert:arr39-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-array-parameter": [
@@ -2002,6 +2007,9 @@
     ],
     "clang-diagnostic-double-promotion": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdouble-promotion",
+      "guideline:sei-cert",
+      "profile:default",
+      "sei-cert:flp34-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-dtor-name": [
@@ -2062,6 +2070,9 @@
     ],
     "clang-diagnostic-embedded-directive": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wembedded-directive",
+      "guideline:sei-cert",
+      "profile:default",
+      "sei-cert:pre32-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-empty-body": [
@@ -2213,6 +2224,10 @@
     ],
     "clang-diagnostic-float-conversion": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wfloat-conversion",
+      "guideline:sei-cert",
+      "profile:default",
+      "sei-cert:flp32-c",
+      "sei-cert:flp34-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-float-equal": [
@@ -2257,6 +2272,7 @@
     ],
     "clang-diagnostic-format-nonliteral": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat-nonliteral",
+      "profile:default",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-format-pedantic": [
@@ -3265,6 +3281,9 @@
     ],
     "clang-diagnostic-non-virtual-dtor": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wnon-virtual-dtor",
+      "guideline:sei-cert",
+      "profile:default",
+      "sei-cert:oop52-cpp",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-nonnull": [
@@ -4173,6 +4192,9 @@
     ],
     "clang-diagnostic-static-in-inline": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wstatic-in-inline",
+      "guideline:sei-cert",
+      "profile:default",
+      "sei-cert:msc40-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-static-inline-explicit-instantiation": [
