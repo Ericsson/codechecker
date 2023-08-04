@@ -19,6 +19,10 @@ from typing import List
 from codechecker_common.logger import get_logger
 
 from codechecker_analyzer import analyzer_context, env
+from codechecker_statistics_collector.collectors.special_return_value import \
+    SpecialReturnValueCollector
+from codechecker_statistics_collector.collectors.return_value import \
+    ReturnValueCollector
 
 from .. import analyzer_base
 from ..config_handler import CheckerState
@@ -92,6 +96,19 @@ def parse_clang_help_page(
         res.append((flag, ' '.join(desc)))
 
     return res
+
+
+def _is_user_disabled_checker(checker, ordered_checkers):
+    """
+    This function returns True if the given checker is disabled by the user
+    explicitly by a --disable flag.
+    """
+    if not ordered_checkers:
+        return False
+
+    disabled_checkers = (c for c, enabled in ordered_checkers if not enabled)
+
+    return any(checker.startswith(c) for c in disabled_checkers)
 
 
 class ClangSA(analyzer_base.SourceAnalyzer):
@@ -595,6 +612,40 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             checkers,
             cmdline_checkers,
             'enable_all' in args and args.enable_all)
+
+        # If --stats flag is provided then enable statistics-based checkers
+        # unless explicitly disabled by the user.
+        if 'stats_enabled' in args:
+            # In some Clang versions, statisticsbased checkers are in the alpha
+            # package (alpha.statisticsbased), and maybe not in others. Lets
+            # figure out the actual checker name first.
+            special_return_value = next((
+                checker for checker, _ in checkers
+                if SpecialReturnValueCollector.checker_analyze in checker),
+                None)
+            unchecked_return_value = next((
+                checker for checker, _ in checkers
+                if ReturnValueCollector.checker_analyze in checker),
+                None)
+
+            if special_return_value and not _is_user_disabled_checker(
+                    special_return_value,
+                    cmdline_checkers):
+                handler.set_checker_enabled(special_return_value)
+
+            if unchecked_return_value and not _is_user_disabled_checker(
+                    unchecked_return_value,
+                    cmdline_checkers):
+                handler.set_checker_enabled(unchecked_return_value)
+
+        # Statistics collector checkers must be explicitly disabled as they
+        # trash the output. These checkers are executed in a preceding analysis
+        # phase.
+        handler.set_checker_enabled(
+            SpecialReturnValueCollector.checker_collect, False)
+
+        handler.set_checker_enabled(
+            ReturnValueCollector.checker_collect, False)
 
         handler.checker_config = []
 
