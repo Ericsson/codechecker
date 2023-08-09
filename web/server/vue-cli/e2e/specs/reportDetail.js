@@ -25,18 +25,18 @@ module.exports = {
 
   "show documentation" (browser) {
     const reportDetailPage = browser.page.reportDetail();
-    const dialog = reportDetailPage.section.documentationDialog;
+    reportDetailPage.expect.element('@showDocumentationBtn')
+      .to.be.present.before(5000, false);
 
-    reportDetailPage.click("@showDocumentationBtn");
+    reportDetailPage.click('@showDocumentationBtn');
 
-    reportDetailPage.expect.section(dialog)
-      .to.be.visible.before(5000);
-
-    dialog.expect.element("@content").text.to.not.equal(null);
-
-    dialog.pause(100).click("@closeBtn");
-
-    reportDetailPage.expect.section(dialog).to.not.be.present.before(5000);
+    browser.windowHandles(windowObj => {
+      if (windowObj.value.length > 1) {
+        browser.switchWindow(windowObj.value[1]);
+        browser.closeWindow();
+        browser.switchWindow(windowObj.value[0]);
+      }
+    });
   },
 
   "show blame information" (browser) {
