@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import platform
 import setuptools
 import subprocess
 import sys
@@ -102,7 +103,7 @@ module_logger = Extension(
 
 class BuildExt(build_ext):
     def get_ext_filename(self, ext_name):
-        return f"{os.path.join(*ext_name.split('.'))}.so"
+        return os.path.join(platform.uname().machine, f"{ext_name}.so")
 
     def build_extension(self, ext):
         if sys.platform == "linux":
