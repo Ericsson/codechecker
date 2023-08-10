@@ -3,6 +3,8 @@ name: codechecker-tests
 # Triggers the workflow on push or pull request events.
 on: [push, pull_request]
 
+permissions: read-all
+
 jobs:
   # Note: UI related linter tests will run in the gui job.
   lint:
