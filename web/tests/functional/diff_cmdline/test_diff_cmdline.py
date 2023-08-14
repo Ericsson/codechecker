@@ -576,9 +576,99 @@ void a() {
     # Ideally, diffing tags should work the same as diffing two remote runs or
     # local directory.
 
-    # TODO: remote-remote diffs concerning tags
+    def test_remoteTag_remoteTag_identical(self):
+        dir1 = os.path.join(self.test_workspace, "dir1")
+        dir2 = os.path.join(self.test_workspace, "dir2")
 
-    def test_remoteFPAnnotated_remote_tag(self):
+        src_div_by_zero = """
+void a() {
+  int i = 0;
+  (void)(10 / i);
+}
+"""
+        # Note that we're storing under the same run.
+        self.__analyze_and_store(dir1, "run1", src_div_by_zero, "tag1")
+        self.__analyze_and_store(dir2, "run1", src_div_by_zero, "tag2")
+
+        report_filter = ReportFilter()
+        report_filter.reviewStatus = []
+        report_filter.detection_status = []
+
+        def get_run_diff_count(diff_type: DiffType):
+            reports, _, _ = get_diff_remote_runs(
+                    self._cc_client, report_filter, diff_type, [],
+                    ["run1:tag1"], ["run1:tag2"])
+            return len(reports)
+
+        self.assertEqual(get_run_diff_count(DiffType.NEW), 0)
+        self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 0)
+        self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED), 1)
+
+        def get_run_diff_count_reverse(diff_type: DiffType):
+            reports, _, _ = get_diff_remote_runs(
+                    self._cc_client, report_filter, diff_type, [],
+                    ["run1:tag2"], ["run1:tag1"])
+            return len(reports)
+
+        self.assertEqual(get_run_diff_count_reverse(DiffType.NEW), 0)
+        self.assertEqual(get_run_diff_count_reverse(DiffType.RESOLVED), 0)
+        self.assertEqual(get_run_diff_count_reverse(DiffType.UNRESOLVED), 1)
+
+    def test_remoteTag_remoteTag_different(self):
+        dir1 = os.path.join(self.test_workspace, "dir1")
+        dir2 = os.path.join(self.test_workspace, "dir2")
+
+        src_div_by_zero = """
+void a() {
+  int i = 0;
+  (void)(10 / i);
+}
+"""
+        src_nullptr_deref = """
+void b() {
+  int *i = 0;
+  *i = 5;
+}
+"""
+        # Note that we're storing under the same run.
+        self.__analyze_and_store(dir1, "run1", src_div_by_zero, "tag1")
+        self.__analyze_and_store(dir2, "run1", src_nullptr_deref, "tag2")
+
+        report_filter = ReportFilter()
+        report_filter.reviewStatus = []
+        report_filter.detection_status = []
+
+        def get_run_diff_count(diff_type: DiffType):
+            reports, _, _ = get_diff_remote_runs(
+                    self._cc_client, report_filter, diff_type, [],
+                    ["run1:tag1"], ["run1:tag2"])
+            return len(reports)
+
+        self.assertEqual(get_run_diff_count(DiffType.NEW), 1)
+        # FIXME: The division by zero disappeared from tag1 to tag2, so the
+        # RESOLVED set should have a report.
+        self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 0)
+        self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED), 0)
+
+        def get_run_diff_count_reverse(diff_type: DiffType):
+            reports, _, _ = get_diff_remote_runs(
+                    self._cc_client, report_filter, diff_type, [],
+                    ["run1:tag2"], ["run1:tag1"])
+            return len(reports)
+
+        # FIXME: The division by zero disappeared from tag1 to tag2, so the
+        # NEW set should have a report when we reverse the diff.
+        self.assertEqual(get_run_diff_count_reverse(DiffType.NEW), 0)
+        self.assertEqual(get_run_diff_count_reverse(DiffType.RESOLVED), 1)
+        self.assertEqual(get_run_diff_count_reverse(DiffType.UNRESOLVED), 0)
+
+    def test_remoteTagFPAnnotated_remoteTag_identical(self):
+        """
+        Test source code suppression changes -- in tag1, a FP suppression is
+        present, and in tag2, it disappears. Internally, as of writing, this
+        will irreversibly remove the fixed_at attribute, so we are not really
+        able to get this right.
+        """
         dir1 = os.path.join(self.test_workspace, "dir1")
         dir2 = os.path.join(self.test_workspace, "dir2")
 
@@ -618,7 +708,7 @@ void a() {
         def get_run_diff_count_reverse(diff_type: DiffType):
             reports, _, _ = get_diff_remote_runs(
                     self._cc_client, report_filter, diff_type, [],
-                    ["run1:tag1"], ["run1:tag2"])
+                    ["run1:tag2"], ["run1:tag1"])
             return len(reports)
 
         # FIXME: The FP suppression disappeared from one tag to the next, so it
@@ -627,7 +717,13 @@ void a() {
         self.assertEqual(get_run_diff_count_reverse(DiffType.RESOLVED), 0)
         self.assertEqual(get_run_diff_count_reverse(DiffType.UNRESOLVED), 1)
 
-    def test_remote_remoteFPAnnotated_tag(self):
+    def test_remoteTag_remoteTagFPAnnotated(self):
+        """
+        Test source code suppression changes -- in tag1, there is no
+        suppression, and in tag2, there is an FP suppression. This should be
+        doable, as first, the fixed_at attribute is NULL, then it'll be set --
+        there is no permanent loss of information.
+        """
         # Diff two different, local runs.
         dir1 = os.path.join(self.test_workspace, "dir1")
         dir2 = os.path.join(self.test_workspace, "dir2")
@@ -668,7 +764,7 @@ void a() {
         def get_run_diff_count_reverse(diff_type: DiffType):
             reports, _, _ = get_diff_remote_runs(
                     self._cc_client, report_filter, diff_type, [],
-                    ["run1:tag1"], ["run1:tag2"])
+                    ["run1:tag2"], ["run1:tag1"])
             return len(reports)
 
         # FIXME: The FP suppression appeared from one tag to the next, so it
@@ -677,7 +773,56 @@ void a() {
         self.assertEqual(get_run_diff_count_reverse(DiffType.RESOLVED), 0)
         self.assertEqual(get_run_diff_count_reverse(DiffType.UNRESOLVED), 0)
 
-    def test_remote_remote_tag_FixedAtDate(self):
+    def test_remoteTagReviewStatusRule_remoteTag_identical(self):
+        """
+        You can find more context for why this is the expected result in the
+        docs of test_local_remoteReviewStatusRule_identical.
+        """
+        dir1 = os.path.join(self.test_workspace, "dir1")
+        dir2 = os.path.join(self.test_workspace, "dir2")
+
+        src_div_by_zero = """
+void a() {
+  int i = 0;
+  (void)(10 / i);
+}
+"""
+        # Note that we're storing under the same run.
+        self.__analyze_and_store(dir1, "run1", src_div_by_zero, "tag1")
+
+        # Add a "false positive" review status rule on the stored report.
+        results = get_all_run_results(self._cc_client)
+        self.assertEqual(len(results), 1)
+        self._cc_client.addReviewStatusRule(
+                results[0].bugHash, ReviewStatus.FALSE_POSITIVE, "")
+
+        self.__analyze_and_store(dir2, "run1", src_div_by_zero, "tag2")
+
+        report_filter = ReportFilter()
+        report_filter.reviewStatus = []
+        report_filter.detection_status = []
+
+        def get_run_diff_count(diff_type: DiffType):
+            reports, _, _ = get_diff_remote_runs(
+                    self._cc_client, report_filter, diff_type, [],
+                    ["run1:tag1"], ["run1:tag2"])
+            return len(reports)
+
+        self.assertEqual(get_run_diff_count(DiffType.NEW), 0)
+        self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 0)
+        self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED), 0)
+
+        def get_run_diff_count_reverse(diff_type: DiffType):
+            reports, _, _ = get_diff_remote_runs(
+                    self._cc_client, report_filter, diff_type, [],
+                    ["run1:tag2"], ["run1:tag1"])
+            return len(reports)
+
+        self.assertEqual(get_run_diff_count_reverse(DiffType.NEW), 0)
+        self.assertEqual(get_run_diff_count_reverse(DiffType.RESOLVED), 0)
+        self.assertEqual(get_run_diff_count_reverse(DiffType.UNRESOLVED), 0)
+
+    def test_remoteTag_remoteTag_FixedAtDate(self):
         """
         When a run disappears from one tag to the next, we regard it as fixed,
         and set it fixed_at date. Test whether just because the fixed_at date
@@ -690,10 +835,9 @@ void a() {
         dir1 = os.path.join(self.test_workspace, "dir1")
         dir2 = os.path.join(self.test_workspace, "dir2")
 
-        src_div_by_zero = """
+        src_no_warnings = """
 void a() {
-  int i = 0;
-  (void)(10 / i);
+  // No faults.
 }
 """
 
@@ -704,7 +848,7 @@ void b() {
 }
 """
         # Note that we're storing under the same run.
-        self.__analyze_and_store(dir1, "run1", src_div_by_zero, "tag1")
+        self.__analyze_and_store(dir1, "run1", src_no_warnings, "tag1")
         self.__analyze_and_store(dir2, "run1", src_nullptr_deref, "tag2")
 
         report_filter = ReportFilter()
@@ -724,9 +868,9 @@ void b() {
         # NOTE that we store the first report dir again. The report in tag2 is
         # abscent, so its fixed_at date will be set. Still, the diff in between
         # tag1 and tag2 shouldn't change.
-        self.__analyze_and_store(dir1, "run1", src_div_by_zero, "tag3")
+        self.__analyze_and_store(dir1, "run1", src_no_warnings, "tag3")
 
         # FIXME: This report should not have disappeared!
         self.assertEqual(get_run_diff_count(DiffType.NEW), 0)
         self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 0)
-        self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED), 1)
+        self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED), 0)
