@@ -698,6 +698,15 @@ LLVM/Clang community, and thus discouraged.
                                     "the analysis. USE WISELY AND AT YOUR "
                                     "OWN RISK!")
 
+    checkers_opts.add_argument('--disable-all',
+                               dest="disable_all",
+                               required=False,
+                               default=argparse.SUPPRESS,
+                               action='store_true',
+                               help="Disable all checkers of all analyzers. "
+                                    "It is equivalent to using \"--disable "
+                                    "default\" as the first argument.")
+
     checkers_opts.add_argument('--no-missing-checker-error',
                                dest="no_missing_checker_error",
                                action='store_true',
@@ -860,6 +869,7 @@ def main(args):
                           'stats_relevance_threshold',
                           'stats_min_sample_count',
                           'enable_all',
+                          'disable_all',
                           'ordered_checkers',  # --enable and --disable.
                           'timeout',
                           'compile_uniqueing',

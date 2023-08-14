@@ -1121,6 +1121,19 @@ class TestAnalyze(unittest.TestCase):
 
             self.assertIn(f"No checkers enabled for {analyzer}", out)
 
+        analyze_cmd = [self._codechecker_cmd, "check", "-l", build_json,
+                       "--disable-all"]
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding="utf-8",
+            errors="ignore")
+        out, _ = process.communicate()
+
+        # Checkers of all 3 analyzers are disabled.
+        self.assertEqual(out.count("No checkers enabled for"), 3)
+
     def test_analyzer_and_checker_config(self):
         """Test analyzer configuration through command line flags."""
         build_json = os.path.join(self.test_workspace, "build_success.json")
