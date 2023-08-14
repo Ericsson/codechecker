@@ -14,11 +14,13 @@ Test the handling of implicitly and explicitly handled checkers in analyzers
 from distutils import util
 import os
 import re
+import tempfile
 import unittest
 from argparse import Namespace
 
 from codechecker_analyzer.analyzers.clangsa.analyzer import ClangSA
 from codechecker_analyzer.analyzers.clangtidy.analyzer import ClangTidy
+from codechecker_analyzer.analyzers.cppcheck.analyzer import Cppcheck
 from codechecker_analyzer.analyzers.config_handler import CheckerState
 from codechecker_analyzer.analyzers.clangtidy.config_handler \
         import is_compiler_warning
@@ -48,6 +50,9 @@ class MockClangsaCheckerLabels:
             return ['sei-cert']
         elif label == 'sei-cert':
             return ['rule1', 'rule2']
+
+    def checkers(self, analyzer=None):
+        return []
 
 
 def create_analyzer_sa():
@@ -434,3 +439,65 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
         # -Wno-unused-value.
         self.assertEqual(cmd.count('-Wvla'), 1)
         self.assertEqual(cmd.count('-Wvla-extension'), 1)
+
+
+def create_analyzer_cppcheck(args, workspace):
+    cfg_handler = Cppcheck.construct_config_handler(args)
+
+    action = {
+        'file': 'main.cpp',
+        'command': "g++ -o main main.cpp",
+        'directory': workspace}
+    build_action = log_parser.parse_options(action)
+
+    return Cppcheck(cfg_handler, build_action)
+
+
+class MockCppcheckCheckerLabels:
+    def checkers_by_labels(self, labels):
+        if labels[0] == 'profile:default':
+            return [
+                'cppcheck-argumentSize',
+                'cppcheck-arrayIndexOutOfBounds',
+                'cppcheck-assertWithSideEffect']
+
+    def get_description(self, label):
+        if label == 'profile':
+            return ['default', 'sensitive', 'security', 'portability',
+                    'extreme']
+
+    def occurring_values(self, label):
+        if label == 'guideline':
+            return ['sei-cert']
+        elif label == 'sei-cert':
+            return ['rule1', 'rule2']
+
+    def checkers(self, analyzer):
+        return []
+
+
+class CheckerHandlingCppcheckTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        context = analyzer_context.get_context()
+        context._checker_labels = MockCppcheckCheckerLabels()
+
+    def test_cppcheckargs(self):
+        """
+        Check if the content of --cppcheckargs config file is properly passed
+        to the analyzer command.
+        """
+        with tempfile.TemporaryDirectory() as tmp_ws:
+            cppcheckargs = os.path.join(tmp_ws, 'cppcheckargs')
+            with open(cppcheckargs, 'w',
+                      encoding='utf-8', errors='ignore') as f:
+                f.write('--max-ctu-depth=42')
+
+            args = Namespace()
+            args.cppcheck_args_cfg_file = cppcheckargs
+
+            analyzer = create_analyzer_cppcheck(args, tmp_ws)
+            result_handler = create_result_handler(analyzer)
+            cmd = analyzer.construct_analyzer_cmd(result_handler)
+
+            self.assertIn('--max-ctu-depth=42', cmd)

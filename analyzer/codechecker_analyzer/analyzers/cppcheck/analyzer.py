@@ -16,13 +16,14 @@ from pathlib import Path
 import os
 import pickle
 import re
+import shlex
 import shutil
 import subprocess
 import xml.etree.ElementTree as ET
 
 from codechecker_common.logger import get_logger
 
-from codechecker_analyzer import analyzer_context
+from codechecker_analyzer import analyzer_context, env
 from codechecker_analyzer.env import get_binary_in_path
 
 from .. import analyzer_base
@@ -225,6 +226,8 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd.append('--plist-output=' + str(output_dir))
 
+            analyzer_cmd.extend(config.analyzer_extra_arguments)
+
             analyzer_cmd.append(self.source_file)
 
             return analyzer_cmd
@@ -388,6 +391,21 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
                     analyzer_config[cfg.option].append(cfg.value)
 
         handler.analyzer_config = analyzer_config
+
+        try:
+            with open(args.cppcheck_args_cfg_file, 'r', encoding='utf8',
+                      errors='ignore') as sa_cfg:
+                handler.analyzer_extra_arguments = \
+                    re.sub(r'\$\((.*?)\)',
+                           env.replace_env_var(args.cppcheck_args_cfg_file),
+                           sa_cfg.read().strip())
+                handler.analyzer_extra_arguments = \
+                    shlex.split(handler.analyzer_extra_arguments)
+        except IOError as ioerr:
+            LOG.debug_analyzer(ioerr)
+        except AttributeError as aerr:
+            # No cppcheck arguments file was given in the command line.
+            LOG.debug_analyzer(aerr)
 
         check_env = context.analyzer_env
 
