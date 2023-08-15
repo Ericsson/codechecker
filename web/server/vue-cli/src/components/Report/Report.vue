@@ -954,5 +954,12 @@ export default {
 
 ::v-deep .report-step-msg.current {
   border: 2px dashed var(--v-primary-base) !important;
+  opacity: 1;
+  font-weight: bold;
+}
+
+::v-deep .report-step-msg {
+  opacity: 0.7;
+  font-weight: lighter;
 }
 </style>
