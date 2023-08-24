@@ -21,6 +21,8 @@ on:
   # Allow running this job manually from either API or GitHub UI.
   workflow_dispatch:
 
+permissions: read-all
+
 jobs:
   checker-config-coverage:
     name: "Config coverage of checkers"

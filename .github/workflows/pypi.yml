@@ -6,6 +6,8 @@ on:
   release:
     types: [published]
 
+permissions: read-all
+
 jobs:
   build:
     name: Build pypi package
