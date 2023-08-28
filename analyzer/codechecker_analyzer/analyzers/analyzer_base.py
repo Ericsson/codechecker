@@ -47,6 +47,24 @@ class SourceAnalyzer(metaclass=ABCMeta):
         raise NotImplementedError("Subclasses should implement this!")
 
     @classmethod
+    @abstractmethod
+    def analyzer_binary(cls):
+        """
+        A subclass should have a analyzer_binary method
+        to return the bin of analyzer.
+        """
+        pass
+
+    @classmethod
+    @abstractmethod
+    def analyzer_env(cls):
+        """
+        A subclass should have a analyzer_env method
+        to return the env for analyzer.
+        """
+        pass
+
+    @classmethod
     def resolve_missing_binary(cls, configured_binary, environ):
         """
         In case of the configured binary for the analyzer is not found in the
@@ -62,6 +80,15 @@ class SourceAnalyzer(metaclass=ABCMeta):
         compatible with the current CodeChecker version.
         """
         raise NotImplementedError("Subclasses should implement this!")
+
+    @classmethod
+    @abstractmethod
+    def version_info(cls):
+        """
+        A subclass should have a version_info method
+        to return with the analyzer's version number.
+        """
+        pass
 
     @classmethod
     def construct_config_handler(cls, args):

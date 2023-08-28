@@ -254,7 +254,8 @@ analyzer arguments:
   --analyzers ANALYZER [ANALYZER ...]
                         Run analysis only with the analyzers specified.
                         Currently supported analyzers are: clangsa, clang-
-                        tidy.
+                        tidy, cppcheck. Version number can be also specified 
+                        for analyzers to verify them.
   --capture-analysis-output
                         Store standard output and standard error of successful
                         analyzer invocations into the '<OUTPUT_DIR>/success'
@@ -1098,7 +1099,8 @@ analyzer arguments:
   --analyzers ANALYZER [ANALYZER ...]
                         Run analysis only with the analyzers specified.
                         Currently supported analyzers are: clangsa, clang-
-                        tidy.
+                        tidy, cppcheck. Version number can be also specified 
+                        for analyzers to verify them.
   --capture-analysis-output
                         Store standard output and standard error of successful
                         analyzer invocations into the '<OUTPUT_DIR>/success'

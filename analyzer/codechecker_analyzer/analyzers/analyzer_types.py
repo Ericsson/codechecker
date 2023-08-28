@@ -25,6 +25,8 @@ from .clangtidy.analyzer import ClangTidy
 from .clangsa.analyzer import ClangSA
 from .cppcheck.analyzer import Cppcheck
 
+from distutils.version import StrictVersion
+
 LOG = get_logger('analyzer')
 
 supported_analyzers = {ClangSA.ANALYZER_NAME: ClangSA,
@@ -113,8 +115,9 @@ def print_unsupported_analyzers(errored):
     for analyzer_binary, reason in errored:
         LOG.warning("Analyzer '%s' is enabled but CodeChecker is failed to "
                     "execute analysis with it: '%s'. Please check your "
-                    "'PATH' environment variable and the "
-                    "'config/package_layout.json' file!",
+                    "'PATH' environment variable, the "
+                    "'config/package_layout.json' file "
+                    "and the --analyzers flag!",
                     analyzer_binary, reason)
 
 
@@ -148,8 +151,11 @@ def check_supported_analyzers(analyzers):
 
     enabled_analyzers = set()
     failed_analyzers = set()
-
     for analyzer_name in analyzers:
+        analyzer_name, requested_version = analyzer_name.split('==', 1) \
+            if len(analyzer_name.split('==', 1)) == 2 \
+            else [analyzer_name, None]
+
         if analyzer_name not in supported_analyzers:
             failed_analyzers.add((analyzer_name,
                                   "Analyzer unsupported by CodeChecker!"))
@@ -184,7 +190,18 @@ def check_supported_analyzers(analyzers):
         # Check version compatibility of the analyzer binary.
         if analyzer_bin:
             analyzer = supported_analyzers[analyzer_name]
-            if not analyzer.version_compatible(analyzer_bin, check_env):
+            if requested_version:
+                bin_version = StrictVersion(str(analyzer.version_info()))
+                requested_version = StrictVersion(requested_version)
+                if requested_version != bin_version:
+                    LOG.warning(
+                        f"Given version: {requested_version}, found version "
+                        f"for {analyzer_name} analyzer: {bin_version}"
+                    )
+                    failed_analyzers.add((analyzer_name,
+                                          "Wrong version given."))
+                    available_analyzer = False
+            if not analyzer.version_compatible():
                 failed_analyzers.add((analyzer_name,
                                      "Incompatible version."))
                 available_analyzer = False

@@ -131,7 +131,6 @@ def perform_analysis(args, skip_handlers, actions, metadata_tool,
     in the given analysis context for the supplied build actions.
     Additionally, insert statistical information into the metadata dict.
     """
-
     context = analyzer_context.get_context()
 
     ctu_reanalyze_on_failure = 'ctu_reanalyze_on_failure' in args and \
@@ -141,7 +140,6 @@ def perform_analysis(args, skip_handlers, actions, metadata_tool,
         else analyzer_types.supported_analyzers
     analyzers, errored = analyzer_types.check_supported_analyzers(analyzers)
     analyzer_types.check_available_analyzers(analyzers, errored)
-
     ctu_collect = False
     ctu_analyze = False
     ctu_dir = ''
@@ -229,9 +227,7 @@ def perform_analysis(args, skip_handlers, actions, metadata_tool,
             if state == CheckerState.enabled:
                 enabled_checkers[analyzer].append(check)
 
-        # TODO: cppcheck may require a different environment than clang.
-        version = analyzer_types.supported_analyzers[analyzer] \
-            .get_version(context.analyzer_env)
+        version = analyzer_types.supported_analyzers[analyzer].get_version()
         metadata_info['analyzer_statistics']['version'] = version
 
         metadata_tool['analyzers'][analyzer] = metadata_info
