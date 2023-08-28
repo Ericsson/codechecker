@@ -645,9 +645,7 @@ void b() {
             return len(reports)
 
         self.assertEqual(get_run_diff_count(DiffType.NEW), 1)
-        # FIXME: The division by zero disappeared from tag1 to tag2, so the
-        # RESOLVED set should have a report.
-        self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 0)
+        self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 1)
         self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED), 0)
 
         def get_run_diff_count_reverse(diff_type: DiffType):
@@ -656,9 +654,7 @@ void b() {
                     ["run1:tag2"], ["run1:tag1"])
             return len(reports)
 
-        # FIXME: The division by zero disappeared from tag1 to tag2, so the
-        # NEW set should have a report when we reverse the diff.
-        self.assertEqual(get_run_diff_count_reverse(DiffType.NEW), 0)
+        self.assertEqual(get_run_diff_count_reverse(DiffType.NEW), 1)
         self.assertEqual(get_run_diff_count_reverse(DiffType.RESOLVED), 1)
         self.assertEqual(get_run_diff_count_reverse(DiffType.UNRESOLVED), 0)
 
@@ -866,7 +862,6 @@ void b() {
         # tag1 and tag2 shouldn't change.
         self.__analyze_and_store(dir1, "run1", src_no_warnings, "tag3")
 
-        # FIXME: This report should not have disappeared!
-        self.assertEqual(get_run_diff_count(DiffType.NEW), 0)
+        self.assertEqual(get_run_diff_count(DiffType.NEW), 1)
         self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 0)
         self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED), 0)
