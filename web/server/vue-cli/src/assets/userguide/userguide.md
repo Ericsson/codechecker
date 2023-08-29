@@ -295,8 +295,13 @@ run history events.
 - filters will be saved in the URL query parameter list.
 
 ### Compare runs
+
 Calculates the difference between two analyses of the project, showing which
 reports have been fixed and which are newly introduced.
+
+:warning: Note: Here, you can read about _how_ to query the differences in
+between two results set. As to how this comparison works, refer to the docs
+on [`CodeChecker cmd diff`](../../../../../../docs/web/user_guide.md#show-differences-between-two-runs-diff).
 
 To compare analysis results you have to do the following:
 - select *BASELINE** runs with the first checkbox in the *Diff* column of the
@@ -306,6 +311,7 @@ the run list table.
 - click on the `Diff` button above the run list table.
 
 ![Compare runs](images/runs/compare_runs.png)
+
 
 ### Sorting runs
 It is possible to change the order of the runs by clicking on a cell at the
@@ -346,6 +352,10 @@ section to see the details.
 ### Compare run history events
 Calculates difference between two analyses of the same run storage, showing
 which reports have been fixed and which are newly introduced.
+
+:warning: Note: Here, you can read about _how_ to query the differences in
+between two results set. As to how this comparison works, refer to the docs
+on [`CodeChecker cmd diff`](../../../../../../docs/web/user_guide.md#show-differences-between-two-runs-diff).
 
 To compare analysis history events you have to do the following:
 - select *BASELINE** runs with the first checkbox in the *Diff* column of the
@@ -615,6 +625,10 @@ found under different file paths.
 In compare mode you can calculate the difference between multiple analyses of
 the project, showing which reports have been fixed and which are newly
 introduced or which can be found in all runs.
+
+:warning: Note: Here, you can read about _how_ to query the differences in
+between two results set. As to how this comparison works, refer to the docs
+on [`CodeChecker cmd diff`](../../../../../../docs/web/user_guide.md#show-differences-between-two-runs-diff).
 
 At the **Baseline** filter section you can select the run names / tags against
 which you want to check the difference.
