@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Only the latest version of CodeChecker is supported by security updates.
+Only the latest release version of _CodeChecker_ is supported by security updates.
 
 | Version | Supported          |
 | ------- | ------------------ |
