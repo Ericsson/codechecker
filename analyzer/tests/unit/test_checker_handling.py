@@ -11,6 +11,8 @@ Test the handling of implicitly and explicitly handled checkers in analyzers
 """
 
 
+from distutils import util
+import os
 import unittest
 from argparse import Namespace
 
@@ -148,10 +150,15 @@ class CheckerHandlingClangSATest(unittest.TestCase):
                 'security.insecureAPI.bcmp',
                 'alpha.llvm.Conventions']
 
+        statisticsbased = [
+                'statisticsbased.SpecialReturnValue',
+                'statisticsbased.UncheckedReturnValue']
+
         checkers = []
         checkers.extend(map(add_description, security_profile_alpha))
         checkers.extend(map(add_description, default_profile))
         checkers.extend(map(add_description, cert_guideline))
+        checkers.extend(map(add_description, statisticsbased))
 
         # "default" profile checkers are enabled explicitly. Others are in
         # "default" state.
@@ -231,6 +238,25 @@ class CheckerHandlingClangSATest(unittest.TestCase):
                                         [('severity:LOW', True)])
         self.assertTrue(all_with_status(CheckerState.enabled)
                         (cfg_handler.checks(), low_severity))
+
+        # Test if statisticsbased checkers are enabled by --stats flag
+        # by default.
+        stats_capable = bool(util.strtobool(
+            os.environ.get('CC_TEST_FORCE_STATS_CAPABLE', 'False')))
+
+        if stats_capable:
+            cfg_handler = ClangSA.construct_config_handler(
+                Namespace(stats_enabled=True))
+            cfg_handler.initialize_checkers(checkers, [])
+
+            enabled_checkers = (
+                checker for checker, (enabled, _)
+                in cfg_handler.checks().items()
+                if enabled == CheckerState.enabled)
+
+            for stat_checker in statisticsbased:
+                self.assertTrue(
+                    any(stat_checker in c for c in enabled_checkers))
 
 
 def create_analyzer_tidy(args=[]):

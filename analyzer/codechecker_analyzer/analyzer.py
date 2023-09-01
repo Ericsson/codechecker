@@ -20,11 +20,6 @@ import time
 
 from codechecker_common.logger import get_logger
 
-from codechecker_statistics_collector.collectors.special_return_value import \
-    SpecialReturnValueCollector
-from codechecker_statistics_collector.collectors.return_value import \
-    ReturnValueCollector
-
 from . import analyzer_context, analysis_manager, pre_analysis_manager, \
     checkers
 from .analyzers import analyzer_types
@@ -192,22 +187,6 @@ def perform_analysis(args, skip_handlers, actions, metadata_tool,
                          "checker names, consider using the option "
                          "'--no-missing-checker-error'")
                 sys.exit(1)
-
-    if 'stats_enabled' in args:
-        config_map[ClangSA.ANALYZER_NAME].set_checker_enabled(
-            SpecialReturnValueCollector.checker_analyze)
-
-        config_map[ClangSA.ANALYZER_NAME].set_checker_enabled(
-            ReturnValueCollector.checker_analyze)
-
-    # Statistics collector checkers must be explicitly disabled
-    # as they trash the output.
-    if "clangsa" in analyzers:
-        config_map[ClangSA.ANALYZER_NAME].set_checker_enabled(
-            SpecialReturnValueCollector.checker_collect, False)
-
-        config_map[ClangSA.ANALYZER_NAME].set_checker_enabled(
-            ReturnValueCollector.checker_collect, False)
 
     enabled_checkers = defaultdict(list)
 
