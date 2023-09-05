@@ -15,6 +15,7 @@ import argparse
 import os
 import sys
 from typing import Dict, Optional, Set
+import fnmatch
 
 from codechecker_report_converter.util import dump_json_output
 from codechecker_report_converter.report import report_file, \
@@ -392,6 +393,22 @@ def main(args):
 
     for dir_path, file_paths in report_file.analyzer_result_files(args.input):
         metadata = get_metadata(dir_path)
+
+        if metadata and 'files' in args:
+            # Mapping plists when files are specified to speed up parsing
+            # The specifed_file_paths variable would be an empty list
+            # if metadata.json did not contain the specified file or
+            # metadata did not contain mapping between source files and plists.
+            specifed_file_paths = [
+                key for key, val in
+                metadata['tools'][0]['result_source_files'].items()
+                if any(fnmatch.fnmatch(val, f) for f in args.files)
+            ] if 'tools' in metadata \
+                and len(metadata['tools']) > 0 \
+                and 'result_source_files' in metadata['tools'][0] \
+                else []
+            file_paths = specifed_file_paths or file_paths
+
         for file_path in file_paths:
             reports = report_file.get_reports(
                 file_path, context.checker_labels, file_cache)
