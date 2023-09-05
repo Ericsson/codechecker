@@ -506,15 +506,15 @@ def parse_report_filter_offline(args):
         report_filter.openReportsDate = \
             int(str_to_timestamp(args.open_reports_date))
 
+    detected_at = None
+    fixed_at = None
+
     if 'detected_at' in args:
         report_filter.firstDetectionDate = \
             int(str_to_timestamp(args.detected_at))
 
     if 'fixed_at' in args:
         report_filter.fixDate = int(str_to_timestamp(args.fixed_at))
-
-    detected_at = None
-    fixed_at = None
 
     if 'detected_before' in args or 'detected_after' in args:
         detected_at = ttypes.DateInterval()
