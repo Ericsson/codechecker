@@ -23,7 +23,7 @@ from codechecker_common.logger import get_logger
 from . import analyzer_context, analysis_manager, pre_analysis_manager, \
     checkers
 from .analyzers import analyzer_types
-from .analyzers.config_handler import CheckerState
+from .analyzers.config_handler import AnalyzerConfigHandler, CheckerState
 from .analyzers.clangsa.analyzer import ClangSA
 
 from .makefile import MakeFileCreator
@@ -119,6 +119,15 @@ def __get_ctu_data(ctu_dir):
             'ctu_temp_fnmap_folder': 'tmpExternalFnMaps'}
 
 
+def __has_enabled_checker(ch: AnalyzerConfigHandler):
+    """
+    Returns True if at least one checker is enabled in the given config
+    handler.
+    """
+    return any(state == CheckerState.enabled
+               for _, (state, _) in ch.checks().items())
+
+
 def perform_analysis(args, skip_handlers, actions, metadata_tool,
                      compile_cmd_count):
     """
@@ -155,8 +164,15 @@ def perform_analysis(args, skip_handlers, actions, metadata_tool,
                       "the Clang Static Analyzer.")
             return
 
-    actions = prepare_actions(actions, analyzers)
     config_map = analyzer_types.build_config_handlers(args, analyzers)
+
+    no_checker_analyzers = \
+        [a for a in analyzers if not __has_enabled_checker(config_map[a])]
+    for analyzer in no_checker_analyzers:
+        LOG.info("No checkers enabled for %s", analyzer)
+        analyzers.remove(analyzer)
+
+    actions = prepare_actions(actions, analyzers)
 
     available_checkers = set()
     # Add profile names to the checkers list so we will not warn

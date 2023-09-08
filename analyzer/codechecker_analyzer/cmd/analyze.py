@@ -752,6 +752,15 @@ LLVM/Clang community, and thus discouraged.
                                     "the analysis. USE WISELY AND AT YOUR "
                                     "OWN RISK!")
 
+    checkers_opts.add_argument('--disable-all',
+                               dest="disable_all",
+                               required=False,
+                               default=argparse.SUPPRESS,
+                               action='store_true',
+                               help="Disable all checkers of all analyzers. "
+                                    "It is equivalent to using \"--disable "
+                                    "default\" as the first argument.")
+
     checkers_opts.add_argument('--no-missing-checker-error',
                                dest="no_missing_checker_error",
                                action='store_true',
@@ -916,6 +925,10 @@ def main(args):
 
     if 'enable_all' in args:
         LOG.info("'--enable-all' was supplied for this analysis.")
+    if 'disable_all' in args:
+        if 'ordered_checkers' not in args:
+            args.ordered_checkers = []
+        args.ordered_checkers.insert(0, ('default', False))
 
     # Enable alpha uniqueing by default if ctu analysis is used.
     if 'none' in args.compile_uniqueing and 'ctu_phases' in args:

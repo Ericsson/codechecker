@@ -1095,6 +1095,47 @@ class TestAnalyze(unittest.TestCase):
         plist_files = glob.glob(os.path.join(self.report_dir, '*.plist'))
         self.assertEqual(len(plist_files), 4)
 
+    def test_disable_all_checkers(self):
+        """
+        If all checkers of an analyzer are disabled then the analysis shouldn't
+        trigger for that analyzer.
+        """
+        build_json = os.path.join(self.test_workspace, "build.json")
+        build_log = [{"directory": self.test_workspace,
+                      "command": "gcc -c main.c",
+                      "file": "main.c"}]
+
+        with open(build_json, 'w',
+                  encoding="utf-8", errors="ignore") as outfile:
+            json.dump(build_log, outfile)
+
+        for analyzer in ['clangsa', 'clang-tidy']:
+            analyze_cmd = [self._codechecker_cmd, "check", "-l", build_json,
+                           "--analyzers", analyzer,
+                           "--disable", "default"]
+            process = subprocess.Popen(
+                analyze_cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                encoding="utf-8",
+                errors="ignore")
+            out, _ = process.communicate()
+
+            self.assertIn(f"No checkers enabled for {analyzer}", out)
+
+        analyze_cmd = [self._codechecker_cmd, "check", "-l", build_json,
+                       "--disable-all"]
+        process = subprocess.Popen(
+            analyze_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding="utf-8",
+            errors="ignore")
+        out, _ = process.communicate()
+
+        # Checkers of all 3 analyzers are disabled.
+        self.assertEqual(out.count("No checkers enabled for"), 3)
+
     def test_analyzer_and_checker_config(self):
         """Test analyzer configuration through command line flags."""
         build_json = os.path.join(self.test_workspace, "build_success.json")

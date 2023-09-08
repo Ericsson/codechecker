@@ -29,6 +29,7 @@
       - [Toggling compiler warnings](#toggling-compiler-warnings)
       - [Checker profiles](#checker-profiles)
         - [`--enable-all`](#--enable-all)
+        - [`--disable-all`](#--disable-all)
       - [Cross Translation Unit (CTU) analysis mode](#cross-translation-unit-ctu-analysis-mode)
       - [Taint analysis configuration](#taint-analysis-configuration)
       - [Statistical analysis mode](#statistical-analysis-mode)
@@ -145,7 +146,8 @@ usage: CodeChecker check [-h] [-o OUTPUT_DIR] [-t {plist}] [-q]
                          [--ctu-reanalyze-on-failure]
                          [--ctu-ast-mode {load-from-pch,parse-on-demand}]
                          [-e checker/group/profile] [-d checker/group/profile]
-                         [--enable-all] [--print-steps] [--suppress SUPPRESS]
+                         [--enable-all] [--disable-all] [--print-steps]
+                         [--suppress SUPPRESS]
                          [--review-status [REVIEW_STATUS [REVIEW_STATUS ...]]]
                          [--verbose {info,debug,debug_analyzer}]
 
@@ -443,6 +445,8 @@ checker configuration:
                         and stability, and could even result in a total
                         failure of the analysis. USE WISELY AND AT YOUR OWN
                         RISK!
+  --disable-all         Disable all checkers of all analyzers. It is equivalent
+                        to using "--disable default" as the first argument.
 
 output arguments:
   --print-steps         Print the steps the analyzers took in finding the
@@ -922,6 +926,7 @@ usage: CodeChecker analyze [-h] [-j JOBS]
                            [--ctu-reanalyze-on-failure]
                            [-e checker/group/profile]
                            [-d checker/group/profile] [--enable-all]
+                           [--disable-all]
                            [--verbose {info,debug,debug_analyzer}]
                            input
 
@@ -1390,6 +1395,8 @@ checker configuration:
                         and stability, and could even result in a total
                         failure of the analysis. USE WISELY AND AT YOUR OWN
                         RISK!
+  --disable-all         Disable all checkers of all analyzers. It is equivalent
+                        to using "--disable default" as the first argument.
 ```
 
 Both `--enable` and `--disable` take individual checkers, checker groups or
@@ -1500,6 +1507,17 @@ special checker groups: `alpha.`, `debug.`, `osx.`, `abseil-`, `android-`,
 ```
 
 can be used to "further" enable `alpha.` checkers, and disable `misc` ones.
+
+##### `--disable-all`
+
+Some checkers are always enabled by default, because they are categorized in
+`default` profile. This flag is equivalent to using `--disable default` which
+technically disables all checkers. The motivation behind `--disable-all` is to
+enable one specific checker and disable everything else:
+
+```sh
+CodeChecker check -l compile_commands.json --disable-all --enable core.DivideZero
+```
 
 #### Cross Translation Unit (CTU) analysis mode
 
