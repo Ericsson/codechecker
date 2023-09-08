@@ -114,9 +114,9 @@ class ResultHandler(metaclass=ABCMeta):
         # build command, because its hash is used for identification in the
         # plist file name.
         #
-        # TODO: This solution is considered a workaround, because the real
-        # question is why such a subprocess is logged? Can cc1build be always
-        # used as a traditional g++ command?
+        # The proper logging of this "make 4.3" version has been done in
+        # bf140d6, so it is unlikely happen that two build actions differ only
+        # in their "-o" flags. This workaround is still kept for any case.
         #
         # Note that some information loss occurs during the following algorithm
         # because ' '.join(shlex.split(cmd)) is not necessarily equal to cmd:

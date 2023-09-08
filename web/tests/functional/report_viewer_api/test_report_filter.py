@@ -220,7 +220,7 @@ class TestReportFilter(unittest.TestCase):
                                                              ReportFilter(),
                                                              None)
 
-        self.assertEqual(run_result_count, 80)
+        self.assertEqual(run_result_count, 79)
 
         run_results = self._cc_client.getRunResults(self._runids,
                                                     run_result_count,
@@ -382,7 +382,7 @@ class TestReportFilter(unittest.TestCase):
     def test_fix_date_filters(self):
         """ Filter by fix dates. """
         report_filter = ReportFilter(
-            detectionStatus=[DetectionStatus.RESOLVED])
+            detectionStatus=[DetectionStatus.OFF])
         run_results = self._cc_client.getRunResults(None, None, 0,
                                                     None, report_filter, None,
                                                     False)

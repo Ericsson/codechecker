@@ -329,8 +329,8 @@ def handle_failure(
     # from the standard output by this postprocess phase so we can present them
     # as CodeChecker reports.
     checks = source_analyzer.config_handler.checks()
-    state = checks.get('clang-diagnostic-error', (CheckerState.default, ''))[0]
-    if state != CheckerState.disabled:
+    state = checks.get('clang-diagnostic-error', (CheckerState.enabled, ''))[0]
+    if state == CheckerState.enabled:
         rh.postprocess_result(skip_handlers)
 
     # Remove files that successfully analyzed earlier on.

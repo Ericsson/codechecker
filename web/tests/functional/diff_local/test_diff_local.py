@@ -77,7 +77,7 @@ class DiffLocal(unittest.TestCase):
             'skip_list_file': skip_list_file,
             'check_env': test_env,
             'workspace': TEST_WORKSPACE,
-            'checkers': [],
+            'checkers': ['-d', 'clang-diagnostic'],
             'analyzers': ['clangsa', 'clang-tidy']
         }
 
@@ -85,7 +85,8 @@ class DiffLocal(unittest.TestCase):
         codechecker_cfg['reportdir'] = os.path.join(test_proj_path_base,
                                                     'reports')
         codechecker_cfg['checkers'] = ['-e', 'core.CallAndMessage',
-                                       '-d', 'core.NullDereference']
+                                       '-d', 'core.NullDereference',
+                                       '-d', 'clang-diagnostic']
 
         ret = codechecker.log_and_analyze(codechecker_cfg, test_proj_path_base)
         if ret:
@@ -95,7 +96,8 @@ class DiffLocal(unittest.TestCase):
         codechecker_cfg['reportdir'] = os.path.join(test_proj_path_new,
                                                     'reports')
         codechecker_cfg['checkers'] = ['-d', 'core.CallAndMessage',
-                                       '-e', 'core.NullDereference']
+                                       '-e', 'core.NullDereference',
+                                       '-d', 'clang-diagnostic']
 
         ret = codechecker.log_and_analyze(codechecker_cfg, test_proj_path_new)
         if ret:

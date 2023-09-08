@@ -10,6 +10,7 @@ Clang Static Analyzer related functions.
 """
 
 import os
+import plistlib
 import re
 import shlex
 import subprocess
@@ -123,6 +124,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         super(ClangSA, self).__init__(cfg_handler, buildaction)
         self.__disable_ctu = False
         self.__checker_configs = []
+        self.__disabled_checkers = []
 
     @classmethod
     def analyzer_binary(cls):
@@ -305,6 +307,43 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
         return parse_clang_help_page(command, 'OPTIONS:')
 
+    def post_analyze(self, result_handler):
+        """
+        Disabled checkers are not actually disabled during analysis, because
+        they might rely on each other under the hood. The disabled checkers'
+        reports are removed in this post-processing step.
+        """
+        try:
+            if not os.path.isfile(result_handler.analyzer_result_file):
+                # This check has the same race-condition reason as the
+                # exception, so see its description below.
+                return
+
+            with open(result_handler.analyzer_result_file, 'rb') as f:
+                plist = plistlib.load(f)
+        except plistlib.InvalidFileException:
+            # It may happen that a compilation database contains a build action
+            # multiple times (because it is compiled for several target
+            # architectures), or at least they differ in a so minor part that
+            # the same .plist file belongs to them. (For further details see
+            # analyzer_action_str() in ResultHandler about the strange behavior
+            # of make 4.3 in its -o flag.)
+            # If this happens then the analysis of the same build action is
+            # analyzed in parallel several times, so the same output .plist
+            # file is changed by several threads. This may result an invalid
+            # .plist which fails plistlib.load(). This is not a big problem,
+            # because the second thread will also execute this post-processing
+            # and it happens rarely anyways. test_compile_uniqueing() fails
+            # undeterministically without this.
+            return
+
+        plist['diagnostics'] = list(filter(
+            lambda diag: diag['check_name'] not in self.__disabled_checkers,
+            plist.get('diagnostics', [])))
+
+        with open(result_handler.analyzer_result_file, 'wb') as f:
+            plistlib.dump(plist, f)
+
     def construct_analyzer_cmd(self, result_handler):
         """
         Called by the analyzer method.
@@ -356,23 +395,19 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                     ['-Xclang', '-analyzer-config', '-Xclang', cfg])
 
             # Config handler stores which checkers are enabled or disabled.
-            disabled_checkers = []
+            self.__disabled_checkers = []
             enabled_checkers = []
             for checker_name, value in config.checks().items():
                 state, _ = value
                 if state == CheckerState.enabled:
                     enabled_checkers.append(checker_name)
                 elif state == CheckerState.disabled:
-                    disabled_checkers.append(checker_name)
+                    self.__disabled_checkers.append(checker_name)
 
             if enabled_checkers:
                 analyzer_cmd.extend(['-Xclang',
                                      '-analyzer-checker=' +
                                      ','.join(enabled_checkers)])
-            if disabled_checkers:
-                analyzer_cmd.extend(['-Xclang',
-                                     '-analyzer-disable-checker=' +
-                                     ','.join(disabled_checkers)])
             # Enable aggressive-binary-operation-simplification option.
             version_info = ClangSA.version_info()
             if version_info and version_info.major_version >= 8:

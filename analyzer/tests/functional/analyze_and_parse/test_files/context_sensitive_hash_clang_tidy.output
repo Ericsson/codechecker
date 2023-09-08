@@ -1,7 +1,7 @@
 NORMAL#CodeChecker log --output $LOGFILE$ --build "make context_hash" --quiet
-NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy --disable clang-diagnostic-unused-but-set-variable --disable clang-diagnostic-unused-but-set-parameter
 NORMAL#CodeChecker parse $OUTPUT$ --print-steps
-CHECK#CodeChecker check --build "make context_hash" --output $OUTPUT$ --quiet --print-steps --analyzers clang-tidy
+CHECK#CodeChecker check --build "make context_hash" --output $OUTPUT$ --quiet --print-steps --analyzers clang-tidy --disable clang-diagnostic-unused-but-set-variable --disable clang-diagnostic-unused-but-set-parameter
 --------------------------------------------------------------------------------
 [] - Starting build...
 [] - Using CodeChecker ld-logger.

@@ -18,11 +18,40 @@ CHECK#CodeChecker check --build "make compiler_warning_simple" --output $OUTPUT$
 [] - To store results use the "CodeChecker store" command.
 [] - See --help and the user guide for further options about parsing and storing the reports.
 [] - ----=================----
-Found no defects in compiler_warning.cpp
+[MEDIUM] compiler_warning.cpp:3:7: unused variable 'i' [clang-diagnostic-unused-variable]
+  int i;
+      ^
+
+Found 1 defect(s) in compiler_warning.cpp
+
+
+----==== Severity Statistics ====----
+----------------------------
+Severity | Number of reports
+----------------------------
+MEDIUM   |                 1
+----------------------------
+----=================----
+
+----==== Checker Statistics ====----
+---------------------------------------------------------------
+Checker name                     | Severity | Number of reports
+---------------------------------------------------------------
+clang-diagnostic-unused-variable | MEDIUM   |                 1
+---------------------------------------------------------------
+----=================----
+
+----==== File Statistics ====----
+----------------------------------------
+File name            | Number of reports
+----------------------------------------
+compiler_warning.cpp |                 1
+----------------------------------------
+----=================----
 
 ----======== Summary ========----
 ---------------------------------------------
 Number of processed analyzer result files | 1
-Number of analyzer reports                | 0
+Number of analyzer reports                | 1
 ---------------------------------------------
 ----=================----

@@ -33,7 +33,7 @@ class ClangTidyConfigHandler(AnalyzerConfigHandler):
         super(ClangTidyConfigHandler, self).__init__()
 
     def add_checker(self, checker_name, description='',
-                    state=CheckerState.default):
+                    state=CheckerState.disabled):
         """
         Add additional checker if the 'take-config-from-directory'
         analyzer configuration option is not set.

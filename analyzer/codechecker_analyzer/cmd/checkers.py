@@ -260,9 +260,11 @@ def __get_detailed_checker_info(
         config_handler.initialize_checkers(checkers, profile_checkers)
 
         for checker, (state, description) in config_handler.checks().items():
+            labels = cl.labels_of_checker(checker, analyzer)
+            state = CheckerState.enabled if ('profile', 'default') in labels \
+                else CheckerState.disabled
             checker_info[analyzer].append(
-                (state, checker, analyzer, description,
-                 sorted(cl.labels_of_checker(checker, analyzer))))
+                (state, checker, analyzer, description, sorted(labels)))
 
     return checker_info
 
@@ -385,10 +387,7 @@ def __format_row(row: Tuple) -> Tuple:
     row -- A tuple with detailed checker info coming from
            __get_detailed_checker_info() function.
     """
-    state = '+' if row[0] == CheckerState.enabled else \
-        '-' if row[0] == CheckerState.disabled else \
-        '?'
-
+    state = '+' if row[0] == CheckerState.enabled else '-'
     labels = ', '.join(f'{k}:{v}' for k, v in row[4])
 
     return state, row[1], row[2], row[3], labels
@@ -404,8 +403,6 @@ def __print_checkers_custom_format(checkers: Iterable):
             status = 'enabled'
         elif checker[0] == CheckerState.disabled:
             status = 'disabled'
-        else:
-            status = 'unknown'
 
         print(checker[1])
         print('  Status:', status)

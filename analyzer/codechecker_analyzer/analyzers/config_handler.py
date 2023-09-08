@@ -21,18 +21,13 @@ from codechecker_common.logger import get_logger
 LOG = get_logger('system')
 
 
-# The baseline handling of checks in every analyzer is to let the analysis
-# engine decide which checks are worthwhile run. Checks handled this way
-# (implicitly by the analyzer) are considered to have a CheckerState of
-# default. If the check however appears in profiles, and such a profile is
-# enabled explicitly on the command-line or implicitly as in case of the
-# default profile, then they are considered to have a CheckerState of enabled.
-# Likewise for individually enabled checks. If a check is however explicitly
-# disabled on the command-line, or belongs to a profile explicitly disabled
-# on the command-line, then it is considered to have a CheckerState of
-# disabled.
+# If the check appears in profiles, and such a profile is enabled explicitly on
+# the command-line or implicitly as in case of the default profile, then they
+# are considered to have a CheckerState of enabled. Likewise for individually
+# enabled checks. If a check is however explicitly disabled on the
+# command-line, or belongs to a profile explicitly disabled on the
+# command-line, then it is considered to have a CheckerState of disabled.
 class CheckerState(Enum):
-    default = 0
     disabled = 1
     enabled = 2
 
@@ -77,17 +72,14 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         self.report_hash = None
         self.enable_all = None
 
-        # The key is the checker name, the value is a tuple.
-        # False if disabled (should be by default).
-        # True if checker is enabled.
-        # (False/True, 'checker_description')
+        # The key is the checker name, the value is a tuple of CheckerState and
+        # checker description.
         self.__available_checkers = collections.OrderedDict()
 
     def add_checker(self, checker_name, description='',
-                    state=CheckerState.default):
+                    state=CheckerState.disabled):
         """
-        Add additional checker. If no state argument is given, the actual usage
-        of the checker is handled by the analyzer.
+        Add a checker to the available checkers' list.
         """
         self.__available_checkers[checker_name] = (state, description)
 
@@ -171,8 +163,7 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
 
         checker_labels = analyzer_context.get_context().checker_labels
 
-        # Add all checkers marked as default. This means the analyzer should
-        # manage whether it is enabled or disabled.
+        # Add all checkers marked as disabled.
         for checker_name, description in checkers:
             self.add_checker(checker_name, description)
 

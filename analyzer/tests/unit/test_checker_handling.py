@@ -13,6 +13,7 @@ Test the handling of implicitly and explicitly handled checkers in analyzers
 
 from distutils import util
 import os
+import re
 import unittest
 from argparse import Namespace
 
@@ -26,7 +27,7 @@ from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.buildlog import log_parser
 
 
-class MockCheckerLabels:
+class MockClangsaCheckerLabels:
     def checkers_by_labels(self, labels):
         if labels[0] == 'profile:default':
             return ['core', 'deadcode', 'security.FloatLoopCounter']
@@ -89,7 +90,7 @@ class CheckerHandlingClangSATest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         context = analyzer_context.get_context()
-        context._checker_labels = MockCheckerLabels()
+        context._checker_labels = MockClangsaCheckerLabels()
 
         analyzer = create_analyzer_sa()
         result_handler = create_result_handler(analyzer)
@@ -161,19 +162,19 @@ class CheckerHandlingClangSATest(unittest.TestCase):
         checkers.extend(map(add_description, statisticsbased))
 
         # "default" profile checkers are enabled explicitly. Others are in
-        # "default" state.
+        # "disabled" state.
         cfg_handler = ClangSA.construct_config_handler(args)
         cfg_handler.initialize_checkers(checkers)
         self.assertTrue(all_with_status(CheckerState.enabled)
                         (cfg_handler.checks(), default_profile))
-        self.assertTrue(all_with_status(CheckerState.default)
+        self.assertTrue(all_with_status(CheckerState.disabled)
                         (cfg_handler.checks(), security_profile_alpha))
 
-        # "--enable-all" leaves alpha checkers in "default" state. Others
+        # "--enable-all" leaves alpha checkers in "disabled" state. Others
         # become enabled.
         cfg_handler = ClangSA.construct_config_handler(args)
         cfg_handler.initialize_checkers(checkers, enable_all=True)
-        self.assertTrue(all_with_status(CheckerState.default)
+        self.assertTrue(all_with_status(CheckerState.disabled)
                         (cfg_handler.checks(), security_profile_alpha))
         self.assertTrue(all_with_status(CheckerState.enabled)
                         (cfg_handler.checks(), default_profile))
@@ -259,6 +260,26 @@ class CheckerHandlingClangSATest(unittest.TestCase):
                     any(stat_checker in c for c in enabled_checkers))
 
 
+class MockClangTidyCheckerLabels:
+    def checkers_by_labels(self, labels):
+        if labels[0] == 'profile:default':
+            return [
+                'bugprone-assert-side-effect',
+                'bugprone-dangling-handle',
+                'bugprone-inaccurate-erase']
+
+    def get_description(self, label):
+        if label == 'profile':
+            return ['default', 'sensitive', 'security', 'portability',
+                    'extreme']
+
+    def occurring_values(self, label):
+        if label == 'guideline':
+            return ['sei-cert']
+        elif label == 'sei-cert':
+            return ['rule1', 'rule2']
+
+
 def create_analyzer_tidy(args=[]):
     cfg_handler = ClangTidy.construct_config_handler(args)
 
@@ -279,15 +300,59 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        context = analyzer_context.get_context()
+        context._checker_labels = MockClangTidyCheckerLabels()
+
         analyzer = create_analyzer_tidy()
         result_handler = create_result_handler(analyzer)
         cls.cmd = analyzer.construct_analyzer_cmd(result_handler)
         print('Analyzer command: %s' % cls.cmd)
 
-        checks_arg = cls.cmd[1]
-        checks = checks_arg[len('-checks='):]
-        cls.checks_list = checks.split(',')
-        print('Checks list: %s' % cls.checks_list)
+    def _enable_disable_pos(self, checker, checks_list):
+        """
+        This function returns the positions of the patterns in "clang-tidy
+        -checks=..." flag where the given checker has been enabled and disabled
+        respectively. For example:
+
+        clang-tidy -checks=-*,a,b*,-c
+
+        "a": enabled->1, disabled->0
+        "b": enabled->2, disabled->0
+        "bx": enabled->2, disabled->0
+        "c": enabled->-1, disabled->3
+
+        If "enabled" position is greater than "disabled" position then the
+        checker itself is enabled.
+        """
+        def checker_matches(pattern, checker):
+            return bool(re.match(pattern.replace('*', '.*') + '$', checker))
+
+        enable_pos = next((
+            i for i, c in enumerate(checks_list) if
+            checker_matches(c, checker)), -1)
+        disable_pos = next(reversed([
+            i for i, c in enumerate(checks_list) if
+            checker_matches(c, '-' + checker)]), -1)
+
+        return enable_pos, disable_pos
+
+    def _is_disabled(self, checker, analyzer_cmd):
+        """
+        Returns True if the "checker" is disabled for clang-tidy given the
+        analyzer command.
+        """
+        checks = next(filter(
+            lambda arg: arg.startswith('-checks='),
+            analyzer_cmd), None)
+
+        if not checks:
+            return True
+
+        enable, disable = self._enable_disable_pos(
+            checker,
+            checks[len('-checks='):].split(','))
+
+        return enable < disable
 
     def test_disable_clangsa_checkers(self):
         """
@@ -296,16 +361,16 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
         analyzer = create_analyzer_tidy()
         result_handler = create_result_handler(analyzer)
 
-        for arg in analyzer.construct_analyzer_cmd(result_handler):
-            if arg.startswith('-checks='):
-                self.assertIn('-clang-analyzer-*', arg)
+        self.assertTrue(self._is_disabled(
+            'clang-analyzer',
+            analyzer.construct_analyzer_cmd(result_handler)))
 
         analyzer.config_handler.checker_config = \
             '{"Checks": "hicpp-use-nullptr"}'
 
-        for arg in analyzer.construct_analyzer_cmd(result_handler):
-            if arg.startswith('-checks='):
-                self.assertIn('-clang-analyzer-*', arg)
+        self.assertTrue(self._is_disabled(
+            'clang-analyzer',
+            analyzer.construct_analyzer_cmd(result_handler)))
 
         self.assertTrue(is_compiler_warning('Wreserved-id-macro'))
         self.assertFalse(is_compiler_warning('hicpp'))
@@ -330,18 +395,18 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
         """
         Test that the default checks are not disabled in Clang Tidy.
         """
+        checker_labels = MockClangTidyCheckerLabels()
 
-        self.assertFalse('-*' in self.__class__.checks_list)
+        for checker in checker_labels.checkers_by_labels(['profile:default']):
+            self.assertFalse(self._is_disabled(
+                checker, self.__class__.cmd))
 
-    def test_only_clangsa_analyzer_checks_are_disabled(self):
+    def test_clangsa_analyzer_checks_are_disabled(self):
         """
-        Test that exactly the clang-analyzer group is disabled in Clang Tidy.
+        Test that the clang-analyzer group is disabled in Clang Tidy.
         """
-
-        self.assertTrue('-clang-analyzer-*' in self.__class__.checks_list)
-        self.assertFalse(
-            any(check.startswith('-') and check != '-clang-analyzer-*'
-                for check in self.__class__.checks_list))
+        self.assertTrue(self._is_disabled(
+            'clang-analyzer', self.__class__.cmd))
 
     def test_clang_diags_as_compiler_warnings(self):
         """

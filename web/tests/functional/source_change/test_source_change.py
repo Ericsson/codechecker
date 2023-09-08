@@ -74,7 +74,7 @@ class TestSkeleton(unittest.TestCase):
             'workspace': TEST_WORKSPACE,
             'reportdir': os.path.join(TEST_WORKSPACE, 'reports'),
             'checkers': [],
-            'analyzers': ['clangsa', 'clang-tidy']
+            'analyzers': ['clangsa']
         }
 
         # Start or connect to the running CodeChecker server and get connection

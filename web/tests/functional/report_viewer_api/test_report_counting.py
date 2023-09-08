@@ -88,14 +88,13 @@ class TestReportFilter(unittest.TestCase):
              'core.NullDereference': 4,
              'cplusplus.NewDelete': 5,
              'deadcode.DeadStores': 6,
-             'misc-definitions-in-headers': 2,
-             'unix.MismatchedDeallocator': 1}
+             'misc-definitions-in-headers': 2}
 
         self.run1_sev_counts = {Severity.MEDIUM: 6,
                                 Severity.LOW: 6,
                                 Severity.HIGH: 32}
 
-        self.run2_sev_counts = {Severity.MEDIUM: 6,
+        self.run2_sev_counts = {Severity.MEDIUM: 5,
                                 Severity.LOW: 6,
                                 Severity.HIGH: 24}
 
@@ -103,7 +102,7 @@ class TestReportFilter(unittest.TestCase):
             {DetectionStatus.NEW: 44}
 
         self.run2_detection_counts = \
-            {DetectionStatus.NEW: 36}
+            {DetectionStatus.NEW: 35}
 
         self.run1_files = \
             {'new_delete.cpp': 6,
@@ -125,7 +124,7 @@ class TestReportFilter(unittest.TestCase):
 
         self.run2_files = \
             {'call_and_message.cpp': 5,
-             'new_delete.cpp': 6,
+             'new_delete.cpp': 5,
              'divide_zero.cpp': 5,
              'divide_zero_duplicate.cpp': 2,
              'null_dereference.cpp': 5,

@@ -64,7 +64,7 @@ class TestComponent(unittest.TestCase):
             'skip_list_file': skip_list_file,
             'check_env': test_env,
             'workspace': TEST_WORKSPACE,
-            'checkers': [],
+            'checkers': ['-d', 'clang-diagnostic'],
             'analyzers': ['clangsa', 'clang-tidy']
         }
 
