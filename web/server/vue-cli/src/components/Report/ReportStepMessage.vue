@@ -31,7 +31,7 @@
     <div>
       {{ value }}
 
-      <p v-if="type === 'error'" class="mb-0 mt-2">
+      <p v-if="type === 'error' && docUrl" class="mb-0 mt-2">
         For more information see the
         <a
           class="show-documentation-btn"
@@ -39,6 +39,12 @@
         >
           checker documentation
         </a>.
+      </p>
+      <p 
+        v-else-if="type === 'error'" 
+        class="no-documentation-msg-text mb-0 mt-2"
+      >
+        No documentation for checker.
       </p>
     </div>
 
@@ -73,7 +79,8 @@ export default {
     index: { type: [ Number, String ], default: null },
     bus: { type: Object, default: null },
     prevStep: { type: Object, default: null },
-    nextStep: { type: Object, default: null }
+    nextStep: { type: Object, default: null },
+    docUrl: { type: String, default: null }
   },
   computed: {
     color() {
@@ -118,9 +125,7 @@ export default {
     },
 
     showDocumentation() {
-      if (!this.bus) return;
-
-      this.bus.$emit("showDocumentation");
+      window.open(this.docUrl, "_blank");
     }
   }
 };
@@ -146,6 +151,9 @@ export default {
       border-bottom: 1px dashed #438ec7;
       display: inline-block;
     }
+  }
+  .no-documentation-msg-text {
+    color: grey
   }
 }
 </style>

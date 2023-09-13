@@ -1,10 +1,5 @@
 <template>
   <v-container fluid class="pa-0">
-    <checker-documentation-dialog
-      :value.sync="checkerDocumentationDialog"
-      :checker="selectedChecker"
-    />
-
     <analysis-info-dialog
       :value.sync="analysisInfoDialog"
       :report-id="reportId"
@@ -313,8 +308,7 @@ import ReportTreeKind from "@/components/Report/ReportTree/ReportTreeKind";
 import { SetCleanupPlanBtn } from "@/components/Report/CleanupPlan";
 
 import AnalysisInfoBtn from "./AnalysisInfoBtn";
-import CheckerDocumentationDialog from
-  "@/components/CheckerDocumentationDialog";
+
 import { ReportComments } from "./Comment";
 import GitBlameMixin from "./Git/GitBlame";
 import ToggleBlameViewBtn from "./Git/ToggleBlameViewBtn";
@@ -330,7 +324,6 @@ export default {
   components: {
     AnalysisInfoBtn,
     AnalysisInfoDialog,
-    CheckerDocumentationDialog,
     CopyBtn,
     ReportComments,
     ReportInfoButton,
@@ -367,11 +360,11 @@ export default {
       loading: true,
       bus: new Vue(),
       annotation: null,
-      checkerDocumentationDialog: false,
       selectedChecker: null,
       analysisInfoDialog: false,
       reportId: null,
-      enableBlameView
+      enableBlameView,
+      docUrl: null
     };
   },
 
@@ -487,7 +480,6 @@ export default {
         analyzerName: this.report.analyzerName,
         checkerId: this.report.checkerId
       });
-      this.checkerDocumentationDialog = true;
     });
   },
 
@@ -654,6 +646,24 @@ export default {
           }));
       });
 
+      const errorChecker = new Checker({
+        analyzerName: this.report.analyzerName,
+        checkerId: this.report.checkerId
+      });
+      await new Promise(resolve => {
+        ccService.getClient().getCheckerLabels(
+          [ errorChecker ],
+          handleThriftError(labels => {
+            const docUrlLabels = labels[0].filter(
+              param => param.startsWith("doc_url")
+            );
+            this.docUrl = docUrlLabels.length ? 
+              docUrlLabels[0].split("doc_url:")[1] : null;
+            resolve(this.docUrl);
+          })
+        );
+      });
+
       const isSameFile = path => path.fileId.equals(this.sourceFile.fileId);
 
       // Add extra path events (macro expansions, notes).
@@ -757,7 +767,8 @@ export default {
             index: event.$index,
             bus: this.bus,
             prevStep: event.$prevStep,
-            nextStep: event.$nextStep
+            nextStep: event.$nextStep,
+            docUrl: this.docUrl
           };
           this.addLineWidget(event, props);
         });
