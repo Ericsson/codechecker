@@ -325,6 +325,7 @@ struct ReportData {
   // of custom labels that describe some properties of a report. For example the
   // timestamp in case of dynamic analyzers when the report was actually emitted.
   18: optional map<string, string> annotations,
+  19: optional BlameInfo blameInfo,    // Contains the git blame information of the report if it exists.
 }
 typedef list<ReportData> ReportDataList
 

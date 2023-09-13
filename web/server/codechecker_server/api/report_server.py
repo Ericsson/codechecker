@@ -1901,9 +1901,15 @@ class ThriftRequestHandler:
 
                 # Get report details if it is required.
                 report_details = {}
-                if get_details:
-                    report_ids = [r[0].id for r in query_result]
+                blame_infos = {}
+                if get_details and len(query_result):
+                    report_ids, blames = zip(*[
+                        (
+                            r[0].id,
+                            (r[0].id, self.getBlameInfo(r[0].file_id))
+                        ) for r in query_result])
                     report_details = get_report_details(session, report_ids)
+                    blame_infos = dict(blames)
 
                 for row in query_result:
                     report = row[0]
@@ -1918,6 +1924,21 @@ class ThriftRequestHandler:
                         report.review_status_author,
                         report.review_status_date,
                         report.review_status_is_in_source)
+
+                    blame_info = blame_infos.get(report.id)
+                    if blame_info and blame_info.commits and blame_info.blame:
+                        blame_data = [b for b in blame_info.blame
+                                      if report.line >= b.startLine
+                                      and report.line <= b.endLine]
+                        commitHash = blame_data[0].commitHash \
+                            if len(blame_data) else None
+                        commitInfo = {cHash: commit for cHash, commit
+                                      in blame_info.commits.items()
+                                      if cHash == commitHash}
+                        blame_info = BlameInfo(
+                            commits=commitInfo,
+                            blame=blame_data
+                        )
 
                     results.append(
                         ReportData(runId=report.run_id,
@@ -1937,6 +1958,7 @@ class ThriftRequestHandler:
                                    fixedAt=str(report.fixed_at),
                                    bugPathLength=report.path_length,
                                    details=report_details.get(report.id),
+                                   blameInfo=blame_info,
                                    analyzerName=report.analyzer_name,
                                    annotations=annotations))
             else:  # not is_unique
@@ -1986,9 +2008,15 @@ class ThriftRequestHandler:
 
                 # Get report details if it is required.
                 report_details = {}
-                if get_details:
-                    report_ids = [r[0].id for r in query_result]
+                blame_infos = {}
+                if get_details and len(query_result):
+                    report_ids, blames = zip(*[
+                        (
+                            r[0].id,
+                            (r[0].id, self.getBlameInfo(r[0].file_id))
+                        ) for r in query_result])
                     report_details = get_report_details(session, report_ids)
+                    blame_infos = dict(blames)
 
                 for row in query_result:
                     report = row[0]
@@ -2003,6 +2031,22 @@ class ThriftRequestHandler:
                         report.review_status_author,
                         report.review_status_date,
                         report.review_status_is_in_source)
+
+                    blame_info = blame_infos[report.id] \
+                        if report.id in blame_infos else None
+                    if blame_info and blame_info.commits and blame_info.blame:
+                        blame_data = [b for b in blame_info.blame
+                                      if report.line >= b.startLine
+                                      and report.line <= b.endLine]
+                        commitHash = blame_data[0].commitHash \
+                            if len(blame_data) else None
+                        commitInfo = {cHash: commit for cHash, commit
+                                      in blame_info.commits.items()
+                                      if cHash == commitHash}
+                        blame_info = BlameInfo(
+                            commits=commitInfo,
+                            blame=blame_data
+                        )
 
                     results.append(
                         ReportData(runId=report.run_id,
@@ -2023,6 +2067,7 @@ class ThriftRequestHandler:
                                    report.fixed_at else None,
                                    bugPathLength=report.path_length,
                                    details=report_details.get(report.id),
+                                   blameInfo=blame_info,
                                    analyzerName=report.analyzer_name,
                                    annotations=annotations))
 
