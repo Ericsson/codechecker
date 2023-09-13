@@ -802,8 +802,9 @@ def handle_list_results(args):
 
     report_filter = parse_report_filter(client, args)
 
-    query_report_details = args.details and args.output_format == 'json' \
-        if 'details' in args else None
+    # TODO: JSON format contains detailed information either way. --details
+    # flag is deprecated in 6.28.0 and should be removed in 6.29.0.
+    query_report_details = 'details' in args or args.output_format == 'json'
 
     all_results = get_run_results(client,
                                   run_ids,
@@ -820,9 +821,6 @@ def handle_list_results(args):
             report.runName = run_id2name[report.runId]
         print(CmdLineOutputEncoder().encode(all_results))
     else:
-        header = ['File', 'Checker', 'Severity', 'Message', 'Bug path length',
-                  'Analyzer name', 'Review status', 'Detection status']
-
         rows = []
         max_msg_len = 50
         for res in all_results:
@@ -848,9 +846,37 @@ def handle_list_results(args):
             if len(msg) > max_msg_len:
                 msg = msg[:max_msg_len] + '...'
 
-            rows.append((checked_file, res.checkerId, sev, msg,
-                         res.bugPathLength, res.analyzerName, rw_status,
-                         dt_status))
+            if query_report_details:
+                if res.blameInfo and res.blameInfo.commits:
+                    commit_hash = next(iter(res.blameInfo.commits.keys()))
+                    commit = res.blameInfo.commits[commit_hash]
+                    commit_time = commit.committedDateTime
+                    commit_summary = commit.summary
+                else:
+                    commit_hash = ""
+                    commit_time = ""
+                    commit_summary = ""
+
+                header = [
+                    'File', 'Checker', 'Severity', 'Message',
+                    'Bug path length', 'Analyzer name', 'Review status',
+                    'Detection status', 'Commit hash', 'Commit time',
+                    'Commit summary']
+
+                rows.append((
+                    checked_file, res.checkerId, sev, msg,
+                    res.bugPathLength, res.analyzerName, rw_status,
+                    dt_status, commit_hash, commit_time, commit_summary))
+            else:
+                header = [
+                    'File', 'Checker', 'Severity', 'Message',
+                    'Bug path length', 'Analyzer name', 'Review status',
+                    'Detection status']
+
+                rows.append((
+                    checked_file, res.checkerId, sev, msg,
+                    res.bugPathLength, res.analyzerName, rw_status,
+                    dt_status))
 
         print(twodim.to_str(args.output_format, header, rows))
 
