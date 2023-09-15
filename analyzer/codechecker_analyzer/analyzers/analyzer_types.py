@@ -113,23 +113,35 @@ def is_ignore_conflict_supported():
 def print_unsupported_analyzers(errored):
     """ Print error messages which occured during analyzer detection. """
     for analyzer_binary, reason in errored:
-        LOG.warning("Analyzer '%s' is enabled but CodeChecker is failed to "
-                    "execute analysis with it: '%s'. Please check your "
-                    "'PATH' environment variable, the "
-                    "'config/package_layout.json' file "
-                    "and the --analyzers flag!",
-                    analyzer_binary, reason)
+        LOG.error("Analyzer '%s' is enabled but CodeChecker is failed to "
+                  "execute analysis with it: '%s'. Please check your "
+                  "'PATH' environment variable, the "
+                  "'config/package_layout.json' file "
+                  "and the --analyzers flag!",
+                  analyzer_binary, reason)
 
 
-def check_available_analyzers(analyzers, errored):
-    """ Handle use case when no analyzer can be found on the user machine. """
-    if analyzers:
+def check_available_analyzers(analyzers, errored, args):
+    """
+    Handle use case when no analyzer can be found on the user machine
+    or wrong analyzer given.
+    """
+    if analyzers and (not errored
+                      or 'analyzers' not in args
+                      or not any("analyzer" in e[1].lower() for e in errored)
+                      ):
         return
-
-    print_unsupported_analyzers(errored)
-    LOG.error("Failed to run command because no analyzers can be found on "
-              "your machine!")
-    sys.exit(1)
+    elif 'analyzers' in args and errored \
+         and any("analyzer" in e[1].lower() for e in errored):
+        print_unsupported_analyzers(errored)
+        LOG.error("Failed to run command because one or more given analyzers "
+                  "cannot be found on your machine!")
+        sys.exit(1)
+    else:
+        print_unsupported_analyzers(errored)
+        LOG.error("Failed to run command because no analyzers can be found on "
+                  "your machine!")
+        sys.exit(1)
 
 
 def check_supported_analyzers(analyzers):
@@ -194,12 +206,12 @@ def check_supported_analyzers(analyzers):
                 bin_version = StrictVersion(str(analyzer.version_info()))
                 requested_version = StrictVersion(requested_version)
                 if requested_version != bin_version:
-                    LOG.warning(
+                    LOG.error(
                         f"Given version: {requested_version}, found version "
                         f"for {analyzer_name} analyzer: {bin_version}"
                     )
                     failed_analyzers.add((analyzer_name,
-                                          "Wrong version given."))
+                                          "Wrong analyzer version given."))
                     available_analyzer = False
             if not analyzer.version_compatible():
                 failed_analyzers.add((analyzer_name,

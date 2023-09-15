@@ -139,7 +139,7 @@ def perform_analysis(args, skip_handlers, actions, metadata_tool,
     analyzers = args.analyzers if 'analyzers' in args \
         else analyzer_types.supported_analyzers
     analyzers, errored = analyzer_types.check_supported_analyzers(analyzers)
-    analyzer_types.check_available_analyzers(analyzers, errored)
+    analyzer_types.check_available_analyzers(analyzers, errored, args)
     ctu_collect = False
     ctu_analyze = False
     ctu_dir = ''
