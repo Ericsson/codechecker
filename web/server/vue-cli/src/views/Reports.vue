@@ -286,6 +286,7 @@ export default {
       reports: [],
       sameReports: {},
       hasTimeStamp: true,
+      hasTestCase : true,
       selected: [],
       namespace: namespace,
       pagination: {
@@ -332,6 +333,10 @@ export default {
           return this.hasTimeStamp;
         }
 
+        if (header.value === "testcase") {
+          return this.hasTestCase;
+        }
+
         return true;
       });
     },
@@ -375,6 +380,15 @@ export default {
         }
       },
       deep: true
+    },
+    formattedReports: {
+      handler() {
+        this.hasTimeStamp =
+          this.formattedReports.some(report => report.timestamp);
+
+        this.hasTestCase =
+          this.formattedReports.some(report => report.testcase);
+      }
     }
   },
 
