@@ -545,6 +545,10 @@ def __print_checker_config(args: argparse.Namespace):
             if analyzer != "cppcheck":
                 analyzer_failures.append(analyzer)
                 continue
+            # TODO
+            if analyzer != "gcc":
+                analyzer_failures.append(analyzer)
+                continue
 
         rows.extend((':'.join((analyzer, c[0])), c[1]) if 'details' in args
                     else (':'.join((analyzer, c[0])),) for c in configs)

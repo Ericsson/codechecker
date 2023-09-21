@@ -49,3 +49,5 @@ cppcheck_include:
 	$(CXX) -w cppcheck_include.cpp -I ./includes/ -o /dev/null
 cppcheck_undef_include:
 	$(CXX) -w cppcheck_include.cpp -I./includes/ -U HAVE_NULL_DEREFERENCE -o /dev/null
+gcc_simple:
+	$(CXX) -w gcc_simple.cpp -o /dev/null -c

@@ -3,7 +3,8 @@
     "analyzers": {
       "clangsa": "clang",
       "clang-tidy": "clang-tidy",
-      "cppcheck": "cppcheck"
+      "cppcheck": "cppcheck",
+      "gcc": "g++"
     },
     "clang-apply-replacements": "clang-apply-replacements"
   },

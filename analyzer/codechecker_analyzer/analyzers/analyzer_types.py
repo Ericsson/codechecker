@@ -24,12 +24,14 @@ from .. import host_check
 from .clangtidy.analyzer import ClangTidy
 from .clangsa.analyzer import ClangSA
 from .cppcheck.analyzer import Cppcheck
+from .gcc.analyzer import Gcc
 
 LOG = get_logger('analyzer')
 
 supported_analyzers = {ClangSA.ANALYZER_NAME: ClangSA,
                        ClangTidy.ANALYZER_NAME: ClangTidy,
-                       Cppcheck.ANALYZER_NAME: Cppcheck}
+                       Cppcheck.ANALYZER_NAME: Cppcheck,
+                       Gcc.ANALYZER_NAME: Gcc}
 
 
 def is_ctu_capable():

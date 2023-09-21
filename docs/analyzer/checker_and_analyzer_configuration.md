@@ -267,3 +267,7 @@ CodeChecker check -l ./compile_commands.json \
   --analyzer-config cppcheck:inconclusive=true \ # allow inconclusive reports
   -o ./reports
 ```
+
+# Cppcheck
+
+TODO

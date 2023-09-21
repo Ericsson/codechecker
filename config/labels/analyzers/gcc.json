@@ -1,0 +1,285 @@
+{
+  "analyzer": "gcc",
+  "labels": {
+    "-Wanalyzer-allocation-size": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-allocation-size",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-deref-before-check": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-deref-before-check",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-double-fclose": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-double-fclose",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-double-free": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-double-free",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-exposure-through-output-file": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-exposure-through-output-file",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-exposure-through-uninit-copy": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-exposure-through-uninit-copy",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-fd-access-mode-mismatch": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-access-mode-mismatch",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-fd-double-close": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-double-close",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-fd-leak": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-leak",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-fd-phase-mismatch": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-phase-mismatch",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-fd-type-mismatch": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-type-mismatch",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-fd-use-after-close": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-use-after-close",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-fd-use-without-check": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-use-without-check",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-file-leak": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-file-leak",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-free-of-non-heap": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-free-of-non-heap",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-imprecise-fp-arithmetic": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-imprecise-fp-arithmetic",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-infinite-recursion": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-infinite-recursion",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-jump-through-null": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-jump-through-null",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-malloc-leak": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-malloc-leak",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-mismatching-deallocation": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-mismatching-deallocation",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-null-argument": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-null-argument",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-null-dereference": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-null-dereference",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-out-of-bounds": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-out-of-bounds",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-overlapping-buffers": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-overlapping-buffers",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-possible-null-argument": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-possible-null-argument",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-possible-null-dereference": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-possible-null-dereference",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-putenv-of-auto-var": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-putenv-of-auto-var",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-shift-count-negative": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-shift-count-negative",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-shift-count-overflow": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-shift-count-overflow",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-stale-setjmp-buffer": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-stale-setjmp-buffer",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-unsafe-call-within-signal-handler": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-unsafe-call-within-signal-handler",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-use-after-free": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-use-after-free",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-use-of-pointer-in-stale-stack-frame": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-use-of-pointer-in-stale-stack-frame",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-use-of-uninitialized-value": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-use-of-uninitialized-value",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-va-arg-type-mismatch": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-va-arg-type-mismatch",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-va-list-exhausted": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-va-list-exhausted",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-va-list-leak": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-va-list-leak",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-va-list-use-after-va-end": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-va-list-use-after-va-end",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-write-to-const": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-write-to-const",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "-Wanalyzer-write-to-string-literal": [
+      "doc_url:https://gcc.gnu.org/onlinedocs/gcc/Static-Analyzer-Options.html#index-Wanalyzer-write-to-string-literal",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:LOW"
+    ]
+  }
+}   

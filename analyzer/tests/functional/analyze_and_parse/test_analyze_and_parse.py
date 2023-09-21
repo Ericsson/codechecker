@@ -223,7 +223,8 @@ class AnalyzeParseTestCase(
                          "[] - Enabled checkers:",
                          "clang-tidy:",
                          "clangsa:",
-                         "cppcheck:"]
+                         "cppcheck:",
+                         "gcc:"]
         for line in output:
             # replace timestamps
             line = re.sub(r'\[\w+ \d{4}-\d{2}-\d{2} \d{2}:\d{2}\]',
@@ -249,6 +250,7 @@ class AnalyzeParseTestCase(
         print(correct_output)
 
         print("Test output file: " + path)
+        self.maxDiff = None
         self.assertEqual(''.join(post_processed_output), correct_output)
 
     def test_json_output_for_macros(self):
