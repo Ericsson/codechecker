@@ -94,7 +94,7 @@ def to_rows(lines: Iterable[str]) -> str:
 
 
 def to_table(
-    lines: Iterable[str],
+    lines: Iterable[Iterable[str]],
     separate_head=True,
     separate_footer=False
 ) -> str:

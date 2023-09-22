@@ -1770,6 +1770,10 @@ optional arguments:
                         Filter results by review statuses. Valid values are:
                         confirmed, false_positive, intentional, suppress,
                         unreviewed (default: ['confirmed', 'unreviewed'])
+  --summary             Statistics for checkers. It can be used to see the
+                        number of findings per checker. It is helpful to
+                        verify which checkers are generating too many reports
+                        in a large report directory.
   --verbose {info,debug_analyzer,debug}
                         Set verbosity level.
 
@@ -1817,6 +1821,12 @@ then the results of the analysis can be printed with
 
 ```sh
 CodeChecker parse ./my_plists
+```
+
+The number of reports per checker can be verified with
+
+```sh
+CodeChecker parse ./my_plists --summary
 ```
 
 #### `JSON` format of `CodeChecker parse`

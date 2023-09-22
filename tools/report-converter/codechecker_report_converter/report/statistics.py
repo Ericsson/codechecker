@@ -90,3 +90,20 @@ class Statistics:
         self.checker_statistics[
             Checker(report.checker_name, report.severity)] += 1
         self.file_statistics[report.file.original_path] += 1
+
+    def write_checker_summary(self, checker_stats, out=sys.stdout):
+        """ Print checker summary statistics if it's available. """
+        if not checker_stats:
+            return None
+
+        out.write("\n----==== Checkers Summary Statistics ====----\n")
+        header = ["Checker name", "Number of reports"]
+        out.write(twodim.to_table([header] + [
+            (str(checker_name), str(number_of_report))
+            for (checker_name, number_of_report)
+            in sorted(
+                checker_stats.items(),
+                key=lambda item:item[1],
+                reverse=True
+            )]))
+        out.write("\n----=================----\n")
