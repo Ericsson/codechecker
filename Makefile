@@ -79,14 +79,28 @@ dev_package: package
 	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_web && \
 	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_server && \
 	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_report_converter && \
-	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_client
+	rm -rf $(CC_BUILD_LIB_DIR)/codechecker_client && \
+	rm -rf $(CC_BUILD_DIR)/config && \
+	mkdir -p $(CC_BUILD_DIR)/config
 
 	ln -fsv $(ROOT)/codechecker_common $(CC_BUILD_LIB_DIR) && \
 	ln -fsv $(CC_ANALYZER)/codechecker_analyzer $(CC_BUILD_LIB_DIR) && \
 	ln -fsv $(CC_WEB)/codechecker_web $(CC_BUILD_LIB_DIR) && \
 	ln -fsv $(CC_SERVER)/codechecker_server $(CC_BUILD_LIB_DIR) && \
 	ln -fsv $(CC_TOOLS)/report-converter/codechecker_report_converter $(CC_BUILD_LIB_DIR) && \
-	ln -fsv $(CC_CLIENT)/codechecker_client $(CC_BUILD_LIB_DIR)
+	ln -fsv $(CC_CLIENT)/codechecker_client $(CC_BUILD_LIB_DIR) && \
+	ln -fsv $(ROOT)/config/* $(CC_BUILD_DIR)/config && \
+	ln -fsv $(CC_ANALYZER)/config/* $(CC_BUILD_DIR)/config && \
+	ln -fsv $(CC_WEB)/config/* $(CC_BUILD_DIR)/config && \
+	ln -fsv $(CC_SERVER)/config/* $(CC_BUILD_DIR)/config
+
+	${PYTHON_BIN} ./scripts/build/create_commands.py -b $(BUILD_DIR) \
+	  --cmd-dir $(ROOT)/codechecker_common/cmd \
+	    $(CC_WEB)/codechecker_web/cmd \
+	    $(CC_SERVER)/codechecker_server/cmd \
+	    $(CC_CLIENT)/codechecker_client/cmd \
+	    $(CC_ANALYZER)/codechecker_analyzer/cmd \
+	  --bin-file $(ROOT)/bin/CodeChecker
 
 package_api:
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_WEB) package_api
