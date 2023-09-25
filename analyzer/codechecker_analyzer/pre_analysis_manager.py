@@ -201,7 +201,10 @@ def run_pre_analysis(actions, clangsa_config,
         raise
     finally:
         pool.join()
-        # Return whether the call completed without raising an exception.
+        # The following pylint report is suppressed, because "result" would not
+        # be set if Pool.map_async() itself would raise an exception. If
+        # exceptions are raised by the callback functions, "result" is set.
+        # pylint: disable=used-before-assignment
         if not result.successful():
             # If the remote call raised an exception then that exception will
             # be reraised by get().

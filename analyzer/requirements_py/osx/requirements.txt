@@ -3,4 +3,3 @@ portalocker==2.2.1
 psutil==5.8.0
 scan-build==2.0.19
 PyYAML==6.0.1
-mypy_extensions==0.4.3
