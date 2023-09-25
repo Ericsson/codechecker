@@ -10,6 +10,7 @@
 
 import json
 import os
+import platform
 import shlex
 import subprocess
 import tempfile
@@ -106,7 +107,7 @@ class BasicLoggerTest(unittest.TestCase):
             return fd.read()
 
     def get_envvars(self) -> Mapping[str, str]:
-        machine = os.uname().machine
+        machine = platform.uname().machine
         return {
             "PATH": os.getenv("PATH"),
             "LD_PRELOAD": os.path.join(LOGGER_DIR,
