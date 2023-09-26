@@ -137,7 +137,7 @@ def __get_report_hash_context_free(report: Report) -> List[str]:
 
         if line_content == '' and \
                 not os.path.isfile(report.file.original_path):
-            LOG.error("Failed to include soruce line in the report hash.")
+            LOG.error("Failed to include source line in the report hash.")
             LOG.error('%s does not exists!', report.file.original_path)
 
         return [
