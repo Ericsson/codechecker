@@ -275,6 +275,13 @@
       "profile:sensitive",
       "severity:HIGH"
     ],
+    "bugprone-inc-dec-in-conditions": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/inc-dec-in-conditions.html",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
     "bugprone-incorrect-roundings": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/incorrect-roundings.html",
       "profile:default",
@@ -347,6 +354,13 @@
       "profile:sensitive",
       "severity:MEDIUM"
     ],
+    "bugprone-multi-level-implicit-pointer-conversion": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/multi-level-implicit-pointer-conversion.html",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+
     "bugprone-multiple-statement-macro": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/multiple-statement-macro.html",
       "profile:extreme",
@@ -554,6 +568,13 @@
       "profile:extreme",
       "profile:sensitive",
       "severity:HIGH"
+    ],
+    "bugprone-switch-missing-default-case": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/switch-missing-default-case.html",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
     ],
     "bugprone-terminating-continue": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/terminating-continue.html",
@@ -5092,6 +5113,11 @@
       "profile:extreme",
       "severity:LOW"
     ],
+    "cppcoreguidelines-macro-to-enum": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/macro-to-enum.html",
+      "profile:extreme",
+      "severity:LOW"
+    ],
     "cppcoreguidelines-macro-usage": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/macro-usage.html",
       "profile:extreme",
@@ -5590,6 +5616,13 @@
       "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
+    ],
+    "misc-header-include-cycle": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/header-include-cycle.html",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
     ],
     "misc-misleading-bidirectional": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/misleading-bidirectional.html",
@@ -6120,6 +6153,12 @@
     ],
     "performance-avoid-endl": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/avoid-endl.html",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
+    "performance-enum-size": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/enum-size.html",
       "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
