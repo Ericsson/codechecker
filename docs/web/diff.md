@@ -610,7 +610,7 @@ In this image, showing the set of oustanding reports in each analysis, you can s
 
 ## Review status rules and diffs
 
-Similarly to source code suppressions, you can set the review status of reports [on the GUI](../..//web/server/vue-cli/src/assets/userguide/userguide.md#review-status) as well, which will create a review status rule. Unlike source code suppressions, review status rules set the review status for _all reports_ matching that rule (i.e. having the same hash), _regardless_ whether the rule was created before or after the report was stored. Because these rules are stored on the server, **they play no part in local-local diffs as of yet**.
+Similarly to source code suppressions, you can set the review status of reports [on the GUI](../..//web/server/vue-cli/src/assets/userguide/userguide.md#review-status) as well, which will create a review status rule. Unlike source code suppressions, review status rules set the review status for _all reports_ matching that rule (i.e. [having the same hash](../analyzer/report_identification.md)), _regardless_ whether the rule was created before or after the report was stored. Because these rules are stored on the server, **they play no part in local-local diffs as of yet**.
 
 :warning: Note: Review status rules act differently when runs are compared as opposed to when tags or dates are compared (see [below](#diff-on-tags-or-timestamps)).
 
@@ -766,7 +766,7 @@ Comparing runs and comparing tags/timestamps has a subtle difference:
 
 :no_entry: Note: You can compare tags through the command line and the web GUI as well. Currently, you can only compare timestamps on the web GUI.
 
-:no_entry: Note: Comparing tags older than the second-to-last is not supported, and may yield incorrect results in specific circumstances. Specifically, if from tag-to-tag a report is resolved, then becomes outstanding again, our results table irrecoverably drops the information that the report was one point resolved. This will result in CodeChecker calculating the set of outstanding reports incorrectly. You can read more about this in [issue](https://github.com/Ericsson/codechecker/issues/3884) in section "Tag diffs -> Local-Remote -> the footnote with the double asterisk (**)".
+:no_entry: Note: We are aware of a bug where comparing tags older than the last may yield incorrect results in specific circumstances. Specifically, if from tag-to-tag a report is resolved, then becomes outstanding again, our results table irrecoverably drops the information that the report was one point resolved. This will result in CodeChecker calculating the set of outstanding reports incorrectly. You can read more about this in [issue](https://github.com/Ericsson/codechecker/issues/3884) in section "Tag diffs -> Local-Remote -> the footnote with the double asterisk (**)".
 
 ### Example setup
 
