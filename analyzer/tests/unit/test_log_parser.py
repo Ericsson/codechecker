@@ -11,6 +11,7 @@
 
 import json
 import os
+import platform
 import shutil
 import tempfile
 import unittest
@@ -684,5 +685,5 @@ class LogParserTest(unittest.TestCase):
 
         # Make sure that the test running machine architecture is in the
         # LD_PRELOAD path.
-        machine = os.uname().machine
+        machine = platform.uname().machine
         self.assertTrue(env["LD_PRELOAD"].endswith(machine + "/ldlogger.so"))

@@ -991,13 +991,6 @@ def get_diff_remote_runs(
     cmp_data.runIds = new_ids
     cmp_data.runTag = new_run_tags
 
-    # Do not show resolved bugs in compare mode new.
-    if cmp_data.diffType == ttypes.DiffType.NEW:
-        report_filter.detectionStatus = [
-            ttypes.DetectionStatus.NEW,
-            ttypes.DetectionStatus.UNRESOLVED,
-            ttypes.DetectionStatus.REOPENED]
-
     sort_mode = [(ttypes.SortMode(
         ttypes.SortType.FILENAME,
         ttypes.Order.ASC))]

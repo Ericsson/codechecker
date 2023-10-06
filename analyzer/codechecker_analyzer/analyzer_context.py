@@ -14,6 +14,7 @@ Context to store package related information.
 from distutils.spawn import find_executable
 
 import os
+import platform
 import sys
 
 from pathlib import Path
@@ -65,7 +66,7 @@ class Context(metaclass=Singleton):
         self.__analyzers = {}
         self.__analyzer_env = None
 
-        machine = os.uname().machine
+        machine = platform.uname().machine
 
         self.logger_lib_dir_path = os.path.join(
             self._data_files_dir_path, 'ld_logger', 'lib', machine)
