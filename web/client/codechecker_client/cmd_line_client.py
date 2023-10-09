@@ -995,6 +995,27 @@ def get_diff_remote_runs(
         ttypes.SortType.FILENAME,
         ttypes.Order.ASC))]
 
+    # Generally speaking, we only compare outstanding reports in both the
+    # baseline and newline analyses, so it wouldn't make sense to show reports
+    # whose detection status indicates otherwise. However, for tags, we check
+    # whether a report is outstanding at the time of the tag, so in the context
+    # of that tag, a resolved report may actually be outstanding, so we clear
+    # the detection status filter.
+    # TODO: We don't support diffs with timestamps on the cmdline, but we
+    # should do this for them as well.
+    if base_run_tags or new_run_tags:
+        # If the value is not the default, lets warn the user that we overwrote
+        # it.
+        default_detection_status = [ttypes.DetectionStatus.NEW,
+                                    ttypes.DetectionStatus.REOPENED,
+                                    ttypes.DetectionStatus.UNRESOLVED]
+        if report_filter.detectionStatus != default_detection_status and \
+           report_filter.detectionStatus != []:
+            LOG.warning("--detection-status is ignored when comparing tags, "
+                        "showing reports regardless of detection status.")
+
+        report_filter.detectionStatus = []
+
     all_results = get_run_results(
         client, base_ids, constants.MAX_QUERY_SIZE, 0, sort_mode,
         report_filter, cmp_data, True)

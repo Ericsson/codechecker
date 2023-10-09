@@ -17,11 +17,11 @@ import shutil
 import unittest
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
-        ReviewStatus, DiffType, ReportFilter
+        ReviewStatus, DiffType, ReportFilter, DetectionStatus
 
 from codechecker_client.cmd_line_client import \
     get_diff_local_dirs, get_diff_remote_run_local_dir, \
-    get_diff_local_dir_remote_run, get_diff_remote_runs
+    get_diff_local_dir_remote_run, get_diff_remote_runs, init_logger
 
 from libtest import codechecker, env
 from libtest.thrift_client_to_db import get_all_run_results
@@ -63,6 +63,8 @@ class TestDiffFromCmdLine(unittest.TestCase):
         test_config['codechecker_cfg'] = codechecker_cfg
 
         env.export_test_cfg(TEST_WORKSPACE, test_config)
+
+        init_logger(None, None)
 
     def teardown_class(self):
         """Clean up after the test."""
@@ -636,13 +638,23 @@ void b() {
 
         report_filter = ReportFilter()
         report_filter.reviewStatus = []
-        report_filter.detection_status = []
+        report_filter.detectionStatus = []
 
         def get_run_diff_count(diff_type: DiffType):
             reports, _, _ = get_diff_remote_runs(
                     self._cc_client, report_filter, diff_type, [],
                     ["run1:tag1"], ["run1:tag2"])
             return len(reports)
+
+        self.assertEqual(get_run_diff_count(DiffType.NEW), 1)
+        self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 1)
+        self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED), 0)
+
+        # This is the default value for --review-status, but for tags, we
+        # should ignore it.
+        report_filter.detectionStatus = [DetectionStatus.NEW,
+                                         DetectionStatus.REOPENED,
+                                         DetectionStatus.UNRESOLVED]
 
         self.assertEqual(get_run_diff_count(DiffType.NEW), 1)
         self.assertEqual(get_run_diff_count(DiffType.RESOLVED), 1)
