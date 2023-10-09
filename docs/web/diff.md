@@ -760,7 +760,7 @@ You can also name timestamps which we call tags. In the below image, the cogwhee
 Comparing runs and comparing tags/timestamps has a subtle difference:
 
 * For runs, we check whether a report is outstanding _at the time of the query_. This means, as seen [in a previous example](diff.md#example-setup-1), if you store a report, _and then_ set a false positive review status rule for it, _and then_ diff this _run_ against another, the report **will not be** present in the run's outstanding reports set.
-* For tags/timestamps, we check whether a report is outstanding _before that specific tag/timestamp_. This means that if you store a report under `tag1`, _and then_ set a false positive review status rule for it, _and then_ diff this _tag_ against another, the report **will be** present in the tag's outstanding report set.
+* For tags/timestamps, we check whether a report is outstanding _before that specific tag/timestamp_. This means that if you store a report under `tag1`, _and then_ set a false positive review status rule for it, _and then_ diff this _tag_ against another, the report **will be** present in the tag's outstanding report set. This also implies that **we ignore the detection status of the report**.
 
 :warning: Note: Tags are created when the report is stored. As a result, you can diff a local analysis directory against a remote tag, but there are no "local tags".
 
