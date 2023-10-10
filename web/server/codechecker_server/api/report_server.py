@@ -2452,13 +2452,11 @@ class ThriftRequestHandler:
         self.__require_view()
         with DBSession(self._Session) as session:
             report = session.query(Report).get(report_id)
+            commentCount = 0
             if report:
                 commentCount = session.query(Comment) \
                     .filter(Comment.bug_hash == report.bug_id) \
                     .count()
-
-            if commentCount is None:
-                commentCount = 0
 
             return commentCount
 
