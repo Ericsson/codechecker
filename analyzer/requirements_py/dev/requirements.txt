@@ -8,3 +8,4 @@ mkdocs==1.2.3
 PyYAML==6.0.1
 mypy_extensions==0.4.3
 coverage==5.5.0
+sarif-tools==1.0.0

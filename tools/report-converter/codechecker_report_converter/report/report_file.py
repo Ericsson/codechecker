@@ -14,23 +14,23 @@ from typing import Dict, Iterator, List, Optional, Tuple
 from codechecker_report_converter.report import File, Report
 from codechecker_report_converter.report.checker_labels import CheckerLabels
 from codechecker_report_converter.report.hash import HashType
-from codechecker_report_converter.report.parser import plist
+from codechecker_report_converter.report.parser import plist, sarif
 from codechecker_report_converter.report.parser.base import AnalyzerInfo
 
 
 LOG = logging.getLogger('report-converter')
 
 
-SUPPORTED_ANALYZER_EXTENSIONS = [plist.EXTENSION]
+SUPPORTED_ANALYZER_TYPES = tuple(sorted([plist.EXTENSION, sarif.EXTENSION]))
 
 
-__SUPPORTED_ANALYZER_EXTENSIONS = tuple([
-    f".{extension}" for extension in SUPPORTED_ANALYZER_EXTENSIONS])
+SUPPORTED_ANALYZER_EXTENSIONS = \
+    tuple([f".{ext}" for ext in SUPPORTED_ANALYZER_TYPES])
 
 
 def is_supported(analyzer_result_file_path: str) -> bool:
     """ True if the given report file can be parsed. """
-    return analyzer_result_file_path.endswith(__SUPPORTED_ANALYZER_EXTENSIONS)
+    return analyzer_result_file_path.endswith(SUPPORTED_ANALYZER_EXTENSIONS)
 
 
 def get_parser(
@@ -39,8 +39,13 @@ def get_parser(
     file_cache: Optional[Dict[str, File]] = None
 ):
     """ Returns a parser object for the given analyzer result file. """
-    if analyzer_result_file_path.endswith(f".{plist.EXTENSION}"):
+    # FIXME: It would be more elegant to collect these modules (plist, sarif,
+    # etc) into a list, but mypy seems to not recognize attributes from modules
+    # saved into variables.
+    if analyzer_result_file_path.endswith(plist.EXTENSION):
         return plist.Parser(checker_labels, file_cache)
+    if analyzer_result_file_path.endswith(sarif.EXTENSION):
+        return sarif.Parser(checker_labels, file_cache)
 
 
 def get_reports(
@@ -54,6 +59,10 @@ def get_reports(
 
     if parser:
         return parser.get_reports(analyzer_result_file_path, source_dir_path)
+    else:
+        LOG.error(f"Found no parsers to parse {analyzer_result_file_path}! "
+                  "Supported file extension types are "
+                  f"{SUPPORTED_ANALYZER_EXTENSIONS}.")
 
     return []
 

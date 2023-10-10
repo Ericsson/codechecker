@@ -14,6 +14,7 @@ a CodeChecker server.
     * [Thread Sanitizer](#thread-sanitizer)
     * [Leak Sanitizer](#leak-sanitizer)
   * [Cppcheck](#cppcheck)
+  * [GNU GCC Static Analyzer](#gnu-gcc-static-analyzer)
   * [Spotbugs](#spotbugs)
   * [Facebook Infer](#facebook-infer)
   * [ESLint](#eslint)
@@ -29,7 +30,7 @@ a CodeChecker server.
   * [Sparse](#sparse)
   * [cpplint](#cpplint)
   * [Roslynator.DotNet.Cli](#roslynatordotnetcli)
-* [Plist to html tool](#plist-to-html-tool)
+* [Plist/Sarif to html tool](#plistsarif-to-html-tool)
   * [Usage](#usage-1)
 * [Report hash generation module](#report-hash-generation-module)
   * [Generate path sensitive report hash](#generate-path-sensitive-report-hash)
@@ -53,33 +54,37 @@ make package
   <summary><i>$ <b>report-converter --help</b> (click to expand)</i></summary>
 
 ```
-usage: report-converter [-h] -o OUTPUT_DIR -t TYPE [--meta [META [META ...]]]
-                        [--filename FILENAME] [-c] [-v]
-                        file
+usage: report-converter [-h] -o OUTPUT_DIR -t TYPE [-e EXPORT]
+                        [--meta [META ...]] [--filename FILENAME] [-c] [-v]
+                        input [input ...]
 
 Creates a CodeChecker report directory from the given code analyzer output
 which can be stored to a CodeChecker web server.
 
 positional arguments:
-  file                  Code analyzer output result file which will be parsed
-                        and used to generate a CodeChecker report directory.
+  input                 Code analyzer output result files or directories which
+                        will be parsed and used to generate a CodeChecker
+                        report directory.
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -o OUTPUT_DIR, --output OUTPUT_DIR
                         This directory will be used to generate CodeChecker
                         report directory files.
   -t TYPE, --type TYPE  Specify the format of the code analyzer output.
-                        Currently supported output types are: asan, clang-
-                        tidy, coccinelle, cppcheck, cpplint, eslint,
-                        fbinfer, golint, kernel-doc, lsan, mdl, msan, 
-                        pyflakes, pylint, roslynator, smatch, sparse, sphinx, spotbugs, 
-                        tsan, tslint, ubsan.
-  --meta [META [META ...]]
-                        Metadata information which will be stored alongside
-                        the run when the created report directory will be
-                        stored to a running CodeChecker server. It has the
-                        following format: key=value. Valid key values are:
+                        Currently supported output types are: asan, clang-tidy,
+                        coccinelle, cppcheck, cpplint, eslint, fbinfer, gcc,
+                        golint, kernel-doc, lsan, mdl, msan, pyflakes, pylint,
+                        roslynator, smatch, sparse, sphinx, spotbugs, tsan,
+                        tslint, ubsan.
+  -e EXPORT, --export EXPORT
+                        Specify the export format of the converted reports.
+                        Currently supported export types are: .plist, .sarif.
+                        (default: plist)
+  --meta [META ...]     Metadata information which will be stored alongside the
+                        run when the created report directory will be stored to
+                        a running CodeChecker server. It has the following
+                        format: key=value. Valid key values are:
                         analyzer_command, analyzer_version. (default: None)
   --filename FILENAME   This option can be used to override the default plist
                         file name output of this tool. This tool can produce
@@ -106,6 +111,7 @@ Supported analyzers:
   cpplint - cpplint, https://github.com/cpplint/cpplint
   eslint - ESLint, https://eslint.org/
   fbinfer - Facebook Infer, https://fbinfer.com
+  gcc - GNU Compiler Collection Static Analyzer, https://gcc.gnu.org/wiki/StaticAnalyzer
   golint - Golint, https://github.com/golang/lint
   kernel-doc - Kernel-Doc, https://github.com/torvalds/linux/blob/master/scripts/kernel-doc
   lsan - LeakSanitizer, https://clang.llvm.org/docs/LeakSanitizer.html
@@ -253,6 +259,34 @@ CppCheck: `analysis statistics`, `analysis duration`, `cppcheck command` etc.
 
 For more information about logging checkout the log section in the
 [user guide](/docs/usage.md).
+
+### [GNU GCC Static Analyzer](https://gcc.gnu.org/wiki/StaticAnalyzer)
+
+This project introduces a static analysis pass for GCC that can diagnose
+various kinds of problems in C/C++ code at compile-time (e.g. double-free,
+use-after-free, etc).
+
+The analyzer runs as an IPA pass on the gimple SSA representation. It
+associates state machines with data, with transitions at certain statements
+and edges. It finds "interesting" interprocedural paths through the user's
+code, in which bogus state transitions happen.
+
+GCC 13.0.0 and later versions support the output in sarif formats, which
+report-converter can parse. Earlier versions only supported a json output,
+which report-converter doesn't support.
+
+You can enable the GNU GCC Static Analyzer and the sarif output with the
+following flags:
+```sh
+# Complie and analyze my_file.cpp.
+g++ -fanalyzer -fdiagnostics-format=sarif-file my_file.cpp
+
+# GCC created a new file, my_file.cpp.sarif.
+report-converter -t gcc -o my_file.cpp.sarif ./gcc_reports
+
+# Store the gcc reports with CodeChecker.
+CodeChecker store ./codechecker_cppcheck_reports -n gcc_reports
+```
 
 ### [Spotbugs](https://spotbugs.github.io/)
 [Spotbugs](https://spotbugs.github.io/) is a static analysis tool for `Java`
@@ -618,7 +652,7 @@ report-converter -t roslynator -o ./codechecker_roslynator_reports ./sample.xml
 CodeChecker store ./codechecker_roslynator_reports -n roslynator
 ```
 
-## Plist to html tool
+## Plist/Sarif to html tool
 `plist-to-html` is a python tool which parses and creates HTML files from one
 or more `.plist` result files.
 

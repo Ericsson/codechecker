@@ -21,6 +21,7 @@ CodeChecker result directory which can be stored to a CodeChecker server.
 |                | [Kernel-Doc](/docs/tools/report-converter.md#kernel-doc)   | ✓ |
 |                | [Sparse](/docs/tools/report-converter.md#sparse)   | ✓ |
 |                | [cpplint](/docs/tools/report-converter.md#cpplint)   | ✓ |
+|                | [GNU GCC Static Analyzer](/docs/tools/report-converter.md#gcc)   | ✓ |
 | **C#**         | [Roslynator.DotNet.Cli](/docs/tools/report-converter.md#roslynatordotnetcli)  | ✓ |
 | **Java**       | [FindBugs](http://findbugs.sourceforge.net/)    | ✗ |
 |                | [SpotBugs](/docs/tools/report-converter.md#spotbugs)    | ✓ |

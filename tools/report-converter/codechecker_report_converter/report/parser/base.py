@@ -9,17 +9,67 @@
 Base parser class to parse analyzer result files.
 """
 
+import json
 import logging
+import os
 
 from abc import ABCMeta, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
+from codechecker_report_converter import __title__, __version__
 from codechecker_report_converter.report import File, Report
 from codechecker_report_converter.report.checker_labels import CheckerLabels
 from codechecker_report_converter.report.hash import HashType
 
 
 LOG = logging.getLogger('report-converter')
+
+
+def load_json(path: str):
+    """
+    Load the contents of the given file as a JSON and return it's value,
+    or default if the file can't be loaded.
+    """
+
+    ret = {}
+    try:
+        with open(path, 'r', encoding='utf-8', errors='ignore') as handle:
+            ret = json.load(handle)
+    except IOError as ex:
+        LOG.warning("Failed to open json file: %s", path)
+        LOG.warning(ex)
+    except OSError as ex:
+        LOG.warning("Failed to open json file: %s", path)
+        LOG.warning(ex)
+    except ValueError as ex:
+        LOG.warning("%s is not a valid json file.", path)
+        LOG.warning(ex)
+    except TypeError as ex:
+        LOG.warning('Failed to process json file: %s', path)
+        LOG.warning(ex)
+
+    return ret
+
+
+def get_tool_info() -> Tuple[str, str]:
+    """ Get tool info.
+
+    If this was called through CodeChecker, this function will return
+    CodeChecker information, otherwise this tool (report-converter)
+    information.
+    """
+    data_files_dir_path = os.environ.get('CC_DATA_FILES_DIR')
+    if data_files_dir_path:
+        analyzer_version_file_path = os.path.join(
+            data_files_dir_path, 'config', 'analyzer_version.json')
+        if os.path.exists(analyzer_version_file_path):
+            data = load_json(analyzer_version_file_path)
+            version = data.get('version')
+            if version:
+                return 'CodeChecker', f"{version['major']}." \
+                    f"{version['minor']}.{version['revision']}"
+
+    return __title__, __version__
 
 
 class AnalyzerInfo:

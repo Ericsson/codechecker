@@ -1,0 +1,51 @@
+{
+  "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json",
+  "version": "2.1.0",
+  "properties": {
+    "comment": "This sample illustrates the relationship between region and contextRegion."
+  },
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "SarifSamples",
+          "version": "1.0"
+        }
+      },
+      "results": [
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "The result."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "code/example.cs"
+                },
+                "region": {
+                  "startLine": 4,
+                  "startColumn": 19,
+                  "endColumn": 22,
+                  "snippet": {
+                    "text": "BAD"
+                  }
+                },
+                "contextRegion": {
+                  "startLine": 4,
+                  "startColumn": 5,
+                  "endColumn": 28,
+                  "snippet": {
+                    "text": "/// This is a BAD word."
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "columnKind": "utf16CodeUnits"
+    }
+  ]
+}

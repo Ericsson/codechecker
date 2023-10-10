@@ -32,7 +32,7 @@ if __name__ == '__main__':
 
 
 from codechecker_report_converter.report.report_file import \
-    SUPPORTED_ANALYZER_EXTENSIONS
+    SUPPORTED_ANALYZER_TYPES, SUPPORTED_ANALYZER_EXTENSIONS
 from codechecker_report_converter.report.parser import plist
 
 LOG = logging.getLogger('report-converter')
@@ -73,7 +73,7 @@ for analyzer_path in analyzers:
             analyzer_result = getattr(module, "AnalyzerResult")
             supported_converters[analyzer_result.TOOL_NAME] = analyzer_result
     except ModuleNotFoundError:
-        pass
+        raise
 
 
 supported_metadata_keys = ["analyzer_command", "analyzer_version"]
@@ -192,12 +192,12 @@ def __add_arguments_to_parser(parser):
                         type=str,
                         dest='export',
                         metavar='EXPORT',
-                        choices=SUPPORTED_ANALYZER_EXTENSIONS,
+                        choices=SUPPORTED_ANALYZER_TYPES,
                         default=plist.EXTENSION,
                         help="Specify the export format of the converted "
                              "reports. Currently supported export types "
-                             "are: " + ', '.join(sorted(
-                                  SUPPORTED_ANALYZER_EXTENSIONS)) + ".")
+                             "are: " +
+                             ', '.join(SUPPORTED_ANALYZER_EXTENSIONS) + ".")
 
     parser.add_argument('--meta',
                         nargs='*',

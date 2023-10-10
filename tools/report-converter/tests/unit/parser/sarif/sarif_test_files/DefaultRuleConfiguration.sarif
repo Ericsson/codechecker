@@ -1,0 +1,69 @@
+{
+  "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json",
+  "version": "2.1.0",
+  "properties": {
+    "comment": "This sample demonstrates the use of default rule configuration."
+  },
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "SarifSamples",
+          "version": "1.0",
+          "rules": [
+            {
+              "id": "TUT0001",
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "TUT0002",
+              "defaultConfiguration": {
+                "level": "warning",
+                "properties": {
+                  "comment": "'warning' is the default, so this can be omitted."
+                }
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "TUT1001",
+          "ruleIndex": 0,
+          "message": {
+            "text": "This result is an error according to the default rule configuration."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///C:/code/myProject/io/kb.c"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1002",
+          "ruleIndex": 1,
+          "message": {
+            "text": "This result is a warning according to the default rule configuration."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///C:/code/myProject/io/file.c"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "columnKind": "utf16CodeUnits"
+    }
+  ]
+}

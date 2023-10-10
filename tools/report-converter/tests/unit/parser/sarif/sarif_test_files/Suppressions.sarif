@@ -1,0 +1,131 @@
+{
+  "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json",
+  "version": "2.1.0",
+  "properties": {
+    "comment": "This sample demonstrates how suppressions affect the visibility of results in SARIF viewers."
+  },
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "SarifSamples",
+          "version": "1.0"
+        }
+      },
+      "results": [
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "This result is visible because it is not suppressed."
+          }
+        },
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "This result is hidden because it is suppressed in source."
+          },
+          "suppressions": [
+            {
+              "kind": "inSource"
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "This result is hidden because it is suppressed externally."
+          },
+          "suppressions": [
+            {
+              "kind": "external"
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "This result is visible because its suppression was rejected."
+          },
+          "suppressions": [
+            {
+              "kind": "external",
+              "status": "rejected"
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "This result is hidden because its suppression was accepted."
+          },
+          "suppressions": [
+            {
+              "kind": "external",
+              "status": "accepted"
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "This result is visible because its suppression is still under review."
+          },
+          "suppressions": [
+            {
+              "kind": "external",
+              "status": "underReview"
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "This result is hidden because at least one suppression was accepted."
+          },
+          "suppressions": [
+            {
+              "kind": "external",
+              "status": "accepted"
+            },
+            {
+              "kind": "external",
+              "status": "rejected"
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "This result is hidden because it has at least one unqualified suppression."
+          },
+          "suppressions": [
+            {
+              "kind": "external"
+            },
+            {
+              "kind": "external",
+              "status": "rejected"
+            }
+          ]
+        },
+        {
+          "ruleId": "TUT1001",
+          "message": {
+            "text": "This result is hidden because at least one suppression has not yet been rejected (it is still under review)."
+          },
+          "suppressions": [
+            {
+              "kind": "external",
+              "status": "underReview"
+            },
+            {
+              "kind": "external",
+              "status": "rejected"
+            }
+          ]
+        }
+      ],
+      "columnKind": "utf16CodeUnits"
+    }
+  ]
+}

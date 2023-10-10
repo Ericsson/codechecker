@@ -1,0 +1,34 @@
+{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "CodeScanner",
+          "rules": [
+            {
+              "id": "CS0001",
+              "messageStrings": {
+                "default": {
+                  "text": "Variable '{0}' was used without being initialized."
+                }
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "CS0001",
+          "ruleIndex": 0,
+          "message": {
+            "id": "default",
+            "arguments": [
+              "x"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
