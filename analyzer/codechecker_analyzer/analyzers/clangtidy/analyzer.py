@@ -564,7 +564,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             with open(args.tidy_args_cfg_file, 'r', encoding='utf-8',
                       errors='ignore') as tidy_cfg:
                 handler.analyzer_extra_arguments = \
-                    re.sub(r'\$\((.*?)\)', env.replace_env_var,
+                    re.sub(r'\$\((.*?)\)',
+                           env.replace_env_var(args.tidy_args_cfg_file),
                            tidy_cfg.read().strip())
                 handler.analyzer_extra_arguments = \
                     shlex.split(handler.analyzer_extra_arguments)
