@@ -917,7 +917,7 @@ usage: CodeChecker analyze [-h] [-j JOBS]
                            [-n NAME] [--analyzers ANALYZER [ANALYZER ...]]
                            [--capture-analysis-output] [--generate-reproducer]
                            [--config CONFIG_FILE]
-                           [--cppcheck-args CPPCHECK_ARGS_CFG_FILE]
+                           [--cppcheckargs CPPCHECK_ARGS_CFG_FILE]
                            [--saargs CLANGSA_ARGS_CFG_FILE]
                            [--tidyargs TIDY_ARGS_CFG_FILE]
                            [--timeout TIMEOUT]
@@ -1122,9 +1122,9 @@ analyzer arguments:
                         For more information see the docs: https://github.com/
                         Ericsson/codechecker/tree/master/docs/config_file.md
                         (default: None)
-  --cppcheck-args CPPCHECK_ARGS_CFG_FILE
-                        Configuration file to pass cppcheck command line
-                        arguments.
+  --cppcheckargs CPPCHECK_ARGS_CFG_FILE
+                        File containing argument which will be forwarded
+                        verbatim for Cppcheck.
   --saargs CLANGSA_ARGS_CFG_FILE
                         File containing argument which will be forwarded
                         verbatim for the Clang Static Analyzer.
