@@ -135,6 +135,13 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             .analyzer_binaries[cls.ANALYZER_NAME]
 
     @classmethod
+    def analyzer_env(cls):
+        """
+        Return the env for analyzer.
+        """
+        return analyzer_context.get_context().analyzer_env
+
+    @classmethod
     def analyzer_plugins(cls) -> List[str]:
         """
         Return the list of .so file paths which contain checker plugins to
@@ -171,12 +178,12 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             analyzer_cmd.extend(["-load", plugin])
 
     @classmethod
-    def get_version(cls, env=None):
+    def get_version(cls):
         """ Get analyzer version information. """
         version = [cls.analyzer_binary(), '--version']
         try:
             output = subprocess.check_output(version,
-                                             env=env,
+                                             env=cls.analyzer_env(),
                                              universal_newlines=True,
                                              encoding="utf-8",
                                              errors="ignore")
@@ -578,7 +585,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         return clang
 
     @classmethod
-    def version_compatible(cls, configured_binary, environ):
+    def version_compatible(cls):
         """
         Check the version compatibility of the given analyzer binary.
         """

@@ -524,7 +524,7 @@ def __print_checker_config(args: argparse.Namespace):
 
     working_analyzers, errored = analyzer_types.check_supported_analyzers(
         args.analyzers)
-    analyzer_types.check_available_analyzers(working_analyzers, errored)
+    analyzer_types.check_available_analyzers(working_analyzers, errored, args)
 
     if 'details' in args:
         header = ['Option', 'Description']

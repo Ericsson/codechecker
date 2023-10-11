@@ -18,6 +18,8 @@ import shlex
 import subprocess
 from typing import Iterable, List, Set, Tuple
 
+from distutils.version import StrictVersion
+
 import yaml
 
 from codechecker_common.logger import get_logger
@@ -220,12 +222,16 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             .analyzer_binaries[cls.ANALYZER_NAME]
 
     @classmethod
-    def get_version(cls, env=None):
+    def analyzer_env(cls):
+        return analyzer_context.get_context().analyzer_env
+
+    @classmethod
+    def get_version(cls):
         """ Get analyzer version information. """
         version = [cls.analyzer_binary(), '--version']
         try:
             output = subprocess.check_output(version,
-                                             env=env,
+                                             env=cls.analyzer_env(),
                                              universal_newlines=True,
                                              encoding="utf-8",
                                              errors="ignore")
@@ -236,6 +242,21 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             LOG.warning(oerr)
 
         return None
+
+    @classmethod
+    def version_info(cls):
+        """
+        Run the Clang-tidy version command
+        parse the output
+        and return the analyzer's version.
+        """
+        version_output = cls.get_version()
+        version_re = re.compile(r'version\s+(?P<version>[\d\.]+)')
+        match = version_re.search(version_output)
+        if match:
+            return StrictVersion(match.group('version'))
+        else:
+            return None
 
     def add_checker_config(self, checker_cfg):
         LOG.error("Not implemented yet")
@@ -533,7 +554,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         return clangtidy
 
     @classmethod
-    def version_compatible(cls, configured_binary, environ):
+    def version_compatible(cls):
         """
         Check the version compatibility of the given analyzer binary.
         """

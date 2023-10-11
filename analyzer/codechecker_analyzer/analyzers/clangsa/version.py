@@ -31,6 +31,11 @@ class ClangVersionInfo:
         self.installed_dir = str(installed_dir)
         self.vendor = str(vendor)
 
+    def __str__(self):
+        return f"{self.major_version}." \
+            f"{self.minor_version}." \
+            f"{self.patch_version}"
+
 
 class ClangVersionInfoParser:
     """

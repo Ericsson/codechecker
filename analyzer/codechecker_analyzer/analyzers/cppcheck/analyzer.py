@@ -60,16 +60,6 @@ def parse_checkers(cppcheck_output):
     return checkers
 
 
-def parse_version(cppcheck_output):
-    """
-    Parse cppcheck version output and return the version number.
-    """
-    version_re = re.compile(r'^Cppcheck (?P<version>[\d\.]+)')
-    match = version_re.match(cppcheck_output)
-    if match:
-        return StrictVersion(match.group('version'))
-
-
 class Cppcheck(analyzer_base.SourceAnalyzer):
     """
     Constructs the Cppcheck analyzer commands.
@@ -83,12 +73,16 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             .analyzer_binaries[cls.ANALYZER_NAME]
 
     @classmethod
-    def get_version(cls, env=None):
+    def analyzer_env(cls):
+        return os.environ
+
+    @classmethod
+    def get_version(cls):
         """ Get analyzer version information. """
         version = [cls.analyzer_binary(), '--version']
         try:
             output = subprocess.check_output(version,
-                                             env=env,
+                                             env=cls.analyzer_env(),
                                              universal_newlines=True,
                                              encoding="utf-8",
                                              errors="ignore")
@@ -334,29 +328,26 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         return cppcheck
 
     @classmethod
-    def __get_analyzer_version(cls, analyzer_binary, env):
+    def version_info(cls):
         """
-        Return the analyzer version.
+        Run the Cppcheck version command
+        parse the output
+        and return the analyzer's version.
         """
-        command = [analyzer_binary, "--version"]
-
-        try:
-            result = subprocess.check_output(
-                    command,
-                    env=env,
-                    encoding="utf-8",
-                    errors="ignore")
-            return parse_version(result)
-        except (subprocess.CalledProcessError, OSError):
-            return []
+        version_output = cls.get_version()
+        version_re = re.compile(r'^Cppcheck (?P<version>[\d\.]+)')
+        match = version_re.match(version_output)
+        if match:
+            return StrictVersion(match.group('version'))
+        else:
+            return None
 
     @classmethod
-    def version_compatible(cls, configured_binary, environ):
+    def version_compatible(cls):
         """
         Check the version compatibility of the given analyzer binary.
         """
-        analyzer_version = \
-            cls.__get_analyzer_version(configured_binary, environ)
+        analyzer_version = cls.version_info()
 
         # The analyzer version should be above 1.80 because '--plist-output'
         # argument was introduced in this release.
