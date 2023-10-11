@@ -46,15 +46,7 @@ class Gcc(analyzer_base.SourceAnalyzer):
         return cls.__get_analyzer_version(cls.analyzer_binary(), env)
 
     def add_checker_config(self, checker_cfg):
-        LOG.error("Checker configuration for Gcc is not implemented yet")
-
-    def get_analyzer_mentioned_files(self, output):
-        """
-        Return a collection of files that were mentioned by the analyzer in
-        its standard outputs, which should be analyzer_stdout or
-        analyzer_stderr from a result handler.
-        """
-        pass
+        LOG.warning("Checker configuration for Gcc is not implemented yet")
 
     def construct_analyzer_cmd(self, result_handler):
         """
