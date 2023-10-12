@@ -18,7 +18,7 @@ CHECK#CodeChecker check --build "make gcc_simple" --output $OUTPUT$ --quiet --an
 [] - To store results use the "CodeChecker store" command.
 [] - See --help and the user guide for further options about parsing and storing the reports.
 [] - ----=================----
-[LOW] gcc_simple.cpp:5:3: double-‘free’ of ‘i’ [-Wanalyzer-double-free]
+[LOW] gcc_simple.cpp:5:3: double-‘free’ of ‘i’ [gcc-double-free]
   free(i);
   ^
 
@@ -34,11 +34,11 @@ LOW      |                 1
 ----=================----
 
 ----==== Checker Statistics ====----
------------------------------------------------------
-Checker name           | Severity | Number of reports
------------------------------------------------------
--Wanalyzer-double-free | LOW      |                 1
------------------------------------------------------
+----------------------------------------------
+Checker name    | Severity | Number of reports
+----------------------------------------------
+gcc-double-free | LOW      |                 1
+----------------------------------------------
 ----=================----
 
 ----==== File Statistics ====----

@@ -117,7 +117,8 @@ class Gcc(analyzer_base.SourceAnalyzer):
                     # support cppcheck)
                     renamed_checker_name = \
                         actual_name_to_codechecker_name(warning_name)
-                    checker_list.append((renamed_checker_name, description))
+                    checker_list.append(
+                        (renamed_checker_name, description.strip()))
             return checker_list
         except (subprocess.CalledProcessError) as e:
             LOG.error(e.stderr)
