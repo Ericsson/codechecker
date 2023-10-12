@@ -21,9 +21,12 @@ from codechecker_analyzer import analyzer_context
 
 from .. import analyzer_base
 from ..flag import has_flag
+from ..config_handler import CheckerState
 
 from .config_handler import GccConfigHandler
-from .result_handler import GccResultHandler
+from .result_handler import GccResultHandler, \
+    actual_name_to_codechecker_name, codechecker_name_to_actual_name, \
+    codechecker_name_to_actual_name_disabled
 
 LOG = get_logger('analyzer.gcc')
 
@@ -76,6 +79,13 @@ class Gcc(analyzer_base.SourceAnalyzer):
 
         analyzer_cmd.append('-fdiagnostics-format=sarif-file')
 
+        for checker_name, value in config.checks().items():
+            if value[0] == CheckerState.disabled:
+                # TODO python3.9 removeprefix method would be nicer
+                # than startswith and a hardcoded slicing
+                analyzer_cmd.append(
+                    codechecker_name_to_actual_name_disabled(checker_name))
+
         compile_lang = self.buildaction.lang
         if not has_flag('-x', analyzer_cmd):
             analyzer_cmd.extend(['-x', compile_lang])
@@ -88,11 +98,11 @@ class Gcc(analyzer_base.SourceAnalyzer):
         return analyzer_cmd
 
     @classmethod
-    def get_analyzer_checkers(cls):
+    def get_analyzer_checkers(self):
         """
         Return the list of the supported checkers.
         """
-        command = [cls.analyzer_binary(), "--help=warning"]
+        command = [self.analyzer_binary(), "--help=warning"]
         checker_list = []
 
         try:
@@ -101,8 +111,13 @@ class Gcc(analyzer_base.SourceAnalyzer):
             # Still contains the help message we need to remove.
             for entry in output.decode().split('\n'):
                 warning_name, _, description = entry.strip().partition(' ')
+                # GCC Static Analyzer names start with -Wanalyzer.
                 if warning_name.startswith('-Wanalyzer'):
-                    checker_list.append((warning_name, description))
+                    # Rename the checkers interally (similarly to how we
+                    # support cppcheck)
+                    renamed_checker_name = \
+                        actual_name_to_codechecker_name(warning_name)
+                    checker_list.append((renamed_checker_name, description))
             return checker_list
         except (subprocess.CalledProcessError) as e:
             LOG.error(e.stderr)
@@ -154,21 +169,8 @@ class Gcc(analyzer_base.SourceAnalyzer):
         In case of the configured binary for the analyzer is not found in the
         PATH, this method is used to find a callable binary.
         """
-
-        LOG.error("%s not found in path for GCC!", configured_binary)
-
-        # if os.path.isabs(configured_binary):
-        #     # Do not autoresolve if the path is an absolute path as there
-        #     # is nothing we could auto-resolve that way.
-        #     return False
-
-        # cppcheck = get_binary_in_path(['g++-13'],
-        #                               r'^cppcheck(-\d+(\.\d+){0,2})?$',
-        #                               env)
-
-        # if cppcheck:
-        #     LOG.debug("Using '%s' for Cppcheck!", cppcheck)
-        # return cppcheck
+        # TODO
+        pass
 
     @classmethod
     def __get_analyzer_version(cls, analyzer_binary, env):
@@ -222,7 +224,6 @@ class Gcc(analyzer_base.SourceAnalyzer):
 
     @classmethod
     def construct_config_handler(cls, args):
-        context = analyzer_context.get_context()
         handler = GccConfigHandler()
 
         analyzer_config = defaultdict(list)
@@ -235,24 +236,7 @@ class Gcc(analyzer_base.SourceAnalyzer):
 
         handler.analyzer_config = analyzer_config
 
-        # check_env = context.analyzer_env
-
-        # # Overwrite PATH to contain only the parent of the cppcheck binary.
-        # if os.path.isabs(Gcc.analyzer_binary()):
-        #     check_env['PATH'] = os.path.dirname(Gcc.analyzer_binary())
-
         checkers = cls.get_analyzer_checkers()
-
-        # Cppcheck can and will report with checks that have a different
-        # name than marked in the --errorlist xml. To be able to suppress
-        # these reports, the checkerlist needs to be extended by those found
-        # in the label file.
-        checker_labels = context.checker_labels
-        checkers_from_label = checker_labels.checkers("gcc")
-        parsed_set = set([data[0] for data in checkers])
-        for checker in set(checkers_from_label):
-            if checker not in parsed_set:
-                checkers.append((checker, ""))
 
         try:
             cmdline_checkers = args.ordered_checkers

@@ -27,6 +27,21 @@ from ..result_handler_base import ResultHandler
 LOG = get_logger('analyzer.gcc')
 
 
+def actual_name_to_codechecker_name(actual_name: str):
+    assert actual_name.startswith('-Wanalyzer')
+    return actual_name.replace("-Wanalyzer", "gcc")
+
+
+def codechecker_name_to_actual_name(codechecker_name: str):
+    assert codechecker_name.startswith('gcc')
+    return codechecker_name.replace("gcc", "-Wanalyzer")
+
+
+def codechecker_name_to_actual_name_disabled(codechecker_name: str):
+    assert codechecker_name.startswith('gcc')
+    return codechecker_name.replace("gcc", "-Wno-analyzer")
+
+
 class GccResultHandler(ResultHandler):
     """
     Create analyzer result file for Gcc output.
@@ -57,10 +72,9 @@ class GccResultHandler(ResultHandler):
             source_dir_path=self.source_dir_path)
 
         reports = [r for r in reports if not r.skip(skip_handlers)]
-        # for report in reports:
-        #     # TODO check if prefix cascading still occurs.
-        #     if not report.checker_name.startswith("gcc-"):
-        #         report.checker_name = "gcc-" + report.checker_name
+        for report in reports:
+            report.checker_name = \
+                actual_name_to_codechecker_name(report.checker_name)
 
         hash_type = HashType.PATH_SENSITIVE
         if self.report_hash_type == 'context-free-v2':
