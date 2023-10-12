@@ -580,19 +580,19 @@ class TestReviewStatus(unittest.TestCase):
             lambda r: r.bugHash == UNCOMMENTED_BUG_HASH,
             reports1))
 
-        multi_confirmed_report = next(filter(
+        multi_confirmed_report1 = next(filter(
             lambda r: r.bugHash == MULTI_REPORT_HASH and
             r.reviewData.status == ReviewStatus.CONFIRMED,
             reports1))
-        multi_intentional_report = next(filter(
+        multi_intentional_report1 = next(filter(
             lambda r: r.bugHash == MULTI_REPORT_HASH and
             r.reviewData.status == ReviewStatus.INTENTIONAL,
             reports1))
-        multi_unreviewed_report = next(filter(
+        multi_unreviewed_report1 = next(filter(
             lambda r: r.bugHash == MULTI_REPORT_HASH and
             r.reviewData.status == ReviewStatus.UNREVIEWED,
             reports1), None)
-        multi_false_positive_report = next(filter(
+        multi_false_positive_report1 = next(filter(
             lambda r: r.bugHash == MULTI_REPORT_HASH and
             r.reviewData.status == ReviewStatus.FALSE_POSITIVE,
             reports1))
@@ -611,17 +611,17 @@ class TestReviewStatus(unittest.TestCase):
             "This is intentional")
         self.assertIsNotNone(uncommented_report1.fixedAt)
         self.assertEqual(
-            multi_confirmed_report.reviewData.comment,
+            multi_confirmed_report1.reviewData.comment,
             "Has a source code comment.")
-        self.assertIsNone(multi_confirmed_report.fixedAt)
+        self.assertIsNone(multi_confirmed_report1.fixedAt)
         self.assertEqual(
-            multi_intentional_report.reviewData.comment,
+            multi_intentional_report1.reviewData.comment,
             "Has a different source code comment.")
         # Only the one with no source code comment changes its review status.
         self.assertEqual(
-            multi_false_positive_report.reviewData.comment,
+            multi_false_positive_report1.reviewData.comment,
             "This is false positive.")
-        self.assertIsNone(multi_unreviewed_report)
+        self.assertIsNone(multi_unreviewed_report1)
 
         rule_filter = ReviewStatusRuleFilter(
             reportHashes=[UNCOMMENTED_BUG_HASH])
@@ -652,16 +652,55 @@ class TestReviewStatus(unittest.TestCase):
 
         reports2 = get_all_run_results(self._cc_client, runid2)
 
+        null_deref_report2 = next(filter(
+            lambda r: r.bugHash == NULL_DEREF_BUG_HASH,
+            reports2))
         uncommented_report2 = next(filter(
             lambda r: r.bugHash == UNCOMMENTED_BUG_HASH,
             reports2))
 
+        multi_confirmed_report2 = next(filter(
+            lambda r: r.bugHash == MULTI_REPORT_HASH and
+            r.reviewData.status == ReviewStatus.CONFIRMED,
+            reports2))
+        multi_intentional_report2 = next(filter(
+            lambda r: r.bugHash == MULTI_REPORT_HASH and
+            r.reviewData.status == ReviewStatus.INTENTIONAL,
+            reports2))
+        multi_unreviewed_report2 = next(filter(
+            lambda r: r.bugHash == MULTI_REPORT_HASH and
+            r.reviewData.status == ReviewStatus.UNREVIEWED,
+            reports2), None)
+        multi_false_positive_report2 = next(filter(
+            lambda r: r.bugHash == MULTI_REPORT_HASH and
+            r.reviewData.status == ReviewStatus.FALSE_POSITIVE,
+            reports2))
+
+        self.assertIn(
+            (null_deref_report2.reviewData.status,
+             null_deref_report2.reviewData.comment),
+            map(lambda x:
+                (x['review_status'], x['review_status_comment']),
+                suppress_project_bugs[null_deref_report2.bugHash]))
         self.assertEqual(
             uncommented_report2.reviewData.status,
             ReviewStatus.INTENTIONAL)
         self.assertEqual(
             uncommented_report2.reviewData.comment,
             "This is intentional")
+        self.assertIsNotNone(uncommented_report2.fixedAt)
+        self.assertEqual(
+            multi_confirmed_report2.reviewData.comment,
+            "Has a source code comment.")
+        self.assertIsNone(multi_confirmed_report2.fixedAt)
+        self.assertEqual(
+            multi_intentional_report2.reviewData.comment,
+            "Has a different source code comment.")
+        # Only the one with no source code comment changes its review status.
+        self.assertEqual(
+            multi_false_positive_report2.reviewData.comment,
+            "This is false positive.")
+        self.assertIsNone(multi_unreviewed_report2)
 
         # A report which gets its review status from "ReviewStatus" table at
         # storage should be fixed at its storage immediately if its review
