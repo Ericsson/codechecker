@@ -25,8 +25,7 @@ from ..config_handler import CheckerState
 
 from .config_handler import GccConfigHandler
 from .result_handler import GccResultHandler, \
-    actual_name_to_codechecker_name, codechecker_name_to_actual_name, \
-    codechecker_name_to_actual_name_disabled
+    actual_name_to_codechecker_name, codechecker_name_to_actual_name_disabled
 
 LOG = get_logger('analyzer.gcc')
 
