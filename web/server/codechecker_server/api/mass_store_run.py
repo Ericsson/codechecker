@@ -1189,9 +1189,10 @@ class MassStoreRun:
         # but before first check the performance
         reports_to_rs_rules = session.query(ReviewStatusRule, DBReport) \
             .join(DBReport, DBReport.bug_id == ReviewStatusRule.bug_hash) \
-            .filter(sqlalchemy.and_(DBReport.run_id == run_id,
-                                    ReviewStatusRule.bug_hash.
-                                    in_(self.__new_report_hashes)))
+            .filter(sqlalchemy.and_(
+                DBReport.run_id == run_id,
+                DBReport.review_status_is_in_source == False,
+                ReviewStatusRule.bug_hash.in_(self.__new_report_hashes)))
 
         # Set the newly stored reports
         for review_status, db_report in reports_to_rs_rules:
