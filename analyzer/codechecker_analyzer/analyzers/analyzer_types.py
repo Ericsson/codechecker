@@ -186,9 +186,11 @@ def check_supported_analyzers(analyzers):
         # Check version compatibility of the analyzer binary.
         if analyzer_bin:
             analyzer = supported_analyzers[analyzer_name]
-            if not analyzer.version_compatible(analyzer_bin, check_env):
+            error = analyzer.is_binary_version_incompatible(analyzer_bin,
+                                                            check_env)
+            if error:
                 failed_analyzers.add((analyzer_name,
-                                     "Incompatible version."))
+                                      f"Incompatible version: {error}"))
                 available_analyzer = False
 
         if not analyzer_bin or \
@@ -221,7 +223,9 @@ def construct_analyzer(buildaction,
 
     except Exception as ex:
         LOG.debug_analyzer(ex)
-        return None
+        # We should've detected well before this point that something is off
+        # with the analyzer. We can't recover here.
+        raise
 
 
 def build_config_handlers(args, enabled_analyzers):

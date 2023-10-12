@@ -351,7 +351,7 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             return []
 
     @classmethod
-    def version_compatible(cls, configured_binary, environ):
+    def is_binary_version_incompatible(cls, configured_binary, environ):
         """
         Check the version compatibility of the given analyzer binary.
         """
@@ -361,9 +361,10 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         # The analyzer version should be above 1.80 because '--plist-output'
         # argument was introduced in this release.
         if analyzer_version >= StrictVersion("1.80"):
-            return True
+            return None
 
-        return False
+        return "CppCheck binary found is too old at " \
+               f"v{str(analyzer_version).strip()}; minimum version is 13.0.0."
 
     def construct_result_handler(self, buildaction, report_output,
                                  skiplist_handler):

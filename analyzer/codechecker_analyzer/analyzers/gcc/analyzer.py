@@ -48,6 +48,13 @@ class Gcc(analyzer_base.SourceAnalyzer):
     def add_checker_config(self, checker_cfg):
         LOG.warning("Checker configuration for Gcc is not implemented yet")
 
+    @classmethod
+    def get_analyzer_mentioned_files(self, output):
+        """
+        This is mostly used for CTU, which is absent in GCC.
+        """
+        pass
+
     def construct_analyzer_cmd(self, result_handler):
         """
         Construct analyzer command for gcc.
@@ -185,7 +192,7 @@ class Gcc(analyzer_base.SourceAnalyzer):
         return None
 
     @classmethod
-    def version_compatible(cls, configured_binary, environ):
+    def is_binary_version_incompatible(cls, configured_binary, environ):
         """
         Check the version compatibility of the given analyzer binary.
         """
@@ -196,13 +203,10 @@ class Gcc(analyzer_base.SourceAnalyzer):
         # '-fdiagnostics-format=sarif-file' argument was introduced in this
         # release.
         if analyzer_version >= StrictVersion("13.0.0"):
-            return True
+            return None
 
-        # FIXME: Maybe this isn't to place to emit an error, especially when
-        # we cycle over multiple binarier to find the correct one.
-        LOG.error("GCC binary found is too old at "
-                  f"v{analyzer_version.strip()}; minimum version is 13.0.0.")
-        return False
+        return f"GCC binary found is too old at v{analyzer_version.strip()}; "\
+               "minimum version is 13.0.0."
 
     def construct_result_handler(self, buildaction, report_output,
                                  skiplist_handler):
