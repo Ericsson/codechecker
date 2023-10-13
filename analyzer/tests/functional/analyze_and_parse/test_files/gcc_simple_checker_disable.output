@@ -1,7 +1,7 @@
 NORMAL#CodeChecker log --output $LOGFILE$ --build "make gcc_simple" --quiet
 NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers gcc --enable=sensitive -d gcc-double-free
 NORMAL#CodeChecker parse $OUTPUT$
-CHECK#CodeChecker check --build "make gcc_simple" --output $OUTPUT$ --quiet --analyzers gcc --enable=sensitive -d gcc-double-free
+CHECK#CodeChecker check --build "make gcc_simple" --output $OUTPUT$ --quiet --analyzers gcc --enable=extreme -d gcc-double-free
 -----------------------------------------------
 [] - Starting build...
 [] - Using CodeChecker ld-logger.

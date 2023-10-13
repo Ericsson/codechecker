@@ -48,7 +48,8 @@ class Gcc(analyzer_base.SourceAnalyzer):
         return cls.__get_analyzer_version(cls.analyzer_binary(), env)
 
     def add_checker_config(self, checker_cfg):
-        LOG.warning("Checker configuration for Gcc is not implemented yet")
+        # TODO
+        pass
 
     @classmethod
     def get_analyzer_mentioned_files(self, output):
