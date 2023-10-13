@@ -1820,13 +1820,13 @@ CodeChecker analyze ../codechecker_myProject_build.log -o my_plists
 then the results of the analysis can be printed with
 
 ```sh
-CodeChecker parse ./my_plists
+CodeChecker parse <results>
 ```
 
 The number of reports per checker can be verified with
 
 ```sh
-CodeChecker parse ./my_plists --summary
+CodeChecker parse --summary <results>
 ```
 
 #### `JSON` format of `CodeChecker parse`

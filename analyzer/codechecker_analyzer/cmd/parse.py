@@ -277,6 +277,36 @@ def get_metadata(dir_path: str) -> Optional[Dict]:
     return None
 
 
+def collect_checker_summmary(file_path: str,
+                             checker_stats: Dict[str, int],
+                             statistics: Statistics):
+    """ Collect statistics from the given plist file.
+        By repeatly calling this function with the same checker_stats
+        dict, and statistics object, it will gradually collect the
+        report count of each checker by using a regex.
+    """
+    if os.path.splitext(os.path.basename(file_path))[1] != ".plist":
+        LOG.warning(f"{file_path} file \
+                    has an unsupported file type")
+        return
+
+    try:
+        with open(file_path, 'r') as file:
+            file_content = file.read()
+    except FileNotFoundError as e:
+        LOG.warning(f"{file_path} file not found - {e}")
+        return
+
+    checker_names = re.findall(
+        r"<key>check_name</key>\s*<string>([^<]+)</string>",
+        file_content
+    )
+    if checker_names:
+        for checker_name in checker_names:
+            checker_stats[checker_name] += 1
+            statistics.num_of_reports += 1
+
+
 def main(args):
     """
     Entry point for parsing some analysis results and printing them to the
@@ -426,26 +456,7 @@ def main(args):
 
         for file_path in file_paths:
             if 'summary' in args:
-                if os.path.splitext(
-                            os.path.basename(file_path))[1] != ".plist":
-                    LOG.warning(f"{file_path} file \
-                                has an unsupported file type")
-                    continue
-
-                try:
-                    with open(file_path, 'r') as file:
-                        file_content = file.read()
-                except FileNotFoundError as e:
-                    LOG.warning(f"{file_path} file not found - {e}")
-                    continue
-
-                checker_names = re.findall(
-                    r"<key>check_name</key>\s*<string>([^<]+)</string>",
-                    file_content
-                )
-                if checker_names:
-                    for checker_name in checker_names:
-                        checker_stats[checker_name] += 1
+                collect_checker_summmary(file_path, checker_stats, statistics)
             else:
                 reports = report_file.get_reports(
                     file_path, context.checker_labels, file_cache)
