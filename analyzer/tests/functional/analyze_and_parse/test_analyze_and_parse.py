@@ -776,3 +776,17 @@ class AnalyzeParseTestCase(
                       encoding="utf-8", errors="ignore") as f:
                 content = f.read()
             self.assertTrue(re.search('"url": null', content))
+
+    def test_summary_option(self):
+        """ Test '--summary' flag of parse command. """
+        test_project_notes = os.path.join(self.test_workspaces['NORMAL'],
+                                          "test_files", "notes")
+
+        parse_cmd = ['CodeChecker', 'parse', "--summary",
+                     test_project_notes]
+
+        out, _, _ = call_command(parse_cmd, cwd=self.test_dir,
+                                 env=self.env)
+
+        self.assertIn("Checkers Summary Statistics", out)
+        self.assertIn("alpha.clone.CloneChecker | 1", out)
