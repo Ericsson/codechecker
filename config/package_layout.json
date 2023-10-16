@@ -4,7 +4,7 @@
       "clangsa": "clang",
       "clang-tidy": "clang-tidy",
       "cppcheck": "cppcheck",
-      "gcc": "g++"
+      "gcc": "gcc"
     },
     "clang-apply-replacements": "clang-apply-replacements"
   },
