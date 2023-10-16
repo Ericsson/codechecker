@@ -73,12 +73,12 @@ jobs:
       - name: "Install run-time dependencies (Linux)"
         if: ${{ matrix.os == 'ubuntu-20.04' }}
         run:
-          sudo apt-get update && sudo apt-get install gcc-13 clang clang-tidy cppcheck
+          sudo apt-get update && sudo apt-get install g++-13 clang clang-tidy cppcheck
 
       - name: "Install run-time dependencies (OSX)"
         if: ${{ matrix.os == 'macos-10.15' }}
         run:
-          brew install llvm cppcheck gcc-13
+          brew install llvm cppcheck g++-13
 
       - name: "Install run-time dependencies (Windows)"
         if: ${{ matrix.os == 'windows-2019' }}
