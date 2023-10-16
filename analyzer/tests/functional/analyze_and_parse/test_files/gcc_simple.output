@@ -1,0 +1,57 @@
+NORMAL#CodeChecker log --output $LOGFILE$ --build "make gcc_simple" --quiet
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers gcc --enable=extreme
+NORMAL#CodeChecker parse $OUTPUT$
+CHECK#CodeChecker check --build "make gcc_simple" --output $OUTPUT$ --quiet --analyzers gcc --enable=extreme
+-----------------------------------------------
+[] - Starting build...
+[] - Using CodeChecker ld-logger.
+[] - Build finished successfully.
+[] - Starting static analysis ...
+[] - [1/1] gcc analyzed gcc_simple.cpp successfully.
+[] - ----==== Summary ====----
+[] - Successfully analyzed
+[] -   gcc: 1
+[] - Total analyzed compilation commands: 1
+[] - ----=================----
+[] - Analysis finished.
+[] - To view results in the terminal use the "CodeChecker parse" command.
+[] - To store results use the "CodeChecker store" command.
+[] - See --help and the user guide for further options about parsing and storing the reports.
+[] - ----=================----
+[UNSPECIFIED] gcc_simple.cpp:5:3: double-‘free’ of ‘i’ [gcc-double-free]
+  free(i);
+  ^
+
+Found 1 defect(s) in gcc_simple.cpp
+
+
+----==== Severity Statistics ====----
+-------------------------------
+Severity    | Number of reports
+-------------------------------
+UNSPECIFIED |                 1
+-------------------------------
+----=================----
+
+----==== Checker Statistics ====----
+-------------------------------------------------
+Checker name    | Severity    | Number of reports
+-------------------------------------------------
+gcc-double-free | UNSPECIFIED |                 1
+-------------------------------------------------
+----=================----
+
+----==== File Statistics ====----
+----------------------------------
+File name      | Number of reports
+----------------------------------
+gcc_simple.cpp |                 1
+----------------------------------
+----=================----
+
+----======== Summary ========----
+---------------------------------------------
+Number of processed analyzer result files | 1
+Number of analyzer reports                | 1
+---------------------------------------------
+----=================----

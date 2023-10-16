@@ -1168,11 +1168,13 @@ analyzer arguments:
 
 CodeChecker supports several analyzer tools. Currently, these analyzers are
 the [_Clang Static Analyzer_](http://clang-analyzer.llvm.org),
-[_Clang-Tidy_](http://clang.llvm.org/extra/clang-tidy) and
-[_Cppcheck_](http://cppcheck.sourceforge.net/). `--analyzers` can be
-used to specify which analyzer tool should be used (by default, all supported
-are used). The tools are completely independent, so either can be omitted if
-not present as they are provided by different binaries.
+[_Clang-Tidy_](http://clang.llvm.org/extra/clang-tidy),
+[_Cppcheck_](http://cppcheck.sourceforge.net/) and
+[_GCC Static Analyzer_](https://gcc.gnu.org/wiki/StaticAnalyzer).
+`--analyzers` can be used to specify which analyzer tool should be used (by
+default, all supported are used). The tools are completely independent, so
+either can be omitted if not present as they are provided by different
+binaries.
 
 See [Configure Clang Static Analyzer and checkers](checker_and_analyzer_configuration.md)
 documentation for a more detailed description how to use the `saargs`,

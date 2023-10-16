@@ -578,11 +578,11 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         return clang
 
     @classmethod
-    def version_compatible(cls, configured_binary, environ):
+    def is_binary_version_incompatible(cls, configured_binary, environ):
         """
-        Check the version compatibility of the given analyzer binary.
+        We support pretty much every ClangSA version.
         """
-        return True
+        return None
 
     def construct_result_handler(self, buildaction, report_output,
                                  skiplist_handler):

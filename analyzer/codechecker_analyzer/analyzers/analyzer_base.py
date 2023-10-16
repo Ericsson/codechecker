@@ -17,6 +17,8 @@ import subprocess
 import sys
 import shlex
 
+from typing import Optional
+
 from codechecker_analyzer import analyzer_context
 from codechecker_common.logger import get_logger
 
@@ -55,11 +57,14 @@ class SourceAnalyzer(metaclass=ABCMeta):
         raise NotImplementedError("Subclasses should implement this!")
 
     @classmethod
-    def version_compatible(cls, configured_binary, environ):
+    def is_binary_version_incompatible(cls, configured_binary, environ) \
+            -> Optional[str]:
         """
         CodeChecker can only execute certain versions of analyzers.
-        This function should return True if the analyzer binary is
-        compatible with the current CodeChecker version.
+        Returns a error object (an optional string). If the return value is
+        None, the analyzer binary is compatible with the current CodeChecker
+        version. Otherwise, the it should be a message describing the precise
+        version mismatch.
         """
         raise NotImplementedError("Subclasses should implement this!")
 
