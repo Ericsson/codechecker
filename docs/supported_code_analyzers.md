@@ -1,9 +1,10 @@
 ## Code Analysis tools
-CodeChecker can execute three main `C/C++` static analyzer tools:
+CodeChecker can execute the following static analyzer tools:
 
 - [Clang Tidy](https://clang.llvm.org/extra/clang-tidy/)
 - [Clang Static Analyzer](https://clang-analyzer.llvm.org/)
 - [Cppcheck](https://cppcheck.sourceforge.io/)
+- [GCC Static Analyzer](https://gcc.gnu.org/wiki/StaticAnalyzer)
 
 We have created a separate [converter tool](/tools/report-converter) which
 can be used to convert the output of different source code analyzer tools to a

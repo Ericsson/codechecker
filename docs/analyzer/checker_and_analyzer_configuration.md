@@ -1,4 +1,4 @@
-# Configure Clang Static Analyzer and checkers
+# Configuring Clang Static Analyzer and checkers
 
 ## Analyzer Configuration <a name="analyzer-configuration"></a>
 
@@ -195,11 +195,11 @@ configuration arguments (json in this case) should be in one line :
 -config="{ "Checks": "clang-diagnostic-*,clang-analyzer-*", "WarningsAsErrors": "", "HeaderFilterRegex": "", "AnalyzeTemporaryDtors": false, "CheckOptions": [ { "key": "google-readability-braces-around-statements.ShortStatementLines", "value": "1" }, { "key": "modernize-loop-convert.MaxCopySize", "value": "16" }, { "key": "modernize-loop-convert.NamingStyle", "value": "CamelCase" }, { "key": "modernize-use-nullptr.NullMacros", "value": "NULL" } ] }"
 ```
 
-# Cppcheck
+# Configuring Cppcheck
 
 As of CodeChecker 6.20, Codechecker can now execute the Cppcheck analyzer.
 
-## Configuration
+## Analyzer Configuration
 
 The Cppcheck analyzer can be configured with --analyzer-config cppcheck:* paramterers.
 
@@ -268,6 +268,20 @@ CodeChecker check -l ./compile_commands.json \
   -o ./reports
 ```
 
-# Cppcheck
+# GCC Static Analyzer
+
+As of CodeChecker 6.23, Codechecker can now execute the GCC Static Analyzer.
+
+## Analyzer Configuration
+
+TODO: gcc-too-complex
+
+## Limitations
+
+TODO
+
+Gcc doesn't well with C++. Prefer only running on C.
+
+## Example invocation
 
 TODO
