@@ -1,5 +1,5 @@
 NORMAL#CodeChecker log --output $LOGFILE$ --build "make gcc_simple" --quiet
-NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers gcc --enable=sensitive
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers gcc --enable=extreme
 NORMAL#CodeChecker parse $OUTPUT$
 CHECK#CodeChecker check --build "make gcc_simple" --output $OUTPUT$ --quiet --analyzers gcc --enable=extreme
 -----------------------------------------------
@@ -18,7 +18,7 @@ CHECK#CodeChecker check --build "make gcc_simple" --output $OUTPUT$ --quiet --an
 [] - To store results use the "CodeChecker store" command.
 [] - See --help and the user guide for further options about parsing and storing the reports.
 [] - ----=================----
-[LOW] gcc_simple.cpp:5:3: double-‘free’ of ‘i’ [gcc-double-free]
+[UNSPECIFIED] gcc_simple.cpp:5:3: double-‘free’ of ‘i’ [gcc-double-free]
   free(i);
   ^
 
@@ -26,19 +26,19 @@ Found 1 defect(s) in gcc_simple.cpp
 
 
 ----==== Severity Statistics ====----
-----------------------------
-Severity | Number of reports
-----------------------------
-LOW      |                 1
-----------------------------
+-------------------------------
+Severity    | Number of reports
+-------------------------------
+UNSPECIFIED |                 1
+-------------------------------
 ----=================----
 
 ----==== Checker Statistics ====----
-----------------------------------------------
-Checker name    | Severity | Number of reports
-----------------------------------------------
-gcc-double-free | LOW      |                 1
-----------------------------------------------
+-------------------------------------------------
+Checker name    | Severity    | Number of reports
+-------------------------------------------------
+gcc-double-free | UNSPECIFIED |                 1
+-------------------------------------------------
 ----=================----
 
 ----==== File Statistics ====----
