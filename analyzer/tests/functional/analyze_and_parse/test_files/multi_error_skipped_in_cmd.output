@@ -1,7 +1,7 @@
 NORMAL#CodeChecker log --output $LOGFILE$ --build "make tidy_check multi_error_skipped_in_cmd" --quiet
-NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy --file "*/multi_error_skipped_in_cmd.cpp" -d clang-diagnostic-unused-value -d misc-definitions-in-headers
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clang-tidy --file "*/multi_error_skipped_in_cmd.cpp" -d default -e bugprone-sizeof-expression
 NORMAL#CodeChecker parse $OUTPUT$
-CHECK#CodeChecker check --build "make tidy_check multi_error_skipped_in_cmd" --output $OUTPUT$ --analyzers clang-tidy --quiet --file "*/multi_error_skipped_in_cmd.cpp" -d clang-diagnostic-unused-value -d misc-definitions-in-headers
+CHECK#CodeChecker check --build "make tidy_check multi_error_skipped_in_cmd" --output $OUTPUT$ --analyzers clang-tidy --quiet --file "*/multi_error_skipped_in_cmd.cpp" -d default -e bugprone-sizeof-expression
 -----------------------------------------------
 [] - Starting build...
 [] - Using CodeChecker ld-logger.
