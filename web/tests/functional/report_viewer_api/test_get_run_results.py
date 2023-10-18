@@ -447,3 +447,20 @@ class RunResults(unittest.TestCase):
         self.assertEqual(len(checker_labels), 2)
         self.assertEqual(set(checker_labels[0]), div_zero_labels)
         self.assertEqual(set(checker_labels[1]), set())
+
+    def test_report_blame_info(self):
+        """
+        Get run results and check that blame info exists
+        when get_details is set.
+        """
+        runid = self._runid
+        simple_filter = ReportFilter()
+        run_results = self._cc_client.getRunResults([runid],
+                                                    100,
+                                                    0,
+                                                    None,
+                                                    simple_filter,
+                                                    None,
+                                                    True)
+
+        self.assertTrue(any(res.blameInfo for res in run_results))

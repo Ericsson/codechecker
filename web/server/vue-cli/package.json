@@ -29,7 +29,7 @@
     "@mdi/font": "^6.5.95",
     "chart.js": "^2.9.4",
     "chartjs-plugin-datalabels": "^0.7.0",
-    "codechecker-api": "file:../../api/js/codechecker-api-node/dist/codechecker-api-6.53.0.tgz",
+    "codechecker-api": "file:../../api/js/codechecker-api-node/dist/codechecker-api-6.54.0.tgz",
     "codemirror": "^5.65.0",
     "date-fns": "^2.28.0",
     "js-cookie": "^3.0.1",
