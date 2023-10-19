@@ -66,7 +66,10 @@ def parse_checker_config_old(config_dump):
     config_dump -- clang-tidy config options YAML dump in pre-LLVM15 format.
     """
     reg = re.compile(r'key:\s+(\S+)\s+value:\s+([^\n]+)')
-    return re.findall(reg, config_dump)
+    all = re.findall(reg, config_dump)
+    # tidy emits the checker option with a "." prefix, but we need a ":"
+    all = [(option[0].replace(".", ":"), option[1]) for option in all]
+    return all
 
 
 def parse_checker_config_new(config_dump):
@@ -82,7 +85,7 @@ def parse_checker_config_new(config_dump):
         if 'CheckOptions' not in data:
             return None
 
-        return [[key, value]
+        return [[key.replace(".", ":"), value]
                 for (key, value) in data['CheckOptions'].items()]
     except ImportError:
         return None
