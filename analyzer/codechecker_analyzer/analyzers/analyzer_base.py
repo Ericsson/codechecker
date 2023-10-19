@@ -56,6 +56,17 @@ class SourceAnalyzer(metaclass=ABCMeta):
         """
         raise NotImplementedError("Subclasses should implement this!")
 
+    @abstractmethod
+    def get_binary_version(self, configured_binary, environ, details=False) \
+            -> str:
+        """
+        Return the version number of the binary that CodeChecker found, even
+        if its incompatible. If details is true, additional version information
+        is provided. If details is false, the return value should be
+        convertible to a distutils.version.StrictVersion type.
+        """
+        raise NotImplementedError("Subclasses should implement this!")
+
     @classmethod
     def is_binary_version_incompatible(cls, configured_binary, environ) \
             -> Optional[str]:
