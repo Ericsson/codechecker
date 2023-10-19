@@ -56,26 +56,36 @@ def ThriftClientCall(function):
         except codechecker_api_shared.ttypes.RequestFailed as reqfailure:
             LOG.error('Calling API endpoint: %s', funcName)
             if reqfailure.errorCode ==\
-                    codechecker_api_shared.ttypes.ErrorCode.DATABASE:
-                LOG.error('Database error on server\n%s',
-                          str(reqfailure.message))
-            elif reqfailure.errorCode ==\
-                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED:
-                LOG.error('Authentication denied\n %s',
-                          str(reqfailure.message))
-            elif reqfailure.errorCode ==\
-                    codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED:
-                LOG.error('Unauthorized to access\n %s',
-                          str(reqfailure.message))
-                LOG.error('Ask the product admin for additional access '
-                          'rights.')
-            elif reqfailure.errorCode ==\
-                    codechecker_api_shared.ttypes.ErrorCode.API_MISMATCH:
-                LOG.error('Client/server API mismatch\n %s',
-                          str(reqfailure.message))
+                codechecker_api_shared.ttypes.ErrorCode.GENERAL and \
+                    reqfailure.extraInfo and \
+                    reqfailure.extraInfo[0] == "report_limit":
+                # We handle this error in near the business logic.
+                raise reqfailure
             else:
-                LOG.error('API call error: %s\n%s', funcName, str(reqfailure))
-            sys.exit(1)
+                if reqfailure.errorCode ==\
+                        codechecker_api_shared.ttypes.ErrorCode.DATABASE:
+                    LOG.error('Database error on server\n%s',
+                              str(reqfailure.message))
+                elif reqfailure.errorCode ==\
+                        codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED:
+                    LOG.error('Authentication denied\n %s',
+                              str(reqfailure.message))
+                elif reqfailure.errorCode ==\
+                        codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED:
+                    LOG.error('Unauthorized to access\n %s',
+                              str(reqfailure.message))
+                    LOG.error('Ask the product admin for additional access '
+                              'rights.')
+                elif reqfailure.errorCode ==\
+                        codechecker_api_shared.ttypes.ErrorCode.API_MISMATCH:
+                    LOG.error('Client/server API mismatch\n %s',
+                              str(reqfailure.message))
+                else:
+                    LOG.error('API call error: %s\n%s',
+                              funcName,
+                              str(reqfailure)
+                              )
+                sys.exit(1)
         except TApplicationException as ex:
             LOG.error("Internal server error: %s", str(ex.message))
             sys.exit(1)

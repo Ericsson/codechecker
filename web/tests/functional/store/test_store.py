@@ -62,13 +62,19 @@ class TestStore(unittest.TestCase):
             'workspace': TEST_WORKSPACE,
             'checkers': [],
             'reportdir': os.path.join(TEST_WORKSPACE, 'reports'),
-            'test_project': 'store_test'
+            'test_project': 'store_test',
+            'test_project_2': 'store_limited_product'
         }
 
         # Start or connect to the running CodeChecker server and get connection
         # details.
         print("This test uses a CodeChecker server... connecting...")
         server_access = codechecker.start_or_get_server()
+
+        server_access['viewer_product'] = 'store_limited_product'
+        codechecker.add_test_package_product(server_access, TEST_WORKSPACE,
+                                             report_limit=2)
+
         server_access['viewer_product'] = 'store_test'
         codechecker.add_test_package_product(server_access, TEST_WORKSPACE)
 
@@ -104,6 +110,11 @@ class TestStore(unittest.TestCase):
             'codechecker_cfg']['check_env']
         codechecker.remove_test_package_product(TEST_WORKSPACE, check_env)
 
+        codechecker.remove_test_package_product(
+            TEST_WORKSPACE,
+            check_env,
+            product="store_limited_product")
+
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
@@ -115,7 +126,9 @@ class TestStore(unittest.TestCase):
         print("Running " + test_class + " tests in " + self._test_workspace)
 
         self._test_cfg = env.import_test_cfg(self._test_workspace)
+
         self._codechecker_cfg = self._test_cfg["codechecker_cfg"]
+
         self._test_directory = os.path.dirname(os.path.abspath(inspect.getfile(
             inspect.currentframe())))
         self._temp_workspace = os.path.join(self._codechecker_cfg["workspace"],
@@ -130,13 +143,20 @@ class TestStore(unittest.TestCase):
 
         self.product_name = self._codechecker_cfg['viewer_product']
 
+        self.limited_product_name = self._codechecker_cfg['test_project_2']
+
         # Setup a viewer client to test viewer API calls.
         self._cc_client = env.setup_viewer_client(self._test_workspace)
         self.assertIsNotNone(self._cc_client)
 
         self._pr_client = env.setup_product_client(
             self._test_workspace, product=self.product_name)
+
+        self._limited_pr_client = env.setup_product_client(
+            self._test_workspace, product=self.limited_product_name)
+
         self.assertIsNotNone(self._pr_client)
+        self.assertIsNotNone(self._limited_pr_client)
 
     def test_product_details(self):
         """
@@ -454,3 +474,41 @@ class TestStore(unittest.TestCase):
         reports = json.loads(out)
 
         self.assertEqual(len(reports), 2)
+
+    def test_store_limit(self):
+        """
+        Test store limit of a product.
+        """
+
+        run_name = "limit_test"
+        store_cmd = [
+            env.codechecker_cmd(), "store",
+            self._divide_zero_workspace,
+            "--name", run_name,
+            "--url", env.parts_to_url(self._codechecker_cfg, 'test_project_2'),
+            "--trim-path-prefix", self._divide_zero_workspace,
+            "--verbose", "debug",
+        ]
+
+        _, out, _ = _call_cmd(store_cmd)
+        self.assertIn("Report Limit Exceeded", out)
+
+    def test_store_stats(self):
+        """
+        Tests that the statistics printed during the store command
+        are deduplicated.
+        """
+
+        run_name = "stats_test"
+        store_cmd = [
+            env.codechecker_cmd(), "store",
+            self._same_headers_workspace,
+            "--name", run_name,
+            "--url", env.parts_to_url(self._codechecker_cfg, 'test_project')
+        ]
+
+        _, out, _ = _call_cmd(store_cmd)
+        # There are 9 individual reports, but only 6 unique.
+        # The statistics should only print the unique ones.
+        self.assertIn("Number of analyzer reports                       | 6",
+                      out)

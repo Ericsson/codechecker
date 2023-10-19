@@ -256,13 +256,13 @@ def get_run_names(workspace):
     return import_test_cfg(workspace)['codechecker_cfg']['run_names']
 
 
-def parts_to_url(codechecker_cfg):
+def parts_to_url(codechecker_cfg, product='viewer_product'):
     """
     Creates a product URL string from the test configuration dict.
     """
     return codechecker_cfg['viewer_host'] + ':' + \
         str(codechecker_cfg['viewer_port']) + '/' + \
-        codechecker_cfg['viewer_product']
+        codechecker_cfg[product]
 
 
 def get_workspace(test_id='test'):

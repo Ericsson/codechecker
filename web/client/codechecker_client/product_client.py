@@ -113,10 +113,15 @@ def handle_add_product(args):
     desc = convert.to_b64(args.description) \
         if 'description' in args else None
 
+    report_limit = None
+    if hasattr(args, "report_limit") and args.report_limit:
+        report_limit = int(args.report_limit)
+
     prod = ProductConfiguration(
         endpoint=args.endpoint,
         displayedName_b64=name,
         description_b64=desc,
+        reportLimit=report_limit,
         connection=dbc)
 
     LOG.debug("Sending request to add product...")

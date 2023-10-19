@@ -743,6 +743,15 @@ def __register_products(parser):
                             help="A custom textual description to be shown "
                                  "alongside the product.")
 
+        parser.add_argument('--report-limit',
+                            type=int,
+                            dest="report_limit",
+                            default=argparse.SUPPRESS,
+                            required=False,
+                            help="The maximum number of reports allowed to "
+                                 "store in one run, if exceeded, the store "
+                                 "action will be rejected.")
+
         dbmodes = parser.add_argument_group(
             "database arguments",
             "NOTE: These database arguments are relative to the server "

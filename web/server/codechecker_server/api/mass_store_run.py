@@ -266,12 +266,15 @@ class MassStoreRun:
         self.__analysis_info: Dict[str, AnalysisInfo] = {}
         self.__duration: int = 0
         self.__report_count: int = 0
+        self.__report_limit: int = 0
         self.__wrong_src_code_comments: List[str] = []
         self.__already_added_report_hashes: Set[str] = set()
         self.__severity_map: Dict[str, int] = {}
         self.__new_report_hashes: Dict[str, Tuple] = {}
         self.__all_report_checkers: Set[str] = set()
         self.__added_reports: List[Tuple[DBReport, Report]] = list()
+
+        self.__get_report_limit_for_product()
 
     @property
     def __manager(self):
@@ -1011,6 +1014,7 @@ class MassStoreRun:
                 else:
                     fixed_at = run_history_time
 
+            self.__check_report_count()
             report_id = self.__add_report(
                 session, run_id, report, file_path_to_id,
                 rs_from_source, detection_status, detected_at,
@@ -1068,6 +1072,41 @@ class MassStoreRun:
                     f"'{value}' has wrong format. '{key}' annotations must be "
                     f"'{ALLOWED_ANNOTATIONS[key]['display']}'."
                 )
+
+    def __get_report_limit_for_product(self):
+        with DBSession(self.__config_database) as session:
+            product = session.query(Product).get(self.__product.id)
+            if product.report_limit:
+                self.__report_limit = product.report_limit
+
+    def __check_report_count(self):
+        """
+        This method comparest the already added report count to the report
+        limit, Raises exception if the number of reports is more than the
+        that is configured for the product.
+        """
+        if len(self.__added_reports) >= self.__report_limit:
+            LOG.error("The number of reports in the given report folder is " +
+                      "larger than the allowed." +
+                      f"The limit: {self.__report_limit}!")
+            extra_info = [
+                "report_limit",
+                f"limit:{self.__report_limit}"
+            ]
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.
+                ErrorCode.GENERAL,
+                "**Report Limit Exceeded** " +
+                "This report folder cannot be stored because the number of " +
+                "reports in the result folder is too high. Usually noisy " +
+                "checkers, generating a lot of reports are not useful and " +
+                "it is better to disable them. Run `CodeChecker parse " +
+                "<report_folder>` to gain a better understanding on report " +
+                "counts. Disable checkers that have generated an excessive " +
+                "number of reports and then rerun the analysis to be able " +
+                "to store the results on the server. " +
+                f"Limit: {self.__report_limit}",
+                extra_info)
 
     def __store_reports(
         self,

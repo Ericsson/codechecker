@@ -39,6 +39,7 @@ class Product(Base):
     display_name = Column(String, nullable=False)
     description = Column(Text)
     run_limit = Column(Integer)
+    report_limit = Column(Integer, nullable=False, server_default="500000")
     num_of_runs = Column(Integer, server_default="0")
     latest_storage_date = Column(DateTime, nullable=True)
 
@@ -49,13 +50,15 @@ class Product(Base):
     confidentiality = Column(String, nullable=True)
 
     def __init__(self, endpoint, conn_str, name=None, description=None,
-                 run_limit=None, is_review_status_change_disabled=False,
+                 run_limit=None, report_limit=500000,
+                 is_review_status_change_disabled=False,
                  confidentiality=None):
         self.endpoint = endpoint
         self.connection = conn_str
         self.display_name = name if name else endpoint
         self.description = description
         self.run_limit = run_limit
+        self.report_limit = report_limit
         self.is_review_status_change_disabled = \
             True if is_review_status_change_disabled else False
         self.confidentiality = confidentiality

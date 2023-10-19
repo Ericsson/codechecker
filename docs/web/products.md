@@ -118,6 +118,7 @@ making a new product available on the server.
 ```
 usage: CodeChecker cmd products add [-h] [-n DISPLAY_NAME]
                                     [--description DESCRIPTION]
+                                    [--report-limit REPORT_LIMIT]
                                     [--sqlite SQLITE_FILE | --postgresql]
                                     [--dbaddress DBADDRESS] [--dbport DBPORT]
                                     [--dbusername DBUSERNAME]
@@ -142,6 +143,9 @@ optional arguments:
   --description DESCRIPTION
                         A custom textual description to be shown alongside the
                         product.
+  --report-limit REPORT_LIMIT
+                        The maximum number of reports allowed to store in one
+                        run, if exceeded, the storeaction will be rejected.
 
 database arguments:
   NOTE: These database arguments are relative to the server machine, as it

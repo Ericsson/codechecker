@@ -42,6 +42,27 @@
     <v-row
       class="ma-0"
     >
+      <v-text-field
+        v-if="isSuperUser"
+        :value="productConfig.reportLimit"
+        type="number"
+        label="Report limit"
+        name="report-limit"
+        prepend-icon="mdi-close-octagon"
+        :rules="rules.runLimit"
+        @input="productConfig.reportLimit = $event || null"
+      />
+
+      <tooltip-help-icon>
+        The maximum number of reports allowed to
+        store in one run, if exceeded, the store
+        action will be rejected.
+      </tooltip-help-icon>
+    </v-row>
+
+    <v-row
+      class="ma-0"
+    >
       <v-select
         v-model="confidentialityString"
         label="Information Classification"
@@ -195,6 +216,9 @@ export default {
           v => !!v || "Engine is required"
         ],
         runLimit: [
+          v => (!v || !!v && !isNaN(parseInt(v))) || "Number is required"
+        ],
+        reportLimit: [
           v => (!v || !!v && !isNaN(parseInt(v))) || "Number is required"
         ]
       },
