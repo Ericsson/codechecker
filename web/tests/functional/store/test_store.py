@@ -492,3 +492,23 @@ class TestStore(unittest.TestCase):
 
         _, out, _ = _call_cmd(store_cmd)
         self.assertIn("Report Limit Exceeded", out)
+
+    def test_store_stats(self):
+        """
+        Tests that the statistics printed during the store command
+        are deduplicated.
+        """
+
+        run_name = "stats_test"
+        store_cmd = [
+            env.codechecker_cmd(), "store",
+            self._same_headers_workspace,
+            "--name", run_name,
+            "--url", env.parts_to_url(self._codechecker_cfg, 'test_project')
+        ]
+
+        _, out, _ = _call_cmd(store_cmd)
+        # There are 9 individual reports, but only 6 unique.
+        # The statistics should only print the unique ones.
+        self.assertIn("Number of analyzer reports                       | 6",
+                      out)
