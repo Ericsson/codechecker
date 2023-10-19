@@ -475,9 +475,10 @@ def assemble_zip(inputs,
                 changed_files.update(report.changed_files)
                 continue
             # Need to calculate unique reoirt count to determine report limit
-            unique_reports.add(get_report_path_hash(report))
-
-            stats.add_report(report)
+            report_path_hash = get_report_path_hash(report)
+            if report_path_hash not in unique_reports:
+                unique_reports.add(report_path_hash)
+                stats.add_report(report)
 
             file_paths.update(report.original_files)
             file_report_positions[report.file.original_path].add(report.line)
