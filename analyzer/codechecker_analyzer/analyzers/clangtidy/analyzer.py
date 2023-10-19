@@ -204,6 +204,16 @@ def _add_asterisk_for_group(
     return result
 
 
+def parse_version(tidy_output):
+    """
+    Parse clang-tidy version output and return the version number.
+    """
+    version_re = re.compile(r'.*version (?P<version>[\d\.]+)', re.S)
+    match = version_re.match(tidy_output)
+    if match:
+        return match.group('version')
+
+
 class ClangTidy(analyzer_base.SourceAnalyzer):
     """
     Constructs the clang tidy analyzer commands.
@@ -220,16 +230,18 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             .analyzer_binaries[cls.ANALYZER_NAME]
 
     @classmethod
-    def get_version(cls, env=None):
-        """ Get analyzer version information. """
-        version = [cls.analyzer_binary(), '--version']
+    def get_binary_version(self, configured_binary, environ, details=False) \
+            -> str:
+        version = [configured_binary, '--version']
         try:
             output = subprocess.check_output(version,
-                                             env=env,
+                                             env=environ,
                                              universal_newlines=True,
                                              encoding="utf-8",
                                              errors="ignore")
-            return output
+            if details:
+                return output.strip()
+            return parse_version(output)
         except (subprocess.CalledProcessError, OSError) as oerr:
             LOG.warning("Failed to get analyzer version: %s",
                         ' '.join(version))
@@ -289,6 +301,11 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         """
         Return the analyzer configuration with all checkers enabled.
         """
+
+        tidy_configs = [
+            ("executable", "Use the specified analyzer binary. This "
+                           "supersedes any other method CodeChecker might use "
+                           "to get hold of one.")]
         try:
             result = subprocess.check_output(
                 [cls.analyzer_binary(), "-dump-config", "-checks=*"],
@@ -296,9 +313,10 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                 universal_newlines=True,
                 encoding="utf-8",
                 errors="ignore")
-            return parse_analyzer_config(result)
+            tidy_configs.extend(parse_analyzer_config(result))
         except (subprocess.CalledProcessError, OSError):
-            return []
+            pass
+        return tidy_configs
 
     def get_checker_list(self, config) -> Tuple[List[str], List[str]]:
         """
@@ -583,6 +601,11 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                 isinstance(args.analyzer_config, list):
             for cfg in args.analyzer_config:
                 if cfg.analyzer == cls.ANALYZER_NAME:
+                    if cfg.option == 'executable':
+                        analyzer_base.handle_analyzer_executable_from_config(
+                                cfg.analyzer, cfg.value)
+                        LOG.info(f"Using clang-tidy binary '{cfg.value}'")
+                        continue
                     analyzer_config[cfg.option] = cfg.value
 
         # Reports in headers are hidden by default in clang-tidy. Re-enable it

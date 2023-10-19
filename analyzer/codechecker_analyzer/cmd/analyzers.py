@@ -13,7 +13,6 @@ analyzers available in CodeChecker.
 
 import argparse
 import subprocess
-import sys
 
 from codechecker_report_converter import twodim
 
@@ -51,29 +50,24 @@ def add_arguments_to_parser(parser):
     Add the subcommand's arguments to the given argparse.ArgumentParser.
     """
 
-    working_analyzers, _ = analyzer_types.check_supported_analyzers(
-        analyzer_types.supported_analyzers)
-
     parser.add_argument('--all',
                         dest="all",
                         action='store_true',
                         default=argparse.SUPPRESS,
                         required=False,
-                        help="Show all supported analyzers, not just the "
-                             "available ones.")
+                        help="DEPRECATED.")
 
     parser.add_argument('--details',
                         dest="details",
                         action='store_true',
                         default=argparse.SUPPRESS,
                         required=False,
-                        help="Show details about the analyzers, not just "
-                             "their names.")
+                        help="DEPRECATED.")
 
     parser.add_argument('--dump-config',
                         dest='dump_config',
                         required=False,
-                        choices=working_analyzers,
+                        choices=analyzer_types.supported_analyzers,
                         help="Dump the available checker options for the "
                              "given analyzer to the standard output. "
                              "Currently only clang-tidy supports this option. "
@@ -89,7 +83,7 @@ def add_arguments_to_parser(parser):
                         dest='analyzer_config',
                         required=False,
                         default=argparse.SUPPRESS,
-                        choices=working_analyzers,
+                        choices=analyzer_types.supported_analyzers,
                         help="Show analyzer configuration options. These can "
                              "be given to 'CodeChecker analyze "
                              "--analyzer-config'.")
@@ -118,7 +112,7 @@ def main(args):
     logger.setup_logger(args.verbose if 'verbose' in args else None, stream)
 
     context = analyzer_context.get_context()
-    working_analyzers, errored = \
+    _, errored = \
         analyzer_types.check_supported_analyzers(
             analyzer_types.supported_analyzers)
 
@@ -158,63 +152,50 @@ def main(args):
         return text.lower().replace(' ', '_')
 
     if 'analyzer_config' in args:
-        if 'details' in args:
-            header = ['Option', 'Description']
-        else:
-            header = ['Option']
+        header = ['Option', 'Description']
 
         if args.output_format in ['csv', 'json']:
             header = list(map(uglify, header))
 
-        analyzer = args.analyzer_config
-        analyzer_class = analyzer_types.supported_analyzers[analyzer]
+        analyzer_name = args.analyzer_config
+        analyzer_class = analyzer_types.supported_analyzers[analyzer_name]
 
         configs = analyzer_class.get_analyzer_config()
         if not configs:
-            LOG.error("Failed to get analyzer configuration options for '%s' "
-                      "analyzer! Please try to upgrade your analyzer version "
-                      "to use this feature.", analyzer)
-            sys.exit(1)
+            LOG.warning("No analyzer configurations found for "
+                        f"'{analyzer_name}'. If you suspsect this shouldn't "
+                        "be the case, try to update your analyzer or check "
+                        "whether CodeChecker found the intended binary.")
 
-        rows = [(':'.join((analyzer, c[0])), c[1]) if 'details' in args
-                else (':'.join((analyzer, c[0])),) for c in configs]
+        rows = [(':'.join((analyzer_name, c[0])), c[1]) for c in configs]
 
         print(twodim.to_str(args.output_format, header, rows))
 
+        for err_analyzer_name, err_reason in errored:
+            if analyzer_name == err_analyzer_name:
+                LOG.warning(
+                    f"Can't analyze with '{analyzer_name}': {err_reason}")
+
         return
 
-    if 'details' in args:
-        header = ['Name', 'Path', 'Version']
-    else:
-        header = ['Name']
+    header = ['Name', 'Path', 'Version']
 
     if args.output_format in ['csv', 'json']:
         header = list(map(uglify, header))
 
     rows = []
-    for analyzer in working_analyzers:
-        if 'details' not in args:
-            rows.append([analyzer])
-        else:
-            binary = context.analyzer_binaries.get(analyzer)
-            try:
-                version = subprocess.check_output(
-                    [binary, '--version'], encoding="utf-8", errors="ignore")
-            except (subprocess.CalledProcessError, OSError):
-                version = 'ERROR'
+    for analyzer_name in analyzer_types.supported_analyzers:
+        analyzer_class = analyzer_types.supported_analyzers[analyzer_name]
+        binary = context.analyzer_binaries.get(analyzer_name)
+        check_env = context.analyzer_env
+        version = analyzer_class.get_binary_version(binary, check_env)
+        if not version:
+            version = 'ERROR'
 
-            rows.append([analyzer,
-                         binary,
-                         version])
+        rows.append([analyzer_name, binary, version])
 
-    if 'all' in args:
-        for analyzer, err_reason in errored:
-            if 'details' not in args:
-                rows.append([analyzer])
-            else:
-                rows.append([analyzer,
-                             context.analyzer_binaries.get(analyzer),
-                             err_reason])
+    assert rows
+    print(twodim.to_str(args.output_format, header, rows))
 
-    if rows:
-        print(twodim.to_str(args.output_format, header, rows))
+    for analyzer_name, err_reason in errored:
+        LOG.warning(f"Can't analyze with '{analyzer_name}': {err_reason}")
