@@ -15,6 +15,8 @@ import argparse
 import os
 import sys
 from typing import Dict, Optional, Set
+import re
+from collections import defaultdict
 import fnmatch
 
 from codechecker_report_converter.util import dump_json_output
@@ -232,6 +234,18 @@ def add_arguments_to_parser(parser):
                             "/a/x.cpp and /a/y.cpp then \"/a/*.cpp\" "
                             "selects both.")
 
+    parser.add_argument('--summary',
+                        dest="summary",
+                        required=False,
+                        default=argparse.SUPPRESS,
+                        action='store_true',
+                        help="Statistics for checkers. "
+                             "It can be used to see "
+                             "the number of findings per checker. "
+                             "It is helpful to verify "
+                             "which checkers are generating too many reports "
+                             "in a large report directory.")
+
     logger.add_verbose_arguments(parser)
     parser.set_defaults(
         func=main, func_process_config_file=cmd_config.process_config_file)
@@ -261,6 +275,36 @@ def get_metadata(dir_path: str) -> Optional[Dict]:
         return load_json(metadata_file)
 
     return None
+
+
+def collect_checker_summmary(file_path: str,
+                             checker_stats: Dict[str, int],
+                             statistics: Statistics):
+    """ Collect statistics from the given plist file.
+        By repeatly calling this function with the same checker_stats
+        dict, and statistics object, it will gradually collect the
+        report count of each checker by using a regex.
+    """
+    if os.path.splitext(os.path.basename(file_path))[1] != ".plist":
+        LOG.warning(f"{file_path} file \
+                    has an unsupported file type")
+        return
+
+    try:
+        with open(file_path, 'r') as file:
+            file_content = file.read()
+    except FileNotFoundError as e:
+        LOG.warning(f"{file_path} file not found - {e}")
+        return
+
+    checker_names = re.findall(
+        r"<key>check_name</key>\s*<string>([^<]+)</string>",
+        file_content
+    )
+    if checker_names:
+        for checker_name in checker_names:
+            checker_stats[checker_name] += 1
+            statistics.num_of_reports += 1
 
 
 def main(args):
@@ -384,6 +428,7 @@ def main(args):
     processed_path_hashes = set()
     processed_file_paths = set()
     print_steps = 'print_steps' in args
+    checker_stats = defaultdict(int)
 
     html_builder: Optional[report_to_html.HtmlBuilder] = None
     if export == 'html':
@@ -410,55 +455,62 @@ def main(args):
             file_paths = specifed_file_paths or file_paths
 
         for file_path in file_paths:
-            reports = report_file.get_reports(
-                file_path, context.checker_labels, file_cache)
+            if 'summary' in args:
+                collect_checker_summmary(file_path, checker_stats, statistics)
+            else:
+                reports = report_file.get_reports(
+                    file_path, context.checker_labels, file_cache)
 
-            reports = reports_helper.skip(
-                reports, processed_path_hashes, skip_handlers, suppr_handler,
-                src_comment_status_filter)
+                reports = reports_helper.skip(
+                    reports, processed_path_hashes, skip_handlers,
+                    suppr_handler, src_comment_status_filter)
 
-            statistics.num_of_analyzer_result_files += 1
-            for report in reports:
-                if report.changed_files:
-                    changed_files.update(report.changed_files)
+                statistics.num_of_analyzer_result_files += 1
+                for report in reports:
+                    if report.changed_files:
+                        changed_files.update(report.changed_files)
 
-                statistics.add_report(report)
+                    statistics.add_report(report)
 
-                if trim_path_prefixes:
-                    report.trim_path_prefixes(trim_path_prefixes)
+                    if trim_path_prefixes:
+                        report.trim_path_prefixes(trim_path_prefixes)
 
-            all_reports.extend(reports)
+                all_reports.extend(reports)
 
-            # Print reports continously.
-            if not export:
-                file_report_map = plaintext.get_file_report_map(
-                    reports, file_path, metadata)
-                plaintext.convert(
-                    file_report_map, processed_file_paths, print_steps)
-            elif export == 'html':
-                print(f"Parsing input file '{file_path}'.")
-                report_to_html.convert(
-                    file_path, reports, output_dir_path,
-                    html_builder)
+                # Print reports continously.
+                if not export:
+                    file_report_map = plaintext.get_file_report_map(
+                        reports, file_path, metadata)
+                    plaintext.convert(
+                        file_report_map, processed_file_paths, print_steps)
+                elif export == 'html':
+                    print(f"Parsing input file '{file_path}'.")
+                    report_to_html.convert(
+                        file_path, reports, output_dir_path,
+                        html_builder)
 
-    if export is None:  # Plain text output
+    if 'summary' in args and export is None:
+        statistics.write_checker_summary(checker_stats)
+    elif export is None and 'summary' not in args:  # Plain text output
         statistics.write()
-    elif export == 'html':
+    elif export == 'html' and 'summary' not in args:
         html_builder.finish(output_dir_path, statistics)
-    elif export == 'json':
+    elif export == 'json' and 'summary' not in args:
         data = report_to_json.convert(all_reports)
         dump_json_output(data, get_output_file_path("reports.json"))
-    elif export == 'codeclimate':
+    elif export == 'codeclimate' and 'summary' not in args:
         data = codeclimate.convert(all_reports)
         dump_json_output(data, get_output_file_path("reports.json"))
-    elif export == 'gerrit':
+    elif export == 'gerrit' and 'summary' not in args:
         data = gerrit.convert(all_reports)
         dump_json_output(data, get_output_file_path("reports.json"))
-    elif export == 'baseline':
+    elif export == 'baseline' and 'summary' not in args:
         data = baseline.convert(all_reports)
         output_path = get_output_file_path("reports.baseline")
         if output_path:
             baseline.write(output_path, data)
+    else:
+        LOG.error("Summary and export flags cannot be given at the same time.")
 
     reports_helper.dump_changed_files(changed_files)
 
