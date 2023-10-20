@@ -103,3 +103,8 @@ class ClangTidyAnalyzerResultTestCase(unittest.TestCase):
         self.__check_analyzer_result('tidy3.out', 'test3.hh_clang-tidy.plist',
                                      ['files/test3.cpp', 'files/test3.hh'],
                                      'tidy3_hh.plist')
+
+        self.__check_analyzer_result('tidy3-clang17.out',
+                                     'test3.hh_clang-tidy.plist',
+                                     ['files/test3.cpp', 'files/test3.hh'],
+                                     'tidy3_hh.plist')
