@@ -25,6 +25,15 @@ from codechecker_common.logger import get_logger
 LOG = get_logger('analyzer')
 
 
+def handle_analyzer_executable_from_config(analyzer_name, path):
+    context = analyzer_context.get_context()
+    if not os.path.isfile(path):
+        LOG.error(f"'{path}' is not a path to an analyzer binary "
+                  f"given to --analyzer-config={analyzer_name}:executable!")
+        sys.exit(1)
+    context.analyzer_binaries[analyzer_name] = path
+
+
 class SourceAnalyzer(metaclass=ABCMeta):
     """
     Base class for different source analyzers.
@@ -53,6 +62,17 @@ class SourceAnalyzer(metaclass=ABCMeta):
         """
         In case of the configured binary for the analyzer is not found in the
         PATH, this method is used to find a callable binary.
+        """
+        raise NotImplementedError("Subclasses should implement this!")
+
+    @abstractmethod
+    def get_binary_version(self, configured_binary, environ, details=False) \
+            -> str:
+        """
+        Return the version number of the binary that CodeChecker found, even
+        if its incompatible. If details is true, additional version information
+        is provided. If details is false, the return value should be
+        convertible to a distutils.version.StrictVersion type.
         """
         raise NotImplementedError("Subclasses should implement this!")
 

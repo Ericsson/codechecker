@@ -41,7 +41,8 @@ LOG = get_logger('analyzer')
 
 def parse_clang_help_page(
     command: List[str],
-    start_label: str
+    start_label: str,
+    starting_value: (str, str) = None
 ) -> List[str]:
     """
     Parse the clang help page starting from a specific label.
@@ -75,6 +76,8 @@ def parse_clang_help_page(
         re.compile(r"^\s{3,}(?P<desc>[^\n]+)$")
 
     res = []
+    if starting_value:
+        res.append(starting_value)
 
     flag = None
     desc = []
@@ -171,16 +174,19 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             analyzer_cmd.extend(["-load", plugin])
 
     @classmethod
-    def get_version(cls, env=None):
-        """ Get analyzer version information. """
-        version = [cls.analyzer_binary(), '--version']
+    def get_binary_version(self, configured_binary, environ, details=False) \
+            -> str:
+        if details:
+            version = [configured_binary, '--version']
+        else:
+            version = [configured_binary, '-dumpversion']
         try:
             output = subprocess.check_output(version,
-                                             env=env,
+                                             env=environ,
                                              universal_newlines=True,
                                              encoding="utf-8",
                                              errors="ignore")
-            return output
+            return output.strip()
         except (subprocess.CalledProcessError, OSError) as oerr:
             LOG.warning("Failed to get analyzer version: %s",
                         ' '.join(version))
@@ -305,7 +311,11 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
         command.append("-analyzer-config-help")
 
-        return parse_clang_help_page(command, 'OPTIONS:')
+        return parse_clang_help_page(
+            command, 'OPTIONS:',
+            ("executable", "Use the specified analyzer binary. This "
+                           "supersedes any other method CodeChecker might use "
+                           "to get hold of one."))
 
     def post_analyze(self, result_handler):
         """
@@ -604,6 +614,22 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
         handler = config_handler.ClangSAConfigHandler(environ)
 
+        handler.checker_config = []
+
+        # TODO: This extra "isinstance" check is needed for
+        # CodeChecker analyzers --analyzer-config. This command also runs
+        # this function in order to construct a config handler.
+        if 'analyzer_config' in args and \
+                isinstance(args.analyzer_config, list):
+            for cfg in args.analyzer_config:
+                if cfg.analyzer == cls.ANALYZER_NAME:
+                    if cfg.option == 'executable':
+                        analyzer_base.handle_analyzer_executable_from_config(
+                                cfg.analyzer, cfg.value)
+                        LOG.info(f"Using clangsa binary '{cfg.value}'")
+                        continue
+                    handler.checker_config.append(f"{cfg.option}={cfg.value}")
+
         handler.report_hash = args.report_hash \
             if 'report_hash' in args else None
 
@@ -682,8 +708,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         handler.set_checker_enabled(
             ReturnValueCollector.checker_collect, False)
 
-        handler.checker_config = []
-
         # TODO: This extra "isinstance" check is needed for
         # CodeChecker checkers --checker-config. This command also runs
         # this function in order to construct a config handler.
@@ -692,14 +716,5 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                 if cfg.analyzer == cls.ANALYZER_NAME:
                     handler.checker_config.append(
                         f"{cfg.checker}:{cfg.option}={cfg.value}")
-
-        # TODO: This extra "isinstance" check is needed for
-        # CodeChecker analyzers --analyzer-config. This command also runs
-        # this function in order to construct a config handler.
-        if 'analyzer_config' in args and \
-                isinstance(args.analyzer_config, list):
-            for cfg in args.analyzer_config:
-                if cfg.analyzer == cls.ANALYZER_NAME:
-                    handler.checker_config.append(f"{cfg.option}={cfg.value}")
 
         return handler

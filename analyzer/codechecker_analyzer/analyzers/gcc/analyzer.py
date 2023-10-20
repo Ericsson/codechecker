@@ -42,11 +42,6 @@ class Gcc(analyzer_base.SourceAnalyzer):
         return analyzer_context.get_context() \
             .analyzer_binaries[cls.ANALYZER_NAME]
 
-    @classmethod
-    def get_version(cls, env=None):
-        """ Get analyzer version information. """
-        return cls.__get_analyzer_version(cls.analyzer_binary(), env)
-
     def add_checker_config(self, checker_cfg):
         # TODO
         pass
@@ -132,7 +127,11 @@ class Gcc(analyzer_base.SourceAnalyzer):
         Config options for gcc.
         """
         # TODO
-        return []
+        gcc_configs = [
+            ("executable", "Use the specified analyzer binary. This "
+                           "supersedes any other method CodeChecker might use "
+                           "to get hold of one.")]
+        return gcc_configs
 
     @classmethod
     def get_checker_config(cls):
@@ -174,19 +173,21 @@ class Gcc(analyzer_base.SourceAnalyzer):
         pass
 
     @classmethod
-    def __get_analyzer_version(cls, analyzer_binary, env):
+    def get_binary_version(self, configured_binary, env, details=False) \
+            -> str:
         """
         Return the analyzer version.
         """
-        # --version outputs a lot of garbage as well (like copyright info),
-        # this only contains the version info.
-        version = [analyzer_binary, '-dumpfullversion']
+        if details:
+            version = [configured_binary, '--version']
+        else:
+            version = [configured_binary, '-dumpfullversion']
         try:
             output = subprocess.check_output(version,
                                              env=env,
                                              encoding="utf-8",
                                              errors="ignore")
-            return output
+            return output.strip()
         except (subprocess.CalledProcessError, OSError) as oerr:
             LOG.warning("Failed to get analyzer version: %s",
                         ' '.join(version))
@@ -200,7 +201,7 @@ class Gcc(analyzer_base.SourceAnalyzer):
         Check the version compatibility of the given analyzer binary.
         """
         analyzer_version = \
-            cls.__get_analyzer_version(configured_binary, environ)
+            cls.get_binary_version(configured_binary, environ)
 
         # The analyzer version should be above 13.0.0 because the
         # '-fdiagnostics-format=sarif-file' argument was introduced in this
@@ -233,6 +234,11 @@ class Gcc(analyzer_base.SourceAnalyzer):
                 isinstance(args.analyzer_config, list):
             for cfg in args.analyzer_config:
                 if cfg.analyzer == cls.ANALYZER_NAME:
+                    if cfg.option == 'executable':
+                        analyzer_base.handle_analyzer_executable_from_config(
+                                cfg.analyzer, cfg.value)
+                        LOG.info(f"Using gcc binary '{cfg.value}'")
+                        continue
                     analyzer_config[cfg.option].append(cfg.value)
 
         handler.analyzer_config = analyzer_config

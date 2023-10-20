@@ -67,7 +67,7 @@ def parse_version(cppcheck_output):
     version_re = re.compile(r'^Cppcheck (?P<version>[\d\.]+)')
     match = version_re.match(cppcheck_output)
     if match:
-        return StrictVersion(match.group('version'))
+        return match.group('version')
 
 
 class Cppcheck(analyzer_base.SourceAnalyzer):
@@ -83,16 +83,19 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             .analyzer_binaries[cls.ANALYZER_NAME]
 
     @classmethod
-    def get_version(cls, env=None):
+    def get_binary_version(self, configured_binary, environ, details=False) \
+            -> str:
         """ Get analyzer version information. """
-        version = [cls.analyzer_binary(), '--version']
+        version = [configured_binary, '--version']
         try:
             output = subprocess.check_output(version,
-                                             env=env,
+                                             env=environ,
                                              universal_newlines=True,
                                              encoding="utf-8",
                                              errors="ignore")
-            return output
+            if details:
+                return output.strip()
+            return parse_version(output)
         except (subprocess.CalledProcessError, OSError) as oerr:
             LOG.warning("Failed to get analyzer version: %s",
                         ' '.join(version))
@@ -257,11 +260,13 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         """
         Config options for cppcheck.
         """
-        return [("addons", "A list of cppcheck addon files."),
+        return [("executable", "Use the specified analyzer binary. This "
+                               "supersedes any other method CodeChecker might "
+                               "use to get hold of one."),
+                ("addons", "A list of cppcheck addon files."),
                 ("libraries", "A list of cppcheck library definiton files."),
                 ("platform", "The platform configuration .xml file."),
-                ("inconclusive", "Enable inconclusive reports.")
-                ]
+                ("inconclusive", "Enable inconclusive reports.")]
 
     @classmethod
     def get_checker_config(cls):
@@ -334,33 +339,16 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         return cppcheck
 
     @classmethod
-    def __get_analyzer_version(cls, analyzer_binary, env):
-        """
-        Return the analyzer version.
-        """
-        command = [analyzer_binary, "--version"]
-
-        try:
-            result = subprocess.check_output(
-                    command,
-                    env=env,
-                    encoding="utf-8",
-                    errors="ignore")
-            return parse_version(result)
-        except (subprocess.CalledProcessError, OSError):
-            return []
-
-    @classmethod
     def is_binary_version_incompatible(cls, configured_binary, environ):
         """
         Check the version compatibility of the given analyzer binary.
         """
         analyzer_version = \
-            cls.__get_analyzer_version(configured_binary, environ)
+            cls.get_binary_version(configured_binary, environ)
 
         # The analyzer version should be above 1.80 because '--plist-output'
         # argument was introduced in this release.
-        if analyzer_version >= StrictVersion("1.80"):
+        if StrictVersion(analyzer_version) >= StrictVersion("1.80"):
             return None
 
         return "CppCheck binary found is too old at " \
@@ -389,6 +377,11 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
                 isinstance(args.analyzer_config, list):
             for cfg in args.analyzer_config:
                 if cfg.analyzer == cls.ANALYZER_NAME:
+                    if cfg.option == 'executable':
+                        analyzer_base.handle_analyzer_executable_from_config(
+                                cfg.analyzer, cfg.value)
+                        LOG.info(f"Using cppcheck binary '{cfg.value}'")
+                        continue
                     analyzer_config[cfg.option].append(cfg.value)
 
         handler.analyzer_config = analyzer_config

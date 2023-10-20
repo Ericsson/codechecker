@@ -143,6 +143,7 @@ def perform_analysis(args, skip_handlers, actions, metadata_tool,
 
     analyzers = args.analyzers if 'analyzers' in args \
         else analyzer_types.supported_analyzers
+    config_map = analyzer_types.build_config_handlers(args, analyzers)
     analyzers, errored = analyzer_types.check_supported_analyzers(analyzers)
     analyzer_types.check_available_analyzers(analyzers, errored)
 
@@ -163,8 +164,6 @@ def perform_analysis(args, skip_handlers, actions, metadata_tool,
             LOG.debug("Statistics can only be used with "
                       "the Clang Static Analyzer.")
             return
-
-    config_map = analyzer_types.build_config_handlers(args, analyzers)
 
     no_checker_analyzers = \
         [a for a in analyzers if not __has_enabled_checker(config_map[a])]
@@ -226,7 +225,8 @@ def perform_analysis(args, skip_handlers, actions, metadata_tool,
 
         # TODO: cppcheck may require a different environment than clang.
         version = analyzer_types.supported_analyzers[analyzer] \
-            .get_version(context.analyzer_env)
+            .get_binary_version(context.analyzer_binaries[analyzer],
+                                context.analyzer_env)
         metadata_info['analyzer_statistics']['version'] = version
 
         metadata_tool['analyzers'][analyzer] = metadata_info

@@ -221,8 +221,7 @@ def construct_analyzer(buildaction,
             LOG.error('Unsupported analyzer type: %s', analyzer_type)
         return analyzer
 
-    except Exception as ex:
-        LOG.debug_analyzer(ex)
+    except Exception:
         # We should've detected well before this point that something is off
         # with the analyzer. We can't recover here.
         raise
