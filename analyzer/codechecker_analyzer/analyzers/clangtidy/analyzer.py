@@ -575,24 +575,6 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         handler.report_hash = args.report_hash \
             if 'report_hash' in args else None
 
-        # FIXME We cannot get the resource dir from the clang-tidy binary,
-        # therefore we get a sibling clang binary which of clang-tidy.
-        # TODO Support "clang-tidy -print-resource-dir" .
-        try:
-            with open(args.tidy_args_cfg_file, 'r', encoding='utf-8',
-                      errors='ignore') as tidy_cfg:
-                handler.analyzer_extra_arguments = \
-                    re.sub(r'\$\((.*?)\)',
-                           env.replace_env_var(args.tidy_args_cfg_file),
-                           tidy_cfg.read().strip())
-                handler.analyzer_extra_arguments = \
-                    shlex.split(handler.analyzer_extra_arguments)
-        except IOError as ioerr:
-            LOG.debug_analyzer(ioerr)
-        except AttributeError as aerr:
-            # No clang tidy arguments file was given in the command line.
-            LOG.debug_analyzer(aerr)
-
         analyzer_config = {}
         # TODO: This extra "isinstance" check is needed for
         # CodeChecker analyzers --analyzer-config. This command also
@@ -612,6 +594,24 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         # if the analyzer doesn't provide any other config options.
         if not analyzer_config:
             analyzer_config["HeaderFilterRegex"] = ".*"
+
+        # FIXME We cannot get the resource dir from the clang-tidy binary,
+        # therefore we get a sibling clang binary which of clang-tidy.
+        # TODO Support "clang-tidy -print-resource-dir" .
+        try:
+            with open(args.tidy_args_cfg_file, 'r', encoding='utf-8',
+                      errors='ignore') as tidy_cfg:
+                handler.analyzer_extra_arguments = \
+                    re.sub(r'\$\((.*?)\)',
+                           env.replace_env_var(args.tidy_args_cfg_file),
+                           tidy_cfg.read().strip())
+                handler.analyzer_extra_arguments = \
+                    shlex.split(handler.analyzer_extra_arguments)
+        except IOError as ioerr:
+            LOG.debug_analyzer(ioerr)
+        except AttributeError as aerr:
+            # No clang tidy arguments file was given in the command line.
+            LOG.debug_analyzer(aerr)
 
         # If both --analyzer-config and -config (in --tidyargs) is given then
         # these need to be merged. Since "HeaderFilterRegex" has a default

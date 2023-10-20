@@ -234,6 +234,11 @@ class Gcc(analyzer_base.SourceAnalyzer):
                 isinstance(args.analyzer_config, list):
             for cfg in args.analyzer_config:
                 if cfg.analyzer == cls.ANALYZER_NAME:
+                    if cfg.option == 'executable':
+                        analyzer_base.handle_analyzer_executable_from_config(
+                                cfg.analyzer, cfg.value)
+                        LOG.info(f"Using gcc binary '{cfg.value}'")
+                        continue
                     analyzer_config[cfg.option].append(cfg.value)
 
         handler.analyzer_config = analyzer_config

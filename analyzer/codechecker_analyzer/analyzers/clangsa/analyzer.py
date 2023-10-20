@@ -614,6 +614,22 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
         handler = config_handler.ClangSAConfigHandler(environ)
 
+        handler.checker_config = []
+
+        # TODO: This extra "isinstance" check is needed for
+        # CodeChecker analyzers --analyzer-config. This command also runs
+        # this function in order to construct a config handler.
+        if 'analyzer_config' in args and \
+                isinstance(args.analyzer_config, list):
+            for cfg in args.analyzer_config:
+                if cfg.analyzer == cls.ANALYZER_NAME:
+                    if cfg.option == 'executable':
+                        analyzer_base.handle_analyzer_executable_from_config(
+                                cfg.analyzer, cfg.value)
+                        LOG.info(f"Using clangsa binary '{cfg.value}'")
+                        continue
+                    handler.checker_config.append(f"{cfg.option}={cfg.value}")
+
         handler.report_hash = args.report_hash \
             if 'report_hash' in args else None
 
@@ -692,8 +708,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         handler.set_checker_enabled(
             ReturnValueCollector.checker_collect, False)
 
-        handler.checker_config = []
-
         # TODO: This extra "isinstance" check is needed for
         # CodeChecker checkers --checker-config. This command also runs
         # this function in order to construct a config handler.
@@ -702,19 +716,5 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                 if cfg.analyzer == cls.ANALYZER_NAME:
                     handler.checker_config.append(
                         f"{cfg.checker}:{cfg.option}={cfg.value}")
-
-        # TODO: This extra "isinstance" check is needed for
-        # CodeChecker analyzers --analyzer-config. This command also runs
-        # this function in order to construct a config handler.
-        if 'analyzer_config' in args and \
-                isinstance(args.analyzer_config, list):
-            for cfg in args.analyzer_config:
-                if cfg.analyzer == cls.ANALYZER_NAME:
-                    if cfg.option == 'executable':
-                        analyzer_base.handle_analyzer_executable_from_config(
-                                cfg.analyzer, cfg.value)
-                        LOG.info(f"Using clangsa binary '{cfg.value}'")
-                        continue
-                    handler.checker_config.append(f"{cfg.option}={cfg.value}")
 
         return handler
