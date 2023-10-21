@@ -898,7 +898,7 @@ class MassStoreRun:
             rs_from_source = SourceReviewStatus()
             try:
                 rs_from_source = \
-                    review_status_handler.get_review_status_from_source(report)
+                    review_status_handler.get_review_status(report)
                 rs_from_source.author = self.user_name
                 rs_from_source.date = run_history_time
             except ValueError as err:
@@ -1095,7 +1095,7 @@ class MassStoreRun:
             .join(DBReport, DBReport.bug_id == ReviewStatusRule.bug_hash) \
             .filter(sqlalchemy.and_(
                 DBReport.run_id == run_id,
-                DBReport.review_status_is_in_source == False,
+                DBReport.review_status_is_in_source.is_(False),
                 ReviewStatusRule.bug_hash.in_(self.__new_report_hashes)))
 
         # Set the newly stored reports
@@ -1354,6 +1354,4 @@ class MassStoreRun:
             if self.__wrong_src_code_comments:
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.SOURCE_FILE,
-                    "Multiple source code comment can be found with the same "
-                    "checker name for same bug!",
                     self.__wrong_src_code_comments)

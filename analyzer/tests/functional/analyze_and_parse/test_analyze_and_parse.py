@@ -232,13 +232,21 @@ class AnalyzeParseTestCase(
 
             # Replace full path only to file name on the following
             # formatted lines:
+            # 1.
             # [severity] /a/b/x.cpp:line:col: message [checker]
             # The replacement on this line will be the following:
             # [severity] x.cpp:line:col: message [checker]
+            # 2.
+            # [] - /a/b/x.cpp contains misspelled ...
+            # The replacement on this line will be the following:
+            # [] - x.cpp contains misspelled ...
             sep = re.escape(os.sep)
             line = re.sub(r'^(\[\w+\]\s)(?P<path>.+{0})'
                           r'(.+\:\d+\:\d+\:\s.*\s\[.*\])$'.format(sep),
                           r'\1\3', line)
+            line = re.sub(r'^\[\] - (?P<path>.+{0})'
+                          r'(.+ contains misspelled.+)'.format(sep),
+                          r'[] - \2', line)
 
             if not any([line.startswith(prefix) for prefix
                         in skip_prefixes]):

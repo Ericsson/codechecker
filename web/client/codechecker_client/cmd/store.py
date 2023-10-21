@@ -38,13 +38,13 @@ from codechecker_report_converter.report import Report, report_file, \
     reports as reports_helper, statistics as report_statistics
 from codechecker_report_converter.report.hash import HashType, \
     get_report_path_hash
-from codechecker_report_converter.source_code_comment_handler import \
-    SourceCodeCommentHandler
 
 from codechecker_client import client as libclient
 from codechecker_client import product
 from codechecker_common import arg, logger, cmd_config
 from codechecker_common.checker_labels import CheckerLabels
+from codechecker_common.source_code_comment_handler import \
+    SourceCodeCommentHandler
 from codechecker_common.util import load_json
 
 from codechecker_web.shared import webserver_context, host_check

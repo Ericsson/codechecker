@@ -35,6 +35,7 @@ from codechecker_report_converter.util import dump_json_output
 
 from codechecker_common import logger
 from codechecker_common.checker_labels import CheckerLabels
+from codechecker_common.review_status_handler import ReviewStatusHandler
 from codechecker_common.util import load_json
 
 from codechecker_web.shared import convert, webserver_context
@@ -181,10 +182,13 @@ def process_run_args(client, run_args_with_tag: Iterable[str]):
 def get_suppressed_reports(reports: List[Report],
                            review_st: List[ttypes.ReviewStatus]) -> List[str]:
     """Returns a list of suppressed report hashes."""
-    return [report.report_hash for report in reports
-            if not report.check_source_code_comments(
-                [ttypes.ReviewStatus._VALUES_TO_NAMES[x]
-                 for x in review_st])]
+    statuses_str = [ttypes.ReviewStatus._VALUES_TO_NAMES[x].lower()
+                    for x in review_st]
+
+    return [
+        report.report_hash for report in reports
+        if report.review_status.status != 'unreviewed' and
+        report.review_status not in statuses_str]
 
 
 def get_report_dir_results(
@@ -197,12 +201,20 @@ def get_report_dir_results(
     Absolute paths are expected to the given report directories.
     """
     all_reports = []
+    review_status_handler = ReviewStatusHandler()
 
     processed_path_hashes = set()
     for _, file_paths in report_file.analyzer_result_files(report_dirs):
         for file_path in file_paths:
             # Get reports.
             reports = report_file.get_reports(file_path, checker_labels)
+
+            try:
+                for report in reports:
+                    report.review_status = \
+                        review_status_handler.get_review_status(report)
+            except ValueError as err:
+                LOG.error(err)
 
             # Skip duplicated reports.
             reports = reports_helper.skip(reports, processed_path_hashes)
@@ -835,9 +847,9 @@ def get_diff_local_dir_remote_run(
 
     report_dir_results = [
         r for r in report_dir_results if
-        r.review_status not in ['false positive', 'intentional'] and
+        r.review_status.status not in ['false_positive', 'intentional'] and
         (r.report_hash not in closed_hashes or
-         r.review_status == 'confirmed')]
+         r.review_status.status == 'confirmed')]
     local_report_hashes = set(r.report_hash for r in report_dir_results)
     local_report_hashes.update(
         baseline.get_report_hashes(baseline_files) - closed_hashes)
@@ -932,9 +944,10 @@ def get_diff_remote_run_local_dir(
 
     report_dir_results = [
         r for r in report_dir_results if
-        r.review_status not in ['false positive', 'intentional'] and
+        r.review_status.status not in ['false_positive', 'intentional'] and
         (r.report_hash not in closed_hashes or
-         r.review_status == 'confirmed')]
+         r.review_status.status == 'confirmed')]
+
     local_report_hashes = set(r.report_hash for r in report_dir_results)
     local_report_hashes.update(
         baseline.get_report_hashes(baseline_files) - closed_hashes)
@@ -1044,16 +1057,17 @@ def get_diff_local_dirs(
     context = webserver_context.get_context()
     statuses_str = [ttypes.ReviewStatus._VALUES_TO_NAMES[x].lower()
                     for x in report_filter.reviewStatus]
+    statuses_str.append('unreviewed')
 
     base_results = get_report_dir_results(
         report_dirs, report_filter, context.checker_labels)
     base_results = [res for res in base_results
-                    if res.check_source_code_comments(statuses_str)]
+                    if res.review_status.status in statuses_str]
 
     new_results = get_report_dir_results(
         new_report_dirs, report_filter, context.checker_labels)
     new_results = [res for res in new_results
-                   if res.check_source_code_comments(statuses_str)]
+                   if res.review_status.status in statuses_str]
 
     base_hashes = set([res.report_hash for res in base_results])
     new_hashes = set([res.report_hash for res in new_results])
@@ -1116,6 +1130,7 @@ def print_reports(
         if output_format == 'plaintext':
             file_report_map = plaintext.get_file_report_map(reports)
             plaintext.convert(
+                ReviewStatusHandler(),
                 file_report_map, processed_file_paths, print_steps)
 
         context = webserver_context.get_context()

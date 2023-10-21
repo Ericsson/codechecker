@@ -24,7 +24,7 @@ from codechecker_analyzer.arg import \
     analyzer_config, checker_config
 
 from codechecker_common import arg, cmd_config, logger
-from codechecker_report_converter.source_code_comment_handler import \
+from codechecker_common.source_code_comment_handler import \
     REVIEW_STATUS_VALUES
 
 from codechecker_analyzer.cmd.analyze import \

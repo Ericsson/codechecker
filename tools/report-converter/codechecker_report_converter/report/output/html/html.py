@@ -249,7 +249,7 @@ class HtmlBuilder:
                 'events': to_bug_path_events(report.bug_path_events),
                 'macros': to_macro_expansions(report.macro_expansions),
                 'notes': to_bug_path_events(report.notes),
-                'reviewStatus': report.review_status,
+                'reviewStatus': report.review_status.formatted_status(),
                 'severity': self.get_severity(report.checker_name)
             })
 

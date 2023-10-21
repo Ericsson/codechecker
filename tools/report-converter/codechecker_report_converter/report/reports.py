@@ -7,7 +7,6 @@
 # -------------------------------------------------------------------------
 
 import logging
-import sys
 
 from typing import Any, Callable, Iterable, List, Optional, Set
 
@@ -58,7 +57,7 @@ def skip(
     processed_path_hashes: Optional[Set[str]] = None,
     skip_handlers: Optional[SkipListHandlers] = None,
     suppr_handler: Optional[GenericSuppressHandler] = None,
-    src_comment_status_filter: Optional[Iterable[str]] = None
+    review_status_filter: Optional[Iterable[str]] = None
 ) -> List[Report]:
     """ Skip reports. """
     kept_reports = []
@@ -74,29 +73,22 @@ def skip(
                       report.checker_name, report.report_hash)
             continue
 
-        if report.source_code_comments:
-            if len(report.source_code_comments) > 1:
-                LOG.error("Multiple source code comment can be found for '%s' "
-                          "checker in '%s' at line %d.", report.checker_name,
-                          report.file.original_path, report.line)
-                sys.exit(1)
-
+        if report.review_status:
             if suppr_handler:
                 if not report.report_hash:
                     LOG.warning("Can't store suppress information for report "
                                 "because no report hash is set: %s", report)
                     continue
 
-                source_code_comment = report.source_code_comments[0]
-                suppr_handler.store_suppress_bug_id(
-                    report.report_hash,
-                    report.file.name,
-                    source_code_comment.message,
-                    source_code_comment.status)
+                if report.review_status.status != 'unreviewed':
+                    suppr_handler.store_suppress_bug_id(
+                        report.report_hash,
+                        report.file.name,
+                        report.review_status.message.decode(),
+                        report.review_status.status)
 
-            if src_comment_status_filter and \
-                    not report.check_source_code_comments(
-                        src_comment_status_filter):
+            if review_status_filter and \
+                    report.review_status.status not in review_status_filter:
                 LOG.debug("Filtered out by --review-status filter option: "
                           "%s:%s [%s] %s [%s]",
                           report.file.original_path, report.line,
@@ -104,8 +96,8 @@ def skip(
                           report.review_status)
                 continue
         else:
-            if src_comment_status_filter and \
-                    'unreviewed' not in src_comment_status_filter:
+            if review_status_filter and \
+                    'unreviewed' not in review_status_filter:
                 LOG.debug("Filtered out by --review-status filter option: "
                           "%s:%s [%s] %s [unreviewed]",
                           report.file.original_path, report.line,
