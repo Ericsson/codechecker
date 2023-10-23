@@ -47,15 +47,17 @@
     - [`checkers`](#checkers)
     - [`analyzers`](#analyzers)
   - [Configuring Clang version](#configuring-clang-version)
-  - [Suppressing False positives (source code comments for review status)](#suppressing-false-positives-source-code-comments-for-review-status)
-    - [Supported formats](#supported-formats)
-    - [Change review status of a specific checker result](#change-review-status-of-a-specific-checker-result)
-    - [Change review status of a specific checker result by using a substring of the checker name](#change-review-status-of-a-specific-checker-result-by-using-a-substring-of-the-checker-name)
-    - [Change review status of all checker result](#change-review-status-of-all-checker-result)
-    - [Change review status of all checker result with C style comment](#change-review-status-of-all-checker-result-with-c-style-comment)
-    - [Multi line comments](#multi-line-comments)
-    - [Multi line C style comments](#multi-line-c-style-comments)
-    - [Change review status for multiple checker results in the same line](#change-review-status-for-multiple-checker-results-in-the-same-line)
+  - [Review status handling](#review-status-handling)
+    - [Setting with source code comments](#setting-with-source-code-comments)
+      - [Supported formats](#supported-formats)
+      - [Change review status of a specific checker result](#change-review-status-of-a-specific-checker-result)
+      - [Change review status of a specific checker result by using a substring of the checker name](#change-review-status-of-a-specific-checker-result-by-using-a-substring-of-the-checker-name)
+      - [Change review status of all checker results](#change-review-status-of-all-checker-results)
+      - [Change review status of all checker results with C style comment](#change-review-status-of-all-checker-results-with-c-style-comment)
+      - [Multi line comments](#multi-line-comments)
+      - [Multi line C style comments](#multi-line-c-style-comments)
+      - [Change review status for multiple checker results in the same line](#change-review-status-for-multiple-checker-results-in-the-same-line)
+    - [Setting with config file](#setting-with-config-file)
 ## Overview
 CodeChecker command line tooling provides sub-commands to perform
 **static code analysis** and to store reports into a **web-based storage**.
@@ -68,7 +70,7 @@ The analysis related use-cases can be fully performed without a web-server.
 * [Execuing Static Analysis](#analyze)
 * [Showing analysis results in the command line](#parse)
 * [Applying code fixes](#fixit)
-* [Suppressing false positives with source-code comments](#suppressing-false-positives-source-code-comments-for-review-status)
+* [Suppressing false positives with source-code comments](#setting-with-source-code-comments)
 
 
 ## Quick Analysis
@@ -2419,41 +2421,53 @@ Clang based tools search by default for
 in a path relative to the tool binary.
 `$(dirname /path/to/tool)/../lib/clang/8.0.0/include`
 
-## Suppressing False positives (source code comments for review status)
+## Review status handling
+
+Users can categorize CodeChecker reports by setting their _review status_. A
+report can be _false positive_ or it can also indicate a _confirmed_ bug.
+Sometimes a bug is _intentional_ in a test code. Developers can review the
+reports and assign such a status accordingly with a short comment message. A
+report is _unreviewed_ by default.
+
+The review status is not only a stateless indication of a report, but takes
+effect in situations when CodeChecker needs to determine the set of outstanding
+bugs. For example, a report with _intentional_ or _false positive_ detection
+status is not considered outstanding, because the analyzed project's developers
+don't need to worry about them.
+
+### Setting with source code comments
 
 Source code comments can be used in the source files to change the review
-status of a specific or all checker results found in a particular line of code.
-Source code comment should be above the line where the defect was found, and
+status of a specific report found in a particular line of code.
+Source code comments should be above the line where the defect was found, and
 __no__ empty lines are allowed between the line with the bug and the source
 code comment.
 
-Comment lines staring with `//` or C style `/**/` comments are supported.
+Comment lines staring with `//` or C style `/**/` comments are both supported.
 Watch out for the comment format!
 
-### Supported formats
+#### Supported formats
 The source code comment has the following format:
-```sh
-// codechecker comment type [checker name] comment
+```c
+// codechecker_<comment type> [<checker name>] comment
 ```
 
-Multiple source code comment types are allowed:
+Several source code comment types are allowed:
 
- * `codechecker_suppress`
- * `codechecker_false_positive`
- * `codechecker_intentional`
- * `codechecker_confirmed`
-
-Source code comment change the `review status` of a bug in the following form:
-
- * `codechecker_suppress` and `codechecker_false_positive` to `False positive`
- * `codechecker_intentional` to `Intentional`
- * `codechecker_confirmed` to `Confirmed`.
-
-Note: `codechecker_suppress` does the same as `codechecker_false_positive`.
+ * `codechecker_suppress`: Sets the review status to _false positive_. These
+    reports are not considered outstanding. The limitations of analyzers may
+    cause false positive reports, these can be categorized by this status value.
+ * `codechecker_false_positive`: Same as `codechecker_suppress`.
+ * `codechecker_intentional`: Sets the review status to _intentional_. These
+    reports are not considered outstanding. For example a bug may be intentional
+    in a test code.
+ * `codechecker_confirmed`: Sets the review status to _confirmed_. This is an
+    indication for developers to deal with this report. Such a report is
+    considered outstanding.
 
 You can read more about review status [here](https://github.com/Ericsson/codechecker/blob/master/www/userguide/userguide.md#userguide-review-status)
 
-### Change review status of a specific checker result
+#### Change review status of a specific checker result
 ```cpp
 void test() {
   int x;
@@ -2462,7 +2476,7 @@ void test() {
 }
 ```
 
-### Change review status of a specific checker result by using a substring of the checker name
+#### Change review status of a specific checker result by using a substring of the checker name
 There is no need to specify the whole checker name in the source code comment
 like `deadcode.DeadStores`, because it will not be resilient to package name
 changes. You are able to specify only a substring of the checker name for the
@@ -2476,7 +2490,7 @@ void test() {
 ```
 
 
-### Change review status of all checker result
+#### Change review status of all checker results
 ```cpp
 void test() {
   int x;
@@ -2485,7 +2499,7 @@ void test() {
 }
 ```
 
-### Change review status of all checker result with C style comment
+#### Change review status of all checker results with C style comment
 ```cpp
 void test() {
   int x;
@@ -2494,7 +2508,7 @@ void test() {
 }
 ```
 
-### Multi line comments
+#### Multi line comments
 ```cpp
 void test() {
   int x;
@@ -2507,7 +2521,7 @@ void test() {
 }
 ```
 
-### Multi line C style comments
+#### Multi line C style comments
 ```cpp
 void test() {
   int x;
@@ -2534,7 +2548,7 @@ void test() {
 }
 ```
 
-### Change review status for multiple checker results in the same line
+#### Change review status for multiple checker results in the same line
 You can change multiple checker reports with a single source code comment:
 
 ```cpp
@@ -2545,7 +2559,7 @@ void test() {
 ```
 
 The limitation of this format is that you can't use separate status or message
-for checkers. To solve this problem you can use one of the following format:
+for checkers. To solve this problem you can use one of the following formats:
 
 ```cpp
 void test_simple() {
@@ -2579,3 +2593,45 @@ void testError2() {
   int x = 1 / 0;
 }
 ```
+
+### Setting with config file
+
+Review status can be configured by a config file in YAML format. This config
+file has to represent a list of review status settings:
+
+```yaml
+- filepath_filter: /path/to/project/test/*
+  checker_filter: core.DivideZero
+  message: Division by zero in test files is automatically intentional.
+  review_status: intentional
+- filepath_filter: /path/to/project/important/module/*
+  message: All reports in this module should be investigated.
+  review_status: confirmed
+- filepath_filter: "*/project/test/*"
+  message: If a filter starts with asterix, then it should be quoted due to YAML format.
+  review_status: suppress
+- report_hash_filter: b85851b34789e35c6acfa1a4aaf65382
+  message: This report is false positive.
+  review_status: false_positive
+```
+
+The fields of a review status settings are:
+
+- `filepath_filter` (optional): A glob to a path where the given review status
+  is applied. A [https://docs.python.org/3/library/glob.html](glob) is a path
+  that may contain shell-style wildcards: `*` substitutes zero or more
+  characters, `?` substitutes exactly one character. This filter option is
+  applied on the full path of a source file, even if `--trim-path-prefix` flag
+  is used later.
+- `checker_filter` (optional): Set the review status for only these checkers'
+  reports.
+- `report_hash_filter` (optional): Set the review status for only the checkers
+  having this report hash. A prefix match is applied on report hashes, so it is
+  enough to provide the beginning of a hash. Make sure to use a quite long
+  prefix so it covers one specific report.
+- `message` (optional): A comment message that describes the reason of the
+  setting.
+- `review_status`: The review status to set.
+
+If none of the `_filter` options is provided, then that setting is not applied
+on any report.

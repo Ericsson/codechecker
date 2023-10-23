@@ -64,7 +64,8 @@ def format_report(report: Report, content_is_not_changed: bool) -> str:
     out = f"[{report.severity}] {file_path}:{report.line}:{report.column}: " \
           f"{report.message} [{report.checker_name}]"
 
-    if content_is_not_changed and report.review_status.status != 'unreviewed':
+    if content_is_not_changed and report.review_status and \
+            report.review_status.status != 'unreviewed':
         out += f" [{report.review_status.formatted_status()}]"
 
     return out

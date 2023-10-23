@@ -12,7 +12,7 @@ in your source code and integrate the static analysis into your CI flow to preve
     - [Step in the docs/examples directory](#step-in-the-docsexamples-directory)
     - [Clean the workspace](#clean-the-workspace)
     - [Log your build](#log-your-build)
-    - [Check the contents of compile_commands.json file](#check-the-contents-of-compile_commandsjson-file)
+    - [Check the contents of compile\_commands.json file](#check-the-contents-of-compile_commandsjson-file)
   - [Step 2: Analyze your code](#step-2-analyze-your-code)
     - [Run the analysis](#run-the-analysis)
     - [View the analysis results in the command line](#view-the-analysis-results-in-the-command-line)
@@ -37,7 +37,7 @@ in your source code and integrate the static analysis into your CI flow to preve
     - [Configure Checkers](#configure-checkers)
     - [Identify files that failed analysis](#identify-files-that-failed-analysis)
   - [Step 8: Integrate CodeChecker into your CI loop](#step-8-integrate-codechecker-into-your-ci-loop)
-    - [Storing & Updating runs](#storing--updating-runs)
+    - [Storing \& Updating runs](#storing--updating-runs)
       - [Alternative 1 (RECOMMENDED): Store the results of each commit in the same run](#alternative-1-recommended-store-the-results-of-each-commit-in-the-same-run)
       - [Alternative 2: Store each analysis in a new run](#alternative-2-store-each-analysis-in-a-new-run)
     - [Use CodeChecker in the CI without a server](#use-codechecker-in-the-ci-without-a-server)
@@ -555,6 +555,10 @@ kept close to the suspicious line of code. Although it is possible, it is not
 recommended to suppress false positives on the Web UI only, because this way
 the suppression will be stored in a database that is unrelated to the source
 code.
+
+It is also possible to suppress multiple reports located in a specific folder
+or reported by a given checker. For further details see
+(this guide)[analyzer/user_guide.md#setting-with-config-file].
 
 ### Ignore modules from your analysis
 You can ignore analysis results for certain files for example 3rd party

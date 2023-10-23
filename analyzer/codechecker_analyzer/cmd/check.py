@@ -21,7 +21,7 @@ import tempfile
 from codechecker_analyzer.analyzers import analyzer_types
 from codechecker_analyzer.arg import \
     OrderedCheckersAction, OrderedConfigAction, \
-    analyzer_config, checker_config
+    analyzer_config, checker_config, existing_abspath
 
 from codechecker_common import arg, cmd_config, logger
 from codechecker_common.source_code_comment_handler import \
@@ -399,6 +399,16 @@ used to generate a log file on the fly.""")
                                     "this time, the analyzer is killed and "
                                     "the analysis is considered as a failed "
                                     "one.")
+
+    analyzer_opts.add_argument('--review-status-config',
+                               dest="review_status_config",
+                               required=False,
+                               type=existing_abspath,
+                               default=argparse.SUPPRESS,
+                               help="Path of review_status.yaml config file "
+                                    "which contains review status settings "
+                                    "assigned to specific directories, "
+                                    "checkers, bug hashes.")
 
     clang_has_z3 = analyzer_types.is_z3_capable()
 
@@ -872,6 +882,7 @@ def main(args):
                           'disable_all',
                           'ordered_checkers',  # --enable and --disable.
                           'timeout',
+                          'review_status_config',
                           'compile_uniqueing',
                           'report_hash',
                           'enable_z3',

@@ -489,7 +489,8 @@ class Report:
             "analyzer_name": self.analyzer_name,
             "category": self.category,
             "type": self.type,
-            "review_status": self.review_status.status,
+            "review_status": self.review_status.status
+            if self.review_status else '',
             "bug_path_events": [e.to_json() for e in self.bug_path_events],
             "bug_path_positions": [
                 p.to_json() for p in self.bug_path_positions],

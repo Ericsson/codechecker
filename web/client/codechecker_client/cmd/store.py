@@ -449,6 +449,10 @@ def assemble_zip(inputs,
 
             files_to_compress.add(skip_file_path)
 
+        review_status_file_path = os.path.join(dir_path, 'review_status.yaml')
+        if os.path.exists(review_status_file_path):
+            files_to_compress.add(review_status_file_path)
+
     LOG.debug("Processing report files ...")
 
     # Currently ProcessPoolExecutor fails completely in windows.

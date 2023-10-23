@@ -86,6 +86,7 @@ def load_json(path: str, default=None, lock=False, display_warning=True):
 
     return ret
 
+
 def get_linef(fp: TextIO, line_no: int) -> str:
     """'fp' should be (readable) file object.
     Return the line content at line_no or an empty line

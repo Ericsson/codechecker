@@ -201,10 +201,21 @@ def get_report_dir_results(
     Absolute paths are expected to the given report directories.
     """
     all_reports = []
-    review_status_handler = ReviewStatusHandler()
 
     processed_path_hashes = set()
-    for _, file_paths in report_file.analyzer_result_files(report_dirs):
+    for report_dir, file_paths in \
+            report_file.analyzer_result_files(report_dirs):
+
+        review_status_handler = ReviewStatusHandler()
+        review_status_cfg = os.path.join(report_dir, 'review_status.yaml')
+        if os.path.isfile(review_status_cfg):
+            try:
+                review_status_handler.set_review_status_config(
+                    review_status_cfg)
+            except ValueError as err:
+                LOG.error(err)
+                sys.exit(1)
+
         for file_path in file_paths:
             # Get reports.
             reports = report_file.get_reports(file_path, checker_labels)

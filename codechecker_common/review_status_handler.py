@@ -7,8 +7,10 @@
 # -------------------------------------------------------------------------
 
 
+import fnmatch
 import os
 from typing import List, Optional
+import yaml
 
 from codechecker_report_converter.report import Report, SourceReviewStatus
 from codechecker_common.logger import get_logger
@@ -33,13 +35,31 @@ class ReviewStatusHandler:
     3. Review status rule:
         A mapping between bug hashes and review statuses set in the GUI.
 
-    TODO: Option 2. will be handled in a future commit.
     TODO: Option 3. should also be covered by this handler class.
     """
+
+    REVIEW_STATUS_OPTIONS = [
+        'false_positive',
+        'suppress',
+        'confirmed',
+        'intentional']
+
+    ALLOWED_FIELDS = [
+        'filepath_filter',
+        'checker_filter',
+        'report_hash_filter',
+        'review_status',
+        'message']
+
     def __init__(self, source_root=''):
+        """
+        TODO: What happens if multiple report directories are stored?
+        """
+        self.__review_status_yaml = None
         self.__source_root = source_root
         self.__source_comment_warnings = []
         self.__source_commets = {}
+        self.__data = None
 
     def __parse_codechecker_review_comment(
         self,
@@ -63,6 +83,46 @@ class ReviewStatusHandler:
 
         return src_comment_data
 
+    def __validate_review_status_yaml_data(self):
+        """
+        This function validates the data read from review_status.yaml file and
+        raises ValueError with the description of the error if the format is
+        invalid.
+        """
+        if not isinstance(self.__data, list):
+            raise ValueError(
+                f"{self.__review_status_yaml} should be a list of review "
+                "status descriptor objects.")
+
+        for item in self.__data:
+            if not isinstance(item, dict):
+                raise ValueError(
+                    f"Format error in {self.__review_status_yaml}: {item} "
+                    "should be a review status descriptor object.")
+
+            for field in item:
+                if field not in ReviewStatusHandler.ALLOWED_FIELDS:
+                    raise ValueError(
+                        f"Format error in {self.__review_status_yaml}: field "
+                        f"'{field}' is not allowed. Available fields are: "
+                        f"{', '.join(ReviewStatusHandler.ALLOWED_FIELDS)}")
+
+            if 'review_status' not in item:
+                raise ValueError(
+                    f"Format error in {self.__review_status_yaml}: "
+                    f"'review_status' field is missing from {item}.")
+
+            if item['review_status'] \
+                    not in ReviewStatusHandler.REVIEW_STATUS_OPTIONS:
+                raise ValueError(
+                    f"Invalid review status field: {item['review_status']} at "
+                    f"{item} in {self.__review_status_yaml}. Available "
+                    f"options are: "
+                    f"{', '.join(ReviewStatusHandler.REVIEW_STATUS_OPTIONS)}.")
+
+            if item['review_status'] == 'suppress':
+                item['review_status'] = 'false_positive'
+
     def get_review_status(self, report: Report) -> SourceReviewStatus:
         """
         Return the review status of the report based on source code comments.
@@ -71,12 +131,83 @@ class ReviewStatusHandler:
         review status returns. This function throws ValueError if the review
         status is ambiguous (see get_review_status_from_source()).
         """
-        rs_from_source = self.get_review_status_from_source(report)
+        # 1. Check if the report has in-source review status setting.
+        review_status = self.get_review_status_from_source(report)
 
-        if rs_from_source:
-            return rs_from_source
+        if review_status:
+            return review_status
 
+        # 2. Check if the report has review status setting in the yaml config.
+        if self.__data:
+            review_status = self.get_review_status_from_config(report)
+            if review_status:
+                return review_status
+
+        # 3. Return "unreviewed" otherwise.
         return SourceReviewStatus(bug_hash=report.report_hash)
+
+    def set_review_status_config(self, config_file):
+        """
+        Set the location of the review_status.yaml config file.
+
+        When the content of multiple report directories are parsed then they
+        may contain separate config files. These need to be given before
+        parsing each report folders.
+        """
+        self.__review_status_yaml = config_file
+
+        with open(self.__review_status_yaml,
+                  encoding='utf-8', errors='ignore') as f:
+            # TODO: Validate format.
+            #  - Can filepath be a list?
+            # TODO: May throw yaml.scanner.ScannerError.
+            try:
+                self.__data = yaml.safe_load(f)
+            except yaml.scanner.ScannerError as err:
+                raise ValueError(
+                    f"Invalid YAML format in {self.__review_status_yaml}:\n"
+                    f"{err}")
+
+        self.__validate_review_status_yaml_data()
+
+    def get_review_status_from_config(
+        self,
+        report: Report
+    ) -> Optional[SourceReviewStatus]:
+        """
+        Return the review status of the given report based on the config file
+        set by set_review_status_config(). If not config file set, or no
+        setting matches the report then None returns.
+        """
+        assert self.__data is not None, \
+            "Review status config file has to be set with " \
+            "set_review_status_config()."
+
+        # TODO: Document "in_source".
+        for item in self.__data:
+            if 'filepath_filter' in item and not fnmatch.fnmatch(
+                    report.file.original_path, item['filepath_filter']):
+                continue
+            if 'checker_filter' in item and \
+                    report.checker_name != item['checker_filter']:
+                continue
+            if 'report_hash_filter' in item and \
+                    not report.report_hash.startswith(
+                        item['report_hash_filter']):
+                continue
+
+            if any(filt in item for filt in
+                   ['filepath_filter', 'checker_filter',
+                    'report_hash_filter']):
+                return SourceReviewStatus(
+                    status=item['review_status'],
+                    message=item['message']
+                    .encode(encoding='utf-8', errors='ignore')
+                    if 'message' in item else b'',
+                    bug_hash=report.report_hash,
+                    in_source=True)
+
+        return None
 
     def get_review_status_from_source(
         self,
@@ -92,6 +223,8 @@ class ReviewStatusHandler:
             contains information about the problem in a string.
         - If the soure file changed (which means that the source comments may
             have replaced, changed or removed) then None returns.
+        - If no review status belongs to the report in the source code, then
+            return None.
         TODO: This function either returns a SourceReviewStatus, or raises an
         exception or returns None. This is too many things that a caller needs
         to handle. The reason is that according to the current behaviors,

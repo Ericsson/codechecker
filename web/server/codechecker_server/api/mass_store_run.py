@@ -895,19 +895,20 @@ class MassStoreRun:
             analyzer_name = mip.checker_to_analyzer.get(
                 report.checker_name, report.analyzer_name)
 
-            rs_from_source = SourceReviewStatus()
+            review_status = SourceReviewStatus()
+
             try:
-                rs_from_source = \
-                    review_status_handler.get_review_status(report)
-                rs_from_source.author = self.user_name
-                rs_from_source.date = run_history_time
+                review_status = review_status_handler.get_review_status(report)
             except ValueError as err:
                 self.__wrong_src_code_comments.append(str(err))
+
+            review_status.author = self.user_name
+            review_status.date = run_history_time
 
             # False positive and intentional reports are considered as closed
             # reports which is indicated with non-null "fixed_at" date.
             fixed_at = None
-            if rs_from_source.status in ['false_positive', 'intentional']:
+            if review_status.status in ['false_positive', 'intentional']:
                 # Keep in mind that now this is not handling review status
                 # rules, only review status source code comments
                 if old_report and old_report.review_status in \
@@ -919,11 +920,11 @@ class MassStoreRun:
             self.__check_report_count()
             report_id = self.__add_report(
                 session, run_id, report, file_path_to_id,
-                rs_from_source, detection_status, detected_at,
+                review_status, detection_status, detected_at,
                 run_history_time, analysis_info, analyzer_name, fixed_at)
 
             self.__new_report_hashes[report.report_hash] = \
-                rs_from_source.status
+                review_status.status
             self.__already_added_report_hashes.add(report_path_hash)
 
             LOG.debug("Storing report done. ID=%d", report_id)
@@ -1061,12 +1062,18 @@ class MassStoreRun:
         # Processing analyzer result files.
         processed_result_file_count = 0
 
-        review_status_handler = ReviewStatusHandler(source_root)
-
         for root_dir_path, _, report_file_paths in os.walk(report_dir):
             LOG.debug("Get reports from '%s' directory", root_dir_path)
 
             skip_handler = get_skip_handler(root_dir_path)
+
+            review_status_handler = ReviewStatusHandler(source_root)
+
+            review_status_cfg = \
+                os.path.join(root_dir_path, 'review_status.yaml')
+            if os.path.isfile(review_status_cfg):
+                review_status_handler.set_review_status_config(
+                    review_status_cfg)
 
             mip = self.__mips[root_dir_path]
             enabled_checkers.update(mip.enabled_checkers)
