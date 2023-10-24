@@ -18,6 +18,8 @@ AnalyzerConfig = collections.namedtuple(
     'AnalyzerConfig', ["analyzer", "option", "value"])
 CheckerConfig = collections.namedtuple(
     "CheckerConfig", ["analyzer", "checker", "option", "value"])
+AnalyzerBinary = collections.namedtuple(
+    "AnalyzerBinary", ["analyzer", "path"])
 
 
 class OrderedCheckersAction(argparse.Action):
@@ -133,3 +135,18 @@ def checker_config(arg: str) -> CheckerConfig:
     return CheckerConfig(
         m.group("analyzer"), m.group("checker"),
         m.group("option"), m.group("value"))
+
+
+def analyzer_binary(arg: str) -> AnalyzerBinary:
+    """
+    This function can be used at "type" argument of argparse.add_argument().
+    It checks the format of --analyzer_binary flag: <analyzer>:<path>
+    """
+    m = re.match(r"(?P<analyzer>.+):(?P<path>.+)", arg)
+
+    if not m:
+        raise argparse.ArgumentTypeError(
+            f"Analyzer binary in wrong format: {arg}, should be "
+            "<analyzer>:</path/to/bin/>")
+
+    return AnalyzerBinary(m.group("analyzer"), m.group("path"))

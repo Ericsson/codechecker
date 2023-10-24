@@ -189,7 +189,10 @@ def check_supported_analyzers(analyzers):
             error = analyzer.is_binary_version_incompatible(check_env)
             if error:
                 failed_analyzers.add((analyzer_name,
-                                      f"Incompatible version: {error}"))
+                                      f"Incompatible version: {error} "
+                                      "Maybe try setting an absolute path to "
+                                      "a different analyzer binary via the "
+                                      "env variable CC_ANALYZER_BIN?"))
                 available_analyzer = False
 
         if not analyzer_bin or \
