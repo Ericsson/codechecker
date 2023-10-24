@@ -904,40 +904,6 @@ def __get_result_source_files(metadata):
     return result_src_files
 
 
-def __parse_CC_ANALYZER_BIN():
-    context = analyzer_context.get_context()
-    if 'CC_ANALYZER_BIN' in context.analyzer_env:
-        had_error = False
-        for value in context.analyzer_env['CC_ANALYZER_BIN'].split(';'):
-            try:
-                analyzer_name, path = analyzer_binary(value)
-            except argparse.ArgumentTypeError as e:
-                LOG.error(e)
-                had_error = True
-                continue
-
-            if analyzer_name not in analyzer_types.supported_analyzers:
-                LOG.error(f"Unsupported analyzer_name name '{analyzer_name}' "
-                          "given to CC_ANALYZER_BIN!")
-                had_error = True
-            if not os.path.isfile(path):
-                LOG.error(f"'{path}' is not a path to an analyzer binary "
-                          "given to CC_ANALYZER_BIN!")
-                had_error = True
-
-            if had_error:
-                continue
-
-            LOG.info(f"Using '{path}' for analyzer '{analyzer_name}'")
-            context.analyzer_binaries[analyzer_name] = path
-
-        if had_error:
-            LOG.info("The value of CC_ANALYZER_BIN should be in the format of "
-                     "CC_ANALYZER_BIN='<analyzer1>:/path/to/bin1;"
-                     "<analyzer2>:/path/to/bin2'")
-            sys.exit(1)
-
-
 def main(args):
     """
     Perform analysis on the given inputs. Possible inputs are a compilation
@@ -1020,7 +986,6 @@ def main(args):
         ctu_or_stats_enabled = True
 
     context = analyzer_context.get_context()
-    __parse_CC_ANALYZER_BIN()
 
     # Number of all the compilation commands in the parsed log files,
     # logged by the logger.
