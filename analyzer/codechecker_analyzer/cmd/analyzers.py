@@ -186,12 +186,12 @@ def main(args):
     rows = []
     for analyzer_name in analyzer_types.supported_analyzers:
         analyzer_class = analyzer_types.supported_analyzers[analyzer_name]
-        binary = context.analyzer_binaries.get(analyzer_name)
         check_env = context.analyzer_env
-        version = analyzer_class.get_binary_version(binary, check_env)
+        version = analyzer_class.get_binary_version(check_env)
         if not version:
             version = 'ERROR'
 
+        binary = context.analyzer_binaries.get(analyzer_name)
         rows.append([analyzer_name, binary, version])
 
     assert rows

@@ -226,8 +226,7 @@ def perform_analysis(args, skip_handlers, actions, metadata_tool,
 
         # TODO: cppcheck may require a different environment than clang.
         version = analyzer_types.supported_analyzers[analyzer] \
-            .get_binary_version(context.analyzer_binaries[analyzer],
-                                context.analyzer_env)
+            .get_binary_version(context.analyzer_env)
         metadata_info['analyzer_statistics']['version'] = version
 
         metadata_tool['analyzers'][analyzer] = metadata_info

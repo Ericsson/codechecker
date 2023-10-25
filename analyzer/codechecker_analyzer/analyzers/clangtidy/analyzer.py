@@ -230,9 +230,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             .analyzer_binaries[cls.ANALYZER_NAME]
 
     @classmethod
-    def get_binary_version(self, configured_binary, environ, details=False) \
-            -> str:
-        version = [configured_binary, '--version']
+    def get_binary_version(self, environ, details=False) -> str:
+        version = [self.analyzer_binary(), '--version']
         try:
             output = subprocess.check_output(version,
                                              env=environ,
@@ -545,7 +544,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         return clangtidy
 
     @classmethod
-    def is_binary_version_incompatible(cls, configured_binary, environ):
+    def is_binary_version_incompatible(cls, environ):
         """
         We support pretty much every Clang-Tidy version.
         """

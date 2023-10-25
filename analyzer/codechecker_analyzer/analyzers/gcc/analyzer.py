@@ -169,18 +169,17 @@ class Gcc(analyzer_base.SourceAnalyzer):
         pass
 
     @classmethod
-    def get_binary_version(self, configured_binary, env, details=False) \
-            -> str:
+    def get_binary_version(self, environ, details=False) -> str:
         """
         Return the analyzer version.
         """
         if details:
-            version = [configured_binary, '--version']
+            version = [self.analyzer_binary(), '--version']
         else:
-            version = [configured_binary, '-dumpfullversion']
+            version = [self.analyzer_binary(), '-dumpfullversion']
         try:
             output = subprocess.check_output(version,
-                                             env=env,
+                                             env=environ,
                                              encoding="utf-8",
                                              errors="ignore")
             return output.strip()
@@ -192,12 +191,11 @@ class Gcc(analyzer_base.SourceAnalyzer):
         return None
 
     @classmethod
-    def is_binary_version_incompatible(cls, configured_binary, environ):
+    def is_binary_version_incompatible(cls, environ):
         """
         Check the version compatibility of the given analyzer binary.
         """
-        analyzer_version = \
-            cls.get_binary_version(configured_binary, environ)
+        analyzer_version = cls.get_binary_version(environ)
 
         # The analyzer version should be above 13.0.0 because the
         # '-fdiagnostics-format=sarif-file' argument was introduced in this

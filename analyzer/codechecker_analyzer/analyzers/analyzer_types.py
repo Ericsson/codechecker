@@ -186,8 +186,7 @@ def check_supported_analyzers(analyzers):
         # Check version compatibility of the analyzer binary.
         if analyzer_bin:
             analyzer = supported_analyzers[analyzer_name]
-            error = analyzer.is_binary_version_incompatible(analyzer_bin,
-                                                            check_env)
+            error = analyzer.is_binary_version_incompatible(check_env)
             if error:
                 failed_analyzers.add((analyzer_name,
                                       f"Incompatible version: {error}"))
