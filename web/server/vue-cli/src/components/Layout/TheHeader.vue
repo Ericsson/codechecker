@@ -62,9 +62,9 @@
         :key="item.name"
         :to="{
           name: item.route,
-          query: queries[item.route] === undefined
+          query: queries[item.query_namespace] === undefined
             ? item.query || {}
-            : queries[item.route]
+            : queries[item.query_namespace]
         }"
         :class="item.active.includes($route.name) &&
           'v-btn--active router-link-active'"
@@ -165,6 +165,7 @@ export default {
       menuButtons: [
         {
           name: "Products",
+          query_namespace: "products",
           icon: "mdi-briefcase-outline",
           route: "products",
           active: [ "products" ],
@@ -173,6 +174,7 @@ export default {
         },
         {
           name: "Runs",
+          query_namespace: "runs",
           icon: "mdi-run-fast",
           route: "runs",
           active: [ "runs", "main_runs" ],
@@ -181,6 +183,7 @@ export default {
         },
         {
           name: "Reports",
+          query_namespace: "report_filter",
           icon: "mdi-bug",
           route: "reports",
           active: [ "reports" ],
@@ -190,6 +193,7 @@ export default {
         },
         {
           name: "Statistics",
+          query_namespace: "report_filter",
           icon: "mdi-chart-line",
           route: "statistics",
           active: [ "statistics" ],
