@@ -42,11 +42,6 @@ class Gcc(analyzer_base.SourceAnalyzer):
         return analyzer_context.get_context() \
             .analyzer_binaries[cls.ANALYZER_NAME]
 
-    @classmethod
-    def get_version(cls, env=None):
-        """ Get analyzer version information. """
-        return cls.__get_analyzer_version(cls.analyzer_binary(), env)
-
     def add_checker_config(self, checker_cfg):
         # TODO
         pass
@@ -174,19 +169,20 @@ class Gcc(analyzer_base.SourceAnalyzer):
         pass
 
     @classmethod
-    def __get_analyzer_version(cls, analyzer_binary, env):
+    def get_binary_version(self, environ, details=False) -> str:
         """
         Return the analyzer version.
         """
-        # --version outputs a lot of garbage as well (like copyright info),
-        # this only contains the version info.
-        version = [analyzer_binary, '-dumpfullversion']
+        if details:
+            version = [self.analyzer_binary(), '--version']
+        else:
+            version = [self.analyzer_binary(), '-dumpfullversion']
         try:
             output = subprocess.check_output(version,
-                                             env=env,
+                                             env=environ,
                                              encoding="utf-8",
                                              errors="ignore")
-            return output
+            return output.strip()
         except (subprocess.CalledProcessError, OSError) as oerr:
             LOG.warning("Failed to get analyzer version: %s",
                         ' '.join(version))
@@ -195,12 +191,11 @@ class Gcc(analyzer_base.SourceAnalyzer):
         return None
 
     @classmethod
-    def is_binary_version_incompatible(cls, configured_binary, environ):
+    def is_binary_version_incompatible(cls, environ):
         """
         Check the version compatibility of the given analyzer binary.
         """
-        analyzer_version = \
-            cls.__get_analyzer_version(configured_binary, environ)
+        analyzer_version = cls.get_binary_version(environ)
 
         # The analyzer version should be above 13.0.0 because the
         # '-fdiagnostics-format=sarif-file' argument was introduced in this

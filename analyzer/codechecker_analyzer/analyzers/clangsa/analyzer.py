@@ -171,16 +171,18 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             analyzer_cmd.extend(["-load", plugin])
 
     @classmethod
-    def get_version(cls, env=None):
-        """ Get analyzer version information. """
-        version = [cls.analyzer_binary(), '--version']
+    def get_binary_version(self, environ, details=False) -> str:
+        if details:
+            version = [self.analyzer_binary(), '--version']
+        else:
+            version = [self.analyzer_binary(), '-dumpversion']
         try:
             output = subprocess.check_output(version,
-                                             env=env,
+                                             env=environ,
                                              universal_newlines=True,
                                              encoding="utf-8",
                                              errors="ignore")
-            return output
+            return output.strip()
         except (subprocess.CalledProcessError, OSError) as oerr:
             LOG.warning("Failed to get analyzer version: %s",
                         ' '.join(version))
@@ -578,7 +580,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         return clang
 
     @classmethod
-    def is_binary_version_incompatible(cls, configured_binary, environ):
+    def is_binary_version_incompatible(cls, environ):
         """
         We support pretty much every ClangSA version.
         """

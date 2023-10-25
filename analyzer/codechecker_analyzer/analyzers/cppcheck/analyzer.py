@@ -67,7 +67,7 @@ def parse_version(cppcheck_output):
     version_re = re.compile(r'^Cppcheck (?P<version>[\d\.]+)')
     match = version_re.match(cppcheck_output)
     if match:
-        return StrictVersion(match.group('version'))
+        return match.group('version')
 
 
 class Cppcheck(analyzer_base.SourceAnalyzer):
@@ -83,16 +83,18 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             .analyzer_binaries[cls.ANALYZER_NAME]
 
     @classmethod
-    def get_version(cls, env=None):
+    def get_binary_version(self, environ, details=False) -> str:
         """ Get analyzer version information. """
-        version = [cls.analyzer_binary(), '--version']
+        version = [self.analyzer_binary(), '--version']
         try:
             output = subprocess.check_output(version,
-                                             env=env,
+                                             env=environ,
                                              universal_newlines=True,
                                              encoding="utf-8",
                                              errors="ignore")
-            return output
+            if details:
+                return output.strip()
+            return parse_version(output)
         except (subprocess.CalledProcessError, OSError) as oerr:
             LOG.warning("Failed to get analyzer version: %s",
                         ' '.join(version))
@@ -334,33 +336,15 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         return cppcheck
 
     @classmethod
-    def __get_analyzer_version(cls, analyzer_binary, env):
-        """
-        Return the analyzer version.
-        """
-        command = [analyzer_binary, "--version"]
-
-        try:
-            result = subprocess.check_output(
-                    command,
-                    env=env,
-                    encoding="utf-8",
-                    errors="ignore")
-            return parse_version(result)
-        except (subprocess.CalledProcessError, OSError):
-            return []
-
-    @classmethod
-    def is_binary_version_incompatible(cls, configured_binary, environ):
+    def is_binary_version_incompatible(cls, environ):
         """
         Check the version compatibility of the given analyzer binary.
         """
-        analyzer_version = \
-            cls.__get_analyzer_version(configured_binary, environ)
+        analyzer_version = cls.get_binary_version(environ)
 
         # The analyzer version should be above 1.80 because '--plist-output'
         # argument was introduced in this release.
-        if analyzer_version >= StrictVersion("1.80"):
+        if StrictVersion(analyzer_version) >= StrictVersion("1.80"):
             return None
 
         return "CppCheck binary found is too old at " \
