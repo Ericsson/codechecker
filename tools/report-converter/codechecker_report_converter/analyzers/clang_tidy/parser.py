@@ -148,21 +148,18 @@ class Parser(BaseParser):
         while self.message_line_re.match(line) is None and \
                 self.note_line_re.match(line) is None:
             match = self.fixit_new_re.match(line)
-            old_format = False
             if not match:
                 match = self.fixit_old_re.match(line)
-                old_format = True
-            message_text = match.group("message")
-            if message_text != '':
-                if old_format:
-                    # Until clang-tidy 16 the fixit
-                    # line starts with white spaces
-                    col = line.find(message_text) + 1
-                else:
-                    # In later versions we have white spaces the
-                    # optionally a line number and then a | character
-                    col = line.find(message_text) - line.find("|") - 1
-                report.bug_path_events.append(BugPathEvent(
+                message_text = match.group("message")
+                # Until Clang 16, the FixIt line starts with whitespace.
+                col = line.find(message_text) + 1
+            else:
+                message_text = match.group("message")
+                # In newer versions, we have whitespace then, optionally
+                # a line number, and then a | character.
+                col = line.find(message_text) - line.find("|") - 1
+
+            report.bug_path_events.append(BugPathEvent(
                     f"{message_text} (fixit)",
                     report.file,
                     report.line,
