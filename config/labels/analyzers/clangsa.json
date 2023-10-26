@@ -327,6 +327,15 @@
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-webkit-uncountedlocalvarschecker",
       "profile:extreme"
     ],
+    "core.BitwiseShift": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-bitwiseshift-c-c",
+      "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "sei-cert:int34-c",
+      "severity:HIGH"
+    ],
     "core.CallAndMessage": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-callandmessage-c-c-objc",
       "guideline:sei-cert",
@@ -933,6 +942,14 @@
       "profile:sensitive",
       "sei-cert:mem51-cpp",
       "severity:MEDIUM"
+    ],
+    "unix.StdCLibraryFunctions": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-stdclibraryfunctions-c",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "profile:security",
+      "severity:HIGH"
     ],
     "unix.Vfork": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-vfork-c",

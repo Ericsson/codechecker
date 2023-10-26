@@ -204,6 +204,13 @@
       "profile:sensitive",
       "severity:LOW"
     ],
+    "bugprone-compare-pointer-to-member-virtual-function": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/compare-pointer-to-member-virtual-function.html",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
     "bugprone-copy-constructor-init": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/copy-constructor-init.html",
       "profile:default",
@@ -228,6 +235,10 @@
     "bugprone-easily-swappable-parameters": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/easily-swappable-parameters.html",
       "profile:extreme",
+      "severity:STYLE"
+    ],
+    "bugprone-empty-catch": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/empty-catch.html",
       "severity:STYLE"
     ],
     "bugprone-exception-escape": [
@@ -281,6 +292,13 @@
       "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
+    ],
+    "bugprone-incorrect-enable-if": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/incorrect-enable-if.html",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:HIGH"
     ],
     "bugprone-incorrect-roundings": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/incorrect-roundings.html",
@@ -360,12 +378,24 @@
       "profile:sensitive",
       "severity:MEDIUM"
     ],
-
     "bugprone-multiple-statement-macro": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/multiple-statement-macro.html",
       "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
+    ],
+    "bugprone-multiple-new-in-one-expression": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/multiple-new-in-one-expression.html",
+      "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "sei-cert:err51-cpp",
+      "sei-cert:exp50-cpp",
+      "sei-cert:mem31-cpp",
+      "sei-cert:mem51-cpp",
+      "sei-cert:mem52-cpp",
+      "severity:HIGH"
     ],
     "bugprone-narrowing-conversions": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/narrowing-conversions.html",
@@ -385,12 +415,24 @@
       "profile:sensitive",
       "severity:MEDIUM"
     ],
+    "bugprone-non-zero-enum-to-bool-conversion": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/non-zero-enum-to-bool-conversion.html",
+      "profile:extreme",
+      "severity:STYLE"
+    ],
     "bugprone-not-null-terminated-result": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/not-null-terminated-result.html",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
+    ],
+    "bugprone-optional-value-conversion": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/optional-value-conversion.html",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
     ],
     "bugprone-parent-virtual-call": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/parent-virtual-call.html",
@@ -636,6 +678,15 @@
       "profile:security",
       "profile:sensitive",
       "sei-cert:err51-cpp",
+      "severity:MEDIUM"
+    ],
+    "bugprone-unique-ptr-array-mismatch": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/unique-ptr-array-mismatch.html",
+      "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "sei-cert:mem51-cpp",
       "severity:MEDIUM"
     ],
     "bugprone-unused-raii": [
@@ -5123,6 +5174,12 @@
       "profile:extreme",
       "severity:LOW"
     ],
+    "cppcoreguidelines-misleading-capture-default-by-value": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/misleading-capture-default-by-value.html",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
     "cppcoreguidelines-missing-std-forward": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/missing-std-forward.html",
       "profile:extreme",
@@ -5132,10 +5189,26 @@
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/narrowing-conversions.html",
       "severity:MEDIUM"
     ],
+    "cppcoreguidelines-noexcept-destructor": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/noexcept-destructor.html",
+      "severity:MEDIUM"
+    ],
+    "cppcoreguidelines-noexcept-move-operations": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/noexcept-move-operations.html",
+      "severity:MEDIUM"
+    ],
+    "cppcoreguidelines-noexcept-swap": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/noexcept-swap.html",
+      "severity:MEDIUM"
+    ],
     "cppcoreguidelines-no-malloc": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/no-malloc.html",
       "profile:extreme",
       "severity:LOW"
+    ],
+    "cppcoreguidelines-no-suspend-with-lock": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/no-suspend-with-lock.html",
+      "severity:MEDIUM"
     ],
     "cppcoreguidelines-non-private-member-variables-in-classes": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/non-private-member-variables-in-classes.html",
@@ -5603,6 +5676,10 @@
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/const-correctness.html",
       "severity:STYLE"
     ],
+    "misc-coroutine-hostile-raii": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/coroutine-hostile-raii.html",
+      "severity:MEDIUM"
+    ],
     "misc-dangling-handle": [
       "doc_url:https://releases.llvm.org/5.0.0/tools/clang/tools/extra/docs/clang-tidy/checks/misc-dangling-handle.html",
       "profile:default",
@@ -6046,6 +6123,12 @@
       "profile:extreme",
       "severity:STYLE"
     ],
+    "modernize-use-constraints": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/modernize/use-constraints.html",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
     "modernize-use-default-member-init": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/modernize/use-default-member-init.html",
       "profile:extreme",
@@ -6083,6 +6166,11 @@
     ],
     "modernize-use-override": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/modernize/use-override.html",
+      "profile:extreme",
+      "severity:LOW"
+    ],
+    "modernize-use-std-print": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/modernize/use-std-print.html",
       "profile:extreme",
       "severity:LOW"
     ],
@@ -6227,8 +6315,22 @@
       "profile:sensitive",
       "severity:LOW"
     ],
+    "performance-noexcept-destructor": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/noexcept-destructor.html",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
     "performance-noexcept-move-constructor": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/noexcept-move-constructor.html",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "performance-noexcept-swap": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/performance/noexcept-swap.html",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
@@ -6419,6 +6521,17 @@
     ],
     "readability-redundant-string-init": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/redundant-string-init.html",
+      "severity:STYLE"
+    ],
+    "readability-reference-to-constructed-temporary": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/reference-to-constructed-temporary.html",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:STYLE"
+    ],
+    "readability-operators-representation": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/operators-representation.html",
       "severity:STYLE"
     ],
     "readability-simplify-boolean-expr": [
