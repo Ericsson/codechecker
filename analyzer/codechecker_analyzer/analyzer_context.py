@@ -220,6 +220,7 @@ class Context(metaclass=Singleton):
                 if not compiler_binary:
                     LOG.debug("'%s' binary can not be found in your PATH!",
                               value)
+                    self.__analyzers[name] = None
                     continue
 
                 self.__analyzers[name] = os.path.realpath(compiler_binary)
