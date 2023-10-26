@@ -57,7 +57,7 @@ CheckOptions:
         result = [[k, v] for (k, v) in result]
         self.assertEqual(len(result), 6)
         self.assertIn(
-            ["readability-suspicious-call-argument.PrefixSimilarAbove",
+            ["readability-suspicious-call-argument:PrefixSimilarAbove",
              "'30'"], result)
 
     def test_new_format(self):
@@ -86,5 +86,5 @@ CheckOptions:
         result = [[k, v] for (k, v) in result]
         self.assertEqual(len(result), 6)
         self.assertIn(
-            ["readability-suspicious-call-argument.PrefixSimilarAbove", "30"],
+            ["readability-suspicious-call-argument:PrefixSimilarAbove", "30"],
             result)
