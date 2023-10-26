@@ -91,7 +91,16 @@ router.afterEach(to => {
   if (to.name === "products")
     store.commit(CLEAR_QUERIES, { except: [ "products" ] });
 
-  store.commit(SET_QUERIES, { location: to.name, query: to.query });
+  let query_namespace = to.name;
+  if (to.name === "reports"
+    || to.name === "product-overview"
+    || to.name === "checker-statistics"
+    || to.name === "severity-statistics"
+    || to.name === "component-statistics"
+  )
+    query_namespace = "report_filter";
+
+  store.commit(SET_QUERIES, { location: query_namespace, query: to.query });
 });
 
 new Vue({
