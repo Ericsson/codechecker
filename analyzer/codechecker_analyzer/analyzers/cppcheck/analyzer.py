@@ -85,6 +85,9 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
     @classmethod
     def get_binary_version(self, environ, details=False) -> str:
         """ Get analyzer version information. """
+        # No need to LOG here, we will emit a warning later anyway.
+        if not self.analyzer_binary():
+            return None
         version = [self.analyzer_binary(), '--version']
         try:
             output = subprocess.check_output(version,

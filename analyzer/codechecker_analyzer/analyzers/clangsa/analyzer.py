@@ -172,6 +172,10 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
     @classmethod
     def get_binary_version(self, environ, details=False) -> str:
+        # No need to LOG here, we will emit a warning later anyway.
+        if not self.analyzer_binary():
+            return None
+
         if details:
             version = [self.analyzer_binary(), '--version']
         else:

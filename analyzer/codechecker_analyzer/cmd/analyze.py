@@ -44,6 +44,11 @@ header_file_extensions = (
 epilog_env_var = f"""
   CC_ANALYZERS_FROM_PATH   Set to `yes` or `1` to enforce taking the analyzers
                            from the `PATH` instead of the given binaries.
+  CC_ANALYZER_BIN          Set the absolute paths of an analyzer binaries.
+                           Overrides other means of CodeChecker getting hold of
+                           binary.
+                           Format: CC_ANALYZER_BIN='<analyzer1>:/path/to/bin1;
+                                                    <analyzer2>:/path/to/bin2'
   CC_CLANGSA_PLUGIN_DIR    If the CC_ANALYZERS_FROM_PATH environment variable
                            is set you can configure the plugin directory of the
                            Clang Static Analyzer by using this environment

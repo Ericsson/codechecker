@@ -173,6 +173,9 @@ class Gcc(analyzer_base.SourceAnalyzer):
         """
         Return the analyzer version.
         """
+        # No need to LOG here, we will emit a warning later anyway.
+        if not self.analyzer_binary():
+            return None
         if details:
             version = [self.analyzer_binary(), '--version']
         else:
