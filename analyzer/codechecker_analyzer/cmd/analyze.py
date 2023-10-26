@@ -27,7 +27,7 @@ from codechecker_analyzer import analyzer, analyzer_context, \
 from codechecker_analyzer.analyzers import analyzer_types, clangsa
 from codechecker_analyzer.arg import \
     OrderedCheckersAction, OrderedConfigAction, existing_abspath, \
-    analyzer_config, checker_config, analyzer_binary
+    analyzer_config, checker_config
 from codechecker_analyzer.buildlog import log_parser
 
 from codechecker_common import arg, logger, cmd_config

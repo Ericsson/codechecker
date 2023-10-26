@@ -12,6 +12,7 @@ Context to store package related information.
 
 # pylint: disable=no-name-in-module
 from distutils.spawn import find_executable
+from argparse import ArgumentTypeError
 
 import os
 import platform
@@ -91,7 +92,6 @@ class Context(metaclass=Singleton):
         self.__populate_analyzers()
         self.__populate_replacer()
 
-
     def __parse_CC_ANALYZER_BIN(self):
         env_var_bins = {}
         if 'CC_ANALYZER_BIN' in self.__analyzer_env:
@@ -99,7 +99,7 @@ class Context(metaclass=Singleton):
             for value in self.__analyzer_env['CC_ANALYZER_BIN'].split(';'):
                 try:
                     analyzer_name, path = analyzer_binary(value)
-                except argparse.ArgumentTypeError as e:
+                except ArgumentTypeError as e:
                     LOG.error(e)
                     had_error = True
                     continue
