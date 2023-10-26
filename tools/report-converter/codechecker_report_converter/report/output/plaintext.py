@@ -64,8 +64,9 @@ def format_report(report: Report, content_is_not_changed: bool) -> str:
     out = f"[{report.severity}] {file_path}:{report.line}:{report.column}: " \
           f"{report.message} [{report.checker_name}]"
 
-    if content_is_not_changed and report.source_code_comments:
-        out += f" [{report.review_status.capitalize()}]"
+    if content_is_not_changed and report.review_status and \
+            report.review_status.status != 'unreviewed':
+        out += f" [{report.review_status.formatted_status()}]"
 
     return out
 
@@ -144,6 +145,7 @@ def get_file_report_map(
 
 
 def convert(
+    review_status_handler,
     source_file_report_map: Dict[str, List[Report]],
     processed_file_paths: Optional[Set[str]] = None,
     print_steps: bool = False,
@@ -164,16 +166,12 @@ def convert(
             content_is_not_changed = \
                 report.file.original_path not in report.changed_files
 
-            if content_is_not_changed:
-                report.dump_source_code_comment_warnings()
-
             output.write(f"{format_report(report, content_is_not_changed)}\n")
 
             if content_is_not_changed:
-                # Print source code comments.
-                for source_code_comment in report.source_code_comments:
-                    if source_code_comment.line:
-                        output.write(f"{source_code_comment.line.rstrip()}\n")
+                source_comment = review_status_handler.source_comment(report)
+                if source_comment and source_comment.line:
+                    output.write(f"{source_comment.line.rstrip()}\n")
 
                 output.write(f"{format_main_report(report)}")
             else:

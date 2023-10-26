@@ -22,13 +22,13 @@ CHECK#CodeChecker check --build "make multi_error_suppress_typo" --output $OUTPU
   return x/0;
           ^
 
-[] - multi_error_suppress_typo.cpp contains misspelled review status comment @9: // codechecker_suppressssss [all] some comment
 [LOW] multi_error_suppress_typo.cpp:10:3: Value stored to 'y' is never read [deadcode.DeadStores]
   y = 7;
   ^
 
 Found 2 defect(s) in multi_error_suppress_typo.cpp
 
+[] - multi_error_suppress_typo.cpp contains misspelled review status comment @9: // codechecker_suppressssss [all] some comment
 
 ----==== Severity Statistics ====----
 ----------------------------

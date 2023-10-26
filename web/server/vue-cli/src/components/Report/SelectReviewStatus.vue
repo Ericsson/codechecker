@@ -71,12 +71,12 @@
           >
             <p>
               Review status of the following reports are given as source code
-              comment. Their review status will not change. However, this option
-              sets the review status of all reports without source code comment
-              even in the future. This may result that a bug is assigned two
-              different review statuses. We don't recommend setting review
-              status in this interface for reports which already have one as a
-              source code comment!
+              comment or review status config YAML file. Their review status
+              will not change. However, this option sets the review status of
+              all reports without source code comment even in the future. This
+              may result that a bug is assigned two different review statuses.
+              We don't recommend setting review status in this interface for
+              reports which already have one as a source code comment!
             </p>
 
             <div

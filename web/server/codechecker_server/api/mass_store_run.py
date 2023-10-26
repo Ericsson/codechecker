@@ -26,13 +26,13 @@ from codechecker_api.codeCheckerDBAccess_v6 import ttypes
 
 from codechecker_common import skiplist_handler
 from codechecker_common.logger import get_logger
+from codechecker_common.review_status_handler import ReviewStatusHandler, \
+    SourceReviewStatus
 from codechecker_common.util import load_json
 
 from codechecker_report_converter.util import trim_path_prefixes
 from codechecker_report_converter.report import report_file, Report
 from codechecker_report_converter.report.hash import get_report_path_hash
-from codechecker_report_converter.source_code_comment_handler import \
-    SourceCodeCommentHandler, SpellException, contains_codechecker_comment
 
 from ..database import db_cleanup
 from ..database.config_db_model import Product
@@ -65,10 +65,6 @@ class LogTask:
                  self.__msg, round(time.time() - self.__start_time, 2))
 
 
-# FIXME: when these types are introduced we need to use those.
-SourceLineComments = List[Any]
-
-
 def unzip(b64zip: str, output_dir: str) -> int:
     """
     This function unzips the base64 encoded zip file. This zip is extracted
@@ -99,27 +95,6 @@ def get_file_content(file_path: str) -> bytes:
     """Return the file content for the given filepath. """
     with open(file_path, 'rb') as f:
         return f.read()
-
-
-def parse_codechecker_review_comment(
-    source_file_name: str,
-    report_line: int,
-    checker_name: str
-) -> SourceLineComments:
-    """Parse the CodeChecker review comments from a source file at a given
-    position.  Returns an empty list if there are no comments.
-    """
-    src_comment_data = []
-    with open(source_file_name, encoding='utf-8', errors='ignore') as f:
-        if contains_codechecker_comment(f):
-            sc_handler = SourceCodeCommentHandler()
-            try:
-                src_comment_data = sc_handler.filter_source_line_comments(
-                    f, report_line, checker_name)
-            except SpellException as ex:
-                LOG.warning("File %s contains %s", source_file_name, ex)
-
-    return src_comment_data
 
 
 def add_file_record(
@@ -214,29 +189,6 @@ def get_blame_file_data(
             del blame_info["tracking_branch"]
 
     return blame_info, remote_url, tracking_branch
-
-
-class SourceReviewStatus:
-    """
-    Helper class for handling in source review statuses.
-    Collect the same info as a review status rule.
-    FIXME Change this to dataclass when available
-    """
-    def __init__(
-        self,
-        status: str,
-        message: bytes,
-        bug_hash: Any,
-        author: str,
-        date: datetime,
-        in_source: bool,
-    ):
-        self.status = status
-        self.message = message
-        self.bug_hash = bug_hash
-        self.author = author
-        self.date = date
-        self.in_source = in_source
 
 
 class MassStoreRun:
@@ -876,11 +828,11 @@ class MassStoreRun:
         self,
         report_file_path: str,
         session: DBSession,
-        source_root: str,
         run_id: int,
         file_path_to_id: Dict[str, int],
         run_history_time: datetime,
         skip_handler: skiplist_handler.SkipListHandler,
+        review_status_handler: ReviewStatusHandler,
         hash_map_reports: Dict[str, List[Any]]
     ) -> bool:
         """
@@ -890,63 +842,6 @@ class MassStoreRun:
 
         if not reports:
             return True
-
-        def get_review_status_from_source(
-                report: Report) -> SourceReviewStatus:
-            """
-            Return the review status set in the source code belonging to
-            the given report.
-
-            - Return the review status if it is set in the source code.
-            - If the review status is ambiguous (i.e. multiple source code
-              comments belong to it) then (unreviewed, in_source=False)
-              returns.
-            """
-            # The original file path is needed here, not the trimmed, because
-            # the source files are extracted as the original file path.
-            source_file_name = os.path.realpath(os.path.join(
-                source_root, report.file.original_path.strip("/")))
-
-            if os.path.isfile(source_file_name):
-                src_comment_data = parse_codechecker_review_comment(
-                    source_file_name, report.line, report.checker_name)
-
-                if len(src_comment_data) == 1:
-                    data = src_comment_data[0]
-                    status, message = data.status, bytes(data.message, 'utf-8')
-
-                    review_status = SourceReviewStatus(
-                        status=status,
-                        message=message,
-                        bug_hash=report.report_hash,
-                        author=self.user_name,
-                        date=run_history_time,
-                        in_source=True
-                    )
-
-                    return review_status
-                elif len(src_comment_data) > 1:
-                    LOG.warning(
-                        "Multiple source code comment can be found "
-                        "for '%s' checker in '%s' at line %s. "
-                        "This suppression will not be taken into account!",
-                        report.checker_name, source_file_name, report.line)
-
-                    self.__wrong_src_code_comments.append(
-                        f"{source_file_name}|{report.line}|"
-                        f"{report.checker_name}")
-
-            # A better way to handle reports where the review status is not
-            # set in the source is to return None, and set the reviews status
-            # and set the review status info at report addition time.
-            return SourceReviewStatus(
-                status="unreviewed",
-                message=b'',
-                bug_hash=report.report_hash,
-                author=self.user_name,
-                date=run_history_time,
-                in_source=False
-            )
 
         def get_missing_file_ids(report: Report) -> List[str]:
             """ Returns file paths which database file id is missing. """
@@ -1000,12 +895,20 @@ class MassStoreRun:
             analyzer_name = mip.checker_to_analyzer.get(
                 report.checker_name, report.analyzer_name)
 
-            rs_from_source = get_review_status_from_source(report)
+            review_status = SourceReviewStatus()
+
+            try:
+                review_status = review_status_handler.get_review_status(report)
+            except ValueError as err:
+                self.__wrong_src_code_comments.append(str(err))
+
+            review_status.author = self.user_name
+            review_status.date = run_history_time
 
             # False positive and intentional reports are considered as closed
             # reports which is indicated with non-null "fixed_at" date.
             fixed_at = None
-            if rs_from_source.status in ['false_positive', 'intentional']:
+            if review_status.status in ['false_positive', 'intentional']:
                 # Keep in mind that now this is not handling review status
                 # rules, only review status source code comments
                 if old_report and old_report.review_status in \
@@ -1017,11 +920,11 @@ class MassStoreRun:
             self.__check_report_count()
             report_id = self.__add_report(
                 session, run_id, report, file_path_to_id,
-                rs_from_source, detection_status, detected_at,
+                review_status, detection_status, detected_at,
                 run_history_time, analysis_info, analyzer_name, fixed_at)
 
             self.__new_report_hashes[report.report_hash] = \
-                rs_from_source.status
+                review_status.status
             self.__already_added_report_hashes.add(report_path_hash)
 
             LOG.debug("Storing report done. ID=%d", report_id)
@@ -1164,6 +1067,14 @@ class MassStoreRun:
 
             skip_handler = get_skip_handler(root_dir_path)
 
+            review_status_handler = ReviewStatusHandler(source_root)
+
+            review_status_cfg = \
+                os.path.join(root_dir_path, 'review_status.yaml')
+            if os.path.isfile(review_status_cfg):
+                review_status_handler.set_review_status_config(
+                    review_status_cfg)
+
             mip = self.__mips[root_dir_path]
             enabled_checkers.update(mip.enabled_checkers)
             disabled_checkers.update(mip.disabled_checkers)
@@ -1176,9 +1087,9 @@ class MassStoreRun:
 
                 report_file_path = os.path.join(root_dir_path, f)
                 self.__process_report_file(
-                    report_file_path, session, source_root, run_id,
+                    report_file_path, session, run_id,
                     file_path_to_id, run_history_time,
-                    skip_handler, report_to_report_id)
+                    skip_handler, review_status_handler, report_to_report_id)
                 processed_result_file_count += 1
 
         session.flush()
@@ -1189,9 +1100,10 @@ class MassStoreRun:
         # but before first check the performance
         reports_to_rs_rules = session.query(ReviewStatusRule, DBReport) \
             .join(DBReport, DBReport.bug_id == ReviewStatusRule.bug_hash) \
-            .filter(sqlalchemy.and_(DBReport.run_id == run_id,
-                                    ReviewStatusRule.bug_hash.
-                                    in_(self.__new_report_hashes)))
+            .filter(sqlalchemy.and_(
+                DBReport.run_id == run_id,
+                DBReport.review_status_is_in_source.is_(False),
+                ReviewStatusRule.bug_hash.in_(self.__new_report_hashes)))
 
         # Set the newly stored reports
         for review_status, db_report in reports_to_rs_rules:
@@ -1449,6 +1361,4 @@ class MassStoreRun:
             if self.__wrong_src_code_comments:
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.SOURCE_FILE,
-                    "Multiple source code comment can be found with the same "
-                    "checker name for same bug!",
                     self.__wrong_src_code_comments)

@@ -18,8 +18,7 @@ import sqlalchemy as sa
 import zlib
 from io import StringIO
 
-from codechecker_common import util
-from codechecker_report_converter.source_code_comment_handler import \
+from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler, SpellException
 
 

@@ -7,16 +7,16 @@
 # -------------------------------------------------------------------------
 
 import builtins
+from dataclasses import dataclass
+from datetime import datetime
 import itertools
 import json
 import logging
 import os
 
-from typing import Callable, Dict, Iterable, List, Optional, Set
+from typing import Callable, Dict, List, Optional, Set
 
 from .. import util
-from ..source_code_comment_handler import SourceCodeCommentHandler, \
-    SourceCodeComments, SpellException
 
 
 LOG = logging.getLogger('report-converter')
@@ -271,6 +271,26 @@ class MacroExpansion(BugPathEvent):
         return json.dumps(self.to_json())
 
 
+@dataclass
+class SourceReviewStatus:
+    """
+    Helper class for handling in source review statuses.
+    Collect the same info as a review status rule.
+
+    TODO: rename this class, because this not only represents review statuses
+          in source code comments but in review status yaml too.
+    """
+    status: str = "unreviewed"
+    message: bytes = b""
+    bug_hash: str = ""
+    in_source: bool = False
+    author: Optional[str] = None
+    date: Optional[datetime] = None
+
+    def formatted_status(self):
+        return self.status.lower().replace('_', ' ').capitalize()
+
+
 class Report:
     """ Represents a report object. """
 
@@ -293,7 +313,8 @@ class Report:
         notes: Optional[List[BugPathEvent]] = None,
         macro_expansions: Optional[List[MacroExpansion]] = None,
         annotations: Optional[Dict[str, str]] = None,
-        static_message: Optional[str] = None
+        static_message: Optional[str] = None,
+        review_status: Optional[SourceReviewStatus] = SourceReviewStatus()
     ):
         """
         This constructor populates the members of the Report object.
@@ -333,9 +354,7 @@ class Report:
         self.macro_expansions = macro_expansions \
             if macro_expansions is not None else []
 
-        self.__source_code_comments: Optional[SourceCodeComments] = None
-        self.__source_code_comment_warnings: List[str] = []
-        self.__sc_handler = SourceCodeCommentHandler()
+        self.review_status = review_status
 
         self.__source_line: Optional[str] = source_line
         self.__files: Optional[Set[File]] = None
@@ -449,92 +468,6 @@ class Report:
         if self.__changed_files is None:
             self.__changed_files = changed_files
 
-    def __init_source_code_comments(self):
-        """
-        Initialize source code comments and warnings if it is not parsed yet.
-        """
-        if self.__source_code_comments is not None:
-            return None
-
-        self.__source_code_comments = []
-
-        if self.file.original_path in self.changed_files:
-            return None
-
-        if not os.path.exists(self.file.original_path):
-            return None
-
-        with open(self.file.original_path,
-                  encoding='utf-8', errors='ignore') as f:
-            try:
-                self.__source_code_comments = \
-                    self.__sc_handler.filter_source_line_comments(
-                        f, self.line, self.checker_name)
-            except SpellException as ex:
-                self.__source_code_comment_warnings.append(
-                    f"{self.file.name} contains {str(ex)}")
-
-        if len(self.__source_code_comments) == 1:
-            LOG.debug("Found source code comment for report '%s' in file "
-                      "'%s': %s",
-                      self.report_hash, self.file.path,
-                      self.__source_code_comments)
-        elif len(self.__source_code_comments) > 1:
-            self.__source_code_comment_warnings.append(
-                f"Multiple source code comment can be found for "
-                f"'{self.checker_name}' checker in '{self.file.path}' at "
-                f"line {self.line}. This bug will not be suppressed!")
-
-    @property
-    def source_code_comment_warnings(self) -> List[str]:
-        """ Get source code comment warnings. """
-        self.__init_source_code_comments()
-        return self.__source_code_comment_warnings
-
-    def dump_source_code_comment_warnings(self):
-        """ Dump source code comments warnings. """
-        for warning in self.source_code_comment_warnings:
-            LOG.warning(warning)
-
-    @property
-    def source_code_comments(self) -> SourceCodeComments:
-        """
-        Get source code comments for the report.
-        It will read the source file only once.
-        """
-        self.__init_source_code_comments()
-
-        if self.__source_code_comments is None:
-            self.__source_code_comments = []
-
-        return self.__source_code_comments
-
-    @source_code_comments.setter
-    def source_code_comments(self, source_code_comments: SourceCodeComments):
-        """ Sets the source code comments manually if it's not set yet. """
-        if self.__source_code_comments is None:
-            self.__source_code_comments = source_code_comments
-
-    def check_source_code_comments(self, comment_types: Iterable[str]) -> bool:
-        """
-        True if it doesn't have a source code comment or if every comments have
-        specified comment types.
-        """
-        if not self.source_code_comments:
-            return True
-
-        return all(c.status in comment_types
-                   for c in self.source_code_comments)
-
-    @property
-    def review_status(self) -> str:
-        """ Return review status for the given report. """
-        if len(self.source_code_comments) == 1:
-            return self.source_code_comments[0].status \
-                .lower().replace('_', ' ')
-
-        return 'unreviewed'
-
     def skip(self, skip_handlers: Optional[SkipListHandlers]) -> bool:
         """ True if the report should be skipped. """
         if not skip_handlers:
@@ -556,9 +489,8 @@ class Report:
             "analyzer_name": self.analyzer_name,
             "category": self.category,
             "type": self.type,
-            "source_code_comments": [
-                s.to_json() for s in self.source_code_comments],
-            "review_status": self.review_status,
+            "review_status": self.review_status.status
+            if self.review_status else '',
             "bug_path_events": [e.to_json() for e in self.bug_path_events],
             "bug_path_positions": [
                 p.to_json() for p in self.bug_path_positions],
@@ -577,6 +509,20 @@ class Report:
 
         raise NotImplementedError(
             f"Comparison Range object with '{type(other)}' is not supported")
+
+    def __hash__(self):
+        """
+        We consider two report objects equivalent if these members are the
+        same. This way a report object can be used as key in a dict.
+        WARNING! Make sure that the same members are compared by __eq__().
+        """
+        return builtins.hash((
+            self.file,
+            self.line,
+            self.column,
+            self.message,
+            self.checker_name,
+            self.report_hash))
 
     def __repr__(self):
         return json.dumps(self.to_json())

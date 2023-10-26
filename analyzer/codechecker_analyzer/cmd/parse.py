@@ -25,15 +25,16 @@ from codechecker_report_converter.report.output import baseline, codeclimate, \
 from codechecker_report_converter.report.output.html import \
     html as report_to_html
 from codechecker_report_converter.report.statistics import Statistics
-from codechecker_report_converter.source_code_comment_handler import \
-    REVIEW_STATUS_VALUES
 
 
 from codechecker_analyzer import analyzer_context, suppress_handler
 
 from codechecker_common import arg, logger, cmd_config
+from codechecker_common.review_status_handler import ReviewStatusHandler
 from codechecker_common.skiplist_handler import SkipListHandler, \
     SkipListHandlers
+from codechecker_common.source_code_comment_handler import \
+    REVIEW_STATUS_VALUES
 from codechecker_common.util import load_json
 
 
@@ -384,6 +385,7 @@ def main(args):
     processed_path_hashes = set()
     processed_file_paths = set()
     print_steps = 'print_steps' in args
+    review_status_handler = ReviewStatusHandler()
 
     html_builder: Optional[report_to_html.HtmlBuilder] = None
     if export == 'html':
@@ -392,6 +394,15 @@ def main(args):
             context.checker_labels)
 
     for dir_path, file_paths in report_file.analyzer_result_files(args.input):
+        review_status_cfg = os.path.join(dir_path, 'review_status.yaml')
+        if os.path.isfile(review_status_cfg):
+            try:
+                review_status_handler.set_review_status_config(
+                    review_status_cfg)
+            except ValueError as err:
+                LOG.error(err)
+                sys.exit(1)
+
         metadata = get_metadata(dir_path)
 
         if metadata and 'files' in args:
@@ -412,6 +423,20 @@ def main(args):
         for file_path in file_paths:
             reports = report_file.get_reports(
                 file_path, context.checker_labels, file_cache)
+
+            for report in reports:
+                try:
+                    # TODO: skip_handler is used later in reports_helper.skip()
+                    # too. However, skipped reports shouldn't check source code
+                    # comments because they potentially raise an exception.
+                    # Skipped files shouldn't raise an exception, also, "skip"
+                    # shouldn't be checked twice.
+                    if not report.skip(skip_handlers):
+                        report.review_status = \
+                            review_status_handler.get_review_status(report)
+                except ValueError as err:
+                    LOG.error(err)
+                    sys.exit(1)
 
             reports = reports_helper.skip(
                 reports, processed_path_hashes, skip_handlers, suppr_handler,
@@ -434,12 +459,16 @@ def main(args):
                 file_report_map = plaintext.get_file_report_map(
                     reports, file_path, metadata)
                 plaintext.convert(
+                    review_status_handler,
                     file_report_map, processed_file_paths, print_steps)
             elif export == 'html':
                 print(f"Parsing input file '{file_path}'.")
                 report_to_html.convert(
                     file_path, reports, output_dir_path,
                     html_builder)
+
+    for warning in review_status_handler.source_comment_warnings():
+        LOG.warning(warning)
 
     if export is None:  # Plain text output
         statistics.write()

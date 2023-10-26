@@ -14,7 +14,7 @@
 import os
 import unittest
 
-from codechecker_report_converter.source_code_comment_handler import \
+from codechecker_common.source_code_comment_handler import \
     SourceCodeComment, SourceCodeCommentHandler
 
 

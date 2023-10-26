@@ -124,7 +124,7 @@ class TestDiffFromCmdLine(unittest.TestCase):
 [{{
     "directory": "{file_dir}",
     "file": "main.c",
-    "command": "gcc main.c -o /dev/null"
+    "command": "gcc main.c -o /dev/null -c"
 }}]
 """
         os.makedirs(file_dir, exist_ok=True)
