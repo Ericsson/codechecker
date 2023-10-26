@@ -55,7 +55,7 @@ class Parser(BaseParser):
             # Checker message.
             r'(?P<message>.*)')
 
-        # Matches pre clang 17 fix-its
+        # Matches pre Clang 17 fix-its:
         # "       fixit-text"
         self.fixit_old_re = re.compile(
             r'^\s+(?P<message>\S.*)')
