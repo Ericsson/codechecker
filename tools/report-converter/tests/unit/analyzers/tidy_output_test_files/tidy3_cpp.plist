@@ -22,25 +22,24 @@
 				<key>line</key>
 				<integer>4</integer>
 			</dict>
-			<key>path</key>
+			<key>notes</key>
 			<array>
 				<dict>
-					<key>depth</key>
+				<key>location</key>
+				<dict>
+					<key>col</key>
+					<integer>12</integer>
+					<key>file</key>
 					<integer>0</integer>
-					<key>kind</key>
-					<string>event</string>
-					<key>location</key>
-					<dict>
-						<key>col</key>
-						<integer>12</integer>
-						<key>file</key>
-						<integer>0</integer>
-						<key>line</key>
-						<integer>4</integer>
+					<key>line</key>
+					<integer>4</integer>
 					</dict>
 					<key>message</key>
 					<string>nullptr (fixit)</string>
 				</dict>
+			</array>
+			<key>path</key>
+			<array>
 				<dict>
 					<key>depth</key>
 					<integer>0</integer>

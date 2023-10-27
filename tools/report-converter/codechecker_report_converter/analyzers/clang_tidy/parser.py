@@ -159,7 +159,7 @@ class Parser(BaseParser):
                 # a line number, and then a | character.
                 col = line.find(message_text) - line.find("|") - 1
 
-            report.bug_path_events.append(BugPathEvent(
+            report.notes.append(BugPathEvent(
                     f"{message_text} (fixit)",
                     report.file,
                     report.line,
