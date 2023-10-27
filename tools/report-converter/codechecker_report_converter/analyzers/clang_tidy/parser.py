@@ -55,6 +55,16 @@ class Parser(BaseParser):
             # Checker message.
             r'(?P<message>.*)')
 
+        # Matches pre Clang 17 fix-its:
+        # "       fixit-text"
+        self.fixit_old_re = re.compile(
+            r'^\s+(?P<message>\S.*)')
+
+        # Matches post clang 17 fix-its
+        # "   28 |     fixit-text"
+        self.fixit_new_re = re.compile(
+            r'^\s*\d*\s*\|\s*(?P<message>\S.*)')
+
     def _parse_line(
         self,
         it: Iterator[str],
@@ -137,15 +147,23 @@ class Parser(BaseParser):
 
         while self.message_line_re.match(line) is None and \
                 self.note_line_re.match(line) is None:
-            message_text = line.strip()
+            match = self.fixit_new_re.match(line)
+            if not match:
+                match = self.fixit_old_re.match(line)
+                message_text = match.group("message")
+                # Until Clang 16, the FixIt line starts with whitespace.
+                col = line.find(message_text) + 1
+            else:
+                message_text = match.group("message")
+                # In newer versions, we have whitespace then, optionally
+                # a line number, and then a | character.
+                col = line.find(message_text) - line.find("|") - 1
 
-            if message_text != '':
-                report.bug_path_events.append(BugPathEvent(
+            report.bug_path_events.append(BugPathEvent(
                     f"{message_text} (fixit)",
                     report.file,
                     report.line,
-                    line.find(message_text) + 1))
-
+                    col))
             line = next(it)
         return line
 
