@@ -28,7 +28,7 @@ from codechecker_common import skiplist_handler
 from codechecker_common.logger import get_logger
 from codechecker_common.review_status_handler import ReviewStatusHandler, \
     SourceReviewStatus
-from codechecker_common.util import load_json
+from codechecker_common.util import load_json, path_for_fake_root
 
 from codechecker_report_converter.util import trim_path_prefixes
 from codechecker_report_converter.report import report_file, Report
@@ -391,13 +391,12 @@ class MassStoreRun:
         file_path_to_id = {}
 
         for file_name, file_hash in filename_to_hash.items():
-            source_file_name = os.path.join(source_root, file_name.strip("/"))
-            source_file_name = os.path.realpath(source_file_name)
-            LOG.debug("Storing source file: %s", source_file_name)
+            source_file_path = path_for_fake_root(file_name, source_root)
+            LOG.debug("Storing source file: %s", source_file_path)
             trimmed_file_path = trim_path_prefixes(
                 file_name, self.__trim_path_prefixes)
 
-            if not os.path.isfile(source_file_name):
+            if not os.path.isfile(source_file_path):
                 # The file was not in the ZIP file, because we already
                 # have the content. Let's check if we already have a file
                 # record in the database or we need to add one.
@@ -407,16 +406,17 @@ class MassStoreRun:
                     fid = add_file_record(
                         session, trimmed_file_path, file_hash)
 
-                if not fid:
+                if fid:
+                    file_path_to_id[trimmed_file_path] = fid
+                    LOG.debug("%d fileid found", fid)
+                else:
                     LOG.error("File ID for %s is not found in the DB with "
                               "content hash %s. Missing from ZIP?",
-                              source_file_name, file_hash)
-                file_path_to_id[trimmed_file_path] = fid
-                LOG.debug("%d fileid found", fid)
+                              source_file_path, file_hash)
                 continue
 
             with DBSession(self.__Session) as session:
-                self.__add_file_content(session, source_file_name, file_hash)
+                self.__add_file_content(session, source_file_path, file_hash)
 
                 file_path_to_id[trimmed_file_path] = add_file_record(
                     session, trimmed_file_path, file_hash)
