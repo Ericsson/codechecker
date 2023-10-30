@@ -200,6 +200,9 @@ class Gcc(analyzer_base.SourceAnalyzer):
         """
         analyzer_version = cls.get_binary_version(environ)
 
+        if analyzer_version is None:
+            return "GCC binary is too old to support -dumpfullversion."
+
         # The analyzer version should be above 13.0.0 because the
         # '-fdiagnostics-format=sarif-file' argument was introduced in this
         # release.
