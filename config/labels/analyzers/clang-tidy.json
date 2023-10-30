@@ -5747,9 +5747,7 @@
     ],
     "misc-include-cleaner": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/include-cleaner.html",
-      "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "severity:LOW"
     ],
     "misc-incorrect-roundings": [
