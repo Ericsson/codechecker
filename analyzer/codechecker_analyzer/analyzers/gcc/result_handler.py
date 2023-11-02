@@ -59,13 +59,17 @@ class GccResultHandler(ResultHandler):
         into the database.
         """
         LOG.debug_analyzer(self.analyzer_stdout)
-        gcc_output_file = self.analyzed_source_file + ".sarif"
 
-        # Gcc doesn't create any files when there are no diagnostics.
-        # Unfortunately, we can't tell whethet the file missing was because of
-        # that or some other error, we need to bail out here.
-        if not os.path.exists(gcc_output_file):
-            return
+        # GCC places sarif files to the "directory" entry found in the
+        # compilation database. As of writing this comment, there is no way to
+        # tell GCC to place is elsewhere, so we need to find it, move it and
+        # rename it.
+        file_name = os.path.basename(self.analyzed_source_file)
+        gcc_output_file = \
+                str(Path(self.buildaction.directory, file_name)) + ".sarif"
+
+        assert os.path.exists(gcc_output_file), \
+                "Faile to find the sarif file for GCC analysis!"
 
         reports = report_file.get_reports(
             gcc_output_file, self.checker_labels,
