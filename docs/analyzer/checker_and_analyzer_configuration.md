@@ -274,13 +274,14 @@ As of CodeChecker 6.23, Codechecker can now execute the GCC Static Analyzer.
 
 ## Analyzer Configuration
 
+TODO: Currently, we don't support GCC Static analyzer options. This will likely
+be fixed in between the 6.23 release candidates and the actual release.
+
 TODO: gcc-too-complex
 
 ## Limitations
 
-TODO
-
-Gcc doesn't well with C++. Prefer only running on C.
+TODO: Gcc doesn't well with C++. Prefer only running on C.
 
 ## Example invocation
 
