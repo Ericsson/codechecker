@@ -16,7 +16,7 @@ import os
 from codechecker_report_converter.report.parser.base import AnalyzerInfo
 from codechecker_report_converter.analyzers.gcc.analyzer_result import \
     AnalyzerResult
-from codechecker_report_converter.report import report_file
+from codechecker_report_converter.report import Report, report_file
 from codechecker_report_converter.report.hash import get_report_hash, HashType
 
 from codechecker_common.logger import get_logger
@@ -40,6 +40,22 @@ def codechecker_name_to_actual_name(codechecker_name: str):
 def codechecker_name_to_actual_name_disabled(codechecker_name: str):
     assert codechecker_name.startswith('gcc')
     return codechecker_name.replace("gcc", "-Wno-analyzer")
+
+
+def prune_unnecessary_events(report: Report):
+    """
+    GCC (at least around v13) emits diagnostics steps in the following manner:
+      following ‘false’ branch...
+      ...to here
+    Besides the funny english, the "to here" notes are unnecessary and
+    distracting, considering we use arrows for the same purpose, so we prune
+    them. We also strip the message of leading/trailing dots.
+    """
+    for event in report.bug_path_events.copy():
+        if event.message == "...to here":
+            report.bug_path_events.remove(event)
+        else:
+            event.message = event.message.strip(".")
 
 
 class GccResultHandler(ResultHandler):
@@ -73,6 +89,7 @@ class GccResultHandler(ResultHandler):
 
         reports = [r for r in reports if not r.skip(skip_handlers)]
         for report in reports:
+            prune_unnecessary_events(report)
             report.checker_name = \
                 actual_name_to_codechecker_name(report.checker_name)
 
