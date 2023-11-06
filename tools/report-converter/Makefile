@@ -48,6 +48,7 @@ package: dep
 	# Install package in 'development mode'.
 	${PYTHON_BIN} setup.py develop
 
+.PHONY: build
 build: dep
 	${PYTHON_BIN} setup.py build --build-purelib $(REPORT_CONVERTER_DIR)
 
