@@ -10,15 +10,15 @@
 """Setup for the package tests."""
 
 
-import multiprocessing
 import os
 import shutil
 
 from libtest import codechecker
 from libtest import env
+import multiprocess
 
 # Stopping event for CodeChecker server.
-__STOP_SERVER = multiprocessing.Event()
+__STOP_SERVER = multiprocess.Event()
 
 # Test workspace initialized at setup for authentication tests.
 TEST_WORKSPACE = None

@@ -13,12 +13,12 @@ Test server configuration file.
 
 
 import json
-import multiprocessing
 import os
 import unittest
 
 from libtest import codechecker
 from libtest import env
+import multiprocess
 
 from . import setup_class_common, teardown_class_common
 
@@ -56,7 +56,7 @@ class TestServerConfig(unittest.TestCase):
             json.dump({
                 'server': ['--skip-db-cleanup']}, config_f)
 
-        event = multiprocessing.Event()
+        event = multiprocess.Event()
         event.clear()
 
         self.codechecker_cfg['viewer_port'] = env.get_free_port()
@@ -80,7 +80,7 @@ class TestServerConfig(unittest.TestCase):
 server:
   - --skip-db-cleanup""")
 
-        event = multiprocessing.Event()
+        event = multiprocess.Event()
         event.clear()
 
         self.codechecker_cfg['viewer_port'] = env.get_free_port()
@@ -102,7 +102,7 @@ server:
             json.dump({
                 'server': ['--dummy-option']}, config_f)
 
-        event = multiprocessing.Event()
+        event = multiprocess.Event()
         event.clear()
 
         self.codechecker_cfg['viewer_port'] = env.get_free_port()
@@ -123,7 +123,7 @@ server:
                   encoding="utf-8", errors="ignore") as config_f:
             config_f.write("")
 
-        event = multiprocessing.Event()
+        event = multiprocess.Event()
         event.clear()
 
         self.codechecker_cfg['viewer_port'] = env.get_free_port()

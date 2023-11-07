@@ -10,7 +10,6 @@
 SSL test.
 """
 
-import multiprocessing
 import os
 import shutil
 import subprocess
@@ -20,6 +19,7 @@ from codechecker_api_shared.ttypes import RequestFailed
 
 from libtest import codechecker
 from libtest import env
+import multiprocess
 
 
 class TestSSL(unittest.TestCase):
@@ -32,7 +32,7 @@ class TestSSL(unittest.TestCase):
 
         # Stopping event for CodeChecker server.
         global __STOP_SERVER
-        __STOP_SERVER = multiprocessing.Event()
+        __STOP_SERVER = multiprocess.Event()
 
         global TEST_WORKSPACE
         TEST_WORKSPACE = env.get_workspace('ssl')

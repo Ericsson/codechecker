@@ -14,7 +14,6 @@ and browser requests.
 import atexit
 import datetime
 from hashlib import sha256
-from multiprocessing import Process
 import os
 import posixpath
 from random import sample
@@ -28,6 +27,7 @@ import urllib
 
 from http.server import HTTPServer, BaseHTTPRequestHandler, \
     SimpleHTTPRequestHandler
+from multiprocess import Process
 
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import func

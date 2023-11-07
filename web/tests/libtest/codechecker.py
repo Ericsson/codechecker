@@ -11,13 +11,14 @@ Helper commands to run CodeChecker in the tests easier.
 
 
 import json
-import multiprocessing
 import os
 import shlex
 import stat
 import subprocess
 from subprocess import CalledProcessError
 import time
+
+import multiprocess
 
 from codechecker_api_shared.ttypes import Permission
 
@@ -699,7 +700,7 @@ def start_server(codechecker_cfg, event, server_args=None, pg_config=None):
                           pg_config,
                           server_args or [])
 
-    server_proc = multiprocessing.Process(
+    server_proc = multiprocess.Process(
         name='server',
         target=start_server_proc,
         args=(event, server_cmd, codechecker_cfg['check_env']))

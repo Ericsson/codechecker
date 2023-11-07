@@ -11,7 +11,6 @@ Test storage of analysis statistics.
 """
 
 
-import multiprocessing
 import json
 import os
 import shutil
@@ -25,6 +24,7 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import RunFilter
 
 from libtest import codechecker
 from libtest import env
+import multiprocess
 
 
 def extract(zip_file, output_dir):
@@ -48,7 +48,7 @@ class TestStorageOfAnalysisStatistics(unittest.TestCase):
 
         # Stopping event for CodeChecker server.
         global EVENT_1
-        EVENT_1 = multiprocessing.Event()
+        EVENT_1 = multiprocess.Event()
 
         global TEST_WORKSPACE
         TEST_WORKSPACE = env.get_workspace('storage_of_analysis_statistics')

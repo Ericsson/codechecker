@@ -9,7 +9,6 @@
 Run pre analysis, collect statistics or CTU data.
 """
 
-import multiprocessing
 import os
 import shlex
 import shutil
@@ -17,6 +16,8 @@ import signal
 import sys
 import traceback
 import uuid
+
+import multiprocess
 
 from codechecker_common.logger import get_logger
 
@@ -164,13 +165,12 @@ def run_pre_analysis(actions, clangsa_config,
 
     signal.signal(signal.SIGINT, signal_handler)
 
-    processed_var = multiprocessing.Value('i', 0)
-    actions_num = multiprocessing.Value('i', len(actions))
+    processed_var = multiprocess.Value('i', 0)
+    actions_num = multiprocess.Value('i', len(actions))
 
-    pool = multiprocessing.Pool(jobs,
-                                initializer=init_worker,
-                                initargs=(processed_var,
-                                          actions_num))
+    pool = multiprocess.Pool(jobs,
+                             initializer=init_worker,
+                             initargs=(processed_var, actions_num))
 
     if statistics_data:
         # Statistics collection is enabled setup temporary

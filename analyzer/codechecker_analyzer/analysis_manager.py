@@ -10,7 +10,6 @@
 
 
 import glob
-import multiprocessing
 import os
 import shlex
 import shutil
@@ -22,6 +21,7 @@ import zipfile
 
 from threading import Timer
 
+import multiprocess
 import psutil
 
 from codechecker_common.logger import get_logger
@@ -740,12 +740,11 @@ def start_workers(actions_map, actions, analyzer_config_map,
 
     actions, skipped_actions = skip_cpp(actions, skip_handlers)
     # Start checking parallel.
-    checked_var = multiprocessing.Value('i', 1)
-    actions_num = multiprocessing.Value('i', len(actions))
-    pool = multiprocessing.Pool(jobs,
-                                initializer=init_worker,
-                                initargs=(checked_var,
-                                          actions_num))
+    checked_var = multiprocess.Value('i', 1)
+    actions_num = multiprocess.Value('i', len(actions))
+    pool = multiprocess.Pool(jobs,
+                             initializer=init_worker,
+                             initargs=(checked_var, actions_num))
     signal.signal(signal.SIGINT, signal_handler)
 
     # If the analysis has failed, we help debugging.

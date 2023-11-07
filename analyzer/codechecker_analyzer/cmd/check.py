@@ -12,11 +12,12 @@ stdout.
 """
 
 import argparse
-import multiprocessing
 import os
 import shutil
 import sys
 import tempfile
+
+import multiprocess
 
 from codechecker_analyzer.analyzers import analyzer_types
 from codechecker_analyzer.arg import \
@@ -182,7 +183,7 @@ used to generate a log file on the fly.""")
                                type=int,
                                dest="jobs",
                                required=False,
-                               default=multiprocessing.cpu_count(),
+                               default=multiprocess.cpu_count(),
                                help="Number of threads to use in analysis. "
                                     "More threads mean faster analysis at "
                                     "the cost of using more memory.")
