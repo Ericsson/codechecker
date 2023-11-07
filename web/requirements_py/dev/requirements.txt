@@ -12,7 +12,7 @@ mkdocs==1.5.3
 mypy_extensions==0.4.3
 coverage==5.5.0
 thrift==0.13.0
-gitpython==3.1.35
+gitpython==3.1.37
 sarif-tools==1.0.0
 
 ./api/py/codechecker_api/dist/codechecker_api.tar.gz
