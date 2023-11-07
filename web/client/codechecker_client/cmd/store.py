@@ -798,6 +798,7 @@ def _timeout_watchdog(timeout: timedelta, trap: int):
     pid = os.getpid()
     timer = Timer(timeout.total_seconds(),
                   lambda: os.kill(pid, trap))
+    timer.name = "StoreTimeoutWatcher"
     LOG.debug("Set up timer for %d seconds (%s) for PID %d",
               timeout.total_seconds(), str(timeout), pid)
     try:
