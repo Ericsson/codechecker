@@ -59,20 +59,25 @@ class GccResultHandler(ResultHandler):
         into the database.
         """
         LOG.debug_analyzer(self.analyzer_stdout)
+        gcc_stderr = self.analyzer_stderr
+        assert gcc_stderr, "Even in the event of no reported diagnostics, " \
+                           "stderr mustn't be empty!"
 
-        # GCC places sarif files to the "directory" entry found in the
-        # compilation database. As of writing this comment, there is no way to
-        # tell GCC to place is elsewhere, so we need to find it, move it and
-        # rename it.
-        file_name = os.path.basename(self.analyzed_source_file)
-        gcc_output_file = \
-                str(Path(self.buildaction.directory, file_name)) + ".sarif"
+        # report-converter needs a file to parse, let's dump the content of
+        # stderr to one.
+        gcc_out_folder = Path(self.workspace, "gcc")
+        gcc_out_folder.mkdir(exist_ok=True)
+        gcc_dest_file_name = \
+            str(Path(gcc_out_folder,
+                     os.path.basename(self.analyzed_source_file) +
+                     self.buildaction_hash + ".sarif"))
 
-        assert os.path.exists(gcc_output_file), \
-                "Faile to find the sarif file for GCC analysis!"
+        with open(gcc_dest_file_name, 'w') as f:
+            f.write(gcc_stderr)
+        assert os.path.exists(gcc_dest_file_name)
 
         reports = report_file.get_reports(
-            gcc_output_file, self.checker_labels,
+            gcc_dest_file_name, self.checker_labels,
             source_dir_path=self.source_dir_path)
 
         # FIXME: We absolutely want to support gcc compiler warnings
@@ -81,6 +86,13 @@ class GccResultHandler(ResultHandler):
         reports = \
             [r for r in reports if not r.skip(skip_handlers) and
              r.checker_name.startswith("-Wanalyzer")]
+
+        # If we were to leave sarif files in the repoort directory, we would
+        # unintentionally parse them, so we rename them.
+        try:
+            shutil.move(gcc_dest_file_name, gcc_dest_file_name + '.bak')
+        except(OSError) as e:
+            LOG.error(e)
 
         for report in reports:
             report.checker_name = \
@@ -98,15 +110,3 @@ class GccResultHandler(ResultHandler):
         report_file.create(
             self.analyzer_result_file, reports, self.checker_labels,
             self.analyzer_info)
-
-        # TODO Maybe move this to post_analyze?
-        gcc_out_folder = Path(self.workspace, "gcc")
-        gcc_out_folder.mkdir(exist_ok=True)
-        gcc_dest_file_name = \
-            Path(gcc_out_folder, os.path.basename(self.analyzed_source_file) +
-                 self.buildaction_hash + ".sarif.bak")
-        try:
-            shutil.move(gcc_output_file, gcc_dest_file_name)
-        except(OSError) as e:
-            LOG.error(f"Failed to move '{gcc_output_file}' to "
-                      f"'{gcc_out_folder}': {e}")
