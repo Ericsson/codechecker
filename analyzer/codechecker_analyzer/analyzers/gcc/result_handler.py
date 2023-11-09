@@ -71,7 +71,13 @@ class GccResultHandler(ResultHandler):
             gcc_output_file, self.checker_labels,
             source_dir_path=self.source_dir_path)
 
-        reports = [r for r in reports if not r.skip(skip_handlers)]
+        # FIXME: We absolutely want to support gcc compiler warnings
+        # eventually (which don't start with '-Wanalyzer'), but we should
+        # probably list them in the label files as well, etc.
+        reports = \
+            [r for r in reports if not r.skip(skip_handlers) and
+             r.checker_name.startswith("-Wanalyzer")]
+
         for report in reports:
             report.checker_name = \
                 actual_name_to_codechecker_name(report.checker_name)
