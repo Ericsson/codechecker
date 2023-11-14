@@ -349,8 +349,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         # enable a compiler warning, we first have to undo the -checks level
         # disable and then enable it, so we need both
         # -checks=compiler-diagnostic- and -W.
-        compiler_warnings = set()
-        enabled_checkers = set()
+        compiler_warnings = list()
+        enabled_checkers = list()
 
         has_checker_config = \
             config.checker_config and config.checker_config != '{}'
@@ -377,8 +377,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                                 f"'clang-diagnostic-{checker_name[1:]}' "
                                 "instead.")
                     if state == CheckerState.enabled:
-                        compiler_warnings.add('-W' + warning_name)
-                        enabled_checkers.add(checker_name)
+                        compiler_warnings.append('-W' + warning_name)
+                        enabled_checkers.append(checker_name)
                     elif state == CheckerState.disabled:
                         if config.enable_all:
                             LOG.warning("Disabling compiler warning with "
@@ -390,15 +390,15 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                 # as -clang-diagnostic-... .
                 elif warning_type == CheckerType.analyzer:
                     if state == CheckerState.enabled:
-                        compiler_warnings.add('-W' + warning_name)
-                        enabled_checkers.add(checker_name)
+                        compiler_warnings.append('-W' + warning_name)
+                        enabled_checkers.append(checker_name)
                     else:
-                        compiler_warnings.add('-Wno-' + warning_name)
+                        compiler_warnings.append('-Wno-' + warning_name)
 
                 continue
 
             if state == CheckerState.enabled:
-                enabled_checkers.add(checker_name)
+                enabled_checkers.append(checker_name)
 
         # By default all checkers are disabled and the enabled ones are added
         # explicitly.
@@ -415,7 +415,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         # for the compiler, clang-tidy is just capable to emit them in its own
         # format.
         if config.analyzer_config.get('take-config-from-directory') == 'true':
-            return [], list(compiler_warnings)
+            return [], compiler_warnings
 
         if has_checker_config:
             try:
@@ -428,12 +428,12 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                 # valid dictionary.
                 checker_cfg = ast.literal_eval(config.checker_config.strip())
                 if checker_cfg.get('Checks'):
-                    return [], list(compiler_warnings)
+                    return [], compiler_warnings
             except SyntaxError as ex:
                 LOG.debug("Invalid checker configuration: %s. Error: %s",
                           config.checker_config, ex)
 
-        return checkers, list(compiler_warnings)
+        return checkers, compiler_warnings
 
     def construct_analyzer_cmd(self, result_handler):
         """ Contruct command which will be executed on analysis. """
