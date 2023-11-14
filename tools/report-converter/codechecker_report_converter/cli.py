@@ -151,12 +151,19 @@ class CollectFiles(argparse.Action):
 
         all_files = []
 
+        had_nonexistent_path = False
         for path in values:
-            if os.path.isfile(path):
+            if not os.path.exists(path):
+                LOG.error(f"File or directory '{path}' does not exist!")
+                had_nonexistent_path = True
+            elif os.path.isfile(path):
                 all_files.append(path)
             else:
                 for root, _, files in os.walk(path):
                     all_files.extend(os.path.join(root, f) for f in files)
+        if had_nonexistent_path:
+            sys.exit(1)
+        assert all_files
 
         setattr(namespace, 'input', all_files)
 
