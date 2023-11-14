@@ -392,6 +392,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                     if state == CheckerState.enabled:
                         compiler_warnings.add('-W' + warning_name)
                         enabled_checkers.add(checker_name)
+                    else:
+                        compiler_warnings.add('-Wno-' + warning_name)
 
                 continue
 
@@ -490,6 +492,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             if config.enable_all:
                 analyzer_cmd.append("-Weverything")
+                analyzer_cmd.extend(
+                    filter(lambda x: x.startswith('-Wno-'), compiler_warnings))
             else:
                 analyzer_cmd.extend(compiler_warnings)
 
