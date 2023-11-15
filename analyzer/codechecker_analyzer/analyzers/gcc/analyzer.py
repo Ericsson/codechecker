@@ -72,7 +72,7 @@ class Gcc(analyzer_base.SourceAnalyzer):
 
         analyzer_cmd.extend(self.buildaction.analyzer_options)
 
-        analyzer_cmd.append('-fdiagnostics-format=sarif-file')
+        analyzer_cmd.append('-fdiagnostics-format=sarif-stderr')
 
         for checker_name, value in config.checks().items():
             if value[0] == CheckerState.disabled:
