@@ -94,7 +94,7 @@ class Context(metaclass=Singleton):
 
     def __parse_CC_ANALYZER_BIN(self):
         env_var_bins = {}
-        if 'CC_ANALYZER_BIN' in self.__analyzer_env:
+        if 'CC_ANALYZER_BIN' in self.analyzer_env:
             had_error = False
             for value in self.__analyzer_env['CC_ANALYZER_BIN'].split(';'):
                 try:
