@@ -396,6 +396,33 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
                 analyzer.config_handler.checks()['Wreserved-id-macro'][0],
                 CheckerState.enabled)
 
+    def test_enable_all_disable_warning(self):
+        """
+        If --enable-all is used and a warning is disabled, then the proper
+        parameterization of clang-tidy is using both -Weverything and
+        -Wno-<warning> in this order.
+        Side note: we use -Weverything instead of listing all enabled warnings
+        to represent --enable-all.
+        """
+        args = Namespace()
+        args.ordered_checkers = [('clang-diagnostic-unused-variable', False)]
+        args.enable_all = True
+
+        analyzer = create_analyzer_tidy(args)
+        result_handler = create_result_handler(analyzer)
+
+        analyzer_cmd = analyzer.construct_analyzer_cmd(result_handler)
+
+        try:
+            pos_everything = analyzer_cmd.index('-Weverything')
+            pos_disable = analyzer_cmd.index('-Wno-unused-variable')
+            self.assertLess(pos_everything, pos_disable)
+        except ValueError:
+            self.assertTrue(
+                False,
+                "-Weverything and -Wno-unused-variable should be in the "
+                "analysis command.")
+
     def test_default_checkers_are_not_disabled(self):
         """
         Test that the default checks are not disabled in Clang Tidy.
