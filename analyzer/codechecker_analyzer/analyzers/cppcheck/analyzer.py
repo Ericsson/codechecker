@@ -231,8 +231,6 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
 
             analyzer_cmd.append('--plist-output=' + str(output_dir))
 
-            analyzer_cmd.extend(config.analyzer_extra_arguments)
-
             analyzer_cmd.append(self.source_file)
 
             return analyzer_cmd
