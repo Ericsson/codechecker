@@ -16,7 +16,6 @@ environment.
 from . import setup_class_common, teardown_class_common
 
 from copy import deepcopy
-import multiprocessing
 import os
 import shutil
 import unittest
@@ -30,9 +29,10 @@ from codechecker_web.shared import convert
 
 from libtest import codechecker
 from libtest import env
+import multiprocess
 
 # Stopping events for CodeChecker server.
-EVENT = multiprocessing.Event()
+EVENT = multiprocess.Event()
 
 
 class TestProductConfigShare(unittest.TestCase):

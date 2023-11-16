@@ -4,6 +4,7 @@ alembic==1.5.5
 portalocker==2.2.1
 psutil==5.8.0
 mypy_extensions==0.4.3
+multiprocess==0.70.15
 thrift==0.13.0
 gitpython==3.1.37
 PyYAML==6.0.1

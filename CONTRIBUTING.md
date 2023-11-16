@@ -31,7 +31,7 @@ rules while writing your code:
 Order your `import` commands according to as follows:
 
   1. **System-wide** imports come first and foremost, e.g.
-    `import multiprocessing`.
+    `import subprocess`.
   2. _(Empty line for readability)_
   3. External module/library imports that are not system-wide but related to
      CodeChecker's **dependencies**, e.g. `from thrift import Thrift`.
@@ -62,7 +62,7 @@ Documentation about the module.
 
 # -- 1. System specific imports
 import atexit
-from multiprocessing import Pool
+from collections import defaultdict
 import os
 import tempfile
 

@@ -11,7 +11,6 @@ Instance manager tests.
 """
 
 
-import multiprocessing
 import os
 import shutil
 import subprocess
@@ -22,10 +21,11 @@ from codechecker_server import instance_manager
 
 from libtest import env
 from libtest.codechecker import start_server
+import multiprocess
 
 # Stopping events for CodeChecker servers.
-EVENT_1 = multiprocessing.Event()
-EVENT_2 = multiprocessing.Event()
+EVENT_1 = multiprocess.Event()
+EVENT_2 = multiprocess.Event()
 
 
 class TestInstances(unittest.TestCase):

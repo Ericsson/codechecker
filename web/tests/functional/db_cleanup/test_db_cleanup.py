@@ -12,7 +12,6 @@ Test database cleanup.
 
 
 import json
-import multiprocessing
 import os
 import shutil
 import unittest
@@ -24,6 +23,7 @@ from codechecker_common.checker_labels import CheckerLabels
 
 from libtest import codechecker
 from libtest import env
+import multiprocess
 
 
 class TestDbCleanup(unittest.TestCase):
@@ -187,7 +187,7 @@ int f(int x) { return 1 / x; }
                              severity_id)
 
     def test_garbage_file_collection(self):
-        event = multiprocessing.Event()
+        event = multiprocess.Event()
         event.clear()
 
         self.codechecker_cfg['viewer_port'] = env.get_free_port()

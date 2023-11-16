@@ -13,11 +13,11 @@ Execute analysis over an already existing build.json compilation database.
 import argparse
 import collections
 import json
-import multiprocessing
 import os
 import shutil
 import sys
 
+import multiprocess
 from typing import List
 
 from tu_collector import tu_collector
@@ -169,7 +169,7 @@ def add_arguments_to_parser(parser):
                         type=int,
                         dest="jobs",
                         required=False,
-                        default=multiprocessing.cpu_count(),
+                        default=multiprocess.cpu_count(),
                         help="Number of threads to use in analysis. More "
                              "threads mean faster analysis at the cost of "
                              "using more memory.")

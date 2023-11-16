@@ -11,12 +11,13 @@ Prepare and start different analysis types
 
 
 from collections import defaultdict
-from multiprocessing.managers import SyncManager
 import os
 import shutil
 import signal
 import sys
 import time
+
+from multiprocess.managers import SyncManager
 
 from codechecker_common.logger import get_logger
 
