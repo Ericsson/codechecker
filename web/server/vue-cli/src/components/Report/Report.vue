@@ -348,7 +348,6 @@ export default {
       step: null,
       editor: null,
       sourceFile: null,
-      reviewData: new ReviewData(),
       jsPlumbInstance: null,
       lineMarks: [],
       lineWidgets: [],
@@ -386,6 +385,12 @@ export default {
       return this.showComments
         ? maxCols - this.commentCols
         : maxCols;
+    },
+
+    reviewData() {
+      return this.report && this.report.reviewData
+        ? this.report.reviewData
+        : new ReviewData();
     }
   },
 
@@ -530,8 +535,6 @@ export default {
       }
 
       this.report = report;
-
-      this.reviewData = report.reviewData;
 
       await this.setSourceFileData(report.fileId);
       await this.drawBugPath();
