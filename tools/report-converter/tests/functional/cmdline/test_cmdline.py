@@ -28,6 +28,18 @@ class TestCmdline(unittest.TestCase):
                               stderr=subprocess.PIPE)
         self.assertEqual(0, ret)
 
+    def test_nonexistent_file(self):
+        """ Get help for report-converter tool. """
+        process = subprocess.Popen(['report-converter', '-t', 'gcc',
+                                    '-o', 'reports/', 'non_existent.sarif'],
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE,
+                                   encoding="utf-8",
+                                   universal_newlines=True)
+        out, _ = process.communicate()
+        self.assertIn("'non_existent.sarif' does not exist", out)
+        self.assertEqual(1, process.returncode)
+
     def test_metadata(self):
         """ Generate metadata for CodeChecker server. """
         analyzer_version = "x.y.z"
