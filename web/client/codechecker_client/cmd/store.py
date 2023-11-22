@@ -23,8 +23,9 @@ import tempfile
 import zipfile
 import zlib
 
+import multiprocess
+
 from collections import defaultdict, namedtuple
-from concurrent.futures import ProcessPoolExecutor
 from contextlib import contextmanager
 from datetime import timedelta
 from threading import Timer
@@ -370,17 +371,8 @@ def filter_source_files_with_comments(
     comment at the main report positions.
     """
     jobs = file_report_positions.items()
-
-    # Currently ProcessPoolExecutor fails completely in windows.
-    # Reason is most likely combination of venv and fork() not
-    # being present in windows, so stuff like setting up
-    # PYTHONPATH in parent CodeChecker before store is executed
-    # are lost.
-    if sys.platform == "win32":
-        return get_source_file_with_comments(jobs)
-    else:
-        with ProcessPoolExecutor() as executor:
-            return get_source_file_with_comments(jobs, executor.map)
+    with multiprocess.Pool() as pool:
+        return get_source_file_with_comments(jobs, pool.map)
 
 
 def get_reports(
@@ -455,18 +447,9 @@ def assemble_zip(inputs,
 
     LOG.debug("Processing report files ...")
 
-    # Currently ProcessPoolExecutor fails completely in windows.
-    # Reason is most likely combination of venv and fork() not
-    # being present in windows, so stuff like setting up
-    # PYTHONPATH in parent CodeChecker before store is executed
-    # are lost.
-    if sys.platform == "win32":
+    with multiprocess.Pool() as pool:
         analyzer_result_file_reports = parse_analyzer_result_files(
-            analyzer_result_file_paths, checker_labels)
-    else:
-        with ProcessPoolExecutor() as executor:
-            analyzer_result_file_reports = parse_analyzer_result_files(
-                 analyzer_result_file_paths, checker_labels, executor.map)
+             analyzer_result_file_paths, checker_labels, pool.map)
 
     LOG.info("Processing report files done.")
 
