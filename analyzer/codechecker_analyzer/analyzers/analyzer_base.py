@@ -17,7 +17,7 @@ import subprocess
 import sys
 import shlex
 
-from typing import Optional
+from typing import Optional, List, Set
 
 from codechecker_analyzer import analyzer_context
 from codechecker_common.logger import get_logger
@@ -69,8 +69,37 @@ class SourceAnalyzer(metaclass=ABCMeta):
         raise NotImplementedError("Subclasses should implement this!")
 
     @classmethod
+    def construct_and_validate_config_handler(cls, args):
+        print(args)
+        cfg_handler = cls.construct_config_handler(args)
+
+        # input_cfg = {cfg.option for cfg in cfg_handler.checker_config}
+        available_cfg = {opt[0] for opt in cls.get_analyzer_config()}
+
+        # assert False
+        # cls.validate_config(input_cfg, available_cfg)
+        # cls.validate_config(set("a"), set("b"))
+        return cfg_handler
+
+    @classmethod
+    def validate_config(cls, input_cfg: Set[str], available_cfg: Set[str]):
+        """
+        Validate the analyzer configuration.
+        """
+        diff = input_cfg - available_cfg
+        if diff:
+            LOG.warning("The following configuration options are not "
+                        "supported by the analyzer: %s",
+                        ', '.join(diff))
+
+    @classmethod
     def construct_config_handler(cls, args):
         """ Should return a subclass of AnalyzerConfigHandler."""
+        raise NotImplementedError("Subclasses should implement this!")
+
+    @classmethod
+    def get_analyzer_config(cls) -> List[str]:
+        """ Returns the analyzer specific configuration list. """
         raise NotImplementedError("Subclasses should implement this!")
 
     @abstractmethod

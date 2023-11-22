@@ -169,6 +169,8 @@ def main(args):
         analyzer = args.analyzer_config
         analyzer_class = analyzer_types.supported_analyzers[analyzer]
 
+        # print(type(analyzer_class))
+
         configs = analyzer_class.get_analyzer_config()
         if not configs:
             LOG.error("Failed to get analyzer configuration options for '%s' "

@@ -12,10 +12,12 @@ Static analyzer configuration handler.
 
 from abc import ABCMeta
 from enum import Enum
+from typing import List
 import collections
 import platform
 
 from codechecker_analyzer import analyzer_context
+from codechecker_analyzer.arg import AnalyzerConfig, CheckerConfig
 from codechecker_common.logger import get_logger
 
 LOG = get_logger('system')
@@ -67,14 +69,18 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
     def __init__(self):
 
         self.analyzer_extra_arguments = []
-        self.checker_config = ''
-        self.analyzer_config = None
+        self.checker_config : List[CheckerConfig] = list()
+        self.analyzer_config : List[AnalyzerConfig] = list()
         self.report_hash = None
         self.enable_all = None
 
         # The key is the checker name, the value is a tuple of CheckerState and
         # checker description.
         self.__available_checkers = collections.OrderedDict()
+
+        # The keys are the option names, the values are the default values.
+        self.__available_checker_config = collections.OrderedDict()
+        self.__available_analyzer_config = collections.OrderedDict()
 
     def add_checker(self, checker_name, description='',
                     state=CheckerState.disabled):

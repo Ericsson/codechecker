@@ -240,7 +240,8 @@ def build_config_handlers(args, enabled_analyzers):
     analyzer_config_map = {}
 
     for ea in enabled_analyzers:
-        config_handler = supported_analyzers[ea].construct_config_handler(args)
+        config_handler = supported_analyzers[
+            ea].construct_and_validate_config_handler(args)
         analyzer_config_map[ea] = config_handler
 
     return analyzer_config_map
