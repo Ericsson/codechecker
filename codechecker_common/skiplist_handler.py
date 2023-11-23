@@ -103,12 +103,6 @@ class SkipListHandler:
                 return sign == '-'
         return False
 
-    def __call__(self, source_file_path: str) -> bool:
-        """
-        Check if the given source should be skipped.
-        """
-        return self.should_skip(source_file_path)
-
 
 class SkipListHandlers(list):
     def should_skip(self, file_path: str):
@@ -117,11 +111,3 @@ class SkipListHandlers(list):
         handler.
         """
         return any(handler.should_skip(file_path) for handler in self)
-
-    # FIXME: eliminate this function and use should_skip instead of this.
-    # Do the same in the SkipListHandler class above.
-    def __call__(self, file_path: str) -> bool:
-        """
-        Check if the given source should be skipped.
-        """
-        return self.should_skip(file_path)
