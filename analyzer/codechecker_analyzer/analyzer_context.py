@@ -104,7 +104,9 @@ class Context(metaclass=Singleton):
                     had_error = True
                     continue
 
-                if not os.path.isfile(path):
+                resolved_path = find_executable(path)
+
+                if not os.path.isfile(resolved_path):
                     LOG.error(f"'{path}' is not a path to an analyzer binary "
                               "given to CC_ANALYZER_BIN!")
                     had_error = True
@@ -112,8 +114,9 @@ class Context(metaclass=Singleton):
                 if had_error:
                     continue
 
-                LOG.info(f"Using '{path}' for analyzer '{analyzer_name}'")
-                env_var_bins[analyzer_name] = path
+                LOG.info(f"Using '{resolved_path}' for analyzer "
+                         f"'{analyzer_name}'")
+                env_var_bins[analyzer_name] = resolved_path
 
             if had_error:
                 LOG.info("The value of CC_ANALYZER_BIN should be in the"
