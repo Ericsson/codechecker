@@ -187,6 +187,7 @@ int f(int x) { return 1 / x; }
                              severity_id)
 
     def test_garbage_file_collection(self):
+        # pylint: disable=no-member multiprocess module members.
         event = multiprocess.Event()
         event.clear()
 

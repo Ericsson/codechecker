@@ -724,6 +724,7 @@ def start_workers(actions_map, actions, analyzer_config_map,
     Start the workers in the process pool.
     For every build action there is worker which makes the analysis.
     """
+    # pylint: disable=no-member multiprocess module members.
 
     # Handle SIGINT to stop this script running.
     def signal_handler(signum, frame):

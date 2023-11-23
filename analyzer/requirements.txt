@@ -2,6 +2,6 @@ lxml==4.9.3
 portalocker==2.2.1
 psutil==5.8.0
 PyYAML==6.0.1
+types-PyYAML==6.0.12.12
 sarif-tools==1.0.0
-mypy_extensions==0.4.3
 multiprocess==0.70.15

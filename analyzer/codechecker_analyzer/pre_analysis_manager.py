@@ -150,6 +150,7 @@ def run_pre_analysis(actions, clangsa_config,
     """
     Run multiple pre analysis jobs before the actual analysis.
     """
+    # pylint: disable=no-member multiprocess module members.
     LOG.info('Pre-analysis started.')
     if ctu_data:
         LOG.info("Collecting data for ctu analysis.")

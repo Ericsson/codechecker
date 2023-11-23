@@ -183,6 +183,7 @@ used to generate a log file on the fly.""")
                                type=int,
                                dest="jobs",
                                required=False,
+                               # pylint: disable=no-member
                                default=multiprocess.cpu_count(),
                                help="Number of threads to use in analysis. "
                                     "More threads mean faster analysis at "

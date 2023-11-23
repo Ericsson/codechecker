@@ -8,7 +8,7 @@
 
 import logging
 
-from typing import Any, Callable, Iterable, List, Optional, Set
+from typing import Callable, Iterable, List, Optional, Set
 
 from codechecker_report_converter.report import Report, SkipListHandlers
 from codechecker_report_converter.report.hash import get_report_path_hash
@@ -17,8 +17,8 @@ LOG = logging.getLogger('report-converter')
 
 
 class GenericSuppressHandler:
-    get_suppressed: Callable[[Any, Report], bool]
-    store_suppress_bug_id: Callable[[Any, str, str, str, str], bool]
+    get_suppressed: Callable[[Report], bool]
+    store_suppress_bug_id: Callable[[str, str, str, str], bool]
 
 
 def get_mentioned_original_files(reports: List[Report]) -> Set[str]:
