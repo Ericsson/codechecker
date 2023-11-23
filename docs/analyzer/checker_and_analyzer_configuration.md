@@ -268,21 +268,35 @@ CodeChecker check -l ./compile_commands.json \
   -o ./reports
 ```
 
-# GCC Static Analyzer
+# Configuring the GCC Static Analyzer
 
 As of CodeChecker 6.23, Codechecker can now execute the GCC Static Analyzer.
+The minimum version of GCC we support is 13.0.0. If you are having trouble with
+making CodeChecker find the appropriate binary, try using the `CC_ANALYZER_BIN`
+environmental variable (see `CodeChecker analyze --help`).
 
 ## Analyzer Configuration
 
-TODO: Currently, we don't support GCC Static analyzer options. This will likely
-be fixed in between the 6.23 release candidates and the actual release.
+Currently, we don't support configuring the GCC Static analyzer through
+CodeChecker. The _overwhelming_ majority of these configurations are only
+recommended for developers -- but we will keep an eye out if this ever changes.
 
-TODO: gcc-too-complex
+As of now, we are not aware of any configurations for checkers.
 
 ## Limitations
 
-TODO: Gcc doesn't well with C++. Prefer only running on C.
+Up to and including GCC version 13, the analyzer is only recommended for C
+code.
+
+Taint checkers are still in the early phases in development as of GCC-13, so
+they should only be enabled for experimentation.
 
 ## Example invocation
 
-TODO
+``` shell
+CodeChecker check -l ./compile_commands.json \
+  --analyzers gcc \ # Run GCC analyzer only
+  -e gcc \ # enable all checkers starting with "gcc"
+  -d gcc-double-free \ # disable gcc-double-free
+  -o ./reports
+```
