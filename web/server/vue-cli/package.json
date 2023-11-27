@@ -75,7 +75,7 @@
     "sass": "~1.32.13",
     "sass-loader": "^12.4.0",
     "selenium-server": "^3.141.59",
-    "start-server-and-test": "^1.14.0",
+    "start-server-and-test": "^2.0.3",
     "util": "^0.12.4",
     "vue-loader": "^15.9.8",
     "vue-style-loader": "^4.1.3",
