@@ -256,8 +256,9 @@ def perform_analysis(args, skip_handlers, rs_handler: ReviewStatusHandler,
         metadata_info['analyzer_statistics']['version'] = version
 
         metadata_tool['analyzers'][analyzer] = metadata_info
-
-    LOG.info("Enabled checkers:\n%s", '\n'.join(
+    LOG.info("Enabled checker list can be found in " +
+             os.path.join(args.output_path, "metadata.json"))
+    LOG.debug("Enabled checkers:\n%s", '\n'.join(
         k + ': ' + ', '.join(v) for k, v in enabled_checkers.items()))
 
     if 'makefile' in args and args.makefile:
