@@ -21,18 +21,31 @@ Example session for debugging a clang crash:
 ```sh
 $ export WS=/your_own_path
 $ cd reports/failed
+$
+$ # unzip the failzip of the crash you are interested in
 $ unzip main.c_4c7feffae4c2b887abcdc37a3c88b2e5.plist.zip
-$ $WS/CodeChecker/debug_tools/prepare_analyzer_cmd.py --clang $WS/llvm/build/debug/bin/clang --clang_plugin_name libericsson --clang_plugin_path $WS/codechecker_core_ws/build/debug/libericsson-checkers.so
+$
+$ # generate the analyzer-command
+$ $WS/CodeChecker/debug_tools/prepare_analyzer_cmd.py --clang $WS/llvm/build/debug/bin/clang
+$
+$ # run the debugging analyzer-command
 $ bash analyzer-command_DEBUG
 ```
 
 Example session for debuggin a CTU clang crash:
 ```sh
 $ export WS=/your_own_path
+$
+$ # put CodeChecker in PATH
 $ export PATH=$WS/CodeChecker/build/CodeChecker/bin:$PATH
-$ source $WS/CodeChecker/venv_dev/bin/activate
+$ # ensure CodeChecker is runnable in this env
+$ source $WS/CodeChecker/venv/bin/activate
+$
 $ cd reports/failed
+$ # unzip the failzip of the crash you are interested in
 $ unzip main.c_4c7feffae4c2b887abcdc37a3c88b2e5.plist.zip
-$ $WS/CodeChecker/debug_tools/prepare_all_cmd_for_ctu.py --clang $WS/llvm/build/debug/bin/clang --clang_plugin_name libericsson --clang_plugin_path $WS/codechecker_core_ws/build/debug/libericsson-checkers.so
+$
+$ # generate the analyzer-command
+$ $WS/CodeChecker/debug_tools/prepare_all_cmd_for_ctu.py --clang $WS/llvm/build/debug/bin/clang
 $ bash analyzer-command_DEBUG
 ```

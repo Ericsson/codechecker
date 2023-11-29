@@ -73,12 +73,6 @@ if __name__ == '__main__':
         '--clang',
         required=True,
         help="Path to the clang binary.")
-    parser.add_argument(
-        '--clang_plugin_name', default=None,
-        help="Name of the used clang plugin.")
-    parser.add_argument(
-        '--clang_plugin_path', default=None,
-        help="Path to the used clang plugin.")
     args = parser.parse_args()
 
     # CodeChecker log outputs 'compile_cmd.json' by default.
@@ -129,8 +123,6 @@ if __name__ == '__main__':
                 prepare_analyzer_cmd.PathOptions(
                     args.sources_root,
                     args.clang,
-                    args.clang_plugin_name,
-                    args.clang_plugin_path,
                     "./report_debug/ctu-dir/" + target)))
 
     print(

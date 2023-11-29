@@ -42,14 +42,6 @@ class AnalyzerCommandPathModifier:
                         self.opts.ctu_dir.rstrip(os.path.sep))),
                 os.path.basename(path))
 
-        if self.opts.clang_plugin_name is not None and\
-                re.search(self.opts.clang_plugin_name, path):
-            if self.opts.clang_plugin_path is None:
-                print("clang_plugin_name is in a path, "
-                      "but clang_plugin_path is not given in the options")
-                sys.exit(-1)
-            return self.opts.clang_plugin_path
-
         if re.search('ctu-dir', path):
             if self.opts.ctu_dir is None:
                 print('ctu-dir is in a path, but not in the options!')
@@ -68,13 +60,9 @@ class PathOptions:
             self,
             sources_root,
             clang,
-            clang_plugin_name,
-            clang_plugin_path,
             ctu_dir):
         self.sources_root = sources_root
         self.clang = clang
-        self.clang_plugin_name = clang_plugin_name
-        self.clang_plugin_path = clang_plugin_path
         self.ctu_dir = ctu_dir
 
 
@@ -121,12 +109,6 @@ if __name__ == '__main__':
         '--clang',
         required=True,
         help="Path to the clang binary.")
-    parser.add_argument(
-        '--clang_plugin_name', default=None,
-        help="Name of the used clang plugin.")
-    parser.add_argument(
-        '--clang_plugin_path', default=None,
-        help="Path to the used clang plugin.")
     args = parser.parse_args()
 
     print(
@@ -135,6 +117,4 @@ if __name__ == '__main__':
             PathOptions(
                 args.sources_root,
                 args.clang,
-                args.clang_plugin_name,
-                args.clang_plugin_path,
                 args.ctu_dir)))
