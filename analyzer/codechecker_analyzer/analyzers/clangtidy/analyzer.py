@@ -478,7 +478,7 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
             if not has_flag('-arch', analyzer_cmd) and \
                     self.buildaction.arch != "":
-                analyzer_cmd.extend(["-arch ", self.buildaction.arch])
+                analyzer_cmd.extend(["-arch", self.buildaction.arch])
 
             analyzer_cmd.extend(self.buildaction.analyzer_options)
 
