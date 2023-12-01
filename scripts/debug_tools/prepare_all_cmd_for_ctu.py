@@ -67,7 +67,7 @@ if __name__ == '__main__':
         help="Path of the source root.")
     parser.add_argument(
         '--report_dir',
-        default='..',
+        default='.',
         help="Path of the report dir.")
     parser.add_argument(
         '--clang',
@@ -136,5 +136,5 @@ if __name__ == '__main__':
     print(
         "Preparation of files for debugging is done. "
         "Now you can execute the generated analyzer command. "
-        "E.g. $ bash % s" %
+        "E.g. $ bash %s" %
         analyzer_command_debug)
