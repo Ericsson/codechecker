@@ -1,6 +1,13 @@
 # Comparing analysis results (Diff)
 
-Compare the outstanding reports in a "before" (_baseline_) and an "after" (_new_ or newline) analysis sets, and display the differences in between them the in the same 
+## Introduction
+In CodeChecker you may compare analysis results either in the command line or in the web UI. With this tool, you can express _pull request analysis_ (did my pull request introduce/fix any bugs?), and _branch history analysis_ (did a change on my branch introduce/fix any bugs?). This document describes different use-cases for how locally stored analysis results, as well as remotely stored analysis results can be compared, and how other components of CodeChecker (source-code suppressions, review status rules, tags) affect the result of this set.
+
+From the outlook, diff sounds like a very simple feature (and it is!), but it also a powerful tool that allows CodeChecker, among other things, to be used as a gating tool. For this reason, you can express rather complicated querries with it using various filters -- this documents intends to help to understand the expected behaviour of diff in these cases as well.
+
+## How diffs work
+
+The term "diff" means the comparison of the outstanding reports in a "before" (_baseline_) and an "after" (_new_ or newline) analysis sets, and display the differences in between them the in the same 
 format as `results`. A report is outstanding if all of the following is true:
 * its detection status is _new_, _reopened_ or _unresolved_,
 * its review status is _unreviewed_ or _confirmed_.
