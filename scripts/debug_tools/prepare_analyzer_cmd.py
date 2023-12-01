@@ -90,6 +90,10 @@ def prepare(analyzer_command_file, pathOptions):
     return res.replace('-nobuiltininc',
                        '-nobuiltininc -isystem ' + clang_include_path)
 
+def write_analyzer_command_file(fname, content):
+    with open(fname, mode="wt", encoding="utf-8", errors="ignore") as f:
+        return f.write(content)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Prepare analyzer-command '
@@ -111,10 +115,11 @@ if __name__ == '__main__':
         help="Path to the clang binary.")
     args = parser.parse_args()
 
-    print(
-        prepare(
+    prepared_command = prepare(
             args.analyzer_command_file,
             PathOptions(
                 args.sources_root,
                 args.clang,
-                args.ctu_dir)))
+                args.ctu_dir))
+
+    write_analyzer_command_file("analyzer-command_DEBUG", prepared_command)
