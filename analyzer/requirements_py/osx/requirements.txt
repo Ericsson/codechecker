@@ -1,4 +1,4 @@
-lxml==4.9.2
+lxml==4.9.3
 portalocker==2.2.1
 psutil==5.8.0
 scan-build==2.0.19
