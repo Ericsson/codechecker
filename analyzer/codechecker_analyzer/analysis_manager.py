@@ -25,6 +25,7 @@ import multiprocess
 import psutil
 
 from codechecker_common.logger import get_logger
+from codechecker_common.review_status_handler import ReviewStatusHandler
 
 from codechecker_statistics_collector.collectors.special_return_value import \
     SpecialReturnValueCollector
@@ -217,8 +218,11 @@ def prepare_check(action, analyzer_config, output_dir,
     return source_analyzer, rh
 
 
-def handle_success(rh, result_file, result_base, skip_handlers,
-                   capture_analysis_output, success_dir):
+def handle_success(
+    rh, result_file, result_base, skip_handlers,
+    rs_handler: ReviewStatusHandler,
+    capture_analysis_output, success_dir
+):
     """
     Result postprocessing is required if the analysis was
     successful (mainly clang tidy output conversion is done).
@@ -229,7 +233,7 @@ def handle_success(rh, result_file, result_base, skip_handlers,
         save_output(os.path.join(success_dir, result_base),
                     rh.analyzer_stdout, rh.analyzer_stderr)
 
-    rh.postprocess_result(skip_handlers)
+    rh.postprocess_result(skip_handlers, rs_handler)
 
     # Generated reports will be handled separately at store.
 
@@ -316,7 +320,8 @@ def handle_reproducer(source_analyzer, rh, zip_file, actions_map):
 
 
 def handle_failure(
-    source_analyzer, rh, zip_file, result_base, actions_map, skip_handlers
+    source_analyzer, rh, zip_file, result_base, actions_map, skip_handlers,
+    rs_handler: ReviewStatusHandler
 ):
     """
     If the analysis fails a debug zip is packed together which contains
@@ -331,7 +336,7 @@ def handle_failure(
     checks = source_analyzer.config_handler.checks()
     state = checks.get('clang-diagnostic-error', (CheckerState.enabled, ''))[0]
     if state == CheckerState.enabled:
-        rh.postprocess_result(skip_handlers)
+        rh.postprocess_result(skip_handlers, rs_handler)
 
     # Remove files that successfully analyzed earlier on.
     plist_file = result_base + ".plist"
@@ -485,7 +490,7 @@ def check(check_data):
     skiplist handler is None if no skip file was configured.
     """
     actions_map, action, analyzer_config, \
-        output_dir, skip_handlers, quiet_output_on_stdout, \
+        output_dir, skip_handlers, rs_handler, quiet_output_on_stdout, \
         capture_analysis_output, generate_reproducer, analysis_timeout, \
         ctu_reanalyze_on_failure, \
         output_dirs, statistics_data = check_data
@@ -603,12 +608,13 @@ def check(check_data):
 
             if success:
                 handle_success(rh, result_file, result_base,
-                               skip_handlers, capture_analysis_output,
-                               success_dir)
+                               skip_handlers, rs_handler,
+                               capture_analysis_output, success_dir)
             elif not generate_reproducer:
                 handle_failure(source_analyzer, rh,
                                os.path.join(failed_dir, zip_file),
-                               result_base, actions_map, skip_handlers)
+                               result_base, actions_map, skip_handlers,
+                               rs_handler)
 
         if rh.analyzer_returncode == 0:
             handle_analysis_result(success=True)
@@ -716,7 +722,7 @@ def skip_cpp(compile_actions, skip_handlers):
 
 
 def start_workers(actions_map, actions, analyzer_config_map,
-                  jobs, output_path, skip_handlers, metadata_tool,
+                  jobs, output_path, skip_handlers, rs_handler, metadata_tool,
                   quiet_analyze, capture_analysis_output, generate_reproducer,
                   timeout, ctu_reanalyze_on_failure, statistics_data, manager,
                   compile_cmd_count):
@@ -783,6 +789,7 @@ def start_workers(actions_map, actions, analyzer_config_map,
                          analyzer_config_map.get(build_action.analyzer_type),
                          output_path,
                          skip_handlers,
+                         rs_handler,
                          quiet_analyze,
                          capture_analysis_output,
                          generate_reproducer,

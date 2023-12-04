@@ -49,7 +49,8 @@ class ReviewStatusHandler:
         'checker_filter',
         'report_hash_filter',
         'review_status',
-        'message']
+        'message',
+        'ignore']
 
     def __init__(self, source_root=''):
         """
@@ -107,21 +108,40 @@ class ReviewStatusHandler:
                         f"'{field}' is not allowed. Available fields are: "
                         f"{', '.join(ReviewStatusHandler.ALLOWED_FIELDS)}")
 
-            if 'review_status' not in item:
+            if 'review_status' not in item and 'ignore' not in item:
                 raise ValueError(
                     f"Format error in {self.__review_status_yaml}: "
-                    f"'review_status' field is missing from {item}.")
+                    f"'review_status' or 'ignore' is required in {item}.")
 
-            if item['review_status'] \
-                    not in ReviewStatusHandler.REVIEW_STATUS_OPTIONS:
-                raise ValueError(
-                    f"Invalid review status field: {item['review_status']} at "
-                    f"{item} in {self.__review_status_yaml}. Available "
-                    f"options are: "
-                    f"{', '.join(ReviewStatusHandler.REVIEW_STATUS_OPTIONS)}.")
+            if 'review_status' in item:
+                review_status_options = \
+                    ', '.join(ReviewStatusHandler.REVIEW_STATUS_OPTIONS)
 
-            if item['review_status'] == 'suppress':
-                item['review_status'] = 'false_positive'
+                if item['review_status'] \
+                        not in ReviewStatusHandler.REVIEW_STATUS_OPTIONS:
+                    raise ValueError(
+                        f"Invalid review status field: "
+                        f"{item['review_status']} at {item} in "
+                        f"{self.__review_status_yaml}. Available options are: "
+                        f"{review_status_options}.")
+
+                if item['review_status'] == 'suppress':
+                    item['review_status'] = 'false_positive'
+
+    def __report_matches_item(self, report: Report, item: dict):
+        if 'filepath_filter' in item and fnmatch.fnmatch(
+                report.file.original_path, item['filepath_filter']):
+            return True
+
+        if 'checker_filter' in item and \
+                report.checker_name == item['checker_filter']:
+            return True
+
+        if 'report_hash_filter' in item and \
+                report.report_hash.startswith(item['report_hash_filter']):
+            return True
+
+        return False
 
     def get_review_status(self, report: Report) -> SourceReviewStatus:
         """
@@ -156,6 +176,11 @@ class ReviewStatusHandler:
         """
         self.__review_status_yaml = config_file
 
+        if os.path.islink(self.__review_status_yaml):
+            orig_yaml = os.readlink(self.__review_status_yaml)
+            if not os.path.exists(orig_yaml):
+                raise ValueError(f"{orig_yaml} not found.")
+
         with open(self.__review_status_yaml,
                   encoding='utf-8', errors='ignore') as f:
             # TODO: Validate format.
@@ -169,6 +194,27 @@ class ReviewStatusHandler:
                     f"{err}")
 
         self.__validate_review_status_yaml_data()
+
+    def should_ignore(self, report: Report) -> bool:
+        """
+        This function returns True if the Report should be ignored based on the
+        review status config file. If a report is ignored, then it shouldn't be
+        written to the analysis output files and CodeChecker should consider
+        them as not existing reports in any context.
+
+        TODO: Should "ignore" state be a review status? Currently it's a
+            standalone field.
+        TODO: If it's a standalone field, then maybe we should find another
+            name for this class, because it handles not only review statuses.
+        """
+        if self.__data is None:
+            return False
+
+        for item in self.__data:
+            if self.__report_matches_item(report, item) and item.get('ignore'):
+                return True
+
+        return False
 
     def get_review_status_from_config(
         self,
@@ -185,15 +231,8 @@ class ReviewStatusHandler:
 
         # TODO: Document "in_source".
         for item in self.__data:
-            if 'filepath_filter' in item and not fnmatch.fnmatch(
-                    report.file.original_path, item['filepath_filter']):
-                continue
-            if 'checker_filter' in item and \
-                    report.checker_name != item['checker_filter']:
-                continue
-            if 'report_hash_filter' in item and \
-                    not report.report_hash.startswith(
-                        item['report_hash_filter']):
+            if not self.__report_matches_item(report, item) or \
+                    item.get('ignore'):
                 continue
 
             if any(filt in item for filt in

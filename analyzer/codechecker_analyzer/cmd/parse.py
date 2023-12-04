@@ -395,7 +395,7 @@ def main(args):
 
     for dir_path, file_paths in report_file.analyzer_result_files(args.input):
         review_status_cfg = os.path.join(dir_path, 'review_status.yaml')
-        if os.path.isfile(review_status_cfg):
+        if os.path.lexists(review_status_cfg):
             try:
                 review_status_handler.set_review_status_config(
                     review_status_cfg)

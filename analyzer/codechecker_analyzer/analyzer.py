@@ -129,7 +129,7 @@ def __has_enabled_checker(ch: AnalyzerConfigHandler):
                for _, (state, _) in ch.checks().items())
 
 
-def perform_analysis(args, skip_handlers, actions, metadata_tool,
+def perform_analysis(args, skip_handlers, rs_handler, actions, metadata_tool,
                      compile_cmd_count):
     """
     Perform static analysis via the given (or if not, all) analyzers,
@@ -313,6 +313,7 @@ def perform_analysis(args, skip_handlers, actions, metadata_tool,
                                        config_map, args.jobs,
                                        args.output_path,
                                        skip_handlers,
+                                       rs_handler,
                                        metadata_tool,
                                        'quiet' in args,
                                        'capture_analysis_output' in args,
