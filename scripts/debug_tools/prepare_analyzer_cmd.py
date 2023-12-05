@@ -110,6 +110,10 @@ if __name__ == '__main__':
         'analyzer_command_file',
         help="The stored analyzer command.")
     parser.add_argument(
+        '-o', '--output',
+        default='analyzer-command_DEBUG',
+        help="The output file for the prepared analyzer command.")
+    parser.add_argument(
         '--sources_root',
         default='./sources-root',
         help="Path of the source root.")
@@ -129,12 +133,20 @@ if __name__ == '__main__':
         help="Path to the used clang plugin.")
     args = parser.parse_args()
 
-    print(
-        prepare(
+    prepared_command = prepare(
             args.analyzer_command_file,
             PathOptions(
                 args.sources_root,
                 args.clang,
                 args.clang_plugin_name,
                 args.clang_plugin_path,
-                args.ctu_dir)))
+                args.ctu_dir))
+
+    with open(args.output, mode="w", encoding="utf-8", errors="ignore") as f:
+        f.write(prepared_command)
+
+    print(
+        "Preparation of files for debugging is done. "
+        "Now you can execute the generated analyzer command. "
+        "E.g. $ bash %s" %
+        args.output)
