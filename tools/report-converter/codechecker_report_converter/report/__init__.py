@@ -14,7 +14,7 @@ import json
 import logging
 import os
 
-from typing import Callable, Dict, List, Optional, Set
+from typing import Callable, Dict, List, Optional, Protocol, Set
 
 from .. import util
 
@@ -22,7 +22,8 @@ from .. import util
 LOG = logging.getLogger('report-converter')
 
 
-SkipListHandlers = Callable[[str], bool]
+class SkipListHandlers(Protocol):
+    should_skip: Callable[[str], bool]
 
 
 InvalidFileContentMsg: str = \
@@ -473,7 +474,7 @@ class Report:
         if not skip_handlers:
             return False
 
-        return skip_handlers(self.file.original_path)
+        return skip_handlers.should_skip(self.file.original_path)
 
     def to_json(self) -> Dict:
         """ Creates a JSON dictionary. """
