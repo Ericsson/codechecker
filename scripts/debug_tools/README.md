@@ -22,7 +22,7 @@ Example session for debugging a clang crash:
 $ export WS=/your_own_path
 $ cd reports/failed
 $ unzip main.c_4c7feffae4c2b887abcdc37a3c88b2e5.plist.zip
-$ $WS/CodeChecker/debug_tools/prepare_analyzer_cmd.py --clang $WS/llvm/build/debug/bin/clang --clang_plugin_name libericsson --clang_plugin_path $WS/codechecker_core_ws/build/debug/libericsson-checkers.so
+$ $WS/CodeChecker/debug_tools/prepare_analyzer_cmd.py --clang $WS/llvm/build/debug/bin/clang
 $ bash analyzer-command_DEBUG
 ```
 
@@ -33,6 +33,6 @@ $ export PATH=$WS/CodeChecker/build/CodeChecker/bin:$PATH
 $ source $WS/CodeChecker/venv_dev/bin/activate
 $ cd reports/failed
 $ unzip main.c_4c7feffae4c2b887abcdc37a3c88b2e5.plist.zip
-$ $WS/CodeChecker/debug_tools/prepare_all_cmd_for_ctu.py --clang $WS/llvm/build/debug/bin/clang --clang_plugin_name libericsson --clang_plugin_path $WS/codechecker_core_ws/build/debug/libericsson-checkers.so
+$ $WS/CodeChecker/debug_tools/prepare_all_cmd_for_ctu.py --clang $WS/llvm/build/debug/bin/clang
 $ bash analyzer-command_DEBUG
 ```

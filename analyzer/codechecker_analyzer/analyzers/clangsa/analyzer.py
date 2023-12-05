@@ -135,42 +135,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             .analyzer_binaries[cls.ANALYZER_NAME]
 
     @classmethod
-    def analyzer_plugins(cls) -> List[str]:
-        """
-        Return the list of .so file paths which contain checker plugins to
-        ClangSA.
-        """
-        plugin_dir = analyzer_context.get_context().checker_plugin
-
-        clangsa_plugin_dir = env.get_clangsa_plugin_dir()
-        is_analyzer_from_path = env.is_analyzer_from_path()
-        if is_analyzer_from_path:
-            if not clangsa_plugin_dir:
-                return []
-
-            # If the CC_ANALYZERS_FROM_PATH and CC_CLANGSA_PLUGIN_DIR
-            # environment variables are set we will use this value as the
-            # plugin directory.
-            plugin_dir = clangsa_plugin_dir
-
-        if not plugin_dir or not os.path.exists(plugin_dir):
-            return []
-
-        return [os.path.join(plugin_dir, f)
-                for f in os.listdir(plugin_dir)
-                if os.path.isfile(os.path.join(plugin_dir, f))
-                and f.endswith(".so")]
-
-    @classmethod
-    def __add_plugin_load_flags(cls, analyzer_cmd: List[str]):
-        """
-        ClangSA can be extended with checker plugins. This function extends a
-        clang command with these plugins.
-        """
-        for plugin in ClangSA.analyzer_plugins():
-            analyzer_cmd.extend(["-load", plugin])
-
-    @classmethod
     def get_binary_version(self, environ, details=False) -> str:
         # No need to LOG here, we will emit a warning later anyway.
         if not self.analyzer_binary():
@@ -259,8 +223,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         """
         command = [cls.analyzer_binary(), "-cc1"]
 
-        cls.__add_plugin_load_flags(command)
-
         command.append("-analyzer-checker-help")
 
         # The clang compiler on OSX is a few
@@ -288,8 +250,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         """
         command = [cls.analyzer_binary(), "-cc1"]
 
-        cls.__add_plugin_load_flags(command)
-
         command.append("-analyzer-checker-option-help")
 
         version_info = ClangSA.version_info()
@@ -306,8 +266,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
     def get_analyzer_config(cls) -> List[str]:
         """Return the list of analyzer config options."""
         command = [cls.analyzer_binary(), "-cc1"]
-
-        cls.__add_plugin_load_flags(command)
 
         command.append("-analyzer-config-help")
 
@@ -366,12 +324,6 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             analyzer_cmd = [ClangSA.analyzer_binary(), '--analyze',
                             # Do not warn about the unused gcc/g++ arguments.
                             '-Qunused-arguments']
-
-            for plugin in ClangSA.analyzer_plugins():
-                analyzer_cmd.extend(["-Xclang", "-plugin",
-                                     "-Xclang", "checkercfg",
-                                     "-Xclang", "-load",
-                                     "-Xclang", plugin])
 
             analyzer_mode = 'plist-multi-file'
             analyzer_cmd.extend(['-Xclang',

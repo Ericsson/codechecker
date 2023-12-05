@@ -49,10 +49,6 @@ epilog_env_var = f"""
                            binary.
                            Format: CC_ANALYZER_BIN='<analyzer1>:/path/to/bin1;
                                                     <analyzer2>:/path/to/bin2'
-  CC_CLANGSA_PLUGIN_DIR    If the CC_ANALYZERS_FROM_PATH environment variable
-                           is set you can configure the plugin directory of the
-                           Clang Static Analyzer by using this environment
-                           variable.
 """
 
 epilog_issue_hashes = """
