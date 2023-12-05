@@ -17,6 +17,7 @@ from libtest import codechecker
 from libtest import env
 import multiprocess
 
+# pylint: disable=no-member multiprocess module members.
 # Stopping event for CodeChecker server.
 __STOP_SERVER = multiprocess.Event()
 

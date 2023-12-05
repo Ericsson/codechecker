@@ -32,6 +32,7 @@ class TestSSL(unittest.TestCase):
 
         # Stopping event for CodeChecker server.
         global __STOP_SERVER
+        # pylint: disable=no-member multiprocess module members.
         __STOP_SERVER = multiprocess.Event()
 
         global TEST_WORKSPACE

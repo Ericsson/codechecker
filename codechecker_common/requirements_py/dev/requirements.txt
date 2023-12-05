@@ -1,5 +1,5 @@
 portalocker==2.2.1
 coverage==5.5.0
-mypy==0.812
-mypy_extensions==0.4.3
+mypy==1.7.1
 PyYAML==6.0.1
+types-PyYAML==6.0.12.12

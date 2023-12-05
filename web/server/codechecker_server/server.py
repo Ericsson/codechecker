@@ -27,7 +27,7 @@ import urllib
 
 from http.server import HTTPServer, BaseHTTPRequestHandler, \
     SimpleHTTPRequestHandler
-from multiprocess import Process
+import multiprocess
 
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import func
@@ -1116,7 +1116,8 @@ def start_server(config_directory, package_data, port, config_sql_server,
     atexit.register(unregister_handler, os.getpid())
 
     for _ in range(manager.worker_processes - 1):
-        p = Process(target=http_server.serve_forever)
+        # pylint: disable=no-member multiprocess module members.
+        p = multiprocess.Process(target=http_server.serve_forever)
         processes.append(p)
         p.start()
 

@@ -700,6 +700,7 @@ def start_server(codechecker_cfg, event, server_args=None, pg_config=None):
                           pg_config,
                           server_args or [])
 
+    # pylint: disable=no-member multiprocess module members.
     server_proc = multiprocess.Process(
         name='server',
         target=start_server_proc,

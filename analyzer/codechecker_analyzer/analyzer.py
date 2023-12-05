@@ -136,6 +136,7 @@ def perform_analysis(args, skip_handlers, actions, metadata_tool,
     in the given analysis context for the supplied build actions.
     Additionally, insert statistical information into the metadata dict.
     """
+    # pylint: disable=no-member multiprocess module members.
 
     context = analyzer_context.get_context()
 

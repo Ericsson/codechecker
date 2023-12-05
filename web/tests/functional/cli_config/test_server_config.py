@@ -24,6 +24,7 @@ from . import setup_class_common, teardown_class_common
 
 
 class TestServerConfig(unittest.TestCase):
+    # pylint: disable=no-member multiprocess module members.
     _ccClient = None
 
     def setup_class(self):
