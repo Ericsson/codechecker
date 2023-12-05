@@ -985,8 +985,13 @@ def main(args):
     # Process the skip list if present.
     skip_handlers = __get_skip_handlers(args, compile_commands)
     rs_handler = review_status_handler.ReviewStatusHandler(args.output_path)
-    if 'review_status_config' in args:
-        rs_handler.set_review_status_config(args.review_status_config)
+
+    try:
+        if 'review_status_config' in args:
+            rs_handler.set_review_status_config(args.review_status_config)
+    except ValueError as ex:
+        LOG.error(ex)
+        sys.exit(1)
 
     ctu_or_stats_enabled = False
     # Skip list is applied only in pre-analysis
