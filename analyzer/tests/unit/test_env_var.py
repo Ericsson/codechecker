@@ -69,12 +69,12 @@ class EnvVarTest(unittest.TestCase):
         machine is expected to run some version of gcc, so this should be OK.
         """
         bin_gcc_var = self._get_analyzer_bin_for_CC_ANALYZER_BIN("gcc:gcc")
-        self.assertIn("gcc", bin_gcc_var)
-        self.assertNotIn("g++", bin_gcc_var)
+        self.assertTrue(bin_gcc_var.endswith("gcc"))
+        self.assertTrue(not bin_gcc_var.endswith("g++"))
 
         bin_gpp_var = self._get_analyzer_bin_for_CC_ANALYZER_BIN("gcc:g++")
-        self.assertIn("g++", bin_gpp_var)
-        self.assertNotIn("gcc", bin_gpp_var)
+        self.assertTrue(bin_gpp_var.endswith("g++"))
+        self.assertTrue(not bin_gpp_var.endswith("gcc"))
 
         self.assertNotEqual(bin_gcc_var, bin_gpp_var)
 
@@ -88,11 +88,11 @@ class EnvVarTest(unittest.TestCase):
         context.analyzer_env["CC_ANALYZERS_FROM_PATH"] = '1'
 
         bin_gcc_var = self._get_analyzer_bin_for_CC_ANALYZER_BIN("gcc:gcc")
-        self.assertIn("gcc", bin_gcc_var)
-        self.assertNotIn("g++", bin_gcc_var)
+        self.assertTrue(bin_gcc_var.endswith("gcc"))
+        self.assertTrue(not bin_gcc_var.endswith("g++"))
 
         bin_gpp_var = self._get_analyzer_bin_for_CC_ANALYZER_BIN("gcc:g++")
-        self.assertIn("g++", bin_gpp_var)
-        self.assertNotIn("gcc", bin_gpp_var)
+        self.assertTrue(bin_gpp_var.endswith("g++"))
+        self.assertTrue(not bin_gpp_var.endswith("gcc"))
 
         self.assertNotEqual(bin_gcc_var, bin_gpp_var)
