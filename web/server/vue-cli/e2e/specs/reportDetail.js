@@ -233,9 +233,9 @@ module.exports = {
     const bugTree = reportDetailPage.section.bugTree;
 
     const oldOutstandingStateIndex = 2;
-    const outstandingStateIndex = 1;
     const oldSeverityIndex = 1;
     const oldBugIndex = 1;
+    const outstandingStateIndex = 1;
     const severityIndex = 2;
     const bugIndex = 1;
     const stepIndex = 1;
@@ -253,7 +253,10 @@ module.exports = {
 
     bugTree.click(bugTree.getTreeNodeSelector(oldOutstandingStateIndex));
 
-    bugTree.click(bugTree.getTreeNodeSelector(outstandingStateIndex));
+    bugTree.click(bugTree.getTreeNodeSelector(
+      outstandingStateIndex,
+      oldSeverityIndex
+    ));
 
     bugTree.click(bugTree.getTreeNodeSelector(
       outstandingStateIndex,
