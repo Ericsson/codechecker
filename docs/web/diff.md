@@ -7,12 +7,17 @@ From the outlook, diff sounds like a very simple feature (and it is!), but it al
 
 ## How diffs work
 
-The term "diff" means the comparison of the outstanding reports in a "before" (_baseline_) and an "after" (_new_ or newline) analysis sets, and display the differences in between them the in the same 
+The term "diff" means the comparison in between the outstanding reports in a "before" (_baseline_) and an "after" (_new_ or newline) analysis sets. Results are displayed in the same 
 format as `results`. A report is outstanding if all of the following is true:
 * its detection status is _new_, _reopened_ or _unresolved_,
 * its review status is _unreviewed_ or _confirmed_.
 
 As a result, an outstanding report may be resolved by changing its review status, or if the report does not appear in the "after" set.
+
+You can compare both local analysis results (see [CodeChecker analyze](../analyzer/user_guide.md#analyze)) and
+results stored on the server (see [CodeChecker store](./user_guide.md#store)). In fact, you can compare
+local _and_ remote analyses against one other! We call these in order local-local,
+remote-remote, and local-remote or remote-local diffs.
 
 `diff` is the primary tool to tell if from the "before" set to the "after" set 
 * a _new_ outstanding report appeared,
@@ -296,10 +301,7 @@ command) and a local report directory and show new results:
 ```
 </details>
 
-You can compare both local analysis results (see [CodeChecker analyze](../analyzer/user_guide.md#analyze)) and
-results stored on the server (see [CodeChecker store](./user_guide.md#store)). In fact, you can compare
-local _and_ remote analyses against one other! We call these in order local-local,
-remote-remote, and local-remote or remote-local diffs.
+Here are some simple examples on the usage of diff from the command line interface:
 
 - Compare locally stored analyses `./my_base_results` and locally stored analysis `./my_updated_results`:
   ```sh
