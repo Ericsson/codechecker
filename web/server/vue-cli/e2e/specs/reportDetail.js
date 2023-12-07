@@ -232,14 +232,46 @@ module.exports = {
     const reportDetailPage = browser.page.reportDetail();
     const bugTree = reportDetailPage.section.bugTree;
 
+    const oldOutstandingStateIndex = 2;
+    const outstandingStateIndex = 1;
+    const oldSeverityIndex = 1;
+    const oldBugIndex = 1;
     const severityIndex = 2;
     const bugIndex = 1;
     const stepIndex = 1;
 
-    bugTree.click(bugTree.getTreeNodeSelector(severityIndex));
-    bugTree.click(bugTree.getTreeNodeSelector(severityIndex, bugIndex));
-    bugTree.click(
-      bugTree.getTreeNodeSelector(severityIndex, bugIndex, stepIndex));
+    bugTree.click(bugTree.getTreeNodeSelector(
+      oldOutstandingStateIndex,
+      oldSeverityIndex,
+      oldBugIndex
+    ));
+
+    bugTree.click(bugTree.getTreeNodeSelector(
+      oldOutstandingStateIndex,
+      oldSeverityIndex
+    ));
+
+    bugTree.click(bugTree.getTreeNodeSelector(oldOutstandingStateIndex));
+
+    bugTree.click(bugTree.getTreeNodeSelector(outstandingStateIndex));
+
+    bugTree.click(bugTree.getTreeNodeSelector(
+      outstandingStateIndex,
+      severityIndex
+    ));
+
+    bugTree.click(bugTree.getTreeNodeSelector(
+      outstandingStateIndex,
+      severityIndex,
+      bugIndex
+    ));
+
+    bugTree.click(bugTree.getTreeNodeSelector(
+      outstandingStateIndex,
+      severityIndex,
+      bugIndex,
+      stepIndex
+    ));
 
     reportDetailPage.waitForProgressBarNotPresent();
   }

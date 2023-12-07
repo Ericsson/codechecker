@@ -44,7 +44,8 @@ import { ccService, handleThriftError } from "@cc-api";
 import {
   DetectionStatus,
   MAX_QUERY_SIZE,
-  ReportFilter
+  ReportFilter,
+  ReviewStatus
 } from "@cc/report-server-types";
 
 import { ReviewStatusIcon } from "@/components/Icons";
@@ -64,7 +65,8 @@ export default {
   },
 
   props: {
-    report: { type: Object, default: null }
+    report: { type: Object, default: null },
+    reviewStatus: { type: Number, default: null }
   },
 
   data() {
@@ -82,7 +84,19 @@ export default {
 
   watch: {
     report() {
-      this.fetchReports();
+      // If the runId and the checkedFile are not changed, we should not load
+      // the reports.
+      if (this.isTheReportFileChanged()) {
+        this.fetchReports();
+      }
+    },
+
+    reviewStatus() {
+      // If the runId and the checkedFile are not changed, but the review
+      // status is, we should load the reports again.
+      if (!this.isTheReportFileChanged()) {
+        this.fetchReports();
+      }
     }
   },
 
@@ -95,23 +109,23 @@ export default {
   methods: {
     // Remove root elements which do not have any children.
     removeEmptyRootElements() {
-      let i = this.items.length;
-      while (i--) {
-        if (!this.items[i].children.length) {
-          this.items.splice(i, 1);
+      if (this.items && this.items.length) {
+        let i = this.items.length;
+        while (i--) {
+          let j = this.items[i].children.length;
+          while (j--) {
+            if (!this.items[i].children[j].children.length) {
+              this.items[i].children.splice(j, 1);
+            }
+          }
+          if (!this.items[i].children.length){
+            this.items.splice(i, 1);
+          }
         }
       }
     },
 
     fetchReports() {
-      // If the runId and the checkedFile are not changed, we should not load
-      // the reports.
-      if (this.runId && this.runId.equals(this.report.runId) &&
-          this.fileId && this.fileId.equals(this.report.fileId)
-      ) {
-        return;
-      }
-
       this.runId = this.report.runId;
       this.fileId = this.report.fileId;
 
@@ -147,38 +161,48 @@ export default {
             const isResolved =
             report.detectionStatus === DetectionStatus.RESOLVED;
 
-            const parent = this.items.find(item => {
-              return isResolved
+            const status = !(
+              isResolved ||
+              report.reviewData.status === ReviewStatus.FALSE_POSITIVE ||
+              report.reviewData.status === ReviewStatus.INTENTIONAL
+            ) ? this.items.find(item => item.isOutstanding)
+              : this.items.find(item => !item.isOutstanding);
+
+            const parent = status.children.find(item => {
+              return isResolved 
                 ? item.detectionStatus === DetectionStatus.RESOLVED
-                : item.severity === report.severity;
+                : item.severity === report.severity
+              ;
             });
 
-            parent.children.push({
-              id: ReportTreeKind.getId(ReportTreeKind.REPORT, report),
-              name: report.checkerId,
-              kind: ReportTreeKind.REPORT,
-              report: report,
-              children: [],
-              itemChildren: [],
-              isLoading: false,
-              getChildren: item => {
-                return new Promise(resolve => {
-                  ccService.getClient().getReportDetails(report.reportId,
-                    handleThriftError(details => {
-                      item.children = formatReportDetails(report, details);
-                      resolve();
+            if (parent){
+              parent.children.push({
+                id: ReportTreeKind.getId(ReportTreeKind.REPORT, report),
+                name: report.checkerId,
+                kind: ReportTreeKind.REPORT,
+                report: report,
+                children: [],
+                itemChildren: [],
+                isLoading: false,
+                getChildren: item => {
+                  return new Promise(resolve => {
+                    ccService.getClient().getReportDetails(report.reportId,
+                      handleThriftError(details => {
+                        item.children = formatReportDetails(report, details);
+                        resolve();
 
-                      if (this.report.reportId.equals(item.report.reportId)) {
-                        const bugItem = item.children.find(c =>
-                          c.id === `${report.reportId}_${ReportTreeKind.BUG}`
-                        );
+                        if (this.report.reportId.equals(item.report.reportId)) {
+                          const bugItem = item.children.find(c =>
+                            c.id === `${report.reportId}_${ReportTreeKind.BUG}`
+                          );
 
-                        this.activeItems.push(bugItem);
-                      }
-                    }));
-                });
-              }
-            });
+                          this.activeItems.push(bugItem);
+                        }
+                      }));
+                  });
+                }
+              });
+            }
           });
           this.openReportItems();
 
@@ -205,31 +229,52 @@ export default {
       const isResolved =
         this.report.detectionStatus === DetectionStatus.RESOLVED;
 
-      const rootNode = this.items.find(item => {
-        return isResolved
+      const status = !(
+        isResolved ||
+        this.report.reviewData.status === ReviewStatus.FALSE_POSITIVE ||
+        this.report.reviewData.status === ReviewStatus.INTENTIONAL
+      ) ? this.items.find(item => item.isOutstanding)
+        : this.items.find(item => !item.isOutstanding);
+
+      this.openedItems.push(status);
+
+      const rootNode = status.children.find(item => {
+        return isResolved 
           ? item.detectionStatus === DetectionStatus.RESOLVED
           : item.severity === this.report.severity;
       });
 
-      this.openedItems.push(rootNode);
-      this.$nextTick(() => {
-        const reportNode = rootNode.children.find(item => {
-          return item.id === this.report.reportId.toString();
-        });
+      if (rootNode) {
+        this.openedItems.push(rootNode);
+        this.$nextTick(() => {
+          const reportNode = rootNode.children.find(item => {
+            return item.id === this.report.reportId.toString();
+          });
 
-        if (reportNode) {
-          const node = this.$el.querySelector(`[data-id='${reportNode.id}']`);
-          if (node) {
-            node.scrollIntoView();
+          if (reportNode) {
+            const node = this.$el.querySelector(`[data-id='${reportNode.id}']`);
+            if (node) {
+              node.scrollIntoView();
+            }
+            this.openedItems.push(reportNode);
           }
-        }
-
-        this.openedItems.push(reportNode);
-      });
+        });
+      }
     },
 
     onClick(activeItems) {
       this.$emit("click", activeItems[0]);
+    },
+
+    isTheReportFileChanged() {
+      if (this.runId && this.runId.equals(this.report.runId) &&
+          this.fileId && this.fileId.equals(this.report.fileId)
+      ) {
+        return false;
+      }
+      else {
+        return true;
+      }
     }
   }
 };

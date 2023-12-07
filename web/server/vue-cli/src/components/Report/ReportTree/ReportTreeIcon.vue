@@ -57,6 +57,24 @@
     mdi-note-outline
   </v-icon>
 
+  <v-icon
+    v-else-if="item.isOutstanding"
+    title="Outstanding reports (review status is unreviewed or confirmed 
+    and detection status is not resolved)"
+    color="primary"
+  >
+    mdi-folder-lock-open
+  </v-icon>
+
+  <v-icon
+    v-else-if="!item.isOutstanding"
+    title="Closed reports (review status is false positive or intentional 
+    or detection status is resolved)"
+    color="primary"
+  >
+    mdi-folder-lock
+  </v-icon>
+
   <v-icon v-else>
     {{ item.open ? "mdi-folder-open" : "mdi-folder" }}
   </v-icon>

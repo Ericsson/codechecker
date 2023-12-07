@@ -339,6 +339,9 @@ export default {
   props: {
     treeItem: { type: Object, default: null }
   },
+
+  emits: [ "update-review-data" ],
+
   data() {
     const enableBlameView =
       this.$router.currentRoute.query["view"] === "blame";
@@ -886,6 +889,11 @@ export default {
           this.reviewData.status = status;
           this.reviewData.author = author;
           this.reviewData.date = format(new Date(), "yyyy-MM-dd HH:mm:ss");
+          this.$emit(
+            "update-review-data",
+            this.reviewData,
+            this.report.reportId
+          );
         }));
     },
 

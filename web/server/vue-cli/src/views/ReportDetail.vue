@@ -77,6 +77,7 @@
             <report-tree
               v-fill-height
               :report="report"
+              :review-status="reviewStatus"
               @click="onReportTreeClick"
             />
           </v-col>
@@ -89,6 +90,7 @@
         :tree-item="treeItem"
         @toggle:comments="showComments = !showComments"
         @update:report="loadReport"
+        @update-review-data="updateReviewData"
       />
     </pane>
   </splitpanes>
@@ -125,7 +127,8 @@ export default {
       report: null,
       treeItem: null,
       showComments: true,
-      reportNotFound: false
+      reportNotFound: false,
+      reviewStatus: null
     };
   },
   computed: {
@@ -222,6 +225,11 @@ export default {
       }
 
       this.treeItem = item;
+    },
+
+    updateReviewData(newReviewData, reportId) {
+      this.reviewStatus = newReviewData.status;
+      this.loadReport(reportId);
     }
   }
 };
