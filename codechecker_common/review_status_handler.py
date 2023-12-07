@@ -49,10 +49,11 @@ class ReviewStatusHandler:
         'checker_name',
         'report_hash']
 
+    # TODO: Read the commit message where THIS current line was committed!
+    # That will tell you why "ignore" option is not found in this list.
     ALLOWED_ACTIONS = [
         'review_status',
-        'reason',
-        'ignore']
+        'reason']
 
     def __init__(self, source_root=''):
         """
@@ -121,7 +122,7 @@ class ReviewStatusHandler:
                     'ignore' not in rule['actions']:
                 raise ValueError(
                     f"Format error in {self.__review_status_yaml}. "
-                    f"'review_status' or 'ignore' is required in:\n"
+                    f"'review_status' is required in:\n"
                     f"{yaml.dump(rule)}.")
 
             if 'review_status' in rule['actions']:

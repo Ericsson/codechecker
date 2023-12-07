@@ -2636,12 +2636,6 @@ rules:
     actions:
       review_status: false_positive
       reason: This report is false positive.
-
-  - filters:
-      filepath: /path/to/3pp/lib/*
-    actions:
-      ignore: true
-      reason: The reports of this lib are ignored completely.
 ```
 
 The review settings rules have two componetes: `filters` and `actions`. A rule
@@ -2663,11 +2657,8 @@ options are available:
 The following actions are available:
 
 - `review_status`: The review status to set.
-- `ignore`: If set to `true` then the report is completely ignored. Such a
-  report is not even dumped to the .plist files, thus it's completely invisible
-  for other CodeChecker commands like "parse", "diff", "store", etc.
 - `reason` (optional): A comment message that describes the reason of the
   setting.
 
-The `review_status` and `ignore` are mutually exclusive. If none of the filter
-options is provided, then that setting is not applied on any report.
+If none of the filter options is provided, then that setting is not applied on
+any report.
