@@ -5296,7 +5296,6 @@
     ],
     "cppcoreguidelines-special-member-functions": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/special-member-functions.html",
-      "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
@@ -5375,7 +5374,6 @@
     ],
     "google-global-names-in-headers": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/google/global-names-in-headers.html",
-      "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "severity:STYLE"
@@ -6001,7 +5999,6 @@
     ],
     "misc-use-anonymous-namespace": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/misc/use-anonymous-namespace.html",
-      "profile:default",
       "profile:extreme",
       "profile:sensitive",
       "severity:LOW"
