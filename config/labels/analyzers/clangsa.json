@@ -809,6 +809,16 @@
     "osx.coreFoundation.containers.PointerSizedValues": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-corefoundation-containers-pointersizedvalues-c"
     ],
+    "security.cert.env.InvalidPtr": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-cert-env-invalidptr",
+      "profile:default",
+      "profile:sensitive",
+      "profile:extreme",
+      "profile:security",
+      "severity:MEDIUM",
+      "sei-cert:env31-c",
+      "sei-cert:env34-c"
+    ],
     "security.FloatLoopCounter": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-floatloopcounter-c",
       "guideline:sei-cert",
@@ -914,6 +924,13 @@
       "profile:extreme",
       "profile:sensitive"
     ],
+    "unix.Errno": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-errno-c",
+      "profile:sensitive",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
+
     "unix.Malloc": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-malloc-c",
       "guideline:sei-cert",
