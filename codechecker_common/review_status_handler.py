@@ -104,6 +104,16 @@ class ReviewStatusHandler:
                     f"'filters' and 'actions':\n"
                     f"{yaml.dump(rule)}")
 
+            if rule['filters'] is None:
+                raise ValueError(
+                    f"Format error in {self.__review_status_yaml}: 'filters' "
+                    f"must have at least one element.")
+
+            if rule['actions'] is None:
+                raise ValueError(
+                    f"Format error in {self.__review_status_yaml}: 'actions' "
+                    f"must have at least one element.")
+
             for field in rule['filters']:
                 if field not in ReviewStatusHandler.ALLOWED_FILTERS:
                     raise ValueError(
