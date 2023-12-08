@@ -100,6 +100,7 @@ def get_linef(fp: TextIO, line_no: int) -> str:
             return line
     return ''
 
+
 def path_for_fake_root(full_path: str, root_path: str = '/') -> str:
     """Normalize and sanitize full_path, then make it relative to root_path."""
     relative_path = os.path.relpath(full_path, '/')
