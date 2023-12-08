@@ -2,6 +2,333 @@
   <!-- eslint-disable max-len -->
   <v-container fluid>
     <v-timeline align-top>
+      <v-timeline-item fill-dot icon="mdi-star" color="green lighten-1">
+        <new-release-item color="green lighten-1">
+          <template v-slot:title>
+            <a
+              href="https://github.com/Ericsson/codechecker/releases/tag/v6.23.0"
+              target="_blank"
+              class="white--text"
+            >
+              Highlights of CodeChecker 6.23.0 release
+            </a>
+          </template>
+
+          <new-feature-item>
+            <template v-slot:title>
+              GCC Static Analyzer support
+            </template>
+            <p>
+              We are happy to announce that CodeChecker added native support for
+              the <a href="https://gcc.gnu.org/wiki/StaticAnalyzer" target="_blank">GCC Static Analyzer</a>!
+              This analyzer checks code in the C family of languages, but its
+              latest release at the time of writing is still best used only on C
+              code. Despite it being a bit immature for C++, we did some internal
+              surveys where the GCC Static Analyzer seemed to be promising.
+            </p>
+
+            <p>
+              We expect this analyzer to be slower than clang-tidy, but faster
+              than the Clang Static Analyzer. You can enable it by adding
+              <code>--analyzers gcc</code> to your <code>CodeChecker check</code>
+              or <code>CodeChecker analyze</code> commands. For further
+              configuration, check out the
+              <a href="https://github.com/Ericsson/codechecker/blob/master/docs/analyzer/checker_and_analyzer_configuration.md#gcc-static-analyzer" target="_blank">GCC Static Analyzer configuration page</a>.
+            </p>
+
+            <p>
+              GNU GCC 13.0.0. (the minimum version we support) can be tricky to
+              obtain and to make CodeChecker use it, as CodeChecker looks for
+              the <code>g++</code> binary, not <code>g++-13</code>. As a
+              workaround, you can set the environmental variable
+              <code>CC_ANALYZER_BIN</code>
+              which will make CodeChecker use the given analyzer path (e.g.
+              <code>CC_ANALYZER_BIN="gcc:/usr/bin/g++-13"</code>). You can use
+              <code>CodeChecker analyzers</code> to check whether you have the
+              correct binary configured.
+            </p>
+
+            <p>
+              You can enable gcc checkers by explicitly mentioning them at the
+              analyze command e.g.
+            </p>
+
+            <code>CodeChecker analyze -e gcc</code>
+
+            <p>
+              gcc checkers are only added to the exterme profile. After
+              evaluation, some checkers may be added to other profiles too.
+            </p>
+
+            <p>
+              Under the same breath, we added partial support for the
+              <a href="https://sarifweb.azurewebsites.net/" target="_blank">SARIF</a>
+              file format (as opposed to using plists) to
+              <code>report-converter</code>, with greater support planned for
+              future releases.
+            </p>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Review status config file
+            </template>
+
+            <p>
+              In previous CodeChecker versions, you could set the review status of
+              a report using two methods: using
+              <a href="https://github.com/Ericsson/codechecker/blob/master/docs/analyzer/user_guide.md#setting-with-source-code-comments" target="_blank">in-source comments</a>,
+              or setting a
+              <a href="https://github.com/Ericsson/codechecker/blob/master/web/server/vue-cli/src/assets/userguide/userguide.md#review-status" target="_blank">review status rule</a>
+              in the GUI. The former sets the specific report's review status,
+              the latter sets all matching reports' review status.
+            </p>
+
+            <p>
+              This release introduces a third way, a review status config file!
+              One of the motivations behind this is that we wanted to have a way
+              to set review statuses on reports in specific directories (which
+              was not possible on the GUI). CodeChecker uses a YAML config file
+              that can be set during analysis:
+            </p>
+
+            <pre>
+$version: 1
+rules:
+  - filters:
+      filepath: /path/to/project/test/*
+      checker_name: core.DivideZero
+    actions:
+      review_status: intentional
+      reason: Division by zero in test files is automatically intentional.
+
+  - filters:
+      filepath: /path/to/project/important/module/*
+    actions:
+      review_status: confirmed
+      reason: All reports in this module should be investigated.
+
+  - filters:
+      filepath: "*/project/test/*"
+    actions:
+      review_status: suppress
+      reason: If a filter starts with asterix, then it should be quoted due to YAML format.
+
+  - filters:
+      report_hash: b85851b34789e35c6acfa1a4aaf65382
+    actions:
+      review_status: false_positive
+      reason: This report is false positive.
+            </pre>
+
+            <p>
+              This is how you can use this config file for an analysis:
+            </p>
+
+            <pre>
+CodeChecker analyze compile_commands.json --review-status-config review_status.yaml -o reports
+            </pre>
+
+            <p>
+              The config file allows for a great variety of ways to match a
+              report and set its review status. For further details see
+              <a href="https://github.com/Ericsson/codechecker/blob/master/docs/analyzer/user_guide.md#setting-with-config-file" target="_blank">this documentation</a>.
+            </p>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Enable/disable status of checkers
+            </template>
+
+            <p>
+              <strong>
+                In this release the unknown Checker status has been eliminated.
+                CodeChecker will enable only those checkers that are either
+                present in the default profile (see CodeChecker checkers
+                --profile default) or enabled using the --enable argument
+                (through another profile or explicitly through a checker name).
+              </strong>
+            </p>
+
+            <p>
+              In previous CodeChecker versions, when you ran an analysis, we
+              assigned three states to every checker: it's either enabled,
+              disabled, or neither (unknown). We kept the third state around to
+              give some leeway for the analyzers to decide which checkers to
+              enable or disable, usually to manage their checker dependencies.
+              We now see that this behavior can be (and usually is) confusing,
+              party because it's hard to tell which checkers were actually
+              enabled.
+            </p>
+
+            <p>
+              You can list the checkers enabled by default using the CodeChecker
+              checkers command:
+            </p>
+
+            <pre>
+CodeChecker 6.22.0 output:
+
+CodedeChecker checkers |grep clang-diagnostic-varargs -A7
+clang-diagnostic-varargs
+  Status: unknown
+  Analyzer: clang-tidy
+  Description:
+  Labels:
+    doc_url:/afs/seli.gic.ericsson.se/app/vbuild/RHEL7-x86_64/codechecker/6.22.0/www/docs/analyzer/DiagnosticsReference.html#wvarargs
+    severity:MEDIUM
+
+=>
+CodeChecker 6.23.0 output:
+
+CodeChecker checkers |grep clang-diagnostic-varargs -A7
+clang-diagnostic-varargs
+  Status: disabled
+  Analyzer: clang-tidy
+  Description:
+  Labels:
+    doc_url:/afs/seli.gic.ericsson.se/app/vbuild/RHEL7-x86_64/codechecker/6.23.0-rc2/www/docs/analyzer/DiagnosticsReference.html#wvarargs
+    severity:MEDIUM
+            </pre>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Major fixes to run/tag comparisons (diff)
+            </template>
+
+            <p>
+              Following a thorough survey, we identified numerous areas to
+              improve on our run/tag comparisons. We landed several patches to
+              improve the results of diffs both on the CLI and the web GUI
+              (which should be almost always identical). Despite that this
+              feature has the appearance of a simple set operation, diff is a
+              powerful tool that can express a lot of properties on the state of
+              your codebase, and has a few intricacies. For this reason, we also
+              greatly improved
+              <a href="https://github.com/Szelethus/codechecker/blob/diff_docs_rewrite/docs/web/diff.md" target="_blank">our docs</a>
+              around it.
+            </p>
+
+            <p>
+              A detailed description of the issues are described in this ticket:
+              <a href="https://github.com/Ericsson/codechecker/issues/3884" target="_blank">#3884</a>
+            </p>
+
+            <p>
+              One example is that the if the suppression was removed for a
+              finding, the diff did not show the reappearing result as new (in
+              local/local diff):
+            </p>
+
+            <pre>
+// Code version 1:
+void c() {
+  int i = 0; // deadstore, this value is never read
+  // codechecker_suppress [all] SUPPRESS ALL
+  i = 5;
+}
+
+
+// Code version 2 (suppression removed):
+
+void c() {
+  int i = 0; // deadstore, this value is never read
+  i = 5;
+}
+
+CodeChecker diff -b version1.c -n version2.c --new
+Did not show the deadstore finding as new.
+            </pre>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Web GUI improvements
+            </template>
+
+            <p>
+              We landed several patches to improve the readability and usability
+              of the GUI, with more improvements to come in later releases! The
+              currently selected event's visual highlight pops a little more now
+              in the report view, and we no longer show unused columns in the
+              run view.
+            </p>
+
+            <p>
+              In the report detail page, outstanding and closed issues are
+              clearly organized into a left tree view. So it will be easier to
+              see which report needs more attention (fixing or triaging).
+            </p>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              Report limit for storing to the server
+            </template>
+
+            <p>
+              Especially in the case of clang-tidy, we have observed some
+              unreasonable number of reports by certain checkers. In some
+              instances, we saw hundreds of thousands (!) of reports reported by
+              some individual checkers, and its more than unlikely that anyone
+              will inspect these reports individually (you probably got the
+              message about using parantheses around macros after the first 15
+              000 reports).
+            </p>
+
+            <p>
+              We found that these checkers were usually enabled by mistake, and
+              put unnecessary strain both on the storage of results to the
+              server, and on the database once stored. Moving forward,
+              CodeChecker servers will reject stores of runs that have more than
+              500 000 reports. This limit is a default value that you can change
+              or even set to unlimited. Our intent is not to discourage
+              legitemately huge stores, only those that are whose size is likely
+              this large by mistake.
+            </p>
+
+            <p>
+              When creating a new product called <code>My product</code> at
+              endpoint <code>myproduct</code>, you can set the report limit from
+              the CLI with the following invocation:
+            </p>
+
+            <pre>
+CodeChecker cmd products add -n "My product" --report-limit 1000000 myproduct
+            </pre>
+
+            <p>
+              For an already existing product, you can change the limit by
+              clicking the pencil at the products page.
+            </p>
+          </new-feature-item>
+
+          <new-feature-item>
+            <template v-slot:title>
+              <v-alert dense outlined type="error" class="py-0 ma-0 ml-2">
+                Backward incompatible change!
+              </v-alert>
+            </template>
+
+            [analyzer] Promote the missing analyzer warning to an error
+            <a href="https://github.com/Ericsson/codechecker/pull/3997" target="_blank">#3997</a>
+            <ul>
+              <li>If analyzers are specified with <code>--analyzers</code> flag and one of them is missing, CodeChecker now emits an error.</li>
+              <li>Previously, the user could only specify the analyzers without version number e.g.: <code>CodeChecker analyze compile_commands.json -o reports --analyzers clangsa</code></li>
+              <li>Now, you can also validate the analyzer's version number e.g.: <code>CodeChecker analyze compile_commands.json -o reports --analyzers clangsa==14.0.0</code></li>
+              <li>In both cases, if a wrong analyzer was given, the system exit would trigger.</li>
+            </ul>
+
+            <p>
+              <code>--all</code> and <code>--details</code> were deprecated for
+              CodeChecker analyzers
+            </p>
+          </new-feature-item>
+        </new-release-item>
+      </v-timeline-item>
+
       <v-timeline-item fill-dot icon="mdi-star">
         <new-release-item>
           <template v-slot:title>
