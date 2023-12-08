@@ -146,10 +146,15 @@ class ReviewStatusHandler:
         raises ValueError with the description of the error if the format is
         invalid.
         """
-        if not isinstance(self.__data, dict) or '$version' not in self.__data:
+        if not isinstance(self.__data, dict):
             raise ValueError(
-                f"{self.__review_status_yaml} should be a dictionary with "
-                "the key '$version'.")
+                f"{self.__review_status_yaml} should represent a dictionary.")
+
+        if '$version' not in self.__data:
+            raise ValueError(
+                f"{self.__review_status_yaml} must contain the key "
+                f"'$version'. Hint: Currently the latest version of this "
+                f"is 1. Consider adding '$version: 1' to the top of the file.")
 
         if not isinstance(self.__data['$version'], int):
             raise ValueError(

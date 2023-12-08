@@ -20,6 +20,7 @@ import time
 from multiprocess.managers import SyncManager
 
 from codechecker_common.logger import get_logger
+from codechecker_common.review_status_handler import ReviewStatusHandler
 
 from . import analyzer_context, analysis_manager, pre_analysis_manager, \
     checkers
@@ -129,8 +130,8 @@ def __has_enabled_checker(ch: AnalyzerConfigHandler):
                for _, (state, _) in ch.checks().items())
 
 
-def perform_analysis(args, skip_handlers, rs_handler, actions, metadata_tool,
-                     compile_cmd_count):
+def perform_analysis(args, skip_handlers, rs_handler: ReviewStatusHandler,
+                     actions, metadata_tool, compile_cmd_count):
     """
     Perform static analysis via the given (or if not, all) analyzers,
     in the given analysis context for the supplied build actions.

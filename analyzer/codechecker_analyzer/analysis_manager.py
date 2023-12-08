@@ -722,7 +722,8 @@ def skip_cpp(compile_actions, skip_handlers):
 
 
 def start_workers(actions_map, actions, analyzer_config_map,
-                  jobs, output_path, skip_handlers, rs_handler, metadata_tool,
+                  jobs, output_path, skip_handlers,
+                  rs_handler: ReviewStatusHandler, metadata_tool,
                   quiet_analyze, capture_analysis_output, generate_reproducer,
                   timeout, ctu_reanalyze_on_failure, statistics_data, manager,
                   compile_cmd_count):
