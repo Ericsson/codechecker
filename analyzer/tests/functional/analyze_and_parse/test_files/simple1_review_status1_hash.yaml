@@ -1,0 +1,7 @@
+$version: 1
+rules:
+  - filters:
+      report_hash: 8459557f082fb0cc2d6150da71a7bcd3
+    actions:
+      review_status: false_positive
+      reason: Division by zero in test files is automatically intentional.

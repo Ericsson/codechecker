@@ -1,0 +1,69 @@
+NORMAL#CodeChecker log --output $LOGFILE$ --build "make dir_simple1" --quiet
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers clangsa --review-status-config simple1_review_status1_glob.yaml
+
+# The review status config file should've set the report to false_positive.
+# We expect to see the first parse to return with 'no defects', and the second
+# with one defect.
+NORMAL#CodeChecker parse $OUTPUT$ --review-status=unreviewed
+NORMAL#CodeChecker parse $OUTPUT$ --review-status=false_positive
+--------------------------------------------------------------------------------
+[] - Starting build...
+[] - Using CodeChecker ld-logger.
+[] - Build finished successfully.
+[] - Starting static analysis ...
+[] - [1/1] clangsa analyzed simple1.cpp successfully.
+[] - ----==== Summary ====----
+[] - Successfully analyzed
+[] -   clangsa: 1
+[] - Total analyzed compilation commands: 1
+[] - ----=================----
+[] - Analysis finished.
+[] - To view results in the terminal use the "CodeChecker parse" command.
+[] - To store results use the "CodeChecker store" command.
+[] - See --help and the user guide for further options about parsing and storing the reports.
+[] - ----=================----
+Found no defects in simple1.cpp
+
+----======== Summary ========----
+---------------------------------------------
+Number of processed analyzer result files | 1
+Number of analyzer reports                | 0
+---------------------------------------------
+----=================----
+[HIGH] simple1.cpp:18:15: Division by zero [core.DivideZero] [False positive]
+  return 2015 / x;
+              ^
+
+Found 1 defect(s) in simple1.cpp
+
+
+----==== Severity Statistics ====----
+----------------------------
+Severity | Number of reports
+----------------------------
+HIGH     |                 1
+----------------------------
+----=================----
+
+----==== Checker Statistics ====----
+----------------------------------------------
+Checker name    | Severity | Number of reports
+----------------------------------------------
+core.DivideZero | HIGH     |                 1
+----------------------------------------------
+----=================----
+
+----==== File Statistics ====----
+-------------------------------
+File name   | Number of reports
+-------------------------------
+simple1.cpp |                 1
+-------------------------------
+----=================----
+
+----======== Summary ========----
+---------------------------------------------
+Number of processed analyzer result files | 1
+Number of analyzer reports                | 1
+---------------------------------------------
+----=================----
