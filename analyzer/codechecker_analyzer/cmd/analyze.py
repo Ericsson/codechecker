@@ -30,7 +30,7 @@ from codechecker_analyzer.arg import \
     analyzer_config, checker_config
 from codechecker_analyzer.buildlog import log_parser
 
-from codechecker_common import arg, logger, cmd_config
+from codechecker_common import arg, logger, cmd_config, review_status_handler
 from codechecker_common.skiplist_handler import SkipListHandler, \
     SkipListHandlers
 from codechecker_common.util import load_json
@@ -877,7 +877,7 @@ def __update_review_status_config(args):
     if 'review_status_config' in args:
         LOG.debug("Copying review status config file %s to %s",
                   args.review_status_config, rs_config_to_send)
-        shutil.copyfile(args.review_status_config, rs_config_to_send)
+        os.symlink(args.review_status_config, rs_config_to_send)
 
 
 def __cleanup_metadata(metadata_prev, metadata):
@@ -984,6 +984,14 @@ def main(args):
 
     # Process the skip list if present.
     skip_handlers = __get_skip_handlers(args, compile_commands)
+    rs_handler = review_status_handler.ReviewStatusHandler(args.output_path)
+
+    try:
+        if 'review_status_config' in args:
+            rs_handler.set_review_status_config(args.review_status_config)
+    except ValueError as ex:
+        LOG.error(ex)
+        sys.exit(1)
 
     ctu_or_stats_enabled = False
     # Skip list is applied only in pre-analysis
@@ -1121,8 +1129,8 @@ def main(args):
     LOG.debug_analyzer("Compile commands forwarded for analysis: %d",
                        compile_cmd_count.analyze)
 
-    analyzer.perform_analysis(args, skip_handlers, actions, metadata_tool,
-                              compile_cmd_count)
+    analyzer.perform_analysis(args, skip_handlers, rs_handler, actions,
+                              metadata_tool, compile_cmd_count)
 
     __update_skip_file(args)
     __update_review_status_config(args)

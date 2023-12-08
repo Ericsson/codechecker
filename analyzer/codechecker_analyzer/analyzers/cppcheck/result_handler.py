@@ -19,6 +19,7 @@ from codechecker_report_converter.report.hash import get_report_hash, HashType
 
 from codechecker_common.logger import get_logger
 from codechecker_common.skiplist_handler import SkipListHandlers
+from codechecker_common.review_status_handler import ReviewStatusHandler
 
 from ..result_handler_base import ResultHandler
 
@@ -35,7 +36,11 @@ class CppcheckResultHandler(ResultHandler):
 
         super(CppcheckResultHandler, self).__init__(*args, **kwargs)
 
-    def postprocess_result(self, skip_handlers: Optional[SkipListHandlers]):
+    def postprocess_result(
+        self,
+        skip_handlers: Optional[SkipListHandlers],
+        rs_handler: Optional[ReviewStatusHandler]
+    ):
         """
         Generate analyzer result output file which can be parsed and stored
         into the database.
@@ -47,6 +52,7 @@ class CppcheckResultHandler(ResultHandler):
             source_dir_path=self.source_dir_path)
 
         reports = [r for r in reports if not r.skip(skip_handlers)]
+
         for report in reports:
             # TODO check if prefix cascading still occurs.
             if not report.checker_name.startswith("cppcheck-"):
@@ -71,6 +77,9 @@ class CppcheckResultHandler(ResultHandler):
                           report.column))
             if bpe != report.bug_path_events[-1]:
                 report.bug_path_events.append(bpe)
+
+        if rs_handler:
+            reports = [r for r in reports if not rs_handler.should_ignore(r)]
 
         report_file.create(
             self.analyzer_result_file, reports, self.checker_labels,

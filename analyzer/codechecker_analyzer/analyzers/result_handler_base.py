@@ -19,6 +19,7 @@ from typing import Optional
 from codechecker_analyzer import analyzer_context
 from codechecker_common.logger import get_logger
 from codechecker_common.skiplist_handler import SkipListHandlers
+from codechecker_common.review_status_handler import ReviewStatusHandler
 
 
 LOG = get_logger('analyzer')
@@ -181,7 +182,13 @@ class ResultHandler(metaclass=ABCMeta):
                 # There might be no result file if analysis failed.
                 LOG.debug(oserr)
 
-    def postprocess_result(self, skip_handlers: Optional[SkipListHandlers]):
+    # TODO: If the parameters are not optional then we can get rid of some
+    #   extra checks.
+    def postprocess_result(
+        self,
+        skip_handlers: Optional[SkipListHandlers],
+        rs_handler: Optional[ReviewStatusHandler]
+    ):
         """
         Postprocess result if needed.
         Should be called after the analyses finished.

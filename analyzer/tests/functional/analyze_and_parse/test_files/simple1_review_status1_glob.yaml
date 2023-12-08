@@ -1,0 +1,7 @@
+$version: 1
+rules:
+  - filters:
+      filepath: "*/test_dir/*"
+    actions:
+      review_status: false_positive
+      reason: Division by zero in test files is automatically intentional.

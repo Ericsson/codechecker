@@ -12,6 +12,8 @@ nofail:
 	$(CXX) -w nofail.cpp -o /dev/null
 simple1:
 	$(CXX) -w simple1.cpp -o /dev/null
+dir_simple1:
+	$(CXX) -w test_dir/simple1.cpp -o /dev/null
 simple2:
 	$(CXX) -w simple2.cpp -o /dev/null
 tidy_check:

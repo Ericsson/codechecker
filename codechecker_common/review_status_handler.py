@@ -44,12 +44,16 @@ class ReviewStatusHandler:
         'confirmed',
         'intentional']
 
-    ALLOWED_FIELDS = [
-        'filepath_filter',
-        'checker_filter',
-        'report_hash_filter',
+    ALLOWED_FILTERS = [
+        'filepath',
+        'checker_name',
+        'report_hash']
+
+    # TODO: Read the commit message where THIS current line was committed!
+    # That will tell you why "ignore" option is not found in this list.
+    ALLOWED_ACTIONS = [
         'review_status',
-        'message']
+        'reason']
 
     def __init__(self, source_root=''):
         """
@@ -83,45 +87,97 @@ class ReviewStatusHandler:
 
         return src_comment_data
 
+    def __check_format_version_1(self):
+        if 'rules' not in self.__data or \
+                not isinstance(self.__data['rules'], list):
+            raise ValueError(
+                f"{self.__review_status_yaml} should contain the key 'rules' "
+                f"with a non-empty list of (filters, actions) pair.")
+
+        for rule in self.__data['rules']:
+            if not isinstance(rule, dict) or \
+                    'filters' not in rule or \
+                    'actions' not in rule:
+                raise ValueError(
+                    f"Format error in {self.__review_status_yaml}. The "
+                    f"following section should be an object with keys "
+                    f"'filters' and 'actions':\n"
+                    f"{yaml.dump(rule)}")
+
+            for field in rule['filters']:
+                if field not in ReviewStatusHandler.ALLOWED_FILTERS:
+                    raise ValueError(
+                        f"Format error in {self.__review_status_yaml}: filter "
+                        f"'{field}' is not allowed. Available filters are: "
+                        f"{', '.join(ReviewStatusHandler.ALLOWED_FILTERS)}")
+
+            for field in rule['actions']:
+                if field not in ReviewStatusHandler.ALLOWED_ACTIONS:
+                    raise ValueError(
+                        f"Format error in {self.__review_status_yaml}: action "
+                        f"'{field}' is not allowed. Available actions are: "
+                        f"{', '.join(ReviewStatusHandler.ALLOWED_ACTIONS)}")
+
+            if 'review_status' not in rule['actions'] and \
+                    'ignore' not in rule['actions']:
+                raise ValueError(
+                    f"Format error in {self.__review_status_yaml}. "
+                    f"'review_status' is required in:\n"
+                    f"{yaml.dump(rule)}.")
+
+            if 'review_status' in rule['actions']:
+                review_status_options = \
+                    ', '.join(ReviewStatusHandler.REVIEW_STATUS_OPTIONS)
+
+                if rule['actions']['review_status'] \
+                        not in ReviewStatusHandler.REVIEW_STATUS_OPTIONS:
+                    raise ValueError(
+                        f"Invalid review status field: "
+                        f"{rule['actions']['review_status']} at {rule} in "
+                        f"{self.__review_status_yaml}. Available options are: "
+                        f"{review_status_options}.")
+
+                if rule['actions']['review_status'] == 'suppress':
+                    rule['actions']['review_status'] = 'false_positive'
+
     def __validate_review_status_yaml_data(self):
         """
         This function validates the data read from review_status.yaml file and
         raises ValueError with the description of the error if the format is
         invalid.
         """
-        if not isinstance(self.__data, list):
+        if not isinstance(self.__data, dict):
             raise ValueError(
-                f"{self.__review_status_yaml} should be a list of review "
-                "status descriptor objects.")
+                f"{self.__review_status_yaml} should represent a dictionary.")
 
-        for item in self.__data:
-            if not isinstance(item, dict):
-                raise ValueError(
-                    f"Format error in {self.__review_status_yaml}: {item} "
-                    "should be a review status descriptor object.")
+        if '$version' not in self.__data:
+            raise ValueError(
+                f"{self.__review_status_yaml} must contain the key "
+                f"'$version'. Hint: Currently the latest version of this "
+                f"is 1. Consider adding '$version: 1' to the top of the file.")
 
-            for field in item:
-                if field not in ReviewStatusHandler.ALLOWED_FIELDS:
-                    raise ValueError(
-                        f"Format error in {self.__review_status_yaml}: field "
-                        f"'{field}' is not allowed. Available fields are: "
-                        f"{', '.join(ReviewStatusHandler.ALLOWED_FIELDS)}")
+        if not isinstance(self.__data['$version'], int):
+            raise ValueError(
+                f"{self.__review_status_yaml} should have an integer value "
+                "for the key '$version'.")
 
-            if 'review_status' not in item:
-                raise ValueError(
-                    f"Format error in {self.__review_status_yaml}: "
-                    f"'review_status' field is missing from {item}.")
+        if self.__data['$version'] == 1:
+            self.__check_format_version_1()
 
-            if item['review_status'] \
-                    not in ReviewStatusHandler.REVIEW_STATUS_OPTIONS:
-                raise ValueError(
-                    f"Invalid review status field: {item['review_status']} at "
-                    f"{item} in {self.__review_status_yaml}. Available "
-                    f"options are: "
-                    f"{', '.join(ReviewStatusHandler.REVIEW_STATUS_OPTIONS)}.")
+    def __report_matches_rule(self, report: Report, rule: dict):
+        if 'filepath' in rule['filters'] and not fnmatch.fnmatch(
+                report.file.original_path, rule['filters']['filepath']):
+            return False
 
-            if item['review_status'] == 'suppress':
-                item['review_status'] = 'false_positive'
+        if 'checker_name' in rule['filters'] and \
+                report.checker_name != rule['filters']['checker_name']:
+            return False
+
+        if 'report_hash' in rule['filters'] and not \
+                report.report_hash.startswith(rule['filters']['report_hash']):
+            return False
+
+        return True
 
     def get_review_status(self, report: Report) -> SourceReviewStatus:
         """
@@ -156,19 +212,44 @@ class ReviewStatusHandler:
         """
         self.__review_status_yaml = config_file
 
+        if os.path.islink(self.__review_status_yaml):
+            orig_yaml = os.readlink(self.__review_status_yaml)
+            if not os.path.exists(orig_yaml):
+                raise ValueError(f"{orig_yaml} not found.")
+
         with open(self.__review_status_yaml,
                   encoding='utf-8', errors='ignore') as f:
             # TODO: Validate format.
             #  - Can filepath be a list?
-            # TODO: May throw yaml.scanner.ScannerError.
             try:
                 self.__data = yaml.safe_load(f)
-            except yaml.scanner.ScannerError as err:
+            except yaml.YAMLError as err:
                 raise ValueError(
                     f"Invalid YAML format in {self.__review_status_yaml}:\n"
                     f"{err}")
 
         self.__validate_review_status_yaml_data()
+
+    def should_ignore(self, report: Report) -> bool:
+        """
+        This function returns True if the Report should be ignored based on the
+        review status config file. If a report is ignored, then it shouldn't be
+        written to the analysis output files and CodeChecker should consider
+        them as not existing reports in any context.
+
+        TODO: If "ignore" is a standalone field, then maybe we should find
+            another name for this class, because it handles not only review
+            statuses.
+        """
+        if self.__data is None:
+            return False
+
+        for rule in self.__data['rules']:
+            if self.__report_matches_rule(report, rule) and \
+                    rule['actions'].get('ignore'):
+                return True
+
+        return False
 
     def get_review_status_from_config(
         self,
@@ -184,26 +265,18 @@ class ReviewStatusHandler:
             "set_review_status_config()."
 
         # TODO: Document "in_source".
-        for item in self.__data:
-            if 'filepath_filter' in item and not fnmatch.fnmatch(
-                    report.file.original_path, item['filepath_filter']):
-                continue
-            if 'checker_filter' in item and \
-                    report.checker_name != item['checker_filter']:
-                continue
-            if 'report_hash_filter' in item and \
-                    not report.report_hash.startswith(
-                        item['report_hash_filter']):
+        for rule in self.__data['rules']:
+            if not self.__report_matches_rule(report, rule) or \
+                    rule['actions'].get('ignore'):
                 continue
 
-            if any(filt in item for filt in
-                   ['filepath_filter', 'checker_filter',
-                    'report_hash_filter']):
+            if any(filt in rule['filters'] for filt in
+                   ['filepath', 'checker_name', 'report_hash']):
                 return SourceReviewStatus(
-                    status=item['review_status'],
-                    message=item['message']
+                    status=rule['actions']['review_status'],
+                    message=rule['actions']['reason']
                     .encode(encoding='utf-8', errors='ignore')
-                    if 'message' in item else b'',
+                    if 'reason' in rule['actions'] else b'',
                     bug_hash=report.report_hash,
                     in_source=True)
 

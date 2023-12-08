@@ -2610,38 +2610,55 @@ Review status can be configured by a config file in YAML format. This config
 file has to represent a list of review status settings:
 
 ```yaml
-- filepath_filter: /path/to/project/test/*
-  checker_filter: core.DivideZero
-  message: Division by zero in test files is automatically intentional.
-  review_status: intentional
-- filepath_filter: /path/to/project/important/module/*
-  message: All reports in this module should be investigated.
-  review_status: confirmed
-- filepath_filter: "*/project/test/*"
-  message: If a filter starts with asterix, then it should be quoted due to YAML format.
-  review_status: suppress
-- report_hash_filter: b85851b34789e35c6acfa1a4aaf65382
-  message: This report is false positive.
-  review_status: false_positive
+$version: 1
+rules:
+  - filters:
+      filepath: /path/to/project/test/*
+      checker_name: core.DivideZero
+    actions:
+      review_status: intentional
+      reason: Division by zero in test files is automatically intentional.
+
+  - filters:
+      filepath: /path/to/project/important/module/*
+    actions:
+      review_status: confirmed
+      reason: All reports in this module should be investigated.
+
+  - filters:
+      filepath: "*/project/test/*"
+    actions:
+      review_status: suppress
+      reason: If a filter starts with asterix, then it should be quoted due to YAML format.
+
+  - filters:
+      report_hash: b85851b34789e35c6acfa1a4aaf65382
+    actions:
+      review_status: false_positive
+      reason: This report is false positive.
 ```
 
-The fields of a review status settings are:
+The review settings rules have two componetes: `filters` and `actions`. A rule
+is applied for every report that match the filter fields. The following filter
+options are available:
 
-- `filepath_filter` (optional): A glob to a path where the given review status
-  is applied. A [https://docs.python.org/3/library/glob.html](glob) is a path
-  that may contain shell-style wildcards: `*` substitutes zero or more
-  characters, `?` substitutes exactly one character. This filter option is
-  applied on the full path of a source file, even if `--trim-path-prefix` flag
-  is used later.
-- `checker_filter` (optional): Set the review status for only these checkers'
+- `filepath` (optional): A glob to a path where the given review status is
+  applied. A [https://docs.python.org/3/library/glob.html](glob) is a path that
+  may contain shell-style wildcards: `*` substitutes zero or more characters,
+  `?` substitutes exactly one character. This filter option is applied on the
+  full path of a source file, even if `--trim-path-prefix` flag is used later.
+- `checker_name` (optional): Set the review status for only these checkers'
   reports.
-- `report_hash_filter` (optional): Set the review status for only the checkers
-  having this report hash. A prefix match is applied on report hashes, so it is
-  enough to provide the beginning of a hash. Make sure to use a quite long
-  prefix so it covers one specific report.
-- `message` (optional): A comment message that describes the reason of the
-  setting.
-- `review_status`: The review status to set.
+- `report_hash` (optional): Set the review status for only the reports having
+  this report hash. A prefix match is applied on report hashes, so it is enough
+  to provide the beginning of a hash. Make sure to use a quite long prefix so
+  it covers one specific report.
 
-If none of the `_filter` options is provided, then that setting is not applied
-on any report.
+The following actions are available:
+
+- `review_status`: The review status to set.
+- `reason` (optional): A comment message that describes the reason of the
+  setting.
+
+If none of the filter options is provided, then that setting is not applied on
+any report.
