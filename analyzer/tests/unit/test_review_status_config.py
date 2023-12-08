@@ -50,7 +50,8 @@ class ReviewStatusHandlerTest(unittest.TestCase):
     def test_empty_file(self):
         cfg = ""
         rscfg_file = self.__put_in_review_status_cfg_file(cfg)
-        with self.assertRaisesRegex(ValueError, "$version"):
+        with self.assertRaisesRegex(
+                ValueError, "should represent a dictionary."):
             self.rshandler.set_review_status_config(rscfg_file)
 
     def test_no_version(self):
@@ -64,7 +65,8 @@ rules:
         """
 
         rscfg_file = self.__put_in_review_status_cfg_file(cfg)
-        with self.assertRaisesRegex(ValueError, "$version"):
+        with self.assertRaisesRegex(
+                ValueError, r"must contain the key '\$version'"):
             self.rshandler.set_review_status_config(rscfg_file)
 
     def test_empty_action_list(self):
@@ -77,7 +79,8 @@ rules:
         """
 
         rscfg_file = self.__put_in_review_status_cfg_file(cfg)
-        with self.assertRaisesRegex(ValueError, "TODO"):
+        with self.assertRaisesRegex(
+                ValueError, "'actions' must have at least one element"):
             self.rshandler.set_review_status_config(rscfg_file)
 
     def test_empty_filter_list(self):
@@ -91,7 +94,8 @@ rules:
         """
 
         rscfg_file = self.__put_in_review_status_cfg_file(cfg)
-        with self.assertRaisesRegex(ValueError, "TODO"):
+        with self.assertRaisesRegex(
+                ValueError, "'filters' must have at least one element."):
             self.rshandler.set_review_status_config(rscfg_file)
 
     def test_empty_filter_and_action_list(self):
@@ -103,7 +107,8 @@ rules:
         """
 
         rscfg_file = self.__put_in_review_status_cfg_file(cfg)
-        with self.assertRaisesRegex(ValueError, "TODO"):
+        with self.assertRaisesRegex(
+                ValueError, "'filters' must have at least one element."):
             self.rshandler.set_review_status_config(rscfg_file)
 
     def test_empty_rules_list(self):
@@ -113,7 +118,9 @@ rules:
         """
 
         rscfg_file = self.__put_in_review_status_cfg_file(cfg)
-        with self.assertRaisesRegex(ValueError, "'rules'"):
+        with self.assertRaisesRegex(
+                ValueError,
+                "should contain the key 'rules' with a non-empty list of"):
             self.rshandler.set_review_status_config(rscfg_file)
 
     def test_correct(self):
@@ -142,8 +149,8 @@ rules:
         """
 
         rscfg_file = self.__put_in_review_status_cfg_file(cfg)
-        with self.assertRaisesRegex(ValueError,
-                                    "Invalid review status field: "):
+        with self.assertRaisesRegex(
+                ValueError, "Invalid review status field: "):
             self.rshandler.set_review_status_config(rscfg_file)
 
     def test_invalid_action(self):
@@ -158,8 +165,8 @@ rules:
         """
 
         rscfg_file = self.__put_in_review_status_cfg_file(cfg)
-        with self.assertRaisesRegex(ValueError,
-                                    "'bake' is not allowed"):
+        with self.assertRaisesRegex(
+                ValueError, "'bake' is not allowed"):
             self.rshandler.set_review_status_config(rscfg_file)
 
     def test_no_review_status(self):
@@ -173,8 +180,8 @@ rules:
         """
 
         rscfg_file = self.__put_in_review_status_cfg_file(cfg)
-        with self.assertRaisesRegex(ValueError,
-                                    "review_status' .* required"):
+        with self.assertRaisesRegex(
+                ValueError, "review_status' .* required"):
             self.rshandler.set_review_status_config(rscfg_file)
 
     def test_invalid_filter(self):
@@ -189,8 +196,8 @@ rules:
         """
 
         rscfg_file = self.__put_in_review_status_cfg_file(cfg)
-        with self.assertRaisesRegex(ValueError,
-                                    "'favourite_color' is not allowed"):
+        with self.assertRaisesRegex(
+                ValueError, "'favourite_color' is not allowed"):
             self.rshandler.set_review_status_config(rscfg_file)
 
     def test_no_actions(self):
@@ -218,7 +225,9 @@ rules:
         with self.assertRaisesRegex(ValueError, "'filters' and 'actions'"):
             self.rshandler.set_review_status_config(rscfg_file)
 
-    def test_no_reason(self):
+    # TODO: The "reason" field is not required. It is also not required for
+    # review statuses with source code comment.
+    def no_reason(self):
         cfg = """
 $version: 1
 rules:
@@ -252,10 +261,15 @@ $version: 1
         """
 
         rscfg_file = self.__put_in_review_status_cfg_file(cfg)
-        with self.assertRaisesRegex(ValueError, "'rules'"):
+        with self.assertRaisesRegex(
+                ValueError,
+                "should contain the key 'rules' with a non-empty list of"):
             self.rshandler.set_review_status_config(rscfg_file)
 
-    def test_multiple_checker_keys(self):
+    # TODO: I'm not sure if we can check this. The yaml parser accepts this and
+    # later there is no opportunity to check double keys because we have a
+    # valid Python object only.
+    def multiple_checker_keys(self):
         cfg = """
 $version: 1
 rules:
