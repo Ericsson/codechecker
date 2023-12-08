@@ -24,7 +24,6 @@ import zipfile
 import zlib
 
 from collections import defaultdict, namedtuple
-from concurrent.futures import ProcessPoolExecutor
 from contextlib import contextmanager
 from datetime import timedelta
 from threading import Timer
@@ -46,6 +45,7 @@ from codechecker_common.checker_labels import CheckerLabels
 from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler
 from codechecker_common.util import load_json
+from codechecker_common.multiprocesspool import MultiProcessPool
 
 from codechecker_web.shared import webserver_context, host_check
 from codechecker_web.shared.env import get_default_workspace
@@ -371,16 +371,8 @@ def filter_source_files_with_comments(
     """
     jobs = file_report_positions.items()
 
-    # Currently ProcessPoolExecutor fails completely in windows.
-    # Reason is most likely combination of venv and fork() not
-    # being present in windows, so stuff like setting up
-    # PYTHONPATH in parent CodeChecker before store is executed
-    # are lost.
-    if sys.platform == "win32":
-        return get_source_file_with_comments(jobs)
-    else:
-        with ProcessPoolExecutor() as executor:
-            return get_source_file_with_comments(jobs, executor.map)
+    with MultiProcessPool() as executor:
+        return get_source_file_with_comments(jobs, executor.map)
 
 
 def get_reports(
@@ -455,18 +447,9 @@ def assemble_zip(inputs,
 
     LOG.debug("Processing report files ...")
 
-    # Currently ProcessPoolExecutor fails completely in windows.
-    # Reason is most likely combination of venv and fork() not
-    # being present in windows, so stuff like setting up
-    # PYTHONPATH in parent CodeChecker before store is executed
-    # are lost.
-    if sys.platform == "win32":
+    with MultiProcessPool() as executor:
         analyzer_result_file_reports = parse_analyzer_result_files(
-            analyzer_result_file_paths, checker_labels)
-    else:
-        with ProcessPoolExecutor() as executor:
-            analyzer_result_file_reports = parse_analyzer_result_files(
-                 analyzer_result_file_paths, checker_labels, executor.map)
+             analyzer_result_file_paths, checker_labels, executor.map)
 
     LOG.info("Processing report files done.")
 

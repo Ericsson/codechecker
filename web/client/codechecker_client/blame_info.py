@@ -1,14 +1,13 @@
 import json
 import os
-import sys
 import zipfile
 
-from concurrent.futures import ProcessPoolExecutor
 from git import Repo
 from git.exc import InvalidGitRepositoryError
 from typing import Dict, Iterable, Optional
 
 from codechecker_common.logger import get_logger
+from codechecker_common.multiprocesspool import MultiProcessPool
 
 LOG = get_logger('system')
 
@@ -113,17 +112,9 @@ def assemble_blame_info(
 
     Returns the number of collected blame information.
     """
-    # Currently ProcessPoolExecutor fails completely in windows.
-    # Reason is most likely combination of venv and fork() not
-    # being present in windows, so stuff like setting up
-    # PYTHONPATH in parent CodeChecker before store is executed
-    # are lost.
-    if sys.platform == "win32":
-        file_blame_info = __collect_blame_info_for_files(file_paths)
-    else:
-        with ProcessPoolExecutor() as executor:
-            file_blame_info = __collect_blame_info_for_files(
-                file_paths, executor.map)
+    with MultiProcessPool() as executor:
+        file_blame_info = __collect_blame_info_for_files(
+            file_paths, executor.map)
 
     # Add blame information to the zip for the files which will be sent
     # to the server if exist.
