@@ -918,7 +918,7 @@ class MassStoreRun:
                     fixed_at = run_history_time
 
             self.__check_report_count()
-            report_id = self.__add_report(
+            self.__add_report(
                 session, run_id, report, file_path_to_id,
                 review_status, detection_status, detected_at,
                 run_history_time, analysis_info, analyzer_name, fixed_at)
@@ -927,7 +927,8 @@ class MassStoreRun:
                 review_status.status
             self.__already_added_report_hashes.add(report_path_hash)
 
-            LOG.debug("Storing report done. ID=%d", report_id)
+            LOG.debug(f"Storing report done. bug_hash:{report.report_hash}, " +
+                      f"source_file:{report_file_path}")
 
         return True
 
