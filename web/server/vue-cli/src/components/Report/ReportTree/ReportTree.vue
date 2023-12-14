@@ -163,6 +163,8 @@ export default {
 
             const status = !(
               isResolved ||
+              report.detectionStatus === DetectionStatus.OFF ||
+              report.detectionStatus === DetectionStatus.UNAVAILABLE ||
               report.reviewData.status === ReviewStatus.FALSE_POSITIVE ||
               report.reviewData.status === ReviewStatus.INTENTIONAL
             ) ? this.items.find(item => item.isOutstanding)
@@ -231,6 +233,8 @@ export default {
 
       const status = !(
         isResolved ||
+        this.report.detectionStatus === DetectionStatus.OFF ||
+        this.report.detectionStatus === DetectionStatus.UNAVAILABLE ||
         this.report.reviewData.status === ReviewStatus.FALSE_POSITIVE ||
         this.report.reviewData.status === ReviewStatus.INTENTIONAL
       ) ? this.items.find(item => item.isOutstanding)

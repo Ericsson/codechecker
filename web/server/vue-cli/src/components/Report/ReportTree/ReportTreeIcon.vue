@@ -59,8 +59,9 @@
 
   <v-icon
     v-else-if="item.isOutstanding"
-    title="Outstanding reports (review status is unreviewed or confirmed 
-    and detection status is not resolved)"
+    title="Outstanding reports, that are potential bugs
+(review status is unreviewed or confirmed and
+detection status is new, unresolved or reopened)"
     color="primary"
   >
     mdi-folder-lock-open
@@ -68,8 +69,9 @@
 
   <v-icon
     v-else-if="!item.isOutstanding"
-    title="Closed reports (review status is false positive or intentional 
-    or detection status is resolved)"
+    title="Closed reports, that are fixed bugs, suppressed reports
+(false positive, intentional) or whose detection status is resolved,
+off or unavailable."
     color="primary"
   >
     mdi-folder-lock
