@@ -176,7 +176,7 @@ clang-diagnostic-varargs
   Analyzer: clang-tidy
   Description:
   Labels:
-    doc_url:/afs/seli.gic.ericsson.se/app/vbuild/RHEL7-x86_64/codechecker/6.22.0/www/docs/analyzer/DiagnosticsReference.html#wvarargs
+    doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wvarargs
     severity:MEDIUM
 
 =>
@@ -188,7 +188,7 @@ clang-diagnostic-varargs
   Analyzer: clang-tidy
   Description:
   Labels:
-    doc_url:/afs/seli.gic.ericsson.se/app/vbuild/RHEL7-x86_64/codechecker/6.23.0-rc2/www/docs/analyzer/DiagnosticsReference.html#wvarargs
+    doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wvarargs
     severity:MEDIUM
             </pre>
           </new-feature-item>
