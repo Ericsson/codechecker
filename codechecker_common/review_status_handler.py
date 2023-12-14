@@ -17,6 +17,7 @@ from codechecker_common.logger import get_logger
 from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler, SpellException, contains_codechecker_comment, \
     SourceCodeComment, SourceCodeComments
+from codechecker_common.util import path_for_fake_root
 
 
 LOG = get_logger('system')
@@ -55,7 +56,7 @@ class ReviewStatusHandler:
         'review_status',
         'reason']
 
-    def __init__(self, source_root=''):
+    def __init__(self, source_root=""):
         """
         TODO: What happens if multiple report directories are stored?
         """
@@ -316,14 +317,21 @@ class ReviewStatusHandler:
         logic where we take the first comment into account in case of ambiguity
         or return "unreviewed" with a warning, like changed files.
         """
-        # The original file path is needed here, not the trimmed, because
-        # the source files are extracted as the original file path.
-        # TODO: Should original_path be strip('/') at store?
-        source_file_name = os.path.realpath(os.path.join(
-            self.__source_root, report.file.original_path))
+        if self.__source_root:
+            # sanitize paths like mass store run
+            source_file_name = path_for_fake_root(
+                report.file.original_path, self.__source_root)
+        else:
+            # in this branch we are operating on the original filesystem,
+            # and we need the path to the original file
+            source_file_name = os.path.realpath(os.path.join(
+                self.__source_root, report.file.original_path))
 
         if source_file_name in report.changed_files:
             return None
+
+        if not os.path.exists(source_file_name):
+            LOG.error(f"Source file '{source_file_name}' does not exist.")
 
         if os.path.isfile(source_file_name):
             src_comment_data = self.__parse_codechecker_review_comment(
