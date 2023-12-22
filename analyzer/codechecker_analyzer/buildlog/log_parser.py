@@ -102,6 +102,7 @@ IGNORED_OPTIONS_GCC = [
     '-fno-toplevel-reorder',
     '-fno-unit-at-a-time',
     '-fno-var-tracking-assignments',
+    '-fno-tree-dominator-opts',
     '-fobjc-link-runtime',
     '-fpartial-inlining',
     '-fpeephole2',
