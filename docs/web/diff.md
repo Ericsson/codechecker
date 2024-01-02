@@ -3,27 +3,36 @@
 ## Introduction
 In CodeChecker you may compare analysis results either in the command line or in the web UI. With this tool, you can express _pull request analysis_ (did my pull request introduce/fix any bugs?), and _branch history analysis_ (did a change on my branch introduce/fix any bugs?). This document describes different use-cases for how locally stored analysis results, as well as remotely stored analysis results can be compared, and how other components of CodeChecker (source-code suppressions, review status rules, tags) affect the result of this set.
 
-From the outlook, diff sounds like a very simple feature (and it is!), but it also a powerful tool that allows CodeChecker, among other things, to be used as a gating tool. For this reason, you can express rather complicated querries with it using various filters -- this documents intends to help to understand the expected behaviour of diff in these cases as well.
+From the outlook, diff sounds like a very simple feature (and it is!), but it also a powerful tool that allows CodeChecker, among other things, to be used as a gating tool. For this reason, you can express rather complicated queries with it using various filters -- this documents intends to help to understand the expected behaviour of diff in these cases as well.
 
-## How diffs work
+### How diffs work
 
-The term "diff" means the comparison in between the outstanding reports in a "before" (_baseline_) and an "after" (_new_ or newline) analysis sets. Results are displayed in the same 
-format as `results`. A report is outstanding if all of the following is true:
-* its detection status is _new_, _reopened_ or _unresolved_,
-* its review status is _unreviewed_ or _confirmed_.
+The term "diff" means the comparison in between the _outstanding_ reports in a "before" (_baseline_) and an "after" (_new_ or newline) analysis sets. Results are displayed in the same 
+format as `CodeChecker cmd results`. A report is _outstanding_ if all of the following is true:
+* its [detection status](../../web/server/vue-cli/src/assets/userguide/userguide.md#detection-status) is _new_, _reopened_ or _unresolved_,
+* its [review status](../../web/server/vue-cli/src/assets/userguide/userguide.md#review-status) is _unreviewed_ or _confirmed_.
+In a nutshell, outstanding reports are those that should be fixed: they are either still detected in the codebase, are unreviewed or confirmed to be true positives. Every other report is considered _closed_.
 
-As a result, an outstanding report may be resolved by changing its review status, or if the report does not appear in the "after" set.
+:warning: Note: When comparing timestamps/tags, we check these conditions at the time of the timestamp/tag (see [here](#diff-on-tags-or-timestamps-branch-history-analysis)).
 
 You can compare both local analysis results (see [CodeChecker analyze](../analyzer/user_guide.md#analyze)) and
 results stored on the server (see [CodeChecker store](./user_guide.md#store)). In fact, you can compare
 local _and_ remote analyses against one other! We call these in order local-local,
 remote-remote, and local-remote or remote-local diffs.
 
+### Usages of diff
+
 `diff` is the primary tool to tell if from the "before" set to the "after" set 
 * a _new_ outstanding report appeared,
 * a report was _resolved_
 * a report is still outstanding (_unresolved_).
 
+Generally speaking, diff allows you to express high level source code quality questions:
+* Serverless Pull Request Analysis: Both the analysis result of the baseline (e.g. master branch) and the new code (e.g. soon-to-be pull request) is stored in local report folders, which are then compared to find out new/resolved reports.
+* Local/Server Pull Request Analysis: The analysis of a new code (e.g. soon-to-be pull request) is stored locally, while the baseline (e.g. master branch) is on the server.
+* Server based Pull Request Analysis: Both the analysis result of the baseline (e.g. master branch) and the new code (e.g. pull request) is located on the server.
+* Server based branch history analysis: When making changes to a pull request / branch, analyses of the changes can be stored on the same run. This can be used whether a change on the PR/branch fixed or introduced a new bug.
+* 
 This allows you to add CodeChecker to your CI loops by checking if a patch introduced a new bug, and you can identify if a patch fixed an existing bug.
 
 :warning: Note: When calculating diff results, reports are uniqued. For more information see [analyzer report identification](../analyzer/report_identification.md).
@@ -318,7 +327,7 @@ Here are some simple examples on the usage of diff from the command line interfa
   ```
 ## Diff through the web GUI
 
-You can also compare runs on the web GUI. On the "Run" page, on the right side of each report, you can see square shaped radio buttons. Clicking on the first one places the run into the "baseline" set, and clicking on the second places it in the "newline" set. After selecting at least one run into each set, you can press the "Diff" button in the upper right corner of the "Run" page.
+You can also compare runs on the web GUI one [stored](https://github.com/Ericsson/codechecker/blob/master/docs/usage.md#alternative-1-recommended-store-the-results-of-each-commit-in-the-same-run). On the "Run" page, on the right side of each report, you can see square shaped radio buttons. Clicking on the first one places the run into the "baseline" set, and clicking on the second places it in the "newline" set. After selecting at least one run into each set, you can press the "Diff" button in the upper right corner of the "Run" page.
 
 ![image](https://github.com/Szelethus/codechecker/assets/23276031/d93d7a73-5071-49df-a00e-5cf932c10c16)
 
@@ -619,7 +628,7 @@ In this image, showing the set of oustanding reports in each analysis, you can s
 
 ## Review status rules and diffs
 
-Similarly to source code suppressions, you can set the review status of reports [on the GUI](../..//web/server/vue-cli/src/assets/userguide/userguide.md#review-status) as well, which will create a review status rule. Unlike source code suppressions, review status rules set the review status for _all reports_ matching that rule (i.e. [having the same hash](../analyzer/report_identification.md)), _regardless_ whether the rule was created before or after the report was stored. Because these rules are stored on the server, **they play no part in local-local diffs as of yet**.
+Similarly to source code suppressions, you can set the review status of reports [on the GUI](../..//web/server/vue-cli/src/assets/userguide/userguide.md#review-status) as well, which will create a review status rule. Unlike source code suppressions, review status rules set the review status for _all reports_ matching that rule (i.e. [having the same hash](../analyzer/report_identification.md)), _regardless_ whether the rule was created before or after the report was stored, making it easy to mark a report false positive in all runs at the same time. Because these rules are stored on the server, **they play no part in local-local diffs as of yet**.
 
 :warning: Note: Review status rules act differently when runs are compared as opposed to when tags or dates are compared (see [below](#diff-on-tags-or-timestamps)).
 
@@ -755,27 +764,32 @@ As a result, this report is not outstanding in either of the runs:
   ----=================----
   ```
 
-## Diff on tags or timestamps
+## Diff on tags or timestamps (_branch history analysis_)
 
-You can filter the analysis results or diff results based on which reports were outstanding _before_ a given timestamp. In the below image, on the web GUI, we diff the reports outstanding before the 1st of January, 2023 in "Test Run" against reports  outstanding before the 1st of January, 2023 in "Test Run Updated":
+If a run is continously updated with new analysis results, it can store the past report states of all previous analysis executions. This can be useful to analyze how the reports were fixed, classified to false positives, or introduced over the development timeline. You can filter the analysis results or diff results based on which reports were outstanding _before_ a given timestamp. In the below image, on the web GUI, we diff the reports outstanding before the 1st of January, 2023 in "Test Run" against reports  outstanding before the 1st of January, 2023 in "Test Run Updated":
 
 ![image](https://github.com/Szelethus/codechecker/assets/23276031/17cc202e-48ab-40ee-a380-dc95a7d0ea41)
 
-You can also name timestamps which we call tags. In the below image, the cogwheels were clicked next to "Run/Tag Filter", and then next to "Test Run". There, you can select tags to be put into the baseline set:
+You can also name timestamps which we call _tags_. In the below image, the cogwheels were clicked next to "Run/Tag Filter", and then next to "Test Run". There, you can select tags to be put into the baseline set:
 
 ![image](https://github.com/Szelethus/codechecker/assets/23276031/4ee5caa8-b7df-452c-8a94-e4c714e69dd3)
 
 
 Comparing runs and comparing tags/timestamps has a subtle difference:
 
-* For runs, we check whether a report is outstanding _at the time of the query_. This means, as seen [in a previous example](diff.md#example-setup-1), if you store a report, _and then_ set a false positive review status rule for it, _and then_ diff this _run_ against another, the report **will not be** present in the run's outstanding reports set.
-* For tags/timestamps, we check whether a report is outstanding _before that specific tag/timestamp_. This means that if you store a report under `tag1`, _and then_ set a false positive review status rule for it, _and then_ diff this _tag_ against another, the report **will be** present in the tag's outstanding report set. This also implies that **we ignore the detection status of the report**.
+* For runs, we check whether a report is outstanding _at the time of the query_. This means, as seen [in a previous example](diff.md#example-setup-1), if you store a report, _and then_ set a false positive review status rule for it, _and then_ diff this _run_ against another, the report **will not be** present in the run's outstanding reports set. 
+* For tags/timestamps, we check whether a report is outstanding _before that specific tag/timestamp_. This means that if you store a report under `tag1`, _and then_ set a false positive review status rule for it, _and then_ diff this _tag_ against another, the report **will be** present in the tag's outstanding report set. This also implies that **we ignore the detection status of the report, as it always describes its current status (which may differ from the timestamp in the query)**.
+
+To summarize, at timestamp/tag T, a report is outstanding if
+* it was detected before or at T,
+* its detection status was _new_, _reopened_ or _unresolved_ at T,
+* its review status is _unreviewed_ or _confirmed_ at T.
 
 :warning: Note: Tags are created when the report is stored. As a result, you can diff a local analysis directory against a remote tag, but there are no "local tags".
 
 :no_entry: Note: You can compare tags through the command line and the web GUI as well. Currently, you can only compare timestamps on the web GUI.
 
-:no_entry: Note: We are aware of a bug where comparing tags older than the last may yield incorrect results in specific circumstances. Specifically, if from tag-to-tag a report is resolved, then becomes outstanding again, our results table irrecoverably drops the information that the report was one point resolved. This will result in CodeChecker calculating the set of outstanding reports incorrectly. You can read more about this in [issue](https://github.com/Ericsson/codechecker/issues/3884) in section "Tag diffs -> Local-Remote -> the footnote with the double asterisk (**)".
+:no_entry: Note: We are aware of a bug where comparing tags older than the last may yield incorrect results in specific circumstances. It only stores the date when a report was first detected in a run and the date when it was closed. If the report is closed and opened several times, it will only remember the first detection date, and the last close date. So CodeChecker assumes the worst: it regards a report which is on/and/off as it was always there until it is finally fixed. In practice this means, that when you compare the run state at two past tags (after a report detection, but before final fix), a reopened report will be considered as always outstanding after first detection and not appear as new report in the diff. You can read more about this in [issue](https://github.com/Ericsson/codechecker/issues/3884) in section "Tag diffs -> Local-Remote -> the footnote with the double asterisk (**)".
 
 ### Example setup
 
