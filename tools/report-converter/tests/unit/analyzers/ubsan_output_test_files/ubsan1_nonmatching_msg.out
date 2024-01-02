@@ -1,0 +1,1 @@
+files/ubsan1.cpp:4:5: runtime error: This is not an actual error message, just tests whether we crash on a msg we don't associate with a checker.
