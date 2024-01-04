@@ -46,19 +46,12 @@
     the program to execute, so we're not reusing CC_LOGGER_CALL_EXEC.          \
   */                                                                           \
   tryLog(path, argv);                                                          \
-  /*                                                                           \
-    Note that envp is not passed through (which would be the environment that  \
-    that the process will be spawned it), but is replaced by environ, which is \
-    a global variable that stores our environment. We added quite a few        \
-    variables into it, and for some reason, they are not present in envp.      \
-  */                                                                           \
-  (void)envp;                                                                  \
   CALL_ORIGINAL_FN(funName_,                                                   \
                    (pid_t *restrict, const char *restrict,                     \
                     const posix_spawn_file_actions_t *restrict,                \
                     const posix_spawnattr_t *restrict, char *const[restrict],  \
                     char *const[restrict]),                                    \
-                   pid, path, file_actions, attrp, argv, environ)
+                   pid, path, file_actions, attrp, argv, envp)
 
 // FIXME: What does this function do? Does it do anything? Does it *need* to do
 // the thing we are not sure it does?
