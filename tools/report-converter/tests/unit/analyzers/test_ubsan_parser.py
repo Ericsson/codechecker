@@ -90,6 +90,16 @@ class UBSANPListConverterTestCase(unittest.TestCase):
         self.__check_analyzer_result('ubsan1.out', 'ubsan1.cpp_ubsan.plist',
                                      ['files/ubsan1.cpp'], 'ubsan1.plist')
 
+    def test_ubsan1_nonmatching_msg(self):
+        """
+        Test for the test_ubsan1_nonmatching_msg.plist file, where the reported
+        error message doesn't match any of the checkers we recognize.
+        """
+        self.maxDiff = None
+        self.__check_analyzer_result(
+            'ubsan1_nonmatching_msg.out', 'ubsan1.cpp_ubsan.plist',
+            ['files/ubsan1.cpp'], 'ubsan1_nonmatching_msg.plist')
+
     def test_ubsan2(self):
         """ Test for the ubsan2.plist file. """
         self.__check_analyzer_result('ubsan2.out', 'ubsan2.cpp_ubsan.plist',

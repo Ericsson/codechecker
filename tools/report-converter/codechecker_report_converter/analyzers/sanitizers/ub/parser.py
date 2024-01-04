@@ -188,6 +188,7 @@ class Parser(SANParser):
         stack_traces, events, line = self.parse_stack_trace(it, line)
 
         message = match.group('message').strip()
+        checker_name = None
         for check, patterns in self.checks.items():
             if any(pattern.search(message) for pattern in patterns):
                 checker_name = f"{self.checker_name}.{check}"
