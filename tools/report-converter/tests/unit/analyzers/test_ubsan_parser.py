@@ -19,7 +19,7 @@ import tempfile
 import unittest
 
 from codechecker_report_converter.analyzers.sanitizers.ub import \
-    analyzer_result
+    analyzer_result, parser
 from codechecker_report_converter.report.parser import plist
 
 OLD_PWD = None
@@ -45,6 +45,7 @@ class UBSANPListConverterTestCase(unittest.TestCase):
     def setUp(self):
         """ Setup the test. """
         self.analyzer_result = analyzer_result.AnalyzerResult()
+        self.parser = parser.Parser()
         self.cc_result_dir = tempfile.mkdtemp()
 
     def tearDown(self):
@@ -104,3 +105,21 @@ class UBSANPListConverterTestCase(unittest.TestCase):
         """ Test for the ubsan2.plist file. """
         self.__check_analyzer_result('ubsan2.out', 'ubsan2.cpp_ubsan.plist',
                                      ['files/ubsan2.cpp'], 'ubsan2.plist')
+
+    def test_ubsan_checker_deduction(self):
+        self.assertEqual(
+            self.parser.deduce_checker_name(
+                "store to address 0xDEADBEEF with insufficient space for an "
+                "object of type 'char'"),
+            "UndefinedBehaviorSanitizer.object-size")
+
+        self.assertEqual(
+            self.parser.deduce_checker_name(
+                "store to address  with insufficient space for an "
+                "object of type 'char'"),
+            "UndefinedBehaviorSanitizer.object-size")
+
+        self.assertEqual(
+            self.parser.deduce_checker_name(
+                "HURR DURR YOUR CODE BAD SHAME ON YOU"),
+            "UndefinedBehaviorSanitizer")

@@ -29,63 +29,81 @@ class Parser(SANParser):
             # Checker message.
             r'(?P<message>[\S \t]+)')
 
+    # Sources: https://github.com/llvm/llvm-project/blob/main/compiler-rt/lib/
+    #   sanitizer_common/sanitizer_allocator_report.cpp
+    #   asan/asan_errors.h
+    #   asan/asan_errors.cpp
+    #    -> both inside ErrorGeneric::ErrorGeneric() and
+    #                   ErrorStringFunction.*::Print()
     check_msg_pairs = {
         "double-free": re.compile(
-            "attempting double-free on .+ in thread .+:"),
+            "attempting double-free on .* in thread .*:"),
         "new-delete-type-mismatch": re.compile(
-            "new-delete-type-mismatch on .+ in thread .+:"),
+            "new-delete-type-mismatch on .* in thread .*:"),
         "bad-free": re.compile(
-            "attempting free on address which was not malloc()-ed: .+ in "
-            "thread .+"),
+            "attempting free on address which was not malloc()-ed: .* in "
+            "thread .*"),
         "alloc-dealloc-mismatch": re.compile(
-            "alloc-dealloc-mismatch (.+ vs .+) on .+"),
+            "alloc-dealloc-mismatch (.* vs .*) on .*"),
         "bad-malloc_usable_size": re.compile(
             "attempting to call malloc_usable_size() for pointer which is not "
-            "not owned: .+"),
+            "not owned: .*"),
         "bad-__sanitizer_get_allocated_size": re.compile(
             "attempting to call __sanitizer_get_allocated_size() for pointer "
-            "which is not owned: .+"),
+            "which is not owned: .*"),
         "calloc-overflow": re.compile(
-            "calloc parameters overflow: count * size (.+ * .+) cannot be "
-            "represented in type size_t (thread .+)"),
+            "calloc parameters overflow: count * size (.* * .*) cannot be "
+            "represented in type size_t (thread .*)"),
         "reallocarray-overflow": re.compile(
-            "reallocarray parameters overflow: count * size (.+ * .+) cannot "
-            "be represented in type size_t (thread .+)"),
+            "reallocarray parameters overflow: count * size (.* * .*) cannot "
+            "be represented in type size_t (thread .*)"),
         "pvalloc-overflow": re.compile(
-            "pvalloc parameters overflow: size 0x.+ rounded up to system page "
-            "size 0x.+ cannot be represented in type size_t (thread .+)"),
+            "pvalloc parameters overflow: size 0x.* rounded up to system page "
+            "size 0x.* cannot be represented in type size_t (thread .*)"),
         "invalid-allocation-alignment": re.compile(
-            "invalid allocation alignment: .+, alignment must be a power of "
-            "two (thread .+)"),
+            "invalid allocation alignment: .*, alignment must be a power of "
+            "two (thread .*)"),
         "invalid-aligned-alloc-alignment": re.compile(
-            "invalid alignment requested in aligned_alloc: .+ the requested "
-            "size 0x.+ must be a multiple of alignment (thread .+)"),
+            "invalid alignment requested in aligned_alloc: .* the requested "
+            "size 0x.* must be a multiple of alignment (thread .*)"),
         "invalid-posix-memalign-alignment": re.compile(
-            "invalid alignment requested in posix_memalign: .+, alignment "
-            "must be a power of two and a multiple of sizeof(void*) == .+ "
-            "(thread .+)"),
+            "invalid alignment requested in posix_memalign: .*, alignment "
+            "must be a power of two and a multiple of sizeof(void*) == .* "
+            "(thread .*)"),
         "allocation-size-too-big": re.compile(
-            "requested allocation size 0x.+ (0x.+ after adjustments for "
+            "requested allocation size 0x.* (0x.* after adjustments for "
             "alignment, red zones etc.) exceeds maximum supported size of "
-            "0x.+ (thread .+)"),
+            "0x.* (thread .*)"),
         "rss-limit-exceeded": re.compile(
             "specified RSS limit exceeded, currently set to "
-            "soft_rss_limit_mb=.+"),
+            "soft_rss_limit_mb=.*"),
         "out-of-memory": re.compile(
-            "allocator is trying to allocate 0x.+ bytes"),
+            "allocator is trying to allocate 0x.* bytes"),
+        # This is not a check name in LLVM, but is the name of the class that
+        # emits these errors.
         "string-function-memory-ranges-overlap": re.compile(
-            ".+: memory ranges .+ and .+ overlap"),
+            ".*: memory ranges .* and .* overlap"),
         "negative-size-param": re.compile(
-            "negative-size-param: (size=.+)"),
+            "negative-size-param: (size=.*)"),
         "bad-__sanitizer_annotate_contiguous_container": re.compile(
             "bad parameters to __sanitizer_annotate_contiguous_container:"),
         "bad-__sanitizer_annotate_double_ended_contiguous_container":
         re.compile(
             "bad parameters to "
             "__sanitizer_annotate_double_ended_contiguous_container:"),
-        "odr-violation": re.compile("odr-violation (.+):"),
-        "invalid-pointer-pair": re.compile("invalid-pointer-pair: .+ .+")
+        "odr-violation": re.compile("odr-violation (.*):"),
+        "invalid-pointer-pair": re.compile("invalid-pointer-pair: .* .*"),
+        # The name of the class that handles this case is called GenericError,
+        # so this is as good of a name as we can come up with.
+        # heap-use-after-free and reports like that are emitted from this.
+        "generic-error": re.compile(".* on address .* at pc .* bp .* sp .*")
     }
+
+    def deduce_checker_name(self, message: str) -> str:
+        for check, pattern in self.check_msg_pairs.items():
+            if pattern.search(message):
+                return f"{self.checker_name}.{check}"
+        return self.checker_name
 
     def parse_sanitizer_message(
         self,
@@ -97,9 +115,6 @@ class Parser(SANParser):
         if not report:
             return report, line
 
-        for check, pattern in self.check_msg_pairs.items():
-            if pattern.search(report.message):
-                report.checker_name = f"{self.checker_name}.{check}"
-                break
+        report.checker_name = self.deduce_checker_name(report.message)
 
         return report, line
