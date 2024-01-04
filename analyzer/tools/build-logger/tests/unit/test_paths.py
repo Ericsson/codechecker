@@ -3,6 +3,7 @@
 import glob
 import os
 import shutil
+import subprocess
 import tempfile
 from typing import Mapping
 from . import BasicLoggerTest, empty_env, REPO_ROOT
@@ -77,6 +78,34 @@ class EscapingTests(BasicLoggerTest):
             )
             actual_json = self.read_actual_json()
             self.assertEqual(actual_json, "[\n]")
+
+    def test_envp_forwarding(self):
+        """
+        Test if environment variables are forwarded by make command properly
+        while logging.
+        """
+        self.tearDown()  # Cleanup the previous iteration.
+        self.setUp()
+
+        # This test project has an exported environment variable defined in the
+        # Makefile. This should keep its values even during the build of
+        # submodules: make -C <subdir>.
+        test_proj = \
+            os.path.join(os.path.dirname(__file__), 'makefile_test_proj')
+
+        logger_env = self.get_envvars()
+        logger_env["CC_LOGGER_GCC_LIKE"] = "gcc"
+
+        subprocess.Popen(
+            ['make'],
+            env=logger_env,
+            cwd=test_proj).communicate()
+
+        self.assert_json(
+            command=f"gcc main.c -o /dev/null -DHELLO=world",
+            file="main.c",
+            directory=os.path.join(test_proj, 'dir')
+        )
 
     def test_simple(self):
         """The most simple case: just compile a single file."""
