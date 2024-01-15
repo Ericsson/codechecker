@@ -89,7 +89,7 @@ file. This compilation database is an input of the next analysis step.
 
 note: This command is currently not working on macOS.
 The System Integrity Protection (SIP) in macOS blocks the usage of `LD_LIBRARY_PATH`.
-Please try to obtain the `complile_commands.json` in an other way, with the help of CMake for example.
+Please try to obtain the `compile_commands.json` in an other way, with the help of CMake for example.
 
 ```sh
 CodeChecker log --build "make" --output ./compile_commands.json
