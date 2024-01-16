@@ -64,7 +64,7 @@ def parse_version(cppcheck_output):
     """
     Parse cppcheck version output and return the version number.
     """
-    version_re = re.compile(r'^Cppcheck (?P<version>[\d\.]+)')
+    version_re = re.compile(r'^Cppcheck(.*?)(?P<version>[\d\.]+)')
     match = version_re.match(cppcheck_output)
     if match:
         return match.group('version')
