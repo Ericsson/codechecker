@@ -73,6 +73,7 @@ enum SortType {
   DETECTION_STATUS,
   BUG_PATH_LENGTH,
   TIMESTAMP,
+  TESTCASE
 }
 
 enum RunSortType {
@@ -613,7 +614,9 @@ service codeCheckerDBAccess {
   // Get report annotation values belonging to the given key.
   // The "key" parameter is optional. If not given then the list of keys returns.
   // PERMISSION: PRODUCT_VIEW
-  list<string> getReportAnnotations(1: optional string key),
+  list<string> getReportAnnotations(2: list<i64>    runIds,
+                                    3: ReportFilter reportFilter,
+                                    4: CompareData  cmpData),
 
   // Count the results separately for multiple runs.
   // If an empty run id list is provided the report
