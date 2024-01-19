@@ -1792,8 +1792,7 @@ export arguments:
                         Specify extra output format type.
                         'codeclimate' format can be used for Code Climate and
                         for GitLab integration. For more information see:
-                        https://github.com/codeclimate/platform/blob/master/sp
-                        ec/analyzers/SPEC.md#data-types
+                        https://github.com/codeclimate/platform/blob/master/spec/analyzers/SPEC.md#data-types
                         'baseline' output can be used to integrate CodeChecker
                         into your local workflow without using a CodeChecker
                         server. For more information see our usage guide.
