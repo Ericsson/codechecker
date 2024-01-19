@@ -2315,7 +2315,7 @@ analyzer:
               </li>
             </ul>
             For more information
-            <a href="https://github.com/Ericsson/codechecker/blob/master/docs/user_guide.md#cmd">
+            <a href="https://github.com/Ericsson/codechecker/blob/master/docs/web/user_guide.md#cmd">
               see
             </a>.
           </new-feature-item>
