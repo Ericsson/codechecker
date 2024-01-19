@@ -8,7 +8,7 @@
           "version": "3.2",
           "releaseDateUtc": "2019-01-03",
           "guid": "A9282C88-F1FE-4A01-8137-E8D2A037AB82",
-          "informationUri": "https://cwe.mitre.org/data/published/cwe_v3.2.pdf/",
+          "informationUri": "https://cwe.mitre.org/data/published/cwe_v3.2.pdf",
           "downloadUri": "https://cwe.mitre.org/data/xml/cwec_v3.2.xml.zip",
           "organization": "MITRE",
           "shortDescription": {
