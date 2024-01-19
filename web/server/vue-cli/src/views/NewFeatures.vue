@@ -2232,7 +2232,7 @@ analyzer:
                   </li>
                 </ul>
                 For more information
-                <a href="https://github.com/Ericsson/codechecker/blob/master/docs/user_guide.md#source-components">
+                <a href="https://github.com/Ericsson/codechecker/blob/master/docs/web/user_guide.md#source-components-components">
                   see
                 </a>.
               </v-col>
