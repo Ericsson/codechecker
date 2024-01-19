@@ -643,7 +643,7 @@ Runs the given build command and records the executed compilation steps. These
 steps are written to the output file in a JSON format. Available build logger
 tool that will be used is '...'. ld-logger can be fine-tuned with some
 environment variables. For details see the following documentation:
-https://github.com/Ericsson/codechecker/blob/master/analyzer/tools/build-
+https://github.com/Ericsson/codechecker/tree/master/analyzer/tools/build-logger
 logger/README.md#usage
 
 optional arguments:
