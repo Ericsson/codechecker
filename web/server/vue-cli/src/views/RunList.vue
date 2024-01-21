@@ -166,6 +166,8 @@ import {
   RunNameColumn
 } from "@/components/Run";
 
+import { VersionMixin } from "@/mixins";
+
 export default {
   name: "RunList",
   components: {
@@ -176,6 +178,7 @@ export default {
     RunNameColumn,
     RunFilterToolbar
   },
+  mixins: [ VersionMixin ],
 
   data() {
     const itemsPerPageOptions = [ 25, 50, 100 ];
@@ -530,12 +533,6 @@ export default {
       }
 
       return "";
-    },
-
-    prettifyCCVersion(version) {
-      if (!version) return version;
-
-      return version.split(" ")[0];
     },
 
     getReportFilterQuery(run) {

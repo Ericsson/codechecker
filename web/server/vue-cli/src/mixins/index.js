@@ -6,6 +6,7 @@ import ReviewStatusMixin from "./review-status.mixin";
 import SeverityMixin from "./severity.mixin";
 import StrToColorMixin from "./str-to-color.mixin";
 import ToCSV from "./to-csv.mixin";
+import VersionMixin from "./version.mixin";
 
 export {
   BugPathLengthColorMixin,
@@ -15,5 +16,6 @@ export {
   ReviewStatusMixin,
   SeverityMixin,
   StrToColorMixin,
-  ToCSV
+  ToCSV,
+  VersionMixin
 };

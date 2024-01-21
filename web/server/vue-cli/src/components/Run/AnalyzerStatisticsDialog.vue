@@ -31,9 +31,9 @@
               :key="analyzer"
             >
               <v-expansion-panel-header
-                class="pa-0 px-1 primary--text"
+                class="pa-0 px-1 primary--text font-weight-bold"
               >
-                <b>{{ analyzer }}</b>
+                {{ analyzer }}
               </v-expansion-panel-header>
 
               <v-expansion-panel-content class="pa-1">

@@ -75,7 +75,8 @@
                   <v-divider class="mx-2 d-inline" inset vertical />
 
                   <analysis-info-btn
-                    @click.native="openAnalysisInfoDialog(null, history.id)"
+                    @click.native="openAnalysisInfoDialog(
+                      run.runId, history.id)"
                   />
 
                   <v-divider class="mx-2 d-inline" inset vertical />
