@@ -18,7 +18,7 @@ import tempfile
 import unittest
 
 from codechecker_report_converter.analyzers.sanitizers.address import \
-    analyzer_result
+    analyzer_result, parser
 from codechecker_report_converter.report.parser import plist
 
 OLD_PWD = None
@@ -43,6 +43,7 @@ class ASANAnalyzerResultTestCase(unittest.TestCase):
     def setUp(self):
         """ Setup the test. """
         self.analyzer_result = analyzer_result.AnalyzerResult()
+        self.parser = parser.Parser()
         self.cc_result_dir = tempfile.mkdtemp()
 
     def tearDown(self):
@@ -69,3 +70,21 @@ class ASANAnalyzerResultTestCase(unittest.TestCase):
             res['metadata']['generated_by']['version'] = "x.y.z"
 
         self.assertEqual(res, exp)
+
+    def test_asan_checker_deduction(self):
+        self.assertEqual(
+            self.parser.deduce_checker_name(
+                "heap-use-after-free on address 0x614000000044 at "
+                "pc 0x0000004f4b45 bp 0x7ffd40559120 sp 0x7ffd40559118"),
+            "AddressSanitizer.generic-error")
+
+        self.assertEqual(
+            self.parser.deduce_checker_name(
+                "heap-use-after-free on address  at "
+                "pc 0x0000004f4b45 bp 0x7ffd40559120 sp 0x7ffd40559118"),
+            "AddressSanitizer.generic-error")
+
+        self.assertEqual(
+            self.parser.deduce_checker_name(
+                "HURR DURR YOUR CODE BAD SHAME ON YOU"),
+            "AddressSanitizer")
