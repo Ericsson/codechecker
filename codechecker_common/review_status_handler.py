@@ -330,9 +330,6 @@ class ReviewStatusHandler:
         if source_file_name in report.changed_files:
             return None
 
-        if not os.path.exists(source_file_name):
-            LOG.error(f"Source file '{source_file_name}' does not exist.")
-
         if os.path.isfile(source_file_name):
             src_comment_data = self.__parse_codechecker_review_comment(
                 source_file_name, report.line, report.checker_name)
