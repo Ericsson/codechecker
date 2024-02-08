@@ -12,7 +12,7 @@ or dangling records from the database.
 from datetime import datetime, timedelta
 
 import sqlalchemy
-from sqlalchemy.sql.expression import bindparam, union_all, select, cast
+from sqlalchemy.sql.expression import bindparam, cast, select, union_all
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import Severity
 
@@ -25,7 +25,7 @@ from .run_db_model import AnalysisInfo, BugPathEvent, BugReportPoint, \
     RunHistoryAnalysisInfo, RunLock
 
 LOG = get_logger('server')
-RUN_LOCK_TIMEOUT_IN_DATABASE = 30 * 60  # 30 minutes.
+RUN_LOCK_TIMEOUT_IN_DATABASE = timedelta(minutes=30)
 SQLITE_LIMIT_COMPOUND_SELECT = 500
 
 
@@ -34,8 +34,7 @@ def remove_expired_run_locks(session_maker):
 
     with DBSession(session_maker) as session:
         try:
-            locks_expired_at = datetime.now() - timedelta(
-                seconds=RUN_LOCK_TIMEOUT_IN_DATABASE)
+            locks_expired_at = datetime.now() - RUN_LOCK_TIMEOUT_IN_DATABASE
 
             session.query(RunLock) \
                 .filter(RunLock.locked_at < locks_expired_at) \

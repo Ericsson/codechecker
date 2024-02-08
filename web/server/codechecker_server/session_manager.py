@@ -10,18 +10,14 @@ Handles the management of authentication sessions on the server's side.
 """
 
 import hashlib
-import json
-import os
 import re
-import uuid
 
 from datetime import datetime
 from typing import Optional
 
 from codechecker_common.logger import get_logger
-from codechecker_common.util import load_json
+from codechecker_common.util import load_json, generate_random_token
 
-from codechecker_web.shared.env import check_file_owner_rw
 from codechecker_web.shared.version import SESSION_COOKIE_NAME as _SCN
 
 from .database.config_db_model import Session as SessionRecord
@@ -44,31 +40,7 @@ except ImportError:
 
 LOG = get_logger("server")
 SESSION_COOKIE_NAME = _SCN
-
-
-def generate_session_token():
-    """
-    Returns a random session token.
-    """
-    return uuid.UUID(bytes=os.urandom(16)).hex
-
-
-def get_worker_processes(scfg_dict):
-    """
-    Return number of worker processes from the config dictionary.
-
-    Return 'worker_processes' field from the config dictionary or returns the
-    default value if this field is not set or the value is negative.
-    """
-    default = os.cpu_count()
-    worker_processes = scfg_dict.get('worker_processes', default)
-
-    if worker_processes < 0:
-        LOG.warning("Number of worker processes can not be negative! Default "
-                    "value will be used: %s", default)
-        worker_processes = default
-
-    return worker_processes
+SESSION_TOKEN_LENGTH = 32
 
 
 class _Session:
@@ -177,14 +149,6 @@ class SessionManager:
 
         scfg_dict = self.__get_config_dict()
 
-        # FIXME: Refactor this. This is irrelevant to authentication config,
-        # so it should NOT be handled by session_manager. A separate config
-        # handler for the server's stuff should be created, that can properly
-        # instantiate SessionManager with the found configuration.
-        self.__worker_processes = get_worker_processes(scfg_dict)
-        self.__max_run_count = scfg_dict.get('max_run_count', None)
-        self.__store_config = scfg_dict.get('store', {})
-        self.__keepalive_config = scfg_dict.get('keepalive', {})
         self.__auth_config = scfg_dict['authentication']
 
         if force_auth:
@@ -262,9 +226,7 @@ class SessionManager:
         """
         LOG.debug(self.__configuration_file)
         cfg_dict = load_json(self.__configuration_file, {})
-        if cfg_dict != {}:
-            check_file_owner_rw(self.__configuration_file)
-        else:
+        if cfg_dict == {}:
             # If the configuration dict is empty, it means a JSON couldn't
             # have been parsed from it.
             raise ValueError("Server configuration file was invalid, or "
@@ -272,26 +234,9 @@ class SessionManager:
         return cfg_dict
 
     def reload_config(self):
-        LOG.info("Reload server configuration file...")
+        LOG.info("Reload server configuration file (old logic)...")
         try:
             cfg_dict = self.__get_config_dict()
-
-            prev_max_run_count = self.__max_run_count
-            new_max_run_count = cfg_dict.get('max_run_count', None)
-            if prev_max_run_count != new_max_run_count:
-                self.__max_run_count = new_max_run_count
-                LOG.debug("Changed 'max_run_count' value from %s to %s",
-                          prev_max_run_count, new_max_run_count)
-
-            prev_store_config = json.dumps(self.__store_config, sort_keys=True,
-                                           indent=2)
-            new_store_config_val = cfg_dict.get('store', {})
-            new_store_config = json.dumps(new_store_config_val, sort_keys=True,
-                                          indent=2)
-            if prev_store_config != new_store_config:
-                self.__store_config = new_store_config_val
-                LOG.debug("Updating 'store' config from %s to %s",
-                          prev_store_config, new_store_config)
 
             update_sessions = False
             auth_fields_to_update = ['session_lifetime', 'refresh_time',
@@ -314,7 +259,7 @@ class SessionManager:
                         self.__auth_config['session_lifetime']
                     session.refresh_time = self.__auth_config['refresh_time']
 
-            LOG.info("Done.")
+            LOG.info("Done reloading (old logic).")
         except ValueError as ex:
             LOG.error("Couldn't reload server configuration file")
             LOG.error(str(ex))
@@ -322,10 +267,6 @@ class SessionManager:
     @property
     def is_enabled(self):
         return self.__auth_config.get('enabled')
-
-    @property
-    def worker_processes(self):
-        return self.__worker_processes
 
     def get_realm(self):
         return {
@@ -619,7 +560,7 @@ class SessionManager:
             return False
 
         # Generate a new token and create a local session.
-        token = generate_session_token()
+        token = generate_random_token(SESSION_TOKEN_LENGTH)
         user_name = validation.get('username')
         groups = validation.get('groups', [])
         is_root = validation.get('root', False)
@@ -646,56 +587,6 @@ class SessionManager:
                     transaction.close()
 
         return local_session
-
-    def get_max_run_count(self):
-        """
-        Returns the maximum storable run count. If the value is None it means
-        we can upload unlimited number of runs.
-        """
-        return self.__max_run_count
-
-    def get_analysis_statistics_dir(self):
-        """
-        Get directory where the compressed analysis statistics files should be
-        stored. If the value is None it means we do not want to store
-        analysis statistics information on the server.
-        """
-
-        return self.__store_config.get('analysis_statistics_dir')
-
-    def get_failure_zip_size(self):
-        """
-        Maximum size of the collected failed zips which can be store on the
-        server.
-        """
-        limit = self.__store_config.get('limit', {})
-        return limit.get('failure_zip_size')
-
-    def get_compilation_database_size(self):
-        """
-        Limit of the compilation database file size.
-        """
-        limit = self.__store_config.get('limit', {})
-        return limit.get('compilation_database_size')
-
-    def is_keepalive_enabled(self):
-        """
-        True if the keepalive functionality is explicitly enabled, otherwise it
-        will return False.
-        """
-        return self.__keepalive_config.get('enabled')
-
-    def get_keepalive_idle(self):
-        """ Get keepalive idle time. """
-        return self.__keepalive_config.get('idle')
-
-    def get_keepalive_interval(self):
-        """ Get keepalive interval time. """
-        return self.__keepalive_config.get('interval')
-
-    def get_keepalive_max_probe(self):
-        """ Get keepalive max probe count. """
-        return self.__keepalive_config.get('max_probe')
 
     def __get_local_session_from_db(self, token):
         """

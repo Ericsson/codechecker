@@ -16,14 +16,15 @@ import datetime
 from hashlib import sha256
 from multiprocessing import Process
 import os
+import pathlib
 import posixpath
 from random import sample
-import shutil
 import signal
 import socket
 import ssl
 import sys
 import stat
+import typing
 import urllib
 
 from http.server import HTTPServer, BaseHTTPRequestHandler, \
@@ -49,15 +50,12 @@ from codechecker_api.ServerInfo_v6 import \
     serverInfoService as ServerInfoAPI_v6
 
 from codechecker_common.logger import get_logger
+from codechecker_common.util import generate_random_token
 
 from codechecker_web.shared.version import get_version_str
 
-from . import instance_manager
-from . import permissions
-from . import routing
-from . import session_manager
-
-from .tmp import get_tmp_dir_hash
+from . import instance_manager, permissions, routing, server_configuration
+from .session_manager import SessionManager, SESSION_COOKIE_NAME
 
 from .api.authentication import ThriftAuthHandler as AuthHandler_v6
 from .api.config_handler import ThriftConfigHandler as ConfigHandler_v6
@@ -75,13 +73,13 @@ LOG = get_logger('server')
 
 
 class RequestHandler(SimpleHTTPRequestHandler):
-    """
-    Handle thrift and browser requests
-    Simply modified and extended version of SimpleHTTPRequestHandler
-    """
-    auth_session = None
+    """Handle Thrift RPC and Browser HTTP requests."""
 
     def __init__(self, request, client_address, server):
+        # Using the superclass BaseHTTPRequestHandler here instead of our
+        # direct superclass, SimpleHTTPRequestHandler, is seemingly
+        # intentional. do_GET() is overridden to serve the appropriate raw
+        # file content endpoints directly.
         BaseHTTPRequestHandler.__init__(self,
                                         request,
                                         client_address,
@@ -118,7 +116,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         cookie was found in the headers. None, otherwise.
         """
 
-        if not self.server.manager.is_enabled:
+        if not self.server.session_manager.is_enabled:
             return None
 
         session = None
@@ -129,8 +127,9 @@ class RequestHandler(SimpleHTTPRequestHandler):
             for cookie in split:
                 values = cookie.split("=")
                 if len(values) == 2 and \
-                        values[0] == session_manager.SESSION_COOKIE_NAME:
-                    session = self.server.manager.get_session(values[1])
+                        values[0] == SESSION_COOKIE_NAME:
+                    session = self.server.session_manager.get_session(
+                        values[1])
 
         if session and session.is_alive:
             # If a valid session token was found and it can still be used,
@@ -163,7 +162,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 self.auth_session)
 
     def __handle_readiness(self):
-        """ Handle readiness probe. """
+        """Handle Kubernetes Readiness probe."""
         try:
             cfg_sess = self.server.config_session()
             cfg_sess.query(ORMConfiguration).count()
@@ -181,7 +180,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 cfg_sess.commit()
 
     def __handle_liveness(self):
-        """ Handle liveness probe. """
+        """Handle Kubernetes liveness probe."""
         self.send_response(200)
         self.end_headers()
         self.wfile.write(b'CODECHECKER_SERVER_IS_LIVE')
@@ -196,9 +195,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
             if token:
                 self.send_header(
                     "Set-Cookie",
-                    "{0}={1}; Path=/".format(
-                        session_manager.SESSION_COOKIE_NAME,
-                        token))
+                    "{0}={1}; Path=/".format(SESSION_COOKIE_NAME, token))
 
             # Set the current user name in the header.
             user_name = self.auth_session.user
@@ -242,16 +239,13 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
         if self.path == '/':
             self.path = 'index.html'
-            SimpleHTTPRequestHandler.do_GET(self)
-            return
+            return SimpleHTTPRequestHandler.do_GET(self)
 
+        # Kubernetes cluster probe endpoints.
         if self.path == '/live':
-            self.__handle_liveness()
-            return
-
+            return self.__handle_liveness()
         if self.path == '/ready':
-            self.__handle_readiness()
-            return
+            return self.__handle_readiness()
 
         product_endpoint, _ = routing.split_client_GET_request(self.path)
 
@@ -351,7 +345,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         otrans = TTransport.TMemoryBuffer()
         oprot = output_protocol_factory.getProtocol(otrans)
 
-        if self.server.manager.is_enabled and \
+        if self.server.session_manager.is_enabled and \
                 not self.path.endswith(('/Authentication',
                                         '/Configuration',
                                         '/ServerInfo')) and \
@@ -389,7 +383,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
                 if major_version == 6:
                     if request_endpoint == 'Authentication':
                         auth_handler = AuthHandler_v6(
-                            self.server.manager,
+                            self.server.configuration_manager,
+                            self.server.session_manager,
                             self.auth_session,
                             self.server.config_session)
                         processor = AuthAPI_v6.Processor(auth_handler)
@@ -425,7 +420,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
                             product = self.__check_prod_db(product_endpoint)
 
                         acc_handler = ReportHandler_v6(
-                            self.server.manager,
+                            self.server.configuration_manager,
+                            self.server.session_manager,
                             product.session_factory,
                             product,
                             self.auth_session,
@@ -506,10 +502,6 @@ class Product:
     Represents a product, which is a distinct storage of analysis reports in
     a separate database (and database connection) with its own access control.
     """
-
-    # The amount of SECONDS that need to pass after the last unsuccessful
-    # connect() call so the next could be made.
-    CONNECT_RETRY_TIMEOUT = 300
 
     def __init__(self, orm_object, context, check_env):
         """
@@ -679,15 +671,12 @@ class Product:
 
 
 class CCSimpleHttpServer(HTTPServer):
-    """
-    Simple http server to handle requests from the clients.
-    """
+    """Simple HTTP server to handle requests from the clients."""
 
-    daemon_threads = False
     address_family = socket.AF_INET  # IPv4
 
     def __init__(self,
-                 server_address,
+                 server_address: typing.Tuple[str, int],
                  RequestHandlerClass,
                  config_directory,
                  product_db_sql_server,
@@ -695,7 +684,8 @@ class CCSimpleHttpServer(HTTPServer):
                  pckg_data,
                  context,
                  check_env,
-                 manager):
+                 configuration_manager: server_configuration.Configuration,
+                 session_manager: SessionManager):
 
         LOG.debug("Initializing HTTP server...")
 
@@ -705,14 +695,16 @@ class CCSimpleHttpServer(HTTPServer):
         self.version = pckg_data['version']
         self.context = context
         self.check_env = check_env
-        self.manager = manager
+        self.configuration_manager = configuration_manager
+        self.session_manager = session_manager
+        self.address, self.port = server_address
         self.__products = {}
 
         # Create a database engine for the configuration database.
         LOG.debug("Creating database engine for CONFIG DATABASE...")
         self.__engine = product_db_sql_server.create_engine()
         self.config_session = sessionmaker(bind=self.__engine)
-        self.manager.set_database_connection(self.config_session)
+        self.session_manager.set_database_connection(self.config_session)
 
         # Load the initial list of products and set up the server.
         cfg_sess = self.config_session()
@@ -735,7 +727,7 @@ class CCSimpleHttpServer(HTTPServer):
                     LOG.warning("Cleaning database for %s Failed.", endpoint)
 
         try:
-            HTTPServer.__init__(self, server_address,
+            HTTPServer.__init__(self, (self.address, self.port),
                                 RequestHandlerClass,
                                 bind_and_activate=True)
             ssl_key_file = os.path.join(config_directory, "key.pem")
@@ -768,12 +760,17 @@ class CCSimpleHttpServer(HTTPServer):
             LOG.error("Couldn't start the server: %s", e.__str__())
             raise
 
+        # If the server was started with the port 0, the OS will pick an
+        # available port. For this reason we will update the port variable
+        # after server initialization.
+        self.port = self.socket.getsockname()[1]
+
     def configure_keepalive(self):
         """
         Enable keepalive on the socket and some TCP keepalive configuration
         option based on the server configuration file.
         """
-        if not self.manager.is_keepalive_enabled():
+        if not self.configuration_manager.enable_keepalive:
             return
 
         keepalive_is_on = self.socket.getsockopt(socket.SOL_SOCKET,
@@ -788,26 +785,38 @@ class CCSimpleHttpServer(HTTPServer):
         if ret:
             LOG.error('Failed to set socket keepalive: %s', ret)
 
-        idle = self.manager.get_keepalive_idle()
+        idle = self.configuration_manager.keepalive_time_idle
         if idle:
             ret = self.socket.setsockopt(socket.IPPROTO_TCP,
                                          socket.TCP_KEEPIDLE, idle)
             if ret:
                 LOG.error('Failed to set TCP keepalive idle: %s', ret)
+        else:
+            idle = self.socket.getsockopt(socket.IPPROTO_TCP,
+                                          socket.TCP_KEEPIDLE)
+            self.configuration_manager.keepalive_time_idle = idle
 
-        interval = self.manager.get_keepalive_interval()
+        interval = self.configuration_manager.keepalive_time_interval
         if interval:
             ret = self.socket.setsockopt(socket.IPPROTO_TCP,
                                          socket.TCP_KEEPINTVL, interval)
             if ret:
                 LOG.error('Failed to set TCP keepalive interval: %s', ret)
+        else:
+            interval = self.socket.getsockopt(socket.IPPROTO_TCP,
+                                              socket.TCP_KEEPINTVL)
+            self.configuration_manager.keepalive_time_interval = interval
 
-        max_probe = self.manager.get_keepalive_max_probe()
-        if max_probe:
+        max_probes = self.configuration_manager.keepalive_max_probes
+        if max_probes:
             ret = self.socket.setsockopt(socket.IPPROTO_TCP,
-                                         socket.TCP_KEEPCNT, max_probe)
+                                         socket.TCP_KEEPCNT, max_probes)
             if ret:
-                LOG.error('Failed to set TCP max keepalive probe: %s', ret)
+                LOG.error('Failed to set TCP max keepalive probes: %s', ret)
+        else:
+            max_probes = self.socket.getsockopt(socket.IPPROTO_TCP,
+                                                socket.TCP_KEEPCNT)
+            self.configuration_manager.keepalive_max_probes = max_probes
 
     def terminate(self):
         """
@@ -933,6 +942,10 @@ class CCSimpleHttpServer(HTTPServer):
             for ep in list(self.__products)
             if ep not in endpoints_to_keep]
 
+    @property
+    def formatted_address(self) -> str:
+        return "%s:%d" % (self.address, self.port)
+
 
 class CCSimpleHttpServerIPv6(CCSimpleHttpServer):
     """
@@ -944,8 +957,12 @@ class CCSimpleHttpServerIPv6(CCSimpleHttpServer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    @property
+    def formatted_address(self) -> str:
+        return "[%s]:%d" % (self.address, self.port)
 
-def __make_root_file(root_file):
+
+def __make_root_file(root_file: str) -> str:
     """
     Generate a root username and password SHA. This hash is saved to the
     given file path, and is also returned.
@@ -954,7 +971,7 @@ def __make_root_file(root_file):
     LOG.debug("Generating initial superuser (root) credentials...")
 
     username = ''.join(sample("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 6))
-    password = get_tmp_dir_hash()[:8]
+    password = generate_random_token(8)
 
     LOG.info("A NEW superuser credential was generated for the server. "
              "This information IS SAVED, thus subsequent server starts "
@@ -982,75 +999,72 @@ def __make_root_file(root_file):
     return secret
 
 
-def start_server(config_directory, package_data, port, config_sql_server,
-                 listen_address, force_auth, skip_db_cleanup,
-                 context, check_env):
+def __load_or_create_root_file(config_directory: str) -> str:
     """
-    Start http server to handle web client and thrift requests.
+    Loads the stored hashed superuser (root) user name and password for the
+    server, or creates an automatically generated one if such does not exist.
+
+    Returns the SHA-hashed expected username and password of root.
     """
-    LOG.debug("Starting CodeChecker server...")
-
-    server_addr = (listen_address, port)
-
     root_file = os.path.join(config_directory, 'root.user')
     if not os.path.exists(root_file):
         LOG.warning("Server started without 'root.user' present in "
                     "CONFIG_DIRECTORY!")
-        root_sha = __make_root_file(root_file)
     else:
         LOG.debug("Root file was found. Loading...")
         try:
             with open(root_file, 'r', encoding="utf-8", errors="ignore") as f:
                 root_sha = f.read()
-            LOG.debug("Root digest is '%s'", root_sha)
+                LOG.debug("Root digest is '%s'", root_sha)
+                return root_sha
         except IOError:
             LOG.info("Cannot open root file '%s' even though it exists",
                      root_file)
-            root_sha = __make_root_file(root_file)
 
-    # Check whether configuration file exists, create an example if not.
-    server_cfg_file = os.path.join(config_directory, 'server_config.json')
-    if not os.path.exists(server_cfg_file):
-        # For backward compatibility reason if the session_config.json file
-        # exists we rename it to server_config.json.
-        session_cfg_file = os.path.join(config_directory,
-                                        'session_config.json')
-        example_cfg_file = os.path.join(os.environ['CC_DATA_FILES_DIR'],
-                                        'config', 'server_config.json')
-        if os.path.exists(session_cfg_file):
-            LOG.info("Renaming '%s' to '%s'. Please check the example "
-                     "configuration file ('%s') or the user guide for more "
-                     "information.", session_cfg_file,
-                     server_cfg_file, example_cfg_file)
-            os.rename(session_cfg_file, server_cfg_file)
-        else:
-            LOG.info("CodeChecker server's example configuration file "
-                     "created at '%s'", server_cfg_file)
-            shutil.copyfile(example_cfg_file, server_cfg_file)
+    return __make_root_file(root_file)
+
+
+def start_server(config_directory, package_data, port: int, config_sql_server,
+                 listen_address: str, force_auth, skip_db_cleanup,
+                 context, check_env):
+    """
+    Start http server to handle web client and thrift requests.
+    """
+    LOG.debug("Begin starting CodeChecker server...")
+
+    root_sha = __load_or_create_root_file(config_directory)
 
     try:
-        manager = session_manager.SessionManager(
+        configuration = server_configuration.load_configuration(
+            pathlib.Path(config_directory))
+    except (OSError, ValueError) as err:
+        LOG.debug(err)
+        LOG.error("The server's configuration file is missing, can not "
+                  "be read, or is in an invalid format!")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
+    server_cfg_file = os.path.join(config_directory, "server_config.json")
+    try:
+        session_manager = SessionManager(
             server_cfg_file,
             root_sha,
             force_auth)
-    except IOError as ioerr:
-        LOG.debug(ioerr)
-        LOG.error("The server's configuration file "
-                  "is missing or can not be read!")
-        sys.exit(1)
-    except ValueError as verr:
-        LOG.debug(verr)
-        LOG.error("The server's configuration file is invalid!")
+    except (IOError, ValueError) as err:
+        LOG.debug(err)
+        LOG.error("The server's configuration file is missing or can not "
+                  "be read!")
         sys.exit(1)
 
     server_clazz = CCSimpleHttpServer
-    if ':' in server_addr[0]:
+    if ':' in listen_address:
         # IPv6 address specified for listening.
         # FIXME: Python>=3.8 automatically handles IPv6 if ':' is in the bind
         # address, see https://bugs.python.org/issue24209.
         server_clazz = CCSimpleHttpServerIPv6
 
-    http_server = server_clazz(server_addr,
+    http_server = server_clazz((listen_address, port),
                                RequestHandler,
                                config_directory,
                                config_sql_server,
@@ -1058,12 +1072,8 @@ def start_server(config_directory, package_data, port, config_sql_server,
                                package_data,
                                context,
                                check_env,
-                               manager)
-
-    # If the server was started with the port 0, the OS will pick an available
-    # port. For this reason we will update the port variable after server
-    # initialization.
-    port = http_server.socket.getsockname()[1]
+                               configuration,
+                               session_manager)
 
     processes = []
 
@@ -1071,10 +1081,8 @@ def start_server(config_directory, package_data, port, config_sql_server,
         """
         Handle SIGTERM to stop the server running.
         """
-        LOG.info("Shutting down the WEB server on [%s:%d]",
-                 '[' + listen_address + ']'
-                 if server_clazz is CCSimpleHttpServerIPv6 else listen_address,
-                 port)
+        LOG.info("Shutting down the WEB server on [%s]",
+                 http_server.formatted_address)
         http_server.terminate()
 
         # Terminate child processes.
@@ -1085,9 +1093,10 @@ def start_server(config_directory, package_data, port, config_sql_server,
 
     def reload_signal_handler(*args, **kwargs):
         """
-        Reloads server configuration file.
+        Reloads the server configuration file.
         """
-        manager.reload_config()
+        configuration.reload()
+        session_manager.reload_config()
 
     try:
         instance_manager.register(os.getpid(),
@@ -1096,11 +1105,6 @@ def start_server(config_directory, package_data, port, config_sql_server,
                                   port)
     except IOError as ex:
         LOG.debug(ex.strerror)
-
-    LOG.info("Server waiting for client requests on [%s:%d]",
-             '[' + listen_address + ']'
-             if server_clazz is CCSimpleHttpServerIPv6 else listen_address,
-             port)
 
     def unregister_handler(pid):
         """
@@ -1115,7 +1119,11 @@ def start_server(config_directory, package_data, port, config_sql_server,
 
     atexit.register(unregister_handler, os.getpid())
 
-    for _ in range(manager.worker_processes - 1):
+    requested_worker_threads = configuration.worker_processes
+    LOG.info("Spawning %d API request handler processes...",
+             requested_worker_threads)
+
+    for _ in range(requested_worker_threads - 1):
         p = Process(target=http_server.serve_forever)
         processes.append(p)
         p.start()
@@ -1125,6 +1133,9 @@ def start_server(config_directory, package_data, port, config_sql_server,
 
     if sys.platform != "win32":
         signal.signal(signal.SIGHUP, reload_signal_handler)
+
+    LOG.info("Server waiting for client requests on [%s]",
+             http_server.formatted_address)
 
     # Main process also acts as a worker.
     http_server.serve_forever()

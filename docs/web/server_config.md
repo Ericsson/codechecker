@@ -89,19 +89,19 @@ For more information about this problem can be found here:
 https://github.com/moby/moby/issues/31208#issuecomment-303905737
 
 #### Idle time
-The interval between the last data packet sent (simple ACKs are not considered
-data) and the first keepalive probe.
+The interval (in seconds) between the last data packet sent (simple `ACK`s are
+not considered data) and the first keepalive probe.
 
 By default the server will use the value from your host configured by the
-`net.ipv4.tcp_keepalive_time` parameter. This value can be overriden by the
+`net.ipv4.tcp_keepalive_time` parameter. This value can be overridden by the
 `idle` key in the server configuration file.
 
 #### Interval time
-The interval between subsequential keepalive probes, regardless of what the
-connection has exchanged in the meantime.
+The interval (in seconds) between subsequential keepalive probes, regardless of
+what the connection has exchanged in the meantime.
 
 By default the server will use the value from your host configured by the
-`net.ipv4.tcp_keepalive_intvl` parameter. This value can be overriden by the
+`net.ipv4.tcp_keepalive_intvl` parameter. This value can be overridden by the
 `interval` key in the server configuration file.
 
 #### Probes
@@ -109,7 +109,7 @@ The number of unacknowledged probes to send before considering the connection
 dead and notifying the application layer.
 
 By default the server will use the value from your host configured by the
-`net.ipv4.tcp_keepalive_probes` parameter. This value can be overriden by the
+`net.ipv4.tcp_keepalive_probes` parameter. This value can be overridden by the
 `max_probe` key in the server configuration file.
 
 ## Authentication

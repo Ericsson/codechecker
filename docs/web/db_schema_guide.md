@@ -39,7 +39,7 @@ Edit the sqlalchemy.url option in [alembic.ini](
 
 ### **Step 3**: Use alembic to autogenerate migration scripts
 
-`alembic --name config_db revision --autogenerate -m "Change description"`
+`PYTHONPATH="build/CodeChecker/lib/python3" alembic --name config_db revision --autogenerate -m "Change description"`
 
 ### **Step 4**: Check the generated scripts
 The new migration script
@@ -77,7 +77,7 @@ Edit the sqlalchemy.url option in [alembic.ini](
 
 #### **Step 2**: Generating migration scripts using autogenerate
 
-`alembic --name run_db revision --autogenerate -m "Change description"`
+`PYTHONPATH="build/CodeChecker/lib/python3" alembic --name config_db revision --autogenerate -m "Change description"`
 
 #### **Step 3**: Check the generated scripts
 The new migration script db_migrate/versions/{hash}_change_description.py is
