@@ -6,14 +6,15 @@
 #
 # -------------------------------------------------------------------------
 """
-Multiprocessing compatibility module.
+Setup python modules for the unit tests.
 """
+
+
+import os
 import sys
 
-# pylint: disable=no-name-in-module
-# pylint: disable=unused-import
-if sys.platform in ["darwin", "win32"]:
-    from multiprocess import Pool, Process, cpu_count
-else:
-    from concurrent.futures import ProcessPoolExecutor as Pool
-    from multiprocessing import Process, cpu_count
+REPO_ROOT = os.path.abspath(os.environ['REPO_ROOT'])
+PKG_ROOT = os.path.join(REPO_ROOT, 'build', 'CodeChecker')
+
+sys.path.append(REPO_ROOT)
+sys.path.append(os.path.join(PKG_ROOT, 'lib', 'python3'))

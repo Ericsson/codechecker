@@ -24,16 +24,17 @@ Example configuration for PAM based authentication.
 """
 
 
-import pam
 import grp
+import pam
 import pwd
+from typing import List
 
 from codechecker_common.logger import get_logger
 
 LOG = get_logger('server')
 
 
-def auth_user(pam_config, username, password):
+def auth_user(pam_config, username, password) -> bool:
     """
     Authenticate user with PAM.
     """
@@ -43,25 +44,22 @@ def auth_user(pam_config, username, password):
     auth = pam.pam()
 
     if auth.authenticate(username, password):
-        allowed_users = pam_config.get("users") \
-            or []
-        allowed_group = pam_config.get("groups")\
-            or []
+        allowed_users: List[str] = pam_config.users
+        allowed_groups: List[str] = pam_config.groups
 
-        if not allowed_users and not allowed_group:
+        if not allowed_users and not allowed_groups:
             # If no filters are set, only authentication is needed.
             return True
-        elif username in allowed_users:
-            # The user is allowed by username.
-            return True
-        else:
-            # Otherwise, check group memeberships. If any of the user's
-            # groups are an allowed groupl, the user is allowed.
-            groups = [g.gr_name for g in grp.getgrall()
-                      if username in g.gr_mem]
-            gid = pwd.getpwnam(username).pw_gid
-            groups.append(grp.getgrgid(gid).gr_name)
 
-            return not set(groups).isdisjoint(set(pam_config.get("groups")))
+        if username in allowed_users:
+            return True
+
+        # Otherwise, check group memeberships. If any of the user's groups is
+        # an allowed group, the user is allowed.
+        groups = {g.gr_name for g in grp.getgrall() if username in g.gr_mem}
+        gid = pwd.getpwnam(username).pw_gid
+        groups.add(grp.getgrgid(gid).gr_name)
+
+        return not groups.isdisjoint(allowed_groups)
 
     return False

@@ -1,11 +1,12 @@
 CodeChecker server configuration
 ====================================
 
-The server's configuration is stored in the server's *workspace* folder, in
-`server_config.json`. This file is created, at the first start of the server,
-using the package's installed `config/server_config.json` as a template.
+The server's configuration is stored in the server's *workspace* directory, in
+**`server_config.json`**.
+This file is created, at the first start of the server, using the package
+s installed `config/server_config.json` as a template.
 
-> **NOTICE!** `session_config.json` file has been deprecated.
+> **NOTICE!** The _`session_config.json`_ file has been deprecated.
 
 Table of Contents
 =================
@@ -57,17 +58,19 @@ The `limit` section controls limitation of analysis statistics.
 The `failure_zip_size` section of the `limit` controls the maximum size of
 uploadable failure zips in *bytes*.
 
-*Default value*: 52428800 bytes = 50 MB
+*Default value*: 52 428 800 bytes (50 MiB).
 
 #### Size of the compilation database
 The `compilation_database_size` section of the `limit` controls the maximum
 size of uploadable compilation database file in *bytes*.
 
-*Default value*: 104857600 bytes = 100 MB
+*Default value*: 104 857 600 bytes (100 MiB).
 
 ### Keepalive
-Linux has built-in support for keepalive. When using a CodeChecker server
-with `Docker Swarm` it is recommended to use the following settings:
+Linux has built-in support for keep-alive of the network sockets.
+When using a CodeChecker server with _Docker Swarm_ it is recommended to use
+the following settings:
+
 ```json
 {
   "keepalive": {
@@ -89,19 +92,19 @@ For more information about this problem can be found here:
 https://github.com/moby/moby/issues/31208#issuecomment-303905737
 
 #### Idle time
-The interval between the last data packet sent (simple ACKs are not considered
-data) and the first keepalive probe.
+The interval (in seconds) between the last data packet sent (simple `ACK`s are
+not considered data) and the first keepalive probe.
 
 By default the server will use the value from your host configured by the
-`net.ipv4.tcp_keepalive_time` parameter. This value can be overriden by the
+`net.ipv4.tcp_keepalive_time` parameter. This value can be overridden by the
 `idle` key in the server configuration file.
 
 #### Interval time
-The interval between subsequential keepalive probes, regardless of what the
-connection has exchanged in the meantime.
+The interval (in seconds) between subsequential keepalive probes, regardless of
+what the connection has exchanged in the meantime.
 
 By default the server will use the value from your host configured by the
-`net.ipv4.tcp_keepalive_intvl` parameter. This value can be overriden by the
+`net.ipv4.tcp_keepalive_intvl` parameter. This value can be overridden by the
 `interval` key in the server configuration file.
 
 #### Probes
@@ -109,7 +112,7 @@ The number of unacknowledged probes to send before considering the connection
 dead and notifying the application layer.
 
 By default the server will use the value from your host configured by the
-`net.ipv4.tcp_keepalive_probes` parameter. This value can be overriden by the
+`net.ipv4.tcp_keepalive_probes` parameter. This value can be overridden by the
 `max_probe` key in the server configuration file.
 
 ## Authentication

@@ -28,7 +28,7 @@ from ..database.database import DBSession
 from ..permissions import handler_from_scope_params as make_handler, \
     require_manager, require_permission
 from ..server import permissions
-from ..session_manager import generate_session_token
+from ..session_manager import generate_random_token, SESSION_TOKEN_LENGTH
 
 LOG = get_logger('server')
 
@@ -40,8 +40,12 @@ class ThriftAuthHandler:
     Handle Thrift authentication requests.
     """
 
-    def __init__(self, manager, auth_session, config_database):
-        self.__manager = manager
+    def __init__(self,
+                 _configuration_manager,
+                 session_manager,
+                 auth_session,
+                 config_database):
+        self.__session_manager = session_manager
         self.__auth_session = auth_session
         self.__config_db = config_database
 
@@ -58,7 +62,7 @@ class ThriftAuthHandler:
 
     def __has_permission(self, permission) -> bool:
         """ True if the current user has given permission rights. """
-        if self.__manager.is_enabled and not self.__auth_session:
+        if self.__session_manager.is_enabled and not self.__auth_session:
             return False
 
         return self.hasPermission(permission, None)
@@ -86,7 +90,7 @@ class ThriftAuthHandler:
     def getAuthParameters(self):
         alive = self.__auth_session.is_alive if self.__auth_session \
                 else False
-        return HandshakeInformation(self.__manager.is_enabled, alive)
+        return HandshakeInformation(self.__session_manager.is_enabled, alive)
 
     @timeit
     def getLoggedInUser(self):
@@ -134,7 +138,7 @@ class ThriftAuthHandler:
                 else:
                     product_permissions[endpoint].user[name].append(perm)
 
-        default_superuser = self.__manager.default_superuser_name
+        default_superuser = self.__session_manager.default_superuser_name
         if default_superuser:
             global_permissions.user[default_superuser].append("SUPERUSER")
 
@@ -153,7 +157,7 @@ class ThriftAuthHandler:
             user_name, _ = auth_string.split(':', 1)
             LOG.debug("'%s' logging in...", user_name)
 
-            session = self.__manager.create_session(auth_string)
+            session = self.__session_manager.create_session(auth_string)
 
             if session:
                 LOG.info("'%s' logged in.", user_name)
@@ -180,7 +184,7 @@ class ThriftAuthHandler:
         if self.__auth_session:
             token = self.__auth_session.token
 
-        is_logged_out = self.__manager.invalidate(token)
+        is_logged_out = self.__session_manager.invalidate(token)
         if is_logged_out:
             LOG.info("'%s' logged out.", user_name)
         return is_logged_out
@@ -363,7 +367,7 @@ class ThriftAuthHandler:
         """
         self.__require_privilaged_access()
         with DBSession(self.__config_db) as session:
-            token = generate_session_token()
+            token = generate_random_token(SESSION_TOKEN_LENGTH)
             user = self.getLoggedInUser()
             groups = ';'.join(self.__auth_session.groups)
             session_token = Session(token, user, groups, description, False)
@@ -402,7 +406,7 @@ class ThriftAuthHandler:
                     "database.")
 
             # Invalidate the local session by token.
-            self.__manager.invalidate_local_session(token)
+            self.__session_manager.invalidate_local_session(token)
 
             LOG.info("Personal access token '%s...' has been removed by '%s'.",
                      token[:5], self.getLoggedInUser())

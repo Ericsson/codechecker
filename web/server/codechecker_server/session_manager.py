@@ -8,26 +8,21 @@
 """
 Handles the management of authentication sessions on the server's side.
 """
-
 import hashlib
-import json
-import os
 import re
-import uuid
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Set
 
-from codechecker_common.compatibility.multiprocessing import cpu_count
 from codechecker_common.logger import get_logger
-from codechecker_common.util import load_json
+from codechecker_common.util import generate_random_token
 
-from codechecker_web.shared.env import check_file_owner_rw
 from codechecker_web.shared.version import SESSION_COOKIE_NAME as _SCN
 
 from .database.config_db_model import Session as SessionRecord
 from .database.config_db_model import SystemPermission
 from .permissions import SUPERUSER
+from .server_configuration import Configuration
 
 
 UNSUPPORTED_METHODS = []
@@ -35,41 +30,17 @@ UNSUPPORTED_METHODS = []
 try:
     from .auth import cc_ldap
 except ImportError:
-    UNSUPPORTED_METHODS.append('ldap')
+    UNSUPPORTED_METHODS.append("ldap")
 
 try:
     from .auth import cc_pam
 except ImportError:
-    UNSUPPORTED_METHODS.append('pam')
+    UNSUPPORTED_METHODS.append("pam")
 
 
 LOG = get_logger("server")
 SESSION_COOKIE_NAME = _SCN
-
-
-def generate_session_token():
-    """
-    Returns a random session token.
-    """
-    return uuid.UUID(bytes=os.urandom(16)).hex
-
-
-def get_worker_processes(scfg_dict):
-    """
-    Return number of worker processes from the config dictionary.
-
-    Return 'worker_processes' field from the config dictionary or returns the
-    default value if this field is not set or the value is negative.
-    """
-    default = cpu_count()
-    worker_processes = scfg_dict.get('worker_processes', default)
-
-    if worker_processes < 0:
-        LOG.warning("Number of worker processes can not be negative! Default "
-                    "value will be used: %s", default)
-        worker_processes = default
-
-    return worker_processes
+SESSION_TOKEN_LENGTH = 32
 
 
 class _Session:
@@ -84,11 +55,11 @@ class _Session:
         self.groups = groups
 
         self.session_lifetime = session_lifetime
-        self.refresh_time = refresh_time if refresh_time else None
+        self.refresh_time = refresh_time
         self.__root = is_root
         self.__database = database
         self.__can_expire = can_expire
-        self.last_access = last_access if last_access else datetime.now()
+        self.last_access = last_access or datetime.now()
 
     @property
     def is_root(self):
@@ -161,12 +132,15 @@ class SessionManager:
     CodeChecker server.
     """
 
-    def __init__(self, configuration_file, root_sha, force_auth=False):
+    def __init__(self,
+                 configuration: Configuration,
+                 root_sha: str,
+                 force_auth: bool = False):
         """
         Initialise a new Session Manager on the server.
 
-        :param configuration_file: The configuration file to read
-            authentication backends from.
+        :param configuration_file: The server's configuration data.
+            It contains authentication backend configuration information.
         :param root_sha: The SHA-256 hash of the root user's authentication.
         :param force_auth: If True, the manager will be enabled even if the
             configuration file disables authentication.
@@ -174,172 +148,78 @@ class SessionManager:
         self.__database_connection = None
         self.__logins_since_prune = 0
         self.__sessions = []
-        self.__configuration_file = configuration_file
-
-        scfg_dict = self.__get_config_dict()
-
-        # FIXME: Refactor this. This is irrelevant to authentication config,
-        # so it should NOT be handled by session_manager. A separate config
-        # handler for the server's stuff should be created, that can properly
-        # instantiate SessionManager with the found configuration.
-        self.__worker_processes = get_worker_processes(scfg_dict)
-        self.__max_run_count = scfg_dict.get('max_run_count', None)
-        self.__store_config = scfg_dict.get('store', {})
-        self.__keepalive_config = scfg_dict.get('keepalive', {})
-        self.__auth_config = scfg_dict['authentication']
+        self.__root_sha = root_sha
+        self._configuration = configuration.authentication
 
         if force_auth:
             LOG.debug("Authentication was force-enabled.")
-            self.__auth_config['enabled'] = True
+            self._configuration.enabled = True
 
-        if 'soft_expire' in self.__auth_config:
-            LOG.debug("Found deprecated argument 'soft_expire' in "
-                      "server_config.authentication.")
+        if not self.is_enabled:
+            return
 
-        self.__refresh_time = self.__auth_config['refresh_time'] \
-            if 'refresh_time' in self.__auth_config else None
+        # If no authentication methods are enabled, or none of them could
+        # starts due to lack of valid configuration or lack of dependencies,
+        # fall back to disabling authentication.
+        found_working_auth_method = False
+        if self._configuration.method_dictionary.enabled:
+            found_working_auth_method = True
 
-        # Save the root SHA into the configuration (but only in memory!)
-        self.__auth_config['method_root'] = root_sha
+        if self._configuration.method_pam.enabled:
+            if "pam" in UNSUPPORTED_METHODS:
+                LOG.warning("PAM authentication was enabled but "
+                            "prerequisites are NOT installed on the system"
+                            "... Disabling PAM authentication.")
+                self._configuration.method_pam.enabled = False
+            else:
+                found_working_auth_method = True
 
-        self.__regex_groups_enabled = False
+        if self._configuration.method_ldap.enabled:
+            if "ldap" in UNSUPPORTED_METHODS:
+                LOG.warning("LDAP authentication was enabled but "
+                            "prerequisites are NOT installed on the system"
+                            "... Disabling LDAP authentication.")
+                self._configuration.method_ldap.enabled = False
+            else:
+                found_working_auth_method = True
 
-        # Pre-compile the regular expressions of 'regex_groups'
-        if 'regex_groups' in self.__auth_config:
-            self.__regex_groups_enabled = self.__auth_config['regex_groups'] \
-                                              .get('enabled', False)
+        if not found_working_auth_method:
+            if force_auth:
+                LOG.warning("Authentication was force-enabled, but no "
+                            "valid authentication backends are "
+                            "configured... The server will only allow "
+                            "the master superuser (\"root\") access.")
+            else:
+                LOG.warning("Authentication is enabled but no valid "
+                            "authentication backends are configured... "
+                            "Falling back to no authentication!")
+                self._configuration.enabled = False
 
-            regex_groups = self.__auth_config['regex_groups'] \
-                               .get('groups', [])
-            d = {}
-            for group_name, regex_list in regex_groups.items():
-                d[group_name] = [re.compile(r) for r in regex_list]
-            self.__group_regexes_compiled = d
-
-        # If no methods are configured as enabled, disable authentication.
-        if scfg_dict['authentication'].get('enabled'):
-            found_auth_method = False
-
-            if 'method_dictionary' in self.__auth_config and \
-                    self.__auth_config['method_dictionary'].get('enabled'):
-                found_auth_method = True
-
-            if 'method_ldap' in self.__auth_config and \
-                    self.__auth_config['method_ldap'].get('enabled'):
-                if 'ldap' not in UNSUPPORTED_METHODS:
-                    found_auth_method = True
-                else:
-                    LOG.warning("LDAP authentication was enabled but "
-                                "prerequisites are NOT installed on the system"
-                                "... Disabling LDAP authentication.")
-                    self.__auth_config['method_ldap']['enabled'] = False
-
-            if 'method_pam' in self.__auth_config and \
-                    self.__auth_config['method_pam'].get('enabled'):
-                if 'pam' not in UNSUPPORTED_METHODS:
-                    found_auth_method = True
-                else:
-                    LOG.warning("PAM authentication was enabled but "
-                                "prerequisites are NOT installed on the system"
-                                "... Disabling PAM authentication.")
-                    self.__auth_config['method_pam']['enabled'] = False
-
-            if not found_auth_method:
-                if force_auth:
-                    LOG.warning("Authentication was manually enabled, but no "
-                                "valid authentication backends are "
-                                "configured... The server will only allow "
-                                "the master superuser (root) access.")
-                else:
-                    LOG.warning("Authentication is enabled but no valid "
-                                "authentication backends are configured... "
-                                "Falling back to no authentication.")
-                    self.__auth_config['enabled'] = False
-
-    def __get_config_dict(self):
-        """
-        Get server config information from the configuration file. Raise
-        ValueError if the configuration file is invalid.
-        """
-        LOG.debug(self.__configuration_file)
-        cfg_dict = load_json(self.__configuration_file, {})
-        if cfg_dict != {}:
-            check_file_owner_rw(self.__configuration_file)
+        # Pre-compile the regular expressions from 'regex_groups'.
+        if self.is_enabled and self._configuration.regex_groups.enabled:
+            self.__regex_groups = {g: [re.compile(rx) for rx in l]
+                                   for g, l in self._configuration
+                                   .regex_groups.groups.items()
+                                   }
         else:
-            # If the configuration dict is empty, it means a JSON couldn't
-            # have been parsed from it.
-            raise ValueError("Server configuration file was invalid, or "
-                             "empty.")
-        return cfg_dict
+            self.__regex_groups = {}
 
-    def reload_config(self):
-        LOG.info("Reload server configuration file...")
-        try:
-            cfg_dict = self.__get_config_dict()
-
-            prev_max_run_count = self.__max_run_count
-            new_max_run_count = cfg_dict.get('max_run_count', None)
-            if prev_max_run_count != new_max_run_count:
-                self.__max_run_count = new_max_run_count
-                LOG.debug("Changed 'max_run_count' value from %s to %s",
-                          prev_max_run_count, new_max_run_count)
-
-            prev_store_config = json.dumps(self.__store_config, sort_keys=True,
-                                           indent=2)
-            new_store_config_val = cfg_dict.get('store', {})
-            new_store_config = json.dumps(new_store_config_val, sort_keys=True,
-                                          indent=2)
-            if prev_store_config != new_store_config:
-                self.__store_config = new_store_config_val
-                LOG.debug("Updating 'store' config from %s to %s",
-                          prev_store_config, new_store_config)
-
-            update_sessions = False
-            auth_fields_to_update = ['session_lifetime', 'refresh_time',
-                                     'logins_until_cleanup']
-            for field in auth_fields_to_update:
-                if field in self.__auth_config:
-                    prev_value = self.__auth_config[field]
-                    new_value = cfg_dict['authentication'].get(field, 0)
-                    if prev_value != new_value:
-                        self.__auth_config[field] = new_value
-                        LOG.debug("Changed '%s' value from %s to %s",
-                                  field, prev_value, new_value)
-                        update_sessions = True
-
-            if update_sessions:
-                # Update configuration options of the already existing
-                # sessions.
-                for session in self.__sessions:
-                    session.session_lifetime = \
-                        self.__auth_config['session_lifetime']
-                    session.refresh_time = self.__auth_config['refresh_time']
-
-            LOG.info("Done.")
-        except ValueError as ex:
-            LOG.error("Couldn't reload server configuration file")
-            LOG.error(str(ex))
+    def configuration_reloaded_update_sessions(self):
+        LOG.info("Updating lifetime of existing sessions ...")
+        for session in self.__sessions:
+            session.session_lifetime = self._configuration.session_lifetime
+            session.refresh_time = self._configuration.refresh_time
 
     @property
-    def is_enabled(self):
-        return self.__auth_config.get('enabled')
-
-    @property
-    def worker_processes(self):
-        return self.__worker_processes
-
-    def get_realm(self):
-        return {
-            "realm": self.__auth_config.get('realm_name'),
-            "error": self.__auth_config.get('realm_error')
-        }
+    def is_enabled(self) -> bool:
+        return self._configuration.enabled
 
     @property
     def default_superuser_name(self) -> Optional[str]:
-        """ Get default superuser name. """
-        root = self.__auth_config['method_root'].split(":")
+        """Get default superuser name."""
+        root = self.__root_sha.split(':', 1)
 
-        # Previously the root file doesn't contain the user name. In this case
+        # Previously, the root file doesn't contain the user name. In this case
         # we will return with no user name.
         if len(root) <= 1:
             return None
@@ -355,13 +235,13 @@ class SessionManager:
         """
         self.__database_connection = connection
 
-    def __handle_validation(self, auth_string):
+    def __handle_validation(self, auth_string: str) -> dict:
         """
-        Validate an oncoming authorization request
-        against some authority controller.
+        Validate an oncoming authorization request against some authority
+        controller.
 
-        Returns False if no validation was done, or a validation object
-        if the user was successfully authenticated.
+        Returns `False` if no validation was done, or a validation object if
+        the user was successfully authenticated.
 
         This validation object contains two keys: username and groups.
         """
@@ -370,42 +250,40 @@ class SessionManager:
             or self.__try_auth_pam(auth_string) \
             or self.__try_auth_ldap(auth_string)
         if not validation:
-            return False
+            return {}
 
         # If a validation method is enabled and regex_groups is enabled too,
-        # we will extend the 'groups'.
-        extra_groups = self.__try_regex_groups(validation['username'])
+        # we will extend the "groups".
+        extra_groups = self.__try_regex_groups(validation["username"])
         if extra_groups:
-            already_groups = set(validation['groups'])
-            validation['groups'] = list(already_groups | extra_groups)
+            validation["groups"] = sorted(set(validation.get("groups", []))
+                                          | extra_groups)
 
-        LOG.debug('User validation details: %s', str(validation))
+        LOG.debug("User validation details: %s", str(validation))
         return validation
 
-    def __is_method_enabled(self, method):
+    def __is_method_enabled(self, method: str) -> bool:
         return method not in UNSUPPORTED_METHODS and \
-            'method_' + method in self.__auth_config and \
-            self.__auth_config['method_' + method].get('enabled')
+            getattr(self._configuration, f"method_{method}").enabled
 
-    def __try_auth_root(self, auth_string):
+    def __try_auth_root(self, auth_string: str) -> dict:
         """
         Try to authenticate the user against the root username:password's hash.
         """
         user_name = SessionManager.get_user_name(auth_string)
-        sha = hashlib.sha256(auth_string.encode('utf8')).hexdigest()
+        sha = hashlib.sha256(auth_string.encode("utf-8")).hexdigest()
 
-        if f"{user_name}:{sha}" == self.__auth_config['method_root']:
-            return {
-                'username': SessionManager.get_user_name(auth_string),
-                'groups': [],
-                'root': True
-            }
+        if self.__root_sha == f"{user_name}:{sha}":
+            return {"username": user_name,
+                    "groups": [],
+                    "root": True
+                    }
 
-        return False
+        return {}
 
-    def __try_auth_token(self, auth_string):
+    def __try_auth_token(self, auth_string: str) -> dict:
         if not self.__database_connection:
-            return None
+            return {}
 
         user_name, token = auth_string.split(':', 1)
 
@@ -420,74 +298,64 @@ class SessionManager:
                 .limit(1).one_or_none()
 
             if not auth_session:
-                return None
+                return {}
 
             return auth_session
         except Exception as e:
-            LOG.error("Couldn't check login in the database: ")
-            LOG.error(str(e))
+            LOG.error("Couldn't check login in the database: %s", str(e))
         finally:
             if transaction:
                 transaction.close()
 
-        return None
+        return {}
 
-    def __try_auth_dictionary(self, auth_string):
+    def __try_auth_dictionary(self, auth_string: str) -> dict:
         """
         Try to authenticate the user against the hardcoded credential list.
 
         Returns a validation object if successful, which contains the users'
         groups.
         """
-        method_config = self.__auth_config.get('method_dictionary')
-        if not method_config:
-            return False
-
-        valid = self.__is_method_enabled('dictionary') and \
-            auth_string in method_config.get('auths')
-        if not valid:
-            return False
+        if not self.__is_method_enabled("dictionary") or \
+                auth_string not in self._configuration \
+                .method_dictionary.auths:
+            return {}
 
         username = SessionManager.get_user_name(auth_string)
-        group_list = method_config['groups'][username] if \
-            'groups' in method_config and \
-            username in method_config['groups'] else []
+        return {"username": username,
+                "groups": self._configuration.method_dictionary
+                .groups.get(username, [])
+                }
 
-        return {
-            'username': username,
-            'groups': group_list
-        }
-
-    def __try_auth_pam(self, auth_string):
+    def __try_auth_pam(self, auth_string: str) -> dict:
         """
         Try to authenticate user based on the PAM configuration.
         """
-        if self.__is_method_enabled('pam'):
-            username, password = auth_string.split(':', 1)
-            if cc_pam.auth_user(self.__auth_config['method_pam'],
-                                username, password):
-                # PAM does not hold a group membership list we can reliably
-                # query.
-                return {'username': username}
+        if not self.__is_method_enabled("pam"):
+            return {}
 
-        return False
+        username, password = auth_string.split(':', 1)
+        if cc_pam.auth_user(self._configuration.method_pam,
+                            username, password):
+            # PAM does not hold a group membership list we can reliably query.
+            return {"username": username}
 
-    def __try_auth_ldap(self, auth_string):
+        return {}
+
+    def __try_auth_ldap(self, auth_string: str) -> dict:
         """
         Try to authenticate user to all the configured authorities.
         """
-        if self.__is_method_enabled('ldap'):
+        if self.__is_method_enabled("ldap"):
             username, password = auth_string.split(':', 1)
-
-            ldap_authorities = self.__auth_config['method_ldap'] \
-                .get('authorities')
-            for ldap_conf in ldap_authorities:
+            for ldap_conf in self._configuration.method_ldap.authorities:
                 if cc_ldap.auth_user(ldap_conf, username, password):
                     groups = cc_ldap.get_groups(ldap_conf, username, password)
                     self.__update_groups(username, groups)
-                    return {'username': username, 'groups': groups}
+                    return {"username": username,
+                            "groups": groups}
 
-        return False
+        return {}
 
     def __update_groups(self, user_name, groups):
         """
@@ -514,26 +382,19 @@ class SessionManager:
 
         return False
 
-    def __try_regex_groups(self, username):
+    def __try_regex_groups(self, username) -> Set[str]:
         """
-        Return a set of groups that the user belongs to, depending on whether
-        the username matches the regular expression of the group.
-
+        Returns a set of groups that the user belongs to, depending on whether
+        the username matches a regular expression of the group.
         """
-        if not self.__regex_groups_enabled:
-            return set()
-
-        matching_groups = set()
-        for group_name, regex_list in self.__group_regexes_compiled.items():
-            for r in regex_list:
-                if re.search(r, username):
-                    matching_groups.add(group_name)
-
-        return matching_groups
+        return {group
+                for group, regexes in self.__regex_groups.items()
+                for regex in regexes
+                if re.search(regex, username)}
 
     @staticmethod
     def get_user_name(auth_string):
-        return auth_string.split(':')[0]
+        return auth_string.split(':', 1)[0]
 
     def get_db_auth_session_tokens(self, user_name):
         """
@@ -560,9 +421,9 @@ class SessionManager:
 
         return None
 
-    def __is_root_user(self, user_name):
+    def __is_root_user(self, user_name: str) -> bool:
         """ Return True if the given user has system permissions. """
-        if self.__auth_config['method_root'].split(":")[0] == user_name:
+        if self.default_superuser_name == user_name:
             return True
 
         transaction = None
@@ -593,19 +454,19 @@ class SessionManager:
 
         return _Session(
             token, user_name, groups,
-            self.__auth_config['session_lifetime'],
-            self.__refresh_time, is_root, self.__database_connection,
-            last_access, can_expire)
+            self._configuration.session_lifetime,
+            self._configuration.refresh_time,
+            is_root, self.__database_connection, last_access, can_expire)
 
     def create_session(self, auth_string):
-        """ Creates a new session for the given auth-string. """
-        if not self.__auth_config['enabled']:
+        """Creates a new session for the given auth-string."""
+        if not self.is_enabled:
             return None
 
         # Perform cleanup of session memory, if neccessary.
         self.__logins_since_prune += 1
         if self.__logins_since_prune >= \
-                self.__auth_config['logins_until_cleanup']:
+                self._configuration.logins_until_cleanup:
             self.__cleanup_sessions()
 
         # Try authenticate user with personal access token.
@@ -622,7 +483,7 @@ class SessionManager:
             return False
 
         # Generate a new token and create a local session.
-        token = generate_session_token()
+        token = generate_random_token(SESSION_TOKEN_LENGTH)
         user_name = validation.get('username')
         groups = validation.get('groups', [])
         is_root = validation.get('root', False)
@@ -636,8 +497,7 @@ class SessionManager:
         if self.__database_connection:
             try:
                 transaction = self.__database_connection()
-                record = SessionRecord(token, user_name,
-                                       ';'.join(groups))
+                record = SessionRecord(token, user_name, ';'.join(groups))
                 transaction.add(record)
                 transaction.commit()
             except Exception as e:
@@ -649,56 +509,6 @@ class SessionManager:
                     transaction.close()
 
         return local_session
-
-    def get_max_run_count(self):
-        """
-        Returns the maximum storable run count. If the value is None it means
-        we can upload unlimited number of runs.
-        """
-        return self.__max_run_count
-
-    def get_analysis_statistics_dir(self):
-        """
-        Get directory where the compressed analysis statistics files should be
-        stored. If the value is None it means we do not want to store
-        analysis statistics information on the server.
-        """
-
-        return self.__store_config.get('analysis_statistics_dir')
-
-    def get_failure_zip_size(self):
-        """
-        Maximum size of the collected failed zips which can be store on the
-        server.
-        """
-        limit = self.__store_config.get('limit', {})
-        return limit.get('failure_zip_size')
-
-    def get_compilation_database_size(self):
-        """
-        Limit of the compilation database file size.
-        """
-        limit = self.__store_config.get('limit', {})
-        return limit.get('compilation_database_size')
-
-    def is_keepalive_enabled(self):
-        """
-        True if the keepalive functionality is explicitly enabled, otherwise it
-        will return False.
-        """
-        return self.__keepalive_config.get('enabled')
-
-    def get_keepalive_idle(self):
-        """ Get keepalive idle time. """
-        return self.__keepalive_config.get('idle')
-
-    def get_keepalive_interval(self):
-        """ Get keepalive interval time. """
-        return self.__keepalive_config.get('interval')
-
-    def get_keepalive_max_probe(self):
-        """ Get keepalive max probe count. """
-        return self.__keepalive_config.get('max_probe')
 
     def __get_local_session_from_db(self, token):
         """
