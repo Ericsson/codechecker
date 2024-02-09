@@ -1035,6 +1035,9 @@ def start_server(config_directory, package_data, port: int, config_sql_server,
     root_sha = __load_or_create_root_file(config_directory)
 
     try:
+        # FIXME: If the configuration is invalid when starting the server,
+        # capture this, and **fail** to start. Only support gracefulness on
+        # invalid values if we are reloading the configuration.
         configuration = server_configuration.load_configuration(
             pathlib.Path(config_directory))
     except (OSError, ValueError) as err:

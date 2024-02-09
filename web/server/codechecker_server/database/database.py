@@ -196,13 +196,13 @@ class SQLServer(metaclass=ABCMeta):
 
                 return True
 
-        except sqlalchemy.exc.SQLAlchemyError as alch_err:
+        except sqlalchemy.exc.SQLAlchemyError:
             LOG.error("Failed to create initial database schema")
             import traceback
             traceback.print_exc()
             return False
 
-        except Exception as ex:
+        except Exception:
             LOG.error("Failed to create initial database schema")
             import traceback
             traceback.print_exc()

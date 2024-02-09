@@ -96,10 +96,10 @@ def generate_random_token(bytes: int = 32) -> str:
     hexadecimal characters in the output.
     """
     prefix = str(os.getpid()).encode()
-    suffix= str(datetime.datetime.now()).encode()
+    suffix = str(datetime.datetime.now()).encode()
 
     hash_value = ''.join(
         [hashlib.sha256(prefix + os.urandom(bytes * 2) + suffix).hexdigest()
          for _ in range(0, -(bytes // -64))])
     idx = random.randrange(0, len(hash_value) - bytes + 1)
-    return hash_value[idx : (idx + bytes)]
+    return hash_value[idx:(idx + bytes)]

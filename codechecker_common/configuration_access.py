@@ -10,7 +10,7 @@ Handles the retrieval and access to a configuration structure loaded from
 a file.
 """
 from pathlib import Path, PurePosixPath
-from typing import cast, Any, Callable, Dict, List, Optional, Union
+from typing import cast, Any, Callable, Dict, List, Optional, TypeVar, Union
 
 from .logger import get_logger
 from .util import load_json
@@ -20,10 +20,328 @@ LOG = get_logger("system")
 
 _K_FILE_PATH = "__file_path"
 _K_CONFIGURATION = "__configuration"
-_K_OPTION_STORE = "__options"
+_K_OPTIONS = "__options"
+_K_SCHEMA = "__schema"
+
+_T_CONFIGURATION = TypeVar("_T_CONFIGURATION", bound="Configuration")
+_T_OPTION_BASE = TypeVar("_T_OPTION_BASE", bound="OptionBase")
+_T_SCHEMA = TypeVar("_T_SCHEMA", bound="Schema")
+
+OptionDict = Dict[str, _T_OPTION_BASE]
 
 
-class Option:
+class AccessError(Exception):
+    pass
+
+
+class BackingDataError(AccessError):
+    def __init__(self, option: _T_OPTION_BASE, cfg: _T_CONFIGURATION):
+        super().__init__(
+            f"'{option.basename}' ('{option.path}') not found in "
+            f"configuration file '{cfg.file_path}'")
+
+
+class BackingDataIndexError(AccessError, IndexError):
+    def __init__(self, option: _T_OPTION_BASE, cfg: _T_CONFIGURATION,
+                 index: int, count: int):
+        super().__init__(
+            f"list index {index} out of range for '{option.basename}' "
+            f"('{option.path}'), only {count} elements exist")
+
+
+def _get_children_options(parent_path: str, options: OptionDict) \
+        -> OptionDict:
+    if not parent_path.endswith('/'):
+        parent_path = parent_path + '/'
+    keys = set(map(lambda p: p[len(parent_path):].split('/')[0],
+                   filter(lambda p: p.startswith(parent_path), options)))
+    opts = [options[parent_path + k] for k in keys if k != '']
+    children = {o.basename: o for o in opts}
+    return children
+
+
+def _step_into_child(option, cfg: _T_CONFIGURATION, name: str):
+    try:
+        child_option = option.get_children()[name]
+    except KeyError:
+        raise AttributeError(
+            f"'{option.path}' option has no attribute '{name}'")
+
+    try:
+        access = getattr(child_option, "_access")
+        return access
+    except AttributeError:
+        raise AttributeError(f"'{child_option.path}' option is not accessible")
+
+
+class OptionBase:
+    def __init__(self,
+                 schema: _T_SCHEMA,
+                 name: Optional[str],
+                 path: str,
+                 description: Optional[str] = None):
+        """
+        Instantiates a new Option (base class) which designates, under a
+        user-facing 'name', an element accessible in a configuration
+        dictionary, as specified by 'path'. '/' is the root of the
+        configuration dictionary, and each "directory" is a named key in a
+        sub-dictionary.
+
+        The Option class hierarchy implement accessor classes, which deal with
+        a type-safe and semantically correct reading of the specified values,
+        but do not own or store the actual value of the option. An underlying
+        storage object (almost certainly a Dict) is always required during
+        actual value access.
+
+        For example, "/max_run_count" denotes the child of the top level
+        dict, whereas "/keepalive/enabled" is a child of a sub-tree.
+        """
+        self._schema = schema
+        self._name = name
+        self._description = description
+        self._path = path
+
+    @property
+    def name(self) -> str:
+        return self._name if self._name is not None else f"<{self.path}>"
+
+    @property
+    def description(self) -> Optional[str]:
+        return self._description
+
+    @property
+    def path(self) -> str:
+        return self._path
+
+    @property
+    def basename(self) -> str:
+        return PurePosixPath(self._path).name
+
+    def get_children(self) -> OptionDict:
+        """
+        Returns the options that are registered as children of the current
+        Option in the schema.
+        """
+        raise NotImplementedError(f"{str(type(self))} can not have children")
+
+    class _Access:
+        """
+        The abstract base class to represent an ongoing access into a loaded
+        Configuration, based on an established Schema.
+
+        When using the member . (dot) operator on a Configuration, instances
+        of this _Access class are created, allowing the client code to
+        continue descending into potential inner attributes.
+
+        This base class does nothing, apart from storing references to the
+        core objects it was originally instantiated with.
+        """
+        def __init__(self, option: _T_OPTION_BASE, cfg: _T_CONFIGURATION,
+                     data_slice):
+            self._option = option
+            self._configuration = cfg
+            self._data_slice = data_slice
+
+        def _get(self) -> Any:
+            raise NotImplementedError(
+                f"{str(type(self._option))} can not be get!")
+
+        def _set(self, new_value: Any) -> Any:
+            raise NotImplementedError(
+                f"{str(type(self._option))} can not be set!")
+
+    def _access(self, cfg: _T_CONFIGURATION, data_slice) -> Any:
+        # pylint: disable=unused-argument
+        raise NotImplementedError(f"{str(type(self))} can not be accessed")
+
+
+class OptionDirectory(OptionBase):
+    """
+    Represents a collection group of options, corresponding to the "directory"
+    concept in filesystems. A directory may only contain sub-options and
+    metadata, and has no value unto itself.
+    """
+    def __init__(self,
+                 schema: _T_SCHEMA,
+                 name: Optional[str],
+                 path: str,
+                 description: Optional[str] = None):
+        super().__init__(schema=schema, name=name, path=path,
+                         description=description)
+
+    def add_option(self, name: Optional[str], path: str, *args, **kwargs):
+        """
+        Adds an option with the given name and sub-path, relative to the
+        current directory. See Schema.add_option() for details.
+        """
+        if not path.startswith("./"):
+            raise ValueError("path must be relative to OptionDirectory")
+
+        return self._schema.add_option(name=name,
+                                       path=path,
+                                       parent=self,
+                                       *args, **kwargs)
+
+    def get_children(self) -> OptionDict:
+        return _get_children_options(self.path, self._schema._options)
+
+    class _Access(OptionBase._Access):
+        """
+        Allows accessing, as attributes, the first-level children of
+        "directories" (option groups).
+        """
+        def __init__(self, option: _T_OPTION_BASE, cfg: _T_CONFIGURATION,
+                     data_slice: Any):
+            if option.basename != '':
+                try:
+                    data_slice = data_slice[option.basename]
+                except KeyError:
+                    raise BackingDataError(option, cfg)
+
+            super().__init__(option=option, cfg=cfg, data_slice=data_slice)
+
+        def __dir__(self):
+            """
+            Allows dir(...) to list the available children options' names.
+            """
+            return sorted(set(
+                cast(List[Any], dir(super())) +
+                cast(List[Any], list(self.__dict__.keys())) +
+                cast(List[Any], list(self._option.get_children().keys()))
+            ))
+
+        def __getattr__(self, name: str):
+            """
+            Continues the accessing descent of the Configuration using the
+            object member access . (dot) operator.
+            """
+            access_ctor = _step_into_child(self._option,
+                                           self._configuration,
+                                           name)
+            return access_ctor(self._configuration, self._data_slice)._get()
+
+        def _get(self):
+            """An access into a directory allows continuing to subelements."""
+            return self
+
+    def _access(self, cfg: _T_CONFIGURATION, data_slice) -> Any:
+        return OptionDirectory._Access(self, cfg, data_slice)
+
+
+class OptionDirectoryList(OptionDirectory):
+    """
+    Represents a special kind of OptionDirectory that acts as a "template" for
+    inner Options. In a group, multiple copies of the same inner structure may
+    exist, and each instance is accessible in practice by specifying a numeric
+    index of the instance.
+
+    Registered under the abstract path
+    "/authentication/method_ldap/authorities[]", this type takes care of
+    requiring an index to access the children instances of this directory.
+    """
+    def __init__(self,
+                 schema: _T_SCHEMA,
+                 name: Optional[str],
+                 path: str,
+                 description: Optional[str] = None):
+        super().__init__(schema=schema, name=name, path=path,
+                         description=description)
+
+    @property
+    def basename(self) -> str:
+        return PurePosixPath(self._path).name.replace("[]", '', 1)
+
+    class _Access(OptionDirectory._Access):
+        """
+        Allows accessing, as if members of a list, the first-level children of
+        "directories" (option groups).
+        """
+        def __init__(self, option: _T_OPTION_BASE, cfg: _T_CONFIGURATION,
+                     data_slice):
+            super().__init__(option=option, cfg=cfg, data_slice=data_slice)
+
+        def __dir__(self):
+            return sorted(set(
+                cast(List[Any], dir(OptionBase._Access)) +
+                cast(List[Any], list(self.__dict__.keys()))
+            ))
+
+        def __getattr__(self, name: str):
+            raise NotImplementedError("Accessing an array of schema elements "
+                                      "must use the subscript operator []")
+
+        def __len__(self) -> int:
+            """Returns the number of child elements in the option list."""
+            return len(self._data_slice)
+
+        def __getitem__(self, index: int):
+            """
+            Continues the accessing descent of the Configuration using the
+            object indexing [] operator.
+            """
+            try:
+                # Wrap the reference to the da of the single element into a
+                # pseudo-directory structure that contains the data as if
+                # it was not the child of a list at all.
+                elem_slice = {self._option.basename: self._data_slice[index]}
+            except IndexError:
+                raise BackingDataIndexError(self._option, self._configuration,
+                                            index, len(self._data_slice))
+
+            # The indexed element of a directory list is a single directory.
+            return OptionDirectory._Access(self._option,
+                                           self._configuration,
+                                           elem_slice)._get()
+
+        def _get(self):
+            """An access into a directory allows continuing to subelements."""
+            return self
+
+    def _access(self, cfg: _T_CONFIGURATION, data_slice) -> Any:
+        return OptionDirectoryList._Access(self, cfg, data_slice)
+
+
+class ScalarOption(OptionBase):
+    """
+    Scalar options encapsulate the access to leaf nodes of the configuration
+    file, and return or assign their values in a raw form directly to the
+    data backing memory.
+
+    Note that a ScalarOption can still be a list or dict, but using such means
+    that client code accesses the list as a single entity, without the
+    configuration access layer associating semantics with the entry.
+    """
+    def __init__(self,
+                 schema: _T_SCHEMA,
+                 name: Optional[str],
+                 path: str,
+                 description: Optional[str] = None):
+        super().__init__(schema=schema, name=name, path=path,
+                         description=description)
+
+    class _Access(OptionBase._Access):
+        """
+        Allows retrieving and setting the value of a leaf configuration option.
+        """
+        def __init__(self, option: _T_OPTION_BASE, cfg: _T_CONFIGURATION,
+                     data_slice):
+            if not isinstance(data_slice, dict):
+                raise TypeError("data captured in an access to a scalar "
+                                "must offer reference semantics!")
+
+            super().__init__(option=option, cfg=cfg, data_slice=data_slice)
+
+        def _get(self):
+            try:
+                return self._data_slice[self._option.basename]
+            except KeyError:
+                raise BackingDataError(self._option, self._configuration)
+
+    def _access(self, cfg: _T_CONFIGURATION, data_slice) -> Any:
+        return ScalarOption._Access(self, cfg, data_slice)
+
+
+class _OLD_Option:
     """
     Encapsulates a configuration option which can be accessed by client
     code, optionally assigned, or even explicitly reloaded from the
@@ -33,9 +351,6 @@ class Option:
     class CheckFailedError(Exception):
         def __init__(self, name: str):
             super().__init__("%s:@check() failed!" % name)
-
-    class AccessError(Exception):
-        pass
 
     class ReadOnlyError(AccessError):
         def __init__(self, name: str):
@@ -65,18 +380,9 @@ class Option:
                  updatable: bool = False,
                  description: Optional[str] = None):
         """
-        Instantiates a new Option which designates, under a user-facing
-        'name', an element accessible in a configuration dictionary, as
-        specified by 'path'. The path to the variable is specified akin to
-        an XPath expression. '/' is the root of the configuration
-        dictionary, and each "directory" is a named key in a
-        sub-dictionary. If the accessed element is a list, numeric indices
+        If the accessed element is a list, numeric indices
         must be used to address individual elements, after which dictionary
         dereferencing can continue.
-
-        For example, "/max_run_count" denotes the child of the top level
-        dict, whereas "/keepalive/enabled" is a child of a sub-tree.
-
 
         If the accessing fails to get the elements of the configuration
         dictionary and a 'KeyError' or 'IndexError' is hit, the 'default'
@@ -110,26 +416,11 @@ class Option:
         Writing to the source of the configuration in a persistent fashion
         is **NOT SUPPORTED**!
         """
-        self._name = name
-        self._description = description
-        self._path = PurePosixPath(path)
         self._allow_set = settable
         self._allow_update = updatable
         self._default = default
         self._check = check
         self._check_fail_msg = check_fail_msg
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @property
-    def description(self) -> Optional[str]:
-        return self._description
-
-    @property
-    def path(self) -> str:
-        return str(self._path)
 
     @property
     def has_default(self) -> bool:
@@ -150,59 +441,6 @@ class Option:
     @property
     def is_dynamically_updatable(self) -> bool:
         return self._allow_update
-
-    def _descend_to_closest_parent(self, configuration: Dict) \
-            -> Union[Dict, List]:
-        """
-        Descends the 'configuration' data structure based on the path
-        leading to the Option, and returns the innermost parent data
-        structure that contains the requested key.
-
-        Examples:
-            "/max_run_count" -> "/" (dict)
-            "/keepalive/enabled" -> "/keepalive" (dict)
-            "/authentication/method_pam/users/2" ->
-                "/authentication/method_pam/users" (list)
-        """
-        tree: Union[Dict, List] = configuration
-        for key in self._path.parts[1:-1]:
-            if type(tree) is dict:
-                tree = cast(Dict, tree)[key]
-            elif type(tree) is list:
-                try:
-                    key_as_int = int(key)
-                    tree = cast(List, tree)[key_as_int]
-                except ValueError:
-                    raise ValueError("Attempted to index a list "
-                                     "with a non-integer!")
-            else:
-                raise TypeError("Attempted to member-access a "
-                                "non-subscriptable configuration entry.")
-        return tree
-
-    @classmethod
-    def __get_leaf(cls, parent: Union[Dict, List], name: str) -> Any:
-        """
-        Returns the leaf node, as identified by 'name', contained within
-        the 'parent'.
-
-        This is an internal method which does not validate whether the
-        retrieved value is appropriate.
-        """
-        if type(parent) is dict:
-            return cast(Dict, parent)[name]
-        elif type(parent) is list:
-            try:
-                idx = int(name)
-                try:
-                    return cast(List, parent)[idx]
-                except IndexError:
-                    raise KeyError(str(idx))
-            except ValueError:
-                raise
-        else:
-            raise TypeError("Non-subscriptable parent object type: %s"
-                            % str(type(parent)))
 
     @classmethod
     def __set_leaf(cls, parent: Union[Dict, List], name: str, value: Any):
@@ -309,12 +547,93 @@ class Option:
         self.__set_leaf(parent, self._path.name, new_value)
 
 
+class Schema:
+    """
+    A schema is a collection of Option objects, which allow checked, semantic
+    access to a configuration data structure. This object is a set of proxies,
+    essentially a glorified sack of pointer to data members. The actual
+    configuration values are NOT stored in this object, see Configuration.
+    """
+    def __init__(self):
+        # This code is frightening at first, but, unfortunately, the usual
+        # 'self.member' syntax must be side-stepped so that __getattr__ and
+        # __setattr__ can be implemented in a user-friendly way.
+        object.__setattr__(self, _K_OPTIONS, {
+            '/': OptionDirectory(
+                schema=self,
+                name=None,
+                path='/',
+                description="<Root of Schema>")
+        })
+
+    @property
+    def _options(self) -> Dict[str, _T_OPTION_BASE]:
+        return self.__dict__[_K_OPTIONS]
+
+    @property
+    def Root(self) -> OptionDirectory:
+        return self.__dict__[_K_OPTIONS]['/']
+
+    def add_option(self, name: Optional[str], path: str,
+                   parent: Optional[OptionDirectory] = None,
+                   *args, **kwargs):
+        """
+        Registers an Option in the current Schema.
+
+        The apparent path of the to-be-created Option determines its type:
+          - paths ending in "[]/" denote an MultiOptionGroup, which is a
+            numbered list of OptionDirectories, containing multiple instances
+            of Options
+          - paths ending in '/' denote an OptionDirectory
+          - everything else denotes a ScalarOption, which is a leaf value
+
+        If path begins with "./", the parent parameter MUST be set, and
+        path is understood relative to the parent.
+
+        Additional positional and keyword arguments are forwarded to the
+        Option constructors.
+        """
+        if path == '/':
+            raise ValueError("The root of the Option structure is hard-coded "
+                             "and can not be manually added as an option")
+        if not path.startswith(('/', "./")):
+            raise ValueError("Path must be a proper relative or absolute "
+                             "POSIX-y path")
+        if path.endswith("[]"):
+            raise ValueError("Paths designating an indexable sequence must "
+                             "use the directory syntax, and end with \"[]/\"")
+
+        clazz = ScalarOption
+        if path.endswith('/'):
+            clazz = OptionDirectory
+            path = path.rstrip('/')
+            if path.endswith("[]"):
+                clazz = OptionDirectoryList
+
+        if path.startswith("./"):
+            if parent is None:
+                raise ValueError("parent must be specified for relative "
+                                 "paths")
+            path = parent.path.rstrip('/') + '/' + path.replace("./", '', 1)
+
+        for parent_path in map(str,
+                               reversed(PurePosixPath(path).parents)):
+            if parent_path not in self.__dict__[_K_OPTIONS]:
+                raise KeyError(f"Parent OptionDirectory-like '{parent_path}' "
+                               "is not registered")
+
+        opt = clazz(self, name, path, *args, **kwargs)
+        self.__dict__[_K_OPTIONS][opt.path] = opt
+        return opt
+
+
 class Configuration:
     """
-    Allows checked access to a configuration data structure.
+    Configuration contains the memory-backed data structure loaded from a
+    configuration file, and allows access to it through an established
+    Schema.
     """
-
-    def __init__(self, configuration_file: Path):
+    def __init__(self, schema: Schema, configuration_file: Path):
         """
         Initialise a new Configuration collection.
 
@@ -331,53 +650,41 @@ class Configuration:
                              % str(configuration_file))
         LOG.debug("Loaded configuration file '%s'.", configuration_file)
 
-        # This code is frightening at first, but, unfortunately, the usual
-        # 'self.member' syntax must be side-stepped so that __getattr__ and
-        # __setattr__ can be implemented in a user-friendly way.
+        object.__setattr__(self, _K_SCHEMA, schema)
         object.__setattr__(self, _K_FILE_PATH, configuration_file)
         object.__setattr__(self, _K_CONFIGURATION, config_dict)
-        object.__setattr__(self, _K_OPTION_STORE, dict())
+
+    def __dir__(self):
+        """
+        Allows dir(...) to list the top-level children of the Configuration.
+        """
+        schema = self.__dict__[_K_SCHEMA]
+        return sorted(set(
+            cast(List[Any], dir(super())) +
+            cast(List[Any], list(self.__dict__.keys())) +
+            cast(List[Any], list(schema.Root.get_children().keys()))
+        ))
 
     @property
     def file_path(self) -> Path:
         """Returns the file path from which the Configuration was loaded."""
         return self.__dict__[_K_FILE_PATH]
 
-    def add_option(self, name: str, *args, **kwargs):
+    def __getattr__(self, name: str) -> _T_OPTION_BASE:
         """
-        Helper method to ensure an option with the given 'name' is
-        appropriately added to the Configuration instance.
-        Additional arguments are forwarded to Options's constructor.
+        Starts the accessing descent of the Configuration using the object
+        member access . (dot) operator.
         """
-        opt = Option(name, *args, **kwargs)
-        self.__dict__[_K_OPTION_STORE][name] = opt
-        return opt
-
-    def __getattr__(self, name: str):
-        """
-        Helper method that makes configuration options available with the
-        object member access . (dot) syntax.
-        """
-        options = self.__dict__[_K_OPTION_STORE]
-        option: Optional[Option] = None
-        try:
-            option = options[name]
-        except KeyError:
-            # If the options dict did not contain the requested key, consider
-            # it as if it did not exist at all.
-            raise AttributeError(name)
-
-        # The inability to actually read the value of the option is a different
-        # type of error.
-        configuration = self.__dict__[_K_CONFIGURATION]
-        return cast(Option, option)(configuration)
+        schema = self.__dict__[_K_SCHEMA]
+        data = self.__dict__[_K_CONFIGURATION]
+        return getattr(schema.Root._access(self, data), name)
 
     def __setattr__(self, name: str, value):
         """
         Helper method that makes configuration options settable through
         assigning a member accessed via the . (dot) operator.
         """
-        options = self.__dict__[_K_OPTION_STORE]
+        options = self.__dict__[_K_OPTIONS]
         option: Optional[Option] = None
         try:
             option = options[name]
@@ -414,7 +721,7 @@ class Configuration:
                              "The log output contains more information."
                              % str(config_file))
 
-        for opt in self.__dict__[_K_OPTION_STORE].values():
+        for opt in self.__dict__[_K_OPTIONS].values():
             # Do not let anything to happen with the current configuration
             # if there is a "schema mismatch" between what is in memory and
             # what keys exist in the file. The user MUST appropriately restart
