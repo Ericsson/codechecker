@@ -19,6 +19,10 @@
     <img src="https://readthedocs.org/projects/codechecker/badge/?version=latest"
          alt="Documentation Status">
   </a>
+  <a href="https://securityscorecards.dev/viewer/?uri=github.com/Ericsson/codechecker">
+    <img src="https://api.securityscorecards.dev/projects/github.com/Ericsson/codechecker/badge"
+         alt="OpenSSF Scorecard Score">
+  </a>
 </p>
 
 **CodeChecker** is a static analysis infrastructure built on the [LLVM/Clang
