@@ -5,3 +5,7 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # -------------------------------------------------------------------------
+"""
+Suppoting methods for the migration from raw BLOBs that actually contain ZLib
+data to the ZLibCompressed* decorated types.
+"""
