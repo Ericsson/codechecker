@@ -76,7 +76,7 @@ class ZLibCompressedBlob(TypeDecorator):
         if '@' in self.kind:
             raise ValueError("'kind' must not contain '@', as this character "
                              "is reserved for the tagging format")
-        return ("zlib[%d]:%s@" % (self.compression_level, self.kind)).encode()
+        return ("zlib[%s,%d]@" % (self.kind, self.compression_level)).encode()
 
     def _parse_tag(self, buffer: bytes) -> Tuple[int, str, int]:
         """
@@ -214,7 +214,7 @@ class ZLibCompressedJSON(ZLibCompressedSerialisable):
         return json.loads(s)
 
     def __init__(self, compression_level=zlib.Z_BEST_COMPRESSION):
-        super().__init__("json",
-                         ZLibCompressedJSON._json_to_str,
-                         ZLibCompressedJSON._str_to_json,
-                         compression_level)
+        super().__init__(kind="json",
+                         serialise_fn=ZLibCompressedJSON._json_to_str,
+                         deserialise_fn=ZLibCompressedJSON._str_to_json,
+                         compression_level=compression_level)
