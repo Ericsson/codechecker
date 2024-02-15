@@ -59,7 +59,6 @@ class DatabaseZLibCompressedTypesTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             tt.process_result_value(enc, self.dialect)
 
-
     def test_zlib_json(self):
         t = zlib.ZLibCompressedJSON()
 

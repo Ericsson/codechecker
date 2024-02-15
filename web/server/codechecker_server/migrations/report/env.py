@@ -5,12 +5,13 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # -------------------------------------------------------------------------
-
 import os
 import sys
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
+
+from codechecker_server.migrations.logging import setup_logger
 
 # This is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -24,11 +25,9 @@ from codechecker_server.database.run_db_model import Base
 
 target_metadata = Base.metadata
 
+# Other values from the config, defined by the needs of env.py, can be
+# acquired: my_important_option = config.get_main_option("my_important_option")
 
-# Other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
 
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
@@ -72,6 +71,7 @@ def run_migrations_online():
             context.run_migrations()
 
 
+setup_logger("report")
 if context.is_offline_mode():
     run_migrations_offline()
 else:
