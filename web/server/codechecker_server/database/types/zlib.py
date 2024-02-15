@@ -11,13 +11,13 @@ load and store textual data with zlib-compression.
 """
 import json
 import re
-from typing import Any, Callable, Optional, Tuple
+from typing import Any, Callable, Optional, Tuple, cast
 import zlib
 
 from sqlalchemy.types import LargeBinary, TypeDecorator
 
 
-TagRegex = re.compile(r"^(.+)\[(.+),(+)\[(.+),(-?\d+)\]$")
+TagRegex = re.compile(r"^(.+)\[(.+),(-?\d+)\]$")
 
 
 class ZLibCompressedBlob(TypeDecorator):
@@ -58,8 +58,8 @@ class ZLibCompressedBlob(TypeDecorator):
         the value of the underyling database-side implementation type.
         That is, performs the conversion Python -> DB.
         """
-        if value is None:
-            return None
+        return cast(LargeBinary, self._compress(value)) \
+            if value is not None else None
 
     def process_result_value(self, value: Optional[impl], dialect: str) \
             -> Optional[client_type]:
@@ -69,10 +69,15 @@ class ZLibCompressedBlob(TypeDecorator):
         code.
         That is, performs the conversion DB -> Python.
         """
-        if value is None:
-            return None
+        return self._decompress(value) if value is not None else None
 
     def _make_tag(self) -> bytes:
+        """
+        Creates the tag prefix that is added to the user-defined data.
+        This is primarily done to explicitly indicate for server operators
+        that the otherwise seemingly arbitrary information in the database
+        should actually be understood as a ZLib-compressed payload.
+        """
         if '@' in self.kind:
             raise ValueError("'kind' must not contain '@', as this character "
                              "is reserved for the tagging format")
@@ -103,25 +108,24 @@ class ZLibCompressedBlob(TypeDecorator):
 
         return (split_index + 1, kind, level)
 
-    def _encode(self, value: bytes) -> bytes:
+    def _compress(self, value: bytes) -> bytes:
         """Formats the input payload ``value`` to a tagged representation."""
         compressed = zlib.compress(value, self.compression_level)
         return self._make_tag() + compressed
 
-    def _decode(self, buffer: bytes) -> bytes:
+    def _decompress(self, buffer: bytes) -> bytes:
         """
         Uncompresses the tagged ZLib-compressed ``buffer`` if it is the
         ``kind`` that is expected by the current instance.
         """
         payload_start, kind, _ = self._parse_tag(buffer)
-
         if kind != self.kind:
             raise ValueError("ZLib-compressed value of kind '%s' decoded "
                              "when expecting kind '%s' instead",
                              kind, self.kind)
 
         payload = buffer[payload_start:]
-        return payload
+        return zlib.decompress(payload)
 
 
 class ZLibCompressedString(ZLibCompressedBlob):
@@ -133,7 +137,7 @@ class ZLibCompressedString(ZLibCompressedBlob):
 
     def __init__(self, compression_level=zlib.Z_BEST_COMPRESSION,
                  kind="text"):
-        super().__init__(compression_level, kind)
+        super().__init__(compression_level=compression_level, kind=kind)
 
     def process_bind_param(self, value: Optional[client_type], dialect: str) \
             -> Optional[impl]:
@@ -145,9 +149,6 @@ class ZLibCompressedString(ZLibCompressedBlob):
 
     def process_result_value(self, value: Optional[impl], dialect: str) \
             -> Optional[client_type]:
-        if value is None:
-            return None
-
         blob = super().process_result_value(value, dialect)
         if blob is None:
             return None
@@ -165,26 +166,22 @@ class ZLibCompressedSerialisable(ZLibCompressedString):
     client_type = Any
 
     def __init__(self, kind: str,
-                 serialise_fn: Callable[[Optional[Any]], Optional[str]],
-                 deserialise_fn: Callable[[Optional[str]], Optional[Any]],
+                 serialise_fn: Callable[[Optional[client_type]],
+                                        Optional[str]],
+                 deserialise_fn: Callable[[Optional[str]],
+                                          Optional[client_type]],
                  compression_level=zlib.Z_BEST_COMPRESSION):
-        super().__init__(compression_level, kind)
+        super().__init__(compression_level=compression_level, kind=kind)
         self.serialise = serialise_fn
         self.deserialise = deserialise_fn
 
     def process_bind_param(self, value: Optional[client_type], dialect: str) \
             -> Optional[impl]:
-        if value is None:
-            return None
-
         serialised = self.serialise(value)
         return super().process_bind_param(serialised, dialect)
 
     def process_result_value(self, value: Optional[impl], dialect: str) \
             -> Optional[client_type]:
-        if value is None:
-            return None
-
         serialised = super().process_result_value(value, dialect)
         return self.deserialise(serialised)
 
@@ -208,10 +205,7 @@ class ZLibCompressedJSON(ZLibCompressedSerialisable):
 
     @staticmethod
     def _str_to_json(s: Optional[str]) -> Optional[Any]:
-        if s is None:
-            return None
-
-        return json.loads(s)
+        return json.loads(s) if s is not None else None
 
     def __init__(self, compression_level=zlib.Z_BEST_COMPRESSION):
         super().__init__(kind="json",
