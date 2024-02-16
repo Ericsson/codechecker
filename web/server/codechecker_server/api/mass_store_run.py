@@ -602,13 +602,10 @@ class MassStoreRun:
         """ Store analysis info for the given run history. """
         for src_dir_path, mip in self.__mips.items():
             for analyzer_command in mip.check_commands:
-                cmd = zlib.compress(
-                    analyzer_command.encode("utf-8"),
-                    zlib.Z_BEST_COMPRESSION)
-
                 analysis_info_rows = session \
                     .query(AnalysisInfo) \
-                    .filter(AnalysisInfo.analyzer_command == cmd) \
+                    .filter(AnalysisInfo.analyzer_command ==
+                            analyzer_command) \
                     .all()
 
                 if analysis_info_rows:
@@ -618,7 +615,9 @@ class MassStoreRun:
                     # database. In this case we will select the first one.
                     analysis_info = analysis_info_rows[0]
                 else:
-                    analysis_info = AnalysisInfo(analyzer_command=cmd)
+                    analysis_info = AnalysisInfo(
+                        analyzer_command=analyzer_command)
+
                     session.add(analysis_info)
 
                 run_history.analysis_info.append(analysis_info)

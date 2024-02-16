@@ -1538,11 +1538,9 @@ class ThriftRequestHandler:
                         .limit(limit).offset(offset)
 
                 for cmd in analysis_info_query:
-                    command = \
-                        zlib.decompress(cmd.analyzer_command).decode('utf-8')
-
                     res.append(ttypes.AnalysisInfo(
-                        analyzerCommand=html.escape(command)))
+                        analyzerCommand=html.escape(cmd.analyzer_command)
+                    ))
 
         return res
 

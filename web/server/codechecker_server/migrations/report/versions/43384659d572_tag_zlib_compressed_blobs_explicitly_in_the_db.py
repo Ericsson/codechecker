@@ -23,6 +23,7 @@ from sqlalchemy.ext.automap import automap_base
 from codechecker_common.util import progress
 
 from codechecker_server.database.types import zlib as db_zlib
+from codechecker_server.migrations.type_support import zlib as migrate_zlib
 
 
 def _for_each_with_ids(LOG,
@@ -76,6 +77,22 @@ def upgrade():
         _for_each_with_ids(LOG, "upgrade", "upgrading", "Upgrading",
                            db, table_name, table_cls, id_field, process_one)
 
+    def upgrade_analysis_info():
+        AnalysisInfo = Base.classes.analysis_info
+
+        def _upgrade(_, analysis_info):
+            if analysis_info.analyzer_command is None:
+                return
+
+            zlib_tagged = migrate_zlib.upgrade_zlib_raw_to_tagged(
+                analysis_info.analyzer_command, ZLibStr)
+            analysis_info.analyzer_command = zlib_tagged
+            db.flush()
+
+        _with_ids("analysis_info", AnalysisInfo, AnalysisInfo.id, _upgrade)
+
+    upgrade_analysis_info()
+
 
 def downgrade():
     # Downgrade columns to use raw BLOBs instead of the typed and tagged
@@ -92,3 +109,20 @@ def downgrade():
                   process_one: Callable[[int, Any], None]):
         _for_each_with_ids(LOG, "downgrade", "downgrading", "Downgrading",
                            db, table_name, table_cls, id_field, process_one)
+
+    def downgrade_analysis_info():
+        AnalysisInfo = Base.classes.analysis_info
+
+        def _downgrade_one(_, analysis_info):
+            if analysis_info.analyzer_command is None:
+                return
+
+            zlib_raw = migrate_zlib.downgrade_zlib_tagged_to_raw(
+                analysis_info.analyzer_command)
+            analysis_info.analyzer_command = zlib_raw
+            db.flush()
+
+        _with_ids("analysis_info", AnalysisInfo, AnalysisInfo.id,
+                  _downgrade_one)
+
+    downgrade_analysis_info()
