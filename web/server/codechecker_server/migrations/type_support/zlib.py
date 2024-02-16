@@ -24,7 +24,7 @@ def upgrade_zlib_raw_to_tagged(
 ) -> bytes:
     """
     Recompresses the given raw ZLib-compressed ``value`` by tagging it with the
-    ``kind`` appropriate for the given ``zlib_cls`` ``ZLibCompressed`` type
+    ``kind`` appropriate for the given ``zlib_type`` ``ZLibCompressed`` type
     decorator.
 
     This method is costly as it searches for the exact compression level that
@@ -52,7 +52,7 @@ def upgrade_zlib_raw_to_tagged(
             return zlib_type._encode(compressed)
     else:
         return zlib_type._encode(zlib.compress(buffer,
-                                              zlib.Z_BEST_COMPRESSION))
+                                               zlib.Z_BEST_COMPRESSION))
 
 
 def downgrade_zlib_tagged_to_raw(value: bytes) -> bytes:
