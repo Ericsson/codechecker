@@ -31,8 +31,8 @@ class MigrationFormatter(logging.Formatter):
 def setup_logger(schema: str):
     """
     Set up a logging system that should be used during schema migration.
-    These outputs are not affected by the environment that executes a migration,
-    e.g., by the running CodeChecker server!
+    These outputs are not affected by the environment that executes a
+    migration, e.g., by the running CodeChecker server!
 
     In migration scripts, use the built-in logging facilities instead of
     CodeChecker's wrapper, and ensure that the name of the logger created

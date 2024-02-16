@@ -197,10 +197,13 @@ class SQLServer(metaclass=ABCMeta):
                 return True
 
         except sqlalchemy.exc.SQLAlchemyError as alch_err:
-            LOG.error(str(alch_err))
+            import traceback
+            traceback.print_exc()
             return False
 
         except Exception as ex:
+            import traceback
+            traceback.print_exc()
             LOG.error("Failed to create initial database schema")
             LOG.error(ex)
             return False
@@ -328,11 +331,15 @@ class SQLServer(metaclass=ABCMeta):
                 return DBStatus.OK
 
         except sqlalchemy.exc.SQLAlchemyError as alch_err:
+            import traceback
+            traceback.print_exc()
             LOG.error(str(alch_err))
             return DBStatus.SCHEMA_UPGRADE_FAILED
 
         except CommandError as cerr:
-            LOG.debug(str(cerr))
+            import traceback
+            traceback.print_exc()
+            LOG.error(str(cerr))
             return DBStatus.SCHEMA_UPGRADE_FAILED
 
     @abstractmethod

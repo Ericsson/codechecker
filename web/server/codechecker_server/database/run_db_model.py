@@ -18,6 +18,9 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import true, false
 
+from .types import zlib
+
+
 CC_META = MetaData(naming_convention={
     "ix": 'ix_%(column_0_label)s',
     "uq": "uq_%(table_name)s_%(column_0_name)s",
@@ -34,9 +37,9 @@ class AnalysisInfo(Base):
     __tablename__ = 'analysis_info'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    analyzer_command = Column(Binary)
+    analyzer_command = Column(zlib.ZLibCompressedString)
 
-    def __init__(self, analyzer_command):
+    def __init__(self, analyzer_command: str):
         self.analyzer_command = analyzer_command
 
 

@@ -48,6 +48,7 @@ class ZLibCompressedBlob(TypeDecorator):
         "report-metadata"), but only indicative of the underlying
         "file format" that is compressed (e.g., "string" or "json").
         """
+        super().__init__()
         self.compression_level = compression_level
         self.kind = kind
 
@@ -58,7 +59,7 @@ class ZLibCompressedBlob(TypeDecorator):
         the value of the underyling database-side implementation type.
         That is, performs the conversion Python -> DB.
         """
-        return cast(LargeBinary, self._compress(value)) \
+        return cast(LargeBinary, self._encode(self._compress(value))) \
             if value is not None else None
 
     def process_result_value(self, value: Optional[impl], dialect: str) \
@@ -69,7 +70,8 @@ class ZLibCompressedBlob(TypeDecorator):
         code.
         That is, performs the conversion DB -> Python.
         """
-        return self._decompress(value) if value is not None else None
+        return self._decompress(self._decode(value)) \
+            if value is not None else None
 
     def _make_tag(self) -> bytes:
         """
@@ -109,14 +111,27 @@ class ZLibCompressedBlob(TypeDecorator):
         return (split_index + 1, kind, level)
 
     def _compress(self, value: bytes) -> bytes:
-        """Formats the input payload ``value`` to a tagged representation."""
-        compressed = zlib.compress(value, self.compression_level)
-        return self._make_tag() + compressed
+        """
+        Compresses the input payload ``value`` with the class's
+        ``compression_level``.
+        """
+        return zlib.compress(value, self.compression_level)
 
     def _decompress(self, buffer: bytes) -> bytes:
         """
-        Uncompresses the tagged ZLib-compressed ``buffer`` if it is the
-        ``kind`` that is expected by the current instance.
+        Uncompresses the headerless payload into its raw, original value.
+        """
+        return zlib.decompress(buffer)
+
+    def _encode(self, value: bytes) -> bytes:
+        """Formats the input payload ``value`` to a tagged representation."""
+        return self._make_tag() + value
+
+    def _decode(self, buffer: bytes) -> bytes:
+        """
+        Decodes the tagged ZLib-compressed ``buffer`` if it is the ``kind``
+        that is expected by the current instance.
+        Returns the original payload.
         """
         payload_start, kind, _ = self._parse_tag(buffer)
         if kind != self.kind:
@@ -125,7 +140,7 @@ class ZLibCompressedBlob(TypeDecorator):
                              kind, self.kind)
 
         payload = buffer[payload_start:]
-        return zlib.decompress(payload)
+        return payload
 
 
 class ZLibCompressedString(ZLibCompressedBlob):
