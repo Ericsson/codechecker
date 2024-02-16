@@ -199,6 +199,7 @@ class SQLServer(metaclass=ABCMeta):
         except sqlalchemy.exc.SQLAlchemyError as alch_err:
             import traceback
             traceback.print_exc()
+            LOG.error(str(alch_err))
             return False
 
         except Exception as ex:
