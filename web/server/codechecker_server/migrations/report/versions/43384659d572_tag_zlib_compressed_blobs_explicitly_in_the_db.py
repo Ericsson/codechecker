@@ -26,15 +26,26 @@ from codechecker_server.database.types import zlib as db_zlib
 from codechecker_server.migrations.type_support import zlib as migrate_zlib
 
 
-def _for_each_with_ids(LOG,
-                       lower_infinitive: str,
-                       lower_gerund: str,
-                       upper_gerund: str,
-                       db,
-                       table_name: str,
-                       table_cls,
-                       id_field,
-                       process_one: Callable[[int, Any], None]):
+ZLibStr = db_zlib.ZLibCompressedString()
+
+
+def to_z_str(compressed_value: bytes) -> bytes:
+    return migrate_zlib.upgrade_zlib_raw_to_tagged(compressed_value, ZLibStr)
+
+
+def to_raw(tagged_value: bytes) -> bytes:
+    return migrate_zlib.downgrade_zlib_tagged_to_raw(tagged_value)
+
+
+def for_each_with_ids(LOG,
+                      lower_infinitive: str,
+                      lower_gerund: str,
+                      upper_gerund: str,
+                      db,
+                      table_name: str,
+                      table_cls,
+                      id_field,
+                      process_one: Callable[[int, Any], None]):
     id_query = db.query(id_field)
     count = id_query.count()
     if not count:
@@ -70,28 +81,42 @@ def upgrade():
     Base.prepare(conn, reflect=True)
     db = Session(bind=conn)
 
-    ZLibStr = db_zlib.ZLibCompressedString()
-
-    def _with_ids(table_name: str, table_cls, id_field,
-                  process_one: Callable[[int, Any], None]):
-        _for_each_with_ids(LOG, "upgrade", "upgrading", "Upgrading",
-                           db, table_name, table_cls, id_field, process_one)
+    def with_ids(table_name: str, table_cls, id_field,
+                 process_one: Callable[[int, Any], None]):
+        for_each_with_ids(LOG, "upgrade", "upgrading", "Upgrading",
+                          db, table_name, table_cls, id_field, process_one)
 
     def upgrade_analysis_info():
         AnalysisInfo = Base.classes.analysis_info
 
-        def _upgrade(_, analysis_info):
+        def process(_, analysis_info):
             if analysis_info.analyzer_command is None:
                 return
-
-            zlib_tagged = migrate_zlib.upgrade_zlib_raw_to_tagged(
-                analysis_info.analyzer_command, ZLibStr)
-            analysis_info.analyzer_command = zlib_tagged
+            analysis_info.analyzer_command = to_z_str(
+                analysis_info.analyzer_command)
             db.flush()
 
-        _with_ids("analysis_info", AnalysisInfo, AnalysisInfo.id, _upgrade)
+        with_ids("analysis_info", AnalysisInfo, AnalysisInfo.id, process)
+
+    def upgrade_analyzer_statistics():
+        AnalyzerStatistic = Base.classes.analyzer_statistics
+
+        def process(_, analyzer_statistic):
+            if analyzer_statistic.version is not None:
+                analyzer_statistic.version = to_z_str(
+                    analyzer_statistic.version)
+            if analyzer_statistic.failed_files is not None:
+                analyzer_statistic.failed_files = to_z_str(
+                    analyzer_statistic.failed_files)
+
+            if analyzer_statistic in db.dirty:
+                db.flush()
+
+        with_ids("analyzer_statistics", AnalyzerStatistic,
+                 AnalyzerStatistic.id, process)
 
     upgrade_analysis_info()
+    upgrade_analyzer_statistics()
 
 
 def downgrade():
@@ -105,24 +130,39 @@ def downgrade():
     Base.prepare(conn, reflect=True)
     db = Session(bind=conn)
 
-    def _with_ids(table_name: str, table_cls, id_field,
-                  process_one: Callable[[int, Any], None]):
-        _for_each_with_ids(LOG, "downgrade", "downgrading", "Downgrading",
-                           db, table_name, table_cls, id_field, process_one)
+    def with_ids(table_name: str, table_cls, id_field,
+                 process_one: Callable[[int, Any], None]):
+        for_each_with_ids(LOG, "downgrade", "downgrading", "Downgrading",
+                          db, table_name, table_cls, id_field, process_one)
 
     def downgrade_analysis_info():
         AnalysisInfo = Base.classes.analysis_info
 
-        def _downgrade_one(_, analysis_info):
+        def process(_, analysis_info):
             if analysis_info.analyzer_command is None:
                 return
-
-            zlib_raw = migrate_zlib.downgrade_zlib_tagged_to_raw(
+            analysis_info.analyzer_command = to_raw(
                 analysis_info.analyzer_command)
-            analysis_info.analyzer_command = zlib_raw
             db.flush()
 
-        _with_ids("analysis_info", AnalysisInfo, AnalysisInfo.id,
-                  _downgrade_one)
+        with_ids("analysis_info", AnalysisInfo, AnalysisInfo.id, process)
+
+    def downgrade_analyzer_statistics():
+        AnalyzerStatistic = Base.classes.analyzer_statistics
+
+        def process(_, analyzer_statistic):
+            if analyzer_statistic.version is not None:
+                analyzer_statistic.version = to_raw(
+                    analyzer_statistic.version)
+            if analyzer_statistic.failed_files is not None:
+                analyzer_statistic.failed_files = to_raw(
+                    analyzer_statistic.failed_files)
+
+            if analyzer_statistic in db.dirty:
+                db.flush()
+
+        with_ids("analyzer_statistics", AnalyzerStatistic,
+                 AnalyzerStatistic.id, process)
 
     downgrade_analysis_info()
+    downgrade_analyzer_statistics()

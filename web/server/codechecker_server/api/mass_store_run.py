@@ -572,16 +572,12 @@ class MassStoreRun:
         for analyzer_type, stat in stats.items():
             analyzer_version = None
             if stat["versions"]:
-                analyzer_version = zlib.compress(
-                    "; ".join(stat["versions"]).encode('utf-8'),
-                    zlib.Z_BEST_COMPRESSION)
+                analyzer_version = "; ".join(stat["versions"])
 
             failed = 0
-            compressed_files = None
+            failed_files = None
             if stat["failed_sources"]:
-                compressed_files = zlib.compress(
-                    '\n'.join(stat["failed_sources"]).encode('utf-8'),
-                    zlib.Z_BEST_COMPRESSION)
+                failed_files = '\n'.join(stat["failed_sources"])
 
                 failed = len(stat["failed_sources"])
 
@@ -590,7 +586,7 @@ class MassStoreRun:
 
             analyzer_statistics = AnalyzerStatistic(
                 run_history_id, analyzer_type, analyzer_version,
-                successful, failed, compressed_files)
+                successful, failed, failed_files)
 
             session.add(analyzer_statistics)
 

@@ -18,7 +18,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import true, false
 
-from .types import zlib
+from .types import zlib as db_zlib
 
 
 CC_META = MetaData(naming_convention={
@@ -37,7 +37,7 @@ class AnalysisInfo(Base):
     __tablename__ = 'analysis_info'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    analyzer_command = Column(zlib.ZLibCompressedString)
+    analyzer_command = Column(db_zlib.ZLibCompressedString)
 
     def __init__(self, analyzer_command: str):
         self.analyzer_command = analyzer_command
@@ -113,10 +113,10 @@ class AnalyzerStatistic(Base):
                                        ondelete='CASCADE'),
                             index=True)
     analyzer_type = Column(String)
-    version = Column(Binary)
+    version = Column(db_zlib.ZLibCompressedString)
     successful = Column(Integer)
     failed = Column(Integer)
-    failed_files = Column(Binary, nullable=True)
+    failed_files = Column(db_zlib.ZLibCompressedString, nullable=True)
 
     def __init__(self, run_history_id, analyzer_type, version, successful,
                  failed, failed_files):

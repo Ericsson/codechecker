@@ -3244,8 +3244,6 @@ class ThriftRequestHandler:
                 .filter(AnalyzerStatistic.failed_files.isnot(None))
 
             for failed_files, run_name in query.all():
-                failed_files = zlib.decompress(failed_files).decode('utf-8')
-
                 for failed_file in failed_files.split('\n'):
                     already_exists = \
                         any(i.runName == run_name for i in res[failed_file])
@@ -3646,10 +3644,9 @@ class ThriftRequestHandler:
                 session, run_ids, run_history_ids)
 
             for stat, run_id in query:
-                failed_files = zlib.decompress(stat.failed_files).decode(
-                    'utf-8').split('\n') if stat.failed_files else []
-                analyzer_version = zlib.decompress(
-                    stat.version).decode('utf-8') if stat.version else None
+                failed_files = stat.failed_file.split('\n') \
+                    if stat.failed_files else []
+                analyzer_version = stat.version if stat.version else None
 
                 analyzer_statistics[stat.analyzer_type] = \
                     ttypes.AnalyzerStatistics(version=analyzer_version,
