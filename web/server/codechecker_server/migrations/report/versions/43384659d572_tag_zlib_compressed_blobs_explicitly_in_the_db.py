@@ -12,8 +12,10 @@ down_revision = '9d956a0fae8d'
 branch_labels = None
 depends_on = None
 
+import json
 from logging import getLogger
 from typing import Any, Callable
+import zlib
 
 from alembic import op
 import sqlalchemy as sa
@@ -26,11 +28,17 @@ from codechecker_server.database.types import zlib as db_zlib
 from codechecker_server.migrations.type_support import zlib as migrate_zlib
 
 
-ZLibStr = db_zlib.ZLibCompressedString()
+ZBlob = db_zlib.ZLibCompressedBlob()
+ZStr = db_zlib.ZLibCompressedString()
+ZJSON = db_zlib.ZLibCompressedJSON()
+
+
+def to_z_blob(compressed_value: bytes) -> bytes:
+    return migrate_zlib.upgrade_zlib_raw_to_tagged(compressed_value, ZBlob)
 
 
 def to_z_str(compressed_value: bytes) -> bytes:
-    return migrate_zlib.upgrade_zlib_raw_to_tagged(compressed_value, ZLibStr)
+    return migrate_zlib.upgrade_zlib_raw_to_tagged(compressed_value, ZStr)
 
 
 def to_raw(tagged_value: bytes) -> bytes:
@@ -115,8 +123,24 @@ def upgrade():
         with_ids("analyzer_statistics", AnalyzerStatistic,
                  AnalyzerStatistic.id, process)
 
+    def upgrade_file_contents():
+        FileContent = Base.classes.file_contents
+
+        def process(_, file_content):
+            file_content.content = to_z_blob(file_content.content)
+            if file_content.blame_info is not None:
+                file_content.blame_info = \
+                    migrate_zlib.upgrade_zlib_serialised(
+                        file_content.blame_info, ZJSON,
+                        original_deserialisation_fn=lambda s: json.loads(s))
+            db.flush()
+
+        with_ids("file_contents", FileContent, FileContent.content_hash,
+                 process)
+
     upgrade_analysis_info()
     upgrade_analyzer_statistics()
+    upgrade_file_contents()
 
 
 def downgrade():
@@ -164,5 +188,22 @@ def downgrade():
         with_ids("analyzer_statistics", AnalyzerStatistic,
                  AnalyzerStatistic.id, process)
 
+    def downgrade_file_contents():
+        FileContent = Base.classes.file_contents
+
+        def process(_, file_content):
+            file_content.content = to_raw(file_content.content)
+            if file_content.blame_info:
+                file_content.blame_info = \
+                    migrate_zlib.downgrade_zlib_serialised(
+                        file_content.blame_info, ZJSON,
+                        original_serialisation_fn=lambda o: json.dumps(o),
+                        compression_level=zlib.Z_BEST_COMPRESSION)
+            db.flush()
+
+        with_ids("file_contents", FileContent, FileContent.content_hash,
+                 process)
+
     downgrade_analysis_info()
     downgrade_analyzer_statistics()
+    downgrade_file_contents()

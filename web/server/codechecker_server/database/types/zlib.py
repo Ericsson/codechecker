@@ -25,7 +25,8 @@ class ZLibCompressedBlob(TypeDecorator):
     impl = LargeBinary
     client_type = bytes
 
-    def __init__(self, compression_level=zlib.Z_BEST_COMPRESSION,
+    def __init__(self,
+                 compression_level=zlib.Z_BEST_COMPRESSION,
                  kind="blob"):
         """
         Defines an instantiation of the decorator that converts binary data
@@ -150,7 +151,8 @@ class ZLibCompressedString(ZLibCompressedBlob):
     impl = ZLibCompressedBlob.impl
     client_type = str
 
-    def __init__(self, compression_level=zlib.Z_BEST_COMPRESSION,
+    def __init__(self,
+                 compression_level=zlib.Z_BEST_COMPRESSION,
                  kind="text"):
         super().__init__(compression_level=compression_level, kind=kind)
 
@@ -180,7 +182,8 @@ class ZLibCompressedSerialisable(ZLibCompressedString):
     impl = ZLibCompressedString.impl
     client_type = Any
 
-    def __init__(self, kind: str,
+    def __init__(self,
+                 kind: str,
                  serialise_fn: Callable[[Optional[client_type]],
                                         Optional[str]],
                  deserialise_fn: Callable[[Optional[str]],

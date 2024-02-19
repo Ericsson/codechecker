@@ -11,6 +11,7 @@ SQLAlchemy ORM model for the analysis run storage database.
 from datetime import datetime, timedelta
 from math import ceil
 import os
+from typing import Optional
 
 from sqlalchemy import MetaData, Column, Integer, UniqueConstraint, String, \
     DateTime, Boolean, ForeignKey, Binary, Enum, Table, Text
@@ -119,7 +120,7 @@ class AnalyzerStatistic(Base):
     failed_files = Column(db_zlib.ZLibCompressedString, nullable=True)
 
     def __init__(self, run_history_id, analyzer_type, version: str,
-                 successful: int, failed: int, failed_files: str):
+                 successful: int, failed: int, failed_files: Optional[str]):
         self.run_history_id = run_history_id
         self.analyzer_type = analyzer_type
         self.version = version
@@ -181,15 +182,19 @@ class FileContent(Base):
     __tablename__ = 'file_contents'
 
     content_hash = Column(String, primary_key=True)
-    content = Column(Binary)
+    content = Column(db_zlib.ZLibCompressedBlob)
 
     # Note: two different authors can commit the same file content to
     # different paths in which case the blame info will be the same.
-    blame_info = Column(Binary, nullable=True)
+    blame_info = Column(db_zlib.ZLibCompressedJSON, nullable=True)
 
-    def __init__(self, content_hash, content, blame_info):
-        self.content_hash, self.content, self.blame_info = \
-            content_hash, content, blame_info
+    def __init__(self,
+                 content_hash: str,
+                 content: bytes,
+                 blame_info: Optional[dict]):
+        self.content_hash = content_hash
+        self.content = content
+        self.blame_info = blame_info
 
 
 class File(Base):

@@ -9,7 +9,7 @@
 Suppoting methods for the migration from raw BLOBs that actually contain ZLib
 data to the ZLibCompressed* decorated types.
 """
-from typing import Tuple
+from typing import Any, Callable, Optional, Tuple
 import zlib
 
 from codechecker_server.database.types import zlib as db_zlib
@@ -28,7 +28,7 @@ def upgrade_zlib_raw_to_tagged(
     decorator.
 
     This method is costly as it searches for the exact compression level that
-    was originally used by performing up to 12 rounds of re-encoding
+    was originally used by performing up to 11 rounds of re-encoding
     internally until the right compression level is figured out.
     Unfortunately, there are no good and deterministic ways to recover this
     information in a single go by observing an already compressed buffer.
@@ -46,13 +46,47 @@ def upgrade_zlib_raw_to_tagged(
         return (compressed == value, compressed)
 
     for compression_level in reversed(range(zlib.Z_DEFAULT_COMPRESSION,
-                                            zlib.Z_BEST_COMPRESSION + 1)):
+                                            zlib.Z_BEST_COMPRESSION)):
         success, compressed = _compress_attempt(compression_level)
         if success:
             return zlib_type._encode(compressed)
     else:
         return zlib_type._encode(zlib.compress(buffer,
                                                zlib.Z_BEST_COMPRESSION))
+
+
+def upgrade_zlib_serialised(
+    value: bytes,
+    zlib_type: db_zlib.ZLibCompressedSerialisable,
+    original_deserialisation_fn: Optional[
+        Callable[[Optional[str]], Optional[Any]]] = None
+) -> bytes:
+    """
+    Reserialises and recompreesses the given raw ZLib-compressed ``value`` to
+    the serialised version stipulated by ``zlib_type``.
+
+    The ``value`` is first deserialised (after decompression) by
+    ``original_deserialisation_fn`` (or, if unset, the appropraite
+    deserialisation function of ``zlib_type``) to a pure object. Following,
+    it is serialised and stored through the type adaptor.
+
+    This method is cheap. No searching for the original compression level is
+    performed, because it is highly likely that the customised and optimised
+    serialisation functions embedded in the ZLib type adaptors will not match
+    whatever the original value contained for the vast majority of inputs.
+
+    This function uses whichever ``compression_level`` the ``zlib_type`` was
+    instantiated with.
+    """
+    deserialise = original_deserialisation_fn or zlib_type.deserialise
+
+    def decompress_and_deserialise(compressed_buffer: bytes) -> Optional[Any]:
+        buffer = zlib.decompress(compressed_buffer)
+        serialised = buffer.decode(errors="strict")
+        return deserialise(serialised)
+
+    data_object = decompress_and_deserialise(value)
+    return zlib_type.process_bind_param(data_object, "")
 
 
 def downgrade_zlib_tagged_to_raw(value: bytes) -> bytes:
@@ -71,3 +105,34 @@ def downgrade_zlib_tagged_to_raw(value: bytes) -> bytes:
     """
     payload_start, _, _ = _default_zlib_type._parse_tag(value)
     return value[payload_start:]
+
+
+def downgrade_zlib_serialised(
+    value: bytes,
+    zlib_type: db_zlib.ZLibCompressedSerialisable,
+    original_serialisation_fn: Optional[
+        Callable[[Optional[Any]], Optional[str]]] = None,
+    compression_level=zlib.Z_BEST_COMPRESSION
+) -> Optional[bytes]:
+    """
+    Reserialises and recompresses the given tagged ZLib-compressed ``value``
+    to a serialised and raw-encoded version stipulated by ``zlib_type``.
+
+    The ``value`` is first deserialised (after decompression) through the
+    type adaptor to a pure object. Following, it is serialised by
+    ``original_serialisation_fn`` (or, if unset, the appropriate serialisation
+    function of ``zlib_type``) to a string representation, which is then
+    compressed by the native ``zlib`` library, using the specified
+    ``compression_level``.
+    """
+    serialise = original_serialisation_fn or zlib_type.serialise
+
+    def serialise_and_compress(o: Any) -> Optional[bytes]:
+        serialised = serialise(o)
+        if not serialised:
+            return None
+        buffer = serialised.encode(errors="strict")
+        return zlib.compress(buffer, compression_level)
+
+    data_object = zlib_type.process_result_value(value, "")
+    return serialise_and_compress(data_object)

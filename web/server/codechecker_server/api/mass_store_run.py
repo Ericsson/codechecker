@@ -445,18 +445,12 @@ class MassStoreRun:
                     blame_info, remote_url, tracking_branch = \
                         get_blame_file_data(blame_file)
 
-                    compressed_blame_info = None
-                    if blame_info:
-                        compressed_blame_info = zlib.compress(
-                            json.dumps(blame_info).encode('utf-8'),
-                            zlib.Z_BEST_COMPRESSION)
-
                     session \
                         .query(FileContent) \
                         .filter(FileContent.blame_info.is_(None)) \
                         .filter(FileContent.content_hash ==
                                 filename_to_hash.get(file_path)) \
-                        .update({"blame_info": compressed_blame_info})
+                        .update({"blame_info": blame_info})
 
                     session \
                         .query(File) \
@@ -507,20 +501,17 @@ class MassStoreRun:
             if not source_file_content:
                 source_file_content = get_file_content(source_file_name)
             try:
-                compressed_content = zlib.compress(
-                    source_file_content, zlib.Z_BEST_COMPRESSION)
-
                 if session.bind.dialect.name == 'postgresql':
                     insert_stmt = sqlalchemy.dialects.postgresql \
                         .insert(FileContent).values(
                             content_hash=content_hash,
-                            content=compressed_content,
+                            content=source_file_content,
                             blame_info=None).on_conflict_do_nothing(
                                 index_elements=['content_hash'])
 
                     session.execute(insert_stmt)
                 else:
-                    fc = FileContent(content_hash, compressed_content, None)
+                    fc = FileContent(content_hash, source_file_content, None)
                     session.add(fc)
 
                 session.commit()
