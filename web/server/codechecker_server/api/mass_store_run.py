@@ -7,7 +7,6 @@
 # -------------------------------------------------------------------------
 
 import base64
-import json
 import os
 import sqlalchemy
 import tempfile

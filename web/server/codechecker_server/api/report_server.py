@@ -11,7 +11,6 @@ Handle Thrift requests.
 
 import base64
 import html
-import json
 import os
 import re
 import shlex
