@@ -2232,7 +2232,7 @@ analyzer:
                   </li>
                 </ul>
                 For more information
-                <a href="https://github.com/Ericsson/codechecker/blob/master/docs/user_guide.md#source-components">
+                <a href="https://github.com/Ericsson/codechecker/blob/master/docs/web/user_guide.md#source-components-components">
                   see
                 </a>.
               </v-col>
@@ -2315,7 +2315,7 @@ analyzer:
               </li>
             </ul>
             For more information
-            <a href="https://github.com/Ericsson/codechecker/blob/master/docs/user_guide.md#cmd">
+            <a href="https://github.com/Ericsson/codechecker/blob/master/docs/web/user_guide.md#cmd">
               see
             </a>.
           </new-feature-item>
@@ -2343,7 +2343,7 @@ analyzer:
               </li>
             </ul>
             For more information
-            <a href="https://github.com/Ericsson/codechecker/blob/master/docs/authentication.md#personal-access-token">
+            <a href="https://github.com/Ericsson/codechecker/blob/master/docs/web/authentication.md#personal-access-token">
               see
             </a>.
           </new-feature-item>

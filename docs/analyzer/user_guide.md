@@ -643,7 +643,7 @@ Runs the given build command and records the executed compilation steps. These
 steps are written to the output file in a JSON format. Available build logger
 tool that will be used is '...'. ld-logger can be fine-tuned with some
 environment variables. For details see the following documentation:
-https://github.com/Ericsson/codechecker/blob/master/analyzer/tools/build-
+https://github.com/Ericsson/codechecker/tree/master/analyzer/tools/build-logger
 logger/README.md#usage
 
 optional arguments:
@@ -1792,8 +1792,7 @@ export arguments:
                         Specify extra output format type.
                         'codeclimate' format can be used for Code Climate and
                         for GitLab integration. For more information see:
-                        https://github.com/codeclimate/platform/blob/master/sp
-                        ec/analyzers/SPEC.md#data-types
+                        https://github.com/codeclimate/platform/blob/master/spec/analyzers/SPEC.md#data-types
                         'baseline' output can be used to integrate CodeChecker
                         into your local workflow without using a CodeChecker
                         server. For more information see our usage guide.
