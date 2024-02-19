@@ -100,12 +100,12 @@ class ZLibCompressedBlob(TypeDecorator):
         header = buffer[:split_index].decode()
         match = TagRegex.match(header)
         if not match:
-            raise ValueError("'%s' is not a valid ZLib tag", header)
+            raise ValueError(f"'{header}' is not a valid ZLib tag")
 
         algorithm, kind, level = match.groups()
         if algorithm != "zlib":
-            raise ValueError("'%s' is not a valid ZLib tag, unexpected "
-                             "algorithm '%s'", header, algorithm)
+            raise ValueError(f"'{header}' is not a valid ZLib tag, "
+                             f"unexpected algorithm '{algorithm}'")
         level = int(level)
 
         return (split_index + 1, kind, level)
@@ -135,9 +135,9 @@ class ZLibCompressedBlob(TypeDecorator):
         """
         payload_start, kind, _ = self._parse_tag(buffer)
         if kind != self.kind:
-            raise ValueError("ZLib-compressed value of kind '%s' decoded "
-                             "when expecting kind '%s' instead",
-                             kind, self.kind)
+            raise ValueError(f"ZLib-compressed value of kind '{kind}' "
+                             f"decoded when expecting kind '{self.kind}' "
+                             "instead")
 
         payload = buffer[payload_start:]
         return payload
