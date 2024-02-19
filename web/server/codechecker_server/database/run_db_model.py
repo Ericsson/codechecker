@@ -118,8 +118,8 @@ class AnalyzerStatistic(Base):
     failed = Column(Integer)
     failed_files = Column(db_zlib.ZLibCompressedString, nullable=True)
 
-    def __init__(self, run_history_id, analyzer_type, version, successful,
-                 failed, failed_files):
+    def __init__(self, run_history_id, analyzer_type, version: str,
+                 successful: int, failed: int, failed_files: str):
         self.run_history_id = run_history_id
         self.analyzer_type = analyzer_type
         self.version = version
