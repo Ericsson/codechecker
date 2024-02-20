@@ -444,12 +444,13 @@ class MassStoreRun:
                     blame_info, remote_url, tracking_branch = \
                         get_blame_file_data(blame_file)
 
-                    session \
-                        .query(FileContent) \
-                        .filter(FileContent.blame_info.is_(None)) \
-                        .filter(FileContent.content_hash ==
-                                filename_to_hash.get(file_path)) \
-                        .update({"blame_info": blame_info})
+                    if blame_info:
+                        session \
+                            .query(FileContent) \
+                            .filter(FileContent.blame_info.is_(None)) \
+                            .filter(FileContent.content_hash ==
+                                    filename_to_hash.get(file_path)) \
+                            .update({"blame_info": blame_info})
 
                     session \
                         .query(File) \

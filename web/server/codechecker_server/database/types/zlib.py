@@ -60,8 +60,10 @@ class ZLibCompressedBlob(TypeDecorator):
         the value of the underyling database-side implementation type.
         That is, performs the conversion Python -> DB.
         """
-        return cast(LargeBinary, self._encode(self._compress(value))) \
-            if value is not None else None
+        if value is None:
+            return None
+        tagged_buffer = self._encode(self._compress(value))
+        return cast(LargeBinary, tagged_buffer)
 
     def process_result_value(self, value: Optional[impl], dialect: str) \
             -> Optional[client_type]:
@@ -71,8 +73,10 @@ class ZLibCompressedBlob(TypeDecorator):
         code.
         That is, performs the conversion DB -> Python.
         """
-        return self._decompress(self._decode(value)) \
-            if value is not None else None
+        if value is None:
+            return None
+        payload = self._decompress(self._decode(value))
+        return payload
 
     def _make_tag(self) -> bytes:
         """
@@ -160,7 +164,6 @@ class ZLibCompressedString(ZLibCompressedBlob):
             -> Optional[impl]:
         if value is None:
             return None
-
         blob = value.encode(errors="ignore")
         return super().process_bind_param(blob, dialect)
 
@@ -169,7 +172,6 @@ class ZLibCompressedString(ZLibCompressedBlob):
         blob = super().process_result_value(value, dialect)
         if blob is None:
             return None
-
         return blob.decode(errors="ignore")
 
 
@@ -195,11 +197,15 @@ class ZLibCompressedSerialisable(ZLibCompressedString):
 
     def process_bind_param(self, value: Optional[client_type], dialect: str) \
             -> Optional[impl]:
+        if value is None:
+            return None
         serialised = self.serialise(value)
         return super().process_bind_param(serialised, dialect)
 
     def process_result_value(self, value: Optional[impl], dialect: str) \
             -> Optional[client_type]:
+        if value is None:
+            return None
         serialised = super().process_result_value(value, dialect)
         return self.deserialise(serialised)
 
