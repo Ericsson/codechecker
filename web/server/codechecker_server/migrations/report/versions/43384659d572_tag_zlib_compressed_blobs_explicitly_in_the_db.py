@@ -18,7 +18,6 @@ from typing import Any, Callable
 import zlib
 
 from alembic import op
-import sqlalchemy as sa
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.automap import automap_base
 

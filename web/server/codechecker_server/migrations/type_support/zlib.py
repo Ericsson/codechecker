@@ -9,7 +9,7 @@
 Suppoting methods for the migration from raw BLOBs that actually contain ZLib
 data to the ZLibCompressed* decorated types.
 """
-from typing import Any, Callable, Optional, Tuple
+from typing import Any, Callable, Optional
 import zlib
 
 from codechecker_server.database.types import zlib as db_zlib
