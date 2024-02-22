@@ -11,7 +11,6 @@ Handle Thrift requests.
 
 import base64
 import html
-import json
 import os
 import re
 import shlex
@@ -1538,11 +1537,9 @@ class ThriftRequestHandler:
                         .limit(limit).offset(offset)
 
                 for cmd in analysis_info_query:
-                    command = \
-                        zlib.decompress(cmd.analyzer_command).decode('utf-8')
-
                     res.append(ttypes.AnalysisInfo(
-                        analyzerCommand=html.escape(command)))
+                        analyzerCommand=html.escape(cmd.analyzer_command)
+                    ))
 
         return res
 
@@ -2635,13 +2632,10 @@ class ThriftRequestHandler:
                 trackingBranch=sourcefile.tracking_branch)
 
             if fileContent:
-                source = zlib.decompress(cont.content)
-
+                source = cont.content
                 if encoding == Encoding.BASE64:
                     source = base64.b64encode(source)
-
-                source_file_data.fileContent = source.decode(
-                    'utf-8', errors='ignore')
+                source_file_data.fileContent = source.decode(errors="ignore")
 
             return source_file_data
 
@@ -2666,10 +2660,6 @@ class ThriftRequestHandler:
                 return BlameInfo()
 
             try:
-                blame_info = json.loads(
-                    zlib.decompress(cont.blame_info).decode(
-                        'utf-8', errors='ignore'))
-
                 commits = {
                     commitHash: Commit(
                         author=CommitAuthor(
@@ -2679,13 +2669,14 @@ class ThriftRequestHandler:
                         message=html.escape(commit["message"]),
                         committedDateTime=commit["committed_datetime"],
                     )
-                    for commitHash, commit in blame_info["commits"].items()
+                    for commitHash, commit
+                    in cont.blame_info["commits"].items()
                 }
 
                 blame_data = [BlameData(
                     startLine=b["from"],
                     endLine=b["to"],
-                    commitHash=b["commit"]) for b in blame_info["blame"]]
+                    commitHash=b["commit"]) for b in cont.blame_info["blame"]]
 
                 return BlameInfo(
                     commits=commits,
@@ -2705,7 +2696,7 @@ class ThriftRequestHandler:
             # This will contain all the lines for the given fileId
             contents_to_file_id = defaultdict(list)
             # The goal of the chunking is not for achieving better performace
-            # but to be compatible with SQLITE dbms with larger report counts,
+            # but to be compatible with SQLite DBMS with larger report counts,
             # with larger report data.
             for chunk in util.chunks(
                     lines_in_files_requested, SQLITE_MAX_VARIABLE_NUMBER):
@@ -2715,14 +2706,14 @@ class ThriftRequestHandler:
                             FileContent.content_hash == File.content_hash) \
                         .filter(File.id.in_(
                                 [line.fileId if line.fileId is not None
-                                    else LOG.warning(
-                                        f"File content "
-                                        "requested without fileId {l}")
+                                    else LOG.warning("File content requested "
+                                                     "without a fileId %s",
+                                                     str(line))
                                     for line in chunk])) \
                         .all()
                 for content in contents:
-                    lines = zlib.decompress(
-                        content.content).decode('utf-8', 'ignore').split('\n')
+                    lines = content.content.decode(errors="ignore") \
+                        .split('\n')
                     contents_to_file_id[content.id] = lines
 
             for files in lines_in_files_requested:
@@ -3246,8 +3237,6 @@ class ThriftRequestHandler:
                 .filter(AnalyzerStatistic.failed_files.isnot(None))
 
             for failed_files, run_name in query.all():
-                failed_files = zlib.decompress(failed_files).decode('utf-8')
-
                 for failed_file in failed_files.split('\n'):
                     already_exists = \
                         any(i.runName == run_name for i in res[failed_file])
@@ -3648,10 +3637,9 @@ class ThriftRequestHandler:
                 session, run_ids, run_history_ids)
 
             for stat, run_id in query:
-                failed_files = zlib.decompress(stat.failed_files).decode(
-                    'utf-8').split('\n') if stat.failed_files else []
-                analyzer_version = zlib.decompress(
-                    stat.version).decode('utf-8') if stat.version else None
+                failed_files = stat.failed_file.split('\n') \
+                    if stat.failed_files else []
+                analyzer_version = stat.version if stat.version else None
 
                 analyzer_statistics[stat.analyzer_type] = \
                     ttypes.AnalyzerStatistics(version=analyzer_version,

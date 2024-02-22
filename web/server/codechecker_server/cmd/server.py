@@ -578,7 +578,11 @@ def __db_migration(cfg_sql_server, migration_root, environ,
 
         product = sess.query(ORMProduct).filter(
                 ORMProduct.endpoint == prod).first()
-        db = database.SQLServer.from_connection_string(product.connection,
+        connection, endpoint = product.connection, product.endpoint
+        sess.close()
+        engine.dispose()
+
+        db = database.SQLServer.from_connection_string(connection,
                                                        RUN_META,
                                                        migration_root,
                                                        interactive=False,
@@ -592,7 +596,7 @@ def __db_migration(cfg_sql_server, migration_root, environ,
         LOG.info(msg)
         if db_status == DBStatus.SCHEMA_MISSING:
             question = 'Do you want to initialize a new schema for ' \
-                        + product.endpoint + '? Y(es)/n(o) '
+                        + endpoint + '? Y(es)/n(o) '
             if force_upgrade or env.get_user_input(question):
                 ret = db.connect(init=True)
                 msg = database_status.db_status_msg.get(
@@ -603,7 +607,7 @@ def __db_migration(cfg_sql_server, migration_root, environ,
 
         elif db_status == DBStatus.SCHEMA_MISMATCH_OK:
             question = 'Do you want to upgrade to new schema for ' \
-                        + product.endpoint + '? Y(es)/n(o) '
+                        + endpoint + '? Y(es)/n(o) '
             if force_upgrade or env.get_user_input(question):
                 LOG.info("Upgrading schema ...")
                 ret = db.upgrade()
@@ -614,9 +618,6 @@ def __db_migration(cfg_sql_server, migration_root, environ,
             else:
                 LOG.info("No schema migration was done.")
 
-        sess.commit()
-        sess.close()
-        engine.dispose()
         LOG.info("========================")
     return 0
 

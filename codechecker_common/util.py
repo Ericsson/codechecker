@@ -8,15 +8,16 @@
 """
 Util module.
 """
-
-
 import itertools
 import json
-from typing import TextIO
+from math import ceil
+from typing import Callable, TextIO
 import os
+
 import portalocker
 
 from codechecker_common.logger import get_logger
+
 
 LOG = get_logger('system')
 
@@ -106,3 +107,33 @@ def path_for_fake_root(full_path: str, root_path: str = '/') -> str:
     relative_path = os.path.relpath(full_path, '/')
     fake_root_path = os.path.join(root_path, relative_path)
     return os.path.realpath(fake_root_path)
+
+
+def progress(g, count: int, n: int,
+             callback: Callable[[int, float], None]):
+    """
+    Wraps a generator of a known total length and fires 'callback' after having
+    yielded every (T/N)th element. The 'callback' is given the index of the
+    element handled just before firing it, and the percentage of progress.
+    """
+    # E.g., if count == 100 and n == 5, then becomes [100, 95, ..., 10, 5, 0].
+    try:
+        checkpoints = [count] + list(reversed(
+            [list(chk)[0]
+             for chk in chunks(
+                 range(0, count + 1),
+                 int(ceil(count / n))
+             )]))
+        if checkpoints[-1] == 0:
+            checkpoints.pop()
+    except ValueError:
+        # The range is too small to have (count / n) many slices.
+        checkpoints = [count]
+
+    i = 0
+    for e in g:
+        i = i + 1
+        yield e
+        if i == checkpoints[-1]:
+            callback(i, float(i) / count * 100)
+            checkpoints.pop()

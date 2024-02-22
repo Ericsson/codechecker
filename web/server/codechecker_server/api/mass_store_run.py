@@ -7,7 +7,6 @@
 # -------------------------------------------------------------------------
 
 import base64
-import json
 import os
 import sqlalchemy
 import tempfile
@@ -445,18 +444,13 @@ class MassStoreRun:
                     blame_info, remote_url, tracking_branch = \
                         get_blame_file_data(blame_file)
 
-                    compressed_blame_info = None
                     if blame_info:
-                        compressed_blame_info = zlib.compress(
-                            json.dumps(blame_info).encode('utf-8'),
-                            zlib.Z_BEST_COMPRESSION)
-
-                    session \
-                        .query(FileContent) \
-                        .filter(FileContent.blame_info.is_(None)) \
-                        .filter(FileContent.content_hash ==
-                                filename_to_hash.get(file_path)) \
-                        .update({"blame_info": compressed_blame_info})
+                        session \
+                            .query(FileContent) \
+                            .filter(FileContent.blame_info.is_(None)) \
+                            .filter(FileContent.content_hash ==
+                                    filename_to_hash.get(file_path)) \
+                            .update({"blame_info": blame_info})
 
                     session \
                         .query(File) \
@@ -507,20 +501,17 @@ class MassStoreRun:
             if not source_file_content:
                 source_file_content = get_file_content(source_file_name)
             try:
-                compressed_content = zlib.compress(
-                    source_file_content, zlib.Z_BEST_COMPRESSION)
-
                 if session.bind.dialect.name == 'postgresql':
                     insert_stmt = sqlalchemy.dialects.postgresql \
                         .insert(FileContent).values(
                             content_hash=content_hash,
-                            content=compressed_content,
+                            content=source_file_content,
                             blame_info=None).on_conflict_do_nothing(
                                 index_elements=['content_hash'])
 
                     session.execute(insert_stmt)
                 else:
-                    fc = FileContent(content_hash, compressed_content, None)
+                    fc = FileContent(content_hash, source_file_content, None)
                     session.add(fc)
 
                 session.commit()
@@ -572,16 +563,12 @@ class MassStoreRun:
         for analyzer_type, stat in stats.items():
             analyzer_version = None
             if stat["versions"]:
-                analyzer_version = zlib.compress(
-                    "; ".join(stat["versions"]).encode('utf-8'),
-                    zlib.Z_BEST_COMPRESSION)
+                analyzer_version = "; ".join(stat["versions"])
 
             failed = 0
-            compressed_files = None
+            failed_files = None
             if stat["failed_sources"]:
-                compressed_files = zlib.compress(
-                    '\n'.join(stat["failed_sources"]).encode('utf-8'),
-                    zlib.Z_BEST_COMPRESSION)
+                failed_files = '\n'.join(stat["failed_sources"])
 
                 failed = len(stat["failed_sources"])
 
@@ -590,7 +577,7 @@ class MassStoreRun:
 
             analyzer_statistics = AnalyzerStatistic(
                 run_history_id, analyzer_type, analyzer_version,
-                successful, failed, compressed_files)
+                successful, failed, failed_files)
 
             session.add(analyzer_statistics)
 
@@ -602,13 +589,10 @@ class MassStoreRun:
         """ Store analysis info for the given run history. """
         for src_dir_path, mip in self.__mips.items():
             for analyzer_command in mip.check_commands:
-                cmd = zlib.compress(
-                    analyzer_command.encode("utf-8"),
-                    zlib.Z_BEST_COMPRESSION)
-
                 analysis_info_rows = session \
                     .query(AnalysisInfo) \
-                    .filter(AnalysisInfo.analyzer_command == cmd) \
+                    .filter(AnalysisInfo.analyzer_command ==
+                            analyzer_command) \
                     .all()
 
                 if analysis_info_rows:
@@ -618,7 +602,9 @@ class MassStoreRun:
                     # database. In this case we will select the first one.
                     analysis_info = analysis_info_rows[0]
                 else:
-                    analysis_info = AnalysisInfo(analyzer_command=cmd)
+                    analysis_info = AnalysisInfo(
+                        analyzer_command=analyzer_command)
+
                     session.add(analysis_info)
 
                 run_history.analysis_info.append(analysis_info)
