@@ -71,11 +71,20 @@ def for_each_with_ids(LOG,
     cols_to_query = [getattr(table_class, col) for col in affected_fields]
     LOG.info("Preparing to %s %d '%s' rows...",
              lower_infinitive, count, table_name)
-    for result in progress(id_query.all(), count, 100 // 5,
+
+    start = now()
+    all_ids = id_query.all()
+    end = now()
+    if (end - start).total_seconds() > 1:
+        LOG.warning("Head %s(%s): took %s",
+                    table_name, id_field, (end - start))
+
+    for result in progress(all_ids, count, 100 // 5,
                            callback=_print_progress):
         id_ = result[0]
+
         start = now()
-        obj = db.query(id_column, *cols_to_query) \
+        obj = db.query(*cols_to_query) \
             .filter(id_column == id_) \
             .one()
         fields = {col: getattr(obj, col) for col in affected_fields}
@@ -83,6 +92,7 @@ def for_each_with_ids(LOG,
         if (end - start).total_seconds() > 1:
             LOG.warning("Load %s(%s = %s): took %s",
                         table_name, id_field, id_, (end - start))
+
         start = now()
         fields_to_update = transform_one(id_, **fields)
         end = now()
@@ -134,15 +144,15 @@ def upgrade():
         def transform(id_, analyzer_command):
             if analyzer_command is None:
                 return {}
+
             start = now()
             new_analyzer_command = to_z_str(analyzer_command)
             end = now()
-            ret = {"analyzer_command": new_analyzer_command}
-
             if (end - start).total_seconds() > 1:
                 LOG.warning("Migrate '%s'.'%s' (ID = %s): took %s, original *COMPRESSED* size %s, new *COMPRESSED+TAGGED* size %s",
                             "analysis_info", "analyzer_command", id_, (end - start), len(analyzer_command), len(new_analyzer_command))
 
+            ret = {"analyzer_command": new_analyzer_command}
             return ret
 
         with_ids("analysis_info", "id", ["analyzer_command"], transform)
@@ -155,18 +165,20 @@ def upgrade():
                 start = now()
                 new_version = to_z_str(version)
                 end = now()
-                ret["version"] = new_version
                 if (end - start).total_seconds() > 1:
                     LOG.warning("Migrate '%s'.'%s' (ID = %s): took %s, original *COMPRESSED* size %s, new *COMPRESSED+TAGGED* size %s",
                                 "analyzer_statistics", "version", id_, (end - start), len(version), len(new_version))
+
+                ret["version"] = new_version
             if failed_files is not None:
                 start = now()
                 new_failed_files = to_z_str(failed_files)
                 end = now()
-                ret["failed_files"] = new_failed_files
                 if (end - start).total_seconds() > 1:
                     LOG.warning("Migrate '%s'.'%s' (ID = %s): took %s, original *COMPRESSED* size %s, new *COMPRESSED+TAGGED* size %s",
                                 "analyzer_statistics", "failed_files", id_, (end - start), len(failed_files), len(new_failed_files))
+
+                ret["failed_files"] = new_failed_files
 
             return ret
 
@@ -178,11 +190,11 @@ def upgrade():
             start = now()
             new_content = to_z_blob(content)
             end = now()
-            ret = {"content": new_content}
-
             if (end - start).total_seconds() > 1:
                 LOG.warning("Migrate '%s'.'%s' (contentHash = %s): took %s, original *COMPRESSED* size %s, new *COMPRESSED+TAGGED* size %s",
                             "file_contents", "content", content_hash, (end - start), len(content), len(new_content))
+
+            ret = {"content": new_content}
 
             if blame_info is not None:
                 start = now()
@@ -192,11 +204,11 @@ def upgrade():
                         cast(str, s))
                 )
                 end = now()
-                ret["blame_info"] = new_blame_info
-
                 if (end - start).total_seconds() > 1:
                     LOG.warning("Migrate '%s'.'%s' (contentHash = %s): took %s, original *COMPRESSED* size %s, new *COMPRESSED+TAGGED* size %s",
                                 "file_contents", "blame_info", content_hash, (end - start), len(blame_info), len(new_blame_info))
+
+                ret["blame_info"] = new_blame_info
 
             return ret
 
