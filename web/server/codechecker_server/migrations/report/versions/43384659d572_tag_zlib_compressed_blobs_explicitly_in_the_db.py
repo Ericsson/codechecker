@@ -12,12 +12,16 @@ down_revision = '9d956a0fae8d'
 branch_labels = None
 depends_on = None
 
+from datetime import datetime
+now = datetime.now
+
 import json
 from logging import getLogger
-from typing import Any, Callable
+from typing import Any, Callable, Dict, List, Optional, cast
 import zlib
 
 from alembic import op
+import sqlalchemy as sa
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.automap import automap_base
 
@@ -50,10 +54,12 @@ def for_each_with_ids(LOG,
                       upper_gerund: str,
                       db,
                       table_name: str,
-                      table_cls,
-                      id_field,
-                      process_one: Callable[[int, Any], None]):
-    id_query = db.query(id_field)
+                      table_class,
+                      id_field: str,
+                      affected_fields: List[str],
+                      transform_one):
+    id_column = getattr(table_class, id_field)
+    id_query = db.query(id_column)
     count = id_query.count()
     if not count:
         return
@@ -62,16 +68,44 @@ def for_each_with_ids(LOG,
         LOG.info("[%d/%d] %s '%s'... %.0f%% done.",
                  index, count, upper_gerund, table_name, percent)
 
+    cols_to_query = [getattr(table_class, col) for col in affected_fields]
     LOG.info("Preparing to %s %d '%s' rows...",
              lower_infinitive, count, table_name)
     for result in progress(id_query.all(), count, 100 // 5,
                            callback=_print_progress):
         id_ = result[0]
-        obj = db.query(table_cls).filter(id_field == id_).one()
-        process_one(id_, obj)
+        start = now()
+        obj = db.query(id_column, *cols_to_query) \
+            .filter(id_column == id_) \
+            .one()
+        fields = {col: getattr(obj, col) for col in affected_fields}
+        end = now()
+        if (end - start).total_seconds() > 1:
+            LOG.warning("Load %s(%s = %s): took %s",
+                        table_name, id_field, id_, (end - start))
+        start = now()
+        fields_to_update = transform_one(id_, **fields)
+        end = now()
+        if (end - start).total_seconds() > 1:
+            LOG.warning("Transform %s(%s = %s): took %s",
+                        table_name, id_field, id_, (end - start))
 
+        if fields_to_update:
+            start = now()
+            db.query(table_class) \
+                .filter(id_field == id_) \
+                .update(fields_to_update,
+                        synchronize_session=False)
+            end = now()
+            if (end - start).total_seconds() > 1:
+                LOG.warning("Store %s(%s = %s): took %s",
+                            table_name, id_field, id_, (end - start))
+
+    start = now()
     db.commit()
-    LOG.info("Done %s '%s'.", lower_gerund, table_name)
+    end = now()
+    LOG.info("Done %s '%s'. (COMMIT took %s)", lower_gerund, table_name,
+             (end - start))
 
 
 def upgrade():
@@ -82,60 +116,92 @@ def upgrade():
     # LargeBinary in this revision, so the Column type itself needs not be
     # modified, only the content values need migration.
     LOG = getLogger("migration/report")
-    dialect = op.get_context().dialect.name
     conn = op.get_bind()
     Base = automap_base()
     Base.prepare(conn, reflect=True)
     db = Session(bind=conn)
 
-    def with_ids(table_name: str, table_cls, id_field,
-                 process_one: Callable[[int, Any], None]):
+    def with_ids(table_name: str,
+                 id_field: str,
+                 affected_fields: List[str],
+                 transform_one):
+        table_class = getattr(Base.classes, table_name)
         for_each_with_ids(LOG, "upgrade", "upgrading", "Upgrading",
-                          db, table_name, table_cls, id_field, process_one)
+                          db, table_name, table_class, id_field,
+                          affected_fields, transform_one)
 
     def upgrade_analysis_info():
-        AnalysisInfo = Base.classes.analysis_info
+        def transform(id_, analyzer_command):
+            if analyzer_command is None:
+                return {}
+            start = now()
+            new_analyzer_command = to_z_str(analyzer_command)
+            end = now()
+            ret = {"analyzer_command": new_analyzer_command}
 
-        def process(_, analysis_info):
-            if analysis_info.analyzer_command is None:
-                return
-            analysis_info.analyzer_command = to_z_str(
-                analysis_info.analyzer_command)
-            db.flush()
+            if (end - start).total_seconds() > 1:
+                LOG.warning("Migrate '%s'.'%s' (ID = %s): took %s, original *COMPRESSED* size %s, new *COMPRESSED+TAGGED* size %s",
+                            "analysis_info", "analyzer_command", id_, (end - start), len(analyzer_command), len(new_analyzer_command))
 
-        with_ids("analysis_info", AnalysisInfo, AnalysisInfo.id, process)
+            return ret
+
+        with_ids("analysis_info", "id", ["analyzer_command"], transform)
 
     def upgrade_analyzer_statistics():
-        AnalyzerStatistic = Base.classes.analyzer_statistics
+        def transform(id_, version, failed_files):
+            ret = {}
 
-        def process(_, analyzer_statistic):
-            if analyzer_statistic.version is not None:
-                analyzer_statistic.version = to_z_str(
-                    analyzer_statistic.version)
-            if analyzer_statistic.failed_files is not None:
-                analyzer_statistic.failed_files = to_z_str(
-                    analyzer_statistic.failed_files)
+            if version is not None:
+                start = now()
+                new_version = to_z_str(version)
+                end = now()
+                ret["version"] = new_version
+                if (end - start).total_seconds() > 1:
+                    LOG.warning("Migrate '%s'.'%s' (ID = %s): took %s, original *COMPRESSED* size %s, new *COMPRESSED+TAGGED* size %s",
+                                "analyzer_statistics", "version", id_, (end - start), len(version), len(new_version))
+            if failed_files is not None:
+                start = now()
+                new_failed_files = to_z_str(failed_files)
+                end = now()
+                ret["failed_files"] = new_failed_files
+                if (end - start).total_seconds() > 1:
+                    LOG.warning("Migrate '%s'.'%s' (ID = %s): took %s, original *COMPRESSED* size %s, new *COMPRESSED+TAGGED* size %s",
+                                "analyzer_statistics", "failed_files", id_, (end - start), len(failed_files), len(new_failed_files))
 
-            if analyzer_statistic in db.dirty:
-                db.flush()
+            return ret
 
-        with_ids("analyzer_statistics", AnalyzerStatistic,
-                 AnalyzerStatistic.id, process)
+        with_ids("analyzer_statistics", "id", ["version", "failed_files"],
+                 transform)
 
     def upgrade_file_contents():
-        FileContent = Base.classes.file_contents
+        def transform(content_hash, content, blame_info):
+            start = now()
+            new_content = to_z_blob(content)
+            end = now()
+            ret = {"content": new_content}
 
-        def process(_, file_content):
-            file_content.content = to_z_blob(file_content.content)
-            if file_content.blame_info is not None:
-                file_content.blame_info = \
-                    migrate_zlib.upgrade_zlib_serialised(
-                        file_content.blame_info, ZJSON,
-                        original_deserialisation_fn=lambda s: json.loads(s))
-            db.flush()
+            if (end - start).total_seconds() > 1:
+                LOG.warning("Migrate '%s'.'%s' (contentHash = %s): took %s, original *COMPRESSED* size %s, new *COMPRESSED+TAGGED* size %s",
+                            "file_contents", "content", content_hash, (end - start), len(content), len(new_content))
 
-        with_ids("file_contents", FileContent, FileContent.content_hash,
-                 process)
+            if blame_info is not None:
+                start = now()
+                new_blame_info = migrate_zlib.upgrade_zlib_serialised(
+                    blame_info, ZJSON,
+                    original_deserialisation_fn=lambda s: json.loads(
+                        cast(str, s))
+                )
+                end = now()
+                ret["blame_info"] = new_blame_info
+
+                if (end - start).total_seconds() > 1:
+                    LOG.warning("Migrate '%s'.'%s' (contentHash = %s): took %s, original *COMPRESSED* size %s, new *COMPRESSED+TAGGED* size %s",
+                                "file_contents", "blame_info", content_hash, (end - start), len(blame_info), len(new_blame_info))
+
+            return ret
+
+        with_ids("file_contents", "content_hash", ["content", "blame_info"],
+                 transform)
 
     upgrade_analysis_info()
     upgrade_analyzer_statistics()
@@ -147,61 +213,60 @@ def downgrade():
     # ZLibCompressed feature. The actual LargeBinary type of the Column needs
     # no modification, only the values.
     LOG = getLogger("migration/report")
-    dialect = op.get_context().dialect.name
     conn = op.get_bind()
     Base = automap_base()
     Base.prepare(conn, reflect=True)
     db = Session(bind=conn)
 
-    def with_ids(table_name: str, table_cls, id_field,
-                 process_one: Callable[[int, Any], None]):
+    def with_ids(table_name: str,
+                 id_field: str,
+                 affected_fields: List[str],
+                 transform_one):
+        table_class = getattr(Base.classes, table_name)
         for_each_with_ids(LOG, "downgrade", "downgrading", "Downgrading",
-                          db, table_name, table_cls, id_field, process_one)
+                          db, table_name, table_class, id_field,
+                          affected_fields, transform_one)
 
     def downgrade_analysis_info():
-        AnalysisInfo = Base.classes.analysis_info
+        def transform(_, analyzer_command):
+            if analyzer_command is None:
+                return {}
+            return {"analyzer_command": to_raw(analyzer_command)}
 
-        def process(_, analysis_info):
-            if analysis_info.analyzer_command is None:
-                return
-            analysis_info.analyzer_command = to_raw(
-                analysis_info.analyzer_command)
-            db.flush()
-
-        with_ids("analysis_info", AnalysisInfo, AnalysisInfo.id, process)
+        with_ids("analysis_info","id", ["analyzer_command"], transform)
 
     def downgrade_analyzer_statistics():
-        AnalyzerStatistic = Base.classes.analyzer_statistics
+        def transform(_, version, failed_files):
+            ret = {}
 
-        def process(_, analyzer_statistic):
-            if analyzer_statistic.version is not None:
-                analyzer_statistic.version = to_raw(
-                    analyzer_statistic.version)
-            if analyzer_statistic.failed_files is not None:
-                analyzer_statistic.failed_files = to_raw(
-                    analyzer_statistic.failed_files)
+            if version is not None:
+                ret["version"] = to_raw(version)
+            if failed_files is not None:
+                ret["failed_files"] = to_raw(failed_files)
 
-            if analyzer_statistic in db.dirty:
-                db.flush()
+            return ret
 
-        with_ids("analyzer_statistics", AnalyzerStatistic,
-                 AnalyzerStatistic.id, process)
+        with_ids("analyzer_statistics", "id", ["version", "failed_files"],
+                 transform)
 
     def downgrade_file_contents():
-        FileContent = Base.classes.file_contents
+        def transform(_, content, blame_info):
+            ret = {"content": to_raw(content)}
 
-        def process(_, file_content):
-            file_content.content = to_raw(file_content.content)
-            if file_content.blame_info:
-                file_content.blame_info = \
-                    migrate_zlib.downgrade_zlib_serialised(
-                        file_content.blame_info, ZJSON,
-                        original_serialisation_fn=lambda o: json.dumps(o),
-                        compression_level=zlib.Z_BEST_COMPRESSION)
-            db.flush()
+            if blame_info is not None:
+                ret["blame_info"] = \
+                    cast(bytes,
+                         migrate_zlib.downgrade_zlib_serialised(
+                             blame_info, ZJSON,
+                             original_serialisation_fn=lambda o:
+                             json.dumps(o),
+                             compression_level=zlib.Z_BEST_COMPRESSION)
+                         )
 
-        with_ids("file_contents", FileContent, FileContent.content_hash,
-                 process)
+            return ret
+
+        with_ids("file_contents", "content_hash", ["content", "blame_info"],
+                 transform)
 
     downgrade_analysis_info()
     downgrade_analyzer_statistics()

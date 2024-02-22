@@ -51,11 +51,6 @@ def upgrade_zlib_serialised(
     deserialisation function of ``zlib_type``) to a pure object. Following,
     it is serialised and stored through the type adaptor.
 
-    This method is cheap. No searching for the original compression level is
-    performed, because it is highly likely that the customised and optimised
-    serialisation functions embedded in the ZLib type adaptors will not match
-    whatever the original value contained for the vast majority of inputs.
-
     This function uses whichever ``compression_level`` the ``zlib_type`` was
     instantiated with.
     """
@@ -78,11 +73,6 @@ def downgrade_zlib_tagged_to_raw(value: bytes) -> bytes:
     The downgrade process purposefully does not use the routines that would
     validate the ``kind`` of the tagged buffer, as that metadata is only
     useful for the type decorator and does not affect payload representation.
-
-    This method is cheap, as during decompression, the compression_level
-    is not relevant information for the algorithm itself. There might be
-    performance pros and cons when comparing different compression levels,
-    but the discussion and the evidence for such is inconclusive.
     """
     payload_start, _, _ = _default_zlib_type._parse_tag(value)
     return value[payload_start:]
