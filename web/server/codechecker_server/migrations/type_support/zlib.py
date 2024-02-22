@@ -27,32 +27,13 @@ def upgrade_zlib_raw_to_tagged(
     ``kind`` appropriate for the given ``zlib_type`` ``ZLibCompressed`` type
     decorator.
 
-    This method is costly as it searches for the exact compression level that
-    was originally used by performing up to 11 rounds of re-encoding
-    internally until the right compression level is figured out.
-    Unfortunately, there are no good and deterministic ways to recover this
-    information in a single go by observing an already compressed buffer.
-
-    The exact compression level might not be found, e.g., if the zlib version
-    used to encode the original 'value' no longer matches what is available
-    on the current machine, and all possible compression levels produce a
-    different result than what was originally present. In this case,
-    ``zlib.Z_BEST_COMPRESSION`` will be used for the re-compressed buffer.
+    The ``value`` is first decompressed using the native ``zlib`` library,
+    and then recompressed according to the ``compression_level`` of the
+    ``zlib_type``. Then, the type-appropriate value prefix is prepended.
     """
     buffer = zlib.decompress(value)
-
-    def _compress_attempt(level: int) -> Tuple[bool, bytes]:
-        compressed = zlib.compress(buffer, level)
-        return (compressed == value, compressed)
-
-    for compression_level in reversed(range(zlib.Z_DEFAULT_COMPRESSION,
-                                            zlib.Z_BEST_COMPRESSION)):
-        success, compressed = _compress_attempt(compression_level)
-        if success:
-            return zlib_type._encode(compressed)
-    else:
-        return zlib_type._encode(zlib.compress(buffer,
-                                               zlib.Z_BEST_COMPRESSION))
+    recompressed = zlib.compress(buffer, zlib_type.compression_level)
+    return zlib_type._encode(recompressed)
 
 
 def upgrade_zlib_serialised(
