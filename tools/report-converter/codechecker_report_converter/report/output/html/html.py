@@ -251,7 +251,11 @@ class HtmlBuilder:
                 'notes': to_bug_path_events(report.notes),
                 'reviewStatus': report.review_status.formatted_status()
                 if report.review_status else '',
-                'severity': self.get_severity(report.checker_name)
+                'severity': self.get_severity(report.checker_name),
+                'testcase': report.annotations.get('testcase') \
+                    if report.annotations else None,
+                'timestamp': report.annotations.get('timestamp') \
+                    if report.annotations else None
             })
 
         return html_reports, files
@@ -302,6 +306,7 @@ class HtmlBuilder:
             for report in reports:
                 html_report_links.append({'link': html_file, 'report': report})
 
+        print(html_report_links)
         table_reports = map(lambda data: {
             'link': data['link'],
             'file-path': data['report']['fileId'],
@@ -312,7 +317,9 @@ class HtmlBuilder:
             'message': data['report']['message'],
             'review-status': data['report']['reviewStatus'],
             'severity': data['report']['severity'],
-            'bug-path-length': len(data['report']['events'])
+            'bug-path-length': len(data['report']['events']),
+            'testcase': data['report']['testcase'],
+            'timestamp': data['report']['timestamp']
         }, html_report_links)
 
         self._tag_contents['table_reports'] = json.dumps(list(table_reports))
