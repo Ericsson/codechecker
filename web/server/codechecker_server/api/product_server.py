@@ -376,7 +376,8 @@ class ThriftProductHandler:
                 msg)
 
         conn_str = SQLServer \
-            .from_cmdline_args(conn_str_args, IDENTIFIER, None, False, None) \
+            .from_cmdline_args(conn_str_args, product.endpoint, IDENTIFIER,
+                               None, False, None) \
             .get_connection_string()
 
         is_rws_change_disabled = product.isReviewStatusChangeDisabled
@@ -534,8 +535,9 @@ class ThriftProductHandler:
                     msg)
 
             conn_str = SQLServer \
-                .from_cmdline_args(conn_str_args, IDENTIFIER, None,
-                                   False, None).get_connection_string()
+                .from_cmdline_args(conn_str_args, product.endpoint,
+                                   IDENTIFIER, None, False, None) \
+                .get_connection_string()
 
             # If endpoint or database arguments change, the product
             # configuration has changed so severely, that it needs

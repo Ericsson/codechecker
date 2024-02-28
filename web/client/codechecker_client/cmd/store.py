@@ -42,10 +42,10 @@ from codechecker_client import client as libclient
 from codechecker_client import product
 from codechecker_common import arg, logger, cmd_config
 from codechecker_common.checker_labels import CheckerLabels
+from codechecker_common.compatibility.multiprocessing import Pool
 from codechecker_common.source_code_comment_handler import \
     SourceCodeCommentHandler
 from codechecker_common.util import load_json
-from codechecker_common.multiprocesspool import MultiProcessPool
 
 from codechecker_web.shared import webserver_context, host_check
 from codechecker_web.shared.env import get_default_workspace
@@ -53,7 +53,13 @@ from codechecker_web.shared.env import get_default_workspace
 try:
     from codechecker_client.blame_info import assemble_blame_info
 except ImportError:
-    pass
+    def assemble_blame_info(_, __) -> int:
+        """
+        Shim for cases where Git blame info is not gatherable due to
+        missing libraries.
+        """
+        raise NotImplementedError()
+
 
 LOG = logger.get_logger('system')
 
@@ -371,7 +377,7 @@ def filter_source_files_with_comments(
     """
     jobs = file_report_positions.items()
 
-    with MultiProcessPool() as executor:
+    with Pool() as executor:
         return get_source_file_with_comments(jobs, executor.map)
 
 
@@ -447,7 +453,7 @@ def assemble_zip(inputs,
 
     LOG.debug("Processing report files ...")
 
-    with MultiProcessPool() as executor:
+    with Pool() as executor:
         analyzer_result_file_reports = parse_analyzer_result_files(
              analyzer_result_file_paths, checker_labels, executor.map)
 
@@ -562,14 +568,13 @@ def assemble_zip(inputs,
                     zipf, file_paths)
 
                 if stats.num_of_blame_information:
-                    LOG.info("Collecting blame information done.")
+                    LOG.info("Collecting blame information... Done.")
                 else:
                     LOG.info("No blame information found for source files.")
-            except NameError:
+            except NotImplementedError:
                 LOG.warning(
-                    "Collecting blame information has been failed. Make sure "
-                    "'git' is available on your system to hide this warning "
-                    "message.")
+                    "Failed to collect blame information. Make sure Git is "
+                    "installed on your system.")
 
         zipf.writestr('content_hashes.json', json.dumps(file_to_hash))
 

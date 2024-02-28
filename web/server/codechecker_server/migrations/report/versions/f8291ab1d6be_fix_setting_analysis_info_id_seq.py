@@ -1,18 +1,19 @@
-"""Fix setting analysis_info_id_seq
+"""
+Fix setting analysis_info_id_seq
 
 Revision ID: f8291ab1d6be
-Revises: a24461972d2e
+Revises:     a24461972d2e
 Create Date: 2021-07-15 16:49:05.354455
-
 """
 
-# revision identifiers, used by Alembic.
+from alembic import op
+
+
+# Revision identifiers, used by Alembic.
 revision = 'f8291ab1d6be'
 down_revision = 'a24461972d2e'
 branch_labels = None
 depends_on = None
-
-from alembic import op
 
 
 def upgrade():
@@ -26,3 +27,8 @@ def upgrade():
                 (SELECT MAX(id) + 1 FROM analysis_info)
             )
         """)
+
+
+def downgrade():
+    # Allow downgrading this revision, but this requires no actions.
+    pass

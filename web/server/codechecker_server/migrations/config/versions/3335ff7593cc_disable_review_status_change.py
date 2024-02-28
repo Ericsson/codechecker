@@ -1,19 +1,19 @@
-"""Disable review status change
+"""
+Disable review_status change
 
 Revision ID: 3335ff7593cc
-Revises: 4964142b58d2
+Revises:     4964142b58d2
 Create Date: 2018-11-29 14:16:58.170551
-
 """
 
-# revision identifiers, used by Alembic.
+from alembic import op
+import sqlalchemy as sa
+
+# Revision identifiers, used by Alembic.
 revision = '3335ff7593cc'
 down_revision = '4964142b58d2'
 branch_labels = None
 depends_on = None
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

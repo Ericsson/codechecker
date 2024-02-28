@@ -1,19 +1,20 @@
-"""Extended report data
+"""
+Extended report data
 
 Revision ID: 40112fd406e3
-Revises: 39f9e96071c0
+Revises:     39f9e96071c0
 Create Date: 2018-11-15 11:06:36.318406
-
 """
 
-# revision identifiers, used by Alembic.
+from alembic import op
+import sqlalchemy as sa
+
+
+# Revision identifiers, used by Alembic.
 revision = '40112fd406e3'
 down_revision = '39f9e96071c0'
 branch_labels = None
 depends_on = None
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():
@@ -31,18 +32,24 @@ def upgrade():
                     sa.Column('line_end', sa.Integer(), nullable=True),
                     sa.Column('col_end', sa.Integer(), nullable=True),
                     sa.Column('message', sa.String(), nullable=True),
-                    sa.ForeignKeyConstraint(['file_id'], ['files.id'],
+                    sa.ForeignKeyConstraint(
+                        ['file_id'], ['files.id'],
                         name=op.f('fk_extended_report_data_file_id_files'),
                         ondelete='CASCADE',
                         initially='DEFERRED',
-                        deferrable=True),
-                    sa.ForeignKeyConstraint(['report_id'], ['reports.id'],
+                        deferrable=True
+                    ),
+                    sa.ForeignKeyConstraint(
+                        ['report_id'], ['reports.id'],
                         name=op.f('fk_extended_report_data_report_id_reports'),
                         ondelete='CASCADE',
                         initially='DEFERRED',
-                        deferrable=True),
-                    sa.PrimaryKeyConstraint('id',
-                        name=op.f('pk_extended_report_data')))
+                        deferrable=True
+                    ),
+                    sa.PrimaryKeyConstraint(
+                        'id',
+                        name=op.f('pk_extended_report_data'))
+                    )
 
     op.create_index(op.f('ix_extended_report_data_file_id'),
                     'extended_report_data', ['file_id'], unique=False)

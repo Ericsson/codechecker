@@ -1,19 +1,21 @@
-"""Off and unavailable detection statuses
+"""
+'off' and 'unavailable' detection statuses
 
 Revision ID: 3e91d0612422
-Revises: 40112fd406e3
+Revises:     40112fd406e3
 Create Date: 2018-12-19 11:16:57.107510
-
 """
 
-# revision identifiers, used by Alembic.
+from alembic import op
+import sqlalchemy as sa
+
+
+# Revision identifiers, used by Alembic.
 revision = '3e91d0612422'
 down_revision = '40112fd406e3'
 branch_labels = None
 depends_on = None
 
-from alembic import op
-import sqlalchemy as sa
 
 table_name = 'reports'
 name = 'detection_status'
@@ -46,7 +48,9 @@ def upgrade():
     elif dialect == 'sqlite':
         op.execute('PRAGMA foreign_keys=off')
         with op.batch_alter_table('reports') as batch_op:
-            batch_op.alter_column(name, existing_type=old_type, type_=new_type)
+            batch_op.alter_column(name,
+                                  existing_type=old_type,
+                                  type_=new_type)
         op.execute('PRAGMA foreign_keys=on')
 
 
@@ -70,5 +74,7 @@ def downgrade():
     elif dialect == 'sqlite':
         op.execute('PRAGMA foreign_keys=off')
         with op.batch_alter_table('reports') as batch_op:
-            batch_op.alter_column(name, existing_type=new_type, type_=old_type)
+            batch_op.alter_column(name,
+                                  existing_type=new_type,
+                                  type_=old_type)
         op.execute('PRAGMA foreign_keys=on')
