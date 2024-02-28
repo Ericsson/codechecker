@@ -291,8 +291,8 @@ having to manually activate the environment before running CodeChecker.
 ### Upgrading environment after system or Python upgrade
 
 If you have upgraded your system's Python to a newer version (e.g., from
-`2.7.6` to `2.7.12` &ndash; this is the case when upgrading Ubuntu from
-14.04.2 LTS to 16.04.1 LTS), the installed environment will not work
+`3.8` to `3.11` &ndash; this is the case when upgrading Ubuntu from
+20.04 LTS to 22.04 LTS), the installed environment will not work
 out-of-the-box. To fix this issue, run the following command to upgrade your
 `checker_env` too:
 
@@ -399,44 +399,6 @@ Store your analysis reports onto the server to be able to use the Web Viewer.
 
 Open the [CodeChecker Web Viewer](http://localhost:8001) in your browser, and
 you should be greeted with a web application showing you the analysis results.
-
-# Important environmental limitations
-
-## Python 2 and older Python 3 releases
-
-CodeChecker has been ported completely to Python **3**.
-**No Python 2 support is planned.**
-You will need at least Python version **`3.8`**.
-Old virtual environments that were created with a Python 2 interpreter need to
-be removed.
-
-### Upgrading environment after system or Python upgrade
-
-If you have upgraded your system's Python to a newer version (e.g., from
-`2.7` to `3.8` &ndash; this is the case when upgrading Ubuntu from 14.04 LTS
-to 20.04 LTS), the installed environment will not work out-of-the-box. To fix
-this issue, run the following command to upgrade your `checker_env` too:
-
-```sh
-cd ~/codechecker/venv
-python3 -m venv .
-```
-
-
-## Older Clang versions
-
-Clang `3.6` or earlier releases are **NOT** supported due to CodeChecker
-relying on features not available in those releases.
-
-If you have Clang `3.7` installed you might see the following warning message:
-
-> Hash value wasn't found in the plist file.
-
-Use Clang `>= 3.8` or SVN trunk `r251011` / Git commit
-[`efec163`](http://github.com/llvm/llvm-project)  &mdash; otherwise,
-CodeChecker generates a simple hash based on the filename and the line content.
-This method is applied for Clang-Tidy results too, because Clang-Tidy does not
-support bug identifier hash generation currently.
 
 
 ## Developer documentations
