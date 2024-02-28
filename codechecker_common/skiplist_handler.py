@@ -55,7 +55,7 @@ class SkipListHandler:
         for skip_line in skip_lines:
             norm_skip_path = os.path.normpath(skip_line[1:].strip())
             rexpr = re.compile(
-                fnmatch.translate(norm_skip_path + '*'))
+                fnmatch.translate('*' + norm_skip_path + '*'))
             self.__skip.append((skip_line, rexpr))
 
     def __check_line_format(self, skip_lines):
@@ -94,6 +94,7 @@ class SkipListHandler:
         Check if the given source should be skipped.
         Should the analyzer skip the given source file?
         """
+
         if not self.__skip:
             return False
 
