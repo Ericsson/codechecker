@@ -669,10 +669,10 @@ class Product:
         LOG.info("Garbage collection for product '%s' started...",
                  self.endpoint)
 
-        db_cleanup.remove_expired_run_locks(self.session_factory)
+        db_cleanup.remove_expired_data(self.session_factory)
         db_cleanup.remove_unused_data(self.session_factory)
-        db_cleanup.upgrade_severity_levels(self.session_factory,
-                                           self.__context.checker_labels)
+        db_cleanup.update_contextual_data(self.session_factory,
+                                          self.__context)
 
         LOG.info("Garbage collection finished.")
         return True

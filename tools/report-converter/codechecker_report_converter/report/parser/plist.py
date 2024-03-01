@@ -26,8 +26,13 @@ if sys.version_info >= (3, 8):
 else:
     from mypy_extensions import TypedDict
 
-from codechecker_report_converter.report import BugPathEvent, \
-    BugPathPosition, File, get_or_create_file, MacroExpansion, Range, Report
+from codechecker_report_converter.report import \
+    BugPathEvent, BugPathPosition, \
+    File, \
+    MacroExpansion, \
+    Range, Report, \
+    UnknownChecker, \
+    get_or_create_file
 from codechecker_report_converter.report.hash import get_report_hash, HashType
 from codechecker_report_converter.report.parser.base import AnalyzerInfo, \
     BaseParser, get_tool_info
@@ -242,8 +247,8 @@ class Parser(BaseParser):
         files: Dict[int, File],
         metadata: Dict[str, Any]
     ) -> Report:
-        location = diag.get('location', {})
-        checker_name = diag.get('check_name', "unknown")
+        location = diag.get("location", {})
+        checker_name = diag.get("check_name", UnknownChecker[1])
         analyzer_name = self.__get_analyzer_name(checker_name, metadata)
         severity = self.get_severity(checker_name)
 

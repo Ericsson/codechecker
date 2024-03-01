@@ -56,6 +56,11 @@ def upgrade():
             batch_op.add_column(col_rs_message)
         op.execute('PRAGMA foreign_keys=on')
 
+        # FIXME: "UPDATE ... SET ... FROM ..." is only supported starting
+        # with SQLite version 3.33.0 (2020-08-14). Until this version
+        # reaches LTS maturity (Ubuntu 20.04 LTS comes with 3.31.0, raising
+        # a syntax error on the "FROM" in the "UPDATE" query), this
+        # branching here needs to stay.
         conn.execute("""
             UPDATE reports
             SET (review_status, review_status_author, review_status_date, review_status_message) =

@@ -16,10 +16,10 @@ import zipfile
 import zlib
 
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 from hashlib import sha256
 from tempfile import TemporaryDirectory
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, Union, cast
 
 import codechecker_api_shared
 from codechecker_api.codeCheckerDBAccess_v6 import ttypes
@@ -31,16 +31,21 @@ from codechecker_common.review_status_handler import ReviewStatusHandler, \
 from codechecker_common.util import load_json, path_for_fake_root
 
 from codechecker_report_converter.util import trim_path_prefixes
-from codechecker_report_converter.report import report_file, Report
+from codechecker_report_converter.report import \
+    FakeChecker, Report, UnknownChecker, report_file
 from codechecker_report_converter.report.hash import get_report_path_hash
 
 from ..database import db_cleanup
 from ..database.config_db_model import Product
 from ..database.database import DBSession
-from ..database.run_db_model import AnalysisInfo, AnalyzerStatistic, \
-    BugPathEvent, BugReportPoint, ReportAnnotations, ExtendedReportData, \
-    File, FileContent, Report as DBReport, ReviewStatus as ReviewStatusRule, \
-    Run, RunHistory, RunLock
+from ..database.run_db_model import \
+    AnalysisInfo, AnalysisInfoChecker, AnalyzerStatistic, \
+    BugPathEvent, BugReportPoint, \
+    Checker, \
+    ExtendedReportData, \
+    File, FileContent, \
+    Report as DBReport, ReportAnnotations, ReviewStatus as ReviewStatusRule, \
+    Run, RunLock, RunHistory
 from ..metadata import checker_is_unavailable, MetadataInfoParser
 
 from .report_server import ThriftRequestHandler
@@ -61,8 +66,40 @@ class LogTask:
         LOG.info("[%s] %s...", self.__run_name, self.__msg)
 
     def __exit__(self, *args):
-        LOG.info("[%s] %s done... (duration: %s sec)", self.__run_name,
+        LOG.info("[%s] %s. Done. (Duration: %s sec)", self.__run_name,
                  self.__msg, round(time.time() - self.__start_time, 2))
+
+
+class RunLocking:
+    def __init__(self, session: DBSession, run_name: str):
+        self.__session = session
+        self.__run_name = run_name
+
+    def __enter__(self, *args):
+        # Load the lock record for "FOR UPDATE" so that the transaction that
+        # handles the run's store operations has a lock on the database row
+        # itself.
+        self.__run_lock = self.__session.query(RunLock) \
+            .filter(RunLock.name == self.__run_name) \
+            .with_for_update(nowait=True) \
+            .one()
+
+        # Do *NOT* remove this seemingly dummy print. The query functions on
+        # result in a **proxy** object, essentially a weak pointer, without(!)
+        # the execution of any underlying SQL statements. Which means that
+        # without the evaluation of the member of this query (with the
+        # . operator) there would be no actual DBMS-level lock in place.
+        # (Not having debug logs enabled is not a problem: the evaluation of
+        # the arguments still take place even if the logging configuration
+        # prevents the actual printing of the log line.)
+        LOG.debug("Acquired exclusive lock for run '%s' that was originally "
+                  "locked at '%s'.",
+                  self.__run_name, self.__run_lock.locked_at)
+        return self
+
+    def __exit__(self, *args):
+        self.__run_lock = None
+        self.__session = None
 
 
 def unzip(b64zip: str, output_dir: str) -> int:
@@ -191,6 +228,11 @@ def get_blame_file_data(
     return blame_info, remote_url, tracking_branch
 
 
+def checker_name_for_report(report: Report) -> Tuple[str, str]:
+    return (report.analyzer_name or UnknownChecker[0],
+            report.checker_name or UnknownChecker[1])
+
+
 class MassStoreRun:
     def __init__(
         self,
@@ -214,17 +256,21 @@ class MassStoreRun:
         self.__trim_path_prefixes = trim_path_prefixes
         self.__description = description
 
-        self.__mips: Dict[str, MetadataInfoParser] = {}
-        self.__analysis_info: Dict[str, AnalysisInfo] = {}
+        self.__mips: Dict[str, MetadataInfoParser] = dict()
+        self.__analysis_info: Dict[str, AnalysisInfo] = dict()
+        self.__checker_row_cache: Dict[Tuple[str, str], Checker] = dict()
         self.__duration: int = 0
         self.__report_count: int = 0
         self.__report_limit: int = 0
-        self.__wrong_src_code_comments: List[str] = []
+        self.__wrong_src_code_comments: List[str] = list()
         self.__already_added_report_hashes: Set[str] = set()
-        self.__severity_map: Dict[str, int] = {}
-        self.__new_report_hashes: Dict[str, Tuple] = {}
+        self.__new_report_hashes: Dict[str, Tuple] = dict()
         self.__all_report_checkers: Set[str] = set()
         self.__added_reports: List[Tuple[DBReport, Report]] = list()
+        self.__reports_with_fake_checkers: Dict[
+            # Either a DBReport *without* an ID, or the ID of a committed
+            # DBReport.
+            str, Tuple[Report, Union[DBReport, int]]] = dict()
 
         self.__get_report_limit_for_product()
 
@@ -529,6 +575,69 @@ class MassStoreRun:
                 # the meantime.
                 session.rollback()
 
+    def __store_checker_identifiers(self, checkers: Set[Tuple[str, str]]):
+        """
+        Stores the identifiers "(analyzer, checker_name)" in the database into
+        a look-up table where each unique checker is given a unique numeric
+        identifier.
+
+        Due to the use of an M-to-N connection table
+        (see `AnalysisInfoChecker`) one side of the joins must have their IDs
+        eagerly populated, otherwise the Python bindings will fail.
+        However, eager population will result in exceptions that a flush was
+        created before the transaction was complete.
+
+        Moreover, this is performed separately from the storing of the details
+        of a run to reduce contention if two parallel stores, especially across
+        server instances (in a distributed/load-balanced environment) want to
+        store the same identifier(s).
+        """
+        max_tries, tries, wait_time = 3, 0, timedelta(seconds=30)
+        # The "fake" checker is a temporary row that is needed intermittently
+        # during report storage because there might be reports that point to
+        # checkers which are not found in a preemptively parsed
+        # 'metadata.json', or, in the worst case, there might simply not be
+        # a 'metadata.json' at all in the to-be-stored structure.
+        all_checkers = {FakeChecker, UnknownChecker} | checkers
+        while tries < max_tries:
+            tries += 1
+            try:
+                LOG.debug("[%s] Begin attempt %d...", self.__name, tries)
+                with DBSession(self.__Session) as session:
+                    known_checkers = {(r.analyzer_name, r.checker_name)
+                                      for r in session
+                                      .query(Checker.analyzer_name,
+                                             Checker.checker_name)
+                                      .all()}
+                    for analyzer, checker in \
+                            sorted(all_checkers - known_checkers):
+                        s = self.__context.checker_labels.severity(checker)
+                        s = ttypes.Severity._NAMES_TO_VALUES[s]
+                        session.add(Checker(analyzer, checker, s))
+                        LOG.debug("Acquiring ID for checker '%s/%s' "
+                                  "for the first time.", analyzer, checker)
+
+                    session.commit()
+                    return
+            except (sqlalchemy.exc.OperationalError,
+                    sqlalchemy.exc.ProgrammingError) as ex:
+                LOG.error("Storing checkers of run '%s' failed: %s.\n"
+                          "Waiting %d before trying again...",
+                          self.__name, ex, wait_time)
+                time.sleep(wait_time.total_seconds())
+                wait_time *= 2
+            except Exception as ex:
+                LOG.error("Failed to store checkers due to some other error: "
+                          "%s", ex)
+                import traceback
+                traceback.print_exc()
+                raise
+
+        raise codechecker_api_shared.ttypes.RequestFailed(
+            codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+            "Storing the names of the checkers in the run failed due to "
+            "excessive contention!")
+
     def __store_analysis_statistics(
         self,
         session: DBSession,
@@ -619,7 +728,24 @@ class MassStoreRun:
                     analysis_info = analysis_info_rows[0]
                 else:
                     analysis_info = AnalysisInfo(analyzer_command=cmd)
+
+                    # Obtain the ID eagerly to be able to use the M-to-N table.
                     session.add(analysis_info)
+                    session.flush()
+                    session.refresh(analysis_info, ["id"])
+
+                    for analyzer in mip.analyzers:
+                        q = session \
+                            .query(Checker) \
+                            .filter(Checker.analyzer_name == analyzer)
+                        db_checkers = {r.checker_name: r for r in q.all()}
+
+                        connection_rows = [AnalysisInfoChecker(
+                            analysis_info, db_checkers[chk], is_enabled)
+                            for chk, is_enabled
+                            in mip.checkers.get(analyzer, dict()).items()]
+                        for r in connection_rows:
+                            session.add(r)
 
                 run_history.analysis_info.append(analysis_info)
                 self.__analysis_info[src_dir_path] = analysis_info
@@ -718,59 +844,154 @@ class MassStoreRun:
                 codechecker_api_shared.ttypes.ErrorCode.GENERAL,
                 str(ex))
 
+    def __get_checker(self,
+                      session: DBSession,
+                      analyzer_name: str,
+                      checker_name: str) -> Optional[Checker]:
+        try:
+            return self.__checker_row_cache[(analyzer_name, checker_name)]
+        except KeyError:
+            maybe_orm: Optional[Checker] = session.query(Checker) \
+                .filter(sqlalchemy.and_(
+                    Checker.analyzer_name == analyzer_name,
+                    Checker.checker_name == checker_name)) \
+                .one_or_none()
+            if maybe_orm:
+                self.__checker_row_cache[(analyzer_name, checker_name)] = \
+                    cast(Checker, maybe_orm)
+            return maybe_orm
+
+    def __checker_for_report(self,
+                             session: DBSession,
+                             report: Report) -> Optional[Checker]:
+        analyzer_name, checker_name = checker_name_for_report(report)
+        return self.__get_checker(session, analyzer_name, checker_name)
+
     def __add_report(
         self,
         session: DBSession,
         run_id: int,
         report: Report,
+        report_path_hash: str,
         file_path_to_id: Dict[str, int],
         review_status: SourceReviewStatus,
         detection_status: str,
         detection_time: datetime,
         run_history_time: datetime,
-        analysis_info: AnalysisInfo,
-        analyzer_name: Optional[str] = None,
+        analysis_info: Optional[AnalysisInfo],
         fixed_at: Optional[datetime] = None
     ) -> int:
         """ Add report to the database. """
         try:
-            checker_name = report.checker_name
-
-            # Cache the severity of the checkers
-            try:
-                severity = self.__severity_map[checker_name]
-            except KeyError:
-                severity_name = \
-                    self.__context.checker_labels.severity(checker_name)
-                severity = ttypes.Severity._NAMES_TO_VALUES[severity_name]
-                self.__severity_map[checker_name] = severity
+            checker = self.__checker_for_report(session, report)
+            if not checker:
+                # It would be too easy to create a 'Checker' instance with the
+                # observed data right here, but __add_report() is called in
+                # the context of the *BIG* TRANSACTION which has all the
+                # reports of the entire store pending. Losing all that
+                # information on a potential UNIQUE CONSTRAINT violation due
+                # to multiple concurrent massStoreRun()s trying to store the
+                # same checker ID which was never seen in a 'metadata.json' is
+                # not worth it.
+                checker = self.__get_checker(session,
+                                             FakeChecker[0], FakeChecker[1])
+                if not checker:
+                    LOG.fatal("Psuedo-checker '%s/%s' has no "
+                              "identity in the database, even though "
+                              "__store_checker_identifiers() should have "
+                              "always preemptively created it!",
+                              FakeChecker[0], FakeChecker[1])
+                    raise KeyError(FakeChecker[1])
 
             db_report = DBReport(
-                run_id, report.report_hash, file_path_to_id[report.file.path],
-                report.message, checker_name or 'NOT FOUND',
-                report.category, report.type, report.line, report.column,
-                severity, review_status.status, review_status.author,
+                file_path_to_id[report.file.path], run_id, report.report_hash,
+                checker, report.line, report.column,
+                len(report.bug_path_events), report.message, detection_status,
+                review_status.status, review_status.author,
                 review_status.message, run_history_time,
-                review_status.in_source,
-                detection_status, detection_time,
-                len(report.bug_path_events), analyzer_name)
-
-            db_report.fixed_at = fixed_at
-
+                review_status.in_source, detection_time, fixed_at)
             if analysis_info:
                 db_report.analysis_info.append(analysis_info)
 
             session.add(db_report)
             self.__added_reports.append((db_report, report))
+            if db_report.checker.checker_name == FakeChecker[1]:
+                self.__reports_with_fake_checkers[report_path_hash] = \
+                    (report, db_report)
 
-            # THE id is none at this point of time
-            # wondering if not returning anything is good?
-            # The report is already handled at the above lines
             return db_report.id
 
         except Exception as ex:
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.GENERAL,
+                str(ex))
+
+    def __get_faked_checkers(self) \
+            -> Set[Tuple[str, str]]:
+        """
+        Extracts the "real" checker identifiers from the
+        __reports_with_fake_checkers that might contain some yet not fully
+        handled reports by __add_report(). This function does NOT touch the
+        database!
+        """
+        return set(checker_name_for_report(report)
+                   for report, _
+                   in self.__reports_with_fake_checkers.values())
+
+    def __load_report_ids_for_reports_with_fake_checkers(self, session):
+        """
+        Transforms the __reports_with_fake_checkers data structure by loading
+        the report.id column in place for the DBReport ORM objects to allow
+        __realise_fake_checkers() to execute appropriately.
+
+        This must only be run **once** between the __add_report() sequence and
+        the __realise_fake_checkers() operation. The reports **MUST** have
+        been committed prior.
+        """
+        for rph in self.__reports_with_fake_checkers:
+            report, db_report = cast(Tuple[Report, DBReport],
+                                     self.__reports_with_fake_checkers[rph])
+            # Only load the "id" field from the database, not the entire row.
+            session.refresh(db_report, ["id"])
+            id_: int = db_report.id
+
+            self.__reports_with_fake_checkers[rph] = (report, id_)
+
+    def __realise_fake_checkers(self, session):
+        """
+        __add_report() might leave some reports that have checker names in
+        their data that were not found in the usually full checker list
+        available in the 'metadata.json'. This usually happens if the report
+        directory that is being stored is not from an 'analyze' or 'check'
+        invocation (that would create an appropriate 'metadata.json') but from
+        other tools (e.g., report-converter, or Cppcheck's native PLISTs).
+
+        This function assumes that for each report in the
+        __reports_with_fake_checkers, their actual checkers' IDs are now added
+        added to the database (which was not the case when __add_report() ran),
+        so all it does is upgrade the 'checker_id' FOREIGN KEY field to point
+        at the real checker.
+        """
+        try:
+            grouped_by_checker: Dict[Tuple[str, str], List[int]] = \
+                defaultdict(list)
+            for _, (report, db_id) in \
+                    self.__reports_with_fake_checkers.items():
+                checker: Tuple[str, str] = checker_name_for_report(report)
+                grouped_by_checker[checker].append(cast(int, db_id))
+
+            for chk, report_ids in grouped_by_checker.items():
+                analyzer_name, checker_name = chk
+                chk_obj = cast(Checker, self.__get_checker(session,
+                                                           analyzer_name,
+                                                           checker_name))
+                session.query(DBReport) \
+                    .filter(DBReport.id.in_(report_ids)) \
+                    .update({"checker_id": chk_obj.id},
+                            synchronize_session=False)
+        except Exception as ex:
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
                 str(ex))
 
     def __add_report_context(self, session, file_path_to_id):
@@ -892,7 +1113,7 @@ class MassStoreRun:
                     if old_status == 'resolved' else 'unresolved'
                 detected_at = old_report.detected_at
 
-            analyzer_name = mip.checker_to_analyzer.get(
+            report.analyzer_name = mip.checker_to_analyzer.get(
                 report.checker_name, report.analyzer_name)
 
             review_status = SourceReviewStatus()
@@ -918,17 +1139,18 @@ class MassStoreRun:
                     fixed_at = run_history_time
 
             self.__check_report_count()
-            self.__add_report(
-                session, run_id, report, file_path_to_id,
-                review_status, detection_status, detected_at,
-                run_history_time, analysis_info, analyzer_name, fixed_at)
+            self.__add_report(session, run_id, report, report_path_hash,
+                              file_path_to_id, review_status, detection_status,
+                              detected_at, run_history_time, analysis_info,
+                              fixed_at)
 
             self.__new_report_hashes[report.report_hash] = \
                 review_status.status
             self.__already_added_report_hashes.add(report_path_hash)
 
-            LOG.debug(f"Storing report done. bug_hash:{report.report_hash}, " +
-                      f"source_file:{report_file_path}")
+            LOG.debug("Storing report done. "
+                      "path_hash=%s, bug_id/report_hash=%s, source_file=%s",
+                      report_path_hash, report.report_hash, report_file_path)
 
         return True
 
@@ -1047,7 +1269,6 @@ class MassStoreRun:
         self.__already_added_report_hashes = set()
         self.__new_report_hashes = dict()
         self.__all_report_checkers = set()
-        self.__severity_map = dict()
 
         all_reports = session.query(DBReport) \
             .filter(DBReport.run_id == run_id) \
@@ -1148,10 +1369,11 @@ class MassStoreRun:
                 reports_to_delete.update([x.id for x in reports])
             else:
                 for report in reports:
-                    checker = report.checker_id
-                    if checker in disabled_checkers:
+                    checker_name: str = report.checker.checker_name
+                    if checker_name in disabled_checkers:
                         report.detection_status = 'off'
-                    elif checker_is_unavailable(checker, enabled_checkers):
+                    elif checker_is_unavailable(checker_name,
+                                                enabled_checkers):
                         report.detection_status = 'unavailable'
                     else:
                         report.detection_status = 'resolved'
@@ -1229,121 +1451,109 @@ class MassStoreRun:
                 run_history_time = datetime.now()
 
                 # Parse all metadata information from the report directory.
-                for root_dir_path, _, _ in os.walk(report_dir):
-                    metadata_file_path = os.path.join(
-                        root_dir_path, 'metadata.json')
+                with LogTask(run_name=self.__name,
+                             message="Parse 'metadata.json's"):
+                    for root_dir_path, _, _ in os.walk(report_dir):
+                        metadata_file_path = os.path.join(
+                            root_dir_path, 'metadata.json')
 
-                    self.__mips[root_dir_path] = \
-                        MetadataInfoParser(metadata_file_path)
+                        self.__mips[root_dir_path] = \
+                            MetadataInfoParser(metadata_file_path)
 
-                # When we use multiple server instances and we try to run
-                # multiple storage to each server which contain at least two
-                # reports which have the same report hash and have source code
-                # comments it is possible that the following exception will be
-                # thrown: (psycopg2.extensions.TransactionRollbackError)
-                # deadlock detected.
-                # The problem is that the report hash is the key for the
-                # review_statuses table and both of the store actions try to
-                # update the same review_statuses data row.
-                # Neither of the two processes can continue, and they will wait
-                # for each other indefinitely. PostgreSQL in this case will
-                # terminate one transaction with the above exception.
-                # For this reason in case of failure we will wait some seconds
-                # and try to run the storage again.
-                # For more information see #2655 and #2653 issues on github.
-                # TODO: Since review status is stored in "reports" table and
-                # "review_statuses" table is not written during storage, this
-                # multiple trials should be unnecessary.
-                max_num_of_tries = 3
-                num_of_tries = 0
-                sec_to_wait_after_failure = 60
-                while True:
-                    try:
-                        # This session's transaction buffer stores the actual
-                        # run data into the database.
-                        with DBSession(self.__Session) as session:
-                            # Load the lock record for "FOR UPDATE" so that the
-                            # transaction that handles the run's store
-                            # operations has a lock on the database row itself.
-                            run_lock = session.query(RunLock) \
-                                .filter(RunLock.name == self.__name) \
-                                .with_for_update(nowait=True).one()
+                with LogTask(run_name=self.__name,
+                             message="Store look-up ID for checkers in "
+                                     "'metadata.json'"):
+                    checkers_in_metadata = {
+                        (analyzer, checker)
+                        for metadata in self.__mips.values()
+                        for analyzer in metadata.analyzers
+                        for checker
+                        in metadata.checkers.get(analyzer, dict()).keys()}
+                    self.__store_checker_identifiers(checkers_in_metadata)
 
-                            # Do not remove this seemingly dummy print, we need
-                            # to make sure that the execution of the SQL
-                            # statement is not optimised away and the fetched
-                            # row is not garbage collected.
-                            LOG.debug("Storing into run '%s' locked at '%s'.",
-                                      self.__name, run_lock.locked_at)
+                try:
+                    # This session's transaction buffer stores the actual
+                    # run data into the database.
+                    with DBSession(self.__Session) as session, \
+                            RunLocking(session, self.__name):
+                        # Actual store operation begins here.
+                        run_id, update_run = self.__add_or_update_run(
+                            session, run_history_time)
 
-                            # Actual store operation begins here.
-                            run_id, update_run = self.__add_or_update_run(
-                                session, run_history_time)
+                        with LogTask(run_name=self.__name,
+                                     message="Store reports"):
+                            self.__store_reports(
+                                session, report_dir, source_root, run_id,
+                                file_path_to_id, run_history_time)
 
+                        session.commit()
+                        self.__load_report_ids_for_reports_with_fake_checkers(
+                            session)
+
+                    if self.__reports_with_fake_checkers:
+                        with LogTask(run_name=self.__name,
+                                     message="Get look-up ID for checkers "
+                                     "not present in 'metadata.json'"):
+                            additional_checkers = self.__get_faked_checkers()
+                            # __store_checker_identifiers() has its own
+                            # TRANSACTION!
+                            self.__store_checker_identifiers(
+                                additional_checkers)
+
+                    with DBSession(self.__Session) as session, \
+                            RunLocking(session, self.__name):
+                        # The data of the run has been successfully committed
+                        # into the database. Deal with post-processing issues
+                        # that could only be done after-the-fact.
+                        if self.__reports_with_fake_checkers:
                             with LogTask(run_name=self.__name,
-                                         message="Store reports"):
-                                self.__store_reports(
-                                    session, report_dir, source_root, run_id,
-                                    file_path_to_id, run_history_time)
+                                         message="Fix-up report-to-checker "
+                                         "associations"):
+                                self.__realise_fake_checkers(session)
 
-                            self.finish_checker_run(session, run_id)
+                        self.finish_checker_run(session, run_id)
+                        session.commit()
 
-                            session.commit()
+                    # If it's a run update, do not increment the number
+                    # of runs of the current product.
+                    inc_num_of_runs = 1 if not update_run else None
 
-                        inc_num_of_runs = 1
+                    self.__report_server._set_run_data_for_curr_product(
+                        inc_num_of_runs, run_history_time)
 
-                        # If it's a run update, do not increment the number
-                        # of runs of the current product.
-                        if update_run:
-                            inc_num_of_runs = None
+                    runtime = round(time.time() - start_time, 2)
+                    zip_size_kb = round(zip_size / 1024)
 
-                        self.__report_server._set_run_data_for_curr_product(
-                            inc_num_of_runs, run_history_time)
+                    tag_desc = ""
+                    if self.__tag:
+                        tag_desc = f", under tag '{self.__tag}'"
 
-                        runtime = round(time.time() - start_time, 2)
-                        zip_size_kb = round(zip_size / 1024)
+                    LOG.info("'%s' stored results (%s KB "
+                             "/decompressed/) to run '%s' (id: %d) %s in "
+                             "%s seconds.", self.user_name,
+                             zip_size_kb, self.__name, run_id, tag_desc,
+                             runtime)
 
-                        tag_desc = ""
-                        if self.__tag:
-                            tag_desc = f", under tag '{self.__tag}'"
+                    iso_start_time = datetime.fromtimestamp(
+                        start_time).isoformat()
 
-                        LOG.info("'%s' stored results (%s KB "
-                                 "/decompressed/) to run '%s' (id: %d) %s in "
-                                 "%s seconds.", self.user_name,
-                                 zip_size_kb, self.__name, run_id, tag_desc,
-                                 runtime)
+                    log_msg = f"{iso_start_time}, " +\
+                              f"{runtime}s, " +\
+                              f'"{self.__product.name}", ' +\
+                              f'"{self.__name}", ' +\
+                              f"{zip_size_kb}KB, " +\
+                              f"{self.__report_count}, " +\
+                              f"{run_id}"
 
-                        iso_start_time = datetime.fromtimestamp(
-                            start_time).isoformat()
+                    STORE_TIME_LOG.info(log_msg)
 
-                        log_msg = f"{iso_start_time}, " +\
-                                  f"{runtime}s, " +\
-                                  f'"{self.__product.name}", ' +\
-                                  f'"{self.__name}", ' +\
-                                  f"{zip_size_kb}KB, " +\
-                                  f"{self.__report_count}, " +\
-                                  f"{run_id}"
-
-                        STORE_TIME_LOG.info(log_msg)
-
-                        return run_id
-                    except (sqlalchemy.exc.OperationalError,
-                            sqlalchemy.exc.ProgrammingError) as ex:
-                        num_of_tries += 1
-
-                        if num_of_tries == max_num_of_tries:
-                            raise codechecker_api_shared.ttypes.RequestFailed(
-                                codechecker_api_shared.ttypes.
-                                ErrorCode.DATABASE,
-                                "Storing reports to the database failed: "
-                                "{0}".format(ex))
-
-                        LOG.error("Storing reports of '%s' run failed: "
-                                  "%s.\nWaiting %d sec before trying to store "
-                                  "it again!", self.__name, ex,
-                                  sec_to_wait_after_failure)
-                        time.sleep(sec_to_wait_after_failure)
-                        sec_to_wait_after_failure *= 2
+                    return run_id
+                except (sqlalchemy.exc.OperationalError,
+                        sqlalchemy.exc.ProgrammingError) as ex:
+                    raise codechecker_api_shared.ttypes.RequestFailed(
+                        codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                        "Storing reports to the database failed: {0}"
+                        .format(ex))
         except Exception as ex:
             LOG.error("Failed to store results: %s", ex)
             import traceback

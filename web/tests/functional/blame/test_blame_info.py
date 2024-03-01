@@ -187,7 +187,12 @@ class TestBlameInfo(unittest.TestCase):
             self.assertFalse(blame_info.commits)
             self.assertFalse(blame_info.blame)
 
-            subprocess.Popen(['git', 'init', proj_dir]).communicate()
+            # Create a .git structure that is as bare as possible, without
+            # getting interference from the user's configuration.
+            subprocess.Popen(['git', 'init', proj_dir,
+                              "--template", "/usr/share/git-core/templates"
+                              ]).communicate()
+
             subprocess.Popen([
                 'git',
                 'remote',
@@ -200,7 +205,8 @@ class TestBlameInfo(unittest.TestCase):
                 '-c', 'user.name=hello',
                 '-c', 'user.email=world',
                 'commit',
-                '-m', 'message']).communicate()
+                '--no-verify',
+                '--message', 'message']).communicate()
 
             codechecker.store(self._codechecker_cfg, run_name)
 

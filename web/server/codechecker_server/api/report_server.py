@@ -22,21 +22,27 @@ import zlib
 from copy import deepcopy
 from collections import OrderedDict, defaultdict
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import sqlalchemy
 from sqlalchemy.sql.expression import or_, and_, not_, func, \
     asc, desc, union_all, select, bindparam, literal_column
+from sqlalchemy.orm import contains_eager
 
 import codechecker_api_shared
 from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import AnalysisInfoFilter, \
-    BlameData, BlameInfo, BugPathPos, CheckerCount, Commit, CommitAuthor, \
-    CommentData, DiffType, Encoding, RunHistoryData, Order, ReportData, \
-    ReportDetails, ReviewData, ReviewStatusRule, ReviewStatusRuleFilter, \
-    ReviewStatusRuleSortMode, ReviewStatusRuleSortType, RunData, RunFilter, \
-    RunReportCount, RunSortType, RunTagCount, SourceComponentData, \
-    SourceFileData, SortMode, SortType, ExportData
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
+    AnalysisInfoFilter, AnalysisInfoChecker as API_AnalysisInfoChecker, \
+    BlameData, BlameInfo, BugPathPos, \
+    CheckerCount, Commit, CommitAuthor, CommentData, \
+    DiffType, \
+    Encoding, ExportData, \
+    Order, \
+    ReportData, ReportDetails, ReviewData, ReviewStatusRule, \
+    ReviewStatusRuleFilter, ReviewStatusRuleSortMode, \
+    ReviewStatusRuleSortType, RunData, RunFilter, RunHistoryData, \
+    RunReportCount, RunSortType, RunTagCount, \
+    SourceComponentData, SourceFileData, SortMode, SortType
 
 from codechecker_common import util
 from codechecker_common.logger import get_logger
@@ -51,10 +57,14 @@ from ..database import db_cleanup
 from ..database.config_db_model import Product
 from ..database.database import conv, DBSession, escape_like
 from ..database.run_db_model import \
-    AnalysisInfo, AnalyzerStatistic, BugPathEvent, BugReportPoint, \
-    CleanupPlan, CleanupPlanReportHash, Comment, ReportAnnotations, \
-    ExtendedReportData, File, FileContent, Report, ReportAnalysisInfo, \
-    ReviewStatus, Run, RunHistory, RunHistoryAnalysisInfo, RunLock, \
+    AnalysisInfo, AnalysisInfoChecker as DB_AnalysisInfoChecker, \
+    AnalyzerStatistic, \
+    BugPathEvent, BugReportPoint, \
+    CleanupPlan, CleanupPlanReportHash, Checker, Comment, \
+    ExtendedReportData, \
+    File, FileContent, \
+    Report, ReportAnnotations, ReportAnalysisInfo, ReviewStatus, \
+    Run, RunHistory, RunHistoryAnalysisInfo, RunLock, \
     SourceComponent
 
 from .thrift_enum_helper import detection_status_enum, \
@@ -138,6 +148,8 @@ def exc_to_thrift_reqfail(func):
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
             # Convert SQLAlchemy exceptions.
             msg = str(alchemy_ex)
+            import traceback
+            traceback.print_exc()
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
         except codechecker_api_shared.ttypes.RequestFailed as rf:
@@ -233,15 +245,22 @@ def process_report_filter(
               for cm in report_filter.checkerMsg]
         AND.append(or_(*OR))
 
-    if report_filter.checkerName:
-        OR = [Report.checker_id.ilike(conv(cn))
-              for cn in report_filter.checkerName]
-        AND.append(or_(*OR))
+    if report_filter.analyzerNames or report_filter.checkerName \
+            or report_filter.severity:
+        if report_filter.analyzerNames:
+            OR = [Checker.analyzer_name.ilike(conv(an))
+                  for an in report_filter.analyzerNames]
+            AND.append(or_(*OR))
 
-    if report_filter.analyzerNames:
-        OR = [Report.analyzer_name.ilike(conv(an))
-              for an in report_filter.analyzerNames]
-        AND.append(or_(*OR))
+        if report_filter.checkerName:
+            OR = [Checker.checker_name.ilike(conv(cn))
+                  for cn in report_filter.checkerName]
+            AND.append(or_(*OR))
+
+        if report_filter.severity:
+            AND.append(Checker.severity.in_(report_filter.severity))
+
+        join_tables.append(Checker)
 
     if report_filter.runName:
         OR = [Run.name.ilike(conv(rn))
@@ -279,9 +298,6 @@ def process_report_filter(
             OR.append(Report.bug_id.in_(q))
 
         AND.append(or_(*OR))
-
-    if report_filter.severity:
-        AND.append(Report.severity.in_(report_filter.severity))
 
     if report_filter.detectionStatus:
         dst = list(map(detection_status_str,
@@ -948,16 +964,26 @@ def create_review_data(
         isInSource=is_in_source)
 
 
-def apply_report_filter(q, filter_expression, join_tables):
+def apply_report_filter(q, filter_expression,
+                        join_tables: List[Any],
+                        already_joined_tables: Optional[List[Any]] = None):
     """
-    Applies the given filter expression and joins the File, Run and RunHistory
-    tables if necessary based on join_tables parameter.
+    Applies the given filter expression and joins the Checker, File, Run, and
+    RunHistory tables if necessary based on join_tables parameter. If a table
+    is already joined by the main query and this is indicated, that will not
+    be joined by this function to prevent a "duplicate alias" error.
     """
-    if File in join_tables:
+    def needs_join(tbl):
+        return tbl in join_tables and (already_joined_tables is None or
+                                       tbl not in already_joined_tables)
+
+    if needs_join(Checker):
+        q = q.join(Checker, Report.checker_id == Checker.id)
+    if needs_join(File):
         q = q.outerjoin(File, Report.file_id == File.id)
-    if Run in join_tables:
+    if needs_join(Run):
         q = q.outerjoin(Run, Run.id == Report.run_id)
-    if RunHistory in join_tables:
+    if needs_join(RunHistory):
         q = q.outerjoin(RunHistory, RunHistory.run_id == Report.run_id)
 
     return q.filter(filter_expression)
@@ -969,8 +995,8 @@ def get_sort_map(sort_types, is_unique=False):
         SortType.FILENAME: [(File.filepath, 'filepath'),
                             (Report.line, 'line')],
         SortType.BUG_PATH_LENGTH: [(Report.path_length, 'bug_path_length')],
-        SortType.CHECKER_NAME: [(Report.checker_id, 'checker_id')],
-        SortType.SEVERITY: [(Report.severity, 'severity')],
+        SortType.CHECKER_NAME: [(Checker.checker_name, 'checker_name')],
+        SortType.SEVERITY: [(Checker.severity, 'severity')],
         SortType.REVIEW_STATUS: [(Report.review_status, 'rw_status')],
         SortType.DETECTION_STATUS: [(Report.detection_status, 'dt_status')],
         SortType.TIMESTAMP: [('annotation_timestamp', 'annotation_timestamp')]}
@@ -1538,11 +1564,28 @@ class ThriftRequestHandler:
                         .limit(limit).offset(offset)
 
                 for cmd in analysis_info_query:
-                    command = \
-                        zlib.decompress(cmd.analyzer_command).decode('utf-8')
+                    command = zlib.decompress(cmd.analyzer_command) \
+                        .decode("utf-8")
+
+                    checkers_q = session \
+                        .query(Checker.analyzer_name,
+                               Checker.checker_name,
+                               DB_AnalysisInfoChecker.enabled) \
+                        .join(Checker, DB_AnalysisInfoChecker.checker_id ==
+                              Checker.id) \
+                        .filter(DB_AnalysisInfoChecker.
+                                analysis_info_id == cmd.id)
+
+                    checkers: Dict[str, Dict[str, API_AnalysisInfoChecker]] = \
+                        defaultdict(dict)
+                    for chk in checkers_q.all():
+                        analyzer, checker, enabled = chk
+                        checkers[analyzer][checker] = API_AnalysisInfoChecker(
+                            enabled=enabled)
 
                     res.append(ttypes.AnalysisInfo(
-                        analyzerCommand=html.escape(command)))
+                        analyzerCommand=html.escape(command),
+                        checkers=checkers))
 
         return res
 
@@ -1609,6 +1652,8 @@ class ThriftRequestHandler:
             result = session \
                 .query(Report, File) \
                 .filter(Report.id == reportId) \
+                .join(Checker, Report.checker_id == Checker.id) \
+                .options(contains_eager(Report.checker)) \
                 .outerjoin(File, Report.file_id == File.id) \
                 .limit(1).one_or_none()
 
@@ -1627,8 +1672,9 @@ class ThriftRequestHandler:
                 fileId=source_file.id,
                 line=report.line,
                 column=report.column,
-                checkerId=report.checker_id,
-                severity=report.severity,
+                analyzerName=report.checker.analyzer_name,
+                checkerId=report.checker.checker_name,
+                severity=report.checker.severity,
                 reviewData=create_review_data(
                     report.review_status,
                     report.review_status_message,
@@ -1768,10 +1814,10 @@ class ThriftRequestHandler:
             #
             # reports
             # =================
-            # id, severity, ...
-            # -----------------
-            # 1,  HIGH,     ...
-            # 2,  MEDIUM,   ...
+            # id, checker_id, ...
+            # -------------------
+            # 1,  123456,     ...
+            # 2,  999999,     ...
             #
             # report_annotations
             # =======================
@@ -1785,10 +1831,10 @@ class ThriftRequestHandler:
             #
             # reports extended
             # ===================================================
-            # id, severity, ..., annotation_key1, annotation_key2
+            # id, checker_id, ..., annotation_key1, annotation_key2
             # ---------------------------------------------------
-            # 1,  HIGH,     ..., value1,          value2
-            # 2,  MEDIUM,   ..., value3,          NULL
+            # 1,  123456,     ..., value1,          value2
+            # 2,  999999,     ..., value3,          NULL
             #
             # The SQL query which results this table is similar to this:
             #
@@ -1855,22 +1901,22 @@ class ThriftRequestHandler:
                     .group_by(Report.bug_id) \
                     .subquery()
 
-                # Sort the results
-                sorted_reports = \
-                    session.query(unique_reports.c.id)
-
+                # Sort the results.
+                sorted_reports = session.query(unique_reports.c.id)
                 sorted_reports = sort_results_query(sorted_reports,
                                                     sort_types,
                                                     sort_type_map,
                                                     order_type_map,
                                                     True)
-
                 sorted_reports = sorted_reports \
                     .limit(limit).offset(offset).subquery()
 
                 q = session.query(Report,
                                   File.filename,
                                   *annotation_cols.values()) \
+                    .join(Checker,
+                          Report.checker_id == Checker.id) \
+                    .options(contains_eager(Report.checker)) \
                     .outerjoin(
                         File,
                         Report.file_id == File.id) \
@@ -1897,7 +1943,7 @@ class ThriftRequestHandler:
                                        sort_types,
                                        sort_type_map,
                                        order_type_map)
-                q = q.group_by(Report.id, File.id)
+                q = q.group_by(Report.id, File.id, Checker.id)
 
                 query_result = q.all()
 
@@ -1908,8 +1954,7 @@ class ThriftRequestHandler:
                     report_details = get_report_details(session, report_ids)
 
                 for row in query_result:
-                    report = row[0]
-                    filename = row[1]
+                    report, filename = row[0], row[1]
                     annotations = {
                         k: v for k, v in zip(annotation_keys, row[2:])
                         if v is not None}
@@ -1930,8 +1975,9 @@ class ThriftRequestHandler:
                                    fileId=report.file_id,
                                    line=report.line,
                                    column=report.column,
-                                   checkerId=report.checker_id,
-                                   severity=report.severity,
+                                   analyzerName=report.checker.analyzer_name,
+                                   checkerId=report.checker.checker_name,
+                                   severity=report.checker.severity,
                                    reviewData=review_data,
                                    detectionStatus=detection_status_enum(
                                        report.detection_status),
@@ -1939,7 +1985,6 @@ class ThriftRequestHandler:
                                    fixedAt=str(report.fixed_at),
                                    bugPathLength=report.path_length,
                                    details=report_details.get(report.id),
-                                   analyzerName=report.analyzer_name,
                                    annotations=annotations))
             else:  # not is_unique
                 filter_expression, join_tables = process_report_filter(
@@ -1952,24 +1997,34 @@ class ThriftRequestHandler:
                 q = session.query(Report,
                                   File.filepath,
                                   *annotation_cols.values()) \
+                    .join(Checker,
+                          Report.checker_id == Checker.id) \
+                    .options(contains_eager(Report.checker)) \
+                    .outerjoin(File,
+                               Report.file_id == File.id) \
                     .outerjoin(
                         ReportAnnotations,
                         Report.id == ReportAnnotations.report_id)
-
-                if File not in join_tables:
-                    q = q.outerjoin(File, Report.file_id == File.id)
 
                 # Grouping by "reports.id" is described at the beginning of
                 # this function. Grouping by "files.id" is necessary, because
                 # "files" table is joined for gathering file names belonging to
                 # the given report. According to SQL syntax if there is a group
                 # by report IDs then files should also be either grouped or an
-                # aggregate function must be applied on them.
-                q = q.group_by(Report.id, File.id)
+                # aggregate function must be applied on them. The same applies
+                # to the "checkers" table.
+                q = q.group_by(Report.id, File.id, Checker.id)
 
-                q = apply_report_filter(q, filter_expression, join_tables)
-
-                q = sort_results_query(q, sort_types, sort_type_map,
+                # The "Checker" entity is eagerly loaded for each "Report" as
+                # there is a guaranteed FOREIGN KEY ... NOT NULL relationship
+                # to a valid entity. Because of this, letting "join_tables"
+                # add "Checker" here is actually ill-formed, as it would
+                # result in queries that ambiguously refer to the same table.
+                q = apply_report_filter(q, filter_expression, join_tables,
+                                        [File, Checker])
+                q = sort_results_query(q,
+                                       sort_types,
+                                       sort_type_map,
                                        order_type_map)
 
                 if report_filter.annotations is not None:
@@ -1993,8 +2048,7 @@ class ThriftRequestHandler:
                     report_details = get_report_details(session, report_ids)
 
                 for row in query_result:
-                    report = row[0]
-                    filepath = row[1]
+                    report, filepath = row[0], row[1]
                     annotations = {
                         k: v for k, v in zip(annotation_keys, row[2:])
                         if v is not None}
@@ -2015,8 +2069,9 @@ class ThriftRequestHandler:
                                    fileId=report.file_id,
                                    line=report.line,
                                    column=report.column,
-                                   checkerId=report.checker_id,
-                                   severity=report.severity,
+                                   analyzerName=report.checker.analyzer_name,
+                                   checkerId=report.checker.checker_name,
+                                   severity=report.checker.severity,
                                    reviewData=review_data,
                                    detectionStatus=detection_status_enum(
                                        report.detection_status),
@@ -2025,7 +2080,6 @@ class ThriftRequestHandler:
                                    report.fixed_at else None,
                                    bugPathLength=report.path_length,
                                    details=report_details.get(report.id),
-                                   analyzerName=report.analyzer_name,
                                    annotations=annotations))
 
             return results
@@ -2591,11 +2645,11 @@ class ThriftRequestHandler:
         """ Return the list of labels to each checker. """
         labels = []
         for checker in checkers:
-            # Analyzer default value in the database is 'unknown' which is not
-            # a valid analyzer name. So this code handles this use case.
-            analyzer_name = None
-            if checker.analyzerName != "unknown":
-                analyzer_name = checker.analyzerName
+            analyzer_name = None if not checker.analyzerName \
+                else str(checker.analyzerName)
+            analyzer_name = analyzer_name \
+                if (analyzer_name and analyzer_name.lower() != "unknown") \
+                else None
 
             labels.append(list(map(
                 lambda x: f'{x[0]}:{x[1]}',
@@ -2753,10 +2807,12 @@ class ThriftRequestHandler:
             filter_expression, join_tables = process_report_filter(
                 session, run_ids, report_filter, cmp_data)
 
-            extended_table = session.query(
-                Report.checker_id,
-                Report.severity,
-                Report.bug_id)
+            extended_table = session \
+                .query(Report.bug_id,
+                       Checker.checker_name,
+                       Checker.severity) \
+                .join(Checker,
+                      Report.checker_id == Checker.id)
 
             if report_filter.annotations is not None:
                 extended_table = extended_table.outerjoin(
@@ -2765,18 +2821,19 @@ class ThriftRequestHandler:
                 extended_table = extended_table.group_by(Report.id)
 
             extended_table = apply_report_filter(
-                extended_table, filter_expression, join_tables)
+                extended_table, filter_expression, join_tables, [Checker])
 
             extended_table = extended_table.subquery()
 
             if report_filter.isUnique:
                 q = session.query(
-                    func.max(extended_table.c.checker_id).label('checker_id'),
-                    func.max(extended_table.c.severity).label('severity'),
+                    func.max(extended_table.c.checker_name)
+                        .label("checker_name"),
+                    func.max(extended_table.c.severity).label("severity"),
                     extended_table.c.bug_id)
             else:
                 q = session.query(
-                    extended_table.c.checker_id,
+                    extended_table.c.checker_name,
                     extended_table.c.severity,
                     func.count(literal_column('*')))
 
@@ -2784,15 +2841,15 @@ class ThriftRequestHandler:
 
             if report_filter.isUnique:
                 q = q.group_by(extended_table.c.bug_id).subquery()
-                unique_checker_q = session.query(q.c.checker_id,
+                unique_checker_q = session.query(q.c.checker_name,
                                                  func.max(q.c.severity),
                                                  func.count(q.c.bug_id)) \
-                    .group_by(q.c.checker_id) \
-                    .order_by(q.c.checker_id)
+                    .group_by(q.c.checker_name) \
+                    .order_by(q.c.checker_name)
             else:
-                unique_checker_q = q.group_by(extended_table.c.checker_id,
+                unique_checker_q = q.group_by(extended_table.c.checker_name,
                                               extended_table.c.severity) \
-                    .order_by(extended_table.c.checker_id)
+                    .order_by(extended_table.c.checker_name)
 
             if limit:
                 unique_checker_q = unique_checker_q.limit(limit).offset(offset)
@@ -2822,9 +2879,11 @@ class ThriftRequestHandler:
             filter_expression, join_tables = process_report_filter(
                 session, run_ids, report_filter, cmp_data)
 
-            extended_table = session.query(
-                Report.analyzer_name,
-                Report.bug_id)
+            extended_table = session \
+                .query(Checker.analyzer_name,
+                       Report.bug_id) \
+                .join(Checker,
+                      Report.checker_id == Checker.id)
 
             if report_filter.annotations is not None:
                 extended_table = extended_table.outerjoin(
@@ -2833,7 +2892,7 @@ class ThriftRequestHandler:
                 extended_table = extended_table.group_by(Report.id)
 
             extended_table = apply_report_filter(
-                extended_table, filter_expression, join_tables)
+                extended_table, filter_expression, join_tables, [Checker])
 
             extended_table = extended_table.subquery()
 
@@ -2879,9 +2938,11 @@ class ThriftRequestHandler:
             filter_expression, join_tables = process_report_filter(
                 session, run_ids, report_filter, cmp_data)
 
-            extended_table = session.query(
-                Report.severity,
-                Report.bug_id)
+            extended_table = session \
+                .query(Report.bug_id,
+                       Checker.severity) \
+                .join(Checker,
+                      Report.checker_id == Checker.id)
 
             if report_filter.annotations is not None:
                 extended_table = extended_table.outerjoin(
@@ -2890,13 +2951,13 @@ class ThriftRequestHandler:
                 extended_table = extended_table.group_by(Report.id)
 
             extended_table = apply_report_filter(
-                extended_table, filter_expression, join_tables)
+                extended_table, filter_expression, join_tables, [Checker])
 
             extended_table = extended_table.subquery()
 
             if report_filter.isUnique:
                 q = session.query(
-                    func.max(extended_table.c.severity).label('severity'),
+                    func.max(extended_table.c.severity).label("severity"),
                     extended_table.c.bug_id)
             else:
                 q = session.query(extended_table.c.severity,

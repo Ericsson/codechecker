@@ -122,6 +122,10 @@ class CppCheck(unittest.TestCase):
         print(out)
         reports = json.loads(out)
         self.assertEqual(len(reports), 5)
-        # The stored hash should not be "0".
         for report in reports:
-            self.assertNotEqual(report['bugHash'], "0")
+            # The stored hash should not be "0".
+            self.assertNotEqual(report["bugHash"], "0")
+            # The stored checker name should not be the fake(d) default that
+            # was created because no 'metadata.json' (and thus no checker
+            # list) exists for this "project".
+            self.assertNotEqual(report["checkerId"], "__FAKE__")

@@ -1,6 +1,12 @@
-import os
+# -------------------------------------------------------------------------
+#
+#  Part of the CodeChecker project, under the Apache License v2.0 with
+#  LLVM Exceptions. See LICENSE for license information.
+#  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# -------------------------------------------------------------------------
 from collections import defaultdict
-
+import os
 from typing import Any, cast, DefaultDict, Dict, Iterable, List, Optional, \
     Set, Tuple, Union
 
@@ -147,6 +153,9 @@ class CheckerLabels:
         for a, c in self.__data.items():
             if analyzer is None or a == analyzer:
                 yield a, c
+
+    def get_analyzers(self) -> Iterable[str]:
+        return self.__data.keys()
 
     def checkers_by_labels(
         self,

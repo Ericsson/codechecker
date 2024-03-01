@@ -12,11 +12,14 @@ down_revision = 'af5d8a21c1e4'
 branch_labels = None
 depends_on = None
 
+from logging import getLogger
+
 from alembic import op
 import sqlalchemy as sa
 
 
 def upgrade():
+    LOG = getLogger("migration")
     conn = op.get_bind()
     ctx = op.get_context()
     dialect = ctx.dialect.name
@@ -88,12 +91,13 @@ def upgrade():
         op.bulk_insert(
             run_history_analysis_info_tbl, run_history_analysis_info)
     except:
-        print("Analyzer command data migration failed!")
+        LOG.error("Analyzer command data migration failed!")
     else:
         # If data migration was successfully finished we can remove the
         # columns.
         if dialect == 'sqlite':
-            # Unfortunately removing columns in SQLite is not supported.
+            # Unfortunately removing columns in SQLite is not supported until
+            # version 3.35.0 (only Ubuntu 22.04's default version). Using the
             # 'batch_alter_table' function can be used to remove a column here (it
             # will create a new database) but it will clear the table which have
             # foreign keys with cascade delete property. Unfortunately disabling

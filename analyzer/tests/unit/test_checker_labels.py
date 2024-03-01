@@ -116,6 +116,13 @@ class TestCheckerLabels(unittest.TestCase):
         cl = CheckerLabels(self.labels_dir.name)
 
         self.assertEqual(
+            sorted(cl.get_analyzers()),
+            sorted([
+                "clang-tidy",
+                "clangsa"
+            ]))
+
+        self.assertEqual(
             sorted(cl.checkers_by_labels([
                 'profile:extreme'])),
             sorted([

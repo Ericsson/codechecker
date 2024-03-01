@@ -9,7 +9,7 @@
 Helpers to parse metadata.json file.
 """
 
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, Dict, Iterable, List, Optional, Set, cast
 import os
 
 from codechecker_common.logger import get_logger
@@ -20,13 +20,18 @@ LOG = get_logger('system')
 
 
 AnalyzerStatistics = Any
+AnalyzerList = List[str]
 CheckCommands = List[str]
 CheckDurations = List[float]
+CheckerNamesView = Iterable[str]
 CheckerToAnalyzer = Dict[str, str]
 CodeCheckerVersion = Optional[str]
 DisabledCheckers = Set[str]
 EnabledCheckers = Set[str]
-MetadataCheckers = Dict[str, Union[Dict[str, bool], List[str]]]
+# Checker name to enabled status.
+MetadataCheckerInfo = Dict[str, bool]
+# Analyzer to checker info.
+MetadataCheckers = Dict[str, MetadataCheckerInfo]
 
 
 def checker_is_unavailable(
@@ -61,32 +66,29 @@ class MetadataInfoParser:
         self.disabled_checkers: DisabledCheckers = set()
         self.checker_to_analyzer: CheckerToAnalyzer = dict()
 
-        self.__metadata_dict = {}
+        self.__metadata_dict: Dict[str, Any] = {}
         if os.path.isfile(metadata_file_path):
-            self.__metadata_dict = load_json(metadata_file_path, {})
+            self.__metadata_dict = cast(Dict[str, Any],
+                                        load_json(metadata_file_path, {}))
 
             if 'version' in self.__metadata_dict:
                 self.__process_metadata_info_v2()
             else:
                 self.__process_metadata_info_v1()
 
+        self.analyzers: AnalyzerList = list(self.checkers.keys())
+
     def __process_metadata_checkers(self):
         """
         Get enabled/disabled checkers and a checker to analyze dictionary.
         """
         for analyzer_name, analyzer_checkers in self.checkers.items():
-            if isinstance(analyzer_checkers, dict):
-                for checker_name, enabled in analyzer_checkers.items():
-                    self.checker_to_analyzer[checker_name] = analyzer_name
-                    if enabled:
-                        self.enabled_checkers.add(checker_name)
-                    else:
-                        self.disabled_checkers.add(checker_name)
-            else:
-                self.enabled_checkers.update(analyzer_checkers)
-
-                for checker_name in analyzer_checkers:
-                    self.checker_to_analyzer[checker_name] = analyzer_name
+            for checker_name, enabled in analyzer_checkers.items():
+                self.checker_to_analyzer[checker_name] = analyzer_name
+                if enabled:
+                    self.enabled_checkers.add(checker_name)
+                else:
+                    self.disabled_checkers.add(checker_name)
 
     def __process_metadata_info_v1(self):
         """ Set metadata information from the old version json file. """
@@ -109,6 +111,24 @@ class MetadataInfoParser:
 
         # Get analyzer checkers.
         self.checkers = self.__metadata_dict.get('checkers', {})
+        for analyzer, checkers in self.checkers.items():
+            if isinstance(checkers, list):
+                # Version 1 metadata files originally only stored the list of
+                # enabled checkers grouped by analyzer. This was true from at
+                # least September 2017
+                # (commit 7254d05a8b7262e4979ac613f32d6c3e0aa0d3cc) all the
+                # way to March 2020
+                # (commit bd775d60950d48884b8f1dc83d8b82653b83cfa3). Before
+                # the official introduction of "v2" files, in December 2019,
+                # (commit 0cd28acac7d31e4a0260c147b8e803b7a36908f0) the
+                # ability to store the enabled status (bool) of a checker
+                # was added. However, the mismatch between the representation
+                # types in old formats are causing all sorts of troubles when
+                # getting the 'checkers' data structure, so instead, represent
+                # the structure with the new format even for a "v1" file.
+                # (See web/tests/functional/report_viewer_api)
+                self.checkers[analyzer] = {checker: True
+                                           for checker in checkers}
         self.__process_metadata_checkers()
 
     def __insert_analyzer_statistics(
