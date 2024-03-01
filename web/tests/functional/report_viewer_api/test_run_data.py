@@ -17,8 +17,11 @@ import unittest
 
 from libtest import env
 
-from codechecker_api.codeCheckerDBAccess_v6.ttypes import DetectionStatus, \
-    Order, ReportFilter, RunFilter, RunSortMode, RunSortType
+from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
+    AnalysisInfoFilter, \
+    DetectionStatus, \
+    Order, \
+    ReportFilter, RunFilter, RunSortMode, RunSortType
 
 from . import setup_class_common, teardown_class_common
 
@@ -171,3 +174,65 @@ class TestRunData(unittest.TestCase):
         # contains special characters.
         sort_mode = RunSortMode(RunSortType.NAME, Order.ASC)
         self._cc_client.getRunData(None, None, 0, sort_mode)
+
+    def test_analysis_info(self):
+        """
+        Test that storing runs to the server records the executed analyzer
+        command and the list of checkers present and executed.
+        """
+        workspace = os.environ["TEST_WORKSPACE"]
+        runs = self.__get_runs("test_files*%")
+        self.assertEqual(len(runs), 1,
+                         "There should be one run for this test.")
+        run = runs[0]
+        run_id = run.runId
+
+        analysis_infos = self._cc_client.getAnalysisInfo(
+            AnalysisInfoFilter(run_id, None, None), 1, 0)
+        self.assertEqual(len(analysis_infos), 1,
+                         "An analysis_info must be recorded for the run!")
+
+        info = analysis_infos[0]
+        cmd = info.analyzerCommand
+        print(run_id, analysis_infos)
+
+        self.assertTrue(workspace in cmd,
+                        "The name of the test workspace should be part of "
+                        "the report directory, found in the cmdline.")
+        # Ensure that the tests here are up-to-date with what's in __init__.py.
+        self.assertTrue("-d core.StackAddressEscape" in cmd,
+                        "A disabled checker is needed for this test to work!")
+        self.assertTrue("-d unix.Malloc" in cmd,
+                        "A disabled checker is needed for this test to work!")
+        self.assertTrue("-d clang-diagnostic" in cmd,
+                        "A disabled checker is needed for this test to work!")
+        self.assertTrue("-e clang-diagnostic-division-by-zero" in cmd,
+                        "An enabled checker is needed for this test to work!")
+
+        checkers = info.checkers
+
+        def assertChecker(analyzer, checker):
+            self.assertTrue(checkers[analyzer][checker].enabled)
+
+        def assertNotChecker(analyzer, checker):
+            self.assertFalse(checkers[analyzer][checker].enabled)
+
+        assertNotChecker("clangsa", "core.StackAddressEscape")
+        assertChecker("clangsa", "core.CallAndMessage")
+        assertChecker("clangsa", "cplusplus.NewDelete")
+        assertChecker("clangsa", "deadcode.DeadStores")
+        assertNotChecker("clangsa", "osx.cocoa.Loops")
+        assertNotChecker("clangsa", "unix.Malloc")
+
+        assertNotChecker("clang-tidy", "bugprone-easily-swappable-parameters")
+        assertChecker("clang-tidy", "clang-diagnostic-division-by-zero")
+        assertNotChecker("clang-tidy", "clang-diagnostic-return-type")
+        assertNotChecker("clang-tidy", "clang-diagnostic-vla")
+        assertNotChecker("clang-tidy", "llvmlibc-restrict-system-libc-headers")
+        assertChecker("clang-tidy", "misc-definitions-in-headers")
+        assertNotChecker("clang-tidy", "objc-super-self")
+
+        self.assertTrue("cppcheck" not in checkers.keys(),
+                        "This analysis was run without CppCheck!")
+        self.assertTrue("gcc" not in checkers.keys(),
+                        "This analysis was run without GCC!")

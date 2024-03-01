@@ -43,6 +43,28 @@ metadata_cc_info = {
             'bugprone-use-after-move': True,
             'abseil-string-find-startswith': False
         }
+    },
+    "checkers_enabled_only": {
+        "clangsa": {
+            "deadcode.DeadStores": True
+        },
+        "clang-tidy": {
+            "bugprone-use-after-move": True,
+        }
+    },
+    "analyzers": [
+        "clang-tidy",
+        "clangsa"
+    ],
+    "analyzers_to_checkers": {
+        "clangsa": [
+            "alpha.clone.CloneChecker",
+            "deadcode.DeadStores"
+        ],
+        "clang-tidy": [
+            "abseil-string-find-startswith",
+            "bugprone-use-after-move"
+        ]
     }
 }
 
@@ -73,6 +95,10 @@ metadata_multiple_info = {
             "version": "Cppcheck 1.87"
         }
     },
+    "analyzers": [
+        "clang-tidy",
+        "clangsa"
+    ],
     'checkers': {
         'clangsa': {
             'alpha.clone.CloneChecker': False,
@@ -135,8 +161,29 @@ class MetadataInfoParserTest(unittest.TestCase):
         self.assertDictEqual(metadata_cc_info['analyzer_statistics'],
                              mip.analyzer_statistics)
 
-        self.assertDictEqual(metadata_cc_info['checkers'],
+        self.assertListEqual(metadata_cc_info["analyzers"],
+                             mip.analyzers)
+
+        self.assertDictEqual(metadata_cc_info["checkers_enabled_only"],
                              mip.checkers)
+
+    def test_metadata_info_v1_point_5(self):
+        """
+        Get metadata info for old version format json file, but the kind where
+        checker "enabled status" was already represented, but before it
+        officially became the version 2 format.
+        """
+        metadata_v1_5 = os.path.join(self.__metadata_test_files, "v1.5.json")
+        mip = MetadataInfoParser(metadata_v1_5)
+
+        self.assertDictEqual(metadata_cc_info["checkers"],
+                             mip.checkers)
+        self.assertListEqual(metadata_cc_info
+                             ["analyzers_to_checkers"]["clangsa"],
+                             list(mip.checkers["clangsa"].keys()))
+        self.assertListEqual(metadata_cc_info
+                             ["analyzers_to_checkers"]["clang-tidy"],
+                             list(mip.checkers["clang-tidy"].keys()))
 
     def test_metadata_info_v2(self):
         """ Get metadata info for new version format json. """
@@ -155,8 +202,17 @@ class MetadataInfoParserTest(unittest.TestCase):
         self.assertDictEqual(metadata_cc_info['analyzer_statistics'],
                              mip.analyzer_statistics)
 
-        self.assertDictEqual(metadata_cc_info['checkers'],
+        self.assertListEqual(metadata_cc_info["analyzers"],
+                             mip.analyzers)
+
+        self.assertDictEqual(metadata_cc_info["checkers"],
                              mip.checkers)
+        self.assertListEqual(metadata_cc_info
+                             ["analyzers_to_checkers"]["clangsa"],
+                             list(mip.checkers["clangsa"].keys()))
+        self.assertListEqual(metadata_cc_info
+                             ["analyzers_to_checkers"]["clang-tidy"],
+                             list(mip.checkers["clang-tidy"].keys()))
 
     def test_multiple_metadata_info(self):
         """ Get metadata info from multiple analyzers. """

@@ -11,8 +11,8 @@ SQLAlchemy ORM model for the product configuration database.
 from datetime import datetime
 import sys
 
-from sqlalchemy import MetaData, Column, Integer, Enum, String, Boolean, \
-    ForeignKey, CHAR, DateTime, Text
+from sqlalchemy import Boolean, CHAR, Column, DateTime, Enum, ForeignKey, \
+    Integer, MetaData, String, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql.expression import false, true
 

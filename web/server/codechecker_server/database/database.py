@@ -203,6 +203,8 @@ class SQLServer(metaclass=ABCMeta):
         except Exception as ex:
             LOG.error("Failed to create initial database schema")
             LOG.error(ex)
+            import traceback
+            traceback.print_exc()
             return False
 
     def get_schema_version(self):
@@ -328,10 +330,14 @@ class SQLServer(metaclass=ABCMeta):
                 return DBStatus.OK
 
         except sqlalchemy.exc.SQLAlchemyError as alch_err:
+            import traceback
+            traceback.print_exc()
             LOG.error(str(alch_err))
             return DBStatus.SCHEMA_UPGRADE_FAILED
 
         except CommandError as cerr:
+            import traceback
+            traceback.print_exc()
             LOG.debug(str(cerr))
             return DBStatus.SCHEMA_UPGRADE_FAILED
 

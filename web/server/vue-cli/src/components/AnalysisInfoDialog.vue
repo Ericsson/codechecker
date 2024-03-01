@@ -126,6 +126,12 @@ export default {
         offset, handleThriftError(analysisInfo => {
           this.analysisInfo = analysisInfo.map(cmd =>
             this.highlightOptions(cmd));
+
+          // FIXME: Do this more ergonomically. This is only good enough for
+          // testing the backend's stability for now...
+          console.warn("The available checkers might have been received, " +
+                       "but showing them is not supported yet!");
+          console.warn(analysisInfo.map(ai => ai.checkers));
         }));
     }
   }

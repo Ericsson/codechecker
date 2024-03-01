@@ -11,9 +11,10 @@ SQLAlchemy ORM model for the analysis run storage database.
 from datetime import datetime, timedelta
 from math import ceil
 import os
+from typing import Optional
 
-from sqlalchemy import MetaData, Column, Integer, UniqueConstraint, String, \
-    DateTime, Boolean, ForeignKey, Binary, Enum, Table, Text
+from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, \
+    LargeBinary, MetaData, String, UniqueConstraint, Table, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import true, false
@@ -30,13 +31,62 @@ CC_META = MetaData(naming_convention={
 Base = declarative_base(metadata=CC_META)
 
 
-class AnalysisInfo(Base):
-    __tablename__ = 'analysis_info'
+class Checker(Base):
+    """
+    Records of a look-up table that associates a product-global ID for each
+    analyzer name and checker name encountered.
+    """
+    __tablename__ = "checkers"
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    analyzer_command = Column(Binary)
+    analyzer_name = Column(String)
+    checker_name = Column(String)
+    severity = Column(Integer, index=True)
 
-    def __init__(self, analyzer_command):
+    __table_args__ = (
+        UniqueConstraint("analyzer_name", "checker_name"),
+    )
+
+    def __init__(self, analyzer_name: str, checker_name: str, severity: int):
+        self.analyzer_name = analyzer_name
+        self.checker_name = checker_name
+        self.severity = severity
+
+
+class AnalysisInfoChecker(Base):
+    __tablename__ = "analysis_info_checkers"
+
+    analysis_info_id = Column(Integer,
+                              ForeignKey("analysis_info.id",
+                                         deferrable=True,
+                                         initially="DEFERRED",
+                                         ondelete="CASCADE"),
+                              primary_key=True)
+    checker_id = Column(Integer,
+                        ForeignKey("checkers.id",
+                                   deferrable=True,
+                                   initially="DEFERRED",
+                                   ondelete="RESTRICT"),
+                        primary_key=True)
+    enabled = Column(Boolean)
+
+    def __init__(self,
+                 analysis_info: "AnalysisInfo",
+                 checker: Checker,
+                 is_enabled: bool):
+        self.analysis_info_id = analysis_info.id
+        self.checker_id = checker.id
+        self.enabled = is_enabled
+
+
+class AnalysisInfo(Base):
+    __tablename__ = "analysis_info"
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    analyzer_command = Column(LargeBinary)
+    available_checkers = relationship(AnalysisInfoChecker, uselist=True)
+
+    def __init__(self, analyzer_command: bytes):
         self.analyzer_command = analyzer_command
 
 
@@ -110,10 +160,10 @@ class AnalyzerStatistic(Base):
                                        ondelete='CASCADE'),
                             index=True)
     analyzer_type = Column(String)
-    version = Column(Binary)
+    version = Column(LargeBinary)
     successful = Column(Integer)
     failed = Column(Integer)
-    failed_files = Column(Binary, nullable=True)
+    failed_files = Column(LargeBinary, nullable=True)
 
     def __init__(self, run_history_id, analyzer_type, version, successful,
                  failed, failed_files):
@@ -178,11 +228,11 @@ class FileContent(Base):
     __tablename__ = 'file_contents'
 
     content_hash = Column(String, primary_key=True)
-    content = Column(Binary)
+    content = Column(LargeBinary)
 
     # Note: two different authors can commit the same file content to
     # different paths in which case the blame info will be the same.
-    blame_info = Column(Binary, nullable=True)
+    blame_info = Column(LargeBinary, nullable=True)
 
     def __init__(self, content_hash, content, blame_info):
         self.content_hash, self.content, self.blame_info = \
@@ -352,16 +402,17 @@ class Report(Base):
                                ondelete='CASCADE'),
                     index=True)
     bug_id = Column(String, index=True)
-    checker_id = Column(String)
-    checker_cat = Column(String)
-    bug_type = Column(String)
-    severity = Column(Integer)
+    checker_id = Column(Integer, ForeignKey("checkers.id",
+                                            deferrable=False,
+                                            ondelete="RESTRICT"),
+                        nullable=False,
+                        index=True)
+    checker = relationship(Checker, innerjoin=True, lazy="joined",
+                           foreign_keys=[checker_id])
+
     line = Column(Integer)
     column = Column(Integer)
     path_length = Column(Integer)
-    analyzer_name = Column(String,
-                           nullable=False,
-                           server_default="unknown")
 
     # TODO: multiple messages to multiple source locations?
     checker_message = Column(String)
@@ -376,7 +427,7 @@ class Report(Base):
                            nullable=False,
                            server_default='unreviewed')
     review_status_author = Column(String)
-    review_status_message = Column(Binary)
+    review_status_message = Column(LargeBinary)
     review_status_date = Column(DateTime, nullable=True)
     # We'd like to indicate whether a suppression comes from a source code
     # comment or set via the GUI. Former ones must not change when set from
@@ -403,32 +454,38 @@ class Report(Base):
 
     annotations = relationship("ReportAnnotations")
 
-    # Priority/severity etc...
-    def __init__(self, run_id, bug_id, file_id, checker_message, checker_id,
-                 checker_cat, bug_type, line, column, severity, review_status,
-                 review_status_author, review_status_message,
-                 review_status_date, review_status_is_in_source,
-                 detection_status, detection_date, path_length,
-                 analyzer_name=None):
-        self.run_id = run_id
+    def __init__(self,
+                 file_id: int,
+                 run_id: int,
+                 bug_id: Optional[str],
+                 checker: Checker,
+                 line: int,
+                 column: int,
+                 path_length: int,
+                 checker_message: str,
+                 detection_status,
+                 review_status,
+                 review_status_author: Optional[str],
+                 review_status_message: Optional[bytes],
+                 review_status_date: Optional[datetime],
+                 review_status_is_in_source: bool, detection_date: datetime,
+                 fixed_date: Optional[datetime]):
         self.file_id = file_id
+        self.run_id = run_id
         self.bug_id = bug_id
+        self.checker = checker
+        self.line = line
+        self.column = column
+        self.path_length = path_length
         self.checker_message = checker_message
-        self.severity = severity
-        self.checker_id = checker_id
-        self.checker_cat = checker_cat
-        self.bug_type = bug_type
+        self.detection_status = detection_status
         self.review_status = review_status
         self.review_status_author = review_status_author
         self.review_status_message = review_status_message
         self.review_status_date = review_status_date
         self.review_status_is_in_source = review_status_is_in_source
-        self.detection_status = detection_status
-        self.line = line
-        self.column = column
         self.detected_at = detection_date
-        self.path_length = path_length
-        self.analyzer_name = analyzer_name
+        self.fixed_at = fixed_date
 
 
 class ReportAnnotations(Base):
@@ -454,7 +511,7 @@ class Comment(Base):
     id = Column(Integer, autoincrement=True, primary_key=True)
     bug_hash = Column(String, nullable=False, index=True)
     author = Column(String, nullable=False)
-    message = Column(Binary, nullable=False)
+    message = Column(LargeBinary, nullable=False)
 
     # Default value is 0 which means a user given comment.
     kind = Column(Integer,
@@ -484,7 +541,7 @@ class ReviewStatus(Base):
     bug_hash = Column(String, primary_key=True)
     status = Column(ReviewStatusType, nullable=False)
     author = Column(String, nullable=False)
-    message = Column(Binary, nullable=False)
+    message = Column(LargeBinary, nullable=False)
     date = Column(DateTime, nullable=False)
 
 
@@ -496,7 +553,7 @@ class SourceComponent(Base):
     # Contains multiple file paths separated by new line characters. Each file
     # path start with a '+' (path should be filtered) or '-' (path should not
     # be filtered) sign. E.g.: "+/a/b/x.cpp\n-/a/b/"
-    value = Column(Binary, nullable=False)
+    value = Column(LargeBinary, nullable=False)
 
     description = Column(Text, nullable=True)
     username = Column(String, nullable=True)

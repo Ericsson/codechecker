@@ -155,6 +155,7 @@ jobs:
         run: sh .github/workflows/install-deps.sh
 
       - name: Init .pgpass
+        if: matrix.database != 'sqlite'
         run: |
           echo '*:*:*:*:postgres' > $HOME/.pgpass
           chmod 0600 $HOME/.pgpass
@@ -163,7 +164,10 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: |
-          export PGPASSFILE=$HOME/.pgpass
+          if [[ "${{ matrix.database != 'sqlite' }}" == "true" ]]
+          then
+            export PGPASSFILE=$HOME/.pgpass
+          fi
 
           make pip_dev_deps
           pip3 install -r web/requirements_py/auth/requirements.txt

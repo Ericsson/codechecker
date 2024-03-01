@@ -136,6 +136,7 @@ class MetadataMergeTest(unittest.TestCase):
             }]
         }
 
+        # FIXME: What even is this?! The name is 'v3' but it says "version: 2".
         metadata_v3 = {
             "version": 2,
             'num_of_report_dir': 1,

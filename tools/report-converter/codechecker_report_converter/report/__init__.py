@@ -14,12 +14,15 @@ import json
 import logging
 import os
 
-from typing import Callable, Dict, List, Optional, Protocol, Set
+from typing import Callable, Dict, List, Optional, Protocol, Set, Tuple
 
 from .. import util
 
 
 LOG = logging.getLogger('report-converter')
+
+FakeChecker: Tuple[str, str] = ("__FAKE__", "__FAKE__")
+UnknownChecker: Tuple[str, str] = ("UNKNOWN", "NOT FOUND")
 
 
 class SkipListHandlers(Protocol):
@@ -338,8 +341,8 @@ class Report:
         self.severity = severity
         self.report_hash = report_hash
         self.analyzer_name = analyzer_name
-        self.category = category
-        self.type = type
+        self.category = category  # TODO: Remove this. DEPRECATED.
+        self.type = type  # TODO: Remove this. DEPRECATED.
         self.annotations = annotations
 
         self.static_message = \
@@ -488,7 +491,13 @@ class Report:
             "severity": self.severity,
             "report_hash": self.report_hash,
             "analyzer_name": self.analyzer_name,
+            # DEPRECATED: 'category' is deprecated in 6.24.0, as it is not
+            # parsed, understood, or handled by the report server.
+            # It should be removed!
             "category": self.category,
+            # DEPRECATED: 'type' is deprecated in 6.24.0, as it is not
+            # parsed, understood, or handled by the report server.
+            # It should be removed!
             "type": self.type,
             "review_status": self.review_status.status
             if self.review_status else '',

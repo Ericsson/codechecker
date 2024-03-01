@@ -432,18 +432,23 @@ class RunResults(unittest.TestCase):
         ])
 
         checker_labels = self._cc_client.getCheckerLabels([
-            Checker('clangsa', 'core.DivideZero')])
+            Checker("clangsa", "core.DivideZero")])
         self.assertEqual(len(checker_labels), 1)
         self.assertEqual(set(checker_labels[0]), div_zero_labels)
 
         checker_labels = self._cc_client.getCheckerLabels([
-            Checker('unknown', 'core.DivideZero')])
+            Checker("unknown", "core.DivideZero")])
         self.assertEqual(len(checker_labels), 1)
         self.assertEqual(set(checker_labels[0]), div_zero_labels)
 
         checker_labels = self._cc_client.getCheckerLabels([
-            Checker('clangsa', 'core.DivideZero'),
-            Checker('clang-tidy', 'dummy-checker')])
+            Checker("UNKNOWN", "core.DivideZero")])
+        self.assertEqual(len(checker_labels), 1)
+        self.assertEqual(set(checker_labels[0]), div_zero_labels)
+
+        checker_labels = self._cc_client.getCheckerLabels([
+            Checker("clangsa", "core.DivideZero"),
+            Checker("clang-tidy", "dummy-checker")])
         self.assertEqual(len(checker_labels), 2)
         self.assertEqual(set(checker_labels[0]), div_zero_labels)
         self.assertEqual(set(checker_labels[1]), set())

@@ -12,18 +12,19 @@ down_revision = '7ceea9232211'
 branch_labels = None
 depends_on = None
 
+from logging import getLogger
+
 from alembic import op
 import sqlalchemy as sa
 
-from codechecker_common.logger import get_logger
 from codechecker_server.database import database
 from codechecker_server.database.run_db_model import IDENTIFIER as RUN_META
 from codechecker_web.shared import webserver_context
 
-LOG = get_logger('system')
 
 
 def upgrade():
+    LOG = getLogger("migration")
     op.add_column(
         'products',
         sa.Column(
