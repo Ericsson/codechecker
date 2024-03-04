@@ -48,12 +48,12 @@ even if it is built with GCC and configured to use GCC's libstdc++
 (https://bugs.launchpad.net/ubuntu/+source/llvm-toolchain-3.8/+bug/1573778).
 
 The practical difficulty in CodeChecker is that we're appending the implicit
-include paths of the compiler which is used during the comiplation of the
-analyzed project in the logging phase. The reason of this is that we'd like to
+include paths of the compiler which is used during the compilation of the
+analyzed project in the logging phase. The reason for this is that we'd like to
 see the same build environment during the analysis. However, Clang also has its
 own implicit include paths. These are almost the same of GCC's paths except for
 `include-fixed` directories because these are GCC specific. Unfortunately some
-projects require the additiion of these paths but some do not. So
+projects require the addition of these paths but some do not. So
 `--keep-gcc-include-fixed` flag can control whether we should keep these during
 the analysis. There is another unanswered question: currently the GCC implicit
 include paths are added with `-isystem` flag. This appends the paths _before_
@@ -195,7 +195,7 @@ compilation error if vector instructions are used as well.
 
  Part of  the GCC Quad-Precision Math Library Application Programming Interface
  (API).
- All math functions in this lib (acosq, asinq) uses the type `__float128`.
+ All math functions in this lib (acosq, asinq) use the type `__float128`.
  We can use the library with Clang by adding gcc's intrinsic system include,
  for instance:
  ```

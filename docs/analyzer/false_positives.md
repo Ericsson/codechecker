@@ -12,7 +12,7 @@ properties of the code. Suppressing a result will not help its understanding.
 Making the code more obvious for the tool, however, makes the analysis more
 precise. As a bonus, such code is sometimes also more readable for developers.
 
-This guide introduces tips and tricks how to make the code easier to analyze.
+This guide introduces tips and tricks on how to make the code easier to analyze.
 
 Table of Contents
 =================
@@ -157,7 +157,7 @@ lack of context or the code being too complex to the analyzer.
 This might result in false positives like uninitialized variables or division
 by zero.
 
-Let us look at the the following example:
+Let us look at the following example:
 
 ```cpp
 int avg(List *l) {
@@ -290,7 +290,7 @@ static void f(void) {
 }
 ```
 
-Tha analyzer might not be able to tell that the value of `allc` is always
+The analyzer might not be able to tell that the value of `allc` is always
 the same as the length of the array `allv`. Rewriting the code and marking
 `allc` `const` will solve this issue.
 
@@ -481,7 +481,7 @@ double f(int i) {
 The second version makes it clear even though the return value is a floating
 point value the loss of precision during integer division is intentional.
 Adding a comment why this is intentional would make this even clearer.
-Such edits makes the code easier to understand for fellow developers. 
+Such edits make the code easier to understand for fellow developers. 
 
 # Suppress or skip results <a name="suppress-or-skip-results"></a>
 

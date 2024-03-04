@@ -9,7 +9,7 @@ all checkers.
 Listing the available configuration options:
 `CodeChecker analyzers --analyzer-config clangsa --details`
 
-Setting analyzer configuration opions:
+Setting analyzer configuration options:
 `CodeChecker analyze --analyzer-config <key=value>`
 
 You can find a comprehensive list of analyzer configuration options at the
@@ -201,14 +201,14 @@ As of CodeChecker 6.20, Codechecker can now execute the Cppcheck analyzer.
 
 ## Analyzer Configuration
 
-The Cppcheck analyzer can be configured with --analyzer-config cppcheck:* paramterers.
+The Cppcheck analyzer can be configured with --analyzer-config cppcheck:* parameters.
 
 The supported analyzer configuration items can be listed with `CodeChecker analyzers --analyzer-config cppcheck --details`
 
 As of CodeChecker 6.20, the following options are supported:
 
 * `cppcheck:addons` A list of Cppcheck addon files.
-* `cppcheck:libraries` A list of Cppcheck library definiton files.
+* `cppcheck:libraries` A list of Cppcheck library definition files.
 * `cppcheck:platform` The platform configuration .xml file.
 * `cppcheck:inconclusive` Enable inconclusive reports.
 
