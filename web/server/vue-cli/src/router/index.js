@@ -85,7 +85,14 @@ export default new Router({
               name: "component-statistics",
               component: () => import(
                 "@/components/Statistics/Component/ComponentStatistics"),
-            }
+            },
+            {
+              path: "coverage",
+              name: "checker-coverage-statistics",
+              component: () =>
+                import("@/components/Statistics/CheckerCoverage/\
+CheckerCoverageStatistics"),
+            },
           ]
         },
         {

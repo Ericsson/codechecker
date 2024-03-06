@@ -396,6 +396,17 @@ struct CheckerCount {
 }
 typedef list<CheckerCount> CheckerCounts
 
+struct CheckerInfo {
+  1: string       checkerName,  // Analyzer name of the checker.
+  2: string       analyzerName, // Analyzer name of the checker.
+  3: Severity     severity,     // Severity level of the checker.
+  4: list<i64> enabled,      // Runs' names in which the checker enabled.
+  5: list<i64> disabled,     // Runs' names in which the checker disabled.
+  6: i64          closed        // Number of closed reports.
+  7: i64          outstanding   // Number of outstanding reports.
+}
+typedef map<i64, CheckerInfo> CheckerInfos
+
 struct CommentData {
   1: i64     id,
   2: string  author,
@@ -851,6 +862,14 @@ service codeCheckerDBAccess {
                                  4: i64          limit,
                                  5: i64          offset)
                                  throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // It gives statistics for specific runs which checkers were
+  // enabled and how many reports are opened or closed.
+  // If the run id list is empty the statistics
+  // will be counted for all of the runs.
+  CheckerInfos getCheckerInfo(1: list<i64>    runIds,
+                              2: ReportFilter reportFilter)
+                              throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // If the run id list is empty the metrics will be counted
   // for all of the runs and in compare mode all of the runs
