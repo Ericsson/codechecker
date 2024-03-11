@@ -51,7 +51,6 @@ from codechecker_common.multiprocesspool import MultiProcessPool
 from codechecker_web.shared import webserver_context, host_check
 from codechecker_web.shared.env import get_default_workspace
 
-# from codechecker_server import MetadataInfoParser
 try:
     from codechecker_client.blame_info import assemble_blame_info
 except ImportError:
@@ -425,6 +424,10 @@ def assemble_zip(inputs,
     """Collect and compress report and source files, together with files
     contanining analysis related information into a zip file which
     will be sent to the server.
+
+    For each report directory, we create a uniqued zipped directory. Each
+    report directory to store could have been made with different
+    configurations, so we can't merge them all into a single zip.
     """
     files_to_compress: Dict[str, set] = defaultdict(set)
     analyzer_result_file_paths = []
@@ -473,7 +476,9 @@ def assemble_zip(inputs,
             if report.changed_files:
                 changed_files.update(report.changed_files)
                 continue
-            # Need to calculate unique reoirt count to determine report limit
+            # Unique all bug reports per report directory; also, count how many
+            # reports we want to store at once to check for the report store
+            # limit.
             report_path_hash = get_report_path_hash(report)
             if report_path_hash not in unique_report_hashes:
                 unique_report_hashes.add(report_path_hash)
@@ -485,7 +490,6 @@ def assemble_zip(inputs,
             file_paths.update(report.original_files)
             file_report_positions[report.file.original_path].add(report.line)
 
-    # TODO: Doesn't support storing multiple report dirs.
     if unique_reports:
         for dirname, analyzer_reports in unique_reports.items():
             for analyzer_name, reports in analyzer_reports.items():

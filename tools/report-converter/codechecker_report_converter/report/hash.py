@@ -205,5 +205,6 @@ def get_report_path_hash(report: Report) -> str:
     if not report_path_hash:
         LOG.error('Failed to generate report path hash: %s', report)
 
+    # This might be a little too verbose even for the verbose output.
     # LOG.debug(report_path_hash)
     return __str_to_hash(report_path_hash)
