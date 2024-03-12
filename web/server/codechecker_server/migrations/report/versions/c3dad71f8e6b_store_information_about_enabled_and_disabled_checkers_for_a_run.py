@@ -196,8 +196,13 @@ def upgrade():
         LOG.info("Done filling 'checkers', %d unique entries.", checker_count)
 
     def upgrade_reports():
+        Base = automap_base()
+        Base.prepare(conn, reflect=True)
+        Report = Base.classes.reports  # 'reports' is the table name!
+        Checker = Base.classes.checkers
+
         db = Session(bind=conn)
-        report_count = db.execute("SELECT COUNT(id) FROM reports;").scalar()
+        report_count = db.query(Report.id).count()
         if not report_count:
             return
 
@@ -214,6 +219,10 @@ def upgrade():
                      if batch < num_batches else report_count,
                      float(batch) / num_batches * 100)
 
+        fake_chk_id = db.query(Checker.id) \
+            .filter(Checker.analyzer_name == FakeChecker[0],
+                    Checker.checker_name == FakeChecker[1]) \
+            .scalar()
         for i in range(0, num_batches):
             # FIXME: "UPDATE ... SET ... FROM ..." is only supported starting
             # with SQLite version 3.33.0 (2020-08-14). Until this version
@@ -233,7 +242,9 @@ def upgrade():
                     WHERE reports.id IN (
                             SELECT reports.id
                             FROM reports
-                            WHERE reports.checker_id = 0
+                            WHERE reports.checker_id = {fake_chk_id}
+                                AND reports.analyzer_name != '{FakeChecker[0]}'
+                                AND reports.checker_name != '{FakeChecker[1]}'
                             LIMIT {REPORT_UPDATE_CHUNK_SIZE}
                         )
                     ;
@@ -249,7 +260,9 @@ def upgrade():
                         AND reports.id IN (
                             SELECT reports.id
                             FROM reports
-                            WHERE reports.checker_id = 0
+                            WHERE reports.checker_id = {fake_chk_id}
+                                AND reports.analyzer_name != '{FakeChecker[0]}'
+                                AND reports.checker_name != '{FakeChecker[1]}'
                             LIMIT {REPORT_UPDATE_CHUNK_SIZE}
                         )
                     ;
@@ -455,8 +468,13 @@ def downgrade():
                  "this is a technical note.")
 
     def downgrade_reports():
+        Base = automap_base()
+        Base.prepare(conn, reflect=True)
+        Report = Base.classes.reports  # 'reports' is the table name!
+        Checker = Base.classes.checkers
+
         db = Session(bind=conn)
-        report_count = db.execute("SELECT COUNT(id) FROM reports;").scalar()
+        report_count = db.query(Report.id).count()
         if not report_count:
             return
 
@@ -473,6 +491,10 @@ def downgrade():
                      if batch < num_batches else report_count,
                      float(batch) / num_batches * 100)
 
+        fake_chk_id = db.query(Checker.id) \
+            .filter(Checker.analyzer_name == FakeChecker[0],
+                    Checker.checker_name == FakeChecker[1]) \
+            .scalar()
         for i in range(0, num_batches):
             # FIXME: "UPDATE ... SET ... FROM ..." is only supported starting
             # with SQLite version 3.33.0 (2020-08-14). Until this version
@@ -483,14 +505,16 @@ def downgrade():
                 db.execute(f"""
                     UPDATE reports
                     SET
-                        (analyzer_name, checker_id, severity, checker_id_lookup) =
-                        (SELECT analyzer_name, checker_name, severity, '0'
+                        (analyzer_name, checker_id, severity,
+                                checker_id_lookup) =
+                        (SELECT analyzer_name, checker_name, severity,
+                                '{fake_chk_id}'
                             FROM checkers
                             WHERE checkers.id = reports.checker_id_lookup)
                     WHERE reports.id IN (
                             SELECT reports.id
                             FROM reports
-                            WHERE reports.checker_id_lookup != 0
+                            WHERE reports.checker_id_lookup != {fake_chk_id}
                             LIMIT {REPORT_UPDATE_CHUNK_SIZE}
                         )
                     ;
@@ -502,13 +526,13 @@ def downgrade():
                         analyzer_name = checkers.analyzer_name,
                         checker_id = checkers.checker_name,
                         severity = checkers.severity,
-                        checker_id_lookup = 0
+                        checker_id_lookup = {fake_chk_id}
                     FROM checkers
                     WHERE checkers.id = reports.checker_id_lookup
                         AND reports.id IN (
                             SELECT reports.id
                             FROM reports
-                            WHERE reports.checker_id_lookup != 0
+                            WHERE reports.checker_id_lookup != {fake_chk_id}
                             LIMIT {REPORT_UPDATE_CHUNK_SIZE}
                         )
                     ;
