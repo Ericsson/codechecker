@@ -19,7 +19,7 @@ You can turn off SIP on El Capitan this way(intel based):
   * Close the Terminal app.
   * Click the  (Apple) menu and select Restart....
 
-Or you can turn off SIP on El Capitan this way(silicon):
+On Apple silicon, the process of disabling SIP is different:
 
   * Click the  (Apple) menu.
   * Select Shut Down...
