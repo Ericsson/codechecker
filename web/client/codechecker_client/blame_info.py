@@ -3,7 +3,7 @@ import os
 import zipfile
 
 from git import Repo
-from git.exc import InvalidGitRepositoryError
+from git.exc import InvalidGitRepositoryError, GitCommandError
 from typing import Dict, Iterable, Optional
 
 from codechecker_common.logger import get_logger
@@ -44,6 +44,9 @@ def __get_blame_info(file_path: str):
             LOG.debug(f"File {file_path} is an ignored file")
             return
     except InvalidGitRepositoryError:
+        return
+    except GitCommandError as ex:
+        LOG.debug(f"Failed to get blame information for {file_path}: {ex}")
         return
 
     tracking_branch = __get_tracking_branch(repo)
