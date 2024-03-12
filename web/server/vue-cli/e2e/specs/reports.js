@@ -185,7 +185,9 @@ module.exports = {
     reportPage.expect.element("@overlay").to.be.visible.before(5000);
 
     dateDialog
+      .pause(100)
       .click("@date")
+      .pause(100)
       .click("@ok");
 
     reportPage.expect.element("@overlay").to.not.be.present.before(5000);
