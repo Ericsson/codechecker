@@ -9,11 +9,22 @@ log](https://github.com/rizsotto/scan-build#limitations)
 the compiler calls without turning off *System Integrity Protection (SIP)*.
 `intercept build` can automatically detect if SIP is turned off.
 
-You can turn off SIP on El Capitan this way:
+You can turn off SIP on El Capitan this way(intel based):
 
   * Click the  (Apple) menu.
   * Select Restart...
   * Hold down command-R to boot into the Recovery System.
+  * Click the Utilities menu and select Terminal.
+  * Type csrutil disable and press return.
+  * Close the Terminal app.
+  * Click the  (Apple) menu and select Restart....
+
+Or you can turn off SIP on El Capitan this way(silicon):
+
+  * Click the  (Apple) menu.
+  * Select Shut Down...
+  * While turning on, press and hold power button until volumes are displayed
+  * Click "Options" and press continue 
   * Click the Utilities menu and select Terminal.
   * Type csrutil disable and press return.
   * Close the Terminal app.
