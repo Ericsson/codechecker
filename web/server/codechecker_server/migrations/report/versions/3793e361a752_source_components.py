@@ -22,7 +22,7 @@ import sqlalchemy as sa
 def upgrade():
     op.create_table('source_components',
         sa.Column('name', sa.String(), nullable=False),
-        sa.Column('value', sa.Binary(), nullable=False),
+        sa.Column('value', sa.LargeBinary(), nullable=False),
         sa.Column('description', sa.Text(), nullable=True),
         sa.Column('username', sa.String(), nullable=True),
         sa.PrimaryKeyConstraint('name', name=op.f('pk_source_components')))

@@ -42,7 +42,7 @@ def upgrade():
         'review_status_is_in_source',
         sa.Boolean(), server_default='0', nullable=True)
     col_rs_message = sa.Column(
-        'review_status_message', sa.Binary(), nullable=True)
+        'review_status_message', sa.LargeBinary(), nullable=True)
 
     conn = op.get_bind()
 

@@ -23,7 +23,7 @@ def upgrade():
                   sa.Column('tracking_branch', sa.String(), nullable=True))
 
     op.add_column('file_contents',
-                  sa.Column('blame_info', sa.Binary(), nullable=True))
+                  sa.Column('blame_info', sa.LargeBinary(), nullable=True))
 
 
 def downgrade():

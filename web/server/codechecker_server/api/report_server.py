@@ -1753,8 +1753,10 @@ class ThriftRequestHandler:
                         new_hashes_query = union_all(*[
                             select([bindparam('bug_id' + str(i), h)
                                     .label('bug_id')])
-                            for i, h in enumerate(chunk)])
-                        q = select([new_hashes_query]).except_(base_hashes)
+                            for i, h in enumerate(chunk)]).subquery()
+                        q = select([new_hashes_query]) \
+                            .except_(base_hashes) \
+                            .subquery()
                         new_hashes.extend([res[0] for res in session.query(q)])
 
                     return new_hashes

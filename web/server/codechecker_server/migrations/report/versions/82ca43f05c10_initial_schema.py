@@ -25,7 +25,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('bug_hash', sa.String(), nullable=False),
     sa.Column('author', sa.String(), nullable=False),
-    sa.Column('message', sa.Binary(), nullable=False),
+    sa.Column('message', sa.LargeBinary(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_comments'))
     )
@@ -37,14 +37,14 @@ def upgrade():
     )
     op.create_table('file_contents',
     sa.Column('content_hash', sa.String(), nullable=False),
-    sa.Column('content', sa.Binary(), nullable=True),
+    sa.Column('content', sa.LargeBinary(), nullable=True),
     sa.PrimaryKeyConstraint('content_hash', name=op.f('pk_file_contents'))
     )
     op.create_table('review_statuses',
     sa.Column('bug_hash', sa.String(), nullable=False),
     sa.Column('status', sa.Enum('unreviewed', 'confirmed', 'false_positive', 'intentional', name='review_status'), nullable=False),
     sa.Column('author', sa.String(), nullable=False),
-    sa.Column('message', sa.Binary(), nullable=False),
+    sa.Column('message', sa.LargeBinary(), nullable=False),
     sa.Column('date', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('bug_hash', name=op.f('pk_review_statuses'))
     )
