@@ -94,7 +94,6 @@ class SkipListHandler:
         Check if the given source should be skipped.
         Should the analyzer skip the given source file?
         """
-
         if not self.__skip:
             return False
 

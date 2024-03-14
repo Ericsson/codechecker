@@ -63,9 +63,30 @@ class TestSkip(unittest.TestCase):
         self.report_dir = os.path.join(self.test_workspace, "reports")
         self.test_dir = os.path.join(os.path.dirname(__file__), 'test_files')
 
-    def __analyze_simple(self, build_json, analyzer_extra_options=None):
+    def __log_and_analyze(self, proj: str, analyzer_extra_options=None):
+        """ Log and analyze the specified project. """
+        test_dir = os.path.join(self.test_dir, proj)
+        build_json = os.path.join(self.test_workspace, "build.json")
+
+        clean_cmd = ["make", "clean"]
+        out = subprocess.check_output(clean_cmd,
+                                      cwd=test_dir,
+                                      encoding="utf-8", errors="ignore")
+        print(out)
+
+        # Create and run log command.
+        log_cmd = [self._codechecker_cmd, "log", "-b", "make",
+                   "-o", build_json]
+        out = subprocess.check_output(log_cmd,
+                                      cwd=test_dir,
+                                      encoding="utf-8", errors="ignore")
+        print(out)
+        # Create and run analyze command.
+        return self.__analyze(build_json, proj, analyzer_extra_options)
+
+    def __analyze(self, build_json, proj: str, analyzer_extra_options=None):
         """ Analyze the 'simple' project. """
-        test_dir = os.path.join(self.test_dir, "simple")
+        test_dir = os.path.join(self.test_dir, proj)
         analyze_cmd = [
             self._codechecker_cmd, "analyze", "-c", build_json,
             "--analyzers", "clangsa", "-o", self.report_dir]
@@ -86,27 +107,6 @@ class TestSkip(unittest.TestCase):
         print(err)
         self.assertEqual(process.returncode, 0)
         return out, err
-
-    def __log_and_analyze_simple(self, analyzer_extra_options=None):
-        """ Log and analyze the 'simple' project. """
-        test_dir = os.path.join(self.test_dir, "simple")
-        build_json = os.path.join(self.test_workspace, "build.json")
-
-        clean_cmd = ["make", "clean"]
-        out = subprocess.check_output(clean_cmd,
-                                      cwd=test_dir,
-                                      encoding="utf-8", errors="ignore")
-        print(out)
-
-        # Create and run log command.
-        log_cmd = [self._codechecker_cmd, "log", "-b", "make",
-                   "-o", build_json]
-        out = subprocess.check_output(log_cmd,
-                                      cwd=test_dir,
-                                      encoding="utf-8", errors="ignore")
-        print(out)
-        # Create and run analyze command.
-        return self.__analyze_simple(build_json, analyzer_extra_options)
 
     def __run_parse(self, extra_options=None):
         """ Run parse command with the given extra options. """
@@ -129,7 +129,7 @@ class TestSkip(unittest.TestCase):
 
     def test_skip(self):
         """Analyze a project with a skip file."""
-        self.__log_and_analyze_simple(["--ignore", "skipfile"])
+        self.__log_and_analyze("simple", ["--ignore", "skipfile"])
 
         # Check if file is skipped.
         report_dir_files = os.listdir(self.report_dir)
@@ -249,15 +249,18 @@ class TestSkip(unittest.TestCase):
             skip_file.write('-*')
             skip_file.flush()
 
-            self.__log_and_analyze_simple([
-                "--ignore", skip_file.name])
+            self.__log_and_analyze(
+                "simple",
+                ["--ignore", skip_file.name])
             self.assertFalse(
                 glob.glob(os.path.join(self.report_dir, '*.plist')))
 
     def test_analyze_header_with_file_option(self):
         """ Analyze a header file with the --file option. """
         header_file = os.path.join(self.test_dir, "simple", "skip.h")
-        out, _ = self.__log_and_analyze_simple(["--file", header_file])
+        out, _ = self.__log_and_analyze(
+            "simple",
+            ["--file", header_file])
         self.assertIn(
             f"Get dependent source files for '{header_file}'...", out)
         self.assertIn(
@@ -289,7 +292,7 @@ class TestSkip(unittest.TestCase):
             json.dump(build_actions, f)
 
         header_file = os.path.join(self.test_dir, "simple", "skip.h")
-        out, _ = self.__analyze_simple(build_json, ["--file", header_file])
+        out, _ = self.__analyze(build_json, "simple", ["--file", header_file])
         self.assertIn(
             f"Get dependent source files for '{header_file}'...", out)
         self.assertIn(
@@ -312,9 +315,13 @@ class TestSkip(unittest.TestCase):
             skip_file.write('-*')
             skip_file.flush()
 
-            self.__log_and_analyze_simple([
-                "--ignore", skip_file.name,
-                "--file", "*/file_to_be_skipped.cpp"])
+            self.__log_and_analyze(
+                "simple",
+                [
+                    "--ignore", skip_file.name,
+                    "--file",
+                    "*/file_to_be_skipped.cpp"
+                ])
             self.assertFalse(
                 glob.glob(os.path.join(self.report_dir, '*.plist')))
 
@@ -336,9 +343,13 @@ class TestSkip(unittest.TestCase):
             ]))
             skip_file.flush()
 
-            self.__log_and_analyze_simple([
-                "--ignore", skip_file.name,
-                "--file", "*/skip_header.cpp"])
+            self.__log_and_analyze(
+                "simple",
+                [
+                    "--ignore", skip_file.name,
+                    "--file",
+                    "*/skip_header.cpp"
+                ])
             print(glob.glob(
                     os.path.join(self.report_dir, '*.plist')))
             self.assertFalse(
@@ -353,9 +364,13 @@ class TestSkip(unittest.TestCase):
             ]))
             skip_file.flush()
 
-            self.__log_and_analyze_simple([
-                "--ignore", skip_file.name,
-                "--file", "*/skip_header.cpp"])
+            self.__log_and_analyze(
+                "simple",
+                [
+                    "--ignore", skip_file.name,
+                    "--file",
+                    "*/skip_header.cpp"
+                ])
             print(glob.glob(
                     os.path.join(self.report_dir, '*.plist')))
             self.assertFalse(
@@ -366,8 +381,7 @@ class TestSkip(unittest.TestCase):
         """
         Test analyze command --file option without a skip file.
         """
-        self.__log_and_analyze_simple([
-            "--file", "*/skip_header.cpp"])
+        self.__log_and_analyze("simple", ["--file", "*/skip_header.cpp"])
         self.assertFalse(
             any('skip_header.cpp' not in f for f in glob.glob(
                 os.path.join(self.report_dir, '*.plist'))))
@@ -376,7 +390,7 @@ class TestSkip(unittest.TestCase):
         """ Test parse command --file option. """
         skipfile = os.path.join(self.test_dir, "simple", "skipfile")
 
-        self.__log_and_analyze_simple()
+        self.__log_and_analyze("simple")
 
         # Only reports from the given files are returned.
         out, _, returncode = self.__run_parse(
@@ -402,3 +416,19 @@ class TestSkip(unittest.TestCase):
         self.assertTrue(all(
             r['file']['original_path'].endswith('/skip_header.cpp')
             for r in data['reports']))
+
+    def test_analyze_file_option_with_path_prefixes(self):
+        """ Analyze a header file with the --file option. """
+        out, _ = self.__log_and_analyze(
+            proj="multidir",
+            analyzer_extra_options=["--file", "*/src/b.cpp"])
+
+        # Only src/b.cpp should be analyzed.
+        self.assertIn("analyzed b.cpp successfully.", out)
+        self.assertNotIn("analyzed a.cpp successfully.", out)
+        self.assertNotIn("analyzed lib.cpp successfully.", out)
+        out, _, _ = self.__run_parse()
+        # Only reports from b.cpp should be present in the report folder.
+        self.assertIn("b.cpp", out)
+        self.assertNotIn("a.cpp", out)
+        self.assertNotIn("lib.cpp", out)
