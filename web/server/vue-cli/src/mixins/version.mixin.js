@@ -1,10 +1,6 @@
 import semver from "semver";
 
 export default {
-  data() {
-    return {};
-  },
-
   methods: {
     prettifyCCVersion(version) {
       if (!version) return version;

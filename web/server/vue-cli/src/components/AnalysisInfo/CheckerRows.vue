@@ -6,7 +6,7 @@
       v-for="(checker, idx) in checkers"
       :key="idx"
       :name="checker[0]"
-      :enabled="checker[1]"
+      :enabled="checker[1].enabled"
     />
   </v-container>
 </template>

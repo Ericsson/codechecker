@@ -50,9 +50,9 @@
         <v-col cols="auto">
           <count-chips
             v-if="needDetailedCounts"
-            :num-good="counts[0]"
-            :num-bad="counts[1]"
-            :num-total="counts[2]"
+            :num-good="counts[CountKeys.Enabled]"
+            :num-bad="counts[CountKeys.Disabled]"
+            :num-total="counts[CountKeys.Total]"
             :good-text="'Number of checkers enabled (executed)'"
             :bad-text="'Number of checkers disabled (not executed)'"
             :total-text="'Number of checkers available'"
@@ -76,6 +76,7 @@
 <script>
 import CountChips from "@/components/CountChips";
 import CheckerRows from "./CheckerRows";
+import { CountKeys } from "@/mixins/analysis-info-handling.mixin";
 
 export default {
   name: "CheckerGroup",
@@ -89,22 +90,32 @@ export default {
     counts: { type: Array, required: true }
   },
   computed: {
+    numEnabled() {
+      return this.counts[this.CountKeys.Enabled];
+    },
+    numDisabled() {
+      return this.counts[this.CountKeys.Disabled];
+    },
     needDetailedCounts() {
-      return this.counts[0] > 0 && this.counts[1] > 0;
+      return this.numEnabled > 0 && this.numDisabled > 0;
     },
     groupWideStatus() {
-      if (this.counts[0] > 0 && this.counts[1] === 0)
+      if (this.numEnabled > 0 && this.numDisabled === 0)
         return "success";
-      if (this.counts[0] === 0 && this.counts[1] > 0)
+      if (this.numEnabled === 0 && this.numDisabled > 0)
         return "error";
       return "grey darken-1";
     },
     groupEnabled() {
       return this.groupWideStatus === "success";
+    },
+    CountKeys() {
+      return CountKeys;
     }
   }
 };
 </script>
+
 <style lang="scss" scoped>
 .analysis-info .checker-group-name {
   font-family: monospace;

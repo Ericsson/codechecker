@@ -31,8 +31,8 @@ export default {
     AnalyzerStatisticsIcon
   },
   props: {
-    enabled: { type: Boolean, required: true },
-    name: { type: String, required: true }
+    name: { type: String, required: true },
+    enabled: { type: Boolean, required: true }
   }
 };
 </script>
