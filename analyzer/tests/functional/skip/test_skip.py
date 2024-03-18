@@ -417,11 +417,37 @@ class TestSkip(unittest.TestCase):
             r['file']['original_path'].endswith('/skip_header.cpp')
             for r in data['reports']))
 
-    def test_analyze_file_option_with_path_prefixes(self):
-        """ Analyze a header file with the --file option. """
-        out, _ = self.__log_and_analyze(
-            proj="multidir",
-            analyzer_extra_options=["--file", "*/src/b.cpp"])
+    def test_analyze_file_option_with_path_prefixes_no_slash(self):
+        """
+        Analyze a source file with the --file option.
+        There is a path prefix without a leading slash in the --file option.
+        The compile command contains directores as "."
+        """
+        out, _ = self.__analyze(
+            "compile_commnands.json",
+            "multidir",
+            ["--file", "*src/b.cpp"])
+
+        # Only src/b.cpp should be analyzed.
+        self.assertIn("analyzed b.cpp successfully.", out)
+        self.assertNotIn("analyzed a.cpp successfully.", out)
+        self.assertNotIn("analyzed lib.cpp successfully.", out)
+        out, _, _ = self.__run_parse()
+        # Only reports from b.cpp should be present in the report folder.
+        self.assertIn("b.cpp", out)
+        self.assertNotIn("a.cpp", out)
+        self.assertNotIn("lib.cpp", out)
+
+    def test_analyze_file_option_with_path_prefixes_with_slash(self):
+        """
+        Analyze a source file with the --file option.
+        There is a path prefix with a leading slash in the --file option.
+        The compile command contains directores as "."
+        """
+        out, _ = self.__analyze(
+            "compile_commnands.json",
+            "multidir",
+            ["--file", "*/src/b.cpp"])
 
         # Only src/b.cpp should be analyzed.
         self.assertIn("analyzed b.cpp successfully.", out)
