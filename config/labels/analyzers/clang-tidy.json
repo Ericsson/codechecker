@@ -695,6 +695,12 @@
       "sei-cert:mem51-cpp",
       "severity:MEDIUM"
     ],
+    "bugprone-unused-local-non-trivial-variable": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/unused-local-non-trivial-variable.html",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:LOW"
+    ],
     "bugprone-unused-raii": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/unused-raii.html",
       "profile:default",
@@ -6379,6 +6385,14 @@
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/avoid-const-params-in-decls.html",
       "severity:STYLE"
     ],
+    "readability-avoid-nested-conditional-operator": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/avoid-nested-conditional-operator.html",
+      "severity:STYLE"
+    ],
+    "readability-avoid-return-with-void-value": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/avoid-return-with-void-value.html",
+      "severity:LOW"
+    ],
     "readability-avoid-unconditional-preprocessor-if": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/avoid-unconditional-preprocessor-if.html",
       "severity:STYLE"
@@ -6493,6 +6507,10 @@
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/redundant-access-specifiers.html",
       "severity:STYLE"
     ],
+    "readability-redundant-casting": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/redundant-casting.html",
+      "severity:STYLE"
+    ],
     "readability-redundant-control-flow": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/redundant-control-flow.html",
       "severity:STYLE"
@@ -6503,6 +6521,14 @@
     ],
     "readability-redundant-function-ptr-dereference": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/redundant-function-ptr-dereference.html",
+      "severity:STYLE"
+    ],
+    "readability-redundant-casting": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/redundant-casting.html",
+      "severity:STYLE"
+    ],
+    "readability-redundant-inline-specifier": [
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/readability/redundant-inline-specifier.html",
       "severity:STYLE"
     ],
     "readability-redundant-member-init": [
