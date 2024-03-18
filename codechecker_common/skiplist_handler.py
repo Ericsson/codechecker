@@ -10,10 +10,10 @@
 
 
 import fnmatch
-import re
-import os
 
 from codechecker_common.logger import get_logger
+
+from pathlib import Path
 
 LOG = get_logger('system')
 
@@ -53,10 +53,9 @@ class SkipListHandler:
         the regular expressions.
         """
         for skip_line in skip_lines:
-            norm_skip_path = os.path.normpath(skip_line[1:].strip())
-            rexpr = re.compile(
-                fnmatch.translate('*' + norm_skip_path + '*'))
-            self.__skip.append((skip_line, rexpr))
+            LOG.info("Processing skip line: %s", skip_line)
+            matcher = skip_line
+            self.__skip.append((skip_line, matcher))
 
     def __check_line_format(self, skip_lines):
         """
@@ -97,9 +96,15 @@ class SkipListHandler:
         if not self.__skip:
             return False
 
-        for line, rexpr in self.__skip:
-            if rexpr.match(source):
-                sign = line[0]
+        path = Path(source).resolve()
+        for filter, _ in self.__skip:
+            sign = filter[0]
+            filter = filter[1:]
+            if filter.startswith("*/") and "/" in filter[2:]:
+                filter = filter[0] + filter[2:]
+            else:
+                filter = Path(filter).resolve()
+            if fnmatch.fnmatch(str(path), str(filter)):
                 return sign == '-'
         return False
 

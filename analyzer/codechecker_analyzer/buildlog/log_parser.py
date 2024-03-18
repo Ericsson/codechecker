@@ -11,6 +11,7 @@ from collections import namedtuple
 # pylint: disable=no-name-in-module
 from distutils.spawn import find_executable
 from enum import Enum
+from pathlib import Path
 
 import glob
 import json
@@ -1290,7 +1291,9 @@ def parse_unique_log(compilation_database,
             # Skipping of the compile commands is done differently if no
             # CTU or statistics related feature was enabled.
             if analysis_skip_handlers \
-                and analysis_skip_handlers.should_skip(entry['file']) \
+                and analysis_skip_handlers.should_skip(
+                        str(Path(Path(entry["directory"]).resolve(),
+                                 entry["file"]))) \
                 and (not ctu_or_stats_enabled or pre_analysis_skip_handlers
                      and pre_analysis_skip_handlers.should_skip(
                          entry['file'])):

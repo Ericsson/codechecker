@@ -1,0 +1,25 @@
+[
+  {
+	"directory": ".",
+		"command": "/usr/bin/g++ -c b.cpp -o /dev/null",
+		"file": "b.cpp"
+	}
+	,
+	{
+		"directory": ".",
+		"command": "/usr/bin/g++ -c lib/lib.cpp -o /dev/null",
+		"file": "lib/lib.cpp"
+	}
+	,
+	{
+		"directory": ".",
+		"command": "/usr/bin/g++ -c src/a.cpp -o /dev/null",
+		"file": "src/a.cpp"
+	}
+	,
+	{
+		"directory": ".",
+		"command": "/usr/bin/g++ -c src/b.cpp -o /dev/null",
+		"file": "src/b.cpp"
+	}
+]

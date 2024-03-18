@@ -270,7 +270,7 @@ class TestSkip(unittest.TestCase):
         self.assertTrue(plist_files)
         self.assertTrue(all('skip_header.cpp' in f for f in plist_files))
 
-    def test_analyze_header_with_file_option_and_intercept_json(self):
+    def test_analyze_header_with_file_opt_and_intercept_json(self):
         """
         Analyze a header file with the --file option and a compilation database
         produced by intercept build.
@@ -302,7 +302,7 @@ class TestSkip(unittest.TestCase):
         self.assertTrue(plist_files)
         self.assertTrue(all('skip_header.cpp' in f for f in plist_files))
 
-    def test_analyze_file_option_skip_everything(self):
+    def test_analyze_file_opt_skip_everything(self):
         """
         Test analyze command --file option when everything is skipped by a
         skipfile.
@@ -417,18 +417,310 @@ class TestSkip(unittest.TestCase):
             r['file']['original_path'].endswith('/skip_header.cpp')
             for r in data['reports']))
 
-    def test_analyze_file_option_with_path_prefixes(self):
-        """ Analyze a header file with the --file option. """
-        out, _ = self.__log_and_analyze(
-            proj="multidir",
-            analyzer_extra_options=["--file", "*/src/b.cpp"])
+    def _test_analyze_file_option(self,
+                                  project,
+                                  file_option,
+                                  expected_files_analyze,
+                                  prohibited_files_analyze,
+                                  expected_files_parse,
+                                  prohibited_files_parse):
+        """
+        Analyze a source file with the --file option.
+        """
+        out, _ = self.__analyze(
+            "compile_commnands.json",
+            project,
+            ["--file", file_option])
 
-        # Only src/b.cpp should be analyzed.
-        self.assertIn("analyzed b.cpp successfully.", out)
-        self.assertNotIn("analyzed a.cpp successfully.", out)
-        self.assertNotIn("analyzed lib.cpp successfully.", out)
+        for expected_file in expected_files_analyze:
+            self.assertIn(f"analyzed {expected_file} successfully.", out)
+
+        for prohibited_file in prohibited_files_analyze:
+            self.assertNotIn(f"analyzed {prohibited_file} successfully.", out)
+
         out, _, _ = self.__run_parse()
-        # Only reports from b.cpp should be present in the report folder.
-        self.assertIn("b.cpp", out)
-        self.assertNotIn("a.cpp", out)
-        self.assertNotIn("lib.cpp", out)
+
+        for expected_file in expected_files_parse:
+            self.assertIn(expected_file, out)
+
+        for prohibited_file in prohibited_files_parse:
+            self.assertNotIn(prohibited_file, out)
+
+    def test_analyze_file_opt_abs(self):
+        """
+        "/ABS/PATH/TO/multidir/src/b.cpp" -> "src/b.cpp"
+        """
+        filter_expr = os.path.join(self.test_dir, "multidir", "src", "b.cpp")
+        filter_expr = os.path.abspath(filter_expr)
+        self._test_analyze_file_option(
+            project="multidir",
+            file_option=filter_expr,
+            expected_files_analyze=["b.cpp"],
+            prohibited_files_analyze=["a.cpp", "lib.cpp"],
+            expected_files_parse=["src/b.cpp"],
+            prohibited_files_parse=["multidir/b.cpp",
+                                    "src/a.cpp",
+                                    "lib/lib.cpp"]
+        )
+
+    def test_analyze_file_opt_wc(self):
+        """
+        "*" -> "multidir/b.cpp", "src/a.cpp", "src/b.cpp", "lib/lib.cpp"
+        """
+        self._test_analyze_file_option(
+            project="multidir",
+            file_option="*",
+            expected_files_analyze=["a.cpp", "b.cpp", "lib.cpp"],
+            prohibited_files_analyze=[],
+            expected_files_parse=["multidir/b.cpp", "src/a.cpp", "src/b.cpp"],
+            prohibited_files_parse=[]
+        )
+
+    def test_analyze_file_opt_wc_ext(self):
+        """
+        "*.cpp" -> "multidir/b.cpp", "src/a.cpp", "src/b.cpp", "lib/lib.cpp"
+        """
+        self._test_analyze_file_option(
+            project="multidir",
+            file_option="*.cpp",
+            expected_files_analyze=["a.cpp", "b.cpp", "lib.cpp"],
+            prohibited_files_analyze=[],
+            expected_files_parse=["multidir/b.cpp", "src/a.cpp", "src/b.cpp"],
+            prohibited_files_parse=[]
+        )
+
+    def test_analyze_file_opt_cwd_wc_ext(self):
+        """
+        "./*.cpp" -> "multidir/b.cpp", "src/a.cpp", "src/b.cpp", "lib/lib.cpp"
+        """
+        self._test_analyze_file_option(
+            project="multidir",
+            file_option="./*.cpp",
+            expected_files_analyze=["a.cpp", "b.cpp", "lib.cpp"],
+            prohibited_files_analyze=[],
+            expected_files_parse=["multidir/b.cpp", "src/a.cpp", "src/b.cpp"],
+            prohibited_files_parse=[]
+        )
+
+    def test_analyze_file_opt_filename_no_slash(self):
+        """
+        "b.cpp" -> "b.cpp"
+        """
+        self._test_analyze_file_option(
+            project="multidir",
+            file_option="b.cpp",
+            expected_files_analyze=["b.cpp"],
+            prohibited_files_analyze=["a.cpp", "lib.cpp"],
+            expected_files_parse=["multidir/b.cpp"],
+            prohibited_files_parse=["src/a.cpp", "src/b.cpp", "lib/lib.cpp"]
+        )
+
+    def test_analyze_file_opt_filename(self):
+        """
+        "./b.cpp" -> "b.cpp"
+        """
+        self._test_analyze_file_option(
+            project="multidir",
+            file_option="./b.cpp",
+            expected_files_analyze=["b.cpp"],
+            prohibited_files_analyze=["a.cpp", "lib.cpp"],
+            expected_files_parse=["multidir/b.cpp"],
+            prohibited_files_parse=["src/a.cpp", "src/b.cpp", "lib/lib.cpp"]
+        )
+
+    def test_analyze_file_opt_wc_filename(self):
+        """
+        "*b.cpp" -> "multidir/b.cpp", "src/b.cpp"
+        """
+        self._test_analyze_file_option(
+            project="multidir",
+            file_option="*/b.cpp",
+            expected_files_analyze=["b.cpp"],
+            prohibited_files_analyze=["a.cpp", "lib.cpp"],
+            expected_files_parse=["src/b.cpp"],
+            prohibited_files_parse=["src/a.cpp", "lib/lib.cpp"]
+        )
+
+    def test_analyze_file_opt_wc_sep_filename(self):
+        """
+        "*/b.cpp" -> "src/b.cpp"
+        """
+        self._test_analyze_file_option(
+            project="multidir",
+            file_option="*/b.cpp",
+            expected_files_analyze=["b.cpp"],
+            prohibited_files_analyze=["a.cpp", "lib.cpp"],
+            expected_files_parse=["src/b.cpp"],
+            prohibited_files_parse=["src/a.cpp",
+                                    "multidir/b.cpp",
+                                    "lib/lib.cpp"]
+        )
+
+    def test_analyze_file_pathpref_filename(self):
+        """
+        "src/b.cpp" -> "src/b.cpp"
+        """
+        self._test_analyze_file_option(
+            project="multidir",
+            file_option="src/b.cpp",
+            expected_files_analyze=["b.cpp"],
+            prohibited_files_analyze=["a.cpp", "lib.cpp"],
+            expected_files_parse=["src/b.cpp"],
+            prohibited_files_parse=["src/a.cpp", "lib/lib.cpp"]
+        )
+
+    def test_analyze_file_opt_dot_pathpref_filename(self):
+        """
+        "./src/b.cpp" -> "src/b.cpp"
+        """
+        self._test_analyze_file_option(
+            project="multidir",
+            file_option="./src/b.cpp",
+            expected_files_analyze=["b.cpp"],
+            prohibited_files_analyze=["a.cpp", "lib.cpp"],
+            expected_files_parse=["src/b.cpp"],
+            prohibited_files_parse=["src/a.cpp", "lib/lib.cpp"]
+        )
+
+    def test_analyze_file_opt_wc_pathpref_filename(self):
+        """
+        "*src/b.cpp" -> "src/b.cpp"
+        """
+        self._test_analyze_file_option(
+            project="multidir",
+            file_option="*src/b.cpp",
+            expected_files_analyze=["b.cpp"],
+            prohibited_files_analyze=["a.cpp", "lib.cpp"],
+            expected_files_parse=["src/b.cpp"],
+            prohibited_files_parse=["src/a.cpp", "lib/lib.cpp"]
+        )
+
+    def test_analyze_file_opt_wc_sep_pathpref_filename(self):
+        """
+        "*/src/b.cpp" -> "src/b.cpp"
+        """
+        self._test_analyze_file_option(
+            project="multidir",
+            file_option="*/src/b.cpp",
+            expected_files_analyze=["b.cpp"],
+            prohibited_files_analyze=["a.cpp", "lib.cpp"],
+            expected_files_parse=["src/b.cpp"],
+            prohibited_files_parse=["src/a.cpp", "lib/lib.cpp"]
+        )
+
+    def test_analyze_file_opt_pathpref_sep_wc(self):
+        """
+        "src/*" -> "src/a.cpp", "src/b.cpp"
+        """
+        self._test_analyze_file_option(
+            project="multidir",
+            file_option="src/*",
+            expected_files_analyze=["a.cpp", "b.cpp"],
+            prohibited_files_analyze=["lib.cpp"],
+            expected_files_parse=["src/a.cpp", "src/b.cpp"],
+            prohibited_files_parse=["multidir/b.cpp", "lib/lib.cpp"]
+        )
+
+    def test_analyze_file_opt_cwd_pathpref_sep_wc(self):
+        """
+        "./src/*" -> "src/a.cpp", "src/b.cpp"
+        """
+        self._test_analyze_file_option(
+            project="multidir",
+            file_option="./src/*",
+            expected_files_analyze=["a.cpp", "b.cpp"],
+            prohibited_files_analyze=["lib.cpp"],
+            expected_files_parse=["src/a.cpp", "src/b.cpp"],
+            prohibited_files_parse=["multidir/b.cpp", "lib/lib.cpp"]
+        )
+
+    def test_analyze_file_wc_sep_pathpref_sep_wc(self):
+        """
+        "*/src/*" -> "src/a.cpp", "src/b.cpp"
+        """
+        self._test_analyze_file_option(
+            project="multidir",
+            file_option="*/src/*",
+            expected_files_analyze=["a.cpp", "b.cpp"],
+            prohibited_files_analyze=["lib.cpp"],
+            expected_files_parse=["src/a.cpp", "src/b.cpp"],
+            prohibited_files_parse=["multidir/b.cpp", "lib/lib.cpp"]
+        )
+
+    def test_analyze_file_opt_wc_pathpref_sep_wc(self):
+        """
+        "*src/*" -> "src/a.cpp", "src/b.cpp"
+        """
+        self._test_analyze_file_option(
+            project="multidir",
+            file_option="*src/*",
+            expected_files_analyze=["a.cpp", "b.cpp"],
+            prohibited_files_analyze=["lib.cpp"],
+            expected_files_parse=["src/a.cpp", "src/b.cpp"],
+            prohibited_files_parse=["multidir/b.cpp", "lib/lib.cpp"]
+        )
+
+    def test_analyze_file_opt_pathpref_sep_wc_ext(self):
+        """
+        "src/*.cpp" -> "src/a.cpp", "src/b.cpp"
+        """
+        self._test_analyze_file_option(
+            project="multidir",
+            file_option="src/*.cpp",
+            expected_files_analyze=["a.cpp", "b.cpp"],
+            prohibited_files_analyze=["lib.cpp"],
+            expected_files_parse=["src/a.cpp", "src/b.cpp"],
+            prohibited_files_parse=["multidir/b.cpp", "lib/lib.cpp"]
+        )
+
+    def test_analyze_file_opt_cwd_pathpref_sep_wc_ext(self):
+        """
+        "./src/*.cpp" -> "src/a.cpp", "src/b.cpp"
+        """
+        self._test_analyze_file_option(
+            project="multidir",
+            file_option="./src/*.cpp",
+            expected_files_analyze=["a.cpp", "b.cpp"],
+            prohibited_files_analyze=["lib.cpp"],
+            expected_files_parse=["src/a.cpp", "src/b.cpp"],
+            prohibited_files_parse=["multidir/b.cpp", "lib/lib.cpp"]
+        )
+
+    def test_analyze_file_wc_sep_pathpref_sep_wc_ext(self):
+        """
+        "*/src/*.cpp" -> "src/a.cpp", "src/b.cpp"
+        """
+        self._test_analyze_file_option(
+            project="multidir",
+            file_option="*/src/*.cpp",
+            expected_files_analyze=["a.cpp", "b.cpp"],
+            prohibited_files_analyze=["lib.cpp"],
+            expected_files_parse=["src/a.cpp", "src/b.cpp"],
+            prohibited_files_parse=["multidir/b.cpp", "lib/lib.cpp"]
+        )
+
+    def test_analyze_file_opt_wc_pathpref_sep_wc_ext(self):
+        """
+        "*src/*.cpp" -> "src/a.cpp", "src/b.cpp"
+        """
+        self._test_analyze_file_option(
+            project="multidir",
+            file_option="*src/*.cpp",
+            expected_files_analyze=["a.cpp", "b.cpp"],
+            prohibited_files_analyze=["lib.cpp"],
+            expected_files_parse=["src/a.cpp", "src/b.cpp"],
+            prohibited_files_parse=["multidir/b.cpp", "lib/lib.cpp"]
+        )
+
+    def test_analyze_file_opt_partialpathpref_filename(self):
+        """
+        "*rc/b.cpp" -> "src/b.cpp"
+        """
+        self._test_analyze_file_option(
+            project="multidir",
+            file_option="*rc/b.cpp",
+            expected_files_analyze=["b.cpp"],
+            prohibited_files_analyze=["a.cpp", "lib.cpp"],
+            expected_files_parse=["src/b.cpp"],
+            prohibited_files_parse=["src/a.cpp", "lib/lib.cpp"]
+        )
