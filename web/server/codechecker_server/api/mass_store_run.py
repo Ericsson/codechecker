@@ -421,9 +421,15 @@ class MassStoreRun:
         """ Remove the lock from the database for the given run name. """
         # Using with_for_update() here so the database (in case it supports
         # this operation) locks the lock record's row from any other access.
+        # The "nowait" option is turned off, because it results a 'could not
+        # obtain lock on row in relation "run_locks"' error message in case
+        # this query happens simultaneously with a concurrent locking of
+        # another parallel store event. With "nowait" option the query will be
+        # blocked until the lock is undone. In the worst case when
+        # statement_timeout is reached, the exception will be thrown anyway.
         run_lock = session.query(RunLock) \
             .filter(RunLock.name == self.__name) \
-            .with_for_update(nowait=True).one()
+            .with_for_update(nowait=False).one()
         session.delete(run_lock)
         session.commit()
 
