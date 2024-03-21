@@ -409,8 +409,8 @@ def parse_analyzer_result_files(
             analyzer_result_files, zip_iter(
                 functools.partial(get_reports, checker_labels=checker_labels),
                 analyzer_result_files))):
-        if idx % 10 == 0:
-            LOG.debug(f"Parsed {idx}/{len(analyzer_result_files)} files...")
+        LOG.debug(f"[{idx}/{len(analyzer_result_files)}] "
+                  f"Parsed '{file_path}' ...")
         analyzer_result_file_reports[file_path] = reports
 
     return analyzer_result_file_reports
@@ -490,18 +490,16 @@ def assemble_zip(inputs,
             file_paths.update(report.original_files)
             file_report_positions[report.file.original_path].add(report.line)
 
-    if unique_reports:
-        for dirname, analyzer_reports in unique_reports.items():
-            for analyzer_name, reports in analyzer_reports.items():
-                if not analyzer_name:
-                    analyzer_name = 'unknown'
-                _, tmpfile = tempfile.mkstemp(f'-{analyzer_name}.plist')
+    for dirname, analyzer_reports in unique_reports.items():
+        for analyzer_name, reports in analyzer_reports.items():
+            if not analyzer_name:
+                analyzer_name = 'unknown'
+            _, tmpfile = tempfile.mkstemp(f'-{analyzer_name}.plist')
 
-                report_file.create(tmpfile, reports, checker_labels,
-                                   AnalyzerInfo(analyzer_name))
-                LOG.debug(f"Stored '{analyzer_name}' unique reports "
-                          f"in {tmpfile}.")
-                files_to_compress[dirname].add(tmpfile)
+            report_file.create(tmpfile, reports, checker_labels,
+                               AnalyzerInfo(analyzer_name))
+            LOG.debug(f"Stored '{analyzer_name}' unique reports in {tmpfile}.")
+            files_to_compress[dirname].add(tmpfile)
 
     if changed_files:
         reports_helper.dump_changed_files(changed_files)
