@@ -490,6 +490,7 @@ def assemble_zip(inputs,
             file_paths.update(report.original_files)
             file_report_positions[report.file.original_path].add(report.line)
 
+    files_to_delete = []
     for dirname, analyzer_reports in unique_reports.items():
         for analyzer_name, reports in analyzer_reports.items():
             if not analyzer_name:
@@ -500,6 +501,7 @@ def assemble_zip(inputs,
                                AnalyzerInfo(analyzer_name))
             LOG.debug(f"Stored '{analyzer_name}' unique reports in {tmpfile}.")
             files_to_compress[dirname].add(tmpfile)
+            files_to_delete.append(tmpfile)
 
     if changed_files:
         reports_helper.dump_changed_files(changed_files)
@@ -639,6 +641,10 @@ Configured report limit for this product: {p.reportLimit}
 
     LOG.info("Compressing report zip file done (%s / %s).",
              sizeof_fmt(zip_size), sizeof_fmt(compressed_zip_size))
+
+    # We are responsible for deleting these.
+    for file in files_to_delete:
+        os.remove(file)
 
 
 def should_be_zipped(input_file: str, input_files: Iterable[str]) -> bool:
