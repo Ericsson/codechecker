@@ -6,8 +6,8 @@ from git import Repo
 from git.exc import InvalidGitRepositoryError, GitCommandError
 from typing import Dict, Iterable, Optional
 
+from codechecker_common.compatibility.multiprocessing import Pool
 from codechecker_common.logger import get_logger
-from codechecker_common.multiprocesspool import MultiProcessPool
 
 LOG = get_logger('system')
 
@@ -115,7 +115,7 @@ def assemble_blame_info(
 
     Returns the number of collected blame information.
     """
-    with MultiProcessPool() as executor:
+    with Pool() as executor:
         file_blame_info = __collect_blame_info_for_files(
             file_paths, executor.map)
 

@@ -16,8 +16,6 @@ import json
 import os
 import shutil
 import sys
-
-import multiprocess
 from typing import List
 
 from tu_collector import tu_collector
@@ -31,6 +29,7 @@ from codechecker_analyzer.arg import \
 from codechecker_analyzer.buildlog import log_parser
 
 from codechecker_common import arg, logger, cmd_config, review_status_handler
+from codechecker_common.compatibility.multiprocessing import cpu_count
 from codechecker_common.skiplist_handler import SkipListHandler, \
     SkipListHandlers
 from codechecker_common.util import load_json
@@ -169,8 +168,7 @@ def add_arguments_to_parser(parser):
                         type=int,
                         dest="jobs",
                         required=False,
-                        # pylint: disable=no-member
-                        default=multiprocess.cpu_count(),
+                        default=cpu_count(),
                         help="Number of threads to use in analysis. More "
                              "threads mean faster analysis at the cost of "
                              "using more memory.")

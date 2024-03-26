@@ -1,18 +1,19 @@
-"""Add index for report and history id columns
+"""
+Add index for report and history id columns
 
 Revision ID: a24461972d2e
-Revises: dabc6998b8f0
+Revises:     dabc6998b8f0
 Create Date: 2021-06-10 15:38:59.504534
-
 """
 
-# revision identifiers, used by Alembic.
+from alembic import op
+
+
+# Revision identifiers, used by Alembic.
 revision = 'a24461972d2e'
 down_revision = 'dabc6998b8f0'
 branch_labels = None
 depends_on = None
-
-from alembic import op
 
 
 def upgrade():

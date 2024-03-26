@@ -17,8 +17,8 @@ https://alembic.sqlalchemy.org/en/latest/autogenerate.html#what-does-autogenerat
 
 # Updating configuration database schema
 
-Config database schema scripts can be found under the `config_db_migrate`
-directory.
+Config database schema scripts can be found under the
+`server/codechecker_server/migrations/config/versions` directory.
 
 ## Automatic migration script generation (Online)
 
@@ -30,20 +30,21 @@ version.
 The configuration database schema file can be found here:
 `server/codechecker_server/database/config_db_model.py`
 
-### **Step 2**: Check the alembic.ini configuration settings
+### **Step 2**: Check the `alembic.ini` configuration settings
 
 Database connection should point to the correct database.
-Edit the sqlalchemy.url option in [alembic.ini](
-   https://alembic.sqlalchemy.org/en/latest/tutorial.html#editing-the-ini-file)
-   according to your database configuration.
+Edit the `sqlalchemy.url` option in
+[alembic.ini](https://alembic.sqlalchemy.org/en/latest/tutorial.html#editing-the-ini-file)
+according to your database configuration.
 
 ### **Step 3**: Use alembic to autogenerate migration scripts
 
 `alembic --name config_db revision --autogenerate -m "Change description"`
 
 ### **Step 4**: Check the generated scripts
+
 The new migration script
-`config_db_migrate/versions/{hash}_change_description.py` is generated.
+`migrations/config/versions/{hash}_change_description.py` is generated.
 **You must always check the generated script because sometimes it isn't
 correct.**
 
@@ -60,29 +61,34 @@ Don't forget to commit the migration script with your other changes.
 
 ## Automatic migration script generation (Online)
 
-A Codechecker server should be started and a product should be configured with
+A CodeChecker server should be started and a product should be configured with
 a previous database schema version.
+
+Product (run) database schema scripts can be found under the
+`server/codechecker_server/migrations/report/versions` directory.
 
 ### **Step 1**: Update the database model
 
 The run database schema file can be found here:
 `server/codechecker_server/database/run_db_model.py`
 
-### **Step 2**: Check alembic.ini configuration
+### **Step 2**: Check `alembic.ini` configuration
 
 Database connection should point to the correct database.
-Edit the sqlalchemy.url option in [alembic.ini](
-   https://alembic.sqlalchemy.org/en/latest/tutorial.html#editing-the-ini-file)
-   according to your database configuration.
+Edit the `sqlalchemy.url` option in
+[alembic.ini](https://alembic.sqlalchemy.org/en/latest/tutorial.html#editing-the-ini-file)
+according to your database configuration.
 
 #### **Step 2**: Generating migration scripts using autogenerate
 
 `alembic --name run_db revision --autogenerate -m "Change description"`
 
 #### **Step 3**: Check the generated scripts
-The new migration script db_migrate/versions/{hash}_change_description.py is
-   generated. **You must always check the generated script because sometimes it
-   isn't correct.**
+
+The new migration script
+`migrations/report/versions/{hash}_change_description.py` is generated.
+**You must always check the generated script because sometimes it isn't
+correct.**
 
 #### **Step 4**: Run all test cases.
 
@@ -118,7 +124,7 @@ and the other is the run database (storing analysis reports).
 If there is some schema mismatch and migration is needed you will get a
 warning at server start.
 
-## IMPORTANT before schema upgrade
+## IMPORTANT: before schema upgrade
 
 If there is some schema change it is recommended to create a full backup
 of your configuration and run databases before running the migration.
@@ -187,17 +193,16 @@ command.
 $ CodeChecker server --db-upgrade-schema Default
 [15:01] - Checking configuration database ...
 [15:01] - Database is OK.
-[15:01] - Preparing schema upgrade for Default
+[15:01] - Preparing schema upgrade for 'Default'
 [WARNING] [15:01] - Please note after migration only newer CodeChecker versions can be used to start the server
 [WARNING] [15:01] - It is advised to make a full backup of your run databases.
+[15:01] - Checking: Default
+[15:01] - [Default] Database schema mismatch: migration is available.
+Do you want to upgrade 'Default' to new schema? Y(es)/n(o) y
+[15:01] - [Default] Schema will be upgraded...
 [15:01] - ========================
-[15:01] - Upgrading: Default
-[15:01] - Database schema mismatch: migration is available.
-Do you want to upgrade to new schema? Y(es)/n(o) y
-Upgrading schema ...
-Done.
-Database is OK.
-[15:01] - ========================
+[15:02] - [Default] Upgrading...
+[15:03] - [Default] Done upgrading.
 ```
 
 Schema upgrade can be done for multiple products in a row if the

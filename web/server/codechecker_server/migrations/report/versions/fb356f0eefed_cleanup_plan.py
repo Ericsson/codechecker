@@ -1,23 +1,25 @@
-"""Cleanup plan
+"""
+Cleanup plan
 
 Revision ID: fb356f0eefed
-Revises: ad2a567e513a
+Revises:     ad2a567e513a
 Create Date: 2021-09-06 10:55:43.093729
-
 """
-
-# revision identifiers, used by Alembic.
-revision = 'fb356f0eefed'
-down_revision = 'ad2a567e513a'
-branch_labels = None
-depends_on = None
 
 from alembic import op
 import sqlalchemy as sa
 
 
+# Revision identifiers, used by Alembic.
+revision = 'fb356f0eefed'
+down_revision = 'ad2a567e513a'
+branch_labels = None
+depends_on = None
+
+
 def upgrade():
-    op.create_table('cleanup_plans',
+    op.create_table(
+        'cleanup_plans',
         sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
         sa.Column('name', sa.String(), nullable=False),
         sa.Column('due_date', sa.DateTime(), nullable=True),
@@ -27,13 +29,15 @@ def upgrade():
         sa.UniqueConstraint('name', name=op.f('uq_cleanup_plans_name'))
     )
 
-    op.create_table('cleanup_plan_report_hashes',
+    op.create_table(
+        'cleanup_plan_report_hashes',
         sa.Column('cleanup_plan_id', sa.Integer(), nullable=True),
         sa.Column('bug_hash', sa.String(), nullable=False),
         sa.ForeignKeyConstraint(
             ['cleanup_plan_id'],
             ['cleanup_plans.id'],
-            name=op.f('fk_cleanup_plan_report_hashes_cleanup_plan_id_cleanup_plans'),
+            name=op.f('fk_cleanup_plan_report_hashes_cleanup_plan_id_'
+                      'cleanup_plans'),
             ondelete='CASCADE',
             initially='DEFERRED',
             deferrable=True),

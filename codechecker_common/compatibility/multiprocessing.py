@@ -6,13 +6,14 @@
 #
 # -------------------------------------------------------------------------
 """
-Multiprocess compatibility module.
+Multiprocessing compatibility module.
 """
-
 import sys
 
-# pylint: disable=unused-import
+# pylint: disable=no-name-in-module,unused-import
 if sys.platform in ["darwin", "win32"]:
-    from multiprocess import Pool as MultiProcessPool
+    from multiprocess import Pool  # type: ignore
+    from multiprocess import cpu_count
 else:
-    from concurrent.futures import ProcessPoolExecutor as MultiProcessPool
+    from concurrent.futures import ProcessPoolExecutor as Pool  # type: ignore
+    from multiprocessing import cpu_count

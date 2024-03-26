@@ -1,19 +1,20 @@
-"""Remove db version table
+"""
+Remove db_version table
 
 Revision ID: 302693c76eb8
-Revises: dec6feb991e6
+Revises:     dec6feb991e6
 Create Date: 2020-03-13 12:21:07.198231
-
 """
 
-# revision identifiers, used by Alembic.
+from alembic import op
+import sqlalchemy as sa
+
+
+# Revision identifiers, used by Alembic.
 revision = '302693c76eb8'
 down_revision = 'dec6feb991e6'
 branch_labels = None
 depends_on = None
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

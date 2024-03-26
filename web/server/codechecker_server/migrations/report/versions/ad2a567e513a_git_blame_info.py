@@ -1,19 +1,20 @@
-"""Git blame info
+"""
+Git blame info
 
 Revision ID: ad2a567e513a
-Revises: f8291ab1d6be
+Revises:     f8291ab1d6be
 Create Date: 2020-12-17 18:08:50.322381
-
 """
 
-# revision identifiers, used by Alembic.
+from alembic import op
+import sqlalchemy as sa
+
+
+# Revision identifiers, used by Alembic.
 revision = 'ad2a567e513a'
 down_revision = 'f8291ab1d6be'
 branch_labels = None
 depends_on = None
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

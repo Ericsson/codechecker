@@ -8,12 +8,11 @@
 """
 Util module.
 """
-
-
 import itertools
 import json
-from typing import TextIO
 import os
+from typing import TextIO
+
 import portalocker
 
 from codechecker_common.logger import get_logger
@@ -32,6 +31,15 @@ def arg_match(options, args):
             continue
 
     return matched_args
+
+
+def clamp(min_: int, value: int, max_: int) -> int:
+    """
+    Clamps ``value`` to be between ``min_`` and ``max_``, inclusive.
+    """
+    if min_ > max_:
+        raise ValueError("min <= max required")
+    return min(max(min_, value), max_)
 
 
 def chunks(iterator, n):

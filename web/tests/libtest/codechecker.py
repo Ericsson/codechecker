@@ -8,8 +8,7 @@
 """
 Helper commands to run CodeChecker in the tests easier.
 """
-
-
+from datetime import timedelta
 import json
 import os
 import shlex
@@ -650,6 +649,7 @@ def start_or_get_server(auth_required=False):
 def wait_for_server_start(stdoutfile):
     print("Waiting for server start reading file " + stdoutfile)
     n = 0
+    server_start_timeout = timedelta(minutes=5)
     while True:
         if os.path.isfile(stdoutfile):
             with open(stdoutfile, encoding="utf-8", errors="ignore") as f:
@@ -661,6 +661,20 @@ def wait_for_server_start(stdoutfile):
                 # some error message.
                 if "usage: CodeChecker" in out:
                     return
+
+        if n > server_start_timeout.total_seconds():
+            print("[FATAL!] Server failed to start after '%s' (%d seconds). "
+                  "There is likely a major issue preventing startup!"
+                  % (str(server_start_timeout),
+                     server_start_timeout.total_seconds()))
+            if os.path.isfile(stdoutfile):
+                with open(stdoutfile) as f:
+                    print("*** HERE FOLLOWS THE OUTPUT OF THE 'server' "
+                          "COMMAND! ***")
+                    print(f.read())
+                    print("*** END 'server' OUTPUT ***")
+
+            raise TimeoutError("Server failed to start in a timely manner")
 
         time.sleep(1)
         n += 1
