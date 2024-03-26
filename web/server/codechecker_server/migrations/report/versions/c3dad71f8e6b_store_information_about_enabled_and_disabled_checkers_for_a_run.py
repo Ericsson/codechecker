@@ -47,9 +47,6 @@ def upgrade():
         # These values are normalised such that in the following, when the
         # foreign key-based look-up is added to the schema, their new
         # 'checker_id' will all point to the single "UNKNOWN/NOT FOUND" case.
-        LOG.info("Normalising unknowns in 'reports'.'analyzer_name' and "
-                 "'reports'.'checker_id'...")
-
         analyzer_name_affected = conn.execute(f"""
             UPDATE reports
             SET analyzer_name = '{UnknownChecker[0]}'
@@ -92,8 +89,6 @@ def upgrade():
             # lost, only the representation slightly changed.
             conn.execute("COMMIT;")
             conn.execute("START TRANSACTION;")
-
-        LOG.info("Done normalising 'reports'.")
 
     def create_new_tables():
         op.create_table(
