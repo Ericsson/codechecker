@@ -1,14 +1,14 @@
 <template>
   <v-icon
     v-if="value === 'successful'"
-    color="#587549"
+    class="analyzer-statistics-icon-successful"
   >
     mdi-check
   </v-icon>
 
   <v-icon
     v-else-if="value === 'failed'"
-    color="#964739"
+    class="analyzer-statistics-icon-failed"
   >
     mdi-close
   </v-icon>
@@ -22,3 +22,11 @@ export default {
   }
 };
 </script>
+<style lang="scss">
+.analyzer-statistics-icon-successful {
+  color: #587548 !important;
+}
+.analyzer-statistics-icon-failed {
+  color: #964739 !important;
+}
+</style>
