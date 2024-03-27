@@ -774,7 +774,7 @@ class TestAnalyze(unittest.TestCase):
             cwd=self.test_workspace,
             encoding="utf-8",
             errors="ignore")
-        process.communicate()
+        print(process.communicate())
 
         errcode = process.returncode
         self.assertEqual(errcode, 0)
