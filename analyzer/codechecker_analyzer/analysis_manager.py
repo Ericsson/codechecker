@@ -20,6 +20,7 @@ import traceback
 import zipfile
 
 from threading import Timer
+from pathlib import Path
 
 import multiprocess
 import psutil
@@ -712,8 +713,10 @@ def skip_cpp(compile_actions, skip_handlers):
     analyze = []
     skip = []
     for compile_action in compile_actions:
-
-        if skip_handlers and skip_handlers.should_skip(compile_action.source):
+        if skip_handlers and \
+                skip_handlers.should_skip(
+                    str(Path(Path(compile_action.directory).resolve(),
+                             compile_action.source))):
             skip.append(compile_action)
         else:
             analyze.append(compile_action)
