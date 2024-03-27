@@ -374,9 +374,11 @@ class ClangSA(analyzer_base.SourceAnalyzer):
                                      "-Xclang", plugin])
 
             analyzer_mode = 'plist-multi-file'
+            if config.analyze_headers:
+                analyzer_cmd.extend(['-Xclang',
+                                     '-analyzer-opt-analyze-headers'])
+
             analyzer_cmd.extend(['-Xclang',
-                                 '-analyzer-opt-analyze-headers',
-                                 '-Xclang',
                                  '-analyzer-output=' + analyzer_mode,
                                  '-o', analyzer_output_file])
 
@@ -384,7 +386,9 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             analyzer_cmd.extend(['-Xclang',
                                  '-analyzer-config',
                                  '-Xclang',
-                                 'expand-macros=true'])
+                                 'expand-macros=' +
+                                 ('true' if config.expand_macros
+                                  else 'false')])
 
             # Checker configuration arguments needs to be set before
             # the checkers.
@@ -617,6 +621,12 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
         handler.enable_z3_refutation = 'enable_z3_refutation' in args and \
             args.enable_z3_refutation == 'on'
+
+        handler.analyze_headers = 'analyze_headers' in args and \
+                                  args.analyze_headers == 'on'
+
+        handler.expand_macros = 'expand_macros' in args and \
+                                args.expand_macros == 'on'
 
         if 'ctu_phases' in args:
             handler.ctu_dir = os.path.join(args.output_path,
