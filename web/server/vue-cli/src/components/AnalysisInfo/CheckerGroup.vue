@@ -1,5 +1,8 @@
 <template>
-  <v-expansion-panel>
+  <v-expansion-panel
+    class="analyzer-checker-group-panel"
+    :data-group-name="group"
+  >
     <v-expansion-panel-header
       class="pa-0 px-1"
     >
@@ -76,7 +79,7 @@
 <script>
 import CountChips from "@/components/CountChips";
 import CheckerRows from "./CheckerRows";
-import { CountKeys } from "@/mixins/analysis-info-handling.mixin";
+import { CountKeys } from "@/mixins/api/analysis-info-handling.mixin";
 
 export default {
   name: "CheckerGroup",
