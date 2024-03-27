@@ -79,19 +79,86 @@ module.exports = {
       .waitForElementNotPresent("@descriptionMenu");
   },
 
-  "show check command of a run" (browser) {
+  async "show check command of a run" (browser) {
     const checkCommand = "cli.py analyze";
     const runsPage = browser.page.runs();
-    const dialogSection = runsPage.section.checkCommandDialog;
+    const dialogSection = runsPage.section.analysisInfoDialog;
 
-    runsPage.click("@showCheckCommandBtn");
+    runsPage.click("@showAnalysisInfoBtn");
 
     runsPage.expect.section(dialogSection)
       .to.be.visible.before(5000);
 
-    dialogSection.assert.containsText("@content", checkCommand);
+    dialogSection.assert.containsText("@command", checkCommand);
 
-    // Close check command dialog.
+    dialogSection.expect.element("@checkerStatuses")
+      .to.be.present.before(5000);
+    dialogSection.expect.element("@checkerStatusError")
+      .to.not.be.present.before(5000);
+
+    dialogSection.pause(1000);
+    await (async () => {
+      const analyzerPanelBtnSelector = ".analysis-info " +
+        ".analyzer-checkers-panel" +
+          ".v-expansion-panel" +
+          ":not(.v-expansion-panel--active) " +
+        "button";
+
+      dialogSection.expect.element(analyzerPanelBtnSelector)
+        .to.be.present.before(5000);
+
+      const analyzerPanelBtns = await runsPage.api.findElements(
+        analyzerPanelBtnSelector);
+      analyzerPanelBtns.value.forEach(async btnId =>
+        await runsPage.api.elementIdClick(btnId.getId()));
+
+      dialogSection.expect.element(analyzerPanelBtnSelector)
+        .to.not.be.present.before(5000);
+    })();
+    await (async () => {
+      const checkerGroupPanelBtnSelector = ".analysis-info " +
+        ".analyzer-checker-group-panel" +
+          ".v-expansion-panel" +
+          ":not(.v-expansion-panel--active) " +
+        "button";
+
+      dialogSection.expect.element(checkerGroupPanelBtnSelector)
+        .to.be.present.before(5000);
+
+      const checkerGroupPanelBtns = await runsPage.api.findElements(
+        checkerGroupPanelBtnSelector);
+      checkerGroupPanelBtns.value.forEach(async btnId =>
+        await runsPage.api.elementIdClick(btnId.getId()));
+
+      dialogSection.expect.element(checkerGroupPanelBtnSelector)
+        .to.not.be.present.before(5000);
+    })();
+    dialogSection.pause(1000);
+
+    const assertCheckerStatus = (analyzer, group, checker, enabled) => {
+      const checkerSelector = ".analysis-info " +
+        ".analyzer-checkers-panel[data-analyzer-name='" + analyzer + "'] " +
+        (group === "" ? "" :
+          ".analyzer-checker-group-panel[data-group-name='" + group +"'] ") +
+        ".analysis-info-checker[data-checker-name='" + checker + "'] " +
+        ".checker-" + (enabled ? "enabled" : "disabled");
+
+      dialogSection.expect.element(checkerSelector).to.be.present.before(1000);
+      dialogSection.expect.element(checkerSelector).text.to.equal(checker);
+    };
+    const assertChecker = (analyzer, group, checker) =>
+      assertCheckerStatus(analyzer, group, checker, true);
+    const assertNotChecker = (analyzer, group, checker) =>
+      assertCheckerStatus(analyzer, group, checker, false);
+
+    assertChecker("clangsa", "core", "core.DivideZero");
+    assertChecker("clangsa", "cplusplus", "cplusplus.NewDelete");
+    assertNotChecker("clangsa", "osx", "osx.cocoa.Loops");
+
+    assertChecker("clang-tidy", "clang-diagnostic", "clang-diagnostic-switch");
+    assertNotChecker("clang-tidy", "llvm", "llvm-header-guard");
+
+    // Close analysis info dialog.
     dialogSection.pause(100).click("@closeBtn");
 
     runsPage.expect.section(dialogSection)
@@ -277,16 +344,21 @@ module.exports = {
       const runsPage = browser.page.runs();
       const expandedSection = runsPage.section.expanded;
       const timelineSection = expandedSection.section.timeline;
-      const dialogSection = runsPage.section.checkCommandDialog;
+      const dialogSection = runsPage.section.analysisInfoDialog;
 
-      timelineSection.click("@showCheckCommandBtn");
+      timelineSection.click("@showAnalysisInfoBtn");
 
       runsPage.expect.section(dialogSection)
         .to.be.visible.before(5000);
 
-      dialogSection.assert.containsText("@content", checkCommand);
+      dialogSection.assert.containsText("@command", checkCommand);
 
-      // Close check command dialog.
+      dialogSection.expect.element("@checkerStatuses")
+        .to.be.present.before(5000);
+      dialogSection.expect.element("@checkerStatusError")
+        .to.not.be.present.before(5000);
+
+      // Close analysis info dialog.
       dialogSection.click("@closeBtn");
 
       runsPage.expect.section(dialogSection)

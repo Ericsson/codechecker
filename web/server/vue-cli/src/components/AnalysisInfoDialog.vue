@@ -25,7 +25,7 @@
           <div
             v-for="cmd in highlightedCmds"
             :key="cmd"
-            class="analysis-info mb-2"
+            class="analyze-command mb-2"
             v-html="cmd"
           />
         </v-container>
@@ -37,7 +37,7 @@
             v-if="analysisInfo.checkerInfoAvailability ===
               CheckerInfoAvailability.Available"
           >
-            <v-container class="pa-0 pt-1">
+            <v-container class="checker-statuses pa-0 pt-1">
               <v-expansion-panels
                 multiple
                 hover
@@ -45,6 +45,8 @@
                 <v-expansion-panel
                   v-for="analyzer in analysisInfo.analyzers"
                   :key="analyzer"
+                  class="analyzer-checkers-panel"
+                  :data-analyzer-name="analyzer"
                 >
                   <v-expansion-panel-header
                     class="pa-0 px-1"
@@ -115,7 +117,7 @@
           >
             <v-alert
               icon="mdi-alert"
-              class="mt-2"
+              class="checker-status-unavailable mt-2"
               color="deep-orange"
               outlined
             >
@@ -148,8 +150,8 @@
                 <span class="version">{{
                   analysisInfo.codeCheckerVersion
                 }}</span>
-                client, and it was also <span class="font-italic">likely</span>
-                stored when the server ran this older version.
+                client, and it was also likely stored when the server ran this
+                older version.
               </span>
               <span
                 v-else-if="analysisInfo.checkerInfoAvailability ===
@@ -175,11 +177,11 @@ import {
 } from "@/components/AnalysisInfo";
 import CountChips from "@/components/CountChips";
 import {
-  default as AnalysisInfoHandlingMixin,
+  default as AnalysisInfoHandlingAPIMixin,
   CheckerInfoAvailability,
   CountKeys,
   GroupKeys
-} from "@/mixins/analysis-info-handling.mixin";
+} from "@/mixins/api/analysis-info-handling.mixin";
 
 export default {
   name: "AnalysisInfoDialog",
@@ -188,7 +190,7 @@ export default {
     CheckerRows,
     CountChips
   },
-  mixins: [ AnalysisInfoHandlingMixin ],
+  mixins: [ AnalysisInfoHandlingAPIMixin ],
   props: {
     value: { type: Boolean, default: false },
     runId: { type: Object, default: () => null },
@@ -283,26 +285,28 @@ export default {
 
 <style lang="scss" scoped>
 ::v-deep .analysis-info {
-  border: 1px solid grey;
-  padding: 4px;
+  .analyze-command {
+    border: 1px solid grey;
+    padding: 4px;
 
-  .param {
-    background-color: rgba(0, 0, 0, 0.15);
-    font-weight: bold;
-    padding-left: 2px;
-    padding-right: 2px;
-  }
+    .param {
+      background-color: rgba(0, 0, 0, 0.15);
+      font-weight: bold;
+      padding-left: 2px;
+      padding-right: 2px;
+    }
 
-  .enabled-checkers {
-    background-color: rgba(0, 142, 0, 0.15);
-  }
+    .enabled-checkers {
+      background-color: rgba(0, 142, 0, 0.15);
+    }
 
-  .disabled-checkers {
-    background-color: rgba(142, 0, 0, 0.15);
-  }
+    .disabled-checkers {
+      background-color: rgba(142, 0, 0, 0.15);
+    }
 
-  .ctu, .statistics {
-    background-color: rgba(0, 0, 142, 0.15);
+    .ctu, .statistics {
+      background-color: rgba(0, 0, 142, 0.15);
+    }
   }
 
   .analyzer-name {
