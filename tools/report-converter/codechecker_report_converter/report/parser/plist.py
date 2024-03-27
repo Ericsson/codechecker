@@ -519,6 +519,11 @@ class Parser(BaseParser):
                         self._create_macro_expansion(
                             macro_expansion, file_index_map))
 
+            if report.annotations:
+                diagnostic["report-annotation"] = dict()
+                for key, value in report.annotations.items():
+                    diagnostic["report-annotation"][key] = value
+
             data['diagnostics'].append(diagnostic)
 
         return data

@@ -37,6 +37,7 @@ from codechecker_report_converter.report import Report, report_file, \
     reports as reports_helper, statistics as report_statistics
 from codechecker_report_converter.report.hash import HashType, \
     get_report_path_hash
+from codechecker_report_converter.report.parser.base import AnalyzerInfo
 
 from codechecker_client import client as libclient
 from codechecker_client import product
@@ -404,10 +405,12 @@ def parse_analyzer_result_files(
     """ Get reports from the given analyzer result files. """
     analyzer_result_file_reports: AnalyzerResultFileReports = defaultdict(list)
 
-    for file_path, reports in zip(
+    for idx, (file_path, reports) in enumerate(zip(
             analyzer_result_files, zip_iter(
                 functools.partial(get_reports, checker_labels=checker_labels),
-                analyzer_result_files)):
+                analyzer_result_files))):
+        LOG.debug(f"[{idx}/{len(analyzer_result_files)}] "
+                  f"Parsed '{file_path}' ...")
         analyzer_result_file_reports[file_path] = reports
 
     return analyzer_result_file_reports
@@ -421,8 +424,12 @@ def assemble_zip(inputs,
     """Collect and compress report and source files, together with files
     contanining analysis related information into a zip file which
     will be sent to the server.
+
+    For each report directory, we create a uniqued zipped directory. Each
+    report directory to store could have been made with different
+    configurations, so we can't merge them all into a single zip.
     """
-    files_to_compress = set()
+    files_to_compress: Dict[str, set] = defaultdict(set)
     analyzer_result_file_paths = []
     stats = StorageZipStatistics()
 
@@ -431,7 +438,8 @@ def assemble_zip(inputs,
 
         metadata_file_path = os.path.join(dir_path, 'metadata.json')
         if os.path.exists(metadata_file_path):
-            files_to_compress.add(metadata_file_path)
+            files_to_compress[os.path.dirname(metadata_file_path)] \
+                .add(metadata_file_path)
 
         skip_file_path = os.path.join(dir_path, 'skip_file')
         if os.path.exists(skip_file_path):
@@ -439,13 +447,15 @@ def assemble_zip(inputs,
                 LOG.info("Found skip file %s with the following content:\n%s",
                          skip_file_path, f.read())
 
-            files_to_compress.add(skip_file_path)
+            files_to_compress[os.path.dirname(skip_file_path)] \
+                .add(skip_file_path)
 
         review_status_file_path = os.path.join(dir_path, 'review_status.yaml')
         if os.path.exists(review_status_file_path):
-            files_to_compress.add(review_status_file_path)
+            files_to_compress[os.path.dirname(review_status_file_path)]\
+                .add(review_status_file_path)
 
-    LOG.debug("Processing report files ...")
+    LOG.debug(f"Processing {len(analyzer_result_file_paths)} report files ...")
 
     with MultiProcessPool() as executor:
         analyzer_result_file_reports = parse_analyzer_result_files(
@@ -456,23 +466,42 @@ def assemble_zip(inputs,
     changed_files = set()
     file_paths = set()
     file_report_positions: FileReportPositions = defaultdict(set)
-    unique_reports = set()
+    unique_reports: Dict[str, Dict[str, List[Report]]] = defaultdict(dict)
+
+    unique_report_hashes = set()
     for file_path, reports in analyzer_result_file_reports.items():
-        files_to_compress.add(file_path)
         stats.num_of_analyzer_result_files += 1
 
         for report in reports:
             if report.changed_files:
                 changed_files.update(report.changed_files)
                 continue
-            # Need to calculate unique reoirt count to determine report limit
+            # Unique all bug reports per report directory; also, count how many
+            # reports we want to store at once to check for the report store
+            # limit.
             report_path_hash = get_report_path_hash(report)
-            if report_path_hash not in unique_reports:
-                unique_reports.add(report_path_hash)
+            if report_path_hash not in unique_report_hashes:
+                unique_report_hashes.add(report_path_hash)
+                unique_reports[os.path.dirname(file_path)]\
+                    .setdefault(report.analyzer_name, []) \
+                    .append(report)
                 stats.add_report(report)
 
             file_paths.update(report.original_files)
             file_report_positions[report.file.original_path].add(report.line)
+
+    files_to_delete = []
+    for dirname, analyzer_reports in unique_reports.items():
+        for analyzer_name, reports in analyzer_reports.items():
+            if not analyzer_name:
+                analyzer_name = 'unknown'
+            _, tmpfile = tempfile.mkstemp(f'-{analyzer_name}.plist')
+
+            report_file.create(tmpfile, reports, checker_labels,
+                               AnalyzerInfo(analyzer_name))
+            LOG.debug(f"Stored '{analyzer_name}' unique reports in {tmpfile}.")
+            files_to_compress[dirname].add(tmpfile)
+            files_to_delete.append(tmpfile)
 
     if changed_files:
         reports_helper.dump_changed_files(changed_files)
@@ -529,15 +558,17 @@ def assemble_zip(inputs,
     LOG.info("Building report zip file...")
     with zipfile.ZipFile(zip_file, 'a', allowZip64=True) as zipf:
         # Add the files to the zip which will be sent to the server.
-        for file_path in files_to_compress:
-            _, file_name = os.path.split(file_path)
 
-            # Create a unique report directory name.
-            report_dir_name = hashlib.md5(os.path.dirname(
-                file_path).encode('utf-8')).hexdigest()
+        for dirname, files in files_to_compress.items():
+            for file_path in files:
+                _, file_name = os.path.split(file_path)
 
-            zip_target = os.path.join('reports', report_dir_name, file_name)
-            zipf.write(file_path, zip_target)
+                # Create a unique report directory name.
+                report_dir_name = \
+                    hashlib.md5(dirname.encode('utf-8')).hexdigest()
+                zip_target = \
+                    os.path.join('reports', report_dir_name, file_name)
+                zipf.write(file_path, zip_target)
 
         collected_file_paths = set()
         for f, h in file_to_hash.items():
@@ -610,6 +641,10 @@ Configured report limit for this product: {p.reportLimit}
 
     LOG.info("Compressing report zip file done (%s / %s).",
              sizeof_fmt(zip_size), sizeof_fmt(compressed_zip_size))
+
+    # We are responsible for deleting these.
+    for file in files_to_delete:
+        os.remove(file)
 
 
 def should_be_zipped(input_file: str, input_files: Iterable[str]) -> bool:

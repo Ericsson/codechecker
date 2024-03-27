@@ -27,7 +27,7 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
 from libtest import env
 
 
-class DiffRemote(unittest.TestCase):
+class DynamicResults(unittest.TestCase):
 
     def setup_class(self):
         """Setup the environment for testing dynamic_results."""

@@ -199,6 +199,9 @@ class TestComponent(unittest.TestCase):
             }
         ]
 
+    def teardown_method(self, method):
+        self.__remove_all_source_componens()
+
     def __add_new_component(self, component):
         """
         Creates a new source component.
@@ -225,6 +228,11 @@ class TestComponent(unittest.TestCase):
 
         return [c for c in components
                 if GEN_OTHER_COMPONENT_NAME not in c.name]
+
+    def __remove_all_source_componens(self):
+        print(self.__get_user_defined_source_components())
+        for component in self.__get_user_defined_source_components():
+            self.__remove_source_component(component.name)
 
     def __test_other_component(self, components, excluded_from_other,
                                included_in_other=None):
@@ -325,8 +333,6 @@ class TestComponent(unittest.TestCase):
                                r.checkedFile.endswith('null_dereference.cpp')]
         self.assertEqual(len(divide_zero_reports), 0)
 
-        self.__remove_source_component(test_component['name'])
-
     def test_filter_report_by_complex_component(self):
         """
         Test report filter by complex component which includes and excludes
@@ -374,8 +380,6 @@ class TestComponent(unittest.TestCase):
         divide_zero_reports = [r for r in run_results if
                                r.checkedFile.endswith('path_begin.cpp')]
         self.assertEqual(len(divide_zero_reports), 0)
-
-        self.__remove_source_component(test_component['name'])
 
     def test_filter_report_by_multiple_components(self):
         """
@@ -425,9 +429,6 @@ class TestComponent(unittest.TestCase):
                                 r.checkedFile.endswith('call_and_message.cpp')]
         self.assertEqual(len(call_and_msg_reports), 0)
 
-        self.__remove_source_component(test_component1['name'])
-        self.__remove_source_component(test_component2['name'])
-
     def test_filter_report_by_excluding_all_results_component(self):
         """
         Test report filter by component which excludes all reports.
@@ -452,8 +453,6 @@ class TestComponent(unittest.TestCase):
         # No reports for this component.
         self.assertEqual(len(run_results), 0)
 
-        self.__remove_source_component(test_component['name'])
-
     def test_component_name_with_whitespaces(self):
         """
         Creates a new component which contains white spaces and removes it at
@@ -462,7 +461,6 @@ class TestComponent(unittest.TestCase):
         test_component = self.components[1]
 
         self.__add_new_component(test_component)
-        self.__remove_source_component(test_component['name'])
 
     def test_no_user_defined_component(self):
         """
@@ -496,7 +494,6 @@ class TestComponent(unittest.TestCase):
 
         excluded_from_other = ['divide_zero.cpp', 'new_delete.cpp']
         self.__test_other_component([component], excluded_from_other)
-        self.__remove_source_component(component['name'])
 
     def test_other_with_multiple_user_defined_component(self):
         """
@@ -539,9 +536,6 @@ class TestComponent(unittest.TestCase):
 
         self.__test_other_component(components, excluded_from_other,
                                     included_in_other)
-
-        for c in components:
-            self.__remove_source_component(c['name'])
 
     def test_component_anywhere_on_path(self):
         """
@@ -589,6 +583,3 @@ class TestComponent(unittest.TestCase):
         self.assertEqual(len(component_results), 1)
         self.assertTrue(
             component_results[0].checkedFile.endswith('path_end.h'))
-
-        for c in components:
-            self.__remove_source_component(c['name'])
