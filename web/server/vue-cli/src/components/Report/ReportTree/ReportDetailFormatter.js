@@ -31,15 +31,50 @@ function getHighlightData(stack, step) {
     }
   }
 
-  if (extractFuncName("Calling ")) {
+  function extractFuncNameCallingGcc() {
+    // Msg is structured like
+    //   returning to ‘dprintf_formatf’ from ‘dprintf_Pass1’
+    // Notice the weird apostrophe.
+    const callingStr = "calling ";
+    if (!msg.startsWith(callingStr))
+      return false;
+
+    const idx = msg.indexOf(" from");
+    if (idx === -1)
+      return false;
+
+    msg = msg.substr(0, idx).replace(callingStr, "").slice(1, -1);
+    return true;
+  }
+
+  function extractFuncNameReturningToGcc() {
+    // Msg is structured like
+    //   calling ‘dprintf_Pass1’ from ‘dprintf_formatf’
+    // Notice the weird apostrophe.
+    const returningStr = "returning to ";
+    if (!msg.startsWith(returningStr))
+      return false;
+
+    const fromStr = " from ";
+    const idx = msg.indexOf(fromStr);
+    if (idx === -1)
+      return false;
+
+    msg = msg.slice(idx + fromStr.length).slice(1, -1);
+    return true;
+  }
+
+  if (extractFuncName("Calling ") || extractFuncNameCallingGcc()) {
     stack.funcStack.push(msg);
     stack.bgColor = highlightColours[
       stack.funcStack.length % highlightColours.length];
 
     highlight.icon = ReportStepIconType.CALLING;
-  } else if (msg.startsWith("Entered call from ")) {
+  } else if (msg.startsWith("Entered call from ") ||
+             msg.startsWith("entry to ")) {
     highlight.icon = ReportStepIconType.ENTERED_CALL;
-  } else if (extractFuncName("Returning from ")) {
+  } else if (extractFuncName("Returning from ") ||
+             extractFuncNameReturningToGcc()) {
     if (msg === stack.funcStack[stack.funcStack.length - 1]) {
       stack.funcStack.pop();
       stack.bgColor = highlightColours[
@@ -59,7 +94,8 @@ function getHighlightData(stack, step) {
     highlight.icon = ReportStepIconType.RETURNING;
   } else if (msg.startsWith("Assuming the condition")) {
     highlight.icon = ReportStepIconType.ASSUMING_CONDITION;
-  } else if (msg.startsWith("Assuming")) {
+  } else if (msg.startsWith("Assuming") ||
+             msg.startsWith("following ")) {
     highlight.icon = ReportStepIconType.ASSUMING;
   } else if (msg == "Entering loop body") {
     highlight.icon = ReportStepIconType.ENTERING_LOOP_BODY;
