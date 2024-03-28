@@ -352,6 +352,23 @@ def check_run_names(client, check_names):
     return run_info
 
 
+def check_existing_source_components(
+    client,
+    source_components: List[str]
+):
+    missing_source_components = []
+
+    for source_component in source_components:
+        if not client.getSourceComponents([source_component]):
+            missing_source_components.append(source_component)
+
+    if missing_source_components:
+        LOG.error(
+            "The following source components don't exist: %s",
+            ', '.join(missing_source_components))
+        sys.exit(1)
+
+
 def check_deprecated_arg_usage(args):
     if 'detected_at' in args:
         LOG.warning('"--detected-at" option has been deprecated. Use '
@@ -666,6 +683,9 @@ def handle_list_results(args):
     check_deprecated_arg_usage(args)
 
     client = setup_client(args.product_url)
+
+    if 'component' in args:
+        check_existing_source_components(client, args.component)
 
     run_filter = ttypes.RunFilter(names=args.names)
 
@@ -1312,6 +1332,9 @@ def handle_diff_results(args):
                       args.product_url)
             raise sexit
 
+    if 'component' in args:
+        check_existing_source_components(client, args.component)
+
     print_steps = 'print_steps' in args
     report_hashes = []
     if (basename_local_dirs or basename_baseline_files) and \
@@ -1409,6 +1432,9 @@ def handle_list_result_types(args):
         return checker_dict.get(key, 0)
 
     client = setup_client(args.product_url)
+
+    if 'component' in args:
+        check_existing_source_components(client, args.component)
 
     run_ids = None
     if 'all_results' not in args:
