@@ -24,6 +24,9 @@ from codechecker_analyzer.analyzers.cppcheck.analyzer import Cppcheck
 from codechecker_analyzer.analyzers.config_handler import CheckerState
 from codechecker_analyzer.analyzers.clangtidy.config_handler \
         import is_compiler_warning
+from codechecker_analyzer.arg import AnalyzerConfig, CheckerConfig
+from codechecker_analyzer.cmd.analyze import \
+    validate_analyzer_parameter, validate_checker_parameter
 
 from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.buildlog import log_parser
@@ -395,6 +398,20 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
         self.assertEqual(
                 analyzer.config_handler.checks()['Wreserved-id-macro'][0],
                 CheckerState.enabled)
+
+    def test_analyze_wrong_parameters(self):
+        """
+        This test checks whether the analyze command detects if a wrong
+        --analyzer-config or --checker-config parameter is specified.
+        """
+
+        analyzer_cfg = [AnalyzerConfig('asd', '123', 'value')]
+        checker_cfg = [CheckerConfig('clangsa', 'asd', '123', 'value')]
+
+        analyzer_func = validate_analyzer_parameter(analyzer_cfg)
+        checker_func = validate_checker_parameter(checker_cfg)
+
+        [self.assertFalse(func) for func in [analyzer_func, checker_func]]
 
     def test_enable_all_disable_warning(self):
         """
