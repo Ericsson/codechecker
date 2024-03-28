@@ -250,6 +250,17 @@ class TestCmdline(unittest.TestCase):
             self.assertTrue(desc)
             self.assertFalse(desc[0].islower())
 
+    def test_parse_incorrect_file_path(self):
+        """
+        This test checks whether the parse command stops running if a
+        non-existent path is specified.
+        """
+
+        parse_cmd = [env.codechecker_cmd(), 'parse', '/asd/123/qwe']
+
+        self.assertIn('Input path /asd/123/qwe does not exist!',
+                      run_cmd(parse_cmd)[1])
+
     def test_checker_config_format(self):
         """
         Test if checker config option is meeting the reqired format.
