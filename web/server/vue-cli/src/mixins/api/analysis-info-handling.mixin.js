@@ -4,7 +4,7 @@ import {
   RunFilter,
   RunHistoryFilter
 } from "@cc/report-server-types";
-import VersionMixin from "./version.mixin";
+import VersionMixin from "../version.mixin";
 
 const GroupKeys = Object.freeze({
   NoGroup: "__N",
@@ -129,6 +129,10 @@ function mergeReduceCheckerStatuses(accumulator, inCheckerDict) {
 }
 
 class AnalysisInfo {
+  GroupKeys() { return GroupKeys; }
+  CountKeys() { return CountKeys; }
+  CheckerInfoAvailability() { return CheckerInfoAvailability; }
+
   constructor() {
     this.cmds = [];
     this.checkers = {};
@@ -217,7 +221,7 @@ class AnalysisInfo {
   }
 }
 
-const AnalysisInfoHandlingMixin = {
+const AnalysisInfoHandlingAPIMixin = {
   methods: {
     loadAnalysisInfo(runId, runHistoryId, reportId) {
       const analysisInfoFilter = new AnalysisInfoFilter({
@@ -260,7 +264,7 @@ const AnalysisInfoHandlingMixin = {
 
 export {
   AnalysisInfo,
-  AnalysisInfoHandlingMixin as default,
+  AnalysisInfoHandlingAPIMixin as default,
   CheckerInfoAvailability,
   CountKeys,
   GroupKeys,

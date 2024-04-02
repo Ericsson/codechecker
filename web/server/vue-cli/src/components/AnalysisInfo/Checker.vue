@@ -2,6 +2,8 @@
   <v-row
     no-gutters
     align="center"
+    class="analysis-info-checker"
+    :data-checker-name="name"
   >
     <v-col
       cols="auto"

@@ -34,7 +34,7 @@ module.exports = {
     showDescriptionBtn: "button.description",
     showHistoryBtn: "a.show-history",
     showStatisticsBtn: "a.show-statistics",
-    showCheckCommandBtn: "button.show-analysis-info",
+    showAnalysisInfoBtn: "button.show-analysis-info",
     openDetectionStatus: "a.detection-status-count",
     descriptionMenu:
       ".menuable__content__active.run-description-menu .v-card__text",
@@ -61,10 +61,12 @@ module.exports = {
         storedBefore: ".stored-before",
       }
     },
-    checkCommandDialog: {
+    analysisInfoDialog: {
       selector: ".v-dialog__content--active .analysis-info",
       elements: {
-        content: ".container",
+        command: ".analyze-command",
+        checkerStatuses: ".checker-statuses",
+        checkerStatusError: ".checker-status-unavailable",
         closeBtn: ".v-card__title button"
       }
     },
@@ -89,7 +91,7 @@ module.exports = {
           elements: {
             date: ".date",
             showStatisticsBtn: "a.show-statistics",
-            showCheckCommandBtn: "button.show-analysis-info",
+            showAnalysisInfoBtn: "button.show-analysis-info",
             historyEvent: ".v-timeline-item.run-history",
             baseline: ".compare-events .v-input--checkbox:nth-child(1)",
             compareTo: ".compare-events .v-input--checkbox:nth-child(2)"
