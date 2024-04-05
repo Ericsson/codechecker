@@ -88,6 +88,14 @@
       "profile:sensitive",
       "severity:MEDIUM"
     ],
+    "alpha.cplusplus.ArrayDelete": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-cplusplus-arraydelete-c",
+      "guideline:sei-cert",
+      "profile:extreme",
+      "profile:sensitive",
+      "sei-cert:exp51-cpp",
+      "severity:HIGH"
+    ],
     "alpha.cplusplus.ContainerModeling": [
       "profile:extreme",
       "profile:sensitive"
@@ -496,6 +504,15 @@
       "profile:extreme",
       "severity:HIGH"
     ],
+    "cplusplus.ArrayDelete": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#cplusplus-arraydelete-c",
+      "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:sensitive",
+      "sei-cert:exp51-cpp",
+      "severity:HIGH"
+    ],
     "cplusplus.InnerPointer": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#cplusplus-innerpointer-c",
       "guideline:sei-cert",
@@ -668,6 +685,12 @@
     ],
     "nullability.NullableReturnedFromNonnull": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#nullability-nullablereturnedfromnonnull-objc",
+      "profile:extreme",
+      "profile:sensitive",
+      "severity:MEDIUM"
+    ],
+    "optin.core.EnumCastOutOfRange": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-core-enumcastoutofrange-c-c",
       "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
