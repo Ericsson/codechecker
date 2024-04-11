@@ -795,7 +795,7 @@ LLVM/Clang community, and thus discouraged.
         func=main, func_process_config_file=cmd_config.process_config_file)
 
 
-def validate_analyzer_parameter(analyzer_conf):
+def is_analyzer_config_valid(analyzer_conf: List[AnalyzerConfig]) -> bool:
     """
     Ensure that the analyzer_config parameter is set to a valid value
     by verifying if it belongs to the set of allowed values.
