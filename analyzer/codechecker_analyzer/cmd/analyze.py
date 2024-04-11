@@ -833,7 +833,7 @@ def is_analyzer_config_valid(analyzer_conf: List[AnalyzerConfig]) -> bool:
         return True
 
 
-def validate_checker_parameter(checker_conf):
+def is_checker_config_valid(checker_conf: List[CheckerConfig]) -> bool:
     """
     Ensure that the checker_config parameter is set to a valid value
     by verifying if it belongs to the set of allowed values.
