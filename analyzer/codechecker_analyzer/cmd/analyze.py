@@ -830,8 +830,7 @@ def is_analyzer_config_valid(analyzer_conf: List[AnalyzerConfig]) -> bool:
                       f"--analyzer-config {analyzer_class.ANALYZER_NAME}' "
                       f"command to check available configs.")
             return False
-        else:
-            return True
+        return True
 
 
 def validate_checker_parameter(checker_conf):
