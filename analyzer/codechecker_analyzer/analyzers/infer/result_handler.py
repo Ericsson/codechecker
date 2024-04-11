@@ -53,9 +53,6 @@ class InferResultHandler(ResultHandler):
         infer_out_folder = Path(self.workspace, "infer")
         infer_dest_file_name = Path(infer_out_folder, self.buildaction_hash, "report.json")
 
-        # infer_dest_file_name = f'{self.workspace}/infer/{self.buildaction_hash}/report.json'
-        # subprocess.run(f'report-converter -t fbinfer -o {self.workspace} {infer_dest_file_name}', cwd=project_folder, shell=True)
-
         reports = self.infer_analyzer_result.get_reports(infer_dest_file_name)
 
         hash_type = HashType.PATH_SENSITIVE
