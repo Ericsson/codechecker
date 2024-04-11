@@ -11,6 +11,7 @@
     item-key="component"
     show-expand
     :expanded.sync="expanded"
+    :necessary-total="true"
     @item-expanded="itemExpanded"
   >
     <template v-slot:expanded-item="{ item }">

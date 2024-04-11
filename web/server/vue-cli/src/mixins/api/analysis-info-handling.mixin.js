@@ -249,8 +249,6 @@ const AnalysisInfoHandlingAPIMixin = {
               } else {
                 analysisInfo.checkerInfoAvailability =
                   CheckerInfoAvailability.UnknownReason;
-                decideNegativeCheckerStatusAvailability(
-                  analysisInfo, runId, runHistoryId, reportId);
               }
 
               analysisInfo.populateAnalyzers();
@@ -268,4 +266,6 @@ export {
   CheckerInfoAvailability,
   CountKeys,
   GroupKeys,
+  decideNegativeCheckerStatusAvailability,
+  setCheckerStatusUnavailableDueToVersion
 };

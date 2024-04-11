@@ -26,7 +26,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 import sqlalchemy
 from sqlalchemy.sql.expression import or_, and_, not_, func, \
-    asc, desc, union_all, select, bindparam, literal_column
+    asc, desc, union_all, select, bindparam, literal_column, case, cast
 from sqlalchemy.orm import contains_eager
 
 import codechecker_api_shared
@@ -42,7 +42,8 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
     ReviewStatusRuleFilter, ReviewStatusRuleSortMode, \
     ReviewStatusRuleSortType, RunData, RunFilter, RunHistoryData, \
     RunReportCount, RunSortType, RunTagCount, \
-    SourceComponentData, SourceFileData, SortMode, SortType
+    SourceComponentData, SourceFileData, SortMode, SortType, \
+    ReviewStatus as API_ReviewStatus, DetectionStatus, CheckerInfo
 
 from codechecker_common import util
 from codechecker_common.logger import get_logger
@@ -58,6 +59,7 @@ from ..database.config_db_model import Product
 from ..database.database import conv, DBSession, escape_like
 from ..database.run_db_model import \
     AnalysisInfo, AnalysisInfoChecker as DB_AnalysisInfoChecker, \
+    AnalysisInfoChecker, \
     AnalyzerStatistic, \
     BugPathEvent, BugReportPoint, \
     CleanupPlan, CleanupPlanReportHash, Checker, Comment, \
@@ -2860,6 +2862,187 @@ class ThriftRequestHandler:
                                              count=count)
                 results.append(checker_count)
         return results
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getCheckerInfo(self, run_ids, report_filter):
+        self.__require_view()
+        with DBSession(self._Session) as session:
+            max_run_histories = session.query(
+                RunHistory.run_id,
+                func.max(RunHistory.id).label('max_run_history_id'),
+            ) \
+                .filter(RunHistory.run_id.in_(run_ids) if run_ids else True) \
+                .group_by(RunHistory.run_id)
+
+            subquery = (
+                session.query(
+                    (func.string_agg(
+                        cast(Run.id, sqlalchemy.String).distinct(),
+                        ','
+                        ).label("run_id")
+                     if session.bind.dialect.name == "postgresql"
+                     else func.group_concat(Run.id.distinct()).label("run_id"))
+                    if report_filter.isUnique
+                    else Run.id.label("run_id"),
+                    Checker.id.label("checker_id"),
+                    Checker.checker_name,
+                    Checker.analyzer_name,
+                    Checker.severity,
+                    Report.bug_id,
+                    Report.detection_status,
+                    Report.review_status,
+                )
+                .join(RunHistory)
+                .join(AnalysisInfo, RunHistory.analysis_info)
+                .join(AnalysisInfoChecker, (
+                    (AnalysisInfo.id == AnalysisInfoChecker.analysis_info_id)
+                    & (AnalysisInfoChecker.enabled.is_(True))))
+                .join(Checker, AnalysisInfoChecker.checker_id == Checker.id)
+                .outerjoin(Report, ((Checker.id == Report.checker_id)
+                                    & (Run.id == Report.run_id)))
+                .filter(RunHistory.id == max_run_histories.subquery()
+                        .c.max_run_history_id)
+            )
+
+            if report_filter.isUnique:
+                subquery = subquery.group_by(
+                    Checker.id,
+                    Checker.checker_name,
+                    Checker.analyzer_name,
+                    Checker.severity,
+                    Report.bug_id,
+                    Report.detection_status,
+                    Report.review_status
+                )
+
+            subquery = subquery.subquery()
+
+            query = (
+                session.query(
+                    subquery.c.checker_id,
+                    subquery.c.checker_name,
+                    subquery.c.analyzer_name,
+                    subquery.c.severity,
+                    subquery.c.run_id,
+                    case(
+                        [
+                            (
+                                subquery.c.detection_status.in_(list(map(
+                                    detection_status_str,
+                                    (DetectionStatus.OFF,
+                                     DetectionStatus.UNAVAILABLE)
+                                ))),
+                                False
+                            )
+                        ],
+                        else_=True
+                    ).label("isEnabled"),
+                    case(
+                        [
+                            (
+                                and_(
+                                    subquery.c.detection_status.in_(list(map(
+                                        detection_status_str,
+                                        (DetectionStatus.NEW,
+                                         DetectionStatus.UNRESOLVED,
+                                         DetectionStatus.REOPENED)
+                                    ))),
+                                    subquery.c.review_status.in_(list(map(
+                                        review_status_str,
+                                        (API_ReviewStatus.UNREVIEWED,
+                                         API_ReviewStatus.CONFIRMED))))
+                                ),
+                                True
+                            )
+                        ],
+                        else_=False
+                    ).label("isOpened"),
+                    func.count(subquery.c.bug_id)
+                )
+                .group_by(
+                    subquery.c.checker_id,
+                    subquery.c.checker_name,
+                    subquery.c.analyzer_name,
+                    subquery.c.severity,
+                    subquery.c.run_id,
+                    case(
+                        [
+                            (
+                                subquery.c.detection_status.in_(list(map(
+                                    detection_status_str,
+                                    (DetectionStatus.OFF,
+                                     DetectionStatus.UNAVAILABLE)
+                                ))),
+                                False
+                            )
+                        ],
+                        else_=True
+                    ),
+                    case(
+                        [
+                            (
+                                and_(
+                                    subquery.c.detection_status.in_(list(map(
+                                        detection_status_str,
+                                        (DetectionStatus.NEW,
+                                         DetectionStatus.UNRESOLVED,
+                                         DetectionStatus.REOPENED)
+                                    ))),
+                                    subquery.c.review_status.in_(list(map(
+                                        review_status_str,
+                                        (API_ReviewStatus.UNREVIEWED,
+                                         API_ReviewStatus.CONFIRMED))))
+                                ),
+                                True
+                            )
+                        ],
+                        else_=False
+                    )
+                )
+            )
+
+            checker_stats = {}
+            all_run_id = [runId for runId, _ in max_run_histories.all()]
+            for checker_id, \
+                checker_name, \
+                analyzer_name, \
+                severity, \
+                run_ids, \
+                is_enabled, \
+                is_opened, \
+                cnt \
+                    in query.all():
+                checker_stat = checker_stats[checker_id] \
+                    if checker_id in checker_stats \
+                    else CheckerInfo(
+                        checkerName=checker_name,
+                        analyzerName=analyzer_name,
+                        enabled=[],
+                        disabled=all_run_id,
+                        severity=severity,
+                        closed=0,
+                        outstanding=0
+                    )
+
+                if is_enabled:
+                    for r in (run_ids.split(",")
+                              if type(run_ids) is str
+                              else [run_ids]):
+                        run_id = int(r)
+                        if run_id not in checker_stat.enabled:
+                            checker_stat.enabled.append(run_id)
+                        if run_id in checker_stat.disabled:
+                            checker_stat.disabled.remove(run_id)
+
+                if is_enabled and is_opened:
+                    checker_stat.outstanding += cnt
+                else:
+                    checker_stat.closed += cnt
+
+                checker_stats[checker_id] = checker_stat
+
+            return checker_stats
 
     @exc_to_thrift_reqfail
     @timeit

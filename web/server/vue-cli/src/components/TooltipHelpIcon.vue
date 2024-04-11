@@ -9,7 +9,7 @@
         <v-icon
           :color="color"
           class="ml-1"
-          small
+          :size="size"
           v-on="on"
         >
           mdi-help-circle
@@ -24,7 +24,8 @@
 export default {
   name: "TooltipHelpIcon",
   props: {
-    color: { type: String, default: "accent" }
+    color: { type: String, default: "accent" },
+    size: { type: String, default: "small" }
   }
 };
 </script>
