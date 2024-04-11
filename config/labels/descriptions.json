@@ -12,9 +12,7 @@
     "MEDIUM": "A true positive indicates that the source code that may not cause a run-time error (yet), but against intuition and hence prone to error.",
     "LOW": "A true positive indicates that the source code is hard to read/understand or could be easily optimized.",
     "STYLE": "A true positive indicates that the source code is against a specific coding guideline or could improve readability.",
-    "UNSPECIFIED": "Checker severity is not specified for a checker.",
-    "ERROR": "error dummy",
-    "WARNING": "warning dummy"
+    "UNSPECIFIED": "Checker severity is not specified for a checker."
   },
   "guideline": {
     "sei-cert": "https://wiki.sei.cmu.edu/confluence/display/seccode",
