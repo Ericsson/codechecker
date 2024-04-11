@@ -865,8 +865,7 @@ def is_checker_config_valid(checker_conf: List[CheckerConfig]) -> bool:
                 f"--checker-config' command to see available checkers."
             )
             return False
-        else:
-            return True
+        return True
 
 
 def get_affected_file_paths(
