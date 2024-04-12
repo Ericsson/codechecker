@@ -5104,12 +5104,6 @@
       "profile:extreme",
       "severity:LOW"
     ],
-    "cppcoreguidelines-avoid-capture-default-when-capturing-this": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/avoid-capture-default-when-capturing-this.html",
-      "profile:extreme",
-      "profile:sensitive",
-      "severity:LOW"
-    ],
     "cppcoreguidelines-avoid-capturing-lambda-coroutines": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/cppcoreguidelines/avoid-capturing-lambda-coroutines.html",
       "profile:default",
@@ -5593,10 +5587,7 @@
       "severity:LOW"
     ],
     "linuxkernel-must-check-errs": [
-      "severity:STYLE"
-    ],
-    "linuxkernel-must-use-errs": [
-      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/linuxkernel/must-use-errs.html",
+      "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/linuxkernel/must-check-errs.html",
       "severity:STYLE"
     ],
     "llvm-else-after-return": [
