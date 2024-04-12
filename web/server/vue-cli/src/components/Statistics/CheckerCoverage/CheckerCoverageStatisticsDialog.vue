@@ -9,7 +9,6 @@
       <v-card-title
         class="headline primary white--text"
         primary-title
-        style="text-transform: capitalize;"
       >
         {{ title }}
 
@@ -105,7 +104,8 @@ export default {
     },
 
     title() {
-      let title = `${this.type} Run List`;
+      let title = `${this.type.charAt(0).toUpperCase() 
+        + this.type.slice(1)} run list`;
       if ( this.checkerName ) {
         title += ` for the "${this.checkerName}" checker`;
       }

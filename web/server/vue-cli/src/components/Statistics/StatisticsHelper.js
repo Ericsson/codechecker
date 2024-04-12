@@ -2,7 +2,6 @@ import { ccService, handleThriftError } from "@cc-api";
 import {
   ReportFilter,
   ReviewStatus,
-  // AnalysisInfoFilter
 } from "@cc/report-server-types";
 
 const reviewStatusVariations = [
