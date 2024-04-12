@@ -217,7 +217,7 @@ export default {
         })
       ];
 
-      this.toCSV(data, "codechecker_analysis_statistics.csv");
+      this.toCSV(data, "codechecker_checker_coverage_statistics.csv");
     },
 
     async getRunData() {
@@ -262,7 +262,9 @@ export default {
       const filter = new ReportFilter(this.reportFilter);
 
       this.checker_stat = await new Promise(resolve => {
-        ccService.getClient().getCheckerInfo(this.runIds, filter,
+        ccService.getClient().getCheckerStatusVerificationDetails(
+          this.runIds,
+          filter,
           handleThriftError(res => {
             resolve(res);
           }));

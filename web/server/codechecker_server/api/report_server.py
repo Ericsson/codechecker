@@ -34,16 +34,17 @@ from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
     AnalysisInfoFilter, AnalysisInfoChecker as API_AnalysisInfoChecker, \
     BlameData, BlameInfo, BugPathPos, \
-    CheckerCount, Commit, CommitAuthor, CommentData, \
-    DiffType, \
+    CheckerCount, CheckerStatusVerificationDetail, Commit, CommitAuthor, \
+    CommentData, \
+    DetectionStatus, DiffType, \
     Encoding, ExportData, \
     Order, \
     ReportData, ReportDetails, ReviewData, ReviewStatusRule, \
     ReviewStatusRuleFilter, ReviewStatusRuleSortMode, \
     ReviewStatusRuleSortType, RunData, RunFilter, RunHistoryData, \
     RunReportCount, RunSortType, RunTagCount, \
-    SourceComponentData, SourceFileData, SortMode, SortType, \
-    ReviewStatus as API_ReviewStatus, DetectionStatus, CheckerInfo
+    ReviewStatus as API_ReviewStatus, \
+    SourceComponentData, SourceFileData, SortMode, SortType
 
 from codechecker_common import util
 from codechecker_common.logger import get_logger
@@ -59,7 +60,6 @@ from ..database.config_db_model import Product
 from ..database.database import conv, DBSession, escape_like
 from ..database.run_db_model import \
     AnalysisInfo, AnalysisInfoChecker as DB_AnalysisInfoChecker, \
-    AnalysisInfoChecker, \
     AnalyzerStatistic, \
     BugPathEvent, BugReportPoint, \
     CleanupPlan, CleanupPlanReportHash, Checker, Comment, \
@@ -1282,6 +1282,66 @@ def get_rs_rule_query(
         q = q.having(report_count == 0)
 
     return q
+
+
+def get_run_id_expression(session, report_filter):
+    """
+    Get run id or concatenated run id list by the unique mode and the DB type
+    """
+    if report_filter.isUnique:
+        if session.bind.dialect.name == "postgresql":
+            return func.string_agg(
+                cast(Run.id, sqlalchemy.String).distinct(),
+                ','
+            ).label("run_id")
+        else:
+            return func.group_concat(
+                Run.id.distinct()
+            ).label("run_id")
+    else:
+        return Run.id.label("run_id")
+
+
+def get_is_enabled_case(subquery):
+    """
+    Creating a case statement to decide the report
+    is enabled or not based on the detection status
+    """
+    detection_status_filters = subquery.c.detection_status.in_(list(
+        map(detection_status_str,
+            (DetectionStatus.OFF, DetectionStatus.UNAVAILABLE))
+    ))
+
+    return case(
+        [(detection_status_filters, False)],
+        else_=True
+    )
+
+
+def get_is_opened_case(subquery):
+    """
+    Creating a case statement to decide the report is opened or not
+    based on the detection status and the review status
+    """
+    detection_statuses = (
+        DetectionStatus.NEW,
+        DetectionStatus.UNRESOLVED,
+        DetectionStatus.REOPENED
+    )
+    review_statuses = (
+        API_ReviewStatus.UNREVIEWED,
+        API_ReviewStatus.CONFIRMED
+    )
+    detection_and_review_status_filters = [
+        subquery.c.detection_status.in_(list(map(
+            detection_status_str, detection_statuses))),
+        subquery.c.review_status.in_(list(map(
+            review_status_str, review_statuses)))
+    ]
+    return case(
+        [(and_(*detection_and_review_status_filters), True)],
+        else_=False
+    )
 
 
 class ThriftRequestHandler:
@@ -2865,8 +2925,9 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
-    def getCheckerInfo(self, run_ids, report_filter):
+    def getCheckerStatusVerificationDetails(self, run_ids, report_filter):
         self.__require_view()
+
         with DBSession(self._Session) as session:
             max_run_histories = session.query(
                 RunHistory.run_id,
@@ -2875,16 +2936,11 @@ class ThriftRequestHandler:
                 .filter(RunHistory.run_id.in_(run_ids) if run_ids else True) \
                 .group_by(RunHistory.run_id)
 
+            run_id_expression = get_run_id_expression(session, report_filter)
+
             subquery = (
                 session.query(
-                    (func.string_agg(
-                        cast(Run.id, sqlalchemy.String).distinct(),
-                        ','
-                        ).label("run_id")
-                     if session.bind.dialect.name == "postgresql"
-                     else func.group_concat(Run.id.distinct()).label("run_id"))
-                    if report_filter.isUnique
-                    else Run.id.label("run_id"),
+                    run_id_expression,
                     Checker.id.label("checker_id"),
                     Checker.checker_name,
                     Checker.analyzer_name,
@@ -2895,10 +2951,12 @@ class ThriftRequestHandler:
                 )
                 .join(RunHistory)
                 .join(AnalysisInfo, RunHistory.analysis_info)
-                .join(AnalysisInfoChecker, (
-                    (AnalysisInfo.id == AnalysisInfoChecker.analysis_info_id)
-                    & (AnalysisInfoChecker.enabled.is_(True))))
-                .join(Checker, AnalysisInfoChecker.checker_id == Checker.id)
+                .join(DB_AnalysisInfoChecker, (
+                    (AnalysisInfo.id ==
+                     DB_AnalysisInfoChecker.analysis_info_id)
+                    & (DB_AnalysisInfoChecker.enabled.is_(True))))
+                .join(Checker,
+                      DB_AnalysisInfoChecker.checker_id == Checker.id)
                 .outerjoin(Report, ((Checker.id == Report.checker_id)
                                     & (Run.id == Report.run_id)))
                 .filter(RunHistory.id == max_run_histories.subquery()
@@ -2918,6 +2976,9 @@ class ThriftRequestHandler:
 
             subquery = subquery.subquery()
 
+            is_enabled_case = get_is_enabled_case(subquery)
+            is_opened_case = get_is_opened_case(subquery)
+
             query = (
                 session.query(
                     subquery.c.checker_id,
@@ -2925,39 +2986,8 @@ class ThriftRequestHandler:
                     subquery.c.analyzer_name,
                     subquery.c.severity,
                     subquery.c.run_id,
-                    case(
-                        [
-                            (
-                                subquery.c.detection_status.in_(list(map(
-                                    detection_status_str,
-                                    (DetectionStatus.OFF,
-                                     DetectionStatus.UNAVAILABLE)
-                                ))),
-                                False
-                            )
-                        ],
-                        else_=True
-                    ).label("isEnabled"),
-                    case(
-                        [
-                            (
-                                and_(
-                                    subquery.c.detection_status.in_(list(map(
-                                        detection_status_str,
-                                        (DetectionStatus.NEW,
-                                         DetectionStatus.UNRESOLVED,
-                                         DetectionStatus.REOPENED)
-                                    ))),
-                                    subquery.c.review_status.in_(list(map(
-                                        review_status_str,
-                                        (API_ReviewStatus.UNREVIEWED,
-                                         API_ReviewStatus.CONFIRMED))))
-                                ),
-                                True
-                            )
-                        ],
-                        else_=False
-                    ).label("isOpened"),
+                    is_enabled_case.label("isEnabled"),
+                    is_opened_case.label("isOpened"),
                     func.count(subquery.c.bug_id)
                 )
                 .group_by(
@@ -2966,39 +2996,8 @@ class ThriftRequestHandler:
                     subquery.c.analyzer_name,
                     subquery.c.severity,
                     subquery.c.run_id,
-                    case(
-                        [
-                            (
-                                subquery.c.detection_status.in_(list(map(
-                                    detection_status_str,
-                                    (DetectionStatus.OFF,
-                                     DetectionStatus.UNAVAILABLE)
-                                ))),
-                                False
-                            )
-                        ],
-                        else_=True
-                    ),
-                    case(
-                        [
-                            (
-                                and_(
-                                    subquery.c.detection_status.in_(list(map(
-                                        detection_status_str,
-                                        (DetectionStatus.NEW,
-                                         DetectionStatus.UNRESOLVED,
-                                         DetectionStatus.REOPENED)
-                                    ))),
-                                    subquery.c.review_status.in_(list(map(
-                                        review_status_str,
-                                        (API_ReviewStatus.UNREVIEWED,
-                                         API_ReviewStatus.CONFIRMED))))
-                                ),
-                                True
-                            )
-                        ],
-                        else_=False
-                    )
+                    is_enabled_case,
+                    is_opened_case
                 )
             )
 
@@ -3013,9 +3012,10 @@ class ThriftRequestHandler:
                 is_opened, \
                 cnt \
                     in query.all():
-                checker_stat = checker_stats[checker_id] \
-                    if checker_id in checker_stats \
-                    else CheckerInfo(
+
+                checker_stat = checker_stats.get(
+                    checker_id,
+                    CheckerStatusVerificationDetail(
                         checkerName=checker_name,
                         analyzerName=analyzer_name,
                         enabled=[],
@@ -3023,11 +3023,11 @@ class ThriftRequestHandler:
                         severity=severity,
                         closed=0,
                         outstanding=0
-                    )
+                    ))
 
                 if is_enabled:
                     for r in (run_ids.split(",")
-                              if type(run_ids) is str
+                              if isinstance(run_ids, str)
                               else [run_ids]):
                         run_id = int(r)
                         if run_id not in checker_stat.enabled:
