@@ -1,3 +1,4 @@
+# FIXME: Subsume into the newer label_tool/doc_url package!
 import argparse
 import json
 import sys

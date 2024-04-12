@@ -13,6 +13,22 @@ from typing import Any, cast, DefaultDict, Dict, Iterable, List, Optional, \
 from codechecker_common.util import load_json
 
 
+def split_label_kv(key_value: str) -> Tuple[str, str]:
+    """
+    A label has a value separated by colon (:) character, e.g:
+    "severity:high". This function returns this key and value as a tuple.
+    Optional whitespaces around (:) and at the two ends of this string are
+    not taken into account. If key_value contains no colon, then the value
+    is empty string.
+    """
+    try:
+        pos = key_value.index(':')
+    except ValueError:
+        return (key_value.strip(), '')
+
+    return key_value[:pos].strip(), key_value[pos + 1:].strip()
+
+
 # TODO: Most of the methods of this class get an optional analyzer name. If
 # None is given to these functions then labels of any analyzer's checkers is
 # taken into account. This the union of all analyzers' checkers is a bad
@@ -79,21 +95,6 @@ class CheckerLabels:
 
         return all_labels
 
-    def __get_label_key_value(self, key_value: str) -> Tuple[str, str]:
-        """
-        A label has a value separated by colon (:) character, e.g:
-        "severity:high". This function returns this key and value as a tuple.
-        Optional whitespaces around (:) and at the two ends of this string are
-        not taken into account. If key_value contains no colon, then the value
-        is empty string.
-        """
-        try:
-            pos = key_value.index(':')
-        except ValueError:
-            return (key_value.strip(), '')
-
-        return key_value[:pos].strip(), key_value[pos + 1:].strip()
-
     def __check_json_format(self, data: dict):
         """
         Check the format of checker labels' JSON config file, i.e. this file
@@ -111,7 +112,7 @@ class CheckerLabels:
             Check if the given label occurs only once in the label list.
             """
             found = False
-            for k, _ in map(self.__get_label_key_value, labels):
+            for k, _ in map(split_label_kv, labels):
                 if k == label:
                     if found:
                         return False
@@ -173,11 +174,11 @@ class CheckerLabels:
         """
         collection = []
 
-        label_set = set(map(self.__get_label_key_value, filter_labels))
+        label_set = set(map(split_label_kv, filter_labels))
 
         for _, checkers in self.__get_analyzer_data(analyzer):
             for checker, labels in checkers.items():
-                labels = set(map(self.__get_label_key_value, labels))
+                labels = set(map(split_label_kv, labels))
 
                 if labels.intersection(label_set):
                     collection.append(checker)
@@ -243,8 +244,7 @@ class CheckerLabels:
                     lambda c: checker.startswith(cast(str, c)),
                     iter(checkers.keys())), None)
 
-            labels.extend(
-                map(self.__get_label_key_value, checkers.get(c, [])))
+            labels.extend(map(split_label_kv, checkers.get(c, [])))
 
         # TODO set() is used for uniqueing results in case a checker name is
         # provided by multiple analyzers. This will be unnecessary when we
@@ -277,7 +277,7 @@ class CheckerLabels:
         for _, checkers in self.__get_analyzer_data(analyzer):
             for labels in checkers.values():
                 collection.update(map(
-                    lambda x: self.__get_label_key_value(x)[0], labels))
+                    lambda x: split_label_kv(x)[0], labels))
 
         return list(collection)
 
@@ -294,7 +294,7 @@ class CheckerLabels:
 
         for _, checkers in self.__get_analyzer_data(analyzer):
             for labels in checkers.values():
-                for lab, value in map(self.__get_label_key_value, labels):
+                for lab, value in map(split_label_kv, labels):
                     if lab == label:
                         values.add(value)
 
