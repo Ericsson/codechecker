@@ -2089,6 +2089,13 @@ class ThriftRequestHandler:
                                        sort_type_map,
                                        order_type_map)
 
+                # Most queries are using paging of reports due their great
+                # number. This is implemented by LIMIT and OFFSET in the SQL
+                # queries. However, if there is no ordering in the query, then
+                # the reports in different pages may overlap. This ordering
+                # prevents it.
+                q = q.order_by(Report.id)
+
                 if report_filter.annotations is not None:
                     annotations = defaultdict(list)
                     for annotation in report_filter.annotations:
