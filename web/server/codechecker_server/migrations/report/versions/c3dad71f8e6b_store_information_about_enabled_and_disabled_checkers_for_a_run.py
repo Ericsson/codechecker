@@ -207,7 +207,7 @@ def upgrade():
         num_batches = report_count // REPORT_UPDATE_CHUNK_SIZE + 1
 
         def _print_progress(batch: int):
-            LOG.info("[%d/%d] Upgrading 'reports'... (%d–%d) %.0f%% done.",
+            LOG.info("[%d/%d] Upgrading 'reports'... (%d-%d) %.0f%% done.",
                      batch, num_batches,
                      (REPORT_UPDATE_CHUNK_SIZE * i) + 1,
                      (REPORT_UPDATE_CHUNK_SIZE * (i + 1))
@@ -479,7 +479,7 @@ def downgrade():
         num_batches = report_count // REPORT_UPDATE_CHUNK_SIZE + 1
 
         def _print_progress(batch: int):
-            LOG.info("[%d/%d] Downgrading 'reports'... (%d–%d) %.0f%% done.",
+            LOG.info("[%d/%d] Downgrading 'reports'... (%d-%d) %.0f%% done.",
                      batch, num_batches,
                      (REPORT_UPDATE_CHUNK_SIZE * i) + 1,
                      (REPORT_UPDATE_CHUNK_SIZE * (i + 1))
