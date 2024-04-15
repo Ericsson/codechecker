@@ -90,6 +90,19 @@ class TestDbCleanup(unittest.TestCase):
         self.codechecker_cfg['check_env']['CC_TEST_LABELS_DIR'] = \
             self.workspace_labels_dir
 
+        self.event = multiprocess.Event()
+        self.event.clear()
+
+    def teardown_method(self, method):
+
+        global TEST_WORKSPACE
+
+        check_env = env.import_test_cfg(TEST_WORKSPACE)[
+            'codechecker_cfg']['check_env']
+        codechecker.remove_test_package_product(TEST_WORKSPACE, check_env)
+
+        self.event.set()
+
     def __create_test_dir(self):
         makefile = "all:\n\t$(CXX) -c a/main.cpp -o /dev/null\n"
         project_info = {
@@ -187,9 +200,6 @@ int f(int x) { return 1 / x; }
                              severity_id)
 
     def test_garbage_file_collection(self):
-        # pylint: disable=no-member multiprocess module members.
-        event = multiprocess.Event()
-        event.clear()
 
         self.codechecker_cfg['viewer_port'] = env.get_free_port()
         env.export_test_cfg(self.test_workspace,
@@ -197,7 +207,9 @@ int f(int x) { return 1 / x; }
 
         env.enable_auth(self.test_workspace)
 
-        server_access = codechecker.start_server(self.codechecker_cfg, event)
+        server_access = codechecker.start_server(
+            self.codechecker_cfg,
+            self.event)
         server_access['viewer_port'] \
             = self.codechecker_cfg['viewer_port']
         server_access['viewer_product'] \
@@ -285,9 +297,9 @@ int f(int x) { return 1 / x; }
 
         files_in_report_after = self.__get_files_in_report(run_name1)
 
-        event.set()
+        self.event.set()
 
-        event.clear()
+        self.event.clear()
 
         # Change severity level of core.DivideZero to LOW.
         with open(os.path.join(self.workspace_labels_dir, 'analyzers',
@@ -305,7 +317,7 @@ int f(int x) { return 1 / x; }
                             {'codechecker_cfg': self.codechecker_cfg})
 
         codechecker.start_server(self.codechecker_cfg,
-                                 event)
+                                 self.event)
         codechecker.login(self.codechecker_cfg,
                           self.test_workspace,
                           'cc',
@@ -323,5 +335,3 @@ int f(int x) { return 1 / x; }
 
         # Checker severity levels.
         self.__check_serverity_of_reports(run_name1)
-
-        event.set()
