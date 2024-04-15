@@ -12,6 +12,7 @@ import sys
 
 
 try:
+    from .doc_url.generate_tool import __main__ as doc_url_generate
     from .doc_url.verify_tool import __main__ as doc_url_verify
 except ModuleNotFoundError as e:
     import traceback
@@ -52,6 +53,7 @@ internal library.
         subparser = package.args(subparser)
         subparser.set_defaults(__main=package.main)
 
+    add_subparser("doc_url_generate", doc_url_generate)
     add_subparser("doc_url_verify", doc_url_verify)
 
     return parser

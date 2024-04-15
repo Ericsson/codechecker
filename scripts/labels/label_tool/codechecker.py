@@ -37,6 +37,16 @@ def codechecker_src_root() -> Optional[pathlib.Path]:
         return None
 
 
+def default_checker_label_dir() -> Optional[pathlib.Path]:
+    """
+    Returns the directory where the configuration labels for checkers are
+    stored.
+    """
+    codechecker_root = codechecker_src_root()
+    return codechecker_root / "config" / "labels" / "analyzers" \
+        if codechecker_root else None
+
+
 def inject_codechecker_to_interpreter():
     """
     Adds the built CodeChecker package relative to the root of the working

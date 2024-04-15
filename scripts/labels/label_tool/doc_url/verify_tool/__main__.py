@@ -21,10 +21,10 @@ from codechecker_common.util import clamp
 
 from ...checker_labels import SingleLabels, get_checker_labels, \
     update_checker_labels
-from ...codechecker import codechecker_src_root
+from ...codechecker import default_checker_label_dir
 from ...output import Settings as GlobalOutputSettings, \
     error, log, trace, coloured, emoji
-from ...util import plural
+from ...util import merge_if_no_collision, plural
 from ..output import Settings as OutputSettings
 from ..verifiers import analyser_selection
 from . import tool
@@ -53,8 +53,8 @@ the creation of a machine-readable output.
 
 The return code of this tool is indicative of errors encountered during
 execution.
-'0' is returned for no errors (success), '1' indicate general
-errors, '2' indicate configuration errors.
+'0' is returned for no errors (success), '1' indicates general errors,
+'2' indicates configuration errors.
 In every other case, the return value is the OR of a bitmask:
 """
     f"""
@@ -72,11 +72,6 @@ epilogue: str = ""
 
 
 def args(parser: Optional[argparse.ArgumentParser]) -> argparse.ArgumentParser:
-    def default_checker_label_dir() -> Optional[pathlib.Path]:
-        codechecker_root = codechecker_src_root()
-        return codechecker_root / "config" / "labels" / "analyzers" \
-            if codechecker_root else None
-
     if not parser:
         parser = argparse.ArgumentParser(
             prog=__package__,
@@ -332,23 +327,14 @@ def main(args_: argparse.Namespace) -> Optional[int]:
                 statistics.append(statistic)
                 rc = int(tool.ReturnFlags(rc) | status)
 
-                for checker in local_fixes.keys() - conflicts:
-                    fix = local_fixes[checker]
-                    try:
-                        existing_fix = fixes[checker]
-                        if existing_fix != fix:
-                            error("%s%s/%s: %s [%s] =/= [%s]",
-                                  emoji(":collision:  "),
-                                  analyser, checker,
-                                  coloured("FIX COLLISION", "red"),
-                                  existing_fix, fix
-                                  )
-                            conflicts.add(checker)
-                            del fixes[checker]
-                    except KeyError:
-                        fixes[checker] = fix
-
-                if args_.apply_fixes and fixes:
+                merge_if_no_collision(
+                    fixes, local_fixes, conflicts,
+                    lambda checker, existing_fix, new_fix:
+                    error("%s%s/%s: %s [%s] =/= [%s]", emoji(":collision:  "),
+                          analyser, checker, coloured("FIX COLLISION", "red"),
+                          existing_fix, new_fix)
+                )
+                if args.apply_fixes and fixes:
                     log("%sUpdating %s %s for '%s'... ('%s')",
                         emoji(":writing_hand:  "),
                         coloured(len(fixes), "green"),
@@ -358,6 +344,9 @@ def main(args_: argparse.Namespace) -> Optional[int]:
                     try:
                         update_checker_labels(analyser, path, "doc_url", fixes)
                     except Exception:
+                        import traceback
+                        traceback.print_exc()
+
                         error("Failed to write checker labels for '%s'!",
                               analyser)
                         continue

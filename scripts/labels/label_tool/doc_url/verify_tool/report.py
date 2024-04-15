@@ -93,7 +93,6 @@ def print_resets(analyser: str,
 
 
 def print_fixes(analyser: str,
-                _urls: SingleLabels,
                 found: SingleLabels,
                 gone: SingleLabels):
     if not gone:

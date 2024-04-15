@@ -38,20 +38,6 @@ def main():
         if perm is None:
             continue
 
-        backref = section.find('.//*[@class="toc-backref"]')
-        name = backref.text[2:].lower()  # Remove -W and convert to lower case.
-        if name:
-            checker_name = f"clang-diagnostic-{name}"
-        else:
-            checker_name = "clang-diagnostic"
-
-        if checker_name not in labels:
-            labels[checker_name] = []
-
-        anchor = perm.attrib['href'].lstrip('#')
-        if not any(lbl.startswith("doc_url:") for lbl in labels[checker_name]):
-            labels[checker_name].append(f"doc_url:{url}#{anchor}")
-
         is_error = section.find('.//*[@class="error"]') is not None
         if not any(lbl.startswith("severity:")
                    for lbl in labels[checker_name]):

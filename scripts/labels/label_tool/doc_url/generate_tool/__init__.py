@@ -1,4 +1,3 @@
-# -------------------------------------------------------------------------
 #
 #  Part of the CodeChecker project, under the Apache License v2.0 with
 #  LLVM Exceptions. See LICENSE for license information.
@@ -6,17 +5,13 @@
 #
 # -------------------------------------------------------------------------
 """
-Verifies and generates fixed ``doc_url`` labels for checkers in the
-configuration.
+This subpackage implements logic that is primarily user-facing, as opposed to
+reusable library-like components.
 """
 from . import \
-    generators, \
-    output, \
-    verifiers
+    tool
 
 
 __all__ = [
-    "generators",
-    "output",
-    "verifiers",
+    "tool",
 ]

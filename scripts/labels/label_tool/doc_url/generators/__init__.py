@@ -6,17 +6,11 @@
 #
 # -------------------------------------------------------------------------
 """
-Verifies and generates fixed ``doc_url`` labels for checkers in the
-configuration.
+Implements the logic for analyser-specific generation of documentation URLs.
 """
-from . import \
-    generators, \
-    output, \
-    verifiers
+from .analyser_selection import select_generator
 
 
 __all__ = [
-    "generators",
-    "output",
-    "verifiers",
+    "select_generator",
 ]

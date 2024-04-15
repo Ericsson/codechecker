@@ -55,6 +55,10 @@ class ClangTidyVerifier(HTTPStatusCodeVerifier):
             # Clang-Tidy checks, but their documentation is in a completely
             # different structure.
             return Status.SKIP
+        if checker.startswith("clang-analyzer"):
+            # Clang-Tidy allows calling the Clang Static Analyzer internally,
+            # but we do not support this through CodeChecker.
+            return Status.SKIP
         if not url:
             return Status.MISSING
         return Status.OK

@@ -7,7 +7,7 @@
 # -------------------------------------------------------------------------
 """Helper functions, mixin classes, and miscellaneous utilities."""
 import bisect
-from typing import Any, Callable, Collection, Dict, List, Optional, \
+from typing import Any, Callable, Collection, Dict, List, Optional, Set, \
     Sequence, Type, TypeVar, Union
 
 
@@ -78,3 +78,30 @@ def lower_bound(l_: List[_T], e: _T) -> Optional[_T]:
     if l_[idx] == e:
         return l_[idx]
     return l_[idx - 1]
+
+
+def merge_if_no_collision(existing: Dict[Any, Any],
+                          new: Dict[Any, Any],
+                          conflicts: Set[Any],
+                          conflict_cb: Optional[Callable[[Any, Any, Any],
+                                                         None]] = None):
+    """
+    Update the contents of `existing` with the contents of `new` piecewise
+    if and only if the `new` value for an element is not in conflict with
+    the `existing` one.
+    Conflicting keys are added to `conflicts`, and if set, `conflict_cb` is
+    called for them.
+    """
+    for k in sorted(new.keys() - conflicts):
+        v = new[k]
+        try:
+            existing_v = existing[k]
+            if existing_v != v:
+                if conflict_cb:
+                    conflict_cb(k, existing_v, v)
+                conflicts.add(k)
+                # There was a conflict, drop the element from the merged set.
+                del existing[k]
+        except KeyError:
+            # No conflicts for truly new elements.
+            existing[k] = v
