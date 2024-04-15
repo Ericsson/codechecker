@@ -827,7 +827,6 @@ class TestAnalyze(unittest.TestCase):
                 codechecker_subcommand, extra_args)
 
     def __run_with_invalid_enabled_checker_name_analyze(self, extra_args):
-        build_json = os.path.join(self.test_workspace, "build_success.json")
         codechecker_subcommand = [self._codechecker_cmd, "analyze",
                                   self.__get_build_json()]
         return self.__run_with_invalid_enabled_checker_name_common(
@@ -835,7 +834,7 @@ class TestAnalyze(unittest.TestCase):
 
     def test_invalid_enabled_checker_name(self):
         """Error out in case of an invalid enabled checker."""
-        out, err, errcode = \
+        out, _, errcode = \
             self.__run_with_invalid_enabled_checker_name_check([])
 
         match = self.err_missing_checker_regex.search(out)
@@ -928,7 +927,6 @@ class TestAnalyze(unittest.TestCase):
                 codechecker_subcommand, extra_args)
 
     def __run_with_invalid_disabled_checker_name_analyze(self, extra_args):
-        build_json = os.path.join(self.test_workspace, "build_success.json")
         codechecker_subcommand = [self._codechecker_cmd, "analyze",
                                   self.__get_build_json()]
         return self.__run_with_invalid_disabled_checker_name_common(
