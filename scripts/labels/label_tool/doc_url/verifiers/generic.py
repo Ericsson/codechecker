@@ -32,9 +32,10 @@ class Base:
     def skip(self, checker: str, url: str) -> Status:
         """
         Returns `Status.OK` if the current verifier is capable of verifying the
-        `checker`. `Status.SKIP` is returned in case the `checker` is
-        unverifiable due to a pattern, and `Status.MISSING` is returned if
-        it is unverifiable due to its lack of `url`.
+        `checker`.
+        `Status.SKIP` is returned in case the `checker` is unverifiable due to
+        a pattern, and `Status.MISSING` is returned if it is unverifiable due
+        to its lack of `url`.
         """
         return Status.OK
 

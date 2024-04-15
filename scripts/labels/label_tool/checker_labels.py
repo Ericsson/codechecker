@@ -43,7 +43,7 @@ def _load_json(path: pathlib.Path) -> Dict:
 def _save_json(path: pathlib.Path, data: Dict):
     try:
         with path.open("w") as file:
-            json.dump(data, file, indent=2)
+            json.dump(data, file, indent=2, sort_keys=True)
             file.write('\n')
     except OSError:
         import traceback
@@ -128,7 +128,14 @@ def update_checker_labels(analyser: str,
     label_indices = {checker: indices[0] if len(indices) == 1 else None
                      for checker, indices in label_indices.items()}
     for checker, new_label in updates.items():
-        checker_labels = label_cfg[checker]
+        try:
+            checker_labels = label_cfg[checker]
+        except KeyError:
+            label_cfg[checker] = list()
+            label_indices[checker] = None
+
+            checker_labels = label_cfg[checker]
+
         idx = label_indices[checker]
         e = f"{key}:{new_label}"
         if idx is not None:
