@@ -34,6 +34,7 @@ class _Generic:
             else HTTPStatusCodeVerifier
 
 
+# Set an analyser to explicit None to disable the default "generic" behaviour.
 AnalyserVerifiers: Dict[str, Union[Type, Tuple[Type, ...]]] = defaultdict(
     lambda: _Generic,
     {

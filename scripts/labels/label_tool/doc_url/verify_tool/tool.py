@@ -99,7 +99,7 @@ def execute(analyser: str,
                                OK=len(ok) if ok else None,
                                Not_OK=len(not_ok) if not_ok else None,
                                )
-        status = status | (ReturnFlags.HadMissing if missing else 0)
+        status |= (ReturnFlags.HadMissing if missing else 0)
 
         if not_ok:
             status |= ReturnFlags.HadNotOK
@@ -108,12 +108,12 @@ def execute(analyser: str,
                     pool, {checker: labels[checker] for checker
                            in labels.keys() & not_ok}
                 )
-                report.print_fixes(analyser, labels, found, gone)
+                report.print_fixes(analyser, found, gone)
                 urls_to_save.update(found)
                 stats = stats._replace(Found=len(found) if found else None,
                                        Gone=len(gone) if gone else None,
                                        )
-                status = status | (ReturnFlags.HadFound if found else 0) \
+                status |= (ReturnFlags.HadFound if found else 0) \
                     | (ReturnFlags.HadGone if gone else 0)
 
     return status, urls_to_save, stats

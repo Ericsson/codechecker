@@ -100,7 +100,7 @@ class PerReleaseRules:
         of versions.
 
         `rule` can be either a `str`, in which placeholders, in the format of
-        `<KEY>` (e.g., `<VERSION>`) are rewritten (see `__call__`, and
+        ``<KEY>`` (e.g., ``<VERSION>``) are rewritten (see `__call__`, and
         `_Rule.__call__`), or a callback function, which receives the arguments
         of `__call__` and is expected to produce a `str` result.
         """
