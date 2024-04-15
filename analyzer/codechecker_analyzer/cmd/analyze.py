@@ -980,6 +980,7 @@ def main(args):
     compile_commands = \
         compilation_database.gather_compilation_database(args.input)
     if compile_commands is None:
+        LOG.error(f"Found no compilation commands in '{args.input}'")
         sys.exit(1)
 
     # Process the skip list if present.

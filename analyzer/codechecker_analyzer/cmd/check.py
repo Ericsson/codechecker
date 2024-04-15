@@ -902,6 +902,7 @@ def main(args):
         if 'clean' in args:
             setattr(analyze_args, 'clean', True)
         __update_if_key_exists(args, analyze_args, 'verbose')
+        __update_if_key_exists(args, analyze_args, 'no_missing_checker_error')
 
         import codechecker_analyzer.cmd.analyze as analyze_module
         LOG.debug("Calling ANALYZE with args:")
