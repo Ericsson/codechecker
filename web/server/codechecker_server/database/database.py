@@ -102,8 +102,10 @@ class DBContext:
             self.db_session = sessionmaker(bind=self.engine)()
             self.db_connection = self.db_session.connection()
         except Exception as ex:
-            LOG.debug("Connection error")
-            LOG.debug(ex)
+            LOG.debug("Connection error:")
+            LOG.debug("%s", str(ex))
+            import traceback
+            traceback.print_exc()
             self.db_error = DBStatus.FAILED_TO_CONNECT
 
         return self
@@ -152,14 +154,14 @@ class SQLServer(metaclass=ABCMeta):
            instance of the new server type if needed
     """
 
-    def __init__(self, model_meta, migration_root):
+    def __init__(self, name_in_log: str, model_meta, migration_root):
         """
         Sets self.migration_root. migration_root should be the path to the
         alembic migration scripts.
 
         Also sets the created class' model identifier to the given meta dict.
         """
-
+        self.name_in_log = name_in_log
         self.__model_meta = model_meta
         self.migration_root = migration_root
 
@@ -177,6 +179,7 @@ class SQLServer(metaclass=ABCMeta):
                 cfg = config.Config()
                 cfg.set_main_option("script_location", self.migration_root)
                 cfg.attributes["connection"] = db.connection
+                cfg.attributes["database_name"] = self.name_in_log
 
                 mcontext = migration.MigrationContext.configure(db.connection)
                 database_schema_revision = mcontext.get_current_revision()
@@ -198,6 +201,8 @@ class SQLServer(metaclass=ABCMeta):
 
         except sqlalchemy.exc.SQLAlchemyError as alch_err:
             LOG.error(str(alch_err))
+            import traceback
+            traceback.print_exc()
             return False
 
         except Exception as ex:
@@ -277,38 +282,38 @@ class SQLServer(metaclass=ABCMeta):
                     # There is a schema mismatch.
                     return DBStatus.SCHEMA_MISMATCH_OK
                 else:
-                    LOG.debug("Schema in the package and"
-                              " in the database is the same.")
+                    LOG.debug("Schema in the package and in the database "
+                              "is the same.")
                     LOG.debug("No schema modification is needed.")
                     return DBStatus.OK
 
         except sqlalchemy.exc.SQLAlchemyError as alch_err:
-            LOG.debug(str(alch_err))
+            LOG.error(str(alch_err))
+            import traceback
+            traceback.print_exc()
             return DBStatus.FAILED_TO_CONNECT
         except CommandError as cerr:
-            LOG.debug("Database schema and CodeChecker is incompatible. "
+            LOG.error("Database schema and CodeChecker is incompatible. "
                       "Please update CodeChecker.")
-            LOG.debug(str(cerr))
+            LOG.error(str(cerr))
+            import traceback
+            traceback.print_exc()
             return DBStatus.SCHEMA_MISMATCH_NO
 
     def upgrade(self):
         """
-        Upgrade database db schema.
+        Upgrade database schema.
 
         Checks the database schema for schema mismatch.
         The database server has to be started before this method is called.
 
-        This method runs an alembic upgrade to HEAD.
-
+        This method runs an Alembic upgrade to HEAD.
         """
 
-        # another safety check before we initialize or upgrade the schema
+        # Another safety check before we initialize or upgrade the schema.
         ret = self.check_schema()
-
-        migration_ok = [DBStatus.SCHEMA_MISMATCH_OK,
-                        DBStatus.SCHEMA_MISSING]
-        if ret not in migration_ok:
-            # schema migration is not possible
+        if ret not in [DBStatus.SCHEMA_MISMATCH_OK, DBStatus.SCHEMA_MISSING]:
+            # Schema migration is not possible.
             return ret
 
         try:
@@ -316,17 +321,18 @@ class SQLServer(metaclass=ABCMeta):
                 if db.error:
                     return db.error
 
-                LOG.debug("Update/create database schema for %s",
+                LOG.debug("Create/update database schema for %s",
                           self.__model_meta['identifier'])
-                LOG.debug("Creating new database session")
 
                 cfg = config.Config()
                 cfg.set_main_option("script_location", self.migration_root)
                 cfg.attributes["connection"] = db.connection
+                cfg.attributes["database_name"] = self.name_in_log
+
                 command.upgrade(cfg, "head")
                 db.session.commit()
 
-                LOG.debug("Upgrading database schema: Done")
+                LOG.debug("Upgrading database schema: Done.")
                 return DBStatus.OK
 
         except sqlalchemy.exc.SQLAlchemyError as alch_err:
@@ -338,7 +344,7 @@ class SQLServer(metaclass=ABCMeta):
         except CommandError as cerr:
             import traceback
             traceback.print_exc()
-            LOG.debug(str(cerr))
+            LOG.error(str(cerr))
             return DBStatus.SCHEMA_UPGRADE_FAILED
 
     @abstractmethod
@@ -353,14 +359,14 @@ class SQLServer(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_connection_string(self):
+    def get_connection_string(self) -> str:
         """
         Returns the connection string for SQLAlchemy.
 
         DO NOT LOG THE CONNECTION STRING BECAUSE IT MAY CONTAIN THE PASSWORD
         FOR THE DATABASE!
         """
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def get_db_location(self):
@@ -431,25 +437,36 @@ class SQLServer(metaclass=ABCMeta):
         return args
 
     @staticmethod
-    def from_connection_string(connection_string, model_meta, migration_root,
-                               interactive=False, env=None):
+    def from_connection_string(connection_string: str,
+                               name_in_log: str,
+                               model_meta,
+                               migration_root,
+                               interactive=False,
+                               env=None):
         """
         Normally only this method is called form outside of this module in
         order to instance the proper server implementation.
 
         Parameters:
-            args: the dict of database arguments
+            connection_string: A fully formatted database URN identifying the
+                connection parameters.
+            name_in_log: A user-facing name of the current database to appear
+                in log output.
             model_meta: the meta identifier of the database model to use
             migration_root: path to the database migration scripts
             env: a run environment dictionary.
         """
 
         args = SQLServer.connection_string_to_args(connection_string)
-        return SQLServer.from_cmdline_args(args, model_meta, migration_root,
-                                           interactive, env)
+        return SQLServer.from_cmdline_args(args,
+                                           name_in_log,
+                                           model_meta,
+                                           migration_root,
+                                           interactive,
+                                           env)
 
     @staticmethod
-    def from_cmdline_args(args, model_meta, migration_root,
+    def from_cmdline_args(args, name_in_log: str, model_meta, migration_root,
                           interactive=False, env=None):
         """
         Normally only this method is called form outside of this module in
@@ -458,6 +475,8 @@ class SQLServer(metaclass=ABCMeta):
         Parameters:
             args: the command line arguments from CodeChecker.py, but as a
               dictionary (if argparse.Namespace, use vars(args)).
+            name_in_log: A custom user-friendly identifier for the DB in
+              logs.
             model_meta: the meta identifier of the database model to use
             migration_root: path to the database migration scripts
             interactive: whether or not the database connection can be
@@ -471,7 +490,8 @@ class SQLServer(metaclass=ABCMeta):
 
         if args['postgresql']:
             LOG.debug("Using PostgreSQL:")
-            return PostgreSQLServer(model_meta,
+            return PostgreSQLServer(name_in_log,
+                                    model_meta,
                                     migration_root,
                                     args['dbaddress'],
                                     args['dbport'],
@@ -485,8 +505,11 @@ class SQLServer(metaclass=ABCMeta):
             LOG.debug("Using SQLite:")
             data_file = os.path.abspath(args['sqlite'])
             LOG.debug("Database at %s", data_file)
-            return SQLiteDatabase(data_file, model_meta,
-                                  migration_root, run_env=env)
+            return SQLiteDatabase(name_in_log,
+                                  data_file,
+                                  model_meta,
+                                  migration_root,
+                                  run_env=env)
 
 
 class PostgreSQLServer(SQLServer):
@@ -494,9 +517,10 @@ class PostgreSQLServer(SQLServer):
     Handler for PostgreSQL.
     """
 
-    def __init__(self, model_meta, migration_root, host, port, user, database,
-                 password=None, interactive=False, run_env=None):
-        super(PostgreSQLServer, self).__init__(model_meta, migration_root)
+    def __init__(self, name_in_log, model_meta, migration_root,
+                 host, port, user, database, password=None,
+                 interactive=False, run_env=None):
+        super().__init__(name_in_log, model_meta, migration_root)
 
         self.host = host
         self.port = port
@@ -589,7 +613,7 @@ class PostgreSQLServer(SQLServer):
 
         return self.check_schema()
 
-    def get_connection_string(self):
+    def get_connection_string(self) -> str:
         return self._get_connection_string(self.database)
 
     def get_db_location(self):
@@ -601,8 +625,9 @@ class SQLiteDatabase(SQLServer):
     Handler for SQLite.
     """
 
-    def __init__(self, data_file, model_meta, migration_root, run_env=None):
-        super(SQLiteDatabase, self).__init__(model_meta, migration_root)
+    def __init__(self, name_in_log, data_file, model_meta, migration_root,
+                 run_env=None):
+        super().__init__(name_in_log, model_meta, migration_root)
 
         self.dbpath = data_file
         self.run_env = run_env
@@ -627,7 +652,7 @@ class SQLiteDatabase(SQLServer):
 
         return self.check_schema()
 
-    def get_connection_string(self):
+    def get_connection_string(self) -> str:
         return str(URL('sqlite+pysqlite', None, None, None, None, self.dbpath))
 
     def get_db_location(self):

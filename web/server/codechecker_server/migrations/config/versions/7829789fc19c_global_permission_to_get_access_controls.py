@@ -1,20 +1,21 @@
-"""Global permission to get access controls
+"""
+Global permission to get access controls
 
 Revision ID: 7829789fc19c
-Revises: cf025b6d7998
+Revises:     cf025b6d7998
 Create Date: 2021-10-28 11:29:08.775219
-
 """
 
-# revision identifiers, used by Alembic.
-revision = '7829789fc19c'
-down_revision = 'cf025b6d7998'
-branch_labels = None
-depends_on = None
 
 from alembic import op
 import sqlalchemy as sa
 
+
+# Revision identifiers, used by Alembic.
+revision = '7829789fc19c'
+down_revision = 'cf025b6d7998'
+branch_labels = None
+depends_on = None
 
 table_name = 'permissions_system'
 column_name = 'permission'

@@ -17,14 +17,13 @@ import shutil
 import sys
 import tempfile
 
-import multiprocess
-
 from codechecker_analyzer.analyzers import analyzer_types
 from codechecker_analyzer.arg import \
     OrderedCheckersAction, OrderedConfigAction, \
     analyzer_config, checker_config, existing_abspath
 
 from codechecker_common import arg, cmd_config, logger
+from codechecker_common.compatibility.multiprocessing import cpu_count
 from codechecker_common.source_code_comment_handler import \
     REVIEW_STATUS_VALUES
 
@@ -183,8 +182,7 @@ used to generate a log file on the fly.""")
                                type=int,
                                dest="jobs",
                                required=False,
-                               # pylint: disable=no-member
-                               default=multiprocess.cpu_count(),
+                               default=cpu_count(),
                                help="Number of threads to use in analysis. "
                                     "More threads mean faster analysis at "
                                     "the cost of using more memory.")

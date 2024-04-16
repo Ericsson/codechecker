@@ -1,25 +1,27 @@
-"""Review status for each report
+"""
+Review status for each report
 
 Revision ID: 75ae226b5d88
-Revises: fb356f0eefed
+Revises:     fb356f0eefed
 Create Date: 2022-01-27 15:19:48.185835
-
 """
 
-# revision identifiers, used by Alembic.
+from collections import defaultdict
+from io import StringIO
+import zlib
+
+from alembic import op
+import sqlalchemy as sa
+
+from codechecker_common.source_code_comment_handler import \
+    SourceCodeCommentHandler, SpellException
+
+
+# Revision identifiers, used by Alembic.
 revision = '75ae226b5d88'
 down_revision = 'fb356f0eefed'
 branch_labels = None
 depends_on = None
-
-from collections import defaultdict
-from alembic import op
-import sqlalchemy as sa
-import zlib
-from io import StringIO
-
-from codechecker_common.source_code_comment_handler import \
-    SourceCodeCommentHandler, SpellException
 
 
 def upgrade():
@@ -63,8 +65,13 @@ def upgrade():
         # branching here needs to stay.
         conn.execute("""
             UPDATE reports
-            SET (review_status, review_status_author, review_status_date, review_status_message) =
-                (SELECT status, author, date, message FROM review_statuses WHERE bug_hash = reports.bug_id)
+            SET (review_status,
+                 review_status_author,
+                 review_status_date,
+                 review_status_message) =
+                (SELECT status, author, date, message
+                    FROM review_statuses
+                    WHERE bug_hash = reports.bug_id)
         """)
     elif dialect == 'postgresql':
         op.add_column('reports', col_rs)
