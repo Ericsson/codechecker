@@ -16,7 +16,12 @@ var BugList = {
   },
 
   _cmp3 : function (a, b) {
-    return a < b ? -1 : a > b ? 1 : 0;
+    if (a === null)
+      return -1;
+    else if (b === null)
+      return 1;
+    else
+      return a < b ? -1 : a > b ? 1 : 0;
   },
 
   initTableSort : function () {
@@ -73,17 +78,24 @@ var BugList = {
     function compare(a, b) {
       var result;
 
-      if (columnId == 'file-path')
-        result = that._cmp3(
-          [a['file-path'], a['line']],
-          [b['file-path'], b['line']]);
+      switch (columnId)
+      {
+        case 'file-path':
+          result = that._cmp3(
+            [a['file-path'], a['line']],
+            [b['file-path'], b['line']]);
+          break;
 
-      if (columnId == 'severity')
-        result = that._cmp3(
-          severities.indexOf(a['severity']),
-          severities.indexOf(b['severity']));
+        case 'severity':
+          result = that._cmp3(
+            severities.indexOf(a['severity']),
+            severities.indexOf(b['severity']));
+          break;
 
-      result = that._cmp3(a[columnId], b[columnId]);
+        default:
+          result = that._cmp3(a[columnId], b[columnId]);
+          break;
+      }
 
       return asc ? result : -result;
     }
@@ -138,6 +150,18 @@ var BugList = {
     review_col.appendChild(document.createTextNode(data['review-status']));
     row.appendChild(review_col);
 
+    let testcase_col = document.createElement('td');
+    testcase_col.setAttribute('class', 'dynamic');
+    testcase_col.appendChild(
+      document.createTextNode(data['testcase'] || ''));
+    row.appendChild(testcase_col);
+
+    let timestamp_col = document.createElement('td');
+    timestamp_col.setAttribute('class', 'dynamic');
+    timestamp_col.appendChild(
+      document.createTextNode(data['timestamp'] || ''));
+    row.appendChild(timestamp_col);
+
     return row;
   },
 
@@ -148,8 +172,20 @@ var BugList = {
     var report_list = document.getElementById('report-list');
     report_list.innerHTML = '';
 
-    for (var i = startIdx; i < endIdx; ++i)
+    var dynamic_cols_needed = false;
+
+    for (var i = startIdx; i < endIdx; ++i) {
       report_list.appendChild(this.buildRow(reports[i], i + 1));
+
+      if (reports[i]['testcase'] || reports[i]['timestamp'])
+        dynamic_cols_needed = true;
+    }
+
+    for (var tag of document.getElementsByClassName('dynamic'))
+      if (dynamic_cols_needed)
+        tag.style.removeProperty('display');
+      else
+        tag.style.display = 'none';
 
     this.initBugPathLength();
   },
