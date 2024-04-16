@@ -1043,7 +1043,7 @@ class TestAnalyze(unittest.TestCase):
             errors="ignore")
         out, _ = process.communicate()
 
-        match = self.warn_missing_checker_regex.search(out)
+        match = self.err_missing_checker_regex.search(out)
         self.assertIsNotNone(match)
         self.assertTrue("non-existing-checker-name" in out)
         self.assertTrue("non-existing-checker" in out)
