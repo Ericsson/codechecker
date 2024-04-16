@@ -390,12 +390,8 @@ class LocalRemote(unittest.TestCase):
 
         # Check reports in the index.html file.
         index_html = os.path.join(html_reports, 'index.html')
-        divide_zero_count = 0
         with open(index_html, 'r', encoding="utf-8", errors="ignore") as f:
-            for line in f:
-                if re.search("core.DivideZero", line):
-                    divide_zero_count += 1
-        self.assertEqual(divide_zero_count, 10)
+            self.assertEqual(len(re.findall('core.DivideZero', f.read())), 10)
 
     def test_different_basename_types(self):
         """ Test different basename types.
