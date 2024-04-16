@@ -382,7 +382,10 @@ def process_report_filter(
             else:
                 OR.append(and_(
                     ReportAnnotations.key == key,
-                    ReportAnnotations.value.in_(values)))
+                    or_(*[ReportAnnotations.value.ilike(conv(v))
+                          for v in values])) if values else and_(
+                              ReportAnnotations.key == key))
+
         AND.append(or_(*OR))
 
     filter_expr = and_(*AND)
@@ -1001,7 +1004,8 @@ def get_sort_map(sort_types, is_unique=False):
         SortType.SEVERITY: [(Checker.severity, 'severity')],
         SortType.REVIEW_STATUS: [(Report.review_status, 'rw_status')],
         SortType.DETECTION_STATUS: [(Report.detection_status, 'dt_status')],
-        SortType.TIMESTAMP: [('annotation_timestamp', 'annotation_timestamp')]}
+        SortType.TIMESTAMP: [('annotation_timestamp', 'annotation_timestamp')],
+        SortType.TESTCASE: [('annotation_testcase', 'annotation_testcase')]}
 
     if is_unique:
         sort_type_map[SortType.FILENAME] = [(File.filename, 'filename')]
@@ -2155,20 +2159,44 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
-    def getReportAnnotations(self, key):
+    def getReportAnnotations(self, run_ids, report_filter, cmp_data):
         self.__require_view()
 
         with DBSession(self._Session) as session:
-            if key:
-                result = session \
-                    .query(ReportAnnotations.value) \
+            filter_expression, join_tables = process_report_filter(
+                session, run_ids, report_filter, cmp_data)
+
+            extended_table = session.query(Report.id)
+
+            extended_table = apply_report_filter(
+                extended_table, filter_expression, join_tables)
+
+            if report_filter.annotations is not None:
+                extended_table = extended_table.outerjoin(
+                    ReportAnnotations,
+                    ReportAnnotations.report_id == Report.id)
+                extended_table = extended_table.group_by(Report.id)
+                extended_table = extended_table.add_columns(
+                    ReportAnnotations.key.label('annotations_key'),
+                    ReportAnnotations.value.label('annotations_value')
+                )
+
+                extended_table = extended_table.subquery()
+
+                result = session.query(extended_table.c.annotations_value) \
                     .distinct() \
-                    .filter(ReportAnnotations.key == key) \
+                    .filter(
+                        *(extended_table.c.annotations_key == annotation.first
+                          for annotation in report_filter.annotations)) \
                     .all()
             else:
-                result = session \
-                    .query(ReportAnnotations.key) \
+                extended_table = extended_table.subquery()
+
+                result = session.query(ReportAnnotations.value) \
                     .distinct() \
+                    .join(
+                        extended_table,
+                        ReportAnnotations.report_id == extended_table.c.id) \
                     .all()
 
         return list(map(lambda x: x[0], result))

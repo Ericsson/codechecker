@@ -280,7 +280,7 @@ export default {
           text: "Testcase",
           value: "testcase",
           align: "center",
-          sortable: false
+          sortable: true
         }
       ],
       reports: [],
@@ -422,6 +422,9 @@ export default {
         break;
       case "timestamp":
         type = SortType.TIMESTAMP;
+        break;
+      case "testcase":
+        type = SortType.TESTCASE;
         break;
       default:
         type = SortType.SEVERITY;
