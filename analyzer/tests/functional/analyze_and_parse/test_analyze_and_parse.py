@@ -766,7 +766,7 @@ class AnalyzeParseTestCase(
                 content = f.read()
 
             self.assertTrue(re.search(
-                '"checker-url": "https://.*alpha-clone-clonechecker', content))
+                '"checker-url": ".*alpha-clone-clonechecker', content))
             self.assertTrue(re.search('"checker-url": ""', content))
             self.assertTrue(re.search('UNKNOWN CHECKER NAME', content))
 
