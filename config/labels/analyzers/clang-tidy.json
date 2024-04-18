@@ -1150,10 +1150,6 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#waggregate-return",
       "severity:MEDIUM"
     ],
-    "clang-diagnostic-agnostic flags": [
-      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#diagnostic-flags",
-      "severity:HIGH"
-    ],
     "clang-diagnostic-aix-compat": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#waix-compat",
       "severity:MEDIUM"
@@ -2370,10 +2366,6 @@
     "clang-diagnostic-format": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat",
       "profile:default",
-      "severity:MEDIUM"
-    ],
-    "clang-diagnostic-format-2": [
-      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat-2",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-format-extra-args": [
@@ -4645,10 +4637,6 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wtrigraphs",
       "profile:default",
       "severity:MEDIUM"
-    ],
-    "clang-diagnostic-troduction": [
-      "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#diagnostic-flags-in-clang",
-      "severity:HIGH"
     ],
     "clang-diagnostic-type-limits": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wtype-limits",
