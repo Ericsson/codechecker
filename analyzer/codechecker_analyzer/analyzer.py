@@ -169,30 +169,11 @@ def perform_analysis(args, skip_handlers, rs_handler: ReviewStatusHandler,
 
     config_map = analyzer_types.build_config_handlers(args, analyzers)
 
-    # Don't enable analyzers that have no checkers enabled. Some analyzers,
-    # like clang-tidy error out if none of theirs are enabled, which makes
-    # sense if you use them as a standalone tool, but not if you run a bunch
-    # of analyzers at once.
     no_checker_analyzers = \
         [a for a in analyzers if not __has_enabled_checker(config_map[a])]
     for analyzer in no_checker_analyzers:
         LOG.info("No checkers enabled for %s", analyzer)
         analyzers.remove(analyzer)
-
-    # Don't emit warnings for analyzers we failed to enable if none of their
-    # checkers were enabled anyways.
-    # TODO: Its perfectly reasonable for an analyzer plugin to not be able to
-    # build their config handler if the analyzer isn't supported in the first
-    # place. For now, this seems to be okay, but may not be later.
-    errored_config_map = analyzer_types.build_config_handlers(
-        args, [x for (x, _) in errored])
-
-    no_checker_err_analyzers = \
-        [a for (a, _) in errored
-         if not __has_enabled_checker(errored_config_map[a])]
-
-    errored = [(an, msg) for an, msg in errored
-               if an not in no_checker_err_analyzers]
 
     actions = prepare_actions(actions, analyzers)
 
