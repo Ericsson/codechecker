@@ -237,21 +237,21 @@
       "profile:sensitive",
       "severity:HIGH"
     ],
-    "alpha.security.cert.pos.34c": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-security-cert-pos-34c",
-      "profile:default",
-      "profile:sensitive",
-      "profile:security",
-      "profile:extreme",
-      "severity:HIGH"
-    ],
     "alpha.security.cert.env.InvalidPtr": [
       "doc_url:https://releases.llvm.org/17.0.1/tools/clang/docs/analyzer/checkers.html#alpha-security-cert-env-invalidptr",
       "profile:default",
-      "profile:sensitive",
       "profile:extreme",
       "profile:security",
+      "profile:sensitive",
       "severity:MEDIUM"
+    ],
+    "alpha.security.cert.pos.34c": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-security-cert-pos-34c",
+      "profile:default",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "severity:HIGH"
     ],
     "alpha.security.taint.TaintPropagation": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-security-taint-taintpropagation-c-c",
@@ -275,8 +275,8 @@
     ],
     "alpha.unix.Errno": [
       "doc_url:https://releases.llvm.org/17.0.1/tools/clang/docs/analyzer/checkers.html#alpha-unix-errno-c",
-      "profile:sensitive",
       "profile:extreme",
+      "profile:sensitive",
       "severity:HIGH"
     ],
     "alpha.unix.PthreadLock": [
@@ -322,6 +322,11 @@
       "profile:sensitive",
       "severity:HIGH"
     ],
+    "alpha.unix.cstring.UninitializedRead": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-unix-cstring-uninitializedread-c",
+      "profile:extreme",
+      "severity:HIGH"
+    ],
     "alpha.webkit.UncountedCallArgsChecker": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-webkit-uncountedcallargschecker",
       "profile:extreme"
@@ -335,10 +340,10 @@
       "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
-      "sei-cert:int34-c",
+      "profile:sensitive",
       "sei-cert:int32-c",
+      "sei-cert:int34-c",
       "severity:HIGH"
     ],
     "core.CallAndMessage": [
@@ -346,8 +351,8 @@
       "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
+      "profile:sensitive",
       "sei-cert:dcl41-c",
       "sei-cert:exp30-c",
       "sei-cert:exp33-c",
@@ -368,8 +373,8 @@
       "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
+      "profile:sensitive",
       "sei-cert:int33-c",
       "severity:HIGH"
     ],
@@ -384,8 +389,8 @@
       "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
+      "profile:sensitive",
       "sei-cert:exp34-c",
       "severity:HIGH"
     ],
@@ -399,27 +404,27 @@
       "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
+      "profile:sensitive",
       "sei-cert:exp34-c",
       "severity:HIGH"
     ],
     "core.StackAddrEscapeBase": [
       "guideline:sei-cert",
-      "sei-cert:dcl30-c",
-      "sei-cert:exp54-cpp",
-      "sei-cert:exp61-cpp",
       "profile:default",
       "profile:extreme",
+      "profile:security",
       "profile:sensitive",
-      "profile:security"
+      "sei-cert:dcl30-c",
+      "sei-cert:exp54-cpp",
+      "sei-cert:exp61-cpp"
     ],
     "core.StackAddressEscape": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-stackaddressescape-c",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
+      "profile:sensitive",
       "sei-cert:dcl30-c",
       "sei-cert:exp54-cpp",
       "sei-cert:exp61-cpp",
@@ -431,8 +436,8 @@
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
-      "sei-cert:exp50-cpp",
       "sei-cert:exp33-c",
+      "sei-cert:exp50-cpp",
       "severity:HIGH"
     ],
     "core.VLASize": [
@@ -440,8 +445,8 @@
       "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
+      "profile:sensitive",
       "sei-cert:arr32-c",
       "severity:HIGH"
     ],
@@ -459,67 +464,62 @@
     ],
     "core.uninitialized.ArraySubscript": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-uninitialized-arraysubscript-c",
+      "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
-      "guideline:sei-cert",
       "profile:security",
+      "profile:sensitive",
       "sei-cert:exp33-c",
       "severity:HIGH"
     ],
     "core.uninitialized.Assign": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-uninitialized-assign-c",
+      "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
-      "severity:HIGH",
-      "guideline:sei-cert",
-      "sei-cert:exp33-c"
+      "profile:sensitive",
+      "sei-cert:exp33-c",
+      "severity:HIGH"
     ],
     "core.uninitialized.Branch": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-uninitialized-branch-c",
+      "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
-      "severity:HIGH",
-      "guideline:sei-cert",
-      "sei-cert:exp33-c"
+      "profile:sensitive",
+      "sei-cert:exp33-c",
+      "severity:HIGH"
     ],
     "core.uninitialized.CapturedBlockVariable": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-uninitialized-capturedblockvariable-c",
+      "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
-      "severity:HIGH",
-      "guideline:sei-cert",
-      "sei-cert:exp33-c"
+      "profile:sensitive",
+      "sei-cert:exp33-c",
+      "severity:HIGH"
     ],
     "core.uninitialized.NewArraySize": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-uninitialized-newarraysize-c",
+      "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
-      "severity:HIGH",
-      "guideline:sei-cert",
-      "sei-cert:exp33-c"
+      "profile:sensitive",
+      "sei-cert:exp33-c",
+      "severity:HIGH"
     ],
     "core.uninitialized.UndefReturn": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-uninitialized-undefreturn-c",
       "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
+      "profile:sensitive",
       "sei-cert:oop53-cpp",
-      "severity:HIGH"
-    ],
-    "alpha.unix.cstring.UninitializedRead": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-unix-cstring-uninitializedread-c",
-      "profile:extreme",
       "severity:HIGH"
     ],
     "cplusplus.ArrayDelete": [
@@ -527,8 +527,8 @@
       "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
+      "profile:sensitive",
       "sei-cert:exp51-cpp",
       "severity:HIGH"
     ],
@@ -537,8 +537,8 @@
       "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
+      "profile:sensitive",
       "sei-cert:mem50-cpp",
       "sei-cert:str52-cpp",
       "severity:HIGH"
@@ -547,8 +547,8 @@
       "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
+      "profile:sensitive",
       "sei-cert:exp63-cpp",
       "severity:HIGH"
     ],
@@ -557,8 +557,8 @@
       "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
+      "profile:sensitive",
       "sei-cert:exp54-cpp",
       "sei-cert:mem50-cpp",
       "sei-cert:mem51-cpp",
@@ -570,8 +570,8 @@
       "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
+      "profile:sensitive",
       "sei-cert:mem51-cpp",
       "severity:HIGH"
     ],
@@ -593,13 +593,13 @@
     ],
     "cplusplus.SelfAssignment": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#cplusplus-selfassignment-c",
+      "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
-      "severity:MEDIUM",
-      "guideline:sei-cert",
-      "sei-cert:oop54-cpp"
+      "profile:sensitive",
+      "sei-cert:oop54-cpp",
+      "severity:MEDIUM"
     ],
     "cplusplus.SmartPtrModeling": [
       "profile:default",
@@ -608,13 +608,13 @@
     ],
     "cplusplus.StringChecker": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#cplusplus-stringchecker-c",
+      "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
-      "severity:HIGH",
-      "guideline:sei-cert",
-      "sei-cert:str51-cpp"
+      "profile:sensitive",
+      "sei-cert:str51-cpp",
+      "severity:HIGH"
     ],
     "cplusplus.VirtualCallModeling": [
       "profile:default",
@@ -623,13 +623,13 @@
     ],
     "deadcode.DeadStores": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#deadcode-deadstores-c",
+      "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
-      "guideline:sei-cert",
-      "severity:LOW",
-      "sei-cert:msc12-c"
+      "profile:sensitive",
+      "sei-cert:msc12-c",
+      "severity:LOW"
     ],
     "debug.AnalysisOrder": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#debug-analysisorder"
@@ -722,12 +722,12 @@
     ],
     "optin.core.EnumCastOutOfRange": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-core-enumcastoutofrange-c-c",
+      "guideline:sei-cert",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
-      "severity:MEDIUM",
+      "profile:sensitive",
       "sei-cert:mem54-cpp",
-      "guideline:sei-cert"     
+      "severity:MEDIUM"
     ],
     "optin.cplusplus.UninitializedObject": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-cplusplus-uninitializedobject-c",
@@ -741,8 +741,8 @@
       "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
+      "profile:sensitive",
       "sei-cert:oop50-cpp",
       "severity:MEDIUM"
     ],
@@ -778,8 +778,8 @@
       "profile:default",
       "profile:extreme",
       "profile:portability",
-      "profile:sensitive",
       "profile:security",
+      "profile:sensitive",
       "sei-cert:mem30-c",
       "severity:MEDIUM"
     ],
@@ -868,26 +868,26 @@
     "osx.coreFoundation.containers.PointerSizedValues": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#osx-corefoundation-containers-pointersizedvalues-c"
     ],
-    "security.cert.env.InvalidPtr": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-cert-env-invalidptr",
-      "profile:default",
-      "profile:sensitive",
-      "profile:extreme",
-      "profile:security",
-      "severity:MEDIUM",
-      "profile:security",
-      "sei-cert:env31-c",
-      "sei-cert:env34-c",
-      "guideline:sei-cert"
-    ],
     "security.FloatLoopCounter": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-floatloopcounter-c",
       "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
+      "profile:sensitive",
       "sei-cert:flp30-c",
+      "severity:MEDIUM"
+    ],
+    "security.cert.env.InvalidPtr": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-cert-env-invalidptr",
+      "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:security",
+      "profile:security",
+      "profile:sensitive",
+      "sei-cert:env31-c",
+      "sei-cert:env34-c",
       "severity:MEDIUM"
     ],
     "security.insecureAPI.DeprecatedOrUnsafeBufferHandling": [
@@ -935,8 +935,8 @@
       "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
+      "profile:sensitive",
       "sei-cert:str31-c",
       "severity:MEDIUM"
     ],
@@ -963,10 +963,10 @@
     ],
     "security.insecureAPI.strcpy": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#security-insecureapi-strcpy-c",
+      "guideline:sei-cert",
       "profile:extreme",
       "profile:security",
       "sei-cert:str31-c",
-      "guideline:sei-cert",
       "severity:MEDIUM"
     ],
     "security.insecureAPI.vfork": [
@@ -981,13 +981,13 @@
     ],
     "unix.API": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-api-c",
+      "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
-      "severity:MEDIUM",
+      "profile:sensitive",
       "sei-cert:exp37-c",
-      "guideline:sei-cert"
+      "severity:MEDIUM"
     ],
     "unix.DynamicMemoryModeling": [
       "profile:default",
@@ -996,20 +996,20 @@
     ],
     "unix.Errno": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-errno-c",
-      "profile:sensitive",
+      "guideline:sei-cert",
       "profile:extreme",
       "profile:security",
-      "severity:HIGH",
-      "guideline:sei-cert",
-      "sei-cert:err30-c"
+      "profile:sensitive",
+      "sei-cert:err30-c",
+      "severity:HIGH"
     ],
     "unix.Malloc": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-malloc-c",
       "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
+      "profile:sensitive",
       "sei-cert:mem30-c",
       "sei-cert:mem31-c",
       "sei-cert:mem34-c",
@@ -1022,8 +1022,8 @@
       "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
+      "profile:sensitive",
       "sei-cert:mem35-c",
       "severity:MEDIUM"
     ],
@@ -1032,42 +1032,42 @@
       "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
+      "profile:sensitive",
       "sei-cert:mem51-cpp",
       "severity:MEDIUM"
     ],
     "unix.StdCLibraryFunctions": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-stdclibraryfunctions-c",
+      "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
-      "severity:HIGH",
-      "guideline:sei-cert",
+      "profile:sensitive",
+      "sei-cert:arr38-c",
       "sei-cert:err33-c",
       "sei-cert:pos52-c",
-      "sei-cert:arr38-c"
+      "severity:HIGH"
     ],
     "unix.Vfork": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-vfork-c",
       "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
+      "profile:sensitive",
       "sei-cert:pos33-c",
       "severity:MEDIUM"
     ],
     "unix.cstring.BadSizeArg": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-cstring-badsizearg-c",
+      "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
-      "severity:MEDIUM",
+      "profile:sensitive",
       "sei-cert:str31-c",
-      "guideline:sei-cert"
+      "severity:MEDIUM"
     ],
     "unix.cstring.CStringModeling": [
       "profile:default",
@@ -1076,13 +1076,13 @@
     ],
     "unix.cstring.NullArg": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-cstring-nullarg",
+      "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
-      "profile:sensitive",
       "profile:security",
-      "severity:HIGH",
-      "guideline:sei-cert",
-      "sei-cert:exp34-c"
+      "profile:sensitive",
+      "sei-cert:exp34-c",
+      "severity:HIGH"
     ],
     "valist.CopyToSelf": [
       "profile:default",
@@ -1111,12 +1111,12 @@
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#webkit-nouncountedmemberchecker",
       "severity:MEDIUM"
     ],
-    "webkit.UncountedLambdaCapturesChecker": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#webkit-uncountedlambdacaptureschecker",
-      "severity:MEDIUM"
-    ],
     "webkit.RefCntblBaseVirtualDtor": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#webkit-refcntblbasevirtualdtor",
+      "severity:MEDIUM"
+    ],
+    "webkit.UncountedLambdaCapturesChecker": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#webkit-uncountedlambdacaptureschecker",
       "severity:MEDIUM"
     ]
   }

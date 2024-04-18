@@ -795,12 +795,12 @@
       "profile:default",
       "severity:HIGH"
     ],
+    "cppcheck-returnStdMoveLocal": [
+      "severity:LOW"
+    ],
     "cppcheck-returnTempReference": [
       "profile:default",
       "severity:HIGH"
-    ],
-    "cppcheck-returnStdMoveLocal": [
-      "severity:LOW"
     ],
     "cppcheck-sameIteratorExpression": [
       "severity:STYLE"
