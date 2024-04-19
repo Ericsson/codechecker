@@ -82,6 +82,9 @@
       "profile:extreme",
       "severity:HIGH"
     ],
+    "alpha.core.StdVariant": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-stdvariant-c"
+    ],
     "alpha.core.TestAfterDivZero": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-testafterdivzero-c",
       "profile:extreme",
@@ -89,7 +92,7 @@
       "severity:MEDIUM"
     ],
     "alpha.cplusplus.ArrayDelete": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-cplusplus-arraydelete-c",
+      "doc_url:https://releases.llvm.org/18.1.1/tools/clang/docs/analyzer/checkers.html#alpha-cplusplus-arraydelete-c",
       "profile:extreme",
       "profile:sensitive",
       "severity:HIGH"
@@ -132,6 +135,9 @@
       "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
+    ],
+    "alpha.cplusplus.MisusedMovedObject": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-cplusplus-misusedmovedobject-c"
     ],
     "alpha.cplusplus.PlacementNew": [
       "profile:extreme",
@@ -768,7 +774,7 @@
       "profile:extreme"
     ],
     "optin.performance.Padding": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-performance-padding",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#optin-performance-padding-c-c-objc",
       "profile:extreme",
       "severity:LOW"
     ],
@@ -1075,8 +1081,7 @@
       "profile:sensitive"
     ],
     "unix.cstring.NullArg": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-cstring-nullarg",
-      "guideline:sei-cert",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-cstring-nullarg-c",
       "profile:default",
       "profile:extreme",
       "profile:security",

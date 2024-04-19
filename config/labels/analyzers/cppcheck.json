@@ -70,7 +70,7 @@
       "severity:MEDIUM"
     ],
     "cppcheck-assignmentInCondition": [
-      "severity:LOW"
+      "severity:STYLE"
     ],
     "cppcheck-autoVariables": [
       "profile:default",
@@ -132,7 +132,7 @@
       "severity:HIGH"
     ],
     "cppcheck-compareValueOutOfTypeRangeError": [
-      "severity:LOW"
+      "severity:STYLE"
     ],
     "cppcheck-comparisonError": [
       "severity:STYLE"
@@ -155,16 +155,28 @@
       "severity:STYLE"
     ],
     "cppcheck-constParameter": [
-      "severity:LOW"
+      "severity:STYLE"
     ],
     "cppcheck-constParameterCallback": [
-      "severity:LOW"
+      "severity:STYLE"
+    ],
+    "cppcheck-constParameterPointer": [
+      "severity:STYLE"
+    ],
+    "cppcheck-constParameterReference": [
+      "severity:STYLE"
     ],
     "cppcheck-constStatement": [
       "profile:default",
       "severity:MEDIUM"
     ],
     "cppcheck-constVariable": [
+      "severity:STYLE"
+    ],
+    "cppcheck-constVariablePointer": [
+      "severity:STYLE"
+    ],
+    "cppcheck-constVariableReference": [
       "severity:STYLE"
     ],
     "cppcheck-containerOutOfBounds": [
@@ -471,6 +483,9 @@
     "cppcheck-knownEmptyContainer": [
       "severity:STYLE"
     ],
+    "cppcheck-knownPointerToBool": [
+      "severity:STYLE"
+    ],
     "cppcheck-leakNoVarFunctionCall": [
       "profile:default",
       "severity:HIGH"
@@ -590,7 +605,7 @@
     ],
     "cppcheck-negativeContainerIndex": [
       "profile:default",
-      "severity:HIGH"
+      "severity:MEDIUM"
     ],
     "cppcheck-negativeIndex": [
       "profile:default",
@@ -694,6 +709,9 @@
       "severity:STYLE"
     ],
     "cppcheck-pointerOutOfBounds": [
+      "severity:LOW"
+    ],
+    "cppcheck-pointerOutOfBoundsCond": [
       "severity:LOW"
     ],
     "cppcheck-pointerPositive": [
@@ -1164,7 +1182,7 @@
     ],
     "cppcheck-zerodivcond": [
       "profile:default",
-      "severity:HIGH"
+      "severity:MEDIUM"
     ]
   }
 }
