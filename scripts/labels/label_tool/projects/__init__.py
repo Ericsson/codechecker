@@ -5,13 +5,11 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # -------------------------------------------------------------------------
-"""
-Implements the logic for analyser-specific generation of documentation URLs.
-"""
-from .analyser_selection import select_generator
-from .base import Base
+"""Helper package for analyser-specific implementation of common tools."""
+from . import \
+    llvm
+
 
 __all__ = [
-    "select_generator",
-    "Base",
+    "llvm",
 ]

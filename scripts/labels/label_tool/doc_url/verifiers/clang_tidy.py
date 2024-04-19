@@ -9,9 +9,9 @@
 from typing import Optional
 
 from ... import transformer
+from ...projects.llvm import fetch_llvm_release_versions
 from ...transformer import Version
 from .generic import HTTPStatusCodeVerifier
-from .llvm import fetch_llvm_release_versions
 from .status import Status
 
 

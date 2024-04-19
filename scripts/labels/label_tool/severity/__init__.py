@@ -6,12 +6,14 @@
 #
 # -------------------------------------------------------------------------
 """
-Implements the logic for analyser-specific generation of documentation URLs.
+Generates ``severity`` labels for checkers in the configuration.
 """
-from .analyser_selection import select_generator
-from .base import Base
+from . import \
+    generators, \
+    output
+
 
 __all__ = [
-    "select_generator",
-    "Base",
+    "generators",
+    "output",
 ]

@@ -17,6 +17,7 @@ from . import \
     checker_labels, \
     http_, \
     output, \
+    projects, \
     transformer, \
     util
 
@@ -26,6 +27,7 @@ __all__ = [
     "codechecker",
     "http_",
     "output",
+    "projects",
     "transformer",
     "util",
 ]

@@ -1,4 +1,3 @@
-# -------------------------------------------------------------------------
 #
 #  Part of the CodeChecker project, under the Apache License v2.0 with
 #  LLVM Exceptions. See LICENSE for license information.
@@ -6,12 +5,13 @@
 #
 # -------------------------------------------------------------------------
 """
-Implements the logic for analyser-specific generation of documentation URLs.
+This subpackage implements logic that is primarily user-facing, as opposed to
+reusable library-like components.
 """
-from .analyser_selection import select_generator
-from .base import Base
+from . import \
+    tool
+
 
 __all__ = [
-    "select_generator",
-    "Base",
+    "tool",
 ]

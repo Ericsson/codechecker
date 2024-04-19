@@ -53,7 +53,7 @@ class ReturnFlags(IntFlag):
     RemainsMissing = Enumerator()
 
 
-def run_generator(generator: Base, urls: SingleLabels) \
+def run_generator(generator: Base, severities: SingleLabels) \
         -> Tuple[List[str], SingleLabels, SingleLabels, List[str]]:
     analyser = generator.analyser
     ok: List[str] = list()
@@ -62,7 +62,7 @@ def run_generator(generator: Base, urls: SingleLabels) \
     gone: List[str] = list()
 
     generation_result: SingleLabels = dict(generator.generate())
-    for checker in sorted(urls.keys() | generation_result.keys()):
+    for checker in sorted(severities.keys() | generation_result.keys()):
         if generator.skip(checker):
             if GlobalOutputSettings.trace():
                 log("%s%s/%s: %s",
@@ -72,17 +72,17 @@ def run_generator(generator: Base, urls: SingleLabels) \
                     file=sys.stderr)
             continue
 
-        existing_url, new_url = \
-            urls.get(checker), generation_result.get(checker)
+        existing_severity, new_severity = \
+            severities.get(checker), generation_result.get(checker)
 
-        if not existing_url:
-            if new_url:
-                new[checker] = new_url
+        if not existing_severity:
+            if new_severity:
+                new[checker] = new_severity
                 log("%s%s/%s: %s [%s]",
                     emoji(":magic_wand:  "),
                     analyser, checker,
                     coloured("NEW", "magenta"),
-                    new_url,
+                    new_severity,
                     file=sys.stdout)
             else:
                 if OutputSettings.report_missing():
@@ -91,22 +91,22 @@ def run_generator(generator: Base, urls: SingleLabels) \
                         analyser, checker,
                         coloured("MISSING", "yellow"),
                         file=sys.stdout)
-        elif existing_url == new_url:
+        elif existing_severity == new_severity:
             ok.append(checker)
             if OutputSettings.report_ok():
                 log("%s%s/%s: %s [%s]",
                     emoji(":check_box_with_check:  "),
                     analyser, checker,
                     coloured("OK", "green"),
-                    existing_url,
+                    existing_severity,
                     file=sys.stdout)
-        elif new_url:
-            updated[checker] = new_url
+        elif new_severity:
+            updated[checker] = new_severity
             log("%s%s/%s: %s [%s] -> [%s]",
                 emoji(":sparkles:  "),
                 analyser, checker,
                 coloured("UPDATED", "yellow"),
-                existing_url, new_url,
+                existing_severity, new_severity,
                 file=sys.stdout)
         else:
             gone.append(checker)
@@ -114,19 +114,19 @@ def run_generator(generator: Base, urls: SingleLabels) \
                 emoji(":ghost:  "),
                 analyser, checker,
                 coloured("GONE", "red"),
-                existing_url,
+                existing_severity,
                 file=sys.stdout)
 
     return ok, updated, new, gone
 
 
 def print_generation(analyser: str,
-                     original_urls: SingleLabels,
+                     original_severities: SingleLabels,
                      ok: List[str],
                      updated: SingleLabels,
                      new: SingleLabels):
     if not updated and not new:
-        log("%s%s: Documentation for all %s %s is OK.",
+        log("%s%s: Severity for all %s %s is OK.",
             emoji(":magnifying_glass_tilted_left::check_mark_button:  "),
             analyser,
             coloured("%d" % len(ok), "green"),
@@ -134,7 +134,7 @@ def print_generation(analyser: str,
             )
     else:
         if updated:
-            log("%s%s: %s %s changed documentation URL. (%s kept previous.)",
+            log("%s%s: %s %s changed severity. (%s kept previous.)",
                 emoji(":magnifying_glass_tilted_left::warning:  "),
                 analyser,
                 coloured("%d" % len(updated), "yellow"),
@@ -143,7 +143,7 @@ def print_generation(analyser: str,
                 if ok else coloured("0", "red"),
                 )
         if new:
-            log("%s%s: %s new %s did not have a `doc_url` label previously!",
+            log("%s%s: %s new %s did not have a `severity` label previously!",
                 emoji(":magnifying_glass_tilted_left:"
                       ":magnifying_glass_tilted_right:  "),
                 analyser,
@@ -162,11 +162,12 @@ def print_generation(analyser: str,
         colour = "green" if is_ok \
             else "yellow" if is_updated \
             else "magenta"
-        url = original_urls[checker] if is_ok \
+        severity = original_severities[checker] if is_ok \
             else updated[checker] if is_updated \
             else new[checker]
 
-        log("    %s· %s [%s]", emoji(icon), coloured(checker, colour), url)
+        log("    %s· %s [%s]", emoji(icon), coloured(checker, colour),
+            severity)
 
 
 def print_gone(analyser: str,
@@ -174,7 +175,7 @@ def print_gone(analyser: str,
     if not gone:
         return
 
-    log("%s%s: %s %s documentation gone.",
+    log("%s%s: %s %s severity gone.",
         emoji(":magnifying_glass_tilted_left::bar_chart:  "),
         analyser,
         coloured("%d" % len(gone), "red"),
@@ -191,7 +192,7 @@ def print_gone(analyser: str,
 def print_missing(analyser: str,
                   missing: List[str]):
     if not OutputSettings.report_missing():
-        log("%s%s: %s %s will not have a `doc_url` label!",
+        log("%s%s: %s %s will not have a `severity` label!",
             emoji(":magnifying_glass_tilted_left:"
                   ":magnifying_glass_tilted_right:  "),
             analyser,
@@ -226,11 +227,11 @@ def execute(analyser: str, generator_class: Type, labels: SingleLabels) \
                        All_Changed=0,
                        Not_Found=len(missing) if missing else None,
                        )
-    urls: SingleLabels = dict()
+    severities: SingleLabels = dict()
     ok, updated, new, gone = run_generator(generator_class(analyser), labels)
     print_generation(analyser, labels, ok, updated, new)
-    urls.update(updated)
-    urls.update(new)
+    severities.update(updated)
+    severities.update(new)
 
     ok = set(ok)
     new = set(new)
@@ -249,7 +250,7 @@ def execute(analyser: str, generator_class: Type, labels: SingleLabels) \
                            Updated=len(updated) if updated else None,
                            Gone=len(gone) if gone else None,
                            New=len(new) if new else None,
-                           All_Changed=len(urls),
+                           All_Changed=len(severities),
                            Not_Found=len(remaining_missing),
                            )
     status |= (ReturnFlags.HadUpdate if updated else 0) \
@@ -257,4 +258,4 @@ def execute(analyser: str, generator_class: Type, labels: SingleLabels) \
         | (ReturnFlags.HadGone if gone else 0) \
         | (ReturnFlags.RemainsMissing if remaining_missing else 0)
 
-    return status, urls, stats
+    return status, severities, stats

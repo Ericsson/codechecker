@@ -5,8 +5,14 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # -------------------------------------------------------------------------
-"""Helper package to hoist common logic specific to the LLVM Project."""
-from .releases import fetch_llvm_release_versions
+"""
+Implements the logic for analyser-specific generation of severities.
+"""
+from .analyser_selection import select_generator
+from .base import Base
 
 
-__all__ = ["fetch_llvm_release_versions"]
+__all__ = [
+    "select_generator",
+    "Base",
+]

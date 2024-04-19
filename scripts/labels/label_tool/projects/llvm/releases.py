@@ -12,8 +12,8 @@ from lxml import html
 from selenium import webdriver
 from selenium.webdriver.common.by import By as WebdriverBy
 
-from ....output import error
-from ....transformer import Version, Versions
+from ...output import error
+from ...transformer import Version, Versions
 
 
 def fetch_llvm_release_versions() -> Versions:
