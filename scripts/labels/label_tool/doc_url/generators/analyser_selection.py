@@ -13,11 +13,13 @@ from typing import Dict, Iterable, Tuple, Type, Union
 from .clang_diagnostic import ClangDiagnosticGenerator
 from .clang_tidy import ClangTidyGenerator
 from .clangsa import ClangSAGenerator
+from .markdownlint import MarkdownlintGenerator
 
 
 AnalyserGenerators: Dict[str, Union[Type, Tuple[Type, ...]]] = {
     "clangsa": ClangSAGenerator,
     "clang-tidy": (ClangDiagnosticGenerator, ClangTidyGenerator,),
+    "mdl": MarkdownlintGenerator,
 }
 
 

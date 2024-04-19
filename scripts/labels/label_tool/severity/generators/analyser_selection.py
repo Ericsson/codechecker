@@ -12,12 +12,14 @@ from typing import Dict, Iterable, Tuple, Type, Union
 
 from .clang_diagnostic import ClangDiagnosticGenerator
 from .cppcheck import CppcheckGenerator
+from .markdownlint import MarkdownlintGenerator
 from .pylint import PylintGenerator
 
 
 AnalyserGenerators: Dict[str, Union[Type, Tuple[Type, ...]]] = {
     "clang-tidy": (ClangDiagnosticGenerator,),
     "cppcheck": CppcheckGenerator,
+    "mdl": MarkdownlintGenerator,
     "pylint": PylintGenerator,
 }
 
