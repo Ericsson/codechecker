@@ -13,6 +13,7 @@ from .analyser_selection import select_verifier
 from .generic import Outcome, \
     HTTPStatusCodeVerifier, HTMLAnchorVerifier
 from .status import Status
+from . import generic
 
 
 __all__ = [
@@ -21,4 +22,5 @@ __all__ = [
     "HTTPStatusCodeVerifier",
     "HTMLAnchorVerifier",
     "Status",
+    "generic"
 ]
