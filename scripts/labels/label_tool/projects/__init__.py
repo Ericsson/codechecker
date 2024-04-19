@@ -7,9 +7,11 @@
 # -------------------------------------------------------------------------
 """Helper package for analyser-specific implementation of common tools."""
 from . import \
-    llvm
+    llvm, \
+    markdownlint
 
 
 __all__ = [
     "llvm",
+    "markdownlint",
 ]
