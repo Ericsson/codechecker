@@ -18,6 +18,7 @@ from tabulate import tabulate
 from ...checker_labels import SingleLabels, get_checker_labels, \
     update_checker_labels
 from ...codechecker import default_checker_label_dir
+from ...exception import EngineError
 from ...output import Settings as GlobalOutputSettings, \
     error, log, trace, coloured, emoji
 from ...util import merge_if_no_collision, plural
@@ -230,19 +231,29 @@ def main(args: argparse.Namespace) -> Optional[int]:
 
             severities: SingleLabels = dict()
             conflicts: Set[str] = set()
-            for generator in geners:
+            for generator_class in geners:
                 log("%sGenerating '%s' as '%s' (%s)...",
                     emoji(":thought_balloon:  "),
                     analyser,
-                    generator.kind,
-                    generator)
-                status, generated_urls, statistic = tool.execute(
-                    analyser,
-                    generator,
-                    labels,
-                )
-                statistics.append(statistic)
-                rc = int(tool.ReturnFlags(rc) | status)
+                    generator_class.kind,
+                    generator_class)
+                try:
+                    status, generated_urls, statistic = tool.execute(
+                        analyser,
+                        generator_class,
+                        labels,
+                    )
+                    statistics.append(statistic)
+                    rc = int(tool.ReturnFlags(rc) | status)
+                except EngineError:
+                    import traceback
+                    traceback.print_exc()
+
+                    error("Failed to execute generator '%s' (%s)",
+                          generator_class.kind, generator_class)
+                    rc = int(tool.ReturnFlags(rc) |
+                             tool.ReturnFlags.GeneralError)
+                    continue
 
                 merge_if_no_collision(
                     severities, generated_urls, conflicts,
