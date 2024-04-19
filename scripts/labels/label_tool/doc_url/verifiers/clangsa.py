@@ -10,9 +10,9 @@ from typing import Optional
 import urllib.parse
 
 from ... import http_ as http, transformer
+from ...projects.llvm import fetch_llvm_release_versions
 from ...transformer import Version
 from .generic import HTMLAnchorVerifier
-from .llvm import fetch_llvm_release_versions
 from .status import Status
 
 

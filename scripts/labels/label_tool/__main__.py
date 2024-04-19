@@ -14,6 +14,7 @@ import sys
 try:
     from .doc_url.generate_tool import __main__ as doc_url_generate
     from .doc_url.verify_tool import __main__ as doc_url_verify
+    from .severity.generate_tool import __main__ as severity_generate
 except ModuleNotFoundError as e:
     import traceback
     traceback.print_exc()
@@ -42,9 +43,9 @@ internal library.
         dest="subcommand",
         required=True)
 
-    def add_subparser(command: str, package):
+    def add_subparser(package):
         subparser = subparsers.add_parser(
-            command,
+            list(globals().keys())[list(globals().values()).index(package)],
             prog=package.__package__,
             help=package.short_help,
             description=package.description,
@@ -53,8 +54,9 @@ internal library.
         subparser = package.args(subparser)
         subparser.set_defaults(__main=package.main)
 
-    add_subparser("doc_url_generate", doc_url_generate)
-    add_subparser("doc_url_verify", doc_url_verify)
+    add_subparser(doc_url_generate)
+    add_subparser(doc_url_verify)
+    add_subparser(severity_generate)
 
     return parser
 

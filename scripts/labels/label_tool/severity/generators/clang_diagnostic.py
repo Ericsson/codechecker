@@ -18,7 +18,7 @@ from .base import Base
 
 class ClangDiagnosticGenerator(Base):
     """
-    Generates documentation URLs for Clang diagnostics from the Sphinx-based
+    Generates severities for Clang diagnostics from the Sphinx-based
     documentation metastructure.
     """
 
@@ -34,8 +34,18 @@ class ClangDiagnosticGenerator(Base):
     def generate(self) -> Iterable[Tuple[str, Optional[str]]]:
         for checker, _, section in clang_diagnostic \
                 .get_clang_diagnostic_documentation(self._http):
-            anchor = section.find(".//a[@class=\"headerlink\"]") \
-                .attrib["href"] \
-                .lstrip('#')
+            has_error_diagnostic = section.find(".//span[@class=\"error\"]") \
+                is not None
+            has_warn_diagnostic = section.find(".//span[@class=\"warning\"]") \
+                is not None
+            has_remark_diagnostic = section.find(
+                ".//span[@class=\"remark\"]") is not None
 
-            yield checker, f"{clang_diagnostic.URL}#{anchor}"
+            if has_error_diagnostic:
+                severity = "HIGH"
+            elif not has_warn_diagnostic and has_remark_diagnostic:
+                severity = "LOW"
+            else:
+                severity = "MEDIUM"
+
+            yield checker, severity
