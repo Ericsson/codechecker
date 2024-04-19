@@ -22,6 +22,7 @@ from codechecker_common.util import clamp
 from ...checker_labels import SingleLabels, get_checker_labels, \
     update_checker_labels
 from ...codechecker import default_checker_label_dir
+from ...exception import EngineError
 from ...output import Settings as GlobalOutputSettings, \
     error, log, trace, coloured, emoji
 from ...util import merge_if_no_collision, plural
@@ -310,22 +311,32 @@ def main(args_: argparse.Namespace) -> Optional[int]:
                 if len(labels) > 2 * args_.jobs else 1
             fixes: SingleLabels = {}
             conflicts: Set[str] = set()
-            for verifier in analyser_selection.select_verifier(analyser,
-                                                               labels):
+            for verifier_class in analyser_selection \
+                    .select_verifier(analyser, labels):
                 log("%sVerifying '%s' as '%s' (%s)...",
                     emoji(":thought_balloon:  "),
                     analyser,
-                    verifier.kind, verifier)
-                status, local_fixes, statistic = tool.execute(
-                    analyser,
-                    verifier,
-                    labels,
-                    process_count,
-                    args_.skip_fixes,
-                    args_.reset_to_upstream,
-                    )
-                statistics.append(statistic)
-                rc = int(tool.ReturnFlags(rc) | status)
+                    verifier_class.kind, verifier_class)
+                try:
+                    status, local_fixes, statistic = tool.execute(
+                        analyser,
+                        verifier_class,
+                        labels,
+                        process_count,
+                        args.skip_fixes,
+                        args.reset_to_upstream,
+                        )
+                    statistics.append(statistic)
+                    rc = int(tool.ReturnFlags(rc) | status)
+                except EngineError:
+                    import traceback
+                    traceback.print_exc()
+
+                    error("Failed to execute verifier '%s' (%s)",
+                          verifier_class.kind, verifier_class)
+                    rc = int(tool.ReturnFlags(rc) |
+                             tool.ReturnFlags.GeneralError)
+                    continue
 
                 merge_if_no_collision(
                     fixes, local_fixes, conflicts,

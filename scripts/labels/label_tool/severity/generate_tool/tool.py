@@ -156,9 +156,9 @@ def print_generation(analyser: str,
                           list(new.keys())):
         is_ok = (checker in ok) if OutputSettings.report_ok() else False
         is_updated = checker in updated
-        icon = ":globe_showing_Europe-Africa:  " if is_ok \
-            else ":bookmark:  " if is_updated \
-            else ":world_map:  "
+        icon = ":check_mark_button:  " if is_ok \
+            else ":pencil:  " if is_updated \
+            else ":notebook:  "
         colour = "green" if is_ok \
             else "yellow" if is_updated \
             else "magenta"
