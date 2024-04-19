@@ -21,15 +21,11 @@ def codechecker_src_root() -> Optional[pathlib.Path]:
     """
     try:
         this_file = pathlib.Path(__file__).resolve(strict=True)
-        labels_idx = find_if(this_file.parents,
-                             lambda p: p.stem == "labels")
-        if not labels_idx:
+        scripts_idx = find_if(this_file.parents,
+                              lambda p: p.stem == "scripts")
+        if not scripts_idx:
             return None
-
-        if this_file.parents[labels_idx + 1].stem == "scripts":
-            return this_file.parents[labels_idx + 2]
-
-        return None
+        return this_file.parents[scripts_idx + 1]
     except Exception:
         import traceback
         traceback.print_exc()
