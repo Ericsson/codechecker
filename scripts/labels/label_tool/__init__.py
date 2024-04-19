@@ -15,6 +15,7 @@ from . import codechecker
 
 from . import \
     checker_labels, \
+    exception, \
     http_, \
     output, \
     projects, \
@@ -25,6 +26,7 @@ from . import \
 __all__ = [
     "checker_labels",
     "codechecker",
+    "exception",
     "http_",
     "output",
     "projects",

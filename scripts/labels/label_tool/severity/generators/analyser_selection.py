@@ -11,10 +11,12 @@ Selects the appropriate generator engine for the analyser configuration.
 from typing import Dict, Iterable, Tuple, Type, Union
 
 from .clang_diagnostic import ClangDiagnosticGenerator
+from .cppcheck import CppcheckGenerator
 
 
 AnalyserGenerators: Dict[str, Union[Type, Tuple[Type, ...]]] = {
     "clang-tidy": (ClangDiagnosticGenerator,),
+    "cppcheck": CppcheckGenerator,
 }
 
 
