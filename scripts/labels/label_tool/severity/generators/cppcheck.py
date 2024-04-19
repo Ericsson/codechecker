@@ -54,7 +54,7 @@ class CppcheckGenerator(Base):
 
         return self._cppcheck_xml
 
-    CppcheckSeverityToCodeCheckerSeverity = defaultdict(
+    SeverityMap = defaultdict(
         lambda: "UNSPECIFIED",
         {
             # When code is executed there is either undefined behaviour, or
@@ -85,5 +85,4 @@ class CppcheckGenerator(Base):
 
         for error_node in xml_results.findall("./errors/error"):
             yield "cppcheck-" + error_node.get("id"), \
-                self.CppcheckSeverityToCodeCheckerSeverity[
-                    error_node.get("severity")]
+                self.SeverityMap[error_node.get("severity")]
