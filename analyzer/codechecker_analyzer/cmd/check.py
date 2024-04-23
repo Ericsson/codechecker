@@ -731,7 +731,9 @@ LLVM/Clang community, and thus discouraged.
                                default=argparse.SUPPRESS,
                                help="Emit a warning instead of an error when "
                                     "an unknown checker name is given to "
-                                    "either --enable or --disable.")
+                                    "either --enable, --disable,"
+                                    "--analyzer-config and/or "
+                                    "--checker-config.")
 
     output_opts = parser.add_argument_group("output arguments")
 
@@ -888,6 +890,7 @@ def main(args):
                           'stats_min_sample_count',
                           'enable_all',
                           'disable_all',
+                          'no_missing_checker_error',
                           'ordered_checkers',  # --enable and --disable.
                           'timeout',
                           'review_status_config',

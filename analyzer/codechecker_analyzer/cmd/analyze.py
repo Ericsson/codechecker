@@ -9,7 +9,6 @@
 Execute analysis over an already existing build.json compilation database.
 """
 
-
 import argparse
 import collections
 import json
@@ -25,7 +24,8 @@ from codechecker_analyzer import analyzer, analyzer_context, \
 from codechecker_analyzer.analyzers import analyzer_types, clangsa
 from codechecker_analyzer.arg import \
     OrderedCheckersAction, OrderedConfigAction, existing_abspath, \
-    analyzer_config, checker_config
+    analyzer_config, checker_config, AnalyzerConfig, CheckerConfig
+
 from codechecker_analyzer.buildlog import log_parser
 
 from codechecker_common import arg, logger, cmd_config, review_status_handler
@@ -33,7 +33,6 @@ from codechecker_common.compatibility.multiprocessing import cpu_count
 from codechecker_common.skiplist_handler import SkipListHandler, \
     SkipListHandlers
 from codechecker_common.util import load_json
-
 
 LOG = logger.get_logger('system')
 
@@ -788,11 +787,98 @@ LLVM/Clang community, and thus discouraged.
                                default=argparse.SUPPRESS,
                                help="Emit a warning instead of an error when "
                                     "an unknown checker name is given to "
-                                    "either --enable or --disable.")
+                                    "either --enable, --disable,"
+                                    "--analyzer-config and/or "
+                                    "--checker-config.")
 
     logger.add_verbose_arguments(parser)
     parser.set_defaults(
         func=main, func_process_config_file=cmd_config.process_config_file)
+
+
+def is_analyzer_config_valid(analyzer_conf: List[AnalyzerConfig]) -> bool:
+    """
+    Ensure that the analyzer_config parameter is set to a valid value
+    by verifying if it belongs to the set of allowed values.
+    """
+    wrong_configs = []
+    supported_analyzers = analyzer_types.supported_analyzers
+
+    for cfg in analyzer_conf:
+        if cfg.analyzer not in supported_analyzers:
+            wrong_configs.append((cfg.analyzer, None))
+            continue
+
+        analyzer_class = supported_analyzers[cfg.analyzer]
+        analyzer_name = analyzer_class.ANALYZER_NAME
+        analyzers = [analyzer[0] for analyzer in
+                     analyzer_class.get_analyzer_config()]
+
+        # Make sure "[clang-tidy] Allow to override checker list #3203" works
+        if analyzer_name == 'clang-tidy':
+            analyzers.append('take-config-from-directory')
+
+        if cfg.analyzer == analyzer_name and cfg.option not in analyzers:
+            wrong_configs.append((analyzer_name, cfg.option))
+
+    if wrong_configs:
+        for analyzer_name, option in wrong_configs:
+            if option is None:
+                LOG.error(
+                    f"Invalid argument to --analyzer-config: {analyzer_name} "
+                    f"is not a supported analyzer. Supported analyzers are: "
+                    f"{', '.join(a for a in supported_analyzers)}.")
+            else:
+                LOG.error(
+                    f"Invalid argument to --analyzer-config: {analyzer_name} "
+                    f"has no config named {option}. Use the 'CodeChecker "
+                    f"analyzers --analyzer-config {analyzer_name}' command to "
+                    f"see available configs.")
+
+        return False
+
+    return True
+
+
+def is_checker_config_valid(checker_conf: List[CheckerConfig]) -> bool:
+    """
+    Ensure that the checker_config parameter is set to a valid value
+    by verifying if it belongs to the set of allowed values.
+    """
+    wrong_configs = []
+    supported_analyzers = analyzer_types.supported_analyzers
+
+    for cfg in checker_conf:
+        if cfg.analyzer not in supported_analyzers:
+            wrong_configs.append((cfg.analyzer, None))
+            continue
+
+        analyzer_class = supported_analyzers[cfg.analyzer]
+        analyzer_name = analyzer_class.ANALYZER_NAME
+        checker_conf_opt = f"{cfg.checker}:{cfg.option}"
+        checkers = [checker[0] for checker in
+                    analyzer_class.get_checker_config()]
+
+        if cfg.analyzer == analyzer_name and checker_conf_opt not in checkers:
+            wrong_configs.append((analyzer_name, checker_conf_opt))
+
+    if wrong_configs:
+        for analyzer_name, conf_opt in wrong_configs:
+            if conf_opt is None:
+                LOG.error(
+                    f"Invalid argument to --checker-config: {analyzer_name} "
+                    f"is not a supported analyzer. Supported analyzers are: "
+                    f"{', '.join(a for a in supported_analyzers)}.")
+            else:
+                LOG.error(
+                    f"Invalid argument to --checker-config: invalid checker "
+                    f"and/or checker option '{conf_opt}' for {analyzer_name}. "
+                    f"Use the 'CodeChecker checkers --checker-config' command "
+                    f"to see available checkers.")
+
+        return False
+
+    return True
 
 
 def get_affected_file_paths(
@@ -931,6 +1017,23 @@ def main(args):
     stored to a report directory given by -o flag.
     """
     logger.setup_logger(args.verbose if 'verbose' in args else None)
+
+    # Validate analyzer and checker config (if any)
+    config_validator = {
+        'analyzer_config': is_analyzer_config_valid,
+        'checker_config': is_checker_config_valid
+    }
+
+    config_validator_res = [validate_func(getattr(args, conf))
+                            for conf, validate_func in config_validator.items()
+                            if conf in args]
+
+    if False in config_validator_res \
+            and 'no_missing_checker_error' not in args:
+        LOG.info("Although it is not recommended, if you want to suppress "
+                 "errors relating to unknown analyzer/checker configs, "
+                 "consider using the option '--no-missing-checker-error'")
+        sys.exit(1)
 
     if 'tidy_config' in args:
         LOG.warning(

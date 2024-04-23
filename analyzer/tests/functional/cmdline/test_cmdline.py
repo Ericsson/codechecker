@@ -250,6 +250,30 @@ class TestCmdline(unittest.TestCase):
             self.assertTrue(desc)
             self.assertFalse(desc[0].islower())
 
+    def test_analyze_incorrect_checker_analyzer(self):
+        """
+        This test checks whether the analyze command stops running if a
+        non-existent path is specified.
+        """
+        test_file = os.path.join(self.test_workspace, 'main.cpp')
+
+        with open(test_file, 'w', encoding="utf-8", errors="ignore") as f:
+            f.write("int main() {}")
+
+        cmd_err = [env.codechecker_cmd(), 'check',
+                   '--analyzer-config', 'clang:asd=1',
+                   '--checker-config', 'clang:asd:asd=1',
+                   '--build', f'g++ {test_file}']
+
+        cmd_no_err = [env.codechecker_cmd(), 'check',
+                      '--analyzer-config', 'clang:asd=1',
+                      '--checker-config', 'clang:asd:asd=1',
+                      '--no-missing-checker-error',
+                      '--build', f'g++ {test_file}']
+
+        self.assertEqual(1, run_cmd(cmd_err)[0])
+        self.assertIn('Build finished successfully', run_cmd(cmd_no_err)[1])
+
     def test_checker_config_format(self):
         """
         Test if checker config option is meeting the reqired format.
