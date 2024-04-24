@@ -11,6 +11,7 @@ from collections import namedtuple
 # pylint: disable=no-name-in-module
 from distutils.spawn import find_executable
 from enum import Enum
+from pathlib import Path
 
 import glob
 import json
@@ -1124,6 +1125,10 @@ def parse_options(compilation_db_entry,
 
         details['analyzer_options'] = aop_without_intrin
 
+        # source can be absolute to the file, or relative to directory
+        # directory can be ".", "./some/folder/" or absolute
+        details['abs_path'] = str(Path(Path(details['directory']).absolute(), details['source']))
+
     return BuildAction(**details)
 
 
@@ -1281,22 +1286,7 @@ def parse_unique_log(compilation_database,
         skipped_cmp_cmd_count = 0
 
         for entry in extend_compilation_database_entries(compilation_database):
-            # Normalization needs to be done here, because the skip regex
-            # won't match properly in the skiplist handler.
-            entry['file'] = os.path.normpath(
-                os.path.join(entry['directory'], entry['file']))
-            # Skip parsing the compilaton commands if it should be skipped
-            # at both analysis phases (pre analysis and analysis).
-            # Skipping of the compile commands is done differently if no
-            # CTU or statistics related feature was enabled.
-            if analysis_skip_handlers \
-                and analysis_skip_handlers.should_skip(entry['file']) \
-                and (not ctu_or_stats_enabled or pre_analysis_skip_handlers
-                     and pre_analysis_skip_handlers.should_skip(
-                         entry['file'])):
-                skipped_cmp_cmd_count += 1
-                continue
-
+            # Parse compilation db entry into an action object
             action = parse_options(entry,
                                    compiler_info_file,
                                    keep_gcc_include_fixed,
@@ -1304,9 +1294,23 @@ def parse_unique_log(compilation_database,
                                    clangsa.version.get,
                                    analyzer_clang_version)
 
+            # Skip parsing the compilaton commands if it should be skipped
+            # at both analysis phases (pre analysis and analysis).
+            # Skipping of the compile commands is done differently if no
+            # CTU or statistics related feature was enabled.
+            if analysis_skip_handlers \
+                and analysis_skip_handlers.should_skip(action.abs_path) \
+                and (not ctu_or_stats_enabled or pre_analysis_skip_handlers
+                     and pre_analysis_skip_handlers.should_skip(
+                         action.abs_path)):
+                skipped_cmp_cmd_count += 1
+                continue
+
             if not action.lang:
+                skipped_cmp_cmd_count += 1
                 continue
             if action.action_type != BuildAction.COMPILE:
+                skipped_cmp_cmd_count += 1
                 continue
             if build_action_uniqueing == CompileActionUniqueingType.NONE:
                 if action not in uniqued_build_actions:

@@ -7,6 +7,8 @@
 # -------------------------------------------------------------------------
 """"""
 
+from typing import Any, List, Tuple
+
 
 class BuildAction:
     """
@@ -25,7 +27,8 @@ class BuildAction:
                  'target',
                  'source',
                  'arch',
-                 'action_type']
+                 'action_type',
+                 'abs_path']
 
     LINK = 0
     COMPILE = 1
@@ -38,15 +41,11 @@ class BuildAction:
             super(BuildAction, self).__setattr__(slot, kwargs[slot])
 
     def __str__(self):
-        # For debugging.
-        return ('\nOriginal command: {0},\n'
-                'Analyzer type: {1},\n Analyzer options: {2},\n'
-                'Directory: {3},\nOutput: {4},\nLang: {5},\nTarget: {6},\n'
-                'Source: {7}'). \
-            format(self.original_command,
-                   self.analyzer_type, self.analyzer_options,
-                   self.directory, self.output, self.lang, self.target,
-                   self.source)
+        """
+        Return all the members of the __slots__ list.
+        """
+        info = [(member, getattr(self, member)) for member in self.__slots__]
+        return ('\n'.join([f'{key}: {value}' for key, value in info]))
 
     def __setattr__(self, attr, value):
         if hasattr(self, attr) and getattr(self, attr) != value:

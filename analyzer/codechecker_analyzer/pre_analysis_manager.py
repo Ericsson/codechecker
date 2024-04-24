@@ -88,7 +88,7 @@ def pre_analyze(params):
 
     progress_checked_num.value += 1
 
-    if skip_handlers and skip_handlers.should_skip(action.source):
+    if skip_handlers and skip_handlers.should_skip(action.abs_path):
         return
     if action.analyzer_type != ClangSA.ANALYZER_NAME:
         return
