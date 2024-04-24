@@ -1168,9 +1168,9 @@ def main(args):
         analyzer_clang_version)
 
     if not actions:
-        LOG.info("No analysis is required.\nThere were no compilation "
-                 "commands in the provided compilation database or "
-                 "all of them were skipped.")
+        LOG.warning("No analysis is required.")
+        LOG.warning("There were no compilation commands in the provided "
+                    "compilation database or all of them were skipped.")
         sys.exit(0)
 
     uniqued_compilation_db_file = os.path.join(
