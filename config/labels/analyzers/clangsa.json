@@ -18,7 +18,7 @@
       "severity:HIGH"
     ],
     "alpha.core.CallAndMessageUnInitRefArg": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-core-callandmessageuninitrefarg-c-c-objc",
+      "doc_url:https://releases.llvm.org/18.1.1/tools/clang/docs/analyzer/checkers.html#alpha-core-callandmessageuninitrefarg-c-c-objc",
       "profile:extreme",
       "severity:HIGH"
     ],
@@ -99,7 +99,7 @@
       "severity:HIGH"
     ],
     "alpha.cplusplus.EnumCastOutOfRange": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-cplusplus-enumcastoutofrange-c",
+      "doc_url:https://releases.llvm.org/17.0.1/tools/clang/docs/analyzer/checkers.html#alpha-cplusplus-enumcastoutofrange-c",
       "profile:extreme",
       "profile:sensitive",
       "severity:MEDIUM"
@@ -239,10 +239,9 @@
       "profile:extreme",
       "severity:HIGH",
       "sei-cert:pos34-c"
-
     ],
     "alpha.security.cert.env.InvalidPtr": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-security-cert-env-invalidptr",
+      "doc_url:https://releases.llvm.org/17.0.1/tools/clang/docs/analyzer/checkers.html#alpha-security-cert-env-invalidptr",
       "profile:default",
       "profile:sensitive",
       "profile:extreme",
@@ -272,7 +271,7 @@
       "severity:MEDIUM"
     ],
     "alpha.unix.Errno": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#alpha-unix-errno-c",
+      "doc_url:https://releases.llvm.org/17.0.1/tools/clang/docs/analyzer/checkers.html#alpha-unix-errno-c",
       "profile:sensitive",
       "profile:extreme",
       "severity:HIGH"
@@ -290,6 +289,7 @@
       "severity:MEDIUM"
     ],
     "alpha.unix.StdCLibraryFunctionArgs": [
+      "doc_url:https://releases.llvm.org/16.0.0/tools/clang/docs/analyzer/checkers.html#alpha-unix-stdclibraryfunctionargs",
       "profile:extreme",
       "severity:HIGH"
     ],
@@ -537,7 +537,7 @@
       "severity:HIGH"
     ],
     "cplusplus.PlacementNew": [
-      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#cplusplus-placementnewchecker-c",
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#cplusplus-placementnew-c",
       "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
@@ -930,7 +930,6 @@
       "profile:extreme",
       "severity:HIGH"
     ],
-
     "unix.Malloc": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-malloc-c",
       "guideline:sei-cert",
@@ -990,6 +989,7 @@
       "profile:sensitive"
     ],
     "unix.cstring.NullArg": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-cstring-nullarg",
       "profile:default",
       "profile:extreme",
       "profile:sensitive",
