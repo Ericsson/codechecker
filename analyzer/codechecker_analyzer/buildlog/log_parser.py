@@ -1130,11 +1130,6 @@ def parse_options(compilation_db_entry,
 
         details['analyzer_options'] = aop_without_intrin
 
-        # source can be absolute to the file, or relative to directory
-        # directory can be ".", "./some/folder/" or absolute
-    details['abs_path'] = str(Path(Path(details['directory']).absolute(), details['source']))
-
-
     return BuildAction(**details)
 
 

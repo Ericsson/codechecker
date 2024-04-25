@@ -7,7 +7,6 @@
 # -------------------------------------------------------------------------
 """"""
 
-from typing import Any, List, Tuple
 
 
 class BuildAction:
@@ -27,8 +26,7 @@ class BuildAction:
                  'target',
                  'source',
                  'arch',
-                 'action_type',
-                 'abs_path']
+                 'action_type']
 
     LINK = 0
     COMPILE = 1
