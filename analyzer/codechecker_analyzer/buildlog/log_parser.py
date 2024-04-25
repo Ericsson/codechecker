@@ -1053,8 +1053,7 @@ def parse_options(compilation_db_entry,
     if not Path(details['source']).is_absolute():
         details['source'] = str(Path(
             Path(compilation_db_entry['directory']).absolute(),
-            compilation_db_entry['file']))
-
+            compilation_db_entry['file']).resolve())
 
     # In case the file attribute in the entry is empty.
     if details['source'] == '.':
@@ -1306,11 +1305,12 @@ def parse_unique_log(compilation_database,
             # Skipping of the compile commands is done differently if no
             # CTU or statistics related feature was enabled.
             if analysis_skip_handlers \
-                and analysis_skip_handlers.should_skip(action.abs_path) \
+                and analysis_skip_handlers.should_skip(action.source) \
                 and (not ctu_or_stats_enabled or pre_analysis_skip_handlers
                      and pre_analysis_skip_handlers.should_skip(
-                         action.abs_path)):
+                         action.source)):
                 skipped_cmp_cmd_count += 1
+                print("skipping:", action.source)
                 continue
 
             if not action.lang:

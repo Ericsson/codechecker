@@ -58,11 +58,11 @@ class OptionParserTest(unittest.TestCase):
         action = {
             'file': 'main.cpp',
             'command': "g++ -o main main.cpp lib.cpp",
-            'directory': ''}
+            'directory': '/tmp'}
 
         res = log_parser.parse_options(action)
         print(res)
-        self.assertTrue('main.cpp' == res.source)
+        self.assertTrue('/tmp/main.cpp' == res.source)
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
     def test_compile_onefile(self):
@@ -72,11 +72,11 @@ class OptionParserTest(unittest.TestCase):
         action = {
             'file': 'main.cpp',
             'command': "g++ -c main.cpp",
-            'directory': ''}
+            'directory': '/tmp'}
 
         res = log_parser.parse_options(action)
         print(res)
-        self.assertTrue('main.cpp' == res.source)
+        self.assertTrue('/tmp/main.cpp' == res.source)
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
     def test_nasm_action(self):
@@ -86,12 +86,12 @@ class OptionParserTest(unittest.TestCase):
         action = {
             'file': 'main.asm',
             'command': "nasm -f elf64 main.asm",
-            'directory': ''}
+            'directory': '/tmp'}
 
         res = log_parser.parse_options(action)
         print(res)
         self.assertIsNone(res.lang)
-        self.assertEqual(res.source, 'main.asm')
+        self.assertEqual(res.source, '/tmp/main.asm')
         self.assertEqual(res.analyzer_type, -1)
 
     def test_preprocess_onefile(self):
@@ -101,12 +101,12 @@ class OptionParserTest(unittest.TestCase):
         action = {
             'file': 'main.c',
             'command': "gcc -E main.c",
-            'directory': ''}
+            'directory': '/tmp'}
 
         res = log_parser.parse_options(action)
         print(res)
 
-        self.assertTrue('main.c' == res.source)
+        self.assertTrue('/tmp/main.c' == res.source)
         self.assertEqual(BuildAction.PREPROCESS, res.action_type)
 
     def test_compile_lang(self):
@@ -117,12 +117,12 @@ class OptionParserTest(unittest.TestCase):
         action = {
             'file': 'main.c',
             'command': "gcc -c -x c main.c",
-            'directory': ''}
+            'directory': '/tmp'}
 
         res = log_parser.parse_options(action)
         print(res)
 
-        self.assertTrue('main.c' == res.source)
+        self.assertTrue('/tmp/main.c' == res.source)
         self.assertEqual('c', res.lang)
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
@@ -142,13 +142,13 @@ class OptionParserTest(unittest.TestCase):
         action = {
             'file': 'main.c',
             'command': "gcc -c -arch " + arch['c'] + ' main.c',
-            'directory': ''
+            'directory': '/tmp'
         }
 
         res = log_parser.parse_options(action)
         print(res)
 
-        self.assertTrue('main.c' == res.source)
+        self.assertTrue('/tmp/main.c' == res.source)
         self.assertEqual(arch['c'], res.arch)
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
@@ -279,12 +279,12 @@ class OptionParserTest(unittest.TestCase):
         action = {
             'file': 'main.cpp',
             'command': 'g++ -c -MF deps.txt main.cpp',
-            'directory': ''}
+            'directory': '/tmp'}
 
         res = log_parser.parse_options(action)
         print(res)
         self.assertEqual(res.analyzer_options, [])
-        self.assertEqual(res.source, 'main.cpp')
+        self.assertEqual(res.source, '/tmp/main.cpp')
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
     @unittest.skipUnless(
@@ -381,7 +381,7 @@ class OptionParserTest(unittest.TestCase):
         action = {
             'file': 'main.cpp',
             'command': 'clang++ -c -MF deps.txt main.cpp',
-            'directory': ''}
+            'directory': '/tmp'}
 
         class FakeClangVersion:
             installed_dir = "/tmp/clang/install"
@@ -400,7 +400,7 @@ class OptionParserTest(unittest.TestCase):
             action, get_clangsa_version_func=fake_clangsa_version_func)
         print(res)
         self.assertEqual(res.analyzer_options, [])
-        self.assertEqual(res.source, 'main.cpp')
+        self.assertEqual(res.source, '/tmp/main.cpp')
         self.assertEqual(BuildAction.COMPILE, res.action_type)
 
     def test_keep_clang_flags(self):

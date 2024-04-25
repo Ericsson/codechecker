@@ -713,7 +713,7 @@ def skip_cpp(compile_actions, skip_handlers):
     skip = []
     for compile_action in compile_actions:
 
-        if skip_handlers and skip_handlers.should_skip(compile_action.abs_path):
+        if skip_handlers and skip_handlers.should_skip(compile_action.source):
             skip.append(compile_action)
         else:
             analyze.append(compile_action)
