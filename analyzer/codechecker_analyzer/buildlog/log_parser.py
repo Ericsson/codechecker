@@ -1049,6 +1049,12 @@ def parse_options(compilation_db_entry,
         details['action_type'] = BuildAction.COMPILE
 
     details['source'] = compilation_db_entry['file']
+    # Calculate absolute path to file if not already abs
+    if not Path(details['source']).is_absolute():
+        details['source'] = str(Path(
+            Path(compilation_db_entry['directory']).absolute(),
+            compilation_db_entry['file']))
+
 
     # In case the file attribute in the entry is empty.
     if details['source'] == '.':
