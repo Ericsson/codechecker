@@ -1,18 +1,10 @@
-"""Store information about enabled and disabled checkers for a run
+"""
+Store information about enabled and disabled checkers for a run.
 
 Revision ID: c3dad71f8e6b
-Revises: 9d956a0fae8d
+Revises:     9d956a0fae8d
 Create Date: 2023-10-20 14:11:48.371981
-
 """
-
-# revision identifiers, used by Alembic.
-revision = 'c3dad71f8e6b'
-down_revision = '9d956a0fae8d'
-branch_labels = None
-depends_on = None
-
-
 from logging import getLogger
 from typing import Dict, Tuple
 
@@ -25,6 +17,12 @@ from sqlalchemy.ext.automap import automap_base
 from codechecker_report_converter.report import FakeChecker, UnknownChecker
 
 
+# Revision identifiers, used by Alembic.
+revision = 'c3dad71f8e6b'
+down_revision = '9d956a0fae8d'
+branch_labels = None
+depends_on = None
+
 REPORT_UPDATE_CHUNK_SIZE = 1_000_000
 
 
@@ -33,7 +31,7 @@ def upgrade():
     # uses the facilities that are sourced from the Alembic env.py.
     # Symbols created on the module-level are created *before* Alembic's env.py
     # had loaded.
-    LOG = getLogger("migration")
+    LOG = getLogger("migration/report")
     dialect = op.get_context().dialect.name
     conn = op.get_bind()
 
@@ -207,7 +205,7 @@ def upgrade():
         num_batches = report_count // REPORT_UPDATE_CHUNK_SIZE + 1
 
         def _print_progress(batch: int):
-            LOG.info("[%d/%d] Upgrading 'reports'... (%d–%d) %.0f%% done.",
+            LOG.info("[%d/%d] Upgrading 'reports'... (%d-%d) %.0f%% done.",
                      batch, num_batches,
                      (REPORT_UPDATE_CHUNK_SIZE * i) + 1,
                      (REPORT_UPDATE_CHUNK_SIZE * (i + 1))
@@ -228,38 +226,38 @@ def upgrade():
                 db.execute(f"""
                     UPDATE reports
                     SET
-                        checker_id = (
-                            SELECT checkers.id
-                            FROM checkers
-                            WHERE checkers.analyzer_name = reports.analyzer_name
-                                AND checkers.checker_name = reports.checker_name
-                        )
+                      checker_id = (
+                        SELECT checkers.id
+                        FROM checkers
+                        WHERE checkers.analyzer_name = reports.analyzer_name
+                          AND checkers.checker_name = reports.checker_name
+                      )
                     WHERE reports.id IN (
-                            SELECT reports.id
-                            FROM reports
-                            WHERE reports.checker_id = {fake_chk_id}
-                                AND reports.analyzer_name != '{FakeChecker[0]}'
-                                AND reports.checker_name != '{FakeChecker[1]}'
-                            LIMIT {REPORT_UPDATE_CHUNK_SIZE}
-                        )
+                        SELECT reports.id
+                        FROM reports
+                        WHERE reports.checker_id = {fake_chk_id}
+                          AND reports.analyzer_name != '{FakeChecker[0]}'
+                          AND reports.checker_name != '{FakeChecker[1]}'
+                        LIMIT {REPORT_UPDATE_CHUNK_SIZE}
+                      )
                     ;
                 """)
             else:
                 db.execute(f"""
                     UPDATE reports
                     SET
-                        checker_id = checkers.id
+                      checker_id = checkers.id
                     FROM checkers
                     WHERE checkers.analyzer_name = reports.analyzer_name
-                        AND checkers.checker_name = reports.checker_name
-                        AND reports.id IN (
-                            SELECT reports.id
-                            FROM reports
-                            WHERE reports.checker_id = {fake_chk_id}
-                                AND reports.analyzer_name != '{FakeChecker[0]}'
-                                AND reports.checker_name != '{FakeChecker[1]}'
-                            LIMIT {REPORT_UPDATE_CHUNK_SIZE}
-                        )
+                      AND checkers.checker_name = reports.checker_name
+                      AND reports.id IN (
+                        SELECT reports.id
+                        FROM reports
+                        WHERE reports.checker_id = {fake_chk_id}
+                          AND reports.analyzer_name != '{FakeChecker[0]}'
+                          AND reports.checker_name != '{FakeChecker[1]}'
+                        LIMIT {REPORT_UPDATE_CHUNK_SIZE}
+                      )
                     ;
                 """)
             _print_progress(i + 1)
@@ -394,7 +392,7 @@ def upgrade():
 
 
 def downgrade():
-    LOG = getLogger("migration")
+    LOG = getLogger("migration/report")
     dialect = op.get_context().dialect.name
     conn = op.get_bind()
 
@@ -479,7 +477,7 @@ def downgrade():
         num_batches = report_count // REPORT_UPDATE_CHUNK_SIZE + 1
 
         def _print_progress(batch: int):
-            LOG.info("[%d/%d] Downgrading 'reports'... (%d–%d) %.0f%% done.",
+            LOG.info("[%d/%d] Downgrading 'reports'... (%d-%d) %.0f%% done.",
                      batch, num_batches,
                      (REPORT_UPDATE_CHUNK_SIZE * i) + 1,
                      (REPORT_UPDATE_CHUNK_SIZE * (i + 1))
@@ -500,17 +498,17 @@ def downgrade():
                 db.execute(f"""
                     UPDATE reports
                     SET
-                        (analyzer_name, checker_id, severity,
-                                checker_id_lookup) =
+                      (analyzer_name, checker_id, severity,
+                        checker_id_lookup) =
                         (SELECT analyzer_name, checker_name, severity,
                                 '{fake_chk_id}'
-                            FROM checkers
-                            WHERE checkers.id = reports.checker_id_lookup)
+                          FROM checkers
+                          WHERE checkers.id = reports.checker_id_lookup)
                     WHERE reports.id IN (
-                            SELECT reports.id
-                            FROM reports
-                            WHERE reports.checker_id_lookup != {fake_chk_id}
-                            LIMIT {REPORT_UPDATE_CHUNK_SIZE}
+                      SELECT reports.id
+                      FROM reports
+                      WHERE reports.checker_id_lookup != {fake_chk_id}
+                      LIMIT {REPORT_UPDATE_CHUNK_SIZE}
                         )
                     ;
                 """)

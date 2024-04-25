@@ -7,14 +7,12 @@ export default {
      * @param {string} fileName - default file name for export.
      */
     toCSV(data, fileName) {
-      const content = data
-        .map(d => d.join(",") + "\r\n")
-        .join("")
-        // Hashmark (#) is a valid URL character but it starts the hash
-        // fragment and for this reason it needs to be escaped.
-        .replaceAll("#", encodeURIComponent("#"));
+      const content = data.map(d => d.join(",")).join("\n");
 
-      const csvContent = `data:text/csv;charset=utf-8,${content}`;
+      // Hashmark (#) is a valid URL character but it starts the hash
+      // fragment and for this reason it needs to be escaped.
+      const csvContent = `data:text/csv;charset=utf-8,${
+        encodeURIComponent(content)}`;
 
       const link = document.createElement("a");
       link.setAttribute("href", csvContent);

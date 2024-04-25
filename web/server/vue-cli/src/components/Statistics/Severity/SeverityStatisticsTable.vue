@@ -10,6 +10,7 @@
     item-key="severity"
     sort-by="severity"
     sort-desc
+    :necessary-total="true"
   />
 </template>
 

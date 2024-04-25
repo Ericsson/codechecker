@@ -74,6 +74,8 @@ class HTMLReport(TypedDict):
     notes: HTMLBugPathEvents
     reviewStatus: Optional[str]
     severity: Optional[str]
+    testcase: Optional[str]
+    timestamp: Optional[str]
 
 
 HTMLReports = List[HTMLReport]
@@ -240,7 +242,7 @@ class HtmlBuilder:
                 'reportHash': report.report_hash,
                 'checker': {
                     'name': report.checker_name,
-                    'url': self._get_doc_url(report)
+                    'url': self._get_doc_url(report) or ''
                 },
                 'analyzerName': report.analyzer_name,
                 'line': report.line,
@@ -251,7 +253,11 @@ class HtmlBuilder:
                 'notes': to_bug_path_events(report.notes),
                 'reviewStatus': report.review_status.formatted_status()
                 if report.review_status else '',
-                'severity': self.get_severity(report.checker_name)
+                'severity': self.get_severity(report.checker_name),
+                'testcase': report.annotations.get('testcase')
+                if report.annotations else None,
+                'timestamp': report.annotations.get('timestamp')
+                if report.annotations else None
             })
 
         return html_reports, files
@@ -302,82 +308,24 @@ class HtmlBuilder:
             for report in reports:
                 html_report_links.append({'link': html_file, 'report': report})
 
-        html_report_links.sort(
-            key=lambda data: self.files[data['report']['fileId']]['filePath'])
+        table_reports = map(lambda data: {
+            'link': data['link'],
+            'file-path': data['report']['fileId'],
+            'report-hash': data['report']['reportHash'],
+            'checker-name': data['report']['checker']['name'],
+            'checker-url': data['report']['checker']['url'],
+            'line': data['report']['line'],
+            'message': data['report']['message'],
+            'review-status': data['report']['reviewStatus'],
+            'severity': data['report']['severity'],
+            'bug-path-length': len(data['report']['events']),
+            'testcase': data['report']['testcase'],
+            'timestamp': data['report']['timestamp']
+        }, html_report_links)
 
-        with io.StringIO() as table_reports:
-            # Create table header.
-            table_reports.write('''
-                <tr>
-                  <th id="report-id">&nbsp;</th>
-                  <th id="file-path">File</th>
-                  <th id="severity">Severity</th>
-                  <th id="checker-name">Checker name</th>
-                  <th id="message">Message</th>
-                  <th id="bug-path-length">Bug path length</th>
-                  <th id="review-status">Review status</th>
-                </tr>''')
+        self._tag_contents['table_reports'] = json.dumps(list(table_reports))
 
-            # Create table lines.
-            for i, data in enumerate(html_report_links):
-                html_file = os.path.basename(data['link'])
-                report = data['report']
-
-                severity = report['severity'].lower() \
-                    if 'severity' in report \
-                    and report['severity'] is not None \
-                    else ''
-
-                review_status = report['reviewStatus'] \
-                    if 'reviewStatus' in report and \
-                    report['reviewStatus'] is not None \
-                    else ''
-
-                events = report['events']
-                if events:
-                    line = events[-1]['line']
-                    message = events[-1]['message']
-                    bug_path_length = len(events)
-                else:
-                    line = report['line']
-                    message = report['message']
-                    bug_path_length = 1
-
-                rs = review_status.lower().replace(' ', '-')
-                file_path = self.files[report['fileId']]['filePath']
-
-                checker = report['checker']
-                doc_url = checker.get('url')
-                if doc_url:
-                    checker_name_col_content = f'<a href="{doc_url}" '\
-                        f'target="_blank">{checker["name"]}</a>'
-                else:
-                    checker_name_col_content = checker["name"]
-
-                table_reports.write(f'''
-                  <tr>
-                    <td>{i + 1}</td>
-                    <td file="{file_path}" line="{line}">
-                      <a href="{html_file}#reportHash={report['reportHash']}">
-                        {file_path} @ Line&nbsp;{line}
-                      </a>
-                    </td>
-                    <td class="severity" severity="{severity}">
-                      <i class="severity-{severity}"
-                         title="{severity}"></i>
-                    </td>
-                    <td>{checker_name_col_content}</td>
-                    <td>{message}</td>
-                    <td class="bug-path-length">{bug_path_length}</td>
-                    <td class="review-status review-status-{rs}">
-                      {review_status}
-                    </td>
-                  </tr>''')
-
-            substitute_data = self._tag_contents
-            substitute_data.update({'table_reports': table_reports.getvalue()})
-
-        content = self._index.substitute(substitute_data)
+        content = self._index.substitute(self._tag_contents)
         output_path = os.path.join(output_dir, 'index.html')
         with open(output_path, 'w+', encoding='utf-8',
                   errors='replace') as html_output:

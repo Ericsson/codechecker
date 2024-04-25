@@ -17,14 +17,13 @@ import shutil
 import sys
 import tempfile
 
-import multiprocess
-
 from codechecker_analyzer.analyzers import analyzer_types
 from codechecker_analyzer.arg import \
     OrderedCheckersAction, OrderedConfigAction, \
     analyzer_config, checker_config, existing_abspath
 
 from codechecker_common import arg, cmd_config, logger
+from codechecker_common.compatibility.multiprocessing import cpu_count
 from codechecker_common.source_code_comment_handler import \
     REVIEW_STATUS_VALUES
 
@@ -183,8 +182,7 @@ used to generate a log file on the fly.""")
                                type=int,
                                dest="jobs",
                                required=False,
-                               # pylint: disable=no-member
-                               default=multiprocess.cpu_count(),
+                               default=cpu_count(),
                                help="Number of threads to use in analysis. "
                                     "More threads mean faster analysis at "
                                     "the cost of using more memory.")
@@ -733,7 +731,9 @@ LLVM/Clang community, and thus discouraged.
                                default=argparse.SUPPRESS,
                                help="Emit a warning instead of an error when "
                                     "an unknown checker name is given to "
-                                    "either --enable or --disable.")
+                                    "either --enable, --disable,"
+                                    "--analyzer-config and/or "
+                                    "--checker-config.")
 
     output_opts = parser.add_argument_group("output arguments")
 
@@ -890,6 +890,7 @@ def main(args):
                           'stats_min_sample_count',
                           'enable_all',
                           'disable_all',
+                          'no_missing_checker_error',
                           'ordered_checkers',  # --enable and --disable.
                           'timeout',
                           'review_status_config',
@@ -902,6 +903,7 @@ def main(args):
         if 'clean' in args:
             setattr(analyze_args, 'clean', True)
         __update_if_key_exists(args, analyze_args, 'verbose')
+        __update_if_key_exists(args, analyze_args, 'no_missing_checker_error')
 
         import codechecker_analyzer.cmd.analyze as analyze_module
         LOG.debug("Calling ANALYZE with args:")

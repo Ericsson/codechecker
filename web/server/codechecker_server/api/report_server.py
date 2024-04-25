@@ -26,7 +26,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 import sqlalchemy
 from sqlalchemy.sql.expression import or_, and_, not_, func, \
-    asc, desc, union_all, select, bindparam, literal_column
+    asc, desc, union_all, select, bindparam, literal_column, case, cast
 from sqlalchemy.orm import contains_eager
 
 import codechecker_api_shared
@@ -34,14 +34,16 @@ from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
     AnalysisInfoFilter, AnalysisInfoChecker as API_AnalysisInfoChecker, \
     BlameData, BlameInfo, BugPathPos, \
-    CheckerCount, Commit, CommitAuthor, CommentData, \
-    DiffType, \
+    CheckerCount, CheckerStatusVerificationDetail, Commit, CommitAuthor, \
+    CommentData, \
+    DetectionStatus, DiffType, \
     Encoding, ExportData, \
     Order, \
     ReportData, ReportDetails, ReviewData, ReviewStatusRule, \
     ReviewStatusRuleFilter, ReviewStatusRuleSortMode, \
     ReviewStatusRuleSortType, RunData, RunFilter, RunHistoryData, \
     RunReportCount, RunSortType, RunTagCount, \
+    ReviewStatus as API_ReviewStatus, \
     SourceComponentData, SourceFileData, SortMode, SortType
 
 from codechecker_common import util
@@ -380,7 +382,10 @@ def process_report_filter(
             else:
                 OR.append(and_(
                     ReportAnnotations.key == key,
-                    ReportAnnotations.value.in_(values)))
+                    or_(*[ReportAnnotations.value.ilike(conv(v))
+                          for v in values])) if values else and_(
+                              ReportAnnotations.key == key))
+
         AND.append(or_(*OR))
 
     filter_expr = and_(*AND)
@@ -999,7 +1004,8 @@ def get_sort_map(sort_types, is_unique=False):
         SortType.SEVERITY: [(Checker.severity, 'severity')],
         SortType.REVIEW_STATUS: [(Report.review_status, 'rw_status')],
         SortType.DETECTION_STATUS: [(Report.detection_status, 'dt_status')],
-        SortType.TIMESTAMP: [('annotation_timestamp', 'annotation_timestamp')]}
+        SortType.TIMESTAMP: [('annotation_timestamp', 'annotation_timestamp')],
+        SortType.TESTCASE: [('annotation_testcase', 'annotation_testcase')]}
 
     if is_unique:
         sort_type_map[SortType.FILENAME] = [(File.filename, 'filename')]
@@ -1280,6 +1286,66 @@ def get_rs_rule_query(
         q = q.having(report_count == 0)
 
     return q
+
+
+def get_run_id_expression(session, report_filter):
+    """
+    Get run id or concatenated run id list by the unique mode and the DB type
+    """
+    if report_filter.isUnique:
+        if session.bind.dialect.name == "postgresql":
+            return func.string_agg(
+                cast(Run.id, sqlalchemy.String).distinct(),
+                ','
+            ).label("run_id")
+        else:
+            return func.group_concat(
+                Run.id.distinct()
+            ).label("run_id")
+    else:
+        return Run.id.label("run_id")
+
+
+def get_is_enabled_case(subquery):
+    """
+    Creating a case statement to decide the report
+    is enabled or not based on the detection status
+    """
+    detection_status_filters = subquery.c.detection_status.in_(list(
+        map(detection_status_str,
+            (DetectionStatus.OFF, DetectionStatus.UNAVAILABLE))
+    ))
+
+    return case(
+        [(detection_status_filters, False)],
+        else_=True
+    )
+
+
+def get_is_opened_case(subquery):
+    """
+    Creating a case statement to decide the report is opened or not
+    based on the detection status and the review status
+    """
+    detection_statuses = (
+        DetectionStatus.NEW,
+        DetectionStatus.UNRESOLVED,
+        DetectionStatus.REOPENED
+    )
+    review_statuses = (
+        API_ReviewStatus.UNREVIEWED,
+        API_ReviewStatus.CONFIRMED
+    )
+    detection_and_review_status_filters = [
+        subquery.c.detection_status.in_(list(map(
+            detection_status_str, detection_statuses))),
+        subquery.c.review_status.in_(list(map(
+            review_status_str, review_statuses)))
+    ]
+    return case(
+        [(and_(*detection_and_review_status_filters), True)],
+        else_=False
+    )
 
 
 class ThriftRequestHandler:
@@ -2027,6 +2093,13 @@ class ThriftRequestHandler:
                                        sort_type_map,
                                        order_type_map)
 
+                # Most queries are using paging of reports due their great
+                # number. This is implemented by LIMIT and OFFSET in the SQL
+                # queries. However, if there is no ordering in the query, then
+                # the reports in different pages may overlap. This ordering
+                # prevents it.
+                q = q.order_by(Report.id)
+
                 if report_filter.annotations is not None:
                     annotations = defaultdict(list)
                     for annotation in report_filter.annotations:
@@ -2086,20 +2159,44 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
-    def getReportAnnotations(self, key):
+    def getReportAnnotations(self, run_ids, report_filter, cmp_data):
         self.__require_view()
 
         with DBSession(self._Session) as session:
-            if key:
-                result = session \
-                    .query(ReportAnnotations.value) \
+            filter_expression, join_tables = process_report_filter(
+                session, run_ids, report_filter, cmp_data)
+
+            extended_table = session.query(Report.id)
+
+            extended_table = apply_report_filter(
+                extended_table, filter_expression, join_tables)
+
+            if report_filter.annotations is not None:
+                extended_table = extended_table.outerjoin(
+                    ReportAnnotations,
+                    ReportAnnotations.report_id == Report.id)
+                extended_table = extended_table.group_by(Report.id)
+                extended_table = extended_table.add_columns(
+                    ReportAnnotations.key.label('annotations_key'),
+                    ReportAnnotations.value.label('annotations_value')
+                )
+
+                extended_table = extended_table.subquery()
+
+                result = session.query(extended_table.c.annotations_value) \
                     .distinct() \
-                    .filter(ReportAnnotations.key == key) \
+                    .filter(
+                        *(extended_table.c.annotations_key == annotation.first
+                          for annotation in report_filter.annotations)) \
                     .all()
             else:
-                result = session \
-                    .query(ReportAnnotations.key) \
+                extended_table = extended_table.subquery()
+
+                result = session.query(ReportAnnotations.value) \
                     .distinct() \
+                    .join(
+                        extended_table,
+                        ReportAnnotations.report_id == extended_table.c.id) \
                     .all()
 
         return list(map(lambda x: x[0], result))
@@ -2863,6 +2960,127 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
+    def getCheckerStatusVerificationDetails(self, run_ids, report_filter):
+        self.__require_view()
+
+        with DBSession(self._Session) as session:
+            max_run_histories = session.query(
+                RunHistory.run_id,
+                func.max(RunHistory.id).label('max_run_history_id'),
+            ) \
+                .filter(RunHistory.run_id.in_(run_ids) if run_ids else True) \
+                .group_by(RunHistory.run_id)
+
+            run_id_expression = get_run_id_expression(session, report_filter)
+
+            subquery = (
+                session.query(
+                    run_id_expression,
+                    Checker.id.label("checker_id"),
+                    Checker.checker_name,
+                    Checker.analyzer_name,
+                    Checker.severity,
+                    Report.bug_id,
+                    Report.detection_status,
+                    Report.review_status,
+                )
+                .join(RunHistory)
+                .join(AnalysisInfo, RunHistory.analysis_info)
+                .join(DB_AnalysisInfoChecker, (
+                    (AnalysisInfo.id ==
+                     DB_AnalysisInfoChecker.analysis_info_id)
+                    & (DB_AnalysisInfoChecker.enabled.is_(True))))
+                .join(Checker,
+                      DB_AnalysisInfoChecker.checker_id == Checker.id)
+                .outerjoin(Report, ((Checker.id == Report.checker_id)
+                                    & (Run.id == Report.run_id)))
+                .filter(RunHistory.id == max_run_histories.subquery()
+                        .c.max_run_history_id)
+            )
+
+            if report_filter.isUnique:
+                subquery = subquery.group_by(
+                    Checker.id,
+                    Checker.checker_name,
+                    Checker.analyzer_name,
+                    Checker.severity,
+                    Report.bug_id,
+                    Report.detection_status,
+                    Report.review_status
+                )
+
+            subquery = subquery.subquery()
+
+            is_enabled_case = get_is_enabled_case(subquery)
+            is_opened_case = get_is_opened_case(subquery)
+
+            query = (
+                session.query(
+                    subquery.c.checker_id,
+                    subquery.c.checker_name,
+                    subquery.c.analyzer_name,
+                    subquery.c.severity,
+                    subquery.c.run_id,
+                    is_enabled_case.label("isEnabled"),
+                    is_opened_case.label("isOpened"),
+                    func.count(subquery.c.bug_id)
+                )
+                .group_by(
+                    subquery.c.checker_id,
+                    subquery.c.checker_name,
+                    subquery.c.analyzer_name,
+                    subquery.c.severity,
+                    subquery.c.run_id,
+                    is_enabled_case,
+                    is_opened_case
+                )
+            )
+
+            checker_stats = {}
+            all_run_id = [runId for runId, _ in max_run_histories.all()]
+            for checker_id, \
+                checker_name, \
+                analyzer_name, \
+                severity, \
+                run_ids, \
+                is_enabled, \
+                is_opened, \
+                cnt \
+                    in query.all():
+
+                checker_stat = checker_stats.get(
+                    checker_id,
+                    CheckerStatusVerificationDetail(
+                        checkerName=checker_name,
+                        analyzerName=analyzer_name,
+                        enabled=[],
+                        disabled=all_run_id,
+                        severity=severity,
+                        closed=0,
+                        outstanding=0
+                    ))
+
+                if is_enabled:
+                    for r in (run_ids.split(",")
+                              if isinstance(run_ids, str)
+                              else [run_ids]):
+                        run_id = int(r)
+                        if run_id not in checker_stat.enabled:
+                            checker_stat.enabled.append(run_id)
+                        if run_id in checker_stat.disabled:
+                            checker_stat.disabled.remove(run_id)
+
+                if is_enabled and is_opened:
+                    checker_stat.outstanding += cnt
+                else:
+                    checker_stat.closed += cnt
+
+                checker_stats[checker_id] = checker_stat
+
+            return checker_stats
+
+    @exc_to_thrift_reqfail
+    @timeit
     def getAnalyzerNameCounts(self, run_ids, report_filter, cmp_data, limit,
                               offset):
         """
@@ -3400,8 +3618,8 @@ class ThriftRequestHandler:
         # access timestamp to file entries to delay their removal (and avoid
         # removing frequently accessed files). The same comment applies to
         # removeRun() function.
-        db_cleanup.remove_unused_comments(self._Session)
-        db_cleanup.remove_unused_analysis_info(self._Session)
+        db_cleanup.remove_unused_comments(self._product)
+        db_cleanup.remove_unused_analysis_info(self._product)
 
         return True
 
@@ -3445,8 +3663,8 @@ class ThriftRequestHandler:
         # error. An alternative solution can be adding a timestamp to file
         # entries to delay their removal. The same comment applies to
         # removeRunReports() function.
-        db_cleanup.remove_unused_comments(self._Session)
-        db_cleanup.remove_unused_analysis_info(self._Session)
+        db_cleanup.remove_unused_comments(self._product)
+        db_cleanup.remove_unused_analysis_info(self._product)
 
         return bool(runs)
 

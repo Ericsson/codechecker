@@ -1,18 +1,20 @@
-"""Run limitation for products
+"""
+Run limitation for products
 
 Revision ID: bb5278995f41
-Revises: 150800b30447
+Revises:     150800b30447
 Create Date: 2018-03-01 15:38:41.164141
-
 """
-# revision identifiers, used by Alembic.
+
+from alembic import op
+import sqlalchemy as sa
+
+
+# Revision identifiers, used by Alembic.
 revision = 'bb5278995f41'
 down_revision = '150800b30447'
 branch_labels = None
 depends_on = None
-
-from alembic import op
-import sqlalchemy as sa
 
 
 def upgrade():

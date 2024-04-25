@@ -6,23 +6,40 @@
 
 var BugList = {
 
-  init : function () {
-    this.initTableSort();
-    this.initBugPathLength();
-    this.initByUrl();
+  _urlHash : function () {
+    var state = {};
+    window.location.hash.substring(1).split('&').forEach(function (s) {
+      var parts = s.split('=');
+      state[parts[0]] = parts[1];
+    });
+    return state;
+  },
+
+  _cmp3 : function (a, b) {
+    if (a === null)
+      return -1;
+    else if (b === null)
+      return 1;
+    else
+      return a < b ? -1 : a > b ? 1 : 0;
   },
 
   initTableSort : function () {
     var that = this;
 
-    var table = document.getElementById('report-list');
+    var table = document.getElementById('report-list-table');
     table.querySelectorAll('th').forEach(function (column) {
-      if (that.canSort(column.id)) {
-        column.addEventListener('click', function () {
-          that.sort(column.id);
-        });
-        column.classList.add('sortable');
-      }
+      column.addEventListener('click', function () {
+        var state = that._urlHash();
+
+        var asc = state.sort === column.id
+          ? !parseInt(state.asc)
+          : !!parseInt(state.asc);
+
+        that.sort(column.id, asc);
+        that.load();
+      });
+      column.classList.add('sortable');
     });
   },
 
@@ -37,15 +54,12 @@ var BugList = {
   },
 
   initByUrl : function () {
-    var state = {};
-    window.location.hash.substr(1).split('&').forEach(function (s) {
-      var parts = s.split('=');
-      state[parts[0]] = parts[1];
-    });
-
+    var state = this._urlHash();
     var column = state['sort'] ? state['sort'] : 'file-path';
     var asc = state['asc'] ? !!parseInt(state['asc']) : true;
+    this.initTableSort();
     this.sort(column, asc);
+    this.load();
   },
 
   generateRedGreenGradientColor : function (value, max, opacity) {
@@ -56,98 +70,164 @@ var BugList = {
       + ',' + opacity + ')';
   },
 
-  canSort : function (columnId) {
-    return columnId === 'report-id' ||
-           columnId === 'file-path' ||
-           columnId === 'severity' ||
-           columnId === 'checker-name' ||
-           columnId === 'message' ||
-           columnId === 'bug-path-length' ||
-           columnId === 'review-status';
-  },
-
-  compare : function (columnId, a, b, asc) {
-    switch (columnId) {
-      case 'report-id':
-      case 'bug-path-length':
-        return asc
-          ? parseInt(a.innerHTML) > parseInt(b.innerHTML)
-          : parseInt(a.innerHTML) < parseInt(b.innerHTML);
-
-      case 'file-path':
-        var fileA = a.getAttribute('file');
-        var fileB = b.getAttribute('file');
-        var lineA = parseInt(a.getAttribute('line'));
-        var lineB = parseInt(b.getAttribute('line'));
-
-        if (asc) {
-          if (fileA > fileB) {
-            return true;
-          } else if (fileA === fileB) {
-            return lineA > lineB ? true : false;
-          } else {
-            return false;
-          }
-        } else {
-          if (fileA < fileB) {
-            return true;
-          } else if (fileA === fileB) {
-            return lineA < lineB ? true : false;
-          } else {
-            return false;
-          }
-        }
-
-      case 'severity':
-        return asc
-          ? a.getAttribute('severity') > b.getAttribute('severity')
-          : a.getAttribute('severity') < b.getAttribute('severity');
-
-      default:
-        return asc
-          ? a.innerHTML.toLowerCase() > b.innerHTML.toLowerCase()
-          : a.innerHTML.toLowerCase() < b.innerHTML.toLowerCase();
-    }
-  },
-
   sort : function (columnId, asc) {
-    var rows = null,
-        switching = true,
-        i, j, x, y, minIdx;
+    var that = this;
 
-    var table = document.getElementById('report-list');
-    var column = document.getElementById(columnId);
-    var cellIndex = column.cellIndex;
+    var severities = ['STYLE', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 
-    if (asc === undefined) {
-      asc = column.getAttribute('sort') === 'desc' ? false : true;
-    }
+    function compare(a, b) {
+      var result;
 
-    var n = table.rows.length;
-    for (i = 1; i < n - 1; i++)
-    {
-      minIdx = i;
-      for (j = i + 1; j < n; j++) {
-        x = table.rows[minIdx].getElementsByTagName('td')[cellIndex];
-        y = table.rows[j].getElementsByTagName('td')[cellIndex];
-        if (this.compare(columnId, x, y, asc)) {
-          minIdx = j;
-        }
+      switch (columnId)
+      {
+        case 'file-path':
+          result = that._cmp3(
+            [a['file-path'], a['line']],
+            [b['file-path'], b['line']]);
+          break;
+
+        case 'severity':
+          result = that._cmp3(
+            severities.indexOf(a['severity']),
+            severities.indexOf(b['severity']));
+          break;
+
+        default:
+          result = that._cmp3(a[columnId], b[columnId]);
+          break;
       }
 
-      if (minIdx !== i) {
-        table.rows[i].parentNode.insertBefore(
-          table.rows[minIdx], table.rows[i]);
-      }
+      return asc ? result : -result;
     }
 
-    table.querySelectorAll('th').forEach(function (column) {
-      column.removeAttribute('sort');
-      column.classList.remove('active');
-    });
-
-    column.classList.add('active');
-    column.setAttribute('sort', asc ? 'desc' : 'asc');
+    reports.sort(compare);
     window.location.hash = '#sort=' + columnId + '&asc=' + (asc ? 1 : 0);
+  },
+
+  buildRow : function (data, id) {
+    let row = document.createElement('tr');
+
+    let id_col = document.createElement('td');
+    id_col.appendChild(document.createTextNode(id));
+    row.appendChild(id_col);
+
+    let file_col = document.createElement('td');
+    let file_col_a = document.createElement('a');
+    file_col_a.setAttribute(
+      'href', data.link + '#reportHash=' + data['report-hash']);
+    file_col_a.innerHTML = data['file-path'] + ' @ Line&nbsp;' + data.line;
+    file_col.appendChild(file_col_a);
+    row.appendChild(file_col);
+
+    let severity_col = document.createElement('td');
+    severity_col.setAttribute('class', 'severity');
+    let severity_col_i = document.createElement('i');
+    severity_col_i.setAttribute(
+      'class', 'severity-' + data.severity.toLowerCase());
+    severity_col_i.setAttribute('title', data.severity);
+    severity_col.appendChild(severity_col_i);
+    row.appendChild(severity_col);
+
+    let checker_col = document.createElement('td');
+    let checker_col_a = document.createElement('a');
+    checker_col_a.setAttribute('href', data['checker-url']);
+    checker_col_a.setAttribute('target', '_blank');
+    checker_col_a.appendChild(
+      document.createTextNode(data['checker-name']));
+    checker_col.appendChild(checker_col_a);
+    row.appendChild(checker_col);
+
+    let message_col = document.createElement('td');
+    message_col.appendChild(document.createTextNode(data.message));
+    row.appendChild(message_col);
+
+    let length_col = document.createElement('td');
+    length_col.setAttribute('class', 'bug-path-length');
+    length_col.appendChild(document.createTextNode(data['bug-path-length']));
+    row.appendChild(length_col);
+
+    let review_col = document.createElement('td');
+    review_col.appendChild(document.createTextNode(data['review-status']));
+    row.appendChild(review_col);
+
+    let testcase_col = document.createElement('td');
+    testcase_col.setAttribute('class', 'dynamic');
+    testcase_col.appendChild(
+      document.createTextNode(data['testcase'] || ''));
+    row.appendChild(testcase_col);
+
+    let timestamp_col = document.createElement('td');
+    timestamp_col.setAttribute('class', 'dynamic');
+    timestamp_col.appendChild(
+      document.createTextNode(data['timestamp'] || ''));
+    row.appendChild(timestamp_col);
+
+    return row;
+  },
+
+  loadTable : function (pageNo, pageSize) {
+    var startIdx = (pageNo - 1) * pageSize;
+    var endIdx = Math.min(startIdx + pageSize, reports.length);
+
+    var report_list = document.getElementById('report-list');
+    report_list.innerHTML = '';
+
+    var dynamic_cols_needed = false;
+
+    for (var i = startIdx; i < endIdx; ++i) {
+      report_list.appendChild(this.buildRow(reports[i], i + 1));
+
+      if (reports[i]['testcase'] || reports[i]['timestamp'])
+        dynamic_cols_needed = true;
+    }
+
+    for (var tag of document.getElementsByClassName('dynamic'))
+      if (dynamic_cols_needed)
+        tag.style.removeProperty('display');
+      else
+        tag.style.display = 'none';
+
+    this.initBugPathLength();
+  },
+
+  loadPageNumber : function () {
+    var pageSize = parseInt(document.getElementById('page-size').value);
+    var pageCount = Math.ceil(reports.length / pageSize);
+
+    var pageNumber = document.getElementById('page-number');
+    pageNumber.innerHTML = '';
+
+    for (var i = 1; i <= pageCount; ++i) {
+      var option = document.createElement('option');
+      option.setAttribute('value', i);
+      option.innerHTML = i;
+      pageNumber.appendChild(option);
+    }
+  },
+
+  selectPage : function (pageNumber) {
+    var pageSize = parseInt(document.getElementById('page-size').value);
+    this.loadTable(pageNumber, pageSize);
+  },
+
+  prevPage : function () {
+    var pageNumber = document.getElementById('page-number');
+    pageNumber.value = Math.max(parseInt(pageNumber.value) - 1, 1);
+    this.selectPage(pageNumber.value);
+  },
+
+  nextPage : function () {
+    var pageNumber = document.getElementById('page-number');
+    pageNumber.value = Math.min(
+      parseInt(pageNumber.value) + 1,
+      pageNumber.children.length);
+    this.selectPage(pageNumber.value);
+  },
+
+  load : function () {
+    var pageSize = parseInt(document.getElementById('page-size').value);
+
+    this.loadPageNumber();
+    this.loadTable(1, pageSize);
   }
 };

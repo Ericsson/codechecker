@@ -16,11 +16,13 @@
       ${browser_support}
       ${bug_list}
 
+      var reports = ${table_reports};
+
       window.onload = function () {
         if (!browserCompatible) {
           setNonCompatibleBrowserMessage();
         } else {
-          BugList.init()
+          BugList.initByUrl();
         }
       }
     </script>
@@ -28,9 +30,33 @@
   <body>
   <div class="container">
     <a href="statistics.html" class="button">Go To Statistics</a>
-    <table id="report-list">
-      ${table_reports}
+    <table id="report-list-table">
+      <thead>
+        <tr>
+          <th id="report-id">&nbsp;</th>
+          <th id="file-path">File</th>
+          <th id="severity">Severity</th>
+          <th id="checker-name">Checker name</th>
+          <th id="message">Message</th>
+          <th id="bug-path-length">Bug path length</th>
+          <th id="review-status">Review status</th>
+          <th id="testcase" class="dynamic">Testcase</th>
+          <th id="timestamp" class="dynamic">Timestamp</th>
+        </tr>
+      </thead>
+      <tbody id="report-list">
+      </tbody>
     </table>
+
+    <select id="page-size" onchange="BugList.initByUrl()">
+      <option value="25">25</option>
+      <option value="50">50</option>
+      <option value="100">100</option>
+    </select>
+
+    <button onclick="BugList.prevPage()">&lt;</button>
+    <select id="page-number" onchange="BugList.selectPage(this.value)"></select>
+    <button onclick="BugList.nextPage()">&gt;</button>
   </div>
   </body>
 </html>

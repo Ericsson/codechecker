@@ -1,20 +1,20 @@
-"""Added permission for Product View
+"""
+Added permission for PRODUCT_VIEW
 
 Revision ID: 7ceea9232211
-Revises: 302693c76eb8
+Revises:     302693c76eb8
 Create Date: 2021-05-25 09:43:15.402946
-
 """
-
-# revision identifiers, used by Alembic.
-revision = '7ceea9232211'
-down_revision = '302693c76eb8'
-branch_labels = None
-depends_on = None
 
 from alembic import op
 import sqlalchemy as sa
 
+
+# Revision identifiers, used by Alembic.
+revision = '7ceea9232211'
+down_revision = '302693c76eb8'
+branch_labels = None
+depends_on = None
 
 table_name = 'permissions_product'
 column_name = 'permission'

@@ -1,5 +1,8 @@
 import { ccService, handleThriftError } from "@cc-api";
-import { ReportFilter, ReviewStatus } from "@cc/report-server-types";
+import {
+  ReportFilter,
+  ReviewStatus,
+} from "@cc/report-server-types";
 
 const reviewStatusVariations = [
   { field: null, values: null },

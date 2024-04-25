@@ -766,9 +766,8 @@ class AnalyzeParseTestCase(
                 content = f.read()
 
             self.assertTrue(re.search(
-                '<a href=".*>alpha.clone.CloneChecker', content))
-            self.assertFalse(re.search(
-                '<a href=".*>UNKNOWN CHECKER NAME', content))
+                '"checker-url": ".*alpha-clone-clonechecker', content))
+            self.assertTrue(re.search('"checker-url": ""', content))
             self.assertTrue(re.search('UNKNOWN CHECKER NAME', content))
 
             # Test whether documentation urls are set properly for known
@@ -785,4 +784,4 @@ class AnalyzeParseTestCase(
             with open(report_html, 'r',
                       encoding="utf-8", errors="ignore") as f:
                 content = f.read()
-            self.assertTrue(re.search('"url": null', content))
+            self.assertTrue(re.search('"url": ""', content))

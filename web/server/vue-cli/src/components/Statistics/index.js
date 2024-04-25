@@ -11,6 +11,12 @@ import ComponentStatisticsTable from "./Component/ComponentStatisticsTable";
 import defaultStatisticsFilterValues from "./DefaultStatisticsFilterValues";
 import ReportDiffCount from "./ReportDiffCount";
 import SeverityStatistics from "./Severity/SeverityStatistics";
+import 
+CheckerCoverageStatistics 
+  from "./CheckerCoverage/CheckerCoverageStatistics";
+import 
+CheckerCoverageStatisticsTable
+  from "./CheckerCoverage/CheckerCoverageStatisticsTable";
 
 import {
   getCheckerStatistics,
@@ -35,5 +41,7 @@ export {
   getSeverityStatistics,
   initDiffField,
   ReportDiffCount,
-  SeverityStatistics
+  SeverityStatistics,
+  CheckerCoverageStatistics,
+  CheckerCoverageStatisticsTable
 };

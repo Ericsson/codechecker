@@ -14,6 +14,7 @@
         outlined
         dark
         small
+        @click="$emit('showing-good-click')"
       >
         <v-icon
           start
@@ -40,6 +41,7 @@
         outlined
         dark
         small
+        @click="$emit('showing-bad-click')"
       >
         <v-icon
           start

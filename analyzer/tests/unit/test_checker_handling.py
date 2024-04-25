@@ -24,6 +24,9 @@ from codechecker_analyzer.analyzers.cppcheck.analyzer import Cppcheck
 from codechecker_analyzer.analyzers.config_handler import CheckerState
 from codechecker_analyzer.analyzers.clangtidy.config_handler \
         import is_compiler_warning
+from codechecker_analyzer.arg import AnalyzerConfig, CheckerConfig
+from codechecker_analyzer.cmd.analyze import \
+    is_analyzer_config_valid, is_checker_config_valid
 
 from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.buildlog import log_parser
@@ -395,6 +398,45 @@ class CheckerHandlingClangTidyTest(unittest.TestCase):
         self.assertEqual(
                 analyzer.config_handler.checks()['Wreserved-id-macro'][0],
                 CheckerState.enabled)
+
+    def test_analyze_wrong_parameters(self):
+        """
+        This test checks whether the analyze command detects if a wrong
+        --analyzer-config or --checker-config parameter is specified.
+        """
+
+        analyzer_cfg_valid = [AnalyzerConfig(
+            'clangsa', 'faux-bodies', 'false')]
+        checker_cfg_valid = [CheckerConfig(
+            'clang-tidy', 'performance-unnecessary-value-param',
+            'IncludeStyle', 'false')]
+
+        self.assertTrue(is_analyzer_config_valid(analyzer_cfg_valid))
+        self.assertTrue(is_checker_config_valid(checker_cfg_valid))
+
+        analyzer_cfg_invalid_analyzer = [AnalyzerConfig(
+            'asd', 'faux-bodies', 'false')]
+        analyzer_cfg_invalid_conf = [AnalyzerConfig(
+            'clangsa', 'asd', 'false')]
+        checker_cfg_invalid_analyzer = [CheckerConfig(
+            'asd', 'performance-unnecessary-value-param',
+            'IncludeStyle', 'false')]
+        checker_cfg_invalid_checker = [CheckerConfig(
+            'clang-tidy', 'asd',
+            'IncludeStyle', 'false')]
+        checker_cfg_invalid_checker_option = [CheckerConfig(
+            'clang-tidy', 'performance-unnecessary-value-param',
+            'asd', 'false')]
+
+        self.assertFalse(is_analyzer_config_valid(
+            analyzer_cfg_invalid_analyzer))
+        self.assertFalse(
+            is_analyzer_config_valid(analyzer_cfg_invalid_conf))
+
+        self.assertFalse(is_checker_config_valid(checker_cfg_invalid_analyzer))
+        self.assertFalse(is_checker_config_valid(checker_cfg_invalid_checker))
+        self.assertFalse(is_checker_config_valid(
+            checker_cfg_invalid_checker_option))
 
     def test_enable_all_disable_warning(self):
         """

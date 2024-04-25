@@ -1,6 +1,6 @@
 <template>
   <base-statistics-table
-    class="checker-statistics"
+    class="analysis-statistics"
     :headers="headers"
     :items="items"
     :loading="loading"
@@ -9,7 +9,7 @@
     item-key="checker"
     sort-by="severity"
     sort-desc
-    :necessary-total="true"
+    @enabled-click="enabledClick"
   />
 </template>
 
@@ -17,7 +17,7 @@
 import { BaseStatisticsTable } from "@/components/Statistics";
 
 export default {
-  name: "CheckerStatisticsTable",
+  name: "CheckerCoverageStatisticsTable",
   components: {
     BaseStatisticsTable
   },
@@ -29,7 +29,7 @@ export default {
     return {
       headers: [
         {
-          text: "Checker",
+          text: "Checker Name",
           value: "checker"
         },
         {
@@ -38,42 +38,27 @@ export default {
           align: "center"
         },
         {
-          text: "Unreviewed",
-          value: "unreviewed.count",
+          text: "Status",
+          value: "enabledInAllRuns",
           align: "center"
         },
         {
-          text: "Confirmed bug",
-          value: "confirmed.count",
+          text: "Closed Reports",
+          value: "closed",
           align: "center"
         },
         {
-          text: "Outstanding reports",
-          value: "outstanding.count",
-          align: "center"
-        },
-        {
-          text: "False positive",
-          value: "falsePositive.count",
-          align: "center"
-        },
-        {
-          text: "Intentional",
-          value: "intentional.count",
-          align: "center"
-        },
-        {
-          text: "Suppressed reports",
-          value: "suppressed.count",
-          align: "center"
-        },
-        {
-          text: "All reports",
-          value: "reports.count",
+          text: "Outstanding Reports",
+          value: "outstanding",
           align: "center"
         }
       ]
     };
+  },
+  methods: {
+    enabledClick(type, checker_name) {
+      this.$emit("enabled-click", type, checker_name);
+    }
   }
 };
 </script>

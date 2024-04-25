@@ -180,7 +180,8 @@ import {
   default as AnalysisInfoHandlingAPIMixin,
   CheckerInfoAvailability,
   CountKeys,
-  GroupKeys
+  GroupKeys,
+  decideNegativeCheckerStatusAvailability
 } from "@/mixins/api/analysis-info-handling.mixin";
 
 export default {
@@ -272,6 +273,8 @@ export default {
 
       var analysisInfo = await this.loadAnalysisInfo(
         this.runId, this.runHistoryId, this.reportId);
+      decideNegativeCheckerStatusAvailability(
+        analysisInfo, this.runId, this.runHistoryId, this.reportId);
       this.highlightedCmds = analysisInfo.cmds.map(cmd =>
         this.highlightOptions(cmd));
       analysisInfo.groupAndCountCheckers();
