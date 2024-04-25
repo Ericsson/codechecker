@@ -250,7 +250,6 @@ class TestCmdline(unittest.TestCase):
             self.assertTrue(desc)
             self.assertFalse(desc[0].islower())
 
-
     def test_parse_incorrect_file_path(self):
         """
         This test checks whether the parse command stops running if a
