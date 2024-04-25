@@ -183,6 +183,9 @@
       "profile:default",
       "severity:HIGH"
     ],
+    "cppcheck-cppcheckLimit": [
+      "severity:CRITICAL"
+    ],
     "cppcheck-cstyleCast": [
       "severity:STYLE"
     ],
@@ -333,9 +336,18 @@
     "cppcheck-initializerList": [
       "severity:STYLE"
     ],
+    "cppcheck-instantiationError": [
+      "severity:CRITICAL"
+    ],
     "cppcheck-integerOverflow": [
       "profile:default",
       "severity:HIGH"
+    ],
+    "cppcheck-internalAstError": [
+      "severity:CRITICAL"
+    ],
+    "cppcheck-internalError": [
+      "severity:CRITICAL"
     ],
     "cppcheck-invalidContainer": [
       "profile:default",
@@ -930,6 +942,9 @@
       "profile:default",
       "severity:MEDIUM"
     ],
+    "cppcheck-syntaxError": [
+      "severity:CRITICAL"
+    ],
     "cppcheck-thisSubtraction": [
       "profile:default",
       "severity:MEDIUM"
@@ -991,6 +1006,9 @@
     "cppcheck-unknownEvaluationOrder": [
       "profile:default",
       "severity:HIGH"
+    ],
+    "cppcheck-unknownMacro": [
+      "severity:CRITICAL"
     ],
     "cppcheck-unknownSignCharArrayIndex": [
       "severity:LOW"
