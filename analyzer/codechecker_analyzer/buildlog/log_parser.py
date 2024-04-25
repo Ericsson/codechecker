@@ -1305,7 +1305,7 @@ def parse_unique_log(compilation_database,
                      and pre_analysis_skip_handlers.should_skip(
                          action.source)):
                 skipped_cmp_cmd_count += 1
-                print("skipping:", action.source)
+                LOG.debug("skipping:", action.source)
                 continue
 
             if not action.lang:
