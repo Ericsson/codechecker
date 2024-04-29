@@ -2179,7 +2179,7 @@ class ThriftRequestHandler:
                 extended_table = extended_table.add_columns(
                     ReportAnnotations.key.label('annotations_key'),
                     ReportAnnotations.value.label('annotations_value')
-                )
+                ).group_by(ReportAnnotations.key, ReportAnnotations.value)
 
                 extended_table = extended_table.subquery()
 
