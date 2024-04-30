@@ -283,6 +283,14 @@ def main(args):
         LOG.error(fnerr)
         sys.exit(1)
 
+    incorrect_input_paths = [input_path for input_path in args.input
+                             if not os.path.exists(input_path)]
+
+    if incorrect_input_paths:
+        for input_path in incorrect_input_paths:
+            LOG.error(f"Input path {input_path} does not exist!")
+        sys.exit(1)
+
     export = args.export if 'export' in args else None
     if export == 'html' and 'output_path' not in args:
         LOG.error("Argument --export not allowed without argument --output "
