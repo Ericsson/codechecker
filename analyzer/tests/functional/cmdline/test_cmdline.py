@@ -152,8 +152,8 @@ class TestCmdline(unittest.TestCase):
                         '--guideline', 'sei-cert']
         _, out, _ = run_cmd(checkers_cmd)
 
-        self.assertNotIn('readability', out)
         self.assertIn('cert-str34-c', out)
+        self.assertNotIn('android', out)
 
         checkers_cmd = [env.codechecker_cmd(), 'checkers',
                         '--guideline', 'sei-cert:mem35-c']
@@ -170,8 +170,7 @@ class TestCmdline(unittest.TestCase):
 
         for checker in out:
             self.assertTrue(checker['name'].endswith('sizeof-expression') or
-                            checker['name'].endswith('SizeofPtr') or
-                            checker['name'].endswith('CastSize') or
+                            checker['name'].endswith('Malloc') or
                             checker['name'].endswith('MallocSizeof'))
 
         checkers_cmd = [env.codechecker_cmd(), 'checkers', '--guideline']

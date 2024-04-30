@@ -426,6 +426,7 @@ class RunResults(unittest.TestCase):
             "guideline:sei-cert",
             "profile:default",
             "profile:extreme",
+            "profile:security",
             "profile:sensitive",
             "sei-cert:int33-c",
             "severity:HIGH"
