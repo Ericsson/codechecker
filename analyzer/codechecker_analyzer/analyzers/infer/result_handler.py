@@ -27,6 +27,7 @@ from ..result_handler_base import ResultHandler
 
 LOG = get_logger('analyzer.infer')
 
+
 class InferResultHandler(ResultHandler):
     """
     Create analyzer result file for Infer output.
@@ -48,10 +49,11 @@ class InferResultHandler(ResultHandler):
         into the database.
         """
         LOG.debug_analyzer(self.analyzer_stdout)
-        
+
         project_folder = Path(self.workspace).parent
         infer_out_folder = Path(self.workspace, "infer")
-        infer_dest_file_name = Path(infer_out_folder, self.buildaction_hash, "report.json")
+        infer_dest_file_name = Path(infer_out_folder,
+                                    self.buildaction_hash, "report.json")
 
         reports = self.infer_analyzer_result.get_reports(infer_dest_file_name)
 
@@ -73,6 +75,5 @@ class InferResultHandler(ResultHandler):
         report_file.create(
             self.analyzer_result_file, reports, self.checker_labels,
             self.analyzer_info)
-        
-        shutil.rmtree(Path(self.workspace, "infer", self.buildaction_hash))
 
+        shutil.rmtree(Path(self.workspace, "infer", self.buildaction_hash))

@@ -65,7 +65,9 @@ class Infer(analyzer_base.SourceAnalyzer):
         analyzer_cmd = [Infer.analyzer_binary(), 'run']
 
         for checker_name, value in config.checks().items():
-            filtered_name = checker_name.replace("infer-", "").replace("-", "_").upper()
+            filtered_name = checker_name.replace("infer-", "")
+            filtered_name = filtered_name.replace("-", "_")
+            filtered_name = filtered_name.upper()
 
             if value[0] == CheckerState.disabled:
                 # TODO python3.9 removeprefix method would be nicer
@@ -75,9 +77,9 @@ class Infer(analyzer_base.SourceAnalyzer):
                 analyzer_cmd.extend(['--enable-issue-type', filtered_name])
 
         output_dir = Path(result_handler.workspace, "infer",
-                              result_handler.buildaction_hash)
+                          result_handler.buildaction_hash)
         output_dir.mkdir(exist_ok=True, parents=True)
-        
+
         analyzer_cmd.extend(['-o', str(output_dir)])
 
         compile_lang = self.buildaction.lang
@@ -95,37 +97,19 @@ class Infer(analyzer_base.SourceAnalyzer):
         """
         Return the list of the supported checkers.
         """
-        # CHECKERS
-        # command = [self.analyzer_binary(), "help", "--list-checkers"]
-
-        # ISSUE TYPES
         command = [self.analyzer_binary(), "help", "--list-issue-types"]
 
         checker_list = []
         try:
-            # getting rid of "format: A:B:...:Z" message
             output = subprocess.check_output(command,
-                            stderr=subprocess.DEVNULL)
-
-            # Still contains the help message we need to remove.
+                                             stderr=subprocess.DEVNULL)
             for entry in output.decode().split('\n'):
-                
-                # CHECKERS
-                # if len(entry.split(":")) != 8:
-                #     continue
-                # entry_id,kind,clang_support, *rest = entry.strip().split(":")
-                # if kind == "UserFacing" and clang_support == "Yes":
-                #     checker_list.append((f"infer-{entry_id}", kind))
-
-                # ISSUE TYPES
                 if len(entry.split(":")) != 8:
                     continue
-                entry_id, _, _, severity, _, checker, *rest = entry.strip().split(":")
-
-                # normalize text if needed
+                entry_id, _, _, _, _, checker, *rest = entry.strip().split(":")
                 entry_id = entry_id.replace("_", "-").lower()
-
-                checker_list.append((f"infer-{entry_id}", f"used by '{checker}' checker."))
+                checker_list.append((f"infer-{entry_id}",
+                                     f"used by '{checker}' checker."))
 
             return checker_list
         except (subprocess.CalledProcessError) as e:
@@ -205,7 +189,7 @@ class Infer(analyzer_base.SourceAnalyzer):
         Check the version compatibility of the given analyzer binary.
         """
         analyzer_version = cls.get_binary_version(environ)
-        return 
+        return
 
     def construct_result_handler(self, buildaction, report_output,
                                  skiplist_handler):
@@ -213,7 +197,7 @@ class Infer(analyzer_base.SourceAnalyzer):
         See base class for docs.
         """
         res_handler = InferResultHandler(buildaction, report_output,
-                                       self.config_handler.report_hash)
+                                         self.config_handler.report_hash)
 
         res_handler.skiplist_handler = skiplist_handler
 

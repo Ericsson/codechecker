@@ -1,0 +1,1 @@
+[{"command": "/usr/bin/g++ -w infer_simple.cpp -o /dev/null -c", "directory": "/home/t/codechecker/analyzer/tests/functional/analyze_and_parse/test_files", "file": "/home/t/codechecker/analyzer/tests/functional/analyze_and_parse/test_files/infer_simple.cpp"}]

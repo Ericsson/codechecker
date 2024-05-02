@@ -311,7 +311,7 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             try:
                 shutil.copy2(cppcheck_out, codechecker_out)
                 Path(cppcheck_out).rename(str(cppcheck_out) + ".bak")
-            except(OSError) as e:
+            except (OSError) as e:
                 LOG.error(e.errno)
 
     @classmethod
