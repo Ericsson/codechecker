@@ -98,20 +98,34 @@ jobs:
         run: |
           pytest tests/functional/binary_package/
 
-  # Publish pypi package when a new CodeChecker version is released.
-  publish:
-    name: Publish pypi package
-    if: github.event_name == 'release'
-    runs-on: ubuntu-20.04
-    needs: test
-    steps:
-      - uses: actions/download-artifact@master
-        with:
-          name: pypi-package
-          path: ./
+  # FIXME: This was disabled because it was not working. We have to make sure
+  # that the token is appropriate. This automatic publishing is also dangerous,
+  # because there is no way to recover a broken release if PyPI is tainted
+  # (the filename will be forever locked and reserved even if we nuke a release)
+  #
+  # To test PyPI functionality, test.pypi.org should be used instead. That
+  # could be done with **every** commit (or at least every PR pulled to master).
+  # With a random enough release name (e.g., "git describe" with the commit
+  # hash suffix) we could deploy to test.pypi.org every time.
+  #
+  # Real finalised releases should undergo manual testing first, and if
+  # everything is in order, the deployment job to live PyPI should be manually
+  # triggered.
 
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_TOKEN }}
+  # Publish pypi package when a new CodeChecker version is released.
+  # publish:
+  #   name: Publish pypi package
+  #   if: github.event_name == 'release'
+  #   runs-on: ubuntu-20.04
+  #   needs: test
+  #   steps:
+  #     - uses: actions/download-artifact@master
+  #       with:
+  #         name: pypi-package
+  #         path: ./
+  #
+  #     - name: Publish to PyPI
+  #       uses: pypa/gh-action-pypi-publish@release/v1
+  #       with:
+  #         user: __token__
+  #         password: ${{ secrets.PYPI_TOKEN }}
