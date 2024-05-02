@@ -1186,6 +1186,7 @@ the [_Clang Static Analyzer_](http://clang-analyzer.llvm.org),
 [_Clang-Tidy_](http://clang.llvm.org/extra/clang-tidy),
 [_Cppcheck_](http://cppcheck.sourceforge.net/) and
 [_GCC Static Analyzer_](https://gcc.gnu.org/wiki/StaticAnalyzer).
+[_Facebook Infer Analyzer_](https://fbinfer.com/)
 `--analyzers` can be used to specify which analyzer tool should be used (by
 default, all supported are used). The tools are completely independent, so
 either can be omitted if not present as they are provided by different

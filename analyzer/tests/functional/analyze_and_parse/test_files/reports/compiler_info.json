@@ -1,0 +1,1 @@
+{"[\"/usr/bin/g++\", \"c++\", []]": {"compiler_includes": ["/usr/include/c++/13", "/usr/include/x86_64-linux-gnu/c++/13", "/usr/include/c++/13/backward", "/usr/lib/gcc/x86_64-linux-gnu/13/include", "/usr/local/include", "/usr/include/x86_64-linux-gnu", "/usr/include"], "compiler_standard": "-std=gnu++17", "target": "x86_64-linux-gnu"}}
