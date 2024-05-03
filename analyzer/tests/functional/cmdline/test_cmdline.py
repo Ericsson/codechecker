@@ -152,7 +152,7 @@ class TestCmdline(unittest.TestCase):
                         '--guideline', 'sei-cert']
         _, out, _ = run_cmd(checkers_cmd)
 
-        self.assertIn('cert-str34-c', out)
+        self.assertIn('cert-dcl58-cpp', out)
         self.assertNotIn('android', out)
 
         checkers_cmd = [env.codechecker_cmd(), 'checkers',

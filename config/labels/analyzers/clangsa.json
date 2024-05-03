@@ -441,6 +441,7 @@
       "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
+      "profile:security",
       "profile:sensitive",
       "sei-cert:exp33-c",
       "sei-cert:exp50-cpp",
