@@ -22,6 +22,7 @@ import sys
 import tempfile
 import zipfile
 import zlib
+import shutil
 
 from collections import defaultdict, namedtuple
 from contextlib import contextmanager
@@ -894,7 +895,16 @@ def main(args):
                                                  port,
                                                  product_name=product_name)
 
-    zip_file_handle, zip_file = tempfile.mkstemp('.zip')
+    try:
+        temp_dir = tempfile.mkdtemp(suffix="-store", dir=args.input[0])
+        LOG.debug(f"{temp_dir} directory created successfully!")
+    except PermissionError:
+        LOG.error(f"Permission denied! You do not have sufficient "
+                  f"permissions to create the {temp_dir} "
+                  "temporary directory.")
+        sys.exit(1)
+
+    zip_file_handle, zip_file = tempfile.mkstemp(suffix=".zip", dir=temp_dir)
     LOG.debug("Will write mass store ZIP to '%s'...", zip_file)
 
     try:
@@ -1007,3 +1017,5 @@ def main(args):
     finally:
         os.close(zip_file_handle)
         os.remove(zip_file)
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
