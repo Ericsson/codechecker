@@ -50,9 +50,9 @@
         <slot
           name="menu-content"
           :items="items"
-          :prevSelectedItems="prevSelectedItems"
+          :prev-selected-items="prevSelectedItems"
           :apply="applyFilters"
-          :onApplyFinished="onApplyFinished"
+          :on-apply-finished="onApplyFinished"
           :cancel="cancel"
           :select="select"
         >
@@ -84,7 +84,7 @@
       </v-menu>
     </template>
 
-    <slot :updateSelectedItems="updateSelectedItems">
+    <slot :update-selected-items="updateSelectedItems">
       <items-selected
         :selected-items="selectedItems"
         :multiple="multiple"

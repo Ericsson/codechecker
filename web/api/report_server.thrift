@@ -42,6 +42,15 @@ enum Order {
 }
 
 /**
+ * Report status can show the current status of the report
+ * that depends on the review and thedetection status.
+ */
+enum ReportStatus {
+  OUTSTANDING, // The report is outstanding according to the review- and the detection status.
+  CLOSED       // The report is not a valid bug according to the review- and the detection status.
+}
+
+/**
  * Review status is a feature which allows a user to assign one of these
  * statuses to a particular Report.
  */
@@ -825,6 +834,16 @@ service codeCheckerDBAccess {
                                        4: i64          limit,
                                        5: i64          offset)
                                        throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // getReportStatusCounts returns ReportStatus-count pairs
+  // to show the number of outstanding and closed reports.
+  // If the run id list is empty the metrics will be
+  // counted for all of the runs.
+  // PERMISSION: PRODUCT_VIEW
+  map<ReportStatus, i64> getReportStatusCounts(1: list<i64>    runIds,
+                                             2: ReportFilter reportFilter,
+                                             3: CompareData  cmpData)
+                                             throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // If the run id list is empty the metrics will be counted
   // for all of the runs and in compare mode all of the runs

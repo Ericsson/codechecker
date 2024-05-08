@@ -301,12 +301,30 @@ def process_report_filter(
 
         AND.append(or_(*OR))
 
-    if report_filter.detectionStatus:
+    if report_filter.reportStatus:
+        #  DetectionStatus.NEW DetectionStatus.RESOLVED DetectionStatus.UNRESOLVED DetectionStatus.REOPENED DetectionStatus.OFF DetectionStatus.UNAVAILABLE:
+        # ReviewStatus.UNREVIEWED ReviewStatus.CONFIRMED ReviewStatus.FALSE_POSITIVE ReviewStatus.INTENTIONAL:
+        dst = list(map(detection_status_str,
+                    (DetectionStatus.NEW,
+                        DetectionStatus.UNRESOLVED,
+                        DetectionStatus.REOPENED)))
+        rst = list(map(review_status_str,
+                    (ReviewStatus.UNREVIEWED,
+                        ReviewStatus.CONFIRMED)))
+        
+        if report_filter.reportStatus.isOutstanding:                      
+            AND.append(and_(Report.review_status.in_(rst), Report.detection_status.in_(dst)))
+        
+        if report_filter.reportStatus.isClosed:
+            AND.append(not_(and_(Report.review_status.in_(rst), Report.detection_status.in_(dst))))
+        print(*AND)
+
+    if report_filter.detectionStatus and not report_filter.reportStatus:
         dst = list(map(detection_status_str,
                        report_filter.detectionStatus))
         AND.append(Report.detection_status.in_(dst))
 
-    if report_filter.reviewStatus:
+    if report_filter.reviewStatus and not report_filter.reportStatus:
         OR = [Report.review_status.in_(
             list(map(review_status_str, report_filter.reviewStatus)))]
         AND.append(or_(*OR))
