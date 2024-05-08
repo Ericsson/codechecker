@@ -151,6 +151,18 @@
         </v-list-item-content>
       </v-list-item>
 
+      <v-divider />
+
+      <v-list-item class="pl-1">
+        <v-list-item-content class="pa-0">
+          <report-status-filter
+            ref="filters"
+            :namespace="namespace"
+            @update:url="updateUrl"
+          />
+        </v-list-item-content>
+      </v-list-item>
+
       <v-divider v-if="showReviewStatus" />
 
       <v-list-item
@@ -332,6 +344,7 @@ import {
   FilePathFilter,
   FixDateFilter,
   ReportHashFilter,
+  ReportStatusFilter,
   ReviewStatusFilter,
   SeverityFilter,
   SourceComponentFilter,
@@ -368,7 +381,8 @@ export default {
     CheckerMessageFilter,
     RemoveFilteredReports,
     BugPathLengthFilter,
-    TestcaseFilter
+    TestcaseFilter,
+    ReportStatusFilter
   },
   props: {
     namespace: { type: String, required: true },
