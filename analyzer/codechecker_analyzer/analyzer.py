@@ -184,12 +184,16 @@ def perform_analysis(args, skip_handlers, rs_handler: ReviewStatusHandler,
     # TODO: Its perfectly reasonable for an analyzer plugin to not be able to
     # build their config handler if the analyzer isn't supported in the first
     # place. For now, this seems to be okay, but may not be later.
+    # Even then, if we couldn't get hold of the analyzer binary, we can't do
+    # anything.
     errored_config_map = analyzer_types.build_config_handlers(
-        args, [x for (x, _) in errored])
+        args,
+        [x for (x, _) in errored
+         if analyzer_types.supported_analyzers[x].analyzer_binary()])
 
     no_checker_err_analyzers = \
-        [a for (a, _) in errored
-         if not __has_enabled_checker(errored_config_map[a])]
+        [analyzer for analyzer, config_h in errored_config_map.items()
+         if not __has_enabled_checker(config_h)]
 
     errored = [(an, msg) for an, msg in errored
                if an not in no_checker_err_analyzers]
