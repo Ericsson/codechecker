@@ -11,7 +11,7 @@
     @input="setSelectedItems"
   >
     <template v-slot:icon="{ item }">
-      <review-status-icon :status="item.id" />
+      <report-status-icon :status="item.id" />
     </template>
 
     <template v-slot:append-toolbar-title>
@@ -47,10 +47,10 @@
 <script>
 import { ccService, handleThriftError } from "@cc-api";
 
-import { ReportFilter, ReviewStatus } from "@cc/report-server-types";
+import { ReportFilter, ReportStatus } from "@cc/report-server-types";
 import TooltipHelpIcon from "@/components/TooltipHelpIcon";
-import { ReviewStatusIcon } from "@/components/Icons";
-import { ReviewStatusMixin } from "@/mixins";
+import { ReportStatusIcon } from "@/components/Icons";
+import { ReportStatusMixin } from "@/mixins";
 
 import { SelectOption, SelectedToolbarTitleItems } from "./SelectOption";
 import BaseSelectOptionFilterMixin from "./BaseSelectOptionFilter.mixin";
@@ -59,11 +59,11 @@ export default {
   name: "ReportStatusFilter",
   components: {
     SelectOption,
-    ReviewStatusIcon,
+    ReportStatusIcon,
     SelectedToolbarTitleItems,
     TooltipHelpIcon
   },
-  mixins: [ BaseSelectOptionFilterMixin, ReviewStatusMixin ],
+  mixins: [ BaseSelectOptionFilterMixin, ReportStatusMixin ],
 
   data() {
     return {
@@ -72,12 +72,12 @@ export default {
   },
 
   methods: {
-    encodeValue(reviewStatusId) {
-      return this.reviewStatusFromCodeToString(reviewStatusId);
+    encodeValue(reportStatusId) {
+      return this.reportStatusFromCodeToString(reportStatusId);
     },
 
-    decodeValue(reviewStatusName) {
-      return this.reviewStatusFromStringToCode(reviewStatusName);
+    decodeValue(reportStatusName) {
+      return this.reportStatusFromStringToCode(reportStatusName);
     },
 
     updateReportFilter() {
@@ -95,13 +95,13 @@ export default {
       this.loading = true;
 
       const reportFilter = new ReportFilter(this.reportFilter);
-      reportFilter.reviewStatus = null;
+      reportFilter.reportStatus = null;
 
       return new Promise(resolve => {
-        ccService.getClient().getReviewStatusCounts(this.runIds, reportFilter,
+        ccService.getClient().getReportStatusCounts(this.runIds, reportFilter,
           this.cmpData, handleThriftError(res => {
-            resolve(Object.keys(ReviewStatus).map(status => {
-              const id = ReviewStatus[status];
+            resolve(Object.keys(ReportStatus).map(status => {
+              const id = ReportStatus[status];
               return {
                 id: id,
                 title: this.encodeValue(id),
