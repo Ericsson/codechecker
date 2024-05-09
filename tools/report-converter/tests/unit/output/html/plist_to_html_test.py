@@ -186,4 +186,10 @@ class PlistToHtmlTest(unittest.TestCase):
         index_html = os.path.join(output_dir, "index.html")
 
         with open(index_html, 'r', encoding="utf-8", errors="ignore") as f:
-            self.assertEqual(len(re.findall('"link": "', f.read())), 3)
+            content = f.read()
+
+            # There are 3 reports in the test file.
+            self.assertEqual(len(re.findall('"link": "', content)), 3)
+            # The links should be relative so the static HTML folder is
+            # portable.
+            self.assertNotIn('"link": "/', content)
