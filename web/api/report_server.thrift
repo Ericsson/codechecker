@@ -390,6 +390,7 @@ struct ReportFilter {
   // [(key1, value1), (key1, value2), (key2, value3)] returns reports which
   // have "value1" OR "value2" for "key1" AND have "value3" for "key2".
   22: optional list<Pair> annotations,
+  23: optional list<ReportStatus>  reportStatus, // Specifying the status of the filtered reports.
 }
 
 struct RunReportCount {
