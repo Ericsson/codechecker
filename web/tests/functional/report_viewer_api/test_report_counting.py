@@ -90,9 +90,9 @@ class TestReportFilter(unittest.TestCase):
              'deadcode.DeadStores': 6,
              'misc-definitions-in-headers': 2}
 
-        self.run1_sev_counts = {Severity.MEDIUM: 6,
+        self.run1_sev_counts = {Severity.MEDIUM: 11,
                                 Severity.LOW: 6,
-                                Severity.HIGH: 32}
+                                Severity.HIGH: 27}
 
         self.run2_sev_counts = {Severity.MEDIUM: 5,
                                 Severity.LOW: 6,

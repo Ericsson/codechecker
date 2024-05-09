@@ -796,6 +796,9 @@
     "redeclared-assigned-name": [
       "severity:MEDIUM"
     ],
+    "redefine-in-handler": [
+      "severity:MEDIUM"
+    ],
     "redefined-argument-from-local": [
       "severity:STYLE"
     ],
