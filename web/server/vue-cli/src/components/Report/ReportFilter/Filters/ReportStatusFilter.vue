@@ -93,7 +93,6 @@ export default {
 
     fetchItems() {
       this.loading = true;
-      console.log(this.reportFilter);
 
       const reportFilter = new ReportFilter(this.reportFilter);
       reportFilter.reviewStatus = null;
