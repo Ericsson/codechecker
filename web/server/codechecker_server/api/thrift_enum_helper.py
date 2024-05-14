@@ -120,6 +120,7 @@ def report_extended_data_type_enum(status):
     elif status == 'fixit':
         return ExtendedReportDataType.FIXIT
 
+
 def report_status_str(status):
     """
     Returns the given report status Thrift enum value.
@@ -128,6 +129,7 @@ def report_status_str(status):
         return 'outstanding'
     elif status == ReportStatus.CLOSED:
         return 'closed'
+
 
 def report_status_enum(status):
     """

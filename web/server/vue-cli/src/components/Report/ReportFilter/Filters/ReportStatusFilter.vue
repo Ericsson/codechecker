@@ -16,22 +16,33 @@
 
     <template v-slot:append-toolbar-title>
       <tooltip-help-icon>
-        Filter reports by the <b>latest</b> review status.<br><br>
+        Filter reports by the <b>latest</b> report status.<br><br>
 
-        Reports can be assigned a review status of the following values:
+        A report can be outstanding or closed.
+        Outstanding reports are potential bugs.
+        Closed reports are fixed bugs, suppressed, resolved
+        or unavailable reports.
+
+        <br><br>
+
+        The report is <b>outstanding</b> when its
         <ul>
           <li>
-            <b>Unreviewed</b>: Nobody has seen this report.
+            <b>Review status</b>: is unreviewed or confirmed
           </li>
+          <b>and</b>
           <li>
-            <b>Confirmed:</b> This is really a bug.
+            <b>Detection status</b>: is new, unresolved or reopened.
           </li>
+        </ul>
+        The report is <b>closed</b> when its
+        <ul>
           <li>
-            <b>False positive:</b> This is not a bug.
+            <b>Review status</b>: is false positive, intentional
           </li>
+          <b>or</b>
           <li>
-            <b>Intentional:</b> This report is a bug but we don't want to fix
-            it.
+            <b>Detection status</b>: is resolved, off or unavailable.
           </li>
         </ul>
       </tooltip-help-icon>

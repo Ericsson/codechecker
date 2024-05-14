@@ -490,9 +490,7 @@ export default {
       const offset = limit * (this.pagination.page - 1);
       const sortType = this.getSortMode();
       const getDetails = false;
-      this.reportFilter.detectionStatus = [ 1 ];
-      console.log(this.reportFilter.reportStatus);
-      console.log(this.reportFilter.detectionStatus);
+
       ccService.getClient().getRunResults(this.runIds, limit, offset, sortType,
         this.reportFilter, this.cmpData, getDetails,
         handleThriftError(reports => {

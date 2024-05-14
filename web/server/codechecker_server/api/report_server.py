@@ -70,7 +70,7 @@ from ..database.run_db_model import \
     SourceComponent
 
 from .thrift_enum_helper import detection_status_enum, \
-    detection_status_str, report_status_enum, report_status_str, \
+    detection_status_str, report_status_enum, \
     review_status_enum, review_status_str, report_extended_data_type_enum
 
 
@@ -302,31 +302,33 @@ def process_report_filter(
         AND.append(or_(*OR))
 
     if report_filter.reportStatus:
-        print("itt")
-        #  DetectionStatus.NEW DetectionStatus.RESOLVED DetectionStatus.UNRESOLVED DetectionStatus.REOPENED DetectionStatus.OFF DetectionStatus.UNAVAILABLE:
-        # ReviewStatus.UNREVIEWED ReviewStatus.CONFIRMED ReviewStatus.FALSE_POSITIVE ReviewStatus.INTENTIONAL:
         dst = list(map(detection_status_str,
                        (DetectionStatus.NEW,
                         DetectionStatus.UNRESOLVED,
                         DetectionStatus.REOPENED)))
         rst = list(map(review_status_str,
-                       (ReviewStatus.UNREVIEWED,
-                        ReviewStatus.CONFIRMED)))
-        
-        if ReportStatus.OUTSTANDING in report_filter.reportStatus:                      
-            AND.append(and_(Report.review_status.in_(rst), Report.detection_status.in_(dst)))
-        
-        if ReportStatus.CLOSED in report_filter.reportStatus:
-            AND.append(not_(and_(Report.review_status.in_(rst), Report.detection_status.in_(dst))))
-        print("teszt")
-        print(*AND)
+                       (API_ReviewStatus.UNREVIEWED,
+                        API_ReviewStatus.CONFIRMED)))
 
-    if report_filter.detectionStatus and not report_filter.reportStatus:
+        OR = []
+        filter_query = and_(
+            Report.review_status.in_(rst),
+            Report.detection_status.in_(dst)
+        )
+        if ReportStatus.OUTSTANDING in report_filter.reportStatus:
+            OR.append(filter_query)
+
+        if ReportStatus.CLOSED in report_filter.reportStatus:
+            OR.append(not_(filter_query))
+
+        AND.append(or_(*OR))
+
+    if report_filter.detectionStatus:
         dst = list(map(detection_status_str,
                        report_filter.detectionStatus))
         AND.append(Report.detection_status.in_(dst))
 
-    if report_filter.reviewStatus and not report_filter.reportStatus:
+    if report_filter.reviewStatus:
         OR = [Report.review_status.in_(
             list(map(review_status_str, report_filter.reviewStatus)))]
         AND.append(or_(*OR))
@@ -1887,9 +1889,6 @@ class ThriftRequestHandler:
     @timeit
     def getRunResults(self, run_ids, limit, offset, sort_types,
                       report_filter, cmp_data, get_details):
-        if report_filter.detectionStatus:
-            print("report_filter")
-            print(report_filter.detectionStatus)
         self.__require_view()
 
         limit = verify_limit_range(limit)
@@ -3300,7 +3299,8 @@ class ThriftRequestHandler:
             if report_filter.annotations is not None:
                 extended_table = extended_table.outerjoin(
                     ReportAnnotations,
-                    ReportAnnotations.report_id == Report.id)
+                    ReportAnnotations.report_id == Report.id
+                )
                 extended_table = extended_table.group_by(Report.id)
 
             extended_table = apply_report_filter(
@@ -3308,31 +3308,28 @@ class ThriftRequestHandler:
 
             extended_table = extended_table.subquery()
 
-            is_opened_case = get_is_opened_case(extended_table)
-
+            is_outstanding_case = get_is_opened_case(extended_table)
+            case_label = "isOutstanding"
 
             if report_filter.isUnique:
                 q = session.query(
-                    is_opened_case.label("isOpened"),
+                    is_outstanding_case.label(case_label),
                     func.count(extended_table.c.bug_id.distinct())) \
-                    .group_by(is_opened_case)
+                    .group_by(is_outstanding_case)
             else:
                 q = session.query(
-                    is_opened_case.label("isOpened"),
+                    is_outstanding_case.label(case_label),
                     func.count(extended_table.c.bug_id)) \
-                    .group_by(is_opened_case)
+                    .group_by(is_outstanding_case)
 
-            # return {ReportStatus.OUTSTANDING if isOutstanding
-            #         else ReportStatus.CLOSED: count
-            #         for isOutstanding, count in q}
             results = {
-                report_status_enum("outstanding" if isOutstanding
-                                   else "closed"): count
-                                   for isOutstanding, count in q}
-            print("results")
-            print(results)
-            return results
+                report_status_enum(
+                    "outstanding" if isOutstanding
+                    else "closed"
+                ): count for isOutstanding, count in q
+            }
 
+            return results
 
     @exc_to_thrift_reqfail
     @timeit

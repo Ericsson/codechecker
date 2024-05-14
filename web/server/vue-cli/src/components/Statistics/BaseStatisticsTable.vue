@@ -296,7 +296,18 @@
     </template>
 
     <template #item.closed="{ item }">
-      <span>
+      <span v-if="item.closed">
+        <router-link
+          :to="{ name: 'reports', query: {
+            ...uniqueMode,
+            ...getBaseQueryParams(item),
+            'report-status': reportStatusFromCodeToString(ReportStatus.CLOSED)
+          }}"
+        >
+          {{ item.closed }}
+        </router-link>
+      </span>
+      <span v-else>
         {{ item.closed }}
       </span>
     </template>
@@ -305,17 +316,11 @@
       <span v-if="item.outstanding">
         <router-link
           :to="{ name: 'reports', query: {
-            ...$router.currentRoute.query,
+            ...uniqueMode,
             ...getBaseQueryParams(item),
-            'review-status': [
-              reviewStatusFromCodeToString(ReviewStatus.UNREVIEWED),
-              reviewStatusFromCodeToString(ReviewStatus.CONFIRMED)
-            ],
-            'detection-status': [
-              detectionStatusFromCodeToString(DetectionStatus.NEW),
-              detectionStatusFromCodeToString(DetectionStatus.REOPENED),
-              detectionStatusFromCodeToString(DetectionStatus.UNRESOLVED)
-            ]
+            'report-status': reportStatusFromCodeToString(
+              ReportStatus.OUTSTANDING
+            )
           }}"
         >
           {{ item.outstanding }}
@@ -351,7 +356,11 @@
 </template>
 
 <script>
-import { DetectionStatus, ReviewStatus } from "@cc/report-server-types";
+import {
+  DetectionStatus,
+  ReportStatus,
+  ReviewStatus
+} from "@cc/report-server-types";
 import {
   DetectionStatusIcon,
   ReviewStatusIcon,
@@ -359,6 +368,7 @@ import {
 } from "@/components/Icons";
 import {
   DetectionStatusMixin,
+  ReportStatusMixin,
   ReviewStatusMixin,
   SeverityMixin
 } from "@/mixins";
@@ -376,7 +386,12 @@ export default {
     SeverityIcon,
     SourceComponentTooltip
   },
-  mixins: [ DetectionStatusMixin, ReviewStatusMixin, SeverityMixin ],
+  mixins: [
+    DetectionStatusMixin,
+    ReportStatusMixin,
+    ReviewStatusMixin,
+    SeverityMixin
+  ],
   props: {
     items: { type: Array, required: true },
     colspan: { type: Number, default: 2 },
@@ -389,8 +404,9 @@ export default {
   },
   data() {
     return {
-      ReviewStatus,
-      DetectionStatus
+      DetectionStatus,
+      ReportStatus,
+      ReviewStatus
     };
   },
   computed: {
@@ -404,6 +420,15 @@ export default {
         this.totalColumns.forEach(c => total[c] += curr[c].count);
         return total;
       }, initVal);
+    },
+
+    uniqueMode() {
+      if ( this.$router.currentRoute.query["is-unique"] !== undefined ) {
+        return {
+          "is-unique": this.$router.currentRoute.query["is-unique"]
+        };
+      }
+      else return {};
     }
   },
   methods: {
