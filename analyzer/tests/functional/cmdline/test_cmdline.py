@@ -169,9 +169,13 @@ class TestCmdline(unittest.TestCase):
         out = json.loads(out)
 
         for checker in out:
-            self.assertTrue(checker['name'].endswith('sizeof-expression') or
-                            checker['name'].endswith('Malloc') or
-                            checker['name'].endswith('MallocSizeof'))
+            self.assertTrue(any(checker['name'].endswith(c)
+                            for c in ['sizeof-expression',
+                                      'Malloc',
+                                      'MallocSizeof',
+                                      'clang-diagnostic-format-overflow',
+                                      'clang-diagnostic-format-\
+                                       overflow-non-kprintf']))
 
         checkers_cmd = [env.codechecker_cmd(), 'checkers', '--guideline']
         _, out, _ = run_cmd(checkers_cmd)
