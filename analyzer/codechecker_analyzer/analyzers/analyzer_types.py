@@ -241,6 +241,9 @@ def build_config_handlers(args, enabled_analyzers):
     analyzer_config_map = {}
 
     for ea in enabled_analyzers:
+        assert supported_analyzers[ea].analyzer_binary(), \
+            "At this point, we should've checked if this analyzer has a " \
+            "binary!"
         config_handler = supported_analyzers[ea].construct_config_handler(args)
         analyzer_config_map[ea] = config_handler
 
