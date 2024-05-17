@@ -69,6 +69,10 @@ service codeCheckerAuthentication {
                       2: string authString)
                       throws (1: codechecker_api_shared.RequestFailed requestError),
 
+  // Create a link for the user to log in.
+  string createLink()
+      throws (1: codechecker_api_shared.RequestFailed requestError),
+
   // Performs logout action for the user. Must be called from the
   // corresponding valid session which is to be destroyed.
   bool destroySession()

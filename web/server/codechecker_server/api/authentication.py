@@ -9,7 +9,7 @@
 Handle Thrift requests for authentication.
 """
 
-
+from authlib.integrations.requests_client import OAuth2Session
 import json
 import codechecker_api_shared
 
@@ -93,8 +93,22 @@ class ThriftAuthHandler:
         return self.__auth_session.user if self.__auth_session else ""
 
     @timeit
+    def createLink(self):
+        # GitHub app config
+        client_id = "66f0228ec6eea4a784a1"
+        client_secret = "db8297561255880f62c7ea7a602fba6f1343e7cc"
+        scope = "user:email" #
+
+        # Create an OAuth2Session instance
+        url, _ = OAuth2Session(client_id, client_secret, scope=scope).create_authorization_url("https://github.com/login/oauth/authorize")
+
+        print("Please visit this URL to authenticate: ", url)
+        # return url
+        return "https://github.com"
+
+    @timeit
     def getAcceptedAuthMethods(self):
-        return ["Username:Password"]
+        return ["Username:Password","oauth"]
 
     @timeit
     def getAccessControl(self):
@@ -166,6 +180,8 @@ class ThriftAuthHandler:
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     msg)
+        elif auth_method == "oauth":
+            print("OAuth authentication from file api auhentication.")
 
         raise codechecker_api_shared.ttypes.RequestFailed(
             codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,

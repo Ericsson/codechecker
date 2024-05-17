@@ -67,6 +67,15 @@
             >
               Login
             </v-btn>
+            <v-btn
+              id="login-btn-github"
+              block
+              x-large
+              color="primary"
+              @click="oauth"
+            >
+              Login With Github
+            </v-btn>
           </v-card-actions>
         </v-card>
       </v-col>
@@ -76,7 +85,7 @@
 
 <script>
 import { mapGetters } from "vuex";
-import { LOGIN } from "@/store/actions.type";
+import { LOGIN ,OAUTH } from "@/store/actions.type";
 
 import Alerts from "@/components/Alerts";
 
@@ -137,6 +146,21 @@ export default {
           this.$router.replace(returnTo || { name: "products" });
         }).catch(err => {
           this.errorMsg = `Failed to log in! ${err.message}`;
+          this.error = true;
+        });
+    },
+    oauth() {
+      this.$store
+        .dispatch(OAUTH)
+        .then(link => {
+          this.success = true;
+          this.error = false;
+          this.$router.replace(link);
+
+          // const returnTo = this.$router.currentRoute.query["return_to"];
+          // this.$router.replace(returnTo || { name: "products" });
+        }).catch(err => {
+          this.errorMsg = `Failed to access link. ${err.message}`;
           this.error = true;
         });
     },
