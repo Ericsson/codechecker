@@ -43,6 +43,10 @@ class ThriftAuthHelper(BaseClientHelper):
     @thrift_client_call
     def performLogin(self, auth_method, auth_string):
         pass
+    
+    @ThriftClientCall
+    def createLink(self):
+        pass
 
     @thrift_client_call
     def destroySession(self):

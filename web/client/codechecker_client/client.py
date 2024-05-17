@@ -12,8 +12,8 @@ Thrift client setup and configuration.
 
 import getpass
 import sys
-
 from thrift.Thrift import TApplicationException
+from authlib.integrations.requests_client import OAuth2Session
 
 import codechecker_api_shared
 from codechecker_api.Authentication_v6 import ttypes as AuthTypes
@@ -130,13 +130,26 @@ def login_user(protocol, host, port, username, login=False):
             LOG.error("Authentication failed! Please check your credentials.")
             LOG.error(reqfail.message)
             sys.exit(1)
+    elif 'oauth' in str(methods): 
+        # GitHub app config
+        client_id = "66f0228ec6eea4a784a1"
+        client_secret = "db8297561255880f62c7ea7a602fba6f1343e7cc"
+        scope = "user:email" #
+
+        # Create an OAuth2Session instance
+        url, _ = OAuth2Session(client_id, client_secret, scope=scope).create_authorization_url("https://github.com/login/oauth/authorize")
+
+        print("Please visit this URL to authenticate: ", url)
+        print("OAuth authentication is client.py in codechecker client.")
+        return url
+        sys.exit(1)
     else:
         LOG.critical("No authentication methods were reported by the server "
                      "that this client could support.")
         sys.exit(1)
 
 
-def perform_auth_for_handler(auth_client, host, port, manager):
+def perform_auth_for_handler(auth_client, host, port, manager): 
     # Before actually communicating with the server,
     # we need to check authentication first.
 
