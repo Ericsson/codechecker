@@ -174,8 +174,7 @@ class TestCmdline(unittest.TestCase):
                                       'Malloc',
                                       'MallocSizeof',
                                       'clang-diagnostic-format-overflow',
-                                      'clang-diagnostic-format-\
-                                       overflow-non-kprintf']))
+                                      'overflow-non-kprintf']))
 
         checkers_cmd = [env.codechecker_cmd(), 'checkers', '--guideline']
         _, out, _ = run_cmd(checkers_cmd)

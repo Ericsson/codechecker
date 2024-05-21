@@ -528,6 +528,7 @@
     "bugprone-sizeof-expression": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/bugprone/sizeof-expression.html",
       "guideline:sei-cert",
+      "label-tool-skip:severity",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -1884,6 +1885,7 @@
     "clang-diagnostic-dangling": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdangling",
       "guideline:sei-cert",
+      "profile:security",
       "sei-cert:mem50-cpp",
       "severity:HIGH"
     ],
@@ -1963,6 +1965,7 @@
       "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
+      "profile:security",
       "profile:sensitive",
       "sei-cert:oop52-cpp",
       "severity:MEDIUM"
@@ -2531,6 +2534,7 @@
     "clang-diagnostic-format-overflow-non-kprintf": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat-overflow-non-kprintf",
       "guideline:sei-cert",
+      "label-tool-skip:severity",
       "profile:security",
       "sei-cert:mem35-c",
       "severity:HIGH"
@@ -3486,6 +3490,7 @@
     "clang-diagnostic-mismatched-new-delete": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wmismatched-new-delete",
       "guideline:sei-cert",
+      "label-tool-skip:severity",
       "profile:security",
       "sei-cert:mem51-cpp",
       "severity:HIGH"
@@ -4151,6 +4156,7 @@
       "profile:default",
       "sei-cert:exp45-c",
       "profile:extreme",
+      "profile:security",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -4236,7 +4242,7 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wpointer-to-int-cast",
       "guideline:sei-cert",
       "profile:security",
-      "sei-cert:INT36-c",
+      "sei-cert:int36-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-pointer-type-mismatch": [
@@ -5325,6 +5331,7 @@
     "clang-diagnostic-uninitialized": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wuninitialized",
       "guideline:sei-cert",
+      "label-tool-skip:severity",
       "profile:default",
       "profile:extreme",
       "profile:security",
@@ -5766,7 +5773,7 @@
       "guideline:sei-cert",
       "profile:security",
       "severity:MEDIUM",
-      "sei-cert:CON33-C"
+      "sei-cert:con33-c"
     ],
     "concurrency-thread-canceltype-asynchronous": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/concurrency/thread-canceltype-asynchronous.html",
