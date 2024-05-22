@@ -1795,7 +1795,12 @@
     ],
     "clang-diagnostic-conditional-uninitialized": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wconditional-uninitialized",
-      "severity:MEDIUM"
+      "guideline:sei-cert",
+      "label-tool-skip:severity",
+      "profile:default",
+      "profile:security",
+      "sei-cert:exp33-c",
+      "severity:HIGH"
     ],
     "clang-diagnostic-config-macros": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wconfig-macros",
@@ -1879,7 +1884,11 @@
     ],
     "clang-diagnostic-dangling": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdangling",
-      "severity:MEDIUM"
+      "guideline:sei-cert",
+      "label-tool-skip:severity",
+      "profile:security",
+      "sei-cert:mem50-cpp",
+      "severity:HIGH"
     ],
     "clang-diagnostic-dangling-else": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdangling-else",
@@ -1954,9 +1963,13 @@
     ],
     "clang-diagnostic-delete-non-abstract-non-virtual-dtor": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wdelete-non-abstract-non-virtual-dtor",
+      "guideline:sei-cert",
+      "label-tool-skip:severity",
       "profile:default",
       "profile:extreme",
+      "profile:security",
       "profile:sensitive",
+      "sei-cert:oop52-cpp",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-delete-non-virtual-dtor": [
@@ -2470,9 +2483,13 @@
     ],
     "clang-diagnostic-format": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat",
+      "guideline:sei-cert",
+      "label-tool-skip:severity",
       "profile:default",
       "profile:extreme",
+      "profile:security",
       "profile:sensitive",
+      "sei-cert:fio47-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-format-extra-args": [
@@ -2502,18 +2519,30 @@
     ],
     "clang-diagnostic-format-nonliteral": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat-nonliteral",
+      "guideline:sei-cert",
+      "label-tool-skip:severity",
       "profile:default",
       "profile:extreme",
+      "profile:security",
       "profile:sensitive",
+      "sei-cert:fio30-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-format-overflow": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat-overflow",
-      "severity:MEDIUM"
+      "guideline:sei-cert",
+      "label-tool-skip:severity",
+      "profile:security",
+      "sei-cert:mem35-c",
+      "severity:HIGH"
     ],
     "clang-diagnostic-format-overflow-non-kprintf": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat-overflow-non-kprintf",
-      "severity:MEDIUM"
+      "guideline:sei-cert",
+      "label-tool-skip:severity",
+      "profile:security",
+      "sei-cert:mem35-c",
+      "severity:HIGH"
     ],
     "clang-diagnostic-format-pedantic": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wformat-pedantic",
@@ -2907,6 +2936,10 @@
     ],
     "clang-diagnostic-implicit-int-conversion": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wimplicit-int-conversion",
+      "guideline:sei-cert",
+      "label-tool-skip:severity",
+      "profile:security",
+      "sei-cert:int36-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-implicit-int-float-conversion": [
@@ -2955,6 +2988,10 @@
     ],
     "clang-diagnostic-incompatible-function-pointer-types-strict": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wincompatible-function-pointer-types-strict",
+      "guideline:sei-cert",
+      "label-tool-skip:severity",
+      "profile:security",
+      "sei-cert:exp37-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-incompatible-library-redeclaration": [
@@ -3088,6 +3125,10 @@
     ],
     "clang-diagnostic-int-conversion": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wint-conversion",
+      "guideline:sei-cert",
+      "label-tool-skip:severity",
+      "profile:security",
+      "sei-cert:int36-c",
       "severity:HIGH"
     ],
     "clang-diagnostic-int-conversions": [
@@ -3456,7 +3497,11 @@
     ],
     "clang-diagnostic-mismatched-new-delete": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wmismatched-new-delete",
-      "severity:MEDIUM"
+      "guideline:sei-cert",
+      "label-tool-skip:severity",
+      "profile:security",
+      "sei-cert:mem51-cpp",
+      "severity:HIGH"
     ],
     "clang-diagnostic-mismatched-parameter-types": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wmismatched-parameter-types",
@@ -4049,6 +4094,10 @@
     ],
     "clang-diagnostic-over-aligned": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wover-aligned",
+      "guideline:sei-cert",
+      "label-tool-skip:severity",
+      "profile:security",
+      "sei-cert:mem57-cpp",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-overflow": [
@@ -4111,8 +4160,12 @@
     ],
     "clang-diagnostic-parentheses": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wparentheses",
+      "guideline:sei-cert",
+      "label-tool-skip:severity",
       "profile:default",
+      "sei-cert:exp45-c",
       "profile:extreme",
+      "profile:security",
       "profile:sensitive",
       "severity:MEDIUM"
     ],
@@ -4196,6 +4249,10 @@
     ],
     "clang-diagnostic-pointer-to-int-cast": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wpointer-to-int-cast",
+      "guideline:sei-cert",
+      "label-tool-skip:severity",
+      "profile:security",
+      "sei-cert:int36-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-pointer-type-mismatch": [
@@ -4562,9 +4619,14 @@
     ],
     "clang-diagnostic-return-type": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wreturn-type",
+      "guideline:sei-cert",
+      "label-tool-skip:severity",
       "profile:default",
       "profile:extreme",
+      "profile:security",
       "profile:sensitive",
+      "sei-cert:msc37-c",
+      "sei-cert:msc52-cpp",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-return-type-c-linkage": [
@@ -4626,9 +4688,13 @@
     ],
     "clang-diagnostic-self-assign-overloaded": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wself-assign-overloaded",
+      "guideline:sei-cert",
+      "label-tool-skip:severity",
       "profile:default",
       "profile:extreme",
+      "profile:security",
       "profile:sensitive",
+      "sei-cert:oop54-cpp",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-self-move": [
@@ -4783,9 +4849,14 @@
     ],
     "clang-diagnostic-sometimes-uninitialized": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wsometimes-uninitialized",
+      "guideline:sei-cert",
+      "label-tool-skip:severity",
       "profile:default",
       "profile:extreme",
+      "profile:security",
       "profile:sensitive",
+      "sei-cert:dcl41-c",
+      "sei-cert:exp33-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-source-mgr": [
@@ -5272,16 +5343,24 @@
     ],
     "clang-diagnostic-uninitialized": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wuninitialized",
+      "guideline:sei-cert",
+      "label-tool-skip:severity",
       "profile:default",
       "profile:extreme",
+      "profile:security",
       "profile:sensitive",
-      "severity:MEDIUM"
+      "sei-cert:exp33-c",
+      "severity:HIGH"
     ],
     "clang-diagnostic-uninitialized-const-reference": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wuninitialized-const-reference",
+      "guideline:sei-cert",
+      "label-tool-skip:severity",
       "profile:default",
       "profile:extreme",
+      "profile:security",
       "profile:sensitive",
+      "sei-cert:exp33-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-unknown-argument": [
@@ -5600,6 +5679,11 @@
     ],
     "clang-diagnostic-varargs": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#wvarargs",
+      "guideline:sei-cert",
+      "label-tool-skip:severity",
+      "profile:security",
+      "sei-cert:exp47-c",
+      "sei-cert:exp58-cpp",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-variadic-macros": [
@@ -5701,10 +5785,14 @@
     ],
     "concurrency-mt-unsafe": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/concurrency/mt-unsafe.html",
+      "guideline:sei-cert",
+      "profile:security",
+      "sei-cert:con33-c",
       "severity:MEDIUM"
     ],
     "concurrency-thread-canceltype-asynchronous": [
       "doc_url:https://clang.llvm.org/extra/clang-tidy/checks/concurrency/thread-canceltype-asynchronous.html",
+      "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
       "profile:security",

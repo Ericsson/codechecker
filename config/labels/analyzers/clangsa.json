@@ -427,6 +427,7 @@
     ],
     "core.StackAddressEscape": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#core-stackaddressescape-c",
+      "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
       "profile:security",
