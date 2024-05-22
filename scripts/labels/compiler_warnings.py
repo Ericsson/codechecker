@@ -1,3 +1,4 @@
+# FIXME: Subsume into the newer label_tool package.
 import argparse
 import json
 import urllib3

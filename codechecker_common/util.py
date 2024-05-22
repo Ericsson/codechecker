@@ -34,9 +34,7 @@ def arg_match(options, args):
 
 
 def clamp(min_: int, value: int, max_: int) -> int:
-    """
-    Clamps ``value`` to be between ``min_`` and ``max_``, inclusive.
-    """
+    """Clamps ``value`` such that ``min_ <= value <= max_``."""
     if min_ > max_:
         raise ValueError("min <= max required")
     return min(max(min_, value), max_)
