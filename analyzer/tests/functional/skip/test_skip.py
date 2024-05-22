@@ -22,6 +22,8 @@ import subprocess
 import tempfile
 import unittest
 
+from pathlib import Path
+
 from libtest import env
 
 
@@ -63,9 +65,14 @@ class TestSkip(unittest.TestCase):
         self.report_dir = os.path.join(self.test_workspace, "reports")
         self.test_dir = os.path.join(os.path.dirname(__file__), 'test_files')
 
-    def __analyze_simple(self, build_json, analyzer_extra_options=None):
+    def __analyze_simple(self,
+                         build_json,
+                         analyzer_extra_options=None,
+                         cwd=None):
         """ Analyze the 'simple' project. """
-        test_dir = os.path.join(self.test_dir, "simple")
+        if not cwd:
+            cwd = os.path.join(self.test_dir, "simple")
+
         analyze_cmd = [
             self._codechecker_cmd, "analyze", "-c", build_json,
             "--analyzers", "clangsa", "-o", self.report_dir]
@@ -77,7 +84,7 @@ class TestSkip(unittest.TestCase):
             analyze_cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            cwd=test_dir,
+            cwd=cwd,
             encoding="utf-8",
             errors="ignore")
         out, err = process.communicate()
@@ -267,6 +274,79 @@ class TestSkip(unittest.TestCase):
         self.assertTrue(plist_files)
         self.assertTrue(all('skip_header.cpp' in f for f in plist_files))
 
+    def test_analyze_relative_with_file_option(self):
+        """
+        Analyze a file with the --file option with a compilation database
+        in which the file entry is relative to the directory.
+        """
+        def check_analyze_out(out):
+            # Checks if analyze command was successful
+            self.assertNotIn("There were no compilation commands in the" +
+                             "provided compilation database or all of" +
+                             "them were skipped.",
+                             out)
+            self.assertIn("Starting static analysis", out)
+            # file_to_be_skipped.cpp must not be in the list of analyzed files
+            self.assertNotIn("file_to_be_skipped.cpp", out)
+            # skip_header.cpp must be in the list of analyzed files
+            self.assertIn("skip_header.cpp", out)
+
+        def check_parse_out(out):
+            # Checks if the parse command was successful
+            reports = out[0]
+            self.assertNotIn("file_to_be_skipped.cpp", reports)
+            # skip_header.cpp must be in the reports
+            self.assertIn("skip_header.cpp", reports)
+
+        # Copy test files to the test workspace
+        shutil.copytree(Path(self.test_dir, "simple"),
+                        Path(self.test_workspace, "rel_simple"))
+        # Obtain a compilation database, copy it to the prepared test workspace
+        self.__log_and_analyze_simple()
+        build_json = Path(self.test_workspace, "rel_simple", "build.json")
+        shutil.copy(Path(self.test_workspace, "build.json"), build_json)
+
+        compilation_commands = None
+        with open(build_json, 'r') as f:
+            compilation_commands = json.load(f)
+
+        for entry in compilation_commands:
+            entry["directory"] = str(Path(self.test_workspace))
+            entry["file"] = str(Path("rel_simple", entry["file"]))
+
+        with open(build_json, 'w') as f:
+            json.dump(compilation_commands, f)
+
+        # Do the CodeChecker Analyze with --file
+        out, _ = self.__analyze_simple(build_json, ["--clean", "--file", Path(
+            self.test_workspace, "rel_simple", "skip_header.cpp").absolute()])
+        check_analyze_out(out)
+
+        out = self.__run_parse()
+        check_parse_out(out)
+
+        # Also test where the directory is a ".".
+        for entry in compilation_commands:
+            entry["directory"] = "."
+
+        with open(build_json, 'w') as f:
+            json.dump(compilation_commands, f)
+
+        # Do the CodeChecker Analyze with --file
+        # We also need to set cwd to test_workspace
+        out, _ = self.__analyze_simple(build_json,
+                                       ["--clean",
+                                        "--file",
+                                           Path(
+                                               self.test_workspace,
+                                               "rel_simple",
+                                               "skip_header.cpp").absolute()],
+                                       cwd=self.test_workspace)
+        check_analyze_out(out)
+
+        out = self.__run_parse()
+        check_parse_out(out)
+
     def test_analyze_header_with_file_option_and_intercept_json(self):
         """
         Analyze a header file with the --file option and a compilation database
@@ -340,7 +420,7 @@ class TestSkip(unittest.TestCase):
                 "--ignore", skip_file.name,
                 "--file", "*/skip_header.cpp"])
             print(glob.glob(
-                    os.path.join(self.report_dir, '*.plist')))
+                os.path.join(self.report_dir, '*.plist')))
             self.assertFalse(
                 any('skip_header.cpp' not in f for f in glob.glob(
                     os.path.join(self.report_dir, '*.plist'))))
@@ -357,7 +437,7 @@ class TestSkip(unittest.TestCase):
                 "--ignore", skip_file.name,
                 "--file", "*/skip_header.cpp"])
             print(glob.glob(
-                    os.path.join(self.report_dir, '*.plist')))
+                os.path.join(self.report_dir, '*.plist')))
             self.assertFalse(
                 any('skip_header.cpp' not in f for f in glob.glob(
                     os.path.join(self.report_dir, '*.plist'))))
