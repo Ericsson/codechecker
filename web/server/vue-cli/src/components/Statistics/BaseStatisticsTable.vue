@@ -326,6 +326,26 @@
       </span>
     </template>
 
+    <template #item.guidelineRules="{ item }">
+      <div v-if="item.guidelineRules.length">
+        <div 
+          v-for="guidelineRule in item.guidelineRules"
+          :key="guidelineRule.type"
+        >
+          <span class="type">
+            {{ guidelineRule.type }}:
+          </span>
+          <span 
+            v-for="rule in guidelineRule.rules"
+            :key="rule"
+            :style="getRuleStyle(guidelineRule)"
+          >
+            {{ rule }}
+          </span>
+        </div>
+      </div>
+    </template>
+
     <template v-if="necessaryTotal" slot="body.append">
       <tr>
         <td class="text-center" :colspan="colspan">
@@ -420,6 +440,13 @@ export default {
         query["severity"] = this.severityFromCodeToString(severity);
 
       return query;
+    },
+
+    getRuleStyle(guidelineRule) {
+      return {
+        display: guidelineRule.rules.length > 1 ? "block" : "inline-block",
+        "margin-left": guidelineRule.rules.length > 1 ? "1em" : "0"
+      };
     }
   }
 };
@@ -436,5 +463,9 @@ export default {
   &:not(.severity):hover {
     text-decoration: underline;
   }
+}
+
+.type {
+  font-weight: bold;
 }
 </style>
