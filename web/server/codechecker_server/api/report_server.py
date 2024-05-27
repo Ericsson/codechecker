@@ -3642,10 +3642,27 @@ class ThriftRequestHandler:
             # cascades and such. Deleting runs in separate transactions don't
             # exceed a potential statement timeout threshold in a DBMS.
             runs = []
+            deleted_run_cnt = 0
+
             for run in q.all():
-                runs.append(run.name)
-                session.delete(run)
-                session.commit()
+                try:
+                    runs.append(run.name)
+                    session.delete(run)
+                    session.commit()
+                    deleted_run_cnt += 1
+                except Exception as e:
+                    # TODO: Display alert on the GUI if there's an exception
+                    # TODO: Catch SQLAlchemyError instead of generic
+                    #  exception once it is confirmed that the exception is
+                    #  due to a large run deletion timeout based on server
+                    #  log warnings
+                    # This exception is handled silently because it is
+                    # expected to never occur, but there have been some rare
+                    # cases where it occurred due to underlying reasons.
+                    # Handling it silently ensures that the Number of runs
+                    # counter is not affected by the exception.
+                    LOG.warning(f"Suppressed an exception while "
+                                f"deleting run {run.name}. Error: {e}")
 
             session.close()
 
@@ -3654,7 +3671,7 @@ class ThriftRequestHandler:
 
         # Decrement the number of runs but do not update the latest storage
         # date.
-        self._set_run_data_for_curr_product(-1 * len(runs))
+        self._set_run_data_for_curr_product(-1 * deleted_run_cnt)
 
         # Remove unused comments and unused analysis info from the database.
         # Originally db_cleanup.remove_unused_data() was used here which
