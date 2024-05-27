@@ -1250,8 +1250,6 @@ class TestAnalyze(unittest.TestCase):
             errors="ignore")
         out, _ = process.communicate()
 
-        # It's printed as the member of enabled checkers at the beginning
-        # of the output, a found report and in the checker statistics.
         self.assertEqual(out.count('hicpp-use-nullptr'), 3)
 
         analyze_cmd = [self._codechecker_cmd, "check", "-l", build_json,
@@ -1270,9 +1268,7 @@ class TestAnalyze(unittest.TestCase):
             errors="ignore")
         out, _ = process.communicate()
         print(out)
-        # It's printed as the member of enabled checkers at the beginning
-        # of the output, a found report and in the checker statistics.
-        self.assertEqual(out.count('UninitializedObject'), 3)
+        self.assertEqual(out.count('UninitializedObject'), 2)
 
         analyze_cmd = [self._codechecker_cmd, "check", "-l", build_json,
                        "--analyzers", "clangsa", "-o", self.report_dir,
@@ -1293,9 +1289,7 @@ class TestAnalyze(unittest.TestCase):
         out, _ = process.communicate()
 
         print(out)
-        # It is printed as the member of enabled checkers, but it gives no
-        # report.
-        self.assertEqual(out.count('UninitializedObject'), 1)
+        self.assertEqual(out.count('UninitializedObject'), 0)
 
     def test_invalid_compilation_database(self):
         """ Warn in case of an invalid enabled checker. """

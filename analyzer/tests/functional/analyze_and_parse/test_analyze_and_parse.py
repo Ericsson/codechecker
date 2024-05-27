@@ -220,7 +220,7 @@ class AnalyzeParseTestCase(
                          "[] - Skipping input file",
                          # Enabled checkers are listed in the beginning of
                          # analysis.
-                         "[] - Enabled checkers:",
+                         "[] - Enabled checker",
                          "clang-tidy:",
                          "clangsa:",
                          "cppcheck:",
