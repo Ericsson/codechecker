@@ -3188,7 +3188,10 @@
     ],
     "clang-diagnostic-invalid-noreturn": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#winvalid-noreturn",
-      "severity:MEDIUM"
+      "guideline:sei-cert",
+      "profile:security",
+      "severity:MEDIUM",
+      "sei-cert:msc53-cpp"
     ],
     "clang-diagnostic-invalid-offsetof": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#winvalid-offsetof",

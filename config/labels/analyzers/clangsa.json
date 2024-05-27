@@ -1057,6 +1057,16 @@
       "sei-cert:pos52-c",
       "severity:HIGH"
     ],
+    "unix.Stream": [
+      "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-stream-c",
+      "guideline:sei-cert",
+      "profile:default",
+      "profile:extreme",
+      "profile:security",
+      "profile:sensitive",
+      "sei-cert:fio42-c",
+      "severity:MEDIUM"
+    ],
     "unix.Vfork": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-vfork-c",
       "guideline:sei-cert",
