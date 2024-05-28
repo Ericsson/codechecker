@@ -497,21 +497,22 @@ def assemble_zip(inputs,
             file_paths.update(report.original_files)
             file_report_positions[report.file.original_path].add(report.line)
 
-    files_to_delete = []
+    temp_dir = tempfile.mkdtemp('-unique-plists', dir=inputs[0])
     for dirname, analyzer_reports in unique_reports.items():
         for analyzer_name, reports in analyzer_reports.items():
             if not analyzer_name:
                 analyzer_name = 'unknown'
-            _, tmpfile = tempfile.mkstemp(f'-{analyzer_name}.plist')
+            _, tmpfile = tempfile.mkstemp(
+                f'-{analyzer_name}.plist', dir=temp_dir)
 
             report_file.create(tmpfile, reports, checker_labels,
                                AnalyzerInfo(analyzer_name))
             LOG.debug(f"Stored '{analyzer_name}' unique reports in {tmpfile}.")
             files_to_compress[dirname].add(tmpfile)
-            files_to_delete.append(tmpfile)
 
     if changed_files:
         reports_helper.dump_changed_files(changed_files)
+        shutil.rmtree(temp_dir)
         sys.exit(1)
 
     if not file_paths:
@@ -632,6 +633,7 @@ rerun the analysis to be able to store the results on the server.
 
 Configured report limit for this product: {p.reportLimit}
         """)
+        shutil.rmtree(temp_dir)
         sys.exit(1)
 
     zip_size = os.stat(zip_file).st_size
@@ -649,8 +651,7 @@ Configured report limit for this product: {p.reportLimit}
              sizeof_fmt(zip_size), sizeof_fmt(compressed_zip_size))
 
     # We are responsible for deleting these.
-    for file in files_to_delete:
-        os.remove(file)
+    shutil.rmtree(temp_dir)
 
 
 def should_be_zipped(input_file: str, input_files: Iterable[str]) -> bool:
