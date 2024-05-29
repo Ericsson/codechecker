@@ -39,7 +39,7 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
     DetectionStatus, DiffType, \
     Encoding, ExportData, \
     Order, \
-    ReportData, ReportDetails, ReviewData, ReviewStatusRule, \
+    ReportData, ReportDetails, ReportStatus, ReviewData, ReviewStatusRule, \
     ReviewStatusRuleFilter, ReviewStatusRuleSortMode, \
     ReviewStatusRuleSortType, RunData, RunFilter, RunHistoryData, \
     RunReportCount, RunSortType, RunTagCount, \
@@ -70,8 +70,8 @@ from ..database.run_db_model import \
     SourceComponent
 
 from .thrift_enum_helper import detection_status_enum, \
-    detection_status_str, review_status_enum, review_status_str, \
-    report_extended_data_type_enum
+    detection_status_str, report_status_enum, \
+    review_status_enum, review_status_str, report_extended_data_type_enum
 
 
 LOG = get_logger('server')
@@ -298,6 +298,28 @@ def process_report_filter(
                 .distinct()
 
             OR.append(Report.bug_id.in_(q))
+
+        AND.append(or_(*OR))
+
+    if report_filter.reportStatus:
+        dst = list(map(detection_status_str,
+                       (DetectionStatus.NEW,
+                        DetectionStatus.UNRESOLVED,
+                        DetectionStatus.REOPENED)))
+        rst = list(map(review_status_str,
+                       (API_ReviewStatus.UNREVIEWED,
+                        API_ReviewStatus.CONFIRMED)))
+
+        OR = []
+        filter_query = and_(
+            Report.review_status.in_(rst),
+            Report.detection_status.in_(dst)
+        )
+        if ReportStatus.OUTSTANDING in report_filter.reportStatus:
+            OR.append(filter_query)
+
+        if ReportStatus.CLOSED in report_filter.reportStatus:
+            OR.append(not_(filter_query))
 
         AND.append(or_(*OR))
 
@@ -3254,6 +3276,60 @@ class ThriftRequestHandler:
 
             results = dict(checker_messages.all())
         return results
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def getReportStatusCounts(self, run_ids, report_filter, cmp_data):
+        """
+          If the run id list is empty the metrics will be counted
+          for all of the runs and in compare mode all of the runs
+          will be used as a baseline excluding the runs in compare data.
+        """
+        self.__require_view()
+        with DBSession(self._Session) as session:
+            filter_expression, join_tables = process_report_filter(
+                session, run_ids, report_filter, cmp_data)
+
+            extended_table = session.query(
+                Report.review_status,
+                Report.detection_status,
+                Report.bug_id
+            )
+
+            if report_filter.annotations is not None:
+                extended_table = extended_table.outerjoin(
+                    ReportAnnotations,
+                    ReportAnnotations.report_id == Report.id
+                )
+                extended_table = extended_table.group_by(Report.id)
+
+            extended_table = apply_report_filter(
+                extended_table, filter_expression, join_tables)
+
+            extended_table = extended_table.subquery()
+
+            is_outstanding_case = get_is_opened_case(extended_table)
+            case_label = "isOutstanding"
+
+            if report_filter.isUnique:
+                q = session.query(
+                    is_outstanding_case.label(case_label),
+                    func.count(extended_table.c.bug_id.distinct())) \
+                    .group_by(is_outstanding_case)
+            else:
+                q = session.query(
+                    is_outstanding_case.label(case_label),
+                    func.count(extended_table.c.bug_id)) \
+                    .group_by(is_outstanding_case)
+
+            results = {
+                report_status_enum(
+                    "outstanding" if isOutstanding
+                    else "closed"
+                ): count for isOutstanding, count in q
+            }
+
+            return results
 
     @exc_to_thrift_reqfail
     @timeit

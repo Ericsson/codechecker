@@ -20,6 +20,7 @@ import CheckerMessageFilter from "./CheckerMessageFilter";
 import BaseFilterMixin from "./BaseFilter.mixin";
 import BugPathLengthFilter from "./BugPathLengthFilter";
 import TestcaseFilter from "./TestcaseFilter";
+import ReportStatusFilter from "./ReportStatusFilter";
 
 export {
   AnalyzerNameFilter,
@@ -42,5 +43,6 @@ export {
   CheckerMessageFilter,
   BaseFilterMixin,
   BugPathLengthFilter,
-  TestcaseFilter
+  TestcaseFilter,
+  ReportStatusFilter
 };

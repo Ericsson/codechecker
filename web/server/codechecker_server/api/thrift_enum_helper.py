@@ -11,7 +11,7 @@ Thrift enum helper.
 
 
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import DetectionStatus, \
-        ExtendedReportDataType, ReviewStatus
+        ExtendedReportDataType, ReportStatus, ReviewStatus
 from codechecker_api.ProductManagement_v6.ttypes import Confidentiality
 
 
@@ -119,3 +119,23 @@ def report_extended_data_type_enum(status):
         return ExtendedReportDataType.MACRO
     elif status == 'fixit':
         return ExtendedReportDataType.FIXIT
+
+
+def report_status_str(status):
+    """
+    Returns the given report status Thrift enum value.
+    """
+    if status == ReportStatus.OUTSTANDING:
+        return 'outstanding'
+    elif status == ReportStatus.CLOSED:
+        return 'closed'
+
+
+def report_status_enum(status):
+    """
+    Converts the given report status to string.
+    """
+    if status == 'outstanding':
+        return ReportStatus.OUTSTANDING
+    elif status == 'closed':
+        return ReportStatus.CLOSED
