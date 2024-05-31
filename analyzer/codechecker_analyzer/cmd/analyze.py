@@ -16,6 +16,7 @@ import os
 import shutil
 import sys
 from typing import List
+from pathlib import Path
 
 from tu_collector import tu_collector
 
@@ -891,7 +892,8 @@ def get_affected_file_paths(
     """
     file_paths = []  # Use list to keep the order of the file paths.
     for file_filter in file_filters:
-        file_paths.append(file_filter)
+        file_paths.append(str(Path(file_filter).resolve())
+                          if '*' not in file_filter else file_filter)
 
         if os.path.exists(file_filter) and \
                 file_filter.endswith(header_file_extensions):
