@@ -80,7 +80,7 @@ def __get_report_hash_path_sensitive(report: Report) -> List[str]:
 
         # WARNING!!! Changing the error handling type for encoding errors
         # can influence the hash content!
-        line_content = report.file.get_line(event.line)
+        line_content = event.file.get_line(event.line)
 
         if line_content == '' and \
                 not os.path.isfile(report.file.original_path):
