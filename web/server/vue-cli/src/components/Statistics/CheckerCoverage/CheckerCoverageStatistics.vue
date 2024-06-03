@@ -117,6 +117,7 @@ import { BaseStatistics } from "@/components/Statistics";
 import CheckerCoverageStatisticsTable from "./CheckerCoverageStatisticsTable";
 import CheckerCoverageStatisticsDialog from "./CheckerCoverageStatisticsDialog";
 import {
+  Checker,
   MAX_QUERY_SIZE,
   ReportFilter,
   RunFilter
@@ -175,6 +176,7 @@ export default {
         return {
           checker: stat[checker_id].checkerName,
           severity: stat[checker_id].severity,
+          guidelineRules: stat[checker_id].guidelineRules,
           enabledInAllRuns: stat[checker_id].disabled.length === 0
             ? 1
             : 0,
@@ -201,12 +203,13 @@ export default {
     downloadCSV() {
       const data = [
         [
-          "Checker Name", "Severity", "Status",
+          "Checker Name", "guideline", "Severity", "Status",
           "Closed Reports", "Outstanding Reports",
         ],
         ...this.statistics.map(stat => {
           return [
             stat.checker,
+            this.formattedGuidelines(stat.guidelineRules),
             this.severityFromCodeToString(stat.severity),
             stat.enabledInAllRuns
               ? "Enabled in all selected runs"
@@ -261,7 +264,7 @@ export default {
 
       const filter = new ReportFilter(this.reportFilter);
 
-      this.checker_stat = await new Promise(resolve => {
+      const checker_stat = await new Promise(resolve => {
         ccService.getClient().getCheckerStatusVerificationDetails(
           this.runIds,
           filter,
@@ -270,6 +273,49 @@ export default {
           }));
       });
 
+      if ( checker_stat !== undefined ) {
+        const checkers = Object.values(checker_stat).map(stat => {
+          return new Checker({
+            analyzerName: stat.analyzerName,
+            checkerId: stat.checkerName
+          });
+        });
+
+        const guidelineRules = await new Promise(resolve => {
+          ccService.getClient().getCheckerLabels(
+            checkers,
+            handleThriftError(labels => {
+              resolve(labels.map(label => {
+                const guidelines = label.filter(
+                  param => param.startsWith("guideline")
+                );
+                return guidelines.map(g => {
+                  const guideline = g.split("guideline:")[1];
+                  const guidelineLabels = label.filter(
+                    param => param.startsWith(guideline)
+                  );
+                  return {
+                    type: guideline,
+                    rules: guidelineLabels.map(gl => {
+                      return gl.split(`${guideline}:`)[1];
+                    })
+                  };
+                });
+              }));
+            })
+          );
+        });
+
+        Object.keys(checker_stat).forEach(
+          (key, index) => {
+            checker_stat[key]["guidelineRules"] = guidelineRules[index]
+            !== undefined
+              ? guidelineRules[index]
+              : null;
+          });
+      }
+      
+      this.checker_stat = checker_stat;
       this.loading = false;
     },
 
@@ -330,6 +376,13 @@ export default {
       else {
         this.noProperRun = true;
       }
+    },
+
+    formattedGuidelines(guidelineRules) {
+      return guidelineRules.map(guidelineRule => {
+        const rules = guidelineRule.rules.join("; ");
+        return `${guidelineRule.type}: ${rules}`;
+      }).join("  ");
     }
   }
 };

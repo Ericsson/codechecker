@@ -33,6 +33,10 @@ export default {
           value: "checker"
         },
         {
+          text: "Guideline",
+          value: "guidelineRules"
+        },
+        {
           text: "Severity",
           value: "severity",
           align: "center"
