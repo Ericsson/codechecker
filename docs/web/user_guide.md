@@ -773,6 +773,10 @@ filter arguments:
                         'year:month:day:hour:minute:second' (the "time" part
                         can be omitted, in which case midnight (00:00:00) is
                         used).
+  --anywhere-on-report-path
+                        Filter reports where the report path not only ends in
+                        the files given by --file or --component, but goes
+                        through them. (default: False)
 ```
 
 #### Source components (`components`)

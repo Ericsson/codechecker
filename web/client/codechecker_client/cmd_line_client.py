@@ -11,6 +11,7 @@ Command line client.
 
 
 from collections import defaultdict, namedtuple
+from copy import deepcopy
 from datetime import datetime, timedelta
 import hashlib
 import os
@@ -577,6 +578,16 @@ def parse_report_filter_offline(args):
     if detected_at or fixed_at:
         report_filter.date = ttypes.ReportDate(detected=detected_at,
                                                fixed=fixed_at)
+
+    report_filter.fileMatchesAnyPoint = args.anywhere_on_report_path
+    report_filter.componentMatchesAnyPoint = args.anywhere_on_report_path
+
+    if args.anywhere_on_report_path and \
+            'file_path' not in args and 'component' not in args:
+        LOG.warning(
+            'The flag --anywhere-on-report-path is meaningful only if --file '
+            'or --component is used.')
+
     return report_filter
 
 
@@ -1416,8 +1427,11 @@ def handle_list_result_types(args):
     init_logger(args.verbose if 'verbose' in args else None, stream)
     check_deprecated_arg_usage(args)
 
-    def get_statistics(client, run_ids, field, values):
-        report_filter = parse_report_filter(client, args)
+    def get_statistics(
+        client, run_ids, field, values,
+        all_checkers_report_filter
+    ):
+        report_filter = deepcopy(all_checkers_report_filter)
 
         setattr(report_filter, field, values)
         checkers = client.getCheckerCounts(run_ids,
@@ -1454,21 +1468,24 @@ def handle_list_result_types(args):
     all_checkers_dict = dict((res.name, res) for res in all_checkers)
 
     unrev_checkers = get_statistics(client, run_ids, 'reviewStatus',
-                                    [ttypes.ReviewStatus.UNREVIEWED])
+                                    [ttypes.ReviewStatus.UNREVIEWED],
+                                    all_checkers_report_filter)
 
     confirmed_checkers = get_statistics(client, run_ids, 'reviewStatus',
-                                        [ttypes.ReviewStatus.CONFIRMED])
+                                        [ttypes.ReviewStatus.CONFIRMED],
+                                        all_checkers_report_filter)
 
     false_checkers = get_statistics(client, run_ids, 'reviewStatus',
-                                    [ttypes.ReviewStatus.FALSE_POSITIVE])
+                                    [ttypes.ReviewStatus.FALSE_POSITIVE],
+                                    all_checkers_report_filter)
 
     intentional_checkers = get_statistics(client, run_ids, 'reviewStatus',
-                                          [ttypes.ReviewStatus.INTENTIONAL])
+                                          [ttypes.ReviewStatus.INTENTIONAL],
+                                          all_checkers_report_filter)
 
     # Get severity counts
-    report_filter = parse_report_filter(client, args)
-
-    sev_count = client.getSeverityCounts(run_ids, report_filter, None)
+    sev_count = client.getSeverityCounts(
+        run_ids, all_checkers_report_filter, None)
 
     severities = []
     severity_total = 0
