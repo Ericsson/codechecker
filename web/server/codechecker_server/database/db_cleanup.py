@@ -133,12 +133,14 @@ def remove_unused_comments(product):
         LOG.debug("[%s] Garbage collection of dangling comments started...",
                   product.endpoint)
         try:
-            report_hashes = session.query(Report.bug_id) \
-                .group_by(Report.bug_id) \
+            sub = session.query(Comment.id) \
+                .join(Report,
+                      Comment.bug_hash == Report.bug_id,
+                      isouter=True) \
+                .filter(Report.id.is_(None)) \
                 .subquery()
-
             count = session.query(Comment) \
-                .filter(Comment.bug_hash.notin_(report_hashes)) \
+                .filter(Comment.id.in_(sub)) \
                 .delete(synchronize_session=False)
             if count:
                 LOG.debug("%d dangling comments deleted.", count)
