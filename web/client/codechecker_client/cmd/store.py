@@ -20,6 +20,7 @@ import os
 import signal
 import sys
 import tempfile
+import uuid
 import zipfile
 import zlib
 import shutil
@@ -502,8 +503,8 @@ def assemble_zip(inputs,
         for analyzer_name, reports in analyzer_reports.items():
             if not analyzer_name:
                 analyzer_name = 'unknown'
-            _, tmpfile = tempfile.mkstemp(
-                f'-{analyzer_name}.plist', dir=temp_dir)
+            tmpfile = os.path.join(
+                temp_dir, f'{uuid.uuid4()}-{analyzer_name}.plist')
 
             report_file.create(tmpfile, reports, checker_labels,
                                AnalyzerInfo(analyzer_name))
