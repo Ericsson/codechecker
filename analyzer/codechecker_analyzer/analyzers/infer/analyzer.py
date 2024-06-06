@@ -9,7 +9,6 @@
 """
 from collections import defaultdict
 # TODO distutils will be removed in python3.12
-from distutils.version import StrictVersion
 import os
 import pickle
 import shlex
@@ -21,7 +20,6 @@ from codechecker_common.logger import get_logger
 from codechecker_analyzer import analyzer_context
 
 from .. import analyzer_base
-from ..flag import has_flag
 from ..config_handler import CheckerState
 
 from .config_handler import InferConfigHandler
@@ -106,7 +104,7 @@ class Infer(analyzer_base.SourceAnalyzer):
             for entry in output.decode().split('\n'):
                 if len(entry.split(":")) != 8:
                     continue
-                entry_id, _, _, _, _, checker, *rest = entry.strip().split(":")
+                entry_id, _, _, _, _, checker, *_ = entry.strip().split(":")
                 entry_id = entry_id.replace("_", "-").lower()
                 checker_list.append((f"infer-{entry_id}",
                                      f"used by '{checker}' checker."))
@@ -188,8 +186,7 @@ class Infer(analyzer_base.SourceAnalyzer):
         """
         Check the version compatibility of the given analyzer binary.
         """
-        analyzer_version = cls.get_binary_version(environ)
-        return
+        return None
 
     def construct_result_handler(self, buildaction, report_output,
                                  skiplist_handler):
