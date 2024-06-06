@@ -1,7 +1,7 @@
 NORMAL#CodeChecker log --output $LOGFILE$ --build "make infer_simple" --quiet
-NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers infer --enable=extreme
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers infer --enable=infer-null-dereference
 NORMAL#CodeChecker parse $OUTPUT$
-CHECK#CodeChecker check --build "make infer_simple" --output $OUTPUT$ --quiet --analyzers infer --enable=extreme
+CHECK#CodeChecker check --build "make infer_simple" --output $OUTPUT$ --quiet --analyzers infer --enable=infer-null-dereference
 -----------------------------------------------
 [] - Starting build...
 [] - Using CodeChecker ld-logger.
@@ -18,10 +18,9 @@ CHECK#CodeChecker check --build "make infer_simple" --output $OUTPUT$ --quiet --
 [] - To store results use the "CodeChecker store" command.
 [] - See --help and the user guide for further options about parsing and storing the reports.
 [] - ----=================----
-[HIGH] infer_simple.cpp:5:3: double-‘free’ of ‘i’ [gcc-double-free]
-  free(i);
+[HIGH] infer_simple.cpp:5:3: pointer `s` last assigned on line 4 could be null and is dereferenced at line 5, column 3. [infer-null-dereference]
+  *s = 42;
   ^
-
 
 Found 1 defect(s) in infer_simple.cpp
 
@@ -35,19 +34,19 @@ HIGH     |                 1
 ----=================----
 
 ----==== Checker Statistics ====----
-----------------------------------------------
-Checker name              | Severity | Number of reports
-----------------------------------------------
-infer-empty-vector-access | HIGH     |                 1
-----------------------------------------------
+-----------------------------------------------------
+Checker name           | Severity | Number of reports
+-----------------------------------------------------
+infer-null-dereference | HIGH     |                 1
+-----------------------------------------------------
 ----=================----
 
 ----==== File Statistics ====----
-----------------------------------
+------------------------------------
 File name        | Number of reports
-----------------------------------
+------------------------------------
 infer_simple.cpp |                 1
-----------------------------------
+------------------------------------
 ----=================----
 
 ----======== Summary ========----
