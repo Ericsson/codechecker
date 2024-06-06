@@ -11,7 +11,6 @@ Result handler for Infer.
 from typing import Optional
 from pathlib import Path
 import shutil
-import os
 
 from codechecker_report_converter.report.parser.base import AnalyzerInfo
 from codechecker_report_converter.analyzers.infer.analyzer_result import \
@@ -50,7 +49,6 @@ class InferResultHandler(ResultHandler):
         """
         LOG.debug_analyzer(self.analyzer_stdout)
 
-        project_folder = Path(self.workspace).parent
         infer_out_folder = Path(self.workspace, "infer")
         infer_dest_file_name = Path(infer_out_folder,
                                     self.buildaction_hash, "report.json")
