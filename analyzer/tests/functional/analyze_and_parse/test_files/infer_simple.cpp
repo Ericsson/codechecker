@@ -1,6 +1,7 @@
-#include <vector>
-int foo(){
-  const std::vector<int> vec;
-  return vec[0]; // Empty vector access reported here
-  // https://fbinfer.com/docs/all-issue-types#empty_vector_access
+#include <stdlib.h>
+
+void test() {
+  int *s = NULL;
+  *s = 42;
+  // https://fbinfer.com/docs/all-issue-types#null_dereference
 }
