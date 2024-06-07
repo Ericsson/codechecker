@@ -29,7 +29,8 @@ from codechecker_common.output import USER_FORMATS
 DEFAULT_FILTER_VALUES = {
     'review_status': ['unreviewed', 'confirmed'],
     'detection_status': ['new', 'reopened', 'unresolved'],
-    'uniqueing': 'off'
+    'uniqueing': 'off',
+    'anywhere_on_report_path': False
 }
 
 DEFAULT_OUTPUT_FORMATS = ["plaintext"] + USER_FORMATS
@@ -423,6 +424,15 @@ def __add_filtering_arguments(parser, defaults=None, diff_mode=False):
                               "'year:month:day:hour:minute:second' (the "
                               "\"time\" part can be omitted, in which case "
                               "midnight (00:00:00) is used).")
+
+    f_group.add_argument('--anywhere-on-report-path',
+                         dest='anywhere_on_report_path',
+                         required=False,
+                         default=init_default('anywhere_on_report_path'),
+                         action="store_true",
+                         help="Filter reports where the report path not only "
+                              "ends in the files given by --file or "
+                              "--component, but goes through them.")
 
 
 def __register_results(parser):
