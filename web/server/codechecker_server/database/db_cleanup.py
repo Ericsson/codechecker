@@ -156,15 +156,30 @@ def remove_unused_comments(product):
 
 
 def remove_unused_analysis_info(product):
-    # Analysis info deletion is a relatively slow operation due to database
-    # cascades. Removing files in smaller chunks prevents reaching a potential
-    # database statement timeout. This hard-coded value is a safe choice
-    # according to some measurements.
-    CHUNK_SIZE = 500
     with DBSession(product.session_factory) as session:
         LOG.debug("[%s] Garbage collection of dangling analysis info "
                   "started...", product.endpoint)
         try:
+            # Disable foreign key constraints to avoid slow delete in Postgres
+            if session.bind.dialect.name == "postgresql":
+                rh_ai_foreign_keys = get_foreign_keys(
+                    session,
+                    RunHistoryAnalysisInfo.name,
+                    AnalysisInfo.__tablename__
+                )
+                drop_foreign_keys(session,
+                                  RunHistoryAnalysisInfo.name,
+                                  rh_ai_foreign_keys)
+
+                rep_ai_foreign_keys = get_foreign_keys(
+                    session,
+                    ReportAnalysisInfo.name,
+                    AnalysisInfo.__tablename__
+                )
+                drop_foreign_keys(session,
+                                  ReportAnalysisInfo.name,
+                                  rep_ai_foreign_keys)
+
             to_delete = session.query(AnalysisInfo.id) \
                 .join(
                     RunHistoryAnalysisInfo,
@@ -177,21 +192,16 @@ def remove_unused_analysis_info(product):
                     isouter=True) \
                 .filter(
                     RunHistoryAnalysisInfo.c.analysis_info_id.is_(None),
-                    ReportAnalysisInfo.c.analysis_info_id.is_(None))
+                    ReportAnalysisInfo.c.analysis_info_id.is_(None)) \
+                .subquery()
 
-            to_delete = map(lambda x: x[0], to_delete)
+            count = session.query(AnalysisInfo) \
+                .filter(AnalysisInfo.id.in_(to_delete)) \
+                .delete(synchronize_session=False)
 
-            total_count = 0
-            for chunk in util.chunks(to_delete, CHUNK_SIZE):
-                count = session.query(AnalysisInfo) \
-                    .filter(AnalysisInfo.id.in_(chunk)) \
-                    .delete(synchronize_session=False)
-                if count:
-                    total_count += count
-
-            if total_count:
+            if count:
                 LOG.debug("[%s] %d dangling analysis info deleted.",
-                          product.endpoint, total_count)
+                          product.endpoint, count)
 
             session.commit()
 
@@ -201,6 +211,15 @@ def remove_unused_analysis_info(product):
                 sqlalchemy.exc.ProgrammingError) as ex:
             LOG.error("[%s] Failed to remove dangling analysis info: %s",
                       product.endpoint, str(ex))
+        finally:
+            # Re-enable foreign key constraints
+            if session.bind.dialect.name == "postgresql":
+                add_foreign_keys(session,
+                                 RunHistoryAnalysisInfo.name,
+                                 rh_ai_foreign_keys)
+                add_foreign_keys(session,
+                                 ReportAnalysisInfo.name,
+                                 rep_ai_foreign_keys)
 
 
 def upgrade_severity_levels(product, checker_labels):
@@ -324,3 +343,53 @@ def upgrade_severity_levels(product, checker_labels):
                 sqlalchemy.exc.ProgrammingError) as ex:
             LOG.error("[%s] Failed to upgrade severity levels: %s",
                       product.endpoint, str(ex))
+
+
+def get_foreign_keys(
+        session,
+        table_name,
+        referred_table_name,
+        constraint_name=None):
+    inspector = sqlalchemy.inspect(session.connection())
+
+    foreign_keys = list(filter(
+        lambda fk: fk["referred_table"] == referred_table_name
+        and (fk["name"] == constraint_name if constraint_name else True),
+        inspector.get_foreign_keys(table_name)
+    ))
+    return foreign_keys
+
+
+def drop_foreign_keys(session, table_name, foreign_keys):
+    for fk in foreign_keys:
+        session.execute(sqlalchemy.text(
+            f"ALTER TABLE {table_name} "
+            f"DROP CONSTRAINT {fk['name']};"
+        ))
+    session.commit()
+
+
+def add_foreign_keys(session, table_name, foreign_keys):
+    for fk in foreign_keys:
+        constraint_name = fk["name"]
+        constrained_columns = ", ".join(fk["constrained_columns"])
+        referred_table = fk["referred_table"]
+        referred_columns = ", ".join(fk["referred_columns"])
+
+        if get_foreign_keys(
+            session,
+            table_name,
+            referred_table,
+            constraint_name
+        ):
+            LOG.warning(f"Cannot add {constraint_name} constraint, "
+                        "it is already exists.")
+            continue
+
+        session.execute(sqlalchemy.text(
+            f"ALTER TABLE {table_name} "
+            f"ADD CONSTRAINT {constraint_name} "
+            f"FOREIGN KEY ({constrained_columns}) "
+            f"REFERENCES {referred_table}({referred_columns});"
+        ))
+    session.commit()
