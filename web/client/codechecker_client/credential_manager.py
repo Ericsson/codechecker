@@ -20,8 +20,8 @@ import portalocker
 from codechecker_common.logger import get_logger
 from codechecker_common.util import load_json
 
-from codechecker_web.shared.env import check_file_owner_rw, get_password_file,\
-    get_session_file
+from codechecker_web.shared.env import check_file_owner_rw, \
+    get_password_file, get_session_file
 from codechecker_web.shared.version import SESSION_COOKIE_NAME as _SCN
 
 LOG = get_logger('system')

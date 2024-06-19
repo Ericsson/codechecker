@@ -32,7 +32,7 @@ def main():
         print("Unit test already exists: " + new_test)
         sys.exit(1)
 
-    template = os.path.join(unit_test_path, 'unit_template.py')
+    template = os.path.join(unit_test_path, 'unit_test.template')
 
     with open(template, 'r', encoding="utf-8", errors="ignore") as init:
         new_test_content = init.read()
