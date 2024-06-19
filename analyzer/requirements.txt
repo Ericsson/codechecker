@@ -1,4 +1,4 @@
-lxml==4.9.3
+lxml==5.2.2
 portalocker==2.2.1
 psutil==5.8.0
 PyYAML==6.0.1
