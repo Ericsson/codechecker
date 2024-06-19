@@ -96,7 +96,7 @@ class GccResultHandler(ResultHandler):
         # unintentionally parse them, so we rename them.
         try:
             shutil.move(gcc_dest_file_name, gcc_dest_file_name + '.bak')
-        except(OSError) as e:
+        except (OSError) as e:
             LOG.error(e)
 
         for report in reports:
