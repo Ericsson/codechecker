@@ -1,7 +1,9 @@
-#include <stdlib.h>
+#include <iostream>
+using namespace std;
 
-void test() {
-  int *s = NULL;
-  *s = 42;
-  // https://fbinfer.com/docs/all-issue-types#null_dereference
+int main()
+{
+    int n = 123;
+    int m = n + 456;
+    return 0;
 }
