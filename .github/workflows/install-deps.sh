@@ -20,10 +20,10 @@ sudo apt-get install \
   cppcheck
 
 # Source: https://fbinfer.com/docs/getting-started
-VERSION=1.1.0; \
-curl -sSL "https://github.com/facebook/infer/releases/download/v$VERSION/infer-linux64-v$VERSION.tar.xz" \
+VERSION=1.2.0; \
+curl -sSL "https://github.com/facebook/infer/releases/download/v$VERSION/infer-linux-x86_64-v$VERSION.tar.xz" \
 | sudo tar -C /opt -xJ && \
-sudo ln -s "/opt/infer-linux64-v$VERSION/bin/infer" /usr/local/bin/infer
+sudo ln -s "/opt/infer-linux-x86_64-v$VERSION/bin/infer" /usr/local/bin/infer
 
 sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-14 9999
 sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-14 9999
