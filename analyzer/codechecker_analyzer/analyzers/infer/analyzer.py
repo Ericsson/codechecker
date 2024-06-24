@@ -102,9 +102,13 @@ class Infer(analyzer_base.SourceAnalyzer):
             output = subprocess.check_output(command,
                                              stderr=subprocess.DEVNULL)
             for entry in output.decode().split('\n'):
-                if len(entry.split(":")) != 8:
+                data = entry.strip().split(":")
+                if (len(data) < 7):
                     continue
-                entry_id, _, _, _, _, checker, *_ = entry.strip().split(":")
+
+                entry_id = data[0]
+                checker = data[6] if len(data) == 7 else data[5]
+
                 entry_id = entry_id.replace("_", "-").lower()
                 checker_list.append((f"infer-{entry_id}",
                                      f"used by '{checker}' checker."))
