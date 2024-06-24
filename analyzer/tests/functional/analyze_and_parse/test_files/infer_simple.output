@@ -1,7 +1,7 @@
 NORMAL#CodeChecker log --output $LOGFILE$ --build "make infer_simple" --quiet
-NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers infer --enable=infer-nullptr-dereference
+NORMAL#CodeChecker analyze $LOGFILE$ --output $OUTPUT$ --analyzers infer --enable=infer-dead-store
 NORMAL#CodeChecker parse $OUTPUT$
-CHECK#CodeChecker check --build "make infer_simple" --output $OUTPUT$ --quiet --analyzers infer --enable=infer-nullptr-dereference
+CHECK#CodeChecker check --build "make infer_simple" --output $OUTPUT$ --quiet --analyzers infer --enable=infer-dead-store
 -----------------------------------------------
 [] - Starting build...
 [] - Using CodeChecker ld-logger.
@@ -18,9 +18,9 @@ CHECK#CodeChecker check --build "make infer_simple" --output $OUTPUT$ --quiet --
 [] - To store results use the "CodeChecker store" command.
 [] - See --help and the user guide for further options about parsing and storing the reports.
 [] - ----=================----
-[HIGH] infer_simple.cpp:5:3: `s` could be null (null value originating from line 4) and is dereferenced. [infer-nullptr-dereference]
-  *s = 42;
-  ^
+[HIGH] infer_simple.cpp:7:5: The value written to `&m` is never used. [infer-dead-store]
+    int m = n + 456;
+    ^
 
 Found 1 defect(s) in infer_simple.cpp
 
@@ -34,11 +34,11 @@ HIGH     |                 1
 ----=================----
 
 ----==== Checker Statistics ====----
---------------------------------------------------------
-Checker name              | Severity | Number of reports
---------------------------------------------------------
-infer-nullptr-dereference | HIGH     |                 1
---------------------------------------------------------
+-----------------------------------------------
+Checker name     | Severity | Number of reports
+-----------------------------------------------
+infer-dead-store | HIGH     |                 1
+-----------------------------------------------
 ----=================----
 
 ----==== File Statistics ====----
