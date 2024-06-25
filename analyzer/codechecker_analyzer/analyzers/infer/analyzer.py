@@ -13,6 +13,7 @@ import os
 import pickle
 import shlex
 import subprocess
+import json
 from pathlib import Path
 
 from codechecker_common.logger import get_logger
@@ -97,6 +98,8 @@ class Infer(analyzer_base.SourceAnalyzer):
         """
         command = [self.analyzer_binary(), "help", "--list-issue-types"]
 
+        desc = json.load(open(Path(__file__).parent / "descriptions.json"))
+
         checker_list = []
         try:
             output = subprocess.check_output(command,
@@ -106,12 +109,16 @@ class Infer(analyzer_base.SourceAnalyzer):
                 if (len(data) < 7):
                     continue
 
-                entry_id = data[0]
-                checker = data[6] if len(data) == 7 else data[5]
+                entry_id = data[0].lower()
+                if entry_id in desc:
+                    description = desc[entry_id]
+                else:
+                    checker = data[6] if len(data) == 7 else data[5]
+                    description = f"used by '{checker}' checker"
 
-                entry_id = entry_id.replace("_", "-").lower()
+                entry_id = entry_id.replace("_", "-")
                 checker_list.append((f"infer-{entry_id}",
-                                     f"used by '{checker}' checker."))
+                                     description))
 
             return checker_list
         except (subprocess.CalledProcessError) as e:

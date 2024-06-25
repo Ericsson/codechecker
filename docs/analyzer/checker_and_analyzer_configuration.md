@@ -304,7 +304,7 @@ CodeChecker check -l ./compile_commands.json \
 # Configuring the FB-Infer Analyzer
 
 As of CodeChecker 6.23, Codechecker can now execute the Facebook Infer Analyzer.
-The minimum version of GCC we support is 1.0.0.
+The minimum version of Infer we support is 1.1.0.
 
 ## Analyzer Configuration
 
@@ -321,8 +321,8 @@ file separately and not the whole project as one.
 
 ``` shell
 CodeChecker check -l ./compile_commands.json \
-  --analyzers infer \ # Run GCC analyzer only
-  -e infer \ # enable all checkers starting with "gcc"
+  --analyzers infer \ # Run Infer analyzer only
+  -e infer \ # enable all checkers starting with "infer"
   -d infer-expensive-loop-invariant-call \ # disable infer-expensive-loop-invariant-call
   -o ./reports
 ```
