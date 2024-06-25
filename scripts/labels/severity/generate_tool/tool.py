@@ -232,7 +232,6 @@ def execute(
     Runs one instance of the generation for a specific analyser.
     """
     status = cast(ReturnFlags, 0)
-    generator = generator_class(analyser)
     missing = [checker for checker in labels if not labels[checker]]
     stats = Statistics(Analyser=analyser,
                        Generator=generator_class.kind,
