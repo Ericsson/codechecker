@@ -15,8 +15,8 @@ from typing import List, Optional, Set
 
 from tabulate import tabulate
 
-from ...checker_labels import SingleLabels, get_checker_labels, \
-    update_checker_labels
+from ...checker_labels import SingleLabels, SkipDirectiveRespectStyle, \
+    get_checker_labels, get_checkers_with_ignore_of_key, update_checker_labels
 from ...codechecker import default_checker_label_dir
 from ...exception import EngineError
 from ...output import Settings as GlobalOutputSettings, \
@@ -63,6 +63,9 @@ In case after the analysis there are still checkers which do not have a
 """
 )
 epilogue: str = ""
+
+
+K_DocUrl: str = "doc_url"
 
 
 def args(parser: Optional[argparse.ArgumentParser]) -> argparse.ArgumentParser:
@@ -211,8 +214,11 @@ def main(args: argparse.Namespace) -> Optional[int]:
                 analyser,
                 path)
             try:
-                labels = get_checker_labels(analyser, path, "doc_url")
-                pass
+                checkers_to_skip = get_checkers_with_ignore_of_key(
+                    path, K_DocUrl)
+                labels = get_checker_labels(analyser, path, K_DocUrl,
+                                            SkipDirectiveRespectStyle.AsPassed,
+                                            checkers_to_skip)
             except Exception:
                 import traceback
                 traceback.print_exc()
@@ -240,6 +246,7 @@ def main(args: argparse.Namespace) -> Optional[int]:
                         analyser,
                         generator_class,
                         labels,
+                        checkers_to_skip
                     )
                     statistics.append(statistic)
                     rc = int(tool.ReturnFlags(rc) | status)
@@ -269,7 +276,10 @@ def main(args: argparse.Namespace) -> Optional[int]:
                         analyser,
                         path)
                     try:
-                        update_checker_labels(analyser, path, "doc_url", urls)
+                        update_checker_labels(
+                            analyser, path, K_DocUrl, urls,
+                            SkipDirectiveRespectStyle.AsPassed,
+                            checkers_to_skip)
                     except Exception:
                         import traceback
                         traceback.print_exc()

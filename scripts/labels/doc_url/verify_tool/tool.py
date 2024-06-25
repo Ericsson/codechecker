@@ -25,7 +25,7 @@ class Statistics(NamedTuple):
     Analyser: str
     Checkers: int
     Verifier: str
-    Skipped: Optional[int]
+    Verifier_Skipped: Optional[int]
     Reset: Optional[int]
     Missing: Optional[int]
     Verified: Optional[int]
@@ -67,7 +67,7 @@ def execute(analyser: str,
     stats = Statistics(Analyser=analyser,
                        Checkers=len(labels),
                        Verifier=verifier_class.kind,
-                       Skipped=None,
+                       Verifier_Skipped=None,
                        Reset=None,
                        Missing=None,
                        Verified=None,
@@ -93,7 +93,7 @@ def execute(analyser: str,
         report.print_verifications(analyser, labels, ok, not_ok, missing)
         urls_to_save.update({checker: labels[checker] for checker in ok})
         verified = len(labels) - skip - len(missing)
-        stats = stats._replace(Skipped=skip if skip else None,
+        stats = stats._replace(Verifier_Skipped=skip if skip else None,
                                Missing=len(missing) if missing else None,
                                Verified=verified if verified else None,
                                OK=len(ok) if ok else None,
