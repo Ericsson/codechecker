@@ -18,7 +18,7 @@ CHECK#CodeChecker check --build "make infer_simple" --output $OUTPUT$ --quiet --
 [] - To store results use the "CodeChecker store" command.
 [] - See --help and the user guide for further options about parsing and storing the reports.
 [] - ----=================----
-[HIGH] infer_simple.cpp:7:5: The value written to `&m` is never used. [infer-dead-store]
+[HIGH] infer_simple.cpp:7:5: The value written to &m (type int) is never used. [infer-dead-store]
     int m = n + 456;
     ^
 
