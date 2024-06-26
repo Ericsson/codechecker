@@ -34,12 +34,6 @@ def build_stat_coll_cmd(action, config, source):
            '-Qunused-arguments',
            '--analyzer-output', 'text']
 
-    for plugin in ClangSA.analyzer_plugins():
-        cmd.extend(["-Xclang", "-plugin",
-                    "-Xclang", "checkercfg",
-                    "-Xclang", "-load",
-                    "-Xclang", plugin])
-
     cmd.extend(['-Xclang',
                 '-analyzer-opt-analyze-headers'])
 

@@ -147,8 +147,3 @@ def is_analyzer_from_path():
     if analyzers_from_path in ['yes', '1']:
         return True
     return False
-
-
-def get_clangsa_plugin_dir():
-    """ Return the value of the CC_CLANGSA_PLUGIN_DIR environment variable. """
-    return os.environ.get('CC_CLANGSA_PLUGIN_DIR')

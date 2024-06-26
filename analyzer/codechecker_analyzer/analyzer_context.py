@@ -340,14 +340,6 @@ class Context(metaclass=Singleton):
         return self._data_files_dir_path
 
     @property
-    def checker_plugin(self):
-        # Do not load the plugin because it might be incompatible.
-        if env.is_analyzer_from_path():
-            return None
-
-        return os.path.join(self._data_files_dir_path, 'plugin')
-
-    @property
     def checker_labels(self):
         return self._checker_labels
 
