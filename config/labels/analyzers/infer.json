@@ -209,12 +209,12 @@
         "infer-config-impact": [
             "doc_url:https://fbinfer.com/docs/all-issue-types#config_impact",
             "profile:unknown",
-            "severity:ADVICE"
+            "severity:STYLE"
         ],
         "infer-config-impact-strict": [
             "doc_url:https://fbinfer.com/docs/all-issue-types#config_impact_strict",
             "profile:unknown",
-            "severity:ADVICE"
+            "severity:STYLE"
         ],
         "infer-config-usage": [
             "doc_url:https://fbinfer.com/docs/all-issue-types#config_usage",
@@ -269,7 +269,7 @@
         "infer-data-flow-to-sink": [
             "doc_url:https://fbinfer.com/docs/all-issue-types#data_flow_to_sink",
             "profile:unknown",
-            "severity:ADVICE"
+            "severity:STYLE"
         ],
         "infer-deadlock": [
             "doc_url:https://fbinfer.com/docs/all-issue-types#deadlock",
@@ -804,7 +804,7 @@
         "infer-sensitive-data-flow": [
             "doc_url:https://fbinfer.com/docs/all-issue-types#sensitive_data_flow",
             "profile:unknown",
-            "severity:ADVICE"
+            "severity:STYLE"
         ],
         "infer-shell-injection": [
             "doc_url:https://fbinfer.com/docs/all-issue-types#shell_injection",
