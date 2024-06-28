@@ -1,7 +1,0 @@
-[
-	{
-		"directory": "/home/t/codechecker/analyzer/tests/functional/analyze_and_parse/test_files",
-		"command": "/usr/bin/g++ -w infer_simple.cpp -o /dev/null -c",
-		"file": "infer_simple.cpp"
-	}
-]
