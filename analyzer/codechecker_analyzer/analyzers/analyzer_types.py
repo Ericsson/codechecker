@@ -25,13 +25,16 @@ from .clangtidy.analyzer import ClangTidy
 from .clangsa.analyzer import ClangSA
 from .cppcheck.analyzer import Cppcheck
 from .gcc.analyzer import Gcc
+from .infer.analyzer import Infer
 
 LOG = get_logger('analyzer')
 
 supported_analyzers = {ClangSA.ANALYZER_NAME: ClangSA,
                        ClangTidy.ANALYZER_NAME: ClangTidy,
                        Cppcheck.ANALYZER_NAME: Cppcheck,
-                       Gcc.ANALYZER_NAME: Gcc}
+                       Gcc.ANALYZER_NAME: Gcc,
+                       Infer.ANALYZER_NAME: Infer
+                       }
 
 
 def is_ctu_capable():
