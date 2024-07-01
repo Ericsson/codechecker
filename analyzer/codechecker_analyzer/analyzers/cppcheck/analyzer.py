@@ -11,6 +11,7 @@ Cppcheck related functions.
 
 from collections import defaultdict
 # TODO distutils will be removed in python3.12
+# pylint: disable=deprecated-module
 from distutils.version import StrictVersion
 from pathlib import Path
 import os
@@ -68,6 +69,7 @@ def parse_version(cppcheck_output):
     match = version_re.match(cppcheck_output)
     if match:
         return match.group('version')
+    return None
 
 
 class Cppcheck(analyzer_base.SourceAnalyzer):
@@ -83,12 +85,12 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             .analyzer_binaries[cls.ANALYZER_NAME]
 
     @classmethod
-    def get_binary_version(self, environ, details=False) -> str:
+    def get_binary_version(cls, environ, details=False) -> str:
         """ Get analyzer version information. """
         # No need to LOG here, we will emit a warning later anyway.
-        if not self.analyzer_binary():
+        if not cls.analyzer_binary():
             return None
-        version = [self.analyzer_binary(), '--version']
+        version = [cls.analyzer_binary(), '--version']
         try:
             output = subprocess.check_output(version,
                                              env=environ,
@@ -105,7 +107,7 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
 
         return None
 
-    def add_checker_config(self, checker_cfg):
+    def add_checker_config(self, _):
         LOG.error("Checker configuration for Cppcheck is not implemented yet")
 
     def get_analyzer_mentioned_files(self, output):
@@ -114,7 +116,6 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         its standard outputs, which should be analyzer_stdout or
         analyzer_stderr from a result handler.
         """
-        pass
 
     def parse_analyzer_config(self):
         """
@@ -179,7 +180,7 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             analyzer_cmd.append('--enable=all')
 
             for checker_name, value in config.checks().items():
-                if value[0] == CheckerState.disabled:
+                if value[0] == CheckerState.DISABLED:
                     # TODO python3.9 removeprefix method would be nicer
                     # than startswith and a hardcoded slicing
                     if checker_name.startswith("cppcheck-"):
@@ -273,16 +274,17 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         """
         return []
 
-    def analyze(self, analyzer_cmd, res_handler, proc_callback=None):
-        env = None
+    def analyze(self, analyzer_cmd, res_handler, proc_callback=None, _=None):
+        environment = None
 
         original_env_file = os.environ.get(
             'CODECHECKER_ORIGINAL_BUILD_ENV')
         if original_env_file:
             with open(original_env_file, 'rb') as env_file:
-                env = pickle.load(env_file, encoding='utf-8')
+                environment = pickle.load(env_file, encoding='utf-8')
 
-        return super().analyze(analyzer_cmd, res_handler, proc_callback, env)
+        return super().analyze(
+            analyzer_cmd, res_handler, proc_callback, environment)
 
     def post_analyze(self, result_handler):
         """
@@ -315,7 +317,7 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
                 LOG.error(e.errno)
 
     @classmethod
-    def resolve_missing_binary(cls, configured_binary, env):
+    def resolve_missing_binary(cls, configured_binary, environ):
         """
         In case of the configured binary for the analyzer is not found in the
         PATH, this method is used to find a callable binary.
@@ -330,7 +332,7 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
 
         cppcheck = get_binary_in_path(['cppcheck'],
                                       r'^cppcheck(-\d+(\.\d+){0,2})?$',
-                                      env)
+                                      environ)
 
         if cppcheck:
             LOG.debug("Using '%s' for Cppcheck!", cppcheck)
@@ -407,7 +409,7 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         # in the label file.
         checker_labels = context.checker_labels
         checkers_from_label = checker_labels.checkers("cppcheck")
-        parsed_set = set([data[0] for data in checkers])
+        parsed_set = set(data[0] for data in checkers)
         for checker in set(checkers_from_label):
             if checker not in parsed_set:
                 checkers.append((checker, ""))

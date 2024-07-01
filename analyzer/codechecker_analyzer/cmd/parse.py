@@ -49,7 +49,7 @@ def init_logger(level, stream=None, logger_name='system'):
 
 EXPORT_TYPES = ['html', 'json', 'codeclimate', 'gerrit', 'baseline']
 
-epilog_env_var = f"""
+EPILOG_ENV_VAR = """
   CC_CHANGED_FILES       Path of changed files json from Gerrit. Use it when
                          generating gerrit output.
   CC_REPO_DIR            Root directory of the sources, i.e. the directory
@@ -59,7 +59,7 @@ epilog_env_var = f"""
                          generating gerrit output.
 """
 
-epilog_exit_status = """
+EPILOG_EXIT_STATUS = """
 0 - No report
 1 - CodeChecker error
 2 - At least one report emitted by an analyzer
@@ -85,11 +85,11 @@ printed by the `parse` command.""",
         'epilog': f"""
 Environment variables
 ------------------------------------------------
-{epilog_env_var}
+{EPILOG_ENV_VAR}
 
 Exit status
 ------------------------------------------------
-{epilog_exit_status}
+{EPILOG_EXIT_STATUS}
 """,
 
         # Help is shown when the "parent" CodeChecker command lists the
@@ -206,8 +206,7 @@ def add_arguments_to_parser(parser):
                         choices=REVIEW_STATUS_VALUES,
                         default=["confirmed", "unreviewed"],
                         help="Filter results by review statuses. Valid "
-                             "values are: {0}".format(
-                                 ', '.join(REVIEW_STATUS_VALUES)))
+                             f"values are: {', '.join(REVIEW_STATUS_VALUES)}")
 
     group = parser.add_argument_group("file filter arguments")
 
@@ -373,6 +372,8 @@ def main(args):
 
         if output_dir_path:
             return os.path.join(output_dir_path, default_file_name)
+
+        return None
 
     skip_handlers = SkipListHandlers()
     if 'files' in args:

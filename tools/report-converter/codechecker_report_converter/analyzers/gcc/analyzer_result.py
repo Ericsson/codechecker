@@ -25,10 +25,7 @@ class AnalyzerResult(AnalyzerResultBase):
     NAME = 'GNU Compiler Collection Static Analyzer'
     URL = 'https://gcc.gnu.org/wiki/StaticAnalyzer'
 
-    def __init__(self):
-        super(AnalyzerResult, self).__init__()
-
-    def get_reports(self, result_file_path: str) -> List[Report]:
+    def get_reports(self, file_path: str) -> List[Report]:
         """ Get reports from the given analyzer result file. """
 
-        return sarif.Parser().get_reports(result_file_path)
+        return sarif.Parser().get_reports(file_path)

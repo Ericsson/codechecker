@@ -14,6 +14,7 @@ import os
 import shlex
 import subprocess
 
+# pylint: disable=deprecated-module
 from distutils import util
 
 from codechecker_analyzer import host_check

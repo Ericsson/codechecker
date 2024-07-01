@@ -18,6 +18,7 @@ WARNING!!!
 
 import os
 import shutil
+import sys
 import unittest
 import uuid
 
@@ -26,6 +27,9 @@ from libtest import env
 from libtest import project
 
 
+# This is a test skeleton. The unused variables will be used probably in the
+# actual tests.
+# pylint: disable=unused-variable,unused-argument
 class TestSkeleton(unittest.TestCase):
 
     _ccClient = None
@@ -166,4 +170,3 @@ class TestSkeleton(unittest.TestCase):
         """
         Test some feature.
         """
-        pass

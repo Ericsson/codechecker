@@ -44,7 +44,7 @@ def get_changed_files(reports: List[Report]):
 def dump_changed_files(changed_files: Set[str]):
     """ Dump changed files. """
     if not changed_files:
-        return None
+        return
 
     file_paths = '\n'.join([' - ' + f for f in changed_files])
     LOG.warning("The following source file contents changed or missing since "

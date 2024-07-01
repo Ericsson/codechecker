@@ -25,11 +25,11 @@ from libtest import env
 from libtest import project
 
 
-def run_cmd(cmd, env=None):
+def run_cmd(cmd, environ=None):
     print(cmd)
     proc = subprocess.Popen(
         cmd,
-        env=env,
+        env=environ,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         encoding="utf-8",
@@ -137,7 +137,7 @@ class TestCmdline(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
 
         test_workspace = os.environ.get('TEST_WORKSPACE')
 
@@ -185,19 +185,20 @@ class TestCmdline(unittest.TestCase):
         sum_res = [self._codechecker_cmd, 'cmd', 'sum',
                    '-a', '--url', str(self.server_url)]
 
-        ret = run_cmd(sum_res,
-                      env=self._test_config['codechecker_cfg']['check_env'])[0]
+        ret = run_cmd(
+            sum_res,
+            environ=self._test_config['codechecker_cfg']['check_env'])[0]
         self.assertEqual(0, ret)
 
     def test_runs_filter(self):
         """ Test cmd results filter command. """
 
-        env = self._test_config['codechecker_cfg']['check_env']
+        environ = self._test_config['codechecker_cfg']['check_env']
 
         # Get runs without filter.
         res_cmd = [self._codechecker_cmd, 'cmd', 'runs',
                    '-o', 'json', '--url', str(self.server_url)]
-        ret, res, _ = run_cmd(res_cmd, env=env)
+        ret, res, _ = run_cmd(res_cmd, environ=environ)
 
         self.assertEqual(0, ret)
         self.assertEqual(2, len(json.loads(res)))
@@ -206,7 +207,7 @@ class TestCmdline(unittest.TestCase):
         res_cmd = [self._codechecker_cmd, 'cmd', 'runs',
                    '-o', 'json', '-n', 'test_files*',
                    '--url', str(self.server_url)]
-        ret, res, _ = run_cmd(res_cmd, env=env)
+        ret, res, _ = run_cmd(res_cmd, environ=environ)
 
         self.assertEqual(0, ret)
         self.assertEqual(2, len(json.loads(res)))
@@ -215,7 +216,7 @@ class TestCmdline(unittest.TestCase):
         res_cmd = [self._codechecker_cmd, 'cmd', 'runs',
                    '-o', 'json', '-n', 'test_files1*',
                    '--url', str(self.server_url)]
-        ret, res, _ = run_cmd(res_cmd, env=env)
+        ret, res, _ = run_cmd(res_cmd, environ=environ)
 
         self.assertEqual(0, ret)
         self.assertEqual(1, len(json.loads(res)))
@@ -223,11 +224,11 @@ class TestCmdline(unittest.TestCase):
     def test_runs_analysis_statistics(self):
         """ Test analysis statistics in detailed mode. """
 
-        env = self._test_config['codechecker_cfg']['check_env']
+        environ = self._test_config['codechecker_cfg']['check_env']
 
         res_cmd = [self._codechecker_cmd, 'cmd', 'runs',
                    '-o', 'json', '--url', str(self.server_url)]
-        ret, res, _ = run_cmd(res_cmd, env=env)
+        ret, res, _ = run_cmd(res_cmd, environ=environ)
 
         self.assertEqual(0, ret)
         for run in json.loads(res):
@@ -238,7 +239,7 @@ class TestCmdline(unittest.TestCase):
         res_cmd = [self._codechecker_cmd, 'cmd', 'runs',
                    '-o', 'json', '--url', str(self.server_url),
                    '--details']
-        ret, res, _ = run_cmd(res_cmd, env=env)
+        ret, res, _ = run_cmd(res_cmd, environ=environ)
 
         self.assertEqual(0, ret)
         for run in json.loads(res):
@@ -252,17 +253,17 @@ class TestCmdline(unittest.TestCase):
         server_url = f"{self.codechecker_cfg['viewer_host']}:" \
                      f"{str(self.codechecker_cfg['viewer_port'])}"
 
-        env = self.codechecker_cfg['check_env'].copy()
-        env['HTTP_PROXY'] = server_url
+        environ = self.codechecker_cfg['check_env'].copy()
+        environ['HTTP_PROXY'] = server_url
 
         res_cmd = [self._codechecker_cmd, 'cmd', 'runs',
                    '--url', str(self.server_url)]
-        ret, _, err = run_cmd(res_cmd, env=env)
+        ret, _, err = run_cmd(res_cmd, environ=environ)
         self.assertEqual(1, ret)
         self.assertIn("Invalid proxy format", err)
 
-        env['HTTP_PROXY'] = f"http://{server_url}"
-        _, _, err = run_cmd(res_cmd, env=env)
+        environ['HTTP_PROXY'] = f"http://{server_url}"
+        _, _, err = run_cmd(res_cmd, environ=environ)
 
         # We can't check the return code here, because on host machine it will
         # be zero, but on the GitHub action's job it will be 1 with "Failed to
@@ -271,24 +272,24 @@ class TestCmdline(unittest.TestCase):
 
     def test_runs_row(self):
         """ Test cmd row output type. """
-        env = self._test_config['codechecker_cfg']['check_env']
+        environ = self._test_config['codechecker_cfg']['check_env']
 
         res_cmd = [self._codechecker_cmd, 'cmd', 'runs',
                    '-o', 'rows', '-n', 'test_files1*',
                    '--url', str(self.server_url)]
-        ret, _, _ = run_cmd(res_cmd, env=env)
+        ret, _, _ = run_cmd(res_cmd, environ=environ)
 
         self.assertEqual(0, ret)
 
     def test_run_update(self):
         """ Test to update run name from the command line. """
 
-        env = self._test_config['codechecker_cfg']['check_env']
+        environ = self._test_config['codechecker_cfg']['check_env']
 
         # Get runs.
         res_cmd = [self._codechecker_cmd, 'cmd', 'runs',
                    '-o', 'json', '--url', str(self.server_url)]
-        ret, res, _ = run_cmd(res_cmd, env=env)
+        ret, res, _ = run_cmd(res_cmd, environ=environ)
         self.assertEqual(0, ret)
 
         runs = json.loads(res)
@@ -302,20 +303,20 @@ class TestCmdline(unittest.TestCase):
         # Empty string as new name.
         res_cmd = [self._codechecker_cmd, 'cmd', 'update', run_name,
                    '-n', '', '--url', str(self.server_url)]
-        ret, res, _ = run_cmd(res_cmd, env=env)
+        ret, res, _ = run_cmd(res_cmd, environ=environ)
         self.assertEqual(1, ret)
 
         # Update the run name.
         res_cmd = [self._codechecker_cmd, 'cmd', 'update',
                    '-n', new_run_name, run_name, '--url', str(self.server_url)]
-        ret, res, _ = run_cmd(res_cmd, env=env)
+        ret, res, _ = run_cmd(res_cmd, environ=environ)
         self.assertEqual(0, ret)
 
         # See that the run was renamed.
         res_cmd = [self._codechecker_cmd, 'cmd', 'runs',
                    '-o', 'json', '-n', run_name,
                    '--url', str(self.server_url)]
-        ret, res, _ = run_cmd(res_cmd, env=env)
+        ret, res, _ = run_cmd(res_cmd, environ=environ)
 
         self.assertEqual(0, ret)
         self.assertEqual(0, len(json.loads(res)))
@@ -323,13 +324,13 @@ class TestCmdline(unittest.TestCase):
         res_cmd = [self._codechecker_cmd, 'cmd', 'update',
                    '-n', new_run_name, new_run_name,
                    '--url', str(self.server_url)]
-        ret, res, _ = run_cmd(res_cmd, env=env)
+        ret, res, _ = run_cmd(res_cmd, environ=environ)
         self.assertEqual(1, ret)
 
         # Rename the run back to the original name.
         res_cmd = [self._codechecker_cmd, 'cmd', 'update',
                    '-n', run_name, new_run_name, '--url', str(self.server_url)]
-        ret, res, _ = run_cmd(res_cmd, env=env)
+        ret, res, _ = run_cmd(res_cmd, environ=environ)
         self.assertEqual(0, ret)
 
     def test_results_multiple_runs(self):
@@ -341,7 +342,7 @@ class TestCmdline(unittest.TestCase):
         res_cmd = [self._codechecker_cmd, 'cmd', 'results', 'test_files1*',
                    'test_files1*', '-o', 'json', '--url', str(self.server_url)]
 
-        ret, _, _ = run_cmd(res_cmd, env=check_env)
+        ret, _, _ = run_cmd(res_cmd, environ=check_env)
         self.assertEqual(0, ret)
 
     def test_detailed_results_contain_run_names(self):
@@ -354,7 +355,7 @@ class TestCmdline(unittest.TestCase):
                    'test_files1*', '-o', 'json', '--url', str(self.server_url),
                    '--details']
 
-        ret, out, _ = run_cmd(res_cmd, env=check_env)
+        ret, out, _ = run_cmd(res_cmd, environ=check_env)
         self.assertEqual(0, ret)
 
         results = json.loads(out)
@@ -371,7 +372,7 @@ class TestCmdline(unittest.TestCase):
         res_cmd = [self._codechecker_cmd, 'cmd', 'results', 'non_existing_run',
                    '-o', 'json', '--url', str(self.server_url)]
 
-        ret, res, err = run_cmd(res_cmd, env=check_env)
+        ret, res, err = run_cmd(res_cmd, environ=check_env)
         self.assertEqual(1, ret)
         self.assertEqual(res, '')
         self.assertIn('No runs were found!', err)
@@ -387,7 +388,7 @@ class TestCmdline(unittest.TestCase):
                    'non_existing_run', '-o', 'json', '--url',
                    str(self.server_url)]
 
-        ret, res, err = run_cmd(res_cmd, env=check_env)
+        ret, res, err = run_cmd(res_cmd, environ=check_env)
         self.assertEqual(1, ret)
         self.assertEqual(res, '')
         self.assertIn('No runs were found!', err)
@@ -395,13 +396,13 @@ class TestCmdline(unittest.TestCase):
     def test_run_sort(self):
         """ Test cmd runs sort command. """
 
-        env = self._test_config['codechecker_cfg']['check_env']
+        environ = self._test_config['codechecker_cfg']['check_env']
 
         # Sort runs by the default sort type and sort order.
         res_cmd = [self._codechecker_cmd, 'cmd', 'runs',
                    '-o', 'json',
                    '--url', str(self.server_url)]
-        ret, res, _ = run_cmd(res_cmd, env=env)
+        ret, res, _ = run_cmd(res_cmd, environ=environ)
 
         self.assertEqual(0, ret)
         self.assertEqual(2, len(json.loads(res)))
@@ -412,7 +413,7 @@ class TestCmdline(unittest.TestCase):
                    '--sort', 'name',
                    '--order', 'asc',
                    '--url', str(self.server_url)]
-        ret, res, _ = run_cmd(res_cmd, env=env)
+        ret, res, _ = run_cmd(res_cmd, environ=environ)
 
         self.assertEqual(0, ret)
         self.assertEqual(2, len(json.loads(res)))
@@ -425,7 +426,7 @@ class TestCmdline(unittest.TestCase):
                            '-*/new_delete.cpp',
                            '-árvíztűrő tükörfúrógép'])
 
-        env = self._test_config['codechecker_cfg']['check_env']
+        environ = self._test_config['codechecker_cfg']['check_env']
 
         # Add new source component.
         with tempfile.NamedTemporaryFile() as component_f:
@@ -437,7 +438,7 @@ class TestCmdline(unittest.TestCase):
                        component_name,
                        '--url', str(self.server_url)]
 
-            ret, out, _ = run_cmd(add_cmd, env=env)
+            ret, out, _ = run_cmd(add_cmd, environ=environ)
 
         self.assertEqual(0, ret)
 
@@ -446,7 +447,7 @@ class TestCmdline(unittest.TestCase):
                     '-o', 'json',
                     '--url', str(self.server_url)]
 
-        ret, out, _ = run_cmd(list_cmd, env=env)
+        ret, out, _ = run_cmd(list_cmd, environ=environ)
         self.assertEqual(0, ret)
 
         res = json.loads(out)
@@ -459,5 +460,5 @@ class TestCmdline(unittest.TestCase):
                   component_name,
                   '--url', str(self.server_url)]
 
-        ret, _, _ = run_cmd(rm_cmd, env=env)
+        ret, _, _ = run_cmd(rm_cmd, environ=environ)
         self.assertEqual(0, ret)

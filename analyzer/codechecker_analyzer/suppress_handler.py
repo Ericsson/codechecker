@@ -85,7 +85,7 @@ class GenericSuppressHandler:
 
     def get_suppressed(self, report: Report) -> bool:
         """ True if the given report is suppressed. """
-        return any([suppress for suppress in self.__suppress_info
-                    if suppress[0] == report.report_hash and
-                    suppress[1] == report.file.name and
-                    self.skip_suppress_status(suppress[3])])
+        return any(suppress for suppress in self.__suppress_info
+                   if suppress[0] == report.report_hash and
+                   suppress[1] == report.file.name and
+                   self.skip_suppress_status(suppress[3]))

@@ -235,6 +235,7 @@ class ReviewStatusHandler:
             try:
                 self.__data = yaml.safe_load(f)
             except yaml.YAMLError as err:
+                # pylint: disable=raise-missing-from
                 raise ValueError(
                     f"Invalid YAML format in {self.__review_status_yaml}:\n"
                     f"{err}")
@@ -344,7 +345,8 @@ class ReviewStatusHandler:
                     message=message.encode('utf-8'),
                     bug_hash=report.report_hash,
                     in_source=True)
-            elif len(src_comment_data) > 1:
+
+            if len(src_comment_data) > 1:
                 raise ValueError(
                     f"Multiple source code comments can be found for "
                     f"'{report.checker_name}' checker in '{source_file_name}' "

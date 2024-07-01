@@ -27,11 +27,11 @@ from libtest import env
 from libtest import project
 
 
-def run_cmd(cmd, env):
+def run_cmd(cmd, environ):
     proc = subprocess.Popen(
         cmd,
         stdout=subprocess.PIPE,
-        env=env,
+        env=environ,
         encoding="utf-8",
         errors="ignore")
     out, _ = proc.communicate()
@@ -111,8 +111,7 @@ class TestCmdLineDeletion(unittest.TestCase):
             if ret:
                 sys.exit(1)
 
-            print("Analyzing the test project was successful {}."
-                  .format(str(i)))
+            print(f"Analyzing the test project was successful {i}.")
 
             # If the check process is very fast, datetime of multiple runs can
             # be almost the same different in microseconds. Test cases of
@@ -143,7 +142,7 @@ class TestCmdLineDeletion(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         # TEST_WORKSPACE is automatically set by test package __init__.py .
         test_workspace = os.environ['TEST_WORKSPACE']
 
@@ -196,7 +195,7 @@ class TestCmdLineDeletion(unittest.TestCase):
                                 'list',
                                 '-o', 'json',
                                 '--url', self.server_url]
-            out_products, _ = run_cmd(get_products_cmd, env=check_env)
+            out_products, _ = run_cmd(get_products_cmd, environ=check_env)
 
             ret_products = json.loads(out_products)
             print(ret_products)
@@ -218,7 +217,7 @@ class TestCmdLineDeletion(unittest.TestCase):
                         '--all-after-run', run2_name,
                         '-o', 'json',
                         '--url', self.server_url]
-        out_runs, _ = run_cmd(get_runs_cmd, env=check_env)
+        out_runs, _ = run_cmd(get_runs_cmd, environ=check_env)
         ret_runs = json.loads(out_runs)
 
         self.assertEqual(len(ret_runs), 2)
@@ -232,7 +231,7 @@ class TestCmdLineDeletion(unittest.TestCase):
                    'cmd', 'del',
                    '--all-after-run', run2_name,
                    '--url', self.server_url]
-        run_cmd(del_cmd, env=check_env)
+        run_cmd(del_cmd, environ=check_env)
 
         self.assertEqual(get_run_count_in_config_db(), 3)
 
@@ -262,7 +261,7 @@ class TestCmdLineDeletion(unittest.TestCase):
                         '--all-before-time', date_run2,
                         '-o', 'json',
                         '--url', self.server_url]
-        out_runs, _ = run_cmd(get_runs_cmd, env=check_env)
+        out_runs, _ = run_cmd(get_runs_cmd, environ=check_env)
         ret_runs = json.loads(out_runs)
 
         self.assertEqual(len(ret_runs), 2)
@@ -274,7 +273,7 @@ class TestCmdLineDeletion(unittest.TestCase):
                    'cmd', 'del',
                    '--all-before-time', date_run2,
                    '--url', self.server_url]
-        run_cmd(del_cmd, env=check_env)
+        run_cmd(del_cmd, environ=check_env)
 
         self.assertTrue(all_exists(
             [project_name + '_' + str(2)]))
@@ -287,7 +286,7 @@ class TestCmdLineDeletion(unittest.TestCase):
                    'cmd', 'del',
                    '--name', run2_name,
                    '--url', self.server_url]
-        run_cmd(del_cmd, env=check_env)
+        run_cmd(del_cmd, environ=check_env)
 
         self.assertTrue(none_exists(
             [project_name + '_' + str(i) for i in range(0, 5)]))

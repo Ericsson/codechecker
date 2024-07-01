@@ -22,20 +22,21 @@ from codechecker_analyzer.arg import \
     OrderedCheckersAction, OrderedConfigAction, \
     analyzer_config, checker_config, existing_abspath
 
+from codechecker_analyzer.cmd.analyze import \
+    EPILOG_ENV_VAR as analyzer_epilog_env_var, \
+    EPILOG_ISSUE_HASHES as analyzer_epilog_issue_hashes
+
+from codechecker_analyzer.cmd.log import \
+    EPILOG_ENV_VAR as log_epilog_env_var
+
+from codechecker_analyzer.cmd.parse import \
+    EPILOG_ENV_VAR as parse_epilog_env_var
+
 from codechecker_common import arg, cmd_config, logger
 from codechecker_common.compatibility.multiprocessing import cpu_count
 from codechecker_common.source_code_comment_handler import \
     REVIEW_STATUS_VALUES
 
-from codechecker_analyzer.cmd.analyze import \
-    epilog_env_var as analyzer_epilog_env_var, \
-    epilog_issue_hashes as analyzer_epilog_issue_hashes
-
-from codechecker_analyzer.cmd.log import \
-    epilog_env_var as log_epilog_env_var
-
-from codechecker_analyzer.cmd.parse import \
-    epilog_env_var as parse_epilog_env_var
 
 LOG = logger.get_logger('system')
 
@@ -786,8 +787,7 @@ LLVM/Clang community, and thus discouraged.
                         choices=REVIEW_STATUS_VALUES,
                         default=["confirmed", "unreviewed"],
                         help="Filter results by review statuses. Valid "
-                             "values are: {0}".format(
-                            ', '.join(REVIEW_STATUS_VALUES)))
+                             "values are: {', '.join(REVIEW_STATUS_VALUES)}")
 
     logger.add_verbose_arguments(parser)
     parser.set_defaults(

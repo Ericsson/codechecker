@@ -59,13 +59,13 @@ In every other case, the return value is the OR of a bitmask:
 """
     f"""
 Having found checkers without a 'doc_url' label will set the bit
-'{tool.ReturnFlags.HadMissing}'.
+'{tool.ReturnFlags.HAD_MISSING}'.
 Having found checkers that have a "Not OK" label will set the bit
-'{tool.ReturnFlags.HadNotOK}'.
+'{tool.ReturnFlags.HAD_NOT_OK}'.
 Having found checkers that were "Not OK" but managed to obtain a fixed,
-working URL will set the bit '{tool.ReturnFlags.HadFound}'.
+working URL will set the bit '{tool.ReturnFlags.HAD_FOUND}'.
 Having found checkers that were "Not OK" and failed the attempted
-automatic fixing routing will set the bit '{tool.ReturnFlags.HadGone}'.
+automatic fixing routing will set the bit '{tool.ReturnFlags.HAD_GONE}'.
 """
 )
 epilogue: str = ""
@@ -166,7 +166,7 @@ If 'None' is given, automatically run for every found configuration file.
         metavar="CHECKER",
         nargs='*',
         type=str,
-        help="""
+        help=f"""
 Filter for only the specified checkers before executing the verification.
 This filter matches only for the checker's name (as present in the
 configuration file), and every checker of every candidate analyser is matched
@@ -174,12 +174,13 @@ against.
 It is not an error to specify filters that do not match anything.
 It is possible to match entire patterns of names using the '?' and '*'
 wildcards, as understood by the 'fnmatch' library, see
-"https://docs.python.org/%d.%d/library/fnmatch.html#fnmatch.fnmatchcase"
+"https://docs.python.org/{sys.version_info[0]}.{sys.version_info[1]}/library/\
+fnmatch.html#fnmatch.fnmatchcase"
 for details.
 Depending on your shell, you might have to specify wildcards in single quotes,
 e.g., 'alpha.*', to prevent the shell from globbing first!
 If 'None' is given, automatically run for every checker.
-""" % (sys.version_info[0], sys.version_info[1]))
+""")
 
     output = parser.add_argument_group("output control arguments", """
 These optional arguments allow enabling additional verbosity for the output
@@ -234,45 +235,45 @@ information.
     return parser
 
 
-def _handle_package_args(args: argparse.Namespace):
-    if not args.checker_label_dir:
+def _handle_package_args(args_: argparse.Namespace):
+    if not args_.checker_label_dir:
         log("%sFATAL: Failed to find the checker label configuration "
             "directory, and it was not specified. "
             "Please specify!",
             emoji(":no_entry:  "))
         raise argparse.ArgumentError(None,
                                      "positional argument 'checker_label_dir'")
-    if args.jobs < 0:
+    if args_.jobs < 0:
         log("%sFATAL: There can not be a non-positive number of jobs.",
             emoji(":no_entry:  "))
         raise argparse.ArgumentError(None, "-j/--jobs")
-    OutputSettings.set_report_missing(args.report_missing or
-                                      args.verbose or
-                                      args.very_verbose)
-    OutputSettings.set_report_ok(args.report_ok or
-                                 args.verbose or
-                                 args.very_verbose)
-    GlobalOutputSettings.set_trace(args.verbose_debug or args.very_verbose)
+    OutputSettings.set_report_missing(args_.report_missing or
+                                      args_.verbose or
+                                      args_.very_verbose)
+    OutputSettings.set_report_ok(args_.report_ok or
+                                 args_.verbose or
+                                 args_.very_verbose)
+    GlobalOutputSettings.set_trace(args_.verbose_debug or args_.very_verbose)
 
 
-def main(args: argparse.Namespace) -> Optional[int]:
+def main(args_: argparse.Namespace) -> Optional[int]:
     try:
-        _handle_package_args(args)
-    except argparse.ArgumentError:
+        _handle_package_args(args_)
+    except argparse.ArgumentError as err:
         # Simulate argparse's return code of parse_args().
-        raise SystemExit(2)
+        raise SystemExit(2) from err
 
     rc = 0
-    statistics: List[tool.Statistics] = list()
-    trace("Checking checker labels from '%s'", args.checker_label_dir)
+    statistics: List[tool.Statistics] = []
+    trace("Checking checker labels from '%s'", args_.checker_label_dir)
 
-    args.checker_label_dir = pathlib.Path(args.checker_label_dir)
-    if not args.checker_label_dir.is_dir():
-        error("'%s' is not a directory!", args.checker_label_dir)
+    args_.checker_label_dir = pathlib.Path(args_.checker_label_dir)
+    if not args_.checker_label_dir.is_dir():
+        error("'%s' is not a directory!", args_.checker_label_dir)
         return 1
 
     # FIXME: pathlib.Path.walk() is only available Python >= 3.12.
-    for root, _, files in os.walk(args.checker_label_dir):
+    for root, _, files in os.walk(args_.checker_label_dir):
         root = pathlib.Path(root)
 
         for file in sorted(files):
@@ -280,7 +281,7 @@ def main(args: argparse.Namespace) -> Optional[int]:
             if file.suffix != ".json":
                 continue
             analyser = file.stem
-            if args.analysers and analyser not in args.analysers:
+            if args_.analysers and analyser not in args_.analysers:
                 continue
 
             path = root / file
@@ -297,22 +298,22 @@ def main(args: argparse.Namespace) -> Optional[int]:
                 error("Failed to obtain checker labels for '%s'!", analyser)
                 continue
 
-            if args.checkers:
+            if args_.checkers:
                 labels = {checker: url
                           for checker, url in labels.items()
-                          for filter_ in args.checkers
+                          for filter_ in args_.checkers
                           if fnmatch.fnmatchcase(checker, filter_)}
             if not labels:
-                log("%sNo checkers are configured%s.",
-                    emoji(":cup_with_straw:  "),
-                    " or match the \"--checkers\" %s"
-                    % plural(args.checkers, "filter", "filters")
-                    if args.checkers else "")
+                filt = " or match the \"--checkers\" %s" + \
+                    plural(args_.checkers, "filter", "filters") \
+                    if args_.checkers else ""
+                log(f'{emoji(":cup_with_straw:  ")}'
+                    f'No checkers are configured{filt}.')
                 continue
 
-            process_count = clamp(1, args.jobs, len(labels)) \
-                if len(labels) > 2 * args.jobs else 1
-            fixes: SingleLabels = dict()
+            process_count = clamp(1, args_.jobs, len(labels)) \
+                if len(labels) > 2 * args_.jobs else 1
+            fixes: SingleLabels = {}
             conflicts: Set[str] = set()
             for verifier in analyser_selection.select_verifier(analyser,
                                                                labels):
@@ -325,8 +326,8 @@ def main(args: argparse.Namespace) -> Optional[int]:
                     verifier,
                     labels,
                     process_count,
-                    args.skip_fixes,
-                    args.reset_to_upstream,
+                    args_.skip_fixes,
+                    args_.reset_to_upstream,
                     )
                 statistics.append(statistic)
                 rc = int(tool.ReturnFlags(rc) | status)
@@ -347,10 +348,10 @@ def main(args: argparse.Namespace) -> Optional[int]:
                     except KeyError:
                         fixes[checker] = fix
 
-                if args.apply_fixes and fixes:
+                if args_.apply_fixes and fixes:
                     log("%sUpdating %s %s for '%s'... ('%s')",
                         emoji(":writing_hand:  "),
-                        coloured("%d" % len(fixes), "green"),
+                        coloured(len(fixes), "green"),
                         plural(fixes, "checker", "checkers"),
                         analyser,
                         path)

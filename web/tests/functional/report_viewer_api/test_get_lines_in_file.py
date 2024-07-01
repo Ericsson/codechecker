@@ -35,7 +35,7 @@ class TestGetLinesInFile(unittest.TestCase):
     def teardown_class(self):
         teardown_class_common()
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         test_workspace = os.environ['TEST_WORKSPACE']
 
         test_class = self.__class__.__name__
@@ -105,7 +105,7 @@ class TestGetLinesInFile(unittest.TestCase):
         Get line content information for multiple files in different positions.
         """
         runid = self._runid
-        logging.debug('Get line content information from the db for runid: ' +
+        logging.debug('Get line content information from the db for runid: %s',
                       str(runid))
 
         # Get reports by file to get a file id.

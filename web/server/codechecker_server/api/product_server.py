@@ -34,6 +34,8 @@ from .thrift_enum_helper import confidentiality_enum, \
 LOG = get_logger('server')
 
 
+# These names are inherited from Thrift stubs.
+# pylint: disable=invalid-name
 class ThriftProductHandler:
     """
     Connect to database and handle thrift client requests.
@@ -67,9 +69,9 @@ class ThriftProductHandler:
                 args = dict(self.__permission_args)
                 args['config_db_session'] = session
 
-            if not any([permissions.require_permission(
-                            perm, args, self.__auth_session)
-                        for perm in required]):
+            if not any(permissions.require_permission(
+                           perm, args, self.__auth_session)
+                       for perm in required):
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
                     "You are not authorized to execute this action.")
@@ -249,7 +251,7 @@ class ThriftProductHandler:
         with DBSession(self.__session) as session:
             product = session.query(Product).get(product_id)
             if product is None:
-                msg = "Product with ID {0} does not exist!".format(product_id)
+                msg = f"Product with ID {product_id} does not exist!"
                 LOG.error(msg)
 
                 raise codechecker_api_shared.ttypes.RequestFailed(
@@ -330,8 +332,9 @@ class ThriftProductHandler:
                 msg)
 
         if self.__server.get_product(product.endpoint):
-            msg = "A product endpoint '/{0}' is already configured!" \
-                .format(product.endpoint)
+            msg = \
+                f"A product endpoint '/{product.endpoint}' is already " \
+                "configured!"
             LOG.error(msg)
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.GENERAL,
@@ -369,7 +372,7 @@ class ThriftProductHandler:
             conn_str_args = {'postgresql': False,
                              'sqlite': dbc.database}
         else:
-            msg = "Database engine '{0}' unknown!".format(dbc.engine)
+            msg = f"Database engine '{dbc.engine}' unknown!"
             LOG.error(msg)
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.GENERAL,
@@ -402,9 +405,9 @@ class ThriftProductHandler:
             self.__server.add_product(orm_prod, init_db=True)
             connection_wrapper = self.__server.get_product(product.endpoint)
             if connection_wrapper.last_connection_failure:
-                msg = "The configured connection for '/{0}' failed: {1}" \
-                    .format(product.endpoint,
-                            connection_wrapper.last_connection_failure)
+                msg = \
+                    f"The configured connection for '/{product.endpoint}' " \
+                    f"failed: {connection_wrapper.last_connection_failure}"
                 LOG.error(msg)
 
                 self.__server.remove_product(product.endpoint)
@@ -445,7 +448,7 @@ class ThriftProductHandler:
         with DBSession(self.__session) as session:
             product = session.query(Product).get(product_id)
             if product is None:
-                msg = "Product with ID {0} does not exist!".format(product_id)
+                msg = f"Product with ID {product_id} does not exist!"
                 LOG.error(msg)
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
@@ -528,7 +531,7 @@ class ThriftProductHandler:
                 conn_str_args = {'postgresql': False,
                                  'sqlite': dbc.database}
             else:
-                msg = "Database engine '{0}' unknown!".format(dbc.engine)
+                msg = f"Database engine '{dbc.engine}' unknown!"
                 LOG.error(msg)
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.GENERAL,
@@ -571,9 +574,10 @@ class ThriftProductHandler:
 
                 connection_wrapper = self.__server.get_product(dummy_endpoint)
                 if connection_wrapper.last_connection_failure:
-                    msg = "The configured connection for '/{0}' failed: {1}" \
-                        .format(new_config.endpoint,
-                                connection_wrapper.last_connection_failure)
+                    msg = \
+                        f"The configured connection for " \
+                        f"'/{new_config.endpoint}' failed: " \
+                        f"{connection_wrapper.last_connection_failure}"
                     LOG.error(msg)
 
                     self.__server.remove_product(dummy_endpoint)
@@ -631,7 +635,7 @@ class ThriftProductHandler:
         with DBSession(self.__session) as session:
             product = session.query(Product).get(product_id)
             if product is None:
-                msg = "Product with ID {0} does not exist!".format(product_id)
+                msg = f"Product with ID {product_id} does not exist!"
                 LOG.error(msg)
 
                 raise codechecker_api_shared.ttypes.RequestFailed(

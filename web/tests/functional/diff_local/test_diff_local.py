@@ -122,7 +122,7 @@ class DiffLocal(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
 
         # TEST_WORKSPACE is automatically set by test package __init__.py .
         test_workspace = os.environ['TEST_WORKSPACE']
@@ -318,8 +318,8 @@ class DiffLocal(unittest.TestCase):
         """
         cfg = dict(self._codechecker_cfg)
 
-        makefile = f"all:\n\t$(CXX) -c main.cpp -Wno-all -Wno-extra " \
-                   f"-o /dev/null\n"
+        makefile = "all:\n\t$(CXX) -c main.cpp -Wno-all -Wno-extra " \
+                   "-o /dev/null\n"
         with open(os.path.join(self._test_dir, 'Makefile'), 'w',
                   encoding="utf-8", errors="ignore") as f:
             f.write(makefile)

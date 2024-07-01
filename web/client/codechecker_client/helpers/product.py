@@ -11,10 +11,12 @@ Helper for the product thrift api.
 
 from codechecker_api.ProductManagement_v6 import codeCheckerProductService
 
-from codechecker_client.thrift_call import ThriftClientCall
+from codechecker_client.thrift_call import thrift_client_call
 from .base import BaseClientHelper
 
 
+# These names are inherited from Thrift stubs.
+# pylint: disable=invalid-name
 class ThriftProductHelper(BaseClientHelper):
     def __init__(self, protocol, host, port, uri, session_token=None,
                  get_new_token=None):
@@ -27,28 +29,28 @@ class ThriftProductHelper(BaseClientHelper):
         self.client = codeCheckerProductService.Client(self.protocol)
 
     # -----------------------------------------------------------------------
-    @ThriftClientCall
+    @thrift_client_call
     def getPackageVersion(self):
         pass
 
     # -----------------------------------------------------------------------
-    @ThriftClientCall
+    @thrift_client_call
     def getProducts(self, product_endpoint_filter, product_name_filter):
         pass
 
-    @ThriftClientCall
+    @thrift_client_call
     def getCurrentProduct(self):
         pass
 
-    @ThriftClientCall
+    @thrift_client_call
     def getProductConfiguration(self, product_id):
         pass
 
     # -----------------------------------------------------------------------
-    @ThriftClientCall
+    @thrift_client_call
     def addProduct(self, product):
         pass
 
-    @ThriftClientCall
+    @thrift_client_call
     def removeProduct(self, product_id):
         pass

@@ -135,18 +135,18 @@ class CCViewerHelper(ThriftAPIHelper):
         if session_token:
             headers = {'Cookie': SESSION_COOKIE_NAME + '=' + session_token}
             transport.setCustomHeaders(headers)
-        super(CCViewerHelper, self).__init__(transport,
-                                             client, auto_handle_connection)
+        super().__init__(transport, client, auto_handle_connection)
 
     def __getattr__(self, attr):
-        is_getAll = re.match(r'(get)All(.*)$', attr)
-        if is_getAll:
-            func_name = is_getAll.group(1) + is_getAll.group(2)
-            return partial(self._getAll_emu, func_name)
+        is_get_all = re.match(r'(get)All(.*)$', attr)
+
+        if is_get_all:
+            func_name = is_get_all.group(1) + is_get_all.group(2)
+            return partial(self._get_all_emu, func_name)
         else:
             return partial(self._thrift_client_call, attr)
 
-    def _getAll_emu(self, func_name, *args):
+    def _get_all_emu(self, func_name, *args):
         """
         Do not call the getAll* functions with keyword arguments,
         limit and offset must be the -4. / -3. positional arguments
@@ -185,8 +185,7 @@ class CCAuthHelper(ThriftAPIHelper):
         if session_token:
             headers = {'Cookie': SESSION_COOKIE_NAME + '=' + session_token}
             transport.setCustomHeaders(headers)
-        super(CCAuthHelper, self).__init__(transport,
-                                           client, auto_handle_connection)
+        super().__init__(transport, client, auto_handle_connection)
 
     def __getattr__(self, attr):
         return partial(self._thrift_client_call, attr)
@@ -211,8 +210,7 @@ class CCProductHelper(ThriftAPIHelper):
         if session_token:
             headers = {'Cookie': SESSION_COOKIE_NAME + '=' + session_token}
             transport.setCustomHeaders(headers)
-        super(CCProductHelper, self).__init__(transport,
-                                              client, auto_handle_connection)
+        super().__init__(transport, client, auto_handle_connection)
 
     def __getattr__(self, attr):
         return partial(self._thrift_client_call, attr)
@@ -234,8 +232,7 @@ class CCConfigHelper(ThriftAPIHelper):
         if session_token:
             headers = {'Cookie': SESSION_COOKIE_NAME + '=' + session_token}
             transport.setCustomHeaders(headers)
-        super(CCConfigHelper, self).__init__(transport,
-                                             client, auto_handle_connection)
+        super().__init__(transport, client, auto_handle_connection)
 
     def __getattr__(self, attr):
         return partial(self._thrift_client_call, attr)

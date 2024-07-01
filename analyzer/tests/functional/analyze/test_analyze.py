@@ -47,7 +47,7 @@ class TestAnalyze(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         """Setup the environment for the tests."""
 
         self.test_workspace = os.environ['TEST_WORKSPACE']
@@ -72,7 +72,7 @@ class TestAnalyze(unittest.TestCase):
         self.disabling_modeling_checker_regex = re.compile(
             r"analyzer-disable-checker=.*unix.cstring.CStringModeling.*")
 
-    def teardown_method(self, method):
+    def teardown_method(self, _):
         """Restore environment after tests have ran."""
         os.chdir(self.__old_pwd)
         if os.path.isdir(self.report_dir):
@@ -194,20 +194,20 @@ class TestAnalyze(unittest.TestCase):
         errcode = process.returncode
         self.assertEqual(errcode, 0)
 
-        info_File = os.path.join(reports_dir, 'compiler_info.json')
-        self.assertEqual(os.path.exists(info_File), True)
-        self.assertNotEqual(os.stat(info_File).st_size, 0)
+        info_file = os.path.join(reports_dir, 'compiler_info.json')
+        self.assertEqual(os.path.exists(info_file), True)
+        self.assertNotEqual(os.stat(info_file).st_size, 0)
 
         # Test the validity of the json files.
-        with open(info_File, 'r', encoding="utf-8", errors="ignore") as f:
+        with open(info_file, 'r', encoding="utf-8", errors="ignore") as f:
             try:
                 data = json.load(f)
                 self.assertEqual(len(data), 1)
                 # For clang we do not collect anything.
                 self.assertTrue("g++" in data)
             except ValueError:
-                self.fail("json.load should successfully parse the file %s"
-                          % info_File)
+                self.fail("json.load should successfully parse "
+                          f"the file {info_file}")
 
     def test_compiler_info_file_is_loaded(self):
         '''
@@ -637,7 +637,6 @@ class TestAnalyze(unittest.TestCase):
         is_b: bool,
         is_s: bool
     ):
-        """ """
         with open(compilation_db_file_path,
                   encoding="utf-8", errors="ignore") as json_file:
             data = json.load(json_file)
@@ -1080,6 +1079,7 @@ class TestAnalyze(unittest.TestCase):
         out = subprocess.run(analyze_cmd,
                              cwd=self.test_dir,
                              # env=self.env,
+                             check=False,
                              stdout=subprocess.PIPE).stdout.decode()
 
         # Test correct handover.
@@ -1100,6 +1100,7 @@ class TestAnalyze(unittest.TestCase):
         out = subprocess.run(analyze_cmd,
                              cwd=self.test_dir,
                              # env=self.env,
+                             check=False,
                              stdout=subprocess.PIPE).stdout.decode()
 
         # Test if the standard is correctly transformed
@@ -1225,6 +1226,7 @@ class TestAnalyze(unittest.TestCase):
             encoding="utf-8",
             errors="ignore")
         out, _ = process.communicate()
+        print(out)
 
         # It's printed as a found report and in the checker statistics.
         # Note: If this test case fails, its pretty sure that something totally

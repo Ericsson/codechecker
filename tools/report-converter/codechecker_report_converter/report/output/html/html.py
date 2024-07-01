@@ -151,9 +151,8 @@ class HtmlBuilder:
 
         # Get the content of the HTML layout dependencies.
         self._tag_contents = {}
-        for tag in self._layout_tag_files:
-            self._tag_contents[tag] = get_file_content(
-                self._layout_tag_files[tag])
+        for tag, filepath in self._layout_tag_files.items():
+            self._tag_contents[tag] = get_file_content(filepath)
 
     def get_severity(self, checker_name: str) -> str:
         """ Returns severity level for the given checker name. """
@@ -349,12 +348,12 @@ class HtmlBuilder:
         num_of_analyzer_result_files = len(self.generated_html_reports)
 
         num_of_reports = 0
-        for html_file in self.generated_html_reports:
-            num_of_reports += len(self.generated_html_reports[html_file])
+        for reports in self.generated_html_reports.values():
+            num_of_reports += len(reports)
 
         checker_statistics: Dict[str, int] = defaultdict(int)
-        for html_file in self.generated_html_reports:
-            for report in self.generated_html_reports[html_file]:
+        for reports in self.generated_html_reports.values():
+            for report in reports:
                 checker = report['checker']['name']
                 checker_statistics[checker] += 1
 
@@ -364,16 +363,15 @@ class HtmlBuilder:
         with io.StringIO() as string:
             for checker_name in sorted(checker_statistics):
                 severity = self.get_severity(checker_name)
-                string.write('''
-                  <tr>
-                    <td>{0}</td>
-                    <td class="severity" severity="{1}">
-                      <i class="severity-{1}" title="{1}"></i>
-                    </td>
-                    <td>{2}</td>
-                  </tr>
-                '''.format(checker_name, severity.lower(),
-                           checker_statistics[checker_name]))
+                string.write(f'''
+    <tr>
+    <td>{checker_name}</td>
+    <td class="severity" severity="{severity.lower()}">
+        <i class="severity-{severity.lower()}" title="{severity.lower()}"></i>
+    </td>
+    <td>{checker_statistics[checker_name]}</td>
+    </tr>
+''')
                 checker_rows.append([checker_name, severity,
                                     str(checker_statistics[checker_name])])
                 severity_statistics[severity] += \
@@ -385,14 +383,14 @@ class HtmlBuilder:
         with io.StringIO() as string:
             for severity in sorted(severity_statistics, key=severity_order):
                 num = severity_statistics[severity]
-                string.write('''
-                  <tr>
-                    <td class="severity" severity="{0}">
-                      <i class="severity-{0}" title="{0}"></i>
-                    </td>
-                    <td>{1}</td>
-                  </tr>
-                '''.format(severity.lower(), num))
+                string.write(f'''
+    <tr>
+    <td class="severity" severity="{severity.lower()}">
+        <i class="severity-{severity.lower()}" title="{severity.lower()}"></i>
+    </td>
+    <td>{num}</td>
+    </tr>
+''')
                 severity_rows.append([severity, str(num)])
             severity_statistics_content = string.getvalue()
 
@@ -436,7 +434,7 @@ def convert(
     file content change.
     """
     if not reports:
-        LOG.info(f'No report data in {file_path} file.')
+        LOG.info('No report data in %s file.', file_path)
         return set()
 
     html_filename = f"{os.path.basename(file_path)}.html"
@@ -447,7 +445,7 @@ def convert(
     if changed_files:
         return changed_files
 
-    LOG.info(f"Html file was generated: {html_output_path}")
+    LOG.info("Html file was generated: %s", html_output_path)
     return changed_files
 
 
@@ -494,7 +492,7 @@ def parse(
                      "analyzer result file.", file_path)
             continue
 
-        LOG.info(f"\nParsing input file '%s'", file_path)
+        LOG.info("\nParsing input file '%s'", file_path)
 
         reports = report_file.get_reports(file_path)
         changed_source = convert(file_path, reports, output_path, html_builder)

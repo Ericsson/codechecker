@@ -164,7 +164,7 @@ PYLINT_CMD = $(MAKE) -C $(CC_ANALYZER) pylint && \
   $(MAKE) -C $(CC_WEB) pylint && \
   pylint -j0 ./bin/** ./codechecker_common \
 	./scripts/** ./scripts/build/** ./scripts/debug_tools/** \
-	./scripts/gerrit_jenkins/** ./scripts/resources/** \
+	./scripts/resources/** \
 	./scripts/test/** ./scripts/thrift/** \
 	--rcfile=$(ROOT)/.pylintrc
 

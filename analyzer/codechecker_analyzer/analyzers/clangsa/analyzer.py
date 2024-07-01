@@ -121,7 +121,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
     __ctu_autodetection = None
 
     def __init__(self, cfg_handler, buildaction):
-        super(ClangSA, self).__init__(cfg_handler, buildaction)
+        super().__init__(cfg_handler, buildaction)
         self.__disable_ctu = False
         self.__checker_configs = []
         self.__disabled_checkers = []
@@ -171,17 +171,17 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             analyzer_cmd.extend(["-load", plugin])
 
     @classmethod
-    def get_binary_version(self, environ, details=False) -> str:
+    def get_binary_version(cls, environ, details=False) -> str:
         # No need to LOG here, we will emit a warning later anyway.
-        if not self.analyzer_binary():
+        if not cls.analyzer_binary():
             return None
 
         if details:
-            version = [self.analyzer_binary(), '--version']
+            ver = [cls.analyzer_binary(), '--version']
         else:
-            version = [self.analyzer_binary(), '-dumpversion']
+            ver = [cls.analyzer_binary(), '-dumpversion']
         try:
-            output = subprocess.check_output(version,
+            output = subprocess.check_output(ver,
                                              env=environ,
                                              universal_newlines=True,
                                              encoding="utf-8",
@@ -189,7 +189,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             return output.strip()
         except (subprocess.CalledProcessError, OSError) as oerr:
             LOG.warning("Failed to get analyzer version: %s",
-                        ' '.join(version))
+                        ' '.join(ver))
             LOG.warning(oerr)
 
         return None
@@ -405,9 +405,9 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             enabled_checkers = []
             for checker_name, value in config.checks().items():
                 state, _ = value
-                if state == CheckerState.enabled:
+                if state == CheckerState.ENABLED:
                     enabled_checkers.append(checker_name)
-                elif state == CheckerState.disabled:
+                elif state == CheckerState.DISABLED:
                     self.__disabled_checkers.append(checker_name)
 
             if enabled_checkers:

@@ -10,6 +10,7 @@
 """ Z3 feature test.  """
 
 
+# pylint: disable=deprecated-module
 from distutils import util
 import os
 import shutil
@@ -91,7 +92,7 @@ class TestSkeleton(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
 
         # TEST_WORKSPACE is automatically set by test package __init__.py .
         test_workspace = os.environ['TEST_WORKSPACE']

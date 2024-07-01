@@ -41,6 +41,16 @@ from codechecker_report_converter.report.hash import HashType, \
     get_report_path_hash
 from codechecker_report_converter.report.parser.base import AnalyzerInfo
 
+try:
+    from codechecker_client.blame_info import assemble_blame_info
+except ImportError:
+    def assemble_blame_info(_, __) -> int:
+        """
+        Shim for cases where Git blame info is not gatherable due to
+        missing libraries.
+        """
+        raise NotImplementedError()
+
 from codechecker_client import client as libclient
 from codechecker_client import product
 from codechecker_common import arg, logger, cmd_config
@@ -52,16 +62,6 @@ from codechecker_common.util import load_json
 
 from codechecker_web.shared import webserver_context, host_check
 from codechecker_web.shared.env import get_default_workspace
-
-try:
-    from codechecker_client.blame_info import assemble_blame_info
-except ImportError:
-    def assemble_blame_info(_, __) -> int:
-        """
-        Shim for cases where Git blame info is not gatherable due to
-        missing libraries.
-        """
-        raise NotImplementedError()
 
 
 LOG = logger.get_logger('system')
@@ -143,9 +143,9 @@ def sizeof_fmt(num, suffix='B'):
     """
     for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
         if abs(num) < 1024.0:
-            return "%3.1f%s%s" % (num, unit, suffix)
+            return f"{num:3.1f}{unit}{suffix}"
         num /= 1024.0
-    return "%.1f%s%s" % (num, 'Yi', suffix)
+    return f"{num:.1f}Yi{suffix}"
 
 
 def get_file_content_hash(file_path):
@@ -309,7 +309,7 @@ exist prior to the 'store' command being ran.""")
 def __get_run_name(input_list):
     """Create a runname for the stored analysis from the input list."""
 
-    # Try to create a name from the metada JSON(s).
+    # Try to create a name from the metadata JSON(s).
     names = set()
     for input_path in input_list:
         metafile = os.path.join(input_path, "metadata.json")
@@ -333,8 +333,8 @@ def __get_run_name(input_list):
             return name
     elif len(names) > 1:
         return "multiple projects: " + ', '.join(names)
-    else:
-        return False
+
+    return False
 
 
 def scan_for_review_comment(job: Tuple[str, Iterable[int]]):
@@ -451,7 +451,7 @@ def assemble_zip(inputs,
 
         skip_file_path = os.path.join(dir_path, 'skip_file')
         if os.path.exists(skip_file_path):
-            with open(skip_file_path, 'r') as f:
+            with open(skip_file_path, 'r', encoding='utf-8') as f:
                 LOG.info("Found skip file %s with the following content:\n%s",
                          skip_file_path, f.read())
 
@@ -746,7 +746,7 @@ def storing_analysis_statistics(client, inputs, run_name):
         if not statistics_files:
             LOG.debug("No analyzer statistics information can be found in the "
                       "report directory.")
-            return False
+            return None
 
         # Write statistics files to the ZIP file.
         with zipfile.ZipFile(zip_file, 'a', allowZip64=True) as zipf:
@@ -775,6 +775,8 @@ def storing_analysis_statistics(client, inputs, run_name):
     finally:
         os.close(zip_file_handle)
         os.remove(zip_file)
+
+    return None
 
 
 class WatchdogError(Exception):
@@ -814,12 +816,13 @@ def _timeout_watchdog(timeout: timedelta, trap: int):
     "pollable asynchronous store" feature is implemented, see:
     http://github.com/Ericsson/codechecker/issues/3672
     """
-    def _signal_handler(sig: int, frame):
+    def _signal_handler(sig: int, _):
         if sig == trap:
             signal.signal(trap, signal.SIG_DFL)
-            raise WatchdogError(timeout,
-                                "Timeout watchdog hit %d seconds (%s)"
-                                % (timeout.total_seconds(), str(timeout)))
+            raise WatchdogError(
+                timeout,
+                f"Timeout watchdog hit {timeout.total_seconds()} "
+                f"seconds ({str(timeout)})")
 
     pid = os.getpid()
     timer = Timer(timeout.total_seconds(),
@@ -856,7 +859,7 @@ def main(args):
         sys.exit(1)
 
     if not host_check.check_zlib():
-        raise Exception("zlib is not available on the system!")
+        raise ModuleNotFoundError("zlib is not available on the system!")
 
     # To ensure the help message prints the default folder properly,
     # the 'default' for 'args.input' is a string, not a list.

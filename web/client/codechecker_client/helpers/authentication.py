@@ -11,76 +11,79 @@ Helper for tha authentication api.
 
 from codechecker_api.Authentication_v6 import codeCheckerAuthentication
 
-from codechecker_client.thrift_call import ThriftClientCall
+from codechecker_client.thrift_call import thrift_client_call
 from .base import BaseClientHelper
 
 
+# These names are inherited from Thrift stubs.
+# pylint: disable=invalid-name
 class ThriftAuthHelper(BaseClientHelper):
     def __init__(self, protocol, host, port, uri, session_token=None):
         super().__init__(protocol, host, port, uri, session_token)
 
         self.client = codeCheckerAuthentication.Client(self.protocol)
 
-    @ThriftClientCall
+    @thrift_client_call
     def checkAPIVersion(self):
         pass
 
     # ============= Authentication and session handling =============
-    @ThriftClientCall
+    @thrift_client_call
     def getAuthParameters(self):
         pass
 
-    @ThriftClientCall
+    @thrift_client_call
     def getAcceptedAuthMethods(self):
         pass
 
-    @ThriftClientCall
+    @thrift_client_call
     def getAccessControl(self):
         pass
 
-    @ThriftClientCall
+    @thrift_client_call
     def performLogin(self, auth_method, auth_string):
         pass
 
-    @ThriftClientCall
+    @thrift_client_call
     def destroySession(self):
         pass
 
     # ============= Authorization, permission management =============
-    @ThriftClientCall
+    @thrift_client_call
     def getPermissions(self, scope):
         pass
 
-    @ThriftClientCall
+    # pylint: disable=redefined-builtin
+    @thrift_client_call
     def getPermissionsForUser(self, scope, extra_params, filter):
         pass
 
-    @ThriftClientCall
+    @thrift_client_call
     def getAuthorisedNames(self, permission, extra_params):
         pass
 
-    @ThriftClientCall
+    @thrift_client_call
     def addPermission(self, permission, auth_name, is_group, extra_params):
         pass
 
-    @ThriftClientCall
+    @thrift_client_call
     def removePermission(self, permission, auth_name, is_group, extra_params):
         pass
 
-    @ThriftClientCall
+    @thrift_client_call
     def hasPermission(self, permission, extra_params):
         pass
 
     # ============= Token management =============
 
-    @ThriftClientCall
+    @thrift_client_call
     def newToken(self, description):
         pass
 
-    @ThriftClientCall
+    @thrift_client_call
     def removeToken(self, token):
         pass
 
-    @ThriftClientCall
+    @thrift_client_call
     def getTokens(self):
         pass

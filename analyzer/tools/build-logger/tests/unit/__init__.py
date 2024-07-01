@@ -69,7 +69,6 @@ empty_env = {"PATH": "/usr/bin"}
 
 class BasicLoggerTest(unittest.TestCase):
     def setUp(self):
-        self.maxDiff = None
         fd, self.source_file = tempfile.mkstemp(
             suffix=".cpp", prefix="logger-test-source-", text=True
         )

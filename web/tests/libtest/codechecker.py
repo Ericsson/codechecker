@@ -32,7 +32,7 @@ DEFAULT_USER_PERMISSIONS = [("cc", Permission.PRODUCT_STORE),
                             ("admin", Permission.PRODUCT_ADMIN)]
 
 
-def call_command(cmd, cwd, env):
+def call_command(cmd, cwd, environ):
     """
     Execute a process in a test case.  If the run is successful do not bloat
     the test output, but in case of any failure dump stdout and stderr.
@@ -49,14 +49,14 @@ def call_command(cmd, cwd, env):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd=cwd,
-            env=env,
+            env=environ,
             encoding="utf-8",
             errors="ignore")
         out, err = proc.communicate()
         if proc.returncode == 1:
             show(out, err)
             print('Unsuccessful run: "' + ' '.join(cmd) + '"')
-            raise Exception("Unsuccessful run of command.")
+            raise OSError("Unsuccessful run of command.")
         return out, err
     except OSError:
         show(out, err)
@@ -663,12 +663,12 @@ def wait_for_server_start(stdoutfile):
                     return
 
         if n > server_start_timeout.total_seconds():
-            print("[FATAL!] Server failed to start after '%s' (%d seconds). "
-                  "There is likely a major issue preventing startup!"
-                  % (str(server_start_timeout),
-                     server_start_timeout.total_seconds()))
+            print("[FATAL!] Server failed to start after "
+                  f"'{str(server_start_timeout)}' "
+                  f"({server_start_timeout.total_seconds()} seconds). "
+                  "There is likely a major issue preventing startup!")
             if os.path.isfile(stdoutfile):
-                with open(stdoutfile) as f:
+                with open(stdoutfile, encoding='utf-8') as f:
                     print("*** HERE FOLLOWS THE OUTPUT OF THE 'server' "
                           "COMMAND! ***")
                     print(f.read())
@@ -714,7 +714,6 @@ def start_server(codechecker_cfg, event, server_args=None, pg_config=None):
                           pg_config,
                           server_args or [])
 
-    # pylint: disable=no-member multiprocess module members.
     server_proc = multiprocess.Process(
         name='server',
         target=start_server_proc,
@@ -734,13 +733,16 @@ def start_server(codechecker_cfg, event, server_args=None, pg_config=None):
 
 def add_test_package_product(server_data, test_folder, check_env=None,
                              protocol='http', report_limit=None,
-                             user_permissions=DEFAULT_USER_PERMISSIONS):
+                             user_permissions=None):
     """
     Add a product for a test suite to the server provided by server_data.
     Server must be running before called.
 
     server_data must contain three keys: viewer_{host, port, product}.
     """
+
+    if user_permissions is None:
+        user_permissions = DEFAULT_USER_PERMISSIONS
 
     if not check_env:
         check_env = env.test_env(test_folder)
@@ -812,7 +814,7 @@ def add_test_package_product(server_data, test_folder, check_env=None,
                                         False,
                                         extra_params)
         if not ret:
-            raise Exception("Failed to add permission to " + user)
+            raise RuntimeError("Failed to add permission to " + user)
 
     logout(codechecker_cfg, test_folder, protocol)
 
@@ -821,7 +823,7 @@ def add_test_package_product(server_data, test_folder, check_env=None,
     login(codechecker_cfg, test_folder, "cc", "test", protocol)
 
     if returncode:
-        raise Exception("Failed to add the product to the test server!")
+        raise RuntimeError("Failed to add the product to the test server!")
 
 
 def remove_test_package_product(test_folder, check_env=None, protocol='http',
@@ -867,7 +869,8 @@ def remove_test_package_product(test_folder, check_env=None, protocol='http',
         env.del_database(product_to_remove, check_env)
 
     if returncode:
-        raise Exception("Failed to remove the product from the test server!")
+        raise RuntimeError(
+            "Failed to remove the product from the test server!")
 
 
 def _pg_db_config_to_cmdline_params(pg_db_config):

@@ -48,7 +48,7 @@ def simplify_credentials(credentials):
 
         host = match.group('host')
         port = match.group('port')
-        host_port = '{0}:{1}'.format(host, port) if port else host
+        host_port = f'{host}:{port}' if port else host
 
         ret[host_port] = auth_string
 
@@ -124,14 +124,14 @@ class UserCredentials:
         return self.__autologin
 
     def get_token(self, host, port):
-        return self.__tokens.get("{0}:{1}".format(host, port))
+        return self.__tokens.get(f"{host}:{port}")
 
     def get_auth_string(self, host, port):
-        ret = self.__save['credentials'].get('{0}:{1}'.format(host, port))
+        ret = self.__save['credentials'].get(f'{host}:{port}')
         if not ret:
             ret = self.__save['credentials'].get(host)
         if not ret:
-            ret = self.__save['credentials'].get('*:{0}'.format(port))
+            ret = self.__save['credentials'].get(f'*:{port}')
         if not ret:
             ret = self.__save['credentials'].get('*')
 
@@ -139,9 +139,9 @@ class UserCredentials:
 
     def save_token(self, host, port, token, destroy=False):
         if destroy:
-            self.__tokens.pop('{0}:{1}'.format(host, port), None)
+            self.__tokens.pop(f'{host}:{port}', None)
         else:
-            self.__tokens['{0}:{1}'.format(host, port)] = token
+            self.__tokens[f'{host}:{port}'] = token
 
         with open(self.token_file, 'w',
                   encoding="utf-8", errors="ignore") as scfg:

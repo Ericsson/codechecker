@@ -28,16 +28,16 @@ LOG = get_logger('system')
 # command-line, or belongs to a profile explicitly disabled on the
 # command-line, then it is considered to have a CheckerState of disabled.
 class CheckerState(Enum):
-    disabled = 1
-    enabled = 2
+    DISABLED = 1
+    ENABLED = 2
 
 
 class CheckerType(Enum):
     """
     Checker type.
     """
-    analyzer = 0  # A checker which is not a compiler warning.
-    compiler = 1  # A checker which specified as "-W<name>" or "-Wno-<name>".
+    ANALYZER = 0  # A checker which is not a compiler warning.
+    COMPILER = 1  # A checker which specified as "-W<name>" or "-Wno-<name>".
 
 
 def get_compiler_warning_name_and_type(checker_name):
@@ -52,11 +52,11 @@ def get_compiler_warning_name_and_type(checker_name):
     if checker_name.startswith('W'):
         name = checker_name[4:] if \
             checker_name.startswith('Wno-') else checker_name[1:]
-        return name, CheckerType.compiler
+        return name, CheckerType.COMPILER
     elif checker_name.startswith('clang-diagnostic-'):
-        return checker_name[17:], CheckerType.analyzer
+        return checker_name[17:], CheckerType.ANALYZER
     else:
-        return None, CheckerType.analyzer
+        return None, CheckerType.ANALYZER
 
 
 class AnalyzerConfigHandler(metaclass=ABCMeta):
@@ -77,7 +77,7 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         self.__available_checkers = collections.OrderedDict()
 
     def add_checker(self, checker_name, description='',
-                    state=CheckerState.disabled):
+                    state=CheckerState.DISABLED):
         """
         Add a checker to the available checkers' list.
         """
@@ -93,8 +93,8 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
             if ch_name.startswith(checker_name) or \
                ch_name.endswith(checker_name):
                 _, description = values
-                state = CheckerState.enabled if enabled \
-                    else CheckerState.disabled
+                state = CheckerState.ENABLED if enabled \
+                    else CheckerState.DISABLED
                 changed_states.append((ch_name, state, description))
 
         # Enabled/disable checkers are stored in an ordered dict. When a
@@ -137,7 +137,7 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
 
     def initialize_checkers(self,
                             checkers,
-                            cmdline_enable=[],
+                            cmdline_enable=None,
                             enable_all=False):
         """
         Add checkers and set their "enabled/disabled" status. The following
@@ -160,6 +160,9 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
                           whether it is after "--enable" or not.
         enable_all -- Boolean value whether "--enable-all" is given.
         """
+
+        if cmdline_enable is None:
+            cmdline_enable = []
 
         checker_labels = analyzer_context.get_context().checker_labels
 

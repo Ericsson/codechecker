@@ -356,7 +356,6 @@ class SQLServer(metaclass=ABCMeta):
         if needed.
 
         """
-        pass
 
     @abstractmethod
     def get_connection_string(self) -> str:
@@ -375,7 +374,6 @@ class SQLServer(metaclass=ABCMeta):
 
         DATABASE USERNAME AND PASSWORD SHOULD NOT BE RETURNED HERE!
         """
-        pass
 
     def get_model_identifier(self):
         return self.__model_meta['identifier']
@@ -385,7 +383,6 @@ class SQLServer(metaclass=ABCMeta):
         This method registers hooks, if needed, related to the engine created
         by create_engine.
         """
-        pass
 
     def create_engine(self):
         """
@@ -505,11 +502,12 @@ class SQLServer(metaclass=ABCMeta):
             LOG.debug("Using SQLite:")
             data_file = os.path.abspath(args['sqlite'])
             LOG.debug("Database at %s", data_file)
-            return SQLiteDatabase(name_in_log,
-                                  data_file,
-                                  model_meta,
-                                  migration_root,
-                                  run_env=env)
+            return SQLiteDatabase(
+                name_in_log,
+                data_file,
+                model_meta,
+                migration_root,
+                run_env=env)
 
 
 class PostgreSQLServer(SQLServer):
@@ -637,7 +635,7 @@ class SQLiteDatabase(SQLServer):
         SQLite databases need FOREIGN KEYs to be enabled, which is handled
         through this connection hook.
         """
-        def _set_sqlite_pragma(dbapi_connection, connection_record):
+        def _set_sqlite_pragma(dbapi_connection, _):
             cursor = dbapi_connection.cursor()
             cursor.execute("PRAGMA foreign_keys=ON")
             cursor.close()

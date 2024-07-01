@@ -28,8 +28,6 @@ class BaseClientHelper:
         """
         @param get_new_token: a function which can generate a new token.
         """
-        self.__host = host
-        self.__port = port
         url = create_product_url(protocol, host, port, uri)
 
         self.transport = None

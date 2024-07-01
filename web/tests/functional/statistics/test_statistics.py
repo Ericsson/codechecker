@@ -10,6 +10,7 @@
 """ statistics collector feature test.  """
 
 
+# pylint: disable=deprecated-module
 from distutils import util
 import os
 import shutil
@@ -93,7 +94,7 @@ class TestSkeleton(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
 
         # TEST_WORKSPACE is automatically set by test package __init__.py .
         test_workspace = os.environ['TEST_WORKSPACE']
@@ -112,7 +113,7 @@ class TestSkeleton(unittest.TestCase):
 
         # Get if the package is able to collect statistics or not.
         cmd = [self._codechecker_cmd, 'analyze', '-h']
-        output, _ = call_command(cmd, cwd=test_workspace, env=self.env)
+        output, _ = call_command(cmd, cwd=test_workspace, environ=self.env)
         self.stats_capable = '--stats' in output
         print("'analyze' reported statistics collector-compatibility? " +
               str(self.stats_capable))
@@ -131,7 +132,7 @@ class TestSkeleton(unittest.TestCase):
         # Clean the test project before logging the compiler commands.
         output, err = call_command(test_project_clean,
                                    cwd=test_project_path,
-                                   env=self.env)
+                                   environ=self.env)
         print(output)
         print(err)
 
@@ -141,7 +142,7 @@ class TestSkeleton(unittest.TestCase):
         log_cmd.extend(test_project_build)
         output, err = call_command(log_cmd,
                                    cwd=test_project_path,
-                                   env=self.env)
+                                   environ=self.env)
         print(output)
         print(err)
 
@@ -156,7 +157,10 @@ class TestSkeleton(unittest.TestCase):
 
         cmd = [self._codechecker_cmd, 'analyze', '-o', 'reports', '--stats',
                'compile_command.json']
-        output, err = call_command(cmd, cwd=test_project_path, env=self.env)
+        output, err = call_command(
+            cmd,
+            cwd=test_project_path,
+            environ=self.env)
         print(output)
         print(err)
         collect_msg = "Collecting data for statistical analysis."
@@ -174,7 +178,10 @@ class TestSkeleton(unittest.TestCase):
         stats_dir = os.path.join(test_project_path, 'stats')
         cmd = [self._codechecker_cmd, 'analyze', '--stats-collect', stats_dir,
                'compile_command.json', '-o', 'reports']
-        output, err = call_command(cmd, cwd=test_project_path, env=self.env)
+        output, err = call_command(
+            cmd,
+            cwd=test_project_path,
+            environ=self.env)
         print(output)
         print(err)
         analyze_msg = "Starting static analysis"
@@ -198,7 +205,10 @@ class TestSkeleton(unittest.TestCase):
                '--stats-min-sample-count', '10',
                '--stats-relevance-threshold', '0.8',
                '-o', 'reports']
-        output, err = call_command(cmd, cwd=test_project_path, env=self.env)
+        output, err = call_command(
+            cmd,
+            cwd=test_project_path,
+            environ=self.env)
         print(output)
         print(err)
         analyze_msg = "Starting static analysis"
@@ -223,7 +233,7 @@ class TestSkeleton(unittest.TestCase):
         stats_dir = os.path.join(test_project_path, 'stats')
         cmd = [self._codechecker_cmd, 'analyze', '--stats-collect', stats_dir,
                'compile_command.json', '-o', 'reports']
-        out, err = call_command(cmd, cwd=test_project_path, env=self.env)
+        out, err = call_command(cmd, cwd=test_project_path, environ=self.env)
         print(out)
         print(err)
 
@@ -232,7 +242,10 @@ class TestSkeleton(unittest.TestCase):
 
         cmd = [self._codechecker_cmd, 'analyze', '--stats-use', stats_dir,
                'compile_command.json', '-o', 'reports']
-        output, err = call_command(cmd, cwd=test_project_path, env=self.env)
+        output, err = call_command(
+            cmd,
+            cwd=test_project_path,
+            environ=self.env)
         print(output)
         print(err)
         self.assertIn(analyze_msg, output)
