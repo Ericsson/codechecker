@@ -81,7 +81,7 @@ class ConfigTests(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         """
         Setup Configuration for tests.
         """
@@ -122,8 +122,8 @@ class ConfigTests(unittest.TestCase):
         Test that SUPERADMINS can edit the notification text.
         """
         # Create a SUPERUSER login.
-        self.sessionToken = self.auth_client.performLogin("Username:Password",
-                                                          "root:root")
+        self.session_token = self.auth_client.performLogin(
+            "Username:Password", "root:root")
 
         ret = self.auth_client.addPermission(Permission.SUPERUSER,
                                              "root",
@@ -134,11 +134,11 @@ class ConfigTests(unittest.TestCase):
 
         su_auth_client = \
             env.setup_auth_client(self._test_workspace,
-                                  session_token=self.sessionToken)
+                                  session_token=self.session_token)
 
         su_config_client = \
             env.setup_config_client(self._test_workspace,
-                                    session_token=self.sessionToken)
+                                    session_token=self.session_token)
 
         user = su_auth_client.getLoggedInUser()
         self.assertEqual(user, "root")
@@ -154,16 +154,16 @@ class ConfigTests(unittest.TestCase):
         """
         Test that non SUPERADMINS can't edit the notification text.
         """
-        self.sessionToken = self.auth_client.performLogin("Username:Password",
-                                                          "cc:test")
+        self.session_token = self.auth_client.performLogin(
+            "Username:Password", "cc:test")
 
         authd_auth_client = \
             env.setup_auth_client(self._test_workspace,
-                                  session_token=self.sessionToken)
+                                  session_token=self.session_token)
 
         authd_config_client = \
             env.setup_config_client(self._test_workspace,
-                                    session_token=self.sessionToken)
+                                    session_token=self.session_token)
 
         user = authd_auth_client.getLoggedInUser()
         self.assertEqual(user, "cc")

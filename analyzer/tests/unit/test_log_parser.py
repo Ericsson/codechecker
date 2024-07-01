@@ -498,12 +498,11 @@ class LogParserTest(unittest.TestCase):
         """
         with open(self.compile_command_file_path, "w",
                   encoding="utf-8", errors="ignore") as build_json:
-            build_json.write(json.dumps([dict(
-                directory=self.tmp_dir,
-                command="g++ {0} @{1}".format(self.src_file_path,
-                                              self.rsp_file_path),
-                file=self.src_file_path
-            )]))
+            build_json.write(json.dumps([{
+                "directory": self.tmp_dir,
+                "command": f"g++ {self.src_file_path} @{self.rsp_file_path}",
+                "file": self.src_file_path
+            }]))
 
         with open(self.rsp_file_path, "w",
                   encoding="utf-8", errors="ignore") as rsp_file:
@@ -524,16 +523,15 @@ class LogParserTest(unittest.TestCase):
         """
         with open(self.compile_command_file_path, "w",
                   encoding="utf-8", errors="ignore") as build_json:
-            build_json.write(json.dumps([dict(
-                directory=self.tmp_dir,
-                command="g++ @{0}".format(self.rsp_file_path),
-                file="@{0}".format(self.rsp_file_path)
-            )]))
+            build_json.write(json.dumps([{
+                "directory": self.tmp_dir,
+                "command": f"g++ @{self.rsp_file_path}",
+                "file": f"@{self.rsp_file_path}"
+            }]))
 
         with open(self.rsp_file_path, "w",
                   encoding="utf-8", errors="ignore") as rsp_file:
-            rsp_file.write("""-DVARIABLE="some value" {0}""".format(
-                self.src_file_path))
+            rsp_file.write(f'-DVARIABLE="some value" {self.src_file_path}')
 
         logfile = os.path.join(self.compile_command_file_path)
 
@@ -553,11 +551,11 @@ class LogParserTest(unittest.TestCase):
         """
         with open(self.compile_command_file_path, "w",
                   encoding="utf-8", errors="ignore") as build_json:
-            build_json.write(json.dumps([dict(
-                directory=self.tmp_dir,
-                command="g++ @{0}".format(self.rsp_file_path),
-                file="@{0}".format(self.rsp_file_path)
-            )]))
+            build_json.write(json.dumps([{
+                "directory": self.tmp_dir,
+                "command": f"g++ @{self.rsp_file_path}",
+                "file": f"@{self.rsp_file_path}"
+            }]))
 
         a_file_path = os.path.join(self.tmp_dir, "a.cpp")
         with open(a_file_path, "w",
@@ -571,8 +569,8 @@ class LogParserTest(unittest.TestCase):
 
         with open(self.rsp_file_path, "w",
                   encoding="utf-8", errors="ignore") as rsp_file:
-            rsp_file.write("""-DVARIABLE="some value" {0} {1}""".format(
-                a_file_path, b_file_path))
+            rsp_file.write(
+                f'-DVARIABLE="some value" {a_file_path} {b_file_path}')
 
         logfile = os.path.join(self.compile_command_file_path)
 
@@ -605,11 +603,11 @@ class LogParserTest(unittest.TestCase):
 
             with open(self.compile_command_file_path, "w",
                       encoding="utf-8", errors="ignore") as f:
-                f.write(json.dumps([dict(
-                    directory=tmp_dir,
-                    command=f"g++ {src_file_path}",
-                    file=src_file_path
-                )]))
+                f.write(json.dumps([{
+                    "directory": tmp_dir,
+                    "command": f"g++ {src_file_path}",
+                    "file": src_file_path
+                }]))
 
         build_actions, _ = log_parser.parse_unique_log(load_json(
             self.compile_command_file_path), self.__this_dir)
@@ -625,39 +623,39 @@ class LogParserTest(unittest.TestCase):
         even when symbolic links are present
         """
 
-        fileA = os.path.join(self.tmp_dir, "mainA.cpp")
-        fileB = os.path.join(self.tmp_dir, "mainB.cpp")
-        fileC = os.path.join(self.tmp_dir, "mainC.cpp")
+        file_a = os.path.join(self.tmp_dir, "mainA.cpp")
+        file_b = os.path.join(self.tmp_dir, "mainB.cpp")
+        file_c = os.path.join(self.tmp_dir, "mainC.cpp")
 
-        fileA_sym = os.path.join(self.tmp_dir, "mainA_sym.cpp")
-        fileB_sym = os.path.join(self.tmp_dir, "mainB_sym.cpp")
+        file_a_sym = os.path.join(self.tmp_dir, "mainA_sym.cpp")
+        file_b_sym = os.path.join(self.tmp_dir, "mainB_sym.cpp")
 
         tmp_symdir = tempfile.mkdtemp()
-        fileC_symdir = os.path.join(tmp_symdir, "mainC_sym.cpp")
+        file_c_symdir = os.path.join(tmp_symdir, "mainC_sym.cpp")
 
-        os.symlink(fileA, fileA_sym)
-        os.symlink(fileB, fileB_sym)
-        os.symlink(fileC, fileC_symdir)
+        os.symlink(file_a, file_a_sym)
+        os.symlink(file_b, file_b_sym)
+        os.symlink(file_c, file_c_symdir)
 
         compilation_cmd = [
             {"directory": self.tmp_dir,
-             "command": "g++ " + fileA,
-             "file": fileA},
+             "command": "g++ " + file_a,
+             "file": file_a},
             {"directory": self.tmp_dir,
-             "command": "g++ " + fileB,
-             "file": fileB},
+             "command": "g++ " + file_b,
+             "file": file_b},
             {"directory": tmp_symdir,
-             "command": "g++ " + fileC_symdir,
-             "file": fileC_symdir},
+             "command": "g++ " + file_c_symdir,
+             "file": file_c_symdir},
             {"directory": self.tmp_dir,
-             "command": "g++ " + fileC,
-             "file": fileC},
+             "command": "g++ " + file_c,
+             "file": file_c},
             {"directory": self.tmp_dir,
-             "command": "g++ " + fileA_sym,
-             "file": fileA_sym},
+             "command": "g++ " + file_a_sym,
+             "file": file_a_sym},
             {"directory": self.tmp_dir,
-             "command": "g++ " + fileB_sym,
-             "file": fileB_sym}]
+             "command": "g++ " + file_b_sym,
+             "file": file_b_sym}]
 
         build_actions, _ = log_parser.parse_unique_log(compilation_cmd,
                                                        self.__this_dir,
@@ -665,7 +663,7 @@ class LogParserTest(unittest.TestCase):
         build_action = build_actions[2]
 
         self.assertEqual(len(build_actions), 3)
-        self.assertEqual(build_action.source, fileC_symdir)
+        self.assertEqual(build_action.source, file_c_symdir)
 
     def test_get_log_env(self):
         """

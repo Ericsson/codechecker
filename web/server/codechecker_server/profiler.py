@@ -30,6 +30,7 @@ class Timer:
     to measure code block execution time.
     """
     def __init__(self, block_name=''):
+        self.before = None
         self.block_name = block_name
 
     def __enter__(self):

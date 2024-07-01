@@ -51,7 +51,7 @@ class ClangVersionInfoParser:
         """Try to parse the version string using the predefined patterns."""
         version_match = re.search(self.clang_version_pattern, version_string)
         if not version_match:
-            return
+            return None
 
         installed_dir_match = re.search(
             self.clang_installed_dir_pattern, version_string)

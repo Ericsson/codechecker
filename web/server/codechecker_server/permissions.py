@@ -22,7 +22,7 @@ from codechecker_api_shared.ttypes import Permission as PermissionEnum
 from codechecker_common.logger import get_logger
 
 LOG = get_logger('server')
-config_db_model = None  # Module will be loaded later...
+CONFIG_DB_MODEL = None  # Module will be loaded later...
 
 
 class Permission(metaclass=ABCMeta):
@@ -101,7 +101,6 @@ class Permission(metaclass=ABCMeta):
         The amount of arguments for this function may vary, depending on the
         scope of the permission.
         """
-        pass
 
 
 class PermissionHandler(metaclass=ABCMeta):
@@ -130,11 +129,11 @@ class PermissionHandler(metaclass=ABCMeta):
         # handler is initialized. Most likely this import does nothing,
         # as the server already executed loading the config_db_model,
         # so we just set the name to properly point to the module object.
-        global config_db_model
-        if config_db_model is None:
+        global CONFIG_DB_MODEL
+        if CONFIG_DB_MODEL is None:
             LOG.debug("Handler initiated for first time, loading ORM...")
             from .database import config_db_model as ConfigDB
-            config_db_model = ConfigDB
+            CONFIG_DB_MODEL = ConfigDB
 
     # These high-level methods are used by client code. These contain
     # control flow that are shared for every permission handler
@@ -210,6 +209,7 @@ class PermissionHandler(metaclass=ABCMeta):
             # and the server is running in authentication disabled mode.
             # All permissions are automatically granted in this case.
             return True
+
         elif auth_session.is_root and self._perm_name == 'SUPERUSER':
             # The special master superuser (root) automatically has the
             # SUPERUSER permission.
@@ -287,7 +287,7 @@ class SystemPermission(Permission):
             self.__session = config_db_session
 
         def __get_perm_record(self, auth_name, is_group):
-            SysPerm = config_db_model.SystemPermission
+            SysPerm = CONFIG_DB_MODEL.SystemPermission
 
             record = self.__session. \
                 query(SysPerm). \
@@ -310,7 +310,7 @@ class SystemPermission(Permission):
             :returns:           A touple in (name, permission_set) structure.
             """
 
-            SysPerm = config_db_model.SystemPermission
+            SysPerm = CONFIG_DB_MODEL.SystemPermission
 
             stored_auth_name = auth_name
             permissions = set()
@@ -332,13 +332,13 @@ class SystemPermission(Permission):
                     auth_name, is_group)
 
             if not permissions:  # This account have not got permission yet.
-                new_permission_record = config_db_model.SystemPermission(
+                new_permission_record = CONFIG_DB_MODEL.SystemPermission(
                     self._permission.name, auth_name, is_group)
             else:  # There are at least one permission of the user.
                 if self._permission.name in permissions:
                     return False  # Required permission already granted
 
-                new_permission_record = config_db_model.SystemPermission(
+                new_permission_record = CONFIG_DB_MODEL.SystemPermission(
                     self._permission.name, stored_auth_name, is_group)
 
             self.__session.add(new_permission_record)
@@ -353,12 +353,14 @@ class SystemPermission(Permission):
                 self.__session.delete(perm_record)
                 return True
 
+            return False
+
         def _has_perm_impl(self, auth_names, are_groups=False):
             if not auth_names:
                 return False
 
             auth_names_lower = [name.lower() for name in auth_names]
-            SysPerm = config_db_model.SystemPermission
+            SysPerm = CONFIG_DB_MODEL.SystemPermission
             query = self.__session. \
                 query(SysPerm). \
                 filter(and_(
@@ -371,7 +373,7 @@ class SystemPermission(Permission):
             return exists
 
         def _list_authorised_impl(self):
-            SysPerm = config_db_model.SystemPermission
+            SysPerm = CONFIG_DB_MODEL.SystemPermission
 
             result = self.__session. \
                 query(SysPerm). \
@@ -380,7 +382,7 @@ class SystemPermission(Permission):
             return [(p.name, p.is_group) for p in result]
 
     def __init__(self, name, **kwargs):
-        super(SystemPermission, self).__init__(name, **kwargs)
+        super().__init__(name, **kwargs)
 
     CALL_ARGS = ['config_db_session']
 
@@ -419,7 +421,7 @@ class ProductPermission(Permission):
             self.__product_id = product_id
 
         def __get_perm_record(self, auth_name, is_group):
-            ProdPerm = config_db_model.ProductPermission
+            ProdPerm = CONFIG_DB_MODEL.ProductPermission
 
             record = self.__session. \
                 query(ProdPerm). \
@@ -442,7 +444,7 @@ class ProductPermission(Permission):
                                 user's name or a group name.
             :returns:           A touple in (name, permission_set) structure.
             """
-            ProdPerm = config_db_model.ProductPermission
+            ProdPerm = CONFIG_DB_MODEL.ProductPermission
 
             stored_auth_name = auth_name
             permissions = set()
@@ -465,14 +467,14 @@ class ProductPermission(Permission):
                     auth_name, is_group)
 
             if not permission_set:  # This account have not got permission yet.
-                new_permission_record = config_db_model.ProductPermission(
+                new_permission_record = CONFIG_DB_MODEL.ProductPermission(
                     self._permission.name, self.__product_id, auth_name,
                     is_group)
             else:  # There are at least one permission of the user.
                 if self._permission.name in permission_set:
                     return False  # Required permission already granted
 
-                new_permission_record = config_db_model.ProductPermission(
+                new_permission_record = CONFIG_DB_MODEL.ProductPermission(
                     self._permission.name, self.__product_id,
                     stored_auth_name, is_group)
 
@@ -488,13 +490,15 @@ class ProductPermission(Permission):
                 self.__session.delete(perm_record)
                 return True
 
+            return False
+
         def _has_perm_impl(self, auth_names, are_groups=False):
             if not auth_names:
                 return False
 
             # Compare authorization names in a case insensitive way.
             auth_names_lower = [name.lower() for name in auth_names]
-            ProdPerm = config_db_model.ProductPermission
+            ProdPerm = CONFIG_DB_MODEL.ProductPermission
             query = self.__session. \
                 query(ProdPerm). \
                 filter(and_(
@@ -508,7 +512,7 @@ class ProductPermission(Permission):
             return exists
 
         def _list_authorised_impl(self):
-            ProdPerm = config_db_model.ProductPermission
+            ProdPerm = CONFIG_DB_MODEL.ProductPermission
 
             result = self.__session. \
                 query(ProdPerm). \
@@ -520,7 +524,7 @@ class ProductPermission(Permission):
             return [(p.name, p.is_group) for p in result]
 
     def __init__(self, name, **kwargs):
-        super(ProductPermission, self).__init__(name, **kwargs)
+        super().__init__(name, **kwargs)
 
     CALL_ARGS = ['config_db_session', 'productID']
 
@@ -625,9 +629,7 @@ def initialise_defaults(scope, extra_params):
     creation of a new product (for PRODUCT permissions), etc.
     """
 
-    perms = [perm for perm in get_permissions(scope)]
-
-    for perm in perms:
+    for perm in get_permissions(scope):
         handler = handler_from_scope_params(perm, extra_params)
         users, groups = handler.list_permitted()
 

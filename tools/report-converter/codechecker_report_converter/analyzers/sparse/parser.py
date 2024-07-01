@@ -26,7 +26,7 @@ class Parser(BaseParser):
     """
 
     def __init__(self, analyzer_result):
-        super(Parser, self).__init__()
+        super().__init__()
 
         self.analyzer_result = analyzer_result
 
@@ -59,7 +59,7 @@ class Parser(BaseParser):
         """ Parse the given line. """
         match = self.message_line_re.match(line)
 
-        if (match is None):
+        if match is None:
             return [], next(it)
 
         file_path = os.path.normpath(
@@ -100,4 +100,4 @@ class Parser(BaseParser):
                 report.line,
                 report.column))
 
-            return [report], line
+        return [report], line

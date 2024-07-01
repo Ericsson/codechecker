@@ -72,7 +72,7 @@ class TestRunTag(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         # TEST_WORKSPACE is automatically set by test package __init__.py .
         self.test_workspace = os.environ['TEST_WORKSPACE']
 
@@ -131,7 +131,7 @@ int main()
 }"""]
         self.tags = ['v1.0', 'v1.1', 'v1.2']
 
-    def teardown_method(self, method):
+    def teardown_method(self, _):
         """Restore environment after tests have ran."""
         os.chdir(self.__old_pwd)
 

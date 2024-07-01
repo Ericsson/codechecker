@@ -55,7 +55,7 @@ class TestCtuFailure(unittest.TestCase):
         print('Removing: ' + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         """ Set up workspace."""
 
         # TEST_WORKSPACE is automatically set by test package __init__.py .
@@ -85,7 +85,7 @@ class TestCtuFailure(unittest.TestCase):
 
         setattr(self, DISPLAY_PROGRESS_ATTR,
                 is_ctu_display_progress_capable(
-                    self.__getClangSaPath()))
+                    self.__get_clangsa_path()))
 
         print("Has display-ctu-progress=true? " +
               str(getattr(self, DISPLAY_PROGRESS_ATTR)))
@@ -110,7 +110,7 @@ class TestCtuFailure(unittest.TestCase):
                   encoding="utf-8", errors="ignore") as log_file:
             json.dump(build_json, log_file)
 
-    def teardown_method(self, method):
+    def teardown_method(self, _):
         """ Tear down workspace."""
 
         shutil.rmtree(self.report_dir, ignore_errors=True)
@@ -417,13 +417,15 @@ class TestCtuFailure(unittest.TestCase):
         out, _, result = call_command(cmd, cwd=self.test_dir, env=self.env)
         return out, result
 
-    def __getClangSaPath(self):
+    def __get_clangsa_path(self):
         cmd = [self._codechecker_cmd, 'analyzers', '--details', '-o', 'json']
         output, _, result = call_command(cmd, cwd=self.test_workspace,
                                          env=self.env)
         self.assertEqual(result, 0, "Failed to run analyzer.")
         json_data = json.loads(output)
 
-        for i in range(len(json_data)):
-            if json_data[i]["name"] == "clangsa":
-                return json_data[i]["path"]
+        for data in json_data:
+            if data["name"] == "clangsa":
+                return data["path"]
+
+        return None

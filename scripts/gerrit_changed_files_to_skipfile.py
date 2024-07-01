@@ -24,7 +24,7 @@ def create_skipfile(files_changed, skipfile):
             for filename in json.loads(line):
                 if "/COMMIT_MSG" in filename:
                     continue
-                skipfile.write("+*/%s\n" % filename)
+                skipfile.write(f"+*/{filename}\n")
 
     skipfile.write("-*\n")
 

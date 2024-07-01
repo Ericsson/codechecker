@@ -111,7 +111,7 @@ class TestReviewStatus(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         self.test_workspace = os.environ['TEST_WORKSPACE']
 
         test_class = self.__class__.__name__
@@ -137,7 +137,7 @@ class TestReviewStatus(unittest.TestCase):
                          'with the given name configured at the test init.')
         self._runid = test_runs[0].runId
 
-    def teardown_method(self, method):
+    def teardown_method(self, _):
         """ Remove all review status rules after each test cases. """
         self.__remove_all_rules()
 
@@ -344,7 +344,7 @@ class TestReviewStatus(unittest.TestCase):
         runs = self._cc_client.getRunData(run_filter, None, 0, None)
         run = runs[0]
         runid = run.runId
-        logging.debug('Get all run results from the db for runid: ' +
+        logging.debug('Get all run results from the db for runid: %s',
                       str(runid))
 
         reports = get_all_run_results(self._cc_client, runid)
@@ -554,46 +554,46 @@ class TestReviewStatus(unittest.TestCase):
         # comment shouldn't change and the one without source code comment
         # should.
 
-        NULL_DEREF_BUG_HASH = '0c07579523063acece2d7aebd4357cac'
-        UNCOMMENTED_BUG_HASH = 'f0bf9810fe405de502137f1eb71fb706'
-        MULTI_REPORT_HASH = '2d019b15c17a7cf6aa3b238b916872ba'
+        null_deref_bug_hash = '0c07579523063acece2d7aebd4357cac'
+        uncommented_bug_hash = 'f0bf9810fe405de502137f1eb71fb706'
+        multi_report_hash = '2d019b15c17a7cf6aa3b238b916872ba'
 
         self._cc_client.addReviewStatusRule(
-            NULL_DEREF_BUG_HASH,
+            null_deref_bug_hash,
             ReviewStatus.INTENTIONAL,
             "This is intentional")
         self._cc_client.addReviewStatusRule(
-            UNCOMMENTED_BUG_HASH,
+            uncommented_bug_hash,
             ReviewStatus.INTENTIONAL,
             "This is intentional")
         self._cc_client.addReviewStatusRule(
-            MULTI_REPORT_HASH,
+            multi_report_hash,
             ReviewStatus.FALSE_POSITIVE,
             "This is false positive.")
 
         reports1 = get_all_run_results(self._cc_client, runid1)
 
         null_deref_report1 = next(filter(
-            lambda r: r.bugHash == NULL_DEREF_BUG_HASH,
+            lambda r: r.bugHash == null_deref_bug_hash,
             reports1))
         uncommented_report1 = next(filter(
-            lambda r: r.bugHash == UNCOMMENTED_BUG_HASH,
+            lambda r: r.bugHash == uncommented_bug_hash,
             reports1))
 
         multi_confirmed_report1 = next(filter(
-            lambda r: r.bugHash == MULTI_REPORT_HASH and
+            lambda r: r.bugHash == multi_report_hash and
             r.reviewData.status == ReviewStatus.CONFIRMED,
             reports1))
         multi_intentional_report1 = next(filter(
-            lambda r: r.bugHash == MULTI_REPORT_HASH and
+            lambda r: r.bugHash == multi_report_hash and
             r.reviewData.status == ReviewStatus.INTENTIONAL,
             reports1))
         multi_unreviewed_report1 = next(filter(
-            lambda r: r.bugHash == MULTI_REPORT_HASH and
+            lambda r: r.bugHash == multi_report_hash and
             r.reviewData.status == ReviewStatus.UNREVIEWED,
             reports1), None)
         multi_false_positive_report1 = next(filter(
-            lambda r: r.bugHash == MULTI_REPORT_HASH and
+            lambda r: r.bugHash == multi_report_hash and
             r.reviewData.status == ReviewStatus.FALSE_POSITIVE,
             reports1))
 
@@ -624,7 +624,7 @@ class TestReviewStatus(unittest.TestCase):
         self.assertIsNone(multi_unreviewed_report1)
 
         rule_filter = ReviewStatusRuleFilter(
-            reportHashes=[UNCOMMENTED_BUG_HASH])
+            reportHashes=[uncommented_bug_hash])
         review_status_rule_before = self._cc_client.getReviewStatusRules(
             rule_filter, None, None, 0)[0]
 
@@ -638,7 +638,7 @@ class TestReviewStatus(unittest.TestCase):
         codechecker.store(codechecker_cfg, test_project_name2)
 
         rule_filter = ReviewStatusRuleFilter(
-            reportHashes=[UNCOMMENTED_BUG_HASH])
+            reportHashes=[uncommented_bug_hash])
         review_status_rule_after = self._cc_client.getReviewStatusRules(
             rule_filter, None, None, 0)[0]
 
@@ -653,26 +653,26 @@ class TestReviewStatus(unittest.TestCase):
         reports2 = get_all_run_results(self._cc_client, runid2)
 
         null_deref_report2 = next(filter(
-            lambda r: r.bugHash == NULL_DEREF_BUG_HASH,
+            lambda r: r.bugHash == null_deref_bug_hash,
             reports2))
         uncommented_report2 = next(filter(
-            lambda r: r.bugHash == UNCOMMENTED_BUG_HASH,
+            lambda r: r.bugHash == uncommented_bug_hash,
             reports2))
 
         multi_confirmed_report2 = next(filter(
-            lambda r: r.bugHash == MULTI_REPORT_HASH and
+            lambda r: r.bugHash == multi_report_hash and
             r.reviewData.status == ReviewStatus.CONFIRMED,
             reports2))
         multi_intentional_report2 = next(filter(
-            lambda r: r.bugHash == MULTI_REPORT_HASH and
+            lambda r: r.bugHash == multi_report_hash and
             r.reviewData.status == ReviewStatus.INTENTIONAL,
             reports2))
         multi_unreviewed_report2 = next(filter(
-            lambda r: r.bugHash == MULTI_REPORT_HASH and
+            lambda r: r.bugHash == multi_report_hash and
             r.reviewData.status == ReviewStatus.UNREVIEWED,
             reports2), None)
         multi_false_positive_report2 = next(filter(
-            lambda r: r.bugHash == MULTI_REPORT_HASH and
+            lambda r: r.bugHash == multi_report_hash and
             r.reviewData.status == ReviewStatus.FALSE_POSITIVE,
             reports2))
 
@@ -714,13 +714,13 @@ class TestReviewStatus(unittest.TestCase):
         # for reports without source code comment.
 
         rule_filter = ReviewStatusRuleFilter(
-            reportHashes=[UNCOMMENTED_BUG_HASH])
+            reportHashes=[uncommented_bug_hash])
         self._cc_client.removeReviewStatusRules(rule_filter)
 
         reports1 = get_all_run_results(self._cc_client, runid1)
 
         uncommented_report1 = next(filter(
-            lambda r: r.bugHash == UNCOMMENTED_BUG_HASH,
+            lambda r: r.bugHash == uncommented_bug_hash,
             reports1))
 
         self.assertIsNone(uncommented_report1.fixedAt)
@@ -728,7 +728,7 @@ class TestReviewStatus(unittest.TestCase):
         reports2 = get_all_run_results(self._cc_client, runid2)
 
         uncommented_report2 = next(filter(
-            lambda r: r.bugHash == UNCOMMENTED_BUG_HASH,
+            lambda r: r.bugHash == uncommented_bug_hash,
             reports2))
 
         self.assertIsNone(uncommented_report2.fixedAt)
@@ -780,10 +780,11 @@ int main() {
 """
             os.makedirs(project_path, exist_ok=True)
 
-            with open(os.path.join(project_path, "main.c"), "w") as f:
+            with open(os.path.join(project_path, "main.c"), "w",
+                      encoding='utf-8') as f:
                 f.write(sources[version])
 
-            with open(build_json_path, "w") as f:
+            with open(build_json_path, "w", encoding='utf-8') as f:
                 f.write(build_json)
 
             codechecker_cfg = env.import_codechecker_cfg(self.test_workspace)

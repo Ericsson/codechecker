@@ -27,7 +27,7 @@ try:
     from thrift.transport import THttpClient
     from thrift.protocol import TJSONProtocol
     from thrift.Thrift import TApplicationException
-except:
+except Exception:
     print("'thrift' package (https://pypi.org/project/thrift/) is not "
           "available in your environment. Please install it before you run "
           "this script again.")
@@ -46,21 +46,24 @@ try:
         serverInfoService as ServerInfoAPI_v6
 
     from codechecker_api_shared.ttypes import RequestFailed
-except:
+except Exception:
     print("'codechecker_api' and 'codechecker_api_shared' must be available "
           "in your environment to run this script. Please install it before "
           "you run this script again:")
-    print("  - https://github.com/Ericsson/codechecker/blob/master/web/api/py/codechecker_api/dist/codechecker_api.tar.gz")
-    print("  - https://github.com/Ericsson/codechecker/blob/master/web/api/py/codechecker_api_shared/dist/codechecker_api_shared.tar.gz")
+    print("  - https://github.com/Ericsson/codechecker/blob/master/web/api/py"
+          "/codechecker_api/dist/codechecker_api.tar.gz")
+    print("  - https://github.com/Ericsson/codechecker/blob/master/web/api/py"
+          "/codechecker_api_shared/dist/codechecker_api_shared.tar.gz")
     sys.exit(1)
 
 
 def get_client_api_version() -> str:
     """ Get client api version from the installed codechecker package. """
     p = subprocess.run([
-        "pip3", "show", "codechecker_api"], stdout=subprocess.PIPE)
+        "pip3", "show", "codechecker_api"], stdout=subprocess.PIPE,
+        check=False)
     ver = p.stdout.decode('utf-8').strip().split('\n')[1]
-    res = re.search('^Version:\ (.*)$', ver)
+    res = re.search('^Version: (.*)$', ver)
     return res.group(1)
 
 
@@ -91,8 +94,16 @@ def create_client(
     return cls.Client(protocol)
 
 
-def main(args):
+def main():
     """ Send multiple Thrift API requests to the server. """
+    parser = argparse.ArgumentParser(
+        prog="client",
+        description="""
+Python client to communicate with a CodeChecker server.""",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    __add_arguments_to_parser(parser)
+    args = parser.parse_args()
+
     # Get server info.
     cli_server_info = create_client(args, ServerInfoAPI_v6, "ServerInfo")
     package_version = cli_server_info.getPackageVersion()
@@ -176,12 +187,4 @@ def __add_arguments_to_parser(parser):
                         help="Password.")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        prog="client",
-        description="""
-Python client to communicate with a CodeChecker server.""",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    __add_arguments_to_parser(parser)
-    args = parser.parse_args()
-
-    main(args)
+    main()

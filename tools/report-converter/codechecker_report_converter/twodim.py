@@ -37,7 +37,7 @@ def to_str(
 
     if format_name == 'rows':
         return to_rows(rows)
-    elif format_name == 'table' or format_name == 'plaintext':
+    elif format_name in ('table', 'plaintext'):
         # TODO: 'plaintext' for now to support the 'CodeChecker cmd' interface.
         return to_table(all_rows, True, separate_footer)
     elif format_name == 'csv':
@@ -87,6 +87,7 @@ def to_rows(lines: Iterable[str]) -> str:
         try:
             str_parts.append(print_string.format(*line))
         except IndexError:
+            # pylint: disable=raise-missing-from
             raise TypeError("One of the rows have a different number of "
                             "columns than the others")
 
@@ -135,6 +136,7 @@ def to_table(
         try:
             str_parts.append(print_string.format(*line))
         except IndexError:
+            # pylint: disable=raise-missing-from
             raise TypeError("One of the rows have a different number of "
                             "columns than the others")
         if i == 0 and separate_head:
@@ -158,10 +160,7 @@ def to_csv(lines: Iterable[str]) -> str:
         ['' if e is None else e for e in line] for line in lines]
 
     # Count the columns.
-    columns = 0
-    for line in lns:
-        if len(line) > columns:
-            columns = len(line)
+    columns = 0 if len(lns) == 0 else max(map(len, lns))
 
     print_string = ""
     for i in range(columns):
@@ -177,6 +176,7 @@ def to_csv(lines: Iterable[str]) -> str:
         try:
             str_parts.append(print_string.format(*line))
         except IndexError:
+            # pylint: disable=raise-missing-from
             raise TypeError("One of the rows have a different number of "
                             "columns than the others")
 
@@ -196,6 +196,6 @@ def to_dictlist(key_list, lines):
 
     res = []
     for line in lines:
-        res.append({key: value for (key, value) in zip(key_list, line)})
+        res.append(dict(zip(key_list, line)))
 
     return res

@@ -52,6 +52,8 @@ def find_closest_compilation_database(path: str) -> Optional[str]:
         if path == root:
             break
 
+    return None
+
 
 def change_args_to_command_in_comp_db(compile_commands: List[Dict]):
     """
@@ -166,6 +168,7 @@ def gather_compilation_database(analysis_input: str) -> Optional[List[Dict]]:
         longest = os.path.commonpath(comp_db_paths + [source_file])
         if longest in comp_db_paths:
             return os.path.join(longest, COMPILATION_DATABASE)
+        return None
 
     # Case 1: analysis_input is a compilation database JSON file.
 

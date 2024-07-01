@@ -43,8 +43,9 @@ class TestCheckerLabels(unittest.TestCase):
           }
         }
 
-        with open(os.path.join(self.labels_dir.name,
-                               'descriptions.json'), 'w') as f:
+        with open(os.path.join(
+                self.labels_dir.name, 'descriptions.json'),
+                'w', encoding='utf-8') as f:
             json.dump(descriptions, f)
 
         os.mkdir(os.path.join(self.labels_dir.name, 'analyzers'))
@@ -77,7 +78,7 @@ class TestCheckerLabels(unittest.TestCase):
 
         with open(os.path.join(self.labels_dir.name,
                                'analyzers',
-                               'clangsa.json'), 'w') as f:
+                               'clangsa.json'), 'w', encoding='utf-8') as f:
             json.dump(labels, f)
 
         labels = {
@@ -109,7 +110,7 @@ class TestCheckerLabels(unittest.TestCase):
 
         with open(os.path.join(self.labels_dir.name,
                                'analyzers',
-                               'clang-tidy.json'), 'w') as f:
+                               'clang-tidy.json'), 'w', encoding='utf-8') as f:
             json.dump(labels, f)
 
     def test_checker_labels(self):

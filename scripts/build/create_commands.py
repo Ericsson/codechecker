@@ -57,7 +57,7 @@ def copy_files(files, target_dir):
         shutil.copy2(f, target_dir)
 
 
-if __name__ == "__main__":
+def main():
     description = '''CodeChecker copy entry point sub-commands'''
 
     parser = argparse.ArgumentParser(
@@ -98,3 +98,7 @@ if __name__ == "__main__":
         copy_files(
             args['bin_file'],
             os.path.join(args['build_dir'], 'CodeChecker', 'bin'))
+
+
+if __name__ == "__main__":
+    main()

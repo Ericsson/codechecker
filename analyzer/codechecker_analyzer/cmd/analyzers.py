@@ -184,8 +184,8 @@ def main(args):
         header = list(map(uglify, header))
 
     rows = []
-    for analyzer_name in analyzer_types.supported_analyzers:
-        analyzer_class = analyzer_types.supported_analyzers[analyzer_name]
+    for analyzer_name, analyzer_class in \
+            analyzer_types.supported_analyzers.items():
         check_env = context.analyzer_env
         version = analyzer_class.get_binary_version(check_env)
         if not version:

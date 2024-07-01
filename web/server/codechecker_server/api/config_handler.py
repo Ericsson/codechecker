@@ -24,6 +24,8 @@ from ..database.database import DBSession
 LOG = get_logger('server')
 
 
+# These names are inherited from Thrift stubs.
+# pylint: disable=invalid-name
 class ThriftConfigHandler:
     """
     Manages Thrift requests regarding configuration.

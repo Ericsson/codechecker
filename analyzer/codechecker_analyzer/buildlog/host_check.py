@@ -36,9 +36,9 @@ def check_intercept(env) -> bool:
 
         if not res:
             return True
-        else:
-            LOG.debug('Failed to run: "%s"', ' '.join(intercept_cmd))
-            return False
+
+        LOG.debug('Failed to run: "%s"', ' '.join(intercept_cmd))
+        return False
     except subprocess.CalledProcessError:
         LOG.debug('Failed to run: "%s", process returned non-zero exit code.',
                   ' '.join(intercept_cmd))
@@ -49,7 +49,7 @@ def check_intercept(env) -> bool:
             # It is possible that another build logger is available.
             LOG.debug(oerr)
             LOG.debug('Failed to run: "%s"', ' '.join(intercept_cmd))
-            return False
+        return False
 
 
 def check_ldlogger(env) -> bool:

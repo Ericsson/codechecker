@@ -8,7 +8,7 @@
 
 
 from collections import namedtuple
-# pylint: disable=no-name-in-module
+# pylint: disable=deprecated-module
 from distutils.spawn import find_executable
 from enum import Enum
 from pathlib import Path
@@ -373,6 +373,7 @@ class ImplicitCompilerInfo:
             LOG.error(
                 "Error during process execution: %s\n%s\n",
                 ' '.join(map(shlex.quote, cmd)), oerr.strerror)
+            return None
 
     @staticmethod
     def __parse_compiler_includes(compile_cmd: List[str]):
@@ -431,8 +432,7 @@ class ImplicitCompilerInfo:
         LOG.debug(
             "Retrieving default includes via %s",
             ' '.join(map(shlex.quote, cmd)))
-        ICI = ImplicitCompilerInfo
-        include_dirs = ICI.__parse_compiler_includes(cmd)
+        include_dirs = ImplicitCompilerInfo.__parse_compiler_includes(cmd)
 
         return list(map(os.path.normpath, include_dirs))
 
@@ -474,7 +474,7 @@ class ImplicitCompilerInfo:
                     is fetched.
         language -- The programming lenguage being compiled (e.g. 'c' or 'c++')
         """
-        VERSION_C = """
+        version_c = """
 #ifdef __STDC_VERSION__
 #  if __STDC_VERSION__ >= 201710L
 #    error CC_FOUND_STANDARD_VER#17
@@ -492,7 +492,7 @@ class ImplicitCompilerInfo:
 #endif
         """
 
-        VERSION_CPP = """
+        version_cpp = """
 #ifdef __cplusplus
 #  if __cplusplus >= 201703L
 #    error CC_FOUND_STANDARD_VER#17
@@ -517,7 +517,7 @@ class ImplicitCompilerInfo:
                 encoding='utf-8') as source:
 
             with source.file as f:
-                f.write(VERSION_C if language == 'c' else VERSION_CPP)
+                f.write(version_c if language == 'c' else version_cpp)
 
             err = ImplicitCompilerInfo.\
                 __get_compiler_err([compiler, source.name])
@@ -692,6 +692,8 @@ def __collect_clang_compile_opts(flag_iterator, details):
     if CLANG_OPTIONS.match(flag_iterator.item):
         details['analyzer_options'].append(flag_iterator.item)
         return True
+
+    return False
 
 
 def __collect_transform_xclang_opts(flag_iterator, details):
@@ -1190,7 +1192,6 @@ def extend_compilation_database_entries(compilation_database):
 
 class CompileCommandEncoder(json.JSONEncoder):
     """JSON serializer for objects not serializable by default json code"""
-    # pylint: disable=method-hidden
     def default(self, o):
         if isinstance(o, BuildAction):
             return o.to_dict()
@@ -1270,7 +1271,8 @@ def parse_unique_log(compilation_database,
                               used to execute the analysis
     """
     try:
-        uniqued_build_actions = dict()
+        uniqued_build_actions = {}
+        uniqueing_re = None
 
         if compile_uniqueing == "alpha":
             build_action_uniqueing = CompileActionUniqueingType.SOURCE_ALPHA

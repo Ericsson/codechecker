@@ -74,6 +74,7 @@ class RunLocking:
     def __init__(self, session: DBSession, run_name: str):
         self.__session = session
         self.__run_name = run_name
+        self.__run_lock = None
 
     def __enter__(self, *args):
         # Load the lock record for "FOR UPDATE" so that the transaction that
@@ -184,9 +185,9 @@ def add_file_record(
             file_id = session.execute(insert_stmt).inserted_primary_key[0]
             session.commit()
             return file_id
-        else:
-            file_record = File(file_path, content_hash, None, None)
-            session.add(file_record)
+
+        file_record = File(file_path, content_hash, None, None)
+        session.add(file_record)
         session.commit()
     except sqlalchemy.exc.IntegrityError as ex:
         LOG.error(ex)
@@ -242,7 +243,7 @@ class MassStoreRun:
         version: Optional[str],
         b64zip: str,
         force: bool,
-        trim_path_prefixes: Optional[List[str]],
+        trim_path_prefix_list: Optional[List[str]],
         description: Optional[str]
     ):
         """ Initialize object. """
@@ -253,34 +254,30 @@ class MassStoreRun:
         self.__version = version
         self.__b64zip = b64zip
         self.__force = force
-        self.__trim_path_prefixes = trim_path_prefixes
+        self.__trim_path_prefixes = trim_path_prefix_list
         self.__description = description
 
-        self.__mips: Dict[str, MetadataInfoParser] = dict()
-        self.__analysis_info: Dict[str, AnalysisInfo] = dict()
-        self.__checker_row_cache: Dict[Tuple[str, str], Checker] = dict()
+        self.__mips: Dict[str, MetadataInfoParser] = {}
+        self.__analysis_info: Dict[str, AnalysisInfo] = {}
+        self.__checker_row_cache: Dict[Tuple[str, str], Checker] = {}
         self.__duration: int = 0
         self.__report_count: int = 0
         self.__report_limit: int = 0
-        self.__wrong_src_code_comments: List[str] = list()
+        self.__wrong_src_code_comments: List[str] = []
         self.__already_added_report_hashes: Set[str] = set()
-        self.__new_report_hashes: Dict[str, Tuple] = dict()
+        self.__new_report_hashes: Dict[str, Tuple] = {}
         self.__all_report_checkers: Set[str] = set()
-        self.__added_reports: List[Tuple[DBReport, Report]] = list()
+        self.__added_reports: List[Tuple[DBReport, Report]] = []
         self.__reports_with_fake_checkers: Dict[
             # Either a DBReport *without* an ID, or the ID of a committed
             # DBReport.
-            str, Tuple[Report, Union[DBReport, int]]] = dict()
+            str, Tuple[Report, Union[DBReport, int]]] = {}
 
         self.__get_report_limit_for_product()
 
     @property
     def __manager(self):
         return self.__report_server._manager
-
-    @property
-    def __Session(self):
-        return self.__report_server._Session
 
     @property
     def __config_database(self):
@@ -310,7 +307,7 @@ class MassStoreRun:
                 max_run_count = product.run_limit
 
         # Session that handles constraints on the run.
-        with DBSession(self.__Session) as session:
+        with DBSession(self.__report_server._Session) as session:
             if not max_run_count:
                 return
 
@@ -385,16 +382,16 @@ class MassStoreRun:
                      when)
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-                "The run named '{0}' is being stored into by {1}. If the "
-                "other store operation has failed, this lock will expire "
-                "at '{2}'.".format(self.__name, username, when))
+                f"The run named '{self.__name}' is being stored into by "
+                f"{username}. If the other store operation has failed, this "
+                f"lock will expire at '{when}'.")
 
         # At any rate, if the lock has been created or updated, commit it
         # into the database.
         try:
             session.commit()
         except (sqlalchemy.exc.IntegrityError,
-                sqlalchemy.orm.exc.StaleDataError):
+                sqlalchemy.orm.exc.StaleDataError) as ex:
             # The commit of this lock can fail.
             #
             # In case two store ops attempt to lock the same run name at the
@@ -414,8 +411,8 @@ class MassStoreRun:
                      self.__name)
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-                "The run named '{0}' is being stored into by another "
-                "user.".format(self.__name))
+                f"The run named '{self.__name}' is being stored into by "
+                "another user.") from ex
 
     def __free_run_lock(self, session: DBSession):
         """ Remove the lock from the database for the given run name. """
@@ -448,7 +445,7 @@ class MassStoreRun:
                 # record in the database or we need to add one.
 
                 LOG.debug('%s not found or already stored.', trimmed_file_path)
-                with DBSession(self.__Session) as session:
+                with DBSession(self.__report_server._Session) as session:
                     fid = add_file_record(
                         session, trimmed_file_path, file_hash)
 
@@ -461,7 +458,7 @@ class MassStoreRun:
                               source_file_path, file_hash)
                 continue
 
-            with DBSession(self.__Session) as session:
+            with DBSession(self.__report_server._Session) as session:
                 self.__add_file_content(session, source_file_path, file_hash)
 
                 file_path_to_id[trimmed_file_path] = add_file_record(
@@ -483,7 +480,7 @@ class MassStoreRun:
         .zip file. This function stores blame info even if the corresponding
         source file is not in the .zip file.
         """
-        with DBSession(self.__Session) as session:
+        with DBSession(self.__report_server._Session) as session:
             for subdir, _, files in os.walk(blame_root):
                 for f in files:
                     blame_file = os.path.join(subdir, f)
@@ -603,7 +600,7 @@ class MassStoreRun:
             tries += 1
             try:
                 LOG.debug("[%s] Begin attempt %d...", self.__name, tries)
-                with DBSession(self.__Session) as session:
+                with DBSession(self.__report_server._Session) as session:
                     known_checkers = {(r.analyzer_name, r.checker_name)
                                       for r in session
                                       .query(Checker.analyzer_name,
@@ -743,7 +740,7 @@ class MassStoreRun:
                         connection_rows = [AnalysisInfoChecker(
                             analysis_info, db_checkers[chk], is_enabled)
                             for chk, is_enabled
-                            in mip.checkers.get(analyzer, dict()).items()]
+                            in mip.checkers.get(analyzer, {}).items()]
                         for r in connection_rows:
                             session.add(r)
 
@@ -948,14 +945,11 @@ class MassStoreRun:
         the __realise_fake_checkers() operation. The reports **MUST** have
         been committed prior.
         """
-        for rph in self.__reports_with_fake_checkers:
-            report, db_report = cast(Tuple[Report, DBReport],
-                                     self.__reports_with_fake_checkers[rph])
+        for rph, (report, db_report) in \
+                self.__reports_with_fake_checkers.items():
             # Only load the "id" field from the database, not the entire row.
             session.refresh(db_report, ["id"])
-            id_: int = db_report.id
-
-            self.__reports_with_fake_checkers[rph] = (report, id_)
+            self.__reports_with_fake_checkers[rph] = (report, db_report.id)
 
     def __realise_fake_checkers(self, session):
         """
@@ -1166,7 +1160,7 @@ class MassStoreRun:
         doesn't match then an exception is thrown. In case of proper format the
         annotation is added to the database.
         """
-        ALLOWED_TYPES = {
+        allowed_types = {
             "datetime": {
                 "func": datetime.fromisoformat,
                 "display": "date-time in ISO format"
@@ -1177,27 +1171,28 @@ class MassStoreRun:
             }
         }
 
-        ALLOWED_ANNOTATIONS = {
-            "timestamp": ALLOWED_TYPES["datetime"],
-            "testsuite": ALLOWED_TYPES["string"],
-            "testcase": ALLOWED_TYPES["string"]
+        allowed_annotations = {
+            "timestamp": allowed_types["datetime"],
+            "testsuite": allowed_types["string"],
+            "testcase": allowed_types["string"]
         }
 
         for key, value in report_annotation.items():
             try:
-                ALLOWED_ANNOTATIONS[key]["func"](value)
+                allowed_annotations[key]["func"](value)
                 session.add(ReportAnnotations(report_id, key, value))
             except KeyError:
+                # pylint: disable=raise-missing-from
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.REPORT_FORMAT,
                     f"'{key}' is not an allowed report annotation.",
-                    ALLOWED_ANNOTATIONS.keys())
+                    allowed_annotations.keys())
             except ValueError:
+                # pylint: disable=raise-missing-from
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.REPORT_FORMAT,
                     f"'{value}' has wrong format. '{key}' annotations must be "
-                    f"'{ALLOWED_ANNOTATIONS[key]['display']}'."
-                )
+                    f"'{allowed_annotations[key]['display']}'.")
 
     def __get_report_limit_for_product(self):
         with DBSession(self.__config_database) as session:
@@ -1267,7 +1262,7 @@ class MassStoreRun:
 
         # Reset internal data.
         self.__already_added_report_hashes = set()
-        self.__new_report_hashes = dict()
+        self.__new_report_hashes = {}
         self.__all_report_checkers = set()
 
         all_reports = session.query(DBReport) \
@@ -1413,7 +1408,7 @@ class MassStoreRun:
         # Check constraints of the run.
         self.__check_run_limit()
 
-        with DBSession(self.__Session) as session:
+        with DBSession(self.__report_server._Session) as session:
             self.__store_run_lock(session)
 
         try:
@@ -1468,13 +1463,13 @@ class MassStoreRun:
                         for metadata in self.__mips.values()
                         for analyzer in metadata.analyzers
                         for checker
-                        in metadata.checkers.get(analyzer, dict()).keys()}
+                        in metadata.checkers.get(analyzer, {}).keys()}
                     self.__store_checker_identifiers(checkers_in_metadata)
 
                 try:
                     # This session's transaction buffer stores the actual
                     # run data into the database.
-                    with DBSession(self.__Session) as session, \
+                    with DBSession(self.__report_server._Session) as session, \
                             RunLocking(session, self.__name):
                         # Actual store operation begins here.
                         run_id, update_run = self.__add_or_update_run(
@@ -1500,7 +1495,7 @@ class MassStoreRun:
                             self.__store_checker_identifiers(
                                 additional_checkers)
 
-                    with DBSession(self.__Session) as session, \
+                    with DBSession(self.__report_server._Session) as session, \
                             RunLocking(session, self.__name):
                         # The data of the run has been successfully committed
                         # into the database. Deal with post-processing issues
@@ -1552,8 +1547,7 @@ class MassStoreRun:
                         sqlalchemy.exc.ProgrammingError) as ex:
                     raise codechecker_api_shared.ttypes.RequestFailed(
                         codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-                        "Storing reports to the database failed: {0}"
-                        .format(ex))
+                        f"Storing reports to the database failed: {ex}")
         except Exception as ex:
             LOG.error("Failed to store results: %s", ex)
             import traceback
@@ -1566,7 +1560,7 @@ class MassStoreRun:
             # (If the failure is undetectable, the coded grace period expiry
             # of the lock will allow further store operations to the given
             # run name.)
-            with DBSession(self.__Session) as session:
+            with DBSession(self.__report_server._Session) as session:
                 self.__free_run_lock(session)
 
             if self.__wrong_src_code_comments:

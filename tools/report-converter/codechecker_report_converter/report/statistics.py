@@ -34,7 +34,7 @@ class Statistics:
     def _write_severity_statistics(self, out=sys.stdout):
         """ Print severity statistics if it's available. """
         if not self.severity_statistics:
-            return None
+            return
 
         out.write("\n----==== Severity Statistics ====----\n")
         header = ["Severity", "Number of reports"]
@@ -45,7 +45,7 @@ class Statistics:
     def _write_checker_statistics(self, out=sys.stdout):
         """ Print checker statistics if it's available. """
         if not self.checker_statistics:
-            return None
+            return
 
         out.write("\n----==== Checker Statistics ====----\n")
         header = ["Checker name", "Severity", "Number of reports"]
@@ -57,7 +57,7 @@ class Statistics:
     def _write_file_statistics(self, out=sys.stdout):
         """ Print file statistics if it's available. """
         if not self.file_statistics:
-            return None
+            return
 
         out.write("\n----==== File Statistics ====----\n")
         header = ["File name", "Number of reports"]
@@ -76,7 +76,7 @@ class Statistics:
         out.write(twodim.to_table(statistics_rows, False))
         out.write("\n----=================----\n")
 
-    def write(self, out=sys.stdout):
+    def write(self, _=sys.stdout):
         """ Print statistics. """
         self._write_severity_statistics()
         self._write_checker_statistics()

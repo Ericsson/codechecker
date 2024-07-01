@@ -21,6 +21,7 @@ import subprocess
 import time
 import unittest
 
+# pylint: disable=deprecated-module
 from distutils.spawn import find_executable
 
 from libtest import env
@@ -50,7 +51,7 @@ class TestFixit(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
 
         # TEST_WORKSPACE is automatically set by test package __init__.py .
         self.test_workspace = os.environ['TEST_WORKSPACE']
@@ -64,7 +65,7 @@ class TestFixit(unittest.TestCase):
         # Change working dir to testfile dir so CodeChecker can be run easily.
         self.__old_pwd = os.getcwd()
 
-    def teardown_method(self, method):
+    def teardown_method(self, _):
         """Restore environment after tests have run."""
         os.chdir(self.__old_pwd)
         if os.path.isdir(self.report_dir):
@@ -131,7 +132,8 @@ int main()
         yaml_files = os.listdir(fixit_dir)
         self.assertEqual(len(yaml_files), 1)
 
-        with open(os.path.join(fixit_dir, yaml_files[0])) as f:
+        with open(os.path.join(fixit_dir, yaml_files[0]), encoding='utf-8') \
+                as f:
             content = f.read()
             self.assertIn("v.empty()", content)
 

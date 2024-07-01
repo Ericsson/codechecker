@@ -25,8 +25,7 @@ def arg_match(options, args):
     that are present in parameter 'args'."""
     matched_args = []
     for option in options:
-        if any([arg if option.startswith(arg) else None
-                for arg in args]):
+        if any(arg if option.startswith(arg) else None for arg in args):
             matched_args.append(option)
             continue
 
@@ -74,10 +73,6 @@ def load_json(path: str, default=None, lock=False, display_warning=True):
 
             if lock:
                 portalocker.unlock(handle)
-    except IOError as ex:
-        if display_warning:
-            LOG.warning("Failed to open json file: %s", path)
-            LOG.warning(ex)
     except OSError as ex:
         if display_warning:
             LOG.warning("Failed to open json file: %s", path)

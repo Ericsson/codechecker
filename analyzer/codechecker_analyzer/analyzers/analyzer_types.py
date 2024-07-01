@@ -209,24 +209,17 @@ def check_supported_analyzers(analyzers):
     return enabled_analyzers, failed_analyzers
 
 
-def construct_analyzer(buildaction,
-                       analyzer_config):
-    try:
-        analyzer_type = buildaction.analyzer_type
+def construct_analyzer(buildaction, analyzer_config):
+    analyzer_type = buildaction.analyzer_type
 
-        LOG.debug_analyzer('Constructing %s analyzer.', analyzer_type)
-        if analyzer_type in supported_analyzers:
-            analyzer = supported_analyzers[analyzer_type](analyzer_config,
-                                                          buildaction)
-        else:
-            analyzer = None
-            LOG.error('Unsupported analyzer type: %s', analyzer_type)
-        return analyzer
-
-    except Exception:
-        # We should've detected well before this point that something is off
-        # with the analyzer. We can't recover here.
-        raise
+    LOG.debug_analyzer('Constructing %s analyzer.', analyzer_type)
+    if analyzer_type in supported_analyzers:
+        analyzer = \
+            supported_analyzers[analyzer_type](analyzer_config, buildaction)
+    else:
+        analyzer = None
+        LOG.error('Unsupported analyzer type: %s', analyzer_type)
+    return analyzer
 
 
 def build_config_handlers(args, enabled_analyzers):

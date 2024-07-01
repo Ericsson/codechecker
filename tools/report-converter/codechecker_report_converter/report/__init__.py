@@ -180,10 +180,10 @@ class BugPathPosition:
     def __init__(
         self,
         file: File,
-        range: Optional[Range]
+        file_range: Optional[Range]
     ):
         self.file = file
-        self.range = range
+        self.range = file_range
 
     def to_json(self) -> Dict:
         """ Creates a JSON dictionary. """
@@ -212,9 +212,9 @@ class BugPathEvent(BugPathPosition):
         file: File,
         line: int,
         column: int,
-        range: Optional[Range] = None
+        file_range: Optional[Range] = None
     ):
-        super(BugPathEvent, self).__init__(file, range)
+        super().__init__(file, file_range)
 
         # Range can provide more precise location information than line and
         # column. Use that instead of these fields.
@@ -257,18 +257,16 @@ class MacroExpansion(BugPathEvent):
         file: File,
         line: int,
         column: int,
-        range: Optional[Range] = None
+        file_range: Optional[Range] = None
     ):
-        super(MacroExpansion, self).__init__(
-            message, file, line, column, range)
-
+        super().__init__(message, file, line, column, file_range)
         self.name = name
 
     def to_json(self) -> Dict:
         """ Creates a JSON dictionary. """
         return {
             "name": self.name,
-            **super(MacroExpansion, self).to_json()
+            **super().to_json()
         }
 
     def __repr__(self):
@@ -309,7 +307,7 @@ class Report:
         report_hash: Optional[str] = None,
         analyzer_name: Optional[str] = None,
         category: Optional[str] = None,
-        type: Optional[str] = None,
+        type: Optional[str] = None,  # pylint: disable=redefined-builtin
         analyzer_result_file_path: Optional[str] = None,
         source_line: Optional[str] = None,
         bug_path_events: Optional[List[BugPathEvent]] = None,

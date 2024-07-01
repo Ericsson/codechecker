@@ -21,11 +21,11 @@ from codechecker_report_converter import twodim
 
 from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.analyzers import analyzer_types
+from codechecker_analyzer.analyzers.config_handler import CheckerState
 
 from codechecker_common import arg, logger
 from codechecker_common.output import USER_FORMATS
 from codechecker_common.checker_labels import CheckerLabels
-from codechecker_analyzer.analyzers.config_handler import CheckerState
 
 LOG = logger.get_logger('system')
 
@@ -48,9 +48,9 @@ def get_argparser_ctor_args():
 
         # Epilogue is shown after the arguments when the help is queried
         # directly.
-        'epilog': """
+        'epilog': f"""
 The list of checkers that are enabled or disabled by default can be edited by
-editing "profile:default" labels in the directory '{}'.
+editing "profile:default" labels in the directory '{labels_dir_path}'.
 
 Example scenario: List checkers by labels
 -----------------------------------------
@@ -78,7 +78,7 @@ List available profiles, guidelines and severities:
 List labels and their available values:
     CodeChecker checkers --label
     CodeChecker checkers --label severity
-""".format(os.path.join(labels_dir_path)),
+""",
 
         # Help is shown when the "parent" CodeChecker command lists the
         # individual subcommands.
@@ -205,12 +205,12 @@ def __guideline_to_label(
 
     if args.guideline in guidelines:
         return f'guideline:{args.guideline}'
-    else:
-        if args.guideline.find(':') == -1:
-            LOG.error('--guideline parameter is either <guideline> or '
-                      '<guideline>:<rule>')
-            sys.exit(1)
-        return args.guideline
+    elif args.guideline.find(':') == -1:
+        LOG.error('--guideline parameter is either <guideline> or '
+                  '<guideline>:<rule>')
+        sys.exit(1)
+
+    return args.guideline
 
 
 def __get_detailed_checker_info(
@@ -261,8 +261,8 @@ def __get_detailed_checker_info(
 
         for checker, (state, description) in config_handler.checks().items():
             labels = cl.labels_of_checker(checker, analyzer)
-            state = CheckerState.enabled if ('profile', 'default') in labels \
-                else CheckerState.disabled
+            state = CheckerState.ENABLED if ('profile', 'default') in labels \
+                else CheckerState.DISABLED
             checker_info[analyzer].append(
                 (state, checker, analyzer, description, sorted(labels)))
 
@@ -335,8 +335,8 @@ def __print_guidelines(args: argparse.Namespace, cl: CheckerLabels):
 
     if args.output_format == 'rows':
         for row in rows:
-            print('Guideline: {}'.format(row[0]))
-            print('Rules: {}'.format(row[1]))
+            print(f'Guideline: {row[0]}')
+            print(f'Rules: {row[1]}')
     else:
         print(twodim.to_str(args.output_format, header, rows))
 
@@ -387,7 +387,7 @@ def __format_row(row: Tuple) -> Tuple:
     row -- A tuple with detailed checker info coming from
            __get_detailed_checker_info() function.
     """
-    state = '+' if row[0] == CheckerState.enabled else '-'
+    state = '+' if row[0] == CheckerState.ENABLED else '-'
     labels = ', '.join(f'{k}:{v}' for k, v in row[4])
 
     return state, row[1], row[2], row[3], labels
@@ -399,10 +399,8 @@ def __print_checkers_custom_format(checkers: Iterable):
     format. Due to its customness it isn't implemented in module twodim.
     """
     for checker in checkers:
-        if checker[0] == CheckerState.enabled:
-            status = 'enabled'
-        elif checker[0] == CheckerState.disabled:
-            status = 'disabled'
+        status = 'enabled' if checker[0] == CheckerState.ENABLED \
+            else 'disabled'
 
         print(checker[1])
         print('  Status:', status)
@@ -423,9 +421,9 @@ def __print_checkers_json_format(checkers: Iterable, detailed: bool):
     structure differs from other twodim formats.
     """
     def checker_info_dict(c):
-        if c[0] == CheckerState.enabled:
+        if c[0] == CheckerState.ENABLED:
             status = 'enabled'
-        elif c[0] == CheckerState.disabled:
+        elif c[0] == CheckerState.DISABLED:
             status = 'disabled'
         else:
             status = 'unknown'
@@ -480,6 +478,8 @@ def __print_checkers(args: argparse.Namespace, cl: CheckerLabels):
     for analyzer in args.analyzers:
         if labels:
             checkers = cl.checkers_by_labels(labels, analyzer)
+            # Variable "checkers" is consumed immediately.
+            # pylint: disable=cell-var-from-loop
             result.extend(
                 filter(lambda x: x[1] in checkers, checker_info[analyzer]))
         else:

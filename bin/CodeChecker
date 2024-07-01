@@ -6,11 +6,15 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # -------------------------------------------------------------------------
+
 """
 Used to kickstart CodeChecker.
 Save original environment without modifications.
 Used to run the logging in the same env.
 """
+# This is for enabling CodeChecker as a filename (i.e. module name).
+# pylint: disable=invalid-name
+# pylint: enable=invalid-name
 
 import os
 import pickle
@@ -20,7 +24,7 @@ import subprocess
 import sys
 import tempfile
 
-proc_pid = None
+PROC_PID = None
 
 
 def run_codechecker(checker_env, subcommand=None):
@@ -56,8 +60,8 @@ def run_codechecker(checker_env, subcommand=None):
                             encoding="utf=8",
                             errors="ignore",
                             env=checker_env)
-    global proc_pid
-    proc_pid = proc.pid
+    global PROC_PID
+    PROC_PID = proc.pid
 
     proc.wait()
     sys.exit(proc.returncode)
@@ -90,10 +94,10 @@ def main(subcommand=None):
         print('Saving original build environment failed.')
         print(ex)
 
-    def signal_term_handler(signum, frame):
-        global proc_pid
-        if proc_pid and not sys.platform == "win32":
-            os.kill(proc_pid, signal.SIGINT)
+    def signal_term_handler(signum, _frame):
+        global PROC_PID
+        if PROC_PID and sys.platform != "win32":
+            os.kill(PROC_PID, signal.SIGINT)
 
         _remove_tmp()
         sys.exit(128 + signum)
@@ -101,12 +105,12 @@ def main(subcommand=None):
     signal.signal(signal.SIGTERM, signal_term_handler)
     signal.signal(signal.SIGINT, signal_term_handler)
 
-    def signal_reload_handler(sig, frame):
-        global proc_pid
-        if proc_pid:
-            os.kill(proc_pid, signal.SIGHUP)
+    def signal_reload_handler(_sig, _frame):
+        global PROC_PID
+        if PROC_PID:
+            os.kill(PROC_PID, signal.SIGHUP)
 
-    if not sys.platform == "win32":
+    if sys.platform != "win32":
         signal.signal(signal.SIGHUP, signal_reload_handler)
 
     try:

@@ -24,7 +24,7 @@ class Parser(BaseParser):
     """
 
     def __init__(self, analyzer_result):
-        super(Parser, self).__init__()
+        super().__init__()
 
         self.analyzer_result = analyzer_result
 

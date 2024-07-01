@@ -1,6 +1,6 @@
 pytest==7.3.1
 sarif-tools==1.0.0
 pycodestyle==2.12.0
-pylint==2.8.2
+pylint==3.2.4
 portalocker==2.2.1
 mypy==1.7.1

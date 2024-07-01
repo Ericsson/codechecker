@@ -83,7 +83,7 @@ def remove_unused_files(product):
     # some measurements. Maybe this could be a command-line parameter. But in
     # the long terms we are planning to reduce cascade deletes by redesigning
     # bug_path_events and bug_report_points tables.
-    CHUNK_SIZE = 500_000
+    chunk_size = 500_000
     with DBSession(product.session_factory) as session:
         LOG.debug("[%s] Garbage collection of dangling files started...",
                   product.endpoint)
@@ -100,7 +100,7 @@ def remove_unused_files(product):
             files_to_delete = map(lambda x: x[0], files_to_delete)
 
             total_count = 0
-            for chunk in util.chunks(iter(files_to_delete), CHUNK_SIZE):
+            for chunk in util.chunks(iter(files_to_delete), chunk_size):
                 q = session.query(File) \
                     .filter(File.id.in_(chunk))
                 count = q.delete(synchronize_session=False)
@@ -277,9 +277,9 @@ def upgrade_severity_levels(product, checker_labels):
                             ((name_attempt,
                               checker_labels.severity(name_attempt, analyzer))
                              for name_attempt in [
-                                 "%s.%s" % (analyzer, checker),
-                                 "%s-%s" % (analyzer, checker),
-                                 "%s/%s" % (analyzer, checker)
+                                 f"{analyzer}.{checker}",
+                                 f"{analyzer}-{checker}",
+                                 f"{analyzer}/{checker}"
                              ])
                             if severity != "UNSPECIFIED"
                         }

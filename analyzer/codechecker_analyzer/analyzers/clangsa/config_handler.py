@@ -21,7 +21,7 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
     """
 
     def __init__(self, environ):
-        super(ClangSAConfigHandler, self).__init__()
+        super().__init__()
         self.ctu_dir = ''
         self.ctu_on_demand = False
         self.enable_z3 = False

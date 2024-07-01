@@ -19,7 +19,7 @@ import re
 import sys
 import shutil
 import time
-from typing import Dict, Iterable, List, Optional, Set, Tuple, Union
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 from codechecker_api.codeCheckerDBAccess_v6 import constants, ttypes
 from codechecker_api_shared.ttypes import RequestFailed
@@ -96,6 +96,8 @@ def run_sort_type_str(value: ttypes.RunSortType) -> Optional[str]:
     elif value == ttypes.RunSortType.CC_VERSION:
         return 'codechecker_version'
 
+    assert False, f"Unknown ttypes.RunSortType: {value}"
+
 
 def run_sort_type_enum(value: str) -> Optional[ttypes.RunSortType]:
     """ Returns the given run sort type Thrift enum value. """
@@ -110,21 +112,21 @@ def run_sort_type_enum(value: str) -> Optional[ttypes.RunSortType]:
     elif value == 'codechecker_version':
         return ttypes.RunSortType.CC_VERSION
 
+    assert False, f"Unknown ttypes.RunSortType value: {str}"
 
-def get_diff_type(args) -> Union[ttypes.DiffType, None]:
+
+def get_diff_type(args) -> ttypes.DiffType:
     """
     Returns Thrift DiffType value by processing the arguments.
     """
     if 'new' in args:
         return ttypes.DiffType.NEW
-
-    if 'unresolved' in args:
+    elif 'unresolved' in args:
         return ttypes.DiffType.UNRESOLVED
-
-    if 'resolved' in args:
+    elif 'resolved' in args:
         return ttypes.DiffType.RESOLVED
 
-    return None
+    assert False, "Unknown ttypes.DiffType: {args}"
 
 
 def get_run_tag(client, run_ids: List[int], tag_name: str):
@@ -261,22 +263,22 @@ def skip_report_dir_result(
 
     if report_filter.checkerName:
         checker_name = report.checker_name
-        if not any([re.match(r'^' + c.replace("*", ".*") + '$',
-                             checker_name, re.IGNORECASE)
-                    for c in report_filter.checkerName]):
+        if not any(re.match(r'^' + c.replace("*", ".*") + '$',
+                            checker_name, re.IGNORECASE)
+                   for c in report_filter.checkerName):
             return True
 
     if report_filter.filepath:
-        if not any([re.match(r'^' + f.replace("*", ".*") + '$',
-                             report.file.path, re.IGNORECASE)
-                    for f in report_filter.filepath]):
+        if not any(re.match(r'^' + f.replace("*", ".*") + '$',
+                            report.file.path, re.IGNORECASE)
+                   for f in report_filter.filepath):
             return True
 
     if report_filter.checkerMsg:
         checker_msg = report.message
-        if not any([re.match(r'^' + c.replace("*", ".*") + '$',
-                             checker_msg, re.IGNORECASE)
-                    for c in report_filter.checkerMsg]):
+        if not any(re.match(r'^' + c.replace("*", ".*") + '$',
+                            checker_msg, re.IGNORECASE)
+                   for c in report_filter.checkerMsg):
             return True
 
     return False
@@ -875,7 +877,7 @@ def get_diff_local_dir_remote_run(
 
     run_ids, run_names, tag_ids = \
         process_run_args(client, remote_run_names)
-    local_report_hashes = set([r.report_hash for r in report_dir_results])
+    local_report_hashes = set(r.report_hash for r in report_dir_results)
 
     review_status_filter = ttypes.ReviewStatusRuleFilter()
     review_status_filter.reportHashes = local_report_hashes
@@ -972,7 +974,7 @@ def get_diff_remote_run_local_dir(
 
     run_ids, run_names, tag_ids = \
         process_run_args(client, remote_run_names)
-    local_report_hashes = set([r.report_hash for r in report_dir_results])
+    local_report_hashes = set(r.report_hash for r in report_dir_results)
 
     review_status_filter = ttypes.ReviewStatusRuleFilter()
     review_status_filter.reportHashes = local_report_hashes
@@ -1064,8 +1066,7 @@ def get_diff_remote_runs(
         default_detection_status = [ttypes.DetectionStatus.NEW,
                                     ttypes.DetectionStatus.REOPENED,
                                     ttypes.DetectionStatus.UNRESOLVED]
-        if report_filter.detectionStatus != default_detection_status and \
-           report_filter.detectionStatus != []:
+        if report_filter.detectionStatus not in (default_detection_status, []):
             LOG.warning("--detection-status is ignored when comparing tags, "
                         "showing reports regardless of detection status.")
 
@@ -1111,8 +1112,8 @@ def get_diff_local_dirs(
     new_results = [res for res in new_results
                    if res.review_status.status in statuses_str]
 
-    base_hashes = set([res.report_hash for res in base_results])
-    new_hashes = set([res.report_hash for res in new_results])
+    base_hashes = set(res.report_hash for res in base_results)
+    new_hashes = set(res.report_hash for res in new_results)
 
     # Add hashes from the baseline files.
     base_hashes.update(baseline.get_report_hashes(baseline_files))
@@ -1275,8 +1276,8 @@ def handle_diff_results(args):
     check_deprecated_arg_usage(args)
 
     if 'clean' in args and os.path.isdir(output_dir):
-        print("Previous analysis results in '{0}' have been removed, "
-              "overwriting with current results.".format(output_dir))
+        print(f"Previous analysis results in '{output_dir}' have been "
+              "removed, overwriting with current results.")
         shutil.rmtree(output_dir)
 
     if output_dir and not os.path.exists(output_dir):
@@ -1489,11 +1490,11 @@ def handle_list_result_types(args):
 
     severities = []
     severity_total = 0
-    for key, count in sorted(list(sev_count.items()),
-                             reverse=True):
-        severities.append(dict(
-            severity=ttypes.Severity._VALUES_TO_NAMES[key],
-            reports=count))
+    for key, count in sorted(list(sev_count.items()), reverse=True):
+        severities.append({
+            "severity": ttypes.Severity._VALUES_TO_NAMES[key],
+            "reports": count
+        })
         severity_total += count
 
     all_results = []
@@ -1501,15 +1502,16 @@ def handle_list_result_types(args):
     for key, checker_data in sorted(list(all_checkers_dict.items()),
                                     key=lambda x: x[1].severity,
                                     reverse=True):
-        all_results.append(dict(
-            checker=key,
-            severity=ttypes.Severity._VALUES_TO_NAMES[checker_data.severity],
-            reports=checker_data.count,
-            unreviewed=checker_count(unrev_checkers, key),
-            confirmed=checker_count(confirmed_checkers, key),
-            false_positive=checker_count(false_checkers, key),
-            intentional=checker_count(intentional_checkers, key)
-        ))
+        all_results.append({
+            "checker": key,
+            "severity":
+            ttypes.Severity._VALUES_TO_NAMES[checker_data.severity],
+            "reports": checker_data.count,
+            "unreviewed": checker_count(unrev_checkers, key),
+            "confirmed": checker_count(confirmed_checkers, key),
+            "false_positive": checker_count(false_checkers, key),
+            "intentional": checker_count(intentional_checkers, key)
+        })
         total['total_reports'] += checker_data.count
         total['total_unreviewed'] += checker_count(unrev_checkers, key)
         total['total_confirmed'] += checker_count(confirmed_checkers, key)
@@ -1739,10 +1741,11 @@ def handle_import(args):
             author=review['author'],
             date=review['date'])
 
-    exportData = ttypes.ExportData(comments=comment_data_list,
-                                   reviewData=review_data_list)
+    export_data = ttypes.ExportData(
+        comments=comment_data_list,
+        reviewData=review_data_list)
 
-    status = client.importData(exportData)
+    status = client.importData(export_data)
     if not status:
         LOG.error("Failed to import data!")
         sys.exit(1)
