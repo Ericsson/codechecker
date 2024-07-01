@@ -86,7 +86,7 @@ class AnalyzerResultBase(metaclass=ABCMeta):
         return bool(all_reports)
 
     @abstractmethod
-    def get_reports(self, analyzer_result_file_path: str) -> List[Report]:
+    def get_reports(self, file_path: str) -> List[Report]:
         """ Get reports from the given analyzer result. """
         raise NotImplementedError("Subclasses should implement this!")
 

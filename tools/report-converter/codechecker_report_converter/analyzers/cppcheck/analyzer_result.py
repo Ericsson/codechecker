@@ -29,17 +29,15 @@ class AnalyzerResult(AnalyzerResultBase):
     NAME = 'Cppcheck'
     URL = 'http://cppcheck.sourceforge.net'
 
-    def get_reports(self, analyzer_result_path: str) -> List[Report]:
+    def get_reports(self, file_path: str) -> List[Report]:
         """ Get reports from the given analyzer result. """
         reports: List[Report] = []
 
         plist_files = []
-        if os.path.isdir(analyzer_result_path):
-            plist_files = glob.glob(os.path.join(
-                analyzer_result_path, "*.plist"))
-        elif os.path.isfile(analyzer_result_path) and \
-                analyzer_result_path.endswith(".plist"):
-            plist_files = [analyzer_result_path]
+        if os.path.isdir(file_path):
+            plist_files = glob.glob(os.path.join(file_path, "*.plist"))
+        elif os.path.isfile(file_path) and file_path.endswith(".plist"):
+            plist_files = [file_path]
         else:
             LOG.error("The given input should be an existing CppCheck result "
                       "directory or a plist file.")

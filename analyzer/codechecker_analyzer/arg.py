@@ -39,8 +39,7 @@ class OrderedCheckersAction(argparse.Action):
     def __init__(self, option_strings, dest, nargs=None, **kwargs):
         if nargs is not None:
             raise ValueError("nargs not allowed")
-        super(OrderedCheckersAction, self).__init__(option_strings, dest,
-                                                    **kwargs)
+        super().__init__(option_strings, dest, **kwargs)
 
     def __call__(self, parser, namespace, value, option_string=None):
 
@@ -64,8 +63,7 @@ class OrderedConfigAction(argparse.Action):
         if nargs != '*':
             raise ValueError("nargs must be '*' for backward compatibility "
                              "reasons!")
-        super(OrderedConfigAction, self).__init__(option_strings, dest,
-                                                  nargs, **kwargs)
+        super().__init__(option_strings, dest, nargs, **kwargs)
 
     def __call__(self, parser, namespace, value, option_string=None):
 

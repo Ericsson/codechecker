@@ -51,8 +51,8 @@ def get_workspace(test_id='test'):
 
     if test_id:
         return tempfile.mkdtemp(prefix=test_id+"-", dir=workspace_root)
-    else:
-        return workspace_root
+
+    return workspace_root
 
 
 def test_env(test_workspace):

@@ -5,7 +5,6 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # -------------------------------------------------------------------------
-""""""
 
 
 class BuildAction:
@@ -35,19 +34,19 @@ class BuildAction:
     def __init__(self, **kwargs):
         # Filtered list of options.
         for slot in BuildAction.__slots__:
-            super(BuildAction, self).__setattr__(slot, kwargs[slot])
+            super().__setattr__(slot, kwargs[slot])
 
     def __str__(self):
         """
         Return all the members of the __slots__ list.
         """
         info = [(member, getattr(self, member)) for member in self.__slots__]
-        return ('\n'.join([f'{key}: {value}' for key, value in info]))
+        return '\n'.join([f'{key}: {value}' for key, value in info])
 
     def __setattr__(self, attr, value):
         if hasattr(self, attr) and getattr(self, attr) != value:
             raise AttributeError("BuildAction is immutable")
-        super(BuildAction, self).__setattr__(attr, value)
+        super().__setattr__(attr, value)
 
     def __eq__(self, other):
         return other.original_command == self.original_command

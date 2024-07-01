@@ -12,7 +12,7 @@ Generic test decorators.
 from functools import wraps
 
 
-def makeSkipUnlessAttributeFound(attribute, message):
+def make_skip_unless_attribute_found(attribute, message):
     def decorator(original):
         @wraps(original)
         def wrapper(self, *args, **kwargs):

@@ -114,7 +114,7 @@ class TestCompilationDatabase(unittest.TestCase):
         root.
         """
         def compile_commands(comp_db):
-            return set([comp_action["command"] for comp_action in comp_db])
+            return set(comp_action["command"] for comp_action in comp_db)
 
         # Check the assumption described in the function's documentation.
         self.assertTrue(

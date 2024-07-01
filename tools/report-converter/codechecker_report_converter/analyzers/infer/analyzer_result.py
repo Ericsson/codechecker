@@ -29,21 +29,21 @@ class AnalyzerResult(AnalyzerResultBase):
     URL = 'https://fbinfer.com'
 
     def __init__(self):
-        super(AnalyzerResult, self).__init__()
+        super().__init__()
         self.__infer_out_parent_dir = None
         self.__file_cache: Dict[str, File] = {}
 
-    def get_reports(self, result_file_path: str) -> List[Report]:
+    def get_reports(self, file_path: str) -> List[Report]:
         """ Parse the given analyzer result. """
         reports: List[Report] = []
 
-        if os.path.isdir(result_file_path):
-            report_file = os.path.join(result_file_path, "report.json")
-            self.__infer_out_parent_dir = os.path.dirname(result_file_path)
+        if os.path.isdir(file_path):
+            report_file = os.path.join(file_path, "report.json")
+            self.__infer_out_parent_dir = os.path.dirname(file_path)
         else:
-            report_file = result_file_path
+            report_file = file_path
             self.__infer_out_parent_dir = os.path.dirname(
-                os.path.dirname(result_file_path))
+                os.path.dirname(file_path))
 
         if not os.path.exists(report_file):
             LOG.error("Report file does not exist: %s", report_file)
@@ -56,7 +56,7 @@ class AnalyzerResult(AnalyzerResultBase):
         except IOError:
             LOG.error("Failed to parse the given analyzer result '%s'. Please "
                       "give an infer output directory which contains a valid "
-                      "'report.json' file.", result_file_path)
+                      "'report.json' file.", file_path)
             return reports
 
         for bug in bugs:
@@ -79,6 +79,7 @@ class AnalyzerResult(AnalyzerResultBase):
             return full_path
 
         LOG.warning("No source file found: %s", source_path)
+        return None
 
     def __parse_report(self, bug) -> Optional[Report]:
         """ Parse the given report and create a message from them. """
@@ -87,9 +88,7 @@ class AnalyzerResult(AnalyzerResultBase):
 
         message = bug['qualifier']
         line = int(bug['line'])
-        col = int(bug['column'])
-        if col < 0:
-            col = 0
+        col = max(int(bug['column']), 0)
 
         source_path = self.__get_abs_path(bug['file'])
         if not source_path:
@@ -121,9 +120,7 @@ class AnalyzerResult(AnalyzerResultBase):
 
         message = bug_trace['description']
         line = int(bug_trace['line_number'])
-        col = int(bug_trace['column_number'])
-        if col < 0:
-            col = 0
+        col = max(int(bug_trace['column_number']), 0)
 
         return BugPathEvent(
             message,

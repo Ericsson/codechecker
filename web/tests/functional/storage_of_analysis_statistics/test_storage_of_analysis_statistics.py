@@ -48,7 +48,6 @@ class TestStorageOfAnalysisStatistics(unittest.TestCase):
 
         # Stopping event for CodeChecker server.
         global EVENT_1
-        # pylint: disable=no-member multiprocess module members.
         EVENT_1 = multiprocess.Event()
 
         global TEST_WORKSPACE
@@ -109,7 +108,7 @@ class TestStorageOfAnalysisStatistics(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
 
         # Get the test workspace.
         self.test_workspace = os.environ['TEST_WORKSPACE']
@@ -178,7 +177,7 @@ int main()
   xxx // Will cause a compilation error
 }"""]
 
-    def teardown_method(self, method):
+    def teardown_method(self, _):
         """Restore environment after tests have ran."""
         os.chdir(self.__old_pwd)
 

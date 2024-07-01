@@ -80,6 +80,7 @@ def is_supported_version(version):
     return False
 
 
+# pylint: disable=invalid-name
 def split_client_GET_request(path):
     """
     Split the given request URI to its parts relevant to the server.
@@ -99,11 +100,12 @@ def split_client_GET_request(path):
     if endpoint_part and is_valid_product_endpoint(endpoint_part):
         remainder = split_path[2] if len(split_path) == 3 else ''
         return endpoint_part, remainder
-    else:
-        # The request wasn't pointing to a valid product endpoint.
-        return None, parsed_path.lstrip('/')
+
+    # The request wasn't pointing to a valid product endpoint.
+    return None, parsed_path.lstrip('/')
 
 
+# pylint: disable=invalid-name
 def split_client_POST_request(path):
     """
     Split the given request URI to its parts relevant to the server.
@@ -124,7 +126,8 @@ def split_client_POST_request(path):
         remainder = split_path[3]
 
         return endpoint_part, version_tag, remainder
-    elif split_path[1].startswith('v'):
+
+    if split_path[1].startswith('v'):
         # Request came through without a valid product URL endpoint to
         # possibly the main server.
         version_tag = split_path[1].lstrip('v')
@@ -135,6 +138,7 @@ def split_client_POST_request(path):
     return None, None, None
 
 
+# pylint: disable=invalid-name
 def is_protected_GET_entrypoint(path):
     """
     Returns if the given GET request's PATH enters the server through an

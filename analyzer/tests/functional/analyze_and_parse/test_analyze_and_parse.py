@@ -120,7 +120,7 @@ class AnalyzeParseTestCase(
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE)
 
-    def teardown_method(self, method):
+    def teardown_method(self, _):
         """Restore environment after a particular test has run."""
         output_dir = AnalyzeParseTestCase.test_workspaces['OUTPUT']
         if os.path.isdir(output_dir):
@@ -241,15 +241,14 @@ class AnalyzeParseTestCase(
             # The replacement on this line will be the following:
             # [] - x.cpp contains misspelled ...
             sep = re.escape(os.sep)
-            line = re.sub(r'^(\[\w+\]\s)(?P<path>.+{0})'
-                          r'(.+\:\d+\:\d+\:\s.*\s\[.*\])$'.format(sep),
+            line = re.sub(rf'^(\[\w+\]\s)(?P<path>.+{sep})'
+                          r'(.+\:\d+\:\d+\:\s.*\s\[.*\])$',
                           r'\1\3', line)
-            line = re.sub(r'^\[\] - (?P<path>.+{0})'
-                          r'(.+ contains misspelled.+)'.format(sep),
+            line = re.sub(rf'^\[\] - (?P<path>.+{sep})'
+                          r'(.+ contains misspelled.+)',
                           r'[] - \2', line)
 
-            if not any([line.startswith(prefix) for prefix
-                        in skip_prefixes]):
+            if not any(line.startswith(prefix) for prefix in skip_prefixes):
                 post_processed_output.append(line)
 
         print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Actual output below:")
@@ -258,7 +257,7 @@ class AnalyzeParseTestCase(
         print(correct_output)
 
         print("Test output file: " + path)
-        self.maxDiff = None
+        self.maxDiff = None  # pylint: disable=invalid-name
         self.assertEqual(''.join(post_processed_output), correct_output)
 
     def test_json_output_for_macros(self):
@@ -346,9 +345,9 @@ class AnalyzeParseTestCase(
     def test_gerrit_output(self):
         """ Test gerrit output of the parse command. """
 
-        env = self.env.copy()
+        environ = self.env.copy()
         report_url = "localhost:8080/index.html"
-        env["CC_REPORT_URL"] = report_url
+        environ["CC_REPORT_URL"] = report_url
 
         changed_file_path = os.path.join(self.test_dir, 'files_changed')
 
@@ -362,17 +361,18 @@ class AnalyzeParseTestCase(
                 "macros.cpp": {}}
             changed_file.write(json.dumps(changed_files))
 
-        env["CC_CHANGED_FILES"] = changed_file_path
+        environ["CC_CHANGED_FILES"] = changed_file_path
 
         test_project_macros = os.path.join(self.test_workspaces['NORMAL'],
                                            "test_files", "macros")
-        env["CC_REPO_DIR"] = test_project_macros
+        environ["CC_REPO_DIR"] = test_project_macros
 
         extract_cmd = ['CodeChecker', 'parse', test_project_macros,
                        '-e', 'gerrit']
 
         print(" ".join(extract_cmd))
-        out, _, result = call_command(extract_cmd, cwd=self.test_dir, env=env)
+        out, _, result = call_command(
+            extract_cmd, cwd=self.test_dir, env=environ)
         self.assertEqual(result, 2, "Parsing not found any issue.")
         print(out)
 
@@ -383,7 +383,7 @@ class AnalyzeParseTestCase(
         self.assertEqual(lbls["Code-Review"], -1)
         self.assertEqual(review_data["message"],
                          "CodeChecker found 1 issue(s) in the code. "
-                         "See: {0}".format(report_url))
+                         f"See: {report_url}")
         self.assertEqual(review_data["tag"], "jenkins")
 
         # Because the CC_CHANGED_FILES is set we will see reports only for
@@ -493,9 +493,9 @@ class AnalyzeParseTestCase(
             are skipped.
         """
 
-        env = self.env.copy()
+        environ = self.env.copy()
         report_url = "localhost:8080/index.html"
-        env["CC_REPORT_URL"] = report_url
+        environ["CC_REPORT_URL"] = report_url
 
         changed_file_path = os.path.join(self.test_dir, 'files_changed')
 
@@ -509,11 +509,11 @@ class AnalyzeParseTestCase(
                 "macros.cpp": {}}
             changed_file.write(json.dumps(changed_files))
 
-        env["CC_CHANGED_FILES"] = changed_file_path
+        environ["CC_CHANGED_FILES"] = changed_file_path
 
         test_project_macros = os.path.join(self.test_workspaces['NORMAL'],
                                            "test_files", "macros")
-        env["CC_REPO_DIR"] = test_project_macros
+        environ["CC_REPO_DIR"] = test_project_macros
         skip_file_path = os.path.join(self.test_dir, 'skipall.txt')
 
         extract_cmd = ['CodeChecker', 'parse', test_project_macros,
@@ -521,7 +521,7 @@ class AnalyzeParseTestCase(
 
         print(" ".join(extract_cmd))
         standard_output, _, result = call_command(
-            extract_cmd, cwd=self.test_dir, env=env)
+            extract_cmd, cwd=self.test_dir, env=environ)
         os.remove(changed_file_path)
         self.assertEqual(result, 0, "Parsing should not found any issue.")
         self.assertIn(
@@ -713,7 +713,7 @@ class AnalyzeParseTestCase(
             self.assertFalse(err)
 
             self.assertTrue(f'No report data in {plist_file_path}' in out)
-            self.assertTrue(f'Html file was generated:' in out)
+            self.assertTrue('Html file was generated:' in out)
             self.assertTrue('Summary' in out)
             self.assertTrue('statistics.html' in out)
             self.assertTrue('index.html' in out)

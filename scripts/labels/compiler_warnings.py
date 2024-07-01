@@ -63,7 +63,7 @@ def main():
             labels[checker_name].append(f"severity:{severity}")
 
     labels_data["labels"] = dict(sorted(labels.items()))
-    with open(args.label_file, 'w') as f:
+    with open(args.label_file, 'w', encoding='utf-8') as f:
         json.dump(labels_data, f, indent=2)
 
 

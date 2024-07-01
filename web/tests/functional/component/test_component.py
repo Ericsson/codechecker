@@ -112,7 +112,7 @@ class TestComponent(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         self._test_workspace = os.environ.get('TEST_WORKSPACE')
 
         test_class = self.__class__.__name__
@@ -199,7 +199,7 @@ class TestComponent(unittest.TestCase):
             }
         ]
 
-    def teardown_method(self, method):
+    def teardown_method(self, _):
         self.__remove_all_source_componens()
 
     def __add_new_component(self, component):

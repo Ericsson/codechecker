@@ -24,7 +24,6 @@ from . import setup_class_common, teardown_class_common
 
 
 class TestServerConfig(unittest.TestCase):
-    # pylint: disable=no-member multiprocess module members.
     _ccClient = None
 
     def setup_class(self):
@@ -33,7 +32,7 @@ class TestServerConfig(unittest.TestCase):
     def teardown_class(self):
         teardown_class_common()
 
-    def setup_method(self, method):
+    def setup_method(self, _):
 
         # TEST_WORKSPACE is automatically set by test package __init__.py .
         self.test_workspace = os.environ['TEST_WORKSPACE']

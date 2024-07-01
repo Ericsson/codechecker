@@ -43,8 +43,8 @@ def expand_whole_protocol_and_port(protocol=None, port=None):
         elif protocol == 'https':
             portnum = 443
         else:
-            raise ValueError("'{0}' is not a protocol understood by "
-                             "CodeChecker".format(protocol))
+            raise ValueError(f"'{protocol}' is not a protocol understood by "
+                             "CodeChecker")
     else:
         protocol = 'http'
         portnum = 8001
@@ -102,25 +102,22 @@ def split_server_url(url):
     # A valid product_url looks like this: 'http://localhost:8001/Product'.
     protocol, port = expand_whole_protocol_and_port(protocol, None)
     host = 'localhost'
-    try:
-        parts = url.split('/', 1)
 
-        # Something is either a hostname, or a host:port.
-        server_addr = parts[0]
-        host, maybe_port = understand_server_addr(server_addr)
-        if maybe_port:
-            port = maybe_port
-    except Exception:
-        raise ValueError("The specified server URL is invalid.")
+    parts = url.split('/', 1)
 
-    LOG.debug("Result: With '%s' on server '%s:%s'",
-              protocol, host, port)
+    # Something is either a hostname, or a host:port.
+    server_addr = parts[0]
+    host, maybe_port = understand_server_addr(server_addr)
+    if maybe_port:
+        port = maybe_port
+
+    LOG.debug("Result: With '%s' on server '%s:%s'", protocol, host, port)
 
     return protocol, host, port
 
 
 def create_product_url(protocol, host, port, endpoint):
-    return "{0}://{1}:{2}{3}".format(protocol, host, str(port), endpoint)
+    return f"{protocol}://{host}:{str(port)}{endpoint}"
 
 
 def split_product_url(url):
@@ -146,34 +143,32 @@ def split_product_url(url):
     # A valid product_url looks like this: 'http://localhost:8001/Product'.
     protocol, port = expand_whole_protocol_and_port(protocol, None)
     host, product_name = 'localhost', 'Default'
-    try:
-        parts = url.split("/")
 
-        if len(parts) == 1:
-            # If only one word is given in the URL, consider it as product
-            # name, but then it must appear to be a valid product name.
+    parts = url.split("/")
 
-            # "Only one word" URLs can be just simple host names too:
-            # http://codechecker.example.com:1234 should NOT be understood as
-            # the "codechecker.example.com:1234" product on "localhost:8001".
-            product_name = parts[0]
-            if product_name[0].isdigit() or '.' in product_name \
-                    or ':' in product_name:
-                raise ValueError("The given product URL is invalid. Please "
-                                 "specify a full product URL.")
-        elif len(parts) == 2:
-            # URL is at least something/product-name.
-            product_name = parts[1]
+    if len(parts) == 1:
+        # If only one word is given in the URL, consider it as product
+        # name, but then it must appear to be a valid product name.
 
-            # Something is either a hostname, or a host:port.
-            server_addr = parts[0]
-            host, maybe_port = understand_server_addr(server_addr)
-            if maybe_port:
-                port = maybe_port
-        else:
-            raise ValueError("Product URL can not contain extra '/' chars.")
-    except Exception:
-        raise ValueError("The specified product URL is invalid.")
+        # "Only one word" URLs can be just simple host names too:
+        # http://codechecker.example.com:1234 should NOT be understood as
+        # the "codechecker.example.com:1234" product on "localhost:8001".
+        product_name = parts[0]
+        if product_name[0].isdigit() or '.' in product_name \
+                or ':' in product_name:
+            raise ValueError("The given product URL is invalid. Please "
+                             "specify a full product URL.")
+    elif len(parts) == 2:
+        # URL is at least something/product-name.
+        product_name = parts[1]
+
+        # Something is either a hostname, or a host:port.
+        server_addr = parts[0]
+        host, maybe_port = understand_server_addr(server_addr)
+        if maybe_port:
+            port = maybe_port
+    else:
+        raise ValueError("Product URL can not contain extra '/' chars.")
 
     LOG.debug("Result: With '%s' on server '%s:%s', product '%s'",
               protocol, host, port, product_name)

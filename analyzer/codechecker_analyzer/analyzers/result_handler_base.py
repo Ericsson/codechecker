@@ -74,8 +74,6 @@ class ResultHandler(metaclass=ABCMeta):
 
     @property
     def buildaction(self):
-        """
-        """
         return self.__buildaction
 
     @property
@@ -193,10 +191,8 @@ class ResultHandler(metaclass=ABCMeta):
         Postprocess result if needed.
         Should be called after the analyses finished.
         """
-        pass
 
     def handle_results(self, client):
         """
         Handle the results and return report statistics.
         """
-        pass

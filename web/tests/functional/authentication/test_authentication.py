@@ -36,7 +36,7 @@ class DictAuth(unittest.TestCase):
     def teardown_class(self):
         teardown_class_common()
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         # Get the test workspace used to authentication tests.
         self._test_workspace = os.environ['TEST_WORKSPACE']
 
@@ -71,9 +71,9 @@ class DictAuth(unittest.TestCase):
         user = auth_client.getLoggedInUser()
         self.assertEqual(user, "")
 
-        self.sessionToken = auth_client.performLogin("Username:Password",
-                                                     "cc:test")
-        self.assertIsNotNone(self.sessionToken,
+        self.session_token = auth_client.performLogin(
+            "Username:Password", "cc:test")
+        self.assertIsNotNone(self.session_token,
                              "Valid credentials didn't give us a token!")
 
         handshake = auth_client.getAuthParameters()
@@ -84,14 +84,14 @@ class DictAuth(unittest.TestCase):
                          "Valid session was " + "reported not to be active.")
 
         client = env.setup_viewer_client(self._test_workspace,
-                                         session_token=self.sessionToken)
+                                         session_token=self.session_token)
 
         self.assertIsNotNone(client.getPackageVersion(),
                              "Privileged server didn't respond properly.")
 
         authd_auth_client = \
             env.setup_auth_client(self._test_workspace,
-                                  session_token=self.sessionToken)
+                                  session_token=self.session_token)
         user = authd_auth_client.getLoggedInUser()
         self.assertEqual(user, "cc")
 
@@ -112,14 +112,14 @@ class DictAuth(unittest.TestCase):
         self.assertEqual(personal_tokens[0].description, description)
 
         auth_client = env.setup_auth_client(self._test_workspace,
-                                            session_token=self.sessionToken)
+                                            session_token=self.session_token)
         result = auth_client.destroySession()
 
         self.assertTrue(result, "Server did not allow us to destroy session.")
 
-        self.sessionToken = auth_client.performLogin("Username:Password",
-                                                     "colon:my:password")
-        self.assertIsNotNone(self.sessionToken,
+        self.session_token = auth_client.performLogin(
+            "Username:Password", "colon:my:password")
+        self.assertIsNotNone(self.session_token,
                              "Valid credentials didn't give us a token!")
 
         result = auth_client.destroySession()
@@ -135,10 +135,10 @@ class DictAuth(unittest.TestCase):
                                   session_token=token)
 
         # Log-in by using an already generated personal token.
-        self.sessionToken = auth_token_client.performLogin("Username:Password",
-                                                           "cc:" + token)
+        self.session_token = auth_token_client.performLogin(
+            "Username:Password", "cc:" + token)
 
-        self.assertIsNotNone(self.sessionToken,
+        self.assertIsNotNone(self.session_token,
                              "Valid credentials didn't give us a token!")
 
         user = auth_token_client.getLoggedInUser()
@@ -151,13 +151,13 @@ class DictAuth(unittest.TestCase):
         codechecker.logout(self._test_cfg['codechecker_cfg'],
                            self._test_workspace)
 
-        self.sessionToken = auth_client.performLogin("Username:Password",
-                                                     "cc:test")
-        self.assertIsNotNone(self.sessionToken,
+        self.session_token = auth_client.performLogin(
+            "Username:Password", "cc:test")
+        self.assertIsNotNone(self.session_token,
                              "Valid credentials didn't give us a token!")
 
         auth_client = env.setup_auth_client(self._test_workspace,
-                                            session_token=self.sessionToken)
+                                            session_token=self.session_token)
         # Remove the generated personal token.
         ret = auth_client.removeToken(token)
         self.assertTrue(ret)
@@ -216,15 +216,15 @@ class DictAuth(unittest.TestCase):
         self.assertEqual(user, "")
 
         # Create a SUPERUSER login.
-        self.sessionToken = auth_client.performLogin("Username:Password",
-                                                     "root:root")
+        self.session_token = auth_client.performLogin(
+            "Username:Password", "root:root")
 
-        self.assertIsNotNone(self.sessionToken,
+        self.assertIsNotNone(self.session_token,
                              "Valid credentials didn't give us a token!")
 
         authd_auth_client = \
             env.setup_auth_client(self._test_workspace,
-                                  session_token=self.sessionToken)
+                                  session_token=self.session_token)
         user = authd_auth_client.getLoggedInUser()
         self.assertEqual(user, "root")
 
@@ -245,15 +245,15 @@ class DictAuth(unittest.TestCase):
 
         # Perform login with a user who is in ADMIN_GROUP and check that
         # he has permission to perform operations.
-        self.sessionToken = \
+        self.session_token = \
             auth_client.performLogin("Username:Password",
                                      "admin_group_user:admin123")
 
-        self.assertIsNotNone(self.sessionToken,
+        self.assertIsNotNone(self.session_token,
                              "Valid credentials didn't give us a token!")
 
         client = env.setup_viewer_client(self._test_workspace,
-                                         session_token=self.sessionToken)
+                                         session_token=self.session_token)
 
         self.assertIsNotNone(client.allowsStoringAnalysisStatistics(),
                              "Privileged server didn't respond properly.")
@@ -265,15 +265,15 @@ class DictAuth(unittest.TestCase):
         auth_client = env.setup_auth_client(self._test_workspace,
                                             session_token='_PROHIBIT')
         # First login as root.
-        self.sessionToken = auth_client.performLogin("Username:Password",
-                                                     "root:root")
-        self.assertIsNotNone(self.sessionToken,
+        self.session_token = auth_client.performLogin(
+            "Username:Password", "root:root")
+        self.assertIsNotNone(self.session_token,
                              "root was unable to login!")
 
         # Then give SUPERUSER privs to admins_custom_group.
         authd_auth_client = \
             env.setup_auth_client(self._test_workspace,
-                                  session_token=self.sessionToken)
+                                  session_token=self.session_token)
         ret = authd_auth_client.addPermission(Permission.SUPERUSER,
                                               "admins_custom_group",
                                               True, None)
@@ -283,14 +283,14 @@ class DictAuth(unittest.TestCase):
         self.assertTrue(result, "Server did not allow us to destroy session.")
 
         # Login as a user who is in admins_custom_group.
-        sessionToken = auth_client.performLogin("Username:Password",
-                                                "regex_admin:blah")
-        self.assertIsNotNone(sessionToken,
+        session_token = auth_client.performLogin(
+            "Username:Password", "regex_admin:blah")
+        self.assertIsNotNone(session_token,
                              "Valid credentials didn't give us a token!")
 
         # Do something privileged.
         client = env.setup_viewer_client(self._test_workspace,
-                                         session_token=sessionToken)
+                                         session_token=session_token)
         self.assertIsNotNone(client.allowsStoringAnalysisStatistics(),
                              "Privileged call failed.")
 
@@ -298,13 +298,13 @@ class DictAuth(unittest.TestCase):
         self.assertTrue(result, "Server did not allow us to destroy session.")
 
         # Finally try to do the same with an unprivileged user.
-        sessionToken = auth_client.performLogin("Username:Password",
-                                                "john:doe")
-        self.assertIsNotNone(sessionToken,
+        session_token = auth_client.performLogin(
+            "Username:Password", "john:doe")
+        self.assertIsNotNone(session_token,
                              "Valid credentials didn't give us a token!")
 
         client = env.setup_viewer_client(self._test_workspace,
-                                         session_token=sessionToken)
+                                         session_token=session_token)
         self.assertFalse(client.allowsStoringAnalysisStatistics(),
                          "Privileged call from unprivileged user"
                          " did not fail!")

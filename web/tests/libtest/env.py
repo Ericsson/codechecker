@@ -59,8 +59,8 @@ def get_postgresql_cfg():
         if os.environ.get('TEST_DBUSERNAME', False):
             pg_db_config['dbusername'] = os.environ['TEST_DBUSERNAME']
         return pg_db_config
-    else:
-        return None
+
+    return None
 
 
 def add_database(dbname, env=None):
@@ -101,17 +101,17 @@ def del_database(dbname, env=None):
     if pg_config:
         pg_config['dbname'] = dbname
 
-        remove_cmd = """
+        remove_cmd = f"""
             UPDATE pg_database
             SET datallowconn='false'
-            WHERE datname='{0}';
+            WHERE datname='{dbname}';
 
             SELECT pg_terminate_backend(pid)
             FROM pg_stat_activity
-            WHERE datname='{0}';
+            WHERE datname='{dbname}';
 
-            DROP DATABASE "{0}";
-        """.format(dbname)
+            DROP DATABASE "{dbname}";
+        """
 
         with tempfile.NamedTemporaryFile(suffix='.sql') as sql_file:
             sql_file.write(remove_cmd.encode('utf-8'))
@@ -277,8 +277,8 @@ def get_workspace(test_id='test'):
 
     if test_id:
         return tempfile.mkdtemp(prefix=test_id+"-", dir=workspace_root)
-    else:
-        return workspace_root
+
+    return workspace_root
 
 
 def clean_wp(workspace):

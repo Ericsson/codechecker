@@ -5,8 +5,6 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # -------------------------------------------------------------------------
-"""
-"""
 
 
 import glob
@@ -116,14 +114,14 @@ def worker_result_handler(results, metadata_tool, output_path):
 
 
 # Progress reporting.
-progress_checked_num = None
-progress_actions = None
+PROGRESS_CHECKED_NUM = None
+PROGRESS_ACTIONS = None
 
 
 def init_worker(checked_num, action_num):
-    global progress_checked_num, progress_actions
-    progress_checked_num = checked_num
-    progress_actions = action_num
+    global PROGRESS_CHECKED_NUM, PROGRESS_ACTIONS
+    PROGRESS_CHECKED_NUM = checked_num
+    PROGRESS_ACTIONS = action_num
 
 
 def save_output(base_file_name, out, err):
@@ -172,8 +170,7 @@ def prepare_check(action, analyzer_config, output_dir,
     """ Construct the source analyzer and result handler. """
     # Create a source analyzer.
     source_analyzer = \
-        analyzer_types.construct_analyzer(action,
-                                          analyzer_config)
+        analyzer_types.construct_analyzer(action, analyzer_config)
 
     if disable_ctu:
         # WARNING! can be called only on ClangSA
@@ -334,8 +331,8 @@ def handle_failure(
     # from the standard output by this postprocess phase so we can present them
     # as CodeChecker reports.
     checks = source_analyzer.config_handler.checks()
-    state = checks.get('clang-diagnostic-error', (CheckerState.enabled, ''))[0]
-    if state == CheckerState.enabled:
+    state = checks.get('clang-diagnostic-error', (CheckerState.ENABLED, ''))[0]
+    if state == CheckerState.ENABLED:
         rh.postprocess_result(skip_handlers, rs_handler)
 
     # Remove files that successfully analyzed earlier on.
@@ -507,7 +504,7 @@ def check(check_data):
         result_file = ''
 
         if analyzer_config is None:
-            raise Exception("Analyzer configuration is missing.")
+            raise ValueError("Analyzer configuration is missing.")
 
         source_analyzer, rh = prepare_check(action, analyzer_config,
                                             output_dir,
@@ -539,7 +536,7 @@ def check(check_data):
                 timeout_cleanup[0] = setup_process_timeout(
                     analyzer_process, analysis_timeout)
         else:
-            def __create_timeout(analyzer_process):
+            def __create_timeout(_):
                 # If no timeout is given by the client, this callback
                 # shouldn't do anything.
                 pass
@@ -555,9 +552,9 @@ def check(check_data):
                         "of %d seconds.", analysis_timeout)
             LOG.warning("Considering this analysis as failed...")
             rh.analyzer_returncode = -1
-            rh.analyzer_stderr = (">>> CodeChecker: Analysis timed out "
-                                  "after {0} seconds. <<<\n{1}") \
-                .format(analysis_timeout, rh.analyzer_stderr)
+            rh.analyzer_stderr = \
+                ">>> CodeChecker: Analysis timed out after " \
+                f"{analysis_timeout} seconds. <<<\n{rh.analyzer_stderr}"
 
         source_analyzer.post_analyze(rh)
 
@@ -619,7 +616,7 @@ def check(check_data):
         if rh.analyzer_returncode == 0:
             handle_analysis_result(success=True)
             LOG.info("[%d/%d] %s analyzed %s successfully.",
-                     progress_checked_num.value, progress_actions.value,
+                     PROGRESS_CHECKED_NUM.value, PROGRESS_ACTIONS.value,
                      action.analyzer_type, source_file_name)
 
             if result_file_exists:
@@ -660,8 +657,8 @@ def check(check_data):
 
                     LOG.info("[%d/%d] %s analyzed %s without"
                              " CTU successfully.",
-                             progress_checked_num.value,
-                             progress_actions.value,
+                             PROGRESS_CHECKED_NUM.value,
+                             PROGRESS_ACTIONS.value,
                              action.analyzer_type,
                              source_file_name)
 
@@ -688,7 +685,7 @@ def check(check_data):
                 LOG.debug_analyzer('\n%s', rh.analyzer_stdout)
                 LOG.debug_analyzer('\n%s', rh.analyzer_stderr)
 
-        progress_checked_num.value += 1
+        PROGRESS_CHECKED_NUM.value += 1
 
         return return_codes, False, reanalyzed, action.analyzer_type, \
             result_file, action.source
@@ -731,10 +728,8 @@ def start_workers(actions_map, actions, analyzer_config_map,
     Start the workers in the process pool.
     For every build action there is worker which makes the analysis.
     """
-    # pylint: disable=no-member multiprocess module members.
-
     # Handle SIGINT to stop this script running.
-    def signal_handler(signum, frame):
+    def signal_handler(signum, _):
         try:
             pool.terminate()
             pool.join()

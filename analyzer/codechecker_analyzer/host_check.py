@@ -45,7 +45,7 @@ def check_analyzer(compiler_bin, env):
         if oerr.errno == errno.ENOENT:
             LOG.error(oerr)
             LOG.error('Failed to run: "%s"', ' '.join(clang_version_cmd))
-            return False
+        return False
 
 
 def has_analyzer_config_option(clang_bin, config_option_name):
@@ -68,7 +68,7 @@ def has_analyzer_config_option(clang_bin, config_option_name):
         match = re.search(config_option_name, out)
         if match:
             LOG.debug("Config option '%s' is available.", config_option_name)
-        return (True if match else False)
+        return bool(match)
 
     except OSError:
         LOG.error('Failed to run: "%s"', ' '.join(cmd))
@@ -79,12 +79,12 @@ def has_analyzer_option(clang_bin, feature):
     """Test if the analyzer has a specific option.
 
     Testing a feature is done by compiling a dummy file."""
-    with tempfile.NamedTemporaryFile("w", encoding='utf-8') as inputFile:
-        inputFile.write("void foo(){}")
-        inputFile.flush()
+    with tempfile.NamedTemporaryFile("w", encoding='utf-8') as input_file:
+        input_file.write("void foo(){}")
+        input_file.flush()
         cmd = [clang_bin, "-x", "c", "--analyze"]
         cmd.extend(feature)
-        cmd.extend([inputFile.name, "-o", "-"])
+        cmd.extend([input_file.name, "-o", "-"])
 
         LOG.debug('run: "%s"', ' '.join(cmd))
         try:

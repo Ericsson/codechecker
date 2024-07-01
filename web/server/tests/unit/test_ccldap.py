@@ -24,8 +24,8 @@ class MockLdap:
         self,
         who=None,
         cred=None,
-        serverctrls=None,
-        clientctrls=None
+        _serverctrls=None,
+        _clientctrls=None
     ):
         success = False
 
@@ -45,15 +45,16 @@ class MockLdap:
     def search_s(
         self,
         base,
-        scope,
+        _scope,
         filterstr='(objectClass=*)',
-        attrlist=None,
-        attrsonly=0
+        _attrlist=None,
+        _attrsonly=0
     ):
         if base == 'ou=other,o=test' and filterstr == '(cn=user2)':
             return [(
                 'cn=user2,ou=other,o=test',
                 {'cn': ['user2'], 'userPassword': ['user2pw']})]
+        return []
 
 
 class CCLDAPTest(unittest.TestCase):

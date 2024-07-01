@@ -126,7 +126,7 @@ class TestSuppress(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         self._test_workspace = os.environ['TEST_WORKSPACE']
 
         self._testproject_data = env.setup_test_proj_cfg(self._test_workspace)
@@ -171,7 +171,8 @@ class TestSuppress(unittest.TestCase):
                 diff = set(expected_content).symmetric_difference(
                            generated_content)
                 print("difference")
-                {print(elem) for elem in diff}
+                for elem in diff:
+                    print(elem)
                 self.assertEqual(len(diff),
                                  0,
                                  "The generated suppress file does not "

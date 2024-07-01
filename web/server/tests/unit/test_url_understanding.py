@@ -25,12 +25,12 @@ def expected_port(protocol=None, port=None):
     return port
 
 
-class product_urlTest(unittest.TestCase):
+class ProductUrlTest(unittest.TestCase):
     """
     Testing the product and server URL splitter.
     """
 
-    def testFullURL(self):
+    def test_full_url(self):
         """
         Whole product URL understanding.
         """
@@ -52,7 +52,7 @@ class product_urlTest(unittest.TestCase):
         test("very-secure.another.server", 443, "CodeChecker", "https")
         test("contains-a-port-overri.de", 1234, "PRD", "https")
 
-    def testProductName(self):
+    def test_product_name(self):
         """
         Understanding only a product name specified.
         """
@@ -70,7 +70,7 @@ class product_urlTest(unittest.TestCase):
         test("MyProduct")
         test("Enterprise-Product", "https")
 
-    def testHostAndProductName(self):
+    def test_host_and_product_name(self):
         """
         Understanding a host and a product name specified.
         """
@@ -93,7 +93,7 @@ class product_urlTest(unittest.TestCase):
         test("8080", "MyProduct")
         test("super", "verygood", "https")
 
-    def testBadProductNames(self):
+    def test_bad_product_names(self):
         """
         Parser throws on bad product URLs?
         """
@@ -121,7 +121,7 @@ class product_urlTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             split_product_url("http://::1:8080/Default")
 
-    def testFullServerURL(self):
+    def test_full_server_url(self):
         """
         Whole server URL understanding.
         """
@@ -152,7 +152,7 @@ class product_urlTest(unittest.TestCase):
         self.assertEqual(shost, '[::1]')
         self.assertEqual(sport, 1234)
 
-    def testHostname(self):
+    def test_host_name(self):
         """
         Understanding only a hostname specified for server URLs.
         """
@@ -170,7 +170,7 @@ class product_urlTest(unittest.TestCase):
         test("codechecker.local")  # Port: 8001
         test("www.example.org", "https")  # Port: 443
 
-    def testBadServerURLs(self):
+    def test_bad_server_urls(self):
         """
         Parser throws on bad server URLs?
         """

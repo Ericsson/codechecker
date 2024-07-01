@@ -211,7 +211,7 @@ class SessionManager:
 
             regex_groups = self.__auth_config['regex_groups'] \
                                .get('groups', [])
-            d = dict()
+            d = {}
             for group_name, regex_list in regex_groups.items():
                 d[group_name] = [re.compile(r) for r in regex_list]
             self.__group_regexes_compiled = d
@@ -420,7 +420,7 @@ class SessionManager:
                 .limit(1).one_or_none()
 
             if not auth_session:
-                return False
+                return None
 
             return auth_session
         except Exception as e:
@@ -429,6 +429,8 @@ class SessionManager:
         finally:
             if transaction:
                 transaction.close()
+
+        return None
 
     def __try_auth_dictionary(self, auth_string):
         """
@@ -571,7 +573,7 @@ class SessionManager:
                 .filter(SystemPermission.name == user_name) \
                 .filter(SystemPermission.permission == SUPERUSER.name) \
                 .limit(1).one_or_none()
-            return True if system_permission else False
+            return bool(system_permission)
         except Exception as e:
             LOG.error("Couldn't get system permission from database: ")
             LOG.error(str(e))
@@ -705,7 +707,7 @@ class SessionManager:
         """
 
         if not self.__database_connection:
-            return
+            return None
 
         transaction = None
         try:
@@ -732,6 +734,8 @@ class SessionManager:
         finally:
             if transaction:
                 transaction.close()
+
+        return None
 
     def get_session(self, token):
         """

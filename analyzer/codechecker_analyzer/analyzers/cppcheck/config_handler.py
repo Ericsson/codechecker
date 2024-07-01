@@ -15,4 +15,3 @@ class CppcheckConfigHandler(config_handler.AnalyzerConfigHandler):
     """
     Configuration handler for Cppcheck analyzer.
     """
-    pass

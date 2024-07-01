@@ -35,7 +35,7 @@ class DiffLocalRemoteSuppressRule(unittest.TestCase):
     def teardown_class(self):
         teardown_class_common()
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         # TEST_WORKSPACE is automatically set by test package __init__.py .
         test_workspace = os.environ['TEST_WORKSPACE']
 
@@ -75,10 +75,10 @@ class DiffLocalRemoteSuppressRule(unittest.TestCase):
 
         self._env = self._test_cfg['codechecker_cfg']['check_env']
 
-        self.guiSuppressAllHashes('core.CallAndMessage')
-        self.guiSuppressAllHashes('core.StackAddressEscape')
+        self.gui_suppress_all_hashes('core.CallAndMessage')
+        self.gui_suppress_all_hashes('core.StackAddressEscape')
 
-    def guiSuppressAllHashes(self, checker_name):
+    def gui_suppress_all_hashes(self, checker_name):
         project_orig_run_name = \
             self._test_cfg['codechecker_cfg']['run_names']['test_project_orig']
         run_filter = RunFilter(names=[project_orig_run_name])

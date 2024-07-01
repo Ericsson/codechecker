@@ -11,7 +11,7 @@ from os import stat, chmod, makedirs
 from os.path import abspath, dirname, exists
 from stat import S_IXUSR, S_IXGRP, S_IXOTH
 from string import Template
-from sys import exit
+import sys
 
 LOG = getLogger('VirtualenvWrapper')
 
@@ -57,10 +57,10 @@ exec "${binary_path}" "$$@"
 def create_wrapper_file(path, content):
     path = abspath(path)
 
-    dir = dirname(path)
+    directory = dirname(path)
 
-    if not exists(dir):
-        makedirs(dir)
+    if not exists(directory):
+        makedirs(directory)
 
     with open(path, 'w', encoding="utf-8", errors="ignore") as wrapper_file:
         wrapper_file.write(content)
@@ -91,7 +91,7 @@ def create_venv_wrapper(**args):
 
     if not exists(binary_path):
         LOG.error("Binary path '%s' does not exist!", binary_path)
-        exit(1)
+        sys.exit(1)
 
     add_executable_permission(binary_path)
 
@@ -101,7 +101,7 @@ def create_venv_wrapper(**args):
     create_wrapper_file(output_path, wrapper_content)
 
 
-if __name__ == "__main__":
+def main():
     parser = ArgumentParser(
         formatter_class=RawDescriptionHelpFormatter,
         description="""Wrap python binaries in virtualenv. This utility can be
@@ -145,3 +145,7 @@ if __name__ == "__main__":
               args['environment'])
 
     create_venv_wrapper(**args)
+
+
+if __name__ == "__main__":
+    main()

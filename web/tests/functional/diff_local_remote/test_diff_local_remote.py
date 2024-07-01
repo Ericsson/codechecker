@@ -161,7 +161,7 @@ class LocalRemote(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         # TEST_WORKSPACE is automatically set by test package __init__.py .
         test_workspace = os.environ['TEST_WORKSPACE']
 
@@ -444,15 +444,15 @@ class LocalRemote(unittest.TestCase):
         """
         export_dir = os.path.join(self._local_reports, "export_dir1")
 
-        env = self._env.copy()
-        env["CC_REPO_DIR"] = ''
-        env["CC_CHANGED_FILES"] = ''
+        environ = self._env.copy()
+        environ["CC_REPO_DIR"] = ''
+        environ["CC_CHANGED_FILES"] = ''
 
         get_diff_results(
             [self._run_names[0]], [self._local_reports],
             '--new', 'gerrit',
             ["--url", self._url, "-e", export_dir],
-            env)
+            environ)
 
         gerrit_review_file = os.path.join(export_dir, 'gerrit_review.json')
         self.assertTrue(os.path.exists(gerrit_review_file))
@@ -478,11 +478,11 @@ class LocalRemote(unittest.TestCase):
             self.assertIn("message", report)
 
             self.assertIn("range", report)
-            range = report["range"]
-            self.assertIn("start_line", range)
-            self.assertIn("start_character", range)
-            self.assertIn("end_line", range)
-            self.assertIn("end_character", range)
+            report_range = report["range"]
+            self.assertIn("start_line", report_range)
+            self.assertIn("start_character", report_range)
+            self.assertIn("end_line", report_range)
+            self.assertIn("end_character", report_range)
 
         shutil.rmtree(export_dir, ignore_errors=True)
 
@@ -492,15 +492,15 @@ class LocalRemote(unittest.TestCase):
         Only one output format was selected
         the gerrit review json should be printed to stdout.
         """
-        env = self._env.copy()
-        env["CC_REPO_DIR"] = ''
-        env["CC_CHANGED_FILES"] = ''
+        environ = self._env.copy()
+        environ["CC_REPO_DIR"] = ''
+        environ["CC_CHANGED_FILES"] = ''
 
         review_data, _, _ = get_diff_results(
             [self._run_names[0]], [self._local_reports],
             '--new', 'gerrit',
             ["--url", self._url],
-            env)
+            environ)
 
         print(review_data)
         review_data = json.loads(review_data)
@@ -521,11 +521,11 @@ class LocalRemote(unittest.TestCase):
             self.assertIn("message", report)
 
             self.assertIn("range", report)
-            range = report["range"]
-            self.assertIn("start_line", range)
-            self.assertIn("start_character", range)
-            self.assertIn("end_line", range)
-            self.assertIn("end_character", range)
+            report_range = report["range"]
+            self.assertIn("start_line", report_range)
+            self.assertIn("start_character", report_range)
+            self.assertIn("end_line", report_range)
+            self.assertIn("end_character", report_range)
 
     def test_set_env_diff_gerrit_output(self):
         """Test gerrit output when using diff and set env vars.
@@ -535,11 +535,11 @@ class LocalRemote(unittest.TestCase):
         """
         export_dir = os.path.join(self._local_reports, "export_dir2")
 
-        env = self._env.copy()
-        env["CC_REPO_DIR"] = self._local_test_project
+        environ = self._env.copy()
+        environ["CC_REPO_DIR"] = self._local_test_project
 
         report_url = "localhost:8080/index.html"
-        env["CC_REPORT_URL"] = report_url
+        environ["CC_REPORT_URL"] = report_url
 
         changed_file_path = os.path.join(self._local_reports, 'files_changed')
 
@@ -553,7 +553,7 @@ class LocalRemote(unittest.TestCase):
                 "divide_zero.cpp": {}}
             changed_file.write(json.dumps(changed_files))
 
-        env["CC_CHANGED_FILES"] = changed_file_path
+        environ["CC_CHANGED_FILES"] = changed_file_path
 
         _, err, _ = get_diff_results(
             [self._run_names[0]], [self._local_reports],
@@ -567,7 +567,7 @@ class LocalRemote(unittest.TestCase):
         get_diff_results([self._run_names[0]], [self._local_reports],
                          '--unresolved', 'gerrit',
                          ["--url", self._url, "-e", export_dir],
-                         env)
+                         environ)
 
         gerrit_review_file = os.path.join(export_dir, 'gerrit_review.json')
         self.assertTrue(os.path.exists(gerrit_review_file))
@@ -599,13 +599,13 @@ class LocalRemote(unittest.TestCase):
         """ Test codeclimate output when using diff and set env vars. """
         export_dir = os.path.join(self._local_reports, "export_dir")
 
-        env = self._env.copy()
-        env["CC_REPO_DIR"] = self._local_test_project
+        environ = self._env.copy()
+        environ["CC_REPO_DIR"] = self._local_test_project
 
         get_diff_results([self._run_names[0]], [self._local_reports],
                          '--unresolved', 'codeclimate',
                          ["--url", self._url, "-e", export_dir],
-                         env)
+                         environ)
 
         codeclimate_issues_file = os.path.join(export_dir,
                                                'codeclimate_issues.json')
@@ -665,7 +665,7 @@ class LocalRemote(unittest.TestCase):
 
         file_path = malloc_issues[0]["location"]["path"]
         self.assertTrue(os.path.isabs(file_path))
-        self.assertTrue(file_path.endswith(f"/new_delete.cpp"))
+        self.assertTrue(file_path.endswith("/new_delete.cpp"))
 
         shutil.rmtree(export_dir_path, ignore_errors=True)
 
@@ -673,9 +673,9 @@ class LocalRemote(unittest.TestCase):
         """ Test multiple output type for diff command. """
         export_dir = os.path.join(self._local_reports, "export_dir3")
 
-        env = self._env.copy()
-        env["CC_REPO_DIR"] = ''
-        env["CC_CHANGED_FILES"] = ''
+        environ = self._env.copy()
+        environ["CC_REPO_DIR"] = ''
+        environ["CC_CHANGED_FILES"] = ''
 
         out, _, _ = get_diff_results(
             [self._run_names[0]], [self._local_reports],
@@ -683,7 +683,7 @@ class LocalRemote(unittest.TestCase):
             ["-o", "html", "gerrit", "plaintext",
              "-e", export_dir,
              "--url", self._url],
-            env)
+            environ)
 
         print(out)
         # Check the plaintext output.
@@ -761,7 +761,7 @@ class LocalRemote(unittest.TestCase):
             '--new', 'json',
             ["--url", self._url,
              "--review-status", "unreviewed", "confirmed", "false_positive"])
-        new_hashes = sorted(set([n['report_hash'] for n in res]))
+        new_hashes = sorted(set(n['report_hash'] for n in res))
 
         new_results, err, returncode = get_diff_results(
             [self._run_names[0]], [baseline_file_path], '--new', 'json',
@@ -781,7 +781,7 @@ class LocalRemote(unittest.TestCase):
             '--unresolved', 'json',
             ["--url", self._url,
              "--review-status", "unreviewed", "confirmed", "false_positive"])
-        unresolved_hashes = sorted(set([n['report_hash'] for n in res]))
+        unresolved_hashes = sorted(set(n['report_hash'] for n in res))
 
         unresolved_results, err, returncode = get_diff_results(
             [self._run_names[0]], [baseline_file_path],
@@ -802,7 +802,7 @@ class LocalRemote(unittest.TestCase):
             '--resolved', 'json',
             ["--url", self._url,
              "--review-status", "unreviewed", "confirmed", "false_positive"])
-        resolved_hashes = set([n['report_hash'] for n in res])
+        resolved_hashes = set(n['report_hash'] for n in res)
 
         resolved_results, _, returncode = get_diff_results(
             [self._run_names[0]], [baseline_file_path], '--resolved', 'json',

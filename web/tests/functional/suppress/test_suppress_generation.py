@@ -64,7 +64,7 @@ def _generate_suppress_file(suppress_file):
     s_file.close()
 
 
-def call_cmd(command, cwd, env):
+def call_cmd(command, cwd, environ):
     try:
         print(' '.join(command))
         proc = subprocess.Popen(
@@ -72,7 +72,7 @@ def call_cmd(command, cwd, env):
             cwd=cwd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            env=env, encoding="utf-8", errors="ignore")
+            env=environ, encoding="utf-8", errors="ignore")
         out, err = proc.communicate()
         print(out)
         print(err)
@@ -171,7 +171,7 @@ class TestSuppress(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         self._test_workspace = os.environ['TEST_WORKSPACE']
 
         self._testproject_data = env.setup_test_proj_cfg(self._test_workspace)
@@ -237,7 +237,7 @@ class TestSuppress(unittest.TestCase):
         Exported source suppress comment stored as a review status in the db.
         """
         runid = self._runid
-        logging.debug("Get all run results from the db for runid: " +
+        logging.debug("Get all run results from the db for runid: %s",
                       str(runid))
 
         expected_file_path = os.path.join(self._test_directory,
@@ -272,13 +272,13 @@ class TestSuppress(unittest.TestCase):
 
         run_results = get_all_run_results(self._cc_client, runid)
         logging.debug("Run results:")
-        [logging.debug(x) for x in run_results]
+        for run_result in run_results:
+            logging.debug(run_result)
         self.assertIsNotNone(run_results)
         self.assertNotEqual(len(run_results), 0)
 
-        for bug_hash in hash_to_suppress_msgs:
-            logging.debug("tesing for bug hash " + bug_hash)
-            expected_data = hash_to_suppress_msgs[bug_hash]
+        for bug_hash, expected_data in hash_to_suppress_msgs.items():
+            logging.debug("tesing for bug hash %s", bug_hash)
             report_data_of_bug = [
                 report_data for report_data in run_results
                 if report_data.bugHash == bug_hash]
@@ -364,8 +364,7 @@ class TestSuppress(unittest.TestCase):
         self.assertIsNotNone(updated_results)
         self.assertNotEqual(len(updated_results), 0)
 
-        for bug_hash in hash_to_suppress_msgs:
-            expected_data = hash_to_suppress_msgs[bug_hash]
+        for bug_hash, expected_data in hash_to_suppress_msgs.items():
             report_data = [report_data for report_data in updated_results
                            if report_data.bugHash == bug_hash][0]
 

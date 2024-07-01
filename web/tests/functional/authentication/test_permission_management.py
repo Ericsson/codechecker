@@ -29,7 +29,7 @@ class PermissionManagement(unittest.TestCase):
     def teardown_class(self):
         teardown_class_common()
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         # TEST_WORKSPACE is automatically set by test package __init__.py .
         self._test_workspace = os.environ['TEST_WORKSPACE']
 
@@ -92,6 +92,7 @@ class PermissionManagement(unittest.TestCase):
             for group in authorized_names.groups:
                 if group.lower() == group_name_lower:
                     return group
+        return None
 
     def test_product_permissions(self):
         """

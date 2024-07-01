@@ -182,7 +182,7 @@ def get_report_hash(report: Report, hash_type: HashType) -> str:
     elif hash_type == HashType.DIAGNOSTIC_MESSAGE:
         hash_content = __get_report_hash_diagnostic_message(report)
     else:
-        raise Exception("Invalid report hash type: " + str(hash_type))
+        raise ValueError("Invalid report hash type: " + str(hash_type))
 
     return __str_to_hash('|||'.join(hash_content))
 

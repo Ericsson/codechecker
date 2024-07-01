@@ -40,7 +40,8 @@ def get_toolchain_compiler(toolchain_path, language):
 
     if language == 'c':
         return os.path.join(toolchain_path, 'bin', 'gcc')
-    elif language == 'c++':
+
+    if language == 'c++':
         return os.path.join(toolchain_path, 'bin', 'g++')
 
     return None

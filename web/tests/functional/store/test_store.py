@@ -17,7 +17,6 @@ import shlex
 import shutil
 import inspect
 import plistlib
-import shutil
 import subprocess
 import unittest
 
@@ -29,7 +28,7 @@ from libtest import env
 from libtest import plist_test
 
 
-def _call_cmd(command, cwd=None, env=None):
+def _call_cmd(command, cwd=None, environ=None):
     try:
         print(' '.join(command))
         proc = subprocess.Popen(
@@ -37,7 +36,7 @@ def _call_cmd(command, cwd=None, env=None):
             cwd=cwd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            env=env, encoding="utf-8", errors="ignore")
+            env=environ, encoding="utf-8", errors="ignore")
         out, err = proc.communicate()
         return proc.returncode, out, err
     except subprocess.CalledProcessError as cerr:
@@ -118,7 +117,7 @@ class TestStore(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         # Get the test workspace used to cppcheck tests.
         self._test_workspace = os.environ["TEST_WORKSPACE"]
 
@@ -413,7 +412,7 @@ class TestStore(unittest.TestCase):
         def create_build_json(source_file):
             build_json = \
                 os.path.join(self._same_headers_workspace, 'build.json')
-            with open(build_json, 'w') as f:
+            with open(build_json, 'w', encoding='utf-8') as f:
                 json.dump([{
                     'directory': '.',
                     'command': f'g++ -c {source_file}',

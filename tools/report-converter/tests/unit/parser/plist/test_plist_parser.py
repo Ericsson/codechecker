@@ -146,7 +146,7 @@ class PlistParserTestCase(unittest.TestCase):
 
     def test_empty_file(self):
         """Plist file is empty."""
-        empty_plist = os.path.join(self.__plist_test_files, 'empty_file')
+        empty_plist = os.path.join(self.__plist_test_files, 'empty_file.plist')
         reports = report_file.get_reports(empty_plist)
         self.assertEqual(reports, [])
 

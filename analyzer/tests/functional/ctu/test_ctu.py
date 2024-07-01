@@ -55,11 +55,11 @@ class TestCtu(unittest.TestCase):
         print('Removing: ' + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         """ Set up workspace."""
-        self.setUpWith('test_files_c', 'buildlog.json', 'reports_c')
+        self.setup_with('test_files_c', 'buildlog.json', 'reports_c')
 
-    def setUpWith(self, input_dir, buildlog_json, report_dir):
+    def setup_with(self, input_dir, buildlog_json, report_dir):
         """
         Set up workspace with a given parameters. If called multiple times,
         teardown_method() must be called before this function.
@@ -98,7 +98,7 @@ class TestCtu(unittest.TestCase):
         self.__old_pwd = os.getcwd()
         os.chdir(self.test_workspace)
 
-    def teardown_method(self, method):
+    def teardown_method(self, _):
         """ Tear down workspace."""
 
         shutil.rmtree(self.report_dir, ignore_errors=True)
@@ -111,17 +111,17 @@ class TestCtu(unittest.TestCase):
         directory then analysis shouldn't fail in the pre-analysis phase of
         CTU.
         """
-        with open(self.buildlog) as f:
+        with open(self.buildlog, encoding='utf-8') as f:
             buildlog = json.load(f)
             buildlog.append(buildlog[0])
             buildlog[-1]['directory'] = 'non_existing'
 
-        with open(self.buildlog, 'w') as f:
+        with open(self.buildlog, 'w', encoding='utf-8') as f:
             json.dump(buildlog, f)
 
         cmd = [self._codechecker_cmd, 'analyze', '-o', self.report_dir,
                '--analyzers', 'clangsa', '--ctu', self.buildlog]
-        proc = run(cmd, cwd=self.test_dir, env=self.env,
+        proc = run(cmd, cwd=self.test_dir, env=self.env, check=False,
                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         self.assertIn('Analysis finished', str(proc.stdout))
@@ -134,7 +134,8 @@ class TestCtu(unittest.TestCase):
                self.buildlog]
 
         self.assertEqual(1,
-                         run(cmd, cwd=self.test_dir, env=self.env).returncode)
+                         run(cmd, cwd=self.test_dir, env=self.env,
+                             check=False).returncode)
 
     @skipUnlessCTUCapable
     def test_system_headers_last(self):
@@ -154,7 +155,7 @@ class TestCtu(unittest.TestCase):
                '--analyzers', 'clangsa', '--ctu', self.buildlog,
                '--verbose', 'debug']
         out = run(
-            cmd, cwd=self.test_dir, env=self.env,
+            cmd, cwd=self.test_dir, env=self.env, check=False,
             stdout=subprocess.PIPE).stdout.decode()
         ast_cmd = next(filter(
             lambda line: 'Generating AST using' in line, out.splitlines()))
@@ -244,14 +245,14 @@ class TestCtu(unittest.TestCase):
         """ Test CTU analyze phase. """
 
         self.teardown_method(self.__test_ctu_analyze_cpp)
-        self.setUpWith('test_files_cpp', 'buildlog.json', 'reports_cpp')
+        self.setup_with('test_files_cpp', 'buildlog.json', 'reports_cpp')
 
         self.__do_ctu_collect(on_demand=on_demand)
         # We specifically check whether spaces in the external function map
         # file work properly. The format of the file changed in between
         # clang-15 and clang-16, and this call checks whether clang is new
         # enough.
-        if not self.__is_externalFnDef_in_new_format(on_demand=on_demand):
+        if not self.__is_externalfndef_in_new_format():
             return
         output = self.__do_ctu_analyze(on_demand=on_demand)
         self.__check_ctu_analyze_cpp(output)
@@ -299,7 +300,7 @@ class TestCtu(unittest.TestCase):
                 ast_dir = os.path.join(ctu_dir, arch, 'ast')
                 self.assertTrue(os.path.isdir(ast_dir))
 
-    def __is_externalFnDef_in_new_format(self, on_demand):
+    def __is_externalfndef_in_new_format(self):
         """
         The format of the external function map file changed in between
         clang-15 and clang-16, check whether this is the updated format.
@@ -307,15 +308,18 @@ class TestCtu(unittest.TestCase):
 
         ctu_dir = os.path.join(self.report_dir, 'ctu-dir')
         self.assertTrue(os.path.isdir(ctu_dir))
+
         for arch in glob.glob(os.path.join(ctu_dir, '*')):
             new_map_file = os.path.join(ctu_dir, arch, 'externalDefMap.txt')
 
             try:
-                fn = open(new_map_file, "r")
+                fn = open(new_map_file, "r", encoding='utf-8')
                 line = fn.readline()
                 return line[0].isdigit()
             except IOError:
                 print("Error: File does not appear to exist.")
+
+        return False
 
     def __do_ctu_analyze(self, on_demand):
         """ Execute CTU analyze phase. """
@@ -357,7 +361,8 @@ class TestCtu(unittest.TestCase):
         connections_file = connections_files[0]
         self.assertTrue(connections_file.startswith('main.c'))
 
-        with open(os.path.join(connections_dir, connections_file)) as f:
+        with open(os.path.join(
+                connections_dir, connections_file), encoding='utf-8') as f:
             self.assertTrue(f.readline().endswith('lib.c'))
 
     def __check_ctu_analyze_cpp(self, output):
@@ -409,7 +414,7 @@ class TestCtu(unittest.TestCase):
         generated textual format. """
 
         self.teardown_method(self.test_ctu_ondemand_yaml_format)
-        self.setUpWith('test_files_c', 'complex_buildlog.json', 'reports_c')
+        self.setup_with('test_files_c', 'complex_buildlog.json', 'reports_c')
 
         # Copy test files to a directory which file path will be longer than
         # 128 chars to test the yaml parser.
@@ -456,5 +461,6 @@ class TestCtu(unittest.TestCase):
                 self.assertRegex(line, '^ *[-/]')
 
         for invocation_list_path in invocation_list_paths:
-            with open(invocation_list_path) as invocation_list_file:
+            with open(invocation_list_path, encoding='utf-8') \
+                    as invocation_list_file:
                 assert_no_linebreak(invocation_list_file)

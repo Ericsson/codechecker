@@ -51,7 +51,7 @@ class TestSkip(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
 
         # TEST_WORKSPACE is automatically set by test package __init__.py .
         self.test_workspace = os.environ['TEST_WORKSPACE']
@@ -233,10 +233,10 @@ class TestSkip(unittest.TestCase):
 
         # Check that we analyzed all source files which depend on the header
         # file.
-        self.assertTrue(any(["a.cpp" in f
-                             for f in report_dir_files]))
-        self.assertTrue(any(["b.cpp" in f
-                             for f in report_dir_files]))
+        self.assertTrue(any("a.cpp" in f
+                            for f in report_dir_files))
+        self.assertTrue(any("b.cpp" in f
+                            for f in report_dir_files))
 
         # Get reports only from the header file.
         out, _, _ = self.__run_parse(["--file", "*/lib.h"])
@@ -307,14 +307,14 @@ class TestSkip(unittest.TestCase):
         shutil.copy(Path(self.test_workspace, "build.json"), build_json)
 
         compilation_commands = None
-        with open(build_json, 'r') as f:
+        with open(build_json, 'r', encoding='utf-8') as f:
             compilation_commands = json.load(f)
 
         for entry in compilation_commands:
             entry["directory"] = str(Path(self.test_workspace))
             entry["file"] = str(Path("rel_simple", entry["file"]))
 
-        with open(build_json, 'w') as f:
+        with open(build_json, 'w', encoding='utf-8') as f:
             json.dump(compilation_commands, f)
 
         # Do the CodeChecker Analyze with --file
@@ -329,7 +329,7 @@ class TestSkip(unittest.TestCase):
         for entry in compilation_commands:
             entry["directory"] = "."
 
-        with open(build_json, 'w') as f:
+        with open(build_json, 'w', encoding='utf-8') as f:
             json.dump(compilation_commands, f)
 
         # Do the CodeChecker Analyze with --file
@@ -357,7 +357,7 @@ class TestSkip(unittest.TestCase):
         # We used to crash when the build log contained 'arguments' fields in
         # place of 'command'. Test that we don't crash on it anymore by
         # manually changing 'command' to 'arguments' here.
-        with open(build_json) as f:
+        with open(build_json, encoding='utf-8') as f:
             build_actions = json.load(f)
             for ba in build_actions:
                 ba['arguments'] = shlex.split(ba['command'])
@@ -365,7 +365,7 @@ class TestSkip(unittest.TestCase):
 
         build_json = os.path.join(self.test_workspace, "build_intercept.json")
 
-        with open(build_json, 'w') as f:
+        with open(build_json, 'w', encoding='utf-8') as f:
             json.dump(build_actions, f)
 
         header_file = os.path.join(self.test_dir, "simple", "skip.h")

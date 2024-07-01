@@ -44,7 +44,6 @@ def contains_codechecker_comment(fp):
 
 class SpellException(Exception):
     """Exception for the review comment spell errors."""
-    pass
 
 
 class SourceCodeComment:
@@ -77,8 +76,8 @@ class SourceCodeComment:
                 self.line == other.line
 
         raise NotImplementedError(
-            "Comparison SourceCodeComment object with '%s' is not supported",
-            type(other))
+            f"Comparison SourceCodeComment object with '{type(other)}' is not "
+            "supported")
 
     def __repr__(self):
         return json.dumps(self.to_json())

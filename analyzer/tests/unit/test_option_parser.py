@@ -301,7 +301,7 @@ class OptionParserTest(unittest.TestCase):
                   "-mabi=spe", "-mabi=eabi", "-fext-numeric-literals"]
         action = {
             'file': 'main.cpp',
-            'command': "g++ {} main.cpp".format(' '.join(ignore)),
+            'command': f"g++ {' '.join(ignore)} main.cpp",
             'directory': ''}
         res = log_parser.parse_options(action)
         self.assertEqual(res.analyzer_options, ["-fsyntax-only"])
@@ -348,7 +348,7 @@ class OptionParserTest(unittest.TestCase):
     def test_ignore_xclang_flags_clang(self):
         """Skip some specific xclang constructs"""
 
-        def fake_clang_version(a, b):
+        def fake_clang_version(_a, _b):
             return True
 
         clang_flags = ["-std=gnu++14",
@@ -364,7 +364,7 @@ class OptionParserTest(unittest.TestCase):
         xclang_skip = {
             "directory": "/tmp",
             "command":
-            "clang++ {} -c /tmp/a.cpp".format(' '.join(clang_flags)),
+            f"clang++ {' '.join(clang_flags)} -c /tmp/a.cpp",
             "file": "/tmp/a.cpp"}
 
         res = log_parser.parse_options(
@@ -392,7 +392,7 @@ class OptionParserTest(unittest.TestCase):
         log_parser.ImplicitCompilerInfo.compiler_versions["clang++"] =\
             fake_clang_version
 
-        def fake_clangsa_version_func(compiler, env):
+        def fake_clangsa_version_func(_compiler, _env):
             """Return always the fake compiler version"""
             return fake_clang_version
 
@@ -417,7 +417,7 @@ class OptionParserTest(unittest.TestCase):
                 "--target=something"]
         action = {
             'file': 'main.cpp',
-            'command': "clang++ {} main.cpp".format(' '.join(keep)),
+            'command': f"clang++ {' '.join(keep)} main.cpp",
             'directory': ''}
 
         class FakeClangVersion:
@@ -429,7 +429,7 @@ class OptionParserTest(unittest.TestCase):
         log_parser.ImplicitCompilerInfo.compiler_versions["clang++"] =\
             fake_clang_version
 
-        def fake_clangsa_version_func(compiler, env):
+        def fake_clangsa_version_func(_compiler, _env):
             """Return always the fake compiler version"""
             return fake_clang_version
 
@@ -444,15 +444,15 @@ class OptionParserTest(unittest.TestCase):
         preserve = ['-nostdinc', '-nostdinc++', '-pedantic']
         action = {
             'file': 'main.cpp',
-            'command': "g++ {} main.cpp".format(' '.join(preserve)),
+            'command': f"g++ {' '.join(preserve)} main.cpp",
             'directory': ''}
         res = log_parser.parse_options(action)
         self.assertEqual(res.analyzer_options, preserve)
 
-    def is_compiler_executable_fun(self, compiler):
+    def is_compiler_executable_fun(self, _):
         return True
 
-    def is_compiler_executable_fun_false(self, compiler):
+    def is_compiler_executable_fun_false(self, _):
         return False
 
     def test_compiler_toolchain(self):
@@ -515,11 +515,11 @@ class OptionParserTest(unittest.TestCase):
         # directory among the implicit include paths. Otherwise this test may
         # fail.
         res = log_parser.parse_options(action, keep_gcc_include_fixed=False)
-        self.assertFalse(any([x.endswith('include-fixed')
-                              for x in res.compiler_includes]))
+        self.assertFalse(any(x.endswith('include-fixed')
+                             for x in res.compiler_includes))
         res = log_parser.parse_options(action, keep_gcc_include_fixed=True)
-        self.assertTrue(any([x.endswith('include-fixed')
-                             for x in res.compiler_includes]))
+        self.assertTrue(any(x.endswith('include-fixed')
+                            for x in res.compiler_includes))
 
     def test_compiler_intrin_headers(self):
         """ Include directories with *intrin.h files should be skipped."""

@@ -18,12 +18,14 @@ def clangsa(label_file):
     for x in root.findall('.//{*}a[@title="Permalink to this headline"]'):
         checker_anchors.append(x.attrib['href'].lstrip('#'))
 
-    with open(label_file) as f:
+    with open(label_file, encoding='utf-8') as f:
         checkers = json.load(f)['labels'].keys()
 
     docs = {}
     for checker in checkers:
         c = checker.lower().replace('.', '-')
+        # next() evaluates the generator immediately.
+        # pylint: disable=cell-var-from-loop
         anchor = next(filter(
             lambda anchor: anchor.startswith(c), checker_anchors), None)
 
@@ -44,12 +46,14 @@ def clang_tidy(label_file):
     for x in root.findall('.//{*}a[@class="reference external"]'):
         checker_anchors.append(x.attrib['href'])
 
-    with open(label_file) as f:
+    with open(label_file, encoding='utf-8') as f:
         checkers = json.load(f)['labels'].keys()
 
     url = url[:url.rfind('/') + 1]
     docs = {}
     for checker in checkers:
+        # next() evaluates the generator immediately.
+        # pylint: disable=cell-var-from-loop
         anchor = next(filter(
             lambda anchor: anchor.startswith(checker), checker_anchors), None)
 
@@ -60,7 +64,7 @@ def clang_tidy(label_file):
 
 
 def get_labels_with_docs(label_file, docs):
-    with open(label_file) as f:
+    with open(label_file, encoding='utf-8') as f:
         labels = json.load(f, object_pairs_hook=OrderedDict)
 
     for checker, label in labels['labels'].items():
@@ -126,7 +130,7 @@ def main():
     if args.dry_run:
         print(json.dumps(labels, indent=2))
     else:
-        with open(args.label_file, 'w') as f:
+        with open(args.label_file, 'w', encoding='utf-8') as f:
             json.dump(labels, f, indent=2)
 
 

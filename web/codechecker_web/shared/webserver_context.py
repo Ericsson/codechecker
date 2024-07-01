@@ -39,7 +39,8 @@ class SeverityMap(Mapping):
         if key not in self.store:
             if key == 'clang-diagnostic-error':
                 return "CRITICAL"
-            elif key.startswith('clang-diagnostic-'):
+
+            if key.startswith('clang-diagnostic-'):
                 return "MEDIUM"
 
         return self.store[key] if key in self.store else 'UNSPECIFIED'

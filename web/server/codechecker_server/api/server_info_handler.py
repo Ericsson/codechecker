@@ -15,6 +15,8 @@ from codechecker_server.profiler import timeit
 LOG = get_logger('server')
 
 
+# These names are inherited from Thrift stubs.
+# pylint: disable=invalid-name
 class ThriftServerInfoHandler:
     """
     Manages Thrift requests regarding server info.

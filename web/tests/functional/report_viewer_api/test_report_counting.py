@@ -44,9 +44,8 @@ class TestReportFilter(unittest.TestCase):
     def teardown_class(self):
         teardown_class_common()
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         test_workspace = os.environ['TEST_WORKSPACE']
-        self.maxDiff = None
 
         test_class = self.__class__.__name__
         print('Running ' + test_class + ' tests in ' + test_workspace)

@@ -56,7 +56,7 @@ class HashClash(unittest.TestCase):
     def teardown_class(self):
         teardown_class_common()
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         """
         Not much setup is needed.
         Runs and results are automatically generated.
@@ -91,7 +91,7 @@ class HashClash(unittest.TestCase):
         self._run_name = 'test_hash_clash_' + uuid4().hex
         codechecker.store(self._codechecker_cfg, self._run_name)
 
-    def teardown_method(self, method):
+    def teardown_method(self, _):
         """
         Remove the run which was stored by this test case.
         """
@@ -104,7 +104,7 @@ class HashClash(unittest.TestCase):
 
     def _reports_for_latest_run(self):
         runs = self._report.getRunData(None, None, 0, None)
-        max_run_id = max([run.runId for run in runs])
+        max_run_id = max(run.runId for run in runs)
         return self._report.getRunResults([max_run_id],
                                           100,
                                           0,

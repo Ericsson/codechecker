@@ -41,13 +41,13 @@ def __get_blame_info(file_path: str):
     try:
         repo = Repo(file_path, search_parent_directories=True)
         if repo.ignored(file_path):
-            LOG.debug(f"File {file_path} is an ignored file")
-            return
+            LOG.debug("File %s is an ignored file", file_path)
+            return None
     except InvalidGitRepositoryError:
-        return
+        return None
     except GitCommandError as ex:
-        LOG.debug(f"Failed to get blame information for {file_path}: {ex}")
-        return
+        LOG.debug("Failed to get blame information for %s: %s", file_path, ex)
+        return None
 
     tracking_branch = __get_tracking_branch(repo)
 
@@ -91,6 +91,8 @@ def __get_blame_info(file_path: str):
         return res
     except Exception as ex:
         LOG.debug("Failed to get blame information for %s: %s", file_path, ex)
+
+    return None
 
 
 def __collect_blame_info_for_files(

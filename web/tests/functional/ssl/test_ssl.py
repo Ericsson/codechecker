@@ -32,7 +32,6 @@ class TestSSL(unittest.TestCase):
 
         # Stopping event for CodeChecker server.
         global __STOP_SERVER
-        # pylint: disable=no-member multiprocess module members.
         __STOP_SERVER = multiprocess.Event()
 
         global TEST_WORKSPACE
@@ -87,7 +86,7 @@ class TestSSL(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
 
         # Get the test workspace used to authentication tests.
         self._test_workspace = os.environ['TEST_WORKSPACE']
@@ -136,9 +135,9 @@ class TestSSL(unittest.TestCase):
             self._test_cfg['codechecker_cfg']['check_env'],
             access_protocol)
 
-        self.sessionToken = auth_client.performLogin("Username:Password",
-                                                     "cc:test")
-        self.assertIsNotNone(self.sessionToken,
+        self.session_token = auth_client.performLogin(
+            "Username:Password", "cc:test")
+        self.assertIsNotNone(self.session_token,
                              "Valid credentials didn't give us a token!")
 
         handshake = auth_client.getAuthParameters()
@@ -149,7 +148,7 @@ class TestSSL(unittest.TestCase):
                          "Valid session was " + "reported not to be active.")
 
         client = env.setup_viewer_client(self._test_workspace,
-                                         session_token=self.sessionToken,
+                                         session_token=self.session_token,
                                          proto=access_protocol)
 
         self.assertIsNotNone(client.getPackageVersion(),
@@ -157,13 +156,13 @@ class TestSSL(unittest.TestCase):
 
         authd_auth_client = \
             env.setup_auth_client(self._test_workspace,
-                                  session_token=self.sessionToken,
+                                  session_token=self.session_token,
                                   proto=access_protocol)
         user = authd_auth_client.getLoggedInUser()
         self.assertEqual(user, "cc")
 
         auth_client = env.setup_auth_client(self._test_workspace,
-                                            session_token=self.sessionToken,
+                                            session_token=self.session_token,
                                             proto=access_protocol)
         result = auth_client.destroySession()
 

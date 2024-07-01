@@ -25,7 +25,7 @@ class ClangTidyParseCheckerConfigTest(unittest.TestCase):
         Test parsing of the output of 'clang-tidy -dump-config -checks=*' for
         clang-tidy up to LLVM 14.
         """
-        OLD_FORMAT_EXAMPLE = """
+        old_format_example = """
 ---
 Checks:          'clang-diagnostic-*,clang-analyzer-*,clang-diagnostic-*,\
 clang-analyzer-*,bugprone-*,-bugprone-easily-swappable-parameters,\
@@ -51,7 +51,7 @@ CheckOptions:
   - key:             bugprone-reserved-identifier.Invert
     value:           'false'
 """
-        result = clangtidy_parse_checker_config(OLD_FORMAT_EXAMPLE)
+        result = clangtidy_parse_checker_config(old_format_example)
         # The result can be an arbitrary iterable of pair-likes. To make
         # assertions about it easer, we first convert it to a list-of-lists.
         result = [[k, v] for (k, v) in result]
@@ -65,7 +65,7 @@ CheckOptions:
         Test parsing of the output of 'clang-tidy -dump-config -checks=*' for
         clang-tidy starting with LLVM 15.
         """
-        NEW_FORMAT_EXAMPLE = """
+        new_format_example = """
 ---
 Checks:          'clang-diagnostic-*,clang-analyzer-*,*'
 WarningsAsErrors: ''
@@ -80,7 +80,7 @@ CheckOptions:
   bugprone-reserved-identifier.Invert: 'false'
   cert-dcl16-c.IgnoreMacros: 'true'
 """
-        result = clangtidy_parse_checker_config(NEW_FORMAT_EXAMPLE)
+        result = clangtidy_parse_checker_config(new_format_example)
         # The result can be an arbitrary iterable of pair-likes. To make
         # assertions about it easer, we first convert it to a list-of-lists.
         result = [[k, v] for (k, v) in result]

@@ -30,6 +30,7 @@ class Timer:
     to measure code block execution time.
     """
     def __init__(self, block_name=''):
+        self.before = None
         self.block_name = block_name
 
     def __enter__(self):
@@ -70,8 +71,8 @@ def timeit(function):
     def wrapper(*args, **kwargs):
         if LOG.getEffectiveLevel() == logger.DEBUG:
             return debug_wrapper(*args, **kwargs)
-        else:
-            return release_wrapper(*args, **kwargs)
+
+        return release_wrapper(*args, **kwargs)
 
     return wrapper
 

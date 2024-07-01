@@ -25,7 +25,7 @@ SUPPORTED_ANALYZER_TYPES = tuple(sorted([plist.EXTENSION, sarif.EXTENSION]))
 
 
 SUPPORTED_ANALYZER_EXTENSIONS = \
-    tuple([f".{ext}" for ext in SUPPORTED_ANALYZER_TYPES])
+    tuple(f".{ext}" for ext in SUPPORTED_ANALYZER_TYPES)
 
 
 def is_supported(analyzer_result_file_path: str) -> bool:
@@ -47,6 +47,8 @@ def get_parser(
     if analyzer_result_file_path.endswith(sarif.EXTENSION):
         return sarif.Parser(checker_labels, file_cache)
 
+    assert False, f"Unknown extension for file {analyzer_result_file_path}"
+
 
 def get_reports(
     analyzer_result_file_path: str,
@@ -59,10 +61,11 @@ def get_reports(
 
     if parser:
         return parser.get_reports(analyzer_result_file_path, source_dir_path)
-    else:
-        LOG.error(f"Found no parsers to parse {analyzer_result_file_path}! "
-                  "Supported file extension types are "
-                  f"{SUPPORTED_ANALYZER_EXTENSIONS}.")
+
+    LOG.error("Found no parsers to parse %s! "
+              "Supported file extension types are %s.",
+              analyzer_result_file_path,
+              SUPPORTED_ANALYZER_EXTENSIONS)
 
     return []
 

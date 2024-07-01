@@ -41,7 +41,7 @@ def fetch_llvm_release_versions() -> Versions:
         traceback.print_exc()
 
         error("Failed to download or parse page '%s'!", url)
-        return list()
+        return []
     finally:
         try:
             del os.environ["MOZ_HEADLESS"]

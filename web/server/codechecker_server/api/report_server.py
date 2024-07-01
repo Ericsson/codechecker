@@ -73,6 +73,8 @@ from .thrift_enum_helper import detection_status_enum, \
     detection_status_str, report_status_enum, \
     review_status_enum, review_status_str, report_extended_data_type_enum
 
+# These names are inherited from Thrift stubs.
+# pylint: disable=invalid-name
 
 LOG = get_logger('server')
 
@@ -91,16 +93,22 @@ def comment_kind_from_thrift_type(kind):
     """ Convert the given comment kind from Thrift type to Python enum. """
     if kind == ttypes.CommentKind.USER:
         return CommentKindValue.USER
-    elif kind == ttypes.CommentKind.SYSTEM:
+
+    if kind == ttypes.CommentKind.SYSTEM:
         return CommentKindValue.SYSTEM
+
+    assert False, f"Unknown ttypes.CommentKind: {kind}"
 
 
 def comment_kind_to_thrift_type(kind):
     """ Convert the given comment kind from Python enum to Thrift type. """
     if kind == CommentKindValue.USER:
         return ttypes.CommentKind.USER
-    elif kind == CommentKindValue.SYSTEM:
+
+    if kind == CommentKindValue.SYSTEM:
         return ttypes.CommentKind.SYSTEM
+
+    assert False, f"Unknown CommentKindValue: {kind}"
 
 
 def verify_limit_range(limit):
@@ -135,16 +143,16 @@ def slugify(text):
     return norm_text
 
 
-def exc_to_thrift_reqfail(func):
+def exc_to_thrift_reqfail(function):
     """
     Convert internal exceptions to RequestFailed exception
     which can be sent back on the thrift connections.
     """
-    func_name = func.__name__
+    func_name = function.__name__
 
     def wrapper(*args, **kwargs):
         try:
-            res = func(*args, **kwargs)
+            res = function(*args, **kwargs)
             return res
 
         except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
@@ -516,10 +524,14 @@ def get_source_component_file_query(
     if skip and include:
         include_q, skip_q = get_include_skip_queries(include, skip)
         return File.id.in_(include_q.except_(skip_q))
-    elif include:
+
+    if include:
         return or_(*[File.filepath.like(conv(fp)) for fp in include])
-    elif skip:
+
+    if skip:
         return and_(*[not_(File.filepath.like(conv(fp))) for fp in skip])
+
+    return None
 
 
 def get_reports_by_bugpath_filter(session, file_filter_q) -> Set[int]:
@@ -602,10 +614,14 @@ def get_other_source_component_file_query(session):
         if skip and include:
             include_q, skip_q = get_include_skip_queries(include, skip)
             return File.id.notin_(include_q.except_(skip_q))
-        elif include:
+
+        if include:
             return and_(*[File.filepath.notlike(conv(fp)) for fp in include])
-        elif skip:
+
+        if skip:
             return or_(*[File.filepath.like(conv(fp)) for fp in skip])
+
+        return None
 
     queries = [get_query(n) for (n, ) in component_names]
     return and_(*queries)
@@ -734,25 +750,21 @@ def process_cmp_data_filter(session, run_ids, report_filter, cmp_data):
     query_new_runs = get_diff_run_id_query(session, cmp_data.runIds,
                                            cmp_data.runTag)
 
-    AND = []
     if cmp_data.diffType == DiffType.NEW:
         return and_(Report.bug_id.in_(query_new.except_(query_base)),
                     Report.run_id.in_(query_new_runs)), [Run]
 
-    elif cmp_data.diffType == DiffType.RESOLVED:
+    if cmp_data.diffType == DiffType.RESOLVED:
         return and_(Report.bug_id.in_(query_base.except_(query_new)),
                     Report.run_id.in_(query_base_runs)), [Run]
 
-    elif cmp_data.diffType == DiffType.UNRESOLVED:
+    if cmp_data.diffType == DiffType.UNRESOLVED:
         return and_(Report.bug_id.in_(query_base.intersect(query_new)),
                     Report.run_id.in_(query_new_runs)), [Run]
 
-    else:
-        raise codechecker_api_shared.ttypes.RequestFailed(
-            codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-            'Unsupported diff type: ' + str(cmp_data.diffType))
-
-    return and_(*AND), []
+    raise codechecker_api_shared.ttypes.RequestFailed(
+        codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+        'Unsupported diff type: ' + str(cmp_data.diffType))
 
 
 def process_run_history_filter(query, run_ids, run_history_filter):
@@ -886,7 +898,6 @@ def get_report_details(session, report_ids):
         .order_by(Comment.created_at.desc())
 
     for data, report_id in comment_query:
-        report_id = report_id
         comment_data = comment_data_db_to_api(data)
         comment_data_list[report_id].append(comment_data)
 
@@ -1095,8 +1106,7 @@ def check_remove_runs_lock(session, run_ids):
         raise codechecker_api_shared.ttypes.RequestFailed(
             codechecker_api_shared.ttypes.ErrorCode.DATABASE,
             "Can not remove results because the following runs "
-            "are locked: {0}".format(
-                ', '.join([r[0] for r in run_locks])))
+            f"are locked: {', '.join([r[0] for r in run_locks])}")
 
 
 def sort_run_data_query(query, sort_mode):
@@ -1184,7 +1194,7 @@ def get_commit_url(
 ) -> Optional[str]:
     """ Get commit url for the given remote url. """
     if not remote_url:
-        return
+        return None
 
     for git_commit_url in git_commit_urls:
         m = git_commit_url["regex"].match(remote_url)
@@ -1195,6 +1205,8 @@ def get_commit_url(
                     url = url.replace(f"${key}", value)
 
             return url
+
+    return None
 
 
 def get_cleanup_plan(session, cleanup_plan_id: int) -> CleanupPlan:
@@ -1320,12 +1332,8 @@ def get_run_id_expression(session, report_filter):
                 cast(Run.id, sqlalchemy.String).distinct(),
                 ','
             ).label("run_id")
-        else:
-            return func.group_concat(
-                Run.id.distinct()
-            ).label("run_id")
-    else:
-        return Run.id.label("run_id")
+        return func.group_concat(Run.id.distinct()).label("run_id")
+    return Run.id.label("run_id")
 
 
 def get_is_enabled_case(subquery):
@@ -1445,9 +1453,9 @@ class ThriftRequestHandler:
             args = dict(self.__permission_args)
             args['config_db_session'] = session
 
-            if not any([permissions.require_permission(
+            if not any(permissions.require_permission(
                     perm, args, self._auth_session)
-                    for perm in required]):
+                    for perm in required):
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
                     "You are not authorized to execute this action.")
@@ -1547,13 +1555,14 @@ class ThriftRequestHandler:
                 status_sum[run_id][detection_status_enum(status)] = count
 
             # Get analyzer statistics.
-            analyzer_statistics = defaultdict(lambda: defaultdict())
+            analyzer_statistics = defaultdict(defaultdict)
 
             stat_q = get_analysis_statistics_query(session, run_filter.ids)
-            for stat, run_id in stat_q:
-                analyzer_statistics[run_id][stat.analyzer_type] = \
-                    ttypes.AnalyzerStatistics(failed=stat.failed,
-                                              successful=stat.successful)
+            for analyzer_stat, run_id in stat_q:
+                analyzer_statistics[run_id][analyzer_stat.analyzer_type] = \
+                    ttypes.AnalyzerStatistics(
+                        failed=analyzer_stat.failed,
+                        successful=analyzer_stat.successful)
 
             results = []
 
@@ -1698,11 +1707,11 @@ class ThriftRequestHandler:
             results = []
             for history in res:
                 analyzer_statistics = {}
-                for stat in history.analyzer_statistics:
-                    analyzer_statistics[stat.analyzer_type] = \
+                for analyzer_stat in history.analyzer_statistics:
+                    analyzer_statistics[analyzer_stat.analyzer_type] = \
                         ttypes.AnalyzerStatistics(
-                            failed=stat.failed,
-                            successful=stat.successful)
+                            failed=analyzer_stat.failed,
+                            successful=analyzer_stat.successful)
 
                 results.append(RunHistoryData(
                     id=history.id,
@@ -1829,24 +1838,25 @@ class ThriftRequestHandler:
                                          .label('bug_id')]) \
                         .except_(base_hashes).alias('new_bugs')
                     return [res[0] for res in session.query(new_hashes)]
-                else:
-                    # The maximum number of compound select in sqlite is 500
-                    # by default. We increased SQLITE_MAX_COMPOUND_SELECT
-                    # limit but when the number of compound select was larger
-                    # than 8435 sqlite threw a `Segmentation fault` error.
-                    # For this reason we create queries with chunks.
-                    new_hashes = []
-                    for chunk in util.chunks(iter(report_hashes),
-                                             SQLITE_MAX_COMPOUND_SELECT):
-                        new_hashes_query = union_all(*[
-                            select([bindparam('bug_id' + str(i), h)
-                                    .label('bug_id')])
-                            for i, h in enumerate(chunk)])
-                        q = select([new_hashes_query]).except_(base_hashes)
-                        new_hashes.extend([res[0] for res in session.query(q)])
 
-                    return new_hashes
-            elif diff_type == DiffType.RESOLVED:
+                # The maximum number of compound select in sqlite is 500
+                # by default. We increased SQLITE_MAX_COMPOUND_SELECT
+                # limit but when the number of compound select was larger
+                # than 8435 sqlite threw a `Segmentation fault` error.
+                # For this reason we create queries with chunks.
+                new_hashes = []
+                for chunk in util.chunks(
+                        iter(report_hashes), SQLITE_MAX_COMPOUND_SELECT):
+                    new_hashes_query = union_all(*[
+                        select([bindparam('bug_id' + str(i), h)
+                                .label('bug_id')])
+                        for i, h in enumerate(chunk)])
+                    q = select([new_hashes_query]).except_(base_hashes)
+                    new_hashes.extend([res[0] for res in session.query(q)])
+
+                return new_hashes
+
+            if diff_type == DiffType.RESOLVED:
                 results = session.query(Report.bug_id)
 
                 if client_version >= (6, 50):
@@ -1863,7 +1873,7 @@ class ThriftRequestHandler:
 
                 return [res[0] for res in results]
 
-            elif diff_type == DiffType.UNRESOLVED:
+            if diff_type == DiffType.UNRESOLVED:
                 results = session.query(Report.bug_id) \
                     .filter(Report.bug_id.in_(report_hashes))
 
@@ -1882,8 +1892,7 @@ class ThriftRequestHandler:
 
                 return [res[0] for res in results]
 
-            else:
-                return []
+            return []
 
     @exc_to_thrift_reqfail
     @timeit
@@ -2357,12 +2366,11 @@ class ThriftRequestHandler:
         new_review_status = review_status.status.capitalize()
         if message:
             system_comment_msg = \
-                'rev_st_changed_msg {0} {1} {2}'.format(
-                    old_review_status, new_review_status,
-                    shlex.quote(message))
+                f'rev_st_changed_msg {old_review_status} ' \
+                f'{new_review_status} {shlex.quote(message)}'
         else:
-            system_comment_msg = 'rev_st_changed {0} {1}'.format(
-                old_review_status, new_review_status)
+            system_comment_msg = \
+                f'rev_st_changed {old_review_status} {new_review_status}'
 
         system_comment = self.__add_comment(review_status.bug_hash,
                                             system_comment_msg,
@@ -2522,8 +2530,8 @@ class ThriftRequestHandler:
                         SQLITE_MAX_VARIABLE_NUMBER):
                     getRules(hash_chunk)
                 return result
-            else:
-                return getRules()
+
+            return getRules()
 
     @exc_to_thrift_reqfail
     @timeit
@@ -2610,11 +2618,10 @@ class ThriftRequestHandler:
                         comment_kind_to_thrift_type(comment.kind)))
 
                 return result
-            else:
-                msg = 'Report id ' + str(report_id) + \
-                      ' was not found in the database.'
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
+
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                f'Report id {report_id} was not found in the database.')
 
     @exc_to_thrift_reqfail
     @timeit
@@ -2653,12 +2660,11 @@ class ThriftRequestHandler:
                 session.commit()
 
                 return True
-            else:
-                msg = 'Report id ' + str(report_id) + \
-                      ' was not found in the database.'
-                LOG.error(msg)
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
+
+            msg = f'Report id {report_id} was not found in the database.'
+            LOG.error(msg)
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
 
     @exc_to_thrift_reqfail
     @timeit
@@ -2681,7 +2687,7 @@ class ThriftRequestHandler:
 
             comment = session.query(Comment).get(comment_id)
             if comment:
-                if comment.author != 'Anonymous' and comment.author != user:
+                if comment.author not in ('Anonymous', user):
                     raise codechecker_api_shared.ttypes.RequestFailed(
                         codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
                         'Unathorized comment modification!')
@@ -2689,9 +2695,9 @@ class ThriftRequestHandler:
                 # Create system comment if the message is changed.
                 message = comment.message.decode('utf-8')
                 if message != content:
-                    system_comment_msg = 'comment_changed {0} {1}'.format(
-                        shlex.quote(message),
-                        shlex.quote(content))
+                    system_comment_msg = \
+                        f'comment_changed {shlex.quote(message)} ' \
+                        f'{shlex.quote(content)}'
 
                     system_comment = \
                         self.__add_comment(comment.bug_hash,
@@ -2704,12 +2710,11 @@ class ThriftRequestHandler:
 
                 session.commit()
                 return True
-            else:
-                msg = 'Comment id ' + str(comment_id) + \
-                      ' was not found in the database.'
-                LOG.error(msg)
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
+
+            msg = f'Comment id {comment_id} was not found in the database.'
+            LOG.error(msg)
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
 
     @exc_to_thrift_reqfail
     @timeit
@@ -2727,7 +2732,7 @@ class ThriftRequestHandler:
 
             comment = session.query(Comment).get(comment_id)
             if comment:
-                if comment.author != 'Anonymous' and comment.author != user:
+                if comment.author not in ('Anonymous', user):
                     raise codechecker_api_shared.ttypes.RequestFailed(
                         codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
                         'Unathorized comment modification!')
@@ -2739,15 +2744,14 @@ class ThriftRequestHandler:
                          self._get_username())
 
                 return True
-            else:
-                msg = 'Comment id ' + str(comment_id) + \
-                      ' was not found in the database.'
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
+
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                f'Comment id {comment_id} was not found in the database.')
 
     @exc_to_thrift_reqfail
     @timeit
-    def getCheckerDoc(self, checkerId):
+    def getCheckerDoc(self, _):
         """
         Parameters:
          - checkerId
@@ -2864,6 +2868,7 @@ class ThriftRequestHandler:
                     commits=commits,
                     blame=blame_data)
             except Exception:
+                # pylint: disable=raise-missing-from
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.DATABASE,
                     "Failed to get blame information for file id: " + fileId)
@@ -2889,8 +2894,8 @@ class ThriftRequestHandler:
                         .filter(File.id.in_(
                                 [line.fileId if line.fileId is not None
                                     else LOG.warning(
-                                        f"File content "
-                                        "requested without fileId {l}")
+                                        "File content requested "
+                                        f"without fileId {line.fileId}")
                                     for line in chunk])) \
                         .all()
                 for content in contents:
@@ -3064,7 +3069,7 @@ class ThriftRequestHandler:
                 checker_name, \
                 analyzer_name, \
                 severity, \
-                run_ids, \
+                run_id_list, \
                 is_enabled, \
                 is_opened, \
                 cnt \
@@ -3083,9 +3088,9 @@ class ThriftRequestHandler:
                     ))
 
                 if is_enabled:
-                    for r in (run_ids.split(",")
-                              if isinstance(run_ids, str)
-                              else [run_ids]):
+                    for r in (run_id_list.split(",")
+                              if isinstance(run_id_list, str)
+                              else [run_id_list]):
                         run_id = int(r)
                         if run_id not in checker_stat.enabled:
                             checker_stat.enabled.append(run_id)
@@ -3795,12 +3800,11 @@ class ThriftRequestHandler:
                          self._get_username())
 
                 return True
-            else:
-                msg = 'Run id ' + str(run_id) + \
-                      ' was not found in the database.'
-                LOG.error(msg)
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
+
+            msg = f'Run id {run_id} was not found in the database.'
+            LOG.error(msg)
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
 
         return True
 
@@ -3891,11 +3895,10 @@ class ThriftRequestHandler:
                 LOG.info("Source component '%s' has been removed by '%s'",
                          name, self._get_username())
                 return True
-            else:
-                msg = 'Source component ' + str(name) + \
-                      ' was not found in the database.'
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
+
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                f'Source component {name} was not found in the database.')
 
     @exc_to_thrift_reqfail
     @timeit
@@ -3912,7 +3915,7 @@ class ThriftRequestHandler:
                 .filter(FileContent.content_hash.in_(file_hashes))
 
             return list(set(file_hashes) -
-                        set([fc.content_hash for fc in q]))
+                        set(fc.content_hash for fc in q))
 
     @exc_to_thrift_reqfail
     @timeit
@@ -3930,7 +3933,7 @@ class ThriftRequestHandler:
                 .filter(FileContent.blame_info.isnot(None))
 
             return list(set(file_hashes) -
-                        set([fc.content_hash for fc in q]))
+                        set(fc.content_hash for fc in q))
 
     @exc_to_thrift_reqfail
     @timeit
@@ -3948,14 +3951,14 @@ class ThriftRequestHandler:
     def allowsStoringAnalysisStatistics(self):
         self.__require_store()
 
-        return True if self._manager.get_analysis_statistics_dir() else False
+        return bool(self._manager.get_analysis_statistics_dir())
 
     @exc_to_thrift_reqfail
     @timeit
     def getAnalysisStatisticsLimits(self):
         self.__require_store()
 
-        cfg = dict()
+        cfg = {}
 
         # Get the limit of failure zip size.
         failure_zip_size = self._manager.get_failure_zip_size()
@@ -4019,17 +4022,18 @@ class ThriftRequestHandler:
             query = get_analysis_statistics_query(
                 session, run_ids, run_history_ids)
 
-            for stat, run_id in query:
-                failed_files = zlib.decompress(stat.failed_files).decode(
-                    'utf-8').split('\n') if stat.failed_files else []
+            for anal_stat, _ in query:
+                failed_files = zlib.decompress(anal_stat.failed_files).decode(
+                    'utf-8').split('\n') if anal_stat.failed_files else []
                 analyzer_version = zlib.decompress(
-                    stat.version).decode('utf-8') if stat.version else None
+                    anal_stat.version).decode('utf-8') \
+                    if anal_stat.version else None
 
-                analyzer_statistics[stat.analyzer_type] = \
+                analyzer_statistics[anal_stat.analyzer_type] = \
                     ttypes.AnalyzerStatistics(version=analyzer_version,
-                                              failed=stat.failed,
+                                              failed=anal_stat.failed,
                                               failedFilePaths=failed_files,
-                                              successful=stat.successful)
+                                              successful=anal_stat.successful)
         return analyzer_statistics
 
     @exc_to_thrift_reqfail

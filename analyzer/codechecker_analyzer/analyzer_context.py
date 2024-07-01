@@ -10,7 +10,7 @@ Context to store package related information.
 """
 
 
-# pylint: disable=no-name-in-module
+# pylint: disable=deprecated-module
 from distutils.spawn import find_executable
 from argparse import ArgumentTypeError
 
@@ -20,8 +20,8 @@ import sys
 
 from pathlib import Path
 
-from codechecker_common import logger
 from codechecker_analyzer.arg import analyzer_binary
+from codechecker_common import logger
 from codechecker_common.checker_labels import CheckerLabels
 from codechecker_common.singleton import Singleton
 from codechecker_common.util import load_json
@@ -92,7 +92,7 @@ class Context(metaclass=Singleton):
         self.__populate_analyzers()
         self.__populate_replacer()
 
-    def __parse_CC_ANALYZER_BIN(self):
+    def __parse_cc_analyzer_bin(self):
         env_var_bins = {}
         if 'CC_ANALYZER_BIN' in self.analyzer_env:
             had_error = False
@@ -202,7 +202,7 @@ class Context(metaclass=Singleton):
         if not analyzer_from_path:
             analyzer_env = self.analyzer_env
 
-        env_var_bin = self.__parse_CC_ANALYZER_BIN()
+        env_var_bin = self.__parse_cc_analyzer_bin()
 
         compiler_binaries = self.pckg_layout.get('analyzers')
         for name, value in compiler_binaries.items():
