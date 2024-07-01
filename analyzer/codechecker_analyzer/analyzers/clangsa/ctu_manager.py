@@ -30,6 +30,9 @@ from . import ctu_triple_arch
 LOG = get_logger('analyzer')
 
 
+# The inheritence comes from the YAML parser, we can't solve it with less
+# ancestors.
+# pylint: disable=too-many-ancestors
 class LLVMComatibleYamlDumper(Dumper):
     def check_simple_key(self):
         """ Mark every keys as simple keys.

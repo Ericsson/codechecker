@@ -15,7 +15,7 @@ import unittest
 import codechecker_analyzer.host_check as hc
 
 
-class Test_has_analyzer_option(unittest.TestCase):
+class TestHasAnalyzerOption(unittest.TestCase):
     def test_existing_option(self):
         self.assertEqual(
             hc.has_analyzer_option("clang",

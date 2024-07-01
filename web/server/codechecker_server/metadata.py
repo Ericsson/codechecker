@@ -64,7 +64,7 @@ class MetadataInfoParser:
         self.checkers: MetadataCheckers = {}
         self.enabled_checkers: EnabledCheckers = set()
         self.disabled_checkers: DisabledCheckers = set()
-        self.checker_to_analyzer: CheckerToAnalyzer = dict()
+        self.checker_to_analyzer: CheckerToAnalyzer = {}
 
         self.__metadata_dict: Dict[str, Any] = {}
         if os.path.isfile(metadata_file_path):

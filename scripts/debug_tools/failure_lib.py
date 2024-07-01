@@ -28,7 +28,7 @@ def find_path_end(string, path_begin):
     return path, path_end
 
 
-def change_paths(string, pathModifierFun):
+def change_paths(string, path_modifier_fun):
     """
     Scan through the string and possibly replace all found paths.
     Returns the modified string.
@@ -47,7 +47,7 @@ def change_paths(string, pathModifierFun):
                 out_dir = "./sources-root" + os.path.dirname(path)
                 if not os.path.isdir(out_dir):
                     os.makedirs(out_dir)
-            path = pathModifierFun(path)
+            path = path_modifier_fun(path)
             result += path
             i = path_end - 1
         else:
@@ -89,8 +89,8 @@ def get_resource_dir(clang_bin):
 
         if proc.returncode == 0:
             return out.decode("utf-8").rstrip()
-        else:
-            return None
+
+        return None
     except OSError:
         print('Failed to run: "' + ' '.join(cmd) + '"')
         raise

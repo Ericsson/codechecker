@@ -71,7 +71,7 @@ def setup_class_common(workspace_name):
     codechecker.add_test_package_product(
         server_access, os.environ['TEST_WORKSPACE'])
 
-    TEST_WORKSPACE = os.environ['TEST_WORKSPACE']
+    test_workspace = os.environ['TEST_WORKSPACE']
 
     test_project = 'cpp'
 
@@ -82,8 +82,8 @@ def setup_class_common(workspace_name):
     codechecker_cfg = {
         'suppress_file': None,
         'skip_list_file': None,
-        'check_env': env.test_env(TEST_WORKSPACE),
-        'workspace': TEST_WORKSPACE,
+        'check_env': env.test_env(test_workspace),
+        'workspace': test_workspace,
         'checkers': [],
         'analyzers': ['clangsa'],
         'run_names': {}
@@ -98,16 +98,16 @@ def setup_class_common(workspace_name):
 
     codechecker_cfg.update(server_access)
 
-    env.export_test_cfg(TEST_WORKSPACE, test_config)
-    cc_client = env.setup_viewer_client(TEST_WORKSPACE)
+    env.export_test_cfg(test_workspace, test_config)
+    cc_client = env.setup_viewer_client(test_workspace)
     for run_data in cc_client.getRunData(None, None, 0, None):
         cc_client.removeRun(run_data.runId, None)
 
     # Copy "cpp" test project 3 times to different directories.
 
-    test_proj_path_orig = os.path.join(TEST_WORKSPACE, "test_proj_orig")
-    test_proj_path_1 = os.path.join(TEST_WORKSPACE, "test_proj_1")
-    test_proj_path_2 = os.path.join(TEST_WORKSPACE, "test_proj_2")
+    test_proj_path_orig = os.path.join(test_workspace, "test_proj_orig")
+    test_proj_path_1 = os.path.join(test_workspace, "test_proj_1")
+    test_proj_path_2 = os.path.join(test_workspace, "test_proj_2")
 
     shutil.rmtree(test_proj_path_orig, ignore_errors=True)
     shutil.rmtree(test_proj_path_1, ignore_errors=True)
@@ -183,15 +183,15 @@ def setup_class_common(workspace_name):
         sys.exit(1)
 
     # Export the test configuration to the workspace.
-    env.export_test_cfg(TEST_WORKSPACE, test_config)
+    env.export_test_cfg(test_workspace, test_config)
 
 
 def teardown_class_common():
-    TEST_WORKSPACE = os.environ['TEST_WORKSPACE']
+    test_workspace = os.environ['TEST_WORKSPACE']
 
-    check_env = env.import_test_cfg(TEST_WORKSPACE)[
+    check_env = env.import_test_cfg(test_workspace)[
         'codechecker_cfg']['check_env']
-    codechecker.remove_test_package_product(TEST_WORKSPACE, check_env)
+    codechecker.remove_test_package_product(test_workspace, check_env)
 
-    print("Removing: " + TEST_WORKSPACE)
-    shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
+    print("Removing: " + test_workspace)
+    shutil.rmtree(test_workspace, ignore_errors=True)

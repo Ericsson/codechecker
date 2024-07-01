@@ -116,12 +116,11 @@ class CheckerLabels:
                 if k == label:
                     if found:
                         return False
-                    else:
-                        found = True
+                    found = True
             return True
 
         if not isinstance(data, dict):
-            raise ValueError(f'Top level element should be a JSON object.')
+            raise ValueError('Top level element should be a JSON object.')
 
         for _, checkers in data.items():
             for checker, labels in checkers.items():
@@ -137,8 +136,8 @@ class CheckerLabels:
                 for unique_label in CheckerLabels.UNIQUE_LABELS:
                     if not is_unique(labels, unique_label):
                         raise ValueError(
-                            f'Label "severity" should be unique for checker '
-                            '{checker}.')
+                            'Label "severity" should be unique for checker '
+                            f'{checker}.')
 
     def __get_analyzer_data(
         self,

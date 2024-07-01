@@ -23,7 +23,6 @@ from libtest import env
 from libtest.codechecker import start_server
 import multiprocess
 
-# pylint: disable=no-member multiprocess module members.
 # Stopping events for CodeChecker servers.
 EVENT_1 = multiprocess.Event()
 EVENT_2 = multiprocess.Event()
@@ -100,7 +99,7 @@ class TestInstances(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         # Get the test workspace used to tests.
         self._test_workspace = os.environ['TEST_WORKSPACE']
 
@@ -124,7 +123,7 @@ class TestInstances(unittest.TestCase):
         print(out)
         return proc.returncode
 
-    def testServerStart(self):
+    def test_server_start(self):
         """Started server writes itself to instance list."""
 
         test_cfg = env.import_test_cfg(self._test_workspace)
@@ -140,7 +139,7 @@ class TestInstances(unittest.TestCase):
                             "The started server did not register itself to the"
                             " instance list.")
 
-    def testServerStartSecondary(self):
+    def test_server_start_secondary(self):
         """Another started server appends itself to instance list."""
 
         test_cfg = env.import_test_cfg(self._test_workspace)
@@ -168,12 +167,12 @@ class TestInstances(unittest.TestCase):
                          "The ports for the two started servers were not found"
                          " in the instance list.")
 
-    def testShutdownRecordKeeping(self):
+    def test_shutdown_record_keeping(self):
         """Test that one server's shutdown keeps the other records."""
 
         # NOTE: Do NOT rename this method. It MUST come lexicographically
-        # AFTER testServerStartSecondary, because we shut down a server started
-        # by the aforementioned method.
+        # AFTER test_server_start_secondary, because we shut down a server
+        # started by the aforementioned method.
 
         # Kill the second started server.
         EVENT_2.set()
@@ -200,7 +199,7 @@ class TestInstances(unittest.TestCase):
                          "The stopped server did not disappear from the"
                          " instance list.")
 
-    def testShutdownTerminateByCmdline(self):
+    def test_shutdown_terminate_by_cmdline(self):
         """Tests that the command-line command actually kills the server,
         and that it does not kill anything else."""
 
@@ -262,7 +261,7 @@ class TestInstances(unittest.TestCase):
                          "The stopped server made another server's record "
                          "appear in the instance list.")
 
-    def testShutdownTerminateStopAll(self):
+    def test_shutdown_terminate_stop_all(self):
         """Tests that --stop-all kills all servers on the host."""
 
         # NOTE: Yet again keep the lexicographical flow, no renames!

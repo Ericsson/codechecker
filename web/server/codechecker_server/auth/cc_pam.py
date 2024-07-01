@@ -51,19 +51,17 @@ def auth_user(pam_config, username, password):
         if not allowed_users and not allowed_group:
             # If no filters are set, only authentication is needed.
             return True
-        else:
-            if username in allowed_users:
-                # The user is allowed by username.
-                return True
 
-            # Otherwise, check group memeberships. If any of the user's
-            # groups are an allowed groupl, the user is allowed.
-            groups = [g.gr_name for g in grp.getgrall()
-                      if username in g.gr_mem]
-            gid = pwd.getpwnam(username).pw_gid
-            groups.append(grp.getgrgid(gid).gr_name)
+        if username in allowed_users:
+            # The user is allowed by username.
+            return True
 
-            return not set(groups).isdisjoint(
-                set(pam_config.get("groups")))
+        # Otherwise, check group memeberships. If any of the user's
+        # groups are an allowed groupl, the user is allowed.
+        groups = [g.gr_name for g in grp.getgrall() if username in g.gr_mem]
+        gid = pwd.getpwnam(username).pw_gid
+        groups.append(grp.getgrgid(gid).gr_name)
+
+        return not set(groups).isdisjoint(set(pam_config.get("groups")))
 
     return False

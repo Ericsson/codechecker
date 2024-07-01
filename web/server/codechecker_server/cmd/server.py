@@ -345,12 +345,9 @@ databases.
         options = ['--dbaddress', '--dbport', '--dbusername', '--dbname',
                    '--db-host', '--db-port', '--db-username', '--db-name']
         psql_args_matching = arg_match(options)
-        if any(psql_args_matching) and\
-                'postgresql' not in args:
-            first_matching_arg = next(iter([match for match
-                                            in psql_args_matching]))
-            parser.error("argument {0}: not allowed without "
-                         "argument --postgresql".format(first_matching_arg))
+        if any(psql_args_matching) and 'postgresql' not in args:
+            parser.error(f"argument {psql_args_matching[0]}: not allowed "
+                         "without argument --postgresql")
             # parser.error() terminates with return code 2.
 
         # --not-host-only is a "shortcut", actually a to-be-deprecated
@@ -480,7 +477,7 @@ def check_product_db_status(cfg_sql_server, migration_root, environ):
     config_session = sessionmaker(bind=engine)
     sess = config_session()
 
-    products: List[ORMProduct] = list()
+    products: List[ORMProduct] = []
     try:
         products = sess.query(ORMProduct) \
             .order_by(ORMProduct.endpoint.asc()) \
@@ -621,15 +618,15 @@ def __db_migration_multiple(
     prod_statuses = check_product_db_status(cfg_sql_server,
                                             migration_root,
                                             environ)
-    products_to_upgrade: List[str] = list()
+    products_to_upgrade: List[str] = []
     for endpoint in (products_requested_for_upgrade or []):
         avail = prod_statuses.get(endpoint)
         if not avail:
             LOG.error("No product was found with endpoint '%s'", endpoint)
             return 1
         products_to_upgrade.append(endpoint)
-    else:
-        products_to_upgrade = list(prod_statuses.keys())
+
+    products_to_upgrade = list(prod_statuses.keys())
     products_to_upgrade.sort()
 
     def _get_migration_decisions() -> List[Tuple[str, str, bool]]:
@@ -640,7 +637,7 @@ def __db_migration_multiple(
         cfg_session_factory = sessionmaker(bind=cfg_engine)
         cfg_session = cfg_session_factory()
 
-        scheduled_upgrades_or_inits: List[Tuple[str, str, bool]] = list()
+        scheduled_upgrades_or_inits: List[Tuple[str, str, bool]] = []
         for endpoint in products_to_upgrade:
             LOG.info("Checking: %s", endpoint)
             connection_str: Optional[str] = None
@@ -726,7 +723,7 @@ def __db_migration_multiple(
     LOG.info("========================")
 
     if scheduled_upgrades_or_inits:
-        failed_products: List[Tuple[str, DBStatus]] = list()
+        failed_products: List[Tuple[str, DBStatus]] = []
         thr_count = util.clamp(1, len(scheduled_upgrades_or_inits),
                                cpu_count())
         with Pool(max_workers=thr_count) as executor:
@@ -746,13 +743,14 @@ def __db_migration_multiple(
                     failed_products.append((product_cfg[0], return_status))
 
         if failed_products:
+            prod_status = []
+            for p in failed_products:
+                status = database_status.db_status_msg.get(
+                    p[1], "Unknown database status")
+                prod_status.append(f"'{p[0]}' ({status})")
+
             LOG.error("The following products failed to upgrade: %s",
-                      ", ".join(list(map(lambda p: "'%s' (%s)" %
-                                         (p[0],
-                                          database_status.db_status_msg.get(
-                                              p[1], "Unknown database status")
-                                          ),
-                                         failed_products))))
+                      ', '.join(prod_status))
         else:
             LOG.info("Schema initialisation(s)/upgrade(s) executed "
                      "successfully.")
@@ -920,7 +918,7 @@ def server_init_start(args):
 
     # Actual server starting from this point.
     if not host_check.check_zlib():
-        raise Exception("zlib is not available on the system!")
+        raise ModuleNotFoundError("zlib is not available on the system!")
 
     # WARNING
     # In case of SQLite args.dbaddress default value is used
@@ -976,7 +974,7 @@ def server_init_start(args):
         LOG.debug("No schema upgrade is possible.")
         sys.exit(1)
 
-    force_upgrade = True if 'force_upgrade' in args else False
+    force_upgrade = 'force_upgrade' in args
 
     if db_status == DBStatus.SCHEMA_MISMATCH_OK:
         LOG.debug("Configuration database schema mismatch!")
@@ -1072,8 +1070,7 @@ def server_init_start(args):
     upgrade_available = {}
     for k, v in prod_statuses.items():
         db_status, _, _, _ = v
-        if db_status == DBStatus.SCHEMA_MISMATCH_OK or \
-                db_status == DBStatus.SCHEMA_MISSING:
+        if db_status in (DBStatus.SCHEMA_MISMATCH_OK, DBStatus.SCHEMA_MISSING):
             upgrade_available[k] = v
 
     if upgrade_available:
@@ -1147,7 +1144,7 @@ def main(args):
                  args.config_directory)
         os.makedirs(args.config_directory)
 
-    with logger.LOG_CFG_SERVER(
+    with logger.LogCfgServer(
         args.verbose if "verbose" in args else None, workspace=workspace
     ):
         try:

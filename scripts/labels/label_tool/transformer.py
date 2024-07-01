@@ -76,7 +76,7 @@ class PerReleaseRules:
         self._rules: Dict[Union[Version,
                                 packaging.version.InfinityType,
                                 packaging.version.NegativeInfinityType],
-                          Optional[Callable]] = dict()
+                          Optional[Callable]] = {}
         self._rules[packaging.version.NegativeInfinity] = None
         self._rules[packaging.version.Infinity] = None
 

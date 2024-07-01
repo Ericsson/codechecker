@@ -19,11 +19,11 @@ import unittest
 from libtest import env
 
 
-def run_cmd(cmd, env=None):
+def run_cmd(cmd, environ=None):
     print(cmd)
     proc = subprocess.Popen(
         cmd,
-        env=env,
+        env=environ,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         encoding="utf-8",
@@ -38,6 +38,11 @@ class TestCmdline(unittest.TestCase):
     """
     Simple tests to check CodeChecker command line.
     """
+
+    def __init__(self, methodName):
+        self.test_workspace = None
+        self._codechecker_cmd = None
+        super().__init__(methodName)
 
     def setup_class(self):
         """Setup the environment for the tests."""
@@ -57,7 +62,7 @@ class TestCmdline(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         # TEST_WORKSPACE is automatically set by test package __init__.py .
         self.test_workspace = os.environ['TEST_WORKSPACE']
 

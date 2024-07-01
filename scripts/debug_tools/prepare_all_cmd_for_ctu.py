@@ -20,12 +20,12 @@ import prepare_compiler_info
 import prepare_analyzer_cmd
 
 
-def execute(cmd, env):
+def execute(cmd, environ):
     print("Executing command: " + ' '.join(cmd))
     try:
         proc = subprocess.Popen(
             cmd,
-            env=env,
+            env=environ,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             encoding="utf-8",
@@ -37,7 +37,7 @@ def execute(cmd, env):
 
         if proc.returncode != 0:
             print('Unsuccessful run: "' + ' '.join(cmd) + '"')
-            raise Exception("Unsuccessful run of command.")
+            raise OSError("Unsuccessful run of command.")
         return out
     except OSError:
         print('Failed to run: "' + ' '.join(cmd) + '"')
@@ -57,7 +57,7 @@ def get_triple_arch(analyze_command_file):
     return platform.machine()
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(
         description='Prepare all commands '
         'to execute in local environmennt for debugging.')
@@ -113,11 +113,11 @@ if __name__ == '__main__':
     env = os.environ
     env['PATH'] = f"{os.path.dirname(args.clang)}:{env['PATH']}"
     env['CC_ANALYZERS_FROM_PATH'] = 'yes'
-    out = execute(["CodeChecker", "analyze", "--ctu-collect",
-                   compile_cmd_debug,
-                   "--compiler-info-file", compiler_info_debug,
-                   "-o", "report_debug",
-                   "--verbose", "debug"], env)
+    execute(["CodeChecker", "analyze", "--ctu-collect",
+             compile_cmd_debug,
+             "--compiler-info-file", compiler_info_debug,
+             "-o", "report_debug",
+             "--verbose", "debug"], env)
 
     analyzer_command_debug = "analyzer-command_DEBUG"
     target = get_triple_arch('./analyzer-command')
@@ -136,5 +136,8 @@ if __name__ == '__main__':
     print(
         "Preparation of files for debugging is done. "
         "Now you can execute the generated analyzer command. "
-        "E.g. $ bash %s" %
-        analyzer_command_debug)
+        f"E.g. $ bash {analyzer_command_debug}")
+
+
+if __name__ == '__main__':
+    main()

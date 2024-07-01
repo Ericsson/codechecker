@@ -20,11 +20,7 @@ from plistlib import _PlistParser  # type: ignore
 from typing import Any, BinaryIO, Dict, List, Optional, Tuple
 
 from xml.parsers.expat import ExpatError
-
-if sys.version_info >= (3, 8):
-    from typing import TypedDict  # pylint: disable=no-name-in-module
-else:
-    from mypy_extensions import TypedDict
+import lxml
 
 from codechecker_report_converter.report import \
     BugPathEvent, BugPathPosition, \
@@ -37,9 +33,13 @@ from codechecker_report_converter.report.hash import get_report_hash, HashType
 from codechecker_report_converter.report.parser.base import AnalyzerInfo, \
     BaseParser, get_tool_info
 
+if sys.version_info >= (3, 8):
+    from typing import TypedDict  # pylint: disable=no-name-in-module
+else:
+    from mypy_extensions import TypedDict
+
 
 LOG = logging.getLogger('report-converter')
-
 
 EXTENSION = 'plist'
 
@@ -99,14 +99,12 @@ class _LXMLPlistParser(_PlistParser):
         self.parser = XMLParser(target=self.event_handler)
 
     def parse(self, fileobj):
-        # pylint: disable=no-name-in-module
-        from lxml.etree import parse, XMLSyntaxError
-
         try:
-            parse(fileobj, self.parser)
-        except XMLSyntaxError as ex:
+            # pylint: disable=c-extension-no-member
+            lxml.etree.parse(fileobj, self.parser)
+        except lxml.etree.XMLSyntaxError as ex:
             LOG.error("Invalid plist file '%s': %s", fileobj.name, ex)
-            return
+            return None
 
         return self.root
 
@@ -158,7 +156,7 @@ def parse(fp: BinaryIO):
     except (ExpatError, TypeError, AttributeError) as err:
         LOG.warning('Invalid plist file')
         LOG.warning(err)
-        return
+        return None
     except ImportError:
         LOG.debug("lxml library is not available. Use plistlib to parse plist "
                   "files.")
@@ -169,7 +167,8 @@ def parse(fp: BinaryIO):
             plistlib.InvalidFileException) as err:
         LOG.warning('Invalid plist file')
         LOG.warning(err)
-        return
+
+    return None
 
 
 def get_file_index_map(
@@ -237,8 +236,8 @@ class Parser(BaseParser):
             traceback.print_exc()
             LOG.warning(type(ex))
             LOG.warning(ex)
-        finally:
-            return reports
+
+        return reports
 
     def __create_report(
         self,
@@ -319,7 +318,7 @@ class Parser(BaseParser):
                 file=files[location['file']],
                 line=location['line'],
                 column=location['col'],
-                range=Range(
+                file_range=Range(
                     start_loc['line'], start_loc['col'],
                     end_loc['line'], end_loc['col'])))
 
@@ -358,13 +357,13 @@ class Parser(BaseParser):
                 if edge:
                     bug_path_positions.append(BugPathPosition(
                         file=files[edge[1]['file']],
-                        range=Range(
+                        file_range=Range(
                             edge[0]['line'], edge[0]['col'],
                             edge[1]['line'], edge[1]['col'])))
 
                 bug_path_positions.append(BugPathPosition(
                     file=files[edges['end'][1]['file']],
-                    range=Range(
+                    file_range=Range(
                         edges['end'][0]['line'], edges['end'][0]['col'],
                         edges['end'][1]['line'], edges['end'][1]['col'])))
 
@@ -393,7 +392,7 @@ class Parser(BaseParser):
                 file=files[location['file']],
                 line=location['line'],
                 column=location['col'],
-                range=Range(
+                file_range=Range(
                     start_loc['line'], start_loc['col'],
                     end_loc['line'], end_loc['col'])))
 
@@ -419,7 +418,7 @@ class Parser(BaseParser):
                 file=files[location['file']],
                 line=location['line'],
                 column=location['col'],
-                range=Range(
+                file_range=Range(
                     start_loc['line'], start_loc['col'],
                     end_loc['line'], end_loc['col'])))
 
@@ -520,7 +519,7 @@ class Parser(BaseParser):
                             macro_expansion, file_index_map))
 
             if report.annotations:
-                diagnostic["report-annotation"] = dict()
+                diagnostic["report-annotation"] = {}
                 for key, value in report.annotations.items():
                     diagnostic["report-annotation"][key] = value
 
@@ -536,7 +535,6 @@ class Parser(BaseParser):
         except TypeError as err:
             LOG.error('Failed to write plist file: %s', output_file_path)
             LOG.error(err)
-            import traceback
             traceback.print_exc()
 
     def _get_bug_path_event_range(self, event: BugPathEvent) -> Range:
@@ -614,13 +612,15 @@ class Parser(BaseParser):
 
     def _create_range(
         self,
-        range: Range,
+        file_range: Range,
         file_idx: int
     ) -> List:
         """ Creates a range. """
         return [
-            self._create_location(range.start_line, range.start_col, file_idx),
-            self._create_location(range.end_line, range.end_col, file_idx)]
+            self._create_location(
+                file_range.start_line, file_range.start_col, file_idx),
+            self._create_location(
+                file_range.end_line, file_range.end_col, file_idx)]
 
     def _create_macro_expansion(
         self,
@@ -637,20 +637,21 @@ class Parser(BaseParser):
 
     def replace_report_hash(
         self,
-        plist_file_path: str,
+        analyzer_result_file_path: str,
         hash_type=HashType.CONTEXT_FREE
     ):
         """
         Override hash in the given file by using the given version hash.
         """
         try:
-            with open(plist_file_path, 'rb+') as f:
+            with open(analyzer_result_file_path, 'rb+') as f:
                 plist = plistlib.load(f)
                 f.seek(0)
                 f.truncate()
 
                 metadata = plist.get('metadata')
-                analyzer_result_dir_path = os.path.dirname(plist_file_path)
+                analyzer_result_dir_path = \
+                    os.path.dirname(analyzer_result_file_path)
 
                 file_cache: Dict[str, File] = {}
                 files = get_file_index_map(
@@ -658,7 +659,7 @@ class Parser(BaseParser):
 
                 for diag in plist['diagnostics']:
                     report = self.__create_report(
-                        plist_file_path, diag, files, metadata)
+                        analyzer_result_file_path, diag, files, metadata)
                     diag['issue_hash_content_of_line_in_context'] = \
                         get_report_hash(report, hash_type)
 
@@ -666,18 +667,18 @@ class Parser(BaseParser):
         except (TypeError, AttributeError,
                 plistlib.InvalidFileException) as err:
             LOG.warning('Failed to process plist file: %s wrong file format?',
-                        plist_file_path)
+                        analyzer_result_file_path)
             LOG.warning(err)
         except IndexError as iex:
             LOG.warning('Indexing error during processing plist file %s',
-                        plist_file_path)
+                        analyzer_result_file_path)
             LOG.warning(type(iex))
             LOG.warning(repr(iex))
             _, _, exc_traceback = sys.exc_info()
             traceback.print_tb(exc_traceback, limit=1, file=sys.stdout)
         except Exception as ex:
             LOG.warning('Error during processing reports from the plist '
-                        'file: %s', plist_file_path)
+                        'file: %s', analyzer_result_file_path)
             traceback.print_exc()
             LOG.warning(type(ex))
             LOG.warning(ex)

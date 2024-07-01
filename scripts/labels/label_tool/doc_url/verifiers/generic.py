@@ -29,7 +29,7 @@ class Base:
     def __init__(self, analyser: str):
         self.analyser = analyser
 
-    def skip(self, checker: str, url: str) -> Status:
+    def skip(self, _checker: str, _url: str) -> Status:
         """
         Returns `Status.OK` if the current verifier is capable of verifying the
         `checker`. `Status.SKIP` is returned in case the `checker` is
@@ -38,7 +38,7 @@ class Base:
         """
         return Status.OK
 
-    def verify(self, checker: str, url: str) -> Outcome:
+    def verify(self, _checker: str, _url: str) -> Outcome:
         """
         Verifies that the documentation page at `url` is available and relevant
         for the `checker` checker.
@@ -47,7 +47,7 @@ class Base:
         """
         return Status.UNKNOWN, None
 
-    def reset(self, checker: str, url: str) -> Optional[str]:
+    def reset(self, _checker: str, _url: str) -> Optional[str]:
         """
         Attempts to reset a potentially fixed (e.g., downgraded) documentation
         URL to its rawest upstream version.
@@ -61,7 +61,7 @@ class Base:
         """
         return None
 
-    def try_fix(self, checker: str, url: str) -> Optional[str]:
+    def try_fix(self, _checker: str, _url: str) -> Optional[str]:
         """
         Attempts to fix the documentation supposedly available, but in fact
         missing from `url` for `checker` to some alternative version that is
@@ -156,7 +156,7 @@ class HTTPStatusCodeVerifier(Base):
               status, response.reason)
         return None
 
-    def skip(self, checker: str, url: str) -> Status:
+    def skip(self, _checker: str, url: str) -> Status:
         return Status.MISSING if not url else Status.OK
 
     ResponseToVerifyStatus = {True: Status.OK,
@@ -223,7 +223,7 @@ class HTMLAnchorVerifier(HTTPStatusCodeVerifier):
         try:
             trace("%s/%s -> %s ...", self.analyser, checker, url)
             response = self.get_url(page)
-        except lxml.etree.LxmlError:
+        except lxml.etree.LxmlError:  # pylint: disable=c-extension-no-member
             import traceback
             traceback.print_exc()
 
@@ -236,7 +236,7 @@ class HTMLAnchorVerifier(HTTPStatusCodeVerifier):
             return self.ResponseToVerifyStatus[http_status], response
 
         dom = self.get_dom(page)
-        if not (dom is not None):
+        if dom is None:
             return Status.NOT_OK, response
         dom = cast(html.HtmlElement, dom)  # mypy does not recognise the if.
 
@@ -271,7 +271,7 @@ class HTMLAnchorVerifier(HTTPStatusCodeVerifier):
         """
         page, _ = self._http.split_anchor(url)
         dom = self.get_dom(page)
-        if not (dom is not None):
+        if dom is None:
             return iter(())
         dom = cast(html.HtmlElement, dom)
 

@@ -80,7 +80,7 @@ class TestDiffFromCmdLine(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         self.test_workspace = os.environ['TEST_WORKSPACE']
 
         test_class = self.__class__.__name__
@@ -89,7 +89,7 @@ class TestDiffFromCmdLine(unittest.TestCase):
         self._cc_client = env.setup_viewer_client(self.test_workspace)
         self.assertIsNotNone(self._cc_client)
 
-    def teardown_method(self, method):
+    def teardown_method(self, _):
         """ Remove all review status rules after each test cases. """
         self.__remove_all_runs()
         self.__remove_all_rules()
@@ -129,10 +129,11 @@ class TestDiffFromCmdLine(unittest.TestCase):
 """
         os.makedirs(file_dir, exist_ok=True)
 
-        with open(os.path.join(file_dir, "main.c"), "w") as f:
+        with open(os.path.join(file_dir, "main.c"), "w",
+                  encoding='utf-8') as f:
             f.write(source_code)
 
-        with open(build_json_path, "w") as f:
+        with open(build_json_path, "w", encoding='utf-8') as f:
             f.write(build_json)
 
         codechecker_cfg = env.import_codechecker_cfg(self.test_workspace)
@@ -153,13 +154,6 @@ class TestDiffFromCmdLine(unittest.TestCase):
     def __analyze_and_store(self, file_dir, store_name, source_code, tag=None):
         self.__analyze(file_dir, source_code)
         self.__store(file_dir, store_name, tag)
-
-    def __get_run_id(self, run_name):
-        runs = self._cc_client.getRunData(None, None, 0, None)
-        self.assertEqual(len(runs), 1)
-        test_run = [run for run in runs if run.name == run_name]
-        self.assertEqual(len(test_run), 1)
-        return test_run[0].runid
 
     # ===-----------------------------------------------------------------=== #
     # Local-local tests.
@@ -248,13 +242,13 @@ void a() {
         # There is a single report that has remained.
         self.assertEqual(get_run_diff_count(DiffType.UNRESOLVED), 1)
 
-    def test_localFPAnnotated_local_identical(self):
+    def test_local_fp_annotated_local_identical(self):
         # Diff identical, local runs, where the baseline report is suppressed
         # via //codechecker_suppress.
         dir1 = os.path.join(self.test_workspace, "dir1")
         dir2 = os.path.join(self.test_workspace, "dir2")
 
-        src_div_by_zero_FP = """
+        src_div_by_zero_fp = """
 void a() {
   int i = 0;
   // codechecker_false_positive [all] SUPPRESS ALL
@@ -267,7 +261,7 @@ void a() {
   (void)(10 / i);
 }
 """
-        self.__analyze(dir1, src_div_by_zero_FP)
+        self.__analyze(dir1, src_div_by_zero_fp)
         self.__analyze(dir2, src_div_by_zero)
 
         def get_run_diff_count(diff_type: DiffType):
@@ -397,13 +391,13 @@ void a() {
         self.assertEqual(get_run_diff_count_reverse(DiffType.RESOLVED), 0)
         self.assertEqual(get_run_diff_count_reverse(DiffType.UNRESOLVED), 1)
 
-    def test_localFPAnnotated_remote_identical(self):
+    def test_local_fp_annotated_remote_identical(self):
         # Create two identical runs, store one on the server, leave one
         # locally.
         dir1 = os.path.join(self.test_workspace, "dir1")
         dir2 = os.path.join(self.test_workspace, "dir2")
 
-        src_div_by_zero_FP = """
+        src_div_by_zero_fp = """
 void a() {
   int i = 0;
   // codechecker_false_positive [all] SUPPRESS ALL
@@ -416,7 +410,7 @@ void a() {
   (void)(10 / i);
 }
 """
-        self.__analyze(dir1, src_div_by_zero_FP)
+        self.__analyze(dir1, src_div_by_zero_fp)
         self.__analyze_and_store(dir2, "run2", src_div_by_zero)
 
         report_filter = ReportFilter()
@@ -455,13 +449,13 @@ void a() {
         # There are no common reports.
         self.assertEqual(get_run_diff_count_reverse(DiffType.UNRESOLVED), 0)
 
-    def test_local_remoteFPAnnotated_identical(self):
+    def test_local_remote_fp_annotated_identical(self):
         # Create two identical runs, store one on the server with a FP source
         # code suppression, leave one locally.
         dir1 = os.path.join(self.test_workspace, "dir1")
         dir2 = os.path.join(self.test_workspace, "dir2")
 
-        src_div_by_zero_FP = """
+        src_div_by_zero_fp = """
 void a() {
   int i = 0;
   // codechecker_false_positive [all] SUPPRESS ALL
@@ -475,7 +469,7 @@ void a() {
 }
 """
         self.__analyze(dir1, src_div_by_zero)
-        self.__analyze_and_store(dir2, "run2", src_div_by_zero_FP)
+        self.__analyze_and_store(dir2, "run2", src_div_by_zero_fp)
 
         report_filter = ReportFilter()
         report_filter.reviewStatus = []
@@ -503,7 +497,7 @@ void a() {
         self.assertEqual(get_run_diff_count_reverse(DiffType.RESOLVED), 1)
         self.assertEqual(get_run_diff_count_reverse(DiffType.UNRESOLVED), 0)
 
-    def test_local_remoteReviewStatusRule_identical(self):
+    def test_local_remote_reviewstatusrule_identical(self):
         """
         Even though the local report is not marked as a false positive, we
         expect the review status rule on the server to affect it.
@@ -578,7 +572,7 @@ void a() {
     # Ideally, diffing tags should work the same as diffing two remote runs or
     # local directory.
 
-    def test_remoteTag_remoteTag_identical(self):
+    def test_remotetag_remotetag_identical(self):
         dir1 = os.path.join(self.test_workspace, "dir1")
         dir2 = os.path.join(self.test_workspace, "dir2")
 
@@ -616,7 +610,7 @@ void a() {
         self.assertEqual(get_run_diff_count_reverse(DiffType.RESOLVED), 0)
         self.assertEqual(get_run_diff_count_reverse(DiffType.UNRESOLVED), 1)
 
-    def test_remoteTag_remoteTag_different(self):
+    def test_remotetag_remotetag_different(self):
         dir1 = os.path.join(self.test_workspace, "dir1")
         dir2 = os.path.join(self.test_workspace, "dir2")
 
@@ -670,7 +664,7 @@ void b() {
         self.assertEqual(get_run_diff_count_reverse(DiffType.RESOLVED), 1)
         self.assertEqual(get_run_diff_count_reverse(DiffType.UNRESOLVED), 0)
 
-    def test_remoteTagFPAnnotated_remoteTag_identical(self):
+    def test_remotetag_fp_annotated_remotetag_identical(self):
         """
         Test source code suppression changes -- in tag1, a FP suppression is
         present, and in tag2, it disappears. Internally, as of writing, this
@@ -680,7 +674,7 @@ void b() {
         dir1 = os.path.join(self.test_workspace, "dir1")
         dir2 = os.path.join(self.test_workspace, "dir2")
 
-        src_div_by_zero_FP = """
+        src_div_by_zero_fp = """
 void a() {
   int i = 0;
   // codechecker_false_positive [all] SUPPRESS ALL
@@ -694,7 +688,7 @@ void a() {
 }
 """
         # Note that we're storing under the same run.
-        self.__analyze_and_store(dir1, "run1", src_div_by_zero_FP, "tag1")
+        self.__analyze_and_store(dir1, "run1", src_div_by_zero_fp, "tag1")
         self.__analyze_and_store(dir2, "run1", src_div_by_zero, "tag2")
 
         report_filter = ReportFilter()
@@ -725,7 +719,7 @@ void a() {
         self.assertEqual(get_run_diff_count_reverse(DiffType.RESOLVED), 0)
         self.assertEqual(get_run_diff_count_reverse(DiffType.UNRESOLVED), 1)
 
-    def test_remoteTag_remoteTagFPAnnotated(self):
+    def test_remotetag_remotetag_fp_annotated(self):
         """
         Test source code suppression changes -- in tag1, there is no
         suppression, and in tag2, there is an FP suppression. This should be
@@ -742,7 +736,7 @@ void a() {
   (void)(10 / i);
 }
 """
-        src_div_by_zero_FP = """
+        src_div_by_zero_fp = """
 void a() {
   int i = 0;
   // codechecker_false_positive [all] SUPPRESS ALL
@@ -751,7 +745,7 @@ void a() {
 """
         # Note that we're storing under the same run.
         self.__analyze_and_store(dir1, "run1", src_div_by_zero, "tag1")
-        self.__analyze_and_store(dir2, "run1", src_div_by_zero_FP, "tag2")
+        self.__analyze_and_store(dir2, "run1", src_div_by_zero_fp, "tag2")
 
         report_filter = ReportFilter()
         report_filter.reviewStatus = []
@@ -777,7 +771,7 @@ void a() {
         self.assertEqual(get_run_diff_count_reverse(DiffType.RESOLVED), 0)
         self.assertEqual(get_run_diff_count_reverse(DiffType.UNRESOLVED), 0)
 
-    def test_remoteTagReviewStatusRule_remoteTag_identical(self):
+    def test_remotetag_reviewstatusrule_remotetag_identical(self):
         """
         You can find more context for why this is the expected result in the
         docs of test_local_remoteReviewStatusRule_identical.
@@ -826,7 +820,7 @@ void a() {
         self.assertEqual(get_run_diff_count_reverse(DiffType.RESOLVED), 0)
         self.assertEqual(get_run_diff_count_reverse(DiffType.UNRESOLVED), 0)
 
-    def test_remoteTag_remoteTag_FixedAtDate(self):
+    def test_remotetag_remotetag_fixedatdate(self):
         """
         When a run disappears from one tag to the next, we regard it as fixed,
         and set it fixed_at date. Test whether just because the fixed_at date

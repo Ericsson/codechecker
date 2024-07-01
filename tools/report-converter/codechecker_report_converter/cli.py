@@ -9,7 +9,6 @@
 
 
 import argparse
-from collections.abc import Iterable, Sequence
 import glob
 import importlib
 import logging
@@ -31,6 +30,8 @@ if __name__ == '__main__':
     sys.path.insert(0, os.path.dirname(current_dir))
 
 
+# The following imports must come after the previous sys.path.insert() section.
+# pylint: disable=wrong-import-position
 from codechecker_report_converter.report.report_file import \
     SUPPORTED_ANALYZER_TYPES, SUPPORTED_ANALYZER_EXTENSIONS
 from codechecker_report_converter.report.parser import plist
@@ -50,7 +51,6 @@ class RawDescriptionDefaultHelpFormatter(
 ):
     """ Adds default values to argument help and retains any formatting in
     descriptions. """
-    pass
 
 
 # Load supported converters dynamically.
@@ -61,26 +61,23 @@ analyzers_dir_path = os.path.join(os.path.dirname(
 analyzers = sorted(glob.glob(os.path.join(
     analyzers_dir_path, '**', 'analyzer_result.py'), recursive=True))
 for analyzer_path in analyzers:
-    analyzer_module = '.'.join(os.path.relpath(
+    ANALYZER_MODULE = '.'.join(os.path.relpath(
         os.path.splitext(analyzer_path)[0],
         analyzers_dir_path).split(os.path.sep))
-    module_name = f"codechecker_report_converter.analyzers.{analyzer_module}"
+    module_name = f"codechecker_report_converter.analyzers.{ANALYZER_MODULE}"
 
-    try:
-        module = importlib.import_module(module_name)
+    module = importlib.import_module(module_name)
 
-        if hasattr(module, "AnalyzerResult"):
-            analyzer_result = getattr(module, "AnalyzerResult")
-            supported_converters[analyzer_result.TOOL_NAME] = analyzer_result
-    except ModuleNotFoundError:
-        raise
+    if hasattr(module, "AnalyzerResult"):
+        analyzer_result = getattr(module, "AnalyzerResult")
+        supported_converters[analyzer_result.TOOL_NAME] = analyzer_result
 
 
 supported_metadata_keys = ["analyzer_command", "analyzer_version"]
 
 
 def transform_output(
-    analyzer_result: Iterable[str],
+    analyzer_results: Iterable[str],
     parser_type: str,
     output_dir: str,
     file_name: str,
@@ -99,7 +96,7 @@ def transform_output(
 
     parser = supported_converters[parser_type]()
     parser.transform(
-        analyzer_result, output_dir, export_type, file_name, metadata)
+        analyzer_results, output_dir, export_type, file_name, metadata)
 
 
 def process_metadata(metadata) -> Tuple[Dict[str, str], Dict[str, str]]:
@@ -154,7 +151,7 @@ class CollectFiles(argparse.Action):
         had_nonexistent_path = False
         for path in values:
             if not os.path.exists(path):
-                LOG.error(f"File or directory '{path}' does not exist!")
+                LOG.error("File or directory '%s' does not exist!", path)
                 had_nonexistent_path = True
             elif os.path.isfile(path):
                 all_files.append(path)
@@ -216,7 +213,7 @@ def __add_arguments_to_parser(parser):
                              "directory will be stored to a running "
                              "CodeChecker server. It has the following "
                              "format: key=value. Valid key values are: "
-                             "{0}.".format(', '.join(supported_metadata_keys)))
+                             f"{', '.join(supported_metadata_keys)}.")
 
     parser.add_argument('--filename',
                         type=str,
@@ -260,10 +257,9 @@ Creates a CodeChecker report directory from the given code analyzer output
 which can be stored to a CodeChecker web server.""",
         epilog="""
 Supported analyzers:
-{0}""".format('\n'.join(["  {0} - {1}, {2}".format(
-                         tool_name,
-                         supported_converters[tool_name].NAME,
-                         supported_converters[tool_name].URL)
+{0}""".format('\n'.join([f"  {tool_name} - "
+                         f"{supported_converters[tool_name].NAME}, "
+                         f"{supported_converters[tool_name].URL}"
                          for tool_name in sorted(supported_converters)])),
         formatter_class=RawDescriptionDefaultHelpFormatter
     )

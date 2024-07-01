@@ -24,7 +24,7 @@ from codechecker_analyzer.buildlog.host_check import check_ldlogger
 from codechecker_common import arg, logger
 
 
-epilog_env_var = f"""
+EPILOG_ENV_VAR = """
   CC_LOGGER_ABS_PATH       If the environment variable is defined, all relative
                            paths in the compilation commands after '-I,
                            -idirafter, -imultilib, -iquote, -isysroot -isystem,
@@ -78,18 +78,18 @@ build-logger/README.md#usage""" if not is_ldlogger else ""
         'formatter_class': arg.RawDescriptionDefaultHelpFormatter,
 
         # Description is shown when the command's help is queried directly
-        'description': """
+        'description': f"""
 Runs the given build command and records the executed compilation steps. These
 steps are written to the output file in a JSON format.
 
-Available build logger tool that will be used is '{0}'.{1}
-""".format('intercept-build' if is_intercept else 'ld-logger',
-           ldlogger_settings),
+Available build logger tool that will be used is
+'{"intercept-build" if is_intercept else "ld-logger"}'.{ldlogger_settings}
+""",
 
         'epilog': f"""
 Environment variables
 ------------------------------------------------
-{epilog_env_var}
+{EPILOG_ENV_VAR}
 """,
 
         # Help is shown when the "parent" CodeChecker command lists the

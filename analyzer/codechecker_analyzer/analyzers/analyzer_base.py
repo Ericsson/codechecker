@@ -56,8 +56,9 @@ class SourceAnalyzer(metaclass=ABCMeta):
         """
         raise NotImplementedError("Subclasses should implement this!")
 
+    @classmethod
     @abstractmethod
-    def get_binary_version(self, environ, details=False) -> str:
+    def get_binary_version(cls, environ, details=False) -> str:
         """
         Return the version number of the binary that CodeChecker found, even
         if its incompatible. If details is true, additional version information
@@ -138,7 +139,6 @@ class SourceAnalyzer(metaclass=ABCMeta):
         """
         Run immediately after the analyze function.
         """
-        pass
 
     @staticmethod
     def run_proc(command, cwd=None, proc_callback=None, env=None):
@@ -147,7 +147,7 @@ class SourceAnalyzer(metaclass=ABCMeta):
         and the stdout and stderr outputs of the process.
         """
 
-        def signal_handler(signum, frame):
+        def signal_handler(signum, _):
             # Clang does not kill its child processes, so I have to.
             try:
                 g_pid = proc.pid

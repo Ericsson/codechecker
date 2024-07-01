@@ -31,7 +31,6 @@ from libtest import codechecker
 from libtest import env
 import multiprocess
 
-# pylint: disable=no-member multiprocess module members.
 # Stopping events for CodeChecker server.
 EVENT = multiprocess.Event()
 
@@ -45,7 +44,7 @@ class TestProductConfigShare(unittest.TestCase):
     def teardown_class(self):
         teardown_class_common()
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         """
         Set up the environment and the test module's configuration from the
         package.
@@ -233,7 +232,7 @@ class TestProductConfigShare(unittest.TestCase):
                             "the product missing should've resulted in "
                             "an error.")
 
-    def teardown_method(self, method):
+    def teardown_method(self, _):
         """
         Clean the environment after running this test module
         """

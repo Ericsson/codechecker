@@ -40,7 +40,7 @@ class RunResults(unittest.TestCase):
     def teardown_class(self):
         teardown_class_common()
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         test_workspace = os.environ['TEST_WORKSPACE']
 
         test_class = self.__class__.__name__
@@ -87,7 +87,7 @@ class RunResults(unittest.TestCase):
     def test_get_run_results_no_filter(self):
         """ Get all the run results without any filtering. """
         runid = self._runid
-        logging.debug('Get all run results from the db for runid: ' +
+        logging.debug('Get all run results from the db for runid: %s',
                       str(runid))
 
         run_result_count = self._cc_client.getRunResultCount([runid],
@@ -106,7 +106,7 @@ class RunResults(unittest.TestCase):
         """ Test if all the bugs are found based
             on the test project configuration. """
         runid = self._runid
-        logging.debug('Get all run results from the db for runid: ' +
+        logging.debug('Get all run results from the db for runid: %s',
                       str(runid))
 
         run_result_count = self._cc_client.getRunResultCount([runid],
@@ -240,7 +240,7 @@ class RunResults(unittest.TestCase):
     def test_get_run_results_severity_sort(self):
         """ Get the run results and sort them by severity and filename ASC. """
         runid = self._runid
-        logging.debug('Get all run results from the db for runid: ' +
+        logging.debug('Get all run results from the db for runid: %s',
                       str(runid))
         sort_mode1 = SortMode(SortType.SEVERITY, Order.ASC)
         sort_mode2 = SortMode(SortType.FILENAME, Order.ASC)
@@ -294,11 +294,11 @@ class RunResults(unittest.TestCase):
         """ Get the run results and sort them by file name and
             checker name ASC. """
         runid = self._runid
-        logging.debug('Get all run results from the db for runid: ' +
+        logging.debug('Get all run results from the db for runid: %s',
                       str(runid))
-        sortMode1 = SortMode(SortType.FILENAME, Order.ASC)
-        sortMode2 = SortMode(SortType.CHECKER_NAME, Order.ASC)
-        sort_types = [sortMode1, sortMode2]
+        sort_mode_1 = SortMode(SortType.FILENAME, Order.ASC)
+        sort_mode_2 = SortMode(SortType.CHECKER_NAME, Order.ASC)
+        sort_types = [sort_mode_1, sort_mode_2]
 
         run_result_count = self._cc_client.getRunResultCount([runid],
                                                              ReportFilter(),
@@ -344,15 +344,15 @@ class RunResults(unittest.TestCase):
 
     def test_bug_path_length(self):
         runid = self._runid
-        sortMode1 = SortMode(SortType.BUG_PATH_LENGTH, Order.ASC)
-        sortMode2 = SortMode(SortType.BUG_PATH_LENGTH, Order.DESC)
+        sort_mode_1 = SortMode(SortType.BUG_PATH_LENGTH, Order.ASC)
+        sort_mode_2 = SortMode(SortType.BUG_PATH_LENGTH, Order.DESC)
         simple_filter = ReportFilter()
         unique_filter = ReportFilter(isUnique=True)
 
         run_results = self._cc_client.getRunResults([runid],
                                                     100,
                                                     0,
-                                                    [sortMode1],
+                                                    [sort_mode_1],
                                                     simple_filter,
                                                     None,
                                                     False)
@@ -361,7 +361,7 @@ class RunResults(unittest.TestCase):
         run_results = self._cc_client.getRunResults([runid],
                                                     100,
                                                     0,
-                                                    [sortMode2],
+                                                    [sort_mode_2],
                                                     unique_filter,
                                                     None,
                                                     False)

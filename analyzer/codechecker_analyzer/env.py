@@ -5,7 +5,6 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # -------------------------------------------------------------------------
-""""""
 
 
 import os
@@ -116,29 +115,30 @@ def get_binary_in_path(basename_list, versioning_pattern, env):
 
     if not binaries:
         return False
-    elif len(binaries) == 1:
+
+    if len(binaries) == 1:
         # Return the first found (earliest in PATH) binary for the only
         # found binary name group.
         return list(binaries.values())[0][0]
-    else:
-        keys = list(binaries.keys())
-        keys.sort()
 
-        # If one of the base names match, select that version.
-        files = None
-        for base_key in basename_list:
-            # Cannot use set here as it would destroy precendence.
-            if base_key in keys:
-                files = binaries[base_key]
-                break
+    keys = list(binaries.keys())
+    keys.sort()
 
-        if not files:
-            # Select the "newest" available version if there are multiple and
-            # none of the base names matched.
-            files = binaries[keys[-1]]
+    # If one of the base names match, select that version.
+    files = None
+    for base_key in basename_list:
+        # Cannot use set here as it would destroy precendence.
+        if base_key in keys:
+            files = binaries[base_key]
+            break
 
-        # Return the one earliest in PATH.
-        return files[0]
+    if not files:
+        # Select the "newest" available version if there are multiple and
+        # none of the base names matched.
+        files = binaries[keys[-1]]
+
+    # Return the one earliest in PATH.
+    return files[0]
 
 
 def is_analyzer_from_path():

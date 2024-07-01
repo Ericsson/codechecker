@@ -15,53 +15,53 @@ from codechecker_server.routing import split_client_GET_request
 from codechecker_server.routing import split_client_POST_request
 
 
-def GET(path, host="http://localhost:8001/"):
+def get(path, host="http://localhost:8001/"):
     return split_client_GET_request(host + path.lstrip('/'))
 
 
-def POST(path):
+def post(path):
     return split_client_POST_request("http://localhost:8001/" +
                                      path.lstrip('/'))
 
 
-class request_routingTest(unittest.TestCase):
+class RequestRoutingTest(unittest.TestCase):
     """
     Testing the router that understands client request queries.
     """
 
-    def testGET(self):
+    def test_get(self):
         """
         Test if the server properly splits query addresses for GET.
         """
 
-        self.assertEqual(GET(''), (None, ''))
-        self.assertEqual(GET('/', '//'), (None, ''))
-        self.assertEqual(GET('index.html'), (None, 'index.html'))
-        self.assertEqual(GET('/images/logo.png'),
+        self.assertEqual(get(''), (None, ''))
+        self.assertEqual(get('/', '//'), (None, ''))
+        self.assertEqual(get('index.html'), (None, 'index.html'))
+        self.assertEqual(get('/images/logo.png'),
                          (None, 'images/logo.png'))
 
-        self.assertEqual(GET('Default'), ('Default', ''))
-        self.assertEqual(GET('Default/index.html'), ('Default', 'index.html'))
+        self.assertEqual(get('Default'), ('Default', ''))
+        self.assertEqual(get('Default/index.html'), ('Default', 'index.html'))
 
-    def testPOST(self):
+    def test_post(self):
         """
         Test if the server properly splits query addresses for POST.
         """
 
         # The splitter returns (None, None, None) as these are invalid paths.
         # It is the server code's responsibility to give a 404 Not Found.
-        self.assertEqual(POST(''), (None, None, None))
-        self.assertEqual(POST('CodeCheckerService'), (None, None, None))
+        self.assertEqual(post(''), (None, None, None))
+        self.assertEqual(post('CodeCheckerService'), (None, None, None))
 
         # Raise an exception if URL is malformed, such as contains a
         # product-endpoint-like component which is badly encoded version
         # string.
         with self.assertRaises(Exception):
-            POST('v6.0')
-            POST('/v6/CodeCheckerService')
+            post('v6.0')
+            post('/v6/CodeCheckerService')
 
-        self.assertEqual(POST('/v6.0/Authentication'),
+        self.assertEqual(post('/v6.0/Authentication'),
                          (None, '6.0', 'Authentication'))
 
-        self.assertEqual(POST('/DummyProduct/v0.0/FoobarService'),
+        self.assertEqual(post('/DummyProduct/v0.0/FoobarService'),
                          ('DummyProduct', '0.0', 'FoobarService'))

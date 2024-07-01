@@ -15,7 +15,7 @@ import os
 import failure_lib as lib
 
 
-def existsInSourcesRoot(entry, sources_root):
+def exists_in_source_root(entry, sources_root):
     """
     Returns true if the given file in the compile commands really available
     in the sources-root dir
@@ -43,7 +43,7 @@ def prepare(compile_command_json, sources_root):
     result_json = []
     sources_root_abs = os.path.abspath(sources_root)
     for entry in json_data:
-        if not existsInSourcesRoot(entry, sources_root):
+        if not exists_in_source_root(entry, sources_root):
             continue
 
         entry['directory'] =\
@@ -59,9 +59,9 @@ def prepare(compile_command_json, sources_root):
             pass
 
         cmd = entry['command']
-        compiler, compilerEnd = lib.find_path_end(cmd.lstrip(), 0)
+        compiler, compiler_end = lib.find_path_end(cmd.lstrip(), 0)
         entry['command'] = compiler +\
-            lib.change_paths(cmd[compilerEnd:],
+            lib.change_paths(cmd[compiler_end:],
                              lib.IncludePathModifier(sources_root_abs))
 
         entry['file'] =\

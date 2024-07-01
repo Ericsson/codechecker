@@ -59,11 +59,11 @@ class ClangTidyVerifier(HTTPStatusCodeVerifier):
             return Status.MISSING
         return Status.OK
 
-    def reset(self, checker: str, url: str) -> Optional[str]:
+    def reset(self, checker: str, _url: str) -> Optional[str]:
         group, check = checker.split("-", 1)
         return self._reset_pattern(group=group, name=check)
 
-    def try_fix(self, checker: str, url: str) -> Optional[str]:
+    def try_fix(self, checker: str, _url: str) -> Optional[str]:
         group, check = checker.split("-", 1)
         older_release_url = self._release_fixer(
             lambda url_: self.verify(checker, url_)[0] == Status.OK,
@@ -71,3 +71,4 @@ class ClangTidyVerifier(HTTPStatusCodeVerifier):
             name=check)
         if older_release_url:
             return older_release_url
+        return None

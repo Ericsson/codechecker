@@ -63,7 +63,7 @@ class TestDbCleanup(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         self.test_workspace = os.environ['TEST_WORKSPACE']
 
         test_class = self.__class__.__name__
@@ -93,7 +93,7 @@ class TestDbCleanup(unittest.TestCase):
         self.event = multiprocess.Event()
         self.event.clear()
 
-    def teardown_method(self, method):
+    def teardown_method(self, _):
 
         global TEST_WORKSPACE
 

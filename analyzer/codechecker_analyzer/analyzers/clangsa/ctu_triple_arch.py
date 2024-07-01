@@ -62,6 +62,8 @@ def _find_arch_in_command(output):
     except ValueError:
         pass
 
+    return None
+
 
 def get_triple_arch(action, source, config):
     """Returns the architecture part of the target triple for the given

@@ -84,6 +84,8 @@ def process_config_file(args, subcommand_name):
 
         return options
 
+    return {}
+
 
 def check_config_file(args):
     """Check if a config file is set in the arguments and if the file exists.

@@ -33,18 +33,13 @@ def create_analyzer_gcc():
 
 class EnvVarTest(unittest.TestCase):
 
-    def setup_class(self):
-        context = analyzer_context.get_context()
-        self.__original_analyzer_env = context.analyzer_env
-
-    def teardown_method(self, method):
+    def teardown_method(self, _):
         # Reset the environment, and some some initializer methods to hopefully
         # reset the state of the analyzer context.
         context = analyzer_context.get_context()
-        context.__analyzer_env = self.__original_analyzer_env
         context._Context__populate_analyzers()
 
-    def _get_analyzer_bin_for_CC_ANALYZER_BIN(self, analyzer_bin_conf: str):
+    def _get_analyzer_bin_for_cc_analyzer_bin(self, analyzer_bin_conf: str):
         """
         Set the CC_ANALYZER_BIN env variable, which is an
           "analyzer plugin" -> "path to binary"
@@ -59,7 +54,7 @@ class EnvVarTest(unittest.TestCase):
         analyzer = create_analyzer_gcc()
         return analyzer.analyzer_binary()
 
-    def test_CC_ANALYZER_BIN(self):
+    def test_cc_analyzer_bin(self):
         """
         Test whether GCC runs the appropriate binary when CC_ANALYZER_BIN is
         set.
@@ -68,17 +63,17 @@ class EnvVarTest(unittest.TestCase):
         respectively, and check whether the GCC analyzer points to them. Every
         machine is expected to run some version of gcc, so this should be OK.
         """
-        bin_gcc_var = self._get_analyzer_bin_for_CC_ANALYZER_BIN("gcc:gcc")
+        bin_gcc_var = self._get_analyzer_bin_for_cc_analyzer_bin("gcc:gcc")
         self.assertTrue(bin_gcc_var.endswith("gcc"))
         self.assertTrue(not bin_gcc_var.endswith("g++"))
 
-        bin_gpp_var = self._get_analyzer_bin_for_CC_ANALYZER_BIN("gcc:g++")
+        bin_gpp_var = self._get_analyzer_bin_for_cc_analyzer_bin("gcc:g++")
         self.assertTrue(bin_gpp_var.endswith("g++"))
         self.assertTrue(not bin_gpp_var.endswith("gcc"))
 
         self.assertNotEqual(bin_gcc_var, bin_gpp_var)
 
-    def test_CC_ANALYZER_BIN_overrides_CC_ANALYZERS_FROM_PATH(self):
+    def test_cc_analyzer_bin_overrides_cc_analyzers_from_path(self):
         """
         Check whether CC_ANALYZER_BIN overrides CC_ANALYZERS_FROM_PATH (which
         is what we want).
@@ -87,11 +82,11 @@ class EnvVarTest(unittest.TestCase):
         context = analyzer_context.get_context()
         context.analyzer_env["CC_ANALYZERS_FROM_PATH"] = '1'
 
-        bin_gcc_var = self._get_analyzer_bin_for_CC_ANALYZER_BIN("gcc:gcc")
+        bin_gcc_var = self._get_analyzer_bin_for_cc_analyzer_bin("gcc:gcc")
         self.assertTrue(bin_gcc_var.endswith("gcc"))
         self.assertTrue(not bin_gcc_var.endswith("g++"))
 
-        bin_gpp_var = self._get_analyzer_bin_for_CC_ANALYZER_BIN("gcc:g++")
+        bin_gpp_var = self._get_analyzer_bin_for_cc_analyzer_bin("gcc:g++")
         self.assertTrue(bin_gpp_var.endswith("g++"))
         self.assertTrue(not bin_gpp_var.endswith("gcc"))
 

@@ -18,6 +18,8 @@ if __name__ == '__main__':
     sys.path.insert(0, os.path.abspath(
         os.path.join(__file__, *[os.path.pardir] * 4)))
 
+# The following imports must come after the previous sys.path.insert() section.
+# pylint: disable=wrong-import-position
 from codechecker_report_converter.report.output.html.html import HtmlBuilder, \
     parse
 
@@ -71,17 +73,17 @@ def main():
     html_builder.create_index_html(args.output_dir)
     html_builder.create_statistics_html(args.output_dir)
 
-    print('\nTo view statistics in a browser run:\n> firefox {0}'.format(
-        os.path.join(args.output_dir, 'statistics.html')))
+    print('\nTo view statistics in a browser run:\n> firefox '
+          f"{os.path.join(args.output_dir, 'statistics.html')}")
 
-    print('\nTo view the results in a browser run:\n> firefox {0}'.format(
-        os.path.join(args.output_dir, 'index.html')))
+    print('\nTo view the results in a browser run:\n> firefox '
+          f"{os.path.join(args.output_dir, 'index.html')}")
 
     if changed_source_files:
         changed_files = '\n'.join([' - ' + f for f in changed_source_files])
         print("\nThe following source file contents changed since the "
-              "latest analysis:\n{0}\nPlease analyze your project again to "
-              "update the reports!".format(changed_files))
+              "latest analysis:\n{changed_files}\nPlease analyze your project "
+              "again to update the reports!")
 
 
 if __name__ == "__main__":

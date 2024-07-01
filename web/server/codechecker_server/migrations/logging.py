@@ -52,10 +52,9 @@ def setup_logger(schema: str):
     """
     sys_logger = logging.getLogger("system")
     codechecker_loglvl = sys_logger.getEffectiveLevel()
-    if codechecker_loglvl >= logging.INFO:
-        # This might be 30 (WARNING) if the migration is run outside of
-        # CodeChecker's context, e.g., in a downgrade.
-        codechecker_loglvl = logging.INFO
+    # This might be 30 (WARNING) if the migration is run outside of
+    # CodeChecker's context, e.g., in a downgrade.
+    codechecker_loglvl = min(codechecker_loglvl, logging.INFO)
 
     # Use the default logging class that came with Python for the migration,
     # temporarily turning away from potentially existing global changes.

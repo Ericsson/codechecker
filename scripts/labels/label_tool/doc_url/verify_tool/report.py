@@ -25,7 +25,7 @@ def print_verifications(analyser: str,
             emoji(":magnifying_glass_tilted_left:"
                   ":magnifying_glass_tilted_right:  "),
             analyser,
-            coloured("%d" % len(missing), "yellow"),
+            coloured(len(missing), "yellow"),
             plural(missing, "checker", "checkers"),
             plural(missing, "does", "do"),
             )
@@ -41,16 +41,16 @@ def print_verifications(analyser: str,
             log("%s%s: All %s %s successfully verified.",
                 emoji(":magnifying_glass_tilted_left::check_mark_button:  "),
                 analyser,
-                coloured("%d" % len(ok), "green"),
+                coloured(len(ok), "green"),
                 plural(ok, "checker", "checkers"),
                 )
     else:
         log("%s%s: %s %s failed documentation verification. (%s succeeded.)",
             emoji(":magnifying_glass_tilted_left::warning:  "),
             analyser,
-            coloured("%d" % len(not_ok), "red"),
+            coloured(len(not_ok), "red"),
             plural(not_ok, "checker", "checkers"),
-            coloured("%d" % len(ok), "green")
+            coloured(len(ok), "green")
             if ok else coloured("0", "red"),
             )
 
@@ -79,9 +79,9 @@ def print_resets(analyser: str,
     log("%s%s: Tried to reset %s %s documentation URL. %s changed.",
         emoji(":magnifying_glass_tilted_left::right_arrow_curving_left:  "),
         analyser,
-        coloured("%d" % attempted, "magenta"),
+        coloured(attempted, "magenta"),
         plural(attempted, "checker's", "checkers'"),
-        coloured("%d" % len(new_urls), "cyan")
+        coloured(len(new_urls), "cyan")
         if new_urls else coloured("0", "red"),
         )
     deque((log("    %s· %s [%s]",
@@ -93,7 +93,7 @@ def print_resets(analyser: str,
 
 
 def print_fixes(analyser: str,
-                urls: SingleLabels,
+                _urls: SingleLabels,
                 found: SingleLabels,
                 gone: SingleLabels):
     if not gone:
@@ -101,7 +101,7 @@ def print_fixes(analyser: str,
             log("%s%s: Found new documentation for all %s %s.",
                 emoji(":magnifying_glass_tilted_left::telescope:  "),
                 analyser,
-                coloured("%d" % len(found), "green"),
+                coloured(len(found), "green"),
                 plural(len(found), "checker", "checkers"),
                 )
     else:
@@ -109,16 +109,16 @@ def print_fixes(analyser: str,
             log("%s%s: All %s %s gone.",
                 emoji(":magnifying_glass_tilted_left::headstone:  "),
                 analyser,
-                coloured("%d" % len(gone), "red"),
+                coloured(len(gone), "red"),
                 plural(len(gone), "checker", "checkers"),
                 )
         else:
             log("%s%s: %s %s gone. (Found %s.)",
                 emoji(":magnifying_glass_tilted_left::bar_chart:  "),
                 analyser,
-                coloured("%d" % len(gone), "red"),
+                coloured(len(gone), "red"),
                 plural(len(gone), "checker", "checkers"),
-                coloured("%d" % len(found), "green")
+                coloured(len(found), "green")
                 if found else coloured("0", "red")
                 )
 

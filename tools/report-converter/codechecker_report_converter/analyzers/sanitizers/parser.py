@@ -32,7 +32,7 @@ class SANParser(BaseParser):
     line_re = re.compile(r'')
 
     def __init__(self):
-        super(SANParser, self).__init__()
+        super().__init__()
 
         # Regex for parsing stack trace line.
         # It has the following format:

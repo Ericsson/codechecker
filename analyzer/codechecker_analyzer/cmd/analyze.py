@@ -40,7 +40,7 @@ LOG = logger.get_logger('system')
 header_file_extensions = (
     '.h', '.hh', '.H', '.hp', '.hxx', '.hpp', '.HPP', '.h++', '.tcc')
 
-epilog_env_var = f"""
+EPILOG_ENV_VAR = """
   CC_ANALYZERS_FROM_PATH   Set to `yes` or `1` to enforce taking the analyzers
                            from the `PATH` instead of the given binaries.
   CC_ANALYZER_BIN          Set the absolute paths of an analyzer binaries.
@@ -54,7 +54,7 @@ epilog_env_var = f"""
                            variable.
 """
 
-epilog_issue_hashes = """
+EPILOG_ISSUE_HASHES = """
 Issue hashes
 ------------------------------------------------
 - By default the issue hash calculation method for 'Clang Static Analyzer' is
@@ -105,7 +105,7 @@ For more information see:
 https://github.com/Ericsson/codechecker/blob/master/docs/analyzer/report_identification.md
 """
 
-epilog_exit_status = """
+EPILOG_EXIT_STATUS = """
 Exit status
 ------------------------------------------------
 0 - Successful analysis
@@ -134,11 +134,11 @@ the project, outputting analysis results in a machine-readable format.""",
         'epilog': f"""
 Environment variables
 ------------------------------------------------
-{epilog_env_var}
+{EPILOG_ENV_VAR}
 
-{epilog_issue_hashes}
+{EPILOG_ISSUE_HASHES}
 
-{epilog_exit_status}
+{EPILOG_EXIT_STATUS}
 
 Compilation databases can be created by instrumenting your project's build via
 'CodeChecker log'. To transform the results of the analysis to a human-friendly
@@ -922,7 +922,7 @@ def __get_skip_handlers(args, compile_commands) -> SkipListHandlers:
 
         # Creates a skip file where all source files will be skipped except
         # the given source files and all the header files.
-        skip_files = ['+{0}'.format(f) for f in source_file_paths]
+        skip_files = [f'+{f}' for f in source_file_paths]
         skip_files.extend(['+/*.h', '+/*.H', '+/*.tcc'])
         skip_files.append('-*')
         content = "\n".join(skip_files)
@@ -1188,8 +1188,8 @@ def main(args):
             'name': 'codechecker',
             'action_num': len(actions),
             'command': sys.argv,
-            'version': "{0} ({1})".format(context.package_git_tag,
-                                          context.package_git_hash),
+            'version':
+            f"{context.package_git_tag} ({context.package_git_hash})",
             'working_directory': os.getcwd(),
             'output_path': args.output_path,
             'result_source_files': {},
@@ -1261,7 +1261,6 @@ def main(args):
         LOG.debug("Sending analyzer statistics finished.")
     except Exception:
         LOG.debug("Failed to send analyzer statistics!")
-        pass
 
     # Generally exit status is set by sys.exit() call in CodeChecker. However,
     # exit code 3 has a special meaning: it returns when the underlying
@@ -1274,3 +1273,5 @@ def main(args):
     for analyzer_data in metadata_tool['analyzers'].values():
         if analyzer_data['analyzer_statistics']['failed'] != 0:
             return 3
+
+    return 0

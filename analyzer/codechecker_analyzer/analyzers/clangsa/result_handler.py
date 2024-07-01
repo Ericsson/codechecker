@@ -32,8 +32,7 @@ class ClangSAResultHandler(ResultHandler):
 
     def __init__(self, *args, **kwargs):
         self.analyzer_info = AnalyzerInfo(name='clangsa')
-
-        super(ClangSAResultHandler, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def postprocess_result(
         self,

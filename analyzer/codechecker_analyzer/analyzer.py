@@ -126,7 +126,7 @@ def __has_enabled_checker(ch: AnalyzerConfigHandler):
     Returns True if at least one checker is enabled in the given config
     handler.
     """
-    return any(state == CheckerState.enabled
+    return any(state == CheckerState.ENABLED
                for _, (state, _) in ch.checks().items())
 
 
@@ -137,8 +137,6 @@ def perform_analysis(args, skip_handlers, rs_handler: ReviewStatusHandler,
     in the given analysis context for the supplied build actions.
     Additionally, insert statistical information into the metadata dict.
     """
-    # pylint: disable=no-member multiprocess module members.
-
     context = analyzer_context.get_context()
 
     ctu_reanalyze_on_failure = 'ctu_reanalyze_on_failure' in args and \
@@ -246,8 +244,8 @@ def perform_analysis(args, skip_handlers, rs_handler: ReviewStatusHandler,
         for check, data in config_map[analyzer].checks().items():
             state, _ = data
             metadata_info['checkers'].update({
-                check: state == CheckerState.enabled})
-            if state == CheckerState.enabled:
+                check: state == CheckerState.ENABLED})
+            if state == CheckerState.ENABLED:
                 enabled_checkers[analyzer].append(check)
 
         # TODO: cppcheck may require a different environment than clang.

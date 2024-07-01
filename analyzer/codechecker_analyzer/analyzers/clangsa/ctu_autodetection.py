@@ -120,21 +120,21 @@ class CTUAutodetection:
             LOG.debug(
                 'Trying to detect CTU capability, but analyzer binary is not '
                 'set!')
-            return None
+            return
 
         analyzer_version = invoke_binary_checked(
             self.__analyzer_binary, ['--version'], self.environ)
 
         if analyzer_version is False:
             LOG.debug('Failed to invoke command to get Clang version!')
-            return None
+            return
 
         version_parser = version.ClangVersionInfoParser(self.__analyzer_binary)
         version_info = version_parser.parse(analyzer_version)
 
         if not version_info:
             LOG.debug('Failed to parse Clang version information!')
-            return None
+            return
 
         self.__analyzer_version_info = version_info
 

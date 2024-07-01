@@ -303,10 +303,11 @@ def get_ldap_query_scope(scope_form_config):
     # the default scope is the subtree
     if scope_form_config == 'base':
         return ldap.LDAP_SCOPE_BASE
-    elif scope_form_config == 'one':
+
+    if scope_form_config == 'one':
         return ldap.LDAP_SCOPE_ONELEVEL
-    else:
-        return ldap.SCOPE_SUBTREE
+
+    return ldap.SCOPE_SUBTREE
 
 
 def auth_user(ldap_config, username=None, credentials=None):

@@ -62,18 +62,19 @@ def log(fmt: str, *args, **kwargs):
 
 def _log_with_prefix(prefix: str, fmt: str, *args, **kwargs):
     """Logging stub."""
-    fmt = "%s: %s" % (prefix, fmt)
+    fmt = f"{prefix}: {fmt}"
     return log(fmt, *args, **kwargs)
 
 
 def error(fmt: str, *args, **kwargs):
     """Logging stub."""
-    return _log_with_prefix("%sERROR" % emoji(":warning:  "),
+    return _log_with_prefix(f"{emoji(':warning:  ')}ERROR",
                             fmt, *args, **kwargs)
 
 
 def trace(fmt: str, *args, **kwargs):
     """Logging stub."""
     if Settings.trace():
-        return _log_with_prefix("%sTRACE" % emoji(":speech_balloon:  "),
+        return _log_with_prefix(f'{emoji(":speech_balloon:  ")}TRACE',
                                 fmt, *args, **kwargs)
+    return None

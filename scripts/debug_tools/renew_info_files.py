@@ -138,12 +138,12 @@ def create_compiler_info_json(old_info, filepath):
                    (c) default compiler standard (string).
         filepath : Path to 'compiler_info.json' file that should be created.
     """
-    info = dict()
+    info = {}
 
     for compiler in old_info:
         include_paths = process_includes(old_info[compiler]['includes'])
         for idx, _ in enumerate(include_paths):
-            include_paths[idx] = "-isystem %s" % include_paths[idx]
+            include_paths[idx] = f"-isystem {include_paths[idx]}"
         compiler_data = {
             "includes": include_paths,
             "target": process_target(old_info[compiler]['target']),
@@ -163,7 +163,7 @@ def create_compiler_info_json(old_info, filepath):
         json.dump(info, dest)
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(
             description="Convert old compiler info or even older compiler "
                         "target and includes files into one info file that "
@@ -177,7 +177,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if not os.path.isdir(args.dir):
-        LOG.error("%s is not a directory" % args.dir)
+        LOG.error("%s is not a directory", args.dir)
         sys.exit(1)
 
     target_file = os.path.join(args.dir, 'compiler_target.json')
@@ -185,7 +185,7 @@ if __name__ == '__main__':
 
     if not os.path.isfile(info_file) and not os.path.isfile(target_file):
         LOG.error("Neither an old-version 'compiler_info.json' nor a "
-                  "'compiler_target.json' could be found in '%s'." % args.dir)
+                  "'compiler_target.json' could be found in '%s'.", args.dir)
         sys.exit(2)
 
     if os.path.isfile(info_file):
@@ -222,7 +222,7 @@ if __name__ == '__main__':
 
         if not os.path.isfile(includes_file):
             # There is no 'compiler_includes.json' to match the target file.
-            LOG.error("'compiler_includes.json' not found in %s" % args.dir)
+            LOG.error("'compiler_includes.json' not found in %s", args.dir)
             sys.exit(5)
 
         LOG.info("'compiler_[includes/target].json' files detected.")
@@ -235,7 +235,7 @@ if __name__ == '__main__':
             target = json.loads(src.read())
 
         # Unify information from the two files.
-        old_info = dict()
+        old_info = {}
         for compiler in includes:
             old_info[compiler] = {"includes": includes[compiler],
                                   "target": target[compiler],
@@ -249,3 +249,7 @@ if __name__ == '__main__':
             LOG.info("Old 'compiler_[includes/target].json' files removed.")
 
         LOG.info("New 'compiler_info.json' file created.")
+
+
+if __name__ == '__main__':
+    main()

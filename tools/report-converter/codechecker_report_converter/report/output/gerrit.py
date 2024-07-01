@@ -97,7 +97,7 @@ def __convert_reports(reports: List[Report],
 
         # Skip the report if it is not in the changed files.
         if changed_file_path and not \
-                any([file_name.endswith(c) for c in changed_files]):
+                any(file_name.endswith(c) for c in changed_files):
             report_messages_in_unchanged_files.append(review_comment_msg)
             continue
 

@@ -5,8 +5,6 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # -------------------------------------------------------------------------
-"""
-"""
 
 
 import argparse
@@ -32,9 +30,6 @@ logging.addLevelName(DEBUG_ANALYZER, 'DEBUG_ANALYZER')
 
 
 class CCLogger(logging.Logger):
-    def __init__(self, name, level=NOTSET):
-        super(CCLogger, self).__init__(name, level)
-
     def debug_analyzer(self, msg, *args, **kwargs):
         if self.isEnabledFor(logging.DEBUG_ANALYZER):
             self._log(logging.DEBUG_ANALYZER, msg, args, **kwargs)
@@ -118,7 +113,7 @@ def validate_loglvl(log_level):
     return log_level
 
 
-class LOG_CFG_SERVER:
+class LogCfgServer:
     """
     Initialize a log configuration server for dynamic log configuration.
     The log config server will only be started if the
@@ -156,19 +151,19 @@ def setup_logger(log_level=None, stream=None, workspace=None):
     be given (stderr -> ext://sys.stderr, 'stdout' -> ext://sys.stdout).
     """
 
-    LOG_CONFIG = json.loads(DEFAULT_LOG_CONFIG)
+    log_config = json.loads(DEFAULT_LOG_CONFIG)
     if log_level:
         log_level = validate_loglvl(log_level)
 
-        loggers = LOG_CONFIG.get("loggers", {})
+        loggers = log_config.get("loggers", {})
         for k in loggers.keys():
-            LOG_CONFIG['loggers'][k]['level'] = log_level
+            log_config['loggers'][k]['level'] = log_level
 
-        handlers = LOG_CONFIG.get("handlers", {})
+        handlers = log_config.get("handlers", {})
         for k in handlers.keys():
-            LOG_CONFIG['handlers'][k]['level'] = log_level
-            if log_level == 'DEBUG' or log_level == 'DEBUG_ANALYZER':
-                LOG_CONFIG['handlers'][k]['formatter'] = 'precise'
+            log_config['handlers'][k]['level'] = log_level
+            if log_level in ('DEBUG', 'DEBUG_ANALYZER'):
+                log_config['handlers'][k]['formatter'] = 'precise'
 
     if stream:
         if stream == 'stderr':
@@ -176,9 +171,9 @@ def setup_logger(log_level=None, stream=None, workspace=None):
         elif stream == 'stdout':
             stream = 'ext://sys.stdout'
 
-        handlers = LOG_CONFIG.get("handlers", {})
+        handlers = log_config.get("handlers", {})
         for k in handlers.keys():
-            handler = LOG_CONFIG['handlers'][k]
+            handler = log_config['handlers'][k]
             if 'stream' in handler:
                 handler['stream'] = stream
 
@@ -190,10 +185,10 @@ def setup_logger(log_level=None, stream=None, workspace=None):
     if workspace:
         # Add file_handler to store_time logger,
         # and add the handler to the config
-        loggers = LOG_CONFIG.get("loggers", {})
+        loggers = log_config.get("loggers", {})
         loggers["store_time"]["handlers"].append('store_time_file_handler')
 
-        handlers = LOG_CONFIG.get("handlers", {})
+        handlers = log_config.get("handlers", {})
         log_path = Path(workspace, "store_time.log")
         handlers["store_time_file_handler"] = {}
         store_time_handler = {
@@ -204,4 +199,4 @@ def setup_logger(log_level=None, stream=None, workspace=None):
             'interval': 7}
         handlers["store_time_file_handler"] = store_time_handler
 
-    config.dictConfig(LOG_CONFIG)
+    config.dictConfig(log_config)

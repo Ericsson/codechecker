@@ -116,7 +116,7 @@ def login_user(protocol, host, port, username, login=False):
         else:
             LOG.info("Logging in using credentials from command line...")
             pwd = getpass.getpass(
-                "Please provide password for user '{}': ".format(username))
+                f"Please provide password for user '{username}': ")
 
         LOG.debug("Trying to login as %s to %s:%d", username, host, port)
         try:
@@ -185,6 +185,8 @@ def perform_auth_for_handler(auth_client, host, port, manager):
             LOG.error("Please log in onto the server using 'CodeChecker "
                       "cmd login'.")
         sys.exit(1)
+
+    return None
 
 
 def setup_product_client(protocol, host, port, auth_client=None,

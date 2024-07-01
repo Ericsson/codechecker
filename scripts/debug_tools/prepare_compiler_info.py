@@ -19,9 +19,9 @@ import failure_lib as lib
 def _try_prepare_as_old_format(compiler_info_file, sources_root):
     json_data = lib.load_json_file(compiler_info_file)
     sources_root_abs = os.path.abspath(sources_root)
-    new_json_data = dict()
+    new_json_data = {}
     for compiler in json_data:
-        new_json_data[compiler] = dict()
+        new_json_data[compiler] = {}
         for language in json_data[compiler]:
             lines = json_data[compiler][language]['compiler_includes']
             changed_lines = []
@@ -42,10 +42,10 @@ def _try_prepare_as_old_format(compiler_info_file, sources_root):
 def _try_prepare_as_new_format(compiler_info_file, sources_root):
     json_data = lib.load_json_file(compiler_info_file)
     sources_root_abs = os.path.abspath(sources_root)
-    new_json_data = dict()
+    new_json_data = {}
 
     for compiler_id_string in json_data:
-        new_json_data[compiler_id_string] = dict()
+        new_json_data[compiler_id_string] = {}
         include_paths = json_data[compiler_id_string]['compiler_includes']
         changed_includes = [
             lib.change_paths(p, lib.IncludePathModifier(sources_root_abs))
@@ -63,7 +63,7 @@ def _try_prepare_as_new_format(compiler_info_file, sources_root):
 def prepare(compiler_info_file, sources_root):
     try:
         return _try_prepare_as_new_format(compiler_info_file, sources_root)
-    except:
+    except Exception:
         print(f"Failed to parse {compiler_info_file} in the 'new' "
               f"compiler_info format; falling back to the old format...")
         return _try_prepare_as_old_format(compiler_info_file, sources_root)
