@@ -407,7 +407,6 @@ you should be greeted with a web application showing you the analysis results.
 * [Dependencies](deps.md)
 * [Thrift interface](web/api/README.md)
 * [Package and integration tests](tests.md)
-* [Checker documentation mapping file](web/checker_docs.md)
 
 ## Conference papers, presentations
 * An overview about the CodeChecker infrastructure was given at [PLDI 2020](http://pldi20.sigplan.org).<br />
