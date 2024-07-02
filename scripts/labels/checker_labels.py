@@ -17,12 +17,20 @@ from codechecker_common.checker_labels import split_label_kv
 from .output import Settings as OutputSettings, error, trace
 
 
+# The raw label structure, as present verbatim in the configuration file.
+# (e.g., {"bugprone-foo": ["severity:HIGH", "profile:default"]})
 _ConfigFileLabels = Dict[str, List[str]]
 
+
+# Maps: checker -> single label value | None
+# (e.g. {"bugprone-foo": "HIGH"})
 SingleLabels = Dict[str, Optional[str]]
-Labels = Dict[str, Dict[str, str]]
+# Maps: checker -> [label key -> label values...]...
+# (e.g. {"bugprone-foo": {"profile": ["default", "sensitive", "extreme"]}}
+MultipleLabels = Dict[str, Dict[str, List[str]]]
 
 
+K_Labels = "labels"
 K_LabelToolSkipDirective = "label-tool-skip"
 
 
@@ -123,7 +131,7 @@ def get_checkers_with_ignore_of_key(path: pathlib.Path,
     checker's labels.
     """
     try:
-        label_cfg = cast(_ConfigFileLabels, _load_json(path)["labels"])
+        label_cfg = cast(_ConfigFileLabels, _load_json(path)[K_Labels])
     except KeyError:
         error("'%s' is not a label config file", path)
         raise
@@ -155,7 +163,7 @@ def get_checker_labels(
     `skip_directive_handling`'s value.
     """
     try:
-        label_cfg = cast(_ConfigFileLabels, _load_json(path)["labels"])
+        label_cfg = cast(_ConfigFileLabels, _load_json(path)[K_Labels])
     except KeyError:
         error("'%s' is not a label config file", path)
         raise
@@ -182,6 +190,33 @@ def get_checker_labels(
             for checker, labels in filtered_labels.items()}
 
 
+def get_checker_labels_multiple(path: pathlib.Path) -> MultipleLabels:
+    """
+    Loads the checker config label file available at `path` and transfors it
+    into a `MultipleLabels` structure, and returns it.
+
+    This method **DOES NOT** respect the ``label-tool-skip`` directives.
+    """
+    try:
+        label_cfg = cast(_ConfigFileLabels, _load_json(path)[K_Labels])
+    except KeyError:
+        error("'%s' is not a label config file", path)
+        raise
+
+    return {
+        checker: {
+            key: [label_v2
+                  for label_kv2 in labels
+                  for label_k2, label_v2 in (split_label_kv(label_kv2),)
+                  if label_k2 == key
+                  ]
+            for label_kv in labels
+            for key, _ in (split_label_kv(label_kv),)
+        }
+        for checker, labels in label_cfg.items()
+    }
+
+
 def update_checker_labels(
     analyser: str,
     path: pathlib.Path,
@@ -204,7 +239,7 @@ def update_checker_labels(
     """
     try:
         config = _load_json(path)
-        label_cfg = cast(_ConfigFileLabels, config["labels"])
+        label_cfg = cast(_ConfigFileLabels, config[K_Labels])
     except KeyError:
         error("'%s's '%s' is not a label config file", analyser, path)
         raise

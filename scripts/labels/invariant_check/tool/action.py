@@ -5,14 +5,17 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # -------------------------------------------------------------------------
-"""
-This subpackage implements logic that is primarily user-facing, as opposed to
-reusable library-like components.
-"""
-from . import \
-    tool
+"""Provides implementations for the high-level user-facing actions."""
 
 
-__all__ = [
-    "tool",
-]
+from codechecker_common.compatibility.multiprocessing import Pool
+
+from ...checker_labels import MultipleLabels
+
+
+def verify_invariant() -> None:
+    pass
+
+
+def run_check(pool: Pool, labels: MultipleLabels) -> None:
+    pass

@@ -8,7 +8,6 @@
 # -------------------------------------------------------------------------
 """Implementation of the user-facing entry point to the script."""
 import argparse
-import fnmatch
 import os
 import pathlib
 import sys
@@ -20,33 +19,28 @@ from codechecker_common.compatibility.multiprocessing import cpu_count
 from codechecker_common.util import clamp
 
 from ...checker_labels import SingleLabels, SkipDirectiveRespectStyle, \
-    get_checker_labels, get_checkers_with_ignore_of_key, update_checker_labels
+    get_checker_labels_multiple, update_checker_labels
 from ...codechecker import default_checker_label_dir
 from ...exception import EngineError
 from ...output import Settings as GlobalOutputSettings, \
     error, log, trace, coloured, emoji
 from ...util import merge_if_no_collision, plural
+from ... import fixit
 from ..output import Settings as OutputSettings
-from ..verifiers import analyser_selection
+from ..rules import Base as RuleBase, rules_visible_to_user
 from . import tool
 
 
 short_help: str = """
-Verify that the 'doc_url's are accessible by users, and update them to a fixed
-version, if necessary.
+Verify various implicit invariants that should be upheld by the checker label
+configuration files.
 """
 description: str = (
     """
-Verify that the 'doc_url's are accessible by users, and update them to a fixed
-version, if necessary.
-This tool makes several HTTP requests to simulate a browser (a User-Agent)
-querying for checker documentations, as if a user was clicking the URLs present
-on the CodeChecker UI.
-Found analysers and checkers are verified, and if the verification fails,
-attempts to resolve to a working URL (often by fixing typos and finding an
-older release of the analysers where the requested page still exists).
+Verifies that the checker label configuration files adhere to some implicitly
+considered invariants without which the behaviour of CodeChecker may become
+unexpected.
 
-Following execution, the tool prints a statistics output automatically.
 The tool's output is primarily engineered to be human readable (with the added
 sprinkle of colours and emojis).
 If the output is not sent to an interactive terminal, the output switches to
@@ -59,20 +53,13 @@ execution.
 In every other case, the return value is the OR of a bitmask:
 """
     f"""
-Having found checkers without a 'doc_url' label will set the bit
-'{tool.ReturnFlags.HadMissing}'.
-Having found checkers that have a "Not OK" label will set the bit
-'{tool.ReturnFlags.HadNotOK}'.
-Having found checkers that were "Not OK" but managed to obtain a fixed,
-working URL will set the bit '{tool.ReturnFlags.HadFound}'.
-Having found checkers that were "Not OK" and failed the attempted
-automatic fixing routing will set the bit '{tool.ReturnFlags.HadGone}'.
+If there was a checker which failed invariant verification, the
+'{tool.ReturnFlags.HadNotOK}' bit will be set.
+If there was a checker which failed but could be automatically fixed, the
+'{tool.ReturnFlags.HadFixed}' bit will be set.
 """
 )
 epilogue: str = ""
-
-
-K_DocUrl: str = "doc_url"
 
 
 def args(parser: Optional[argparse.ArgumentParser]) -> argparse.ArgumentParser:
@@ -94,56 +81,33 @@ The configuration directory where the checker labels are available.
 """)
 
     parser.add_argument(
+        "-l", "--list-rules",
+        dest="list_rules",
+        action="store_true",
+        help="""
+List the available rules that the verification toolkit can verify.
+This action disables running the verification itself!
+""")
+
+    parser.add_argument(
         "-j", "--jobs",
         metavar="COUNT",
         dest="jobs",
         type=int,
         default=cpu_count(),
         help="""
-The number of parallel processes to use for querying the validity of the
-documentation URLs.
+The number of parallel processes to use for verification of the invariants.
 Defaults to all available logical cores.
 """)
 
-    behaviour = parser.add_argument_group("behaviour arguments", """
-These optional arguments allow fine-tuning the steps executed by the
-verification logic.
-Unlike filters, which change what inputs are considered for verification, the
-behavioural arguments change the executed logic for all considered inputs.
-""")
-
-    behaviour.add_argument(
-        "--reset-to-upstream",
-        dest="reset_to_upstream",
-        action="store_true",
-        help="""
-Where applicable to the analyser and known how to do so, reset every checker's
-documentation URL to what it would be if it pointed to the upstream version,
-even if it does not actually do so.
-This allows both the verification of the "URL fixing" logic, and to uncover
-potentially old or outdated documentation URLs.
-""")
-
-    fix = behaviour.add_mutually_exclusive_group(required=False)
-
-    fix.add_argument(
+    parser.add_argument(
         "-f", "--fix",
         dest="apply_fixes",
         action="store_true",
         help="""
-Apply and update the fixed 'doc_url's for cases which were "Not OK" but the
-fixing heuristics managed to find a proper result back into the input
+Apply the updates resulting from the automatic fixing of invariants
+(whereever, but not in all cases, applicable) back into the input
 configuration file.
-""")
-
-    fix.add_argument(
-        "--skip-fixes",
-        dest="skip_fixes",
-        action="store_true",
-        help="""
-Completely skip executing the "URL fixing" phase in which the tool would search
-for a version of the URL where the documentation is available to the user.
-Instead, stop and quit after gathering "OK" and "Not OK" status.
 """)
 
     filters = parser.add_argument_group("filter arguments")
@@ -161,30 +125,21 @@ If 'None' is given, automatically run for every found configuration file.
 """)
 
     filters.add_argument(
-        "--checkers",
-        metavar="CHECKER",
+        "--rules",
+        metavar="RULE",
         nargs='*',
         type=str,
         help="""
-Filter for only the specified checkers before executing the verification.
-This filter matches only for the checker's name (as present in the
-configuration file), and every checker of every candidate analyser is matched
-against.
-It is not an error to specify filters that do not match anything.
-It is possible to match entire patterns of names using the '?' and '*'
-wildcards, as understood by the 'fnmatch' library, see
-"https://docs.python.org/%d.%d/library/fnmatch.html#fnmatch.fnmatchcase"
-for details.
-Depending on your shell, you might have to specify wildcards in single quotes,
-e.g., 'alpha.*', to prevent the shell from globbing first!
-If 'None' is given, automatically run for every checker.
-""" % (sys.version_info[0], sys.version_info[1]))
+Filter for only the specified invariant rules to verify (and fix).
+If this argument is left unspecified, the default is to execute every
+available rule.
+""")
 
     output = parser.add_argument_group("output control arguments", """
 These optional arguments allow enabling additional verbosity for the output
 of the program.
 By default, the tool tries to be the most concise possible, and only report
-negative findings ("Not OK" results) and encountered errors.
+meaningful findings and encountered errors.
 """)
 
     output.add_argument(
@@ -198,21 +153,13 @@ Does not enable any trace or debug information.
 """)
 
     output.add_argument(
-        "--report-missing",
-        dest="report_missing",
-        action="store_true",
-        help="""
-If set, the output will contain an additional list that details which checkers
-do not have any 'doc_url' label at all ("MISSING").
-""")
-
-    output.add_argument(
         "--report-ok",
         dest="report_ok",
         action="store_true",
         help="""
-If set, the output will contain the "OK" reports for checkers that successfully
-verified.
+If set, the output will contain the "OK" reports for checkers which pass the
+invariant verification steps.
+By default, only errors are reported.
 """)
 
     output.add_argument(
@@ -245,21 +192,39 @@ def _handle_package_args(args: argparse.Namespace):
         log("%sFATAL: There can not be a non-positive number of jobs.",
             emoji(":no_entry:  "))
         raise argparse.ArgumentError(None, "-j/--jobs")
-    OutputSettings.set_report_missing(args.report_missing or
-                                      args.verbose or
-                                      args.very_verbose)
     OutputSettings.set_report_ok(args.report_ok or
                                  args.verbose or
                                  args.very_verbose)
     GlobalOutputSettings.set_trace(args.verbose_debug or args.very_verbose)
 
 
+def _list_rules():
+    for clazz in rules_visible_to_user:
+        log(tabulate(
+            tabular_data=[
+                ("Name", clazz.kind),
+                ("Description", clazz.description.replace('\n', ' ')),
+                ("Supports fixes?",
+                 emoji(":check_mark_button:  ") if clazz.supports_fixes
+                 and sys.stderr.isatty()
+                 else '+' if clazz.supports_fixes
+                 else "")
+            ],
+            tablefmt="fancy_grid" if sys.stderr.isatty()
+            else "grid"),
+            file=sys.stderr)
+
+
 def main(args: argparse.Namespace) -> Optional[int]:
     try:
         _handle_package_args(args)
     except argparse.ArgumentError:
-        # Simulate argparse's return code of parse_args().
+        # Simulate argparse's return code of parse_args.
         raise SystemExit(2)
+
+    if args.list_rules:
+        _list_rules()
+        return
 
     rc = 0
     statistics: List[tool.Statistics] = list()
@@ -268,6 +233,14 @@ def main(args: argparse.Namespace) -> Optional[int]:
     args.checker_label_dir = pathlib.Path(args.checker_label_dir)
     if not args.checker_label_dir.is_dir():
         error("'%s' is not a directory!", args.checker_label_dir)
+        return 1
+
+    rules: List[RuleBase] = list(filter(
+        lambda clz: True if not args.rules else clz.kind in args.rules,
+        rules_visible_to_user))
+    if not rules:
+        log("%sSkipping, no rules match the enable filter!",
+            emoji(":no_littering:  "))
         return 1
 
     # FIXME: pathlib.Path.walk() is only available Python >= 3.12.
@@ -288,18 +261,7 @@ def main(args: argparse.Namespace) -> Optional[int]:
                 analyser,
                 path)
             try:
-                checkers_to_skip = get_checkers_with_ignore_of_key(
-                    path, K_DocUrl)
-                labels = get_checker_labels(analyser, path, K_DocUrl,
-                                            SkipDirectiveRespectStyle.AsPassed,
-                                            checkers_to_skip)
-
-                # Note: get_checker_labels() will *IGNORE* the checkers present
-                # in checkers_to_skip.
-                # This results in the checkers with "label-tool-skip:doc_url"
-                # label staying invisible during the execution of this tool,
-                # hence the called executing functions do not need to get this
-                # data structure.
+                labels = get_checker_labels_multiple(path)
             except Exception:
                 import traceback
                 traceback.print_exc()
@@ -307,67 +269,64 @@ def main(args: argparse.Namespace) -> Optional[int]:
                 error("Failed to obtain checker labels for '%s'!", analyser)
                 continue
 
-            if args.checkers:
-                labels = {checker: url
-                          for checker, url in labels.items()
-                          for filter_ in args.checkers
-                          if fnmatch.fnmatchcase(checker, filter_)}
-            if not labels:
-                log("%sNo checkers are configured%s.",
-                    emoji(":cup_with_straw:  "),
-                    " or match the \"--checkers\" %s"
-                    % plural(args.checkers, "filter", "filters")
-                    if args.checkers else "")
-                continue
-
             process_count = clamp(1, args.jobs, len(labels)) \
                 if len(labels) > 2 * args.jobs else 1
-            fixes: SingleLabels = dict()
+            fixes: Dict[str, List[fixit.FixAction]] = dict()
+            try:
+                tool.execute(analyser, rules, labels, process_count)
+            except:
+                pass
+            # for invariant in rules:
+                # print(invariant)
+                # invariant.check("x", "y")
+
+            raise Exception("fuck off")
+
+            urls: SingleLabels = dict()
             conflicts: Set[str] = set()
-            for verifier_class in analyser_selection \
-                    .select_verifier(analyser, labels):
-                log("%sVerifying '%s' as '%s' (%s)...",
+            for generator_class in geners:
+                log("%sGenerating '%s' as '%s' (%s)...",
                     emoji(":thought_balloon:  "),
                     analyser,
-                    verifier_class.kind, verifier_class)
+                    generator_class.kind,
+                    generator_class)
                 try:
-                    status, local_fixes, statistic = tool.execute(
+                    status, generated_urls, statistic = tool.execute(
                         analyser,
-                        verifier_class,
+                        generator_class,
                         labels,
-                        process_count,
-                        args.skip_fixes,
-                        args.reset_to_upstream,
-                        )
+                        checkers_to_skip
+                    )
                     statistics.append(statistic)
                     rc = int(tool.ReturnFlags(rc) | status)
                 except EngineError:
                     import traceback
                     traceback.print_exc()
 
-                    error("Failed to execute verifier '%s' (%s)",
-                          verifier_class.kind, verifier_class)
+                    error("Failed to execute generator '%s' (%s)",
+                          generator_class.kind, generator_class)
                     rc = int(tool.ReturnFlags(rc) |
                              tool.ReturnFlags.GeneralError)
                     continue
 
                 merge_if_no_collision(
-                    fixes, local_fixes, conflicts,
+                    urls, generated_urls, conflicts,
                     lambda checker, existing_fix, new_fix:
                     error("%s%s/%s: %s [%s] =/= [%s]", emoji(":collision:  "),
                           analyser, checker, coloured("FIX COLLISION", "red"),
                           existing_fix, new_fix)
                 )
-                if args.apply_fixes and fixes:
+
+                if args.apply_fixes and urls:
                     log("%sUpdating %s %s for '%s'... ('%s')",
                         emoji(":writing_hand:  "),
-                        coloured("%d" % len(fixes), "green"),
-                        plural(fixes, "checker", "checkers"),
+                        coloured("%d" % len(urls), "green"),
+                        plural(urls, "checker", "checkers"),
                         analyser,
                         path)
                     try:
                         update_checker_labels(
-                            analyser, path, K_DocUrl, fixes,
+                            analyser, path, K_DocUrl, urls,
                             SkipDirectiveRespectStyle.AsPassed,
                             checkers_to_skip)
                     except Exception:
