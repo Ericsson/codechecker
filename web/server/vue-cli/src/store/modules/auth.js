@@ -64,6 +64,21 @@ const actions = {
 
   [LOGIN](context, credentials) {
     return new Promise((resolve, reject) => {
+
+      if (credentials.type === "oauth") {
+        authService.getClient().performLogin("oauth", credentials.url,
+          handleThriftError(token => {
+            context.commit(SET_AUTH, {
+              userName: "OAuth",
+              token: token
+            });
+            resolve(token);
+          }, err => {
+            reject(err);
+          }));
+        return;
+      }
+
       authService.getClient().performLogin("Username:Password",
         `${credentials.username}:${credentials.password}`,
         handleThriftError(token => {

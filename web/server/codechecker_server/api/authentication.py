@@ -102,9 +102,25 @@ class ThriftAuthHandler:
         # Create an OAuth2Session instance
         url, _ = OAuth2Session(client_id, client_secret, scope=scope).create_authorization_url("https://github.com/login/oauth/authorize")
 
-        print("Please visit this URL to authenticate: ", url)
-        # return url
-        return "https://github.com"
+        #print("Please visit this URL to authenticate: ", url)
+        return url
+
+    @timeit
+    def getOAuthToken(self, link):
+        client_id = "66f0228ec6eea4a784a1"
+        client_secret = "db8297561255880f62c7ea7a602fba6f1343e7cc"
+        scope = "user:email"
+
+        # Create an OAuth2Session instance
+        session = OAuth2Session(client_id, client_secret, scope=scope)
+        token = session.fetch_token(
+            url="https://github.com/login/oauth/access_token",
+            authorization_response=f"{link}",
+        )
+        user = session.get("https://api.github.com/user").json()
+        print(str(user))
+        return str(user)
+
 
     @timeit
     def getAcceptedAuthMethods(self):
@@ -158,6 +174,8 @@ class ThriftAuthHandler:
 
     @timeit
     def performLogin(self, auth_method, auth_string):
+        LOG.info("function called: performLogin")
+
         if not auth_string:
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
@@ -181,7 +199,31 @@ class ThriftAuthHandler:
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     msg)
         elif auth_method == "oauth":
-            print("OAuth authentication from file api auhentication.")
+            LOG.info("OAuth login... started")
+            client_id = "66f0228ec6eea4a784a1" # temprorary here
+            client_secret = "db8297561255880f62c7ea7a602fba6f1343e7cc" # temprorary here
+            scope = "user:email" # temprorary here
+            session = OAuth2Session(client_id, client_secret, scope=scope)# temprorary here
+            token = session.fetch_token( # temprorary here
+                url="https://github.com/login/oauth/access_token",
+                authorization_response=f"{auth_string}",
+            )
+            user = session.get("https://api.github.com/user").json() # temprorary here
+
+            # session = self.__manager.create_session(auth_string)
+
+            return token
+            # if session:
+            #     LOG.info("'%s' logged in.", user_name)
+            #     return session.token
+            # else:
+            #     msg = "Invalid credentials supplied for user '{0}'. " \
+            #           "Refusing authentication!".format(user_name)
+
+            #     LOG.warning(msg)
+            #     raise codechecker_api_shared.ttypes.RequestFailed(
+            #         codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+            #         msg)
 
         raise codechecker_api_shared.ttypes.RequestFailed(
             codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,

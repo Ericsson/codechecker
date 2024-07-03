@@ -80,13 +80,15 @@
         </v-card>
       </v-col>
     </v-row>
+    <p>{{ link }}</p>
+    <p>1234: {{ link2 }}</p>
   </v-container>
 </template>
 
 <script>
 import { mapGetters } from "vuex";
-import { LOGIN ,OAUTH } from "@/store/actions.type";
-
+import { LOGIN } from "@/store/actions.type";
+import { authService, handleThriftError } from "@cc-api";
 import Alerts from "@/components/Alerts";
 
 export default {
@@ -103,7 +105,9 @@ export default {
       success: false,
       error: false,
       errorMsg: null,
-      valid: false
+      valid: false,
+      link: "",
+      link2: "1234"
     };
   },
 
@@ -130,6 +134,31 @@ export default {
 
   mounted() {
     this.fixAutocomplete();
+
+    this.link2 = "89012637895";
+
+    const url = new URL(window.location.href);
+    
+    let code = null, state = null;
+    code = url.searchParams.get("code");
+    state = url.searchParams.get("state");
+
+
+
+    if (code != null && state != null) {
+      this.link2 = "12334455235";
+      this.$store
+        .dispatch(LOGIN, { type: "oauth", url: window.location.href })
+        .then(() => {
+          this.success = true;
+          this.error = false;
+
+          // this.$router.replace(returnTo || { name: "products" });
+        }).catch(err => {
+          this.errorMsg = `Failed to log in! ${err.message}`;
+          this.error = true;
+        });
+    }
   },
 
   methods: {
@@ -150,19 +179,25 @@ export default {
         });
     },
     oauth() {
-      this.$store
-        .dispatch(OAUTH)
-        .then(link => {
+      new Promise(resolve => {
+        authService.getClient().createLink(
+          handleThriftError(url => {
+            resolve(url);
+          }));
+      }).then(url => {
+        if (url) {
           this.success = true;
           this.error = false;
-          this.$router.replace(link);
-
-          // const returnTo = this.$router.currentRoute.query["return_to"];
-          // this.$router.replace(returnTo || { name: "products" });
-        }).catch(err => {
-          this.errorMsg = `Failed to access link. ${err.message}`;
+          window.location.href = url;
+          this.link = url;
+        } else {
+          this.errorMsg = `Server returned an invalid URL: ${url}`;
           this.error = true;
-        });
+        }
+      }).catch(err => {
+        this.errorMsg = `Failed to access link. ${err.message}`;
+        this.error = true;
+      });
     },
 
     /**
