@@ -44,6 +44,9 @@ class ThriftAuthHandler:
         self.__manager = manager
         self.__auth_session = auth_session
         self.__config_db = config_database
+        # Load the authentication configuration from server_config.json , still may be wrong
+        with open('server_config.json') as config_file:
+          self.auth_config = json.load(config_file)["authentication"]
 
     def __require_privilaged_access(self):
         """
@@ -94,32 +97,56 @@ class ThriftAuthHandler:
 
     @timeit
     def createLink(self):
-        # GitHub app config
-        client_id = "66f0228ec6eea4a784a1"
-        client_secret = "db8297561255880f62c7ea7a602fba6f1343e7cc"
-        scope = "user:email" #
+        oauth_config = self.auth_config.get("method_oauth", {})
+        if not oauth_config.get("enabled"):
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                "OAuth authentication is not enabled.")
+        
+        client_id = oauth_config["oauth_client_id"]
+        client_secret = oauth_config["oauth_client_secret"]
+        scope = oauth_config["oauth_scope"]
+        authorization_uri = oauth_config["oauth_authorization_uri"]
 
         # Create an OAuth2Session instance
-        url, _ = OAuth2Session(client_id, client_secret, scope=scope).create_authorization_url("https://github.com/login/oauth/authorize")
-
-        #print("Please visit this URL to authenticate: ", url)
+        session = OAuth2Session(client_id, client_secret, scope=scope)
+        url, _ = session.create_authorization_url(authorization_uri)
+        
         return url
 
     @timeit
     def getOAuthToken(self, link):
-        client_id = "66f0228ec6eea4a784a1"
-        client_secret = "db8297561255880f62c7ea7a602fba6f1343e7cc"
-        scope = "user:email"
+        oauth_config = self.auth_config.get("method_oauth", {})
+        if not oauth_config.get("enabled"):
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                "OAuth authentication is not enabled.")
+        
+        client_id = oauth_config["oauth_client_id"] # may be changed
+        client_secret = oauth_config["oauth_client_secret"] # may be changed
+        scope = oauth_config["oauth_scope"] # may be changed
+        token_url = oauth_config["oauth_token_uri"] # may be changed
+        user_info_url = oauth_config["oauth_user_info_uri"] # may be changed
 
-        # Create an OAuth2Session instance
         session = OAuth2Session(client_id, client_secret, scope=scope)
         token = session.fetch_token(
-            url="https://github.com/login/oauth/access_token",
-            authorization_response=f"{link}",
+            url=token_url,
+            authorization_response=link,
         )
-        user = session.get("https://api.github.com/user").json()
-        print(str(user))
-        return str(user)
+        user_info = session.get(user_info_url).json()
+
+        username = user_info[oauth_config["oauth_user_info_mapping"]["username"]]
+        email = user_info[oauth_config["oauth_user_info_mapping"]["email"]]
+        fullname = user_info[oauth_config["oauth_user_info_mapping"]["fullname"]]
+
+        if username not in oauth_config.get("allowed_users", []):
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                "User is not authorized to access this service.")
+
+        print(f"Username: {username}, Email: {email}, Fullname: {fullname}") # for debugging
+        return user_info
+
 
 
     @timeit
@@ -200,34 +227,38 @@ class ThriftAuthHandler:
                     msg)
         elif auth_method == "oauth":
             LOG.info("OAuth login... started")
-            client_id = "66f0228ec6eea4a784a1" # temprorary here
-            client_secret = "db8297561255880f62c7ea7a602fba6f1343e7cc" # temprorary here
-            scope = "user:email" # temprorary here
-            session = OAuth2Session(client_id, client_secret, scope=scope)# temprorary here
-            token = session.fetch_token( # temprorary here
-                url="https://github.com/login/oauth/access_token",
+            oauth_config = self.auth_config.get("method_oauth", {})
+            if not oauth_config.get("enabled"):
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "OAuth authentication is not enabled.")
+            
+            client_id = oauth_config["oauth_client_id"]
+            client_secret = oauth_config["oauth_client_secret"]
+            scope = oauth_config["oauth_scope"]
+            token_url = oauth_config["oauth_token_uri"]
+            user_info_url = oauth_config["oauth_user_info_uri"]
+
+            session = OAuth2Session(client_id, client_secret, scope=scope)
+            token = session.fetch_token(
+                url=token_url,
                 authorization_response=f"{auth_string}",
             )
-            user = session.get("https://api.github.com/user").json() # temprorary here
+            user_info = session.get(user_info_url).json()
 
-            # session = self.__manager.create_session(auth_string)
+            username = user_info[oauth_config["oauth_user_info_mapping"]["username"]]
+            if username not in oauth_config.get("allowed_users", []):
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "User is not authorized to access this service.")
 
+            LOG.info("OAuth login successful for user '%s'", username)
             return token
-            # if session:
-            #     LOG.info("'%s' logged in.", user_name)
-            #     return session.token
-            # else:
-            #     msg = "Invalid credentials supplied for user '{0}'. " \
-            #           "Refusing authentication!".format(user_name)
-
-            #     LOG.warning(msg)
-            #     raise codechecker_api_shared.ttypes.RequestFailed(
-            #         codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-            #         msg)
 
         raise codechecker_api_shared.ttypes.RequestFailed(
             codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
             "Could not negotiate via common authentication method.")
+
 
     @timeit
     def destroySession(self):
