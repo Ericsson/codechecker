@@ -55,7 +55,8 @@ def run_codechecker(checker_env, subcommand=None):
     proc = subprocess.Popen(checker_cmd,
                             encoding="utf=8",
                             errors="ignore",
-                            env=checker_env)
+                            env=checker_env,
+                            close_fds=False)
     global proc_pid
     proc_pid = proc.pid
 
