@@ -94,6 +94,7 @@ IGNORED_OPTIONS_GCC = [
     '-fno-delete-null-pointer-checks',
     '-fno-defer-pop',
     '-fno-extended-identifiers',
+    '-fno-freestanding',
     '-fno-jump-table',
     '-fno-keep-inline-dllexport'
     '-fno-keep-static-consts',
