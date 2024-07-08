@@ -103,5 +103,4 @@ class GCCAnalyzerResultTestCase(unittest.TestCase):
         with open(plist_file, mode='rb') as pfile:
             exp = plistlib.load(pfile)
 
-        self.maxDiff = None
         self.assertEqual(res, exp)

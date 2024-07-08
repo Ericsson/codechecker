@@ -24,8 +24,6 @@ from libtest import project
 from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
     Order, Pair, ReportFilter, SortMode, SortType
 
-from libtest import env
-
 
 class DynamicResults(unittest.TestCase):
 
@@ -86,7 +84,7 @@ class DynamicResults(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         self.test_workspace = os.environ['TEST_WORKSPACE']
 
         test_class = self.__class__.__name__

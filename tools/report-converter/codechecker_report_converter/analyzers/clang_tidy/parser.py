@@ -25,7 +25,7 @@ class Parser(BaseParser):
     """ Parser for clang-tidy console output. """
 
     def __init__(self):
-        super(Parser, self).__init__()
+        super().__init__()
 
         # Regex for parsing a clang-tidy message.
         self.message_line_re = re.compile(
@@ -58,7 +58,7 @@ class Parser(BaseParser):
         # Matches pre Clang 17 fix-its:
         # "       fixit-text"
         self.fixit_old_re = re.compile(
-            r'^\s+(?P<message>\S.*)')
+            r'^\s*(?P<message>\S.*)')
 
         # Matches post clang 17 fix-its
         # "   28 |     fixit-text"
@@ -111,7 +111,7 @@ class Parser(BaseParser):
 
                 reports.append(r)
 
-            return reports, line
+        return reports, line
 
     def _get_category(self, checker_name: str) -> str:
         """ Get category for Clang-Tidy checker. """

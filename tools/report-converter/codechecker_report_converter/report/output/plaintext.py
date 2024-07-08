@@ -137,8 +137,11 @@ def get_file_report_map(
         source_file = __get_source_file_for_analyzer_result_file(
             input_file_path, metadata)
 
-        # Add source file to the map if it doesn't exists.
+        # Add source file to the map if it doesn't exist.
         if source_file:
+            # This statement is not pointless. The key should be inserted only
+            # if no value belongs to it from earlier.
+            # pylint: disable=pointless-statement
             file_report_map[source_file]
 
     return file_report_map

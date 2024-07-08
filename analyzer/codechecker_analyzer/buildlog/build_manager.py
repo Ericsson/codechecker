@@ -26,7 +26,7 @@ from . import host_check
 LOG = get_logger('buildlogger')
 
 
-def execute_buildcmd(command, silent=False, env=None, cwd=None):
+def execute_buildcmd(command, silent=False, environ=None, cwd=None):
     """
     Execute the the build command and continuously write
     the output from the process to the standard output.
@@ -34,7 +34,7 @@ def execute_buildcmd(command, silent=False, env=None, cwd=None):
     proc = subprocess.Popen(
         command,
         bufsize=-1,
-        env=env,
+        env=environ,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         cwd=cwd,

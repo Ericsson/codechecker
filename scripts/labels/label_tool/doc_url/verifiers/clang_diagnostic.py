@@ -101,6 +101,7 @@ class ClangDiagnosticVerifier(HTMLAnchorVerifier):
                     return urllib.parse.urlparse(url). \
                             _replace(fragment=other_anchor). \
                             geturl()
+            return None
 
         attempt = _try_anchor(self.anchor_prefixes, url)
         if attempt:

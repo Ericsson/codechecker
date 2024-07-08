@@ -6,8 +6,6 @@
 #
 # -------------------------------------------------------------------------
 
-"""TODO"""
-
 
 import os
 import unittest
@@ -21,28 +19,19 @@ class ReviewStatusHandlerTest(unittest.TestCase):
     Test the build command escaping and execution.
     """
 
-    @classmethod
-    def setup_class(self):
+    def __init__(self, methodName):
         global TEST_WORKSPACE
         TEST_WORKSPACE = env.get_workspace('review_status_config')
-
         os.environ['TEST_WORKSPACE'] = TEST_WORKSPACE
+
         self._test_workspace = os.environ['TEST_WORKSPACE']
-
-    @classmethod
-    def teardown_class(self):
-        pass
-
-    def setup_method(self, method):
         self.rshandler = ReviewStatusHandler(None)
-        pass
 
-    def teardown_method(self, method):
-        pass
+        super().__init__(methodName)
 
     def __put_in_review_status_cfg_file(self, file_contents: str) -> str:
         rs_cfg = os.path.join(self._test_workspace, "review_status.yaml")
-        with open(rs_cfg, "w") as f:
+        with open(rs_cfg, "w", encoding='utf-8') as f:
             f.write(file_contents)
 
         return rs_cfg

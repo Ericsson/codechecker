@@ -30,16 +30,16 @@ def truncate_arg(arg, max_len=100):
     return arg
 
 
-def ThriftClientCall(function):
+def thrift_client_call(function):
     """ Wrapper function for thrift client calls.
         - open and close transport,
         - log and handle errors
     """
-    funcName = function.__name__
+    func_name = function.__name__
 
     def wrapper(self, *args, **kwargs):
         self.transport.open()
-        func = getattr(self.client, funcName)
+        func = getattr(self.client, func_name)
         try:
             try:
                 return func(*args, **kwargs)
@@ -54,38 +54,35 @@ def ThriftClientCall(function):
 
                 return func(*args, **kwargs)
         except codechecker_api_shared.ttypes.RequestFailed as reqfailure:
-            LOG.error('Calling API endpoint: %s', funcName)
-            if reqfailure.errorCode ==\
+            LOG.error('Calling API endpoint: %s', func_name)
+            if reqfailure.errorCode == \
                 codechecker_api_shared.ttypes.ErrorCode.GENERAL and \
                     reqfailure.extraInfo and \
                     reqfailure.extraInfo[0] == "report_limit":
                 # We handle this error in near the business logic.
                 raise reqfailure
+
+            if reqfailure.errorCode ==\
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE:
+                LOG.error(
+                    'Database error on server\n%s', str(reqfailure.message))
+            elif reqfailure.errorCode ==\
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED:
+                LOG.error(
+                    'Authentication denied\n %s', str(reqfailure.message))
+            elif reqfailure.errorCode ==\
+                    codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED:
+                LOG.error(
+                    'Unauthorized to access\n %s', str(reqfailure.message))
+                LOG.error(
+                    'Ask the product admin for additional access rights.')
+            elif reqfailure.errorCode ==\
+                    codechecker_api_shared.ttypes.ErrorCode.API_MISMATCH:
+                LOG.error(
+                    'Client/server API mismatch\n %s', str(reqfailure.message))
             else:
-                if reqfailure.errorCode ==\
-                        codechecker_api_shared.ttypes.ErrorCode.DATABASE:
-                    LOG.error('Database error on server\n%s',
-                              str(reqfailure.message))
-                elif reqfailure.errorCode ==\
-                        codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED:
-                    LOG.error('Authentication denied\n %s',
-                              str(reqfailure.message))
-                elif reqfailure.errorCode ==\
-                        codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED:
-                    LOG.error('Unauthorized to access\n %s',
-                              str(reqfailure.message))
-                    LOG.error('Ask the product admin for additional access '
-                              'rights.')
-                elif reqfailure.errorCode ==\
-                        codechecker_api_shared.ttypes.ErrorCode.API_MISMATCH:
-                    LOG.error('Client/server API mismatch\n %s',
-                              str(reqfailure.message))
-                else:
-                    LOG.error('API call error: %s\n%s',
-                              funcName,
-                              str(reqfailure)
-                              )
-                sys.exit(1)
+                LOG.error('API call error: %s\n%s', func_name, str(reqfailure))
+            sys.exit(1)
         except TApplicationException as ex:
             LOG.error("Internal server error: %s", str(ex.message))
             sys.exit(1)
@@ -100,7 +97,7 @@ def ThriftClientCall(function):
                 LOG.error('Thrift size limit error.')
             elif ex.type == TProtocolException.BAD_VERSION:
                 LOG.error('Thrift bad version error.')
-            LOG.error(funcName)
+            LOG.error(func_name)
 
             # Do not print the argument list if it contains sensitive
             # information such as passwords.
@@ -108,7 +105,7 @@ def ThriftClientCall(function):
             # the full content of it (for example the 'b64zip' parameter of the
             # 'massStoreRun' API function). For this reason we have to truncate
             # the arguments.
-            if funcName != "performLogin":
+            if func_name != "performLogin":
                 LOG.error([truncate_arg(arg) for arg in args])
 
             LOG.error(kwargs)

@@ -37,7 +37,7 @@ class RemoveRunResults(unittest.TestCase):
     def teardown_class(self):
         teardown_class_common()
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         test_workspace = os.environ['TEST_WORKSPACE']
 
         test_class = self.__class__.__name__

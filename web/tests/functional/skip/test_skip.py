@@ -153,7 +153,7 @@ class TestSkip(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
 
         # TEST_WORKSPACE is automatically set by test package __init__.py
         self.test_workspace = os.environ['TEST_WORKSPACE']
@@ -189,7 +189,7 @@ class TestSkip(unittest.TestCase):
         """ There should be no results from the skipped file. """
 
         runid = self._runid
-        logging.debug('Get all run results from the db for runid: ' +
+        logging.debug('Get all run results from the db for runid: %s',
                       str(runid))
 
         run_results = get_all_run_results(self._cc_client, runid)
@@ -233,9 +233,7 @@ class TestSkip(unittest.TestCase):
                 if not bug['checker'].startswith('clang-diagnostic-'):
                     self.assertIn(bug['file'], skipped_files)
         else:
-            self.assertTrue(True,
-                            "There should be missing results because"
-                            "using skip")
+            self.fail("There should be missing results because using skip")
 
         self.assertEqual(len(run_results), len(test_proj_res) - len(skipped))
 

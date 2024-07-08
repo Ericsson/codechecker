@@ -80,6 +80,7 @@ def is_supported_version(version):
     return False
 
 
+# pylint: disable=invalid-name
 def split_client_GET_request(path):
     """
     Split the given request URI to its parts relevant to the server.
@@ -104,6 +105,7 @@ def split_client_GET_request(path):
         return None, parsed_path.lstrip('/')
 
 
+# pylint: disable=invalid-name
 def split_client_POST_request(path):
     """
     Split the given request URI to its parts relevant to the server.
@@ -135,6 +137,7 @@ def split_client_POST_request(path):
     return None, None, None
 
 
+# pylint: disable=invalid-name
 def is_protected_GET_entrypoint(path):
     """
     Returns if the given GET request's PATH enters the server through an

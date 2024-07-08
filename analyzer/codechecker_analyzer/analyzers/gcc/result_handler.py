@@ -52,7 +52,7 @@ class GccResultHandler(ResultHandler):
         self.analyzer_info = AnalyzerInfo(name=AnalyzerResult.TOOL_NAME)
         self.gcc_analyzer_result = AnalyzerResult()
 
-        super(GccResultHandler, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def postprocess_result(
         self,
@@ -77,7 +77,7 @@ class GccResultHandler(ResultHandler):
                      os.path.basename(self.analyzed_source_file) +
                      self.buildaction_hash + ".sarif"))
 
-        with open(gcc_dest_file_name, 'w') as f:
+        with open(gcc_dest_file_name, 'w', encoding="utf-8") as f:
             f.write(gcc_stderr)
         assert os.path.exists(gcc_dest_file_name)
 

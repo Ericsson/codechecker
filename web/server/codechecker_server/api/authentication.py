@@ -33,6 +33,8 @@ from ..session_manager import generate_session_token
 LOG = get_logger('server')
 
 
+# These names are inherited from Thrift stubs.
+# pylint: disable=invalid-name
 class ThriftAuthHandler:
     """
     Handle Thrift authentication requests.
@@ -88,10 +90,7 @@ class ThriftAuthHandler:
 
     @timeit
     def getLoggedInUser(self):
-        if self.__auth_session:
-            return self.__auth_session.user
-        else:
-            return ""
+        return self.__auth_session.user if self.__auth_session else ""
 
     @timeit
     def getAcceptedAuthMethods(self):
@@ -160,8 +159,8 @@ class ThriftAuthHandler:
                 LOG.info("'%s' logged in.", user_name)
                 return session.token
             else:
-                msg = "Invalid credentials supplied for user '{0}'. " \
-                      "Refusing authentication!".format(user_name)
+                msg = f"Invalid credentials supplied for user " \
+                    f"'{user_name}'. Refusing authentication!"
 
                 LOG.warning(msg)
                 raise codechecker_api_shared.ttypes.RequestFailed(
@@ -284,8 +283,7 @@ class ThriftAuthHandler:
             if not require_manager(perm, params, self.__auth_session):
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
-                    "You can not manage the permission '{0}'"
-                    .format(perm.name))
+                    f"You can not manage the permission '{perm.name}'")
 
             handler = make_handler(perm, params)
             users, groups = handler.list_permitted()
@@ -308,8 +306,7 @@ class ThriftAuthHandler:
             if not require_manager(perm, params, self.__auth_session):
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
-                    "You can not manage the permission '{0}'"
-                    .format(perm.name))
+                    f"You can not manage the permission '{perm.name}'")
 
             handler = make_handler(perm, params)
             handler.add_permission(auth_name.strip(),
@@ -332,8 +329,7 @@ class ThriftAuthHandler:
             if not require_manager(perm, params, self.__auth_session):
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.UNAUTHORIZED,
-                    "You can not manage the permission '{0}'"
-                    .format(perm.name))
+                    f"You can not manage the permission '{perm.name}'")
 
             handler = make_handler(perm, params)
             handler.remove_permission(auth_name, is_group,
@@ -402,8 +398,8 @@ class ThriftAuthHandler:
             if not num_of_removed:
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.DATABASE,
-                    "Personal access token {0} was not found in the "
-                    "database.".format(token))
+                    f"Personal access token {token} was not found in the "
+                    "database.")
 
             # Invalidate the local session by token.
             self.__manager.invalidate_local_session(token)

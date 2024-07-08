@@ -288,7 +288,7 @@ class DiffRemote(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
 
         # TEST_WORKSPACE is automatically set by test package __init__.py .
         self.test_workspace = os.environ['TEST_WORKSPACE']
@@ -988,7 +988,8 @@ class DiffRemote(unittest.TestCase):
 
         # Check HTML output
         for file_path in os.listdir(html_reports):
-            with open(os.path.join(html_reports, file_path)) as f:
+            with open(os.path.join(html_reports, file_path),
+                      encoding='utf-8') as f:
                 self.assertNotIn(InvalidFileContentMsg, f.read())
 
         shutil.rmtree(html_reports, ignore_errors=True)

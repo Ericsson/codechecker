@@ -5,10 +5,9 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # -------------------------------------------------------------------------
-"""
-"""
 from collections import defaultdict
 # TODO distutils will be removed in python3.12
+# pylint: disable=deprecated-module
 from distutils.version import StrictVersion
 import os
 import pickle
@@ -46,12 +45,10 @@ class Gcc(analyzer_base.SourceAnalyzer):
         # TODO
         pass
 
-    @classmethod
     def get_analyzer_mentioned_files(self, output):
         """
         This is mostly used for CTU, which is absent in GCC.
         """
-        pass
 
     def construct_analyzer_cmd(self, result_handler):
         """
@@ -75,7 +72,7 @@ class Gcc(analyzer_base.SourceAnalyzer):
         analyzer_cmd.append('-fdiagnostics-format=sarif-stderr')
 
         for checker_name, value in config.checks().items():
-            if value[0] == CheckerState.disabled:
+            if value[0] == CheckerState.DISABLED:
                 # TODO python3.9 removeprefix method would be nicer
                 # than startswith and a hardcoded slicing
                 analyzer_cmd.append(
@@ -93,11 +90,11 @@ class Gcc(analyzer_base.SourceAnalyzer):
         return analyzer_cmd
 
     @classmethod
-    def get_analyzer_checkers(self):
+    def get_analyzer_checkers(cls):
         """
         Return the list of the supported checkers.
         """
-        command = [self.analyzer_binary(), "--help=warning"]
+        command = [cls.analyzer_binary(), "--help=warning"]
         checker_list = []
 
         try:
@@ -137,7 +134,7 @@ class Gcc(analyzer_base.SourceAnalyzer):
         # TODO
         return []
 
-    def analyze(self, analyzer_cmd, res_handler, proc_callback=None):
+    def analyze(self, analyzer_cmd, res_handler, proc_callback=None, _=None):
         env = None
 
         original_env_file = os.environ.get(
@@ -157,29 +154,27 @@ class Gcc(analyzer_base.SourceAnalyzer):
         The report parsing of the Parse command is done recursively.
 
         """
-        pass
 
     @classmethod
-    def resolve_missing_binary(cls, configured_binary, env):
+    def resolve_missing_binary(cls, configured_binary, environ):
         """
         In case of the configured binary for the analyzer is not found in the
         PATH, this method is used to find a callable binary.
         """
         # TODO
-        pass
 
     @classmethod
-    def get_binary_version(self, environ, details=False) -> str:
+    def get_binary_version(cls, environ, details=False) -> str:
         """
         Return the analyzer version.
         """
         # No need to LOG here, we will emit a warning later anyway.
-        if not self.analyzer_binary():
+        if not cls.analyzer_binary():
             return None
         if details:
-            version = [self.analyzer_binary(), '--version']
+            version = [cls.analyzer_binary(), '--version']
         else:
-            version = [self.analyzer_binary(), '-dumpfullversion']
+            version = [cls.analyzer_binary(), '-dumpfullversion']
         try:
             output = subprocess.check_output(version,
                                              env=environ,

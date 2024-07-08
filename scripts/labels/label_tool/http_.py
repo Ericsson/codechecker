@@ -18,7 +18,7 @@ from .output import trace
 
 
 Response = urllib3.response.BaseHTTPResponse
-URL = Union[str, urllib.parse.ParseResult]
+Url = Union[str, urllib.parse.ParseResult]
 
 
 class HTMLAcquirer:
@@ -43,7 +43,7 @@ class HTMLAcquirer:
         trace("HTTP GET '%s'", url)
         return self._pool.request("GET", url)
 
-    def get_url(self, url: URL) -> Response:
+    def get_url(self, url: Url) -> Response:
         """
         Downloads the content of `url` and returns the raw HTTP response.
         """
@@ -61,7 +61,7 @@ class HTMLAcquirer:
         dom = html.fromstring(response.data) if response.data else None
         return dom
 
-    def get_dom(self, url: URL) -> Optional[html.HtmlElement]:
+    def get_dom(self, url: Url) -> Optional[html.HtmlElement]:
         """
         Downloads the content of `url`.
         If the download is successful, parses the obtained HTML and returns the
@@ -71,7 +71,7 @@ class HTMLAcquirer:
             url = url.geturl()
         return self._get_dom_raw(url)
 
-    def split_anchor(self, url: URL) -> Tuple[str, str]:
+    def split_anchor(self, url: Url) -> Tuple[str, str]:
         if isinstance(url, str) and '#' not in url:
             return url, ""
 
@@ -97,10 +97,10 @@ class CachingHTMLAcquirer(HTMLAcquirer):
     def __init__(self, cache_size: int = DefaultCacheSize):
         super().__init__()
         self._cache_capacity = cache_size
-        self._cache: Dict[str, CachingHTMLAcquirer.CacheType] = dict()
-        self._cache_lru: Dict[str, datetime.datetime] = dict()
+        self._cache: Dict[str, CachingHTMLAcquirer.CacheType] = {}
+        self._cache_lru: Dict[str, datetime.datetime] = {}
 
-    def get_url(self, url: URL) -> Response:
+    def get_url(self, url: Url) -> Response:
         """
         Downloads the content of `url` after stripping the HTML anchor off of
         the request, and returns the raw HTTP response.
@@ -115,7 +115,7 @@ class CachingHTMLAcquirer(HTMLAcquirer):
         response, _ = cached
         return response
 
-    def get_dom(self, url: URL) -> Optional[html.HtmlElement]:
+    def get_dom(self, url: Url) -> Optional[html.HtmlElement]:
         """
         Downloads the content of `url` after stripping the HTML anchor off of
         the request.

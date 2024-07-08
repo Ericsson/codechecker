@@ -101,17 +101,17 @@ def del_database(dbname, env=None):
     if pg_config:
         pg_config['dbname'] = dbname
 
-        remove_cmd = """
+        remove_cmd = f"""
             UPDATE pg_database
             SET datallowconn='false'
-            WHERE datname='{0}';
+            WHERE datname='{dbname}';
 
             SELECT pg_terminate_backend(pid)
             FROM pg_stat_activity
-            WHERE datname='{0}';
+            WHERE datname='{dbname}';
 
-            DROP DATABASE "{0}";
-        """.format(dbname)
+            DROP DATABASE "{dbname}";
+        """
 
         with tempfile.NamedTemporaryFile(suffix='.sql') as sql_file:
             sql_file.write(remove_cmd.encode('utf-8'))

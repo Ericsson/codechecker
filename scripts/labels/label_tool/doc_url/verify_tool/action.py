@@ -103,10 +103,10 @@ def verify_checker(verifier: HTTPStatusCodeVerifier,
 
 def run_verification(pool: Pool, urls: SingleLabels) \
         -> Tuple[List[str], int, List[str], List[str]]:
-    ok: List[str] = list()
+    ok: List[str] = []
     skip = 0
-    not_ok: List[str] = list()
-    missing: List[str] = list()
+    not_ok: List[str] = []
+    missing: List[str] = []
 
     def _consume_result(checker: str,  s: Status):
         if s == Status.OK:
@@ -149,7 +149,7 @@ def reset_checker(verifier: HTTPStatusCodeVerifier,
 
 def run_reset(pool: Pool, urls: SingleLabels) -> Tuple[int, SingleLabels]:
     attempted = 0
-    new_urls: SingleLabels = dict()
+    new_urls: SingleLabels = {}
 
     def _consume_result(checker: str,
                         was_attempted: bool,
@@ -195,8 +195,8 @@ def try_fix_checker(verifier: HTTPStatusCodeVerifier,
 
 def run_fixes(pool: Pool, urls: SingleLabels) -> Tuple[SingleLabels,
                                                        SingleLabels]:
-    found: SingleLabels = dict()
-    gone: SingleLabels = dict()
+    found: SingleLabels = {}
+    gone: SingleLabels = {}
 
     def _consume_result(checker: str,
                         old_url: Optional[str],

@@ -72,7 +72,7 @@ class TestDetectionStatus(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         # TEST_WORKSPACE is automatically set by test package __init__.py .
         self.test_workspace = os.environ['TEST_WORKSPACE']
 
@@ -173,7 +173,7 @@ int main()
   sizeof(42);
 }"""]
 
-    def teardown_method(self, method):
+    def teardown_method(self, _):
         """Restore environment after tests have ran."""
         os.chdir(self.__old_pwd)
 
@@ -187,8 +187,8 @@ int main()
 
     def _create_clang_tidy_cfg_file(self, checkers):
         """ This function will create a .clang-tidy config file. """
-        with open(self.clang_tidy_cfg, 'w') as f:
-            f.write("Checks: '{0}'".format(','.join(checkers)))
+        with open(self.clang_tidy_cfg, 'w', encoding='utf-8') as f:
+            f.write(f"Checks: '{','.join(checkers)}'")
 
     def test_same_file_change(self):
         """
@@ -200,7 +200,7 @@ int main()
         self._check_source_file(self._codechecker_cfg)
 
         runs = self._cc_client.getRunData(None, None, 0, None)
-        run_id = max([run.runId for run in runs])
+        run_id = max(run.runId for run in runs)
 
         reports = self._cc_client.getRunResults([run_id],
                                                 100,
@@ -212,7 +212,7 @@ int main()
 
         self.assertEqual(len(reports), 5)
         self.assertTrue(
-            all([r.detectionStatus == DetectionStatus.NEW for r in reports]))
+            all(r.detectionStatus == DetectionStatus.NEW for r in reports))
 
         # Check the second file version
         self._create_source_file(1)
@@ -234,7 +234,7 @@ int main()
                 self.assertIn(report.bugHash,
                               ['cbd629ba2ee25c41cdbf5e2e336b1b1c'])
             else:
-                self.assertTrue(False)
+                self.fail()
 
         # Check the third file version
         self._create_source_file(2)
@@ -282,7 +282,7 @@ int main()
                     "content.")
 
             else:
-                self.assertTrue(False)
+                self.fail()
 
         # Check the second file version again
         self._create_source_file(1)
@@ -359,7 +359,7 @@ int main()
         codechecker.store(self._codechecker_cfg, 'hello')
 
         runs = self._cc_client.getRunData(None, None, 0, None)
-        run_id = max([run.runId for run in runs])
+        run_id = max(run.runId for run in runs)
 
         reports = self._cc_client.getRunResults([run_id],
                                                 100,
@@ -496,9 +496,8 @@ int main()
         self._test_dir = orig_test_dir
 
         # Store two report directory.
-        cfg['reportdir'] = '{0} {1}'.format(
-            cfg['reportdir'],
-            self._codechecker_cfg['reportdir'])
+        cfg['reportdir'] = \
+            f"{cfg['reportdir']} {self._codechecker_cfg['reportdir']}"
         codechecker.store(cfg, 'hello')
 
         # Check that no reports are marked as OFF.

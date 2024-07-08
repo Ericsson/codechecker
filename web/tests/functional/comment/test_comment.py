@@ -132,7 +132,7 @@ class TestComment(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         self._test_workspace = os.environ.get('TEST_WORKSPACE')
 
         test_class = self.__class__.__name__
@@ -146,19 +146,19 @@ class TestComment(unittest.TestCase):
         auth_client = env.setup_auth_client(self._test_workspace,
                                             session_token='_PROHIBIT')
 
-        sessionToken_cc = auth_client.performLogin("Username:Password",
-                                                   "cc:test")
-        sessionToken_john = auth_client.performLogin("Username:Password",
-                                                     "john:doe")
+        session_token_cc = auth_client.performLogin(
+            "Username:Password", "cc:test")
+        session_token_john = auth_client.performLogin(
+            "Username:Password", "john:doe")
         self._cc_client =\
             env.setup_viewer_client(
                 self._test_workspace,
-                session_token=sessionToken_cc)
+                session_token=session_token_cc)
 
         self._cc_client_john =\
             env.setup_viewer_client(
                 self._test_workspace,
-                session_token=sessionToken_john)
+                session_token=session_token_john)
         self.assertIsNotNone(self._cc_client)
 
         # Get the run names which belong to this test
@@ -177,7 +177,7 @@ class TestComment(unittest.TestCase):
         """
 
         runid = self._test_runs[0].runId
-        logging.debug('Get all run results from the db for runid: ' +
+        logging.debug('Get all run results from the db for runid: %s',
                       str(runid))
 
         run_results = get_all_run_results(self._cc_client, runid)
@@ -323,7 +323,7 @@ class TestComment(unittest.TestCase):
 
         # Get run results for the first run.
         runid_base = self._test_runs[0].runId
-        logging.debug('Get all run results from the db for runid: ' +
+        logging.debug('Get all run results from the db for runid: %s',
                       str(runid_base))
 
         run_results_base = get_all_run_results(self._cc_client, runid_base)
@@ -334,7 +334,7 @@ class TestComment(unittest.TestCase):
 
         # Get run results for the second run.
         runid_new = self._test_runs[1].runId
-        logging.debug('Get all run results from the db for runid: ' +
+        logging.debug('Get all run results from the db for runid: %s',
                       str(runid_new))
 
         run_results_new = get_all_run_results(self._cc_client, runid_new)

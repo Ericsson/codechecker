@@ -23,7 +23,7 @@ pycodestyle_in_env: venv_dev
 
 PYLINT_TEST_CMD = $(MAKE) -C $(CURRENT_DIR)/tools/merge_clang_extdef_mappings pylint && \
 	$(MAKE) -C $(CURRENT_DIR)/tools/statistics_collector pylint && \
-	PYLINTRC=$(ROOT)/.pylintrc pylint -j0 ./bin/** ./codechecker_analyzer ./tests/**
+	PYLINTRC=$(ROOT)/.pylintrc pylint -j0 ./codechecker_analyzer ./tests/**
 
 pylint:
 	$(PYLINT_TEST_CMD)

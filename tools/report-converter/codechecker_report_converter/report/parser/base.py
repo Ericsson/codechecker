@@ -35,9 +35,6 @@ def load_json(path: str):
     try:
         with open(path, 'r', encoding='utf-8', errors='ignore') as handle:
             ret = json.load(handle)
-    except IOError as ex:
-        LOG.warning("Failed to open json file: %s", path)
-        LOG.warning(ex)
     except OSError as ex:
         LOG.warning("Failed to open json file: %s", path)
         LOG.warning(ex)

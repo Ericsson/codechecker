@@ -34,11 +34,11 @@ def extend_with_git_information(repository_root, version_json_data):
     version = version_json_data['version']
     version_string = str(version['major'])
     if int(version['minor']) != 0 or int(version['revision']) != 0:
-        version_string += ".{0}".format(version['minor'])
+        version_string += f".{version['minor']}"
     if int(version['revision']) != 0:
-        version_string += ".{0}".format(version['revision'])
+        version_string += f".{version['revision']}"
     if version['rc'] != '' and int(version['rc']) != 0:
-        version_string += "-rc{0}".format(version['rc'])
+        version_string += f"-rc{version['rc']}"
 
     LOG.info("This is CodeChecker v%s", version_string)
 
@@ -123,7 +123,7 @@ def extend_version_file(repository_root, version_file):
     LOG.debug(json.dumps(version_json_data, sort_keys=True, indent=2))
 
 
-if __name__ == "__main__":
+def main():
     description = '''CodeChecker extend version file'''
 
     parser = argparse.ArgumentParser(
@@ -154,3 +154,7 @@ if __name__ == "__main__":
     for version_file in args['versionfile']:
         LOG.info("Extending version file '%s'.", version_file)
         extend_version_file(args['repository'], version_file)
+
+
+if __name__ == "__main__":
+    main()

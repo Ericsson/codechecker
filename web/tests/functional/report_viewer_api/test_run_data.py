@@ -36,7 +36,7 @@ class TestRunData(unittest.TestCase):
     def teardown_class(self):
         teardown_class_common()
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         test_workspace = os.environ['TEST_WORKSPACE']
 
         test_class = self.__class__.__name__
@@ -211,26 +211,29 @@ class TestRunData(unittest.TestCase):
 
         checkers = info.checkers
 
-        def assertChecker(analyzer, checker):
+        def assert_checker(analyzer, checker):
             self.assertTrue(checkers[analyzer][checker].enabled)
 
-        def assertNotChecker(analyzer, checker):
+        def assert_not_checker(analyzer, checker):
             self.assertFalse(checkers[analyzer][checker].enabled)
 
-        assertNotChecker("clangsa", "core.StackAddressEscape")
-        assertChecker("clangsa", "core.CallAndMessage")
-        assertChecker("clangsa", "cplusplus.NewDelete")
-        assertChecker("clangsa", "deadcode.DeadStores")
-        assertNotChecker("clangsa", "osx.cocoa.Loops")
-        assertNotChecker("clangsa", "unix.Malloc")
+        assert_not_checker("clangsa", "core.StackAddressEscape")
+        assert_checker("clangsa", "core.CallAndMessage")
+        assert_checker("clangsa", "cplusplus.NewDelete")
+        assert_checker("clangsa", "deadcode.DeadStores")
+        assert_not_checker("clangsa", "osx.cocoa.Loops")
+        assert_not_checker("clangsa", "unix.Malloc")
 
-        assertNotChecker("clang-tidy", "bugprone-easily-swappable-parameters")
-        assertChecker("clang-tidy", "clang-diagnostic-division-by-zero")
-        assertNotChecker("clang-tidy", "clang-diagnostic-return-type")
-        assertNotChecker("clang-tidy", "clang-diagnostic-vla")
-        assertNotChecker("clang-tidy", "llvmlibc-restrict-system-libc-headers")
-        assertChecker("clang-tidy", "misc-definitions-in-headers")
-        assertNotChecker("clang-tidy", "objc-super-self")
+        assert_not_checker(
+            "clang-tidy", "bugprone-easily-swappable-parameters")
+        assert_checker("clang-tidy", "clang-diagnostic-division-by-zero")
+        assert_not_checker("clang-tidy", "clang-diagnostic-return-type")
+        assert_not_checker("clang-tidy", "clang-diagnostic-vla")
+        assert_not_checker(
+            "clang-tidy", "llvmlibc-restrict-system-libc-headers")
+        assert_checker(
+            "clang-tidy", "misc-definitions-in-headers")
+        assert_not_checker("clang-tidy", "objc-super-self")
 
         self.assertTrue("cppcheck" not in checkers.keys(),
                         "This analysis was run without CppCheck!")

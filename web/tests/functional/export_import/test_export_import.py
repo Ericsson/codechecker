@@ -136,7 +136,7 @@ class TestExport(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
 
         # TEST_WORKSPACE is automatically set by test package __init__.py .
         test_workspace = os.environ['TEST_WORKSPACE']
@@ -171,7 +171,7 @@ class TestExport(unittest.TestCase):
         """
         run_filter = RunFilter()
         run_filter.names = [self.test_runs[0].name]
-        logging.debug('Get all run results from the db for runid: ' +
+        logging.debug('Get all run results from the db for runid: %s',
                       str(self.test_runs[0].runId))
 
         run_results = get_all_run_results(

@@ -104,7 +104,7 @@ class TestBlameInfo(unittest.TestCase):
         print("Removing: " + TEST_WORKSPACE)
         shutil.rmtree(TEST_WORKSPACE, ignore_errors=True)
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         # TEST_WORKSPACE is automatically set by test package __init__.py .
         self.test_workspace = os.environ['TEST_WORKSPACE']
 

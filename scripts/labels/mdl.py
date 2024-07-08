@@ -2,7 +2,6 @@ import argparse
 import json
 import re
 import urllib3
-import xml.etree.ElementTree as ET
 
 
 def cli_args():
@@ -45,7 +44,7 @@ def main():
                 "severity:STYLE"
             ]
 
-    with open(args.label_file, 'w') as f:
+    with open(args.label_file, 'w', encoding='utf-8') as f:
         json.dump({
             "analyzer": "mdl",
             "labels": dict(sorted(labels.items()))

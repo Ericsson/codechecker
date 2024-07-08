@@ -25,7 +25,7 @@ class _Singleton:
     without having to serialise a complex state object over the communication
     channel between the manager and the processes.
     """
-    _instances: Dict[Type, Any] = dict()
+    _instances: Dict[Type, Any] = {}
 
     def __new__(cls, *args, **kwargs) -> object:
         if cls not in cls._instances:

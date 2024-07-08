@@ -74,6 +74,7 @@ class ClangSAVerifier(HTMLAnchorVerifier):
                 return urllib.parse.urlparse(url). \
                         _replace(fragment=other_anchor). \
                         geturl()
+            return None
 
         attempt = _try_anchor(url)
         if attempt:

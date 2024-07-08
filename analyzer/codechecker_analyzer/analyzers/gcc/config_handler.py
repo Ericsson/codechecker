@@ -15,4 +15,3 @@ class GccConfigHandler(config_handler.AnalyzerConfigHandler):
     """
     Configuration handler for Gcc analyzer.
     """
-    pass

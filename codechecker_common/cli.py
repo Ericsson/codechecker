@@ -108,7 +108,7 @@ def main():
     with open(commands_cfg, encoding="utf-8", errors="ignore") as cfg_file:
         subcommands = json.load(cfg_file)
 
-    def signal_handler(signum, frame):
+    def signal_handler(signum, _):
         """
         Without this handler the PostgreSQL
         server does not terminate at signal.
@@ -186,10 +186,9 @@ output.
             logger.setup_logger(
                 args.verbose if 'verbose' in args else None,
                 'stderr')
-            LOG = logger.get_logger('system')
+            log = logger.get_logger('system')
 
-            if len(sys.argv) > 1:
-                called_sub_command = sys.argv[1]
+            called_sub_command = sys.argv[1]
 
             cfg_args = args.func_process_config_file(args, called_sub_command)
             if cfg_args:
@@ -203,7 +202,7 @@ output.
                     sys.argv[cfg_idx + 2:]
 
                 args = parser.parse_args()
-                LOG.info("Full extended command: %s", ' '.join(sys.argv))
+                log.info("Full extended command: %s", ' '.join(sys.argv))
 
         if 'func' in args:
             sys.exit(args.func(args))

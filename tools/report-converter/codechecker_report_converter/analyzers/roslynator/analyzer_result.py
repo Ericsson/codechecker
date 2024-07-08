@@ -30,7 +30,7 @@ class AnalyzerResult(AnalyzerResultBase):
         + '#roslynator-command-line-tool-'
 
     def __init__(self):
-        super(AnalyzerResult, self).__init__()
+        super().__init__()
         self.__file_cache: Dict[str, File] = {}
 
     def get_reports(
@@ -82,15 +82,15 @@ class AnalyzerResult(AnalyzerResultBase):
         Returns the Report from the parsed diagnostic or None if something goes
         wrong.
         """
-        id = diag.attrib.get('Id')
+        diag_id = diag.attrib.get('Id')
 
-        filePathElement = diag.find('FilePath')
-        if filePathElement is None:
-            LOG.warning("Diagnostic does not belong to a file: %s", id)
+        file_path_element = diag.find('FilePath')
+        if file_path_element is None:
+            LOG.warning("Diagnostic does not belong to a file: %s", diag_id)
             return None
 
         source_file_path = os.path.join(os.path.dirname(input_file_path),
-                                        filePathElement.text)
+                                        file_path_element.text)
         if not os.path.exists(source_file_path):
             LOG.warning("Source file does not exist: %s", source_file_path)
             return None
@@ -105,5 +105,5 @@ class AnalyzerResult(AnalyzerResultBase):
             int(line),
             int(column),
             message,
-            id
+            diag_id
         )

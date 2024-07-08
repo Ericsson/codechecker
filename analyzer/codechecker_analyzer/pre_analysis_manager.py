@@ -41,7 +41,7 @@ def collect_statistics(action, source, clangsa_config, statistics_data):
 
     if not can_collect:
         LOG.debug('Can not collect statistical data.')
-        return
+        return None
 
     # TODO: shlex.join() will be more convenient in Python 3.8.
     LOG.debug_analyzer(' '.join(map(shlex.quote, cmd)))
@@ -73,20 +73,20 @@ def collect_statistics(action, source, clangsa_config, statistics_data):
 
 
 # Progress reporting.
-progress_checked_num = None
-progress_actions = None
+PROGRESS_CHECKED_NUM = None
+PROGRESS_ACTIONS = None
 
 
 def init_worker(checked_num, action_num):
-    global progress_checked_num, progress_actions
-    progress_checked_num = checked_num
-    progress_actions = action_num
+    global PROGRESS_CHECKED_NUM, PROGRESS_ACTIONS
+    PROGRESS_CHECKED_NUM = checked_num
+    PROGRESS_ACTIONS = action_num
 
 
 def pre_analyze(params):
     action, clangsa_config, skip_handlers, ctu_data, statistics_data = params
 
-    progress_checked_num.value += 1
+    PROGRESS_CHECKED_NUM.value += 1
 
     if skip_handlers and skip_handlers.should_skip(action.source):
         return
@@ -96,8 +96,8 @@ def pre_analyze(params):
     _, source_filename = os.path.split(action.source)
 
     LOG.info("[%d/%d] %s",
-             progress_checked_num.value,
-             progress_actions.value, source_filename)
+             PROGRESS_CHECKED_NUM.value,
+             PROGRESS_ACTIONS.value, source_filename)
 
     try:
         if ctu_data:
@@ -150,14 +150,13 @@ def run_pre_analysis(actions, clangsa_config,
     """
     Run multiple pre analysis jobs before the actual analysis.
     """
-    # pylint: disable=no-member multiprocess module members.
     LOG.info('Pre-analysis started.')
     if ctu_data:
         LOG.info("Collecting data for ctu analysis.")
     if statistics_data:
         LOG.info("Collecting data for statistical analysis.")
 
-    def signal_handler(signum, frame):
+    def signal_handler(signum, _):
         try:
             pool.terminate()
             manager.shutdown()

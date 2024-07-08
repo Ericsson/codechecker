@@ -32,10 +32,10 @@ COMMENT_PATTERN = re.compile(
 
 def add_comment_to_file(args, file_path):
     if args.remove:
-        print('Removing comments from %s' % file_path)
+        print(f'Removing comments from {file_path}')
         full_comment = ''
     else:
-        print('Adding the comment to %s' % file_path)
+        print(f'Adding the comment to {file_path}')
         full_comment = '\n' + COMMENT_BEGIN + COMMENT + COMMENT_END + '\n'
 
     with open(file_path, 'r+', encoding="utf-8", errors="ignore") as handle:
@@ -85,7 +85,7 @@ def main():
             elif os.path.isdir(full_path):
                 add_comment_to_directory(args, full_path)
             else:
-                print('%s is not a valid file or directory.' % path)
+                print(f'{path} is not a valid file or directory.')
     else:
         add_comment_to_directory(args, os.getcwd())
 

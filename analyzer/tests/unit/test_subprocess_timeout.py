@@ -21,12 +21,12 @@ import psutil
 from codechecker_analyzer.analysis_manager import setup_process_timeout
 
 
-class subprocess_timeoutTest(unittest.TestCase):
+class SubprocessTimeoutTest(unittest.TestCase):
     """
     Test the process timeout watcher functionality.
     """
 
-    def testTimeoutWithProcessFinishing(self):
+    def test_timeout_with_process_finishing(self):
         """
         Test if process timeout watcher recognises if a process ended
         gracefully before the timeout expired.
@@ -39,7 +39,7 @@ class subprocess_timeoutTest(unittest.TestCase):
                                 preexec_fn=os.setpgrp,
                                 encoding="utf-8",
                                 errors="ignore")
-        print("Started `echo` with PID {0}".format(proc.pid))
+        print(f"Started `echo` with PID {proc.pid}")
 
         future = setup_process_timeout(proc, 5, signal.SIGKILL)
 
@@ -52,7 +52,7 @@ class subprocess_timeoutTest(unittest.TestCase):
                          "Process timeout watcher said it killed the "
                          "process, but it should have exited long beforehand.")
 
-    def testTimeoutWithLongRunning(self):
+    def test_timeout_with_long_running(self):
         """
         Test if process timeout watcher kills the process that runs too long,
         and properly reports that it was killed.
@@ -66,7 +66,7 @@ class subprocess_timeoutTest(unittest.TestCase):
                                 preexec_fn=os.setpgrp,
                                 encoding="utf-8",
                                 errors="ignore")
-        print("Started `yes` with PID {0}".format(proc.pid))
+        print(f"Started `yes` with PID {proc.pid}")
 
         future = setup_process_timeout(proc, 5)
 

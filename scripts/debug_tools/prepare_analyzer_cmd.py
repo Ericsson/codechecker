@@ -78,18 +78,18 @@ class PathOptions:
         self.ctu_dir = ctu_dir
 
 
-def prepare(analyzer_command_file, pathOptions):
+def prepare(analyzer_command_file, path_options):
     res = lib.change_paths(get_first_line_of_file(analyzer_command_file),
-                           AnalyzerCommandPathModifier(pathOptions))
+                           AnalyzerCommandPathModifier(path_options))
 
     if '-nobuiltininc' not in res:
         return res
 
     # Find Clang include path
-    clang_include_path = lib.get_resource_dir(pathOptions.clang) + '/include'
+    clang_include_path = lib.get_resource_dir(path_options.clang) + '/include'
 
     if clang_include_path is None:
-        clang_lib_path = os.path.dirname(pathOptions.clang) + '/../lib'
+        clang_lib_path = os.path.dirname(path_options.clang) + '/../lib'
         clang_include_path = ''
         for path, _, files in os.walk(clang_lib_path):
             if 'stddef.h' in files:
@@ -103,7 +103,7 @@ def prepare(analyzer_command_file, pathOptions):
                        '-nobuiltininc -isystem ' + clang_include_path)
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(description='Prepare analyzer-command '
                                      'to execute in local environmennt.')
     parser.add_argument(
@@ -148,5 +148,8 @@ if __name__ == '__main__':
     print(
         "Preparation of files for debugging is done. "
         "Now you can execute the generated analyzer command. "
-        "E.g. $ bash %s" %
-        args.output)
+        f"E.g. $ bash {args.output}")
+
+
+if __name__ == '__main__':
+    main()

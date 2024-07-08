@@ -43,13 +43,13 @@ class ReturnFlags(IntFlag):
     # Zero indicates an all-success, but `Enumerator()` starts from 1.
 
     # Reserved flags used for other purposes external to the tool.
-    GeneralError = Enumerator()
-    ConfigurationOrArgsError = Enumerator()
+    GENERAL_ERROR = Enumerator()
+    CONFIGURATION_OR_ARGS_ERROR = Enumerator()
 
-    HadMissing = Enumerator()
-    HadNotOK = Enumerator()
-    HadFound = Enumerator()
-    HadGone = Enumerator()
+    HAD_MISSING = Enumerator()
+    HAD_NOT_OK = Enumerator()
+    HAD_FOUND = Enumerator()
+    HAD_GONE = Enumerator()
 
 
 def execute(analyser: str,
@@ -88,7 +88,7 @@ def execute(analyser: str,
             stats = stats._replace(Reset=len(new_urls) if new_urls else None,
                                    )
 
-        urls_to_save: SingleLabels = dict()
+        urls_to_save: SingleLabels = {}
         ok, skip, not_ok, missing = action.run_verification(pool, labels)
         report.print_verifications(analyser, labels, ok, not_ok, missing)
         urls_to_save.update({checker: labels[checker] for checker in ok})
@@ -99,10 +99,10 @@ def execute(analyser: str,
                                OK=len(ok) if ok else None,
                                Not_OK=len(not_ok) if not_ok else None,
                                )
-        status = status | (ReturnFlags.HadMissing if missing else 0)
+        status = status | (ReturnFlags.HAD_MISSING if missing else 0)
 
         if not_ok:
-            status |= ReturnFlags.HadNotOK
+            status |= ReturnFlags.HAD_NOT_OK
             if not skip_fixes:
                 found, gone = action.run_fixes(
                     pool, {checker: labels[checker] for checker
@@ -113,7 +113,7 @@ def execute(analyser: str,
                 stats = stats._replace(Found=len(found) if found else None,
                                        Gone=len(gone) if gone else None,
                                        )
-                status = status | (ReturnFlags.HadFound if found else 0) \
-                    | (ReturnFlags.HadGone if gone else 0)
+                status = status | (ReturnFlags.HAD_FOUND if found else 0) \
+                    | (ReturnFlags.HAD_GONE if gone else 0)
 
     return status, urls_to_save, stats

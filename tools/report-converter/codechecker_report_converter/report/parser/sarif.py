@@ -12,10 +12,9 @@ import os
 
 from sarif import loader
 
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from urllib.parse import urlparse
-from typing import Any, List, Optional, Tuple
 
 from codechecker_report_converter.report import BugPathEvent, \
     BugPathPosition, File, MacroExpansion, get_or_create_file, Range, Report
@@ -48,19 +47,19 @@ class ThreadFlowInfo:
 class Parser(BaseParser):
     def get_reports(
         self,
-        result_file_path: str,
-        source_dir_path: Optional[str] = None
+        analyzer_result_file_path: str,
+        _: Optional[str] = None
     ) -> List[Report]:
         """ Get reports from the given analyzer result file. """
 
-        if not self.has_any_runs(result_file_path):
+        if not self.has_any_runs(analyzer_result_file_path):
             return []
 
         reports: List[Report] = []
-        self.result_file_path = result_file_path
+        self.result_file_path = analyzer_result_file_path
         self.had_error = False
 
-        data = loader.load_sarif_file(result_file_path)
+        data = loader.load_sarif_file(analyzer_result_file_path)
 
         for run in data.runs:
             rules = self._get_rules(run.run_data)
@@ -93,7 +92,7 @@ class Parser(BaseParser):
                     report = Report(
                         file, rng.start_line, rng.start_col,
                         message, rule_id,  # TODO: Add severity.
-                        analyzer_result_file_path=result_file_path,
+                        analyzer_result_file_path=analyzer_result_file_path,
                         bug_path_events=bug_path_events,
                         bug_path_positions=thread_flow_info.bug_path_positions,
                         notes=thread_flow_info.notes,
@@ -215,16 +214,17 @@ class Parser(BaseParser):
 
         if not self.original_uri_base_ids:
             LOG.error("Missing 'originalUriBaseIds' (sarif v2.1.0 §3.14.14) "
-                      f"in '{self.result_file_path}'.")
+                      "in '%s'.", self.result_file_path)
             LOG.error(error_str)
             self.had_error = True
             return ""
 
         original = self.original_uri_base_ids.get(uri_base_id)
         if not original:
-            LOG.error(f"Missing entry for '{uri_base_id} in"
-                      "'originalUriBaseIds' (sarif v2.1.0 §3.14.14)"
-                      f"in '{self.result_file_path}'.")
+            LOG.error("Missing entry for '%s in "
+                      "'originalUriBaseIds' (sarif v2.1.0 §3.14.14) in '%s'.",
+                      uri_base_id,
+                      self.result_file_path)
             LOG.error(error_str)
             self.had_error = True
             return ""
@@ -232,8 +232,10 @@ class Parser(BaseParser):
         abs_uri_prefix = original.get("uri")
         if not abs_uri_prefix:
             LOG.warning("Missing 'uri' (sarif v2.1.0 §3.4.3) for "
-                        f"'{uri_base_id} in 'originalUriBaseIds' (sarif "
-                        f"v2.1.0 §3.14.14) in '{self.result_file_path}'.")
+                        "'%s in 'originalUriBaseIds' (sarif "
+                        "v2.1.0 §3.14.14) in '%s'.",
+                        uri_base_id,
+                        self.result_file_path)
             LOG.error(error_str)
             self.had_error = True
             return ""
@@ -265,7 +267,7 @@ class Parser(BaseParser):
 
         uri_parsed = urlparse(uri)
         if uri_parsed is None:
-            LOG.warning(f"Failed to urlparse {uri}!")
+            LOG.warning("Failed to urlparse %s!", uri)
             return None
 
         file_path = os.path.join(uri_parsed.netloc, uri_parsed.path)
@@ -449,4 +451,3 @@ class Parser(BaseParser):
         """
         Override hash in the given file by using the given version hash.
         """
-        pass

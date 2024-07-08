@@ -10,7 +10,8 @@ Multiprocessing compatibility module.
 """
 import sys
 
-# pylint: disable=no-name-in-module,unused-import
+# pylint: disable=no-name-in-module
+# pylint: disable=unused-import
 if sys.platform in ["darwin", "win32"]:
     from multiprocess import Pool  # type: ignore
     from multiprocess import cpu_count

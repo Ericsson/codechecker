@@ -45,7 +45,7 @@ class TestReportFilter(unittest.TestCase):
     def teardown_class(self):
         teardown_class_common()
 
-    def setup_method(self, method):
+    def setup_method(self, _):
         test_workspace = os.environ['TEST_WORKSPACE']
 
         test_class = self.__class__.__name__
@@ -116,8 +116,9 @@ class TestReportFilter(unittest.TestCase):
 
         for level in severity_test_data:
             for severity_level, test_result_count in level.items():
-                logging.debug('Severity level filter ' + severity_level +
-                              ' test result count: ' + str(test_result_count))
+                logging.debug('Severity level filter %s test result count: %d',
+                              severity_level,
+                              test_result_count)
                 sort_types = None
                 sev = get_severity_level(severity_level)
                 sev_f = ReportFilter(severity=[sev])
@@ -139,8 +140,9 @@ class TestReportFilter(unittest.TestCase):
 
         for level in severity_test_data:
             for checker_id_filter, test_result_count in level.items():
-                logging.debug('Checker id filter ' + checker_id_filter +
-                              ' test result count: ' + str(test_result_count))
+                logging.debug('Checker id filter %s test result count: %d',
+                              checker_id_filter,
+                              test_result_count)
                 sort_types = None
                 cid_f = ReportFilter(checkerName=[checker_id_filter])
 
@@ -165,8 +167,9 @@ class TestReportFilter(unittest.TestCase):
 
         for level in severity_test_data:
             for filepath_filter, test_result_count in level.items():
-                logging.debug('File path filter ' + filepath_filter +
-                              ' test result count: ' + str(test_result_count))
+                logging.debug('File path filter %s test result count: %d',
+                              filepath_filter,
+                              test_result_count)
 
                 sort_types = None
                 fp_f = ReportFilter(filepath=[filepath_filter])
@@ -192,8 +195,9 @@ class TestReportFilter(unittest.TestCase):
 
         for level in filter_test_data:
             for filepath_filter, test_result_count in level.items():
-                logging.debug('File path filter ' + filepath_filter +
-                              ' test result count: ' + str(test_result_count))
+                logging.debug('File path filter %s test result count: %d',
+                              filepath_filter,
+                              test_result_count)
 
                 sort_types = None
                 fp_f = ReportFilter(filepath=[filepath_filter])
@@ -259,8 +263,9 @@ class TestReportFilter(unittest.TestCase):
 
         for level in severity_test_data:
             for review_status, test_result_count in level.items():
-                logging.debug('Review status ' + review_status +
-                              ' test result count: ' + str(test_result_count))
+                logging.debug('Review status %s test result count: %d',
+                              review_status,
+                              test_result_count)
                 sort_types = None
                 status = get_status(review_status)
                 s_f = ReportFilter(reviewStatus=[status])
@@ -293,14 +298,14 @@ class TestReportFilter(unittest.TestCase):
             None, 500, 0, sort_types, unique_filter, None, False)
         unique_result_count = self._cc_client.getRunResultCount(
             None, unique_filter, None)
-        unique_bughash = set([res.bugHash for res in run_results])
+        unique_bughash = set(res.bugHash for res in run_results)
 
         # Get simple results.
         run_results = self._cc_client.getRunResults(
             None, 500, 0, sort_types, simple_filter, None, False)
         simple_result_count = self._cc_client.getRunResultCount(
             None, simple_filter, None)
-        simple_bughash = set([res.bugHash for res in run_results])
+        simple_bughash = set(res.bugHash for res in run_results)
 
         diff_hashes = list(simple_bughash.difference(unique_bughash))
         self.assertEqual(0, len(diff_hashes))
@@ -411,8 +416,9 @@ class TestReportFilter(unittest.TestCase):
 
         for level in analyzer_name_test_data:
             for analyzer_name_filter, test_result_count in level.items():
-                logging.debug('Analyzer name filter ' + analyzer_name_filter +
-                              ' test result count: ' + str(test_result_count))
+                logging.debug('Analyzer name filter %s test result count: %d',
+                              analyzer_name_filter,
+                              test_result_count)
                 sort_types = None
                 an_f = ReportFilter(analyzerNames=[analyzer_name_filter])
 

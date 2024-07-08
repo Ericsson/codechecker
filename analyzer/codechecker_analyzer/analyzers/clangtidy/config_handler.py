@@ -29,11 +29,8 @@ class ClangTidyConfigHandler(AnalyzerConfigHandler):
     Configuration handler for Clang-tidy analyzer.
     """
 
-    def __init__(self):
-        super(ClangTidyConfigHandler, self).__init__()
-
     def add_checker(self, checker_name, description='',
-                    state=CheckerState.disabled):
+                    state=CheckerState.DISABLED):
         """
         Add additional checker if the 'take-config-from-directory'
         analyzer configuration option is not set.
@@ -43,8 +40,7 @@ class ClangTidyConfigHandler(AnalyzerConfigHandler):
             if is_compiler_warning(checker_name):
                 return
 
-        super(ClangTidyConfigHandler, self).add_checker(checker_name,
-                                                        description, state)
+        super().add_checker(checker_name, description, state)
 
     def set_checker_enabled(self, checker_name, enabled=True):
         """
@@ -54,5 +50,4 @@ class ClangTidyConfigHandler(AnalyzerConfigHandler):
            checker_name.startswith('clang-diagnostic'):
             self.add_checker(checker_name)
 
-        super(ClangTidyConfigHandler, self).set_checker_enabled(checker_name,
-                                                                enabled)
+        super().set_checker_enabled(checker_name, enabled)
