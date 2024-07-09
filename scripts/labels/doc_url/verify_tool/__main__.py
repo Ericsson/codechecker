@@ -103,7 +103,7 @@ The configuration directory where the checker labels are available.
         default=cpu_count(),
         help="""
 The number of parallel processes to use for querying the validity of the
-"documentation URLs.
+documentation URLs.
 Defaults to all available logical cores.
 """)
 
