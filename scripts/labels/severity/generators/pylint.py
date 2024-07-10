@@ -35,7 +35,7 @@ class PylintGenerator(Base):
         try:
             version = subprocess.check_output(["pylint", "--version"])
             trace("pylint version '%s'",
-                  version.decode().split('\n')[0].split(' ')[1])
+                  version.decode().split('\n', maxsplit=1)[0].split(' ')[1])
             self._pylint_msgs = subprocess.check_output(
                 ["pylint", "--list-msgs"]) \
                 .decode()

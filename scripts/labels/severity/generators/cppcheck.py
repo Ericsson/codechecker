@@ -5,6 +5,7 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # -------------------------------------------------------------------------
+# pylint: disable=c-extension-no-member
 """Cppcheck."""
 from collections import defaultdict
 import subprocess

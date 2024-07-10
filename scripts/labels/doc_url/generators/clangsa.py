@@ -30,7 +30,7 @@ class ClangSAGenerator(Base):
         if dom is None:
             return iter(())
 
-        sections: Dict[str, str] = dict()
+        sections: Dict[str, str] = {}
         for section in dom.xpath(
                 "//section[descendant::a[@class=\"toc-backref\"]]"):
             anchor = section.find(".//a[@class=\"headerlink\"]") \
@@ -47,7 +47,7 @@ class ClangSAGenerator(Base):
 
             if '.' not in checker_name:
                 continue
-            if sum([1 for c in section_num if c == '.']) != 4:
+            if sum((1 for c in section_num if c == '.')) != 4:
                 continue
             sections[checker_name] = anchor
 
@@ -62,3 +62,4 @@ class ClangSAGenerator(Base):
 
         for header in sorted(sections.keys() - non_checker_keys):
             yield header, f"{self.toc_url}#{sections[header]}"
+        return iter(())

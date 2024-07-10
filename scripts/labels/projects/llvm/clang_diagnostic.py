@@ -49,3 +49,5 @@ def get_clang_diagnostic_documentation(request: http.HTMLAcquirer) \
         checker_name = f"clang-diagnostic-{checker_name.lower()}"
 
         yield checker_name, diagnostic_name, section
+
+    return iter(())

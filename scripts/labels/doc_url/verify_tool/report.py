@@ -25,7 +25,7 @@ def print_verifications(analyser: str,
             emoji(":magnifying_glass_tilted_left:"
                   ":magnifying_glass_tilted_right:  "),
             analyser,
-            coloured(len(missing), "yellow"),
+            coloured(f"{len(missing)}", "yellow"),
             plural(missing, "checker", "checkers"),
             plural(missing, "does", "do"),
             )
@@ -41,16 +41,16 @@ def print_verifications(analyser: str,
             log("%s%s: All %s %s successfully verified.",
                 emoji(":magnifying_glass_tilted_left::check_mark_button:  "),
                 analyser,
-                coloured(len(ok), "green"),
+                coloured(f"{len(ok)}", "green"),
                 plural(ok, "checker", "checkers"),
                 )
     else:
         log("%s%s: %s %s failed documentation verification. (%s succeeded.)",
             emoji(":magnifying_glass_tilted_left::warning:  "),
             analyser,
-            coloured(len(not_ok), "red"),
+            coloured(f"{len(not_ok)}", "red"),
             plural(not_ok, "checker", "checkers"),
-            coloured(len(ok), "green")
+            coloured(f"{len(ok)}", "green")
             if ok else coloured("0", "red"),
             )
 
@@ -81,7 +81,7 @@ def print_resets(analyser: str,
         analyser,
         coloured(attempted, "magenta"),
         plural(attempted, "checker's", "checkers'"),
-        coloured(len(new_urls), "cyan")
+        coloured(f"{len(new_urls)}", "cyan")
         if new_urls else coloured("0", "red"),
         )
     deque((log("    %s· %s [%s]",
@@ -100,7 +100,7 @@ def print_fixes(analyser: str,
             log("%s%s: Found new documentation for all %s %s.",
                 emoji(":magnifying_glass_tilted_left::telescope:  "),
                 analyser,
-                coloured(len(found), "green"),
+                coloured(f"{len(found)}", "green"),
                 plural(len(found), "checker", "checkers"),
                 )
     else:
@@ -108,16 +108,16 @@ def print_fixes(analyser: str,
             log("%s%s: All %s %s gone.",
                 emoji(":magnifying_glass_tilted_left::headstone:  "),
                 analyser,
-                coloured(len(gone), "red"),
+                coloured(f"{len(gone)}", "red"),
                 plural(len(gone), "checker", "checkers"),
                 )
         else:
             log("%s%s: %s %s gone. (Found %s.)",
                 emoji(":magnifying_glass_tilted_left::bar_chart:  "),
                 analyser,
-                coloured(len(gone), "red"),
+                coloured(f"{len(gone)}", "red"),
                 plural(len(gone), "checker", "checkers"),
-                coloured(len(found), "green")
+                coloured(f"{len(found)}", "green")
                 if found else coloured("0", "red")
                 )
 

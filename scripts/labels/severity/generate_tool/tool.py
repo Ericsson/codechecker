@@ -41,6 +41,8 @@ class ReturnFlags(IntFlag):
     A bit flag structure indicating the return value of the tool's `execute`
     function.
     """
+    # pylint: disable=invalid-name
+
     # Zero indicates an all-success, but `Enumerator()` starts from 1.
 
     # Reserved flags used for other purposes external to the tool.
@@ -56,10 +58,10 @@ class ReturnFlags(IntFlag):
 def run_generator(generator: Base, severities: SingleLabels) \
         -> Tuple[List[str], SingleLabels, SingleLabels, List[str]]:
     analyser = generator.analyser
-    ok: List[str] = list()
-    updated: SingleLabels = dict()
-    new: SingleLabels = dict()
-    gone: List[str] = list()
+    ok: List[str] = []
+    updated: SingleLabels = {}
+    new: SingleLabels = {}
+    gone: List[str] = []
 
     generation_result: SingleLabels = dict(generator.generate())
     for checker in sorted(severities.keys() | generation_result.keys()):
@@ -129,7 +131,7 @@ def print_generation(analyser: str,
         log("%s%s: Severity for all %s %s is OK.",
             emoji(":magnifying_glass_tilted_left::check_mark_button:  "),
             analyser,
-            coloured("%d" % len(ok), "green"),
+            coloured(f"{len(ok)}", "green"),
             plural(ok, "checker", "checkers"),
             )
     else:
@@ -137,9 +139,9 @@ def print_generation(analyser: str,
             log("%s%s: %s %s changed severity. (%s kept previous.)",
                 emoji(":magnifying_glass_tilted_left::warning:  "),
                 analyser,
-                coloured("%d" % len(updated), "yellow"),
+                coloured(f"{len(updated)}", "yellow"),
                 plural(updated, "checker", "checkers"),
-                coloured("%d" % len(ok), "green")
+                coloured(f"{len(ok)}", "green")
                 if ok else coloured("0", "red"),
                 )
         if new:
@@ -147,7 +149,7 @@ def print_generation(analyser: str,
                 emoji(":magnifying_glass_tilted_left:"
                       ":magnifying_glass_tilted_right:  "),
                 analyser,
-                coloured("%d" % len(new), "magenta"),
+                coloured(f"{len(new)}", "magenta"),
                 plural(new, "checker", "checkers"),
                 )
 
@@ -178,7 +180,7 @@ def print_gone(analyser: str,
     log("%s%s: %s %s severity gone.",
         emoji(":magnifying_glass_tilted_left::bar_chart:  "),
         analyser,
-        coloured("%d" % len(gone), "red"),
+        coloured(f"{len(gone)}", "red"),
         plural(len(gone), "checker's", "checkers'"),
         )
     deque((log("    %s· %s [%s]",
@@ -196,7 +198,7 @@ def print_missing(analyser: str,
             emoji(":magnifying_glass_tilted_left:"
                   ":magnifying_glass_tilted_right:  "),
             analyser,
-            coloured("%d" % len(missing), "yellow"),
+            coloured(f"{len(missing)}", "yellow"),
             plural(missing, "checker", "checkers"),
             )
         if OutputSettings.report_missing():
@@ -227,7 +229,7 @@ def execute(analyser: str, generator_class: Type, labels: SingleLabels) \
                        All_Changed=0,
                        Not_Found=len(missing) if missing else None,
                        )
-    severities: SingleLabels = dict()
+    severities: SingleLabels = {}
     ok, updated, new, gone = run_generator(generator_class(analyser), labels)
     print_generation(analyser, labels, ok, updated, new)
     severities.update(updated)
@@ -242,8 +244,7 @@ def execute(analyser: str, generator_class: Type, labels: SingleLabels) \
 
     print_gone(analyser, {checker: labels[checker]
                           for checker in gone - to_skip})
-    remaining_missing = [checker for checker
-                         in labels.keys() - ok - updated.keys() - to_skip]
+    remaining_missing = list(labels.keys() - ok - updated.keys() - to_skip)
     print_missing(analyser, remaining_missing)
     stats = stats._replace(Skipped=len(to_skip) if to_skip else None,
                            OK=len(ok) if ok else None,

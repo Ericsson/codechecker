@@ -40,16 +40,18 @@ class ReturnFlags(IntFlag):
     A bit flag structure indicating the return value of the execution of the
     tool's `execute` function.
     """
+    # pylint: disable=invalid-name
+
     # Zero indicates an all-success, but `Enumerator()` starts from 1.
 
     # Reserved flags used for other purposes external to the tool.
-    GENERAL_ERROR = Enumerator()
-    CONFIGURATION_OR_ARGS_ERROR = Enumerator()
+    GeneralError = Enumerator()
+    ConfigurationOrArgsError = Enumerator()
 
-    HAD_MISSING = Enumerator()
-    HAD_NOT_OK = Enumerator()
-    HAD_FOUND = Enumerator()
-    HAD_GONE = Enumerator()
+    HadMissing = Enumerator()
+    HadNotOK = Enumerator()
+    HadFound = Enumerator()
+    HadGone = Enumerator()
 
 
 def execute(analyser: str,
@@ -102,7 +104,7 @@ def execute(analyser: str,
         status |= (ReturnFlags.HadMissing if missing else 0)
 
         if not_ok:
-            status |= ReturnFlags.HAD_NOT_OK
+            status |= ReturnFlags.HadNotOK
             if not skip_fixes:
                 found, gone = action.run_fixes(
                     pool, {checker: labels[checker] for checker

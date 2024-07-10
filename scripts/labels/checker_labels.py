@@ -131,7 +131,7 @@ def update_checker_labels(analyser: str,
         try:
             checker_labels = label_cfg[checker]
         except KeyError:
-            label_cfg[checker] = list()
+            label_cfg[checker] = []
             label_indices[checker] = None
 
             checker_labels = label_cfg[checker]

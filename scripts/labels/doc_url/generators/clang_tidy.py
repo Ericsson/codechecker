@@ -44,3 +44,5 @@ class ClangTidyGenerator(Base):
                 continue
 
             yield checker, f"{self.documentation_root}/{url}"
+
+        return iter(())

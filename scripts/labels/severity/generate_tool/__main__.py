@@ -8,6 +8,7 @@
 # -------------------------------------------------------------------------
 """Implementation of the user-facing entry point to the script."""
 import argparse
+from functools import partial
 import os
 import pathlib
 import sys
@@ -67,7 +68,8 @@ In case after the analysis there are still checkers which do not have a
 epilogue: str = ""
 
 
-def args(parser: Optional[argparse.ArgumentParser]) -> argparse.ArgumentParser:
+def arg_parser(parser: Optional[argparse.ArgumentParser]) \
+        -> argparse.ArgumentParser:
     if not parser:
         parser = argparse.ArgumentParser(
             prog=__package__,
@@ -179,15 +181,25 @@ def _handle_package_args(args: argparse.Namespace):
     GlobalOutputSettings.set_trace(args.verbose_debug or args.very_verbose)
 
 
+def _emit_collision_error(analyser: str,
+                          checker: str,
+                          existing_fix: str,
+                          new_fix: str):
+    error("%s%s/%s: %s [%s] =/= [%s]", emoji(":collision:  "),
+          analyser, checker,
+          coloured("FIX COLLISION", "red"),
+          existing_fix, new_fix)
+
+
 def main(args: argparse.Namespace) -> Optional[int]:
     try:
         _handle_package_args(args)
-    except argparse.ArgumentError:
+    except argparse.ArgumentError as arg_err:
         # Simulate argparse's return code of parse_args.
-        raise SystemExit(2)
+        raise SystemExit(2) from arg_err
 
     rc = 0
-    statistics: List[tool.Statistics] = list()
+    statistics: List[tool.Statistics] = []
     trace("Checking checker labels from '%s'", args.checker_label_dir)
 
     args.checker_label_dir = pathlib.Path(args.checker_label_dir)
@@ -214,7 +226,6 @@ def main(args: argparse.Namespace) -> Optional[int]:
                 path)
             try:
                 labels = get_checker_labels(analyser, path, "severity")
-                pass
             except Exception:
                 import traceback
                 traceback.print_exc()
@@ -229,7 +240,7 @@ def main(args: argparse.Namespace) -> Optional[int]:
                     analyser)
                 continue
 
-            severities: SingleLabels = dict()
+            severities: SingleLabels = {}
             conflicts: Set[str] = set()
             for generator_class in geners:
                 log("%sGenerating '%s' as '%s' (%s)...",
@@ -255,18 +266,13 @@ def main(args: argparse.Namespace) -> Optional[int]:
                              tool.ReturnFlags.GeneralError)
                     continue
 
-                merge_if_no_collision(
-                    severities, generated_urls, conflicts,
-                    lambda checker, existing_fix, new_fix:
-                    error("%s%s/%s: %s [%s] =/= [%s]", emoji(":collision:  "),
-                          analyser, checker, coloured("FIX COLLISION", "red"),
-                          existing_fix, new_fix)
-                )
+                merge_if_no_collision(severities, generated_urls, conflicts,
+                                      partial(_emit_collision_error, analyser))
 
                 if args.apply_fixes and severities:
                     log("%sUpdating %s %s for '%s'... ('%s')",
                         emoji(":writing_hand:  "),
-                        coloured("%d" % len(severities), "green"),
+                        coloured(f"{len(severities)}", "green"),
                         plural(severities, "checker", "checkers"),
                         analyser,
                         path)
@@ -294,6 +300,6 @@ def main(args: argparse.Namespace) -> Optional[int]:
 
 if __name__ == "__main__":
     def _main():
-        _args = args(None).parse_args()
-        sys.exit(main(_args) or 0)
+        args = arg_parser(None).parse_args()
+        sys.exit(main(args) or 0)
     _main()

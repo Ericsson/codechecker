@@ -17,7 +17,7 @@ class Base:
     def __init__(self, analyser: str):
         self.analyser = analyser
 
-    def skip(self, checker: str) -> bool:
+    def skip(self, _checker: str) -> bool:
         """
         Returns ``True`` if the result for `checker` from the current generator
         should be discarded.

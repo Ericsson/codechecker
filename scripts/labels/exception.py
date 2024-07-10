@@ -10,4 +10,3 @@
 
 class EngineError(Exception):
     """Indiciates a generic failure of a generator or verifier engine."""
-    pass

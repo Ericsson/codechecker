@@ -31,8 +31,10 @@ def get_markdownlint_latest_release(request: http.HTMLAcquirer) -> str:
             try:
                 github_token = os.environ["GITHUB_TOKEN"]
             except KeyError:
+                # pylint: disable=raise-missing-from
                 raise PermissionError("GitHub API rate limit exceeded, "
-                                      "specify 'GITHUB_TOKEN' env var!")
+                                      "specify 'GITHUB_TOKEN' enviromment "
+                                      "variable!")
 
         response = request._pool.request("GET", api, headers={
             "Authorization": f"Bearer {github_token}"
@@ -40,7 +42,7 @@ def get_markdownlint_latest_release(request: http.HTMLAcquirer) -> str:
 
     if response.status != http.HTTPStatusCode.OK:
         raise HTTPError("Failed to get a valid response on second try, got "
-                        "%s %s instead" % (response.status, response.reason))
+                        f"{response.status} {response.reason} instead")
 
     data = json.loads(response.data)
     return data[0]["name"]

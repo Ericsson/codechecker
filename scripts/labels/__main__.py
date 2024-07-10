@@ -51,7 +51,7 @@ internal library.
             description=package.description,
             epilog=package.epilogue,
             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-        subparser = package.args(subparser)
+        subparser = package.arg_parser(subparser)
         subparser.set_defaults(__main=package.main)
 
     add_subparser(doc_url_generate)
