@@ -10,8 +10,7 @@ Context to store package related information.
 """
 
 
-# pylint: disable=deprecated-module
-from distutils.spawn import find_executable
+from shutil import which
 from argparse import ArgumentTypeError
 
 import os
@@ -104,7 +103,7 @@ class Context(metaclass=Singleton):
                     had_error = True
                     continue
 
-                resolved_path = find_executable(path)
+                resolved_path = which(path)
 
                 if not os.path.isfile(resolved_path):
                     LOG.error(f"'{path}' is not a path to an analyzer binary "
@@ -219,7 +218,7 @@ class Context(metaclass=Singleton):
                     self._data_files_dir_path, value)
             else:
                 env_path = analyzer_env['PATH'] if analyzer_env else None
-                compiler_binary = find_executable(value, env_path)
+                compiler_binary = which(cmd=value, path=env_path)
                 if not compiler_binary:
                     LOG.debug("'%s' binary can not be found in your PATH!",
                               value)
@@ -242,7 +241,7 @@ class Context(metaclass=Singleton):
             self.__replacer = os.path.join(self._data_files_dir_path,
                                            replacer_binary)
         else:
-            self.__replacer = find_executable(replacer_binary)
+            self.__replacer = which(replacer_binary)
 
     @property
     def version(self):

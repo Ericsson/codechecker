@@ -28,7 +28,7 @@ import string
 import subprocess
 import sys
 import zipfile
-from distutils.spawn import find_executable
+from shutil import which
 
 from pathlib import Path
 from typing import Iterable, Iterator, List, Optional, Set, Tuple, Union
@@ -114,7 +114,7 @@ def __determine_compiler(gcc_command: List[str]) -> str:
     files or environment variables.
     """
     if gcc_command[0].endswith('ccache'):
-        if find_executable(gcc_command[1]) is not None:
+        if which(gcc_command[1]) is not None:
             return gcc_command[1]
 
     return gcc_command[0]

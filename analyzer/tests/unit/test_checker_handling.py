@@ -11,8 +11,7 @@ Test the handling of implicitly and explicitly handled checkers in analyzers
 """
 
 
-# pylint: disable=deprecated-module
-from distutils import util
+from codechecker_common.util import strtobool
 import os
 import re
 import tempfile
@@ -260,8 +259,9 @@ class CheckerHandlingClangSATest(unittest.TestCase):
 
         # Test if statisticsbased checkers are enabled by --stats flag
         # by default.
-        stats_capable = bool(util.strtobool(
-            os.environ.get('CC_TEST_FORCE_STATS_CAPABLE', 'False')))
+        stats_capable = strtobool(
+            os.environ.get('CC_TEST_FORCE_STATS_CAPABLE', 'False')
+        )
 
         if stats_capable:
             cfg_handler = ClangSA.construct_config_handler(
