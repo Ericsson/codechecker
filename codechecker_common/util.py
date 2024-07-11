@@ -107,3 +107,8 @@ def path_for_fake_root(full_path: str, root_path: str = '/') -> str:
     relative_path = os.path.relpath(full_path, '/')
     fake_root_path = os.path.join(root_path, relative_path)
     return os.path.realpath(fake_root_path)
+
+
+def strtobool(value: str) -> bool:
+    """Parse a string value to a boolean."""
+    return value.lower() in ('y', 'yes', 't', 'true', 'on', '1')

@@ -6,9 +6,7 @@
 #
 # -------------------------------------------------------------------------
 from collections import defaultdict
-# TODO distutils will be removed in python3.12
-# pylint: disable=deprecated-module
-from distutils.version import StrictVersion
+from packaging.version import Version
 import os
 import pickle
 import shlex
@@ -201,7 +199,7 @@ class Gcc(analyzer_base.SourceAnalyzer):
         # The analyzer version should be above 13.0.0 because the
         # '-fdiagnostics-format=sarif-file' argument was introduced in this
         # release.
-        if analyzer_version >= StrictVersion("13.0.0"):
+        if Version(analyzer_version) >= Version("13.0.0"):
             return None
 
         return f"GCC binary found is too old at v{analyzer_version.strip()}; "\

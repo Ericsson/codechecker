@@ -21,8 +21,7 @@ import subprocess
 import time
 import unittest
 
-# pylint: disable=deprecated-module
-from distutils.spawn import find_executable
+from shutil import which
 
 from libtest import env
 
@@ -71,7 +70,7 @@ class TestFixit(unittest.TestCase):
         if os.path.isdir(self.report_dir):
             shutil.rmtree(self.report_dir)
 
-    @unittest.skipIf(find_executable('clang-apply-replacements') is None,
+    @unittest.skipIf(which('clang-apply-replacements') is None,
                      "clang-apply-replacements clang tool must be available "
                      "in the environment.")
     def test_fixit_list(self):
@@ -167,7 +166,7 @@ int main()
             self.assertIn("v.empty()", new_source_file)
             self.assertNotIn("v.size()", new_source_file)
 
-    @unittest.skipIf(find_executable('clang-apply-replacements') is None,
+    @unittest.skipIf(which('clang-apply-replacements') is None,
                      "clang-apply-replacements clang tool must be available "
                      "in the environment.")
     def test_fixit_file_modification(self):
@@ -255,7 +254,7 @@ int main()
         self.assertIn('Skipped files due to modification since last analysis',
                       err)
 
-    @unittest.skipIf(find_executable('clang-apply-replacements') is None,
+    @unittest.skipIf(which('clang-apply-replacements') is None,
                      "clang-apply-replacements clang tool must be available "
                      "in the environment.")
     def test_fixit_by_diff(self):
@@ -353,7 +352,7 @@ int main()
         print('\n' + out + '\n')
         self.assertEqual(out.count("DiagnosticMessage"), 1)
 
-    @unittest.skipIf(find_executable('clang-apply-replacements') is None,
+    @unittest.skipIf(which('clang-apply-replacements') is None,
                      "clang-apply-replacements clang tool must be available "
                      "in the environment.")
     def test_fixit_apply_failure(self):

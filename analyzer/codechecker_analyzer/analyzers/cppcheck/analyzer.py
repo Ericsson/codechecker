@@ -10,9 +10,7 @@ Cppcheck related functions.
 """
 
 from collections import defaultdict
-# TODO distutils will be removed in python3.12
-# pylint: disable=deprecated-module
-from distutils.version import StrictVersion
+from packaging.version import Version
 from pathlib import Path
 import os
 import pickle
@@ -347,7 +345,7 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
 
         # The analyzer version should be above 1.80 because '--plist-output'
         # argument was introduced in this release.
-        if StrictVersion(analyzer_version) >= StrictVersion("1.80"):
+        if Version(analyzer_version) >= Version("1.80"):
             return None
 
         return "CppCheck binary found is too old at " \
