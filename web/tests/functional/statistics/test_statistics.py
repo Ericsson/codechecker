@@ -10,8 +10,7 @@
 """ statistics collector feature test.  """
 
 
-# pylint: disable=deprecated-module
-from distutils import util
+from codechecker_common.util import strtobool
 import os
 import shutil
 import sys
@@ -120,8 +119,9 @@ class TestSkeleton(unittest.TestCase):
 
         if not self.stats_capable:
             try:
-                self.stats_capable = bool(util.strtobool(
-                    os.environ['CC_TEST_FORCE_STATS_CAPABLE']))
+                self.stats_capable = strtobool(
+                    os.environ['CC_TEST_FORCE_STATS_CAPABLE']
+                )
             except (ValueError, KeyError):
                 pass
 

@@ -10,8 +10,7 @@
 """ Z3 feature test.  """
 
 
-# pylint: disable=deprecated-module
-from distutils import util
+from codechecker_common.util import strtobool
 import os
 import shutil
 import unittest
@@ -117,8 +116,9 @@ class TestSkeleton(unittest.TestCase):
 
         if not self.z3_capable:
             try:
-                self.z3_capable = bool(util.strtobool(
-                    os.environ['CC_TEST_FORCE_Z3_CAPABLE']))
+                self.z3_capable = strtobool(
+                    os.environ['CC_TEST_FORCE_Z3_CAPABLE']
+                )
             except (ValueError, KeyError):
                 pass
 

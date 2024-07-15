@@ -8,8 +8,7 @@
 
 
 from collections import namedtuple
-# pylint: disable=deprecated-module
-from distutils.spawn import find_executable
+from shutil import which
 from enum import Enum
 from pathlib import Path
 
@@ -342,7 +341,7 @@ class ImplicitCompilerInfo:
     def is_executable_compiler(compiler):
         if compiler not in ImplicitCompilerInfo.compiler_isexecutable:
             ImplicitCompilerInfo.compiler_isexecutable[compiler] = \
-                find_executable(compiler) is not None
+                which(compiler) is not None
 
         return ImplicitCompilerInfo.compiler_isexecutable[compiler]
 
