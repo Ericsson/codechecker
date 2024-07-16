@@ -78,6 +78,7 @@ IGNORED_OPTIONS_GCC = [
     '-ffixed-r2',
     '-ffp$',
     '-mfp16-format',
+    '-mmitigate-rop',
     '-fgcse-lm',
     '-fhoist-adjacent-loads',
     '-findirect-inlining',
