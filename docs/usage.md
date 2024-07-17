@@ -11,7 +11,7 @@ in your source code and integrate the static analysis into your CI flow to preve
   - [Step 1: Integrate CodeChecker into your build system](#step-1-integrate-codechecker-into-your-build-system)
     - [Step in the docs/examples directory](#step-in-the-docsexamples-directory)
     - [Clean the workspace](#clean-the-workspace)
-    - [Log your build](#log-your-build)
+    - [Generate a compilation database](#generate-a-compilation-database)
     - [Check the contents of compile\_commands.json file](#check-the-contents-of-compile_commandsjson-file)
   - [Step 2: Analyze your code](#step-2-analyze-your-code)
     - [Run the analysis](#run-the-analysis)
@@ -81,15 +81,25 @@ cd <repo root dir>/docs/examples
 make clean
 ```
 
-### Log your build
+### Generate a compilation database
+
+There are different ways to generate a 
+[compilation database](https://clang.llvm.org/docs/JSONCompilationDatabase.html).
+This compilation database is an input of the next analysis step.
+
+You can check [LLVM documentation](https://clang.llvm.org/docs/JSONCompilationDatabase.html)
+for the different options on how to generate this file.
+
+Alternatively, you can run `CodeChecker log` command to generate a compilation database.
+
 Logging means that during the whole compilation process CodeChecker catches
-compiler calls and saves commands in a
-[compilation database](https://clang.llvm.org/docs/JSONCompilationDatabase.html)
-file. This compilation database is an input of the next analysis step.
+compiler calls and saves commands in a compilation database file. 
 
 note: This command is currently not working on macOS.
 The System Integrity Protection (SIP) in macOS blocks the usage of `LD_LIBRARY_PATH`.
-Please try to obtain the `compile_commands.json` in an other way, with the help of CMake for example.
+Please try to obtain the `compile_commands.json` in an other way, with the help of
+[CMake](https://cmake.org/cmake/help/latest/variable/CMAKE_EXPORT_COMPILE_COMMANDS.html)
+for example.
 
 ```sh
 CodeChecker log --build "make" --output ./compile_commands.json
