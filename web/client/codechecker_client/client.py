@@ -132,12 +132,12 @@ def login_user(protocol, host, port, username, login=False):
             sys.exit(1)
     elif 'oauth' in str(methods): 
         # GitHub app config
-        client_id = "66f0228ec6eea4a784a1"
-        client_secret = "db8297561255880f62c7ea7a602fba6f1343e7cc"
-        scope = "user:email" #
+        client_id = oauth_config['oauth_client_id']
+        client_secret = oauth_config['oauth_client_secret']
+        scope = oauth_config['oauth_scope']
 
         # Create an OAuth2Session instance
-        url, _ = OAuth2Session(client_id, client_secret, scope=scope).create_authorization_url("https://github.com/login/oauth/authorize")
+        url, _ = OAuth2Session(client_id, client_secret, scope=scope).create_authorization_url(oauth_config['oauth_authorization_url'])
 
         print("Please visit this URL to authenticate: ", url)
         print("OAuth authentication is client.py in codechecker client.")

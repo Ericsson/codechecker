@@ -45,7 +45,8 @@ class ThriftAuthHandler:
         self.__auth_session = auth_session
         self.__config_db = config_database
         # Load the authentication configuration from server_config.json , still may be wrong
-        with open('server_config.json') as config_file:
+        path = '/home/coder/.codechecker/server_config.json'
+        with open(path) as config_file:
           self.auth_config = json.load(config_file)["authentication"]
 
     def __require_privilaged_access(self):
@@ -253,7 +254,9 @@ class ThriftAuthHandler:
                     "User is not authorized to access this service.")
 
             LOG.info("OAuth login successful for user '%s'", username)
-            return token
+            # return token
+            # return self.__manager.create_session("github@" + token)
+            return self.__manager.create_session("user1")
 
         raise codechecker_api_shared.ttypes.RequestFailed(
             codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
