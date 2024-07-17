@@ -27,3 +27,5 @@ class ClangSAConfigHandler(config_handler.AnalyzerConfigHandler):
         self.enable_z3 = False
         self.enable_z3_refutation = False
         self.environ = environ
+        self.analyze_headers = False
+        self.expand_macros = False

@@ -506,6 +506,19 @@ def add_arguments_to_parser(parser):
                                         "SMT solver. This should not cause "
                                         "that much of a slowdown compared to "
                                         "using only the Z3 solver.")
+    analyzer_opts.add_argument('--analyze-headers',
+                               dest='analyze_headers',
+                               choices=['on', 'off'],
+                               default='on',
+                               help="Force the static analyzer to analyze "
+                                    "functions defined in header files.")
+
+    analyzer_opts.add_argument('--expand-macros',
+                               dest='expand_macros',
+                               choices=['on', 'off'],
+                               default='on',
+                               help="Whether macros should be expanded and "
+                                    "included in the plist output.")
 
     if analyzer_types.is_ctu_capable():
         ctu_opts = parser.add_argument_group(
