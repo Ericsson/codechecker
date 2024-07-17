@@ -80,8 +80,6 @@
         </v-card>
       </v-col>
     </v-row>
-    <p>{{ link }}</p>
-    <p>1234: {{ link2 }}</p>
   </v-container>
 </template>
 
@@ -106,8 +104,6 @@ export default {
       error: false,
       errorMsg: null,
       valid: false,
-      link: "",
-      link2: "1234"
     };
   },
 
@@ -135,7 +131,7 @@ export default {
   mounted() {
     this.fixAutocomplete();
 
-    this.link2 = "89012637895";
+   
 
     const url = new URL(window.location.href);
     
@@ -146,7 +142,7 @@ export default {
 
 
     if (code != null && state != null) {
-      this.link2 = "12334455235";
+    
       this.$store
         .dispatch(LOGIN, { type: "oauth", url: window.location.href })
         .then(() => {
