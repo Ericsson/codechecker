@@ -78,9 +78,8 @@
                 :src="image"
                 alt="github logo"
                 style="max-height: 20px; height: 100%;"
-              />
-              &nbsp;
-                Login with GitHub   
+              >
+              &nbsp; Login with GitHub 
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -157,7 +156,11 @@ export default {
           this.success = true;
           this.error = false;
 
-          // this.$router.replace(returnTo || { name: "products" });
+          const returnTo = this.$router.currentRoute.query["return_to"];
+          this.$router.replace(returnTo || { name: "products" });
+
+          const w = window.location;
+          window.location.href = w.protocol + "//" + w.host + w.pathname;
         }).catch(err => {
           this.errorMsg = `Failed to log in! ${err.message}`;
           this.error = true;
