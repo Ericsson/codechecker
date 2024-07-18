@@ -379,7 +379,7 @@ class SessionManager:
             or self.__try_auth_dictionary(auth_string) \
             or self.__try_auth_pam(auth_string) \
             or self.__try_auth_ldap(auth_string) \
-            or self.__try_auth_oauth(auth_string)
+            or self.__try_auth_oauth_github(auth_string)
         if not validation:
             return False
 
@@ -500,21 +500,19 @@ class SessionManager:
 
         return False
 
-    def __try_auth_oauth(self, auth_string):
+    def __try_auth_oauth_github(self, auth_string):
         """
         Try to authenticate user based on the OAuth configuration.
         """
-        # print(self.__is_method_enabled('oauth'), "try oauth")
         if self.__is_method_enabled('oauth'):
-            print(auth_string , "try oauth debug")
-            username = auth_string.split('github@')[1]
+            # providers = self.__auth_config['method_oauth'].get('providers', {}).keys()
+            # print(providers, "try oauth")
 
-            # groups = self.__auth_config['method_oauth'] \
-            #     .get('groups')
-            groups = ["user"] # the group is hardcoded for now
-            self.__update_groups(username, groups)
-            print({'username': username, 'groups': groups}, "try oauth debug")
-            return {'username': username, 'groups': groups}
+            data = auth_string.split('github@')[1]
+            username, token = data.split(':')
+
+            print({'username': username}, "try oauth debug")
+            return {'username': username, 'token': token }
 
     def __update_groups(self, user_name, groups):
         """

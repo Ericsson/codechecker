@@ -248,7 +248,6 @@ class ThriftAuthHandler:
             user_info = session.get(user_info_url).json()
 
             username = user_info[oauth_config["oauth_user_info_mapping"]["username"]]
-            print(username)
             # LOG.info(username)
             # if username not in oauth_config.get("allowed_users", []):
             #     raise codechecker_api_shared.ttypes.RequestFailed(
@@ -257,7 +256,7 @@ class ThriftAuthHandler:
 
             LOG.info("OAuth login successful for user '%s'", username)
             # return token
-            session = self.__manager.create_session("github@" + username) 
+            session = self.__manager.create_session("github@" + username + ":" + token['access_token']) 
             return session.token
             # return self.__manager.create_session(username)
 
