@@ -74,7 +74,13 @@
               color="primary"
               @click="oauth"
             >
-              Login With Github
+              <img
+                :src="image"
+                alt="github logo"
+                style="max-height: 20px; height: 100%;"
+              />
+              &nbsp;
+                Login with GitHub   
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -88,6 +94,7 @@ import { mapGetters } from "vuex";
 import { LOGIN } from "@/store/actions.type";
 import { authService, handleThriftError } from "@cc-api";
 import Alerts from "@/components/Alerts";
+import image from "@/assets/oauth/github-mark.png";
 
 export default {
   name: "Login",
@@ -104,6 +111,7 @@ export default {
       error: false,
       errorMsg: null,
       valid: false,
+      image: image
     };
   },
 

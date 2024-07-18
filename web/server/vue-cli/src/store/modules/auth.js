@@ -69,7 +69,7 @@ const actions = {
         authService.getClient().performLogin("oauth", credentials.url,
           handleThriftError(token => {
             context.commit(SET_AUTH, {
-              userName: "OAuth",
+              userName: "OAuth login",
               token: token
             });
             resolve(token);
