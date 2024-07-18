@@ -244,6 +244,16 @@ class SessionManager:
                                 "... Disabling PAM authentication.")
                     self.__auth_config['method_pam']['enabled'] = False
 
+            if 'method_oauth' in self.__auth_config and \
+                    self.__auth_config['method_oauth'].get('enabled'):
+                if 'oauth' not in UNSUPPORTED_METHODS:
+                    found_auth_method = True
+                else:
+                    LOG.warning("OAuth authentication was enabled but "
+                                "prerequisites are NOT installed on the system"
+                                "... Disabling OAuth authentication.")
+                    self.__auth_config['method_oauth']['enabled'] = False
+
             if not found_auth_method:
                 if force_auth:
                     LOG.warning("Authentication was manually enabled, but no "
@@ -368,7 +378,8 @@ class SessionManager:
         validation = self.__try_auth_root(auth_string) \
             or self.__try_auth_dictionary(auth_string) \
             or self.__try_auth_pam(auth_string) \
-            or self.__try_auth_ldap(auth_string)
+            or self.__try_auth_ldap(auth_string) \
+            or self.__try_auth_oauth(auth_string)
         if not validation:
             return False
 
@@ -488,6 +499,22 @@ class SessionManager:
                     return {'username': username, 'groups': groups}
 
         return False
+
+    def __try_auth_oauth(self, auth_string):
+        """
+        Try to authenticate user based on the OAuth configuration.
+        """
+        # print(self.__is_method_enabled('oauth'), "try oauth")
+        if self.__is_method_enabled('oauth'):
+            print(auth_string , "try oauth debug")
+            username = auth_string.split('github@')[1]
+
+            # groups = self.__auth_config['method_oauth'] \
+            #     .get('groups')
+            groups = ["user"] # the group is hardcoded for now
+            self.__update_groups(username, groups)
+            print({'username': username, 'groups': groups}, "try oauth debug")
+            return {'username': username, 'groups': groups}
 
     def __update_groups(self, user_name, groups):
         """
@@ -609,12 +636,14 @@ class SessionManager:
             self.__cleanup_sessions()
 
         # Try authenticate user with personal access token.
-        auth_token = self.__try_auth_token(auth_string)
-        if auth_token:
-            local_session = self.__get_local_session_from_db(auth_token.token)
-            local_session.revalidate()
-            self.__sessions.append(local_session)
-            return local_session
+        print(auth_string, "DEBUGGING LINE")
+        if ":" in auth_string:
+            auth_token = self.__try_auth_token(auth_string)
+            if auth_token:
+                local_session = self.__get_local_session_from_db(auth_token.token)
+                local_session.revalidate()
+                self.__sessions.append(local_session)
+                return local_session
 
         # Try to authenticate user with different authentication methods.
         validation = self.__handle_validation(auth_string)

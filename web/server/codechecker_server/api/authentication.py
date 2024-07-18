@@ -45,7 +45,7 @@ class ThriftAuthHandler:
         self.__auth_session = auth_session
         self.__config_db = config_database
         # Load the authentication configuration from server_config.json , still may be wrong
-        path = '/home/coder/.codechecker/server_config.json'
+        path = '/home/feyruz/.codechecker/server_config.json'
         with open(path) as config_file:
           self.auth_config = json.load(config_file)["authentication"]
 
@@ -248,15 +248,18 @@ class ThriftAuthHandler:
             user_info = session.get(user_info_url).json()
 
             username = user_info[oauth_config["oauth_user_info_mapping"]["username"]]
-            if username not in oauth_config.get("allowed_users", []):
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                    "User is not authorized to access this service.")
+            print(username)
+            # LOG.info(username)
+            # if username not in oauth_config.get("allowed_users", []):
+            #     raise codechecker_api_shared.ttypes.RequestFailed(
+            #         codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+            #         "User is not authorized to access this service.")
 
             LOG.info("OAuth login successful for user '%s'", username)
             # return token
-            # return self.__manager.create_session("github@" + token)
-            return self.__manager.create_session("user1")
+            session = self.__manager.create_session("github@" + username) 
+            return session.token
+            # return self.__manager.create_session(username)
 
         raise codechecker_api_shared.ttypes.RequestFailed(
             codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
