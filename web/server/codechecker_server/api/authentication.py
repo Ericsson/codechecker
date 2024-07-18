@@ -245,16 +245,15 @@ class ThriftAuthHandler:
                 url=token_url,
                 authorization_response=f"{auth_string}",
             )
+            
             user_info = session.get(user_info_url).json()
 
             username = user_info[oauth_config["oauth_user_info_mapping"]["username"]]
-            # LOG.info(username)
-            # if username not in oauth_config.get("allowed_users", []):
-            #     raise codechecker_api_shared.ttypes.RequestFailed(
-            #         codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-            #         "User is not authorized to access this service.")
+            if username not in oauth_config.get("allowed_users", []):
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "User is not authorized to access this service.")
 
-            LOG.info("OAuth login successful for user '%s'", username)
             # return token
             session = self.__manager.create_session("github@" + username + ":" + token['access_token']) 
             return session.token
