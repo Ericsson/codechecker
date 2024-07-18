@@ -505,13 +505,9 @@ class SessionManager:
         Try to authenticate user based on the OAuth configuration.
         """
         if self.__is_method_enabled('oauth'):
-            # providers = self.__auth_config['method_oauth'].get('providers', {}).keys()
-            # print(providers, "try oauth")
-
             data = auth_string.split('github@')[1]
             username, token = data.split(':')
 
-            print({'username': username}, "try oauth debug")
             return {'username': username, 'token': token }
 
     def __update_groups(self, user_name, groups):
@@ -634,7 +630,6 @@ class SessionManager:
             self.__cleanup_sessions()
 
         # Try authenticate user with personal access token.
-        print(auth_string, "DEBUGGING LINE")
         if ":" in auth_string:
             auth_token = self.__try_auth_token(auth_string)
             if auth_token:

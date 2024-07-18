@@ -45,6 +45,25 @@
         }
       ]
     },
+    "method_oauth": {
+      "enabled": false,
+      "oauth_client_id": null,
+      "oauth_client_secret": null,
+      "oauth_redirect_uri": "http://localhost:8001/login",
+      "oauth_authorization_uri": "https://github.com/login/oauth/authorize",
+      "oauth_token_uri": "https://github.com/login/oauth/access_token",
+      "oauth_user_info_uri": "https://api.github.com/user",
+      "oauth_scope": "user:email",
+      "oauth_user_info_mapping": {
+        "username": "login",
+        "email": "email",
+        "fullname": "name"
+      },
+      "allowed_users": [
+        "user1",
+        "user2",
+        "user3"
+      ],
     "method_pam": {
       "enabled" : false,
       "users": [

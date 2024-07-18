@@ -57,7 +57,10 @@
               />
             </v-form>
           </v-card-text>
-          <v-card-actions class="justify-center px-0">
+          <v-card-actions
+            id="btn-container"
+            class="d-flex justify-center flex-column"
+          >
             <v-btn
               id="login-btn"
               block
@@ -156,14 +159,12 @@ export default {
           this.success = true;
           this.error = false;
 
-          const returnTo = this.$router.currentRoute.query["return_to"];
-          this.$router.replace(returnTo || { name: "products" });
-
           const w = window.location;
           window.location.href = w.protocol + "//" + w.host + w.pathname;
         }).catch(err => {
           this.errorMsg = `Failed to log in! ${err.message}`;
           this.error = true;
+          this.$router.replace({ name: "login" });
         });
     }
   },
@@ -246,6 +247,11 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+#btn-container > button {
+  margin: 0 !important;
+  margin-top: 10px !important;
+}
+
 #avatar {
   position: absolute;
   margin: 0 auto;
