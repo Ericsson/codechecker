@@ -109,25 +109,7 @@ const actions = {
 
   [OAUTH]() {
     return new Promise(resolve => {
-      // resolve("google.com");
       resolve(authService.getClient().createLink());
-      // authService.getClient().createLink(
-      //   handleThriftErrorsuccess => {(
-      //     if (success) {
-      //       resolve(success);
-      //     }
-      //   })
-      // );
-      // resolve(authService.getClient().performLogin("oauth", ""));
-      // handleThriftError(token => {
-      //   context.commit(SET_AUTH, {
-      //     userName: "OAuth",
-      //     token: token
-      //   });
-      //   resolve(token);
-      // }, err => {
-      //   reject(err);
-      // }));
     });
   }
 };
