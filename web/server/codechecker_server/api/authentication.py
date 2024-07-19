@@ -30,6 +30,8 @@ from ..permissions import handler_from_scope_params as make_handler, \
 from ..server import permissions
 from ..session_manager import generate_session_token
 
+import os
+
 LOG = get_logger('server')
 
 
@@ -44,8 +46,8 @@ class ThriftAuthHandler:
         self.__manager = manager
         self.__auth_session = auth_session
         self.__config_db = config_database
-        # Load the authentication configuration from server_config.json , still may be wrong
-        path = '/home/feyruz/.codechecker/server_config.json'
+        # Load the authentication configuration from server_config.json , 
+        path = os.path.expanduser('~') + '/.codechecker/server_config.json'
         with open(path) as config_file:
           self.auth_config = json.load(config_file)["authentication"]
 
