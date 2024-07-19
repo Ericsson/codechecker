@@ -139,8 +139,6 @@ def login_user(protocol, host, port, username, login=False):
         # Create an OAuth2Session instance
         url, _ = OAuth2Session(client_id, client_secret, scope=scope).create_authorization_url(oauth_config['oauth_authorization_url'])
 
-        print("Please visit this URL to authenticate: ", url)
-        print("OAuth authentication is client.py in codechecker client.")
         return url
         sys.exit(1)
     else:

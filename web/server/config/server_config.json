@@ -14,34 +14,34 @@
     "max_probe": 10
   },
   "authentication": {
-    "enabled" : false,
-    "realm_name" : "CodeChecker Privileged server",
-    "realm_error" : "Access requires valid credentials.",
-    "session_lifetime" : 300,
-    "refresh_time" : 60,
-    "logins_until_cleanup" : 30,
+    "enabled": false,
+    "realm_name": "CodeChecker Privileged server",
+    "realm_error": "Access requires valid credentials.",
+    "session_lifetime": 300,
+    "refresh_time": 60,
+    "logins_until_cleanup": 30,
     "method_dictionary": {
-      "enabled" : false,
-      "auths" : [],
-      "groups" : {}
+      "enabled": false,
+      "auths": [],
+      "groups": {}
     },
     "method_ldap": {
-      "enabled" : false,
+      "enabled": false,
       "authorities": [
         {
-          "connection_url" : "ldap://ldap.example.org",
-          "username" : null,
-          "password" : null,
-          "referrals" : false,
-          "deref" : "always",
-          "accountBase" : null,
-          "accountScope" : "subtree",
-          "accountPattern" : "(&(objectClass=person)(sAMAccountName=$USN$))",
+          "connection_url": "ldap://ldap.example.org",
+          "username": null,
+          "password": null,
+          "referrals": false,
+          "deref": "always",
+          "accountBase": null,
+          "accountScope": "subtree",
+          "accountPattern": "(&(objectClass=person)(sAMAccountName=$USN$))",
           "user_dn_postfix_preference": null,
-          "groupBase" : null,
-          "groupScope" : "subtree",
-          "groupPattern" : "(&(objectClass=group)(member=$USERDN$))",
-          "groupNameAttr" : "sAMAccountName"
+          "groupBase": null,
+          "groupScope": "subtree",
+          "groupPattern": "(&(objectClass=group)(member=$USERDN$))",
+          "groupNameAttr": "sAMAccountName"
         }
       ]
     },
@@ -49,7 +49,6 @@
       "enabled": false,
       "oauth_client_id": null,
       "oauth_client_secret": null,
-      "oauth_redirect_uri": "http://localhost:8001/login",
       "oauth_authorization_uri": "https://github.com/login/oauth/authorize",
       "oauth_token_uri": "https://github.com/login/oauth/access_token",
       "oauth_user_info_uri": "https://api.github.com/user",
@@ -64,19 +63,26 @@
         "user2",
         "user3"
       ],
-    "method_pam": {
-      "enabled" : false,
-      "users": [
-        "root", "myname"
-      ],
-      "groups": [
-        "adm", "cc-users"
-      ]
-    },
-    "regex_groups": {
-      "enabled" : false,
-      "groups" : {
-        "admins_custom_group" : [ "^admin$", "^admin_", "_admin$" ]
+      "method_pam": {
+        "enabled": false,
+        "users": [
+          "root",
+          "myname"
+        ],
+        "groups": [
+          "adm",
+          "cc-users"
+        ]
+      },
+      "regex_groups": {
+        "enabled": false,
+        "groups": {
+          "admins_custom_group": [
+            "^admin$",
+            "^admin_",
+            "_admin$"
+          ]
+        }
       }
     }
   }

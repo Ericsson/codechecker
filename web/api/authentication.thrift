@@ -69,11 +69,11 @@ service codeCheckerAuthentication {
                       2: string authString)
                       throws (1: codechecker_api_shared.RequestFailed requestError),
 
-  // Create a link for the user to log in.
+  // Create a link for the user to log in for github Oauth.
   string createLink()
       throws (1: codechecker_api_shared.RequestFailed requestError),
 
-  // creates a user object
+  // Retrieves an OAuth token for the specified link.
   string getOAuthToken(1: string link)
     throws (1: codechecker_api_shared.RequestFailed requestError),
 
