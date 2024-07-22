@@ -47,42 +47,67 @@
     },
     "method_oauth": {
       "enabled": false,
-      "oauth_client_id": null,
-      "oauth_client_secret": null,
-      "oauth_authorization_uri": "https://github.com/login/oauth/authorize",
-      "oauth_token_uri": "https://github.com/login/oauth/access_token",
-      "oauth_user_info_uri": "https://api.github.com/user",
-      "oauth_scope": "user:email",
-      "oauth_user_info_mapping": {
-        "username": "login",
-        "email": "email",
-        "fullname": "name"
-      },
-      "allowed_users": [
-        "user1",
-        "user2",
-        "user3"
-      ],
-      "method_pam": {
-        "enabled": false,
-        "users": [
-          "root",
-          "myname"
-        ],
-        "groups": [
-          "adm",
-          "cc-users"
-        ]
-      },
-      "regex_groups": {
-        "enabled": false,
-        "groups": {
-          "admins_custom_group": [
-            "^admin$",
-            "^admin_",
-            "_admin$"
+      "providers": {
+        "github": {
+          "enabled": false,
+          "oauth_client_id": "example_id",
+          "oauth_client_secret": "example_secret",
+          "oauth_redirect_uri": "http://localhost:8001/login",
+          "oauth_authorization_uri": "https://github.com/login/oauth/authorize",
+          "oauth_token_uri": "https://github.com/login/oauth/access_token",
+          "oauth_user_info_uri": "https://api.github.com/user",
+          "oauth_scope": "user:email",
+          "oauth_user_info_mapping": {
+            "username": "login",
+            "email": "email",
+            "fullname": "name"
+          },
+          "allowed_users": [
+            "user1",
+            "user2",
+            "user3"
+          ]
+        },
+        "google": {
+          "enabled": false,
+          "oauth_client_id": "example_id",
+          "oauth_client_secret": "example_secret",
+          "oauth_authorization_uri": "https://accounts.google.com/o/oauth2/auth",
+          "oauth_token_uri": "https://oauth2.googleapis.com/token",
+          "oauth_user_info_uri": "https://www.googleapis.com/oauth2/v1/userinfo",
+          "oauth_scope": "https://www.googleapis.com/auth/userinfo.email",
+          "oauth_user_info_mapping": {
+            "username": "email",
+            "email": "email",
+            "fullname": "name"
+          },
+          "allowed_users": [
+            "user1",
+            "user2",
+            "user3"
           ]
         }
+      }
+    },
+    "method_pam": {
+      "enabled": false,
+      "users": [
+        "root",
+        "myname"
+      ],
+      "groups": [
+        "adm",
+        "cc-users"
+      ]
+    },
+    "regex_groups": {
+      "enabled": false,
+      "groups": {
+        "admins_custom_group": [
+          "^admin$",
+          "^admin_",
+          "_admin$"
+        ]
       }
     }
   }
