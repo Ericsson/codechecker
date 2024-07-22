@@ -30,7 +30,6 @@ from ..permissions import handler_from_scope_params as make_handler, \
 from ..server import permissions
 from ..session_manager import generate_session_token
 
-import os
 
 LOG = get_logger('server')
 
@@ -46,10 +45,7 @@ class ThriftAuthHandler:
         self.__manager = manager
         self.__auth_session = auth_session
         self.__config_db = config_database
-        # Load the authentication configuration from server_config.json , 
-        path = os.path.expanduser('~') + '/.codechecker/server_config.json'
-        with open(path) as config_file:
-          self.auth_config = json.load(config_file)["authentication"]
+        self.auth_config = self.__manager.get_oauth_config()
 
     def __require_privilaged_access(self):
         """
@@ -100,16 +96,16 @@ class ThriftAuthHandler:
 
     @timeit
     def createLink(self):
-        oauth_config = self.auth_config.get("method_oauth", {})
-        if not oauth_config.get("enabled"):
+        self.oauth_config = self.__manager.get_oauth_config()
+        if not self.oauth_config.get("enabled"):
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                "OAuth authentication is not enabled.")
+                "OAuth authentication is not enabled.11")
         
-        client_id = oauth_config["oauth_client_id"]
-        client_secret = oauth_config["oauth_client_secret"]
-        scope = oauth_config["oauth_scope"]
-        authorization_uri = oauth_config["oauth_authorization_uri"]
+        client_id = self.oauth_config["oauth_client_id"]
+        client_secret = self.oauth_config["oauth_client_secret"]
+        scope = self.oauth_config["oauth_scope"]
+        authorization_uri = self.oauth_config["oauth_authorization_uri"]
 
         # Create an OAuth2Session instance
         session = OAuth2Session(client_id, client_secret, scope=scope)
@@ -123,7 +119,7 @@ class ThriftAuthHandler:
         if not oauth_config.get("enabled"):
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                "OAuth authentication is not enabled.")
+                "OAuth authentication is not enabled. 22")
         
         client_id = oauth_config["oauth_client_id"] # may be changed
         client_secret = oauth_config["oauth_client_secret"] # may be changed
@@ -230,11 +226,12 @@ class ThriftAuthHandler:
                     msg)
         elif auth_method == "oauth":
             LOG.info("OAuth login... started")
-            oauth_config = self.auth_config.get("method_oauth", {})
+            
+            oauth_config = self.__manager.get_oauth_config()
             if not oauth_config.get("enabled"):
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                    "OAuth authentication is not enabled.")
+                    "OAuth authentication is not enabled.33")
             
             client_id = oauth_config["oauth_client_id"]
             client_secret = oauth_config["oauth_client_secret"]
