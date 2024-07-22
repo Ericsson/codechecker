@@ -56,6 +56,8 @@ class MakeFileCreator:
             self.__stats_dir = statistics_data['stats_out_dir']
 
         self.__makefile = os.path.join(output_path, 'Makefile')
+        self.__stat_sh = os.path.join(output_path, 'print_stat.sh')
+        self.__exit_codes_dir = os.path.join(output_path, 'exit_codes')
 
         self.__config = None
         self.__func_map_cmd = None
@@ -110,12 +112,50 @@ class MakeFileCreator:
         analyzer.
         """
         mfile.write("# Default target to run all analysis.\n"
-                    "default: all\n\n")
+                    "default: create_exit_code_folder all\n"
+                    f"\t@bash {self.__stat_sh}\n"
+                    f"\t@rm -rf {self.__exit_codes_dir}\n\n"
+                    "# Folder for creating exit codes of analyses.\n"
+                    "create_exit_code_folder:\n"
+                    f"\t@rm -rf {self.__exit_codes_dir}\n"
+                    f"\t@mkdir {self.__exit_codes_dir}\n\n")
 
         for analyzer in self.__analyzers:
             analyzer_name = self.__format_analyzer_type(analyzer)
             mfile.write(f"# Target to run only '{analyzer_name}' analysis.\n"
                         f"all: all_{analyzer_name}\n\n")
+
+    def __write_print_stats(self, sfile):
+        """ Write target to print analyzer statistics.
+
+        At the end of the analysis the Makefile should print statistics about
+        how many actions were analyzed by the specific analyzers.
+        """
+        sfile.write(f'''#!/usr/bin/env bash
+declare -A success
+declare -A all
+sum=0
+
+for filename in $(ls {self.__exit_codes_dir}); do
+  success[$filename]=$(grep ^0$ {self.__exit_codes_dir}/$filename | wc -l)
+  all[$filename]=$(wc -l < {self.__exit_codes_dir}/$filename)
+  sum=$(($sum + ${{all[$filename]}}))
+done
+
+echo "----==== Summary ====----"
+
+echo "Successfully analyzed"
+for analyzer in "${{!success[@]}}"; do
+  echo $analyzer: ${{success[$analyzer]}}
+done
+
+echo "Failed to analyze"
+for analyzer in "${{!success[@]}}"; do
+  echo $analyzer: $((${{all[$analyzer]}} - ${{success[$analyzer]}}))
+done
+
+echo "Total analyzed compilation commands: $sum"
+echo "----=================----"''')
 
     def __get_ctu_pre_analysis_cmds(self, action):
         """ Get CTU pre-analysis commands. """
@@ -238,6 +278,9 @@ class MakeFileCreator:
         target = self.__get_target_name(action)
         analyzer_name = self.__format_analyzer_type(action.analyzer_type)
 
+        save_exit_code = \
+            f"; echo $$? >> {self.__exit_codes_dir}/{action.analyzer_type}"
+
         if action.analyzer_type == ClangTidy.ANALYZER_NAME:
             analyzer_output_file = rh.analyzer_result_file + ".output"
             file_name = "{source_file}_{analyzer}_" + target
@@ -247,11 +290,12 @@ class MakeFileCreator:
                                     "--filename", file_name,
                                     analyzer_output_file]
 
-            command = f"@{' '.join(analyzer_cmd)} > {analyzer_output_file}\n" \
+            command = f"@{' '.join(analyzer_cmd)} > " \
+                      f"{analyzer_output_file}{save_exit_code}\n" \
                       f"\t@{' '.join(report_converter_cmd)} 1>/dev/null\n" \
                       f"\t@rm -rf {analyzer_output_file}\n"
         else:
-            command = f"@{' '.join(analyzer_cmd)} 1>/dev/null"
+            command = f"@{' '.join(analyzer_cmd)} 1>/dev/null{save_exit_code}"
 
         mfile.write(
             f'{target}: {post_pre_all_target}\n'
@@ -264,6 +308,10 @@ class MakeFileCreator:
         """ Creates a Makefile from the given actions. """
         LOG.info("Creating Makefile from the analyzer commands: '%s'...",
                  self.__makefile)
+
+        with open(self.__stat_sh, 'w+',
+                  encoding='utf-8', errors='ignore') as sfile:
+            self.__write_print_stats(sfile)
 
         with open(self.__makefile, 'w+',
                   encoding='utf-8', errors='ignore') as mfile:
