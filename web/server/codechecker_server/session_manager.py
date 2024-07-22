@@ -266,8 +266,8 @@ class SessionManager:
                                 "Falling back to no authentication.")
                     self.__auth_config['enabled'] = False
     
-    def get_oauth_config(self):
-        return self.__auth_config.get('method_oauth', {})
+    def get_oauth_config(self, provider):
+        return self.__auth_config.get('method_oauth', {}).get("providers", {}).get(provider, {})
 
 
     def __get_config_dict(self):

@@ -45,7 +45,7 @@ class ThriftAuthHandler:
         self.__manager = manager
         self.__auth_session = auth_session
         self.__config_db = config_database
-        self.auth_config = self.__manager.get_oauth_config()
+        self.oauth_config_github = self.__manager.get_oauth_config("github")
 
     def __require_privilaged_access(self):
         """
@@ -94,9 +94,13 @@ class ThriftAuthHandler:
     def getLoggedInUser(self):
         return self.__auth_session.user if self.__auth_session else ""
 
-    @timeit
+    @timeit 
     def createLink(self):
-        self.oauth_config = self.__manager.get_oauth_config()
+        """
+        This functin is for creating a autehntication link for OAuth for Github.
+        """
+        self.oauth_config = self.oauth_config_github
+
         if not self.oauth_config.get("enabled"):
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
@@ -115,6 +119,9 @@ class ThriftAuthHandler:
 
     @timeit
     def getOAuthToken(self, link):
+        """
+        This function is for getting the OAuth token from the link for Oauth for Github.
+        """
         oauth_config = self.auth_config.get("method_oauth", {})
         if not oauth_config.get("enabled"):
             raise codechecker_api_shared.ttypes.RequestFailed(
@@ -143,7 +150,6 @@ class ThriftAuthHandler:
                 codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                 "User is not authorized to access this service.")
 
-        print(f"Username: {username}, Email: {email}, Fullname: {fullname}") # for debugging
         return user_info
 
 
@@ -227,7 +233,7 @@ class ThriftAuthHandler:
         elif auth_method == "oauth":
             LOG.info("OAuth login... started")
             
-            oauth_config = self.__manager.get_oauth_config()
+            oauth_config = self.oauth_config_github
             if not oauth_config.get("enabled"):
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
