@@ -113,7 +113,7 @@ class BasicLoggerTest(unittest.TestCase):
                                        "lib",
                                        machine,
                                        "ldlogger.so"),
-            "CC_LOGGER_GCC_LIKE": "gcc:g++:clang:clang++:cc:c++",
+            "CC_LOGGER_GCC_LIKE": "gcc:g++:clang:clang++:/cc:c++",
             "CC_LOGGER_FILE": self.logger_file,
             "CC_LOGGER_DEBUG_FILE": self.logger_debug_file,
         }

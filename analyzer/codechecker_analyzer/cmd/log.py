@@ -42,7 +42,7 @@ EPILOG_ENV_VAR = """
   CC_LOGGER_GCC_LIKE       Set to to a colon separated list to change which
                            compilers should be logged. For example (default):
                            export CC_LOGGER_GCC_LIKE="gcc:g++:clang:clang++:
-                           cc:c++". The logger will match any compilers with
+                           /cc:c++". The logger will match any compilers with
                            'gcc', 'g++', 'clang', 'clang++', 'cc' and 'c++' in
                            their filenames.
   CC_LOGGER_KEEP_LINK      If its value is not 'true' then object files will be

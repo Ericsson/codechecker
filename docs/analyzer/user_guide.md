@@ -483,7 +483,7 @@ Environment variables for 'CodeChecker log' command:
   CC_LOGGER_GCC_LIKE       Set to to a colon separated list to change which
                            compilers should be logged. For example (default):
                            export CC_LOGGER_GCC_LIKE="gcc:g++:clang:clang++:
-                           cc:c++". The logger will match any compilers with
+                           /cc:c++". The logger will match any compilers with
                            'gcc', 'g++', 'clang', 'clang++', 'cc' and 'c++' in
                            their filenames.
   CC_LOGGER_KEEP_LINK      If its value is not 'true' then object files will be
@@ -682,7 +682,7 @@ Environment variables
   CC_LOGGER_GCC_LIKE       Set to to a colon separated list to change which
                            compilers should be logged. For example (default):
                            export CC_LOGGER_GCC_LIKE="gcc:g++:clang:clang++:
-                           cc:c++". The logger will match any compilers with
+                           /cc:c++". The logger will match any compilers with
                            'gcc', 'g++', 'clang', 'clang++', 'cc' and 'c++' in
                            their filenames.
   CC_LOGGER_KEEP_LINK      If its value is not 'true' then object files will be
@@ -707,7 +707,7 @@ Set `CC_LOGGER_GCC_LIKE` environment variable to a colon separated list.
 For example (default):
 
 ```sh
-export CC_LOGGER_GCC_LIKE="gcc:g++:clang:clang++:cc:c++"
+export CC_LOGGER_GCC_LIKE="gcc:g++:clang:clang++:/cc:c++"
 ```
 
 This colon separated list may contain compiler names or paths. In case an
@@ -716,7 +716,7 @@ considered a path. The logger will capture only those build actions which have
 this postfix:
 
 ```sh
-export CC_LOGGER_GCC_LIKE="gcc:/bin/g++:clang:clang++:cc:c++"
+export CC_LOGGER_GCC_LIKE="gcc:/bin/g++:clang:clang++:/cc:c++"
 
 # "gcc" has to be infix of the compiler's name because it contains no slash.
 # "/bin/g++" has to be postfix of the compiler's path because it contains slash.
@@ -730,6 +730,9 @@ my/gcc/compiler/gcc-7 main.c  # Captured because "gcc" is infix of "gcc-7".
 /clang # Will not log clang++ calls only the clang binary calls will be captured.
 clang  # Will capture clang-tidy (which is not wanted) calls too because of a partial match.
 ```
+
+The reason of having a slash before `cc` is that `cc1` binary is executed as
+a sub-process by some compilers and that shouldn't be captured.
 
 Example:
 
@@ -1351,7 +1354,7 @@ CodeChecker will get the hardcoded values for the compilers set in the
 `CC_LOGGER_GCC_LIKE` environment variable.
 
 ```sh
-export CC_LOGGER_GCC_LIKE="gcc:g++:clang:clang++:cc:c++"
+export CC_LOGGER_GCC_LIKE="gcc:g++:clang:clang++:/cc:c++"
 ```
 
 GCC specific hard-coded values are detected during the analysis and
