@@ -75,7 +75,7 @@
               block
               x-large
               color="primary"
-              @click="oauth"
+              @click="oauth('github')"
             >
               <img
                 :src="image"
@@ -83,6 +83,15 @@
                 style="max-height: 20px; height: 100%;"
               >
               &nbsp; Login with GitHub 
+            </v-btn>
+            <v-btn
+              id="login-btn"
+              block
+              x-large
+              color="primary"
+              @click="oauth('google')"
+            >
+              Login with Google
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -113,7 +122,7 @@ export default {
       error: false,
       errorMsg: null,
       valid: false,
-      image: image
+      image: image,
     };
   },
 
@@ -141,20 +150,41 @@ export default {
   mounted() {
     this.fixAutocomplete();
 
-   
-
     const url = new URL(window.location.href);
-    
     let code = null, state = null;
     code = url.searchParams.get("code");
     state = url.searchParams.get("state");
 
-
-
     if (code != null && state != null) {
-    
+      if (url.searchParams.get("scope") &&
+          url.searchParams.get("scope").includes("googleapis")
+      ) {
+        this.$store
+          .dispatch(LOGIN, {
+            type: "oauth",
+            provider: "google",
+            url: window.location.href
+          })
+          .then(() => {
+            this.success = true;
+            this.error = false;
+
+            const w = window.location;
+            window.location.href = w.protocol + "//" + w.host + w.pathname;
+          }).catch(err => {
+            this.errorMsg = `Failed to log in! ${err.message}`;
+            this.error = true;
+            this.$router.replace({ name: "login" });
+          });
+        return;
+      }
+
       this.$store
-        .dispatch(LOGIN, { type: "oauth", url: window.location.href })
+        .dispatch(LOGIN, {
+          type: "oauth",
+          provider: "github",
+          url: window.location.href
+        })
         .then(() => {
           this.success = true;
           this.error = false;
@@ -166,6 +196,7 @@ export default {
           this.error = true;
           this.$router.replace({ name: "login" });
         });
+
     }
   },
 
@@ -186,12 +217,20 @@ export default {
           this.error = true;
         });
     },
-    oauth() {
+    oauth(provider) {
       new Promise(resolve => {
-        authService.getClient().createLink(
-          handleThriftError(url => {
-            resolve(url);
-          }));
+        if (provider === "google") {
+          authService.getClient().createLinkGoogle(
+            handleThriftError(url => {
+              resolve(url);
+            }));
+        }
+        else if (provider === "github") {
+          authService.getClient().createLinkGithub(
+            handleThriftError(url => {
+              resolve(url);
+            }));
+        }
       }).then(url => {
         if (url) {
           this.success = true;

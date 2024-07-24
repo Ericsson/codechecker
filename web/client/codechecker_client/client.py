@@ -130,17 +130,6 @@ def login_user(protocol, host, port, username, login=False):
             LOG.error("Authentication failed! Please check your credentials.")
             LOG.error(reqfail.message)
             sys.exit(1)
-    elif 'oauth' in str(methods): 
-        # GitHub app config
-        client_id = oauth_config['oauth_client_id']
-        client_secret = oauth_config['oauth_client_secret']
-        scope = oauth_config['oauth_scope']
-
-        # Create an OAuth2Session instance
-        url, _ = OAuth2Session(client_id, client_secret, scope=scope).create_authorization_url(oauth_config['oauth_authorization_url'])
-
-        return url
-        sys.exit(1)
     else:
         LOG.critical("No authentication methods were reported by the server "
                      "that this client could support.")

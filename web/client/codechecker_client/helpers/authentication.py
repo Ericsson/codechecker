@@ -45,7 +45,11 @@ class ThriftAuthHelper(BaseClientHelper):
         pass
     
     @ThriftClientCall
-    def createLink(self):
+    def createLinkGithub(self):
+        pass
+
+    @ThriftClientCall
+    def createLinkGoogle(self):
         pass
 
     @thrift_client_call
