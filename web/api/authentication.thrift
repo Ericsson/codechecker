@@ -70,7 +70,11 @@ service codeCheckerAuthentication {
                       throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Create a link for the user to log in for github Oauth.
-  string createLink()
+  string createLinkGithub()
+      throws (1: codechecker_api_shared.RequestFailed requestError),
+
+  // Create a link for the use to log in for google Oauth
+  string createLinkGoogle()
       throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Retrieves an OAuth token for the specified link.

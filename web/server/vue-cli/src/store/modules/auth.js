@@ -66,17 +66,32 @@ const actions = {
     return new Promise((resolve, reject) => {
 
       if (credentials.type === "oauth") {
-        authService.getClient().performLogin("oauth", credentials.url,
-          handleThriftError(token => {
-            context.commit(SET_AUTH, {
-              userName: "OAuth login",
-              token: token
-            });
-            resolve(token);
-          }, err => {
-            reject(err);
-          }));
-        return;
+        if (credentials.provider === "github") {
+          authService.getClient().performLogin("oauth_github", credentials.url,
+            handleThriftError(token => {
+              context.commit(SET_AUTH, {
+                userName: "OAuth login",
+                token: token
+              });
+              resolve(token);
+            }, err => {
+              reject(err);
+            }));
+          return;
+        }
+        else if (credentials.provider === "google") {
+          authService.getClient().performLogin("oauth_google", credentials.url,
+            handleThriftError(token => {
+              context.commit(SET_AUTH, {
+                userName: "OAuth login",
+                token: token
+              });
+              resolve(token);
+            }, err => {
+              reject(err);
+            }));
+          return;
+        }
       }
 
       authService.getClient().performLogin("Username:Password",
@@ -93,7 +108,7 @@ const actions = {
     });
   },
 
-  [LOGOUT](context) {
+  [LOGOUT](context) { 
     return new Promise((resolve, reject) => {
       authService.getClient().destroySession(
         handleThriftError(success => {
@@ -107,9 +122,15 @@ const actions = {
     });
   },
 
-  [OAUTH]() {
+  [OAUTH](provider) {
     return new Promise(resolve => {
-      resolve(authService.getClient().createLink());
+      if (provider === "github") {
+        resolve(authService.getClient().createLinkGithub());
+      } else if (provider === "google") {
+        resolve(authService.getClient().createLinkGoogle());
+      } else {
+        throw new Error(`Unsupported provider: ${provider}`);
+      }
     });
   }
 };

@@ -383,7 +383,8 @@ class SessionManager:
             or self.__try_auth_dictionary(auth_string) \
             or self.__try_auth_pam(auth_string) \
             or self.__try_auth_ldap(auth_string) \
-            or self.__try_auth_oauth_github(auth_string)
+            or self.__try_auth_oauth_github(auth_string) \
+            or self.__try_auth_oauth_google(auth_string)
         if not validation:
             return False
 
@@ -508,11 +509,21 @@ class SessionManager:
         """
         Try to authenticate user based on the OAuth configuration.
         """
-        if self.__is_method_enabled('oauth'):
+        if self.__is_method_enabled('oauth') and 'github@' in auth_string:
             data = auth_string.split('github@')[1]
             username, token = data.split(':')
 
             return {'username': username, 'token': token }
+
+    def __try_auth_oauth_google(self, auth_string):
+        """
+        Try to authenticate user based on the OAuth configuration.
+        """
+        if self.__is_method_enabled('oauth') and 'google@' in auth_string:
+            data = auth_string.split('google@')[1]
+            email, token = data.split(':')
+
+            return {'username': email, 'token': token }
 
     def __update_groups(self, user_name, groups):
         """
