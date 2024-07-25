@@ -124,7 +124,7 @@ class ThriftAuthHandler:
         """
         This function is for creating an authentication link for OAuth for Google.
         """
-        oauth_config = self.oauth_config_google
+        oauth_config = self.oauth_config_google # get the google oauth config
 
         if not oauth_config.get("enabled"):
             raise codechecker_api_shared.ttypes.RequestFailed(
@@ -256,8 +256,8 @@ class ThriftAuthHandler:
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     "User is not authorized to access this service.")
 
-            # return token
             session = self.__manager.create_session("github@" + username + ":" + token['access_token']) 
+
             return session.token
         elif auth_method == "oauth_google":
             LOG.info("OAuth login GOOGLE... started")
