@@ -154,10 +154,11 @@ export default {
     let code = null, state = null;
     code = url.searchParams.get("code");
     state = url.searchParams.get("state");
+    const provider = document.cookie.split(";").find(
+      c => c.includes("oauth_provider")).split("=")[1];
 
     if (code != null && state != null) {
-      if (url.searchParams.get("scope") &&
-          url.searchParams.get("scope").includes("googleapis")
+      if (provider === "google"
       ) {
         this.$store
           .dispatch(LOGIN, {
@@ -178,24 +179,26 @@ export default {
           });
         return;
       }
+      else if (provider === "github") {
+        this.$store
+          .dispatch(LOGIN, {
+            type: "oauth",
+            provider: "github",
+            url: window.location.href
+          })
+          .then(() => {
+            this.success = true;
+            this.error = false;
 
-      this.$store
-        .dispatch(LOGIN, {
-          type: "oauth",
-          provider: "github",
-          url: window.location.href
-        })
-        .then(() => {
-          this.success = true;
-          this.error = false;
-
-          const w = window.location;
-          window.location.href = w.protocol + "//" + w.host + w.pathname;
-        }).catch(err => {
-          this.errorMsg = `Failed to log in! ${err.message}`;
-          this.error = true;
-          this.$router.replace({ name: "login" });
-        });
+            const w = window.location;
+            window.location.href = w.protocol + "//" + w.host + w.pathname;
+          }).catch(err => {
+            this.errorMsg = `Failed to log in! ${err.message}`;
+            this.error = true;
+            this.$router.replace({ name: "login" });
+          });
+        return;
+      }
 
     }
   },
@@ -219,6 +222,7 @@ export default {
     },
     oauth(provider) {
       new Promise(resolve => {
+        document.cookie = `oauth_provider=${provider}; path=*`;
         if (provider === "google") {
           authService.getClient().createLinkGoogle(
             handleThriftError(url => {

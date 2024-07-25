@@ -77,10 +77,6 @@ service codeCheckerAuthentication {
   string createLinkGoogle()
       throws (1: codechecker_api_shared.RequestFailed requestError),
 
-  // Retrieves an OAuth token for the specified link.
-  string getOAuthToken(1: string link)
-    throws (1: codechecker_api_shared.RequestFailed requestError),
-
   // Performs logout action for the user. Must be called from the
   // corresponding valid session which is to be destroyed.
   bool destroySession()
