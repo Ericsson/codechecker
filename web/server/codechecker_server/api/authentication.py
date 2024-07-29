@@ -136,7 +136,6 @@ class ThriftAuthHandler:
         scope = oauth_config["oauth_scope"]
         authorization_uri = oauth_config["oauth_authorization_uri"]
         redirect_uri = oauth_config["oauth_redirect_uri"]
-        token_uri = oauth_config["oauth_token_uri"]
         
 
         # Create an OAuth2Session instance
@@ -241,6 +240,7 @@ class ThriftAuthHandler:
             scope = oauth_config["oauth_scope"]
             token_url = oauth_config["oauth_token_uri"]
             user_info_url = oauth_config["oauth_user_info_uri"]
+            
 
             session = OAuth2Session(client_id, client_secret, scope=scope)
             token = session.fetch_token(
@@ -289,6 +289,7 @@ class ThriftAuthHandler:
                     "User is not authorized to access this service.")
 
             session = self.__manager.create_session("google@" + email + ":" + token['access_token'])
+            
             return session.token
 
         raise codechecker_api_shared.ttypes.RequestFailed(
