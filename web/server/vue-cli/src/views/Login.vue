@@ -152,8 +152,10 @@ export default {
 
     const url = new URL(window.location.href);
     let code = null, state = null;
+    //get the code and state from the url
     code = url.searchParams.get("code");
     state = url.searchParams.get("state");
+    //get the provider from the cookie
     const provider = document.cookie.split(";").find(
       c => c.includes("oauth_provider")).split("=")[1];
 
