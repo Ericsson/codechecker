@@ -14,44 +14,56 @@
     "max_probe": 10
   },
   "authentication": {
-    "enabled": false,
-    "realm_name": "CodeChecker Privileged server",
-    "realm_error": "Access requires valid credentials.",
-    "session_lifetime": 300,
-    "refresh_time": 60,
-    "logins_until_cleanup": 30,
+    "enabled" : false,
+    "realm_name" : "CodeChecker Privileged server",
+    "realm_error" : "Access requires valid credentials.",
+    "session_lifetime" : 300,
+    "refresh_time" : 60,
+    "logins_until_cleanup" : 30,
     "method_dictionary": {
-      "enabled": false,
-      "auths": [],
-      "groups": {}
+      "enabled" : false,
+      "auths" : [],
+      "groups" : {}
     },
     "method_ldap": {
-      "enabled": false,
+      "enabled" : false,
       "authorities": [
         {
-          "connection_url": "ldap://ldap.example.org",
-          "username": null,
-          "password": null,
-          "referrals": false,
-          "deref": "always",
-          "accountBase": null,
-          "accountScope": "subtree",
-          "accountPattern": "(&(objectClass=person)(sAMAccountName=$USN$))",
+          "connection_url" : "ldap://ldap.example.org",
+          "username" : null,
+          "password" : null,
+          "referrals" : false,
+          "deref" : "always",
+          "accountBase" : null,
+          "accountScope" : "subtree",
+          "accountPattern" : "(&(objectClass=person)(sAMAccountName=$USN$))",
           "user_dn_postfix_preference": null,
-          "groupBase": null,
-          "groupScope": "subtree",
-          "groupPattern": "(&(objectClass=group)(member=$USERDN$))",
-          "groupNameAttr": "sAMAccountName"
+          "groupBase" : null,
+          "groupScope" : "subtree",
+          "groupPattern" : "(&(objectClass=group)(member=$USERDN$))",
+          "groupNameAttr" : "sAMAccountName"
         }
+      ]
+    },
+    "method_pam": {
+      "enabled" : false,
+      "users": [
+        "root", "myname"
+      ],
+      "groups": [
+        "adm", "cc-users"
       ]
     },
     "method_oauth": {
       "enabled": false,
-      "providers": {
-        "github": {
-          "enabled": false,
-          "oauth_client_id": "client id",
-          "oauth_client_secret": "client secret",
+      "groups": [
+        "allowed_users"
+      ],
+      "providers" : {
+        "github" : {
+          "enabled" : false,
+          "oauth_client_id" : "ExampleClientID",
+          "oauth_client_secret": "exampleClientSecret",
           "oauth_authorization_uri": "https://github.com/login/oauth/authorize",
           "oauth_token_uri": "https://github.com/login/oauth/access_token",
           "oauth_user_info_uri": "https://api.github.com/user",
@@ -68,46 +80,31 @@
           ]
         },
         "google": {
-          "enabled": false,
-          "oauth_client_id": "client id",
-          "oauth_client_secret": "client secret",
-          "oauth_authorization_uri": "https://accounts.google.com/o/oauth2/auth",
-          "oauth_redirect_uri": "http://localhost:8080/login",
-          "oauth_token_uri": "https://accounts.google.com/o/oauth2/token",
-          "oauth_user_info_uri": "https://www.googleapis.com/oauth2/v1/userinfo",
-          "oauth_scope": "openid email profile",
-          "oauth_user_info_mapping": {
-            "username": "email",
-            "email": "email",
-            "fullname": "name"
+          "enabled" : false,
+          "oauth_client_id" : "ExampleClientID",
+          "oauth_client_secret" : "exampleClientSecret",
+          "oauth_authorization_uri" : "https://accounts.google.com/o/oauth2/auth",
+          "oauth_redirect_uri" : "http://path_To_CodeChecker_Login_Page",
+          "oauth_token_uri" : "https://accounts.google.com/o/oauth2/token",
+          "oauth_user_info_uri" : "https://www.googleapis.com/oauth2/v1/userinfo",
+          "oauth_scope" : "openid email profile",
+          "oauth_user_info_mapping" : {
+            "username" : "email",
+            "email" : "email",
+            "fullname" : "name"
           },
           "allowed_users": [
-            "user1",
-            "user2",
-            "user3"
+            "user1@gmail.com",
+            "user2@gmail.com",
+            "user3@gmail.com"
           ]
         }
       }
     },
-    "method_pam": {
-      "enabled": false,
-      "users": [
-        "root",
-        "myname"
-      ],
-      "groups": [
-        "adm",
-        "cc-users"
-      ]
-    },
     "regex_groups": {
-      "enabled": false,
-      "groups": {
-        "admins_custom_group": [
-          "^admin$",
-          "^admin_",
-          "_admin$"
-        ]
+      "enabled" : false,
+      "groups" : {
+        "admins_custom_group" : [ "^admin$", "^admin_", "_admin$" ]
       }
     }
   }

@@ -1,4 +1,3 @@
-
 import {
   GET_AUTH_PARAMS,
   GET_LOGGED_IN_USER,
@@ -123,14 +122,14 @@ const actions = {
   },
 
   [OAUTH](provider) {
-    return new Promise(resolve => {
-      if (provider === "github") {
-        resolve(authService.getClient().createLinkGithub());
-      } else if (provider === "google") {
-        resolve(authService.getClient().createLinkGoogle());
-      } else {
-        throw new Error(`Unsupported provider: ${provider}`);
-      }
+    return new Promise((resolve, reject) => {
+      authService.getClient().createLink(provider,
+        handleThriftError(url => {
+          resolve(url);
+        }, err => {
+          reject(err);
+        })
+      );
     });
   }
 };

@@ -13,7 +13,7 @@ Thrift client setup and configuration.
 import getpass
 import sys
 from thrift.Thrift import TApplicationException
-from authlib.integrations.requests_client import OAuth2Session
+
 
 import codechecker_api_shared
 from codechecker_api.Authentication_v6 import ttypes as AuthTypes
@@ -136,7 +136,7 @@ def login_user(protocol, host, port, username, login=False):
         sys.exit(1)
 
 
-def perform_auth_for_handler(auth_client, host, port, manager): 
+def perform_auth_for_handler(auth_client, host, port, manager):
     # Before actually communicating with the server,
     # we need to check authentication first.
 

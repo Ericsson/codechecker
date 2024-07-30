@@ -70,12 +70,8 @@ service codeCheckerAuthentication {
                       throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Create a link for the user to log in for github Oauth.
-  string createLinkGithub()
-      throws (1: codechecker_api_shared.RequestFailed requestError),
-
-  // Create a link for the use to log in for google Oauth
-  string createLinkGoogle()
-      throws (1: codechecker_api_shared.RequestFailed requestError),
+  string createLink(1: string provider)
+                    throws (1: codechecker_api_shared.RequestFailed requestError),
 
   // Performs logout action for the user. Must be called from the
   // corresponding valid session which is to be destroyed.
