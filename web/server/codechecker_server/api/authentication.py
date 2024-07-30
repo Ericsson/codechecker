@@ -10,6 +10,8 @@ Handle Thrift requests for authentication.
 """
 
 from authlib.integrations.requests_client import OAuth2Session
+from authlib.common.security import generate_token
+
 import json
 import codechecker_api_shared
 
@@ -30,7 +32,6 @@ from ..permissions import handler_from_scope_params as make_handler, \
 from ..server import permissions
 from ..session_manager import generate_session_token
 
-from authlib.common.security import generate_token
 
 LOG = get_logger('server')
 
@@ -96,63 +97,61 @@ class ThriftAuthHandler:
     def getLoggedInUser(self):
         return self.__auth_session.user if self.__auth_session else ""
 
-    @timeit 
-    def createLinkGithub(self):
+    @timeit
+    def createLink(self, provider):
         """
-        This functin is for creating a autehntication link for OAuth for Github.
+        For creating a autehntication link for OAuth for specified provider
         """
-        self.oauth_config = self.oauth_config_github
+        url = None
+        print("createLink function called")
+        if provider == "github":
+            self.oauth_config = self.oauth_config_github
 
-        if not self.oauth_config.get("enabled"):
-            raise codechecker_api_shared.ttypes.RequestFailed(
-                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                "OAuth authentication is not enabled.11")
-        
-        client_id = self.oauth_config["oauth_client_id"]
-        client_secret = self.oauth_config["oauth_client_secret"]
-        scope = self.oauth_config["oauth_scope"]
-        authorization_uri = self.oauth_config["oauth_authorization_uri"]
+            if not self.oauth_config.get("enabled"):
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "OAuth authentication is not enabled.11")
 
-        # Create an OAuth2Session instance
-        session = OAuth2Session(client_id, client_secret, scope=scope)
-        url, _ = session.create_authorization_url(authorization_uri)
-        
+            client_id = self.oauth_config["oauth_client_id"]
+            client_secret = self.oauth_config["oauth_client_secret"]
+            scope = self.oauth_config["oauth_scope"]
+            authorization_uri = self.oauth_config["oauth_authorization_uri"]
+
+            # Create an OAuth2Session instance
+            session = OAuth2Session(client_id, client_secret, scope=scope)
+            # Create authorization URL
+            url, _ = session.create_authorization_url(authorization_uri)
+
+        elif provider == "google":
+            oauth_config = self.oauth_config_google
+
+            if not oauth_config.get("enabled"):
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "OAuth authentication is not enabled. 22")
+
+            client_id = oauth_config["oauth_client_id"]
+            client_secret = oauth_config["oauth_client_secret"]
+            scope = oauth_config["oauth_scope"]
+            authorization_uri = oauth_config["oauth_authorization_uri"]
+            redirect_uri = oauth_config["oauth_redirect_uri"]
+
+            # Create an OAuth2Session instance
+            session = OAuth2Session(
+                client_id,
+                client_secret,
+                scope=scope,
+                redirect_uri=redirect_uri)
+
+            # Create authorization URL
+            nonce = generate_token()
+            url = session.create_authorization_url(
+                authorization_uri, nonce=nonce)[0]
         return url
 
     @timeit
-    def createLinkGoogle(self):
-        """
-        This function is for creating an authentication link for OAuth for Google.
-        """
-        oauth_config = self.oauth_config_google # get the google oauth config
-
-        if not oauth_config.get("enabled"):
-            raise codechecker_api_shared.ttypes.RequestFailed(
-                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                "OAuth authentication is not enabled. 22")
-
-        client_id = oauth_config["oauth_client_id"]
-        client_secret = oauth_config["oauth_client_secret"]
-        scope = oauth_config["oauth_scope"]
-        authorization_uri = oauth_config["oauth_authorization_uri"]
-        redirect_uri = oauth_config["oauth_redirect_uri"]
-        
-
-        # Create an OAuth2Session instance
-        session = OAuth2Session(client_id, client_secret, scope=scope, redirect_uri=redirect_uri)
-
-        # Create authorization URL
-        nonce = generate_token()
-        authorization_url, state = session.create_authorization_url(authorization_uri, nonce=nonce)
-
-        
-        return authorization_url
-
-
-
-    @timeit
     def getAcceptedAuthMethods(self):
-        return ["Username:Password","oauth"]
+        return ["Username:Password", "oauth"]
 
     @timeit
     def getAccessControl(self):
@@ -228,74 +227,89 @@ class ThriftAuthHandler:
                     msg)
         elif auth_method == "oauth_github":
             LOG.info("OAuth login... started")
-            
+
             oauth_config = self.oauth_config_github
             if not oauth_config.get("enabled"):
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     "OAuth authentication is not enabled.33")
-            
+
             client_id = oauth_config["oauth_client_id"]
             client_secret = oauth_config["oauth_client_secret"]
             scope = oauth_config["oauth_scope"]
             token_url = oauth_config["oauth_token_uri"]
             user_info_url = oauth_config["oauth_user_info_uri"]
-            
 
             session = OAuth2Session(client_id, client_secret, scope=scope)
             token = session.fetch_token(
                 url=token_url,
                 authorization_response=f"{auth_string}",
             )
-            
-            user_info = session.get(user_info_url).json()
 
-            username = user_info[oauth_config["oauth_user_info_mapping"]["username"]]
-            if username not in oauth_config.get("allowed_users", []):
+            user_info = session.get(user_info_url).json()
+            username = user_info[
+                oauth_config["oauth_user_info_mapping"]["username"]]
+            allowed_users = oauth_config.get("allowed_users", [])
+            # important process here
+            if allowed_users == ["*"] or username in allowed_users:
+                session = self.__manager.create_session(
+                    "github@" + username + ":" + token['access_token'])
+                return session.token
+
+            if len(allowed_users) == 0:
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                    "User is not authorized to access this service.")
+                    "The allowed users list is empty")
 
-            session = self.__manager.create_session("github@" + username + ":" + token['access_token']) 
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "User is not authorized to access this service")
 
-            return session.token
         elif auth_method == "oauth_google":
             LOG.info("OAuth login GOOGLE... started")
-            
+
             oauth_config = self.oauth_config_google
             if not oauth_config.get("enabled"):
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                    "OAuth authentication is not enabled.44")
-            
+                    "OAuth authentication is not enabled.")
+
             client_id = oauth_config["oauth_client_id"]
             client_secret = oauth_config["oauth_client_secret"]
             scope = oauth_config["oauth_scope"]
             token_url = oauth_config["oauth_token_uri"]
             user_info_url = oauth_config["oauth_user_info_uri"]
             redirect_uri = oauth_config["oauth_redirect_uri"]
+            allowed_users = oauth_config.get("allowed_users", [])
 
-            session = OAuth2Session(client_id, client_secret, scope=scope, redirect_uri=redirect_uri)
+            session = OAuth2Session(
+                client_id,
+                client_secret,
+                scope=scope,
+                redirect_uri=redirect_uri)
             token = session.fetch_token(
                 url=token_url,
-                authorization_response=f"{auth_string}",
-            )
-            
+                authorization_response=f"{auth_string}")
+
             user_info = session.get(user_info_url).json()
             email = user_info[oauth_config["oauth_user_info_mapping"]["email"]]
-            if email not in oauth_config.get("allowed_users", []):
+            if allowed_users == ["*"] or email in allowed_users:
+                session = self.__manager.create_session(
+                    "google@" + email + ":" + token['access_token'])
+                return session.token
+
+            if len(allowed_users) == 0:
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                    "User is not authorized to access this service.")
+                    "The allowed users list is empty")
 
-            session = self.__manager.create_session("google@" + email + ":" + token['access_token'])
-            
-            return session.token
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                "User is not authorized to access this service")
 
         raise codechecker_api_shared.ttypes.RequestFailed(
             codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
             "Could not negotiate via common authentication method.")
-
 
     @timeit
     def destroySession(self):

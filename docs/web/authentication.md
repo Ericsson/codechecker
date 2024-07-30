@@ -9,28 +9,26 @@ the results stored on a server.
 
 Table of Contents
 =================
-- [CodeChecker authentication subsystem](#codechecker-authentication-subsystem)
-- [Table of Contents](#table-of-contents)
-- [Server-side configuration ](#server-side-configuration-)
-  - [Dictionary authentication ](#dictionary-authentication-)
-  - [External authentication methods ](#external-authentication-methods-)
-    - [PAM authentication ](#pam-authentication-)
-    - [LDAP authentication ](#ldap-authentication-)
-      - [Configuration options ](#configuration-options-)
-  - [Membership in custom groups with regex\_groups](#membership-in-custom-groups-with-regex_groups)
-    - [OAUTH authentication ](#oauth-authentication-)
-      - [OAUTH Configuration options ](#oauth-configuration-options-)
-      - [Details per each provider ](#details-per-each-provider-)
-- [Client-side configuration ](#client-side-configuration-)
-  - [Web-browser client ](#web-browser-client-)
-  - [Command-line client ](#command-line-client-)
-    - [Preconfigured credentials ](#preconfigured-credentials-)
-    - [Automatic login ](#automatic-login-)
-    - [Currently active tokens ](#currently-active-tokens-)
-- [Personal access token ](#personal-access-token-)
-  - [New personal access token ](#new-personal-access-token-)
-  - [List personal access tokens ](#list-personal-access-tokens-)
-  - [Remove personal access token ](#remove-personal-access-token-)
+* [Server-side configuration](#server-side-configuration)
+    * [<i>Dictionary</i> authentication](#dictionary-authentication)
+    * [External authentication methods](#external-auth-methods)
+        * [<i>PAM</i> authentication](#pam-authentication)
+        * [<i>LDAP</i> authentication](#ldap-authentication)
+            * [Configuration options](#configuration-options)
+    * Membership in custom groups with [<i>regex_groups</i>](#regex_groups-authentication)
+      * [<i>OAUTH</i> authentication](#oauth-authentication)
+        * [<i>OAUTH</i> Configuration options](#oauth-configuration-options)
+        * [<i>OAUTH</i> details per each provider](#oauth-details-per-each-provider)
+* [Client-side configuration](#client-side-configuration)
+    * [Web-browser client](#web-browser-client)
+    * [Command-line client](#command-line-client)
+        * [Preconfigured credentials](#preconfigured-credentials)
+        * [Automatic login](#automatic-login)
+        * [Currently active tokens](#currently-active-tokens)
+* [Personal access token](#personal-access-token)
+    * [`new`](#new-personal-access-token)
+    * [`list`](#list-personal-access-token)
+    * [`del`](#remove-personal-access-token)
 
 # Server-side configuration <a name="server-side-configuration"></a>
 
@@ -386,7 +384,7 @@ CodeChecker also supports OAUTH-based authentication. The `authentication.method
         Field for the fullname.
  * `allowed_users`
   
-  A list of allowed users differently configured for each provider
+    A list of allowed users differently configured for each provider
 
 ~~~{.json}
 "method_oauth": {
@@ -435,7 +433,7 @@ CodeChecker also supports OAUTH-based authentication. The `authentication.method
     }
 ~~~
 
-#### Details per each provider <a name ="details-per-each-provider"></a>
+#### Oauth Details per each provider <a name ="oauth-details-per-each-provider"></a>
 
 * For Google OAuth to function correctly, the `oauth_redirect_uri` in application's configuration must exactly match the `Authorized redirect URIs` specified in the Google API Console. 
 

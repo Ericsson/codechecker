@@ -77,12 +77,7 @@
               color="primary"
               @click="oauth('github')"
             >
-              <img
-                :src="image"
-                alt="github logo"
-                style="max-height: 20px; height: 100%;"
-              >
-              &nbsp; Login with GitHub 
+              Login with GitHub
             </v-btn>
             <v-btn
               id="login-btn"
@@ -105,7 +100,6 @@ import { mapGetters } from "vuex";
 import { LOGIN } from "@/store/actions.type";
 import { authService, handleThriftError } from "@cc-api";
 import Alerts from "@/components/Alerts";
-import image from "@/assets/oauth/github-mark.png";
 
 export default {
   name: "Login",
@@ -122,7 +116,6 @@ export default {
       error: false,
       errorMsg: null,
       valid: false,
-      image: image,
     };
   },
 
@@ -160,8 +153,7 @@ export default {
       c => c.includes("oauth_provider")).split("=")[1];
 
     if (code != null && state != null) {
-      if (provider === "google"
-      ) {
+      if (provider === "google") {
         this.$store
           .dispatch(LOGIN, {
             type: "oauth",
@@ -225,21 +217,15 @@ export default {
     oauth(provider) {
       new Promise(resolve => {
         document.cookie = `oauth_provider=${provider}; path=*`;
-        if (provider === "google") {
-          authService.getClient().createLinkGoogle(
-            handleThriftError(url => {
-              resolve(url);
-            }));
-        }
-        else if (provider === "github") {
-          authService.getClient().createLinkGithub(
-            handleThriftError(url => {
-              resolve(url);
-            }));
-        }
-      }).then(url => {
+        // console output the provider for debugging
+        authService.getClient().createLink(provider,
+          handleThriftError(url => {
+            resolve(url);
+          }));
+      }
+      ).then(url => {
         if (url) {
-          this.success = true;
+          this.success = false;
           this.error = false;
           window.location.href = url;
           this.link = url;
