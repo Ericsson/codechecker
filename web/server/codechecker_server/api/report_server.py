@@ -3072,7 +3072,7 @@ class ThriftRequestHandler:
                         checkerName=checker_name,
                         analyzerName=analyzer_name,
                         enabled=[],
-                        disabled=all_run_id,
+                        disabled=all_run_id.copy(),
                         severity=severity,
                         closed=0,
                         outstanding=0
