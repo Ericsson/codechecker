@@ -59,7 +59,7 @@ def has_analyzer_config_option(clang_bin, config_option_name):
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            env=analyzer_context.get_context().analyzer_env,
+            env=analyzer_context.get_context().get_analyzer_env("clangsa"),
             encoding="utf-8", errors="ignore")
         out, err = proc.communicate()
         LOG.debug("stdout:\n%s", out)
@@ -92,7 +92,7 @@ def has_analyzer_option(clang_bin, feature):
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                env=analyzer_context.get_context().analyzer_env,
+                env=analyzer_context.get_context().get_analyzer_env("clangsa"),
                 encoding="utf-8", errors="ignore")
             out, err = proc.communicate()
             LOG.debug("stdout:\n%s", out)

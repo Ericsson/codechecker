@@ -12,6 +12,8 @@ Tests for environmental variables recognized by CodeChecker.
 
 
 import unittest
+import tempfile
+import os
 
 from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.analyzers.gcc.analyzer import Gcc
@@ -48,7 +50,7 @@ class EnvVarTest(unittest.TestCase):
         initialized with the binary that was given by the env var).
         """
         context = analyzer_context.get_context()
-        context.analyzer_env["CC_ANALYZER_BIN"] = analyzer_bin_conf
+        context.cc_env["CC_ANALYZER_BIN"] = analyzer_bin_conf
         context._Context__populate_analyzers()
 
         analyzer = create_analyzer_gcc()
@@ -80,7 +82,7 @@ class EnvVarTest(unittest.TestCase):
         """
 
         context = analyzer_context.get_context()
-        context.analyzer_env["CC_ANALYZERS_FROM_PATH"] = '1'
+        context.cc_env["CC_ANALYZERS_FROM_PATH"] = '1'
 
         bin_gcc_var = self._get_analyzer_bin_for_cc_analyzer_bin("gcc:gcc")
         self.assertTrue(bin_gcc_var.endswith("gcc"))
@@ -91,3 +93,68 @@ class EnvVarTest(unittest.TestCase):
         self.assertTrue(not bin_gpp_var.endswith("gcc"))
 
         self.assertNotEqual(bin_gcc_var, bin_gpp_var)
+
+    def test_cc_analyzer_internal_env(self):
+        """
+        Check whether the ld_library_path is extended with the internal
+        lib path if internally packaged analyzer is invoked.
+        """
+
+        data_files_dir = tempfile.mkdtemp()
+
+        package_layout_json = """
+        {
+        "ld_lib_path_extra": [],
+        "path_env_extra": [],
+        "runtime": {
+            "analyzers": {
+            "clang-tidy": "clang-tidy",
+            "clangsa": "cc-bin/packaged-clang",
+            "cppcheck": "cppcheck",
+            "gcc": "g++"
+            },
+            "clang-apply-replacements": "clang-apply-replacements",
+            "ld_lib_path_extra": [
+            "internal_package_lib"
+            ],
+            "path_env_extra": [
+            ]
+        }
+        }
+        """
+        config_dir = os.path.join(data_files_dir, "config")
+        os.mkdir(config_dir)
+        layout_cfg_file = os.path.join(config_dir, "package_layout.json")
+        with open(layout_cfg_file, "w", encoding="utf-8") as text_file:
+            text_file.write(package_layout_json)
+        cc_bin_dir = os.path.join(data_files_dir, "cc-bin")
+        os.mkdir(cc_bin_dir)
+        packaged_clang_file = os.path.join(cc_bin_dir, "packaged-clang")
+        with open(packaged_clang_file, "w", encoding="utf-8") as text_file:
+            text_file.write("")
+
+        context = analyzer_context.get_context()
+        context._data_files_dir_path = data_files_dir
+
+        lcfg_dict = context._Context__get_package_layout()
+        context._data_files_dir_path = data_files_dir
+        context.pckg_layout = lcfg_dict['runtime']
+        context._Context__populate_analyzers()
+
+        # clang-19 is part of the codechecker package
+        # so the internal package lib should be in the ld_library_path
+        clang_env = context.get_analyzer_env("clangsa")
+        env_txt = str(clang_env)
+        self.assertTrue(env_txt.find("internal_package_lib") != -1)
+
+        # clang-tidy is not part of the codechecker package
+        # so internal package lib should not be in the ld_library_path
+        clang_env = context.get_analyzer_env("clang-tidy")
+        env_txt = str(clang_env)
+        self.assertTrue(env_txt.find("internal_package_lib") == -1)
+
+        os.remove(layout_cfg_file)
+        os.remove(packaged_clang_file)
+        os.rmdir(cc_bin_dir)
+        os.rmdir(config_dir)
+        os.rmdir(context._data_files_dir_path)
