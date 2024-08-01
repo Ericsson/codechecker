@@ -406,7 +406,8 @@ def process_report_filter(
             if keep_all_annotations:
                 OR.append(or_(
                     ReportAnnotations.key != key,
-                    ReportAnnotations.value.in_(values)))
+                    *[ReportAnnotations.value.ilike(conv(v))
+                      for v in values]))
             else:
                 OR.append(and_(
                     ReportAnnotations.key == key,
@@ -2012,7 +2013,8 @@ class ThriftRequestHandler:
 
                     OR = []
                     for key, values in annotations.items():
-                        OR.append(annotation_cols[key].in_(values))
+                        OR.extend([annotation_cols[key].ilike(conv(v))
+                                   for v in values])
                     sub_query = sub_query.having(or_(*OR))
 
                 sub_query = sort_results_query(sub_query,
@@ -2125,7 +2127,8 @@ class ThriftRequestHandler:
 
                     OR = []
                     for key, values in annotations.items():
-                        OR.append(annotation_cols[key].in_(values))
+                        OR.extend([annotation_cols[key].ilike(conv(v))
+                                   for v in values])
                     q = q.having(or_(*OR))
 
                 q = q.limit(limit).offset(offset)
