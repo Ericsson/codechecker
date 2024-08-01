@@ -90,8 +90,7 @@ class AnalyzerConfigHandler(metaclass=ABCMeta):
         changed_states = []
 
         for ch_name, values in self.__available_checkers.items():
-            if ch_name.startswith(checker_name) or \
-               ch_name.endswith(checker_name):
+            if ch_name.startswith(checker_name):
                 _, description = values
                 state = CheckerState.ENABLED if enabled \
                     else CheckerState.DISABLED
