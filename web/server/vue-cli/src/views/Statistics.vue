@@ -7,7 +7,8 @@
         :show-remove-filtered-reports="false"
         :report-count="reportCount"
         :show-diff-type="false"
-        :show-compare-to="false"
+        :show-compare-to="
+          $router.currentRoute.name != 'checker-coverage-statistics'"
         @refresh="refresh"
       />
     </pane>
