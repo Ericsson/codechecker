@@ -250,6 +250,13 @@ class CheckerHandlingClangSATest(unittest.TestCase):
         self.assertTrue(all_with_status(CheckerState.DISABLED)
                         (cfg_handler.checks(), cert_guideline))
 
+        cfg_handler = ClangSA.construct_config_handler(args)
+        cfg_handler.initialize_checkers(checkers,
+                                        [('default', False),
+                                         ('DeadStores', True)])
+        self.assertTrue(all_with_status(CheckerState.DISABLED)
+                        (cfg_handler.checks(), default_profile))
+
         # Enable "LOW" severity checkers.
         cfg_handler = ClangSA.construct_config_handler(args)
         cfg_handler.initialize_checkers(checkers,
