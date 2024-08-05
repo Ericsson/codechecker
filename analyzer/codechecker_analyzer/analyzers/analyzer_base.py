@@ -111,6 +111,10 @@ class SourceAnalyzer(metaclass=ABCMeta):
         LOG.debug_analyzer('\n%s',
                            ' '.join([shlex.quote(x) for x in analyzer_cmd]))
 
+        if env is None:
+            env = analyzer_context.get_context()\
+                .get_analyzer_env(self.ANALYZER_NAME)
+
         res_handler.analyzer_cmd = analyzer_cmd
         try:
             ret_code, stdout, stderr \
@@ -158,7 +162,10 @@ class SourceAnalyzer(metaclass=ABCMeta):
         signal.signal(signal.SIGINT, signal_handler)
 
         if env is None:
-            env = analyzer_context.get_context().analyzer_env
+            env = analyzer_context.get_context().cc_env
+
+        LOG.debug_analyzer('\nENV:\n')
+        LOG.debug_analyzer(env)
 
         proc = subprocess.Popen(
             command,

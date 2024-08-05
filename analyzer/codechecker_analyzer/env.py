@@ -9,6 +9,7 @@
 
 import os
 import re
+import pickle
 
 from codechecker_analyzer import analyzer_context
 from codechecker_common.logger import get_logger
@@ -33,6 +34,24 @@ def get_log_env(logfile, original_env):
     new_env[context.env_var_cc_logger_file] = logfile
 
     return new_env
+
+
+def get_original_env():
+    original_env = os.environ
+    try:
+        original_env_file = os.environ.get('CODECHECKER_ORIGINAL_BUILD_ENV')
+        if original_env_file:
+            LOG.debug_analyzer('Loading original build env from: %s',
+                               original_env_file)
+
+            with open(original_env_file, 'rb') as env_file:
+                original_env = pickle.load(env_file, encoding='utf-8')
+
+    except Exception as ex:
+        LOG.warning(str(ex))
+        LOG.warning('Failed to get saved original_env ')
+        original_env = None
+    return original_env
 
 
 def extend(path_env_extra, ld_lib_path_extra):
