@@ -17,7 +17,16 @@ sudo apt-get install \
   libssl-dev \
   clang-14 \
   clang-tidy-14 \
-  cppcheck
+  cppcheck 
+
+# Source: https://fbinfer.com/docs/getting-started
+VERSION=1.1.0; \
+curl -sSL "https://github.com/facebook/infer/releases/download/v$VERSION/infer-linux64-v$VERSION.tar.xz" \
+| sudo tar -C /opt -xJ && \
+sudo ln -s "/opt/infer-linux64-v$VERSION/bin/infer" /usr/local/bin/infer
+
+ldd --version
+infer help --version
 
 sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-14 9999
 sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-14 9999
