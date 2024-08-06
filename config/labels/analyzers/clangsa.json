@@ -875,7 +875,6 @@
       "profile:default",
       "profile:extreme",
       "profile:security",
-      "profile:security",
       "profile:sensitive",
       "sei-cert:env31-c",
       "sei-cert:env34-c",
@@ -1077,6 +1076,7 @@
     ],
     "unix.cstring.NullArg": [
       "doc_url:https://clang.llvm.org/docs/analyzer/checkers.html#unix-cstring-nullarg-c",
+      "guideline:sei-cert",
       "profile:default",
       "profile:extreme",
       "profile:security",

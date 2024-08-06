@@ -1798,7 +1798,9 @@
       "guideline:sei-cert",
       "label-tool-skip:severity",
       "profile:default",
+      "profile:extreme",
       "profile:security",
+      "profile:sensitive",
       "sei-cert:exp33-c",
       "severity:HIGH"
     ],
@@ -3190,8 +3192,8 @@
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#winvalid-noreturn",
       "guideline:sei-cert",
       "profile:security",
-      "severity:MEDIUM",
-      "sei-cert:msc53-cpp"
+      "sei-cert:msc53-cpp",
+      "severity:MEDIUM"
     ],
     "clang-diagnostic-invalid-offsetof": [
       "doc_url:https://clang.llvm.org/docs/DiagnosticsReference.html#winvalid-offsetof",
@@ -4166,10 +4168,10 @@
       "guideline:sei-cert",
       "label-tool-skip:severity",
       "profile:default",
-      "sei-cert:exp45-c",
       "profile:extreme",
       "profile:security",
       "profile:sensitive",
+      "sei-cert:exp45-c",
       "severity:MEDIUM"
     ],
     "clang-diagnostic-parentheses-equality": [
