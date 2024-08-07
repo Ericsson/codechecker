@@ -184,9 +184,15 @@ pycodestyle:
 pycodestyle_in_env:
 	$(ACTIVATE_DEV_VENV) && $(PYCODE_CMD)
 
-test: test_analyzer test_web
+test: test_common test_analyzer test_web
 
-test_in_env: test_analyzer_in_env test_web_in_env
+test_in_env: test_common_in_env test_analyzer_in_env test_web_in_env
+
+test_common:
+	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_COMMON) test
+
+test_commin_in_env:
+	$(MAKE) -C $(CC_COMMON) test_in_env
 
 test_analyzer:
 	BUILD_DIR=$(BUILD_DIR) $(MAKE) -C $(CC_ANALYZER) test

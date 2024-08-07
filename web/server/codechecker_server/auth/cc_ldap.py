@@ -95,13 +95,15 @@ from contextlib import contextmanager
 import ldap
 from ldap.dn import escape_dn_chars
 
+from codechecker_common import configuration_access
 from codechecker_common.logger import get_logger
 
 LOG = get_logger('server')
 
 
 def bytes_to_str(data):
-    """ Converts the given data to text.
+    """
+    Converts the given data to text.
 
     The LDAP protocol states that some fields be encoded in UTF-8. Attribute
     values, on the other hand, MAY contain any type of data, including text.
@@ -224,17 +226,18 @@ class LDAPConnection:
         None if initialization failed.
         """
 
-        ldap_server = ldap_config.get('connection_url')
-        if ldap_server is None:
-            LOG.error('Server address is missing from the configuration')
+        try:
+            ldap_server = ldap_config.connection_url
+        except configuration_access.UnsetError:
+            LOG.error("LDAP server address is missing from the configuration!")
             self.connection = None
             return
 
-        referrals = ldap_config.get('referrals', False)
+        referrals = ldap_config.referrals
         ldap.set_option(ldap.OPT_REFERRALS, 1 if referrals else 0)
 
-        deref = ldap_config.get('deref', ldap.DEREF_ALWAYS)
-        if deref == 'never':
+        deref = ldap_config.deref
+        if deref == "never":
             deref = ldap.DEREF_NEVER
         else:
             deref = ldap.DEREF_ALWAYS
@@ -243,9 +246,9 @@ class LDAPConnection:
 
         ldap.protocol_version = ldap.VERSION3
 
-        # Verify certificate in LDAPS connections
-        tls_require_cert = ldap_config.get('tls_require_cert', '')
-        if tls_require_cert.lower() == 'never':
+        # Verify the server certificate in LDAPS connections.
+        tls_require_cert = ldap_config.tls_require_cert
+        if tls_require_cert.lower() == "never":
             LOG.debug("Insecure LDAPS connection because of "
                       "tls_require_cert=='never'")
             ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
@@ -309,7 +312,7 @@ def get_ldap_query_scope(scope_form_config):
         return ldap.SCOPE_SUBTREE
 
 
-def auth_user(ldap_config, username=None, credentials=None):
+def auth_user(ldap_config, username=None, credentials=None) -> bool:
     """
     Authenticate a user.
     """
@@ -318,12 +321,12 @@ def auth_user(ldap_config, username=None, credentials=None):
                     ' authentication.')
         return False
 
-    account_base = ldap_config.get('accountBase')
+    account_base = ldap_config.accountBase
     if account_base is None:
         LOG.warning('Account base needs to be configured to query users')
         return False
 
-    account_pattern = ldap_config.get('accountPattern')
+    account_pattern = ldap_config.accountPattern
     if account_pattern is None:
         LOG.warning('No account pattern is defined to search for users.')
         LOG.warning('Please configure one.')
@@ -332,21 +335,21 @@ def auth_user(ldap_config, username=None, credentials=None):
     username = escape_dn_chars(username)
     account_pattern = account_pattern.replace('$USN$', username)
 
-    account_scope = ldap_config.get('accountScope', '')
+    account_scope = ldap_config.accountScope
     account_scope = get_ldap_query_scope(account_scope)
 
-    service_user = ldap_config.get('username')
-    service_cred = ldap_config.get('password')
+    service_user = ldap_config.username
+    service_cred = ldap_config.password
 
-    # Service user is not configured try to authenticate
-    # with the given username and credentials.
     if not service_user:
+        # Service user is not configured. Try to authenticate with the login
+        # username and credentials.
         service_user = username
         service_cred = credentials
 
     LOG.debug("Creating SERVICE connection...")
 
-    user_dn_postfix_preference = ldap_config.get('user_dn_postfix_preference')
+    user_dn_postfix_preference = ldap_config.user_dn_postfix_preference
 
     with LDAPConnection(ldap_config, service_user, service_cred) as connection:
         if connection is None:
@@ -382,12 +385,12 @@ def get_groups(ldap_config, username, credentials):
     Get the LDAP groups for a given user.
     """
 
-    account_base = ldap_config.get('accountBase')
+    account_base = ldap_config.accountBase
     if account_base is None:
         LOG.error('Account base needs to be configured to query users')
         return False
 
-    account_pattern = ldap_config.get('accountPattern')
+    account_pattern = ldap_config.accountPattern
     if account_pattern is None:
         LOG.error('No account pattern is defined to search for users.')
         LOG.error('Please configure one.')
@@ -395,16 +398,16 @@ def get_groups(ldap_config, username, credentials):
 
     account_pattern = account_pattern.replace('$USN$', username)
 
-    account_scope = ldap_config.get('accountScope', '')
+    account_scope = ldap_config.accountScope
     account_scope = get_ldap_query_scope(account_scope)
 
-    service_user = ldap_config.get('username')
-    service_cred = ldap_config.get('password')
+    service_user = ldap_config.username
+    service_cred = ldap_config.password
     if not service_user:
         service_user = username
         service_cred = credentials
 
-    user_dn_postfix_preference = ldap_config.get('user_dn_postfix_preference')
+    user_dn_postfix_preference = ldap_config.user_dn_postfix_preference
 
     LOG.debug("creating LDAP connection. service user %s", service_user)
     with LDAPConnection(ldap_config, service_user, service_cred) as connection:
@@ -419,7 +422,7 @@ def get_groups(ldap_config, username, credentials):
                               account_scope,
                               user_dn_postfix_preference)
 
-        group_pattern = ldap_config.get('groupPattern')
+        group_pattern = ldap_config.groupPattern
         if user_dn and not group_pattern:
             LOG.debug("User '%s' found but there is no group_pattern"
                       " to check LDAP for group membership.",
@@ -429,16 +432,16 @@ def get_groups(ldap_config, username, credentials):
 
         LOG.debug('Checking for group membership %s', user_dn)
 
-        group_scope = ldap_config.get('groupScope', '')
+        group_scope = ldap_config.groupScope
         group_scope = get_ldap_query_scope(group_scope)
 
-        group_base = ldap_config.get('groupBase')
+        group_base = ldap_config.groupBase
         if group_base is None:
             LOG.error('Group base needs to be configured to'
                       'query ldap groups.')
             return []
 
-        group_name_attr = ldap_config.get('groupNameAttr')
+        group_name_attr = ldap_config.groupNameAttr
         if group_name_attr is None:
             LOG.error('groupNameAttr needs to be configured to'
                       'query ldap groups.'
@@ -446,9 +449,9 @@ def get_groups(ldap_config, username, credentials):
                       'attribute of the group.')
             return []
 
-        # Remove non ascii characters.
+        # Remove non-ASCII characters.
         group_name_attr = \
-            group_name_attr.encode('ascii', 'ignore').decode('utf-8')
+            group_name_attr.encode("ascii", "ignore").decode("utf-8")
         attr_list = [group_name_attr]
 
         LOG.debug("Performing LDAP search for group: %s Group Name Attr: %s",
