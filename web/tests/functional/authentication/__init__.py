@@ -12,6 +12,7 @@
 
 import os
 import shutil
+import subprocess
 
 from libtest import codechecker
 from libtest import env
@@ -63,6 +64,9 @@ def setup_class_common():
     codechecker.start_server(codechecker_cfg, __STOP_SERVER)
 
     codechecker.add_test_package_product(host_port_cfg, TEST_WORKSPACE)
+
+    process = subprocess.Popen(["python3", "oauth_server.py"],
+                               cwd="tests/functional/authentication")
 
 
 def teardown_class_common():
