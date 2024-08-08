@@ -65,6 +65,7 @@
           "oauth_client_id" : "ExampleClientID",
           "oauth_client_secret": "exampleClientSecret",
           "oauth_authorization_uri": "https://github.com/login/oauth/authorize",
+          "oauth_redirect_uri": "http://path_To_CodeChecker_Login_Page",
           "oauth_token_uri": "https://github.com/login/oauth/access_token",
           "oauth_user_info_uri": "https://api.github.com/user",
           "oauth_scope": "openid email profile",

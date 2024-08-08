@@ -359,6 +359,29 @@ def enable_auth(workspace):
         {"admin_group_user": ["admin_GROUP"]}
     scfg_dict["authentication"]["regex_groups"]["enabled"] = True
 
+    scfg_dict["authentication"]["method_oauth"] = {
+        "enabled": True,
+        "providers": {
+            "github": {
+                "enabled": True,
+                "oauth_client_id": "1",
+                "oauth_client_secret": "1",
+                "oauth_authorization_uri": "http://localhost:3000/login",
+                "oauth_redirect_uri": "http://localhost:3000/login",
+                "oauth_token_uri": "http://localhost:3000/token",
+                "oauth_user_info_uri": "http://localhost:3000/get_user",
+                "oauth_scope": "openid email profile",
+                "oauth_user_info_mapping": {
+                    "username": "login",
+                    "email": "email",
+                    "fullname": "name"
+                },
+                "allowed_users": [
+                    "admin_github"
+                ]
+            }
+        }
+    }
     with open(server_cfg_file, 'w',
               encoding="utf-8", errors="ignore") as scfg:
         json.dump(scfg_dict, scfg, indent=2, sort_keys=True)

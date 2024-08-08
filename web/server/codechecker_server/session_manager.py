@@ -505,12 +505,12 @@ class SessionManager:
         if self.__is_method_enabled('oauth') and 'github@' in auth_string:
             data = auth_string.split('github@')[1]
             username, token = data.split(':')
-            return {'username': username, 'token': token}
+            return {'username': username, 'token': token, 'groups': []}
 
         if self.__is_method_enabled('oauth') and 'google@' in auth_string:
             data = auth_string.split('google@')[1]
             email, token = data.split(':')
-            return {'username': email, 'token': token}
+            return {'username': email, 'token': token, 'groups': []}
 
         return False
 

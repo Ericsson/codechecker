@@ -102,51 +102,29 @@ class ThriftAuthHandler:
         """
         For creating a autehntication link for OAuth for specified provider
         """
-        url = None
-        print("createLink function called")
-        if provider == "github":
-            self.oauth_config = self.oauth_config_github
+        oauth_config = self.__manager.get_oauth_config(provider)
+        if not oauth_config.get("enabled"):
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                "OAuth authentication is not enabled.")
 
-            if not self.oauth_config.get("enabled"):
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                    "OAuth authentication is not enabled.11")
+        client_id = oauth_config["oauth_client_id"]
+        client_secret = oauth_config["oauth_client_secret"]
+        scope = oauth_config["oauth_scope"]
+        authorization_uri = oauth_config["oauth_authorization_uri"]
+        redirect_uri = oauth_config["oauth_redirect_uri"]
 
-            client_id = self.oauth_config["oauth_client_id"]
-            client_secret = self.oauth_config["oauth_client_secret"]
-            scope = self.oauth_config["oauth_scope"]
-            authorization_uri = self.oauth_config["oauth_authorization_uri"]
+        # Create an OAuth2Session instance
+        session = OAuth2Session(
+            client_id,
+            client_secret,
+            scope=scope,
+            redirect_uri=redirect_uri)
 
-            # Create an OAuth2Session instance
-            session = OAuth2Session(client_id, client_secret, scope=scope)
-            # Create authorization URL
-            url, _ = session.create_authorization_url(authorization_uri)
-
-        elif provider == "google":
-            oauth_config = self.oauth_config_google
-
-            if not oauth_config.get("enabled"):
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                    "OAuth authentication is not enabled. 22")
-
-            client_id = oauth_config["oauth_client_id"]
-            client_secret = oauth_config["oauth_client_secret"]
-            scope = oauth_config["oauth_scope"]
-            authorization_uri = oauth_config["oauth_authorization_uri"]
-            redirect_uri = oauth_config["oauth_redirect_uri"]
-
-            # Create an OAuth2Session instance
-            session = OAuth2Session(
-                client_id,
-                client_secret,
-                scope=scope,
-                redirect_uri=redirect_uri)
-
-            # Create authorization URL
-            nonce = generate_token()
-            url = session.create_authorization_url(
-                authorization_uri, nonce=nonce)[0]
+        # Create authorization URL
+        nonce = generate_token()
+        url = session.create_authorization_url(
+            authorization_uri, nonce=nonce)[0]
         return url
 
     @timeit
@@ -227,7 +205,6 @@ class ThriftAuthHandler:
                     msg)
         elif auth_method == "oauth_github":
             LOG.info("OAuth login... started")
-
             oauth_config = self.oauth_config_github
             if not oauth_config.get("enabled"):
                 raise codechecker_api_shared.ttypes.RequestFailed(

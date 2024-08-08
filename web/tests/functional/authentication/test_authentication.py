@@ -15,6 +15,7 @@ import json
 import os
 import subprocess
 import unittest
+import requests
 
 from codechecker_api_shared.ttypes import RequestFailed, Permission
 
@@ -182,6 +183,39 @@ class DictAuth(unittest.TestCase):
         # self.assertFalse(handshake.sessionStillActive,
         #                  "Destroyed session was " +
         #                  "reported to be still active.")
+
+    def try_login(self, provider, username, password):
+        auth_client = env.setup_auth_client(
+            self._test_workspace, session_token='_PROHIBIT')
+
+        link = auth_client.createLink(provider)
+        data = requests.get(
+            url=f"{link}&username={username}&password={password}",
+            timeout=10).json()
+
+        link = link.split('?')[0]
+        code, state = data['code'], data['state']
+        auth_string = f"{link}?code={code}&state={state}"
+
+        self.session_token = auth_client.performLogin(
+            f"oauth_{provider}",
+            auth_string)
+
+        return self.session_token
+
+    # test_oauth_github_admin
+    def test_oauth_allowed_users(self):
+        """
+        Testing the authentication using external oauth provider
+        made for this case that simulates the behavior of the real provider.
+        """
+        # The following user is in the list of allowed users:
+        session = self.try_login("github", "admin_github", "admin")
+        self.assertIsNotNone(session, "WE HAVE A PROBLEM")
+
+        # The following user is NOT in the list:
+        with self.assertRaises(RequestFailed):
+            self.try_login("github", "user_github", "user")
 
     def test_nonauth_storage(self):
         """
