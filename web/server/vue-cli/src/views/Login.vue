@@ -70,23 +70,16 @@
             >
               Login
             </v-btn>
-            <v-btn
-              id="login-btn-github"
+            <v-btn 
+              v-for="provider in providers"
+              :id="login-btn-{provider}"
+              :key="provider"
               block
               x-large
               color="primary"
-              @click="oauth('github')"
+              @click="oauth(provider)"
             >
-              Login with GitHub
-            </v-btn>
-            <v-btn
-              id="login-btn"
-              block
-              x-large
-              color="primary"
-              @click="oauth('google')"
-            >
-              Login with Google
+              Login with {{ provider }}
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -116,6 +109,7 @@ export default {
       error: false,
       errorMsg: null,
       valid: false,
+      providers: []
     };
   },
 
@@ -152,48 +146,39 @@ export default {
     const provider = document.cookie.split(";").find(
       c => c.includes("oauth_provider")).split("=")[1];
 
+    new Promise(resolve => {
+      authService.getClient().getOauthProviders(
+        handleThriftError(providers => {
+          resolve(providers);
+        }));
+    }).then(providers => {
+      if (providers) {
+        this.providers = providers;
+      }
+    }).catch(err => {
+      this.errorMsg = `Providers list was passed incorrectly. ${err.message}`;
+      this.error = true;
+    });
+
     if (code != null && state != null) {
-      if (provider === "google") {
-        this.$store
-          .dispatch(LOGIN, {
-            type: "oauth",
-            provider: "google",
-            url: window.location.href
-          })
-          .then(() => {
-            this.success = true;
-            this.error = false;
+      this.$store
+        .dispatch(LOGIN, {
+          type: "oauth",
+          provider: provider,
+          url: window.location.href
+        })
+        .then(() => {
+          this.success = true;
+          this.error = false;
 
-            const w = window.location;
-            window.location.href = w.protocol + "//" + w.host + w.pathname;
-          }).catch(err => {
-            this.errorMsg = `Failed to log in! ${err.message}`;
-            this.error = true;
-            this.$router.replace({ name: "login" });
-          });
-        return;
-      }
-      else if (provider === "github") {
-        this.$store
-          .dispatch(LOGIN, {
-            type: "oauth",
-            provider: "github",
-            url: window.location.href
-          })
-          .then(() => {
-            this.success = true;
-            this.error = false;
-
-            const w = window.location;
-            window.location.href = w.protocol + "//" + w.host + w.pathname;
-          }).catch(err => {
-            this.errorMsg = `Failed to log in! ${err.message}`;
-            this.error = true;
-            this.$router.replace({ name: "login" });
-          });
-        return;
-      }
-
+          const w = window.location;
+          window.location.href = w.protocol + "//" + w.host + w.pathname;
+        }).catch(err => {
+          this.errorMsg = `Failed to log in! ${err.message}`;
+          this.error = true;
+          this.$router.replace({ name: "login" });
+        });
+      return;
     }
   },
 
@@ -222,8 +207,7 @@ export default {
           handleThriftError(url => {
             resolve(url);
           }));
-      }
-      ).then(url => {
+      }).then(url => {
         if (url) {
           this.success = false;
           this.error = false;

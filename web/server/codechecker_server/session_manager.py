@@ -260,6 +260,15 @@ class SessionManager:
                                 "Falling back to no authentication.")
                     self.__auth_config['enabled'] = False
 
+    def get_oauth_providers(self):
+        result = []
+        providers = self.__auth_config.get(
+            'method_oauth', {}).get("providers", {})
+        for provider in providers:
+            if providers[provider].get('enabled', False):
+                result.append(provider)
+        return result
+
     def get_oauth_config(self, provider):
         return self.__auth_config.get(
             'method_oauth', {}).get("providers", {}).get(provider, {})
@@ -502,15 +511,21 @@ class SessionManager:
         """
         Try to authenticate user based on the OAuth configuration.
         """
-        if self.__is_method_enabled('oauth') and 'github@' in auth_string:
-            data = auth_string.split('github@')[1]
+        if not self.__is_method_enabled('oauth'):
+            return False
+
+        providers = self.__auth_config.get(
+            'method_oauth', {}).get("providers", {})
+
+        provider = auth_string.split('@')[0]
+
+        if provider in providers:
+            if not providers[provider].get('enabled', False):
+                return False
+
+            data = auth_string.split(provider + '@')[1]
             username, token = data.split(':')
             return {'username': username, 'token': token, 'groups': []}
-
-        if self.__is_method_enabled('oauth') and 'google@' in auth_string:
-            data = auth_string.split('google@')[1]
-            email, token = data.split(':')
-            return {'username': email, 'token': token, 'groups': []}
 
         return False
 

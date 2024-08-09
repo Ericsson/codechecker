@@ -68,6 +68,9 @@ service codeCheckerAuthentication {
   string performLogin(1: string authMethod,
                       2: string authString)
                       throws (1: codechecker_api_shared.RequestFailed requestError),
+  
+  // Returns list of providers for oauth for respective appearence of buttons.
+  list<string> getOauthProviders(),
 
   // Create a link for the user to log in for github Oauth.
   string createLink(1: string provider)
