@@ -65,8 +65,8 @@ def setup_class_common():
 
     codechecker.add_test_package_product(host_port_cfg, TEST_WORKSPACE)
 
-    process = subprocess.Popen(["python3", "oauth_server.py"],
-                               cwd="tests/functional/authentication")
+    subprocess.Popen(["python3", "oauth_server.py"],
+                     cwd="tests/functional/authentication")
 
 
 def teardown_class_common():

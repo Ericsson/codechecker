@@ -12,30 +12,50 @@ SERVERPORT = int(os.getenv("PORT")) if os.getenv("PORT") else 3000
 class OauthServer(BaseHTTPRequestHandler):
     users_by_data = {
         "admin_github:admin": {
-            "code": "0",
+            "code": "1",
             "token": "github1"
         },
         "user_github:user": {
-            "code": "1",
+            "code": "2",
             "token": "github2"
+        },
+        "user_google:user": {
+            "code": "3",
+            "token": "google3"
+        },
+        "user_dummy:user": {
+            "code": "4",
+            "token": "dummy4"
         }
     }
 
     tokens_by_code = {
-        "0": "github1",
-        "1": "github2"
+        "1": "github1",
+        "2": "github2",
+        "3": "google3",
+        "4": "dummy4"
     }
 
     users_by_token = {
         "github1": {
             "login": "admin_github",
             "email": "admin@github.com",
-            "name": "Admin @github",
+            "name": "Admin @github"
         },
         "github2": {
             "login": "user_github",
             "email": "user@github.com",
-            "name": "User @github",
+            "name": "User @github"
+        },
+        "google3": {
+            "login": "user_google",
+            "email": "user@google.com",
+            "name": "User @google"
+        },
+        "dummy4": {
+            "login": "user_dummy",
+            "email": "dummy@dummy.com",
+            "name": "User @dummy"
         }
     }
 
