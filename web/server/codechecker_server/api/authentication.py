@@ -47,8 +47,6 @@ class ThriftAuthHandler:
         self.__manager = manager
         self.__auth_session = auth_session
         self.__config_db = config_database
-        self.oauth_config_github = self.__manager.get_oauth_config("github")
-        self.oauth_config_google = self.__manager.get_oauth_config("google")
 
     def __require_privilaged_access(self):
         """
@@ -178,6 +176,10 @@ class ThriftAuthHandler:
             productPermissions=product_permissions)
 
     @timeit
+    def getOauthProviders(self):
+        return self.__manager.get_oauth_providers()
+
+    @timeit
     def performLogin(self, auth_method, auth_string):
         LOG.info("function called: performLogin")
 
@@ -203,49 +205,11 @@ class ThriftAuthHandler:
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
                     msg)
-        elif auth_method == "oauth_github":
+
+        elif auth_method.startswith("oauth_", 0, 6):
+            provider = auth_method[6:]
             LOG.info("OAuth login... started")
-            oauth_config = self.oauth_config_github
-            if not oauth_config.get("enabled"):
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                    "OAuth authentication is not enabled.33")
-
-            client_id = oauth_config["oauth_client_id"]
-            client_secret = oauth_config["oauth_client_secret"]
-            scope = oauth_config["oauth_scope"]
-            token_url = oauth_config["oauth_token_uri"]
-            user_info_url = oauth_config["oauth_user_info_uri"]
-
-            session = OAuth2Session(client_id, client_secret, scope=scope)
-            token = session.fetch_token(
-                url=token_url,
-                authorization_response=f"{auth_string}",
-            )
-
-            user_info = session.get(user_info_url).json()
-            username = user_info[
-                oauth_config["oauth_user_info_mapping"]["username"]]
-            allowed_users = oauth_config.get("allowed_users", [])
-            # important process here
-            if allowed_users == ["*"] or username in allowed_users:
-                session = self.__manager.create_session(
-                    "github@" + username + ":" + token['access_token'])
-                return session.token
-
-            if len(allowed_users) == 0:
-                raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                    "The allowed users list is empty")
-
-            raise codechecker_api_shared.ttypes.RequestFailed(
-                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                    "User is not authorized to access this service")
-
-        elif auth_method == "oauth_google":
-            LOG.info("OAuth login GOOGLE... started")
-
-            oauth_config = self.oauth_config_google
+            oauth_config = self.__manager.get_oauth_config(provider)
             if not oauth_config.get("enabled"):
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
@@ -266,13 +230,15 @@ class ThriftAuthHandler:
                 redirect_uri=redirect_uri)
             token = session.fetch_token(
                 url=token_url,
-                authorization_response=f"{auth_string}")
+                authorization_response=auth_string)
 
             user_info = session.get(user_info_url).json()
-            email = user_info[oauth_config["oauth_user_info_mapping"]["email"]]
-            if allowed_users == ["*"] or email in allowed_users:
+            username = user_info[
+                oauth_config["oauth_user_info_mapping"]["username"]]
+            if allowed_users == ["*"] or username in allowed_users:
                 session = self.__manager.create_session(
-                    "google@" + email + ":" + token['access_token'])
+                    provider + "@" + username +
+                    ":" + token['access_token'])
                 return session.token
 
             if len(allowed_users) == 0:
@@ -281,9 +247,8 @@ class ThriftAuthHandler:
                     "The allowed users list is empty")
 
             raise codechecker_api_shared.ttypes.RequestFailed(
-                codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
-                "User is not authorized to access this service")
-
+                    codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
+                    "User is not authorized to access this service")
         raise codechecker_api_shared.ttypes.RequestFailed(
             codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
             "Could not negotiate via common authentication method.")

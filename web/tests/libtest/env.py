@@ -379,7 +379,42 @@ def enable_auth(workspace):
                 "allowed_users": [
                     "admin_github"
                 ]
+            },
+            "google": {
+                "enabled": True,
+                "oauth_client_id": "2",
+                "oauth_client_secret": "2",
+                "oauth_authorization_uri": "http://localhost:3000/login",
+                "oauth_redirect_uri": "http://localhost:3000/login",
+                "oauth_token_uri": "http://localhost:3000/token",
+                "oauth_user_info_uri": "http://localhost:3000/get_user",
+                "oauth_scope": "openid email profile",
+                "oauth_user_info_mapping": {
+                    "username": "email",
+                    "email": "email",
+                    "fullname": "name"
+                },
+                "allowed_users": [
+                    "*"
+                ]
+            },
+            "dummy": {
+                "enabled": True,
+                "oauth_client_id": "3",
+                "oauth_client_secret": "3",
+                "oauth_authorization_uri": "http://localhost:3000/login",
+                "oauth_redirect_uri": "http://localhost:3000/login",
+                "oauth_token_uri": "http://localhost:3000/token",
+                "oauth_user_info_uri": "http://localhost:3000/get_user",
+                "oauth_scope": "openid email profile",
+                "oauth_user_info_mapping": {
+                    "username": "email",
+                    "email": "email",
+                    "fullname": "name"
+                },
+                "allowed_users": []
             }
+
         }
     }
     with open(server_cfg_file, 'w',

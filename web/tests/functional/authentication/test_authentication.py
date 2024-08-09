@@ -193,6 +193,9 @@ class DictAuth(unittest.TestCase):
             url=f"{link}&username={username}&password={password}",
             timeout=10).json()
 
+        if 'error' in data:
+            raise RequestFailed(data['error'])
+
         link = link.split('?')[0]
         code, state = data['code'], data['state']
         auth_string = f"{link}?code={code}&state={state}"
@@ -203,19 +206,41 @@ class DictAuth(unittest.TestCase):
 
         return self.session_token
 
-    # test_oauth_github_admin
-    def test_oauth_allowed_users(self):
+    def test_oauth_allowed_users_default(self):
         """
         Testing the authentication using external oauth provider
         made for this case that simulates the behavior of the real provider.
         """
-        # The following user is in the list of allowed users:
+        # The following user is in the list of allowed users: GITHUB
         session = self.try_login("github", "admin_github", "admin")
-        self.assertIsNotNone(session, "WE HAVE A PROBLEM")
+        self.assertIsNotNone(session, "allowed user could not login")
 
-        # The following user is NOT in the list:
+        # The following user is NOT in the list: GITHUB
         with self.assertRaises(RequestFailed):
             self.try_login("github", "user_github", "user")
+
+    def test_oauth_allowed_users_special(self):
+        """
+        Testing the oauth, verifying special cases where
+        all users are allowed to login, or none of them.
+        """
+        # All users are allowed to login.
+        session = self.try_login("google", "user_google", "user")
+        self.assertIsNotNone(session, "allowed user could not login")
+
+        # No users are allowed to login.
+        with self.assertRaises(RequestFailed):
+            self.try_login("dummy", "user_google", "user")
+
+    def test_oauth_invalid_credentials(self):
+        """
+        Testing the oauth using non-existent users.
+        """
+        with self.assertRaises(RequestFailed):
+            self.try_login("google", "nonexistant", "test")
+
+        with self.assertRaises(RequestFailed):
+            self.try_login("github", "nonexistant", "test")
 
     def test_nonauth_storage(self):
         """

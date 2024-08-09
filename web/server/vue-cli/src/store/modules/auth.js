@@ -63,36 +63,20 @@ const actions = {
 
   [LOGIN](context, credentials) {
     return new Promise((resolve, reject) => {
-
       if (credentials.type === "oauth") {
-        if (credentials.provider === "github") {
-          authService.getClient().performLogin("oauth_github", credentials.url,
-            handleThriftError(token => {
-              context.commit(SET_AUTH, {
-                userName: "OAuth login",
-                token: token
-              });
-              resolve(token);
-            }, err => {
-              reject(err);
-            }));
-          return;
-        }
-        else if (credentials.provider === "google") {
-          authService.getClient().performLogin("oauth_google", credentials.url,
-            handleThriftError(token => {
-              context.commit(SET_AUTH, {
-                userName: "OAuth login",
-                token: token
-              });
-              resolve(token);
-            }, err => {
-              reject(err);
-            }));
-          return;
-        }
+        authService.getClient().performLogin(
+          "oauth_" + credentials.provider, credentials.url,
+          handleThriftError(token => {
+            context.commit(SET_AUTH, {
+              userName: "OAuth @" + credentials.provider,
+              token: token
+            });
+            resolve(token);
+          }, err => {
+            reject(err);
+          }));
+        return;
       }
-
       authService.getClient().performLogin("Username:Password",
         `${credentials.username}:${credentials.password}`,
         handleThriftError(token => {
