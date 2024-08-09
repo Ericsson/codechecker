@@ -134,10 +134,23 @@ class DynamicResults(unittest.TestCase):
         results = self._cc_client.getRunResults(
             None, 500, 0, None, testcase_filter, None, False)
 
-        self.assertEqual(len(results), 3)
+        self.assertEqual(len(results), 2)
 
         self.assertTrue(all(map(
             lambda report: report.annotations['testcase'] == 'TC-1',
+            results)))
+
+        testcase_filter = ReportFilter(annotations=[Pair(
+            first='testcase',
+            second='TC-*')])
+
+        results = self._cc_client.getRunResults(
+            None, 500, 0, None, testcase_filter, None, False)
+
+        self.assertEqual(len(results), 3)
+
+        self.assertTrue(all(map(
+            lambda report: report.annotations['testcase'].startswith('TC-'),
             results)))
 
     def test_count_by_attribute(self):
@@ -156,4 +169,4 @@ class DynamicResults(unittest.TestCase):
         num = self._cc_client.getRunResultCount(
             None, testcase_filter, None)
 
-        self.assertEqual(num, 3)
+        self.assertEqual(num, 2)
