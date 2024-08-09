@@ -57,7 +57,10 @@
               />
             </v-form>
           </v-card-text>
-          <v-card-actions class="justify-center px-0">
+          <v-card-actions
+            id="btn-container"
+            class="d-flex justify-center flex-column"
+          >
             <v-btn
               id="login-btn"
               block
@@ -66,6 +69,24 @@
               @click="login"
             >
               Login
+            </v-btn>
+            <v-btn
+              id="login-btn-github"
+              block
+              x-large
+              color="primary"
+              @click="oauth('github')"
+            >
+              Login with GitHub
+            </v-btn>
+            <v-btn
+              id="login-btn"
+              block
+              x-large
+              color="primary"
+              @click="oauth('google')"
+            >
+              Login with Google
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -77,7 +98,7 @@
 <script>
 import { mapGetters } from "vuex";
 import { LOGIN } from "@/store/actions.type";
-
+import { authService, handleThriftError } from "@cc-api";
 import Alerts from "@/components/Alerts";
 
 export default {
@@ -94,7 +115,7 @@ export default {
       success: false,
       error: false,
       errorMsg: null,
-      valid: false
+      valid: false,
     };
   },
 
@@ -121,6 +142,59 @@ export default {
 
   mounted() {
     this.fixAutocomplete();
+
+    const url = new URL(window.location.href);
+    let code = null, state = null;
+    //get the code and state from the url
+    code = url.searchParams.get("code");
+    state = url.searchParams.get("state");
+    //get the provider from the cookie
+    const provider = document.cookie.split(";").find(
+      c => c.includes("oauth_provider")).split("=")[1];
+
+    if (code != null && state != null) {
+      if (provider === "google") {
+        this.$store
+          .dispatch(LOGIN, {
+            type: "oauth",
+            provider: "google",
+            url: window.location.href
+          })
+          .then(() => {
+            this.success = true;
+            this.error = false;
+
+            const w = window.location;
+            window.location.href = w.protocol + "//" + w.host + w.pathname;
+          }).catch(err => {
+            this.errorMsg = `Failed to log in! ${err.message}`;
+            this.error = true;
+            this.$router.replace({ name: "login" });
+          });
+        return;
+      }
+      else if (provider === "github") {
+        this.$store
+          .dispatch(LOGIN, {
+            type: "oauth",
+            provider: "github",
+            url: window.location.href
+          })
+          .then(() => {
+            this.success = true;
+            this.error = false;
+
+            const w = window.location;
+            window.location.href = w.protocol + "//" + w.host + w.pathname;
+          }).catch(err => {
+            this.errorMsg = `Failed to log in! ${err.message}`;
+            this.error = true;
+            this.$router.replace({ name: "login" });
+          });
+        return;
+      }
+
+    }
   },
 
   methods: {
@@ -139,6 +213,30 @@ export default {
           this.errorMsg = `Failed to log in! ${err.message}`;
           this.error = true;
         });
+    },
+    oauth(provider) {
+      new Promise(resolve => {
+        document.cookie = `oauth_provider=${provider}; path=*`;
+        // console output the provider for debugging
+        authService.getClient().createLink(provider,
+          handleThriftError(url => {
+            resolve(url);
+          }));
+      }
+      ).then(url => {
+        if (url) {
+          this.success = false;
+          this.error = false;
+          window.location.href = url;
+          this.link = url;
+        } else {
+          this.errorMsg = `Server returned an invalid URL: ${url}`;
+          this.error = true;
+        }
+      }).catch(err => {
+        this.errorMsg = `Failed to access link. ${err.message}`;
+        this.error = true;
+      });
     },
 
     /**
@@ -180,6 +278,11 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+#btn-container > button {
+  margin: 0 !important;
+  margin-top: 10px !important;
+}
+
 #avatar {
   position: absolute;
   margin: 0 auto;

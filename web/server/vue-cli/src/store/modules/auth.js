@@ -1,9 +1,9 @@
-
 import {
   GET_AUTH_PARAMS,
   GET_LOGGED_IN_USER,
   LOGIN,
-  LOGOUT
+  LOGOUT,
+  OAUTH
 } from "../actions.type";
 
 import {
@@ -63,6 +63,36 @@ const actions = {
 
   [LOGIN](context, credentials) {
     return new Promise((resolve, reject) => {
+
+      if (credentials.type === "oauth") {
+        if (credentials.provider === "github") {
+          authService.getClient().performLogin("oauth_github", credentials.url,
+            handleThriftError(token => {
+              context.commit(SET_AUTH, {
+                userName: "OAuth login",
+                token: token
+              });
+              resolve(token);
+            }, err => {
+              reject(err);
+            }));
+          return;
+        }
+        else if (credentials.provider === "google") {
+          authService.getClient().performLogin("oauth_google", credentials.url,
+            handleThriftError(token => {
+              context.commit(SET_AUTH, {
+                userName: "OAuth login",
+                token: token
+              });
+              resolve(token);
+            }, err => {
+              reject(err);
+            }));
+          return;
+        }
+      }
+
       authService.getClient().performLogin("Username:Password",
         `${credentials.username}:${credentials.password}`,
         handleThriftError(token => {
@@ -77,7 +107,7 @@ const actions = {
     });
   },
 
-  [LOGOUT](context) {
+  [LOGOUT](context) { 
     return new Promise((resolve, reject) => {
       authService.getClient().destroySession(
         handleThriftError(success => {
@@ -88,6 +118,18 @@ const actions = {
         }, err => {
           reject(err);
         }));
+    });
+  },
+
+  [OAUTH](provider) {
+    return new Promise((resolve, reject) => {
+      authService.getClient().createLink(provider,
+        handleThriftError(url => {
+          resolve(url);
+        }, err => {
+          reject(err);
+        })
+      );
     });
   }
 };

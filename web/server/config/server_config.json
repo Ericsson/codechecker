@@ -54,6 +54,54 @@
         "adm", "cc-users"
       ]
     },
+    "method_oauth": {
+      "enabled": false,
+      "groups": [
+        "allowed_users"
+      ],
+      "providers" : {
+        "github" : {
+          "enabled" : false,
+          "oauth_client_id" : "ExampleClientID",
+          "oauth_client_secret": "exampleClientSecret",
+          "oauth_authorization_uri": "https://github.com/login/oauth/authorize",
+          "oauth_redirect_uri": "http://path_To_CodeChecker_Login_Page",
+          "oauth_token_uri": "https://github.com/login/oauth/access_token",
+          "oauth_user_info_uri": "https://api.github.com/user",
+          "oauth_scope": "openid email profile",
+          "oauth_user_info_mapping": {
+            "username": "login",
+            "email": "email",
+            "fullname": "name"
+          },
+          "allowed_users": [
+            "user1",
+            "user2",
+            "user3"
+          ]
+        },
+        "google": {
+          "enabled" : false,
+          "oauth_client_id" : "ExampleClientID",
+          "oauth_client_secret" : "exampleClientSecret",
+          "oauth_authorization_uri" : "https://accounts.google.com/o/oauth2/auth",
+          "oauth_redirect_uri" : "http://path_To_CodeChecker_Login_Page",
+          "oauth_token_uri" : "https://accounts.google.com/o/oauth2/token",
+          "oauth_user_info_uri" : "https://www.googleapis.com/oauth2/v1/userinfo",
+          "oauth_scope" : "openid email profile",
+          "oauth_user_info_mapping" : {
+            "username" : "email",
+            "email" : "email",
+            "fullname" : "name"
+          },
+          "allowed_users": [
+            "user1@gmail.com",
+            "user2@gmail.com",
+            "user3@gmail.com"
+          ]
+        }
+      }
+    },
     "regex_groups": {
       "enabled" : false,
       "groups" : {

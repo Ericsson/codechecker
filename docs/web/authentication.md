@@ -16,6 +16,9 @@ Table of Contents
         * [<i>LDAP</i> authentication](#ldap-authentication)
             * [Configuration options](#configuration-options)
     * Membership in custom groups with [<i>regex_groups</i>](#regex_groups-authentication)
+      * [<i>OAUTH</i> authentication](#oauth-authentication)
+        * [<i>OAUTH</i> Configuration options](#oauth-configuration-options)
+        * [<i>OAUTH</i> details per each provider](#oauth-details-per-each-provider)
 * [Client-side configuration](#client-side-configuration)
     * [Web-browser client](#web-browser-client)
     * [Command-line client](#command-line-client)
@@ -319,6 +322,124 @@ When we manage permissions on the GUI we can give permission to these
 groups. For more information [see](permissions.md#managing-permissions).
 
 ----
+
+### <i>OAUTH</i> authentication <a name="oauth-authentication"></a>
+
+CodeChecker also supports OAUTH-based authentication. The `authentication.method_oauth` section contains the configuration for OAUTH authentication for different OAUTH providers. The server can be configured for different Oauth `providers` .Users can be added into the `allowed_users`
+
+#### OAUTH Configuration options <a name="oauth-configuration-options"></a>
+  * `enabled`
+  
+    Indicated if OAUTH method is enabled 
+
+ * `providers`
+
+    The provider field contains configuration details for OAuth providers. Each provider's configuration includes but may vary depending on provider:
+ 
+ * `enabled`
+
+    Indicates if the Oauth provider is enabled
+
+ * `oauth_client_id`
+    
+    Contains client ID provided by the OAuth provider.
+
+
+ * `oauth_client_secret`
+  
+    The client secret provided by the OAuth provider.
+
+ * `oauth_authorization_uri`
+  
+    This link in used for redirecting user for perovider's authentication page
+
+ * `oauth_redirect_uri`
+  
+    The oauth_redirect_uri URI to which the OAuth provider will redirect after authorization and in some providers used for confirming the redirection URI.
+
+ * `oauth_token_uri`
+
+    The URI to exchange the authorization code for an access token.
+
+ * `oauth_user_info_uri`
+
+    The URI to fetch the authenticated user's information.
+
+ * `oauth_scope`
+
+    The scope of access requested from the OAuth provider.
+
+ * `oauth_user_info_mapping`
+
+    A mapping of user info fields from the provider to local fields.
+
+    * `username`
+        
+        Field for the username.
+    * `email`
+        
+        Field for the email.
+    * `fullname`
+        
+        Field for the fullname.
+ * `allowed_users`
+  
+    A list of allowed users differently configured for each provider
+
+~~~{.json}
+"method_oauth": {
+      "enabled": false,
+      "providers": {
+        "github": {
+          "enabled": false,
+          "oauth_client_id": "client id",
+          "oauth_client_secret": "client secret",
+          "oauth_authorization_uri": "https://github.com/login/oauth/authorize",
+          "oauth_token_uri": "https://github.com/login/oauth/access_token",
+          "oauth_user_info_uri": "https://api.github.com/user",
+          "oauth_scope": "openid email profile",
+          "oauth_user_info_mapping": {
+            "username": "login",
+            "email": "email",
+            "fullname": "name"
+          },
+          "allowed_users": [
+            "user1",
+            "user2",
+            "user3"
+          ]
+        },
+        "google": {
+          "enabled": false,
+          "oauth_client_id": "client id",
+          "oauth_client_secret": "client secret",
+          "oauth_authorization_uri": "https://accounts.google.com/o/oauth2/auth",
+          "oauth_redirect_uri": "http://localhost:8080/login",
+          "oauth_token_uri": "https://accounts.google.com/o/oauth2/token",
+          "oauth_user_info_uri": "https://www.googleapis.com/oauth2/v1/userinfo",
+          "oauth_scope": "openid email profile",
+          "oauth_user_info_mapping": {
+            "username": "email",
+            "email": "email",
+            "fullname": "name"
+          },
+          "allowed_users": [
+            "user1",
+            "user2",
+            "user3"
+          ]
+        }
+      }
+    }
+~~~
+
+#### Oauth Details per each provider <a name ="oauth-details-per-each-provider"></a>
+
+* For Google OAuth to function correctly, the `oauth_redirect_uri` in application's configuration must exactly match the `Authorized redirect URIs` specified in the Google API Console. 
+
+* For GitHub to redirect correctly, set the `Authorization callback URL` to the login page of CodeChecker. This ensures proper processing of the authorization. Additionally, set the homepage URL to the homepage of CodeChecker.
+
+
 
 # Client-side configuration <a name="client-side-configuration"></a>
 

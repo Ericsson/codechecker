@@ -244,6 +244,10 @@ class SessionManager:
                                 "... Disabling PAM authentication.")
                     self.__auth_config['method_pam']['enabled'] = False
 
+            if 'method_oauth' in self.__auth_config and \
+                    self.__auth_config['method_oauth'].get('enabled'):
+                found_auth_method = True
+
             if not found_auth_method:
                 if force_auth:
                     LOG.warning("Authentication was manually enabled, but no "
@@ -255,6 +259,10 @@ class SessionManager:
                                 "authentication backends are configured... "
                                 "Falling back to no authentication.")
                     self.__auth_config['enabled'] = False
+
+    def get_oauth_config(self, provider):
+        return self.__auth_config.get(
+            'method_oauth', {}).get("providers", {}).get(provider, {})
 
     def __get_config_dict(self):
         """
@@ -368,7 +376,8 @@ class SessionManager:
         validation = self.__try_auth_root(auth_string) \
             or self.__try_auth_dictionary(auth_string) \
             or self.__try_auth_pam(auth_string) \
-            or self.__try_auth_ldap(auth_string)
+            or self.__try_auth_ldap(auth_string) \
+            or self.__try_auth_oauth(auth_string)
         if not validation:
             return False
 
@@ -486,6 +495,22 @@ class SessionManager:
                     groups = cc_ldap.get_groups(ldap_conf, username, password)
                     self.__update_groups(username, groups)
                     return {'username': username, 'groups': groups}
+
+        return False
+
+    def __try_auth_oauth(self, auth_string):
+        """
+        Try to authenticate user based on the OAuth configuration.
+        """
+        if self.__is_method_enabled('oauth') and 'github@' in auth_string:
+            data = auth_string.split('github@')[1]
+            username, token = data.split(':')
+            return {'username': username, 'token': token, 'groups': []}
+
+        if self.__is_method_enabled('oauth') and 'google@' in auth_string:
+            data = auth_string.split('google@')[1]
+            email, token = data.split(':')
+            return {'username': email, 'token': token, 'groups': []}
 
         return False
 
@@ -609,12 +634,14 @@ class SessionManager:
             self.__cleanup_sessions()
 
         # Try authenticate user with personal access token.
-        auth_token = self.__try_auth_token(auth_string)
-        if auth_token:
-            local_session = self.__get_local_session_from_db(auth_token.token)
-            local_session.revalidate()
-            self.__sessions.append(local_session)
-            return local_session
+        if ":" in auth_string:
+            auth_token = self.__try_auth_token(auth_string)
+            if auth_token:
+                local_session = self.__get_local_session_from_db(
+                    auth_token.token)
+                local_session.revalidate()
+                self.__sessions.append(local_session)
+                return local_session
 
         # Try to authenticate user with different authentication methods.
         validation = self.__handle_validation(auth_string)
