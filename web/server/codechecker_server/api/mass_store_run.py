@@ -105,9 +105,9 @@ class RunLocking:
 
 def unzip(b64zip: str, output_dir: str) -> int:
     """
-    This function unzips the base64 encoded zip file. This zip is extracted
-    to a temporary directory and the ZIP is then deleted. The function returns
-    the size of the extracted decompressed zip file.
+    This function unzips a Base64 encoded and ZLib-compressed ZIP file. This
+    ZIP is extracted to a temporary directory and the ZIP is then deleted.
+    The function returns the size of the extracted decompressed ZIP file.
     """
     if len(b64zip) == 0:
         return 0
@@ -126,11 +126,10 @@ def unzip(b64zip: str, output_dir: str) -> int:
                 import traceback
                 traceback.print_exc()
                 raise
-    return 0
 
 
 def get_file_content(file_path: str) -> bytes:
-    """Return the file content for the given filepath. """
+    """Return the file content for the given filepath."""
     with open(file_path, 'rb') as f:
         return f.read()
 
@@ -276,8 +275,8 @@ class MassStoreRun:
         self.__get_report_limit_for_product()
 
     @property
-    def __manager(self):
-        return self.__report_server._manager
+    def __configuration_manager(self):
+        return self.__report_server._configuration_manager
 
     @property
     def __config_database(self):
@@ -299,7 +298,7 @@ class MassStoreRun:
         """
         Checks the maximum allowed of uploadable runs for the current product.
         """
-        max_run_count = self.__manager.get_max_run_count()
+        max_run_count = self.__configuration_manager.max_run_count
 
         with DBSession(self.__config_database) as session:
             product = session.query(Product).get(self.__product.id)
@@ -1392,7 +1391,6 @@ class MassStoreRun:
             if not run:
                 return False
 
-            run.mark_finished()
             run.duration = self.__duration
 
             return True

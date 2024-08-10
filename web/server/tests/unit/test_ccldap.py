@@ -13,7 +13,12 @@ Unit tests for LDAP.
 import unittest
 from unittest.mock import patch
 
+from codechecker_common.configuration_access import \
+    Configuration, OptionDirectory, Schema
+
 from codechecker_server.auth import cc_ldap
+from codechecker_server.server_configuration import \
+    register_configuration_options
 
 
 class MockLdap:
@@ -57,6 +62,21 @@ class MockLdap:
         return []
 
 
+SERVER_CFG_SCHEMA = register_configuration_options(Schema())
+
+
+def _make_ldap_config(authority_configuration: dict) -> OptionDirectory:
+    full_config_stub = {
+        "authentication": {
+            "method_ldap": {
+                "authorities": [authority_configuration]
+            }
+        }
+    }
+    cfg = Configuration.from_memory(SERVER_CFG_SCHEMA, full_config_stub)
+    return cfg.authentication.method_ldap.authorities[0]
+
+
 class CCLDAPTest(unittest.TestCase):
 
     top = ('o=test', {'o': ['test']})
@@ -71,20 +91,22 @@ class CCLDAPTest(unittest.TestCase):
     # It takes the form {dn: {attr: [value, ...], ...}, ...}.
     directory = dict([top, example, other, service_user, user2])
 
-    # service_user is used as a service user in the configuration.
-    ldap_config = {"connection_url": "ldap://localhost/",
-                   "username": "cn=service_user,ou=example,o=test",
-                   "password": "servicepw",
-                   "referrals": False,
-                   "deref": "always",
-                   "accountBase": "ou=other,o=test",
-                   "accountScope": "subtree",
-                   "accountPattern": "(cn=$USN$)",
-                   "groupBase": "o=test",
-                   "groupScope": "subtree",
-                   "groupPattern": "",
-                   "groupNameAttr": ""
-                   }
+    _ldap_config = {
+        "connection_url": "ldap://localhost/",
+        # service_user is used as a service user in the configuration.
+        "username": "cn=service_user,ou=example,o=test",
+        "password": "servicepw",
+        "referrals": False,
+        "deref": "always",
+        "accountBase": "ou=other,o=test",
+        "accountScope": "subtree",
+        "accountPattern": "(cn=$USN$)",
+        "groupBase": "o=test",
+        "groupScope": "subtree",
+        "groupPattern": "",
+        "groupNameAttr": ""
+    }
+    ldap_config = _make_ldap_config(_ldap_config)
 
     def setUp(self):
         self.ldap_patcher = patch('ldap.initialize')
@@ -96,7 +118,8 @@ class CCLDAPTest(unittest.TestCase):
         At least a connection_url is required in the ldap config.
         Without it no connection can be initialized.
         """
-        with cc_ldap.LDAPConnection({}, None, None) as connection:
+        ldap_config = _make_ldap_config({})
+        with cc_ldap.LDAPConnection(ldap_config, None, None) as connection:
             self.assertIsNone(connection)
 
     def test_anonymous_bind(self):
@@ -111,6 +134,7 @@ class CCLDAPTest(unittest.TestCase):
         Bind to LDAP server with username and credentials.
         """
         ldap_config = {"connection_url": "ldap://localhost/"}
+        ldap_config = _make_ldap_config(ldap_config)
 
         with cc_ldap.LDAPConnection(ldap_config,
                                     'cn=service_user,ou=example,o=test',
@@ -123,6 +147,8 @@ class CCLDAPTest(unittest.TestCase):
         but username is provided at context initialization.
         """
         ldap_config = {"connection_url": "ldap://localhost/"}
+        ldap_config = _make_ldap_config(ldap_config)
+
         with cc_ldap.LDAPConnection(ldap_config,
                                     'cn=service_user,ou=example,o=test',
                                     '') as connection:
@@ -134,6 +160,8 @@ class CCLDAPTest(unittest.TestCase):
         but username and credentials provided context initialization.
         """
         ldap_config = {"connection_url": "ldap://localhost/"}
+        ldap_config = _make_ldap_config(ldap_config)
+
         with cc_ldap.LDAPConnection(ldap_config,
                                     'cn=service_user,ou=example,o=test',
                                     'servicepw') as connection:
@@ -144,6 +172,8 @@ class CCLDAPTest(unittest.TestCase):
         Search for the full user DN.
         """
         ldap_config = {"connection_url": "ldap://localhost/"}
+        ldap_config = _make_ldap_config(ldap_config)
+
         with cc_ldap.LDAPConnection(ldap_config,
                                     'cn=service_user,ou=example,o=test') \
                 as connection:
