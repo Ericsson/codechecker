@@ -330,7 +330,7 @@ CodeChecker also supports OAUTH-based authentication. The `authentication.method
 #### OAUTH Configuration options <a name="oauth-configuration-options"></a>
   * `enabled`
   
-    Indicated if OAUTH method is enabled 
+    Indicated if OAUTH authentication is enabled (required for any methods below)
 
  * `providers`
 
@@ -338,7 +338,7 @@ CodeChecker also supports OAUTH-based authentication. The `authentication.method
  
  * `enabled`
 
-    Indicates if the Oauth provider is enabled
+    Indicates if current provider is enabled (github, google, etc)
 
  * `oauth_client_id`
     
@@ -347,15 +347,15 @@ CodeChecker also supports OAUTH-based authentication. The `authentication.method
 
  * `oauth_client_secret`
   
-    The client secret provided by the OAuth provider.
+    The client secret must be provided by the OAuth provider.
 
  * `oauth_authorization_uri`
   
-    This link in used for redirecting user for perovider's authentication page
+    This link in used for redirecting user for provider's authentication page
 
  * `oauth_redirect_uri`
   
-    The oauth_redirect_uri URI to which the OAuth provider will redirect after authorization and in some providers used for confirming the redirection URI.
+    User will be redirected back to the provided link after login with returned data.
 
  * `oauth_token_uri`
 
@@ -390,26 +390,7 @@ CodeChecker also supports OAUTH-based authentication. The `authentication.method
 "method_oauth": {
       "enabled": false,
       "providers": {
-        "github": {
-          "enabled": false,
-          "oauth_client_id": "client id",
-          "oauth_client_secret": "client secret",
-          "oauth_authorization_uri": "https://github.com/login/oauth/authorize",
-          "oauth_token_uri": "https://github.com/login/oauth/access_token",
-          "oauth_user_info_uri": "https://api.github.com/user",
-          "oauth_scope": "openid email profile",
-          "oauth_user_info_mapping": {
-            "username": "login",
-            "email": "email",
-            "fullname": "name"
-          },
-          "allowed_users": [
-            "user1",
-            "user2",
-            "user3"
-          ]
-        },
-        "google": {
+        "example_provider": {
           "enabled": false,
           "oauth_client_id": "client id",
           "oauth_client_secret": "client secret",
@@ -435,11 +416,7 @@ CodeChecker also supports OAUTH-based authentication. The `authentication.method
 
 #### Oauth Details per each provider <a name ="oauth-details-per-each-provider"></a>
 
-* For Google OAuth to function correctly, the `oauth_redirect_uri` in application's configuration must exactly match the `Authorized redirect URIs` specified in the Google API Console. 
-
-* For GitHub to redirect correctly, set the `Authorization callback URL` to the login page of CodeChecker. This ensures proper processing of the authorization. Additionally, set the homepage URL to the homepage of CodeChecker.
-
-
+* For OAuth providers to function correctly, the `oauth_redirect_uri` in application's configuration must exactly match the `Authorized redirect URIs` specified in the Google API Console. 
 
 # Client-side configuration <a name="client-side-configuration"></a>
 
