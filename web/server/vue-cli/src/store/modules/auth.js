@@ -2,8 +2,7 @@ import {
   GET_AUTH_PARAMS,
   GET_LOGGED_IN_USER,
   LOGIN,
-  LOGOUT,
-  OAUTH
+  LOGOUT
 } from "../actions.type";
 
 import {
@@ -102,18 +101,6 @@ const actions = {
         }, err => {
           reject(err);
         }));
-    });
-  },
-
-  [OAUTH](provider) {
-    return new Promise((resolve, reject) => {
-      authService.getClient().createLink(provider,
-        handleThriftError(url => {
-          resolve(url);
-        }, err => {
-          reject(err);
-        })
-      );
     });
   }
 };

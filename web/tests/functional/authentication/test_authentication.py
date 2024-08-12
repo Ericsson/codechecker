@@ -212,7 +212,7 @@ class DictAuth(unittest.TestCase):
         made for this case that simulates the behavior of the real provider.
         """
         # The following user is in the list of allowed users: GITHUB
-        session = self.try_login("github", "admin_github", "admin")
+        session = self.try_login("google", "admin_github", "admin")
         self.assertIsNotNone(session, "allowed user could not login")
 
         # The following user is NOT in the list: GITHUB

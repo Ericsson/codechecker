@@ -181,8 +181,6 @@ class ThriftAuthHandler:
 
     @timeit
     def performLogin(self, auth_method, auth_string):
-        LOG.info("function called: performLogin")
-
         if not auth_string:
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.AUTH_DENIED,
@@ -208,7 +206,6 @@ class ThriftAuthHandler:
 
         elif auth_method.startswith("oauth_", 0, 6):
             provider = auth_method[6:]
-            LOG.info("OAuth login... started")
             oauth_config = self.__manager.get_oauth_config(provider)
             if not oauth_config.get("enabled"):
                 raise codechecker_api_shared.ttypes.RequestFailed(
@@ -235,6 +232,15 @@ class ThriftAuthHandler:
             user_info = session.get(user_info_url).json()
             username = user_info[
                 oauth_config["oauth_user_info_mapping"]["username"]]
+
+            if provider == "github" and \
+                    "localhost" not in user_info_url:
+                link = "https://api.github.com/user/emails"
+                for email in session.get(link).json():
+                    if email['primary']:
+                        username = email['email']
+                        break
+
             if allowed_users == ["*"] or username in allowed_users:
                 session = self.__manager.create_session(
                     provider + "@" + username +

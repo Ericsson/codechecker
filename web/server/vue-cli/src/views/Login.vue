@@ -136,50 +136,8 @@ export default {
 
   mounted() {
     this.fixAutocomplete();
-
-    const url = new URL(window.location.href);
-    let code = null, state = null;
-    //get the code and state from the url
-    code = url.searchParams.get("code");
-    state = url.searchParams.get("state");
-    //get the provider from the cookie
-    const provider = document.cookie.split(";").find(
-      c => c.includes("oauth_provider")).split("=")[1];
-
-    new Promise(resolve => {
-      authService.getClient().getOauthProviders(
-        handleThriftError(providers => {
-          resolve(providers);
-        }));
-    }).then(providers => {
-      if (providers) {
-        this.providers = providers;
-      }
-    }).catch(err => {
-      this.errorMsg = `Providers list was passed incorrectly. ${err.message}`;
-      this.error = true;
-    });
-
-    if (code != null && state != null) {
-      this.$store
-        .dispatch(LOGIN, {
-          type: "oauth",
-          provider: provider,
-          url: window.location.href
-        })
-        .then(() => {
-          this.success = true;
-          this.error = false;
-
-          const w = window.location;
-          window.location.href = w.protocol + "//" + w.host + w.pathname;
-        }).catch(err => {
-          this.errorMsg = `Failed to log in! ${err.message}`;
-          this.error = true;
-          this.$router.replace({ name: "login" });
-        });
-      return;
-    }
+    this.getProviders();
+    this.detectCallback();
   },
 
   methods: {
@@ -198,6 +156,51 @@ export default {
           this.errorMsg = `Failed to log in! ${err.message}`;
           this.error = true;
         });
+    },
+    detectCallback() {
+      const url = new URL(window.location.href);
+      let code = null, state = null;
+
+      code = url.searchParams.get("code");
+      state = url.searchParams.get("state");
+
+      const provider = document.cookie.split(";").find(
+        c => c.includes("oauth_provider")).split("=")[1];
+
+      if (code != null && state != null) {
+        this.$store
+          .dispatch(LOGIN, {
+            type: "oauth",
+            provider: provider,
+            url: window.location.href
+          })
+          .then(() => {
+            this.success = true;
+            this.error = false;
+
+            const w = window.location;
+            window.location.href = w.protocol + "//" + w.host + w.pathname;
+          }).catch(err => {
+            this.errorMsg = `Failed to log in! ${err.message}`;
+            this.error = true;
+            this.$router.replace({ name: "login" });
+          });
+      }
+    },
+    getProviders() {
+      new Promise(resolve => {
+        authService.getClient().getOauthProviders(
+          handleThriftError(providers => {
+            resolve(providers);
+          }));
+      }).then(providers => {
+        if (providers) {
+          this.providers = providers;
+        }
+      }).catch(err => {
+        this.errorMsg = `Providers list was passed incorrectly. ${err.message}`;
+        this.error = true;
+      });
     },
     oauth(provider) {
       new Promise(resolve => {
