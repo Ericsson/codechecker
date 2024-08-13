@@ -15,4 +15,3 @@ class InferConfigHandler(config_handler.AnalyzerConfigHandler):
     """
     Configuration handler for Infer analyzer.
     """
-    pass
