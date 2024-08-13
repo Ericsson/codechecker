@@ -36,7 +36,7 @@ class InferResultHandler(ResultHandler):
         self.analyzer_info = AnalyzerInfo(name=AnalyzerResult.TOOL_NAME)
         self.infer_analyzer_result = AnalyzerResult()
 
-        super(InferResultHandler, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def postprocess_result(
         self,

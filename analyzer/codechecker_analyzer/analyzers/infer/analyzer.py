@@ -6,6 +6,7 @@
 #
 # -------------------------------------------------------------------------
 """
+Module for Facebook Infer analyzer related methods
 """
 from collections import defaultdict
 # TODO distutils will be removed in python3.12
@@ -25,6 +26,7 @@ from ..config_handler import CheckerState
 
 from .config_handler import InferConfigHandler
 from .result_handler import InferResultHandler
+from codechecker_analyzer.buildlog.log_parser import IGNORED_OPTIONS_GCC
 
 LOG = get_logger('analyzer.infer')
 
@@ -45,12 +47,11 @@ class Infer(analyzer_base.SourceAnalyzer):
         # TODO
         pass
 
-    @classmethod
     def get_analyzer_mentioned_files(self, output):
         """
         This is mostly used for CTU.
         """
-        pass
+        return set()
 
     def construct_analyzer_cmd(self, result_handler):
         """
@@ -61,16 +62,14 @@ class Infer(analyzer_base.SourceAnalyzer):
         # unforeseen exceptions where a general catch is justified?
         config = self.config_handler
 
-        analyzer_cmd = [Infer.analyzer_binary(), 'run']
+        analyzer_cmd = [Infer.analyzer_binary(), 'run', '--keep-going']
 
         for checker_name, value in config.checks().items():
             filtered_name = checker_name.replace("infer-", "")
             filtered_name = filtered_name.replace("-", "_")
             filtered_name = filtered_name.upper()
 
-            if value[0] == CheckerState.disabled:
-                # TODO python3.9 removeprefix method would be nicer
-                # than startswith and a hardcoded slicing
+            if value[0] == CheckerState.DISABLED:
                 analyzer_cmd.extend(['--disable-issue-type', filtered_name])
             else:
                 analyzer_cmd.extend(['--enable-issue-type', filtered_name])
@@ -78,35 +77,41 @@ class Infer(analyzer_base.SourceAnalyzer):
         output_dir = Path(result_handler.workspace, "infer",
                           result_handler.buildaction_hash)
         output_dir.mkdir(exist_ok=True, parents=True)
-
         analyzer_cmd.extend(['-o', str(output_dir)])
+        analyzer_cmd.append('--')
 
-        compile_lang = self.buildaction.lang
-        analyzer_cmd.extend(['--', compile_lang, '-c', self.source_file])
+        cmd_filtered = []
+        for cmd in shlex.split(self.buildaction.original_command):
+            if IGNORED_OPTIONS_GCC.match(cmd) and \
+                    self.buildaction.lang in ['c', 'c++']:
+                continue
+            cmd_filtered.append(cmd)
 
-        # analyzer_cmd.append(self.source_file)
+        if self.buildaction.lang == 'c++':
+            cmd_filtered.append('-stdlib=libc++')
 
+        analyzer_cmd.extend(cmd_filtered)
         LOG.debug_analyzer("Running analysis command "
                            f"'{shlex.join(analyzer_cmd)}'")
 
         return analyzer_cmd
 
     @classmethod
-    def get_analyzer_checkers(self):
+    def get_analyzer_checkers(cls):
         """
         Return the list of the supported checkers.
         """
-        command = [self.analyzer_binary(), "help", "--list-issue-types"]
-
-        desc = json.load(open(Path(__file__).parent / "descriptions.json"))
-
+        command = [cls.analyzer_binary(), "help", "--list-issue-types"]
+        desc = json.load(
+            open(Path(__file__).parent / "descriptions.json",
+                 "r", encoding="utf-8"))
         checker_list = []
         try:
             output = subprocess.check_output(command,
                                              stderr=subprocess.DEVNULL)
             for entry in output.decode().split('\n'):
                 data = entry.strip().split(":")
-                if (len(data) < 7):
+                if len(data) < 7:
                     continue
 
                 entry_id = data[0].lower()
@@ -119,7 +124,6 @@ class Infer(analyzer_base.SourceAnalyzer):
                 entry_id = entry_id.replace("_", "-")
                 checker_list.append((f"infer-{entry_id}",
                                      description))
-
             return checker_list
         except (subprocess.CalledProcessError) as e:
             LOG.error(e.stderr)
@@ -141,7 +145,7 @@ class Infer(analyzer_base.SourceAnalyzer):
         """
         return []
 
-    def analyze(self, analyzer_cmd, res_handler, proc_callback=None):
+    def analyze(self, analyzer_cmd, res_handler, proc_callback=None, env=None):
         env = None
 
         original_env_file = os.environ.get(
@@ -156,40 +160,37 @@ class Infer(analyzer_base.SourceAnalyzer):
         """
         Post process the results after the analysis.
         """
-        pass
 
     @classmethod
-    def resolve_missing_binary(cls, configured_binary, env):
+    def resolve_missing_binary(cls, configured_binary, environ):
         """
         In case of the configured binary for the analyzer is not found in the
         PATH, this method is used to find a callable binary.
         """
-        pass
 
     @classmethod
-    def get_binary_version(self, environ, details=False) -> str:
+    def get_binary_version(cls, environ, details=False) -> str:
         """
         Return the analyzer version.
         """
         # No need to LOG here, we will emit a warning later anyway.
-        if not self.analyzer_binary():
+        if not cls.analyzer_binary():
             return None
         if details:
-            version = [self.analyzer_binary(), '--version']
+            version = [cls.analyzer_binary(), '--version']
         else:
-            # version = [self.analyzer_binary(), '-dumpfullversion']
-            version = [self.analyzer_binary(), '--version']
+            version = [cls.analyzer_binary(), '--version']
         try:
             output = subprocess.check_output(version,
                                              env=environ,
                                              encoding="utf-8",
                                              errors="ignore")
-            return output.split('\n')[0].strip().split(" ")[-1][1:]
+            output = output.split('\n', maxsplit=1)[0]
+            return output.strip().split(" ")[-1][1:]
         except (subprocess.CalledProcessError, OSError) as oerr:
             LOG.warning("Failed to get analyzer version: %s",
                         ' '.join(version))
             LOG.warning(oerr)
-
         return None
 
     @classmethod
