@@ -13,7 +13,6 @@ from collections import defaultdict
 from packaging.version import Version
 from pathlib import Path
 import os
-import pickle
 import re
 import shlex
 import shutil
@@ -272,18 +271,6 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         """
         return []
 
-    def analyze(self, analyzer_cmd, res_handler, proc_callback=None, _=None):
-        environment = None
-
-        original_env_file = os.environ.get(
-            'CODECHECKER_ORIGINAL_BUILD_ENV')
-        if original_env_file:
-            with open(original_env_file, 'rb') as env_file:
-                environment = pickle.load(env_file, encoding='utf-8')
-
-        return super().analyze(
-            analyzer_cmd, res_handler, proc_callback, environment)
-
     def post_analyze(self, result_handler):
         """
         Post process the reuslts after the analysis.
@@ -393,7 +380,7 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             # No cppcheck arguments file was given in the command line.
             LOG.debug_analyzer(aerr)
 
-        check_env = context.analyzer_env
+        check_env = context.get_analyzer_env(cls.ANALYZER_NAME)
 
         # Overwrite PATH to contain only the parent of the cppcheck binary.
         if os.path.isabs(Cppcheck.analyzer_binary()):

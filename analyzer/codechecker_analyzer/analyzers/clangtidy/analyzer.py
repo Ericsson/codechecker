@@ -270,7 +270,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             if cls.__analyzer_checkers:
                 return cls.__analyzer_checkers
 
-            environ = analyzer_context.get_context().analyzer_env
+            environ = analyzer_context\
+                .get_context().get_analyzer_env(cls.ANALYZER_NAME)
             result = subprocess.check_output(
                 [cls.analyzer_binary(), "-list-checks", "-checks=*"],
                 env=environ,
@@ -297,7 +298,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         try:
             result = subprocess.check_output(
                 [cls.analyzer_binary(), "-dump-config", "-checks=*"],
-                env=analyzer_context.get_context().analyzer_env,
+                env=analyzer_context.get_context()
+                .get_analyzer_env(cls.ANALYZER_NAME),
                 universal_newlines=True,
                 encoding="utf-8",
                 errors="ignore")
@@ -313,7 +315,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         try:
             result = subprocess.check_output(
                 [cls.analyzer_binary(), "-dump-config", "-checks=*"],
-                env=analyzer_context.get_context().analyzer_env,
+                env=analyzer_context.get_context()
+                .get_analyzer_env(cls.ANALYZER_NAME),
                 universal_newlines=True,
                 encoding="utf-8",
                 errors="ignore")

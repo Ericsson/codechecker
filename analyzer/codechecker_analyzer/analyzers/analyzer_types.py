@@ -104,7 +104,9 @@ def is_ignore_conflict_supported():
     proc = subprocess.Popen([context.replacer_binary, '--help'],
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE,
-                            env=context.analyzer_env,
+                            env=context
+                            .get_analyzer_env(
+                                os.path.basename(context.replacer_binary)),
                             encoding="utf-8", errors="ignore")
     out, _ = proc.communicate()
     return '--ignore-insert-conflict' in out
@@ -144,7 +146,7 @@ def check_supported_analyzers(analyzers):
     """
 
     context = analyzer_context.get_context()
-    check_env = context.analyzer_env
+    check_env = context.cc_env
 
     analyzer_binaries = context.analyzer_binaries
 
