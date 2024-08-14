@@ -264,6 +264,27 @@ class CheckerHandlingClangSATest(unittest.TestCase):
         self.assertTrue(all_with_status(CheckerState.ENABLED)
                         (cfg_handler.checks(), low_severity))
 
+        # Enable checkers with a checker group prefix.
+        cfg_handler = ClangSA.construct_config_handler(args)
+        cfg_handler.initialize_checkers(checkers,
+                                        [('default', False),
+                                         ('cplusplus.NewDelete', True)])
+        self.assertTrue(
+            all_with_status(CheckerState.ENABLED)
+            (cfg_handler.checks(), ['cplusplus.NewDelete']))
+        self.assertTrue(
+            all_with_status(CheckerState.DISABLED)
+            (cfg_handler.checks(), ['cplusplus.NewDeleteLeaks']))
+
+        cfg_handler = ClangSA.construct_config_handler(args)
+        cfg_handler.initialize_checkers(checkers,
+                                        [('default', False),
+                                         ('cplusplus', True)])
+        self.assertTrue(
+            all_with_status(CheckerState.ENABLED)
+            (cfg_handler.checks(), ['cplusplus.NewDelete',
+                                    'cplusplus.NewDeleteLeaks']))
+
         # Test if statisticsbased checkers are enabled by --stats flag
         # by default.
         stats_capable = strtobool(
