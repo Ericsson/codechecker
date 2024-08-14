@@ -14,8 +14,9 @@ make all test
 
 Set the following environment variables:
 ~~~~~~~
-export LD_PRELOAD=`pwd`/build/lib/`uname -m`/ldlogger.so
-export CC_LOGGER_GCC_LIKE="gcc:g++:clang:clang++:/cc:c++"
+export LD_PRELOAD=ldlogger.so
+export LD_LIBRARY_PATH=`pwd`/build/lib:$LD_LIBRARY_PATH
+export CC_LOGGER_GCC_LIKE="gcc:g++:clang:clang++:cc:c++"
 # The output compilation JSON file.
 export CC_LOGGER_FILE=`pwd`/compilation.json
 # Log linker build actions to the JSON file. Optional. Default: false

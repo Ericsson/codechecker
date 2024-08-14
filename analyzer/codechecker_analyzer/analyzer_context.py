@@ -14,10 +14,7 @@ from shutil import which
 from argparse import ArgumentTypeError
 
 import os
-import platform
 import sys
-
-from pathlib import Path
 
 from codechecker_analyzer.arg import analyzer_binary
 from codechecker_common import logger
@@ -68,18 +65,12 @@ class Context(metaclass=Singleton):
         self.__analyzer_envs = {}
         self.__cc_env = None
 
-        machine = platform.uname().machine
-
         self.logger_lib_dir_path = os.path.join(
-            self._data_files_dir_path, 'ld_logger', 'lib', machine)
+            self._data_files_dir_path, 'ld_logger', 'lib')
 
         if not os.path.exists(self.logger_lib_dir_path):
             self.logger_lib_dir_path = os.path.join(
-                self._lib_dir_path,
-                'codechecker_analyzer',
-                'ld_logger',
-                'lib',
-                machine)
+                self._lib_dir_path, 'codechecker_analyzer', 'ld_logger', 'lib')
 
         self.logger_bin = None
         self.logger_file = None
@@ -297,12 +288,8 @@ class Context(metaclass=Singleton):
         return os.path.join(self._bin_dir_path, 'ld_logger')
 
     @property
-    def logger_lib_path(self):
-        """
-        Returns the absolute path to the logger library.
-        """
-        return str(Path(self.logger_lib_dir_path,
-                        self.logger_lib_name).absolute())
+    def path_logger_lib(self):
+        return self.logger_lib_dir_path
 
     @property
     def logger_lib_name(self):
