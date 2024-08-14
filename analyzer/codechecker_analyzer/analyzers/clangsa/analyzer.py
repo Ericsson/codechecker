@@ -51,7 +51,8 @@ def parse_clang_help_page(
         help_page = subprocess.check_output(
             command,
             stderr=subprocess.STDOUT,
-            env=analyzer_context.get_context().get_analyzer_env("clangsa"),
+            env=analyzer_context.get_context()\
+            .get_analyzer_env(ClangSA.ANALYZER_NAME),
             universal_newlines=True,
             encoding="utf-8",
             errors="ignore")
@@ -207,7 +208,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
         if not cls.__ctu_autodetection:
             cls.__ctu_autodetection = CTUAutodetection(
                 cls.analyzer_binary(),
-                analyzer_context.get_context().get_analyzer_env("clangsa"))
+                analyzer_context.get_context()\
+                .get_analyzer_env(ClangSA.ANALYZER_NAME))
 
         return cls.__ctu_autodetection
 
@@ -606,7 +608,7 @@ class ClangSA(analyzer_base.SourceAnalyzer):
     def construct_config_handler(cls, args):
 
         context = analyzer_context.get_context()
-        environ = context.get_analyzer_env("clangsa")
+        environ = context.get_analyzer_env(ClangSA.ANALYZER_NAME)
 
         handler = config_handler.ClangSAConfigHandler(environ)
 

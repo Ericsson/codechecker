@@ -105,7 +105,8 @@ def is_ignore_conflict_supported():
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE,
                             env=context
-                            .get_analyzer_env("clang-apply-replacements"),
+                            .get_analyzer_env(
+                                os.path.basename(context.replacer_binary)),
                             encoding="utf-8", errors="ignore")
     out, _ = proc.communicate()
     return '--ignore-insert-conflict' in out
