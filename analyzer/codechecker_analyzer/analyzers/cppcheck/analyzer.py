@@ -13,7 +13,6 @@ from collections import defaultdict
 from packaging.version import Version
 from pathlib import Path
 import os
-import pickle
 import re
 import shlex
 import shutil
@@ -271,18 +270,6 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
         TODO add config options for cppcheck checkers.
         """
         return []
-
-    def analyze(self, analyzer_cmd, res_handler, proc_callback=None, _=None):
-        environment = None
-
-        original_env_file = os.environ.get(
-            'CODECHECKER_ORIGINAL_BUILD_ENV')
-        if original_env_file:
-            with open(original_env_file, 'rb') as env_file:
-                environment = pickle.load(env_file, encoding='utf-8')
-
-        return super().analyze(
-            analyzer_cmd, res_handler, proc_callback, environment)
 
     def post_analyze(self, result_handler):
         """
