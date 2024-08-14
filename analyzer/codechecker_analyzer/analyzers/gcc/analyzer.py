@@ -7,8 +7,6 @@
 # -------------------------------------------------------------------------
 from collections import defaultdict
 from packaging.version import Version
-import os
-import pickle
 import shlex
 import subprocess
 
@@ -131,17 +129,6 @@ class Gcc(analyzer_base.SourceAnalyzer):
         """
         # TODO
         return []
-
-    def analyze(self, analyzer_cmd, res_handler, proc_callback=None, _=None):
-        env = None
-
-        original_env_file = os.environ.get(
-            'CODECHECKER_ORIGINAL_BUILD_ENV')
-        if original_env_file:
-            with open(original_env_file, 'rb') as env_file:
-                env = pickle.load(env_file, encoding='utf-8')
-
-        return super().analyze(analyzer_cmd, res_handler, proc_callback, env)
 
     def post_analyze(self, result_handler: GccResultHandler):
         """
