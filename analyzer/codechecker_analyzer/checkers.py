@@ -28,7 +28,7 @@ def available(ordered_checkers, available_checkers):
 
         name_match = False
         for available_checker in available_checkers:
-            regex = "^" + re.escape(str(checker_name)) + ".*$"
+            regex = "^" + re.escape(str(checker_name)) + "\\b.*$"
             c_name = available_checker
             match = re.match(regex, c_name)
             if match:
