@@ -756,6 +756,16 @@ object files as input) should be captured. For further details see
 [this documentation](/analyzer/tools/build-logger/README.md).
 
 
+If your build tool overrides `LD_LIBRARY_PATH` during the build process, then
+`ldlogger.so` will not be found. The best solution is to making sure
+that the LD_LIBRARY_PATH is not overridden, only extended.
+If this is not possible, you can work around the situation by
+specifying the absolute path of the `ldlogger.so` in the `LD_PRELOAD`:
+
+```sh
+LD_PRELOAD=<CODECHECKER_DIR>/ld_logger/lib/x86_64/ldlogger.so CodeChecker log -o compile_commands.json -b "make -j2"
+```
+
 #### Change user inside the build command
 If we change user inside the build command of the CodeChecker log command
 before the actual compiler invocation, the compilation database will be empty:
