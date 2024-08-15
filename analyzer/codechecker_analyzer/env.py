@@ -29,7 +29,8 @@ def get_log_env(logfile, original_env):
     new_env[context.env_var_cc_logger_bin] = context.path_logger_bin
 
     if 'LD_PRELOAD' in new_env:
-        new_env['LD_PRELOAD'] = new_env['LD_PRELOAD'] + " " +context.logger_lib_name
+        new_env['LD_PRELOAD'] = new_env['LD_PRELOAD'] \
+            + " " + context.logger_lib_name
     else:
         new_env['LD_PRELOAD'] = context.logger_lib_name
 
