@@ -106,13 +106,10 @@ class BasicLoggerTest(unittest.TestCase):
             return fd.read()
 
     def get_envvars(self) -> Mapping[str, str]:
-        machine = platform.uname().machine
         return {
             "PATH": os.getenv("PATH"),
-            "LD_PRELOAD": os.path.join(LOGGER_DIR,
-                                       "lib",
-                                       machine,
-                                       "ldlogger.so"),
+            "LD_PRELOAD": "ldlogger.so",
+            "LD_LIBRARY_PATH": os.path.join(LOGGER_DIR, "lib"),
             "CC_LOGGER_GCC_LIKE": "gcc:g++:clang:clang++:/cc:c++",
             "CC_LOGGER_FILE": self.logger_file,
             "CC_LOGGER_DEBUG_FILE": self.logger_debug_file,
