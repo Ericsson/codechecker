@@ -475,7 +475,8 @@ class ClangSA(analyzer_base.SourceAnalyzer):
             analyzer_cmd.extend(self.buildaction.analyzer_options)
 
             analyzer_cmd.extend(prepend_all(
-                '-isystem',
+                '-isystem' if config.add_gcc_include_dirs_with_isystem else
+                '-idirafter',
                 self.buildaction.compiler_includes))
 
             analyzer_cmd.append(self.source_file)
@@ -619,6 +620,10 @@ class ClangSA(analyzer_base.SourceAnalyzer):
 
         handler.enable_z3_refutation = 'enable_z3_refutation' in args and \
             args.enable_z3_refutation == 'on'
+
+        handler.add_gcc_include_dirs_with_isystem = \
+            'add_gcc_include_dirs_with_isystem' in args and \
+            args.add_gcc_include_dirs_with_isystem
 
         if 'ctu_phases' in args:
             handler.ctu_dir = os.path.join(args.output_path,

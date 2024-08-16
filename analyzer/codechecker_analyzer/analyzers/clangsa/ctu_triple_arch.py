@@ -35,7 +35,10 @@ def get_compile_command(action, config, source='', output=''):
     # -isystem, etc. flags where it is found. For this reason we append the
     # implicit include paths to the end of the analyzer command in order to get
     # less precedence than the user's explicit include paths.
-    cmd.extend(prepend_all('-isystem', action.compiler_includes))
+    cmd.extend(prepend_all(
+        '-isystem' if config.add_gcc_include_dirs_with_isystem else
+        '-idirafter',
+        action.compiler_includes))
     if output:
         cmd.extend(['-o', output])
     if source:

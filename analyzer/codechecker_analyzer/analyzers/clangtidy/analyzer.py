@@ -489,7 +489,8 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
             analyzer_cmd.extend(self.buildaction.analyzer_options)
 
             analyzer_cmd.extend(prepend_all(
-                '-isystem',
+                '-isystem' if config.add_gcc_include_dirs_with_isystem else
+                '-idirafter',
                 self.buildaction.compiler_includes))
 
             if not has_flag('-std', analyzer_cmd) and not \
@@ -584,6 +585,10 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
         handler = config_handler.ClangTidyConfigHandler()
         handler.report_hash = args.report_hash \
             if 'report_hash' in args else None
+
+        handler.add_gcc_include_dirs_with_isystem = \
+            'add_gcc_include_dirs_with_isystem' in args and \
+            args.add_gcc_include_dirs_with_isystem
 
         # FIXME We cannot get the resource dir from the clang-tidy binary,
         # therefore we get a sibling clang binary which of clang-tidy.
