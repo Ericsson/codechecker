@@ -311,10 +311,11 @@ class ThriftProductHandler:
             return prod
 
     @timeit
-    def addProduct_Support(self,product_info):
+    def add_product_support(self, product_info):
         """
         Creates a database for the given product,
-        to assist add product function that connect to already existing database
+        to assist add product function that connect to
+        already existing database
         """
         # Extract connection details
         if product_info.engine == 'sqlite':
@@ -326,13 +327,13 @@ class ThriftProductHandler:
                 db_port = int(product_info.port)
                 db_user = convert.from_b64(product_info.username_b64)
                 db_pass = convert.from_b64(product_info.password_b64)
-                db_name = product_info.database if product_info.database else None
+                db_name = product_info.database or None
                 if db_name is None:
-                    raise Exception("Database name is not provided")
-            except Exception as e:
-                raise Exception("Invalid connection details")
+                    raise ValueError("Database name is not provided")
+            except Exception as x:
+                raise ValueError("Invalid database connection details") from x
 
-            # Create an engine for database to connect and create a new database
+            # Create an engine for database to connect
             engine_url = URL.URL(
                 drivername=db_engine,
                 username=db_user,
@@ -344,7 +345,8 @@ class ThriftProductHandler:
             engine = create_engine(engine_url)
             conn = engine.connect()
             conn.execute("commit")
-        #check connection
+
+        # check connection
         try:
             conn.execute(f"CREATE DATABASE {db_name}")
             return True
@@ -358,7 +360,7 @@ class ThriftProductHandler:
         return False
 
     @timeit
-    def addProduct(self, product): # work in progress
+    def addProduct(self, product):
         """
         Add the given product to the products configured by the server.
         """
