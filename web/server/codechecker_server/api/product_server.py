@@ -14,6 +14,10 @@ import os
 import random
 
 from sqlalchemy.sql.expression import and_
+from sqlalchemy import create_engine
+
+from sqlalchemy.exc import ProgrammingError
+import sqlalchemy.engine.url as URL
 
 import codechecker_api_shared
 from codechecker_api.ProductManagement_v6 import ttypes
@@ -307,10 +311,62 @@ class ThriftProductHandler:
             return prod
 
     @timeit
-    def addProduct(self, product):
+    def addProduct_Support(self,product_info):
+        """
+        Creates a database for the given product,
+        to assist add product function that connect to already existing database
+        """
+        # Extract connection details
+        if product_info.engine == 'sqlite':
+            return True
+        else:
+            try:
+                db_host = product_info.host
+                db_engine = product_info.engine
+                db_port = int(product_info.port)
+                db_user = convert.from_b64(product_info.username_b64)
+                db_pass = convert.from_b64(product_info.password_b64)
+                db_name = product_info.database if product_info.database else None
+                if db_name is None:
+                    raise Exception("Database name is not provided")
+            except Exception as e:
+                raise Exception("Invalid connection details")
+
+            # Create an engine for database to connect and create a new database
+            engine_url = URL.URL(
+                drivername=db_engine,
+                username=db_user,
+                password=db_pass,
+                host=db_host,
+                port=db_port,
+                database='postgres'
+            )
+            engine = create_engine(engine_url)
+            conn = engine.connect()
+            conn.execute("commit")
+        #check connection
+        try:
+            conn.execute(f"CREATE DATABASE {db_name}")
+            return True
+        except ProgrammingError as e:
+            if "already exists" in str(e):
+                return True
+            elif e and "already exists" not in str(e):
+                raise e
+        finally:
+            conn.close()
+        return False
+
+    @timeit
+    def addProduct(self, product): # work in progress
         """
         Add the given product to the products configured by the server.
         """
+        if not self.addProduct_Support(product.connection):
+            raise codechecker_api_shared.ttypes.RequestFailed(
+                codechecker_api_shared.ttypes.ErrorCode.GENERAL,
+                "Failed to create a database")
+
         self.__require_permission([permissions.SUPERUSER])
 
         session = None
