@@ -364,7 +364,7 @@ class ThriftProductHandler:
         """
         Add the given product to the products configured by the server.
         """
-        if not self.addProduct_Support(product.connection):
+        if not self.add_product_support(product.connection):
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.GENERAL,
                 "Failed to create a database")
