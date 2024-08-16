@@ -73,7 +73,10 @@ def build_stat_coll_cmd(action, config, source):
     if not has_flag('-std', cmd) and not has_flag('--std', cmd):
         cmd.append(action.compiler_standard)
 
-    cmd.extend(prepend_all('-isystem', action.compiler_includes))
+    cmd.extend(prepend_all(
+        '-isystem' if config.add_gcc_include_dirs_with_isystem else
+        '-idirafter',
+        action.compiler_includes))
 
     if source:
         cmd.append(source)
