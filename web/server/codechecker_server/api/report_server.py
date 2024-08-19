@@ -45,7 +45,8 @@ from codechecker_api.codeCheckerDBAccess_v6.ttypes import \
     ReviewStatusRuleSortType, Rule, RunData, RunFilter, RunHistoryData, \
     RunReportCount, RunSortType, RunTagCount, \
     ReviewStatus as API_ReviewStatus, \
-    SourceComponentData, SourceFileData, SortMode, SortType
+    SourceComponentData, SourceFileData, SortMode, SortType, \
+    SubmittedRunOptions
 
 from codechecker_common import util
 from codechecker_common.logger import get_logger
@@ -70,6 +71,7 @@ from ..database.run_db_model import \
     Run, RunHistory, RunHistoryAnalysisInfo, RunLock, \
     SourceComponent
 
+from .common import exc_to_thrift_reqfail
 from .thrift_enum_helper import detection_status_enum, \
     detection_status_str, report_status_enum, \
     review_status_enum, review_status_str, report_extended_data_type_enum
@@ -141,39 +143,6 @@ def slugify(text):
     norm_text = re.sub(r'([\s]+|[/]+)', '_', norm_text)
 
     return norm_text
-
-
-def exc_to_thrift_reqfail(function):
-    """
-    Convert internal exceptions to RequestFailed exception
-    which can be sent back on the thrift connections.
-    """
-    func_name = function.__name__
-
-    def wrapper(*args, **kwargs):
-        try:
-            res = function(*args, **kwargs)
-            return res
-
-        except sqlalchemy.exc.SQLAlchemyError as alchemy_ex:
-            # Convert SQLAlchemy exceptions.
-            msg = str(alchemy_ex)
-            import traceback
-            traceback.print_exc()
-            raise codechecker_api_shared.ttypes.RequestFailed(
-                codechecker_api_shared.ttypes.ErrorCode.DATABASE, msg)
-        except codechecker_api_shared.ttypes.RequestFailed as rf:
-            LOG.warning("%s:\n%s", func_name, rf.message)
-            raise
-        except Exception as ex:
-            import traceback
-            traceback.print_exc()
-            msg = str(ex)
-            LOG.warning("%s:\n%s", func_name, msg)
-            raise codechecker_api_shared.ttypes.RequestFailed(
-                codechecker_api_shared.ttypes.ErrorCode.GENERAL, msg)
-
-    return wrapper
 
 
 def get_component_values(
@@ -3987,6 +3956,18 @@ class ThriftRequestHandler:
         m = MassStoreRun(self, name, tag, version, b64zip, force,
                          trim_path_prefixes, description)
         return m.store()
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def massStoreRunAsynchronous(self, zipfile_blob: str,
+                                 store_opts: SubmittedRunOptions) -> str:
+        import pprint
+        LOG.info("massStoreRunAsynchronous() called with:\n\t - %d bytes "
+                 "input\n\t - Options:\n\n%s", len(zipfile_blob),
+                 pprint.pformat(store_opts.__dict__, indent=2, depth=8))
+        raise codechecker_api_shared.ttypes.RequestFailed(
+            codechecker_api_shared.ttypes.ErrorCode.GENERAL,
+            "massStoreRunAsynchronous() not implemented in this server build!")
 
     @exc_to_thrift_reqfail
     @timeit
