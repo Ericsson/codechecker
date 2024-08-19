@@ -238,6 +238,26 @@ class CCConfigHelper(ThriftAPIHelper):
         return partial(self._thrift_client_call, attr)
 
 
+class CCTaskHelper(ThriftAPIHelper):
+    def __init__(self, proto, host, port, uri, auto_handle_connection=True,
+                 session_token=None):
+        from codechecker_api.codeCheckerServersideTasks_v6 \
+            import codeCheckerServersideTaskService
+        from codechecker_client.credential_manager import SESSION_COOKIE_NAME
+
+        url = create_product_url(proto, host, port, f"/v{VERSION}{uri}")
+        transport = THttpClient.THttpClient(url)
+        protocol = TJSONProtocol.TJSONProtocol(transport)
+        client = codeCheckerServersideTaskService.Client(protocol)
+        if session_token:
+            headers = {'Cookie': f"{SESSION_COOKIE_NAME}={session_token}"}
+            transport.setCustomHeaders(headers)
+        super().__init__(transport, client, auto_handle_connection)
+
+    def __getattr__(self, attr):
+        return partial(self._thrift_client_call, attr)
+
+
 def get_all_run_results(
     client,
     run_id=None,
@@ -303,3 +323,10 @@ def get_config_client(port, host='localhost', uri='/Configuration',
     return CCConfigHelper(protocol, host, port, uri,
                           auto_handle_connection,
                           session_token)
+
+
+def get_task_client(port, host="localhost", uri="/Tasks",
+                    auto_handle_connection=True, session_token=None,
+                    protocol="http"):
+    return CCTaskHelper(protocol, host, port, uri, auto_handle_connection,
+                        session_token)
