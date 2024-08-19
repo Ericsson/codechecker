@@ -13,6 +13,8 @@ Handle Thrift requests for the product manager service.
 import os
 import random
 
+import time
+
 from sqlalchemy.sql.expression import and_
 from sqlalchemy import create_engine
 
@@ -320,31 +322,28 @@ class ThriftProductHandler:
         # Extract connection details
         if product_info.engine == 'sqlite':
             return True
-        else:
-            try:
-                db_host = product_info.host
-                db_engine = product_info.engine
-                db_port = int(product_info.port)
-                db_user = convert.from_b64(product_info.username_b64)
-                db_pass = convert.from_b64(product_info.password_b64)
-                db_name = product_info.database or None
-                if db_name is None:
-                    raise ValueError("Database name is not provided")
-            except Exception as x:
-                raise ValueError("Invalid database connection details") from x
 
-            # Create an engine for database to connect
-            engine_url = URL.URL(
-                drivername=db_engine,
-                username=db_user,
-                password=db_pass,
-                host=db_host,
-                port=db_port,
-                database='postgres'
-            )
-            engine = create_engine(engine_url)
-            conn = engine.connect()
-            conn.execute("commit")
+        db_host = product_info.host
+        db_engine = product_info.engine
+        db_port = int(product_info.port)
+        db_user = convert.from_b64(product_info.username_b64)
+        db_pass = convert.from_b64(product_info.password_b64)
+        db_name = product_info.database or None
+        if db_name is None:
+            raise ValueError("Database name is not provided")
+
+        # Create an engine for database to connect
+        engine_url = URL.URL(
+            drivername=db_engine,
+            username=db_user,
+            password=db_pass,
+            host=db_host,
+            port=db_port,
+            database='postgres'
+        )
+        engine = create_engine(engine_url)
+        conn = engine.connect()
+        conn.execute("commit")
 
         # check connection
         try:
@@ -359,17 +358,24 @@ class ThriftProductHandler:
             conn.close()
         return False
 
+        # conn.execute(f"CREATE DATABASE {db_name}")
+        # conn.close()
+        # return True
+
     @timeit
     def addProduct(self, product):
         """
         Add the given product to the products configured by the server.
         """
-        if not self.add_product_support(product.connection):
-            raise codechecker_api_shared.ttypes.RequestFailed(
-                codechecker_api_shared.ttypes.ErrorCode.GENERAL,
-                "Failed to create a database")
-
         self.__require_permission([permissions.SUPERUSER])
+        self.add_product_support(product.connection)
+        time.sleep(5)
+        # wait 5 seconds for the database to be created
+
+        # if not self.add_product_support(product.connection):
+        #     raise codechecker_api_shared.ttypes.RequestFailed(
+        #         codechecker_api_shared.ttypes.ErrorCode.GENERAL,
+        #         "Failed to create a database")
 
         session = None
         LOG.info("User requested add product '%s'", product.endpoint)

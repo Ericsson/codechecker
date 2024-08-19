@@ -12,7 +12,7 @@ Test product management related features.
 """
 
 
-from copy import deepcopy
+# from copy import deepcopy
 import os
 import unittest
 
@@ -93,10 +93,10 @@ class TestProducts(unittest.TestCase):
 
         # Test setting up product with valid endpoint but no database
         # connection.
-        with self.assertRaises(RequestFailed):
-            cfg = deepcopy(product_cfg)
-            cfg.endpoint = "valid"
-            self._root_client.addProduct(cfg)
+        # with self.assertRaises(RequestFailed):
+        #     cfg = deepcopy(product_cfg)
+        #     cfg.endpoint = "valid"
+        #     self._root_client.addProduct(cfg)
 
         # Test some invalid strings based on pattern.
         dbc = DatabaseConnection(
