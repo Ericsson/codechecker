@@ -8,8 +8,9 @@
 """
 SQLAlchemy ORM model for the product configuration database.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 import sys
+from typing import Optional
 
 from sqlalchemy import Boolean, CHAR, Column, DateTime, Enum, ForeignKey, \
     Integer, MetaData, String, Text
@@ -156,6 +157,200 @@ class Configuration(Base):
     def __init__(self, config_key, config_value):
         self.config_key = config_key
         self.config_value = config_value
+
+
+class BackgroundTask(Base):
+    """
+    Information about background tasks executed on a CodeChecker service,
+    potentially as part of a cluster, stored in the database.
+    These entities store the metadata for the task objects, but no information
+    about the actual "input" of the task exists in the database!
+    """
+    __tablename__ = "background_tasks"
+
+    _token_length = 64
+
+    machine_id = Column(String, index=True)
+    """
+    A unique, implementation-specific identifier of the actual CodeChecker
+    server instance that knows how to execute the task.
+    """
+
+    token = Column(CHAR(length=_token_length), primary_key=True)
+    kind = Column(String, nullable=False, index=True)
+    status = Column(Enum(
+        # A job token (and thus a BackgroundTask record) was allocated, but
+        # the job is still under preparation.
+        "allocated",
+
+        # The job is pending on the server, but the server has all the data
+        # available to eventually perform the job.
+        "enqueued",
+
+        # The server is actually performing the job.
+        "running",
+
+        # The server successfully finished completing the job.
+        "completed",
+
+        # The execution of the job failed.
+        # In this stage, the "comments" field likely contains more information
+        # that is not machine-readable.
+        "failed",
+
+        # The job never started, or its execution was terminated at the
+        # request of the administrators.
+        "cancelled",
+
+        # The job never started, or its execution was terminated due to a
+        # system-level reason (such as the server's foced shutdown).
+        "dropped",
+        ),
+                    nullable=False,
+                    default="enqueued",
+                    index=True)
+
+    product_id = Column(Integer,
+                        ForeignKey("products.id",
+                                   deferrable=False,
+                                   initially="IMMEDIATE",
+                                   ondelete="CASCADE"),
+                        nullable=True,
+                        index=True)
+    """
+    If the job is tightly associated with a product, the ID of the `Product`
+    entity with which it is associated.
+    """
+
+    username = Column(String, nullable=True)
+    """
+    The main actor who was responsible for the creation of the job task.
+    """
+
+    summary = Column(String, nullable=False)
+    comments = Column(Text, nullable=True)
+
+    enqueued_at = Column(DateTime, nullable=True)
+    started_at = Column(DateTime, nullable=True)
+    finished_at = Column(DateTime, nullable=True)
+
+    last_seen_at = Column(DateTime, nullable=True)
+    """
+    Contains the timestamp, only when the job is not yet "finished", when the
+    job last synchronised against the database, e.g., when it last checked the
+    "cancel_flag" field.
+
+    This is used for health checking whether the background worker is actually
+    doing something, as a second line of defence to uncover "dropped" jobs,
+    e.g., when the servers have failed and the new server can not identify
+    jobs from its "previous life".
+    """
+
+    consumed = Column(Boolean, nullable=False,
+                      default=False, server_default=false())
+    """
+    Whether the status of the job was checked **BY THE MAIN ACTOR** (username).
+    """
+
+    cancel_flag = Column(Boolean, nullable=False,
+                         default=False, server_default=false())
+    """
+    Whether a SUPERUSER has signalled that the job should be cancelled.
+
+    Note, that cancelling is a co-operative action: jobs are never actually
+    "killed" on the O.S. level from the outside; rather, each job is expected
+    to be implemented in a way that they regularly query this bit, and if set,
+    act accordingly.
+    """
+
+    def __init__(self,
+                 token: str,
+                 kind: str,
+                 summary: str,
+                 machine_id: str,
+                 user_name: Optional[str],
+                 product: Optional[Product] = None,
+                 ):
+        self.machine_id = machine_id
+        self.token = token
+        self.kind = kind
+        self.status = "allocated"
+        self.summary = summary
+        self.username = user_name
+        self.last_seen_at = datetime.now(timezone.utc)
+
+        if product:
+            self.product_id = product.id
+
+    def add_comment(self, comment: str, actor: Optional[str] = None):
+        if not self.comments:
+            self.comments = ""
+        elif self.comments:
+            self.comments += "\n----------\n"
+
+        self.comments += f"{actor if actor else '<unknown>'} " \
+            f"at {str(datetime.now(timezone.utc))}:\n{comment}"
+
+    def heartbeat(self):
+        """Update `last_seen_at`."""
+        if self.status in ["enqueued", "running"]:
+            self.last_seen_at = datetime.now(timezone.utc)
+
+    def set_enqueued(self):
+        """Marks the job as successfully enqueued."""
+        if self.status != "allocated":
+            raise ValueError(
+                f"Invalid transition '{str(self.status)}' -> 'enqueued'")
+
+        self.status = "enqueued"
+        self.enqueued_at = datetime.now(timezone.utc)
+
+    def set_running(self):
+        """Marks the job as currently executing."""
+        if self.status != "enqueued":
+            raise ValueError(
+                f"Invalid transition '{str(self.status)}' -> 'running'")
+
+        self.status = "running"
+        self.started_at = datetime.now(timezone.utc)
+
+    def set_finished(self, successfully: bool = True):
+        """Marks the job as successfully completed or failed."""
+        new_status = "completed" if successfully else "failed"
+        if self.status != "running":
+            raise ValueError(
+                f"Invalid transition '{str(self.status)}' -> '{new_status}'")
+
+        self.status = new_status
+        self.finished_at = datetime.now(timezone.utc)
+
+    def set_abandoned(self, force_dropped_status: bool = False):
+        """
+        Marks the job as cancelled or dropped based on whether the
+        cancel flag is set.
+        """
+        new_status = "cancelled" \
+            if not force_dropped_status and self.cancel_flag \
+            else "dropped"
+
+        self.status = new_status
+        self.finished_at = datetime.now(timezone.utc)
+
+    @property
+    def is_in_terminated_state(self) -> bool:
+        """
+        Returns whether the current task has finished execution in some way,
+        for some reason.
+        """
+        return self.status not in ["allocated", "enqueued", "running"]
+
+    @property
+    def can_be_cancelled(self) -> bool:
+        """
+        Returns whether the task is in a state where setting `cancel_flag`
+        is meaningful.
+        """
+        return not self.is_in_terminated_state and not self.cancel_flag
 
 
 IDENTIFIER = {

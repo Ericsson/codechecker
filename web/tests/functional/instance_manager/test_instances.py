@@ -10,7 +10,6 @@
 Instance manager tests.
 """
 
-
 import os
 import shutil
 import subprocess
@@ -178,7 +177,7 @@ class TestInstances(unittest.TestCase):
         EVENT_2.set()
 
         # Give the server some grace period to react to the kill command.
-        time.sleep(5)
+        time.sleep(30)
 
         test_cfg = env.import_test_cfg(self._test_workspace)
         codechecker_1 = test_cfg['codechecker_1']

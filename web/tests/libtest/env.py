@@ -18,16 +18,18 @@ import shutil
 import socket
 import stat
 import subprocess
+from typing import cast
 
 from codechecker_common.util import load_json
 
-from .thrift_client_to_db import get_auth_client
-from .thrift_client_to_db import get_config_client
-from .thrift_client_to_db import get_product_client
-from .thrift_client_to_db import get_viewer_client
+from .thrift_client_to_db import \
+    get_auth_client, \
+    get_config_client, \
+    get_product_client, \
+    get_task_client, \
+    get_viewer_client
 
-from functional import PKG_ROOT
-from functional import REPO_ROOT
+from functional import PKG_ROOT, REPO_ROOT
 
 
 def get_free_port():
@@ -234,6 +236,30 @@ def setup_config_client(workspace,
                              uri=uri,
                              auto_handle_connection=auto_handle_connection,
                              session_token=session_token, protocol=proto)
+
+
+def setup_task_client(workspace,
+                      host=None, port=None,
+                      uri="/Tasks",
+                      auto_handle_connection=True,
+                      session_token=None,
+                      protocol="http"):
+    if not host and not port:
+        codechecker_cfg = import_test_cfg(workspace)["codechecker_cfg"]
+        port = codechecker_cfg["viewer_port"]
+        host = codechecker_cfg["viewer_host"]
+
+    if session_token is None:
+        session_token = get_session_token(workspace, host, port)
+    if session_token == "_PROHIBIT":
+        session_token = None
+
+    return get_task_client(port=port,
+                           host=cast(str, host),
+                           uri=uri,
+                           auto_handle_connection=auto_handle_connection,
+                           session_token=session_token,
+                           protocol=protocol)
 
 
 def repository_root():

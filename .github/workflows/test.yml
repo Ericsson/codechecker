@@ -20,8 +20,8 @@ jobs:
       - name: Install dependencies
         run: |
           pip install $(grep -iE "pylint|pycodestyle" analyzer/requirements_py/dev/requirements.txt)
-      - name: Run tests
-        run: make pylint pycodestyle
+      - name: Run pycodestyle & pylint
+        run: make -k pycodestyle pylint
 
   tools:
     name: Tools (report-converter, etc.)
