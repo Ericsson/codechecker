@@ -24,6 +24,8 @@ import portalocker
 
 from codechecker_common.logger import get_logger
 
+from .typehints import Orderable
+
 LOG = get_logger('system')
 
 
@@ -39,7 +41,7 @@ def arg_match(options, args):
     return matched_args
 
 
-def clamp(min_: int, value: int, max_: int) -> int:
+def clamp(min_: Orderable, value: Orderable, max_: Orderable) -> Orderable:
     """Clamps ``value`` such that ``min_ <= value <= max_``."""
     if min_ > max_:
         raise ValueError("min <= max required")

@@ -77,9 +77,8 @@ def executor(queue: Queue,
         except Empty:
             continue
 
-        import pprint
-        LOG.info("Executor #%d received task object:\n\n%s:\n%s\n\n",
-                 os.getpid(), t, pprint.pformat(t.__dict__))
+        LOG.debug("Executor PID %d popped task '%s' (%s) ...",
+                  os.getpid(), t.token, str(t))
 
         t.execute(tm)
 
@@ -135,7 +134,8 @@ def executor(queue: Queue,
     try:
         config_db_engine.dispose()
     except Exception as ex:
-        LOG.error("Failed to shut down task executor!\n%s", str(ex))
+        LOG.error("Failed to shut down task executor %d!\n%s",
+                  os.getpid(), str(ex))
         return
 
     LOG.debug("Task executor subprocess PID %d exited main loop.",

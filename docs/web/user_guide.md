@@ -39,6 +39,7 @@
       - [Manage product configuration of a server (`products`)](#manage-product-configuration-of-a-server-products)
       - [Query authorization settings (`permissions`)](#query-authorization-settings-permissions)
       - [Authenticate to the server (`login`)](#authenticate-to-the-server-login)
+      - [Server-side task management (`serverside-tasks`)](#server-side-task-management-serverside-tasks)
     - [Exporting source code suppression to suppress file](#exporting-source-code-suppression-to-suppress-file)
       - [Export comments and review statuses (`export`)](#export-comments-and-review-statuses-export)
       - [Import comments and review statuses into Codechecker (`import`)](#import-comments-and-review-statuses-into-codechecker-import)
@@ -1388,6 +1389,295 @@ can be used normally.
 
 The password can be saved on the disk. If such "preconfigured" password is
 not found, the user will be asked, in the command-line, to provide credentials.
+
+#### Server-side task management (`serverside-tasks`)
+<details>
+  <summary>
+    <i>$ <b>CodeChecker cmd serverside-tasks --help</b> (click to expand)</i>
+  </summary>
+
+```
+usage: CodeChecker cmd serverside-tasks [-h] [-t [TOKEN [TOKEN ...]]]
+                                        [--await] [--kill]
+                                        [--output {plaintext,table,json}]
+                                        [--machine-id [MACHINE_ID [MACHINE_ID ...]]]
+                                        [--type [TYPE [TYPE ...]]]
+                                        [--status [{allocated,enqueued,running,completed,failed,cancelled,dropped} [{allocated,enqueued,running,completed,failed,cancelled,dropped} ...]]]
+                                        [--username [USERNAME [USERNAME ...]]
+                                        | --no-username]
+                                        [--product [PRODUCT [PRODUCT ...]] |
+                                        --no-product]
+                                        [--enqueued-before TIMESTAMP]
+                                        [--enqueued-after TIMESTAMP]
+                                        [--started-before TIMESTAMP]
+                                        [--started-after TIMESTAMP]
+                                        [--finished-before TIMESTAMP]
+                                        [--finished-after TIMESTAMP]
+                                        [--last-seen-before TIMESTAMP]
+                                        [--last-seen-after TIMESTAMP]
+                                        [--only-cancelled | --no-cancelled]
+                                        [--only-consumed | --no-consumed]
+                                        [--url SERVER_URL]
+                                        [--verbose {info,debug_analyzer,debug}]
+
+Query the status of and otherwise filter information for server-side
+background tasks executing on a CodeChecker server. In addition, for server
+administartors, allows requesting tasks to cancel execution.
+
+Normally, the querying of a task's status is available only to the following
+users:
+  - The user who caused the creation of the task.
+  - For tasks that are associated with a specific product, the PRODUCT_ADMIN
+    users of that product.
+  - Accounts with SUPERUSER rights (server administrators).
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -t [TOKEN [TOKEN ...]], --token [TOKEN [TOKEN ...]]
+                        The identifying token(s) of the task(s) to query. Each
+                        task is associated with a unique token. (default:
+                        None)
+  --await               Instead of querying the status and reporting that,
+                        followed by an exit, block execution of the
+                        'CodeChecker cmd serverside-tasks' program until the
+                        queried task(s) terminate(s). Makes the CLI's return
+                        code '0' if the task(s) completed successfully, and
+                        non-zero otherwise. If '--kill' is also specified, the
+                        CLI will await the shutdown of the task(s), but will
+                        return '0' if the task(s) were successfully killed as
+                        well. (default: False)
+  --kill                Request the co-operative and graceful termination of
+                        the tasks matching the filter(s) specified. '--kill'
+                        is only available to SUPERUSERs! Note, that this
+                        action only submits a *REQUEST* of termination to the
+                        server, and tasks are free to not support in-progress
+                        kills. Even for tasks that support getting killed, due
+                        to its graceful nature, it might take a considerable
+                        time for the killing to conclude. Killing a task that
+                        has not started RUNNING yet results in it
+                        automatically terminating before it would start.
+                        (default: False)
+
+output arguments:
+  --output {plaintext,table,json}
+                        The format of the output to use when showing the
+                        result of the request. (default: plaintext)
+
+task list filter arguments:
+  These options can be used to obtain and filter the list of tasks
+  associated with the 'CodeChecker server' specified by '--url', based on the
+  various information columns stored for tasks.
+
+  '--token' is usable with the following filters as well.
+
+  Filters with a variable number of options (e.g., '--machine-id A B') will be
+  in a Boolean OR relation with each other (meaning: machine ID is either "A"
+  or "B").
+  Specifying multiple filters (e.g., '--machine-id A B --username John') will
+  be considered in a Boolean AND relation (meaning: [machine ID is either "A" or
+  "B"] and [the task was created by "John"]).
+
+  Listing is only available for the following, privileged users:
+    - For tasks that are associated with a specific product, the PRODUCT_ADMINs
+     of that product.
+    - Server administrators (SUPERUSERs).
+
+  Unprivileged users MUST use only the task's token to query information about
+  the task.
+
+
+  --machine-id [MACHINE_ID [MACHINE_ID ...]]
+                        The IDs of the server instance executing the tasks.
+                        This is an internal identifier set by server
+                        administrators via the 'CodeChecker server' command.
+                        (default: None)
+  --type [TYPE [TYPE ...]]
+                        The descriptive, but still machine-readable "type" of
+                        the tasks to filter for. (default: None)
+  --status [{allocated,enqueued,running,completed,failed,cancelled,dropped} [{allocated,enqueued,running,completed,failed,cancelled,dropped} ...]]
+                        The task's execution status(es) in the pipeline.
+                        (default: None)
+  --username [USERNAME [USERNAME ...]]
+                        The user(s) who executed the action that caused the
+                        tasks' creation. (default: None)
+  --no-username         Filter for tasks without a responsible user that
+                        created them. (default: False)
+  --product [PRODUCT [PRODUCT ...]]
+                        Filter for tasks that execute in the context of
+                        products specified by the given ENDPOINTs. This query
+                        is only available if you are a PRODUCT_ADMIN of the
+                        specified product(s). (default: None)
+  --no-product          Filter for server-wide tasks (not associated with any
+                        products). This query is only available to SUPERUSERs.
+                        (default: False)
+  --enqueued-before TIMESTAMP
+                        Filter for tasks that were created BEFORE (or on) the
+                        specified TIMESTAMP, which is given in the format of
+                        'year:month:day' or
+                        'year:month:day:hour:minute:second'. If the "time"
+                        part (':hour:minute:second') is not given, 00:00:00
+                        (midnight) is assumed instead. Timestamps for tasks
+                        are always understood as Coordinated Universal Time
+                        (UTC). (default: None)
+  --enqueued-after TIMESTAMP
+                        Filter for tasks that were created AFTER (or on) the
+                        specified TIMESTAMP, which is given in the format of
+                        'year:month:day' or
+                        'year:month:day:hour:minute:second'. If the "time"
+                        part (':hour:minute:second') is not given, 00:00:00
+                        (midnight) is assumed instead. Timestamps for tasks
+                        are always understood as Coordinated Universal Time
+                        (UTC). (default: None)
+  --started-before TIMESTAMP
+                        Filter for tasks that were started execution BEFORE
+                        (or on) the specified TIMESTAMP, which is given in the
+                        format of 'year:month:day' or
+                        'year:month:day:hour:minute:second'. If the "time"
+                        part (':hour:minute:second') is not given, 00:00:00
+                        (midnight) is assumed instead. Timestamps for tasks
+                        are always understood as Coordinated Universal Time
+                        (UTC). (default: None)
+  --started-after TIMESTAMP
+                        Filter for tasks that were started execution AFTER (or
+                        on) the specified TIMESTAMP, which is given in the
+                        format of 'year:month:day' or
+                        'year:month:day:hour:minute:second'. If the "time"
+                        part (':hour:minute:second') is not given, 00:00:00
+                        (midnight) is assumed instead. Timestamps for tasks
+                        are always understood as Coordinated Universal Time
+                        (UTC). (default: None)
+  --finished-before TIMESTAMP
+                        Filter for tasks that concluded execution BEFORE (or
+                        on) the specified TIMESTAMP, which is given in the
+                        format of 'year:month:day' or
+                        'year:month:day:hour:minute:second'. If the "time"
+                        part (':hour:minute:second') is not given, 00:00:00
+                        (midnight) is assumed instead. Timestamps for tasks
+                        are always understood as Coordinated Universal Time
+                        (UTC). (default: None)
+  --finished-after TIMESTAMP
+                        Filter for tasks that concluded execution execution
+                        AFTER (or on) the specified TIMESTAMP, which is given
+                        in the format of 'year:month:day' or
+                        'year:month:day:hour:minute:second'. If the "time"
+                        part (':hour:minute:second') is not given, 00:00:00
+                        (midnight) is assumed instead. Timestamps for tasks
+                        are always understood as Coordinated Universal Time
+                        (UTC). (default: None)
+  --last-seen-before TIMESTAMP
+                        Filter for tasks that reported actual forward progress
+                        in its execution ("heartbeat") BEFORE (or on) the
+                        specified TIMESTAMP, which is given in the format of
+                        'year:month:day' or
+                        'year:month:day:hour:minute:second'. If the "time"
+                        part (':hour:minute:second') is not given, 00:00:00
+                        (midnight) is assumed instead. Timestamps for tasks
+                        are always understood as Coordinated Universal Time
+                        (UTC). (default: None)
+  --last-seen-after TIMESTAMP
+                        Filter for tasks that reported actual forward progress
+                        in its execution ("heartbeat") AFTER (or on) the
+                        specified TIMESTAMP, which is given in the format of
+                        'year:month:day' or
+                        'year:month:day:hour:minute:second'. If the "time"
+                        part (':hour:minute:second') is not given, 00:00:00
+                        (midnight) is assumed instead. Timestamps for tasks
+                        are always understood as Coordinated Universal Time
+                        (UTC). (default: None)
+  --only-cancelled      Show only tasks that received a cancel request from a
+                        SUPERUSER (see '--kill'). (default: False)
+  --no-cancelled        Show only tasks that had not received a cancel request
+                        from a SUPERUSER (see '--kill'). (default: False)
+  --only-consumed       Show only tasks that concluded their execution and the
+                        responsible user (see '--username') "downloaded" this
+                        fact. (default: False)
+  --no-consumed         Show only tasks that concluded their execution but the
+                        responsible user (see '--username') did not "check" on
+                        the task. (default: False)
+
+common arguments:
+  --url SERVER_URL      The URL of the server to access, in the format of
+                        '[http[s]://]host:port'. (default: localhost:8001)
+  --verbose {info,debug_analyzer,debug}
+                        Set verbosity level.
+
+The return code of 'CodeChecker cmd serverside-tasks' is almost always '0',
+unless there is an error.
+If **EXACTLY** one '--token' is specified in the arguments without the use of
+'--await' or '--kill', the return code is based on the current status of the
+task, as identified by the token:
+  -  0: The task completed successfully.
+  -  1: (Reserved for operational errors.)
+  -  2: (Reserved for command-line errors.)
+  -  4: The task failed to complete due to an error during execution.
+  -  8: The task is still running...
+  - 16: The task was cancelled by the administrators, or the server was shut
+        down.
+```
+</details>
+
+The `serverside-tasks` subcommand allows users and administrators to query the status of (and for administrators, request the cancellation) of **server-side background tasks**.
+These background tasks are created by a limited set of user actions, where the user's client not waiting for the completion of the task can be beneficial.
+A task is always identified by its **token**, which is a random generated value.
+This token is presented to the user when appropriate.
+
+##### Querying the status of a single job
+
+The primary purpose of `CodeChecker cmd serverside-tasks` is to query the status of a running task, with the `--token TOKEN` flag, e.g., `CodeChecker cmd serverside-tasks --token ABCDEF`.
+This will return the task's details:
+
+```
+Task 'ABCDEF':
+    - Type:         TaskService::DummyTask
+    - Summary:      Dummy task for testing purposes
+    - Status:       CANCELLED
+    - Enqueued at:  2024-08-19 15:55:34
+    - Started at:   2024-08-19 15:55:34
+    - Last seen:    2024-08-19 15:55:35
+    - Completed at: 2024-08-19 15:55:35
+
+Comments on task '8b62497c7d1b7e3945445f5b9c3951d97ae07e58f97cad60a0187221e7d1e2ba':
+...
+```
+
+If `--await` is also specified, the execution of `CodeChecker cmd serverside-task` blocks the caller prompt or script until the task terminates on the server.
+This is useful in situations where the side effect of a task is needed to be ready before the script may process further instructions.
+
+A task can have the following statuses:
+
+  * **Allocated**: The task's token was minted, but the complete input to the task has not yet fully processed.
+  * **Enqueued**: The task is ready for execution, and the system is waiting for free resources to begin running the implementation.
+  * **Running**: The task is actively executing.
+  * **Completed**: The task successfully finished executing. (The side effects of the operations are available at this point.)
+  * **Failed**: The task's execution was started, but failed for some reason. This could be an error detected in the input, a database issue, or any other _Exception_. The "Comments" field of the task, when queried, will likely contain the details of the error.
+  * **Cancelled**: The task was cancelled by an administrator ([see later](#requesting-the-termination-of-a-task-only-for-SUPERUSERs)) and the task shut down to this request.
+  * **Dropped**: The task's execution was interrupted due to an external reason (system crash, service shutdown).
+
+##### Querying multiple tasks via filters
+
+For product and server administrators (`PRODUCT_ADMIN` and `SUPERUSER` rights), the `serverside-tasks` subcommand exposes various filter options, which can be used to create even a combination of criteria tasks must match to be returned.
+Please refer to the `--help` of the subcommand for the exact list of filters available.
+In this mode, the statuses of the tasks are printed in a concise table.
+
+```sh
+$ CodeChecker cmd serverside-tasks --enqueued-after 2024:08:19 --status cancelled
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Token                                                            | Machine            | Type                   | Summary                         | Status    | Product | User | Enqueued            | Started             | Last seen           | Completed           | Cancelled?
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+8b62497c7d1b7e3945445f5b9c3951d97ae07e58f97cad60a0187221e7d1e2ba | xxxxxxxxxxxxx:8001 | TaskService::DummyTask | Dummy task for testing purposes | CANCELLED |         |      | 2024-08-19 15:55:34 | 2024-08-19 15:55:34 | 2024-08-19 15:55:35 | 2024-08-19 15:55:35 | Yes
+6fa0097a9bd1799572c7ccd2afc0272684ed036c11145da7eaf40cc8a07c7241 | xxxxxxxxxxxxx:8001 | TaskService::DummyTask | Dummy task for testing purposes | CANCELLED |         |      | 2024-08-19 15:55:53 | 2024-08-19 15:55:53 | 2024-08-19 15:55:53 | 2024-08-19 15:55:53 | Yes
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+```
+
+##### Requesting the termination of a task (only for `SUPERUSER`s)
+
+Tasks matching the query filters can be requested for termination ("killed") by specifying `--kill` in addition to the filters.
+This will send a request to the server to shut the tasks down.
+
+**Note**, that this shutdown is not deterministic and is not immediate.
+Due to technical reasons, it is up for the task's implementation to find the appropriate position to honour the shutdown request.
+Depending on the task's semantics, the input, or simply circumstance, a task may completely ignore the shutdown request and decide to nevertheless complete.
 
 
 ### Exporting source code suppression to suppress file
