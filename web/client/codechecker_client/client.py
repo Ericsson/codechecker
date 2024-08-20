@@ -23,10 +23,11 @@ from codechecker_common.logger import get_logger
 from codechecker_web.shared import env
 from codechecker_web.shared.version import CLIENT_API
 
-from codechecker_client.helpers.authentication import ThriftAuthHelper
-from codechecker_client.helpers.product import ThriftProductHelper
-from codechecker_client.helpers.results import ThriftResultsHelper
 from .credential_manager import UserCredentials
+from .helpers.authentication import ThriftAuthHelper
+from .helpers.product import ThriftProductHelper
+from .helpers.results import ThriftResultsHelper
+from .helpers.tasks import ThriftServersideTaskHelper
 from .product import split_product_url
 
 LOG = get_logger('system')
@@ -65,7 +66,7 @@ def setup_auth_client(protocol, host, port, session_token=None):
     session token for the session.
     """
     client = ThriftAuthHelper(protocol, host, port,
-                              '/v' + CLIENT_API + '/Authentication',
+                              f"/v{CLIENT_API}/Authentication",
                               session_token)
 
     return client
@@ -78,7 +79,7 @@ def login_user(protocol, host, port, username, login=False):
     """
     session = UserCredentials()
     auth_client = ThriftAuthHelper(protocol, host, port,
-                                   '/v' + CLIENT_API + '/Authentication')
+                                   f"/v{CLIENT_API}/Authentication")
 
     if not login:
         logout_done = auth_client.destroySession()
@@ -213,7 +214,7 @@ def setup_product_client(protocol, host, port, auth_client=None,
         # as "viewpoint" from which the product service is called.
         product_client = ThriftProductHelper(
             protocol, host, port,
-            '/' + product_name + '/v' + CLIENT_API + '/Products',
+            f"/{product_name}/v{CLIENT_API}/Products",
             session_token,
             lambda: get_new_token(protocol, host, port, cred_manager))
 
@@ -263,3 +264,26 @@ def setup_client(product_url) -> ThriftResultsHelper:
         f"/{product_name}/v{CLIENT_API}/CodeCheckerService",
         session_token,
         lambda: get_new_token(protocol, host, port, cred_manager))
+
+
+def setup_task_client(protocol, host, port, auth_client=None,
+                      session_token=None):
+    """
+    Setup the Thrift client for the server-side task management endpoint.
+    """
+    cred_manager = UserCredentials()
+    session_token = cred_manager.get_token(host, port)
+
+    if not session_token:
+        auth_client = setup_auth_client(protocol, host, port)
+        session_token = perform_auth_for_handler(auth_client, host, port,
+                                                 cred_manager)
+
+    # Attach to the server-wide task management service.
+    task_client = ThriftServersideTaskHelper(
+        protocol, host, port,
+        f"/v{CLIENT_API}/Tasks",
+        session_token,
+        lambda: get_new_token(protocol, host, port, cred_manager))
+
+    return task_client
