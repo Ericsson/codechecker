@@ -380,12 +380,6 @@ class Cppcheck(analyzer_base.SourceAnalyzer):
             # No cppcheck arguments file was given in the command line.
             LOG.debug_analyzer(aerr)
 
-        check_env = context.get_analyzer_env(cls.ANALYZER_NAME)
-
-        # Overwrite PATH to contain only the parent of the cppcheck binary.
-        if os.path.isabs(Cppcheck.analyzer_binary()):
-            check_env['PATH'] = os.path.dirname(Cppcheck.analyzer_binary())
-
         checkers = cls.get_analyzer_checkers()
 
         # Cppcheck can and will report with checks that have a different
