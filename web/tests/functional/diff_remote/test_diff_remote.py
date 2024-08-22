@@ -492,7 +492,7 @@ class DiffRemote(unittest.TestCase):
 
         # Unresolved core checkers.
         test_res = {'core.StackAddressEscape': 3, 'core.DivideZero': 10}
-        self.assertDictContainsSubset(test_res, diff_dict)
+        self.assertLessEqual(test_res.items(), diff_dict.items())
 
     def test_get_diff_res_count_unresolved(self):
         """
@@ -574,7 +574,7 @@ class DiffRemote(unittest.TestCase):
                     'deadcode.DeadStores': 6,
                     'core.StackAddressEscape': 3,
                     'core.DivideZero': 10}
-        self.assertDictContainsSubset(diff_dict, test_res)
+        self.assertLessEqual(diff_dict.items(), test_res.items())
 
     def test_get_diff_severity_counts_all_unresolved(self):
         """
