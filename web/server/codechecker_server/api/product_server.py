@@ -13,13 +13,11 @@ Handle Thrift requests for the product manager service.
 import os
 import random
 
-import time
-
 from sqlalchemy.sql.expression import and_
-from sqlalchemy import create_engine
 
+from sqlalchemy import create_engine
 from sqlalchemy.exc import ProgrammingError
-import sqlalchemy.engine.url as URL
+from sqlalchemy.engine.url import URL
 
 import codechecker_api_shared
 from codechecker_api.ProductManagement_v6 import ttypes
@@ -316,51 +314,55 @@ class ThriftProductHandler:
     def add_product_support(self, product_info):
         """
         Creates a database for the given product,
-        to assist add product function that connect to
-        already existing database
+        to assist add product function that connects to
+        an already existing database.
         """
-        # Extract connection details
-        if product_info.engine == 'sqlite':
-            return True
-
-        db_host = product_info.host
-        db_engine = product_info.engine
-        db_port = int(product_info.port)
-        db_user = convert.from_b64(product_info.username_b64)
-        db_pass = convert.from_b64(product_info.password_b64)
-        db_name = product_info.database or None
-        if db_name is None:
-            raise ValueError("Database name is not provided")
-
-        # Create an engine for database to connect
-        engine_url = URL.URL(
-            drivername=db_engine,
-            username=db_user,
-            password=db_pass,
-            host=db_host,
-            port=db_port,
-            database='postgres'
-        )
-        engine = create_engine(engine_url)
-        conn = engine.connect()
-        conn.execute("commit")
-
-        # check connection
         try:
-            conn.execute(f"CREATE DATABASE {db_name}")
-            return True
-        except ProgrammingError as e:
-            if "already exists" in str(e):
-                return True
-            elif e and "already exists" not in str(e):
-                raise e
-        finally:
-            conn.close()
-        return False
+            self.__require_permission([permissions.SUPERUSER])
 
-        # conn.execute(f"CREATE DATABASE {db_name}")
-        # conn.close()
-        # return True
+            LOG.info("requested add support for '%s'", product_info.database)
+
+            if product_info.engine == 'sqlite':
+                LOG.info("Using SQLite engine, skipping database creation")
+                return True
+
+            db_host = product_info.host
+            db_engine = product_info.engine
+            db_port = int(product_info.port)
+            db_user = convert.from_b64(product_info.username_b64)
+            db_pass = convert.from_b64(product_info.password_b64)
+            db_name = product_info.database
+
+            engine_url = URL(
+                drivername=db_engine,
+                username=db_user,
+                password=db_pass,
+                host=db_host,
+                port=db_port,
+                database='postgres'
+            )
+            engine = create_engine(engine_url)
+            conn = engine.connect()
+            conn.execute("commit")
+
+            try:
+                LOG.info("Creating database '%s'", db_name)
+                conn.execute(f"CREATE DATABASE {db_name}")
+            except ProgrammingError as e:
+                LOG.error("ProgrammingError occurred: %s", str(e))
+                if "already exists" in str(e):
+                    LOG.info("Database '%s' already exists", db_name)
+                    return True
+                else:
+                    raise e
+            finally:
+                conn.close()
+
+            LOG.info("Database '%s' created successfully", db_name)
+            return True
+        except Exception as ex:
+            LOG.error(f"An error occurred in add_product_support: {ex}")
+            return False
 
     @timeit
     def addProduct(self, product):
@@ -368,14 +370,6 @@ class ThriftProductHandler:
         Add the given product to the products configured by the server.
         """
         self.__require_permission([permissions.SUPERUSER])
-        self.add_product_support(product.connection)
-        time.sleep(5)
-        # wait 5 seconds for the database to be created
-
-        # if not self.add_product_support(product.connection):
-        #     raise codechecker_api_shared.ttypes.RequestFailed(
-        #         codechecker_api_shared.ttypes.ErrorCode.GENERAL,
-        #         "Failed to create a database")
 
         session = None
         LOG.info("User requested add product '%s'", product.endpoint)
@@ -403,6 +397,8 @@ class ThriftProductHandler:
             raise codechecker_api_shared.ttypes.RequestFailed(
                 codechecker_api_shared.ttypes.ErrorCode.GENERAL,
                 msg)
+
+        self.add_product_support(product.connection)
 
         # Some values come encoded as Base64, decode these.
         displayed_name = convert.from_b64(product.displayedName_b64) \

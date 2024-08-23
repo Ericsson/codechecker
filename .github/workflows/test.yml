@@ -5,6 +5,10 @@ on: [push, pull_request]
 
 permissions: read-all
 
+concurrency:
+  group: ${{ github.head_ref }}
+  cancel-in-progress: true
+
 jobs:
   # Note: UI related linter tests will run in the gui job.
   lint:
