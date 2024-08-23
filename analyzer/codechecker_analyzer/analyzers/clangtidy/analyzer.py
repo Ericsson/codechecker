@@ -396,7 +396,12 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
                 # as -clang-diagnostic-... .
                 elif warning_type == CheckerType.ANALYZER:
                     if state == CheckerState.ENABLED:
-                        compiler_warnings.append('-W' + warning_name)
+                        if checker_name == "clang-diagnostic-error":
+                            # Disable warning of clang-diagnostic-error to
+                            # avoid generated compiler errors.
+                            compiler_warnings.append('-Wno-' + warning_name)
+                        else:
+                            compiler_warnings.append('-W' + warning_name)
                         enabled_checkers.append(checker_name)
                     else:
                         compiler_warnings.append('-Wno-' + warning_name)
