@@ -971,6 +971,9 @@ def parse_options(compilation_db_entry,
 
     details['directory'] = compilation_db_entry['directory']
     details['action_type'] = None
+    if not gcc_command:
+        LOG.info("Invalid 'gcc_command' for compilation_db_entry: " + str(compilation_db_entry))
+        return BuildAction(**details)
     details['compiler'] =\
         determine_compiler(gcc_command,
                            ImplicitCompilerInfo.is_executable_compiler)
